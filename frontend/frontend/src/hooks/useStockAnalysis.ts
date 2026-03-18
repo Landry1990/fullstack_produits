@@ -101,7 +101,7 @@ export const useStockAnalysis = () => {
             setData(response.data);
         } catch (err: unknown) {
             console.error(err);
-            setError(t('stockAnalysis.error'));
+            setError(t('stock:analyse.error'));
         } finally {
             setLoading(false);
         }

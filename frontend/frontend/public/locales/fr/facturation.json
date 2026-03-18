@@ -110,7 +110,10 @@
         "add_btn": "Ajouter",
         "sudo_mode": {
             "validate_by": "Validé par",
-            "password": "Mot de passe (Sudo)"
+            "password": "Mot de passe (Sudo)",
+            "confirm_qty": "Confirmer la quantité <strong>{{qty}}</strong> pour le produit <strong>{{name}}</strong> ?",
+            "confirm_price": "Confirmer le changement de prix de <strong>{{oldPrice}}</strong> à <strong>{{newPrice}}</strong> pour <strong>{{name}}</strong> ?",
+            "confirm_discount": "Confirmer une remise de <strong>{{discount}}%</strong> sur le produit <strong>{{name}}</strong> ?"
         },
         "sudo_self": "(Moi-même)",
         "password_placeholder": "Mot de passe du validateur...",

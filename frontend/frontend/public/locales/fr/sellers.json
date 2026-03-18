@@ -1,0 +1,20 @@
+{
+    "ranking": {
+        "title": "Classement Vendeurs",
+        "subtitle": "Performances mensuelles et évolution",
+        "period": {
+            "month": "Mois",
+            "quarter": "Trimestre",
+            "year": "Année"
+        },
+        "table_title": "Classement Complet",
+        "seller": "Vendeur",
+        "sales": "Ventes",
+        "revenue": "CA",
+        "avg_basket": "Panier",
+        "evolution": "Évol.",
+        "no_data": "Aucune donnée pour cette période",
+        "evolution_chart": "Évolution (12 mois)",
+        "comparison": "Comparaison CA"
+    }
+}

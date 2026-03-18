@@ -110,8 +110,8 @@ export default function Avoirs() {
                 onClose={closeSudo}
                 onValidate={sudoState.onValidate}
                 saving={false}
-                title={sudoState.title || "Validation d'Avoir"}
-                message={sudoState.message || "Confirmer cette action (réintégration de stock) ?"}
+                title={sudoState.title || t('stock:avoirs.modals.sudo_validate_title')}
+                message={sudoState.message || t('stock:avoirs.modals.sudo_validate_message')}
             />
 
         </div>

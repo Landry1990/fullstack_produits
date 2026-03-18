@@ -21,21 +21,21 @@ export const CreancesQuickStats: React.FC<CreancesQuickStatsProps> = ({
     const stats = [
         {
             label: t('creances:stats.total_invoices'),
-            value: `${formatCurrency(Math.round(totalDue))} F`,
+            value: `${formatCurrency(Math.round(totalDue))} ${t('common:currency')}`,
             icon: <CreditCard className="w-5 h-5 text-blue-500" />,
             bgColor: 'bg-blue-50',
             borderColor: 'border-blue-100'
         },
         {
             label: t('creances:stats.total_paid'),
-            value: `${formatCurrency(Math.round(totalPaid))} F`,
+            value: `${formatCurrency(Math.round(totalPaid))} ${t('common:currency')}`,
             icon: <CheckCircle className="w-5 h-5 text-success" />,
             bgColor: 'bg-success/10',
             borderColor: 'border-success/20'
         },
         {
             label: t('creances:stats.remaining'),
-            value: `${formatCurrency(Math.round(totalRemaining))} F`,
+            value: `${formatCurrency(Math.round(totalRemaining))} ${t('common:currency')}`,
             icon: <Clock className="w-5 h-5 text-warning" />,
             bgColor: 'bg-warning/10',
             borderColor: 'border-warning/20'

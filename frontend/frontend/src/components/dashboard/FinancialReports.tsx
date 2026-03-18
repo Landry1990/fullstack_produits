@@ -8,7 +8,7 @@ interface FinancialReportsProps {
 }
 
 export const FinancialReports: React.FC<FinancialReportsProps> = ({ onExport, exporting }) => {
-    const { t } = useTranslation();
+    const { t } = useTranslation(['dashboard', 'common']);
 
     const reports = [
         {

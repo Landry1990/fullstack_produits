@@ -10,13 +10,13 @@ interface ReportSidebarProps {
 }
 
 export const ReportSidebar: React.FC<ReportSidebarProps> = ({ selectedQuery, onSelect }) => {
-    const { t } = useTranslation();
+    const { t } = useTranslation(['reports', 'common']);
 
     return (
         <div className="w-80 bg-base-100 border-r border-base-300 flex flex-col shrink-0 print:hidden overflow-hidden">
             <div className="p-4 border-b border-base-200">
                 <h2 className="text-xs font-bold text-base-content/40 uppercase tracking-widest">
-                    {t('reports.queries_title', 'Rapports Disponibles')}
+                    {t('queries_title', 'Rapports Disponibles')}
                 </h2>
             </div>
             <div className="flex-1 overflow-y-auto custom-scrollbar">
@@ -37,10 +37,10 @@ export const ReportSidebar: React.FC<ReportSidebarProps> = ({ selectedQuery, onS
                         </div>
                         <div className="flex-1 min-w-0">
                             <div className={`font-bold text-sm truncate ${selectedQuery?.id === query.id ? 'text-primary' : 'text-base-content'}`}>
-                                {t(`reports.queries.${query.id}.name`, { defaultValue: query.name })}
+                                {t(`queries.${query.id}.name`, { defaultValue: query.name })}
                             </div>
                             <div className="text-[10px] text-base-content/60 font-medium line-clamp-2 mt-0.5 leading-tight">
-                                {t(`reports.queries.${query.id}.description`, { defaultValue: query.description || '' })}
+                                {t(`queries.${query.id}.description`, { defaultValue: query.description || '' })}
                             </div>
                         </div>
                         <ChevronRight className={`w-4 h-4 mt-1 shrink-0 transition-transform ${selectedQuery?.id === query.id ? 'text-primary translate-x-1' : 'text-base-content/20 opacity-0 group-hover:opacity-100'}`} />

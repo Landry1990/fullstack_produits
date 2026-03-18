@@ -46,7 +46,7 @@ export const SalesFilters: React.FC<SalesFiltersProps> = ({ filters, onDeleteDra
                     </div>
                     <input
                         type="text"
-                        placeholder={t('filters.search_placeholder')}
+                        placeholder={t('sales:filters.search_placeholder')}
                         className="input input-bordered pl-10 w-full bg-base-100 focus:border-primary focus:ring-1 focus:ring-primary"
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
@@ -85,11 +85,11 @@ export const SalesFilters: React.FC<SalesFiltersProps> = ({ filters, onDeleteDra
                             onChange={(e) => setStatusFilter(e.target.value)}
                             className="select select-bordered w-full pl-10 select-sm"
                         >
-                            <option value="ALL">{t('filters.status_all')}</option>
-                            <option value="BROU">{t('status.draft')}</option>
-                            <option value="VAL">{t('status.validated')}</option>
-                            <option value="PAY">{t('status.paid')}</option>
-                            <option value="ANN">{t('status.cancelled')}</option>
+                            <option value="ALL">{t('sales:filters.status_all')}</option>
+                            <option value="BROU">{t('sales:status.draft')}</option>
+                            <option value="VAL">{t('sales:status.validated')}</option>
+                            <option value="PAY">{t('sales:status.paid')}</option>
+                            <option value="ANN">{t('sales:status.cancelled')}</option>
                         </select>
                     </div>
 
@@ -103,7 +103,7 @@ export const SalesFilters: React.FC<SalesFiltersProps> = ({ filters, onDeleteDra
                             onChange={(e) => setSellerFilter(e.target.value)}
                             className="select select-bordered w-full pl-10 select-sm"
                         >
-                            <option value="">{t('filters.all_sellers')}</option>
+                            <option value="">{t('sales:filters.all_sellers')}</option>
                             {users.map(u => (
                                 <option key={u.id} value={u.id}>
                                     {u.first_name} {u.last_name} ({u.username})
@@ -119,7 +119,7 @@ export const SalesFilters: React.FC<SalesFiltersProps> = ({ filters, onDeleteDra
                     <button
                         onClick={onDeleteDrafts}
                         className="btn btn-ghost btn-sm text-error hover:bg-error/10"
-                        title={t('actions.delete_drafts')}
+                        title={t('sales:actions.delete_drafts')}
                     >
                         <Trash2 className="w-5 h-5" />
                     </button>
@@ -127,7 +127,7 @@ export const SalesFilters: React.FC<SalesFiltersProps> = ({ filters, onDeleteDra
                     <button
                         onClick={onRefresh}
                         className="btn btn-ghost btn-sm text-base-content/60"
-                        title={t('common.refresh', { defaultValue: 'Actualiser' })}
+                        title={t('common:refresh')}
                     >
                         <RefreshCw className="w-5 h-5" />
                     </button>

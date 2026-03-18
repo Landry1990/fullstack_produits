@@ -107,5 +107,37 @@
         "supervisor_hint": "La validation d'un superviseur sera requise à l'étape suivante.",
         "cancel": "Annuler",
         "confirm_payment": "Confirmer le Règlement"
-    }
+    },
+    "toasts": {
+        "error_print_receipt": "Erreur lors de l'impression du reçu",
+        "error_print_statement": "Erreur lors de la génération du relevé",
+        "payment_success": "Paiement enregistré avec succès !",
+        "bulk_success": "Règlement groupé effectué avec succès !",
+        "confirm_print_receipt": "Voulez-vous imprimer un reçu pour ce paiement ?",
+        "confirm_print_bulk_receipt": "Voulez-vous imprimer le reçu récapitulatif pour ce règlement ?",
+        "select_client_error": "Veuillez sélectionner un client",
+        "error_loading": "Erreur lors du chargement des créances"
+    },
+    "print_view": {
+        "title": "RELEVÉ DE CRÉANCES",
+        "client": "Client",
+        "name": "Nom:",
+        "address": "Adresse:",
+        "phone": "Téléphone:",
+        "email": "Email:",
+        "period": "Période",
+        "from": "Du:",
+        "to": "Au:",
+        "date_header": "Date",
+        "invoice_header": "N° Facture",
+        "beneficiary_header": "Ayant Droit",
+        "total_header": "Montant Total",
+        "paid_header": "Payé",
+        "remaining_header": "Reste",
+        "totals_label": "TOTAUX:",
+        "client_signature": "Signature Client",
+        "pharmacy_signature": "Signature Pharmacie",
+        "generated_on": "Document généré le"
+    },
+    "client_type_label": "Client"
 }

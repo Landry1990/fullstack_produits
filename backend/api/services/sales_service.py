@@ -508,9 +508,16 @@ class SalesService:
         difference = facture.total_ttc - old_total
         
         if difference != 0:
-            Caisse.objects.create(
-                facture=facture, mode_paiement='especes', montant=difference,
-                statut='completee', user=user, reference=f"Ajustement modification facture {facture.numero_facture or facture.id}"
-            )
+            # Correction : L'ajustement ne doit être créé que si un paiement a déjà été encaissé
+            # (Cas fréquent à la caisse centrale où la vente est modifiée avant d'être payée)
+            total_paye = Caisse.objects.filter(facture=facture, statut='completee').aggregate(
+                total=Sum('montant')
+            )['total'] or Decimal('0')
+
+            if total_paye > 0 or facture.status == Facture.Status.PAYEE:
+                Caisse.objects.create(
+                    facture=facture, mode_paiement='especes', montant=difference,
+                    statut='completee', user=user, reference=f"Ajustement modification facture {facture.numero_facture or facture.id}"
+                )
 
         return facture, old_total, difference

@@ -101,7 +101,7 @@ export default function FinanceFournisseurModal({ isOpen, onClose, fournisseur, 
                 <div className="text-right">
                     <p className="text-[10px] text-slate-500 uppercase font-bold tracking-wider">{t('providers:details.debt_balance')}</p>
                     <p className={`text-xl font-black font-mono ${ normalizeNumberInput(fournisseur.solde_dette || 0) > 0 ? 'text-red-500' : 'text-emerald-600'}`}>
-                        {formatCurrency(normalizeNumberInput(fournisseur.solde_dette || 0))} F
+                        {formatCurrency(normalizeNumberInput(fournisseur.solde_dette || 0))} {t('common:currency')}
                     </p>
                 </div>
             </div>
@@ -110,7 +110,7 @@ export default function FinanceFournisseurModal({ isOpen, onClose, fournisseur, 
                 {/* Left Panel: New Payment Form */}
                 <div className="w-1/3 border-r bg-white p-6 overflow-y-auto">
                     <h4 className="font-bold text-lg mb-6 flex items-center gap-2">
-                         <span className="w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center text-sm">₹</span>
+                         <span className="w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center text-sm">{t('common:currency')}</span>
                          {t('providers:finance.new_payment')}
                     </h4>
                     <form onSubmit={handleSubmit} className="space-y-4">
@@ -126,7 +126,7 @@ export default function FinanceFournisseurModal({ isOpen, onClose, fournisseur, 
                                 className={`input input-bordered w-full font-mono font-bold text-lg rounded-xl focus:border-emerald-500 focus:ring-emerald-500/20 ${prefilledMontant ? 'bg-emerald-50 border-emerald-200' : ''}`}
                                 placeholder="0.00"
                                 required 
-                            />    <span className="absolute left-3 top-3.5 text-slate-400 font-bold">F</span>
+                            />    <span className="absolute left-3 top-3.5 text-slate-400 font-bold">{t('common:currency')}</span>
                             </div>
                         </div>
 
@@ -238,7 +238,7 @@ export default function FinanceFournisseurModal({ isOpen, onClose, fournisseur, 
                                                 )}
                                             </td>
                                             <td className="text-right font-bold font-mono">
-                                                {formatCurrency(normalizeNumberInput(paiement.montant))} F
+                                                {formatCurrency(normalizeNumberInput(paiement.montant))} {t('common:currency')}
                                             </td>
                                             <td className="text-center">
                                                 <button 

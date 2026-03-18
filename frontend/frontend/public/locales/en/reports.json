@@ -1,5 +1,5 @@
 {
-    "title": "Reports Center",
+    "title": "Report Center",
     "subtitle": "Select a query, configure parameters and view results",
     "queries_title": "Query List",
     "execute": "Execute query",
@@ -117,5 +117,30 @@
             "VENTES": "Sales",
             "VENTES_MODIF": "Sales (Modif)"
         }
+    },
+    "monthly_report": {
+        "ca_ttc": "Total Revenue (incl. tax)",
+        "ca_ht": "Total Revenue (excl. tax)",
+        "margin": "Margin",
+        "nb_sales": "Nb Sales",
+        "receivables": "Receivables",
+        "invoices": "{{count}} invoices",
+        "payments": "Payments",
+        "tva_split": "VAT Breakdown",
+        "cash_movements": "Cash Movements",
+        "entries": "Inflows",
+        "exits": "Outflows",
+        "final_balance": "Final Balance",
+        "top_suppliers": "Top Suppliers",
+        "pro_clients": "Pro Clients",
+        "total_ca": "Total Revenue",
+        "paid": "Paid",
+        "remains": "Remains",
+        "collection": "Collection",
+        "free_units": "Free Units",
+        "monetary_value": "Monetary Value",
+        "given_quantity": "Given Quantity",
+        "ca_impact": "Impact on Revenue",
+        "no_payments": "No payments"
     }
 }

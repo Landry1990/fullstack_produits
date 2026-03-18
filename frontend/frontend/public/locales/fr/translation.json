@@ -419,35 +419,6 @@
             }
         }
     },
-    "temporal_analysis": {
-        "title": "Analyse Temporelle",
-        "subtitle": "Analysez vos meilleures heures, jours et saisons.",
-        "peak_hours": "Heures de pointe",
-        "daily_comparison": "Jours rentables",
-        "seasonality": "Saisonnalité",
-        "peak_hour_title": "Affluence Maximale",
-        "peak_hour_summary": "Pic à {{hour}}:00 avec un CA de {{revenue}}",
-        "best_day_title": "Meilleur Jour de Performance",
-        "best_day_summary": "{{day}} est votre meilleur jour avec {{revenue}} en moyenne",
-        "seasonality_title": "Tendances Saisonnières",
-        "seasonality_summary": "Analyse sur {{months}} mois • {{count}} produits saisonniers détectés",
-        "global_revenue_evolution": "Évolution Globale du CA",
-        "top_seasonal_products": "Top Produits Saisonniers",
-        "no_seasonality_detected": "Aucune tendance saisonnière marquée détectée pour le moment.",
-        "no_data": "Pas de données",
-        "columns": {
-            "day": "Jour",
-            "avg_sales": "Ventes Moy.",
-            "avg_basket": "Panier Moy.",
-            "avg_revenue": "CA Moyen",
-            "product": "Produit",
-            "peak_month": "Mois Pic",
-            "peak_volume": "Vol. Pic",
-            "monthly_avg": "Moy. Mensuelle",
-            "variation": "Variation",
-            "avg_basket_short": "Panier M."
-        }
-    },
     "users": {
         "title": "Gestion des Utilisateurs",
         "new_user": "Nouvel Utilisateur",
@@ -1455,71 +1426,6 @@
             "input_quantity_error": "Veuillez saisir la nouvelle quantité"
         }
     },
-    "promis": {
-        "title": "Gestion des Promis",
-        "new_btn": "+ Nouveau Promis",
-        "filter_status": "Filtrer par statut",
-        "status_all": "Tous",
-        "status_att": "En attente",
-        "status_del": "Délivrés",
-        "status_ann": "Annulés",
-        "table": {
-            "date": "Date",
-            "client": "Client",
-            "phone": "Téléphone",
-            "product": "Produit",
-            "qty": "Qté",
-            "status": "Statut",
-            "actions": "Actions"
-        },
-        "actions": {
-            "deliver": "Délivrer",
-            "cancel": "Annuler",
-            "print": "Imprimer",
-            "sms": "SMS",
-            "sms_send": "Envoyer 📨"
-        },
-        "modal": {
-            "title_new": "Nouveau Promis",
-            "title_sms": "Envoyer SMS à {{name}}",
-            "client_label": "Client",
-            "client_placeholder": "Nom du patient ou client...",
-            "phone_label": "Téléphone",
-            "phone_placeholder": "Numéro de téléphone (ex: 77...)",
-            "product_label": "Produit *",
-            "product_placeholder": "Rechercher un produit (Nom/CIP)...",
-            "qty_label": "Quantité *",
-            "notes_label": "Notes",
-            "notes_placeholder": "Instructions ou commentaires...",
-            "cancel": "Annuler",
-            "create": "Enregistrer",
-            "sms_number": "Numéro destinataire",
-            "sms_message": "Contenu du message"
-        },
-        "validation": {
-            "product_required": "Veuillez sélectionner un produit",
-            "client_required": "Client requis (sélection ou nom libre)",
-            "create_error": "Erreur lors de l'enregistrement"
-        },
-        "messages": {
-            "empty": "Aucun promis trouvé",
-            "delivered_on": "Livré le {{date}}",
-            "cancelled": "Annulé",
-            "print_ticket_error": "Erreur lors de l'impression du ticket",
-            "bulk_delivery_error": "Erreur lors de la livraison en masse",
-            "bulk_cancel_error": "Erreur lors de l'annulation en masse",
-            "sms_success": "SMS envoyé avec succès",
-            "sms_error": "Erreur lors de l'envoi du SMS"
-        },
-        "modals": {
-            "bulk_delivery_title": "Livrer plusieurs promis",
-            "bulk_delivery_message": "Marquer {{count}} promis comme délivrés ?",
-            "bulk_delivery_confirm": "Délivrer tous",
-            "bulk_cancel_title": "Annuler plusieurs promis",
-            "bulk_cancel_message": "Annuler {{count}} promis et réintégrer le stock ?\n\nCette action créera des entrées dans l'historique des produits.",
-            "bulk_cancel_confirm": "Annuler tous"
-        }
-    },
     "sales": {
         "title": "Historique des Ventes",
         "subtitle": "Gérez vos ventes, factures et règlements",
@@ -2264,57 +2170,6 @@
         "workstation_placeholder": "Nommez ce poste (ex: CAISSE-1)",
         "workstation_help": "Ce nom sera mémorisé pour identifier cet appareil."
     },
-    "abc_analysis": {
-        "title": "Analyse ABC",
-        "subtitle": "Classification des produits par contribution au CA (Pareto 80/20)",
-        "loading": "Chargement de l'analyse...",
-        "error_loading": "Erreur lors du chargement des données",
-        "filters": {
-            "months_3": "3 mois",
-            "months_6": "6 mois",
-            "months_12": "12 mois",
-            "all_rayons": "Tous les rayons",
-            "all_suppliers": "Tous les fournisseurs",
-            "copy": "Copier"
-        },
-        "alerts": {
-            "shortage": "{{count}} produit(s) A en rupture !",
-            "shortage_plural": "{{count}} produits A en rupture !"
-        },
-        "stats": {
-            "total_ca": "Chiffre d'Affaires Total",
-            "period_info": "Sur {{count}} mois",
-            "category_a": "Catégorie A",
-            "category_b": "Catégorie B",
-            "category_c": "Catégorie C"
-        },
-        "tabs": {
-            "vital": "A - Vital",
-            "important": "B - Important",
-            "secondary": "C - Secondaire"
-        },
-        "table": {
-            "product": "Produit",
-            "cip": "CIP",
-            "rayon": "Rayon",
-            "stock": "Stock",
-            "qty_sold": "Qté Vendue",
-            "sale_price": "Prix Vente",
-            "ca": "CA",
-            "ca_percent": "% CA",
-            "cumulated_percent": "% Cumulé",
-            "no_products": "Aucun produit dans cette catégorie",
-            "shortage_badge": "Rupture"
-        },
-        "footer": {
-            "analyzed_since": "Données analysées depuis le {{date}}",
-            "total_products": "{{count}} produits au total"
-        },
-        "messages": {
-            "copy_success": "{{count}} lignes copiées ! Collez dans Excel.",
-            "copy_error": "Erreur lors de la copie des données"
-        }
-    },
     "ordonnancier": {
         "title": "📋 Ordonnancier",
         "export_pdf": "Exporter PDF",
@@ -2652,8 +2507,8 @@
             "concentration": "Concentration Achats"
         },
         "sales_tab": {
-            "calculation_method": "Méthode de calcul : Ventes Réalisées",
-            "info_text": "Les statistiques ci-dessous concernent uniquement les produits vendus sur la période sélectionnée (CA encaissé).",
+            "calculation_method": "Méthode : Chiffre d'Affaires Net Facturé",
+            "info_text": "Ces statistiques concernent les produits facturés sur la période (CA net après remises).",
             "cards": {
                 "total_ca": "CA Total TTC",
                 "purchase_cost": "Coût d'Achat (Vendu)",

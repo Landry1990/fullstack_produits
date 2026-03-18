@@ -13,28 +13,31 @@ export const AvoirsQuickStats: React.FC<AvoirsQuickStatsProps> = ({ avoirs }) =>
     const stats = useMemo(() => {
         return {
             total: avoirs.length,
-            valides: avoirs.filter(a => a.status === 'VALIDEE').length,
-            brouillons: avoirs.filter(a => a.status === 'BROUILLON').length
+            valides: avoirs.filter(a => {
+                const s = a.status?.toUpperCase();
+                return s === 'VAL' || s === 'VALIDE' || s === 'VALIDÉ' || s === 'VALIDEE' || s === 'VALIDÉE';
+            }).length,
+            brouillons: avoirs.filter(a => a.status?.toUpperCase() === 'BROUILLON' || a.status?.toUpperCase() === 'BRO').length
         };
     }, [avoirs]);
 
     const statItems = [
         {
-            title: t('avoirs.stats.total'),
+            title: t('stock:avoirs.stats.total'),
             value: stats.total,
             icon: <FileText className="w-5 h-5" />,
             colorClass: "text-primary",
             bgClass: "bg-primary/10",
         },
         {
-            title: t('avoirs.stats.valides'),
+            title: t('stock:avoirs.stats.valides'),
             value: stats.valides,
             icon: <CheckCircle2 className="w-5 h-5" />,
             colorClass: "text-success",
             bgClass: "bg-success/10",
         },
         {
-            title: t('avoirs.stats.brouillons'),
+            title: t('stock:avoirs.stats.brouillons'),
             value: stats.brouillons,
             icon: <AlertCircle className="w-5 h-5" />,
             colorClass: "text-warning",

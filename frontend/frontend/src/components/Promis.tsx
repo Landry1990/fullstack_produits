@@ -55,12 +55,8 @@ const Promis: React.FC = () => {
                 <div className="w-full space-y-4">
                     <div className="bg-base-100 rounded-2xl shadow-sm border border-base-300 flex flex-col">
                         <div className="p-6 border-b border-base-200">
-                            <h1 className="text-2xl font-bold text-base-content tracking-tight">
-                                {t('promis.title', 'Gestion des Promis')}
-                            </h1>
-                            <p className="text-base-content/60 text-sm mt-1">
-                                {t('promis.subtitle', 'Gérez les produits promis, les livraisons et les retours en stock')}
-                            </p>
+                            <h1 className="text-3xl font-black text-base-content tracking-tight">{t('stock:promis.title', 'Promised Products Management')}</h1>
+                            <p className="text-base-content/50 font-medium text-sm mt-1">{t('stock:promis.subtitle', 'Manage promised products, deliveries and stock returns')}</p>
                         </div>
                         
                         <PromisFilters 
@@ -119,8 +115,8 @@ const Promis: React.FC = () => {
                 isOpen={sudoModal.isOpen}
                 onClose={() => setSudoModal({ isOpen: false, action: null, targetId: null })}
                 onConfirm={handleSudoConfirm}
-                title="Confirmation Requise (Zone Sensible)"
-                message="Cette action va modifier le stock (réintégration). Veuillez confirmer votre mot de passe pour continuer."
+                title={t('stock:promis.modals.sudo_confirm_title', 'Confirmation Requise (Zone Sensible)')}
+                message={t('stock:promis.modals.sudo_confirm_message', 'Cette action va modifier le stock (réintégration). Veuillez confirmer votre mot de passe pour continuer.')}
             />
 
         </div>

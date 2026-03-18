@@ -1,7 +1,7 @@
 {
     "title": "Tableau de Bord",
     "manager": "Manager",
-    "subtitle": "Suivi des performances et objectifs commerciaux",
+    "subtitle": "Suivi de la Marge Brute et couverture des charges",
     "set_objective": "Fixer un Objectif",
     "progression": "Progression",
     "target": "Cible",
@@ -188,6 +188,18 @@
         "margin_label": "Marge",
         "palier_label": "Objectif Palier {{level}}",
         "ca_target_placeholder": "Ex: 500000",
-        "since_date": "Depuis le {{date}}"
+        "since_date": "Depuis le {{date}}",
+        "alerts": {
+            "perf_title": "Alerte Performance",
+            "perf_msg": "Le CA journalier est en retard ({{rate}}% de l'objectif). Prévoir des actions correctives.",
+            "shortage_title": "Ruptures Critiques",
+            "shortage_msg": "{{count}} produits sont en dessous de leur stock minimum.",
+            "debt_title": "Créances Importantes",
+            "debt_msg": "{{count}} clients dépassent {{threshold}}F de dette. Top: {{top_name}} ({{top_debt}}F).",
+            "dormant_title": "Stocks Dormants",
+            "dormant_msg": "{{count}} produits n'ont pas eu de vente depuis {{days}} jours. Envisager une promotion.",
+            "drop_title": "Baisse Hebdomadaire",
+            "drop_msg": "Le CA de cette semaine est nettement inférieur à la semaine dernière (-30%+)."
+        }
     }
 }

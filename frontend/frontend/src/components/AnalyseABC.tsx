@@ -46,7 +46,7 @@ interface Fournisseur {
 }
 
 export default function AnalyseABC() {
-  const { t } = useTranslation()
+  const { t } = useTranslation(['stock', 'common'])
   const [data, setData] = useState<AnalyseABCData | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -95,7 +95,7 @@ export default function AnalyseABC() {
         const response = await axios.get(`${apiBaseUrl}/api/produits/analyse_abc/?${params}`)
         setData(response.data)
       } catch (err: any) {
-        setError(err.response?.data?.detail || t('abc_analysis.error_loading'))
+        setError(err.response?.data?.detail || t('stock:abc.error_loading'))
         console.error('Erreur analyse ABC:', err)
       } finally {
         setLoading(false)
@@ -117,15 +117,15 @@ export default function AnalyseABC() {
     
     // En-têtes
     const headers = [
-      t('abc_analysis.table.product'),
-      t('abc_analysis.table.cip'),
-      t('abc_analysis.table.rayon'),
-      t('abc_analysis.table.stock'),
-      t('abc_analysis.table.qty_sold'),
-      t('abc_analysis.table.sale_price'),
-      t('abc_analysis.table.ca'),
-      t('abc_analysis.table.ca_percent'),
-      t('abc_analysis.table.cumulated_percent'),
+      t('stock:abc.table.product'),
+      t('stock:abc.table.cip'),
+      t('stock:abc.table.rayon'),
+      t('stock:abc.table.stock'),
+      t('stock:abc.table.qty_sold'),
+      t('stock:abc.table.sale_price'),
+      t('stock:abc.table.ca'),
+      t('stock:abc.table.ca_percent'),
+      t('stock:abc.table.cumulated_percent'),
       'Catégorie'
     ]
     
@@ -156,9 +156,9 @@ export default function AnalyseABC() {
     
     try {
       document.execCommand('copy')
-      toast.success(t('abc_analysis.messages.copy_success', { count: produitsFiltrés.length }))
+      toast.success(t('stock:abc.messages.copy_success', { count: produitsFiltrés.length }))
     } catch (err) {
-      toast.error(t('abc_analysis.messages.copy_error'))
+      toast.error(t('stock:abc.messages.copy_error'))
     } finally {
       document.body.removeChild(textarea)
     }
@@ -191,10 +191,10 @@ export default function AnalyseABC() {
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6 shrink-0">
         <div>
           <h1 className="text-2xl font-bold text-base-content flex items-center gap-2">
-            📊 {t('abc_analysis.title')}
+            📊 {t('stock:abc.title')}
           </h1>
           <p className="text-base-content/60 text-sm">
-            {t('abc_analysis.subtitle')}
+            {t('stock:abc.subtitle')}
           </p>
         </div>
         
@@ -205,9 +205,9 @@ export default function AnalyseABC() {
             value={periode}
             onChange={(e) => setPeriode(Number(e.target.value))}
           >
-            <option value={3}>{t('abc_analysis.filters.months_3')}</option>
-            <option value={6}>{t('abc_analysis.filters.months_6')}</option>
-            <option value={12}>{t('abc_analysis.filters.months_12')}</option>
+            <option value={3}>{t('stock:abc.filters.months_3')}</option>
+            <option value={6}>{t('stock:abc.filters.months_6')}</option>
+            <option value={12}>{t('stock:abc.filters.months_12')}</option>
           </select>
           
           <select 
@@ -215,7 +215,7 @@ export default function AnalyseABC() {
             value={rayonId}
             onChange={(e) => setRayonId(e.target.value)}
           >
-            <option value="">{t('abc_analysis.filters.all_rayons')}</option>
+            <option value="">{t('stock:abc.filters.all_rayons')}</option>
             {rayons.map(r => (
               <option key={r.id} value={r.id}>{r.name}</option>
             ))}
@@ -226,7 +226,7 @@ export default function AnalyseABC() {
             value={fournisseurId}
             onChange={(e) => setFournisseurId(e.target.value)}
           >
-            <option value="">{t('abc_analysis.filters.all_suppliers')}</option>
+            <option value="">{t('stock:abc.filters.all_suppliers')}</option>
             {fournisseurs.map(f => (
               <option key={f.id} value={f.id}>{f.name}</option>
             ))}
@@ -237,7 +237,7 @@ export default function AnalyseABC() {
             onClick={copyToClipboard}
             disabled={!data || produitsFiltrés.length === 0}
           >
-            📋 {t('abc_analysis.filters.copy')}
+            📋 {t('stock:abc.filters.copy')}
           </button>
         </div>
       </div>
@@ -249,7 +249,7 @@ export default function AnalyseABC() {
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
           </svg>
           <div>
-            <span className="font-bold">{t('abc_analysis.alerts.shortage', { count: data.alertes_rupture_a })}</span>
+            <span className="font-bold">{t('stock:abc.alerts.shortage', { count: data.alertes_rupture_a })}</span>
             <span className="ml-2">{data.produits_a_en_rupture.join(', ')}</span>
           </div>
         </div>
@@ -259,25 +259,25 @@ export default function AnalyseABC() {
       {data && (
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6 shrink-0">
           <div className="stat bg-white rounded-lg shadow border border-base-200">
-            <div className="stat-title">{t('abc_analysis.stats.total_ca')}</div>
+            <div className="stat-title">{t('stock:abc.stats.total_ca')}</div>
             <div className="stat-value text-primary text-2xl">{formatNumber(data.ca_total)} F</div>
-            <div className="stat-desc">{t('abc_analysis.stats.period_info', { count: data.periode_mois })}</div>
+            <div className="stat-desc">{t('stock:abc.stats.period_info', { count: data.periode_mois })}</div>
           </div>
           
           <div className="stat bg-red-50 rounded-lg shadow border border-red-200">
-            <div className="stat-title text-red-600">🔴 {t('abc_analysis.stats.category_a')}</div>
+            <div className="stat-title text-red-600">🔴 {t('stock:abc.stats.category_a')}</div>
             <div className="stat-value text-red-600 text-2xl">{data.nb_produits_a}</div>
             <div className="stat-desc text-red-500">{formatNumber(data.ca_categorie_a)} F ({data.ca_total > 0 ? Math.round(data.ca_categorie_a / data.ca_total * 100) : 0}%)</div>
           </div>
           
           <div className="stat bg-yellow-50 rounded-lg shadow border border-yellow-200">
-            <div className="stat-title text-yellow-600">🟡 {t('abc_analysis.stats.category_b')}</div>
+            <div className="stat-title text-yellow-600">🟡 {t('stock:abc.stats.category_b')}</div>
             <div className="stat-value text-yellow-600 text-2xl">{data.nb_produits_b}</div>
             <div className="stat-desc text-yellow-500">{formatNumber(data.ca_categorie_b)} F ({data.ca_total > 0 ? Math.round(data.ca_categorie_b / data.ca_total * 100) : 0}%)</div>
           </div>
           
           <div className="stat bg-green-50 rounded-lg shadow border border-green-200">
-            <div className="stat-title text-green-600">🟢 {t('abc_analysis.stats.category_c')}</div>
+            <div className="stat-title text-green-600">🟢 {t('stock:abc.stats.category_c')}</div>
             <div className="stat-value text-green-600 text-2xl">{data.nb_produits_c}</div>
             <div className="stat-desc text-green-500">{formatNumber(data.ca_categorie_c)} F ({data.ca_total > 0 ? Math.round(data.ca_categorie_c / data.ca_total * 100) : 0}%)</div>
           </div>
@@ -290,19 +290,19 @@ export default function AnalyseABC() {
           className={`tab ${activeTab === 'A' ? 'bg-red-500 text-white' : ''}`}
           onClick={() => setActiveTab('A')}
         >
-          🔴 {t('abc_analysis.tabs.vital')} ({data?.nb_produits_a || 0})
+          🔴 {t('stock:abc.tabs.vital')} ({data?.nb_produits_a || 0})
         </button>
         <button 
           className={`tab ${activeTab === 'B' ? 'bg-yellow-500 text-white' : ''}`}
           onClick={() => setActiveTab('B')}
         >
-          🟡 {t('abc_analysis.tabs.important')} ({data?.nb_produits_b || 0})
+          🟡 {t('stock:abc.tabs.important')} ({data?.nb_produits_b || 0})
         </button>
         <button 
           className={`tab ${activeTab === 'C' ? 'bg-green-500 text-white' : ''}`}
           onClick={() => setActiveTab('C')}
         >
-          🟢 {t('abc_analysis.tabs.secondary')} ({data?.nb_produits_c || 0})
+          🟢 {t('stock:abc.tabs.secondary')} ({data?.nb_produits_c || 0})
         </button>
       </div>
 
@@ -312,22 +312,22 @@ export default function AnalyseABC() {
           <table className="table table-sm table-pin-rows w-full">
             <thead className="bg-base-100">
               <tr>
-                <th>{t('abc_analysis.table.product')}</th>
-                <th>{t('abc_analysis.table.cip')}</th>
-                <th>{t('abc_analysis.table.rayon')}</th>
-                <th className="text-right">{t('abc_analysis.table.stock')}</th>
-                <th className="text-right">{t('abc_analysis.table.qty_sold')}</th>
-                <th className="text-right">{t('abc_analysis.table.sale_price')}</th>
-                <th className="text-right">{t('abc_analysis.table.ca')}</th>
-                <th className="text-right">{t('abc_analysis.table.ca_percent')}</th>
-                <th className="text-right">{t('abc_analysis.table.cumulated_percent')}</th>
+                <th>{t('stock:abc.table.product')}</th>
+                <th>{t('stock:abc.table.cip')}</th>
+                <th>{t('stock:abc.table.rayon')}</th>
+                <th className="text-right">{t('stock:abc.table.stock')}</th>
+                <th className="text-right">{t('stock:abc.table.qty_sold')}</th>
+                <th className="text-right">{t('stock:abc.table.sale_price')}</th>
+                <th className="text-right">{t('stock:abc.table.ca')}</th>
+                <th className="text-right">{t('stock:abc.table.ca_percent')}</th>
+                <th className="text-right">{t('stock:abc.table.cumulated_percent')}</th>
               </tr>
             </thead>
             <tbody>
               {produitsFiltrés.length === 0 ? (
                 <tr>
                   <td colSpan={9} className="text-center py-12 text-base-content/50">
-                    {t('abc_analysis.table.no_products')}
+                    {t('stock:abc.table.no_products')}
                   </td>
                 </tr>
               ) : (
@@ -335,7 +335,7 @@ export default function AnalyseABC() {
                   <tr key={p.id} className={`hover ${p.en_rupture ? 'bg-red-50' : ''}`}>
                     <td className="font-medium">
                       {p.nom}
-                      {p.en_rupture && <span className="badge badge-error badge-xs ml-2">{t('abc_analysis.table.shortage_badge')}</span>}
+                      {p.en_rupture && <span className="badge badge-error badge-xs ml-2">{t('stock:abc.table.shortage_badge')}</span>}
                     </td>
                     <td className="font-mono text-xs text-base-content/60">{p.cip}</td>
                     <td className="text-sm">{p.rayon}</td>
@@ -357,7 +357,7 @@ export default function AnalyseABC() {
 
       {/* Footer */}
       <div className="mt-4 text-xs text-base-content/50 text-center shrink-0">
-        {t('abc_analysis.footer.analyzed_since', { date: data?.date_debut })} • {t('abc_analysis.footer.total_products', { count: data?.produits.length || 0 })}
+        {t('stock:abc.footer.analyzed_since', { date: data?.date_debut })} • {t('stock:abc.footer.total_products', { count: data?.produits.length || 0 })}
       </div>
     </div>
   )

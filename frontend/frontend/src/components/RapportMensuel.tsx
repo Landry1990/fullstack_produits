@@ -77,7 +77,7 @@ interface RapportData {
 
 
 export default function RapportMensuel() {
-  const { t, i18n } = useTranslation();
+  const { t, i18n } = useTranslation(['translation', 'common', 'caisse']);
   const [mois, setMois] = useState(() => {
     const d = new Date();
     return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
@@ -180,24 +180,24 @@ export default function RapportMensuel() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             <div className="stat bg-gradient-to-br from-emerald-500 to-emerald-600 text-white rounded-lg shadow-lg">
               <div className="stat-title text-emerald-100 font-semibold">{t('monthly_report.kpis.ca_ttc')}</div>
-              <div className="stat-value text-3xl">{formatCurrency(Math.round(rapport.ca.ca_ttc))} F</div>
+              <div className="stat-value text-3xl">{formatCurrency(Math.round(rapport.ca.ca_ttc))} {t('common:currency')}</div>
               <div className="stat-desc text-emerald-100">{t('monthly_report.kpis.sales_count', { count: rapport.ca.nb_ventes })}</div>
             </div>
 
             <div className="stat bg-gradient-to-br from-blue-500 to-blue-600 text-white rounded-lg shadow-lg">
               <div className="stat-title text-blue-100 font-semibold">{t('monthly_report.kpis.ca_ht')}</div>
-              <div className="stat-value text-3xl">{formatCurrency(Math.round(rapport.ca.ca_ht))} F</div>
+              <div className="stat-value text-3xl">{formatCurrency(Math.round(rapport.ca.ca_ht))} {t('common:currency')}</div>
             </div>
 
             <div className="stat bg-gradient-to-br from-amber-500 to-amber-600 text-white rounded-lg shadow-lg">
               <div className="stat-title text-amber-100 font-semibold">{t('monthly_report.kpis.gross_margin')}</div>
-              <div className="stat-value text-3xl">{formatCurrency(Math.round(rapport.marge.marge_brute))} F</div>
+              <div className="stat-value text-3xl">{formatCurrency(Math.round(rapport.marge.marge_brute))} {t('common:currency')}</div>
               <div className="stat-desc text-amber-100">{t('monthly_report.kpis.margin_info', { pct: rapport.marge.marge_pct.toFixed(1) })}</div>
             </div>
 
             <div className="stat bg-gradient-to-br from-purple-500 to-purple-600 text-white rounded-lg shadow-lg">
               <div className="stat-title text-purple-100 font-semibold">{t('monthly_report.kpis.purchase_cost')}</div>
-              <div className="stat-value text-3xl">{formatCurrency(Math.round(rapport.marge.cout_achat))} F</div>
+              <div className="stat-value text-3xl">{formatCurrency(Math.round(rapport.marge.cout_achat))} {t('common:currency')}</div>
             </div>
           </div>
 
@@ -229,7 +229,7 @@ export default function RapportMensuel() {
                               <span className="badge badge-ghost font-bold">{f.nb_commandes}</span>
                             </td>
                             <td className="text-right font-bold text-primary">
-                              {formatCurrency(Math.round(Number(f.montant_total)))} F
+                              {formatCurrency(Math.round(Number(f.montant_total)))} {t('common:currency')}
                             </td>
                           </tr>
                         ))}
@@ -241,7 +241,7 @@ export default function RapportMensuel() {
                             {rapport.achats_par_fournisseur.reduce((acc, f) => acc + f.nb_commandes, 0)}
                           </td>
                           <td className="text-right text-primary">
-                            {formatCurrency(Math.round(rapport.achats_par_fournisseur.reduce((acc, f) => acc + Number(f.montant_total), 0)))} F
+                            {formatCurrency(Math.round(rapport.achats_par_fournisseur.reduce((acc, f) => acc + Number(f.montant_total), 0)))} {t('common:currency')}
                           </td>
                         </tr>
                       </tfoot>
@@ -268,15 +268,15 @@ export default function RapportMensuel() {
                 <div className="grid grid-cols-3 gap-4 mb-4">
                   <div className="text-center p-3 bg-base-50 rounded-lg">
                     <div className="text-xs text-base-content/60 font-medium">{t('monthly_report.pro_clients.ca_total')}</div>
-                    <div className="text-lg font-bold text-info">{formatCurrency(Math.round(rapport.clients_professionnels.ca_total))} F</div>
+                    <div className="text-lg font-bold text-info">{formatCurrency(Math.round(rapport.clients_professionnels.ca_total))} {t('common:currency')}</div>
                   </div>
                   <div className="text-center p-3 bg-success/10 rounded-lg">
                     <div className="text-xs text-success/70 font-medium">{t('monthly_report.pro_clients.paid')}</div>
-                    <div className="text-lg font-bold text-success">{formatCurrency(Math.round(rapport.clients_professionnels.montant_paye))} F</div>
+                    <div className="text-lg font-bold text-success">{formatCurrency(Math.round(rapport.clients_professionnels.montant_paye))} {t('common:currency')}</div>
                   </div>
                   <div className="text-center p-3 bg-warning/10 rounded-lg">
                     <div className="text-xs text-warning/70 font-medium">{t('monthly_report.pro_clients.balance')}</div>
-                    <div className="text-lg font-bold text-warning">{formatCurrency(Math.round(rapport.clients_professionnels.reste_a_payer))} F</div>
+                    <div className="text-lg font-bold text-warning">{formatCurrency(Math.round(rapport.clients_professionnels.reste_a_payer))} {t('common:currency')}</div>
                   </div>
                 </div>
 
@@ -307,8 +307,8 @@ export default function RapportMensuel() {
                         {rapport.clients_professionnels.top_clients.slice(0, 5).map((c) => (
                           <tr key={c.client_id} className="hover">
                             <td className="font-medium">{c.client_nom}</td>
-                            <td className="text-right">{formatCurrency(Math.round(Number(c.ca_total)))} F</td>
-                            <td className="text-right text-warning font-bold">{formatCurrency(Math.round(Number(c.reste_a_payer)))} F</td>
+                            <td className="text-right">{formatCurrency(Math.round(Number(c.ca_total)))} {t('common:currency')}</td>
+                            <td className="text-right text-warning font-bold">{formatCurrency(Math.round(Number(c.reste_a_payer)))} {t('common:currency')}</td>
                           </tr>
                         ))}
                       </tbody>
@@ -331,7 +331,7 @@ export default function RapportMensuel() {
                 <div className="grid grid-cols-3 gap-3 mb-4">
                   <div className="text-center p-2 bg-success/10 rounded">
                     <div className="text-xs text-success/70">{t('monthly_report.free_units.value')}</div>
-                    <div className="text-sm font-bold text-success">{formatCurrency(Math.round(rapport.unites_gratuites.valeur_totale))} F</div>
+                    <div className="text-sm font-bold text-success">{formatCurrency(Math.round(rapport.unites_gratuites.valeur_totale))} {t('common:currency')}</div>
                   </div>
                   <div className="text-center p-2 bg-base-50 rounded">
                     <div className="text-xs text-base-content/60">{t('monthly_report.free_units.quantity')}</div>
@@ -359,7 +359,7 @@ export default function RapportMensuel() {
                           <tr key={p.produit_id} className="hover">
                             <td className="font-medium truncate max-w-xs" title={p.produit_nom}>{p.produit_nom}</td>
                             <td className="text-right">{p.quantite_gratuite}</td>
-                            <td className="text-right font-bold">{formatCurrency(Math.round(Number(p.valeur_totale)))} F</td>
+                            <td className="text-right font-bold">{formatCurrency(Math.round(Number(p.valeur_totale)))} {t('common:currency')}</td>
                           </tr>
                         ))}
                       </tbody>
@@ -391,7 +391,7 @@ export default function RapportMensuel() {
                         {rapport.encaissements.map((enc, idx) => (
                           <tr key={idx} className="hover">
                             <td className="font-medium">{enc.mode_label}</td>
-                            <td className="text-right font-bold">{formatCurrency(Math.round(Number(enc.montant)))} F</td>
+                            <td className="text-right font-bold">{formatCurrency(Math.round(Number(enc.montant)))} {t('common:currency')}</td>
                           </tr>
                         ))}
                       </tbody>
@@ -399,7 +399,7 @@ export default function RapportMensuel() {
                         <tr>
                           <td>{t('monthly_report.encaissements.total')}</td>
                           <td className="text-right text-success">
-                            {formatCurrency(Math.round(rapport.encaissements.reduce((sum, e) => sum + Number(e.montant), 0)))} F
+                            {formatCurrency(Math.round(rapport.encaissements.reduce((sum, e) => sum + Number(e.montant), 0)))} {t('common:currency')}
                           </td>
                         </tr>
                       </tfoot>
@@ -427,16 +427,16 @@ export default function RapportMensuel() {
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
                 <div className="stat bg-base-100 rounded-box border border-base-200 p-4">
                   <div className="stat-title text-sm">{t('monthly_report.caisse_mvts.in')}</div>
-                  <div className="stat-value text-success text-lg">{formatCurrency(Math.round(rapport.mouvements_caisse?.total_entrees || 0))} F</div>
+                  <div className="stat-value text-success text-lg">{formatCurrency(Math.round(rapport.mouvements_caisse?.total_entrees || 0))} {t('common:currency')}</div>
                 </div>
                 <div className="stat bg-base-100 rounded-box border border-base-200 p-4">
                   <div className="stat-title text-sm">{t('monthly_report.caisse_mvts.out')}</div>
-                  <div className="stat-value text-error text-lg">{formatCurrency(Math.round(rapport.mouvements_caisse?.total_sorties || 0))} F</div>
+                  <div className="stat-value text-error text-lg">{formatCurrency(Math.round(rapport.mouvements_caisse?.total_sorties || 0))} {t('common:currency')}</div>
                 </div>
                 <div className="stat bg-base-100 rounded-box border border-base-200 p-4">
                   <div className="stat-title text-sm">{t('monthly_report.caisse_mvts.balance')}</div>
                   <div className={`stat-value text-lg ${(rapport.mouvements_caisse?.solde || 0) >= 0 ? 'text-success' : 'text-error'}`}>
-                    {(rapport.mouvements_caisse?.solde || 0) > 0 ? '+' : ''}{formatCurrency(Math.round(rapport.mouvements_caisse?.solde || 0))} F
+                    {(rapport.mouvements_caisse?.solde || 0) > 0 ? '+' : ''}{formatCurrency(Math.round(rapport.mouvements_caisse?.solde || 0))} {t('common:currency')}
                   </div>
                 </div>
               </div>
@@ -459,13 +459,13 @@ export default function RapportMensuel() {
                           <td>{new Date(mvt.date).toLocaleDateString(i18n.language === 'fr' ? 'fr-FR' : 'en-US')}</td>
                           <td>
                             <span className={`badge badge-sm ${mvt.type === 'ENTREE' ? 'badge-success badge-outline' : 'badge-error badge-outline'}`}>
-                              {mvt.type}
+                              {mvt.type === 'ENTREE' ? t('caisse:journal.modes.entry_caps') : t('caisse:journal.modes.exit_caps')}
                             </span>
                           </td>
                           <td className="font-medium">{mvt.motif}</td>
                           <td className="text-xs text-base-content/70">{mvt.user}</td>
                           <td className={`text-right font-bold ${mvt.type === 'ENTREE' ? 'text-success' : 'text-error'}`}>
-                            {mvt.type === 'SORTIE' ? '-' : '+'}{formatCurrency(Math.round(Number(mvt.montant)))} F
+                            {mvt.type === 'SORTIE' ? '-' : '+'}{formatCurrency(Math.round(Number(mvt.montant)))} {t('common:currency')}
                           </td>
                         </tr>
                       ))}
@@ -499,9 +499,9 @@ export default function RapportMensuel() {
                       {rapport.ca_par_tva.map((tva, idx) => (
                         <tr key={idx} className="hover">
                           <td className="font-medium">{tva.taux}%</td>
-                           <td className="text-right">{formatCurrency(Math.round(Number(tva.ca_ht)))} F</td>
-                           <td className="text-right">{formatCurrency(Math.round(Number(tva.montant_tva)))} F</td>
-                           <td className="text-right font-bold">{formatCurrency(Math.round(Number(tva.ca_ttc)))} F</td>
+                           <td className="text-right">{formatCurrency(Math.round(Number(tva.ca_ht)))} {t('common:currency')}</td>
+                           <td className="text-right">{formatCurrency(Math.round(Number(tva.montant_tva)))} {t('common:currency')}</td>
+                           <td className="text-right font-bold">{formatCurrency(Math.round(Number(tva.ca_ttc)))} {t('common:currency')}</td>
                         </tr>
                       ))}
                     </tbody>
@@ -522,7 +522,7 @@ export default function RapportMensuel() {
                   <div className="text-center">
                     <div className="text-sm text-warning/70 font-medium mb-2">{t('monthly_report.receivables.total_to_recover')}</div>
                     <div className="text-4xl font-bold text-warning">
-                      {formatCurrency(Math.round(Number(rapport.creances_a_percevoir || 0)))} F
+                      {formatCurrency(Math.round(Number(rapport.creances_a_percevoir || 0)))} {t('common:currency')}
                     </div>
                     <div className="text-xs text-base-content/60 mt-2">{t('monthly_report.receivables.desc')}</div>
                   </div>

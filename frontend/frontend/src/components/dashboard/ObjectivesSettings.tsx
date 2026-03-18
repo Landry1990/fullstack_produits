@@ -30,7 +30,7 @@ const updateConfig = async (data: ObjectivesConfig): Promise<ObjectivesConfig> =
 };
 
 export function ObjectivesSettings({ isOpen, onClose }: Props) {
-    const { t } = useTranslation();
+    const { t } = useTranslation(['dashboard', 'common']);
     const queryClient = useQueryClient();
     const [config, setConfig] = useState<ObjectivesConfig>({
         mode: 'MANUEL',

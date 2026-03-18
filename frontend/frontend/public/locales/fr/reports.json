@@ -117,5 +117,30 @@
             "VENTES": "Ventes",
             "VENTES_MODIF": "Ventes (Modif)"
         }
+    },
+    "monthly_report": {
+        "ca_ttc": "CA TTC",
+        "ca_ht": "CA HT",
+        "margin": "Marge",
+        "nb_sales": "Nb Ventes",
+        "receivables": "Créances",
+        "invoices": "{{count}} factures",
+        "payments": "Encaissements",
+        "tva_split": "Répartition TVA",
+        "cash_movements": "Mouvements Caisse",
+        "entries": "Entrées",
+        "exits": "Sorties",
+        "final_balance": "Solde Final",
+        "top_suppliers": "Top Fournisseurs",
+        "pro_clients": "Clients Professionnels",
+        "total_ca": "CA Total",
+        "paid": "Payé",
+        "remains": "Reste",
+        "collection": "Recouvrement",
+        "free_units": "Unités Gratuites",
+        "monetary_value": "Valeur Monétaire",
+        "given_quantity": "Quantité Donnée",
+        "ca_impact": "Impact sur CA",
+        "no_payments": "Aucun encaissement"
     }
 }

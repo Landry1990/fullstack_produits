@@ -40,7 +40,7 @@ interface UGReportData {
 }
 
 export default function StockUGReport() {
-  const { t } = useTranslation();
+  const { t } = useTranslation(['stock', 'common']);
   const [data, setData] = useState<UGReportData | null>(null);
   const [loading, setLoading] = useState(true);
   
@@ -79,7 +79,7 @@ export default function StockUGReport() {
       setData(response.data);
     } catch (error) {
       console.error('Error fetching UG report:', error);
-      toast.error(t('common:messages.error_loading', { defaultValue: 'Erreur lors du chargement des données' }));
+      toast.error(t('common:messages.error_loading'));
     } finally {
       setLoading(false);
     }
@@ -92,7 +92,12 @@ export default function StockUGReport() {
   const exportCSV = () => {
     if (!data?.fournisseurs.length) return;
     
-    const headers = ['Fournisseur', 'Nombre de Lots avec UG', 'Total Unités Gratuites (UG)', 'Valeur Estimée (FCFA)'];
+    const headers = [
+      t('stock:rapport_ug.table.supplier'),
+      t('stock:rapport_ug.table.lots_count'),
+      t('stock:rapport_ug.table.received_ug'),
+      t('stock:rapport_ug.table.remaining_value')
+    ];
     const rows = data.fournisseurs.map(f => [
       f.fournisseur_nom,
       f.lots_count,
@@ -101,7 +106,7 @@ export default function StockUGReport() {
     ]);
     
     // Add total row
-    rows.push([t('common:total_general', { defaultValue: 'TOTAL GÉNÉRAL' }), '', data.global_total_ug, data.global_total_valeur]);
+    rows.push([t('common:total_general'), '', data.global_total_ug, data.global_total_valeur]);
     
     const csvContent = "data:text/csv;charset=utf-8," 
       + headers.join(';') + '\n' 
@@ -123,7 +128,7 @@ export default function StockUGReport() {
         win.document.write(`
           <html>
             <head>
-              <title>Rapport Unités Gratuites - ${format(new Date(), 'dd/MM/yyyy')}</title>
+              <title>${t('stock:rapport_ug.print_template.title')} - ${format(new Date(), 'dd/MM/yyyy')}</title>
               <style>
                 body { font-family: sans-serif; padding: 20px; color: #334155; }
                 h1 { text-align: center; font-size: 24px; color: #1e293b; margin-bottom: 5px; }
@@ -143,24 +148,24 @@ export default function StockUGReport() {
               </style>
             </head>
             <body>
-              <h1>Rapport des Unités Gratuites</h1>
-              <div class="subtitle">Situation du stock promotionnel au ${format(new Date(), 'dd/MM/yyyy')}</div>
+              <h1>${t('stock:rapport_ug.title')}</h1>
+              <div class="subtitle">${t('stock:rapport_ug.print_template.situation', { date: format(new Date(), 'dd/MM/yyyy') })}</div>
               
               <div class="kpi-grid">
                 <div class="kpi-card">
-                  <div class="kpi-label">${t('rapport_ug.stats.history_ug', { defaultValue: 'Histo. UG Reçues' })}</div>
+                  <div class="kpi-label">${t('stock:rapport_ug.stats.history_ug')}</div>
                   <div class="kpi-value">${formatNumber(data.global_total_ug)}</div>
                 </div>
                 <div class="kpi-card" style="border-left: 4px solid #10b981;">
-                  <div class="kpi-label" style="color: #10b981;">${t('rapport_ug.stats.current_stock_ug', { defaultValue: 'Stock UG Actuel' })}</div>
+                  <div class="kpi-label" style="color: #10b981;">${t('stock:rapport_ug.stats.current_stock_ug')}</div>
                   <div class="kpi-value">${formatNumber(data.global_total_ug_restantes)}</div>
                 </div>
                 <div class="kpi-card">
-                  <div class="kpi-label">${t('rapport_ug.stats.estimated_value', { defaultValue: 'Valeur Reçue' })}</div>
+                  <div class="kpi-label">${t('stock:rapport_ug.stats.estimated_value')}</div>
                   <div class="kpi-value">${formatCurrency(data.global_total_valeur)} F</div>
                 </div>
                 <div class="kpi-card" style="border-left: 4px solid #3b82f6;">
-                  <div class="kpi-label" style="color: #3b82f6;">${t('rapport_ug.stats.latent_cash', { defaultValue: 'Trésorerie Latente' })}</div>
+                  <div class="kpi-label" style="color: #3b82f6;">${t('stock:rapport_ug.stats.latent_cash')}</div>
                   <div class="kpi-value">${formatCurrency(data.global_total_valeur_restante)} F</div>
                 </div>
               </div>
@@ -168,11 +173,11 @@ export default function StockUGReport() {
               <table>
                 <thead>
                   <tr>
-                    <th>{t('rapport_ug.table.details.product', { defaultValue: 'Fournisseur / Produit' })}</th>
-                    <th>{t('rapport_ug.table.details.lot', { defaultValue: 'N° Lot / Facture' })}</th>
-                    <th style="text-align: right;">{t('rapport_ug.table.details.received', { defaultValue: 'Qté Reçue' })}</th>
-                    <th style="text-align: right;">{t('rapport_ug.table.remaining', { defaultValue: 'Reliquat UG' })}</th>
-                    <th style="text-align: right;">{t('rapport_ug.table.details.val_rest', { defaultValue: 'Valeur Rest.' })}</th>
+                    <th>${t('stock:rapport_ug.table.details.product')}</th>
+                    <th>${t('stock:rapport_ug.table.details.lot')}</th>
+                    <th style="text-align: right;">${t('stock:rapport_ug.table.details.received')}</th>
+                    <th style="text-align: right;">${t('stock:rapport_ug.table.details.remaining')}</th>
+                    <th style="text-align: right;">${t('stock:rapport_ug.table.details.val_rest')}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -197,7 +202,7 @@ export default function StockUGReport() {
               </table>
               
               <div style="text-align: center; margin-top: 40px; font-size: 9px; color: #94a3b8; font-weight: bold; text-transform: uppercase;">
-                --- {t('rapport_ug.print_template.footer', { defaultValue: 'Fin du rapport de stock promotionnel' })} ---
+                --- ${t('stock:rapport_ug.print_template.footer')} ---
               </div>
             </body>
           </html>
@@ -222,10 +227,10 @@ export default function StockUGReport() {
               </div>
               <div>
                 <h1 className="text-3xl font-black tracking-tight text-slate-800">
-                  {t('rapport_ug.title_part1', { defaultValue: 'Rapport des' })} <span className="text-indigo-500 italic">{t('rapport_ug.title_part2', { defaultValue: 'Unités Gratuites' })}</span>
+                  {t('stock:rapport_ug.title_part1')} <span className="text-indigo-500 italic">{t('stock:rapport_ug.title_part2')}</span>
                 </h1>
                 <p className="text-sm font-semibold text-slate-500 uppercase tracking-widest mt-1">
-                  {t('rapport_ug.subtitle', { defaultValue: 'Suivi des entrées promotionnelles (UG) par fournisseur' })}
+                  {t('stock:rapport_ug.subtitle')}
                 </p>
               </div>
             </div>
@@ -238,7 +243,7 @@ export default function StockUGReport() {
               disabled={loading || !data?.fournisseurs.length}
             >
               <Printer className="w-4 h-4" />
-              {t('rapport_ug.print', { defaultValue: 'Imprimer' })}
+              {t('stock:rapport_ug.print')}
             </button>
             <button 
               onClick={exportCSV}
@@ -246,7 +251,7 @@ export default function StockUGReport() {
               disabled={loading || !data?.fournisseurs.length}
             >
               <Download className="w-4 h-4" />
-              {t('rapport_ug.export', { defaultValue: 'CSV' })}
+              {t('stock:rapport_ug.export')}
             </button>
             <button 
               onClick={fetchData}
@@ -254,7 +259,7 @@ export default function StockUGReport() {
               disabled={loading}
             >
               <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
-              {t('rapport_ug.refresh', { defaultValue: 'Actualiser' })}
+              {t('stock:rapport_ug.refresh')}
             </button>
           </div>
         </div>
@@ -267,7 +272,7 @@ export default function StockUGReport() {
                  <PackageOpen className="w-6 h-6" />
               </div>
               <div>
-                <p className="text-xs font-bold text-slate-400 tracking-wider uppercase">{t('rapport_ug.stats.history_ug', { defaultValue: 'Historique UG Reçues' })}</p>
+                <p className="text-xs font-bold text-slate-400 tracking-wider uppercase">{t('stock:rapport_ug.stats.history_ug')}</p>
                 <p className="text-2xl font-black text-slate-800 tracking-tight">
                   {loading ? '...' : formatNumber(data?.global_total_ug ?? 0)}
                 </p>
@@ -281,7 +286,7 @@ export default function StockUGReport() {
                  <PackageOpen className="w-6 h-6" />
               </div>
               <div>
-                <p className="text-xs font-bold text-slate-400 tracking-wider uppercase">{t('rapport_ug.stats.current_stock_ug', { defaultValue: 'Stock UG Actuel (Restant)' })}</p>
+                <p className="text-xs font-bold text-slate-400 tracking-wider uppercase">{t('stock:rapport_ug.stats.current_stock_ug')}</p>
                 <p className="text-2xl font-black text-emerald-600 tracking-tight">
                   {loading ? '...' : formatNumber(data?.global_total_ug_restantes ?? 0)}
                 </p>
@@ -295,7 +300,7 @@ export default function StockUGReport() {
                  <Banknote className="w-6 h-6" />
               </div>
               <div>
-                <p className="text-xs font-bold text-slate-400 tracking-wider uppercase">{t('rapport_ug.stats.estimated_value', { defaultValue: 'Valeur Reçue Estimée' })}</p>
+                <p className="text-xs font-bold text-slate-400 tracking-wider uppercase">{t('stock:rapport_ug.stats.estimated_value')}</p>
                 <p className="text-2xl font-black text-slate-600 tracking-tight">
                   {loading ? '...' : `${formatCurrency(data?.global_total_valeur ?? 0)} F`}
                 </p>
@@ -309,7 +314,7 @@ export default function StockUGReport() {
                  <Banknote className="w-6 h-6" />
               </div>
               <div>
-                <p className="text-xs font-bold text-blue-400 tracking-wider uppercase">{t('rapport_ug.stats.latent_cash', { defaultValue: 'Trésorerie Latente UG' })}</p>
+                <p className="text-xs font-bold text-blue-400 tracking-wider uppercase">{t('stock:rapport_ug.stats.latent_cash')}</p>
                 <p className="text-2xl font-black text-slate-800 tracking-tight">
                   {loading ? '...' : `${formatCurrency(data?.global_total_valeur_restante ?? 0)} F`}
                 </p>
@@ -323,7 +328,7 @@ export default function StockUGReport() {
           {/* Toolbar */}
           <div className="px-6 py-4 border-b border-slate-100 flex flex-col sm:flex-row justify-between items-center gap-4 bg-slate-50/50">
             <h2 className="text-lg font-bold text-slate-800 flex items-center gap-2">
-              {t('rapport_ug.filters.supplier_split', { defaultValue: 'Répartition par Fournisseur' })}
+              {t('stock:rapport_ug.filters.supplier_split')}
               {data && <span className="badge badge-primary badge-sm ml-2">{data.fournisseurs.length}</span>}
             </h2>
             
@@ -335,10 +340,10 @@ export default function StockUGReport() {
                   className="bg-transparent border-none outline-none text-sm text-slate-700 w-full"
                   value={dateDebut}
                   onChange={e => setDateDebut(e.target.value)}
-                  placeholder={t('rapport_ug.filters.date_from', { defaultValue: 'Début' })}
+                  placeholder={t('stock:rapport_ug.filters.date_from')}
                 />
               </div>
-              <span className="text-slate-400 font-medium whitespace-nowrap">{t('rapport_ug.filters.to', { defaultValue: 'au' })}</span>
+              <span className="text-slate-400 font-medium whitespace-nowrap">{t('stock:rapport_ug.filters.to')}</span>
               <div className="flex items-center gap-2 bg-white px-3 py-1.5 rounded-xl border border-slate-200 focus-within:ring-2 focus-within:ring-indigo-100 focus-within:border-indigo-300 transition-all shadow-sm w-full sm:w-auto">
                 <Calendar className="w-4 h-4 text-slate-400" />
                 <input 
@@ -346,7 +351,7 @@ export default function StockUGReport() {
                   className="bg-transparent border-none outline-none text-sm text-slate-700 w-full"
                   value={dateFin}
                   onChange={e => setDateFin(e.target.value)}
-                  placeholder={t('rapport_ug.filters.date_to', { defaultValue: 'Fin' })}
+                  placeholder={t('stock:rapport_ug.filters.date_to')}
                 />
               </div>
               
@@ -354,7 +359,7 @@ export default function StockUGReport() {
                 <button 
                   className="btn btn-ghost btn-sm btn-circle text-slate-400 hover:text-red-500"
                   onClick={() => { setDateDebut(''); setDateFin(''); }}
-                  title={t('rapport_ug.filters.clear_dates', { defaultValue: 'Effacer les dates' })}
+                  title={t('stock:rapport_ug.filters.clear_dates')}
                 >
                   <RefreshCw className="w-4 h-4" />
                 </button>
@@ -367,11 +372,11 @@ export default function StockUGReport() {
             <table className="table table-zebra w-full whitespace-nowrap">
               <thead className="bg-slate-50 sticky top-0 opacity-100 z-10 text-slate-500 text-xs uppercase font-extrabold tracking-wider border-b border-slate-200">
                 <tr>
-                  <th className="px-6 py-4">{t('rapport_ug.table.supplier', { defaultValue: 'Fournisseur' })}</th>
-                  <th className="px-6 py-4 text-right">{t('rapport_ug.table.lots_count', { defaultValue: 'Nb Réceptions (Lots)' })}</th>
-                  <th className="px-6 py-4 text-right">{t('rapport_ug.table.received_ug', { defaultValue: 'UG Reçues (Histo.)' })}</th>
-                  <th className="px-6 py-4 text-right text-emerald-600 bg-emerald-50">{t('rapport_ug.table.remaining_stock', { defaultValue: 'Stock UG Restant' })}</th>
-                  <th className="px-6 py-4 text-right text-blue-600 bg-blue-50">{t('rapport_ug.table.remaining_value', { defaultValue: 'Valeur Restante (FCFA)' })}</th>
+                  <th className="px-6 py-4">{t('stock:rapport_ug.table.supplier')}</th>
+                  <th className="px-6 py-4 text-right">{t('stock:rapport_ug.table.lots_count')}</th>
+                  <th className="px-6 py-4 text-right">{t('stock:rapport_ug.table.received_ug')}</th>
+                  <th className="px-6 py-4 text-right text-emerald-600 bg-emerald-50">{t('stock:rapport_ug.table.remaining_stock')}</th>
+                  <th className="px-6 py-4 text-right text-blue-600 bg-blue-50">{t('stock:rapport_ug.table.remaining_value')}</th>
                 </tr>
               </thead>
               <tbody className="text-sm font-medium text-slate-600">
@@ -386,9 +391,9 @@ export default function StockUGReport() {
                   ))
                 ) : data?.fournisseurs.length === 0 ? (
                   <tr>
-                    <td colSpan={4} className="px-6 py-12 text-center text-slate-400">
+                    <td colSpan={5} className="px-6 py-12 text-center text-slate-400">
                       <PackageOpen className="w-12 h-12 mx-auto mb-3 opacity-20" />
-                      <p className="font-medium text-slate-500">{t('rapport_ug.table.empty', { defaultValue: 'Aucune unité gratuite trouvée sur cette période' })}</p>
+                      <p className="font-medium text-slate-500">{t('stock:rapport_ug.table.empty')}</p>
                     </td>
                   </tr>
                 ) : (
@@ -425,40 +430,42 @@ export default function StockUGReport() {
                     </tr>
                     {expandedSupplierIds.has(stat.fournisseur_id) && (
                       <tr>
-                        <td colSpan={4} className="px-0 py-0 bg-slate-50/50 border-b border-slate-200">
+                        <td colSpan={5} className="px-0 py-0 bg-slate-50/50 border-b border-slate-200">
                            <div className="px-10 py-4">
-                             <table className="table table-sm w-full bg-white rounded-xl shadow-sm border border-slate-200">
-                               <thead className="bg-slate-100 text-slate-500">
-                                 <tr>
-                                   <th>{t('rapport_ug.table.details.product', { defaultValue: 'Produit' })}</th>
-                                   <th>{t('rapport_ug.table.details.lot', { defaultValue: 'N° Lot' })}</th>
-                                   <th>{t('rapport_ug.table.details.date', { defaultValue: 'Date Réception' })}</th>
-                                   <th>{t('rapport_ug.table.details.order', { defaultValue: 'N° Commande' })}</th>
-                                   <th>{t('rapport_ug.table.details.invoice', { defaultValue: 'N° Facture' })}</th>
-                                   <th className="text-right">{t('rapport_ug.table.details.price', { defaultValue: 'Prix Vente' })}</th>
-                                   <th className="text-right">{t('rapport_ug.table.details.received', { defaultValue: 'Reçues' })}</th>
-                                   <th className="text-right text-emerald-600">{t('rapport_ug.table.details.remaining', { defaultValue: 'Restantes' })}</th>
-                                   <th className="text-right text-blue-600">{t('rapport_ug.table.details.val_rest', { defaultValue: 'Valeur Rest.' })}</th>
-                                 </tr>
-                               </thead>
-                               <tbody>
-                                 {stat.details.map(detail => (
-                                   <tr key={detail.lot_id} className={detail.quantity_free_remaining === 0 ? 'opacity-50' : ''}>
-                                     <td className="font-medium text-slate-700">{detail.produit_nom}</td>
-                                     <td className="text-slate-500 font-mono text-xs">{detail.lot_numero}</td>
-                                     <td className="text-slate-600">
-                                        {detail.date_reception ? format(new Date(detail.date_reception), 'dd/MM/yyyy HH:mm') : 'N/A'}
-                                     </td>
-                                     <td className="text-slate-500 font-mono text-xs">{detail.commande_numero}</td>
-                                     <td className="text-slate-500 font-mono text-xs">{detail.facture_numero}</td>
-                                     <td className="text-right text-slate-600">{formatCurrency(detail.prix_vente)} F</td>
-                                     <td className="text-right text-slate-400">{formatNumber(detail.quantity_free)}</td>
-                                     <td className="text-right font-bold text-emerald-600">{formatNumber(detail.quantity_free_remaining)}</td>
-                                     <td className="text-right font-bold text-blue-600">{formatCurrency(detail.valeur_restante)} F</td>
+                             <div className="overflow-x-auto">
+                               <table className="table table-sm w-full bg-white rounded-xl shadow-sm border border-slate-200">
+                                 <thead className="bg-slate-100 text-slate-500">
+                                   <tr>
+                                     <th>{t('stock:rapport_ug.table.details.product')}</th>
+                                     <th>{t('stock:rapport_ug.table.details.lot')}</th>
+                                     <th>{t('stock:rapport_ug.table.details.date')}</th>
+                                     <th>{t('stock:rapport_ug.table.details.order')}</th>
+                                     <th>{t('stock:rapport_ug.table.details.invoice')}</th>
+                                     <th className="text-right">{t('stock:rapport_ug.table.details.price')}</th>
+                                     <th className="text-right">{t('stock:rapport_ug.table.details.received')}</th>
+                                     <th className="text-right text-emerald-600">{t('stock:rapport_ug.table.details.remaining')}</th>
+                                     <th className="text-right text-blue-600">{t('stock:rapport_ug.table.details.val_rest')}</th>
                                    </tr>
-                                 ))}
-                               </tbody>
-                             </table>
+                                 </thead>
+                                 <tbody>
+                                   {stat.details.map(detail => (
+                                     <tr key={detail.lot_id} className={detail.quantity_free_remaining === 0 ? 'opacity-50' : ''}>
+                                       <td className="font-medium text-slate-700">{detail.produit_nom}</td>
+                                       <td className="text-slate-500 font-mono text-xs">{detail.lot_numero}</td>
+                                       <td className="text-slate-600">
+                                          {detail.date_reception ? format(new Date(detail.date_reception), 'dd/MM/yyyy HH:mm') : 'N/A'}
+                                       </td>
+                                       <td className="text-slate-500 font-mono text-xs">{detail.commande_numero}</td>
+                                       <td className="text-slate-500 font-mono text-xs">{detail.facture_numero}</td>
+                                       <td className="text-right text-slate-600">{formatCurrency(detail.prix_vente)} F</td>
+                                       <td className="text-right text-slate-400">{formatNumber(detail.quantity_free)}</td>
+                                       <td className="text-right font-bold text-emerald-600">{formatNumber(detail.quantity_free_remaining)}</td>
+                                       <td className="text-right font-bold text-blue-600">{formatCurrency(detail.valeur_restante)} F</td>
+                                     </tr>
+                                   ))}
+                                 </tbody>
+                               </table>
+                             </div>
                            </div>
                         </td>
                       </tr>

@@ -53,7 +53,7 @@ export interface UsePromisDataReturn {
 }
 
 export function usePromisData(): UsePromisDataReturn {
-    const { t } = useTranslation();
+    const { t } = useTranslation(['stock', 'common']);
     const confirm = useConfirm();
 
     const [promisList, setPromisList] = useState<Promis[]>([]);
@@ -87,7 +87,7 @@ export function usePromisData(): UsePromisDataReturn {
             setPromisList(Array.isArray(results) ? results : (results as PaginatedResponse<Promis>).results || []);
             setError(null);
         } catch (err) {
-            setError('Erreur lors du chargement des promis');
+            setError(t('stock:promis.messages.load_error', 'Erreur lors du chargement des promis'));
             console.error(err);
         } finally {
             setLoading(false);
@@ -140,27 +140,27 @@ export function usePromisData(): UsePromisDataReturn {
     // --- Actions ---
     const handleDelivrer = async (id: number) => {
         const confirmed = await confirm({
-            title: 'Marquer comme délivré',
-            message: 'Marquer ce promis comme délivré ?',
+            title: t('stock:promis.actions.deliver', 'Marquer comme délivré'),
+            message: t('stock:promis.messages.deliver_confirm', 'Marquer ce promis comme délivré ?'),
             variant: 'success',
-            confirmText: 'Délivrer'
+            confirmText: t('stock:promis.actions.deliver', 'Délivrer')
         });
         if (!confirmed) return;
         try {
             await promisService.delivrer(id);
             fetchPromis();
         } catch (err) {
-            toast.error('Erreur lors de la livraison');
+            toast.error(t('stock:promis.messages.deliver_error', 'Erreur lors de la livraison'));
             console.error(err);
         }
     };
 
     const handleAnnuler = async (id: number) => {
         const confirmed = await confirm({
-            title: 'Annuler le promis',
-            message: "Annuler ce promis et réintégrer le stock ?\n\nCette action créera une entrée dans l'historique du produit.\n\nUne confirmation par mot de passe sera requise.",
+            title: t('stock:promis.actions.cancel', 'Annuler le promis'),
+            message: t('stock:promis.messages.cancel_confirm', "Annuler ce promis et réintégrer le stock ?\n\nCette action créera une entrée dans l'historique du produit.\n\nUne confirmation par mot de passe sera requise."),
             variant: 'warning',
-            confirmText: 'Continuer'
+            confirmText: t('common:continue', 'Continuer')
         });
         if (!confirmed) return;
         setSudoModal({ isOpen: true, action: 'cancel', targetId: id });
@@ -172,7 +172,7 @@ export function usePromisData(): UsePromisDataReturn {
             toast.success(data.detail);
             fetchPromis();
         } catch (err) {
-            toast.error("Erreur lors de l'annulation");
+            toast.error(t('stock:promis.messages.cancel_error', 'Erreur lors de l\'annulation'));
             console.error(err);
         }
     };
@@ -185,7 +185,7 @@ export function usePromisData(): UsePromisDataReturn {
             setTimeout(() => window.URL.revokeObjectURL(url), 10000);
         } catch (err) {
             console.error('Erreur impression ticket:', err);
-            toast.error(t('promis.messages.print_ticket_error', 'Erreur lors de l\'impression'));
+            toast.error(t('stock:promis.messages.print_ticket_error', 'Erreur lors de l\'impression'));
         }
     };
 
@@ -196,7 +196,7 @@ export function usePromisData(): UsePromisDataReturn {
             toast.success(data.detail);
         } catch (err: unknown) {
             const error = err as { response?: { data?: { detail?: string } } };
-            toast.error(error.response?.data?.detail || "Erreur lors de l'envoi du rappel WhatsApp");
+            toast.error(error.response?.data?.detail || t('stock:promis.messages.whatsapp_error', "Erreur lors de l'envoi du rappel WhatsApp"));
             console.error(err);
         } finally {
             setLoading(false);
@@ -225,10 +225,10 @@ export function usePromisData(): UsePromisDataReturn {
     const handleBulkDelivrer = async () => {
         if (selectedIds.size === 0) return;
         const confirmed = await confirm({
-            title: t('promis.modals.bulk_delivery_title', 'Livraison en masse'),
-            message: t('promis.modals.bulk_delivery_message', { count: selectedIds.size, defaultValue: `Confirmez la livraison de ${selectedIds.size} promis ?` }),
+            title: t('stock:promis.modals.bulk_delivery_title', 'Livraison en masse'),
+            message: t('stock:promis.modals.bulk_delivery_message', { count: selectedIds.size, defaultValue: `Confirmez la livraison de ${selectedIds.size} promis ?` }),
             variant: 'success',
-            confirmText: t('promis.modals.bulk_delivery_confirm', 'Livrer')
+            confirmText: t('stock:promis.modals.bulk_delivery_confirm', 'Livrer')
         });
         if (!confirmed) return;
 
@@ -239,7 +239,7 @@ export function usePromisData(): UsePromisDataReturn {
             setSelectedIds(new Set());
             fetchPromis();
         } catch (err) {
-            toast.error(t('promis.messages.bulk_delivery_error', 'Erreur lors de la livraison multiple'));
+            toast.error(t('stock:promis.messages.bulk_delivery_error', 'Erreur lors de la livraison multiple'));
             console.error(err);
         } finally {
             setBulkLoading(false);
@@ -249,10 +249,10 @@ export function usePromisData(): UsePromisDataReturn {
     const handleBulkAnnuler = async () => {
         if (selectedIds.size === 0) return;
         const confirmed = await confirm({
-            title: t('promis.modals.bulk_cancel_title', 'Annulation en masse'),
-            message: t('promis.modals.bulk_cancel_message', { count: selectedIds.size, defaultValue: `Confirmer l'annulation de ${selectedIds.size} promis ?` }) + '\n\nUne confirmation par mot de passe sera requise.',
-            variant: 'warning',
-            confirmText: t('promis.modals.bulk_cancel_confirm', 'Annuler')
+            title: t('stock:promis.modals.bulk_cancel_title', 'Annulation en masse'),
+            message: t('stock:promis.modals.bulk_cancel_message', { count: selectedIds.size, defaultValue: `Confirmer l'annulation de ${selectedIds.size} promis ?` }) + '\n\n' + t('stock:promis.messages.sudo_required_note', 'Une confirmation par mot de passe sera requise.'),
+            variant: 'danger',
+            confirmText: t('stock:promis.modals.bulk_cancel_confirm', 'Annuler')
         });
         if (!confirmed) return;
         setSudoModal({ isOpen: true, action: 'bulk_cancel', targetId: null });
@@ -266,7 +266,7 @@ export function usePromisData(): UsePromisDataReturn {
             setSelectedIds(new Set());
             fetchPromis();
         } catch (err) {
-            toast.error(t('promis.messages.bulk_cancel_error', 'Erreur lors de l\'annulation multiple'));
+            toast.error(t('stock:promis.messages.bulk_cancel_error', 'Erreur lors de l\'annulation multiple'));
             console.error(err);
         } finally {
             setBulkLoading(false);

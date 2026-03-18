@@ -12,28 +12,28 @@ export const PromisQuickStats: React.FC<PromisQuickStatsProps> = ({ stats }) => 
 
     const statItems = [
          {
-            title: t('promis.stats.all_title'),
+            title: t('stock:promis.stats.all_title'),
             value: stats.total,
             icon: <PackageOpen className="w-5 h-5" />,
             colorClass: "text-primary",
             bgClass: "bg-primary/10",
         },
         {
-            title: t('promis.stats.att_title'),
+            title: t('stock:promis.stats.att_title'),
             value: stats.enAttente,
             icon: <Clock className="w-5 h-5" />,
             colorClass: "text-warning",
             bgClass: "bg-warning/10",
         },
         {
-            title: t('promis.stats.del_title'),
+            title: t('stock:promis.stats.del_title'),
             value: stats.delivres,
             icon: <CheckCircle2 className="w-5 h-5" />,
             colorClass: "text-success",
             bgClass: "bg-success/10",
         },
         {
-            title: t('promis.stats.ann_title'),
+            title: t('stock:promis.stats.ann_title'),
             value: stats.annules,
             icon: <XCircle className="w-5 h-5" />,
             colorClass: "text-error",

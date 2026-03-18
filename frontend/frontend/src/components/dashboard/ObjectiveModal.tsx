@@ -18,7 +18,7 @@ export const ObjectiveModal: React.FC<ObjectiveModalProps> = ({
     onChange,
     onSave
 }) => {
-    const { t } = useTranslation();
+    const { t } = useTranslation(['dashboard', 'common']);
 
     if (!isOpen) return null;
 

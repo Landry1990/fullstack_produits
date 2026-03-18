@@ -362,13 +362,13 @@ export default function Sidebar() {
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium text-white truncate">{user?.username || 'Admin'}</p>
                   <p className="text-xs text-white/60 truncate">
-                    {user?.is_superuser ? t('sidebar.roles.pharmacist') : t('sidebar.roles.user')}
+                    {user?.is_superuser ? t('roles.pharmacist') : t('roles.user')}
                   </p>
                 </div>
               </div>
               <button onClick={logout} className="btn btn-sm btn-ghost w-full text-red-400 hover:bg-red-500/10 hover:text-red-300 gap-2">
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>
-                {t('sidebar.logout')}
+                {t('logout')}
               </button>
               <div className="mt-3 flex gap-2 justify-center">
                 <button className={`btn btn-xs ${i18n.language === 'fr' ? 'btn-primary' : 'btn-ghost text-white/50'}`} onClick={() => i18n.changeLanguage('fr')}>FR</button>

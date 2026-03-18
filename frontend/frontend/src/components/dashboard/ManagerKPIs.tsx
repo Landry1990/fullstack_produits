@@ -22,10 +22,9 @@ const ProgressBar: React.FC<ProgressBarProps> = ({ rate, colorClass = 'bg-primar
 
 const formatCurrency = (amount: number, locale = 'fr-FR', symbol = 'F') => {
     return new Intl.NumberFormat(locale, {
-        style: 'currency',
-        currency: 'XOF',
-        maximumFractionDigits: 0
-    }).format(amount).replace('XOF', symbol);
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 0,
+    }).format(amount).replace(/\u00a0/g, ' ').replace(/\s/g, ' ') + ' ' + symbol;
 };
 
 interface KPIData {
@@ -155,12 +154,12 @@ export const ManagerKPIs: React.FC<ManagerKPIsProps> = ({ kpis }) => {
                             
                             <div className="mb-4 relative z-10">
                                 <span className={`text-3xl font-black ${isSuccess ? 'text-success drop-shadow-sm' : 'text-base-content'} transition-colors duration-500`}>
-                                    {formatCurrency(data.actual)}
+                                    {formatCurrencyLocal(data.actual)}
                                 </span>
                                 {data.margin !== undefined && (
                                     <div className="text-xs font-bold opacity-70 mt-1 flex items-center gap-1">
                                         <TrendingUp size={12} className="text-success" />
-                                        <span>{t('manager_dashboard.margin_label')} : {formatCurrency(data.margin)}</span>
+                                        <span>{t('manager_dashboard.margin_label')} : {formatCurrencyLocal(data.margin)}</span>
                                     </div>
                                 )}
                             </div>
@@ -168,7 +167,7 @@ export const ManagerKPIs: React.FC<ManagerKPIsProps> = ({ kpis }) => {
                             <div className="space-y-2">
                                 <div className="flex justify-between text-xs font-bold uppercase tracking-tight opacity-50">
                                     <span>{t('manager_dashboard.progression', 'Progression')}</span>
-                                    <span>{t('manager_dashboard.target', 'Cible')}: {formatCurrency(data.target)}</span>
+                                    <span>{t('manager_dashboard.target', 'Cible')}: {formatCurrencyLocal(data.target)}</span>
                                 </div>
                                 <ProgressBar 
                                     rate={data.rate} 
@@ -186,7 +185,7 @@ export const ManagerKPIs: React.FC<ManagerKPIsProps> = ({ kpis }) => {
                                             <>
                                                 <div className="flex justify-between text-xs font-bold uppercase tracking-tight text-warning">
                                                     <span className="flex items-center gap-1"><Zap size={12} className="fill-warning" /> {t('manager_dashboard.palier_label', { level: palier.level })}</span>
-                                                    <span>{formatCurrency(palier.target)}</span>
+                                                    <span>{formatCurrencyLocal(palier.target)}</span>
                                                 </div>
                                                 <ProgressBar 
                                                     rate={palier.rate} 

@@ -46,7 +46,7 @@ export const BulkPaiementModal: React.FC<BulkPaiementModalProps> = ({
                             {t('creances:bulk_modal.selected_invoices', { count })}
                         </div>
                         <div className="text-3xl font-black text-base-content italic tracking-tight">
-                            {formatCurrency(Math.round(totalAmount))} F
+                            {formatCurrency(Math.round(totalAmount))} {t('common:currency')}
                         </div>
                     </div>
                 </div>

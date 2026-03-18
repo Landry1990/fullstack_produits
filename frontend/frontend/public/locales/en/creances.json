@@ -107,5 +107,37 @@
         "supervisor_hint": "Supervisor validation will be required in the next step.",
         "cancel": "Cancel",
         "confirm_payment": "Confirm Settlement"
-    }
+    },
+    "toasts": {
+        "error_print_receipt": "Error printing receipt",
+        "error_print_statement": "Error generating statement",
+        "payment_success": "Payment recorded successfully!",
+        "bulk_success": "Bulk settlement completed successfully!",
+        "confirm_print_receipt": "Would you like to print a receipt for this payment?",
+        "confirm_print_bulk_receipt": "Would you like to print the summary receipt for this settlement?",
+        "select_client_error": "Please select a client",
+        "error_loading": "Error loading claims"
+    },
+    "print_view": {
+        "title": "ACCOUNTS RECEIVABLE STATEMENT",
+        "client": "Client",
+        "name": "Name:",
+        "address": "Address:",
+        "phone": "Phone:",
+        "email": "Email:",
+        "period": "Period",
+        "from": "From:",
+        "to": "To:",
+        "date_header": "Date",
+        "invoice_header": "Invoice No.",
+        "beneficiary_header": "Beneficiary",
+        "total_header": "Total Amount",
+        "paid_header": "Paid",
+        "remaining_header": "Remaining",
+        "totals_label": "TOTALS:",
+        "client_signature": "Client Signature",
+        "pharmacy_signature": "Pharmacy Signature",
+        "generated_on": "Document generated on"
+    },
+    "client_type_label": "Client"
 }

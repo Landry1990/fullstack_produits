@@ -7,7 +7,7 @@ import { Printer, Download, LayoutPanelTop, Play } from 'lucide-react';
 import { Toaster } from 'react-hot-toast';
 
 export default function CentreRapports() {
-    const { t } = useTranslation();
+    const { t } = useTranslation(['reports', 'common']);
     const { state, actions } = useCentreRapports();
     const { 
         selectedQuery, 
@@ -49,10 +49,10 @@ export default function CentreRapports() {
                                             </div>
                                             <div>
                                                 <h1 className="text-2xl font-bold text-base-content tracking-tight uppercase">
-                                                    {t(`reports.queries.${selectedQuery.id}.name`, { defaultValue: selectedQuery.name })}
+                                                    {t(`queries.${selectedQuery.id}.name`, { defaultValue: selectedQuery.name })}
                                                 </h1>
                                                 <p className="text-xs font-bold text-base-content/40 uppercase tracking-widest mt-0.5">
-                                                    {t(`reports.queries.${selectedQuery.id}.description`, { defaultValue: selectedQuery.description || '' })}
+                                                    {t(`queries.${selectedQuery.id}.description`, { defaultValue: selectedQuery.description || '' })}
                                                 </p>
                                             </div>
                                         </div>
@@ -69,7 +69,7 @@ export default function CentreRapports() {
                                                     <Play className="w-4 h-4 fill-current group-hover:scale-110 transition-transform" />
                                                 )}
                                                 <span className="font-black uppercase tracking-widest text-xs">
-                                                    {t('reports.execute', 'Générer')}
+                                                    {t('execute', 'Générer')}
                                                 </span>
                                             </button>
                                             
@@ -151,10 +151,10 @@ export default function CentreRapports() {
                                     <LayoutPanelTop className="w-16 h-16 opacity-20" />
                                 </div>
                                 <h2 className="text-2xl font-black uppercase tracking-[0.2em]">
-                                    {t('reports.title', 'Centre de Rapports')}
+                                    {t('title', 'Centre de Rapports')}
                                 </h2>
                                 <p className="text-xs font-bold uppercase tracking-widest mt-2 opacity-50">
-                                    {t('reports.select_query_prompt', 'Sélectionnez un rapport pour commencer')}
+                                    {t('select_query_prompt', 'Sélectionnez un rapport pour commencer')}
                                 </p>
                             </div>
                         )}

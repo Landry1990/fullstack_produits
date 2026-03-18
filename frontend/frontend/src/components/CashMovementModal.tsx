@@ -12,8 +12,6 @@ interface CashMovementModalProps {
 
 export default function CashMovementModal({ isOpen, onClose, onSuccess }: CashMovementModalProps) {
   const { t } = useTranslation(['cash_journal', 'common'])
-  const currentLocale = t('common:locale', { defaultValue: 'fr-FR' })
-  const currencySymbol = t('common.currency_symbol', 'F')
   const [type, setType] = useState<'ENTREE' | 'SORTIE'>('SORTIE')
   const [montant, setMontant] = useState('')
   const [motif, setMotif] = useState('')
@@ -146,7 +144,7 @@ export default function CashMovementModal({ isOpen, onClose, onSuccess }: CashMo
 
         <div className="flex justify-end gap-3 pt-2">
           <button type="button" className="btn btn-ghost px-6 rounded-xl" onClick={onClose} disabled={loading}>
-            {t('common.cancel')}
+            {t('common:cancel')}
           </button>
           <button 
             type="submit" 

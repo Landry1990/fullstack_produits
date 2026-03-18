@@ -173,7 +173,712 @@
             "date_start": "Start date",
             "date_end": "End date",
             "reason_label": "Reason",
-            "all_reasons": "All reasons"
+            "all_reasons": "All reasons",
+            "refresh": "Refresh",
+            "export": "Export Excel",
+            "reset": "Reset",
+            "reasons": {
+                "INVENTAIRE": "Inventory",
+                "CASSE": "Breakage / Damage",
+                "VOL": "Theft / Loss",
+                "CONFUSION": "Data entry error / Confusion",
+                "ERR_ENTREE": "Stock Entry Error",
+                "AVARIE": "Spoilage / Degradation",
+                "USAGE_INT": "Internal Use",
+                "PERIME": "Expired Product"
+            }
+        },
+        "table": {
+            "loading": "Loading adjustments...",
+            "empty": "No adjustments found",
+            "date_header": "Date & Time",
+            "product_header": "Product",
+            "cip_header": "CIP",
+            "user_header": "User",
+            "before_header": "Before",
+            "after_header": "After",
+            "diff_header": "Difference",
+            "reason_header": "Reason",
+            "pagination": "Page {{current}} of {{total}} ({{count}} adjustments)"
+        }
+    },
+    "analyse": {
+        "title": "Stock Analysis",
+        "error": "Error loading data. Check if the server is accessible.",
+        "per_month": "month",
+        "per_day": "day",
+        "days": "days",
+        "tabs": {
+            "unsold": "Unsold",
+            "overstock": "Overstock",
+            "shortage": "Shortage Forecast",
+            "unsold_desc": "Products in stock but with no sales (Rotation = 0)",
+            "overstock_desc": "Products in overstock (Stock > 1.7x Rotation)",
+            "shortage_desc": "Products at risk of stockout in the next 30 days"
+        },
+        "filters": {
+            "supplier": "Supplier",
+            "all_suppliers": "All suppliers",
+            "refresh": "Refresh",
+            "days_threshold": "Days without sale"
+        },
+        "stats": {
+            "supplier": "Supplier",
+            "item_count": "Item count",
+            "estimated_value": "Estimated value",
+            "overstock_value": "Estimated overstock value",
+            "value_at_risk": "Value at risk",
+            "critical_alerts": "Critical alerts"
+        },
+        "columns": {
+            "product": "Product",
+            "supplier": "Supplier",
+            "current_stock": "Current Stock",
+            "created_at": "Created at",
+            "last_purchase": "Last Purchase",
+            "last_sale": "Last Sale",
+            "inactive_since": "Inactive since",
+            "cost_price": "Cost Price",
+            "stock_value": "Stock Value",
+            "avg_rotation": "Avg. Rotation",
+            "threshold": "Threshold (1.7x)",
+            "excess_qty": "Excess Qty",
+            "excess_value": "Excess Value",
+            "avg_daily_sales": "Avg. Sales/Day",
+            "days_until_stockout": "Days until stockout",
+            "urgency": "Urgency",
+            "value_at_risk": "Value at risk"
+        },
+        "shortage": {
+            "warnings": "warnings",
+            "selected": "product(s) selected",
+            "generate_order": "Generate Order",
+            "urgency": {
+                "critical": "Critical (< 7d)",
+                "warning": "Warning (< 14d)",
+                "caution": "Caution (< 30d)"
+            }
+        },
+        "messages": {
+            "loading": "Loading analysis...",
+            "never_sold": "Never sold"
+        },
+        "empty": {
+            "unsold": "No unsold products",
+            "overstock": "No products in overstock",
+            "shortage": "No shortages forecast",
+            "all_good": "Everything seems in order!"
+        }
+    },
+    "abc": {
+        "title": "ABC Analysis",
+        "subtitle": "Product classification by contribution to turnover (Pareto 80/20)",
+        "loading": "Loading analysis...",
+        "error_loading": "Error loading data",
+        "filters": {
+            "months_3": "3 months",
+            "months_6": "6 months",
+            "months_12": "12 months",
+            "all_rayons": "All rayons",
+            "all_suppliers": "All suppliers",
+            "copy": "Copy"
+        },
+        "alerts": {
+            "shortage": "{{count}} A product(s) out of stock!",
+            "shortage_plural": "{{count}} A products out of stock!"
+        },
+        "stats": {
+            "total_ca": "Total Turnover",
+            "period_info": "Over {{count}} months",
+            "category_a": "Category A",
+            "category_b": "Category B",
+            "category_c": "Category C"
+        },
+        "tabs": {
+            "vital": "A - Vital",
+            "important": "B - Important",
+            "secondary": "C - Secondary"
+        },
+        "table": {
+            "product": "Product",
+            "cip": "CIP",
+            "rayon": "Rayon",
+            "stock": "Stock",
+            "qty_sold": "Qty Sold",
+            "sale_price": "Sale Price",
+            "ca": "Turnover",
+            "ca_percent": "% Turnover",
+            "cumulated_percent": "% Cumulated",
+            "no_products": "No products in this category",
+            "shortage_badge": "Shortage"
+        },
+        "footer": {
+            "analyzed_since": "Data analyzed since {{date}}",
+            "total_products": "{{count}} products in total"
+        },
+        "messages": {
+            "copy_success": "{{count}} lines copied! Paste into Excel.",
+            "copy_error": "Error copying data"
+        }
+    },
+    "temporal_analysis": {
+        "title": "Temporal Analysis",
+        "subtitle": "Analyze your peak hours, days, and seasons.",
+        "peak_hours": "Peak hours",
+        "daily_comparison": "Profitable days",
+        "seasonality": "Seasonality",
+        "peak_hour_title": "Peak Affluence",
+        "peak_hour_summary": "Peak at {{hour}}:00 with a turnover of {{revenue}}",
+        "best_day_title": "Best Performance Day",
+        "best_day_summary": "{{day}} is your best day with {{revenue}} on average",
+        "seasonality_title": "Seasonal Trends",
+        "seasonality_summary": "Analysis over {{months}} months • {{count}} seasonal products detected",
+        "global_revenue_evolution": "Global Turnover Evolution",
+        "top_seasonal_products": "Top Seasonal Products",
+        "no_seasonality_detected": "No strong seasonal trend detected yet.",
+        "no_data": "No data",
+        "columns": {
+            "day": "Day",
+            "avg_sales": "Avg. Sales",
+            "avg_basket": "Avg. Basket",
+            "avg_revenue": "Avg. Turnover",
+            "product": "Product",
+            "peak_month": "Peak Month",
+            "peak_volume": "Peak Vol.",
+            "monthly_avg": "Monthly Avg.",
+            "variation": "Variation",
+            "avg_basket_short": "Avg. B."
+        }
+    },
+    "reappro": {
+        "title": "Shelf Replenishment",
+        "subtitle": "Transfer products from reserve to shelf",
+        "transfer_all": "Transfer All",
+        "print_title": "SHELF REPLENISHMENT NEEDS",
+        "print_hint": "List of products to be moved from reserve to shelf.",
+        "stats": {
+            "displayed_products": "{{count}} product(s) displayed",
+            "urgencies": "Urgencies",
+            "suggested_volume": "Suggested volume",
+            "units": "units"
+        },
+        "table": {
+            "product": "Product",
+            "level": "Level",
+            "min": "Min.",
+            "capacity": "Capac.",
+            "on_shelf": "On Shelf",
+            "in_reserve": "In Reserve",
+            "suggestion": "Reserve Exit",
+            "actions": "Actions",
+            "need_refill": "Urgent need",
+            "stabilized": "Stable",
+            "suggested": "Suggested",
+            "complete": "Complete",
+            "transfer_btn": "Move"
+        },
+        "messages": {
+            "error_loading_products": "Error loading products to replenish",
+            "no_refill_needed": "No replenishment needed for this product",
+            "transfer_success": "Transfer successful: {{count}} {{name}} moved to shelf",
+            "no_products_to_refill": "No products to replenish currently",
+            "bulk_success": "Replenishment completed: {{success}} products processed out of {{total}}",
+            "loading_stocks": "Analyzing needs...",
+            "no_reserve_products": "No products with reserve management found."
+        },
+        "modal_confirm": {
+            "title": "Global Transfer",
+            "question": "Confirm transfer?",
+            "message": "You are about to move suggested quantities from reserve for {{count}} products.",
+            "cancel": "Cancel",
+            "confirm": "Confirm Transfer"
+        },
+        "modal_sudo": {
+            "title": "Administrative Validation",
+            "message": "A pharmacist or administrator password is required to adjust stocks."
+        }
+    },
+    "avoirs": {
+        "title": "Returns Management",
+        "subtitle": "Manage supplier returns and stock reinstatements",
+        "loading": "Loading returns...",
+        "empty": "No return found",
+        "search_placeholder": "Search supplier or number...",
+        "create_btn": "New Return",
+        "stats": {
+            "total": "Total Returns",
+            "valides": "Validated",
+            "brouillons": "Drafts"
+        },
+        "table": {
+            "date": "Date",
+            "numero": "Return No.",
+            "fournisseur": "Supplier",
+            "montant": "Amount (Excl. Tax)",
+            "status": "Status"
+        },
+        "types": {
+            "perime": "Expired",
+            "casse": "Broken",
+            "erreur_livraison": "Delivery Error",
+            "avarie": "Damage",
+            "non_facture": "Not Invoiced",
+            "autre": "Other"
+        },
+        "statuses": {
+            "brouillon": "Draft",
+            "valide": "Validated"
+        },
+        "form": {
+            "title_new": "New Return",
+            "title_edit": "Edit Return #{{id}}",
+            "subtitle": "Create or modify a supplier return",
+            "cancel": "Cancel",
+            "saving": "Saving...",
+            "save_draft": "Save Draft",
+            "general_info": "General Information",
+            "fournisseur": "Supplier",
+            "fournisseur_placeholder": "Search a supplier...",
+            "no_fournisseur": "No supplier found",
+            "type_label": "Return Reason",
+            "observations_label": "Observations",
+            "observations_placeholder": "Internal notes regarding this return...",
+            "search_product_placeholder": "Search a product to add...",
+            "empty_lines": "No product added to return.",
+            "table_product": "Product",
+            "table_lot": "Lot / Exp.",
+            "table_qty": "Qty",
+            "table_price": "Cost Price",
+            "table_total": "Total (Excl. Tax)",
+            "no_lot": "NO LOT",
+            "no_date": "NO DATE",
+            "select_lot": "Select Lot",
+            "items_count": "{{count}} item(s) • {{units}} units",
+            "total_amount": "Total Return (Excl. Tax)"
+        },
+        "details": {
+            "back": "Back to list",
+            "title": "Return No. {{numero}}",
+            "created_at": "Created on {{date}}",
+            "created_by": "by {{name}}",
+            "print": "Print",
+            "delete": "Delete",
+            "validate": "Validate Return",
+            "fournisseur_info": "Supplier Information",
+            "type_label": "Reason",
+            "observations_label": "Observations",
+            "financial_summary": "Financial Summary",
+            "items_count": "Items",
+            "total_qty": "Total units",
+            "total_ht": "Total (Excl. Tax)",
+            "lines_title": "Return Lines",
+            "lines_subtitle": "Detail of returned products",
+            "close_line": "Close line",
+            "reopen_line": "Reopen line",
+            "close_all": "Close all",
+            "reopen_all": "Reopen all",
+            "no_lines": "This return contains no lines."
+        },
+        "modals": {
+            "lot_title": "Select a Lot for Return",
+            "no_lots": "No lot available in stock for this product.",
+            "sudo_validate_title": "Return Validation - {{numero}}",
+            "sudo_validate_message": "Confirm validation of supplier return <strong>{{numero}}</strong>?<br/>This will reinstate products in stock (or adjust depending on type).",
+            "sudo_bulk_validate_title": "Bulk Validation - {{count}} returns",
+            "sudo_bulk_validate_message": "Confirm validation of <strong>{{count}} supplier returns</strong>?<br/>Stock will be reinstated for all."
+        },
+        "toasts": {
+            "select_supplier": "Please select a supplier",
+            "add_product": "Please add at least one product",
+            "product_exists": "This product is already in the list",
+            "load_lots_error": "Error loading lots",
+            "save_success": "Return created successfully (Draft)",
+            "update_success": "Return modified successfully",
+            "save_error": "Error during save",
+            "delete_success": "Return deleted successfully",
+            "delete_error": "Error during deletion",
+            "validate_success": "Return validated and stock updated",
+            "validate_error": "Error during validation",
+            "line_closed": "Line closed",
+            "line_reopened": "Line reopened",
+            "update_line_error": "Error updating line",
+            "bulk_lines_closed": "All lines closed",
+            "bulk_lines_reopened": "All lines reopened",
+            "bulk_update_error": "Error during bulk update",
+            "bulk_delete_success": "{{count}} returns deleted",
+            "bulk_delete_error": "Error during bulk deletion",
+            "bulk_validate_success": "{{count}} returns validated",
+            "bulk_validate_error": "Error during bulk validation"
+        },
+        "confirms": {
+            "back_to_list": "Are you sure you want to leave? Unsaved changes will be lost.",
+            "delete_avoir": "Are you sure you want to delete draft return {{numero}}?",
+            "bulk_delete": "Delete these {{count}} draft returns?"
+        }
+    },
+    "promis": {
+        "title": "Promised Products Management",
+        "subtitle": "Manage promised products, deliveries and stock returns",
+        "new_btn": "+ New Promised",
+        "filter_status": "Filter by status",
+        "status_all": "All",
+        "status_att": "Waiting",
+        "status_del": "Delivered",
+        "status_ann": "Cancelled",
+        "stats": {
+            "all_title": "All Promised",
+            "att_title": "Waiting",
+            "del_title": "Delivered",
+            "ann_title": "Cancelled"
+        },
+        "table": {
+            "date": "Date",
+            "client": "Client",
+            "phone": "Phone",
+            "product": "Product",
+            "qty": "Qty",
+            "status": "Status",
+            "actions": "Actions"
+        },
+        "actions": {
+            "deliver": "Deliver",
+            "cancel": "Cancel",
+            "print": "Print Ticket",
+            "sms": "Send SMS",
+            "whatsapp": "WhatsApp Reminder",
+            "sms_send": "Send 📨"
+        },
+        "modal": {
+            "title_new": "New Promised Product",
+            "title_sms": "Send SMS to {{name}}",
+            "client_label": "Client",
+            "client_placeholder": "Patient or client name...",
+            "phone_label": "Phone",
+            "phone_placeholder": "Phone number (ex: 77...)",
+            "product_label": "Product *",
+            "product_placeholder": "Search product (Name/CIP)...",
+            "qty_label": "Quantity *",
+            "notes_label": "Notes",
+            "notes_placeholder": "Instructions or comments...",
+            "cancel": "Cancel",
+            "create": "Save",
+            "sms_number": "Recipient number",
+            "sms_message": "Message content"
+        },
+        "validation": {
+            "product_required": "Please select a product",
+            "client_required": "Client required (selection or free name)",
+            "create_error": "Error during saving"
+        },
+        "messages": {
+            "loading": "Loading promised products...",
+            "empty": "No promised product found",
+            "delivered_on": "Delivered on {{date}}",
+            "cancelled": "Cancelled",
+            "print_ticket_error": "Error printing ticket",
+            "bulk_delivery_error": "Error during bulk delivery",
+            "bulk_cancel_error": "Error during bulk cancellation",
+            "sms_success": "SMS sent successfully",
+            "sms_error": "Error sending SMS",
+            "sms_default_body": "Hello {{name}}, your product {{product}} is available at the pharmacy.",
+            "sudo_required_note": "Password confirmation will be required.",
+            "deliver_confirm": "Mark this promised product as delivered?",
+            "deliver_error": "Error during delivery",
+            "cancel_confirm": "Cancel this promised product and return to stock?\n\nThis action will create an entry in product history.\n\nPassword confirmation will be required.",
+            "cancel_error": "Error during cancellation",
+            "whatsapp_error": "Error sending WhatsApp reminder",
+            "load_error": "Error loading promised products"
+        },
+        "modals": {
+            "bulk_delivery_title": "Bulk Deliver",
+            "bulk_delivery_message": "Mark {{count}} promised products as delivered?",
+            "bulk_delivery_confirm": "Deliver all",
+            "bulk_cancel_title": "Bulk Cancel",
+            "bulk_cancel_message": "Cancel {{count}} promised products and return to stock?\n\nThis action will create entries in product history.",
+            "bulk_cancel_confirm": "Cancel all",
+            "sudo_confirm_title": "Confirmation Required (Sensitive Area)",
+            "sudo_confirm_message": "This action will modify stock (reinstatement). Please confirm your password to continue."
+        }
+    },
+    "perimes": {
+        "title": "Expired Products Management",
+        "subtitle": "Loss analysis and forecasting",
+        "tabs": {
+            "dashboard": "Dashboard",
+            "list": "List",
+            "history": "History"
+        },
+        "stats": {
+            "valeur_perimes": "Losses (Cost)",
+            "manque_gagner": "Potential Loss",
+            "lots_count": "{{count}} expired lots",
+            "at_sale_price": "At sale price",
+            "taux_perte": "Loss Rate",
+            "vs_ca": "vs Turnover"
+        },
+        "prevision": {
+            "title": "Expiration Forecast",
+            "lots_count": "{{count}} lots",
+            "potential_risk": "Potential sales value at risk"
+        },
+        "top_perimes": "Expired Products in Stock",
+        "risk_lots": "At-Risk Lots",
+        "no_result": "No at-risk lot found",
+        "history": {
+            "print": "Print",
+            "excel": "Excel",
+            "title": "Exit History",
+            "no_result": "No exit found for this period",
+            "total_valorization": "Total Exit Valuation",
+            "operations_count": "{{count}} operations in the period",
+            "table": {
+                "date": "Date",
+                "product": "Product",
+                "lot": "Lot",
+                "qty": "Qty Exit",
+                "value": "Valuation",
+                "user": "User",
+                "details": "Details"
+            }
+        },
+        "messages": {
+            "loading": "Loading lots...",
+            "loading_stats": "Loading statistics...",
+            "loading_history": "Loading history...",
+            "error_loading": "Cannot load lots",
+            "error_stats": "Error loading stats",
+            "error_history": "Error loading history",
+            "error_exit": "Error during stock exit",
+            "error_bulk_exit": "Error during bulk exit",
+            "success_exit": "Stock exit completed.",
+            "success_bulk_exit": "{{count}} lots successfully exited.",
+            "invalid_qty": "Invalid quantity."
+        },
+        "confirm": {
+            "exit_title": "Stock Exit - Expired",
+            "exit_message": "Confirm exit of <strong>{{qty}} units</strong> of product <strong>{{product}}</strong> (Lot {{lot}})?<br/><br/>This action is irreversible.",
+            "bulk_exit_title": "Bulk Exit - Expired",
+            "bulk_exit_message": "Do you want to exit <strong>{{count}} lots</strong> from stock?<br/>Their stock will be set to 0."
+        },
+        "prompt": {
+            "qty": "How many units do you want to exit from stock for lot {{lot}}? (Max: {{max}})"
+        },
+        "table": {
+            "product": "Product",
+            "lot": "Lot",
+            "expiration": "Expiration",
+            "provider": "Supplier",
+            "stock": "Stock",
+            "qty": "Qty",
+            "value": "Value",
+            "value_cost": "Value (Cost)",
+            "value_sale": "Value (Sale)",
+            "actions": "Actions",
+            "sorti": "Exited",
+            "exit_btn": "Exit"
+        },
+        "filters_label": "Filters",
+        "show_expired_only": "Already expired",
+        "no_data": "No data available",
+        "history_print_generated": "Document generated on"
+    },
+    "transformations": {
+        "title": "Transformations Management",
+        "subtitle": "Transform your stock (ex: Box to Units)",
+        "new_relation_btn": "+ New Relation",
+        "tabs": {
+            "configured_relations": "Configured Relations",
+            "history": "History"
+        },
+        "messages": {
+            "load_error": "Error loading data",
+            "create_success": "Relation created successfully",
+            "create_error": "Error creating relation",
+            "delete_confirm_title": "Delete relation?",
+            "delete_confirm_message": "This action will delete the transformation configuration.",
+            "delete_confirm_btn": "Delete",
+            "delete_success": "Relation deleted",
+            "delete_error": "Error during deletion",
+            "transform_success": "Transformation completed successfully",
+            "transform_error": "Error during transformation"
+        },
+        "modal_relation": {
+            "title": "New Transformation Relation",
+            "subtitle": "Configure a new transformation rule",
+            "source": "Source Product",
+            "source_placeholder": "Search source product...",
+            "destination": "Destination Product",
+            "destination_placeholder": "Search destination product...",
+            "ratio_label": "Conversion ratio",
+            "ratio_help": "Target quantity obtained for 1 source unit",
+            "cancel": "Cancel",
+            "create": "Create relation"
+        },
+        "modal_transform": {
+            "title": "Execute Transformation",
+            "subtitle": "Execute a stock transformation",
+            "qty_to_transform": "Qty to transform",
+            "qty_obtained": "Qty obtained",
+            "notes_label": "Notes / Observations",
+            "notes_placeholder": "Add an optional note...",
+            "confirm_btn": "Confirm transformation"
+        },
+        "table_history": {
+            "date": "Date",
+            "user": "User",
+            "transformation": "Transformation",
+            "quantities": "Quantities",
+            "notes": "Notes",
+            "empty": "No history available"
+        },
+        "labels": {
+            "dest": "Dest.",
+            "unit": "UNIT",
+            "units": "UNITS",
+            "transformer": "Transformer",
+            "no_relations": "No relation configured"
+        }
+    },
+    "organisation": {
+        "title": "Stock Organization",
+        "subtitle": "Manage your product shelves, forms, and groups",
+        "tabs": {
+            "rayons": "Shelves",
+            "formes": "Forms",
+            "groupes": "Groups"
+        },
+        "category_manager": {
+            "name_label": "{{type}} Name",
+            "load_error": "Error loading {{type}}s",
+            "success_save": "{{type}} saved successfully",
+            "success_delete": "{{type}} deleted successfully",
+            "delete_confirm_title": "Delete this item?",
+            "delete_confirm_msg": "This action is irreversible and will affect associated products.",
+            "search": "Search a {{type}}...",
+            "no_items": "No {{type}} found",
+            "details_title": "{{type}} Details",
+            "parent_label": "Parent",
+            "add_products_btn": "Add products",
+            "assoc_products_title": "Associate products",
+            "assoc_products_subtitle": "Search and bulk add products for: {{name}}",
+            "search_products_placeholder": "Search by name or CIP...",
+            "product_added": "{{name}} added to {{type}}",
+            "product_removed": "Product removed",
+            "remove_product_title": "Remove product?",
+            "remove_product_msg": "Do you want to remove {{name}} from this {{type}}?",
+            "select_item": "Select a {{type}}",
+            "select_item_hint": "Choose a category from the list to see its products.",
+            "edit_title": "Edit {{type}}",
+            "new_title": "New {{type}}",
+            "edit_subtitle": "Update information",
+            "new_subtitle": "Create a new entry in {{type}}s",
+            "parent_select_none": "None (Parent category)",
+            "description_label": "Description",
+            "cancel": "Cancel",
+            "save": "Save",
+            "print_stock_title": "Print stock status",
+            "print_help": "Generate a PDF report of current stock status for this category.",
+            "exclude_zero_stock": "Exclude out-of-stock products",
+            "print_btn": "Start printing",
+            "print_no_rayon_title": "Print products without shelf",
+            "no_rayon": "Without Shelf"
+        },
+        "smart_organizer": {
+            "title": "Smart Organizer",
+            "subtitle": "Classify products into: {{name}}",
+            "help_text": "Define an alphabetical range to identify products to move.",
+            "from_label": "From (Inclusive)",
+            "to_label": "To (Inclusive)",
+            "contains_label": "Contains (Optional)",
+            "case_sensitive": "Case sensitive",
+            "loading_products": "Loading product database...",
+            "products_found": "{{count}} product found",
+            "products_found_plural": "{{count}} products found",
+            "preview": "Preview",
+            "no_results": "No product matches criteria"
+        }
+    },
+    "etats_inventaire": {
+        "title": "Inventory Reports",
+        "generate_title": "Generate an inventory report",
+        "grouping_title": "Grouping",
+        "groups": {
+            "rayon": "By Shelf",
+            "forme": "By Form",
+            "groupe": "By Group"
+        },
+        "to_print_label": "{{type}} to print",
+        "all_entities": "All {{type}}s",
+        "loading_entities": "Loading...",
+        "stock_display_title": "Stock Display",
+        "stock_options": {
+            "machine": "Machine Stock (current values)",
+            "zero": "Zero Stock (for entry)"
+        },
+        "summary": {
+            "recap": "Summary:",
+            "title": "Inventory report",
+            "all": "All",
+            "with": "with"
+        },
+        "generating": "Generating...",
+        "download_btn": "Download PDF",
+        "messages": {
+            "success": "PDF downloaded successfully",
+            "error": "Error during PDF download"
+        },
+        "help": {
+            "title": "How to use?",
+            "step1": "1. Choose the grouping type",
+            "step2": "2. Select a specific {{type}} or leave it as \"All\"",
+            "step3": "3. Choose the stock display",
+            "step4": "4. Click on \"Download PDF\""
+        }
+    },
+    "rapport_ug": {
+        "title": "Free Units (UG) Report",
+        "title_part1": "Report of",
+        "title_part2": "Free Units",
+        "subtitle": "Tracking promotional entries (UG) by supplier",
+        "refresh": "Refresh",
+        "export": "CSV",
+        "print": "Print",
+        "stats": {
+            "history_ug": "History UG Received",
+            "current_stock_ug": "Current UG Stock (Remaining)",
+            "estimated_value": "Estimated Received Value",
+            "latent_cash": "Latent UG Cash"
+        },
+        "filters": {
+            "supplier_split": "Breakdown by Supplier",
+            "date_from": "Start",
+            "date_to": "End",
+            "to": "to",
+            "clear_dates": "Clear dates"
+        },
+        "table": {
+            "supplier": "Supplier",
+            "lots_count": "Nb Receptions (Lots)",
+            "received_ug": "UG Received (Histo.)",
+            "remaining_stock": "Remaining UG Stock",
+            "remaining_value": "Remaining Value (FCFA)",
+            "empty": "No free units found during this period",
+            "details": {
+                "product": "Product",
+                "lot": "Lot No.",
+                "date": "Reception Date",
+                "order": "Order No.",
+                "invoice": "Invoice No.",
+                "price": "Selling Price",
+                "received": "Received",
+                "remaining": "Remaining",
+                "val_rest": "Rest. Value"
+            }
+        },
+        "print_template": {
+            "title": "Free Units Report",
+            "situation": "Promotional stock situation as of {{date}}",
+            "footer": "End of promotional stock report"
         }
     }
 }

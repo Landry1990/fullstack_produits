@@ -3607,8 +3607,8 @@
             "concentration": "Purchase Concentration"
         },
         "sales_tab": {
-            "calculation_method": "Calculation Method: Sales Realized",
-            "info_text": "The statistics below concern only products sold during the selected period (collected turnover).",
+            "calculation_method": "Method: Net Invoiced Revenue",
+            "info_text": "These statistics concern products invoiced during the period (Net revenue after discounts).",
             "cards": {
                 "total_ca": "Total Revenue (incl. Tax)",
                 "purchase_cost": "Purchase Cost (Sold)",

@@ -23,6 +23,8 @@
     "status": {
         "draft": "Brouillon"
     },
+    "no_number": "Sans numéro",
+    "stock": "Stock",
     "actions": {
         "confirm": "Confirmer",
         "cancel": "Annuler"
@@ -45,6 +47,7 @@
     "download": "Télécharger",
     "export_success": "Export réussi",
     "export_error": "Erreur lors de l'export",
+    "date": "Date",
     "messages": {
         "created": "Créé avec succès",
         "updated": "Mis à jour",
@@ -90,6 +93,11 @@
     "previous": "Précédent",
     "next": "Suivant",
     "all_rayons": "Tous les rayons",
+    "no_rayon": "Sans Rayon",
+    "rayon": "Rayon",
+    "forme": "Forme",
+    "groupe": "Groupe",
+    "no_product_found": "Aucun produit trouvé",
     "payment_modes": {
         "especes": "Espèces",
         "carte": "Carte Bancaire",
@@ -117,5 +125,22 @@
         "validate_required": "(Requis pour valider)",
         "cancel": "Annuler",
         "confirm": "Confirmer la validation"
-    }
+    },
+    "cip": "CIP",
+    "not_available": "N/A",
+    "no_results_found": "Aucun résultat trouvé",
+    "filters": "Filtres",
+    "from": "Du",
+    "to": "Au",
+    "period": "Période",
+    "count_days": "{{count}} jours",
+    "count_days_one": "{{count}} jour",
+    "buttons": {
+        "done": "Terminer",
+        "excel": "Excel"
+    },
+    "total_general": "TOTAL GÉNÉRAL",
+    "no_cip": "Sans CIP",
+    "unknown_product": "Produit Inconnu",
+    "remove": "Retirer"
 }

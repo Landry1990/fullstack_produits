@@ -24,13 +24,13 @@ export const ReportResults: React.FC<ReportResultsProps> = ({
     loading,
     onPageChange
 }) => {
-    const { t } = useTranslation();
+    const { t } = useTranslation(['reports', 'common']);
 
     if (!results) {
         return (
             <div className="flex-1 flex flex-col items-center justify-center text-base-content/20 animate-in fade-in duration-700">
                 <Inbox className="w-24 h-24 mb-4 opacity-10" />
-                <p className="text-xl font-black uppercase tracking-[0.2em]">{t('reports.results.execute_prompt', 'En attente d\'exécution...')}</p>
+                <p className="text-xl font-black uppercase tracking-[0.2em]">{t('results.execute_prompt', 'En attente d\'exécution...')}</p>
             </div>
         );
     }
@@ -78,7 +78,7 @@ export const ReportResults: React.FC<ReportResultsProps> = ({
                 return (
                     <div className="flex flex-col items-center justify-center py-20 text-base-content/30 italic">
                         <Inbox className="w-12 h-12 mb-2 opacity-20" />
-                        <p>{t('reports.results.no_result', 'Aucun résultat trouvé pour cette période.')}</p>
+                        <p>{t('results.empty', 'Aucun résultat trouvé pour cette période.')}</p>
                     </div>
                 );
             }
@@ -125,7 +125,7 @@ export const ReportResults: React.FC<ReportResultsProps> = ({
                     </div>
                     {results.length > 100 && !pagination && (
                         <div className="p-4 bg-base-50 text-center text-[10px] font-black uppercase text-base-content/30 tracking-[0.2em] border-t border-base-200">
-                            {t('reports.results.limited_display', 'Affichage limité aux 100 premiers résultats sur {{total}}', { total: results.length })}
+                            {t('results.limited_display', 'Affichage limité aux 100 premiers résultats sur {{total}}', { total: results.length })}
                         </div>
                     )}
                 </div>

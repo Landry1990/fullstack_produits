@@ -51,6 +51,24 @@ export const SalesTable: React.FC<SalesTableProps> = ({
         });
     };
 
+    const getStatusLabel = (status: string) => {
+        switch (status?.toUpperCase()) {
+            case 'PAY':
+            case 'PAYEE':
+            case 'PAYÉE': return t('sales:status.paid', 'Paid');
+            case 'VAL':
+            case 'VALIDE':
+            case 'VALIDÉE':
+            case 'VALIDEE': return t('sales:status.validated', 'Validated');
+            case 'BROU':
+            case 'BROUILLON': return t('sales:status.draft', 'Draft');
+            case 'ANN':
+            case 'ANNULEE':
+            case 'ANNULÉE': return t('sales:status.cancelled', 'Cancelled');
+            default: return status;
+        }
+    };
+
     const handleSelectAll = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.checked) {
             setSelectedIds(factures.map(f => f.id));
@@ -76,7 +94,7 @@ export const SalesTable: React.FC<SalesTableProps> = ({
          return (
              <div className="flex flex-col items-center justify-center py-20 text-gray-400 animate-in fade-in duration-500">
                 <div className="w-16 h-16 border-4 border-blue-100 border-t-blue-600 rounded-full animate-spin mb-4"></div>
-                <p className="font-medium animate-pulse">{t('common.loading')}</p>
+                <p className="font-medium animate-pulse">{t('common:loading')}</p>
             </div>
          );
     }
@@ -84,8 +102,8 @@ export const SalesTable: React.FC<SalesTableProps> = ({
     if (factures.length === 0) {
         return (
             <div className="flex flex-col items-center justify-center py-20 text-gray-400 bg-white/50 m-4 rounded-2xl border border-dashed border-gray-200">
-                <h3 className="text-lg font-semibold text-gray-900 mb-1">{t('no_sales_found')}</h3>
-                <p className="text-sm">{t('try_different_filters')}</p>
+                <h3 className="text-lg font-semibold text-gray-900 mb-1">{t('sales:no_sales_found')}</h3>
+                <p className="text-sm">{t('sales:try_different_filters')}</p>
             </div>
         );
     }
@@ -96,11 +114,11 @@ export const SalesTable: React.FC<SalesTableProps> = ({
             if (!selectedFacture) return null;
             return (
                 <>
-                    <li className="menu-title text-xs opacity-50 px-4 py-2 uppercase tracking-widest">{t('common.single_selection', { defaultValue: 'Sélection' })}</li>
+                    <li className="menu-title text-xs opacity-50 px-4 py-2 uppercase tracking-widest">{t('common:single_selection', { defaultValue: 'Sélection' })}</li>
                     <li>
                         <a onClick={() => onView(selectedFacture)} className="gap-3 py-3">
                             <Eye className="w-4 h-4 text-secondary" />
-                            {t('common.details')}
+                            {t('common:details')}
                         </a>
                     </li>
                     <li>
@@ -141,7 +159,7 @@ export const SalesTable: React.FC<SalesTableProps> = ({
                     <li>
                         <a onClick={() => onDelete(selectedFacture.id)} className="gap-3 py-3 text-error hover:bg-error/10 font-bold">
                             <Trash2 className="w-4 h-4" />
-                            {t('common.delete')}
+                            {t('common:delete')}
                         </a>
                     </li>
                 </>
@@ -153,7 +171,7 @@ export const SalesTable: React.FC<SalesTableProps> = ({
                 <li>
                     <a onClick={handleBulkDelete} className="gap-3 py-3 text-error hover:bg-error/10 font-bold">
                         <Trash2 className="w-4 h-4" />
-                        {t('confirm_bulk_delete', { count: selectedIds.length })}
+                        {t('sales:confirm_bulk_delete', { count: selectedIds.length })}
                     </a>
                 </li>
             </>
@@ -185,15 +203,15 @@ export const SalesTable: React.FC<SalesTableProps> = ({
                             </SelectionHeader>
                         ) : (
                             <>
-                                <th className="px-6 py-4">{t('table.invoice_number')}</th>
-                                <th className="px-6 py-4">{t('table.client')}</th>
-                                <th className="px-6 py-4 hidden xl:table-cell">{t('table.operator')}</th>
-                                <th className="px-6 py-4 text-center">{t('table.amount')}</th>
-                                <th className="px-6 py-4 text-center">{t('table.amount_settled')}</th>
-                                <th className="px-6 py-4 text-center">{t('table.amount_on_account')}</th>
-                                <th className="px-6 py-4 text-center">{t('table.discount')}</th>
-                                <th className="px-6 py-4 text-center hidden md:table-cell">{t('table.status')}</th>
-                                <th className="px-6 py-4 text-right pr-6">{t('table.actions')}</th>
+                                <th className="px-6 py-4">{t('sales:table.invoice_number')}</th>
+                                <th className="px-6 py-4">{t('sales:table.client')}</th>
+                                <th className="px-6 py-4 hidden xl:table-cell">{t('sales:table.operator')}</th>
+                                <th className="px-6 py-4 text-center">{t('sales:table.amount')}</th>
+                                <th className="px-6 py-4 text-center">{t('sales:table.amount_settled')}</th>
+                                <th className="px-6 py-4 text-center">{t('sales:table.amount_on_account')}</th>
+                                <th className="px-6 py-4 text-center">{t('sales:table.discount')}</th>
+                                <th className="px-6 py-4 text-center hidden md:table-cell">{t('sales:table.status')}</th>
+                                <th className="px-6 py-4 text-right pr-6">{t('sales:table.actions')}</th>
                             </>
                         )}
                     </tr>
@@ -236,7 +254,7 @@ export const SalesTable: React.FC<SalesTableProps> = ({
                                     </div>
                                     <div>
                                         <div className="font-medium text-base-content">
-                                            {facture.client_name || facture.client_name_override || t('common.passerby_client')}
+                                        {facture.client_name || facture.client_name_override || t('common:passerby_client')}
                                         </div>
                                     </div>
                                 </div>
@@ -275,7 +293,7 @@ export const SalesTable: React.FC<SalesTableProps> = ({
                                     facture.status === 'BROU' ? 'bg-base-200 text-base-content/60 border-base-300' :
                                     'bg-warning/10 text-warning border-warning/20'}`}
                                 >
-                                    {facture.status_display}
+                                    {getStatusLabel(facture.status)}
                                 </span>
                             </td>
 
@@ -285,7 +303,7 @@ export const SalesTable: React.FC<SalesTableProps> = ({
                                         <ActionIcon 
                                             icon={Eye}
                                             onClick={() => onView(facture)}
-                                            title={t('common.details')}
+                                            title={t('common:details')}
                                             variant="secondary"
                                         />
                                         <ActionIcon 

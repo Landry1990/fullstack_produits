@@ -10,7 +10,8 @@
         "avg_basket": "Panier Moyen",
         "margin_rate": "Taux de Marge",
         "dsi": "Jours Stock (DSI)",
-        "growth": "Croissance Mensuelle"
+        "growth": "Croissance Mensuelle",
+        "annual": "ANNUEL"
     },
     "charts": {
         "ca_evolution": "Évolution CA",
@@ -19,7 +20,10 @@
         "ca_12_months": "Chiffre d'Affaires (12 derniers mois)",
         "margin_evolution": "Évolution des Marges",
         "predictions_3m": "Prédictions CA (3 prochains mois)",
-        "repartition": "Répartition CA"
+        "repartition": "Répartition CA",
+        "total": "Total:",
+        "units": "Unités",
+        "sales_count": "Nb Ventes"
     },
     "by_category": "Par Catégorie",
     "by_supplier": "Par Fournisseur",

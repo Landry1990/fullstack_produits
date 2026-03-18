@@ -10,7 +10,8 @@
         "avg_basket": "Average Basket",
         "margin_rate": "Margin Rate",
         "dsi": "Stock Days (DSI)",
-        "growth": "Monthly Growth"
+        "growth": "Monthly Growth",
+        "annual": "ANNUAL"
     },
     "charts": {
         "ca_evolution": "Revenue Evolution",
@@ -19,7 +20,10 @@
         "ca_12_months": "Turnover (Last 12 months)",
         "margin_evolution": "Margin Evolution",
         "predictions_3m": "CA Predictions (Next 3 months)",
-        "repartition": "Revenue Breakdown"
+        "repartition": "Revenue Breakdown",
+        "total": "Total:",
+        "units": "Units",
+        "sales_count": "Sales Count"
     },
     "by_category": "By Category",
     "by_supplier": "By Supplier",

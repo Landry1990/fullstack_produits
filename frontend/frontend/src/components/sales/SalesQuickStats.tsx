@@ -32,7 +32,7 @@ export const SalesQuickStats: React.FC<SalesQuickStatsProps> = ({ stats, onClose
                 <button 
                     onClick={onClose}
                     className="absolute -top-2 -right-2 btn btn-circle btn-xs btn-ghost hover:bg-error hover:text-white transition-colors z-10 shadow-lg border border-base-300 bg-base-100"
-                    title={t('actions.hide_report')}
+                    title={t('sales:actions.hide_report')}
                 >
                     ✕
                 </button>
@@ -41,7 +41,7 @@ export const SalesQuickStats: React.FC<SalesQuickStatsProps> = ({ stats, onClose
             {/* Totals Section */}
             <div className="bg-base-100 p-4 rounded-xl border border-base-300 shadow-sm flex flex-col justify-center">
                 <div className="text-xs font-bold text-base-content/50 uppercase tracking-wider mb-1">
-                    {t('stats.daily_revenue')}
+                    {t('sales:stats.daily_revenue')}
                 </div>
                 <div className="text-2xl font-black text-primary">
                     {formatCurrency(Number(stats.total_regle) + Number(stats.total_en_compte))} <span className="text-sm font-normal">F</span>
@@ -50,7 +50,7 @@ export const SalesQuickStats: React.FC<SalesQuickStatsProps> = ({ stats, onClose
 
             <div className="bg-success/5 p-4 rounded-xl border border-success/20 shadow-sm flex flex-col justify-center">
                 <div className="text-xs font-bold text-success/70 uppercase tracking-wider mb-1">
-                    {t('stats.total_collected')}
+                    {t('sales:stats.total_collected')}
                 </div>
                 <div className="text-2xl font-black text-success">
                     {formatCurrency(Number(stats.total_regle))} <span className="text-sm font-normal">F</span>
@@ -59,7 +59,7 @@ export const SalesQuickStats: React.FC<SalesQuickStatsProps> = ({ stats, onClose
 
             <div className="bg-warning/5 p-4 rounded-xl border border-warning/20 shadow-sm flex flex-col justify-center">
                 <div className="text-xs font-bold text-warning/70 uppercase tracking-wider mb-1">
-                    {t('stats.total_on_account')}
+                    {t('sales:stats.total_on_account')}
                 </div>
                 <div className="text-2xl font-black text-warning">
                     {formatCurrency(Number(stats.total_en_compte))} <span className="text-sm font-normal">F</span>
@@ -70,17 +70,17 @@ export const SalesQuickStats: React.FC<SalesQuickStatsProps> = ({ stats, onClose
             <div className="bg-gradient-to-br from-primary/10 to-primary/5 p-4 rounded-xl border border-primary/20 flex items-center justify-between">
                 <div>
                     <div className="text-xs font-bold text-primary uppercase tracking-wider mb-1 flex items-center gap-1">
-                        <UserCheck className="w-3 h-3" /> {t('stats.best_seller')}
+                        <UserCheck className="w-3 h-3" /> {t('sales:stats.best_seller')}
                     </div>
                     {stats.top_vendeur ? (
                         <div>
                             <div className="text-lg font-bold text-base-content">{stats.top_vendeur.name}</div>
                             <div className="text-xs text-base-content/60">
-                                {t('stats.sales_count', { count: stats.top_vendeur.count })} • {formatCurrency(stats.top_vendeur.amount || 0)} F
+                                {t('sales:stats.sales_count', { count: stats.top_vendeur.count })} • {formatCurrency(stats.top_vendeur.amount || 0)} F
                             </div>
                         </div>
                     ) : (
-                        <div className="text-sm text-base-content/50 italic">{t('stats.no_sales_today')}</div>
+                        <div className="text-sm text-base-content/50 italic">{t('sales:stats.no_sales_today')}</div>
                     )}
                 </div>
             </div>
@@ -89,17 +89,17 @@ export const SalesQuickStats: React.FC<SalesQuickStatsProps> = ({ stats, onClose
             <div className="bg-gradient-to-br from-secondary/10 to-secondary/5 p-4 rounded-xl border border-secondary/20 flex items-center justify-between">
                  <div>
                     <div className="text-xs font-bold text-secondary uppercase tracking-wider mb-1 flex items-center gap-1">
-                        <TrendingUp className="w-3 h-3" /> {t('stats.best_product')}
+                        <TrendingUp className="w-3 h-3" /> {t('sales:stats.best_product')}
                     </div>
                     {stats.top_produit ? (
                         <div>
                             <div className="text-lg font-bold text-base-content">{stats.top_produit.name}</div>
                             <div className="text-xs text-base-content/60">
-                                {t('stats.units_sold', { count: stats.top_produit.quantity })}
+                                {t('sales:stats.units_sold', { count: stats.top_produit.quantity })}
                             </div>
                         </div>
                     ) : (
-                        <div className="text-sm text-base-content/50 italic">{t('stats.no_product_sold')}</div>
+                        <div className="text-sm text-base-content/50 italic">{t('sales:stats.no_product_sold')}</div>
                     )}
                 </div>
             </div>
