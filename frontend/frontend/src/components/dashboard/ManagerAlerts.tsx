@@ -14,7 +14,7 @@ interface ManagerAlertsProps {
 }
 
 export const ManagerAlerts: React.FC<ManagerAlertsProps> = ({ alerts }) => {
-    const { t } = useTranslation();
+    const { t } = useTranslation(['dashboard', 'common']);
 
     return (
         <div className="bg-base-100 rounded-2xl shadow-sm border border-base-300 overflow-hidden flex flex-col">

@@ -98,7 +98,7 @@
         "mode_details": "Détails par mode",
         "confirm": "CONFIRMER LA CLÔTURE",
         "ticket": "TICKET",
-        "unit": "CFA"
+        "unit": "F"
     },
     "movement_modal": {
         "title_out": "Nouvelle Dépense (Sortie)",

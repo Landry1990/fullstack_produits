@@ -34,7 +34,7 @@ export const ReportFilters: React.FC<ReportFiltersProps> = ({
     clientSearch,
     clientActions
 }) => {
-    const { t } = useTranslation();
+    const { t } = useTranslation(['reports', 'common']);
 
     if (selectedQuery.params.length === 0) return null;
 
@@ -48,7 +48,7 @@ export const ReportFilters: React.FC<ReportFiltersProps> = ({
                 <div key={param.key} className="form-control min-w-[200px]">
                     <label className="label py-1">
                         <span className="label-text text-[10px] font-bold uppercase tracking-widest text-base-content/50">
-                            {t(`reports.params.${param.key}`, { defaultValue: param.label })}
+                            {t(`params.${param.key}`, { defaultValue: param.label })}
                             {param.required && <span className="text-error ml-1">*</span>}
                         </span>
                     </label>
@@ -139,7 +139,7 @@ export const ReportFilters: React.FC<ReportFiltersProps> = ({
                                         setParam(param.key, '');
                                     }}
                                     onFocus={() => clientSearch.query.length > 0 && clientActions.setShowDropdown(true)}
-                                    placeholder={t('reports.client_search_placeholder', 'Rechercher un client...')}
+                                    placeholder={t('params.client_id', 'Rechercher un client...')}
                                     className="input input-bordered input-md w-full pl-10 rounded-xl font-bold bg-base-200/50"
                                 />
                                 {clientSearch.showDropdown && clientSearch.filtered.length > 0 && (

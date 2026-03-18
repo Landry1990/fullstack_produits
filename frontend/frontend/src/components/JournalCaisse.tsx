@@ -803,7 +803,7 @@ export default function JournalCaisse() {
                     disabled={loading || !selectedUser}
                     title={!selectedUser ? t('messages.no_cashier_selected') : t('close_register')}
                 >
-                    <Lock className="w-4 h-4" /> <span className="sm:inline">{t('journal.close_register')}</span>
+                    <Lock className="w-4 h-4" /> <span className="sm:inline">{t('close_register')}</span>
                 </button>
              </div>
           </div>
@@ -948,14 +948,14 @@ export default function JournalCaisse() {
           {(serverTotals?.total_entrees ?? totauxParMode.entrees) !== 0 && (
               <div className="badge badge-success badge-outline gap-2 p-3 text-[10px] font-bold text-success/80">
                   <ArrowUpRight className="w-3 h-3" />
-                  <span className="opacity-60">Entrées:</span>
+                  <span className="opacity-60">{t('filter.entries')}:</span>
                   <span>{formatCurrency(serverTotals?.total_entrees ?? totauxParMode.entrees)}</span>
               </div>
           )}
           {(serverTotals?.total_sorties ?? totauxParMode.sorties) !== 0 && (
               <div className="badge badge-error badge-outline gap-2 p-3 text-[10px] font-bold text-error/80">
                   <ArrowDownRight className="w-3 h-3" />
-                  <span className="opacity-60">Sorties:</span>
+                  <span className="opacity-60">{t('filter.exits')}:</span>
                   <span>{formatCurrency(serverTotals?.total_sorties ?? totauxParMode.sorties)}</span>
               </div>
           )}
@@ -978,8 +978,8 @@ export default function JournalCaisse() {
               {/* Final Operational Balance */}
               <div className="flex items-center gap-4 bg-primary text-white py-2 px-6 rounded-r-emerald-none rounded-r-full shadow-xl shadow-primary/20 flex-1 sm:flex-none justify-center sm:justify-start">
                   <div className="flex flex-col items-start">
-                     <span className="text-[10px] font-black uppercase opacity-70 tracking-wider leading-tight">{t('journal.stats.net_operational_balance')}</span>
-                     <span className="text-[8px] opacity-60 uppercase font-bold">{t('journal.stats.excluding_recoveries')}</span>
+                     <span className="text-[10px] font-black uppercase opacity-70 tracking-wider leading-tight">{t('stats.net_operational_balance')}</span>
+                     <span className="text-[8px] opacity-60 uppercase font-bold">{t('stats.excluding_recoveries')}</span>
                   </div>
                   <div className="w-px h-6 bg-white/20 mx-1"></div>
                   <span className="text-xl font-black">{formatCurrency((serverTotals?.total_ventes ?? totauxParMode.ventes) + (serverTotals?.total_entrees ?? totauxParMode.entrees) - (serverTotals?.total_sorties ?? totauxParMode.sorties))}</span>
@@ -1203,14 +1203,14 @@ export default function JournalCaisse() {
                             disabled={page === 1} 
                             onClick={() => setPage(page - 1)}
                         >
-                            {t('common.pagination.prev') || 'Précédent'}
+                            {t('common:pagination.prev')}
                         </button>
                         <button 
                             className="btn btn-sm px-4 bg-white hover:bg-base-200 border-base-300 shadow-sm transition-all" 
                             disabled={page >= totalPages} 
                             onClick={() => setPage(page + 1)}
                         >
-                            {t('common.pagination.next') || 'Suivant'}
+                            {t('common:pagination.next')}
                         </button>
                     </div>
                 </div>
@@ -1232,14 +1232,14 @@ export default function JournalCaisse() {
                 <div className="space-y-6">
                     <div className="grid grid-cols-1 gap-3">
                         <div className="p-5 bg-primary/5 border border-primary/20 rounded-xl shadow-sm text-center">
-                            <div className="text-[10px] font-black text-primary/60 uppercase mb-1 tracking-widest">{t('journal.stats.net_operational_balance')}</div>
+                            <div className="text-[10px] font-black text-primary/60 uppercase mb-1 tracking-widest">{t('stats.net_operational_balance')}</div>
                             <div className="text-3xl font-black text-primary">{formatCurrencyLocal(Math.round(closingTotals.total_ventes + closingTotals.total_entrees - closingTotals.total_sorties))}</div>
-                            <div className="text-[10px] font-bold text-primary/40 mt-1 uppercase">{t('journal.stats.cash_formula')}</div>
+                            <div className="text-[10px] font-bold text-primary/40 mt-1 uppercase">{t('stats.cash_formula')}</div>
                         </div>
                         <div className="p-4 bg-success/5 border border-success/20 rounded-xl text-center">
-                            <div className="text-[9px] font-black text-success/60 uppercase mb-1 tracking-widest">{t('journal.stats.cash_to_justify')}</div>
+                            <div className="text-[9px] font-black text-success/60 uppercase mb-1 tracking-widest">{t('stats.cash_to_justify')}</div>
                             <div className="text-2xl font-black text-success">{formatCurrencyLocal(Math.round(closingTotals.total_theorique))}</div>
-                            <div className="text-[10px] font-bold text-success/40 mt-1 uppercase">{t('journal.stats.cash_formula')}</div>
+                            <div className="text-[10px] font-bold text-success/40 mt-1 uppercase">{t('stats.cash_formula')}</div>
                         </div>
                     </div>
 
@@ -1256,7 +1256,7 @@ export default function JournalCaisse() {
                                 onChange={(e) => setActualAmount(e.target.value)}
                                 autoFocus
                             />
-                            <span className="absolute right-6 top-1/2 -translate-y-1/2 font-black text-base-content/20">{t('closing.unit')}</span>
+                            <span className="absolute right-6 top-1/2 -translate-y-1/2 font-black text-base-content/20">{t('common:currency')}</span>
                         </div>
                         <div className="mt-4 flex items-center justify-between p-3 bg-base-200 rounded-lg">
                             <span className="text-xs font-bold text-base-content/60 uppercase">{t('closing.cash_gap')}</span>
@@ -1301,7 +1301,7 @@ export default function JournalCaisse() {
                         <Printer className="w-5 h-5" /> {t('closing.ticket')}
                     </button>
                     <button className="btn btn-ghost font-bold opacity-50" onClick={() => setIsClosingModalOpen(false)}>
-                        {t('common.cancel') || 'ANNULER'}
+                        {t('common:cancel')}
                     </button>
                 </div>
             </div>

@@ -48,12 +48,12 @@ interface EvolutionSeries {
   }[];
 }
 
-const formatMoney = (value: number) => {
-  return new Intl.NumberFormat('fr-FR', { style: 'decimal', maximumFractionDigits: 0 }).format(value) + ' F';
+const formatMoney = (value: number, currencySymbol: string) => {
+  return new Intl.NumberFormat('fr-FR', { style: 'decimal', maximumFractionDigits: 0 }).format(value) + ' ' + currencySymbol;
 };
 
 export default function ClassementVendeurs() {
-  const { t } = useTranslation();
+  const { t } = useTranslation(['sellers', 'common']);
   const [loading, setLoading] = useState(true);
   const [ranking, setRanking] = useState<RankingResponse | null>(null);
   const [evolutionData, setEvolutionData] = useState<EvolutionSeries[]>([]);
@@ -85,7 +85,7 @@ export default function ClassementVendeurs() {
           setSelectedVendeur(res.data.data[0].vendeur_id);
         }
       } catch (err) {
-        toast.error(t('common.error', 'Erreur lors du chargement'));
+        toast.error(t('common:messages.error_loading'));
         console.error(err);
       } finally {
         setLoading(false);
@@ -134,10 +134,10 @@ export default function ClassementVendeurs() {
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-base-content flex items-center gap-2">
-            🏆 {t('sellers.ranking.title', 'Classement Vendeurs')}
+            🏆 {t('sellers:ranking.title')}
           </h1>
           <p className="text-base-content/60">
-            {t('sellers.ranking.subtitle', 'Performances mensuelles et évolution')}
+            {t('sellers:ranking.subtitle')}
           </p>
         </div>
         <div className="flex gap-2">
@@ -152,9 +152,9 @@ export default function ClassementVendeurs() {
             value={periode}
             onChange={(e) => setPeriode(e.target.value as 'mois' | 'trimestre' | 'annee')}
           >
-            <option value="mois">{t('sellers.ranking.period.month', 'Mois')}</option>
-            <option value="trimestre">{t('sellers.ranking.period.quarter', 'Trimestre')}</option>
-            <option value="annee">{t('sellers.ranking.period.year', 'Année')}</option>
+            <option value="mois">{t('sellers:ranking.period.month')}</option>
+            <option value="trimestre">{t('sellers:ranking.period.quarter')}</option>
+            <option value="annee">{t('sellers:ranking.period.year')}</option>
           </select>
         </div>
       </div>
@@ -185,9 +185,9 @@ export default function ClassementVendeurs() {
                   )}
                 </div>
                 <div className="mt-4 space-y-1">
-                  <p className="text-2xl font-bold">{formatMoney(v.chiffre_affaires)}</p>
+                  <p className="text-2xl font-bold">{formatMoney(v.chiffre_affaires, t('common:currency'))}</p>
                   <p className="text-sm opacity-80">
-                    {v.nbre_ventes} ventes · Panier: {formatMoney(v.panier_moyen)}
+                    {v.nbre_ventes} ventes · Panier: {formatMoney(v.panier_moyen, t('common:currency'))}
                   </p>
                 </div>
               </div>
@@ -202,7 +202,7 @@ export default function ClassementVendeurs() {
         <div className="card bg-base-100 shadow-lg">
           <div className="card-body">
             <h3 className="text-lg font-semibold mb-4">
-              {t('sellers.ranking.table_title', 'Classement Complet')}
+              {t('sellers:ranking.table_title')}
             </h3>
             {loading ? (
               <div className="h-64 flex items-center justify-center">
@@ -214,11 +214,11 @@ export default function ClassementVendeurs() {
                   <thead className="sticky top-0 bg-base-100">
                     <tr>
                       <th>#</th>
-                      <th>{t('sellers.ranking.seller', 'Vendeur')}</th>
-                      <th className="text-right">{t('sellers.ranking.sales', 'Ventes')}</th>
-                      <th className="text-right">{t('sellers.ranking.revenue', 'CA')}</th>
-                      <th className="text-right">{t('sellers.ranking.avg_basket', 'Panier')}</th>
-                      <th className="text-right">{t('sellers.ranking.evolution', 'Évol.')}</th>
+                      <th>{t('sellers:ranking.seller')}</th>
+                      <th className="text-right">{t('sellers:ranking.sales')}</th>
+                      <th className="text-right">{t('sellers:ranking.revenue')}</th>
+                      <th className="text-right">{t('sellers:ranking.avg_basket')}</th>
+                      <th className="text-right">{t('sellers:ranking.evolution')}</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -231,8 +231,8 @@ export default function ClassementVendeurs() {
                         <td className="font-bold">{getMedal(v.rang)}</td>
                         <td>{v.vendeur}</td>
                         <td className="text-right">{v.nbre_ventes}</td>
-                        <td className="text-right font-mono">{formatMoney(v.chiffre_affaires)}</td>
-                        <td className="text-right font-mono text-sm">{formatMoney(v.panier_moyen)}</td>
+                        <td className="text-right font-mono">{formatMoney(v.chiffre_affaires, t('common:currency'))}</td>
+                        <td className="text-right font-mono text-sm">{formatMoney(v.panier_moyen, t('common:currency'))}</td>
                         <td className="text-right">
                           {v.evolution !== null && v.evolution !== undefined ? (
                             <span className={v.evolution >= 0 ? 'text-success' : 'text-error'}>
@@ -247,7 +247,7 @@ export default function ClassementVendeurs() {
               </div>
             ) : (
               <div className="h-64 flex items-center justify-center text-base-content/50">
-                {t('sellers.ranking.no_data', 'Aucune donnée pour cette période')}
+                {t('sellers:ranking.no_data')}
               </div>
             )}
           </div>
@@ -257,7 +257,7 @@ export default function ClassementVendeurs() {
         <div className="card bg-base-100 shadow-lg">
           <div className="card-body">
             <h3 className="text-lg font-semibold mb-4">
-              {t('sellers.ranking.evolution_chart', 'Évolution (12 mois)')}
+              {t('sellers:ranking.evolution_chart')}
             </h3>
             {chartData.length > 0 ? (
               <ResponsiveContainer width="100%" height={350}>
@@ -265,7 +265,7 @@ export default function ClassementVendeurs() {
                   <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
                   <XAxis dataKey="label" fontSize={11} />
                   <YAxis tickFormatter={(v) => `${(v / 1000).toFixed(0)}k`} fontSize={11} />
-                  <Tooltip formatter={(value: number) => formatMoney(value)} />
+                  <Tooltip formatter={(value: number) => formatMoney(value, t('common:currency'))} />
                   <Legend />
                   {evolutionData.map((series, index) => (
                     <Line 
@@ -283,7 +283,7 @@ export default function ClassementVendeurs() {
               </ResponsiveContainer>
             ) : (
               <div className="h-80 flex items-center justify-center text-base-content/50">
-                {t('common.loading', 'Chargement...')}
+                {t('common:loading')}
               </div>
             )}
           </div>
@@ -295,15 +295,15 @@ export default function ClassementVendeurs() {
         <div className="card bg-base-100 shadow-lg">
           <div className="card-body">
             <h3 className="text-lg font-semibold mb-4">
-              {t('sellers.ranking.comparison', 'Comparaison CA')}
+              {t('sellers:ranking.comparison')}
             </h3>
             <ResponsiveContainer width="100%" height={300}>
               <BarChart data={ranking.data.slice(0, 5)} layout="vertical">
                 <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
                 <XAxis type="number" tickFormatter={(v) => `${(v / 1000).toFixed(0)}k`} />
                 <YAxis type="category" dataKey="vendeur" width={100} fontSize={12} />
-                <Tooltip formatter={(value: number) => formatMoney(value)} />
-                <Bar dataKey="chiffre_affaires" name="CA" radius={[0, 4, 4, 0]}>
+                <Tooltip formatter={(value: number) => formatMoney(value, t('common:currency'))} />
+                <Bar dataKey="chiffre_affaires" name={t('sellers:ranking.revenue')} radius={[0, 4, 4, 0]}>
                   {ranking.data.slice(0, 5).map((_, index) => (
                     <Bar key={index} dataKey="chiffre_affaires" fill={COLORS[index % COLORS.length]} />
                   ))}

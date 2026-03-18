@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo } from 'react';
 import axios from 'axios';
 import { toast } from 'react-hot-toast';
 import { Search, Sparkles, AlertCircle, ArrowRight } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import PremiumModal from './PremiumModal';
 import { safeStorage } from '../../utils/storage';
 
@@ -23,6 +24,7 @@ interface MiniProduct {
 }
 
 export default function SmartOrganizerModal({ isOpen, onClose, targetCategory, onSuccess }: SmartOrganizerModalProps) {
+    const { t } = useTranslation(['stock', 'common']);
     const [allProducts, setAllProducts] = useState<MiniProduct[]>([]);
     const [loading, setLoading] = useState(false);
     const [processing, setProcessing] = useState(false);
@@ -51,7 +53,7 @@ export default function SmartOrganizerModal({ isOpen, onClose, targetCategory, o
             setAllProducts(res.data);
         } catch (err) {
             console.error("Error fetching products for organizer:", err);
-            toast.error("Erreur lors de la récupération de la liste des produits");
+            toast.error(t('stock:organisation.smart_organizer.load_error'));
         } finally {
             setLoading(false);
         }
@@ -98,12 +100,12 @@ export default function SmartOrganizerModal({ isOpen, onClose, targetCategory, o
                 headers: { Authorization: `Token ${token}` }
             });
 
-            toast.success(`${res.data.updated_count} produits ont été rangés dans "${targetCategory.name}"`);
+            toast.success(t('stock:organisation.smart_organizer.success_message', { count: res.data.updated_count, name: targetCategory.name }));
             onSuccess();
             onClose();
         } catch (err: any) {
             console.error("Error bulk categorizing:", err);
-            toast.error(err.response?.data?.detail || "Erreur lors du rangement massif");
+            toast.error(err.response?.data?.detail || t('stock:organisation.smart_organizer.bulk_error'));
         } finally {
             setProcessing(false);
         }
@@ -113,8 +115,8 @@ export default function SmartOrganizerModal({ isOpen, onClose, targetCategory, o
         <PremiumModal
             isOpen={isOpen}
             onClose={onClose}
-            title="Rangement Intelligent"
-            subtitle={`Classer des produits dans : ${targetCategory.name}`}
+            title={t('stock:organisation.smart_organizer.title')}
+            subtitle={t('stock:organisation.smart_organizer.subtitle', { name: targetCategory.name })}
             icon={<Sparkles className="w-6 h-6 text-primary" />}
             maxWidth="max-w-2xl"
         >
@@ -122,13 +124,13 @@ export default function SmartOrganizerModal({ isOpen, onClose, targetCategory, o
                 <div className="bg-primary/5 rounded-2xl p-4 border border-primary/10">
                     <p className="text-sm text-primary font-medium flex items-center gap-2">
                         <AlertCircle className="w-4 h-4" />
-                        Définissez une plage alphabétique pour identifier les produits à déplacer.
+                        {t('stock:organisation.smart_organizer.help_text')}
                     </p>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div className="form-control">
-                        <label className="label text-xs font-bold uppercase tracking-wider text-gray-400">De (Inclus)</label>
+                        <label className="label text-xs font-bold uppercase tracking-wider text-gray-400">{t('stock:organisation.smart_organizer.from_label')}</label>
                         <input 
                             type="text" 
                             className="input input-bordered rounded-xl" 
@@ -138,7 +140,7 @@ export default function SmartOrganizerModal({ isOpen, onClose, targetCategory, o
                         />
                     </div>
                     <div className="form-control">
-                        <label className="label text-xs font-bold uppercase tracking-wider text-gray-400">À (Inclus)</label>
+                        <label className="label text-xs font-bold uppercase tracking-wider text-gray-400">{t('stock:organisation.smart_organizer.to_label')}</label>
                         <input 
                             type="text" 
                             className="input input-bordered rounded-xl" 
@@ -148,7 +150,7 @@ export default function SmartOrganizerModal({ isOpen, onClose, targetCategory, o
                         />
                     </div>
                     <div className="form-control">
-                        <label className="label text-xs font-bold uppercase tracking-wider text-gray-400">Contient (Optionnel)</label>
+                        <label className="label text-xs font-bold uppercase tracking-wider text-gray-400">{t('stock:organisation.smart_organizer.contains_label')}</label>
                         <input 
                             type="text" 
                             className="input input-bordered rounded-xl" 
@@ -167,7 +169,7 @@ export default function SmartOrganizerModal({ isOpen, onClose, targetCategory, o
                             checked={caseSensitive}
                             onChange={e => setCaseSensitive(e.target.checked)}
                         />
-                        <span className="label-text text-xs font-medium">Respecter la casse</span>
+                        <span className="label-text text-xs font-medium">{t('stock:organisation.smart_organizer.case_sensitive')}</span>
                     </label>
                 </div>
 
@@ -177,15 +179,15 @@ export default function SmartOrganizerModal({ isOpen, onClose, targetCategory, o
                     {loading ? (
                         <div className="flex flex-col items-center justify-center p-12 text-slate-400 gap-2">
                             <span className="loading loading-spinner"></span>
-                            <p className="text-xs">Chargement de la base produit...</p>
+                            <p className="text-xs">{t('stock:organisation.smart_organizer.loading_products')}</p>
                         </div>
                     ) : filteredProducts.length > 0 ? (
                         <div className="p-4">
                            <div className="flex justify-between items-center mb-4 sticky top-0 bg-slate-50 py-1">
                               <h4 className="font-bold text-slate-700 text-sm">
-                                 {filteredProducts.length} produit{filteredProducts.length > 1 ? 's' : ''} trouvé{filteredProducts.length > 1 ? 's' : ''}
+                                 {t('stock:organisation.smart_organizer.products_found', { count: filteredProducts.length })}
                               </h4>
-                              <div className="badge badge-primary badge-sm">Aperçu</div>
+                              <div className="badge badge-primary badge-sm">{t('stock:organisation.smart_organizer.preview')}</div>
                            </div>
                            <div className="space-y-2">
                               {filteredProducts.slice(0, 50).map(p => (
@@ -196,7 +198,7 @@ export default function SmartOrganizerModal({ isOpen, onClose, targetCategory, o
                               ))}
                               {filteredProducts.length > 50 && (
                                  <p className="text-center text-[10px] text-slate-400 italic pt-2">
-                                    + {filteredProducts.length - 50} autres produits...
+                                    {t('stock:organisation.smart_organizer.more_products', { count: filteredProducts.length - 50 })}
                                  </p>
                               )}
                            </div>
@@ -204,23 +206,23 @@ export default function SmartOrganizerModal({ isOpen, onClose, targetCategory, o
                     ) : (
                         <div className="flex flex-col items-center justify-center p-12 text-slate-400 gap-2">
                             <Search className="w-8 h-8 opacity-20" />
-                            <p className="text-sm italic">Aucun produit ne correspond aux critères</p>
+                            <p className="text-sm italic">{t('stock:organisation.smart_organizer.no_results')}</p>
                         </div>
                     )}
                 </div>
 
                 <div className="flex justify-between items-center pt-4 border-t border-slate-100">
                     <button className="btn btn-ghost px-6 rounded-xl" onClick={onClose} disabled={processing}>
-                        Annuler
+                        {t('common:cancel')}
                     </button>
                     <button 
                         className={`btn btn-primary px-10 rounded-xl shadow-lg shadow-primary/20 gap-2 ${processing ? 'loading' : ''}`}
                         onClick={handleApply}
                         disabled={filteredProducts.length === 0 || processing}
                     >
-                        {processing ? 'Rangement...' : (
+                        {processing ? t('stock:organisation.smart_organizer.processing') : (
                             <>
-                                Ranger dans <strong>{targetCategory.name}</strong>
+                                {t('stock:organisation.smart_organizer.apply_btn', { name: targetCategory.name })}
                                 <ArrowRight className="w-4 h-4 ml-1" />
                             </>
                         )}

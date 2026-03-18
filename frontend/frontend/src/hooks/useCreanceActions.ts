@@ -1,5 +1,6 @@
 import { useState, useCallback } from 'react';
 import { toast } from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
 import type { Creance } from '../types';
 import { useSudo } from './useSudo';
 import { usePharmacySettings } from './usePharmacySettings';
@@ -19,6 +20,7 @@ export const useCreanceActions = ({
     selectedIds,
     setSelectedIds
 }: UseCreanceActionsProps) => {
+    const { t } = useTranslation(['creances', 'common']);
     const { settings: pharmacySettings } = usePharmacySettings();
     const { sudoState, requireSudo, closeSudo } = useSudo();
 
@@ -73,7 +75,7 @@ export const useCreanceActions = ({
         } catch (err: unknown) {
             console.error('Erreur lors de l\'impression du reçu:', err);
             const error = err as { response?: { data?: { detail?: string } } };
-            toast.error(error.response?.data?.detail || 'Erreur lors de l\'impression du reçu');
+            toast.error(error.response?.data?.detail || t('creances:toasts.error_print_receipt'));
         }
     }, []);
 
@@ -98,7 +100,7 @@ export const useCreanceActions = ({
         } catch (err: unknown) {
             console.error('Erreur lors de l\'impression du relevé:', err);
             const error = err as { response?: { data?: { detail?: string } } };
-            toast.error(error.response?.data?.detail || 'Erreur lors de l\'impression du relevé');
+            toast.error(error.response?.data?.detail || t('creances:toasts.error_print_statement'));
         }
     }, []);
 
@@ -118,14 +120,14 @@ export const useCreanceActions = ({
 
             setIsPaiementModalOpen(false);
             refresh();
-            toast.success('Paiement enregistré avec succès !');
+            toast.success(t('creances:toasts.payment_success'));
 
-            if (window.confirm('Voulez-vous imprimer un reçu pour ce paiement ?')) {
+            if (window.confirm(t('creances:toasts.confirm_print_receipt'))) {
                 await handlePrintDirectReceipt(selectedCreance.id, paiementId);
             }
         } catch (err: unknown) {
             const error = err as { response?: { data?: { detail?: string } } };
-            toast.error(error.response?.data?.detail || 'Erreur lors de l\'enregistrement du paiement');
+            toast.error(error.response?.data?.detail || t('common:messages.error_saving'));
             console.error('Erreur:', err);
         }
     }, [selectedCreance, montantPaiement, modePaiement, referencePaiement, refresh, handlePrintDirectReceipt]);
@@ -149,14 +151,14 @@ export const useCreanceActions = ({
             setIsBulkModalOpen(false);
             setSelectedIds([]);
             refresh();
-            toast.success('Règlement groupé effectué avec succès !');
+            toast.success(t('creances:toasts.bulk_success'));
 
-            if (releveId && window.confirm('Voulez-vous imprimer le reçu récapitulatif pour ce règlement ?')) {
+            if (releveId && window.confirm(t('creances:toasts.confirm_print_bulk_receipt'))) {
                 await handlePrintBulkReceipt(releveId);
             }
         } catch (err: unknown) {
             const error = err as { response?: { data?: { detail?: string } } };
-            toast.error(error.response?.data?.detail || 'Erreur lors du règlement groupé');
+            toast.error(error.response?.data?.detail || t('common:messages.error_saving'));
             console.error('Erreur:', err);
         }
     }, [selectedIds, modePaiement, referencePaiement, setSelectedIds, refresh, handlePrintBulkReceipt]);
@@ -167,7 +169,7 @@ export const useCreanceActions = ({
 
     const handleImprimerReleve = useCallback(async (selectedClient: string, dateDebut: string, dateFin: string) => {
         if (!selectedClient) {
-            toast.error('Veuillez sélectionner un client');
+            toast.error(t('creances:toasts.select_client_error'));
             return;
         }
 
@@ -184,7 +186,7 @@ export const useCreanceActions = ({
                 const content = `
           <div style="font-family: Arial, sans-serif; padding: 20px; max-width: 800px; margin: 0 auto;">
             <div style="text-align: center; margin-bottom: 30px; border-bottom: 2px solid #333; padding-bottom: 20px;">
-              <h1 style="margin: 0; font-size: 24px;">RELEVÉ DE CRÉANCES</h1>
+              <h1 style="margin: 0; font-size: 24px;">${t('creances:print_view.title')}</h1>
               <p style="margin: 5px 0;">${pharmacySettings.pharmacy_name}</p>
               <p style="margin: 5px 0; font-size: 12px;">${pharmacySettings.city || ''}, ${pharmacySettings.country || ''}</p>
               ${pharmacySettings.niu ? `<p style="margin: 5px 0; font-size: 12px;">NIU: ${pharmacySettings.niu}</p>` : ''}
@@ -192,67 +194,67 @@ export const useCreanceActions = ({
             </div>
 
             <div style="margin-bottom: 20px;">
-              <h3 style="margin: 10px 0;">Client</h3>
-              <p style="margin: 5px 0;"><strong>Nom:</strong> ${data.client.name}</p>
-              <p style="margin: 5px 0;"><strong>Adresse:</strong> ${data.client.address || ''}</p>
-              <p style="margin: 5px 0;"><strong>Téléphone:</strong> ${data.client.phone || ''}</p>
-              <p style="margin: 5px 0;"><strong>Email:</strong> ${data.client.email || ''}</p>
+              <h3 style="margin: 10px 0;">${t('creances:print_view.client')}</h3>
+              <p style="margin: 5px 0;"><strong>${t('creances:print_view.name')}</strong> ${data.client.name}</p>
+              <p style="margin: 5px 0;"><strong>${t('creances:print_view.address')}</strong> ${data.client.address || ''}</p>
+              <p style="margin: 5px 0;"><strong>${t('creances:print_view.phone')}</strong> ${data.client.phone || ''}</p>
+              <p style="margin: 5px 0;"><strong>${t('creances:print_view.email')}</strong> ${data.client.email || ''}</p>
             </div>
 
             ${data.periode.date_debut || data.periode.date_fin ? `
               <div style="margin-bottom: 20px;">
-                <h3 style="margin: 10px 0;">Période</h3>
-                ${data.periode.date_debut ? `<p style="margin: 5px 0;"><strong>Du:</strong> ${new Date(data.periode.date_debut).toLocaleDateString('fr-FR')}</p>` : ''}
-                ${data.periode.date_fin ? `<p style="margin: 5px 0;"><strong>Au:</strong> ${new Date(data.periode.date_fin).toLocaleDateString('fr-FR')}</p>` : ''}
+                <h3 style="margin: 10px 0;">${t('creances:print_view.period')}</h3>
+                ${data.periode.date_debut ? `<p style="margin: 5px 0;"><strong>${t('creances:print_view.from')}</strong> ${new Date(data.periode.date_debut).toLocaleDateString(t('common:locale'))}</p>` : ''}
+                ${data.periode.date_fin ? `<p style="margin: 5px 0;"><strong>${t('creances:print_view.to')}</strong> ${new Date(data.periode.date_fin).toLocaleDateString(t('common:locale'))}</p>` : ''}
               </div>
             ` : ''}
 
             <table style="width: 100%; border-collapse: collapse; margin-top: 20px; font-size: 10px;">
               <thead>
                 <tr style="background-color: #f0f0f0;">
-                  <th style="border: 1px solid #ddd; padding: 4px; text-align: left;">Date</th>
-                  <th style="border: 1px solid #ddd; padding: 4px; text-align: left;">N° Facture</th>
-                  <th style="border: 1px solid #ddd; padding: 4px; text-align: left;">Ayant Droit</th>
-                  <th style="border: 1px solid #ddd; padding: 4px; text-align: right;">Montant Total</th>
-                  <th style="border: 1px solid #ddd; padding: 4px; text-align: right;">Payé</th>
-                  <th style="border: 1px solid #ddd; padding: 4px; text-align: right;">Reste</th>
+                  <th style="border: 1px solid #ddd; padding: 4px; text-align: left;">${t('creances:print_view.date_header')}</th>
+                  <th style="border: 1px solid #ddd; padding: 4px; text-align: left;">${t('creances:print_view.invoice_header')}</th>
+                  <th style="border: 1px solid #ddd; padding: 4px; text-align: left;">${t('creances:print_view.beneficiary_header')}</th>
+                  <th style="border: 1px solid #ddd; padding: 4px; text-align: right;">${t('creances:print_view.total_header')}</th>
+                  <th style="border: 1px solid #ddd; padding: 4px; text-align: right;">${t('creances:print_view.paid_header')}</th>
+                  <th style="border: 1px solid #ddd; padding: 4px; text-align: right;">${t('creances:print_view.remaining_header')}</th>
                 </tr>
               </thead>
               <tbody>
                 ${data.creances.map((c: Creance) => `
                   <tr>
-                    <td style="border: 1px solid #ddd; padding: 4px;">${new Date(c.date).toLocaleDateString('fr-FR')}</td>
+                    <td style="border: 1px solid #ddd; padding: 4px;">${new Date(c.date).toLocaleDateString(t('common:locale'))}</td>
                     <td style="border: 1px solid #ddd; padding: 4px;">${c.numero_facture || '-'}</td>
                     <td style="border: 1px solid #ddd; padding: 4px;">${c.ayant_droit || '-'}</td>
-                    <td style="border: 1px solid #ddd; padding: 4px; text-align: right;">${formatCurrency(parseFloat(c.total_ttc))} F</td>
-                    <td style="border: 1px solid #ddd; padding: 4px; text-align: right;">${formatCurrency(parseFloat(c.montant_paye))} F</td>
-                    <td style="border: 1px solid #ddd; padding: 4px; text-align: right;">${formatCurrency(parseFloat(c.reste_a_payer))} F</td>
+                    <td style="border: 1px solid #ddd; padding: 4px; text-align: right;">${formatCurrency(parseFloat(c.total_ttc))} ${t('common:currency')}</td>
+                    <td style="border: 1px solid #ddd; padding: 4px; text-align: right;">${formatCurrency(parseFloat(c.montant_paye))} ${t('common:currency')}</td>
+                    <td style="border: 1px solid #ddd; padding: 4px; text-align: right;">${formatCurrency(parseFloat(c.reste_a_payer))} ${t('common:currency')}</td>
                   </tr>
                 `).join('')}
               </tbody>
               <tfoot>
                 <tr style="background-color: #f0f0f0; font-weight: bold;">
-                  <td colspan="3" style="border: 1px solid #ddd; padding: 4px; text-align: right;">TOTAUX:</td>
-                  <td style="border: 1px solid #ddd; padding: 4px; text-align: right;">${formatCurrency(parseFloat(data.totaux.total_factures))} F</td>
-                  <td style="border: 1px solid #ddd; padding: 4px; text-align: right;">${formatCurrency(parseFloat(data.totaux.total_paye))} F</td>
-                  <td style="border: 1px solid #ddd; padding: 4px; text-align: right;">${formatCurrency(parseFloat(data.totaux.total_reste))} F</td>
+                  <td colspan="3" style="border: 1px solid #ddd; padding: 4px; text-align: right;">${t('creances:print_view.totals_label')}</td>
+                  <td style="border: 1px solid #ddd; padding: 4px; text-align: right;">${formatCurrency(parseFloat(data.totaux.total_factures))} ${t('common:currency')}</td>
+                  <td style="border: 1px solid #ddd; padding: 4px; text-align: right;">${formatCurrency(parseFloat(data.totaux.total_paye))} ${t('common:currency')}</td>
+                  <td style="border: 1px solid #ddd; padding: 4px; text-align: right;">${formatCurrency(parseFloat(data.totaux.total_reste))} ${t('common:currency')}</td>
                 </tr>
               </tfoot>
             </table>
 
             <div style="margin-top: 40px; display: flex; justify-content: space-between;">
               <div style="text-align: center;">
-                <p style="margin-bottom: 60px;">Signature Client</p>
+                <p style="margin-bottom: 60px;">${t('creances:print_view.client_signature')}</p>
                 <p>_____________________</p>
               </div>
               <div style="text-align: center;">
-                <p style="margin-bottom: 60px;">Signature Pharmacie</p>
+                <p style="margin-bottom: 60px;">${t('creances:print_view.pharmacy_signature')}</p>
                 <p>_____________________</p>
               </div>
             </div>
 
             <div style="text-align: center; margin-top: 30px; font-size: 12px; color: #666;">
-              <p>Document généré le ${new Date().toLocaleString('fr-FR')}</p>
+              <p>${t('creances:print_view.generated_on')} ${new Date().toLocaleString(t('common:locale'))}</p>
             </div>
           </div>
         `;
@@ -267,7 +269,7 @@ export const useCreanceActions = ({
             }
         } catch (err) {
             console.error('Erreur impression relevé:', err);
-            toast.error('Erreur lors de la génération du relevé');
+            toast.error(t('creances:toasts.error_print_statement'));
         }
     }, [pharmacySettings]);
 

@@ -59,7 +59,8 @@ export default function Dashboard() {
   const { data: hourlyTraffic } = useHourlyTraffic();
 
   const currentLocale = t('common:locale', { defaultValue: 'fr-FR' });
-  const formatCurrencyLocal = (val: number) => formatCurrency(val, 0, currentLocale);
+  const currencySymbol = t('common:currency_symbol', { defaultValue: 'F' });
+  const formatCurrencyLocal = (val: number) => formatCurrency(val, currentLocale, currencySymbol);
 
   const loading = statsLoading || chartLoading;
   const error = statsError ? t('error_loading') : null;
@@ -182,7 +183,7 @@ export default function Dashboard() {
           ...(stats.user_stats ? [
             {
               title: t('stats.my_sales'),
-              value: formatCurrency(stats.user_stats.sales ?? 0),
+              value: formatCurrencyLocal(stats.user_stats.sales ?? 0),
               change: t('stats.sales_count', { count: stats.user_stats.count ?? 0 }),
               icon: TrendingUp,
               color: "text-indigo-600",

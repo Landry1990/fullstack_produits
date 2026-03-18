@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import type { Creance, Client } from '../types';
+import { useTranslation } from 'react-i18next';
 import creanceService from '../services/creanceService';
 import clientService from '../services/clientService';
 
@@ -41,6 +42,7 @@ export interface UseCreancesDataReturn {
 }
 
 export const useCreancesData = (): UseCreancesDataReturn => {
+    const { t } = useTranslation(['creances', 'common']);
     const [creances, setCreances] = useState<Creance[]>([]);
     const [clients, setClients] = useState<Client[]>([]);
     const [loading, setLoading] = useState(false);
@@ -80,7 +82,7 @@ export const useCreancesData = (): UseCreancesDataReturn => {
             });
             setCreances(results);
         } catch (err) {
-            setError('Erreur lors du chargement des créances');
+            setError(t('creances:toasts.error_loading'));
             console.error('Erreur:', err);
         } finally {
             setLoading(false);

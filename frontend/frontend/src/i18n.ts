@@ -38,7 +38,8 @@ i18n
             'settings',
             'prescriptions',
             'promotions',
-            'facturation'
+            'facturation',
+            'sellers'
         ],
         defaultNS: 'common',
         interpolation: {

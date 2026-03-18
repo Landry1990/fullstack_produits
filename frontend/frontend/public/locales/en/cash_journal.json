@@ -98,7 +98,7 @@
         "mode_details": "Details by mode",
         "confirm": "CONFIRM CLOSING",
         "ticket": "TICKET",
-        "unit": "CFA"
+        "unit": "F"
     },
     "movement_modal": {
         "title_out": "New Expense (Exit)",

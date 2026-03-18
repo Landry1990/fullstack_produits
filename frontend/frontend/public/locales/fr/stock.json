@@ -68,11 +68,18 @@
             "expiration": "Expiration",
             "provider": "Fournisseur",
             "stock": "Stock",
+            "qty": "Qté",
             "value": "Valeur",
+            "value_cost": "Valeur (Coût)",
+            "value_sale": "Valeur (Vente)",
             "actions": "Actions",
             "sorti": "Sorti",
             "exit_btn": "Sortir"
-        }
+        },
+        "filters_label": "Filtres",
+        "show_expired_only": "Déjà périmés",
+        "no_data": "Aucune donnée disponible",
+        "history_print_generated": "Document généré le"
     },
     "transformations": {
         "title": "Gestion des Transformations",
@@ -120,7 +127,15 @@
             "user": "Utilisateur",
             "transformation": "Transformation",
             "quantities": "Quantités",
-            "notes": "Notes"
+            "notes": "Notes",
+            "empty": "Aucun historique disponible"
+        },
+        "labels": {
+            "dest": "Dest.",
+            "unit": "UNITE",
+            "units": "UNITES",
+            "transformer": "Transformer",
+            "no_relations": "Aucune relation configurée"
         }
     },
     "organisation": {
@@ -163,7 +178,112 @@
             "print_stock_title": "Imprimer l'état du stock",
             "print_help": "Générez un rapport PDF de l'état actuel des stocks pour cette catégorie.",
             "exclude_zero_stock": "Exclure les produits en rupture de stock",
-            "print_btn": "Lancer l'impression"
+            "print_btn": "Lancer l'impression",
+            "print_no_rayon_title": "Imprimer les produits sans rayon",
+            "no_rayon": "Sans Rayon"
+        },
+        "smart_organizer": {
+            "title": "Rangement Intelligent",
+            "subtitle": "Classer des produits dans : {{name}}",
+            "help_text": "Définissez une plage alphabétique pour identifier les produits à déplacer.",
+            "from_label": "De (Inclus)",
+            "to_label": "À (Inclus)",
+            "contains_label": "Contient (Optionnel)",
+            "case_sensitive": "Respecter la casse",
+            "loading_products": "Chargement de la base produit...",
+            "products_found": "{{count}} produit trouvé",
+            "products_found_plural": "{{count}} produits trouvés",
+            "preview": "Aperçu",
+            "more_products": "+ {{count}} autres produits...",
+            "no_results": "Aucun produit ne correspond aux critères",
+            "processing": "Rangement...",
+            "apply_btn": "Ranger dans {{name}}",
+            "success_message": "{{count}} produits ont été rangés dans \"{{name}}\"",
+            "load_error": "Erreur lors de la récupération de la liste des produits",
+            "bulk_error": "Erreur lors du rangement massif"
+        }
+    },
+    "etats_inventaire": {
+        "title": "États d'Inventaires",
+        "generate_title": "Générer un état d'inventaire",
+        "grouping_title": "Regroupement",
+        "groups": {
+            "rayon": "Par Rayon",
+            "forme": "Par Forme",
+            "groupe": "Par Groupe"
+        },
+        "to_print_label": "{{type}} à imprimer",
+        "all_entities": "Tous les {{type}}s",
+        "loading_entities": "Chargement...",
+        "stock_display_title": "Affichage du Stock",
+        "stock_options": {
+            "machine": "Stock Machine (valeurs actuelles)",
+            "zero": "Stock à Zéro (pour saisie)"
+        },
+        "summary": {
+            "recap": "Récapitulatif :",
+            "title": "État d'inventaire",
+            "all": "Tous",
+            "with": "avec"
+        },
+        "generating": "Génération...",
+        "download_btn": "Télécharger PDF",
+        "messages": {
+            "success": "PDF téléchargé avec succès",
+            "error": "Erreur lors du téléchargement du PDF"
+        },
+        "help": {
+            "title": "Comment utiliser ?",
+            "step1": "1. Choisissez le type de regroupement",
+            "step2": "2. Sélectionnez un {{type}} spécifique ou laissez \"Tous\"",
+            "step3": "3. Choisissez l'affichage du stock",
+            "step4": "4. Cliquez sur \"Télécharger PDF\""
+        }
+    },
+    "rapport_ug": {
+        "title": "Rapport des Unités Gratuites (UG)",
+        "title_part1": "Rapport des",
+        "title_part2": "Unités Gratuites",
+        "subtitle": "Suivi des entrées promotionnelles (UG) par fournisseur",
+        "refresh": "Actualiser",
+        "export": "CSV",
+        "print": "Imprimer",
+        "stats": {
+            "history_ug": "Historique UG Reçues",
+            "current_stock_ug": "Stock UG Actuel (Restant)",
+            "estimated_value": "Valeur Reçue Estimée",
+            "latent_cash": "Trésorerie Latente UG"
+        },
+        "filters": {
+            "supplier_split": "Répartition par Fournisseur",
+            "date_from": "Début",
+            "date_to": "Fin",
+            "to": "au",
+            "clear_dates": "Effacer les dates"
+        },
+        "table": {
+            "supplier": "Fournisseur",
+            "lots_count": "Nb Réceptions (Lots)",
+            "received_ug": "UG Reçues (Histo.)",
+            "remaining_stock": "Stock UG Restant",
+            "remaining_value": "Valeur Restante (FCFA)",
+            "empty": "Aucune unité gratuite trouvée sur cette période",
+            "details": {
+                "product": "Produit",
+                "lot": "N° Lot",
+                "date": "Date Réception",
+                "order": "N° Commande",
+                "invoice": "N° Facture",
+                "price": "Prix Vente",
+                "received": "Reçues",
+                "remaining": "Restantes",
+                "val_rest": "Valeur Rest."
+            }
+        },
+        "print_template": {
+            "title": "Rapport Unités Gratuites",
+            "situation": "Situation du stock promotionnel au {{date}}",
+            "footer": "Fin du rapport de stock promotionnel"
         }
     },
     "inventaire": {
@@ -412,6 +532,7 @@
     },
     "promis": {
         "title": "Gestion des Promis",
+        "subtitle": "Gérez les produits promis, les livraisons et les retours en stock",
         "new_btn": "+ Nouveau Promis",
         "filter_status": "Filtrer par statut",
         "status_all": "Tous",
@@ -472,7 +593,15 @@
             "bulk_delivery_error": "Erreur lors de la livraison en masse",
             "bulk_cancel_error": "Erreur lors de l'annulation en masse",
             "sms_success": "SMS envoyé avec succès",
-            "sms_error": "Erreur lors de l'envoi du SMS"
+            "sms_error": "Erreur lors de l'envoi du SMS",
+            "sms_default_body": "Bonjour {{name}}, votre produit {{product}} est disponible à la pharmacie.",
+            "sudo_required_note": "Une confirmation par mot de passe sera requise.",
+            "deliver_confirm": "Marquer ce promis comme délivré ?",
+            "deliver_error": "Erreur lors de la livraison",
+            "cancel_confirm": "Annuler ce promis et réintégrer le stock ?\n\nCette action créera une entrée dans l'historique du produit.\n\nUne confirmation par mot de passe sera requise.",
+            "cancel_error": "Erreur lors de l'annulation",
+            "whatsapp_error": "Erreur lors de l'envoi du rappel WhatsApp",
+            "load_error": "Erreur lors du chargement des promis"
         },
         "modals": {
             "bulk_delivery_title": "Livrer plusieurs promis",
@@ -480,7 +609,9 @@
             "bulk_delivery_confirm": "Délivrer tous",
             "bulk_cancel_title": "Annuler plusieurs promis",
             "bulk_cancel_message": "Annuler {{count}} promis et réintégrer le stock ?\n\nCette action créera des entrées dans l'historique des produits.",
-            "bulk_cancel_confirm": "Annuler tous"
+            "bulk_cancel_confirm": "Annuler tous",
+            "sudo_confirm_title": "Confirmation Requise (Zone Sensible)",
+            "sudo_confirm_message": "Cette action va modifier le stock (réintégration). Veuillez confirmer votre mot de passe pour continuer."
         }
     },
     "analyse": {
@@ -516,6 +647,9 @@
             "supplier": "Fournisseur",
             "current_stock": "Stock Actuel",
             "created_at": "Créé le",
+            "last_purchase": "Dernier Achat",
+            "last_sale": "Dernière Vente",
+            "inactive_since": "Inactif depuis",
             "cost_price": "Prix Achat",
             "stock_value": "Valeur Stock",
             "avg_rotation": "Rotation Moy.",
@@ -679,6 +813,42 @@
             "close_all": "Tout clôturer",
             "reopen_all": "Tout réouvrir",
             "no_lines": "Cet avoir ne contient aucune ligne."
+        },
+        "modals": {
+            "lot_title": "Sélectionner un Lot pour le Retour",
+            "no_lots": "Aucun lot disponible en stock pour ce produit.",
+            "sudo_validate_title": "Validation d'Avoir - {{numero}}",
+            "sudo_validate_message": "Confirmer la validation de l'avoir fournisseur <strong>{{numero}}</strong> ?<br/>Cela réintégrera les produits en stock (ou ajustera selon le type).",
+            "sudo_bulk_validate_title": "Validation groupée - {{count}} avoirs",
+            "sudo_bulk_validate_message": "Confirmer la validation de <strong>{{count}} avoirs</strong> fournisseurs ?<br/>Le stock sera réintégré pour tous."
+        },
+        "toasts": {
+            "select_supplier": "Veuillez sélectionner un fournisseur",
+            "add_product": "Veuillez ajouter au moins un produit",
+            "product_exists": "Ce produit est déjà dans la liste",
+            "load_lots_error": "Erreur lors du chargement des lots",
+            "save_success": "Avoir créé avec succès (Brouillon)",
+            "update_success": "Avoir modifié avec succès",
+            "save_error": "Erreur lors de la sauvegarde",
+            "delete_success": "Avoir supprimé avec succès",
+            "delete_error": "Erreur lors de la suppression",
+            "validate_success": "Avoir validé et stock mis à jour",
+            "validate_error": "Erreur lors de la validation",
+            "line_closed": "Ligne clôturée",
+            "line_reopened": "Ligne réouverte",
+            "update_line_error": "Erreur lors de la mise à jour de la ligne",
+            "bulk_lines_closed": "Toutes les lignes clôturées",
+            "bulk_lines_reopened": "Toutes les lignes réouvertes",
+            "bulk_update_error": "Erreur lors de la mise à jour groupée",
+            "bulk_delete_success": "{{count}} avoirs supprimés",
+            "bulk_delete_error": "Erreur lors de la suppression groupée",
+            "bulk_validate_success": "{{count}} avoirs validés",
+            "bulk_validate_error": "Erreur lors de la validation groupée"
+        },
+        "confirms": {
+            "back_to_list": "Voulez-vous vraiment quitter ? Les modifications non enregistrées seront perdues.",
+            "delete_avoir": "Voulez-vous vraiment supprimer l'avoir brouillon {{numero}} ?",
+            "bulk_delete": "Supprimer ces {{count}} avoirs brouillons ?"
         }
     },
     "reappro": {

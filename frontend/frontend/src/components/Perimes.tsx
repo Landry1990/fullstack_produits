@@ -183,7 +183,7 @@ export default function Perimes() {
         setProcessing(true)
         await axios.post(`${stockLotsEndpoint}${lot.id}/sortir_perimes/`, {
           quantity: qty,
-          reason: 'Périmé / Avarie',
+          reason: t('stock:ajustements.filters.reasons.PERIME') + ' / ' + t('stock:ajustements.filters.reasons.AVARIE'),
           validated_by_id: validatorId,
           sudo_password: password
         })
@@ -210,7 +210,7 @@ export default function Perimes() {
               setProcessing(true)
               await axios.post(`${stockLotsEndpoint}bulk_sortir_perimes/`, {
                   lot_ids: selectedLotIds,
-                  reason: 'Sortie groupée périmés',
+                  reason: t('stock:perimes.confirm.bulk_exit_title'),
                   validated_by_id: validatorId,
                   sudo_password: password
               })
@@ -252,19 +252,19 @@ export default function Perimes() {
 
     const content = `
       <div style="font-family: Arial, sans-serif; color: #333;">
-        <h3 style="text-align: center; border-bottom: 2px solid #333; padding-bottom: 10px;">${t('perimes.history.title')}</h3>
+        <h3 style="text-align: center; border-bottom: 2px solid #333; padding-bottom: 10px;">${t('stock:perimes.history.title')}</h3>
         <p style="text-align: center; font-size: 0.9em; margin-bottom: 20px;">
-          Période: ${new Date(dateDebut).toLocaleDateString()} au ${new Date(dateFin).toLocaleDateString()}
+          ${t('common:period')}: ${new Date(dateDebut).toLocaleDateString()} ${t('common:to').toLowerCase()} ${new Date(dateFin).toLocaleDateString()}
         </p>
         
         <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px; font-size: 0.85em;">
           <thead>
             <tr style="background-color: #f3f4f6;">
-              <th style="border: 1px solid #ddd; padding: 8px; text-align: left;">${t('perimes.history.table.date')}</th>
-              <th style="border: 1px solid #ddd; padding: 8px; text-align: left;">${t('perimes.history.table.product')}</th>
-              <th style="border: 1px solid #ddd; padding: 8px; text-align: left;">${t('perimes.history.table.lot')}</th>
-              <th style="border: 1px solid #ddd; padding: 8px; text-align: right;">${t('perimes.history.table.qty')}</th>
-              <th style="border: 1px solid #ddd; padding: 8px; text-align: right;">${t('perimes.history.table.value')}</th>
+              <th style="border: 1px solid #ddd; padding: 8px; text-align: left;">${t('stock:perimes.history.table.date')}</th>
+              <th style="border: 1px solid #ddd; padding: 8px; text-align: left;">${t('stock:perimes.history.table.product')}</th>
+              <th style="border: 1px solid #ddd; padding: 8px; text-align: left;">${t('stock:perimes.history.table.lot')}</th>
+              <th style="border: 1px solid #ddd; padding: 8px; text-align: right;">${t('stock:perimes.history.table.qty')}</th>
+              <th style="border: 1px solid #ddd; padding: 8px; text-align: right;">${t('stock:perimes.history.table.value')}</th>
             </tr>
           </thead>
           <tbody>
@@ -274,25 +274,25 @@ export default function Perimes() {
                 <td style="border: 1px solid #ddd; padding: 8px;">${adj.produit_name}</td>
                 <td style="border: 1px solid #ddd; padding: 8px;">${adj.lot_number || '-'}</td>
                 <td style="border: 1px solid #ddd; padding: 8px; text-align: right;">${Math.abs(adj.quantity_change)}</td>
-                <td style="border: 1px solid #ddd; padding: 8px; text-align: right; font-weight: bold;">${formatCurrency(adj.valorisation)} F</td>
+                <td style="border: 1px solid #ddd; padding: 8px; text-align: right; font-weight: bold;">${formatCurrency(adj.valorisation)} ${t('common:currency')}</td>
               </tr>
             `).join('')}
           </tbody>
           <tfoot>
             <tr style="background-color: #f9fafb; font-weight: bold;">
-              <td colspan="4" style="border: 1px solid #ddd; padding: 8px; text-align: right;">${t('perimes.history.total_valorization').toUpperCase()}</td>
-              <td style="border: 1px solid #ddd; padding: 8px; text-align: right; color: #dc2626;">${formatCurrency(totalVal)} F</td>
+              <td colspan="4" style="border: 1px solid #ddd; padding: 8px; text-align: right;">${t('stock:perimes.history.total_valorization').toUpperCase()}</td>
+              <td style="border: 1px solid #ddd; padding: 8px; text-align: right; color: #dc2626;">${formatCurrency(totalVal)} ${t('common:currency')}</td>
             </tr>
           </tfoot>
         </table>
         
         <div style="text-align: right; font-size: 0.8em; margin-top: 30px;">
-          <p>Document généré le ${new Date().toLocaleString()}</p>
+          <p>${t('stock:perimes.history_print_generated')} ${new Date().toLocaleString()}</p>
         </div>
       </div>
     `
 
-    printWithTemplate(content, { title: t('perimes.history.title'), width: 800 })
+    printWithTemplate(content, { title: t('stock:perimes.history.title'), width: 800 })
   }
 
   const handleExportExcel = () => {
@@ -452,7 +452,7 @@ export default function Perimes() {
                       {/* 30 jours */}
                       <div className={`border-2 rounded-xl p-4 ${getUrgencyClass(stats.previsions['30j'].valeur_vente)}`}>
                         <div className="flex items-center justify-between mb-2">
-                          <span className="font-bold text-base-content">30 {t('common:days')}</span>
+                          <span className="font-bold text-base-content">{t('common:count_days', { count: 30 })}</span>
                           <span className="badge badge-sm">{t('perimes.prevision.lots_count', { count: stats.previsions['30j'].count_lots })}</span>
                         </div>
                         <p className="text-xl font-bold">{formatCurrency(stats.previsions['30j'].valeur_vente)} F</p>
@@ -462,7 +462,7 @@ export default function Perimes() {
                       {/* 60 jours */}
                       <div className={`border-2 rounded-xl p-4 ${getUrgencyClass(stats.previsions['60j'].valeur_vente)}`}>
                         <div className="flex items-center justify-between mb-2">
-                          <span className="font-bold text-base-content">60 {t('common:days')}</span>
+                           <span className="font-bold text-base-content">{t('common:count_days', { count: 60 })}</span>
                           <span className="badge badge-sm">{t('perimes.prevision.lots_count', { count: stats.previsions['60j'].count_lots })}</span>
                         </div>
                         <p className="text-xl font-bold">{formatCurrency(stats.previsions['60j'].valeur_vente)} F</p>
@@ -472,7 +472,7 @@ export default function Perimes() {
                       {/* 90 jours */}
                       <div className={`border-2 rounded-xl p-4 ${getUrgencyClass(stats.previsions['90j'].valeur_vente)}`}>
                         <div className="flex items-center justify-between mb-2">
-                          <span className="font-bold text-base-content">90 {t('common:days')}</span>
+                           <span className="font-bold text-base-content">{t('common:count_days', { count: 90 })}</span>
                           <span className="badge badge-sm">{t('perimes.prevision.lots_count', { count: stats.previsions['90j'].count_lots })}</span>
                         </div>
                         <p className="text-xl font-bold">{formatCurrency(stats.previsions['90j'].valeur_vente)} F</p>
@@ -497,8 +497,8 @@ export default function Perimes() {
                               <th>{t('perimes.table.lot')}</th>
                               <th>{t('perimes.table.expiration')}</th>
                               <th className="text-right">{t('perimes.table.qty')}</th>
-                              <th className="text-right">{t('perimes.table.value')} Coût</th>
-                              <th className="text-right">{t('perimes.table.value')} Vente</th>
+                              <th className="text-right">{t('perimes.table.value_cost')}</th>
+                              <th className="text-right">{t('perimes.table.value_sale')}</th>
                             </tr>
                           </thead>
                           <tbody>
@@ -512,8 +512,8 @@ export default function Perimes() {
                                   </span>
                                 </td>
                                 <td className="text-right font-bold">{item.quantity}</td>
-                                <td className="text-right text-error">{formatCurrency(item.valeur_cout)} F</td>
-                                <td className="text-right text-warning">{formatCurrency(item.valeur_vente)} F</td>
+                                <td className="text-right text-error">{formatCurrency(item.valeur_cout)} {t('common:currency')}</td>
+                                <td className="text-right text-warning">{formatCurrency(item.valeur_vente)} {t('common:currency')}</td>
                               </tr>
                             ))}
                           </tbody>
@@ -535,7 +535,7 @@ export default function Perimes() {
               </>
             ) : (
               <div className="text-center py-12 text-base-content/60">
-                <p>Aucune donnée disponible</p>
+                <p>{t('stock:perimes.no_data')}</p>
               </div>
             )}
           </div>
@@ -584,7 +584,7 @@ export default function Perimes() {
                            </div>
                            <div className="flex gap-3 items-center">
                               <div className="flex items-center gap-2 bg-base-200/50 p-1 px-3 rounded-xl border border-base-300/50">
-                                <span className="text-[10px] font-bold text-base-content/40 uppercase">Filtres</span>
+                                <span className="text-[10px] font-bold text-base-content/40 uppercase">{t('common:filters')}</span>
                                 <div className="h-4 w-[1px] bg-base-300 mx-1"></div>
                                 <label className="flex items-center gap-2 cursor-pointer group">
                                   <input 
@@ -593,7 +593,7 @@ export default function Perimes() {
                                       checked={showExpiredOnly} 
                                       onChange={(e) => setShowExpiredOnly(e.target.checked)}
                                   />
-                                  <span className="text-[11px] font-semibold text-base-content/60 group-hover:text-base-content transition-colors">Déjà périmés</span> 
+                                  <span className="text-[11px] font-semibold text-base-content/60 group-hover:text-base-content transition-colors">{t('stock:perimes.show_expired_only')}</span> 
                                 </label>
                                 
                                 {!showExpiredOnly && (
@@ -602,10 +602,10 @@ export default function Perimes() {
                                         value={filterDays} 
                                         onChange={(e) => setFilterDays(parseInt(e.target.value))}
                                     >
-                                        <option value={30}>30 {t('common:days')}</option>
-                                        <option value={60}>60 {t('common:days')}</option>
-                                        <option value={90}>90 {t('common:days')}</option>
-                                        <option value={180}>180 {t('common:days')}</option>
+                                         <option value={30}>{t('common:count_days', { count: 30 })}</option>
+                                         <option value={60}>{t('common:count_days', { count: 60 })}</option>
+                                         <option value={90}>{t('common:count_days', { count: 90 })}</option>
+                                         <option value={180}>{t('common:count_days', { count: 180 })}</option>
                                     </select>
                                 )}
                               </div>
@@ -682,7 +682,7 @@ export default function Perimes() {
                             </div>
                         </td>
                         <td className="py-2.5 px-4 text-right text-error font-mono font-black text-xs">
-                          {formatCurrency(Number(lot.price_cost || 0) * lot.quantity_remaining)} F
+                          {formatCurrency(Number(lot.price_cost || 0) * lot.quantity_remaining)} {t('common:currency')}
                         </td>
                         <td className="py-2.5 px-4 text-center">
                           {lot.quantity_remaining > 0 ? (
@@ -715,7 +715,7 @@ export default function Perimes() {
              <div className="mb-4 flex flex-wrap gap-4 items-center justify-between bg-base-50 p-4 rounded-xl border border-base-200">
                 <div className="flex flex-wrap gap-4 items-center">
                     <div className="flex flex-col gap-1">
-                        <span className="text-[10px] font-bold text-base-content/40 uppercase pl-1">Du</span>
+                        <span className="text-[10px] font-bold text-base-content/40 uppercase pl-1">{t('common:from')}</span>
                         <input 
                             type="date" 
                             className="input input-bordered input-sm rounded-lg" 
@@ -724,7 +724,7 @@ export default function Perimes() {
                         />
                     </div>
                     <div className="flex flex-col gap-1">
-                        <span className="text-[10px] font-bold text-base-content/40 uppercase pl-1">Au</span>
+                        <span className="text-[10px] font-bold text-base-content/40 uppercase pl-1">{t('common:to')}</span>
                         <input 
                             type="date" 
                             className="input input-bordered input-sm rounded-lg" 
@@ -758,7 +758,7 @@ export default function Perimes() {
                     <div className="stat">
                         <div className="stat-title text-xs font-bold uppercase text-base-content/50">{t('perimes.history.total_valorization')}</div>
                         <div className="stat-value text-error text-2xl">
-                            {formatCurrency(adjustments.reduce((sum, a) => sum + (a.valorisation || 0), 0))} F
+                             {formatCurrency(adjustments.reduce((sum, a) => sum + (a.valorisation || 0), 0))} {t('common:currency')}
                         </div>
                         <div className="stat-desc font-medium text-base-content/40">{t('perimes.history.operations_count', { count: adjustments.length })}</div>
                     </div>
@@ -802,11 +802,11 @@ export default function Perimes() {
                                             {adj.quantity_change}
                                         </td>
                                         <td className="text-right font-bold">
-                                            {formatCurrency(adj.valorisation)} F
+                                             {formatCurrency(adj.valorisation)} {t('common:currency')}
                                         </td>
                                         <td className="text-xs">{adj.user_name}</td>
                                         <td className="text-xs truncate max-w-[150px]" title={adj.reason_detail}>
-                                            {adj.reason_type_display} {adj.reason_detail ? `- ${adj.reason_detail}` : ''}
+                                            {t(`stock:ajustements.filters.reasons.${adj.reason_type}`, { defaultValue: adj.reason_type_display })} {adj.reason_detail ? `- ${adj.reason_detail}` : ''}
                                         </td>
                                     </tr>
                                 ))}

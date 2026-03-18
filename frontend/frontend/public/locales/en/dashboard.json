@@ -1,7 +1,7 @@
 {
     "title": "Dashboard",
     "manager": "Manager",
-    "subtitle": "Performance monitoring and business objectives",
+    "subtitle": "Gross Margin tracking and expense coverage",
     "set_objective": "Set an Objective",
     "progression": "Progression",
     "target": "Target",
@@ -120,7 +120,7 @@
     "manager_dashboard": {
         "title": "Dashboard",
         "manager": "Manager",
-        "subtitle": "Performance monitoring and business objectives",
+        "subtitle": "Gross Margin tracking and expense coverage",
         "set_objective": "Set an Objective",
         "loading": "Loading dashboard...",
         "settings_tooltip": "Configure objectives",
@@ -188,6 +188,18 @@
         "margin_label": "Margin",
         "palier_label": "Tier {{level}} Objective",
         "ca_target_placeholder": "Ex: 500000",
-        "since_date": "Since {{date}}"
+        "since_date": "Since {{date}}",
+        "alerts": {
+            "perf_title": "Performance Alert",
+            "perf_msg": "Daily Revenue is behind ({{rate}}% of target). Planned corrective actions.",
+            "shortage_title": "Critical Shortages",
+            "shortage_msg": "{{count}} products are below their minimum stock level.",
+            "debt_title": "Important Debts",
+            "debt_msg": "{{count}} clients exceed {{threshold}}F in debt. Top: {{top_name}} ({{top_debt}}F).",
+            "dormant_title": "Dormant Stocks",
+            "dormant_msg": "{{count}} products have not had any sales for {{days}} days. Consider a promotion.",
+            "drop_title": "Weekly Drop",
+            "drop_msg": "This week's CA is significantly lower than last week (-30%+)."
+        }
     }
 }

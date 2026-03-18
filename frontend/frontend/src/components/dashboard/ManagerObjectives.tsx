@@ -2,13 +2,7 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { RefreshCw, Target } from 'lucide-react';
 
-const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('fr-FR', {
-        style: 'currency',
-        currency: 'XOF',
-        maximumFractionDigits: 0
-    }).format(amount).replace('XOF', 'F');
-};
+import { formatCurrency } from '../../utils/formatters';
 
 interface ManagerObjectivesProps {
     currentObj: any;
@@ -17,7 +11,11 @@ interface ManagerObjectivesProps {
 }
 
 export const ManagerObjectives: React.FC<ManagerObjectivesProps> = ({ currentObj, onEdit, onRefresh }) => {
-    const { t } = useTranslation();
+    const { t } = useTranslation(['dashboard', 'common']);
+    const currentLocale = t('common:locale', { defaultValue: 'fr-FR' });
+    const currencySymbol = t('common:currency_symbol', { defaultValue: 'F' });
+
+    const formatCurrencyLocal = (amount: number) => formatCurrency(amount, currentLocale, currencySymbol);
 
     const objectiveTypes = [
         { label: t('manager_dashboard.periods.daily', 'Journalier'), code: 'JOUR', color: 'text-primary' },
@@ -49,7 +47,7 @@ export const ManagerObjectives: React.FC<ManagerObjectivesProps> = ({ currentObj
                             <div>
                                 <span className={`text-[10px] font-bold uppercase tracking-widest ${p.color}`}>{p.label}</span>
                                 <div className="font-black text-base-content text-lg">
-                                    {obj ? formatCurrency(Number(obj.ca_objectif)) : t('manager_dashboard.not_defined', 'Non défini')}
+                                    {obj ? formatCurrencyLocal(Number(obj.ca_objectif)) : t('manager_dashboard.not_defined', 'Non défini')}
                                 </div>
                                 {obj && obj.date_debut && (
                                     <div className="text-[10px] text-base-content/40 font-bold uppercase mt-0.5">

@@ -26,7 +26,11 @@ export const SmsModal: React.FC<SmsModalProps> = ({
 
     useEffect(() => {
         if (promis && isOpen) {
-            setMessage(`Bonjour ${promis.client_display}, votre produit ${promis.produit_name} est disponible à la pharmacie.`);
+            setMessage(t('stock:promis.messages.sms_default_body', { 
+                name: promis.client_display, 
+                product: promis.produit_name,
+                defaultValue: `Bonjour ${promis.client_display}, votre produit ${promis.produit_name} est disponible à la pharmacie.`
+            }));
         } else if (!isOpen) {
             setMessage('');
         }
@@ -44,10 +48,10 @@ export const SmsModal: React.FC<SmsModalProps> = ({
                 context_type: 'PROMIS',
                 context_id: promis.id
             });
-            toast.success(t('promis.messages.sms_success'));
+            toast.success(t('stock:promis.messages.sms_success'));
             onClose();
         } catch (err: any) {
-            toast.error(t('promis.messages.sms_error'));
+            toast.error(t('stock:promis.messages.sms_error'));
             console.error(err);
         } finally {
             setSendingSms(false);
@@ -58,14 +62,14 @@ export const SmsModal: React.FC<SmsModalProps> = ({
         <PremiumModal
             isOpen={isOpen}
             onClose={onClose}
-            title={t('promis.modal.title_sms', { name: promis?.client_display })}
+            title={t('stock:promis.modal.title_sms', { name: promis?.client_display })}
         >
             <form onSubmit={handleSendSms} className="space-y-5">
                 <div className="form-control">
                     <label className="label font-medium text-sm text-base-content/70">
                         <span className="flex items-center gap-2">
                             <Phone className="w-4 h-4" />
-                            {t('promis.modal.sms_number')}
+                            {t('stock:promis.modal.sms_number')}
                         </span>
                     </label>
                     <input 
@@ -78,7 +82,7 @@ export const SmsModal: React.FC<SmsModalProps> = ({
                 
                 <div className="form-control">
                     <label className="label font-medium text-sm text-base-content/70">
-                        {t('promis.modal.sms_message')}
+                        {t('stock:promis.modal.sms_message')}
                     </label>
                     <textarea 
                         className="textarea textarea-bordered h-32 focus:border-primary transition-colors text-base"
@@ -103,7 +107,7 @@ export const SmsModal: React.FC<SmsModalProps> = ({
                         disabled={sendingSms}
                     >
                         {sendingSms ? <span className="loading loading-spinner loading-sm"/> : <Send className="w-4 h-4" />}
-                        {t('promis.actions.sms_send')}
+                        {t('stock:promis.actions.sms_send')}
                     </button>
                 </div>
             </form>

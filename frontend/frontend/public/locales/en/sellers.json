@@ -1,0 +1,20 @@
+{
+    "ranking": {
+        "title": "Seller Ranking",
+        "subtitle": "Monthly performance and evolution",
+        "period": {
+            "month": "Month",
+            "quarter": "Quarter",
+            "year": "Year"
+        },
+        "table_title": "Full Ranking",
+        "seller": "Seller",
+        "sales": "Sales",
+        "revenue": "Revenue",
+        "avg_basket": "Avg Basket",
+        "evolution": "Evol.",
+        "no_data": "No data for this period",
+        "evolution_chart": "Evolution (12 months)",
+        "comparison": "Revenue Comparison"
+    }
+}

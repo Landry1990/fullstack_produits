@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import PremiumModal from '../../common/PremiumModal';
 import { formatCurrency } from '../../../utils/formatters';
 import { format } from 'date-fns';
+import { fr, enUS } from 'date-fns/locale';
 
 
 interface LotModalProps {
@@ -20,7 +21,7 @@ export const AvoirsLotModal: React.FC<LotModalProps> = ({
     loadingLots,
     onSelectLot
 }) => {
-    const { t } = useTranslation();
+    const { t, i18n } = useTranslation(['stock', 'common']);
     return (
         <PremiumModal
             isOpen={isOpen}
@@ -49,7 +50,7 @@ export const AvoirsLotModal: React.FC<LotModalProps> = ({
                                     <tr key={lot.id}>
                                         <td className="font-mono font-bold text-xs">{lot.lot || 'N/A'}</td>
                                         <td className="text-xs">
-                                            {lot.date_expiration ? format(new Date(lot.date_expiration), 'dd/MM/yyyy') : '-'}
+                                            {lot.date_expiration ? format(new Date(lot.date_expiration), 'dd/MM/yyyy', { locale: i18n.language === 'fr' ? fr : enUS }) : '-'}
                                         </td>
                                         <td>
                                             <span className="badge badge-sm badge-ghost">{lot.quantity_remaining}</span>
@@ -61,7 +62,7 @@ export const AvoirsLotModal: React.FC<LotModalProps> = ({
                                                 className="btn btn-primary btn-sm"
                                                 onClick={() => onSelectLot(lot)}
                                             >
-                                                {t('common.select', 'Sélectionner')}
+                                                {t('common:select', 'Sélectionner')}
                                             </button>
                                         </td>
                                     </tr>

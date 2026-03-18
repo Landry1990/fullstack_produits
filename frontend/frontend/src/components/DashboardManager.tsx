@@ -11,7 +11,7 @@ import { ObjectivesSettings } from './dashboard/ObjectivesSettings';
 import { Settings } from 'lucide-react';
 
 export default function DashboardManager() {
-    const { t } = useTranslation();
+    const { t } = useTranslation(['dashboard', 'common']);
     const {
         stats,
         statsLoading,

@@ -1,9 +1,11 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import axios from 'axios';
 import { toast } from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
 import type { StockAdjustment, PaginatedResponse, StockAdjustmentStats } from '../types';
 
 export const useAjustementsData = () => {
+    const { t } = useTranslation(['common']);
     const [adjustments, setAdjustments] = useState<StockAdjustment[]>([]);
     const [loading, setLoading] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
@@ -70,7 +72,7 @@ export const useAjustementsData = () => {
             }
 
         } catch (err) {
-            toast.error('Erreur lors du chargement des ajustements');
+            toast.error(t('common:messages.error_loading'));
             console.error(err);
         } finally {
             setLoading(false);
@@ -107,9 +109,9 @@ export const useAjustementsData = () => {
             link.remove();
             window.URL.revokeObjectURL(url);
 
-            toast.success('Export réussi');
+            toast.success(t('common:messages.export_success'));
         } catch (err) {
-            toast.error('Erreur lors de l\'export');
+            toast.error(t('common:messages.export_error'));
             console.error(err);
         }
     }, [adjustmentsEndpoint, searchQuery, filterReasonType, dateStart, dateEnd]);

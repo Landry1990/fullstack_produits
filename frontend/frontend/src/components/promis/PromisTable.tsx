@@ -1,7 +1,7 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { format } from 'date-fns';
-import { fr } from 'date-fns/locale';
+import { fr, enUS } from 'date-fns/locale';
 import { Check, X, Printer, MessageCircle, MoreVertical } from 'lucide-react';
 import type { Promis } from '../../types';
 import ActionIcon from '../ui/ActionIcon';
@@ -40,7 +40,8 @@ export const PromisTable: React.FC<PromisTableProps> = ({
     onClearSelection,
     bulkLoading
 }) => {
-    const { t } = useTranslation(['stock', 'common']);
+    const { t, i18n } = useTranslation(['stock', 'common']);
+    const currentLocale = i18n.language === 'fr' ? fr : enUS;
 
     const getStatusStyle = (status: string) => {
         switch (status) {
@@ -55,7 +56,7 @@ export const PromisTable: React.FC<PromisTableProps> = ({
         return (
             <div className="flex flex-col items-center justify-center p-12 text-base-content/60 gap-4">
                 <span className="loading loading-spinner loading-md text-primary" />
-                <p>{t('promis.messages.loading')}</p>
+                <p>{t('stock:promis.messages.loading')}</p>
             </div>
         );
     }
@@ -68,7 +69,7 @@ export const PromisTable: React.FC<PromisTableProps> = ({
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
                     </svg>
                 </div>
-                <p>{t('promis.messages.empty')}</p>
+                <p>{t('stock:promis.messages.empty')}</p>
             </div>
         );
     }
@@ -90,31 +91,31 @@ export const PromisTable: React.FC<PromisTableProps> = ({
                         <>
                             <li>
                                 <a onClick={() => onDeliver(id)} className="flex items-center gap-3 py-3 hover:bg-success/10 text-success font-medium">
-                                    <Check className="w-4 h-4" /> {t('promis.actions.deliver')}
+                                    <Check className="w-4 h-4" /> {t('stock:promis.actions.deliver')}
                                 </a>
                             </li>
                             <li>
                                 <a onClick={() => onCancel(id)} className="flex items-center gap-3 py-3 hover:bg-error/10 text-error font-medium">
-                                    <X className="w-4 h-4" /> {t('promis.actions.cancel')}
+                                    <X className="w-4 h-4" /> {t('stock:promis.actions.cancel')}
                                 </a>
                             </li>
                         </>
                     )}
                     <li>
                         <a onClick={() => onPrint(id)} className="flex items-center gap-3 py-3 hover:bg-base-200">
-                            <Printer className="w-4 h-4" /> {t('promis.actions.print')}
+                            <Printer className="w-4 h-4" /> {t('stock:promis.actions.print')}
                         </a>
                     </li>
                     {p.client_phone_display && (
                         <>
                             <li>
                                 <a onClick={() => onSms(p)} className="flex items-center gap-3 py-3 hover:bg-info/10 text-info">
-                                    <MessageCircle className="w-4 h-4" /> {t('promis.actions.sms')}
+                                    <MessageCircle className="w-4 h-4" /> {t('stock:promis.actions.sms')}
                                 </a>
                             </li>
                             <li>
                                 <a onClick={() => onWhatsApp(id)} className="flex items-center gap-3 py-3 hover:bg-success/10 text-success">
-                                    <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.414 0 .018 5.396.015 12.03c0 2.12.541 4.191 1.57 6.017L0 24l6.135-1.61a11.75 11.75 0 005.917 1.595h.004c6.637 0 12.032-5.396 12.035-12.032.002-3.218-1.248-6.242-3.517-8.511z"/></svg> {t('promis.actions.whatsapp')}
+                                    <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.414 0 .018 5.396.015 12.03c0 2.12.541 4.191 1.57 6.017L0 24l6.135-1.61a11.75 11.75 0 005.917 1.595h.004c6.637 0 12.032-5.396 12.035-12.032.002-3.218-1.248-6.242-3.517-8.511z"/></svg> {t('stock:promis.actions.whatsapp')}
                                 </a>
                             </li>
                         </>
@@ -130,13 +131,13 @@ export const PromisTable: React.FC<PromisTableProps> = ({
                 <li>
                     <a onClick={onBulkDeliver} className={`flex items-center gap-3 py-3 hover:bg-success/10 text-success font-medium ${bulkLoading ? 'disabled' : ''}`}>
                         {bulkLoading ? <span className="loading loading-spinner loading-xs" /> : <Check className="w-4 h-4" />}
-                        {t('promis.actions.deliver')}
+                        {t('stock:promis.actions.deliver')}
                     </a>
                 </li>
                 <li>
                     <a onClick={onBulkCancel} className={`flex items-center gap-3 py-3 hover:bg-error/10 text-error font-medium ${bulkLoading ? 'disabled' : ''}`}>
                         {bulkLoading ? <span className="loading loading-spinner loading-xs" /> : <X className="w-4 h-4" />}
-                        {t('promis.actions.cancel')}
+                        {t('stock:promis.actions.cancel')}
                     </a>
                 </li>
             </>
@@ -170,13 +171,13 @@ export const PromisTable: React.FC<PromisTableProps> = ({
                             </SelectionHeader>
                         ) : (
                             <>
-                                <th className="sticky top-0 z-30 bg-base-200 opacity-100 border-b border-base-300 text-[10px] font-black uppercase tracking-widest text-base-content/40 px-6 py-4">{t('promis.table.date')}</th>
-                                <th className="sticky top-0 z-30 bg-base-200 opacity-100 border-b border-base-300 text-[10px] font-black uppercase tracking-widest text-base-content/40 px-6 py-4">{t('promis.table.client')}</th>
-                                <th className="sticky top-0 z-30 bg-base-200 opacity-100 border-b border-base-300 text-[10px] font-black uppercase tracking-widest text-base-content/40 px-6 py-4">{t('promis.table.phone')}</th>
-                                <th className="sticky top-0 z-30 bg-base-200 opacity-100 border-b border-base-300 text-[10px] font-black uppercase tracking-widest text-base-content/40 px-6 py-4">{t('promis.table.product')}</th>
-                                <th className="sticky top-0 z-30 bg-base-200 opacity-100 border-b border-base-300 text-[10px] font-black uppercase tracking-widest text-base-content/40 px-6 py-4 text-center">{t('promis.table.qty')}</th>
-                                <th className="sticky top-0 z-30 bg-base-200 opacity-100 border-b border-base-300 text-[10px] font-black uppercase tracking-widest text-base-content/40 px-6 py-4 text-center">{t('promis.table.status')}</th>
-                                <th className="sticky top-0 z-30 bg-base-200 opacity-100 border-b border-base-300 text-[10px] font-black uppercase tracking-widest text-base-content/40 px-6 py-4 text-right pr-6">{t('promis.table.actions')}</th>
+                                <th className="sticky top-0 z-30 bg-base-200 opacity-100 border-b border-base-300 text-[10px] font-black uppercase tracking-widest text-base-content/40 px-6 py-4">{t('stock:promis.table.date')}</th>
+                                <th className="sticky top-0 z-30 bg-base-200 opacity-100 border-b border-base-300 text-[10px] font-black uppercase tracking-widest text-base-content/40 px-6 py-4">{t('stock:promis.table.client')}</th>
+                                <th className="sticky top-0 z-30 bg-base-200 opacity-100 border-b border-base-300 text-[10px] font-black uppercase tracking-widest text-base-content/40 px-6 py-4">{t('stock:promis.table.phone')}</th>
+                                <th className="sticky top-0 z-30 bg-base-200 opacity-100 border-b border-base-300 text-[10px] font-black uppercase tracking-widest text-base-content/40 px-6 py-4">{t('stock:promis.table.product')}</th>
+                                <th className="sticky top-0 z-30 bg-base-200 opacity-100 border-b border-base-300 text-[10px] font-black uppercase tracking-widest text-base-content/40 px-6 py-4 text-center">{t('stock:promis.table.qty')}</th>
+                                <th className="sticky top-0 z-30 bg-base-200 opacity-100 border-b border-base-300 text-[10px] font-black uppercase tracking-widest text-base-content/40 px-6 py-4 text-center">{t('stock:promis.table.status')}</th>
+                                <th className="sticky top-0 z-30 bg-base-200 opacity-100 border-b border-base-300 text-[10px] font-black uppercase tracking-widest text-base-content/40 px-6 py-4 text-right pr-6">{t('stock:promis.table.actions')}</th>
                             </>
                         )}
                     </tr>
@@ -198,8 +199,8 @@ export const PromisTable: React.FC<PromisTableProps> = ({
                             </td>
                             <td>
                                 <div className="flex flex-col">
-                                    <span className="font-semibold text-base-content">{format(new Date(p.date_promis), 'dd/MM/yyyy', { locale: fr })}</span>
-                                    <span className="text-xs text-base-content/60">{format(new Date(p.date_promis), 'HH:mm', { locale: fr })}</span>
+                                    <span className="font-semibold text-base-content">{format(new Date(p.date_promis), 'dd/MM/yyyy', { locale: currentLocale })}</span>
+                                    <span className="text-xs text-base-content/60">{format(new Date(p.date_promis), 'HH:mm', { locale: currentLocale })}</span>
                                 </div>
                             </td>
                             <td>
@@ -225,7 +226,7 @@ export const PromisTable: React.FC<PromisTableProps> = ({
                                 </span>
                                 {p.status === 'DEL' && p.date_livraison && (
                                     <div className="text-[10px] text-success mt-1 opacity-80">
-                                        Livré le {format(new Date(p.date_livraison), 'dd/MM/yyyy', { locale: fr })}
+                                        {t('stock:promis.messages.delivered_on', { date: format(new Date(p.date_livraison), 'dd/MM/yyyy', { locale: currentLocale }) })}
                                     </div>
                                 )}
                             </td>
@@ -237,13 +238,13 @@ export const PromisTable: React.FC<PromisTableProps> = ({
                                                 <ActionIcon 
                                                     icon={Check}
                                                     onClick={() => onDeliver(p.id)}
-                                                    title={t('promis.actions.deliver')}
+                                                    title={t('stock:promis.actions.deliver')}
                                                     variant="success"
                                                 />
                                                 <ActionIcon 
                                                     icon={X}
                                                     onClick={() => onCancel(p.id)}
-                                                    title={t('promis.actions.cancel')}
+                                                    title={t('stock:promis.actions.cancel')}
                                                     variant="error"
                                                 />
                                             </>
@@ -257,7 +258,7 @@ export const PromisTable: React.FC<PromisTableProps> = ({
                                                 <li>
                                                     <a onClick={() => onPrint(p.id)} className="flex items-center gap-2 hover:bg-primary/10 hover:text-primary">
                                                         <Printer className="w-4 h-4" />
-                                                        {t('promis.actions.print')}
+                                                        {t('stock:promis.actions.print')}
                                                     </a>
                                                 </li>
                                                 {p.client_phone_display && (
@@ -265,13 +266,13 @@ export const PromisTable: React.FC<PromisTableProps> = ({
                                                         <li>
                                                             <a onClick={() => onSms(p)} className="flex items-center gap-2 hover:bg-info/10 hover:text-info">
                                                                 <MessageCircle className="w-4 h-4" />
-                                                                {t('promis.actions.sms')}
+                                                                {t('stock:promis.actions.sms')}
                                                             </a>
                                                         </li>
                                                         <li>
                                                             <a onClick={() => onWhatsApp(p.id)} className="flex items-center gap-2 hover:bg-success/10 hover:text-success font-bold">
                                                                 <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.414 0 .018 5.396.015 12.03c0 2.12.541 4.191 1.57 6.017L0 24l6.135-1.61a11.75 11.75 0 005.917 1.595h.004c6.637 0 12.032-5.396 12.035-12.032.002-3.218-1.248-6.242-3.517-8.511z"/></svg>
-                                                                {t('promis.actions.whatsapp')}
+                                                                {t('stock:promis.actions.whatsapp')}
                                                             </a>
                                                         </li>
                                                     </>

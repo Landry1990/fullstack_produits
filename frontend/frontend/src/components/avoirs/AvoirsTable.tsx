@@ -1,7 +1,7 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { format } from 'date-fns';
-import { fr } from 'date-fns/locale';
+import { fr, enUS } from 'date-fns/locale';
 import { Eye, Edit, Trash2, CheckCircle2, Check } from 'lucide-react';
 import type { Avoir } from '../../types';
 import { formatCurrency } from '../../utils/formatters';
@@ -42,34 +42,41 @@ export const AvoirsTable: React.FC<AvoirsTableProps> = ({
     const { t, i18n } = useTranslation(['stock', 'common']);
 
     const getStatusStyle = (status: string) => {
-        switch (status) {
-            case 'BROUILLON': return 'bg-warning/10 text-warning border-warning/20';
+        switch (status?.toUpperCase()) {
+            case 'BROUILLON':
+            case 'BRO': return 'bg-warning/10 text-warning border-warning/20';
             case 'VAL':
-            case 'VALIDÉ': return 'bg-success/10 text-success border-success/20';
+            case 'VALIDE':
+            case 'VALIDÉ':
+            case 'VALIDEE':
+            case 'VALIDÉE': return 'bg-success/10 text-success border-success/20';
             default: return 'bg-base-200 text-base-content/60 border-base-300';
         }
     };
 
     const getTypeAvoirLabel = (type: string) => {
-        switch (type) {
+        switch (type?.toUpperCase()) {
             case 'PERIME':
-            case 'Périmé': return t('avoirs.types.perime');
-            case 'CASSE': return t('avoirs.types.casse');
-            case 'ERREUR_LIVRAISON': return t('avoirs.types.erreur_livraison');
-            case 'AVARIE': return t('avoirs.types.avarie');
-            case 'NON_FACTURE': return t('avoirs.types.non_facture');
-            case 'AUTRE': return t('avoirs.types.autre');
+            case 'PÉRIMÉ': return t('stock:avoirs.types.perime');
+            case 'CASSE':
+            case 'CASSÉ': return t('stock:avoirs.types.casse');
+            case 'ERREUR_LIVRAISON': return t('stock:avoirs.types.erreur_livraison');
+            case 'AVARIE': return t('stock:avoirs.types.avarie');
+            case 'NON_FACTURE': return t('stock:avoirs.types.non_facture');
+            case 'AUTRE': return t('stock:avoirs.types.autre');
             default: return type;
         }
     };
 
     const getStatusLabel = (status: string) => {
         switch (status?.toUpperCase()) {
-            case 'BROUILLON': return t('avoirs.statuses.brouillon');
+            case 'BROUILLON':
+            case 'BRO': return t('stock:avoirs.statuses.brouillon');
             case 'VAL':
+            case 'VALIDE':
             case 'VALIDÉ':
             case 'VALIDEE':
-            case 'VALIDE': return t('avoirs.statuses.valide');
+            case 'VALIDÉE': return t('stock:avoirs.statuses.valide');
             default: return status;
         }
     };
@@ -78,7 +85,7 @@ export const AvoirsTable: React.FC<AvoirsTableProps> = ({
         return (
             <div className="flex flex-col items-center justify-center p-12 text-base-content/60 gap-4">
                 <span className="loading loading-spinner loading-md text-primary" />
-                <p>{t('avoirs.loading')}</p>
+                <p>{t('stock:avoirs.loading')}</p>
             </div>
         );
     }
@@ -91,12 +98,15 @@ export const AvoirsTable: React.FC<AvoirsTableProps> = ({
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
                     </svg>
                 </div>
-                <p>{t('avoirs.empty')}</p>
+                <p>{t('stock:avoirs.empty')}</p>
             </div>
         );
     }
 
-    const draftAvoirsCount = avoirs.filter(a => a.status === 'BROUILLON').length;
+    const draftAvoirsCount = avoirs.filter(a => {
+        const s = a.status?.toUpperCase();
+        return s === 'BROUILLON' || s === 'BRO';
+    }).length;
     const allSelected = draftAvoirsCount > 0 && selectedIds.size === draftAvoirsCount;
 
     const renderBulkActions = () => {
@@ -114,7 +124,7 @@ export const AvoirsTable: React.FC<AvoirsTableProps> = ({
                             <Eye className="w-4 h-4" /> {t('common:view')}
                         </a>
                     </li>
-                    {avoir.status === 'BROUILLON' && (
+                    {(avoir.status?.toUpperCase() === 'BROUILLON' || avoir.status?.toUpperCase() === 'BRO') && (
                         <>
                             <li>
                                 <a onClick={() => onEdit(avoir)} className="flex items-center gap-3 py-3 hover:bg-warning/10 text-warning font-medium">
@@ -184,11 +194,11 @@ export const AvoirsTable: React.FC<AvoirsTableProps> = ({
                             </SelectionHeader>
                         ) : (
                             <>
-                                <th className="sticky top-0 z-30 bg-base-200 opacity-100 border-b border-base-300 text-[10px] font-black uppercase tracking-widest text-base-content/40 px-6 py-4">{t('avoirs.table.date')}</th>
-                                <th className="sticky top-0 z-30 bg-base-200 opacity-100 border-b border-base-300 text-[10px] font-black uppercase tracking-widest text-base-content/40 px-6 py-4">{t('avoirs.table.numero')}</th>
-                                <th className="sticky top-0 z-30 bg-base-200 opacity-100 border-b border-base-300 text-[10px] font-black uppercase tracking-widest text-base-content/40 px-6 py-4">{t('avoirs.table.fournisseur')}</th>
-                                <th className="sticky top-0 z-30 bg-base-200 opacity-100 border-b border-base-300 text-[10px] font-black uppercase tracking-widest text-base-content/40 px-6 py-4 text-right">{t('avoirs.table.montant')}</th>
-                                <th className="sticky top-0 z-30 bg-base-200 opacity-100 border-b border-base-300 text-[10px] font-black uppercase tracking-widest text-base-content/40 px-6 py-4 text-center">{t('avoirs.table.status')}</th>
+                                <th className="sticky top-0 z-30 bg-base-200 opacity-100 border-b border-base-300 text-[10px] font-black uppercase tracking-widest text-base-content/40 px-6 py-4">{t('stock:avoirs.table.date')}</th>
+                                <th className="sticky top-0 z-30 bg-base-200 opacity-100 border-b border-base-300 text-[10px] font-black uppercase tracking-widest text-base-content/40 px-6 py-4">{t('stock:avoirs.table.numero')}</th>
+                                <th className="sticky top-0 z-30 bg-base-200 opacity-100 border-b border-base-300 text-[10px] font-black uppercase tracking-widest text-base-content/40 px-6 py-4">{t('stock:avoirs.table.fournisseur')}</th>
+                                <th className="sticky top-0 z-30 bg-base-200 opacity-100 border-b border-base-300 text-[10px] font-black uppercase tracking-widest text-base-content/40 px-6 py-4 text-right">{t('stock:avoirs.table.montant')}</th>
+                                <th className="sticky top-0 z-30 bg-base-200 opacity-100 border-b border-base-300 text-[10px] font-black uppercase tracking-widest text-base-content/40 px-6 py-4 text-center">{t('stock:avoirs.table.status')}</th>
                                 <th className="sticky top-0 z-30 bg-base-200 opacity-100 border-b border-base-300 text-[10px] font-black uppercase tracking-widest text-base-content/40 px-6 py-4 text-right pr-6">{t('common:actions_title')}</th>
                             </>
                         )}
@@ -202,7 +212,7 @@ export const AvoirsTable: React.FC<AvoirsTableProps> = ({
                             onClick={() => selectedIds.size === 0 && onView(avoir)}
                         >
                             <td className="text-center" onClick={(e) => e.stopPropagation()}>
-                                {avoir.status === 'BROUILLON' && (
+                                {(avoir.status?.toUpperCase() === 'BROUILLON' || avoir.status?.toUpperCase() === 'BRO') && (
                                     <label className="cursor-pointer label p-0 justify-center">
                                         <input 
                                             type="checkbox" 
@@ -216,10 +226,10 @@ export const AvoirsTable: React.FC<AvoirsTableProps> = ({
                             <td>
                                 <div className="flex flex-col">
                                     <span className="font-semibold text-base-content">
-                                        {format(new Date(avoir.created_at || avoir.date), 'dd/MM/yyyy', { locale: i18n.language === 'fr' ? fr : undefined })}
+                                        {format(new Date(avoir.created_at || avoir.date), 'dd/MM/yyyy', { locale: i18n.language === 'fr' ? fr : enUS })}
                                     </span>
                                     <span className="text-xs text-base-content/60">
-                                        {format(new Date(avoir.created_at || avoir.date), 'HH:mm', { locale: i18n.language === 'fr' ? fr : undefined })}
+                                        {format(new Date(avoir.created_at || avoir.date), 'HH:mm', { locale: i18n.language === 'fr' ? fr : enUS })}
                                     </span>
                                 </div>
                             </td>
@@ -248,7 +258,7 @@ export const AvoirsTable: React.FC<AvoirsTableProps> = ({
                                             variant="info"
                                         />
                                         
-                                        {avoir.status === 'BROUILLON' && (
+                                        {(avoir.status?.toUpperCase() === 'BROUILLON' || avoir.status?.toUpperCase() === 'BRO') && (
                                             <>
                                                 <ActionIcon 
                                                     icon={Edit}

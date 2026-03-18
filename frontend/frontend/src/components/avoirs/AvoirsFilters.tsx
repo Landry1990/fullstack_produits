@@ -26,7 +26,7 @@ export const AvoirsFilters: React.FC<AvoirsFiltersProps> = ({
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-base-content/40" />
                         <input
                             type="text"
-                            placeholder={t('avoirs.search_placeholder')}
+                            placeholder={t('stock:avoirs.search_placeholder')}
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
                             className="input input-bordered w-full pl-9 bg-base-200/50 focus:bg-base-100 transition-colors"
@@ -47,7 +47,7 @@ export const AvoirsFilters: React.FC<AvoirsFiltersProps> = ({
                         onClick={onNew}
                     >
                         <Plus className="w-4 h-4" />
-                        <span className="hidden sm:inline">{t('avoirs.create_btn')}</span>
+                        <span className="hidden sm:inline">{t('stock:avoirs.create_btn')}</span>
                         <span className="sm:hidden">{t('common:add')}</span>
                     </button>
                 </div>

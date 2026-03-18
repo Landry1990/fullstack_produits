@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import { toast } from 'react-hot-toast';
 import { useDebounce } from 'use-debounce';
 import { useLocation } from 'react-router-dom';
@@ -86,6 +87,7 @@ export interface UseAvoirsDataReturn {
 }
 
 export function useAvoirsData(): UseAvoirsDataReturn {
+    const { t } = useTranslation(['stock', 'common']);
     // Navigation
     const [viewMode, setViewMode] = useState<ViewMode>('LIST');
     const location = useLocation();
@@ -271,7 +273,7 @@ export function useAvoirsData(): UseAvoirsDataReturn {
             return;
         }
 
-        if (confirm('Voulez-vous vraiment quitter ? Les modifications non enregistrées seront perdues.')) {
+        if (confirm(t('avoirs.confirms.back_to_list'))) {
             setViewMode('LIST');
             setSelectedAvoir(null);
         }
@@ -280,11 +282,11 @@ export function useAvoirsData(): UseAvoirsDataReturn {
     const handleSave = async (e: React.FormEvent): Promise<void> => {
         e.preventDefault();
         if (!selectedFournisseurId) {
-            toast('Veuillez sélectionner un fournisseur', { icon: '⚠️' });
+            toast(t('avoirs.toasts.select_supplier'), { icon: '⚠️' });
             return;
         }
         if (lignes.length === 0) {
-            toast('Veuillez ajouter au moins un produit', { icon: '⚠️' });
+            toast(t('avoirs.toasts.add_product'), { icon: '⚠️' });
             return;
         }
 
@@ -330,23 +332,23 @@ export function useAvoirsData(): UseAvoirsDataReturn {
             fetchAvoirs();
         } catch (err: unknown) {
             const error = err as { response?: { data?: { message?: string } }; message?: string };
-            toast.error('Erreur lors de la sauvegarde: ' + (error.response?.data?.message || error.message));
+            toast.error(t('avoirs.toasts.save_error') + ': ' + (error.response?.data?.message || error.message));
         } finally {
             setLoading(false);
         }
     };
 
     const handleDelete = async (avoir: Avoir) => {
-        if (!confirm(`Voulez-vous vraiment supprimer l'avoir brouillon ${avoir.numero} ?`)) return;
+        if (!confirm(t('avoirs.confirms.delete_avoir', { numero: avoir.numero }))) return;
         try {
             setLoading(true);
             await avoirService.delete(avoir.id);
-            toast.success('Avoir supprimé avec succès');
+            toast.success(t('avoirs.toasts.delete_success'));
             fetchAvoirs();
             if (viewMode === 'DETAILS') setViewMode('LIST');
         } catch (err: unknown) {
             const error = err as { response?: { data?: { error?: string } }; message?: string };
-            toast.error('Erreur: ' + (error.response?.data?.error || error.message));
+            toast.error(t('avoirs.toasts.delete_error') + ': ' + (error.response?.data?.error || error.message));
         } finally {
             setLoading(false);
         }
@@ -360,18 +362,18 @@ export function useAvoirsData(): UseAvoirsDataReturn {
                     validated_by_id: validatorId,
                     password: password
                 });
-                toast.success('Avoir validé et stock mis à jour');
+                toast.success(t('avoirs.toasts.validate_success'));
                 fetchAvoirs();
                 if (viewMode === 'DETAILS') setViewMode('LIST');
             } catch (err: unknown) {
                 const error = err as { response?: { data?: { error?: string } }; message?: string };
-                toast.error('Erreur: ' + (error.response?.data?.error || error.message || 'Erreur inconnue'));
+                toast.error(t('avoirs.toasts.validate_error') + ': ' + (error.response?.data?.error || error.message || 'Erreur inconnue'));
             } finally {
                 setSavingValidation(false);
             }
         }, {
-            title: `Validation Avoir - ${avoir.numero}`,
-            message: `Confirmer la validation de l'avoir fournisseur <strong>${avoir.numero}</strong> ?<br/>Cela réintégrera les produits en stock (ou ajustera selon le type).`
+            title: t('avoirs.modals.sudo_validate_title', { numero: avoir.numero }),
+            message: t('avoirs.modals.sudo_validate_message', { numero: avoir.numero })
         });
     };
 
@@ -399,9 +401,9 @@ export function useAvoirsData(): UseAvoirsDataReturn {
         updateState(newStatus);
         try {
             await avoirService.updateLigne(ligneId, { est_cloture: newStatus });
-            toast.success(newStatus ? 'Ligne clôturée' : 'Ligne réouverte');
+            toast.success(newStatus ? t('avoirs.toasts.line_closed') : t('avoirs.toasts.line_reopened'));
         } catch (err) {
-            toast.error("Erreur lors de la mise à jour");
+            toast.error(t('avoirs.toasts.update_line_error'));
             updateState(!newStatus);
         }
     };
@@ -439,9 +441,9 @@ export function useAvoirsData(): UseAvoirsDataReturn {
                 .filter(p => !!p.id)
                 .map(p => avoirService.updateLigne(p.id, { est_cloture: targetStatus }));
             await Promise.all(promises);
-            toast.success(targetStatus ? 'Toutes les lignes clôturées' : 'Toutes les lignes réouvertes');
+            toast.success(targetStatus ? t('avoirs.toasts.bulk_lines_closed') : t('avoirs.toasts.bulk_lines_reopened'));
         } catch (err) {
-            toast.error("Erreur lors de la mise en masse");
+            toast.error(t('avoirs.toasts.bulk_update_error'));
             // Rollback
             setSelectedAvoir(prev => prev ? { ...prev, produits: originalProduits } : null);
         }
@@ -451,7 +453,7 @@ export function useAvoirsData(): UseAvoirsDataReturn {
     const selectProduct = (product: ProduitModel) => {
         const existing = lignes.find(l => (typeof l.produit === 'object' ? l.produit.id : l.produit) === product.id);
         if (existing) {
-            toast.error('Ce produit est déjà dans la liste');
+            toast.error(t('avoirs.toasts.product_exists'));
             return;
         }
         const newLine: LigneAvoir = {
@@ -500,7 +502,7 @@ export function useAvoirsData(): UseAvoirsDataReturn {
             const lots = await produitService.getLots(produitId);
             setAvailableLots(lots.filter((l: StockLot) => l.quantity_remaining > 0));
         } catch (err) {
-            toast.error('Erreur lors du chargement des lots');
+            toast.error(t('avoirs.toasts.load_lots_error'));
         } finally {
             setLoadingLots(false);
         }
@@ -548,16 +550,16 @@ export function useAvoirsData(): UseAvoirsDataReturn {
     const handleBulkDelete = async () => {
         const count = selectedIds.size;
         if (count === 0) return;
-        if (!confirm(`Supprimer ces ${count} avoirs brouillons ?`)) return;
+        if (!confirm(t('avoirs.confirms.bulk_delete', { count }))) return;
 
         setBulkLoading(true);
         try {
             await Promise.all(Array.from(selectedIds).map(id => avoirService.delete(id)));
-            toast.success(`${count} avoirs supprimés`);
+            toast.success(t('avoirs.toasts.bulk_delete_success', { count }));
             setSelectedIds(new Set());
             fetchAvoirs();
         } catch (err) {
-            toast.error("Erreur lors de la suppression groupée");
+            toast.error(t('avoirs.toasts.bulk_delete_error'));
         } finally {
             setBulkLoading(false);
         }
@@ -576,17 +578,17 @@ export function useAvoirsData(): UseAvoirsDataReturn {
                         password: password
                     })
                 ));
-                toast.success(`${count} avoirs validés`);
+                toast.success(t('avoirs.toasts.bulk_validate_success', { count }));
                 setSelectedIds(new Set());
                 fetchAvoirs();
             } catch (err) {
-                toast.error("Erreur lors de la validation groupée");
+                toast.error(t('avoirs.toasts.bulk_validate_error'));
             } finally {
                 setBulkLoading(false);
             }
         }, {
-            title: `Validation groupée - ${count} avoirs`,
-            message: `Confirmer la validation de <strong>${count} avoirs</strong> fournisseurs ?<br/>Le stock sera réintégré pour tous.`
+            title: t('avoirs.modals.sudo_bulk_validate_title', { count }),
+            message: t('avoirs.modals.sudo_bulk_validate_message', { count })
         });
     };
 

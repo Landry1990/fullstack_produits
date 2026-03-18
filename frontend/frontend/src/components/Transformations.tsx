@@ -94,8 +94,8 @@ const ProductAutocomplete: React.FC<ProductAutocompleteProps> = ({
           <div className="flex-1 min-w-0">
             <div className="font-bold text-gray-800 truncate">{selected.name}</div>
             <div className="text-[11px] text-gray-500 flex gap-3">
-              <span>CIP: {selected.cip1 || 'N/A'}</span>
-              <span>Stock: <b className={selected.stock <= 0 ? 'text-error' : 'text-success'}>{formatNumber(selected.stock)}</b></span>
+              <span>{t('common:cip')}: {selected.cip1 || t('common:not_available')}</span>
+              <span>{t('common:stock')}: <b className={selected.stock <= 0 ? 'text-error' : 'text-success'}>{formatNumber(selected.stock)}</b></span>
             </div>
           </div>
           <button
@@ -172,8 +172,8 @@ const ProductAutocomplete: React.FC<ProductAutocompleteProps> = ({
                   <div className="flex-1 min-w-0">
                     <div className="font-semibold text-sm truncate">{p.name}</div>
                     <div className="text-[10px] flex gap-3" style={itemProps.style.color ? { color: 'rgba(255,255,255,0.7)' } : { color: '#9ca3af' }}>
-                      <span>CIP: {p.cip1 || 'N/A'}</span>
-                      <span>Stock: <b>{formatNumber(p.stock)}</b></span>
+                      <span>{t('common:cip')}: {p.cip1 || t('common:not_available')}</span>
+                      <span>{t('common:stock')}: <b>{formatNumber(p.stock)}</b></span>
                     </div>
                   </div>
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 opacity-30 group-hover:opacity-100 transition-opacity" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -404,12 +404,12 @@ const Transformations: React.FC = () => {
                        <div className="text-primary/20 group-hover:text-primary transition-colors flex flex-col items-center">
                           <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M14 5l7 7m0 0l-7 7m7-7H3" /></svg>
                        </div>
-                       <div className="flex items-center gap-3 text-right">
+                        <div className="flex items-center gap-3 text-right">
                           <div className="max-w-[120px]">
-                             <div className="text-[9px] font-black opacity-30 uppercase tracking-widest mb-0.5">Dest.</div>
+                             <div className="text-[9px] font-black opacity-30 uppercase tracking-widest mb-0.5">{t('stock:transformations.labels.dest')}</div>
                              <div className="font-bold text-xs truncate text-success" title={relation.produit_destination_nom}>{relation.produit_destination_nom}</div>
                           </div>
-                       </div>
+                        </div>
                     </div>
 
                     <div className="bg-base-200/50 rounded-xl p-3 flex justify-between items-center mb-6 border border-base-300/30">
@@ -418,12 +418,12 @@ const Transformations: React.FC = () => {
                     </div>
 
                     <div className="mt-auto flex gap-2 pt-2 border-t border-base-200/50">
-                       <button 
-                         className="btn btn-primary btn-sm flex-1 rounded-lg h-9 font-bold"
-                         onClick={() => openTransformerModal(relation)}
-                       >
-                         Transformer
-                       </button>
+                        <button 
+                          className="btn btn-primary btn-sm flex-1 rounded-lg h-9 font-bold"
+                          onClick={() => openTransformerModal(relation)}
+                        >
+                          {t('stock:transformations.labels.transformer')}
+                        </button>
                        <button 
                          className="btn btn-ghost btn-sm btn-square text-error hover:bg-error/10 rounded-lg h-9"
                          onClick={() => handleDeleteRelation(relation.id)}
@@ -436,7 +436,7 @@ const Transformations: React.FC = () => {
                 {relations.length === 0 && (
                   <div className="col-span-full flex flex-col items-center justify-center py-20 opacity-20 italic">
                     <svg xmlns="http://www.w3.org/2000/svg" className="h-16 w-16 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" /></svg>
-                    <p className="font-bold uppercase tracking-widest text-xs">Aucune relation configurée</p>
+                    <p className="font-bold uppercase tracking-widest text-xs">{t('stock:transformations.labels.no_relations')}</p>
                   </div>
                 )}
               </div>
@@ -484,7 +484,7 @@ const Transformations: React.FC = () => {
                       ))}
                       {historique.length === 0 && (
                         <tr>
-                          <td colSpan={5} className="text-center py-20 opacity-20 italic font-bold uppercase tracking-widest text-xs">Aucun historique disponible</td>
+                          <td colSpan={5} className="text-center py-20 opacity-20 italic font-bold uppercase tracking-widest text-xs">{t('stock:transformations.table_history.empty')}</td>
                         </tr>
                       )}
                     </tbody>
@@ -576,20 +576,20 @@ const Transformations: React.FC = () => {
           {selectedSource && selectedDestination && ratioValue && (
             <div className="bg-gradient-to-br from-success/5 to-primary/5 border border-success/20 rounded-xl p-4 shadow-inner">
               <div className="flex items-center justify-between text-sm">
-                <div className="text-center flex-1">
-                  <div className="font-bold text-base-content truncate text-xs">{selectedSource.name}</div>
-                  <div className="text-[10px] font-black opacity-30 mt-0.5">× 1 UNITE</div>
-                </div>
-                <div className="px-4 text-primary/40 flex flex-col items-center">
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M17 8l4 4m0 0l-4 4m4-4H3" />
-                  </svg>
-                  <span className="text-[10px] font-black mt-1 bg-primary/10 px-2 py-0.5 rounded-full">× {ratioValue}</span>
-                </div>
-                <div className="text-center flex-1">
-                  <div className="font-bold text-success truncate text-xs">{selectedDestination.name}</div>
-                  <div className="text-[10px] font-black text-success/40 mt-0.5">× {Math.floor(normalizeNumberInput(ratioValue))} UNITES</div>
-                </div>
+                  <div className="text-center flex-1">
+                    <div className="font-bold text-base-content truncate text-xs">{selectedSource.name}</div>
+                    <div className="text-[10px] font-black opacity-30 mt-0.5">× 1 {t('stock:transformations.labels.unit')}</div>
+                  </div>
+                  <div className="px-4 text-primary/40 flex flex-col items-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                    </svg>
+                    <span className="text-[10px] font-black mt-1 bg-primary/10 px-2 py-0.5 rounded-full">× {ratioValue}</span>
+                  </div>
+                  <div className="text-center flex-1">
+                    <div className="font-bold text-success truncate text-xs">{selectedDestination.name}</div>
+                    <div className="text-[10px] font-black text-success/40 mt-0.5">× {Math.floor(normalizeNumberInput(ratioValue))} {t('stock:transformations.labels.units')}</div>
+                  </div>
               </div>
             </div>
           )}

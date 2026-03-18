@@ -44,10 +44,10 @@ export const PromisFilters: React.FC<PromisFiltersProps> = ({
                             value={filterStatus}
                             onChange={(e) => setFilterStatus(e.target.value as any)}
                         >
-                            <option value="ALL">{t('promis.status_all')}</option>
-                            <option value="ATT">{t('promis.status_att')}</option>
-                            <option value="DEL">{t('promis.status_del')}</option>
-                            <option value="ANN">{t('promis.status_ann')}</option>
+                            <option value="ALL">{t('stock:promis.status_all')}</option>
+                            <option value="ATT">{t('stock:promis.status_att')}</option>
+                            <option value="DEL">{t('stock:promis.status_del')}</option>
+                            <option value="ANN">{t('stock:promis.status_ann')}</option>
                         </select>
                     </div>
                 </div>
@@ -65,7 +65,7 @@ export const PromisFilters: React.FC<PromisFiltersProps> = ({
                         onClick={onNew}
                     >
                         <Plus className="w-4 h-4" />
-                        <span className="hidden sm:inline">{t('promis.new_btn')}</span>
+                        <span className="hidden sm:inline">{t('stock:promis.new_btn')}</span>
                         <span className="sm:hidden">{t('common:add')}</span>
                     </button>
                 </div>

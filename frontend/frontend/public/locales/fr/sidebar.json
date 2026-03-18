@@ -72,7 +72,7 @@
         "rapports": "Centre de Rapports",
         "abc": "Analyse ABC",
         "produits": "Produits",
-        "fournisseurs": "Fournisseurs",
+        "fournisseurs": "Statistiques Fournisseurs",
         "mensuel": "Rapport Mensuel",
         "finances": "Module Financier",
         "classement_vendeurs": "Classement Vendeurs",
@@ -90,7 +90,7 @@
     "logout": "Déconnexion",
     "app_subtitle": "Gestion Professionnelle",
     "roles": {
-        "pharmacist": "Pharmacien",
+        "pharmacist": "Administrateur",
         "user": "Utilisateur"
     }
 }
