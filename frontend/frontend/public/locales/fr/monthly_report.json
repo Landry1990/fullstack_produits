@@ -1,0 +1,84 @@
+{
+    "title": "Synthèse Mensuelle d'Activité",
+    "subtitle": "Rapport complet de votre activité mensuelle",
+    "filters": {
+        "month": "Mois",
+        "generate": "Générer",
+        "loading": "Chargement..."
+    },
+    "kpis": {
+        "ca_ttc": "CA TTC",
+        "ca_ht": "CA HT",
+        "gross_margin": "Marge Brute",
+        "purchase_cost": "Coût d'Achat",
+        "margin_info": "{{pct}}% du CA",
+        "sales_count": "{{count}} ventes"
+    },
+    "suppliers": {
+        "title": "Achats par Fournisseur",
+        "name": "Fournisseur",
+        "orders": "Nb Commandes",
+        "amount": "Montant Total",
+        "no_data": "Aucun achat ce mois-ci",
+        "total": "Total"
+    },
+    "pro_clients": {
+        "title": "Clients Professionnels",
+        "ca_total": "CA Total",
+        "paid": "Payé",
+        "balance": "Reste",
+        "recovery_rate": "Taux de recouvrement",
+        "top_clients": "Top Clients Pro"
+    },
+    "free_units": {
+        "title": "Unités Gratuites (UG)",
+        "value": "Valeur",
+        "quantity": "Quantité",
+        "ca_pct": "% CA",
+        "top_products": "Top Produits Offerts",
+        "product": "Produit",
+        "qty": "Qté"
+    },
+    "encaissements": {
+        "title": "Encaissements du Mois",
+        "mode": "Mode",
+        "amount": "Montant",
+        "no_data": "Aucun encaissement ce mois-ci",
+        "total": "Total"
+    },
+    "caisse_mvts": {
+        "title": "Autres Mouvements de Caisse",
+        "in": "Entrées Diverses",
+        "out": "Sorties Diverses",
+        "balance": "Solde Mouvements",
+        "date": "Date",
+        "type": "Type",
+        "reason": "Motif",
+        "user": "Utilisateur",
+        "no_data": "Aucun mouvement extra-comptable ce mois-ci"
+    },
+    "tva": {
+        "title": "CA par Taux de TVA",
+        "rate": "Taux",
+        "ht": "CA HT",
+        "tax": "TVA",
+        "ttc": "TTC"
+    },
+    "receivables": {
+        "title": "Créances à Percevoir",
+        "total_to_recover": "Montant total à recouvrer",
+        "desc": "Sur toutes les ventes à crédit"
+    },
+    "empty": {
+        "title": "Sélectionnez un mois et cliquez sur \"Générer\"",
+        "subtitle": "Pour visualiser la synthèse mensuelle complète"
+    },
+    "messages": {
+        "load_error": "Erreur lors du chargement du rapport",
+        "download_error": "Erreur lors du téléchargement du PDF"
+    },
+    "pdf": {
+        "download": "PDF",
+        "tooltip": "Télécharger le rapport en PDF"
+    }
+}

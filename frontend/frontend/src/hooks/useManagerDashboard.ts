@@ -13,7 +13,7 @@ export interface EditingObjectif {
 }
 
 export const useManagerDashboard = () => {
-    const { t } = useTranslation();
+    const { t } = useTranslation(['dashboard', 'common']);
     const queryClient = useQueryClient();
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);

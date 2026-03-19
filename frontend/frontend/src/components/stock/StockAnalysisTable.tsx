@@ -176,35 +176,35 @@ export const StockAnalysisTable: React.FC<StockAnalysisTableProps> = ({
                                         </td>
                                         <td className="text-center">
                                             <div className="badge border-none bg-warning/20 text-warning font-black italic">
-                                                {item.days_since_sale ?? '-'}j
+                                                {item.days_since_sale ?? '-'} {t('stock:analyse.day_short', { defaultValue: 'j' })}
                                             </div>
                                         </td>
                                         <td className="text-right font-mono font-bold text-base-content/40">
-                                            {formatCurrency(Math.round(item.cost_price))} F
+                                            {formatCurrency(Math.round(item.cost_price))} {t('common:currency_symbol', { defaultValue: 'F' })}
                                         </td>
                                         <td className="text-right font-black text-error px-6">
-                                            {formatCurrency(Math.round(item.value))} F
+                                            {formatCurrency(Math.round(item.value))} {t('common:currency_symbol', { defaultValue: 'F' })}
                                         </td>
                                     </>
                                 ) : activeTab === 'overstock' ? (
                                     <>
                                         <td className="text-center font-mono">
                                             <span className="font-bold">{Number(item.rotation || 0).toFixed(0)}</span>
-                                            <span className="text-[10px] text-base-content/30 ml-1">/mois</span>
+                                            <span className="text-[10px] text-base-content/30 ml-1">/ {t('stock:analyse.per_month')}</span>
                                         </td>
                                         <td className="text-center font-bold text-base-content/40">{item.threshold}</td>
                                         <td className="text-center">
                                             <span className="text-error font-black italic">+{item.excess_qty}</span>
                                         </td>
                                         <td className="text-right font-black text-error px-6">
-                                            {formatCurrency(Math.round(item.value))} F
+                                            {formatCurrency(Math.round(item.value))} {t('common:currency_symbol', { defaultValue: 'F' })}
                                         </td>
                                     </>
                                 ) : (
                                     <>
                                         <td className="text-center font-mono">
                                             <span className="font-bold">{item.avg_daily_sales}</span>
-                                            <span className="text-[10px] text-base-content/30 ml-1">/jour</span>
+                                            <span className="text-[10px] text-base-content/30 ml-1">/ {t('stock:analyse.per_day')}</span>
                                         </td>
                                         <td className="text-center">
                                             <div className={`font-black italic ${
@@ -218,7 +218,7 @@ export const StockAnalysisTable: React.FC<StockAnalysisTableProps> = ({
                                             {getUrgencyBadge(item.urgency || '')}
                                         </td>
                                         <td className="text-right font-black text-error px-6">
-                                            {formatCurrency(Math.round(item.value))} F
+                                            {formatCurrency(Math.round(item.value))} {t('common:currency_symbol', { defaultValue: 'F' })}
                                         </td>
                                     </>
                                 )}

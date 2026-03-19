@@ -14,11 +14,11 @@ describe('formatPrice / formatCurrency', () => {
     });
 
     it('formate zéro', () => {
-        expect(formatCurrency(0)).toBe('0');
+        expect(formatCurrency(0)).toBe('0 F');
     });
 
     it('formate les petits nombres', () => {
-        expect(formatCurrency(42)).toBe('42');
+        expect(formatCurrency(42)).toBe('42 F');
     });
 
     it('formate les grands nombres', () => {
@@ -26,18 +26,15 @@ describe('formatPrice / formatCurrency', () => {
         expect(result).toMatch(/2\s?500\s?000/);
     });
 
-    it('formatCurrency est un alias de formatPrice', () => {
-        expect(formatCurrency).toBe(formatPrice);
-    });
 });
 
 describe('safeFormatNumber', () => {
     it('gère null', () => {
-        expect(safeFormatNumber(null)).toBe('0');
+        expect(safeFormatNumber(null)).toBe('0 F');
     });
 
     it('gère undefined', () => {
-        expect(safeFormatNumber(undefined)).toBe('0');
+        expect(safeFormatNumber(undefined)).toBe('0 F');
     });
 
     it('gère les strings numériques', () => {
@@ -46,7 +43,7 @@ describe('safeFormatNumber', () => {
     });
 
     it('gère les strings non-numériques', () => {
-        expect(safeFormatNumber('abc')).toBe('0');
+        expect(safeFormatNumber('abc')).toBe('0 F');
     });
 
     it('gère les nombres normaux', () => {

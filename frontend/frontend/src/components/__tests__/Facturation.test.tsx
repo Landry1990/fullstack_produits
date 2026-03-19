@@ -68,18 +68,7 @@ vi.mock('../facturation/ActionButtons', () => ({
   )
 }))
 
-// Mock Axios
-vi.mock('axios', () => ({
-  default: {
-    get: vi.fn(),
-    post: vi.fn(),
-    isAxiosError: vi.fn(),
-    interceptors: {
-      request: { use: vi.fn(), eject: vi.fn() },
-      response: { use: vi.fn(), eject: vi.fn() }
-    }
-  }
-}))
+// axios is mocked globally in setup.ts
 
 describe('Facturation Integration', () => {
   const defaultCart = {
@@ -155,8 +144,8 @@ describe('Facturation Integration', () => {
       </MemoryRouter>
     )
 
-    expect(screen.getByPlaceholderText(/Scanner un code-barres/i)).toBeInTheDocument()
-    expect(screen.getByText(/Encaisser/i)).toBeInTheDocument()
+    expect(screen.getByPlaceholderText(/Saisir.*matricule/i)).toBeInTheDocument()
+    expect(screen.getByTestId('encaisser-btn')).toBeInTheDocument()
     expect(screen.getByText(/Total TTC/i)).toBeInTheDocument()
   })
 
@@ -170,7 +159,7 @@ describe('Facturation Integration', () => {
     )
 
     // The cart table structure is rendered empty by default when empty
-    expect(screen.getByText(/0\s*article\(s\)/i)).toBeInTheDocument()
+    expect(screen.getByText(/0\s*article/i)).toBeInTheDocument()
   })
 
   it('affiche les produits dans le panier quand useCart renvoie des données', async () => {

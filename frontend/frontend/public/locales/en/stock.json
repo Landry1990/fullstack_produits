@@ -204,10 +204,12 @@
     },
     "analyse": {
         "title": "Stock Analysis",
+        "subtitle": "Analyze and optimize your stock levels",
         "error": "Error loading data. Check if the server is accessible.",
         "per_month": "month",
         "per_day": "day",
         "days": "days",
+        "day_short": "d",
         "tabs": {
             "unsold": "Unsold",
             "overstock": "Overstock",
@@ -228,7 +230,8 @@
             "estimated_value": "Estimated value",
             "overstock_value": "Estimated overstock value",
             "value_at_risk": "Value at risk",
-            "critical_alerts": "Critical alerts"
+            "critical_alerts": "Critical alerts",
+            "selected": "{{count}} item(s) selected"
         },
         "columns": {
             "product": "Product",
@@ -251,7 +254,7 @@
         },
         "shortage": {
             "warnings": "warnings",
-            "selected": "product(s) selected",
+            "selected": "{{count}} item(s) selected",
             "generate_order": "Generate Order",
             "urgency": {
                 "critical": "Critical (< 7d)",
@@ -309,6 +312,7 @@
             "ca": "Turnover",
             "ca_percent": "% Turnover",
             "cumulated_percent": "% Cumulated",
+            "category": "Category",
             "no_products": "No products in this category",
             "shortage_badge": "Shortage"
         },

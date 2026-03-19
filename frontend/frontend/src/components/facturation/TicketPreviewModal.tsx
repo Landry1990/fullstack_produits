@@ -16,7 +16,7 @@ export default function TicketPreviewModal({
   settings,
   onSendWhatsApp
 }: TicketPreviewModalProps) {
-  const { t } = useTranslation()
+  const { t } = useTranslation(['facturation', 'common'])
 
   if (!isOpen || !ticket) return null
 

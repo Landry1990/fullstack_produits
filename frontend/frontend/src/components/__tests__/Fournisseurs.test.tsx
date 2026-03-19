@@ -1,11 +1,10 @@
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { MemoryRouter, useLocation } from 'react-router-dom';
 import Fournisseurs from '../Fournisseurs';
 import axios from 'axios';
 
 // Mock libs
-vi.mock('axios');
 vi.mock('react-hot-toast', () => ({
   toast: { success: vi.fn(), error: vi.fn() }
 }));
@@ -53,7 +52,7 @@ describe('Fournisseurs Component', () => {
       </MemoryRouter>
     );
 
-    expect(screen.getByPlaceholderText(/Rechercher un fournisseur/i)).toBeInTheDocument();
+    expect(screen.getByPlaceholderText(/Rechercher par nom/i)).toBeInTheDocument();
     
     // Wait for data to load
     await waitFor(() => {
@@ -79,25 +78,36 @@ describe('Fournisseurs Component', () => {
         expect(screen.getByText('Pharma Distrib')).toBeInTheDocument();
     });
 
-    // Check if Finance modal or its content is visible
-    // Based on implementation, FinanceFournisseurModal should open
+    // The text in the modal can be "Gestion Financière" or "Règlements" depending on i18n
     await waitFor(() => {
-        expect(screen.getByText(/Finance/i) || screen.getByText(/Règlement/i)).toBeInTheDocument();
+        expect(screen.getByText(/Gestion Financière/i) || screen.getByText(/Règlements/i)).toBeInTheDocument();
     });
   });
 
   it('filters suppliers based on search query', async () => {
+    vi.useFakeTimers();
     render(
       <MemoryRouter>
         <Fournisseurs />
       </MemoryRouter>
     );
 
-    const searchInput = screen.getByPlaceholderText(/Rechercher un fournisseur/i);
+    const searchInput = screen.getByPlaceholderText(/Rechercher par nom/i);
     fireEvent.change(searchInput, { target: { value: 'Med' } });
 
-    await waitFor(() => {
-        expect(axios.get).toHaveBeenCalledWith(expect.stringContaining('search=Med'), expect.any(Object));
+    // Attendre le debounce de 300ms
+    await act(async () => {
+        vi.advanceTimersByTime(400);
     });
+
+    await waitFor(() => {
+        expect(axios.get).toHaveBeenCalledWith(
+            expect.any(String),
+            expect.objectContaining({
+                params: expect.objectContaining({ search: 'Med' })
+            })
+        );
+    });
+    vi.useRealTimers();
   });
 });

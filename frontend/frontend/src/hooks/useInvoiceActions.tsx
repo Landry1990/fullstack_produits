@@ -14,7 +14,7 @@ interface UseInvoiceActionsProps {
 }
 
 export const useInvoiceActions = ({ setFacturesLocal }: UseInvoiceActionsProps) => {
-    const { t } = useTranslation();
+    const { t } = useTranslation(['sales', 'common']);
     const navigate = useNavigate();
     const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || '/api';
 
@@ -124,7 +124,7 @@ export const useInvoiceActions = ({ setFacturesLocal }: UseInvoiceActionsProps) 
 
         } catch (error) {
             console.error('Erreur sauvegarde nom client:', error);
-            toast.error(t('sales.messages.save_error'));
+            toast.error(t('messages.save_error'));
             // Fallback print
             printInvoicePDF(pendingPrintFacture.id, clientNameInput);
         } finally {
@@ -139,7 +139,7 @@ export const useInvoiceActions = ({ setFacturesLocal }: UseInvoiceActionsProps) 
 
         // Charger détails si manquants
         if (!facture.produits || facture.produits.length === 0) {
-            const toastId = toast.loading(t('sales.messages.loading_details', { defaultValue: 'Chargement...' }));
+        const toastId = toast.loading(t('messages.loading_details', { defaultValue: 'Chargement...' }));
             try {
                 const token = safeStorage.getItem('authToken');
                 const response = await axios.get(`${apiBaseUrl}/factures/${facture.id}/`, {
@@ -208,7 +208,7 @@ export const useInvoiceActions = ({ setFacturesLocal }: UseInvoiceActionsProps) 
 
         // Si les produits ne sont pas complets, on charge le détail
         if (!facture.produits || facture.produits.length === 0) {
-            const toastId = toast.loading(t('sales.messages.loading_details', { defaultValue: 'Chargement...' }));
+        const toastId = toast.loading(t('messages.loading_details', { defaultValue: 'Chargement...' }));
             try {
                 const token = safeStorage.getItem('authToken');
                 const response = await axios.get(`${apiBaseUrl}/factures/${facture.id}/`, {
@@ -237,7 +237,7 @@ export const useInvoiceActions = ({ setFacturesLocal }: UseInvoiceActionsProps) 
 
         // Si les produits ne sont pas complets, on charge le détail
         if (!facture.produits || facture.produits.length === 0) {
-            const toastId = toast.loading(t('sales.messages.loading_details', { defaultValue: 'Chargement...' }));
+        const toastId = toast.loading(t('messages.loading_details', { defaultValue: 'Chargement...' }));
             try {
                 const token = safeStorage.getItem('authToken');
                 const response = await axios.get(`${apiBaseUrl}/factures/${facture.id}/`, {
@@ -275,7 +275,7 @@ export const useInvoiceActions = ({ setFacturesLocal }: UseInvoiceActionsProps) 
 
         // Sauvegarder la facture "dupliquée" pour le chargement dans Facturation
         safeStorage.setItem('devis_to_load', JSON.stringify(duplicatedFacture), 'local');
-        toast.success(t('sales.messages.duplicated_to_cart', { defaultValue: 'Facture copiée vers la facturation' }));
+        toast.success(t('messages.duplicated_to_cart', { defaultValue: 'Facture copiée vers la facturation' }));
         
         // Rediriger vers la facturation
         navigate('/app/facturation');
@@ -307,7 +307,7 @@ export const useInvoiceActions = ({ setFacturesLocal }: UseInvoiceActionsProps) 
 
             // Sauvegarder la facture "avoir" pour le chargement dans Facturation
             safeStorage.setItem('devis_to_load', JSON.stringify(newDraftAvoir), 'local');
-            toast.success(t('sales.messages.avoir_to_cart', { defaultValue: 'Produits en négatif ajoutés à la facturation' }));
+            toast.success(t('messages.avoir_to_cart', { defaultValue: 'Produits en négatif ajoutés à la facturation' }));
             
             // Rediriger vers la facturation
             navigate('/app/facturation');

@@ -132,7 +132,7 @@ const ROLES = [
 ];
 
 export default function GestionUtilisateurs() {
-  const { t } = useTranslation();
+  const { t } = useTranslation(['users', 'sidebar', 'common']);
   const confirm = useConfirm();
   const [users, setUsers] = useState<User[]>([]);
   const [, setLoading] = useState(true);
@@ -184,7 +184,7 @@ export default function GestionUtilisateurs() {
       setUsers(Array.isArray(data) ? data : (data.results || []));
     } catch (error) {
       console.error('Error fetching users:', error);
-      toast.error(t('users.messages.load_error'));
+      toast.error(t('messages.load_error'));
     } finally {
       setLoading(false);
     }
@@ -358,11 +358,11 @@ export default function GestionUtilisateurs() {
   const executeDeleteUser = async (userId: number, username: string) => {
     try {
       await axios.delete(`/api/users/${userId}/`);
-      toast.success(t('users.messages.deleted', { username }));
+      toast.success(t('messages.deleted', { username }));
       fetchUsers();
     } catch (error) {
       console.error('Error deleting user:', error);
-      toast.error(t('users.messages.delete_error'));
+      toast.error(t('messages.delete_error'));
     }
   };
 
@@ -376,16 +376,16 @@ export default function GestionUtilisateurs() {
 
   const handleDeleteUser = async (userId: number, username: string) => {
     const confirmed = await confirm({
-      title: t('users.messages.delete_confirm_title'),
-      message: t('users.messages.delete_confirm', { username }),
+      title: t('messages.delete_confirm_title'),
+      message: t('messages.delete_confirm', { username }),
       variant: 'danger',
-      confirmText: t('users.messages.delete_btn')
+      confirmText: t('messages.delete_btn')
     });
     
     if (confirmed) {
       setPasswordModalConfig({
-        title: t('users.messages.sudo_title'),
-        message: t('users.messages.sudo_message')
+        title: t('messages.sudo_title'),
+        message: t('messages.sudo_message')
       });
       setPendingAction(() => () => executeDeleteUser(userId, username));
       setIsPasswordModalOpen(true);
@@ -426,33 +426,33 @@ export default function GestionUtilisateurs() {
       
       if (editingUser) {
         await axios.patch(`/api/users/${editingUser.id}/`, payload);
-        toast.success(t('users.messages.updated'));
+        toast.success(t('messages.updated'));
       } else {
         await axios.post('/api/users/', payload);
-        toast.success(t('users.messages.created'));
+        toast.success(t('messages.created'));
       }
       
       setModalOpen(false);
       fetchUsers();
     } catch (error) {
       console.error('Error saving user:', error);
-      toast.error(t('users.messages.save_error'));
+      toast.error(t('messages.save_error'));
     }
   };
 
   if (!currentUser?.is_superuser) {
-    return <div className="p-4 text-error">{t('users.messages.access_denied')}</div>;
+    return <div className="p-4 text-error">{t('messages.access_denied')}</div>;
   }
 
   return (
     <div className="p-6">
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold text-primary">{t('users.title')}</h1>
+        <h1 className="text-2xl font-bold text-primary">{t('title')}</h1>
         <button className="btn btn-primary" onClick={() => handleOpenModal()}>
           <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
           </svg>
-          {t('users.new_user')}
+          {t('new_user')}
         </button>
       </div>
 
@@ -460,10 +460,10 @@ export default function GestionUtilisateurs() {
         <table className="table w-full">
           <thead>
             <tr>
-              <th>{t('users.table.user')}</th>
-              <th>{t('users.table.role_access')}</th>
-              <th>{t('users.table.special_permissions')}</th>
-              <th className="text-right">{t('users.table.actions')}</th>
+              <th>{t('table.user')}</th>
+              <th>{t('table.role_access')}</th>
+              <th>{t('table.special_permissions')}</th>
+              <th className="text-right">{t('table.actions')}</th>
             </tr>
           </thead>
           <tbody>
@@ -490,14 +490,14 @@ export default function GestionUtilisateurs() {
                       user.profile?.role === 'CAISSIER' ? 'badge-secondary' : 'badge-ghost'
                     }`}>
                       {user.is_superuser 
-                        ? t('users.badges.pharmacist') 
+                        ? t('badges.pharmacist') 
                         : user.profile?.role === 'CAISSIER' 
-                            ? t('users.roles.cashier') 
-                            : t('users.roles.seller')}
+                            ? t('roles.cashier') 
+                            : t('roles.seller')}
                     </span>
                     <div className="flex flex-wrap gap-1 mt-1">
                       {user.is_superuser ? (
-                        <span className="badge badge-outline badge-xs">{t('users.badges.full_access')}</span>
+                        <span className="badge badge-outline badge-xs">{t('badges.full_access')}</span>
                       ) : (
                         user.profile?.allowed_menus.map(menu => (
                           <span key={menu} className="badge badge-outline badge-xs opacity-70">
@@ -511,12 +511,12 @@ export default function GestionUtilisateurs() {
                 <td>
                   <div className="flex gap-2">
                     {user.profile?.can_cash_out && (
-                      <div className="badge badge-success badge-outline gap-1" title={t('users.permissions.cash_out')}>
+                      <div className="badge badge-success badge-outline gap-1" title={t('permissions.cash_out')}>
                         <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
                       </div>
                     )}
                     {user.profile?.can_sell_negative_stock && (
-                      <div className="badge badge-warning badge-outline gap-1" title={t('users.permissions.negative_stock')}>
+                      <div className="badge badge-warning badge-outline gap-1" title={t('permissions.negative_stock')}>
                         <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
                       </div>
                     )}
@@ -527,14 +527,14 @@ export default function GestionUtilisateurs() {
                     className="btn btn-ghost btn-sm"
                     onClick={() => handleOpenModal(user)}
                   >
-                    {t('users.actions.edit')}
+                    {t('actions.edit')}
                   </button>
                   {currentUser?.username !== user.username && (
                     <button 
                       className="btn btn-ghost btn-sm text-error"
                       onClick={() => handleDeleteUser(user.id, user.username)}
                     >
-                      {t('users.actions.delete')}
+                      {t('actions.delete')}
                     </button>
                   )}
                 </td>
@@ -552,7 +552,7 @@ export default function GestionUtilisateurs() {
                 <div className="w-8 h-8 rounded-lg bg-primary/10 text-primary flex items-center justify-center">
                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
                 </div>
-                {editingUser ? t('users.modal.edit_title') : t('users.modal.new_title')}
+                {editingUser ? t('modal.edit_title') : t('modal.new_title')}
               </h3>
               <button className="btn btn-sm btn-circle btn-ghost" onClick={() => setModalOpen(false)}>✕</button>
             </div>
@@ -560,12 +560,12 @@ export default function GestionUtilisateurs() {
             <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-6 space-y-8">
               <div className="space-y-4">
                 <div className="flex items-center gap-2 border-l-4 border-primary pl-3">
-                  <h4 className="font-bold text-sm uppercase tracking-wider text-base-content/70">{t('users.modal.basic_info')}</h4>
+                  <h4 className="font-bold text-sm uppercase tracking-wider text-base-content/70">{t('modal.basic_info')}</h4>
                 </div>
                 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div className="form-control">
-                    <label className="label text-xs font-semibold py-1">{t('users.form.role')}</label>
+                    <label className="label text-xs font-semibold py-1">{t('form.role')}</label>
                     <select 
                       className="select select-bordered w-full select-primary font-bold"
                       value={formData.role}
@@ -578,7 +578,7 @@ export default function GestionUtilisateurs() {
                   </div>
 
                   <div className="form-control">
-                    <label className="label text-xs font-semibold py-1">{t('users.form.username')}</label>
+                    <label className="label text-xs font-semibold py-1">{t('form.username')}</label>
                     <input 
                       type="text" 
                       className="input input-bordered" 
@@ -590,8 +590,8 @@ export default function GestionUtilisateurs() {
                   
                   <div className="form-control">
                     <label className="label text-xs font-semibold py-1">
-                      {t('users.form.password')}
-                      {editingUser && <span className="label-text-alt text-warning ml-2">{t('users.form.password_hint')}</span>}
+                      {t('form.password')}
+                      {editingUser && <span className="label-text-alt text-warning ml-2">{t('form.password_hint')}</span>}
                     </label>
                     <input 
                       type="password" 
@@ -603,7 +603,7 @@ export default function GestionUtilisateurs() {
                   </div>
 
                   <div className="form-control">
-                    <label className="label text-xs font-semibold py-1">{t('users.form.firstname')}</label>
+                    <label className="label text-xs font-semibold py-1">{t('form.firstname')}</label>
                     <input 
                       type="text" 
                       className="input input-bordered" 
@@ -613,7 +613,7 @@ export default function GestionUtilisateurs() {
                   </div>
 
                   <div className="form-control">
-                    <label className="label text-xs font-semibold py-1">{t('users.form.lastname')}</label>
+                    <label className="label text-xs font-semibold py-1">{t('form.lastname')}</label>
                     <input 
                       type="text" 
                       className="input input-bordered" 
@@ -623,7 +623,7 @@ export default function GestionUtilisateurs() {
                   </div>
                   
                   <div className="form-control">
-                    <label className="label text-xs font-semibold py-1">{t('users.form.email')}</label>
+                    <label className="label text-xs font-semibold py-1">{t('form.email')}</label>
                     <input 
                       type="email" 
                       className="input input-bordered" 
@@ -636,7 +636,7 @@ export default function GestionUtilisateurs() {
 
               <div className="space-y-4">
                 <div className="flex items-center gap-2 border-l-4 border-secondary pl-3">
-                  <h4 className="font-bold text-sm uppercase tracking-wider text-base-content/70">{t('users.modal.authorized_menus')}</h4>
+                  <h4 className="font-bold text-sm uppercase tracking-wider text-base-content/70">{t('modal.authorized_menus')}</h4>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -685,7 +685,7 @@ export default function GestionUtilisateurs() {
                 {formData.is_superuser && (
                   <div className="alert alert-info py-2 shadow-sm italic text-sm">
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" className="stroke-current shrink-0 w-4 h-4"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                    <span>{t('users.modal.admin_note')}</span>
+                    <span>{t('modal.admin_note')}</span>
                   </div>
                 )}
               </div>
@@ -693,7 +693,7 @@ export default function GestionUtilisateurs() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                   <div className="space-y-4">
                     <div className="flex items-center gap-2 border-l-4 border-success pl-3">
-                      <h4 className="font-bold text-sm uppercase tracking-wider text-base-content/70">{t('users.modal.special_permissions')}</h4>
+                      <h4 className="font-bold text-sm uppercase tracking-wider text-base-content/70">{t('modal.special_permissions')}</h4>
                     </div>
                     
                     <div className="grid grid-cols-1 gap-3 bg-base-200/50 p-4 rounded-xl border border-base-300">
@@ -706,37 +706,37 @@ export default function GestionUtilisateurs() {
                           disabled={formData.is_superuser || formData.role === 'VENDEUR'}
                         />
                         <div className="flex flex-col">
-                          <span className="font-bold text-xs group-hover:text-success transition-colors">{t('users.permissions.cash_out')}</span>
-                          <span className="text-[10px] opacity-60 leading-none mt-0.5">{t('users.permissions.cash_out_desc')}</span>
+                          <span className="font-bold text-xs group-hover:text-success transition-colors">{t('permissions.cash_out')}</span>
+                          <span className="text-[10px] opacity-60 leading-none mt-0.5">{t('permissions.cash_out_desc')}</span>
                         </div>
                       </label>
 
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                         <label className="label cursor-pointer justify-start gap-3 p-2 bg-base-100/50 rounded-lg group">
                           <input type="checkbox" className="checkbox checkbox-xs" checked={formData.can_do_returns} onChange={e => setFormData({...formData, can_do_returns: e.target.checked})} />
-                          <span className="text-xs font-medium opacity-80 group-hover:opacity-100">{t('users.permissions.returns')}</span>
+                          <span className="text-xs font-medium opacity-80 group-hover:opacity-100">{t('permissions.returns')}</span>
                         </label>
                         <label className="label cursor-pointer justify-start gap-3 p-2 bg-base-100/50 rounded-lg group">
                           <input type="checkbox" className="checkbox checkbox-xs checkbox-warning" checked={formData.can_sell_negative_stock} onChange={e => setFormData({...formData, can_sell_negative_stock: e.target.checked})} />
-                          <span className="text-xs font-bold text-warning/80 group-hover:text-warning">{t('users.permissions.negative_stock')}</span>
+                          <span className="text-xs font-bold text-warning/80 group-hover:text-warning">{t('permissions.negative_stock')}</span>
                         </label>
                         <label className="label cursor-pointer justify-start gap-3 p-2 bg-base-100/50 rounded-lg group">
                           <input type="checkbox" className="checkbox checkbox-xs" checked={formData.can_modify_price} onChange={e => setFormData({...formData, can_modify_price: e.target.checked})} />
-                          <span className="text-xs font-medium opacity-80 group-hover:opacity-100">{t('users.permissions.modify_price')}</span>
+                          <span className="text-xs font-medium opacity-80 group-hover:opacity-100">{t('permissions.modify_price')}</span>
                         </label>
                         <label className="label cursor-pointer justify-start gap-3 p-2 bg-base-100/50 rounded-lg group">
                           <input type="checkbox" className="checkbox checkbox-xs" checked={formData.can_generate_coupon} onChange={e => setFormData({...formData, can_generate_coupon: e.target.checked})} />
-                          <span className="text-xs font-medium opacity-80 group-hover:opacity-100">{t('users.permissions.generate_coupon')}</span>
+                          <span className="text-xs font-medium opacity-80 group-hover:opacity-100">{t('permissions.generate_coupon')}</span>
                         </label>
                         <label className="label cursor-pointer justify-start gap-3 p-2 bg-base-100/50 rounded-lg group">
                           <input type="checkbox" className="checkbox checkbox-xs" checked={formData.can_modify_invoice} onChange={e => setFormData({...formData, can_modify_invoice: e.target.checked})} />
-                          <span className="text-xs font-medium opacity-80 group-hover:opacity-100">{t('users.permissions.modify_invoice')}</span>
+                          <span className="text-xs font-medium opacity-80 group-hover:opacity-100">{t('permissions.modify_invoice')}</span>
                         </label>
                       </div>
 
                       <div className="form-control px-2 mt-1">
                         <label className="label py-1">
-                          <span className="label-text text-[10px] font-bold opacity-60">{t('users.form.max_discount')}</span>
+                          <span className="label-text text-[10px] font-bold opacity-60">{t('form.max_discount')}</span>
                         </label>
                         <input 
                           type="number" 
@@ -750,45 +750,45 @@ export default function GestionUtilisateurs() {
 
                   <div className="space-y-4">
                     <div className="flex items-center gap-2 border-l-4 border-error pl-3">
-                      <h4 className="font-bold text-sm uppercase tracking-wider text-base-content/70">{t('users.modal.security_sudo')}</h4>
+                      <h4 className="font-bold text-sm uppercase tracking-wider text-base-content/70">{t('modal.security_sudo')}</h4>
                     </div>
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 bg-base-200/50 p-4 rounded-xl border border-base-300">
                       <label className="label cursor-pointer justify-start gap-3 p-2 bg-base-100/50 rounded-lg group">
                         <input type="checkbox" className="checkbox checkbox-xs checkbox-error" checked={formData.can_cancel_invoice} onChange={e => setFormData({...formData, can_cancel_invoice: e.target.checked})} />
-                        <span className="text-xs font-medium text-error opacity-80 group-hover:opacity-100">{t('users.permissions.cancel_invoice')}</span>
+                        <span className="text-xs font-medium text-error opacity-80 group-hover:opacity-100">{t('permissions.cancel_invoice')}</span>
                       </label>
                       <label className="label cursor-pointer justify-start gap-3 p-2 bg-base-100/50 rounded-lg group">
                         <input type="checkbox" className="checkbox checkbox-xs checkbox-error" checked={formData.can_cancel_promis} onChange={e => setFormData({...formData, can_cancel_promis: e.target.checked})} />
-                        <span className="text-xs font-medium text-error opacity-80 group-hover:opacity-100">{t('users.permissions.cancel_promis')}</span>
+                        <span className="text-xs font-medium text-error opacity-80 group-hover:opacity-100">{t('permissions.cancel_promis')}</span>
                       </label>
                       <label className="label cursor-pointer justify-start gap-3 p-2 bg-base-100/50 rounded-lg group">
                         <input type="checkbox" className="checkbox checkbox-xs checkbox-error" checked={formData.can_delete_product} onChange={e => setFormData({...formData, can_delete_product: e.target.checked})} />
-                        <span className="text-xs font-medium text-error opacity-80 group-hover:opacity-100">{t('users.permissions.delete_product')}</span>
+                        <span className="text-xs font-medium text-error opacity-80 group-hover:opacity-100">{t('permissions.delete_product')}</span>
                       </label>
                       <label className="label cursor-pointer justify-start gap-3 p-2 bg-base-100/50 rounded-lg group">
                         <input type="checkbox" className="checkbox checkbox-xs checkbox-error" checked={formData.can_delete_fournisseur} onChange={e => setFormData({...formData, can_delete_fournisseur: e.target.checked})} />
-                        <span className="text-xs font-medium text-error opacity-80 group-hover:opacity-100">{t('users.permissions.delete_fournisseur')}</span>
+                        <span className="text-xs font-medium text-error opacity-80 group-hover:opacity-100">{t('permissions.delete_fournisseur')}</span>
                       </label>
                       <label className="label cursor-pointer justify-start gap-3 p-2 bg-base-100/50 rounded-lg group">
                         <input type="checkbox" className="checkbox checkbox-xs checkbox-warning" checked={formData.can_adjust_stock} onChange={e => setFormData({...formData, can_adjust_stock: e.target.checked})} />
-                        <span className="text-xs font-medium text-warning opacity-80 group-hover:opacity-100">{t('users.permissions.adjust_stock')}</span>
+                        <span className="text-xs font-medium text-warning opacity-80 group-hover:opacity-100">{t('permissions.adjust_stock')}</span>
                       </label>
                       <label className="label cursor-pointer justify-start gap-3 p-2 bg-base-100/50 rounded-lg group">
                         <input type="checkbox" className="checkbox checkbox-xs checkbox-warning" checked={formData.can_manage_perimes} onChange={e => setFormData({...formData, can_manage_perimes: e.target.checked})} />
-                        <span className="text-xs font-medium text-warning opacity-80 group-hover:opacity-100">{t('users.permissions.manage_perimes')}</span>
+                        <span className="text-xs font-medium text-warning opacity-80 group-hover:opacity-100">{t('permissions.manage_perimes')}</span>
                       </label>
                       <label className="label cursor-pointer justify-start gap-3 p-2 bg-base-100/50 rounded-lg group">
                         <input type="checkbox" className="checkbox checkbox-xs checkbox-warning" checked={formData.can_manage_avoirs} onChange={e => setFormData({...formData, can_manage_avoirs: e.target.checked})} />
-                        <span className="text-xs font-medium text-warning opacity-80 group-hover:opacity-100">{t('users.permissions.manage_avoirs')}</span>
+                        <span className="text-xs font-medium text-warning opacity-80 group-hover:opacity-100">{t('permissions.manage_avoirs')}</span>
                       </label>
                       <label className="label cursor-pointer justify-start gap-3 p-2 bg-base-100/50 rounded-lg group">
                         <input type="checkbox" className="checkbox checkbox-xs checkbox-warning" checked={formData.can_delete_commande} onChange={e => setFormData({...formData, can_delete_commande: e.target.checked})} />
-                        <span className="text-xs font-medium text-warning opacity-80 group-hover:opacity-100">{t('users.permissions.delete_commande')}</span>
+                        <span className="text-xs font-medium text-warning opacity-80 group-hover:opacity-100">{t('permissions.delete_commande')}</span>
                       </label>
                       <label className="label cursor-pointer justify-start gap-3 p-2 bg-base-100/50 rounded-lg group">
                         <input type="checkbox" className="checkbox checkbox-xs checkbox-warning" checked={formData.can_close_commande} onChange={e => setFormData({...formData, can_close_commande: e.target.checked})} />
-                        <span className="text-xs font-medium text-warning opacity-80 group-hover:opacity-100">{t('users.permissions.close_commande')}</span>
+                        <span className="text-xs font-medium text-warning opacity-80 group-hover:opacity-100">{t('permissions.close_commande')}</span>
                       </label>
                     </div>
                   </div>
@@ -796,8 +796,8 @@ export default function GestionUtilisateurs() {
             </form>
 
             <div className="p-4 bg-base-200 border-t border-base-300 flex justify-end gap-3 flex-none">
-              <button type="button" className="btn btn-ghost" onClick={() => setModalOpen(false)}>{t('users.modal.cancel')}</button>
-              <button type="submit" onClick={() => handleSubmit({ preventDefault: () => {} } as React.FormEvent)} className="btn btn-primary px-10 shadow-lg shadow-primary/20">{t('users.modal.save')}</button>
+              <button type="button" className="btn btn-ghost" onClick={() => setModalOpen(false)}>{t('modal.cancel')}</button>
+              <button type="submit" onClick={() => handleSubmit({ preventDefault: () => {} } as React.FormEvent)} className="btn btn-primary px-10 shadow-lg shadow-primary/20">{t('modal.save')}</button>
             </div>
           </div>
         </div>

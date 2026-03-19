@@ -39,7 +39,15 @@ i18n
             'prescriptions',
             'promotions',
             'facturation',
-            'sellers'
+            'sellers',
+            'vitrine',
+            'caisse',
+            'creances',
+            'providers',
+            'maintenance',
+            'pharmacy_settings',
+            'monthly_report',
+            'supplier_stats'
         ],
         defaultNS: 'common',
         interpolation: {

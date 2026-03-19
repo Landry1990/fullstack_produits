@@ -1,6 +1,0 @@
-src/components/products/modals/ProductDetailsModal.tsx(82,15): error TS2322: Type '{ selectedProduit: ProduitModel; activeTab: any; setActiveTab: (tab: any) => void; achats: AchatProduit[]; lots: StockLot[]; adjustments: StockAdjustment[]; monthlyStats: any[]; stockHistory: any[]; loadingHistory: boolean; onMovementClick: (item: any) => void; }' is not assignable to type 'IntrinsicAttributes & ProductTabsContentProps'.
-  Property 'achats' does not exist on type 'IntrinsicAttributes & ProductTabsContentProps'.
-src/components/products/modals/StockAdjustmentModal.tsx(2,1): error TS6133: 'useTranslation' is declared but its value is never read.
-src/components/products/ProductDetailPanel.tsx(129,11): error TS2322: Type '{ selectedProduit: ProduitModel; activeTab: any; setActiveTab: (tab: any) => void; achats: AchatProduit[]; lots: StockLot[]; adjustments: StockAdjustment[]; monthlyStats: any[]; stockHistory: any[]; loadingHistory: boolean; onMovementClick: (item: any) => void; }' is not assignable to type 'IntrinsicAttributes & ProductTabsContentProps'.
-  Property 'achats' does not exist on type 'IntrinsicAttributes & ProductTabsContentProps'.
-src/components/Transformations.tsx(11,17): error TS6133: 'Printer' is declared but its value is never read.

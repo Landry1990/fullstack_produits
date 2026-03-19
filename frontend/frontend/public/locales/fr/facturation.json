@@ -33,7 +33,7 @@
         "discount": "Remise Globale",
         "tva": "TVA",
         "total_ttc": "Total TTC",
-        "part_patient": "Net à Payer (Patient)",
+        "part_patient": "Part Patient",
         "part_assurance": "Part Assurance",
         "assurance_label": "Assurance"
     },

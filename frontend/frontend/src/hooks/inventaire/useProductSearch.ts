@@ -11,7 +11,7 @@ export const useProductSearch = (
     lignes: LigneInventaire[],
     inventoryType?: 'GLOBAL' | 'RAYON' | 'RESERVE'
 ) => {
-    const { t } = useTranslation();
+    const { t } = useTranslation(['stock', 'common']);
 
     const [searchQuery, setSearchQuery] = useState('');
     const [searchResults, setSearchResults] = useState<ProduitModel[]>([]);
@@ -198,7 +198,7 @@ export const useProductSearch = (
         );
 
         if (existsLocally) {
-            toast.error(t('stock.inventaire.detail.already_added'));
+            toast.error(t('inventaire.detail.already_added'));
             setSearchQuery('');
             setSearchResults([]);
             setSelectedItemIndex(-1);

@@ -1,20 +1,13 @@
 
 [1m[46m RUN [49m[22m [36mv4.0.17 [39m[90mC:/Projet Fullstack/fullstack_produits/frontend/frontend[39m
 
- [31mÔØ»[39m src/components/__tests__/Facturation.test.tsx [2m([22m[2m4 tests[22m[2m | [22m[31m3 failed[39m[2m | [22m[33m1 skipped[39m[2m)[22m[32m 33[2mms[22m[39m
-[31m     [31m├ù[31m affiche les composants principaux au chargement[39m[32m 26[2mms[22m[39m
-[31m     [31m├ù[31m affiche un panier vide au d├®marrage[39m[32m 2[2mms[22m[39m
-[31m     [31m├ù[31m affiche les produits dans le panier quand useCart renvoie des donn├®es[39m[32m 3[2mms[22m[39m
-     [2m[90mÔåô[39m[22m ouvre la modal de paiement au clic sur Encaisser
- [31mÔØ»[39m src/components/__tests__/Ventes.test.tsx [2m([22m[2m6 tests[22m[2m | [22m[31m2 failed[39m[2m | [22m[33m4 skipped[39m[2m)[22m[33m 2098[2mms[22m[39m
-     [2m[90mÔåô[39m[22m renders correctly and fetches factures
-     [2m[90mÔåô[39m[22m handles filtering
-     [2m[90mÔåô[39m[22m searches for invoices
-[31m     [31m├ù[31m opens product details modal[39m[33m 1062[2mms[22m[39m
-     [2m[90mÔåô[39m[22m opens refund modal and handles cancellation
-[31m     [31m├ù[31m displays empty state when no factures found[39m[33m 1034[2mms[22m[39m
-stderr | src/components/__tests__/Avoirs.test.tsx > Avoirs Component > affiche la liste des avoirs
-An update to Avoirs inside a test was not wrapped in act(...).
+ [32mÔ£ô[39m src/components/facturation/__tests__/TotalsSection.test.tsx [2m([22m[2m2 tests[22m[2m)[22m[32m 110[2mms[22m[39m
+ [31mÔØ»[39m src/components/__tests__/ModuleFinancier.test.tsx [2m([22m[2m3 tests[22m[2m | [22m[31m3 failed[39m[2m)[22m[32m 80[2mms[22m[39m
+[31m     [31m├ù[31m renders correctly and displays KPI cards[39m[32m 47[2mms[22m[39m
+[31m     [31m├ù[31m displays loading state when data is fetching[39m[32m 11[2mms[22m[39m
+[31m     [31m├ù[31m renders chart sections[39m[32m 20[2mms[22m[39m
+stderr | src/components/__tests__/StockAnalysis.test.tsx > StockAnalysis > affiche le titre et charge les donn├®es au montage
+An update to StockAnalysis inside a test was not wrapped in act(...).
 
 When testing, code that causes React state updates should be wrapped into act(...):
 
@@ -24,7 +17,37 @@ act(() => {
 /* assert on the output */
 
 This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
-An update to Avoirs inside a test was not wrapped in act(...).
+An update to StockAnalysis inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to StockAnalysis inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to StockAnalysis inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to StockAnalysis inside a test was not wrapped in act(...).
 
 When testing, code that causes React state updates should be wrapped into act(...):
 
@@ -35,7 +58,650 @@ act(() => {
 
 This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
 
- [31mÔØ»[39m src/components/__tests__/Avoirs.test.tsx [2m([22m[2m2 tests[22m[2m | [22m[31m2 failed[39m[2m)[22m[32m 73[2mms[22m[39m
+stderr | src/components/__tests__/StockAnalysis.test.tsx > StockAnalysis > affiche la liste des produits apr├¿s le chargement
+An update to StockAnalysis inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to StockAnalysis inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to StockAnalysis inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to StockAnalysis inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to StockAnalysis inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | src/components/__tests__/StockAnalysis.test.tsx > StockAnalysis > filtre les produits par recherche
+An update to StockAnalysis inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to StockAnalysis inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to StockAnalysis inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to StockAnalysis inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to StockAnalysis inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | src/components/__tests__/StockAnalysis.test.tsx > StockAnalysis > identifie correctement les produits en rupture de stock
+An update to StockAnalysis inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to StockAnalysis inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to StockAnalysis inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to StockAnalysis inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to StockAnalysis inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ [31mÔØ»[39m src/components/facturation/__tests__/CartTable.test.tsx [2m([22m[2m9 tests[22m[2m | [22m[31m3 failed[39m[2m)[22m[33m 700[2mms[22m[39m
+[31m     [31m├ù[31m affiche le message vide quand il n'y a pas de produits[39m[32m 60[2mms[22m[39m
+     [32mÔ£ô[39m affiche les produits dans le tableau[32m 80[2mms[22m[39m
+     [33m[2mÔ£ô[22m[39m appelle updateQuantite lors du changement de quantit├® [33m 327[2mms[22m[39m
+[31m     [31m├ù[31m appelle updatePrix lors du changement de prix[39m[32m 83[2mms[22m[39m
+[31m     [31m├ù[31m appelle updateRemiseProduit lors du changement de remise[39m[32m 79[2mms[22m[39m
+     [32mÔ£ô[39m affiche le bouton lot avec le texte appropri├®[32m 20[2mms[22m[39m
+     [32mÔ£ô[39m affiche le num├®ro de lot quand un lot est s├®lectionn├®[32m 16[2mms[22m[39m
+     [32mÔ£ô[39m appelle onOpenLotModal au clic sur le bouton lot[32m 17[2mms[22m[39m
+     [32mÔ£ô[39m formate correctement la date de p├®remption[32m 16[2mms[22m[39m
+ [31mÔØ»[39m src/components/facturation/__tests__/PaymentModal.test.tsx [2m([22m[2m11 tests[22m[2m | [22m[31m2 failed[39m[2m)[22m[33m 744[2mms[22m[39m
+     [32mÔ£ô[39m ne s'affiche pas quand isOpen est false[32m 38[2mms[22m[39m
+     [33m[2mÔ£ô[22m[39m s'affiche quand isOpen est true [33m 306[2mms[22m[39m
+     [32mÔ£ô[39m affiche le total ├á payer pour une nouvelle vente[32m 62[2mms[22m[39m
+[31m     [31m├ù[31m affiche le montant du coupon quand applicable[39m[32m 38[2mms[22m[39m
+[31m     [31m├ù[31m affiche l'info Tiers Payant quand tauxCouverture > 0[39m[32m 25[2mms[22m[39m
+     [32mÔ£ô[39m affiche les parts Patient et Assurance en mode Tiers Payant[32m 20[2mms[22m[39m
+     [32mÔ£ô[39m appelle onCompleteSale ├á la soumission pour une nouvelle vente[32m 105[2mms[22m[39m
+     [32mÔ£ô[39m appelle onRegisterPayment ├á la soumission pour une facture existante[32m 56[2mms[22m[39m
+     [32mÔ£ô[39m affiche le total vers├®[32m 11[2mms[22m[39m
+     [32mÔ£ô[39m appelle setMontantPaye lors de la saisie du montant[32m 27[2mms[22m[39m
+     [32mÔ£ô[39m ajoute un paiement au clic sur le bouton Ajouter[32m 54[2mms[22m[39m
+stderr | src/components/__tests__/Dashboard.test.tsx > Dashboard Component > renders main statistics correctly
+The tag <stop> is unrecognized in this browser. If you meant to render a React component, start its name with an uppercase letter.
+<linearGradient /> is using incorrect casing. Use PascalCase for React components, or lowercase for HTML elements.
+The tag <linearGradient> is unrecognized in this browser. If you meant to render a React component, start its name with an uppercase letter.
+The tag <defs> is unrecognized in this browser. If you meant to render a React component, start its name with an uppercase letter.
+<linearGradient /> is using incorrect casing. Use PascalCase for React components, or lowercase for HTML elements.
+
+stderr | src/components/__tests__/Dashboard.test.tsx > Dashboard Component > displays stock product count
+<linearGradient /> is using incorrect casing. Use PascalCase for React components, or lowercase for HTML elements.
+<linearGradient /> is using incorrect casing. Use PascalCase for React components, or lowercase for HTML elements.
+
+[90mstdout[2m | src/components/__tests__/Produit.test.tsx[2m > [22m[2mProduit Component (Integration)[2m > [22m[2mfetches and displays products via axios
+[22m[39m[Produit] Rendering component...
+[Produit] Rendering component...
+
+stderr | src/components/__tests__/Dashboard.test.tsx > Dashboard Component > displays user personal stats
+<linearGradient /> is using incorrect casing. Use PascalCase for React components, or lowercase for HTML elements.
+<linearGradient /> is using incorrect casing. Use PascalCase for React components, or lowercase for HTML elements.
+
+[90mstdout[2m | src/components/__tests__/Produit.test.tsx[2m > [22m[2mProduit Component (Integration)[2m > [22m[2msearches for products by triggering new API call
+[22m[39m[Produit] Rendering component...
+[Produit] Rendering component...
+
+[90mstdout[2m | src/components/__tests__/Produit.test.tsx[2m > [22m[2mProduit Component (Integration)[2m > [22m[2mhandles delete integration flow
+[22m[39m[Produit] Rendering component...
+[Produit] Rendering component...
+
+ [31mÔØ»[39m src/components/__tests__/Produit.test.tsx [2m([22m[2m3 tests[22m[2m | [22m[31m3 failed[39m[2m)[22m[32m 59[2mms[22m[39m
+[31m     [31m├ù[31m fetches and displays products via axios[39m[32m 45[2mms[22m[39m
+[31m     [31m├ù[31m searches for products by triggering new API call[39m[32m 7[2mms[22m[39m
+[31m     [31m├ù[31m handles delete integration flow[39m[32m 5[2mms[22m[39m
+stderr | src/components/__tests__/Dashboard.test.tsx > Dashboard Component > displays Promis notification when data exists
+<linearGradient /> is using incorrect casing. Use PascalCase for React components, or lowercase for HTML elements.
+<linearGradient /> is using incorrect casing. Use PascalCase for React components, or lowercase for HTML elements.
+
+stderr | src/components/__tests__/Dashboard.test.tsx > Dashboard Component > displays Expiring Lots notification when critical lots exist
+<linearGradient /> is using incorrect casing. Use PascalCase for React components, or lowercase for HTML elements.
+<linearGradient /> is using incorrect casing. Use PascalCase for React components, or lowercase for HTML elements.
+
+stderr | src/components/__tests__/Dashboard.test.tsx > Dashboard Component > renders UG statistics table
+<linearGradient /> is using incorrect casing. Use PascalCase for React components, or lowercase for HTML elements.
+<linearGradient /> is using incorrect casing. Use PascalCase for React components, or lowercase for HTML elements.
+
+stderr | src/components/__tests__/Dashboard.test.tsx > Dashboard Component > displays supplier debts section
+<linearGradient /> is using incorrect casing. Use PascalCase for React components, or lowercase for HTML elements.
+<linearGradient /> is using incorrect casing. Use PascalCase for React components, or lowercase for HTML elements.
+
+stderr | src/components/__tests__/StockAnalysis.test.tsx > StockAnalysis > calcule correctement la valeur totale du stock
+An update to StockAnalysis inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to StockAnalysis inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to StockAnalysis inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to StockAnalysis inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to StockAnalysis inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | src/components/__tests__/Dashboard.test.tsx > Dashboard Component > handles expiration period change
+<linearGradient /> is using incorrect casing. Use PascalCase for React components, or lowercase for HTML elements.
+<linearGradient /> is using incorrect casing. Use PascalCase for React components, or lowercase for HTML elements.
+
+stderr | src/components/__tests__/Dashboard.test.tsx > Dashboard Component > does not crash when stats data is undefined (Regression)
+<linearGradient /> is using incorrect casing. Use PascalCase for React components, or lowercase for HTML elements.
+<linearGradient /> is using incorrect casing. Use PascalCase for React components, or lowercase for HTML elements.
+
+stderr | src/components/__tests__/Dashboard.test.tsx > Dashboard Component > navigates to providers with correct state when clicking supplier debt action
+<linearGradient /> is using incorrect casing. Use PascalCase for React components, or lowercase for HTML elements.
+<linearGradient /> is using incorrect casing. Use PascalCase for React components, or lowercase for HTML elements.
+
+ [31mÔØ»[39m src/components/__tests__/Dashboard.test.tsx [2m([22m[2m13 tests[22m[2m | [22m[31m1 failed[39m[2m)[22m[33m 1626[2mms[22m[39m
+     [32mÔ£ô[39m renders loading state correctly[32m 34[2mms[22m[39m
+[31m     [31m├ù[31m renders error state correctly[39m[32m 38[2mms[22m[39m
+     [32mÔ£ô[39m renders main statistics correctly[32m 198[2mms[22m[39m
+     [32mÔ£ô[39m displays stock product count[32m 83[2mms[22m[39m
+     [32mÔ£ô[39m displays user personal stats[32m 95[2mms[22m[39m
+     [32mÔ£ô[39m displays Promis notification when data exists[32m 89[2mms[22m[39m
+     [32mÔ£ô[39m displays Expiring Lots notification when critical lots exist[32m 92[2mms[22m[39m
+     [32mÔ£ô[39m renders UG statistics table[32m 89[2mms[22m[39m
+     [32mÔ£ô[39m displays supplier debts section[32m 114[2mms[22m[39m
+     [32mÔ£ô[39m handles expiration period change[32m 145[2mms[22m[39m
+     [32mÔ£ô[39m renders restricted view for VENDEUR role[32m 53[2mms[22m[39m
+     [32mÔ£ô[39m does not crash when stats data is undefined (Regression)[32m 61[2mms[22m[39m
+     [33m[2mÔ£ô[22m[39m navigates to providers with correct state when clicking supplier debt action [33m 531[2mms[22m[39m
+stderr | src/components/__tests__/StockAnalysis.test.tsx > StockAnalysis > g├¿re les erreurs d'API avec ├®l├®gance
+Erreur chargement fournisseurs: Error: Network Error
+    at C:/Projet Fullstack/fullstack_produits/frontend/frontend/src/components/__tests__/StockAnalysis.test.tsx:84:47
+    at file:///C:/Projet%20Fullstack/fullstack_produits/frontend/frontend/node_modules/@vitest/runner/dist/index.js:145:11
+    at file:///C:/Projet%20Fullstack/fullstack_produits/frontend/frontend/node_modules/@vitest/runner/dist/index.js:915:26
+    at file:///C:/Projet%20Fullstack/fullstack_produits/frontend/frontend/node_modules/@vitest/runner/dist/index.js:1243:20
+    at new Promise (<anonymous>)
+    at runWithTimeout (file:///C:/Projet%20Fullstack/fullstack_produits/frontend/frontend/node_modules/@vitest/runner/dist/index.js:1209:10)
+    at file:///C:/Projet%20Fullstack/fullstack_produits/frontend/frontend/node_modules/@vitest/runner/dist/index.js:1653:37
+    at Traces.$ (file:///C:/Projet%20Fullstack/fullstack_produits/frontend/frontend/node_modules/vitest/dist/chunks/traces.CCmnQaNT.js:142:27)
+    at trace (file:///C:/Projet%20Fullstack/fullstack_produits/frontend/frontend/node_modules/vitest/dist/chunks/test.B8ej_ZHS.js:239:21)
+    at runTest (file:///C:/Projet%20Fullstack/fullstack_produits/frontend/frontend/node_modules/@vitest/runner/dist/index.js:1653:12)
+An update to StockAnalysis inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to StockAnalysis inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to StockAnalysis inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to StockAnalysis inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to StockAnalysis inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ [31mÔØ»[39m src/components/__tests__/Fournisseurs.test.tsx [2m([22m[2m0 test[22m[2m)[22m
+stderr | src/components/__tests__/StockAnalysis.test.tsx > StockAnalysis > permet de changer le tri
+An update to StockAnalysis inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to StockAnalysis inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to StockAnalysis inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to StockAnalysis inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to StockAnalysis inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | src/components/__tests__/StockAnalysis.test.tsx > StockAnalysis > affiche un message quand aucun produit ne correspond ├á la recherche
+An update to StockAnalysis inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to StockAnalysis inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to StockAnalysis inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to StockAnalysis inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to StockAnalysis inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ [31mÔØ»[39m src/components/__tests__/StockAnalysis.test.tsx [2m([22m[2m8 tests[22m[2m | [22m[31m7 failed[39m[2m)[22m[33m 3916[2mms[22m[39m
+[31m     [31m├ù[31m affiche le titre et charge les donn├®es au montage[39m[32m 143[2mms[22m[39m
+     [32mÔ£ô[39m affiche la liste des produits apr├¿s le chargement[32m 132[2mms[22m[39m
+[31m     [31m├ù[31m filtre les produits par recherche[39m[32m 99[2mms[22m[39m
+[31m     [31m├ù[31m identifie correctement les produits en rupture de stock[39m[33m 1070[2mms[22m[39m
+[31m     [31m├ù[31m calcule correctement la valeur totale du stock[39m[33m 1058[2mms[22m[39m
+[31m     [31m├ù[31m g├¿re les erreurs d'API avec ├®l├®gance[39m[33m 1060[2mms[22m[39m
+[31m     [31m├ù[31m permet de changer le tri[39m[32m 276[2mms[22m[39m
+[31m     [31m├ù[31m affiche un message quand aucun produit ne correspond ├á la recherche[39m[32m 74[2mms[22m[39m
+ [31mÔØ»[39m src/components/__tests__/StatistiquesFournisseur.test.tsx [2m([22m[2m0 test[22m[2m)[22m
+ [31mÔØ»[39m src/components/__tests__/Inventaire.test.tsx [2m([22m[2m0 test[22m[2m)[22m
+stderr | src/components/__tests__/Clients.test.tsx > Clients Component > opens create modal on button click
+An update to Clients inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to Clients inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to Clients inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ [32mÔ£ô[39m src/components/__tests__/Clients.test.tsx [2m([22m[2m4 tests[22m[2m)[22m[33m 736[2mms[22m[39m
+     [33m[2mÔ£ô[22m[39m filters clients on search [33m 397[2mms[22m[39m
+ [32mÔ£ô[39m src/components/__tests__/CommandeToAvoir.test.tsx [2m([22m[2m3 tests[22m[2m)[22m[32m 251[2mms[22m[39m
+ [32mÔ£ô[39m src/components/__tests__/Commandes.test.tsx [2m([22m[2m2 tests[22m[2m)[22m[33m 468[2mms[22m[39m
+     [33m[2mÔ£ô[22m[39m shows "Nouvelle Commande" button [33m 403[2mms[22m[39m
+ [32mÔ£ô[39m src/components/facturation/__tests__/ActionButtons.test.tsx [2m([22m[2m10 tests[22m[2m)[22m[32m 177[2mms[22m[39m
+stderr | src/components/__tests__/JournalCaisse.test.tsx > JournalCaisse Component > opens movement modal on button click
+An update to JournalCaisse inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to JournalCaisse inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to JournalCaisse inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to JournalCaisse inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to JournalCaisse inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to JournalCaisse inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to JournalCaisse inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ [32mÔ£ô[39m src/components/__tests__/JournalCaisse.test.tsx [2m([22m[2m3 tests[22m[2m)[22m[33m 1024[2mms[22m[39m
+     [33m[2mÔ£ô[22m[39m filters by user and triggers fetch [33m 482[2mms[22m[39m
+ [32mÔ£ô[39m src/App.test.tsx [2m([22m[2m1 test[22m[2m)[22m[32m 41[2mms[22m[39m
+ [32mÔ£ô[39m src/utils/__tests__/validation.test.ts [2m([22m[2m6 tests[22m[2m)[22m[32m 42[2mms[22m[39m
+ [32mÔ£ô[39m src/utils/__tests__/formatters.test.ts [2m([22m[2m17 tests[22m[2m)[22m[32m 47[2mms[22m[39m
+ [32mÔ£ô[39m src/utils/__tests__/finance.test.ts [2m([22m[2m5 tests[22m[2m)[22m[32m 7[2mms[22m[39m
+stderr | src/components/__tests__/Facturation.test.tsx > Facturation Integration > affiche les composants principaux au chargement
+An update to Facturation inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to Facturation inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | src/components/__tests__/Facturation.test.tsx > Facturation Integration > affiche un panier vide au d├®marrage
+An update to Facturation inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to Facturation inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ [32mÔ£ô[39m src/components/__tests__/Facturation.test.tsx [2m([22m[2m4 tests[22m[2m | [22m[33m1 skipped[39m[2m)[22m[32m 222[2mms[22m[39m
+ [2m[90mÔåô[39m[22m src/components/__tests__/Ventes.test.tsx [2m([22m[2m6 tests[22m[2m | [22m[33m6 skipped[39m[2m)[22m
 stderr | src/components/__tests__/Avoirs.test.tsx > Avoirs Component > permet de cr├®er un nouvel avoir
 An update to Avoirs inside a test was not wrapped in act(...).
 
@@ -57,311 +723,96 @@ act(() => {
 /* assert on the output */
 
 This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
-[31m     [31m├ù[31m affiche la liste des avoirs[39m[32m 56[2mms[22m[39m
-[31m     [31m├ù[31m permet de cr├®er un nouvel avoir[39m[32m 15[2mms[22m[39m
+
+ [32mÔ£ô[39m src/components/__tests__/Avoirs.test.tsx [2m([22m[2m2 tests[22m[2m)[22m[32m 172[2mms[22m[39m
+
+ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ» Failed Suites 3 ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»
+
+ FAIL  src/components/__tests__/Fournisseurs.test.tsx [ src/components/__tests__/Fournisseurs.test.tsx ]
+TypeError: Cannot read properties of undefined (reading 'interceptors')
+ ÔØ» src/services/api.ts:14:5
+     12| 
+     13| // Request Interceptor: Add Auth Token
+     14| api.interceptors.request.use(
+       |     ^
+     15|     (config) => {
+     16|         const token = safeStorage.getItem('authToken');
+ ÔØ» src/services/financeService.ts:1:1
+ ÔØ» src/hooks/useFinanceFournisseurs.ts:2:1
+
+ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»[1/22]ÔÄ»
+
+ FAIL  src/components/__tests__/Inventaire.test.tsx [ src/components/__tests__/Inventaire.test.tsx ]
+TypeError: Cannot read properties of undefined (reading 'interceptors')
+ ÔØ» src/services/api.ts:14:5
+     12| 
+     13| // Request Interceptor: Add Auth Token
+     14| api.interceptors.request.use(
+       |     ^
+     15|     (config) => {
+     16|         const token = safeStorage.getItem('authToken');
+ ÔØ» src/services/produitService.ts:1:1
+ ÔØ» src/hooks/useProduits.ts:2:1
+
+ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»[2/22]ÔÄ»
+
+ FAIL  src/components/__tests__/StatistiquesFournisseur.test.tsx [ src/components/__tests__/StatistiquesFournisseur.test.tsx ]
+TypeError: Cannot read properties of undefined (reading 'interceptors')
+ ÔØ» src/services/api.ts:14:5
+     12| 
+     13| // Request Interceptor: Add Auth Token
+     14| api.interceptors.request.use(
+       |     ^
+     15|     (config) => {
+     16|         const token = safeStorage.getItem('authToken');
+ ÔØ» src/services/financeService.ts:1:1
+ ÔØ» src/hooks/useFinanceStats.ts:2:1
+
+ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»[3/22]ÔÄ»
 
 
-ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ» Failed Tests 7 ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»
+ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ» Failed Tests 19 ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»
 
- FAIL  src/components/__tests__/Avoirs.test.tsx > Avoirs Component > affiche la liste des avoirs
-TestingLibraryElementError: Unable to find an element with the text: Avoirs Fournisseurs (Retours). This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+ FAIL  src/components/__tests__/Dashboard.test.tsx > Dashboard Component > renders error state correctly
+TestingLibraryElementError: Unable to find an element with the text: /Erreur|Impossible/i. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
 
 Ignored nodes: comments, script, style
 <body>
   <div>
     <div
-      class="min-h-screen bg-base-200 p-6 space-y-6 font-sans"
+      class="p-6"
     >
       <div
-        class="flex flex-col gap-6"
+        class="alert alert-error shadow-sm rounded-2xl border-none"
       >
-        <div
-          class="w-full space-y-4"
+        <svg
+          aria-hidden="true"
+          class="lucide lucide-triangle-alert w-6 h-6"
+          fill="none"
+          height="24"
+          stroke="currentColor"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="2"
+          viewBox="0 0 24 24"
+          width="24"
+          xmlns="http://www.w3.org/2000/svg"
         >
-          <div
-            class="bg-base-100 rounded-2xl shadow-sm border border-base-300 flex flex-col"
-          >
-            <div
-              class="p-6 border-b border-base-200"
-            >
-              <h1
-                class="text-2xl font-bold text-base-content tracking-tight"
-              >
-                avoirs.title
-              </h1>
-              <p
-                class="text-base-content/60 text-sm mt-1"
-              >
-                avoirs.subtitle
-              </p>
-            </div>
-            <div
-              class="p-4 bg-base-100 border-b border-base-200"
-            >
-              <div
-                class="flex flex-col md:flex-row gap-4 justify-between items-center"
-              >
-                <div
-                  class="flex flex-1 gap-4 items-center w-full md:w-auto"
-                >
-                  <div
-                    class="relative flex-1 max-w-md"
-                  >
-                    <svg
-                      aria-hidden="true"
-                      class="lucide lucide-search absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-base-content/40"
-                      fill="none"
-                      height="24"
-                      stroke="currentColor"
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      stroke-width="2"
-                      viewBox="0 0 24 24"
-                      width="24"
-                      xmlns="http://www.w3.org/2000/svg"
-                    >
-                      <path
-                        d="m21 21-4.34-4.34"
-                      />
-                      <circle
-                        cx="11"
-                        cy="11"
-                        r="8"
-                      />
-                    </svg>
-                    <input
-                      class="input input-bordered w-full pl-9 bg-base-200/50 focus:bg-base-100 transition-colors"
-                      placeholder="avoirs.search_placeholder"
-                      type="text"
-                      value=""
-                    />
-                  </div>
-                </div>
-                <div
-                  class="flex items-center gap-2 w-full md:w-auto justify-end"
-                >
-                  <button
-                    class="btn btn-square btn-ghost text-base-content/60 hover:text-primary hover:bg-primary/10 transition-colors"
-                    title="common.refresh"
-                  >
-                    <svg
-                      fill="none"
-                      height="18"
-                      stroke="currentColor"
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      stroke-width="2"
-                      viewBox="0 0 24 24"
-                      width="18"
-                      xmlns="http://www.w3.org/2000/svg"
-                    >
-                      <path
-                        d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"
-                      />
-                      <path
-                        d="M3 3v5h5"
-                      />
-                    </svg>
-                  </button>
-                  <button
-                    class="btn btn-primary gap-2 text-white shadow-sm hover:shadow-md transition-all"
-                  >
-                    <svg
-                      aria-hidden="true"
-                      class="lucide lucide-plus w-4 h-4"
-                      fill="none"
-                      height="24"
-                      stroke="currentColor"
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      stroke-width="2"
-                      viewBox="0 0 24 24"
-                      width="24"
-                      xmlns="http://www.w3.org/2000/svg"
-                    >
-                      <path
-                        d="M5 12h14"
-                      />
-                      <path
-                        d="M12 5v14"
-                      />
-                    </svg>
-                    <span
-                      class="hidden sm:inline"
-                    >
-                      avoirs.create_btn
-                    </span>
-                    <span
-                      class="sm:hidden"
-                    >
-                      common.add
-                    </span>
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-          <div
-            class="grid grid-cols-1 md:grid-cols-3 gap-4"
-          >
-            <div
-              class="bg-base-100 rounded-2xl shadow-sm border border-base-300 p-5 flex items-center gap-4 transition-all hover:shadow-md hover:border-base-content/20"
-            >
-              <div
-                class="w-12 h-12 rounded-xl flex items-center justify-center bg-primary/10 text-primary"
-              >
-                <svg
-                  aria-hidden="true"
-                  class="lucide lucide-file-text w-5 h-5"
-                  fill="none"
-                  height="24"
-                  stroke="currentColor"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  viewBox="0 0 24 24"
-                  width="24"
-                  xmlns="http://www.w3.org/2000/svg"
-                >
-                  <path
-                    d="M6 22a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h8a2.4 2.4 0 0 1 1.704.706l3.588 3.588A2.4 2.4 0 0 1 20 8v12a2 2 0 0 1-2 2z"
-                  />
-                  <path
-                    d="M14 2v5a1 1 0 0 0 1 1h5"
-                  />
-                  <path
-                    d="M10 9H8"
-                  />
-                  <path
-                    d="M16 13H8"
-                  />
-                  <path
-                    d="M16 17H8"
-                  />
-                </svg>
-              </div>
-              <div>
-                <p
-                  class="text-sm font-medium text-base-content/60"
-                >
-                  avoirs.stats.total
-                </p>
-                <p
-                  class="text-2xl font-bold text-primary"
-                >
-                  0
-                </p>
-              </div>
-            </div>
-            <div
-              class="bg-base-100 rounded-2xl shadow-sm border border-base-300 p-5 flex items-center gap-4 transition-all hover:shadow-md hover:border-base-content/20"
-            >
-              <div
-                class="w-12 h-12 rounded-xl flex items-center justify-center bg-success/10 text-success"
-              >
-                <svg
-                  aria-hidden="true"
-                  class="lucide lucide-circle-check w-5 h-5"
-                  fill="none"
-                  height="24"
-                  stroke="currentColor"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  viewBox="0 0 24 24"
-                  width="24"
-                  xmlns="http://www.w3.org/2000/svg"
-                >
-                  <circle
-                    cx="12"
-                    cy="12"
-                    r="10"
-                  />
-                  <path
-                    d="m9 12 2 2 4-4"
-                  />
-                </svg>
-              </div>
-              <div>
-                <p
-                  class="text-sm font-medium text-base-content/60"
-                >
-                  avoirs.stats.valides
-                </p>
-                <p
-                  class="text-2xl font-bold text-success"
-                >
-                  0
-                </p>
-              </div>
-            </div>
-            <div
-              class="bg-base-100 rounded-2xl shadow-sm border border-base-300 p-5 flex items-center gap-4 transition-all hover:shadow-md hover:border-base-content/20"
-            >
-              <div
-                class="w-12 h-12 rounded-xl flex items-center justify-center bg-warning/10 text-warning"
-              >
-                <svg
-                  aria-hidden="true"
-                  class="lucide lucide-circle-alert w-5 h-5"
-                  fill="none"
-                  height="24"
-                  stroke="currentColor"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  viewBox="0 0 24 24"
-                  width="24"
-                  xmlns="http://www.w3.org/2000/svg"
-                >
-                  <circle
-                    cx="12"
-                    cy="12"
-                    r="10"
-                  />
-                  <line
-                    x1="12"
-                    x2="12"
-                    y1="8"
-                    y2="12"
-                  />
-                  <line
-                    x1="12"
-                    x2="12.01"
-                    y1="16"
-                    y2="16"
-                  />
-                </svg>
-              </div>
-              <div>
-                <p
-                  class="text-sm font-medium text-base-content/60"
-                >
-                  avoirs.stats.brouillons
-                </p>
-                <p
-                  class="text-2xl font-bold text-warning"
-                >
-                  0
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-      <div
-        class="bg-base-100 rounded-2xl shadow-sm border border-base-300 overflow-hidden"
-      >
-        <div
-          class="flex flex-col items-center justify-center p-12 text-base-content/60 gap-4"
-        >
-          <span
-            class="loading loading-spinner loading-md text-primary"
+          <path
+            d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"
           />
-          <p>
-            Chargement des avoirs...
-          </p>
-        </div>
+          <path
+            d="M12 9v4"
+          />
+          <path
+            d="M12 17h.01"
+          />
+        </svg>
+        <span
+          class="font-bold text-sm tracking-tight"
+        >
+          error_loading
+        </span>
       </div>
     </div>
   </div>
@@ -370,345 +821,51 @@ Ignored nodes: comments, script, style
  ÔØ» node_modules/@testing-library/dom/dist/query-helpers.js:76:38
  ÔØ» node_modules/@testing-library/dom/dist/query-helpers.js:52:17
  ÔØ» node_modules/@testing-library/dom/dist/query-helpers.js:95:19
- ÔØ» src/components/__tests__/Avoirs.test.tsx:64:19
-     62|     render(<MemoryRouter><Avoirs /></MemoryRouter>)
-     63|     
-     64|     expect(screen.getByText('Avoirs Fournisseurs (Retours)')).toBeInThÔÇª
-       |                   ^
-     65|     
-     66|     await waitFor(() => {
+ ÔØ» src/components/__tests__/Dashboard.test.tsx:149:23
+    147|         );
+    148|         
+    149|         expect(screen.getByText(/Erreur|Impossible/i)).toBeInTheDocumeÔÇª
+       |                       ^
+    150|     });
+    151| 
 
-ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»[1/7]ÔÄ»
+ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»[4/22]ÔÄ»
 
- FAIL  src/components/__tests__/Avoirs.test.tsx > Avoirs Component > permet de cr├®er un nouvel avoir
-TestingLibraryElementError: Unable to find an element with the text: + Nouvel Avoir. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+ FAIL  src/components/__tests__/ModuleFinancier.test.tsx > ModuleFinancier Component > renders correctly and displays KPI cards
+ FAIL  src/components/__tests__/ModuleFinancier.test.tsx > ModuleFinancier Component > displays loading state when data is fetching
+ FAIL  src/components/__tests__/ModuleFinancier.test.tsx > ModuleFinancier Component > renders chart sections
+TypeError: Cannot destructure property 'data' of '(0 , __vite_ssr_import_4__.useAnalyseFournisseurs)(...)' as it is undefined.
+ ÔØ» ModuleFinancier src/components/ModuleFinancier.tsx:67:17
+     65|   const { data: categoryAnalysis, isLoading: loadingCategories } = useÔÇª
+     66|   const { data: marginAnalysis, isLoading: loadingMarginAnalysis } = uÔÇª
+     67|   const { data: supplierAnalysis, isLoading: loadingSupplierAnalysis }ÔÇª
+       |                 ^
+     68| 
+     69|   // Prepare chart data for CA Evolution
+ ÔØ» Object.react_stack_bottom_frame node_modules/react-dom/cjs/react-dom-client.development.js:23863:20
+ ÔØ» renderWithHooks node_modules/react-dom/cjs/react-dom-client.development.js:5529:22
+ ÔØ» updateFunctionComponent node_modules/react-dom/cjs/react-dom-client.development.js:8897:19
+ ÔØ» beginWork node_modules/react-dom/cjs/react-dom-client.development.js:10522:18
+ ÔØ» runWithFiberInDEV node_modules/react-dom/cjs/react-dom-client.development.js:1522:13
+ ÔØ» performUnitOfWork node_modules/react-dom/cjs/react-dom-client.development.js:15140:22
+ ÔØ» workLoopSync node_modules/react-dom/cjs/react-dom-client.development.js:14956:41
+ ÔØ» renderRootSync node_modules/react-dom/cjs/react-dom-client.development.js:14936:11
+ ÔØ» performWorkOnRoot node_modules/react-dom/cjs/react-dom-client.development.js:14462:44
 
-Ignored nodes: comments, script, style
-<body>
-  <div>
-    <div
-      class="min-h-screen bg-base-200 p-6 space-y-6 font-sans"
-    >
-      <div
-        class="flex flex-col gap-6"
-      >
-        <div
-          class="w-full space-y-4"
-        >
-          <div
-            class="bg-base-100 rounded-2xl shadow-sm border border-base-300 flex flex-col"
-          >
-            <div
-              class="p-6 border-b border-base-200"
-            >
-              <h1
-                class="text-2xl font-bold text-base-content tracking-tight"
-              >
-                avoirs.title
-              </h1>
-              <p
-                class="text-base-content/60 text-sm mt-1"
-              >
-                avoirs.subtitle
-              </p>
-            </div>
-            <div
-              class="p-4 bg-base-100 border-b border-base-200"
-            >
-              <div
-                class="flex flex-col md:flex-row gap-4 justify-between items-center"
-              >
-                <div
-                  class="flex flex-1 gap-4 items-center w-full md:w-auto"
-                >
-                  <div
-                    class="relative flex-1 max-w-md"
-                  >
-                    <svg
-                      aria-hidden="true"
-                      class="lucide lucide-search absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-base-content/40"
-                      fill="none"
-                      height="24"
-                      stroke="currentColor"
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      stroke-width="2"
-                      viewBox="0 0 24 24"
-                      width="24"
-                      xmlns="http://www.w3.org/2000/svg"
-                    >
-                      <path
-                        d="m21 21-4.34-4.34"
-                      />
-                      <circle
-                        cx="11"
-                        cy="11"
-                        r="8"
-                      />
-                    </svg>
-                    <input
-                      class="input input-bordered w-full pl-9 bg-base-200/50 focus:bg-base-100 transition-colors"
-                      placeholder="avoirs.search_placeholder"
-                      type="text"
-                      value=""
-                    />
-                  </div>
-                </div>
-                <div
-                  class="flex items-center gap-2 w-full md:w-auto justify-end"
-                >
-                  <button
-                    class="btn btn-square btn-ghost text-base-content/60 hover:text-primary hover:bg-primary/10 transition-colors"
-                    title="common.refresh"
-                  >
-                    <svg
-                      fill="none"
-                      height="18"
-                      stroke="currentColor"
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      stroke-width="2"
-                      viewBox="0 0 24 24"
-                      width="18"
-                      xmlns="http://www.w3.org/2000/svg"
-                    >
-                      <path
-                        d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"
-                      />
-                      <path
-                        d="M3 3v5h5"
-                      />
-                    </svg>
-                  </button>
-                  <button
-                    class="btn btn-primary gap-2 text-white shadow-sm hover:shadow-md transition-all"
-                  >
-                    <svg
-                      aria-hidden="true"
-                      class="lucide lucide-plus w-4 h-4"
-                      fill="none"
-                      height="24"
-                      stroke="currentColor"
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      stroke-width="2"
-                      viewBox="0 0 24 24"
-                      width="24"
-                      xmlns="http://www.w3.org/2000/svg"
-                    >
-                      <path
-                        d="M5 12h14"
-                      />
-                      <path
-                        d="M12 5v14"
-                      />
-                    </svg>
-                    <span
-                      class="hidden sm:inline"
-                    >
-                      avoirs.create_btn
-                    </span>
-                    <span
-                      class="sm:hidden"
-                    >
-                      common.add
-                    </span>
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-          <div
-            class="grid grid-cols-1 md:grid-cols-3 gap-4"
-          >
-            <div
-              class="bg-base-100 rounded-2xl shadow-sm border border-base-300 p-5 flex items-center gap-4 transition-all hover:shadow-md hover:border-base-content/20"
-            >
-              <div
-                class="w-12 h-12 rounded-xl flex items-center justify-center bg-primary/10 text-primary"
-              >
-                <svg
-                  aria-hidden="true"
-                  class="lucide lucide-file-text w-5 h-5"
-                  fill="none"
-                  height="24"
-                  stroke="currentColor"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  viewBox="0 0 24 24"
-                  width="24"
-                  xmlns="http://www.w3.org/2000/svg"
-                >
-                  <path
-                    d="M6 22a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h8a2.4 2.4 0 0 1 1.704.706l3.588 3.588A2.4 2.4 0 0 1 20 8v12a2 2 0 0 1-2 2z"
-                  />
-                  <path
-                    d="M14 2v5a1 1 0 0 0 1 1h5"
-                  />
-                  <path
-                    d="M10 9H8"
-                  />
-                  <path
-                    d="M16 13H8"
-                  />
-                  <path
-                    d="M16 17H8"
-                  />
-                </svg>
-              </div>
-              <div>
-                <p
-                  class="text-sm font-medium text-base-content/60"
-                >
-                  avoirs.stats.total
-                </p>
-                <p
-                  class="text-2xl font-bold text-primary"
-                >
-                  0
-                </p>
-              </div>
-            </div>
-            <div
-              class="bg-base-100 rounded-2xl shadow-sm border border-base-300 p-5 flex items-center gap-4 transition-all hover:shadow-md hover:border-base-content/20"
-            >
-              <div
-                class="w-12 h-12 rounded-xl flex items-center justify-center bg-success/10 text-success"
-              >
-                <svg
-                  aria-hidden="true"
-                  class="lucide lucide-circle-check w-5 h-5"
-                  fill="none"
-                  height="24"
-                  stroke="currentColor"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  viewBox="0 0 24 24"
-                  width="24"
-                  xmlns="http://www.w3.org/2000/svg"
-                >
-                  <circle
-                    cx="12"
-                    cy="12"
-                    r="10"
-                  />
-                  <path
-                    d="m9 12 2 2 4-4"
-                  />
-                </svg>
-              </div>
-              <div>
-                <p
-                  class="text-sm font-medium text-base-content/60"
-                >
-                  avoirs.stats.valides
-                </p>
-                <p
-                  class="text-2xl font-bold text-success"
-                >
-                  0
-                </p>
-              </div>
-            </div>
-            <div
-              class="bg-base-100 rounded-2xl shadow-sm border border-base-300 p-5 flex items-center gap-4 transition-all hover:shadow-md hover:border-base-content/20"
-            >
-              <div
-                class="w-12 h-12 rounded-xl flex items-center justify-center bg-warning/10 text-warning"
-              >
-                <svg
-                  aria-hidden="true"
-                  class="lucide lucide-circle-alert w-5 h-5"
-                  fill="none"
-                  height="24"
-                  stroke="currentColor"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  viewBox="0 0 24 24"
-                  width="24"
-                  xmlns="http://www.w3.org/2000/svg"
-                >
-                  <circle
-                    cx="12"
-                    cy="12"
-                    r="10"
-                  />
-                  <line
-                    x1="12"
-                    x2="12"
-                    y1="8"
-                    y2="12"
-                  />
-                  <line
-                    x1="12"
-                    x2="12.01"
-                    y1="16"
-                    y2="16"
-                  />
-                </svg>
-              </div>
-              <div>
-                <p
-                  class="text-sm font-medium text-base-content/60"
-                >
-                  avoirs.stats.brouillons
-                </p>
-                <p
-                  class="text-2xl font-bold text-warning"
-                >
-                  0
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-      <div
-        class="bg-base-100 rounded-2xl shadow-sm border border-base-300 overflow-hidden"
-      >
-        <div
-          class="flex flex-col items-center justify-center p-12 text-base-content/60 gap-4"
-        >
-          <span
-            class="loading loading-spinner loading-md text-primary"
-          />
-          <p>
-            Chargement des avoirs...
-          </p>
-        </div>
-      </div>
-    </div>
-  </div>
-</body>
- ÔØ» Object.getElementError node_modules/@testing-library/dom/dist/config.js:37:19
- ÔØ» node_modules/@testing-library/dom/dist/query-helpers.js:76:38
- ÔØ» node_modules/@testing-library/dom/dist/query-helpers.js:52:17
- ÔØ» node_modules/@testing-library/dom/dist/query-helpers.js:95:19
- ÔØ» src/components/__tests__/Avoirs.test.tsx:77:27
-     75|     render(<MemoryRouter><Avoirs /></MemoryRouter>)
-     76|     
-     77|     const newBtn = screen.getByText('+ Nouvel Avoir')
-       |                           ^
-     78|     fireEvent.click(newBtn)
-     79|     
+ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»[5/22]ÔÄ»
 
-ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»[2/7]ÔÄ»
-
- FAIL  src/components/__tests__/Facturation.test.tsx > Facturation Integration > affiche les composants principaux au chargement
- FAIL  src/components/__tests__/Facturation.test.tsx > Facturation Integration > affiche un panier vide au d├®marrage
- FAIL  src/components/__tests__/Facturation.test.tsx > Facturation Integration > affiche les produits dans le panier quand useCart renvoie des donn├®es
-Error: useSidebar must be used within a SidebarProvider
- ÔØ» useSidebar src/context/SidebarContext.tsx:62:11
-     60|   const context = useContext(SidebarContext)
-     61|   if (context === undefined) {
-     62|     throw new Error('useSidebar must be used within a SidebarProvider')
+ FAIL  src/components/__tests__/Produit.test.tsx > Produit Component (Integration) > fetches and displays products via axios
+ FAIL  src/components/__tests__/Produit.test.tsx > Produit Component (Integration) > searches for products by triggering new API call
+ FAIL  src/components/__tests__/Produit.test.tsx > Produit Component (Integration) > handles delete integration flow
+Error: useConfirm must be used within a ConfirmProvider
+ ÔØ» useConfirm src/hooks/useConfirm.tsx:71:11
+     69|   const context = useContext(ConfirmContext)
+     70|   if (!context) {
+     71|     throw new Error('useConfirm must be used within a ConfirmProvider')
        |           ^
-     63|   }
-     64|   return context
- ÔØ» Facturation src/components/Facturation.tsx:46:84
+     72|   }
+     73|   return context.confirm
+ ÔØ» Produit src/components/Produit.tsx:43:19
  ÔØ» Object.react_stack_bottom_frame node_modules/react-dom/cjs/react-dom-client.development.js:23863:20
  ÔØ» renderWithHooks node_modules/react-dom/cjs/react-dom-client.development.js:5529:22
  ÔØ» updateFunctionComponent node_modules/react-dom/cjs/react-dom-client.development.js:8897:19
@@ -718,55 +875,207 @@ Error: useSidebar must be used within a SidebarProvider
  ÔØ» workLoopSync node_modules/react-dom/cjs/react-dom-client.development.js:14956:41
  ÔØ» renderRootSync node_modules/react-dom/cjs/react-dom-client.development.js:14936:11
 
-ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»[3/7]ÔÄ»
+ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»[6/22]ÔÄ»
 
- FAIL  src/components/__tests__/Ventes.test.tsx > Ventes Component > opens product details modal
-TestingLibraryElementError: Unable to find an element with the text: FAC-001. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+ FAIL  src/components/__tests__/StockAnalysis.test.tsx > StockAnalysis > affiche le titre et charge les donn├®es au montage
+TestingLibraryElementError: Unable to find an element with the text: /Analyse des Stocks/i. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
 
 Ignored nodes: comments, script, style
 <body>
   <div>
     <div
-      class="min-h-screen bg-base-200 p-6 space-y-6 font-sans"
+      class="min-h-screen bg-[#F8FAFC] p-4 lg:p-8"
     >
       <div
-        class="flex flex-col gap-6"
+        data-rht-toaster=""
+        style="position: fixed; z-index: 9999; top: 16px; left: 16px; right: 16px; bottom: 16px; pointer-events: none;"
+      />
+      <div
+        class="max-w-[1600px] mx-auto space-y-8"
       >
         <div
-          class="w-full space-y-4"
+          class="flex flex-col md:flex-row md:items-end justify-between gap-6"
         >
-          <div
-            class="bg-base-100 rounded-2xl shadow-sm border border-base-300 flex flex-col"
-          >
+          <div>
             <div
-              class="p-6 border-b border-base-200"
-            >
-              <h1
-                class="text-2xl font-bold text-base-content tracking-tight"
-              >
-                sales.title
-              </h1>
-              <p
-                class="text-base-content/60 text-sm mt-1"
-              >
-                sales.subtitle
-              </p>
-            </div>
-            <div
-              class="bg-base-100 p-4 rounded-xl shadow-sm border border-base-300 space-y-4"
+              class="flex items-center gap-3 mb-2"
             >
               <div
-                class="flex flex-col md:flex-row gap-4"
+                class="w-12 h-12 rounded-2xl bg-primary flex items-center justify-center text-white shadow-lg shadow-primary/20"
+              >
+                <svg
+                  aria-hidden="true"
+                  class="lucide lucide-package-search w-7 h-7"
+                  fill="none"
+                  height="24"
+                  stroke="currentColor"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  viewBox="0 0 24 24"
+                  width="24"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    d="M21 10V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l2-1.14"
+                  />
+                  <path
+                    d="m7.5 4.27 9 5.15"
+                  />
+                  <polyline
+                    points="3.29 7 12 12 20.71 7"
+                  />
+                  <line
+                    x1="12"
+                    x2="12"
+                    y1="22"
+                    y2="12"
+                  />
+                  <circle
+                    cx="18.5"
+                    cy="15.5"
+                    r="2.5"
+                  />
+                  <path
+                    d="M20.27 17.27 22 19"
+                  />
+                </svg>
+              </div>
+              <div>
+                <h1
+                  class="text-3xl font-black tracking-tight text-base-content"
+                >
+                  Analyse
+                   
+                  <span
+                    class="text-primary italic"
+                  >
+                    Stock
+                  </span>
+                </h1>
+                <p
+                  class="text-sm font-semibold text-base-content/40 uppercase tracking-widest mt-1"
+                >
+                  Analyse et optimisation des stocks
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div
+          class="bg-white rounded-[32px] shadow-sm border border-base-200 overflow-hidden"
+        >
+          <div
+            class="flex flex-col gap-6 p-6"
+          >
+            <div
+              class="flex items-center gap-2 bg-base-200 p-1.5 rounded-[20px] self-start shadow-inner"
+            >
+              <button
+                class="btn btn-sm px-6 rounded-[14px] border-none transition-all gap-2 bg-white text-primary shadow-sm font-black"
+              >
+                <svg
+                  aria-hidden="true"
+                  class="lucide lucide-accessibility w-4 h-4"
+                  fill="none"
+                  height="24"
+                  stroke="currentColor"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  viewBox="0 0 24 24"
+                  width="24"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <circle
+                    cx="16"
+                    cy="4"
+                    r="1"
+                  />
+                  <path
+                    d="m18 19 1-7-6 1"
+                  />
+                  <path
+                    d="m5 8 3-3 5.5 3-2.36 3.5"
+                  />
+                  <path
+                    d="M4.24 14.5a5 5 0 0 0 6.88 6"
+                  />
+                  <path
+                    d="M13.76 17.5a5 5 0 0 0-6.88-6"
+                  />
+                </svg>
+                Invendus
+              </button>
+              <button
+                class="btn btn-sm px-6 rounded-[14px] border-none transition-all gap-2 btn-ghost text-base-content/40 font-bold hover:bg-white/50"
+              >
+                <svg
+                  aria-hidden="true"
+                  class="lucide lucide-trending-up w-4 h-4"
+                  fill="none"
+                  height="24"
+                  stroke="currentColor"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  viewBox="0 0 24 24"
+                  width="24"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    d="M16 7h6v6"
+                  />
+                  <path
+                    d="m22 7-8.5 8.5-5-5L2 17"
+                  />
+                </svg>
+                Surstock
+              </button>
+              <button
+                class="btn btn-sm px-6 rounded-[14px] border-none transition-all gap-2 btn-ghost text-base-content/40 font-bold hover:bg-white/50"
+              >
+                <svg
+                  aria-hidden="true"
+                  class="lucide lucide-triangle-alert w-4 h-4"
+                  fill="none"
+                  height="24"
+                  stroke="currentColor"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  viewBox="0 0 24 24"
+                  width="24"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"
+                  />
+                  <path
+                    d="M12 9v4"
+                  />
+                  <path
+                    d="M12 17h.01"
+                  />
+                </svg>
+                Ruptures
+              </button>
+            </div>
+            <div
+              class="flex flex-col lg:flex-row gap-6 items-end border-t border-base-200 pt-6"
+            >
+              <div
+                class="flex-1 grid grid-cols-1 md:grid-cols-2 gap-4"
               >
                 <div
-                  class="flex-1 relative"
+                  class="space-y-1.5"
                 >
-                  <div
-                    class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"
+                  <label
+                    class="text-[10px] font-black uppercase tracking-widest text-base-content/40 flex items-center gap-1.5 ml-1"
                   >
                     <svg
                       aria-hidden="true"
-                      class="lucide lucide-search h-5 w-5 text-base-content/40"
+                      class="lucide lucide-user w-3 h-3"
                       fill="none"
                       height="24"
                       stroke="currentColor"
@@ -778,173 +1087,36 @@ Ignored nodes: comments, script, style
                       xmlns="http://www.w3.org/2000/svg"
                     >
                       <path
-                        d="m21 21-4.34-4.34"
+                        d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"
                       />
                       <circle
-                        cx="11"
-                        cy="11"
-                        r="8"
+                        cx="12"
+                        cy="7"
+                        r="4"
                       />
                     </svg>
-                  </div>
-                  <input
-                    class="input input-bordered pl-10 w-full bg-base-100 focus:border-primary focus:ring-1 focus:ring-primary"
-                    placeholder="sales.filters.search_placeholder"
-                    type="text"
-                    value=""
-                  />
-                </div>
-                <div
-                  class="flex items-center gap-2 bg-base-100 p-1.5 rounded-lg border border-base-300 px-3"
-                >
-                  <svg
-                    aria-hidden="true"
-                    class="lucide lucide-calendar h-5 w-5 text-base-content/60"
-                    fill="none"
-                    height="24"
-                    stroke="currentColor"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2"
-                    viewBox="0 0 24 24"
-                    width="24"
-                    xmlns="http://www.w3.org/2000/svg"
+                     
+                    Fournisseur
+                  </label>
+                  <select
+                    class="select select-sm select-bordered w-full font-bold focus:ring-2 focus:ring-primary/20 transition-all"
                   >
-                    <path
-                      d="M8 2v4"
-                    />
-                    <path
-                      d="M16 2v4"
-                    />
-                    <rect
-                      height="18"
-                      rx="2"
-                      width="18"
-                      x="3"
-                      y="4"
-                    />
-                    <path
-                      d="M3 10h18"
-                    />
-                  </svg>
-                  <input
-                    class="bg-transparent border-none text-sm focus:ring-0 px-2 outline-none text-base-content"
-                    type="date"
-                    value="2026-02-26"
-                  />
-                  <span
-                    class="text-base-content/40"
-                  >
-                    -
-                  </span>
-                  <input
-                    class="bg-transparent border-none text-sm focus:ring-0 px-2 outline-none text-base-content"
-                    type="date"
-                    value="2026-02-26"
-                  />
-                </div>
-              </div>
-              <div
-                class="flex flex-col md:flex-row gap-4 items-center"
-              >
-                <div
-                  class="grid grid-cols-1 md:grid-cols-3 gap-4 flex-1 w-full"
-                >
-                  <div
-                    class="relative"
-                  >
-                    <div
-                      class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"
-                    >
-                      <svg
-                        aria-hidden="true"
-                        class="lucide lucide-funnel h-4 w-4 text-base-content/40"
-                        fill="none"
-                        height="24"
-                        stroke="currentColor"
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-        ...
-
-Ignored nodes: comments, script, style
-<html>
-  <head />
-  <body>
-    <div>
-      <div
-        class="min-h-screen bg-base-200 p-6 space-y-6 font-sans"
-      >
-        <div
-          class="flex flex-col gap-6"
-        >
-          <div
-            class="w-full space-y-4"
-          >
-            <div
-              class="bg-base-100 rounded-2xl shadow-sm border border-base-300 flex flex-col"
-            >
-              <div
-                class="p-6 border-b border-base-200"
-              >
-                <h1
-                  class="text-2xl font-bold text-base-content tracking-tight"
-                >
-                  sales.title
-                </h1>
-                <p
-                  class="text-base-content/60 text-sm mt-1"
-                >
-                  sales.subtitle
-                </p>
-              </div>
-              <div
-                class="bg-base-100 p-4 rounded-xl shadow-sm border border-base-300 space-y-4"
-              >
-                <div
-                  class="flex flex-col md:flex-row gap-4"
-                >
-                  <div
-                    class="flex-1 relative"
-                  >
-                    <div
-                      class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"
-                    >
-                      <svg
-                        aria-hidden="true"
-                        class="lucide lucide-search h-5 w-5 text-base-content/40"
-                        fill="none"
-                        height="24"
-                        stroke="currentColor"
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                        stroke-width="2"
-                        viewBox="0 0 24 24"
-                        width="24"
-                        xmlns="http://www.w3.org/2000/svg"
-                      >
-                        <path
-                          d="m21 21-4.34-4.34"
-                        />
-                        <circle
-                          cx="11"
-                          cy="11"
-                          r="8"
-                        />
-                      </svg>
-                    </div>
-                    <input
-                      class="input input-bordered pl-10 w-full bg-base-100 focus:border-primary focus:ring-1 focus:ring-primary"
-                      placeholder="sales.filters.search_placeholder"
-                      type="text"
+                    <option
                       value=""
-                    />
-                  </div>
-                  <div
-                    class="flex items-center gap-2 bg-base-100 p-1.5 rounded-lg border border-base-300 px-3"
+                    >
+                      Tous les fournisseurs
+                    </option>
+                  </select>
+                </div>
+                <div
+                  class="space-y-1.5"
+                >
+                  <label
+                    class="text-[10px] font-black uppercase tracking-widest text-base-content/40 flex items-center gap-1.5 ml-1"
                   >
                     <svg
                       aria-hidden="true"
-                      class="lucide lucide-calendar h-5 w-5 text-base-content/60"
+                      class="lucide lucide-calendar w-3 h-3"
                       fill="none"
                       height="24"
                       stroke="currentColor"
@@ -972,130 +1144,442 @@ Ignored nodes: comments, script, style
                         d="M3 10h18"
                       />
                     </svg>
-                    <input
-                      class="bg-transparent border-none text-sm focus:ring-0 px-2 outline-none text-base-content"
-                      type="date"
-                      value="2026-02-26"
-                    />
-                    <span
-                      class="text-base-content/40"
-                    >
-                      -
-                    </span>
-                    <input
-                      class="bg-transparent border-none text-sm focus:ring-0 px-2 outline-none text-base-content"
-                      type="date"
-                      value="2026-02-26"
-                    />
-                  </div>
-                </div>
-                <div
-                  class="flex flex-col md:flex-row gap-4 items-center"
-                >
-                  <div
-                    class="grid grid-cols-1 md:grid-cols-3 gap-4 flex-1 w-full"
+                     
+                    Seuil (jours)
+                  </label>
+                  <select
+                    class="select select-sm select-bordered w-full font-bold focus:ring-2 focus:ring-primary/20 transition-all"
                   >
-                    <div
-                      class="relative"
+                    <option
+                      value="30"
                     >
-                      <div
-                        class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"
-                      >
-                        <svg
-                          aria-hidden="true"
-                          class="lucide lucide-funnel h-4 w-4 text-base-content/40"
-             ...
- ÔØ» Proxy.waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
- ÔØ» src/components/__tests__/Ventes.test.tsx:164:15
-    162|         );
-    163| 
-    164|         await waitFor(() => {
-       |               ^
-    165|             expect(screen.getByText('FAC-001')).toBeInTheDocument();
-    166|         });
+                      30 
+                      jours
+                    </option>
+                    <option
+                      value="60"
+                    >
+                      60 
+                      jours
+                    </option>
+                    <option
+                      value="90"
+                    >
+                      90 
+                      jours
+                    </option>
+                    <option
+                      value="180"
+                    >
+                      180 
+                      jours
+                    </option>
+                    <option
+                      value="365"
+                    >
+                      365 
+                      jours
+                    </option>
+                  </select>
+                </div>
+              </div>
+              <div
+                class="shrink-0"
+              >
+                <button
+                  class="btn btn-sm btn-disabled gap-2 shadow-sm rounded-xl px-6"
+                  disabled=""
+                >
+                  <span
+                    class="loading loading-spinner loading-xs"
+                  />
+                  Actualiser
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div
+          class="bg-white rounded-[32px] shadow-sm border border-base-200 overflow-hidden flex flex-col min-h-[600px] relative"
+        >
+          <div
+            class="flex flex-col items-center justify-center h-96 gap-4"
+          >
+            <span
+              class="loading loading-spinner loading-lg text-primary"
+            />
+            <p
+              class="text-sm font-medium text-base-content/40 uppercase tracking-widest animate-pulse"
+            >
+              Chargement de l'analyse...
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+ ÔØ» Object.getElementError node_modules/@testing-library/dom/dist/config.js:37:19
+ ÔØ» node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ÔØ» node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ÔØ» node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ÔØ» src/components/__tests__/StockAnalysis.test.tsx:35:23
+     33|         await renderWithContext(<StockAnalysis />);
+     34|         
+     35|         expect(screen.getByText(/Analyse des Stocks/i)).toBeInTheDocumÔÇª
+       |                       ^
+     36|         await waitFor(() => {
+     37|             expect(mockedAxios.get).toHaveBeenCalledWith('/api/produitÔÇª
 
-ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»[4/7]ÔÄ»
+ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»[7/22]ÔÄ»
 
- FAIL  src/components/__tests__/Ventes.test.tsx > Ventes Component > displays empty state when no factures found
-TestingLibraryElementError: Unable to find an element with the text: /Aucune facture enregistr├®e/i. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+ FAIL  src/components/__tests__/StockAnalysis.test.tsx > StockAnalysis > filtre les produits par recherche
+TestingLibraryElementError: Unable to find an element with the placeholder text of: /Rechercher/i
 
 Ignored nodes: comments, script, style
 <body>
   <div>
     <div
-      class="min-h-screen bg-base-200 p-6 space-y-6 font-sans"
+      class="min-h-screen bg-[#F8FAFC] p-4 lg:p-8"
     >
       <div
-        class="flex flex-col gap-6"
+        data-rht-toaster=""
+        style="position: fixed; z-index: 9999; top: 16px; left: 16px; right: 16px; bottom: 16px; pointer-events: none;"
+      />
+      <div
+        class="max-w-[1600px] mx-auto space-y-8"
       >
         <div
-          class="w-full space-y-4"
+          class="flex flex-col md:flex-row md:items-end justify-between gap-6"
         >
-          <div
-            class="bg-base-100 rounded-2xl shadow-sm border border-base-300 flex flex-col"
-          >
+          <div>
             <div
-              class="p-6 border-b border-base-200"
-            >
-              <h1
-                class="text-2xl font-bold text-base-content tracking-tight"
-              >
-                sales.title
-              </h1>
-              <p
-                class="text-base-content/60 text-sm mt-1"
-              >
-                sales.subtitle
-              </p>
-            </div>
-            <div
-              class="bg-base-100 p-4 rounded-xl shadow-sm border border-base-300 space-y-4"
+              class="flex items-center gap-3 mb-2"
             >
               <div
-                class="flex flex-col md:flex-row gap-4"
+                class="w-12 h-12 rounded-2xl bg-primary flex items-center justify-center text-white shadow-lg shadow-primary/20"
+              >
+                <svg
+                  aria-hidden="true"
+                  class="lucide lucide-package-search w-7 h-7"
+                  fill="none"
+                  height="24"
+                  stroke="currentColor"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  viewBox="0 0 24 24"
+                  width="24"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    d="M21 10V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l2-1.14"
+                  />
+                  <path
+                    d="m7.5 4.27 9 5.15"
+                  />
+                  <polyline
+                    points="3.29 7 12 12 20.71 7"
+                  />
+                  <line
+                    x1="12"
+                    x2="12"
+                    y1="22"
+                    y2="12"
+                  />
+                  <circle
+                    cx="18.5"
+                    cy="15.5"
+                    r="2.5"
+                  />
+                  <path
+                    d="M20.27 17.27 22 19"
+                  />
+                </svg>
+              </div>
+              <div>
+                <h1
+                  class="text-3xl font-black tracking-tight text-base-content"
+                >
+                  Analyse
+                   
+                  <span
+                    class="text-primary italic"
+                  >
+                    Stock
+                  </span>
+                </h1>
+                <p
+                  class="text-sm font-semibold text-base-content/40 uppercase tracking-widest mt-1"
+                >
+                  Analyse et optimisation des stocks
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div
+          class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+        >
+          <div
+            class="bg-white p-6 rounded-3xl border border-primary/20 shadow-sm flex items-center gap-5 transition-all hover:shadow-md group"
+          >
+            <div
+              class="p-4 bg-primary/10 text-primary rounded-2xl transition-transform group-hover:scale-110 duration-300"
+            >
+              <svg
+                aria-hidden="true"
+                class="lucide lucide-info w-6 h-6"
+                fill="none"
+                height="24"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                viewBox="0 0 24 24"
+                width="24"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <circle
+                  cx="12"
+                  cy="12"
+                  r="10"
+                />
+                <path
+                  d="M12 16v-4"
+                />
+                <path
+                  d="M12 8h.01"
+                />
+              </svg>
+            </div>
+            <div
+              class="min-w-0 flex-1"
+            >
+              <div
+                class="text-[10px] font-black uppercase tracking-widest text-base-content/40 mb-1 truncate"
+              >
+                Fournisseur
+              </div>
+              <div
+                class="text-xl font-black text-primary tracking-tighter truncate"
+              >
+                Tous les fournisseurs
+              </div>
+            </div>
+          </div>
+          <div
+            class="bg-white p-6 rounded-3xl border border-warning/20 shadow-sm flex items-center gap-5 transition-all hover:shadow-md group"
+          >
+            <div
+              class="p-4 bg-warning/10 text-warning rounded-2xl transition-transform group-hover:scale-110 duration-300"
+            >
+              <svg
+                aria-hidden="true"
+                class="lucide lucide-package w-6 h-6"
+                fill="none"
+                height="24"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                viewBox="0 0 24 24"
+             ...
+ ÔØ» Object.getElementError node_modules/@testing-library/dom/dist/config.js:37:19
+ ÔØ» node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ÔØ» node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ÔØ» node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ÔØ» src/components/__tests__/StockAnalysis.test.tsx:55:36
+     53|         await waitFor(() => screen.getByText('Produit A'));
+     54| 
+     55|         const searchInput = screen.getByPlaceholderText(/Rechercher/i);
+       |                                    ^
+     56|         await act(async () => {
+     57|             fireEvent.change(searchInput, { target: { value: 'Produit ÔÇª
+
+ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»[8/22]ÔÄ»
+
+ FAIL  src/components/__tests__/StockAnalysis.test.tsx > StockAnalysis > identifie correctement les produits en rupture de stock
+TestingLibraryElementError: Unable to find an element with the text: /Stock faible/i. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="min-h-screen bg-[#F8FAFC] p-4 lg:p-8"
+    >
+      <div
+        data-rht-toaster=""
+        style="position: fixed; z-index: 9999; top: 16px; left: 16px; right: 16px; bottom: 16px; pointer-events: none;"
+      />
+      <div
+        class="max-w-[1600px] mx-auto space-y-8"
+      >
+        <div
+          class="flex flex-col md:flex-row md:items-end justify-between gap-6"
+        >
+          <div>
+            <div
+              class="flex items-center gap-3 mb-2"
+            >
+              <div
+                class="w-12 h-12 rounded-2xl bg-primary flex items-center justify-center text-white shadow-lg shadow-primary/20"
+              >
+                <svg
+                  aria-hidden="true"
+                  class="lucide lucide-package-search w-7 h-7"
+                  fill="none"
+                  height="24"
+                  stroke="currentColor"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  viewBox="0 0 24 24"
+                  width="24"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    d="M21 10V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l2-1.14"
+                  />
+                  <path
+                    d="m7.5 4.27 9 5.15"
+                  />
+                  <polyline
+                    points="3.29 7 12 12 20.71 7"
+                  />
+                  <line
+                    x1="12"
+                    x2="12"
+                    y1="22"
+                    y2="12"
+                  />
+                  <circle
+                    cx="18.5"
+                    cy="15.5"
+                    r="2.5"
+                  />
+                  <path
+                    d="M20.27 17.27 22 19"
+                  />
+                </svg>
+              </div>
+              <div>
+                <h1
+                  class="text-3xl font-black tracking-tight text-base-content"
+                >
+                  Analyse
+                   
+                  <span
+                    class="text-primary italic"
+                  >
+                    Stock
+                  </span>
+                </h1>
+                <p
+                  class="text-sm font-semibold text-base-content/40 uppercase tracking-widest mt-1"
+                >
+                  Analyse et optimisation des stocks
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div
+          class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+        >
+          <div
+            class="bg-white p-6 rounded-3xl border border-primary/20 shadow-sm flex items-center gap-5 transition-all hover:shadow-md group"
+          >
+            <div
+              class="p-4 bg-primary/10 text-primary rounded-2xl transition-transform group-hover:scale-110 duration-300"
+            >
+              <svg
+                aria-hidden="true"
+                class="lucide lucide-info w-6 h-6"
+                fill="none"
+                height="24"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                viewBox="0 0 24 24"
+                width="24"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <circle
+                  cx="12"
+                  cy="12"
+                  r="10"
+                />
+                <path
+                  d="M12 16v-4"
+                />
+                <path
+                  d="M12 8h.01"
+                />
+              </svg>
+            </div>
+            <div
+              class="min-w-0 flex-1"
+            >
+              <div
+                class="text-[10px] font-black uppercase tracking-widest text-base-content/40 mb-1 truncate"
+              >
+                Fournisseur
+              </div>
+              <div
+                class="text-xl font-black text-primary tracking-tighter truncate"
+              >
+                Tous les fournisseurs
+              </div>
+            </div>
+          </div>
+          <div
+            class="bg-white p-6 rounded-3xl border border-warning/20 shadow-sm flex items-center gap-5 transition-all hover:shadow-md group"
+          >
+            <div
+              class="p-4 bg-warning/10 text-warning rounded-2xl transition-transform group-hover:scale-110 duration-300"
+            >
+              <svg
+                aria-hidden="true"
+                class="lucide lucide-package w-6 h-6"
+                fill="none"
+                height="24"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                viewBox="0 0 24 24"
+             ...
+
+Ignored nodes: comments, script, style
+<html>
+  <head />
+  <body>
+    <div>
+      <div
+        class="min-h-screen bg-[#F8FAFC] p-4 lg:p-8"
+      >
+        <div
+          data-rht-toaster=""
+          style="position: fixed; z-index: 9999; top: 16px; left: 16px; right: 16px; bottom: 16px; pointer-events: none;"
+        />
+        <div
+          class="max-w-[1600px] mx-auto space-y-8"
+        >
+          <div
+            class="flex flex-col md:flex-row md:items-end justify-between gap-6"
+          >
+            <div>
+              <div
+                class="flex items-center gap-3 mb-2"
               >
                 <div
-                  class="flex-1 relative"
-                >
-                  <div
-                    class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"
-                  >
-                    <svg
-                      aria-hidden="true"
-                      class="lucide lucide-search h-5 w-5 text-base-content/40"
-                      fill="none"
-                      height="24"
-                      stroke="currentColor"
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      stroke-width="2"
-                      viewBox="0 0 24 24"
-                      width="24"
-                      xmlns="http://www.w3.org/2000/svg"
-                    >
-                      <path
-                        d="m21 21-4.34-4.34"
-                      />
-                      <circle
-                        cx="11"
-                        cy="11"
-                        r="8"
-                      />
-                    </svg>
-                  </div>
-                  <input
-                    class="input input-bordered pl-10 w-full bg-base-100 focus:border-primary focus:ring-1 focus:ring-primary"
-                    placeholder="sales.filters.search_placeholder"
-                    type="text"
-                    value=""
-                  />
-                </div>
-                <div
-                  class="flex items-center gap-2 bg-base-100 p-1.5 rounded-lg border border-base-300 px-3"
+                  class="w-12 h-12 rounded-2xl bg-primary flex items-center justify-center text-white shadow-lg shadow-primary/20"
                 >
                   <svg
                     aria-hidden="true"
-                    class="lucide lucide-calendar h-5 w-5 text-base-content/60"
+                    class="lucide lucide-package-search w-7 h-7"
                     fill="none"
                     height="24"
                     stroke="currentColor"
@@ -1107,60 +1591,275 @@ Ignored nodes: comments, script, style
                     xmlns="http://www.w3.org/2000/svg"
                   >
                     <path
-                      d="M8 2v4"
+                      d="M21 10V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l2-1.14"
                     />
                     <path
-                      d="M16 2v4"
+                      d="m7.5 4.27 9 5.15"
                     />
-                    <rect
-                      height="18"
-                      rx="2"
-                      width="18"
-                      x="3"
-                      y="4"
+                    <polyline
+                      points="3.29 7 12 12 20.71 7"
+                    />
+                    <line
+                      x1="12"
+                      x2="12"
+                      y1="22"
+                      y2="12"
+                    />
+                    <circle
+                      cx="18.5"
+                      cy="15.5"
+                      r="2.5"
                     />
                     <path
-                      d="M3 10h18"
+                      d="M20.27 17.27 22 19"
                     />
                   </svg>
-                  <input
-                    class="bg-transparent border-none text-sm focus:ring-0 px-2 outline-none text-base-content"
-                    type="date"
-                    value="2026-02-26"
-                  />
-                  <span
-                    class="text-base-content/40"
+                </div>
+                <div>
+                  <h1
+                    class="text-3xl font-black tracking-tight text-base-content"
                   >
-                    -
-                  </span>
-                  <input
-                    class="bg-transparent border-none text-sm focus:ring-0 px-2 outline-none text-base-content"
-                    type="date"
-                    value="2026-02-26"
-                  />
+                    Analyse
+                     
+                    <span
+                      class="text-primary italic"
+                    >
+                      Stock
+                    </span>
+                  </h1>
+                  <p
+                    class="text-sm font-semibold text-base-content/40 uppercase tracking-widest mt-1"
+                  >
+                    Analyse et optimisation des stocks
+                  </p>
                 </div>
               </div>
+            </div>
+          </div>
+          <div
+            class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+          >
+            <div
+              class="bg-white p-6 rounded-3xl border border-primary/20 shadow-sm flex items-center gap-5 transition-all hover:shadow-md group"
+            >
               <div
-                class="flex flex-col md:flex-row gap-4 items-center"
+                class="p-4 bg-primary/10 text-primary rounded-2xl transition-transform group-hover:scale-110 duration-300"
+              >
+                <svg
+                  aria-hidden="true"
+                  class="lucide lucide-info w-6 h-6"
+                  fill="none"
+                  height="24"
+                  stroke="currentColor"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  viewBox="0 0 24 24"
+                  width="24"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <circle
+                    cx="12"
+                    cy="12"
+                    r="10"
+                  />
+                  <path
+                    d="M12 16v-4"
+                  />
+                  <path
+                    d="M12 8h.01"
+                  />
+                </svg>
+              </div>
+              <div
+                class="min-w-0 flex-1"
               >
                 <div
-                  class="grid grid-cols-1 md:grid-cols-3 gap-4 flex-1 w-full"
+                  class="text-[10px] font-black uppercase tracking-widest text-base-content/40 mb-1 truncate"
                 >
-                  <div
-                    class="relative"
+                  Fournisseur
+                </div>
+                <div
+                  class="text-xl font-black text-primary tracking-tighter truncate"
+                >
+                  Tous les fournisseurs
+                </div>
+              </div>
+            </div>
+            <div
+              class="bg-white p-6 rounded-3xl border border-warning/20 shadow-sm flex items-center gap-5 transition-all hover:shadow-md group"
+            >
+              <div
+                class="p-4 bg-warning/10 text-warning rounded-2xl transition-transform group-hover:scale-110 duration-300"
+              >
+                <svg
+                  aria-hidden="true"
+                  class="lucide lucide-package w-6 h-6"
+                  fill="none"
+                  heig...
+ ÔØ» waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ÔØ» src/components/__tests__/StockAnalysis.test.tsx:67:15
+     65|         await renderWithContext(<StockAnalysis />);
+     66| 
+     67|         await waitFor(() => {
+       |               ^
+     68|             const lowStockItems = screen.getAllByText(/Stock faible/i);
+     69|             expect(lowStockItems.length).toBeGreaterThan(0);
+
+ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»[9/22]ÔÄ»
+
+ FAIL  src/components/__tests__/StockAnalysis.test.tsx > StockAnalysis > calcule correctement la valeur totale du stock
+TestingLibraryElementError: Unable to find an element with the text: /1\s?400/. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="min-h-screen bg-[#F8FAFC] p-4 lg:p-8"
+    >
+      <div
+        data-rht-toaster=""
+        style="position: fixed; z-index: 9999; top: 16px; left: 16px; right: 16px; bottom: 16px; pointer-events: none;"
+      />
+      <div
+        class="max-w-[1600px] mx-auto space-y-8"
+      >
+        <div
+          class="flex flex-col md:flex-row md:items-end justify-between gap-6"
+        >
+          <div>
+            <div
+              class="flex items-center gap-3 mb-2"
+            >
+              <div
+                class="w-12 h-12 rounded-2xl bg-primary flex items-center justify-center text-white shadow-lg shadow-primary/20"
+              >
+                <svg
+                  aria-hidden="true"
+                  class="lucide lucide-package-search w-7 h-7"
+                  fill="none"
+                  height="24"
+                  stroke="currentColor"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  viewBox="0 0 24 24"
+                  width="24"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    d="M21 10V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l2-1.14"
+                  />
+                  <path
+                    d="m7.5 4.27 9 5.15"
+                  />
+                  <polyline
+                    points="3.29 7 12 12 20.71 7"
+                  />
+                  <line
+                    x1="12"
+                    x2="12"
+                    y1="22"
+                    y2="12"
+                  />
+                  <circle
+                    cx="18.5"
+                    cy="15.5"
+                    r="2.5"
+                  />
+                  <path
+                    d="M20.27 17.27 22 19"
+                  />
+                </svg>
+              </div>
+              <div>
+                <h1
+                  class="text-3xl font-black tracking-tight text-base-content"
+                >
+                  Analyse
+                   
+                  <span
+                    class="text-primary italic"
                   >
-                    <div
-                      class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"
-                    >
-                      <svg
-                        aria-hidden="true"
-                        class="lucide lucide-funnel h-4 w-4 text-base-content/40"
-                        fill="none"
-                        height="24"
-                        stroke="currentColor"
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-        ...
+                    Stock
+                  </span>
+                </h1>
+                <p
+                  class="text-sm font-semibold text-base-content/40 uppercase tracking-widest mt-1"
+                >
+                  Analyse et optimisation des stocks
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div
+          class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+        >
+          <div
+            class="bg-white p-6 rounded-3xl border border-primary/20 shadow-sm flex items-center gap-5 transition-all hover:shadow-md group"
+          >
+            <div
+              class="p-4 bg-primary/10 text-primary rounded-2xl transition-transform group-hover:scale-110 duration-300"
+            >
+              <svg
+                aria-hidden="true"
+                class="lucide lucide-info w-6 h-6"
+                fill="none"
+                height="24"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                viewBox="0 0 24 24"
+                width="24"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <circle
+                  cx="12"
+                  cy="12"
+                  r="10"
+                />
+                <path
+                  d="M12 16v-4"
+                />
+                <path
+                  d="M12 8h.01"
+                />
+              </svg>
+            </div>
+            <div
+              class="min-w-0 flex-1"
+            >
+              <div
+                class="text-[10px] font-black uppercase tracking-widest text-base-content/40 mb-1 truncate"
+              >
+                Fournisseur
+              </div>
+              <div
+                class="text-xl font-black text-primary tracking-tighter truncate"
+              >
+                Tous les fournisseurs
+              </div>
+            </div>
+          </div>
+          <div
+            class="bg-white p-6 rounded-3xl border border-warning/20 shadow-sm flex items-center gap-5 transition-all hover:shadow-md group"
+          >
+            <div
+              class="p-4 bg-warning/10 text-warning rounded-2xl transition-transform group-hover:scale-110 duration-300"
+            >
+              <svg
+                aria-hidden="true"
+                class="lucide lucide-package w-6 h-6"
+                fill="none"
+                height="24"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                viewBox="0 0 24 24"
+             ...
 
 Ignored nodes: comments, script, style
 <html>
@@ -1168,153 +1867,1319 @@ Ignored nodes: comments, script, style
   <body>
     <div>
       <div
-        class="min-h-screen bg-base-200 p-6 space-y-6 font-sans"
+        class="min-h-screen bg-[#F8FAFC] p-4 lg:p-8"
       >
         <div
-          class="flex flex-col gap-6"
+          data-rht-toaster=""
+          style="position: fixed; z-index: 9999; top: 16px; left: 16px; right: 16px; bottom: 16px; pointer-events: none;"
+        />
+        <div
+          class="max-w-[1600px] mx-auto space-y-8"
         >
           <div
-            class="w-full space-y-4"
+            class="flex flex-col md:flex-row md:items-end justify-between gap-6"
+          >
+            <div>
+              <div
+                class="flex items-center gap-3 mb-2"
+              >
+                <div
+                  class="w-12 h-12 rounded-2xl bg-primary flex items-center justify-center text-white shadow-lg shadow-primary/20"
+                >
+                  <svg
+                    aria-hidden="true"
+                    class="lucide lucide-package-search w-7 h-7"
+                    fill="none"
+                    height="24"
+                    stroke="currentColor"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    viewBox="0 0 24 24"
+                    width="24"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <path
+                      d="M21 10V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l2-1.14"
+                    />
+                    <path
+                      d="m7.5 4.27 9 5.15"
+                    />
+                    <polyline
+                      points="3.29 7 12 12 20.71 7"
+                    />
+                    <line
+                      x1="12"
+                      x2="12"
+                      y1="22"
+                      y2="12"
+                    />
+                    <circle
+                      cx="18.5"
+                      cy="15.5"
+                      r="2.5"
+                    />
+                    <path
+                      d="M20.27 17.27 22 19"
+                    />
+                  </svg>
+                </div>
+                <div>
+                  <h1
+                    class="text-3xl font-black tracking-tight text-base-content"
+                  >
+                    Analyse
+                     
+                    <span
+                      class="text-primary italic"
+                    >
+                      Stock
+                    </span>
+                  </h1>
+                  <p
+                    class="text-sm font-semibold text-base-content/40 uppercase tracking-widest mt-1"
+                  >
+                    Analyse et optimisation des stocks
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div
+            class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
           >
             <div
-              class="bg-base-100 rounded-2xl shadow-sm border border-base-300 flex flex-col"
+              class="bg-white p-6 rounded-3xl border border-primary/20 shadow-sm flex items-center gap-5 transition-all hover:shadow-md group"
             >
               <div
-                class="p-6 border-b border-base-200"
+                class="p-4 bg-primary/10 text-primary rounded-2xl transition-transform group-hover:scale-110 duration-300"
               >
-                <h1
-                  class="text-2xl font-bold text-base-content tracking-tight"
+                <svg
+                  aria-hidden="true"
+                  class="lucide lucide-info w-6 h-6"
+                  fill="none"
+                  height="24"
+                  stroke="currentColor"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  viewBox="0 0 24 24"
+                  width="24"
+                  xmlns="http://www.w3.org/2000/svg"
                 >
-                  sales.title
-                </h1>
-                <p
-                  class="text-base-content/60 text-sm mt-1"
-                >
-                  sales.subtitle
-                </p>
+                  <circle
+                    cx="12"
+                    cy="12"
+                    r="10"
+                  />
+                  <path
+                    d="M12 16v-4"
+                  />
+                  <path
+                    d="M12 8h.01"
+                  />
+                </svg>
               </div>
               <div
-                class="bg-base-100 p-4 rounded-xl shadow-sm border border-base-300 space-y-4"
+                class="min-w-0 flex-1"
               >
                 <div
-                  class="flex flex-col md:flex-row gap-4"
+                  class="text-[10px] font-black uppercase tracking-widest text-base-content/40 mb-1 truncate"
                 >
-                  <div
-                    class="flex-1 relative"
-                  >
-                    <div
-                      class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"
-                    >
-                      <svg
-                        aria-hidden="true"
-                        class="lucide lucide-search h-5 w-5 text-base-content/40"
-                        fill="none"
-                        height="24"
-                        stroke="currentColor"
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                        stroke-width="2"
-                        viewBox="0 0 24 24"
-                        width="24"
-                        xmlns="http://www.w3.org/2000/svg"
-                      >
-                        <path
-                          d="m21 21-4.34-4.34"
-                        />
-                        <circle
-                          cx="11"
-                          cy="11"
-                          r="8"
-                        />
-                      </svg>
-                    </div>
-                    <input
-                      class="input input-bordered pl-10 w-full bg-base-100 focus:border-primary focus:ring-1 focus:ring-primary"
-                      placeholder="sales.filters.search_placeholder"
-                      type="text"
-                      value=""
-                    />
-                  </div>
-                  <div
-                    class="flex items-center gap-2 bg-base-100 p-1.5 rounded-lg border border-base-300 px-3"
-                  >
-                    <svg
-                      aria-hidden="true"
-                      class="lucide lucide-calendar h-5 w-5 text-base-content/60"
-                      fill="none"
-                      height="24"
-                      stroke="currentColor"
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      stroke-width="2"
-                      viewBox="0 0 24 24"
-                      width="24"
-                      xmlns="http://www.w3.org/2000/svg"
-                    >
-                      <path
-                        d="M8 2v4"
-                      />
-                      <path
-                        d="M16 2v4"
-                      />
-                      <rect
-                        height="18"
-                        rx="2"
-                        width="18"
-                        x="3"
-                        y="4"
-                      />
-                      <path
-                        d="M3 10h18"
-                      />
-                    </svg>
-                    <input
-                      class="bg-transparent border-none text-sm focus:ring-0 px-2 outline-none text-base-content"
-                      type="date"
-                      value="2026-02-26"
-                    />
-                    <span
-                      class="text-base-content/40"
-                    >
-                      -
-                    </span>
-                    <input
-                      class="bg-transparent border-none text-sm focus:ring-0 px-2 outline-none text-base-content"
-                      type="date"
-                      value="2026-02-26"
-                    />
-                  </div>
+                  Fournisseur
                 </div>
                 <div
-                  class="flex flex-col md:flex-row gap-4 items-center"
+                  class="text-xl font-black text-primary tracking-tighter truncate"
                 >
-                  <div
-                    class="grid grid-cols-1 md:grid-cols-3 gap-4 flex-1 w-full"
-                  >
-                    <div
-                      class="relative"
-                    >
-                      <div
-                        class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"
-                      >
-                        <svg
-                          aria-hidden="true"
-                          class="lucide lucide-funnel h-4 w-4 text-base-content/40"
-             ...
- ÔØ» Proxy.waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
- ÔØ» src/components/__tests__/Ventes.test.tsx:242:15
-    240|         );
-    241| 
-    242|         await waitFor(() => {
+                  Tous les fournisseurs
+                </div>
+              </div>
+            </div>
+            <div
+              class="bg-white p-6 rounded-3xl border border-warning/20 shadow-sm flex items-center gap-5 transition-all hover:shadow-md group"
+            >
+              <div
+                class="p-4 bg-warning/10 text-warning rounded-2xl transition-transform group-hover:scale-110 duration-300"
+              >
+                <svg
+                  aria-hidden="true"
+                  class="lucide lucide-package w-6 h-6"
+                  fill="none"
+                  heig...
+ ÔØ» waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ÔØ» src/components/__tests__/StockAnalysis.test.tsx:76:15
+     74|         await renderWithContext(<StockAnalysis />);
+     75| 
+     76|         await waitFor(() => {
        |               ^
-    243|             expect(screen.getByText(/Aucune facture enregistr├®e/i)).toÔÇª
-    244|         });
+     77|             // (10 * 100) + (2 * 200) = 1000 + 400 = 1400
+     78|             expect(screen.getByText(/1\s?400/)).toBeInTheDocument();
 
-ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»[5/7]ÔÄ»
+ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»[10/22]ÔÄ»
+
+ FAIL  src/components/__tests__/StockAnalysis.test.tsx > StockAnalysis > g├¿re les erreurs d'API avec ├®l├®gance
+TestingLibraryElementError: Unable to find an element with the text: /Erreur de chargement/i. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="min-h-screen bg-[#F8FAFC] p-4 lg:p-8"
+    >
+      <div
+        data-rht-toaster=""
+        style="position: fixed; z-index: 9999; top: 16px; left: 16px; right: 16px; bottom: 16px; pointer-events: none;"
+      />
+      <div
+        class="max-w-[1600px] mx-auto space-y-8"
+      >
+        <div
+          class="flex flex-col md:flex-row md:items-end justify-between gap-6"
+        >
+          <div>
+            <div
+              class="flex items-center gap-3 mb-2"
+            >
+              <div
+                class="w-12 h-12 rounded-2xl bg-primary flex items-center justify-center text-white shadow-lg shadow-primary/20"
+              >
+                <svg
+                  aria-hidden="true"
+                  class="lucide lucide-package-search w-7 h-7"
+                  fill="none"
+                  height="24"
+                  stroke="currentColor"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  viewBox="0 0 24 24"
+                  width="24"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    d="M21 10V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l2-1.14"
+                  />
+                  <path
+                    d="m7.5 4.27 9 5.15"
+                  />
+                  <polyline
+                    points="3.29 7 12 12 20.71 7"
+                  />
+                  <line
+                    x1="12"
+                    x2="12"
+                    y1="22"
+                    y2="12"
+                  />
+                  <circle
+                    cx="18.5"
+                    cy="15.5"
+                    r="2.5"
+                  />
+                  <path
+                    d="M20.27 17.27 22 19"
+                  />
+                </svg>
+              </div>
+              <div>
+                <h1
+                  class="text-3xl font-black tracking-tight text-base-content"
+                >
+                  Analyse
+                   
+                  <span
+                    class="text-primary italic"
+                  >
+                    Stock
+                  </span>
+                </h1>
+                <p
+                  class="text-sm font-semibold text-base-content/40 uppercase tracking-widest mt-1"
+                >
+                  Analyse et optimisation des stocks
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div
+          class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+        >
+          <div
+            class="bg-white p-6 rounded-3xl border border-primary/20 shadow-sm flex items-center gap-5 transition-all hover:shadow-md group"
+          >
+            <div
+              class="p-4 bg-primary/10 text-primary rounded-2xl transition-transform group-hover:scale-110 duration-300"
+            >
+              <svg
+                aria-hidden="true"
+                class="lucide lucide-info w-6 h-6"
+                fill="none"
+                height="24"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                viewBox="0 0 24 24"
+                width="24"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <circle
+                  cx="12"
+                  cy="12"
+                  r="10"
+                />
+                <path
+                  d="M12 16v-4"
+                />
+                <path
+                  d="M12 8h.01"
+                />
+              </svg>
+            </div>
+            <div
+              class="min-w-0 flex-1"
+            >
+              <div
+                class="text-[10px] font-black uppercase tracking-widest text-base-content/40 mb-1 truncate"
+              >
+                Fournisseur
+              </div>
+              <div
+                class="text-xl font-black text-primary tracking-tighter truncate"
+              >
+                Tous les fournisseurs
+              </div>
+            </div>
+          </div>
+          <div
+            class="bg-white p-6 rounded-3xl border border-warning/20 shadow-sm flex items-center gap-5 transition-all hover:shadow-md group"
+          >
+            <div
+              class="p-4 bg-warning/10 text-warning rounded-2xl transition-transform group-hover:scale-110 duration-300"
+            >
+              <svg
+                aria-hidden="true"
+                class="lucide lucide-package w-6 h-6"
+                fill="none"
+                height="24"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                viewBox="0 0 24 24"
+             ...
+
+Ignored nodes: comments, script, style
+<html>
+  <head />
+  <body>
+    <div>
+      <div
+        class="min-h-screen bg-[#F8FAFC] p-4 lg:p-8"
+      >
+        <div
+          data-rht-toaster=""
+          style="position: fixed; z-index: 9999; top: 16px; left: 16px; right: 16px; bottom: 16px; pointer-events: none;"
+        />
+        <div
+          class="max-w-[1600px] mx-auto space-y-8"
+        >
+          <div
+            class="flex flex-col md:flex-row md:items-end justify-between gap-6"
+          >
+            <div>
+              <div
+                class="flex items-center gap-3 mb-2"
+              >
+                <div
+                  class="w-12 h-12 rounded-2xl bg-primary flex items-center justify-center text-white shadow-lg shadow-primary/20"
+                >
+                  <svg
+                    aria-hidden="true"
+                    class="lucide lucide-package-search w-7 h-7"
+                    fill="none"
+                    height="24"
+                    stroke="currentColor"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    viewBox="0 0 24 24"
+                    width="24"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <path
+                      d="M21 10V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l2-1.14"
+                    />
+                    <path
+                      d="m7.5 4.27 9 5.15"
+                    />
+                    <polyline
+                      points="3.29 7 12 12 20.71 7"
+                    />
+                    <line
+                      x1="12"
+                      x2="12"
+                      y1="22"
+                      y2="12"
+                    />
+                    <circle
+                      cx="18.5"
+                      cy="15.5"
+                      r="2.5"
+                    />
+                    <path
+                      d="M20.27 17.27 22 19"
+                    />
+                  </svg>
+                </div>
+                <div>
+                  <h1
+                    class="text-3xl font-black tracking-tight text-base-content"
+                  >
+                    Analyse
+                     
+                    <span
+                      class="text-primary italic"
+                    >
+                      Stock
+                    </span>
+                  </h1>
+                  <p
+                    class="text-sm font-semibold text-base-content/40 uppercase tracking-widest mt-1"
+                  >
+                    Analyse et optimisation des stocks
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div
+            class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+          >
+            <div
+              class="bg-white p-6 rounded-3xl border border-primary/20 shadow-sm flex items-center gap-5 transition-all hover:shadow-md group"
+            >
+              <div
+                class="p-4 bg-primary/10 text-primary rounded-2xl transition-transform group-hover:scale-110 duration-300"
+              >
+                <svg
+                  aria-hidden="true"
+                  class="lucide lucide-info w-6 h-6"
+                  fill="none"
+                  height="24"
+                  stroke="currentColor"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  viewBox="0 0 24 24"
+                  width="24"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <circle
+                    cx="12"
+                    cy="12"
+                    r="10"
+                  />
+                  <path
+                    d="M12 16v-4"
+                  />
+                  <path
+                    d="M12 8h.01"
+                  />
+                </svg>
+              </div>
+              <div
+                class="min-w-0 flex-1"
+              >
+                <div
+                  class="text-[10px] font-black uppercase tracking-widest text-base-content/40 mb-1 truncate"
+                >
+                  Fournisseur
+                </div>
+                <div
+                  class="text-xl font-black text-primary tracking-tighter truncate"
+                >
+                  Tous les fournisseurs
+                </div>
+              </div>
+            </div>
+            <div
+              class="bg-white p-6 rounded-3xl border border-warning/20 shadow-sm flex items-center gap-5 transition-all hover:shadow-md group"
+            >
+              <div
+                class="p-4 bg-warning/10 text-warning rounded-2xl transition-transform group-hover:scale-110 duration-300"
+              >
+                <svg
+                  aria-hidden="true"
+                  class="lucide lucide-package w-6 h-6"
+                  fill="none"
+                  heig...
+ ÔØ» waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ÔØ» src/components/__tests__/StockAnalysis.test.tsx:88:15
+     86|         await renderWithContext(<StockAnalysis />);
+     87| 
+     88|         await waitFor(() => {
+       |               ^
+     89|             expect(screen.getByText(/Erreur de chargement/i)).toBeInThÔÇª
+     90|         });
+
+ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»[11/22]ÔÄ»
+
+ FAIL  src/components/__tests__/StockAnalysis.test.tsx > StockAnalysis > permet de changer le tri
+TestingLibraryElementError: Found multiple elements with the role "combobox"
+
+Here are the matching elements:
+
+Ignored nodes: comments, script, style
+<select
+  class="select select-sm select-bordered w-full font-bold focus:ring-2 focus:ring-primary/20 transition-all"
+>
+  <option
+    value=""
+  >
+    Tous les fournisseurs
+  </option>
+  <option
+    value="1"
+  >
+    Produit A
+  </option>
+  <option
+    value="2"
+  >
+    Produit B
+  </option>
+</select>
+
+Ignored nodes: comments, script, style
+<select
+  class="select select-sm select-bordered w-full font-bold focus:ring-2 focus:ring-primary/20 transition-all"
+>
+  <option
+    value="30"
+  >
+    30 
+    jours
+  </option>
+  <option
+    value="60"
+  >
+    60 
+    jours
+  </option>
+  <option
+    value="90"
+  >
+    90 
+    jours
+  </option>
+  <option
+    value="180"
+  >
+    180 
+    jours
+  </option>
+  <option
+    value="365"
+  >
+    365 
+    jours
+  </option>
+</select>
+
+(If this is intentional, then use the `*AllBy*` variant of the query (like `queryAllByText`, `getAllByText`, or `findAllByText`)).
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="min-h-screen bg-[#F8FAFC] p-4 lg:p-8"
+    >
+      <div
+        data-rht-toaster=""
+        style="position: fixed; z-index: 9999; top: 16px; left: 16px; right: 16px; bottom: 16px; pointer-events: none;"
+      />
+      <div
+        class="max-w-[1600px] mx-auto space-y-8"
+      >
+        <div
+          class="flex flex-col md:flex-row md:items-end justify-between gap-6"
+        >
+          <div>
+            <div
+              class="flex items-center gap-3 mb-2"
+            >
+              <div
+                class="w-12 h-12 rounded-2xl bg-primary flex items-center justify-center text-white shadow-lg shadow-primary/20"
+              >
+                <svg
+                  aria-hidden="true"
+                  class="lucide lucide-package-search w-7 h-7"
+                  fill="none"
+                  height="24"
+                  stroke="currentColor"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  viewBox="0 0 24 24"
+                  width="24"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    d="M21 10V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l2-1.14"
+                  />
+                  <path
+                    d="m7.5 4.27 9 5.15"
+                  />
+                  <polyline
+                    points="3.29 7 12 12 20.71 7"
+                  />
+                  <line
+                    x1="12"
+                    x2="12"
+                    y1="22"
+                    y2="12"
+                  />
+                  <circle
+                    cx="18.5"
+                    cy="15.5"
+                    r="2.5"
+                  />
+                  <path
+                    d="M20.27 17.27 22 19"
+                  />
+                </svg>
+              </div>
+              <div>
+                <h1
+                  class="text-3xl font-black tracking-tight text-base-content"
+                >
+                  Analyse
+                   
+                  <span
+                    class="text-primary italic"
+                  >
+                    Stock
+                  </span>
+                </h1>
+                <p
+                  class="text-sm font-semibold text-base-content/40 uppercase tracking-widest mt-1"
+                >
+                  Analyse et optimisation des stocks
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div
+          class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+        >
+          <div
+            class="bg-white p-6 rounded-3xl border border-primary/20 shadow-sm flex items-center gap-5 transition-all hover:shadow-md group"
+          >
+            <div
+              class="p-4 bg-primary/10 text-primary rounded-2xl transition-transform group-hover:scale-110 duration-300"
+            >
+              <svg
+                aria-hidden="true"
+                class="lucide lucide-info w-6 h-6"
+                fill="none"
+                height="24"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                viewBox="0 0 24 24"
+                width="24"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <circle
+                  cx="12"
+                  cy="12"
+                  r="10"
+                />
+                <path
+                  d="M12 16v-4"
+                />
+                <path
+                  d="M12 8h.01"
+                />
+              </svg>
+            </div>
+            <div
+              class="min-w-0 flex-1"
+            >
+              <div
+                class="text-[10px] font-black uppercase tracking-widest text-base-content/40 mb-1 truncate"
+              >
+                Fournisseur
+              </div>
+              <div
+                class="text-xl font-black text-primary tracking-tighter truncate"
+              >
+                Tous les fournisseurs
+              </div>
+            </div>
+          </div>
+          <div
+            class="bg-white p-6 rounded-3xl border border-warning/20 shadow-sm flex items-center gap-5 transition-all hover:shadow-md group"
+          >
+            <div
+              class="p-4 bg-warning/10 text-warning rounded-2xl transition-transform group-hover:scale-110 duration-300"
+            >
+              <svg
+                aria-hidden="true"
+                class="lucide lucide-package w-6 h-6"
+                fill="none"
+                height="24"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                viewBox="0 0 24 24"
+             ...
+ ÔØ» Object.getElementError node_modules/@testing-library/dom/dist/config.js:37:19
+ ÔØ» getElementError node_modules/@testing-library/dom/dist/query-helpers.js:20:35
+ ÔØ» getMultipleElementsFoundError node_modules/@testing-library/dom/dist/query-helpers.js:23:10
+ ÔØ» node_modules/@testing-library/dom/dist/query-helpers.js:55:13
+ ÔØ» node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ÔØ» src/components/__tests__/StockAnalysis.test.tsx:98:31
+     96|         await waitFor(() => screen.getByText('Produit A'));
+     97| 
+     98|         const select = screen.getByRole('combobox');
+       |                               ^
+     99|         await act(async () => {
+    100|             fireEvent.change(select, { target: { value: 'stock_asc' } ÔÇª
+
+ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»[12/22]ÔÄ»
+
+ FAIL  src/components/__tests__/StockAnalysis.test.tsx > StockAnalysis > affiche un message quand aucun produit ne correspond ├á la recherche
+TestingLibraryElementError: Unable to find an element with the placeholder text of: /Rechercher/i
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="min-h-screen bg-[#F8FAFC] p-4 lg:p-8"
+    >
+      <div
+        data-rht-toaster=""
+        style="position: fixed; z-index: 9999; top: 16px; left: 16px; right: 16px; bottom: 16px; pointer-events: none;"
+      />
+      <div
+        class="max-w-[1600px] mx-auto space-y-8"
+      >
+        <div
+          class="flex flex-col md:flex-row md:items-end justify-between gap-6"
+        >
+          <div>
+            <div
+              class="flex items-center gap-3 mb-2"
+            >
+              <div
+                class="w-12 h-12 rounded-2xl bg-primary flex items-center justify-center text-white shadow-lg shadow-primary/20"
+              >
+                <svg
+                  aria-hidden="true"
+                  class="lucide lucide-package-search w-7 h-7"
+                  fill="none"
+                  height="24"
+                  stroke="currentColor"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  viewBox="0 0 24 24"
+                  width="24"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    d="M21 10V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l2-1.14"
+                  />
+                  <path
+                    d="m7.5 4.27 9 5.15"
+                  />
+                  <polyline
+                    points="3.29 7 12 12 20.71 7"
+                  />
+                  <line
+                    x1="12"
+                    x2="12"
+                    y1="22"
+                    y2="12"
+                  />
+                  <circle
+                    cx="18.5"
+                    cy="15.5"
+                    r="2.5"
+                  />
+                  <path
+                    d="M20.27 17.27 22 19"
+                  />
+                </svg>
+              </div>
+              <div>
+                <h1
+                  class="text-3xl font-black tracking-tight text-base-content"
+                >
+                  Analyse
+                   
+                  <span
+                    class="text-primary italic"
+                  >
+                    Stock
+                  </span>
+                </h1>
+                <p
+                  class="text-sm font-semibold text-base-content/40 uppercase tracking-widest mt-1"
+                >
+                  Analyse et optimisation des stocks
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div
+          class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+        >
+          <div
+            class="bg-white p-6 rounded-3xl border border-primary/20 shadow-sm flex items-center gap-5 transition-all hover:shadow-md group"
+          >
+            <div
+              class="p-4 bg-primary/10 text-primary rounded-2xl transition-transform group-hover:scale-110 duration-300"
+            >
+              <svg
+                aria-hidden="true"
+                class="lucide lucide-info w-6 h-6"
+                fill="none"
+                height="24"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                viewBox="0 0 24 24"
+                width="24"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <circle
+                  cx="12"
+                  cy="12"
+                  r="10"
+                />
+                <path
+                  d="M12 16v-4"
+                />
+                <path
+                  d="M12 8h.01"
+                />
+              </svg>
+            </div>
+            <div
+              class="min-w-0 flex-1"
+            >
+              <div
+                class="text-[10px] font-black uppercase tracking-widest text-base-content/40 mb-1 truncate"
+              >
+                Fournisseur
+              </div>
+              <div
+                class="text-xl font-black text-primary tracking-tighter truncate"
+              >
+                Tous les fournisseurs
+              </div>
+            </div>
+          </div>
+          <div
+            class="bg-white p-6 rounded-3xl border border-warning/20 shadow-sm flex items-center gap-5 transition-all hover:shadow-md group"
+          >
+            <div
+              class="p-4 bg-warning/10 text-warning rounded-2xl transition-transform group-hover:scale-110 duration-300"
+            >
+              <svg
+                aria-hidden="true"
+                class="lucide lucide-package w-6 h-6"
+                fill="none"
+                height="24"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                viewBox="0 0 24 24"
+             ...
+ ÔØ» Object.getElementError node_modules/@testing-library/dom/dist/config.js:37:19
+ ÔØ» node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ÔØ» node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ÔØ» node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ÔØ» src/components/__tests__/StockAnalysis.test.tsx:114:36
+    112|         await waitFor(() => screen.getByText('Produit A'));
+    113| 
+    114|         const searchInput = screen.getByPlaceholderText(/Rechercher/i);
+       |                                    ^
+    115|         await act(async () => {
+    116|             fireEvent.change(searchInput, { target: { value: 'InexistaÔÇª
+
+ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»[13/22]ÔÄ»
+
+ FAIL  src/components/facturation/__tests__/CartTable.test.tsx > CartTable > affiche le message vide quand il n'y a pas de produits
+TestingLibraryElementError: Unable to find an element with the text: /Votre panier est vide/i. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="h-full flex flex-col items-center justify-center text-base-content/30 gap-4 min-h-[200px]"
+    >
+      <svg
+        class="h-16 w-16 opacity-20"
+        fill="none"
+        stroke="currentColor"
+        viewBox="0 0 24 24"
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <path
+          d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="1.5"
+        />
+      </svg>
+      <p
+        class="font-light"
+      >
+        facturation.cart.empty
+      </p>
+    </div>
+  </div>
+</body>
+ ÔØ» Object.getElementError node_modules/@testing-library/dom/dist/config.js:37:19
+ ÔØ» node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ÔØ» node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ÔØ» node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ÔØ» src/components/facturation/__tests__/CartTable.test.tsx:74:19
+     72|   it('affiche le message vide quand il n\'y a pas de produits', () => {
+     73|     renderWithContext(<CartTable {...defaultProps} />)
+     74|     expect(screen.getByText(/Votre panier est vide/i)).toBeInTheDocumeÔÇª
+       |                   ^
+     75|   })
+     76| 
+
+ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»[14/22]ÔÄ»
+
+ FAIL  src/components/facturation/__tests__/CartTable.test.tsx > CartTable > appelle updatePrix lors du changement de prix
+AssertionError: expected "vi.fn()" to be called with arguments: [ 1, '800' ]
+
+Number of calls: 0
+
+ ÔØ» src/components/facturation/__tests__/CartTable.test.tsx:98:32
+     96|     if (prixInput) {
+     97|         fireEvent.change(prixInput, { target: { value: '800' } })
+     98|         expect(mockUpdatePrix).toHaveBeenCalledWith(1, '800')
+       |                                ^
+     99|     }
+    100|   })
+
+ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»[15/22]ÔÄ»
+
+ FAIL  src/components/facturation/__tests__/CartTable.test.tsx > CartTable > appelle updateRemiseProduit lors du changement de remise
+AssertionError: expected "vi.fn()" to be called with arguments: [ 1, '10' ]
+
+Number of calls: 0
+
+ ÔØ» src/components/facturation/__tests__/CartTable.test.tsx:109:41
+    107|     if (remiseInput) {
+    108|         fireEvent.change(remiseInput, { target: { value: '10' } })
+    109|         expect(mockUpdateRemiseProduit).toHaveBeenCalledWith(1, '10')
+       |                                         ^
+    110|     }
+    111|   })
+
+ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»[16/22]ÔÄ»
+
+ FAIL  src/components/facturation/__tests__/PaymentModal.test.tsx > PaymentModal > affiche le montant du coupon quand applicable
+TestingLibraryElementError: Unable to find an element with the text: /Coupon/i. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+<body
+  style="overflow: hidden;"
+>
+  <div>
+    <div
+      class="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4"
+    >
+      <div
+        class="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden flex flex-col max-h-[90vh] "
+      >
+        <div
+          class="bg-gradient-to-r from-primary/10 via-secondary/5 to-accent/10 px-6 py-5 border-b border-gray-100 shrink-0"
+        >
+          <div
+            class="flex items-center justify-between"
+          >
+            <div
+              class="flex items-center gap-3 min-w-0"
+            >
+              <div
+                class="w-10 h-10 rounded-xl bg-white/50 flex items-center justify-center shrink-0"
+              >
+                <span
+                  class="text-primary text-xl"
+                >
+                  ­ƒÆ░
+                </span>
+              </div>
+              <div
+                class="min-w-0"
+              >
+                <h3
+                  class="font-bold text-lg text-gray-800 truncate"
+                >
+                  Paiement
+                </h3>
+              </div>
+            </div>
+            <button
+              aria-label="Fermer"
+              class="btn btn-ghost btn-circle btn-sm shrink-0"
+              type="button"
+            >
+              <svg
+                class="h-5 w-5"
+                fill="currentColor"
+                viewBox="0 0 20 20"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  clip-rule="evenodd"
+                  d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
+                  fill-rule="evenodd"
+                />
+              </svg>
+            </button>
+          </div>
+        </div>
+        <div
+          class="flex-1 overflow-y-auto"
+        >
+          <form
+            class="p-6 space-y-5"
+          >
+            <div
+              class="text-center mb-6"
+            >
+              <div
+                class="text-sm text-base-content/60 uppercase tracking-wide mb-1"
+              >
+                Reste ├á payer
+              </div>
+              <div
+                class="text-4xl font-light text-primary"
+              >
+                5000
+                 F
+              </div>
+              0
+            </div>
+            <div
+              class="form-control w-full"
+            >
+              <label
+                class="label py-1"
+              >
+                <span
+                  class="label-text text-xs uppercase font-bold text-base-content/50"
+                >
+                  Mode de paiement
+                </span>
+              </label>
+              <div
+                class="p-3 bg-base-100 border border-base-300 rounded-lg text-sm font-medium flex items-center gap-2"
+              >
+                <span
+                  class="badge badge-primary badge-xs"
+                />
+                Caisse Centrale
+              </div>
+            </div>
+            <div
+              class="flex items-end gap-2"
+            >
+              <div
+                class="form-control flex-1"
+              >
+                <label
+                  class="label py-1"
+                >
+                  <span
+                    class="label-text text-xs uppercase font-bold text-base-content/50"
+                  >
+                    Montant
+                  </span>
+                </label>
+                <input
+                  class="input input-bordered w-full font-light text-2xl text-center focus:border-primary focus:ring-2 focus:ring-primary/20"
+                  placeholder="Montant"
+                  step="0.01"
+                  type="number"
+                  value="5000"
+                />
+              </div>
+              <button
+                class="btn btn-primary h-[3rem]"
+                type="button"
+              >
+                Ajouter
+              </button>
+            </div>
+            <div
+              class="pt-4 border-t border-base-200 mt-2"
+            >
+              <div
+                class="flex justify-between items-center mb-4"
+              >
+                <div
+                  class="text-sm"
+                >
+                  <span
+                    class="text-success font-bold"
+                  >
+                    Rendu monnaie:
+                     
+                    0
+                     F
+                  </span>
+                </div>
+                <div
+                  class="text-xl font-bold"
+                >
+                  Total:
+                   
+                  5000
+                   / 
+                  5000
+                   F
+                </div>
+              </div>
+              <button
+                class="btn btn-primary w-full gap-2 "
+                type="submit"
+              >
+                Valider la vente
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+ ÔØ» Object.getElementError node_modules/@testing-library/dom/dist/config.js:37:19
+ ÔØ» node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ÔØ» node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ÔØ» node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ÔØ» src/components/facturation/__tests__/PaymentModal.test.tsx:84:19
+     82|     renderWithContext(<PaymentModal {...props} />)
+     83|     // On cherche sp├®cifiquement le texte "500 F" qui doit ├¬tre pr├®senÔÇª
+     84|     expect(screen.getByText(/Coupon/i)).toBeInTheDocument()
+       |                   ^
+     85|     const couponAmounts = screen.getAllByText(/500\s?F/)
+     86|     expect(couponAmounts.length).toBeGreaterThan(0)
+
+ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»[17/22]ÔÄ»
+
+ FAIL  src/components/facturation/__tests__/PaymentModal.test.tsx > PaymentModal > affiche l'info Tiers Payant quand tauxCouverture > 0
+TestingLibraryElementError: Unable to find an element with the text: /Tiers Payant 70%/i. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+<body
+  style="overflow: hidden;"
+>
+  <div>
+    <div
+      class="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4"
+    >
+      <div
+        class="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden flex flex-col max-h-[90vh] "
+      >
+        <div
+          class="bg-gradient-to-r from-primary/10 via-secondary/5 to-accent/10 px-6 py-5 border-b border-gray-100 shrink-0"
+        >
+          <div
+            class="flex items-center justify-between"
+          >
+            <div
+              class="flex items-center gap-3 min-w-0"
+            >
+              <div
+                class="w-10 h-10 rounded-xl bg-white/50 flex items-center justify-center shrink-0"
+              >
+                <span
+                  class="text-primary text-xl"
+                >
+                  ­ƒÆ░
+                </span>
+              </div>
+              <div
+                class="min-w-0"
+              >
+                <h3
+                  class="font-bold text-lg text-gray-800 truncate"
+                >
+                  Paiement
+                </h3>
+              </div>
+            </div>
+            <button
+              aria-label="Fermer"
+              class="btn btn-ghost btn-circle btn-sm shrink-0"
+              type="button"
+            >
+              <svg
+                class="h-5 w-5"
+                fill="currentColor"
+                viewBox="0 0 20 20"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  clip-rule="evenodd"
+                  d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
+                  fill-rule="evenodd"
+                />
+              </svg>
+            </button>
+          </div>
+        </div>
+        <div
+          class="flex-1 overflow-y-auto"
+        >
+          <form
+            class="p-6 space-y-5"
+          >
+            <div
+              class="text-center mb-6"
+            >
+              <div
+                class="text-sm text-base-content/60 uppercase tracking-wide mb-1"
+              >
+                Reste ├á payer
+              </div>
+              <div
+                class="text-4xl font-light text-primary"
+              >
+                5000
+                 F
+              </div>
+              0
+            </div>
+            <div
+              class="form-control w-full"
+            >
+              <label
+                class="label py-1"
+              >
+                <span
+                  class="label-text text-xs uppercase font-bold text-base-content/50"
+                >
+                  Mode de paiement
+                </span>
+              </label>
+              <div
+                class="p-3 bg-base-100 border border-base-300 rounded-lg text-sm font-medium flex items-center gap-2"
+              >
+                <span
+                  class="badge badge-primary badge-xs"
+                />
+                Caisse Centrale
+              </div>
+            </div>
+            <div
+              class="flex items-end gap-2"
+            >
+              <div
+                class="form-control flex-1"
+              >
+                <label
+                  class="label py-1"
+                >
+                  <span
+                    class="label-text text-xs uppercase font-bold text-base-content/50"
+                  >
+                    Montant
+                  </span>
+                </label>
+                <input
+                  class="input input-bordered w-full font-light text-2xl text-center focus:border-primary focus:ring-2 focus:ring-primary/20"
+                  placeholder="Montant"
+                  step="0.01"
+                  type="number"
+                  value="5000"
+                />
+              </div>
+              <button
+                class="btn btn-primary h-[3rem]"
+                type="button"
+              >
+                Ajouter
+              </button>
+            </div>
+            <div
+              class="pt-4 border-t border-base-200 mt-2"
+            >
+              <div
+                class="flex justify-between items-center mb-4"
+              >
+                <div
+                  class="text-sm"
+                >
+                  <span
+                    class="text-success font-bold"
+                  >
+                    Rendu monnaie:
+                     
+                    0
+                     F
+                  </span>
+                </div>
+                <div
+                  class="text-xl font-bold"
+                >
+                  Total:
+                   
+                  5000
+                   / 
+                  5000
+                   F
+                </div>
+              </div>
+              <button
+                class="btn btn-primary w-full gap-2 "
+                type="submit"
+              >
+                Valider la vente
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+ ÔØ» Object.getElementError node_modules/@testing-library/dom/dist/config.js:37:19
+ ÔØ» node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ÔØ» node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ÔØ» node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ÔØ» src/components/facturation/__tests__/PaymentModal.test.tsx:95:19
+     93|     }
+     94|     renderWithContext(<PaymentModal {...props} />)
+     95|     expect(screen.getByText(/Tiers Payant 70%/i)).toBeInTheDocument()
+       |                   ^
+     96|   })
+     97| 
+
+ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»[18/22]ÔÄ»
 
 
-[2m Test Files [22m [1m[31m3 failed[39m[22m[90m (3)[39m
-[2m      Tests [22m [1m[31m7 failed[39m[22m[2m | [22m[33m5 skipped[39m[90m (12)[39m
-[2m   Start at [22m 01:19:40
-[2m   Duration [22m 5.24s[2m (transform 1.19s, setup 532ms, import 6.85s, tests 2.20s, environment 3.52s)[22m
+[2m Test Files [22m [1m[31m9 failed[39m[22m[2m | [22m[1m[32m12 passed[39m[22m[2m | [22m[33m1 skipped[39m[90m (22)[39m
+[2m      Tests [22m [1m[31m19 failed[39m[22m[2m | [22m[1m[32m86 passed[39m[22m[2m | [22m[33m7 skipped[39m[90m (112)[39m
+[2m   Start at [22m 06:54:46
+[2m   Duration [22m 15.71s[2m (transform 8.63s, setup 8.00s, import 25.63s, tests 10.42s, environment 35.05s)[22m
 

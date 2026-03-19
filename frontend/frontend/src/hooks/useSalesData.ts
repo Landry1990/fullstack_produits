@@ -5,7 +5,7 @@ import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
 
 export const useSalesData = () => {
-    const { t } = useTranslation();
+    const { t } = useTranslation(['sales', 'common']);
     const [factures, setFactures] = useState<Facture[]>([]);
     const [loading, setLoading] = useState(true);
     const [startDate, setStartDate] = useState(new Date().toISOString().split('T')[0]);

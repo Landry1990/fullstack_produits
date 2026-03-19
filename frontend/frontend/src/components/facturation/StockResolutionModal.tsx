@@ -34,7 +34,7 @@ export default function StockResolutionModal({
   setPromisClientName,
   onConfirm
 }: StockResolutionModalProps) {
-  const { t } = useTranslation()
+  const { t } = useTranslation(['facturation', 'common'])
 
   // --- Local States for Inputs (Performance & Robustness) ---
   const [localClientName, setLocalClientName] = useState(promisClientName)
@@ -88,7 +88,7 @@ export default function StockResolutionModal({
     <PremiumModal
       isOpen={isOpen}
       onClose={onClose}
-      title={t('facturation.stock_resolution.title')}
+      title={t('stock_resolution.title')}
       icon={
         <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-warning" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
@@ -98,10 +98,10 @@ export default function StockResolutionModal({
       footer={
         <div className="flex justify-end gap-3 w-full">
           <button className="btn btn-ghost" onClick={onClose}>
-            {t('facturation.stock_resolution.cancel_and_edit_cart')}
+            {t('stock_resolution.cancel_and_edit_cart')}
           </button>
           <button className="btn btn-primary px-8" onClick={handleConfirm}>
-            {t('facturation.stock_resolution.validate_and_cash')}
+            {t('stock_resolution.validate_and_cash')}
           </button>
         </div>
       }
@@ -110,7 +110,7 @@ export default function StockResolutionModal({
         <div className="alert alert-warning shadow-lg mb-6">
             <div className="flex items-center gap-2">
                 <svg xmlns="http://www.w3.org/2000/svg" className="stroke-current flex-shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
-                <span>{t('facturation.stock_resolution.message')}</span>
+                <span>{t('stock_resolution.message')}</span>
             </div>
         </div>
 
@@ -119,10 +119,10 @@ export default function StockResolutionModal({
             <thead className="bg-base-100">
               <tr>
                 <th>{t('common.product')}</th>
-                <th>{t('facturation.stock_resolution.demand')}</th>
-                <th className="text-right">{t('facturation.stock_resolution.stock')}</th>
-                <th className="text-right">{t('facturation.stock_resolution.missing')}</th>
-                <th className="text-center">{t('facturation.stock_resolution.promised')}</th>
+                <th>{t('stock_resolution.demand')}</th>
+                <th className="text-right">{t('stock_resolution.stock')}</th>
+                <th className="text-right">{t('stock_resolution.missing')}</th>
+                <th className="text-center">{t('stock_resolution.promised')}</th>
               </tr>
             </thead>
             <tbody>
@@ -160,26 +160,26 @@ export default function StockResolutionModal({
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="form-control">
                         <label className="label">
-                            <span className="label-text font-semibold">{t('facturation.stock_resolution.client_name')} <span className="text-xs font-normal opacity-50">({t('facturation.stock_resolution.optional')})</span></span>
+                            <span className="label-text font-semibold">{t('stock_resolution.client_name')} <span className="text-xs font-normal opacity-50">({t('stock_resolution.optional')})</span></span>
                         </label>
                         <input 
                             type="text" 
                             className="input input-bordered focus:input-primary rounded-xl" 
                             value={localClientName}
                             onChange={(e) => setLocalClientName(e.target.value)}
-                            placeholder={t('facturation.client.manual_placeholder')}
+                            placeholder={t('client.manual_placeholder')}
                         />
                     </div>
                     <div className="form-control">
                         <label className="label">
-                            <span className="label-text font-semibold">{t('facturation.stock_resolution.client_phone_for_promised_ticket')}</span>
+                            <span className="label-text font-semibold">{t('stock_resolution.client_phone_for_promised_ticket')}</span>
                         </label>
                         <input 
                             type="text" 
                             className="input input-bordered focus:input-primary rounded-xl" 
                             value={localPhone}
                             onChange={(e) => setLocalPhone(e.target.value)}
-                            placeholder={t('facturation.stock_resolution.phone_number_placeholder')}
+                            placeholder={t('stock_resolution.phone_number_placeholder')}
                         />
                     </div>
                 </div>

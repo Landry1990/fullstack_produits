@@ -1,0 +1,47 @@
+{
+    "title": "Ma Vitrine en Ligne",
+    "subtitle": "Gérez votre présence web et simulez l'expérience patient",
+    "online_count": "Produits en Ligne",
+    "tabs": {
+        "gestion": "Gestion",
+        "simulateur": "Simulateur"
+    },
+    "gestion": {
+        "search_placeholder": "Rechercher un produit à gérer...",
+        "show_public_only": "Visibles uniquement",
+        "selected_count": "{{count}} produit(s) sélectionné(s)",
+        "publish": "Publier en Ligne",
+        "unpublish": "Retirer de la Vitrine",
+        "cancel": "Annuler",
+        "table": {
+            "product": "Produit",
+            "rayon": "Rayon",
+            "stock": "Stock",
+            "pharmacy_price": "Prix Pharma",
+            "public_price": "Prix Public (Web)",
+            "online": "En ligne ?",
+            "empty": "Aucun produit trouvé",
+            "uncategorized": "Non catégorisé"
+        }
+    },
+    "simulateur": {
+        "search_title": "Rechercher un Médicament",
+        "search_placeholder": "Ex: Doliprane, Paracetamol...",
+        "available": "En Stock",
+        "out_of_stock": "Rupture",
+        "available_full": "Disponible",
+        "no_results": "Aucun produit disponible trouvé.",
+        "already_in_list": "Produit déjà dans la liste",
+        "my_list": "Ma Liste",
+        "empty_list": "Votre liste est vide"
+    },
+    "messages": {
+        "visibility_updated": "Visibilité mise à jour",
+        "price_updated": "Prix mis à jour",
+        "update_error": "Erreur lors de la mise à jour",
+        "generic_error": "Erreur",
+        "bulk_published": "Produits publiés en ligne",
+        "bulk_unpublished": "Produits retirés de la vitrine",
+        "bulk_error": "Erreur lors de la mise à jour groupée"
+    }
+}

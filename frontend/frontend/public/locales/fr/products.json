@@ -194,7 +194,18 @@
             "empty": "Aucun mouvement enregistré",
             "view_invoice": "Cliquer pour voir la facture",
             "view_order": "Cliquer pour voir la commande",
-            "stock_after": "Stock après"
+            "stock_after": "Stock après",
+            "types": {
+                "AJUSTEMENT": "Ajustement",
+                "ENTREE": "Entrée Stock",
+                "SORTIE": "Sortie Stock",
+                "VENTE": "Vente",
+                "RETOUR": "Retour",
+                "TRANSFORMATION_ENTREE": "Transf. Entrée",
+                "TRANSFORMATION_SORTIE": "Transf. Sortie",
+                "AVOIR": "Avoir Fournisseur",
+                "UG": "Unité Gratuite"
+            }
         }
     },
     "messages": {

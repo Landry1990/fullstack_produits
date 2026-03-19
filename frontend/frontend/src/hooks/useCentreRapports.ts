@@ -308,7 +308,7 @@ export const formatValue = (key: string, value: unknown, t?: any): string => {
 
 // Hook Implementation
 export function useCentreRapports() {
-    const { t } = useTranslation();
+    const { t } = useTranslation(['reports', 'common']);
     const [searchParams] = useSearchParams();
 
     const [selectedQuery, setSelectedQuery] = useState<QueryDefinition | null>(null);
@@ -461,7 +461,7 @@ export function useCentreRapports() {
 
     const downloadExcel = useCallback(() => {
         if (!results || !selectedQuery) {
-            toast.error(t('reports.results.export_no_result'));
+            toast.error(t('results.export_no_result'));
             return;
         }
 
@@ -497,7 +497,7 @@ export function useCentreRapports() {
                 data.push(row);
             });
         } else {
-            toast.error(t('reports.results.export_unsupported'));
+            toast.error(t('results.export_unsupported'));
             return;
         }
 
@@ -519,7 +519,7 @@ export function useCentreRapports() {
         const today = new Date().toISOString().slice(0, 10);
         const filename = `${selectedQuery.id}_${today}.xlsx`;
         XLSX.writeFile(wb, filename);
-        toast.success(t('reports.results.export_success', { filename }));
+        toast.success(t('results.export_success', { filename }));
     }, [results, selectedQuery, t]);
 
     // Auto-select from URL

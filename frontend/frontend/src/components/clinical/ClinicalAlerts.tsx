@@ -14,7 +14,7 @@ interface ClinicalAlertsProps {
 }
 
 export default function ClinicalAlerts({ alerts }: ClinicalAlertsProps) {
-  const { t } = useTranslation();
+  const { t } = useTranslation(['common']);
   if (!alerts || alerts.length === 0) return null
 
   // Group by gravity for sorting/styling

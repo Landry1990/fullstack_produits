@@ -126,7 +126,7 @@ export default function AnalyseABC() {
       t('stock:abc.table.ca'),
       t('stock:abc.table.ca_percent'),
       t('stock:abc.table.cumulated_percent'),
-      'Catégorie'
+      t('stock:abc.table.category', { defaultValue: 'Catégorie' })
     ]
     
     // Lignes de données
@@ -343,8 +343,8 @@ export default function AnalyseABC() {
                       {p.stock}
                     </td>
                     <td className="text-right font-semibold text-info">{formatNumber(p.quantite_vendue)}</td>
-                    <td className="text-right">{formatNumber(p.prix_vente)} F</td>
-                    <td className="text-right font-bold">{formatNumber(p.chiffre_affaires)} F</td>
+                    <td className="text-right">{formatNumber(p.prix_vente)} {t('common:currency_symbol', { defaultValue: 'F' })}</td>
+                    <td className="text-right font-bold">{formatNumber(p.chiffre_affaires)} {t('common:currency_symbol', { defaultValue: 'F' })}</td>
                     <td className="text-right">{p.pourcentage_ca.toFixed(0)}%</td>
                     <td className="text-right text-base-content/60">{p.pourcentage_cumule.toFixed(1)}%</td>
                   </tr>

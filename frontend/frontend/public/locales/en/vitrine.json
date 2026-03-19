@@ -1,0 +1,47 @@
+{
+    "title": "My Online Storefront",
+    "subtitle": "Manage your web presence and simulate the patient experience",
+    "online_count": "Products Online",
+    "tabs": {
+        "gestion": "Management",
+        "simulateur": "Simulator"
+    },
+    "gestion": {
+        "search_placeholder": "Search for a product to manage...",
+        "show_public_only": "Visible only",
+        "selected_count": "{{count}} product(s) selected",
+        "publish": "Publish Online",
+        "unpublish": "Remove from Storefront",
+        "cancel": "Cancel",
+        "table": {
+            "product": "Product",
+            "rayon": "Shelf",
+            "stock": "Stock",
+            "pharmacy_price": "Pharmacy Price",
+            "public_price": "Public Price (Web)",
+            "online": "Online?",
+            "empty": "No products found",
+            "uncategorized": "Uncategorized"
+        }
+    },
+    "simulateur": {
+        "search_title": "Search for a Medication",
+        "search_placeholder": "E.g.: Doliprane, Paracetamol...",
+        "available": "In Stock",
+        "out_of_stock": "Out of Stock",
+        "available_full": "Available",
+        "no_results": "No available product found.",
+        "already_in_list": "Product already in list",
+        "my_list": "My List",
+        "empty_list": "Your list is empty"
+    },
+    "messages": {
+        "visibility_updated": "Visibility updated",
+        "price_updated": "Price updated",
+        "update_error": "Error during update",
+        "generic_error": "Error",
+        "bulk_published": "Products published online",
+        "bulk_unpublished": "Products removed from storefront",
+        "bulk_error": "Error during bulk update"
+    }
+}

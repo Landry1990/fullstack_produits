@@ -643,3 +643,4 @@ class ComplexTransactionsTestCase(APITransactionTestCase):
         facture.refresh_from_db()
         self.assertIn(facture.status, [Facture.Status.VALIDEE, Facture.Status.PAYEE])
 
+

@@ -86,7 +86,7 @@ const CartRow = React.memo(({
   const handleRemiseSubmit = () => {
     const numValue = normalizeNumberInput(localRemise)
     if (!isNaN(numValue) && numValue > maxDiscount) {
-      toast.error(t('facturation.messages.discount_limit_error', { rate: maxDiscount }))
+      toast.error(t('facturation:messages.discount_limit_error', { rate: maxDiscount }))
       setLocalRemise(String(maxDiscount))
       updateRemiseProduit(ligne.produit.id, String(maxDiscount))
     } else if (localRemise !== ligne.remise_produit) {
@@ -238,7 +238,7 @@ export default function CartTable({
         <svg xmlns="http://www.w3.org/2000/svg" className="h-16 w-16 opacity-20" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
         </svg>
-        <p className="font-light">{t('facturation.cart.empty')}</p>
+        <p className="font-light">{t('facturation:cart.empty')}</p>
       </div>
     )
   }

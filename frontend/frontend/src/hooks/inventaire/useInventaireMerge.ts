@@ -23,7 +23,7 @@ export const useInventaireMerge = ({
     activeInventaire,
     handleEdit
 }: UseInventaireMergeProps) => {
-    const { t } = useTranslation();
+    const { t } = useTranslation(['stock', 'common']);
     const [showMergeModal, setShowMergeModal] = useState(false);
     const [mergeCandidates, setMergeCandidates] = useState<Inventaire[]>([]);
     const [loadingMergeCandidates, setLoadingMergeCandidates] = useState(false);
@@ -34,14 +34,14 @@ export const useInventaireMerge = ({
     const inventairesEndpoint = `${String(apiBaseUrl).replace(/\/$/, '')}/inventaires/`;
 
     const canMergeSelectedInventaires = () => {
-        if (selectedInventaireIds.size < 2) return { canMerge: false, reason: t('stock.inventaire.merge.need_two', { defaultValue: 'Sélectionnez au moins 2 inventaires.' }) };
+        if (selectedInventaireIds.size < 2) return { canMerge: false, reason: t('inventaire.merge.need_two', { defaultValue: 'Sélectionnez au moins 2 inventaires.' }) };
 
         const selectedDocs = inventaires.filter(i => selectedInventaireIds.has(i.id));
-        if (selectedDocs.length === 0) return { canMerge: false, reason: t('stock.inventaire.merge.error', { defaultValue: 'Erreur lors de la sélection.' }) };
+        if (selectedDocs.length === 0) return { canMerge: false, reason: t('inventaire.merge.error', { defaultValue: 'Erreur lors de la sélection.' }) };
 
         const firstStatus = selectedDocs[0].status;
         const allSameStatus = selectedDocs.every((i: Inventaire) => i.status === firstStatus);
-        if (!allSameStatus) return { canMerge: false, reason: t('stock.inventaire.merge.same_status_required', { defaultValue: 'Les inventaires sélectionnés doivent avoir le même état (tous en préparation ou tous clôturés).' }) };
+        if (!allSameStatus) return { canMerge: false, reason: t('inventaire.merge.same_status_required', { defaultValue: 'Les inventaires sélectionnés doivent avoir le même état (tous en préparation ou tous clôturés).' }) };
 
         return { canMerge: true, reason: null };
     };
@@ -76,8 +76,8 @@ export const useInventaireMerge = ({
         // Confirmation is currently mocked, ideally use useConfirm from hook
         const confirmed = window.confirm(
             isListMode
-                ? t('stock.inventaire.modals.merge_warning_list_plain', { defaultValue: 'Les inventaires sélectionnés seront fusionnés DANS l\'inventaire cible. Êtes-vous sûr ?' })
-                : t('stock.inventaire.merge.confirm_msg', { defaultValue: 'L\'inventaire source sera fusionné dans l\'inventaire actuel. Confirmer ?' })
+                ? t('inventaire.modals.merge_warning_list_plain', { defaultValue: 'Les inventaires sélectionnés seront fusionnés DANS l\'inventaire cible. Êtes-vous sûr ?' })
+                : t('inventaire.merge.confirm_msg', { defaultValue: 'L\'inventaire source sera fusionné dans l\'inventaire actuel. Confirmer ?' })
         );
         if (!confirmed) return;
 
@@ -95,7 +95,7 @@ export const useInventaireMerge = ({
                     successCount++;
                 }
 
-                toast.success(t('stock.inventaire.merge.success_count', { count: successCount }));
+                toast.success(t('inventaire.merge.success_count', { count: successCount }));
                 setSelectedInventaireIds(new Set());
                 fetchInventaires();
             } else {
@@ -103,7 +103,7 @@ export const useInventaireMerge = ({
                 await axios.post(`${inventairesEndpoint}${activeInventaire?.id}/merge/`, {
                     source_inventaire_id: selectedMergeSource
                 });
-                toast.success(t('stock.inventaire.merge.success'));
+                toast.success(t('inventaire.merge.success'));
                 if (activeInventaire) handleEdit(activeInventaire);
             }
 
@@ -112,7 +112,7 @@ export const useInventaireMerge = ({
         } catch (err: unknown) {
             console.error("Erreur fusion", err);
             const error = err as { response?: { data?: { error?: string } } };
-            toast.error(error.response?.data?.error || t('stock.inventaire.merge.error', { defaultValue: 'Erreur lors de la fusion' }));
+            toast.error(error.response?.data?.error || t('inventaire.merge.error', { defaultValue: 'Erreur lors de la fusion' }));
         } finally {
             setMerging(false);
         }

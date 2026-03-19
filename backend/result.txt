@@ -1,5 +1,0 @@
-Initial Stock: 100
-Stock after sale (status VAL): 90
-Cancellation result: True, Facture annulée avec succès.
-Stock after cancellation: 100
-SUCCESS: Stock reintegrated correctly!

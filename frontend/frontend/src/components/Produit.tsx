@@ -392,28 +392,79 @@ export default function Produit() {
   const error = loadError instanceof Error ? loadError.message : (loadError ? String(loadError) : null);
 
   return (
-    <div className="flex flex-col h-full p-4 space-y-4">
-      {/* Header */}
-      <div className="flex justify-between items-center shrink-0">
-        <h1 className="text-lg font-bold">📦 {t('products:title')}</h1>
-        <div className="flex gap-1">
-          <button onClick={() => recalculateRotationMutation.mutate()} className="btn btn-xs btn-ghost" title={t('products:actions.rotation')}>🔄 {t('products:actions.rotation')}</button>
-          <button onClick={() => refetchProduits()} className="btn btn-xs btn-ghost" disabled={loading}>{loading ? <span className="loading loading-spinner loading-xs"></span> : '🔄'}</button>
+    <div className="min-h-screen bg-base-200 p-6 space-y-6 font-sans">
+      {/* Header Section */}
+      <div className="bg-base-100 rounded-2xl shadow-sm border border-base-300 p-6">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+          <div>
+            <h1 className="text-2xl font-black text-base-content tracking-tight flex items-center gap-3">
+              <span className="p-2 bg-primary/10 text-primary rounded-xl">
+                <svg xmlns="http://www.w3.org/2000/svg" className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+                </svg>
+              </span>
+              {t('products:title')}
+            </h1>
+            <p className="text-base-content/60 text-sm mt-1 ml-11">
+              {t('products:subtitle', { defaultValue: 'Gérez votre inventaire et vos stocks en temps réel' })}
+            </p>
+          </div>
+          
+          <div className="flex items-center gap-2">
+            <button 
+              onClick={() => recalculateRotationMutation.mutate()} 
+              className="btn btn-sm btn-ghost gap-2 font-bold text-base-content/60 hover:text-primary transition-colors"
+              title={t('products:actions.rotation')}
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+              </svg>
+              {t('products:actions.rotation')}
+            </button>
+            <button 
+              onClick={() => refetchProduits()} 
+              className={`btn btn-sm btn-ghost ${loading ? 'btn-disabled' : ''} text-base-content/60 hover:text-primary transition-colors`}
+              disabled={loading}
+            >
+              {loading ? <span className="loading loading-spinner loading-xs"></span> : (
+                <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                </svg>
+              )}
+            </button>
+          </div>
         </div>
       </div>
 
-      {error && <div className="alert alert-error alert-sm"><span>{error}</span></div>}
+      {error && (
+        <div className="alert alert-error shadow-sm rounded-xl py-3 border-none bg-error/10 text-error font-medium">
+          <svg xmlns="http://www.w3.org/2000/svg" className="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          <span>{error}</span>
+        </div>
+      )}
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-3 flex-1 min-h-0">
-        {/* Left Panel */}
-        <div className="md:col-span-1 bg-white rounded-lg shadow flex flex-col overflow-hidden">
-          <div className="p-3 border-b bg-white shrink-0 flex justify-between items-center">
-            <div className="flex items-center gap-2">
-              <h2 className="text-sm font-bold text-slate-800">{t('products:title')}</h2>
-              <span className="bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full text-[10px] font-bold">{totalCount}</span>
+      {/* Main Content Grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 min-h-[600px]">
+        {/* Left Panel: List & Actions */}
+        <div className="lg:col-span-4 bg-base-100 rounded-2xl shadow-sm border border-base-300 flex flex-col overflow-hidden">
+          <div className="p-4 border-b border-base-200 bg-base-100 flex justify-between items-center shrink-0">
+            <div className="flex items-center gap-3">
+              <span className="font-black text-xs uppercase tracking-widest text-base-content/40">Inventaire</span>
+              <span className="bg-primary/10 text-primary px-2.5 py-0.5 rounded-full text-[10px] font-black">{totalCount}</span>
             </div>
-            <button className="btn btn-sm btn-primary gap-2" onClick={() => setIsCreateModalOpen(true)}>➕ {t('products:actions.create')}</button>
+            <button 
+              className="btn btn-sm btn-primary rounded-xl px-4 gap-2 shadow-sm shadow-primary/20" 
+              onClick={() => setIsCreateModalOpen(true)}
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" />
+              </svg>
+              {t('products:actions.create')}
+            </button>
           </div>
+          
           <ProductFilters 
             searchQuery={searchQuery} setSearchQuery={setSearchQuery} 
             filterRayon={filterRayon} setFilterRayon={setFilterRayon}
@@ -432,15 +483,50 @@ export default function Produit() {
           />
 
           {totalPages > 1 && (
-            <div className="flex justify-center p-2 border-t bg-slate-50 gap-2 items-center text-xs">
-              <button className="btn btn-xs btn-ghost" disabled={page === 1} onClick={() => setPage(p => Math.max(1, p - 1))}>←</button>
-              <span>{t('common:pagination.page_info_simple', { page })} / {t('common:pagination.page_of', { count: totalPages })}</span>
-              <button className="btn btn-xs btn-ghost" disabled={page >= totalPages} onClick={() => setPage(p => Math.min(totalPages, p + 1))}>→</button>
+            <div className="p-4 border-t border-base-200 bg-base-50/30">
+              <div className="flex justify-between items-center">
+                <button 
+                  className="btn btn-xs btn-ghost gap-1 font-bold disabled:opacity-30" 
+                  disabled={page === 1} 
+                  onClick={() => setPage(p => Math.max(1, p - 1))}
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7" />
+                  </svg>
+                  {t('common:pagination.prev')}
+                </button>
+                <span className="text-[10px] font-black text-base-content/40 uppercase tracking-tighter">
+                  {t('common:pagination.page_info_simple', { page })} / {totalPages}
+                </span>
+                <button 
+                  className="btn btn-xs btn-ghost gap-1 font-bold disabled:opacity-30" 
+                  disabled={page >= totalPages} 
+                  onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+                >
+                   {t('common:pagination.next')}
+                  <svg xmlns="http://www.w3.org/2000/svg" className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />
+                  </svg>
+                </button>
+              </div>
             </div>
           )}
 
-          <div className="p-1.5 border-t bg-slate-50/50 text-[10px] text-center text-slate-400 shrink-0 flex justify-around">
-            <span>📦 {totalCount}</span><span className="text-warning">⚠️ {lowStockCount}</span><span className="text-error">🚫 {outOfStockCount}</span>
+          <div className="p-3 border-t border-base-200 bg-base-100 shrink-0 flex justify-between px-6">
+            <div className="flex items-center gap-1.5">
+              <span className="text-[10px] font-black text-base-content/30 uppercase tracking-widest">Global</span>
+              <span className="text-primary font-black text-sm">{totalCount}</span>
+            </div>
+            <div className="flex items-center gap-4">
+              <div className="flex items-center gap-1.5" title="Stock Faible">
+                <div className="w-2 h-2 rounded-full bg-warning animate-pulse"></div>
+                <span className="text-warning font-black text-sm">{lowStockCount}</span>
+              </div>
+              <div className="flex items-center gap-1.5" title="Rupture">
+                <div className="w-2 h-2 rounded-full bg-error"></div>
+                <span className="text-error font-black text-sm">{outOfStockCount}</span>
+              </div>
+            </div>
           </div>
 
           <BulkActionsBar 
@@ -452,24 +538,26 @@ export default function Produit() {
           />
         </div>
 
-        {/* Right Panel */}
-        <ProductDetailPanel 
-          selectedProduit={selectedProduit} detailsLoading={detailsLoading} 
-          activeTab={activeTab} setActiveTab={setActiveTab}
-          lots={lots} monthlyStats={monthlyStats} 
-          achats={achats} loadingAchats={loadingAchats}
-          stockHistory={stockHistory} loadingHistory={loadingHistory} transferLoading={transferLoading}
-          onMovementClick={handleMovementClick}
-          onOpenAdjustment={() => {
-            setAdjustmentForm({ new_quantity: String(selectedProduit?.stock || 0), reason_type: 'INVENTAIRE' });
-            setIsAdjustmentModalOpen(true);
-          }}
-          onOpenEdit={handleOpenEditModal}
-          onGenerateLabels={handleGenerateLabels}
-          onDelete={handleDeleteProduit}
-          onToggleActive={handleToggleActive}
-          onTransferToRayon={handleTransferToRayon}
-        />
+        {/* Right Panel: Details */}
+        <div className="lg:col-span-8 bg-base-100 rounded-2xl shadow-sm border border-base-300 flex flex-col overflow-hidden">
+          <ProductDetailPanel 
+            selectedProduit={selectedProduit} detailsLoading={detailsLoading} 
+            activeTab={activeTab} setActiveTab={setActiveTab}
+            lots={lots} monthlyStats={monthlyStats} 
+            achats={achats} loadingAchats={loadingAchats}
+            stockHistory={stockHistory} loadingHistory={loadingHistory} transferLoading={transferLoading}
+            onMovementClick={handleMovementClick}
+            onOpenAdjustment={() => {
+              setAdjustmentForm({ new_quantity: String(selectedProduit?.stock || 0), reason_type: 'INVENTAIRE' });
+              setIsAdjustmentModalOpen(true);
+            }}
+            onOpenEdit={handleOpenEditModal}
+            onGenerateLabels={handleGenerateLabels}
+            onDelete={handleDeleteProduit}
+            onToggleActive={handleToggleActive}
+            onTransferToRayon={handleTransferToRayon}
+          />
+        </div>
       </div>
 
       {/* Modals */}

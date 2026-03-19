@@ -47,3 +47,22 @@ Thumbs.db
 *.key
 *.p12
 *.jks
+
+# ============== Debug & Temp Files ==============
+# Test/build output files
+*_output*.txt
+*_errors*.txt
+*_failures*.txt
+*_result*.txt
+reproduction_error.txt
+diagnostic_output.txt
+
+# Lint reports
+lint_report.json
+
+# Temporary/backup files
+*_backup.py.txt
+temp_*
+
+# PDF files (not part of the application)
+*.pdf

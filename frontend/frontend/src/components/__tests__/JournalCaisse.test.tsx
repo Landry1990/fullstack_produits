@@ -4,8 +4,7 @@ import { MemoryRouter } from 'react-router-dom';
 import JournalCaisse from '../JournalCaisse';
 import axios from 'axios';
 
-// Mock libs
-vi.mock('axios');
+// axios and react-i18next are mocked globally in setup.ts
 vi.mock('react-hot-toast', () => ({
   toast: { success: vi.fn(), error: vi.fn() }
 }));
@@ -50,7 +49,7 @@ const mockPageInit = {
     total_recouvrement: 2000,
     details: { especes: 30000, carte: 15000 }
   },
-  users: [{ id: 1, username: 'caissier1', full_name: 'Ali Baba' }]
+  users: [{ id: 1, username: 'caissier1', first_name: 'Ali', last_name: 'Baba', full_name: 'Ali Baba' }]
 };
 
 describe('JournalCaisse Component', () => {
@@ -66,7 +65,7 @@ describe('JournalCaisse Component', () => {
       </MemoryRouter>
     );
 
-    expect(screen.getByText('Journal de Caisse')).toBeInTheDocument();
+    expect(screen.getByText(/Journal de Caisse/i)).toBeInTheDocument();
     
     await waitFor(() => {
         // Checking for "Espèces à Justifier" value (50 000)
@@ -87,12 +86,12 @@ describe('JournalCaisse Component', () => {
         expect(screen.getByText('Ali Baba')).toBeInTheDocument();
     });
 
-    const userSelect = screen.getByRole('combobox', { name: '' }); // Select for user
+    const userSelect = screen.getAllByRole('combobox')[1]; // Select for user is the second one
     fireEvent.change(userSelect, { target: { value: '1' } });
 
     await waitFor(() => {
-        expect(axios.get).toHaveBeenCalledWith(expect.stringContaining('page_init'), expect.objectContaining({
-            params: expect.objectContaining({ user: '1' })
+        expect(axios.get).toHaveBeenCalledWith(expect.stringContaining('get_totals'), expect.objectContaining({
+            params: expect.objectContaining({ user_id: '1' })
         }));
     });
   });
@@ -104,7 +103,7 @@ describe('JournalCaisse Component', () => {
       </MemoryRouter>
     );
 
-    const operationBtn = screen.getByText(/Opération/i);
+    const operationBtn = screen.getByRole('button', { name: /Opération/i });
     fireEvent.click(operationBtn);
 
     // CashMovementModal is a child component, we'd normally check for its content

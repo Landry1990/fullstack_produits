@@ -614,74 +614,7 @@
             "sudo_confirm_message": "Cette action va modifier le stock (réintégration). Veuillez confirmer votre mot de passe pour continuer."
         }
     },
-    "analyse": {
-        "title": "Analyse des Stocks",
-        "error": "Erreur lors du chargement des données. Vérifiez que le serveur est accessible.",
-        "per_month": "mois",
-        "per_day": "jour",
-        "days": "jours",
-        "tabs": {
-            "unsold": "Invendus",
-            "overstock": "Surstock",
-            "shortage": "Prévisions Rupture",
-            "unsold_desc": "Produits en stock mais sans ventes (Rotation = 0)",
-            "overstock_desc": "Produits en surstock (Stock > 1.7x Rotation)",
-            "shortage_desc": "Produits qui risquent la rupture dans les 30 prochains jours"
-        },
-        "filters": {
-            "supplier": "Fournisseur",
-            "all_suppliers": "Tous les fournisseurs",
-            "refresh": "Actualiser",
-            "days_threshold": "Jours sans vente"
-        },
-        "stats": {
-            "supplier": "Fournisseur",
-            "item_count": "Nombre d'articles",
-            "estimated_value": "Valeur estimée",
-            "overstock_value": "Valeur estimée du surstock",
-            "value_at_risk": "Valeur à risque",
-            "critical_alerts": "Alertes critiques"
-        },
-        "columns": {
-            "product": "Produit",
-            "supplier": "Fournisseur",
-            "current_stock": "Stock Actuel",
-            "created_at": "Créé le",
-            "last_purchase": "Dernier Achat",
-            "last_sale": "Dernière Vente",
-            "inactive_since": "Inactif depuis",
-            "cost_price": "Prix Achat",
-            "stock_value": "Valeur Stock",
-            "avg_rotation": "Rotation Moy.",
-            "threshold": "Seuil (1.7x)",
-            "excess_qty": "Qté Excès",
-            "excess_value": "Valeur Excès",
-            "avg_daily_sales": "Vente Moy/Jour",
-            "days_until_stockout": "Jours avant rupture",
-            "urgency": "Urgence",
-            "value_at_risk": "Valeur à risque"
-        },
-        "shortage": {
-            "warnings": "avertissements",
-            "selected": "produit(s) sélectionné(s)",
-            "generate_order": "Générer Commande",
-            "urgency": {
-                "critical": "Critique (< 7j)",
-                "warning": "Attention (< 14j)",
-                "caution": "Surveillance (< 30j)"
-            }
-        },
-        "messages": {
-            "loading": "Chargement de l'analyse...",
-            "never_sold": "Jamais vendu"
-        },
-        "empty": {
-            "unsold": "Aucun produit invendu",
-            "overstock": "Aucun produit en surstock",
-            "shortage": "Aucune rupture prévue",
-            "all_good": "Tout semble en ordre !"
-        }
-    },
+
     "abc": {
         "title": "Analyse ABC",
         "subtitle": "Classification des produits par contribution au CA (Pareto 80/20)",
@@ -721,6 +654,7 @@
             "ca": "CA",
             "ca_percent": "% CA",
             "cumulated_percent": "% Cumulé",
+            "category": "Catégorie",
             "no_products": "Aucun produit dans cette catégorie",
             "shortage_badge": "Rupture"
         },
@@ -731,6 +665,77 @@
         "messages": {
             "copy_success": "{{count}} lignes copiées ! Collez dans Excel.",
             "copy_error": "Erreur lors de la copie des données"
+        }
+    },
+    "analyse": {
+        "title": "Analyse",
+        "subtitle": "Analyse et optimisation des stocks",
+        "error": "Erreur de chargement",
+        "per_month": "mois",
+        "per_day": "jour",
+        "days": "jours",
+        "day_short": "j",
+        "tabs": {
+            "unsold": "Invendus",
+            "overstock": "Surstock",
+            "shortage": "Ruptures",
+            "unsold_desc": "Produits sans vente récente",
+            "overstock_desc": "Produits en surstock",
+            "shortage_desc": "Prévision des ruptures"
+        },
+        "filters": {
+            "supplier": "Fournisseur",
+            "all_suppliers": "Tous les fournisseurs",
+            "days_threshold": "Seuil (jours)",
+            "refresh": "Actualiser"
+        },
+        "stats": {
+            "supplier": "Fournisseur",
+            "item_count": "Nb. produits",
+            "estimated_value": "Valeur estimée",
+            "overstock_value": "Valeur surstock",
+            "value_at_risk": "Valeur à risque",
+            "critical_alerts": "Alertes critiques",
+            "selected": "{{count}} article(s) sélectionné(s)"
+        },
+        "columns": {
+            "product": "Produit",
+            "supplier": "Fournisseur",
+            "current_stock": "Stock",
+            "created_at": "Date création",
+            "last_purchase": "Dernier Achat",
+            "last_sale": "Dernière Vente",
+            "inactive_since": "Inactif depuis",
+            "cost_price": "Prix coût",
+            "stock_value": "Valeur stock",
+            "avg_rotation": "Rotation Moy.",
+            "threshold": "Seuil",
+            "excess_qty": "Excédent",
+            "excess_value": "Valeur excédent",
+            "avg_daily_sales": "Ventes/jour",
+            "days_until_stockout": "Jours restants",
+            "urgency": "Urgence",
+            "value_at_risk": "Valeur à risque"
+        },
+        "shortage": {
+            "warnings": "avertissements",
+            "selected": "{{count}} sélectionné(s)",
+            "generate_order": "Générer commande",
+            "urgency": {
+                "critical": "Rupture Imminente",
+                "warning": "Stock faible",
+                "caution": "À surveiller"
+            }
+        },
+        "messages": {
+            "loading": "Chargement de l'analyse...",
+            "never_sold": "Jamais vendu"
+        },
+        "empty": {
+            "unsold": "Aucun produit invendu",
+            "overstock": "Pas de surstock",
+            "shortage": "Pas de rupture prévue",
+            "all_good": "Tout semble en ordre !"
         }
     },
     "avoirs": {

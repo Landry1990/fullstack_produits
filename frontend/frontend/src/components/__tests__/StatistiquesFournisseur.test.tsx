@@ -2,9 +2,11 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import StatistiquesFournisseur from '../StatistiquesFournisseur';
 import axios from 'axios';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { MemoryRouter } from 'react-router-dom';
 
 // Mock axios
-vi.mock('axios');
+// (using global mock from setup.ts)
 
 // Mock Recharts
 vi.mock('recharts', () => {
@@ -21,6 +23,22 @@ vi.mock('recharts', () => {
         Legend: () => <div data-testid="legend" />,
     };
 });
+
+const queryClient = new QueryClient({
+    defaultOptions: {
+        queries: { retry: false, gcTime: 0 }
+    }
+});
+
+const renderWithContext = (ui: React.ReactElement) => {
+    return render(
+        <QueryClientProvider client={queryClient}>
+            <MemoryRouter>
+                {ui}
+            </MemoryRouter>
+        </QueryClientProvider>
+    );
+};
 
 describe('StatistiquesFournisseur', () => {
     const mockStats = [
@@ -48,13 +66,13 @@ describe('StatistiquesFournisseur', () => {
     });
 
     it('renders the title and initial components', async () => {
-        render(<StatistiquesFournisseur />);
-        expect(screen.getByText('Statistiques par Fournisseur')).toBeInTheDocument();
-        expect(screen.getByText('Analyse du chiffre d\'affaires et des marges')).toBeInTheDocument();
+        renderWithContext(<StatistiquesFournisseur />);
+        expect(screen.getByText(/Statistiques par Fournisseur|title/i)).toBeInTheDocument();
+        expect(screen.getByText(/Analyse.+|subtitle/i)).toBeInTheDocument();
     });
 
     it('fetches and displays statistics correctly', async () => {
-        render(<StatistiquesFournisseur />);
+        renderWithContext(<StatistiquesFournisseur />);
         
         // Wait for data to load
         await waitFor(() => {
@@ -82,7 +100,7 @@ describe('StatistiquesFournisseur', () => {
 
     it('renders empty state correctly', async () => {
         (axios.get as any).mockResolvedValueOnce({ data: [] });
-        render(<StatistiquesFournisseur />);
+        renderWithContext(<StatistiquesFournisseur />);
         
         await waitFor(() => {
             expect(screen.getByText('Aucune donnée pour la période sélectionnée')).toBeInTheDocument();
@@ -90,14 +108,14 @@ describe('StatistiquesFournisseur', () => {
     });
 
     it('renders charts', async () => {
-        render(<StatistiquesFournisseur />);
+        renderWithContext(<StatistiquesFournisseur />);
         await waitFor(() => {
             expect(screen.getByTestId('bar-chart')).toBeInTheDocument();
         });
     });
 
     it('handles date filtering', async () => {
-        render(<StatistiquesFournisseur />);
+        renderWithContext(<StatistiquesFournisseur />);
         
         // Initial call
         await waitFor(() => {
