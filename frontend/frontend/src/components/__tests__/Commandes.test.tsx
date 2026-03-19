@@ -7,18 +7,12 @@ import Commandes from '../Commandes'
 vi.mock('react-hot-toast', () => ({
   toast: { success: vi.fn(), error: vi.fn() }
 }))
-vi.mock('axios')
+// axios is mocked globally in setup.ts
 vi.mock('dompurify', () => ({
   default: { sanitize: (str: string) => str }
 }))
 
-// Mock i18n - return the key as the translation
-vi.mock('react-i18next', () => ({
-  useTranslation: () => ({
-    t: (key: string) => key,
-    i18n: { language: 'fr', changeLanguage: vi.fn() }
-  })
-}))
+// react-i18next is mocked globally in setup.ts
 
 // Mock des hooks (chemins relatifs depuis __tests__)
 vi.mock('../../context/AuthContext', () => ({
@@ -122,8 +116,8 @@ describe('Commandes Component', () => {
       </MemoryRouter>
     )
 
-    // Vérifier que le titre est affiché (utilise la clé i18n orders.title)
-    expect(screen.getByText('orders.title')).toBeInTheDocument()
+    // Vérifier que le titre est affiché
+    expect(screen.getByText(/Gestion des Commandes/i)).toBeInTheDocument()
 
     // Vérifier que la liste mockée est affichée
     expect(screen.getByText('Liste Mockée')).toBeInTheDocument()

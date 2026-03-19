@@ -67,7 +67,7 @@ export default function CommandeList({
   onViewDetails,
   onBulkDelete
 }: CommandeListProps) {
-  const { t } = useTranslation();
+  const { t } = useTranslation(['orders', 'common']);
 
   const getStatusStyle = (status: string) => {
     switch (status) {

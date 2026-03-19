@@ -19,7 +19,7 @@ export default function PasswordConfirmModal({
   title,
   message
 }: PasswordConfirmModalProps) {
-  const { t } = useTranslation();
+  const { t } = useTranslation(['users', 'common']);
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -49,11 +49,11 @@ export default function PasswordConfirmModal({
       onClose();
     } catch (err: any) {
         if (err.response?.status === 403) {
-             setError(t('users.password_confirm.incorrect'));
-             toast.error(t('users.password_confirm.incorrect'));
+             setError(t('password_confirm.incorrect'));
+             toast.error(t('password_confirm.incorrect'));
         } else {
-             setError(t('users.password_confirm.tech_error'));
-             toast.error(t('users.password_confirm.tech_error'));
+             setError(t('password_confirm.tech_error'));
+             toast.error(t('password_confirm.tech_error'));
         }
     } finally {
       setLoading(false);
@@ -79,12 +79,12 @@ export default function PasswordConfirmModal({
       <form onSubmit={handleSubmit} className="p-6 space-y-5">
         <div>
           <label className="block text-xs font-bold uppercase tracking-wider text-gray-400 mb-2">
-            {t('users.password_confirm.label')}
+            {t('password_confirm.label')}
           </label>
           <input
             ref={inputRef}
             type="password"
-            placeholder={t('users.password_confirm.placeholder')}
+            placeholder={t('password_confirm.placeholder')}
             className={`input input-bordered w-full h-12 rounded-xl focus:border-error focus:ring-2 focus:ring-error/20 transition-all ${error ? 'input-error' : ''}`}
             value={password}
             onChange={(e) => setPassword(e.target.value)}

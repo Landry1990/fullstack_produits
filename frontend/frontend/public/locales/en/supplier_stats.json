@@ -1,0 +1,71 @@
+{
+    "title": "Supplier Statistics",
+    "subtitle": "Detailed analysis of purchase and sales performance",
+    "filters": {
+        "from": "From",
+        "to": "To",
+        "refresh": "Refresh"
+    },
+    "tabs": {
+        "sales": "Sales & Margins",
+        "performance": "Performance (Scoring)",
+        "price_comparison": "Price Comparator",
+        "concentration": "Purchase Concentration"
+    },
+    "sales_tab": {
+        "calculation_method": "Method: Net Invoiced Turnover",
+        "info_text": "These statistics concern products invoiced during the period (Net turnover after discounts).",
+        "cards": {
+            "total_ca": "Total Turnover (TTC)",
+            "purchase_cost": "Purchase Cost (Sold)",
+            "gross_margin": "Gross Margin",
+            "margin_percentage": "% of Turnover",
+            "units_sold": "Units Sold"
+        },
+        "chart": {
+            "title": "Turnover Breakdown by Supplier",
+            "ca": "Turnover",
+            "margin": "Gross Margin"
+        },
+        "table": {
+            "supplier": "Supplier",
+            "qty_sold": "Qty Sold",
+            "purchase_cost": "Cost Price",
+            "ca_ttc": "Turnover (TTC)",
+            "gross_margin": "Gross Margin",
+            "margin_percent": "% Margin",
+            "no_data": "No data for the selected period"
+        }
+    },
+    "performance_tab": {
+        "alert_title": "12-Month Rolling Analysis",
+        "alert_text": "Scores calculated based on reception history.",
+        "score": "Score",
+        "metrics": {
+            "volume": "Volume (30%)",
+            "quality": "Quality (30%)",
+            "incidents": "Incidents",
+            "consistency": "Consistency (40%)",
+            "deliveries": "Deliveries"
+        }
+    },
+    "prices_tab": {
+        "alert_title": "Savings Opportunities",
+        "alert_text": "Products purchased from multiple suppliers with significant price gaps.",
+        "table": {
+            "product": "Product",
+            "max_gap": "Max Gap",
+            "offers": "Offers (Avg Price)",
+            "best_price": "Best Price"
+        }
+    },
+    "concentration_tab": {
+        "title": "Purchase Concentration (Financial Volume)",
+        "table": {
+            "color": "Color",
+            "supplier": "Supplier",
+            "market_share": "Market Share",
+            "volume": "Purchase Volume"
+        }
+    }
+}

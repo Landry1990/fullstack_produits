@@ -19,7 +19,7 @@ interface Product {
 
 // --- Composant Gestion (Admin) ---
 function GestionVitrine({ products, isLoading, searchTerm, setSearchTerm, showPublicOnly, setShowPublicOnly, toggleVisibility, updatePrice, bulkToggle }: any) {
-    const { t } = useTranslation();
+    const { t } = useTranslation(['vitrine', 'common']);
     const [selectedIds, setSelectedIds] = useState<number[]>([]);
 
     // Clear selection when search changes or products refresh significantly
@@ -51,7 +51,7 @@ function GestionVitrine({ products, isLoading, searchTerm, setSearchTerm, showPu
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
                     <input 
                         type="text" 
-                        placeholder={t('vitrine.gestion.search_placeholder')}
+                        placeholder={t('gestion.search_placeholder')}
                         className="input input-bordered w-full pl-10"
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
@@ -59,7 +59,7 @@ function GestionVitrine({ products, isLoading, searchTerm, setSearchTerm, showPu
                 </div>
                 <div className="form-control">
                     <label className="label cursor-pointer gap-2 justify-start lg:justify-center">
-                        <span className="label-text font-medium">{t('vitrine.gestion.show_public_only')}</span> 
+                        <span className="label-text font-medium">{t('gestion.show_public_only')}</span> 
                         <input 
                             type="checkbox" 
                             className="toggle toggle-primary" 
@@ -75,7 +75,7 @@ function GestionVitrine({ products, isLoading, searchTerm, setSearchTerm, showPu
                 <div className="alert bg-base-100 shadow-lg border-l-4 border-primary flex flex-col sm:flex-row justify-between items-center gap-4 animate-in slide-in-from-top-2">
                     <div className="flex items-center gap-2">
                         <CheckCircle className="w-5 h-5 text-primary" />
-                        <span className="font-semibold">{t('vitrine.gestion.selected_count', { count: selectedIds.length })}</span>
+                        <span className="font-semibold">{t('gestion.selected_count', { count: selectedIds.length })}</span>
                     </div>
                     <div className="flex gap-2">
                         <button 
@@ -85,7 +85,7 @@ function GestionVitrine({ products, isLoading, searchTerm, setSearchTerm, showPu
                                 setSelectedIds([]);
                             }}
                         >
-                            {t('vitrine.gestion.publish')}
+                            {t('gestion.publish')}
                         </button>
                         <button 
                             className="btn btn-sm btn-error text-white"
@@ -94,13 +94,13 @@ function GestionVitrine({ products, isLoading, searchTerm, setSearchTerm, showPu
                                 setSelectedIds([]);
                             }}
                         >
-                            {t('vitrine.gestion.unpublish')}
+                            {t('gestion.unpublish')}
                         </button>
                          <button 
                             className="btn btn-sm btn-ghost"
                             onClick={() => setSelectedIds([])}
                         >
-                            {t('vitrine.gestion.cancel')}
+                            {t('gestion.cancel')}
                         </button>
                     </div>
                 </div>
@@ -120,19 +120,19 @@ function GestionVitrine({ products, isLoading, searchTerm, setSearchTerm, showPu
                             disabled={isLoading || products.length === 0}
                         />
                     </th>
-                    <th>{t('vitrine.gestion.table.product')}</th>
-                    <th>{t('vitrine.gestion.table.rayon')}</th>
-                    <th>{t('vitrine.gestion.table.stock')}</th>
-                    <th>{t('vitrine.gestion.table.pharmacy_price')}</th>
-                    <th>{t('vitrine.gestion.table.public_price')}</th>
-                    <th className="text-center">{t('vitrine.gestion.table.online')}</th>
+                    <th>{t('gestion.table.product')}</th>
+                    <th>{t('gestion.table.rayon')}</th>
+                    <th>{t('gestion.table.stock')}</th>
+                    <th>{t('gestion.table.pharmacy_price')}</th>
+                    <th>{t('gestion.table.public_price')}</th>
+                    <th className="text-center">{t('gestion.table.online')}</th>
                     </tr>
                 </thead>
                 <tbody>
                     {isLoading ? (
                     <tr><td colSpan={7} className="text-center p-8"><span className="loading loading-spinner loading-lg"></span></td></tr>
                     ) : products.length === 0 ? (
-                        <tr><td colSpan={7} className="text-center p-8 text-gray-500">{t('vitrine.gestion.table.empty')}</td></tr>
+                        <tr><td colSpan={7} className="text-center p-8 text-gray-500">{t('gestion.table.empty')}</td></tr>
                     ) : (
                         products.map((product: Product) => (
                             <tr key={product.id} className={`hover:bg-base-50 ${selectedIds.includes(product.id) ? 'bg-base-200' : ''}`}>
@@ -149,7 +149,7 @@ function GestionVitrine({ products, isLoading, searchTerm, setSearchTerm, showPu
                                     <div className="text-xs text-gray-400">{product.cip1}</div>
                                 </td>
                                 <td>
-                                    <span className="badge badge-ghost badge-sm whitespace-nowrap">{product.rayon_name || t('vitrine.gestion.table.uncategorized')}</span>
+                                    <span className="badge badge-ghost badge-sm whitespace-nowrap">{product.rayon_name || t('gestion.table.uncategorized')}</span>
                                 </td>
                                 <td>
                                     <div className={`font-mono font-medium ${product.stock <= 0 ? 'text-red-500' : 'text-green-600'}`}>
@@ -198,7 +198,7 @@ function GestionVitrine({ products, isLoading, searchTerm, setSearchTerm, showPu
 
 // --- Composant Simulateur (Client) ---
 function SimulateurClient() {
-    const { t } = useTranslation();
+    const { t } = useTranslation(['vitrine', 'common']);
     const [searchTerm, setSearchTerm] = useState('');
     const [debouncedSearch, setDebouncedSearch] = useState('');
     const [cart, setCart] = useState<Product[]>([]);
@@ -238,7 +238,7 @@ function SimulateurClient() {
             setSearchTerm(''); // Clear search after add
             setHighlightedIndex(-1);
         } else {
-            toast.error(t('vitrine.simulateur.already_in_list'));
+            toast.error(t('simulateur.already_in_list'));
         }
     };
 
@@ -268,11 +268,11 @@ function SimulateurClient() {
                 <div className="card bg-base-100 shadow-lg p-4 lg:p-6">
                     <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
                         <Search className="w-6 h-6 text-primary" />
-                        {t('vitrine.simulateur.search_title')}
+                        {t('simulateur.search_title')}
                     </h2>
                     <input 
                         type="text" 
-                        placeholder={t('vitrine.simulateur.search_placeholder')}
+                        placeholder={t('simulateur.search_placeholder')}
                         className="input input-bordered input-lg w-full text-lg"
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
@@ -299,9 +299,9 @@ function SimulateurClient() {
                                                     <div className="text-sm opacity-60">{p.cip1}</div>
                                                     {/* Statut Stock dans les résultats */}
                                                     {p.stock > 0 ? (
-                                                        <span className="badge badge-success badge-sm text-white gap-1"><CheckCircle className="w-3 h-3"/>{t('vitrine.simulateur.available')}</span>
+                                                        <span className="badge badge-success badge-sm text-white gap-1"><CheckCircle className="w-3 h-3"/>{t('simulateur.available')}</span>
                                                     ) : (
-                                                        <span className="badge badge-error badge-sm text-white gap-1"><XCircle className="w-3 h-3"/>{t('vitrine.simulateur.out_of_stock')}</span>
+                                                        <span className="badge badge-error badge-sm text-white gap-1"><XCircle className="w-3 h-3"/>{t('simulateur.out_of_stock')}</span>
                                                     )}
                                                 </div>
                                             </div>
@@ -311,7 +311,7 @@ function SimulateurClient() {
                             </ul>
                         )}
                         {debouncedSearch && results.length === 0 && !isLoading && (
-                            <div className="alert">{t('vitrine.simulateur.no_results')}</div>
+                            <div className="alert">{t('simulateur.no_results')}</div>
                         )}
                     </div>
                 </div>
@@ -322,7 +322,7 @@ function SimulateurClient() {
                 <div className="card bg-base-100 shadow-xl h-full border-t-4 border-primary sticky top-4 lg:static">
                     <div className="card-body p-4 lg:p-8">
                         <h2 className="card-title flex justify-between">
-                            <span>{t('vitrine.simulateur.my_list')}</span>
+                            <span>{t('simulateur.my_list')}</span>
                             <div className="indicator">
                                 <span className="indicator-item badge badge-secondary">{cart.length}</span> 
                                 <ShoppingCart className="w-6 h-6" />
@@ -335,7 +335,7 @@ function SimulateurClient() {
                             {cart.length === 0 ? (
                                 <div className="text-center text-gray-400 py-10">
                                     <ShoppingCart className="w-16 h-16 mx-auto mb-2 opacity-20" />
-                                    {t('vitrine.simulateur.empty_list')}
+                                    {t('simulateur.empty_list')}
                                 </div>
                             ) : (
                                 cart.map(item => (
@@ -346,11 +346,11 @@ function SimulateurClient() {
                                                 {/* Logique de disponibilité simplifiée pour le client */}
                                                 {item.stock > 0 ? (
                                                     <span className="badge badge-success gap-1 text-white text-xs">
-                                                        <CheckCircle className="w-2 h-2" /> {t('vitrine.simulateur.available_full')}
+                                                        <CheckCircle className="w-2 h-2" /> {t('simulateur.available_full')}
                                                     </span>
                                                 ) : (
                                                     <span className="badge badge-error gap-1 text-white text-xs">
-                                                        <XCircle className="w-2 h-2" /> {t('vitrine.simulateur.out_of_stock')}
+                                                        <XCircle className="w-2 h-2" /> {t('simulateur.out_of_stock')}
                                                     </span>
                                                 )}
                                                 
@@ -378,7 +378,7 @@ function SimulateurClient() {
 
 // --- Composant Principal ---
 export default function Vitrine() {
-  const { t } = useTranslation();
+  const { t } = useTranslation(['vitrine', 'common']);
   const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState<'gestion' | 'simulateur'>('gestion');
   
@@ -438,14 +438,14 @@ export default function Vitrine() {
     },
     onError: (_err, _newTodo, context) => {
         queryClient.setQueryData(['vitrine-products', debouncedSearch, showPublicOnly], context?.previousProducts);
-        toast.error(t('vitrine.messages.update_error'));
+        toast.error(t('messages.update_error'));
     },
     onSettled: () => {
         queryClient.invalidateQueries({ queryKey: ['vitrine-products'] });
         queryClient.invalidateQueries({ queryKey: ['vitrine-stats-count'] });
     },
     onSuccess: () => {
-      toast.success(t('vitrine.messages.visibility_updated'));
+      toast.success(t('messages.visibility_updated'));
     }
   });
 
@@ -455,9 +455,9 @@ export default function Vitrine() {
     },
     onSuccess: () => {
         queryClient.invalidateQueries({ queryKey: ['vitrine-products'] });
-        toast.success(t('vitrine.messages.price_updated'));
+        toast.success(t('messages.price_updated'));
     },
-    onError: () => toast.error(t('vitrine.messages.generic_error'))
+    onError: () => toast.error(t('messages.generic_error'))
   });
 
   const bulkToggle = useMutation({
@@ -467,9 +467,9 @@ export default function Vitrine() {
     onSuccess: (_, variables) => {
         queryClient.invalidateQueries({ queryKey: ['vitrine-products'] });
         queryClient.invalidateQueries({ queryKey: ['vitrine-stats-count'] });
-        toast.success(variables.target_status ? t('vitrine.messages.bulk_published') : t('vitrine.messages.bulk_unpublished'));
+        toast.success(variables.target_status ? t('messages.bulk_published') : t('messages.bulk_unpublished'));
     },
-    onError: () => toast.error(t('vitrine.messages.bulk_error'))
+    onError: () => toast.error(t('messages.bulk_error'))
   });
 
   return (
@@ -478,9 +478,9 @@ export default function Vitrine() {
         <div>
           <h1 className="text-2xl lg:text-3xl font-bold flex items-center gap-2">
             <Globe className="w-6 h-6 lg:w-8 lg:h-8 text-blue-500" />
-            {t('vitrine.title')}
+            {t('title')}
           </h1>
-          <p className="text-sm lg:text-base text-gray-500 mt-1">{t('vitrine.subtitle')}</p>
+          <p className="text-sm lg:text-base text-gray-500 mt-1">{t('subtitle')}</p>
         </div>
         
         <div className="flex flex-col sm:flex-row items-stretch lg:items-center gap-4 lg:gap-6">
@@ -489,7 +489,7 @@ export default function Vitrine() {
                   <Cloud className="w-5 h-5" />
                 </div>
                 <div>
-                  <div className="text-xs text-gray-500 font-medium uppercase tracking-wider">{t('vitrine.online_count')}</div>
+                  <div className="text-xs text-gray-500 font-medium uppercase tracking-wider">{t('online_count')}</div>
                   <div className="text-xl font-bold leading-none">
                       {formatNumber(publicCount)}
                   </div>
@@ -501,13 +501,13 @@ export default function Vitrine() {
                     className={`tab flex-1 sm:flex-none ${activeTab === 'gestion' ? 'tab-active' : ''}`}
                     onClick={() => setActiveTab('gestion')}
                 >
-                    {t('vitrine.tabs.gestion')}
+                    {t('tabs.gestion')}
                 </a>
                 <a 
                     className={`tab flex-1 sm:flex-none ${activeTab === 'simulateur' ? 'tab-active' : ''}`}
                     onClick={() => setActiveTab('simulateur')}
                 >
-                    {t('vitrine.tabs.simulateur')}
+                    {t('tabs.simulateur')}
                 </a>
             </div>
         </div>

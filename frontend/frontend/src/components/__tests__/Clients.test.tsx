@@ -36,7 +36,7 @@ describe('Clients Component', () => {
       </MemoryRouter>
     );
 
-    expect(screen.getByText('Clients')).toBeInTheDocument();
+    expect(screen.getByText(/Gestion des Clients/i)).toBeInTheDocument();
     
     await waitFor(() => {
         expect(screen.getByText('Jean Dupont')).toBeInTheDocument();

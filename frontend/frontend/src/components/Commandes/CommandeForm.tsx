@@ -127,7 +127,7 @@ export default function CommandeForm({
     executingAction
  
 }: CommandeFormProps) {
-    const { t } = useTranslation();
+    const { t } = useTranslation(['orders', 'common']);
     return (
         <div className="flex flex-col h-full overflow-hidden">
           <div className="flex items-center justify-between mb-4 shrink-0">

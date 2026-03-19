@@ -16,7 +16,7 @@ export default function PendingSalesDrawer({
   onRestore,
   onDelete
 }: PendingSalesDrawerProps) {
-  const { t } = useTranslation()
+  const { t } = useTranslation(['facturation', 'common'])
 
   if (!isOpen) return null
 
@@ -24,13 +24,13 @@ export default function PendingSalesDrawer({
     <div className="modal modal-open">
       <div className="modal-box max-w-2xl">
         <div className="flex justify-between items-center mb-4">
-          <h3 className="font-bold text-lg">{t('facturation.pending_sales.title')}</h3>
+          <h3 className="font-bold text-lg">{t('pending_sales.title')}</h3>
           <button onClick={onClose} className="btn btn-sm btn-circle btn-ghost">✕</button>
         </div>
 
         {ventesEnAttente.length === 0 ? (
           <div className="text-center py-8 text-base-content/40">
-            {t('facturation.pending_sales.no_sales')}
+            {t('pending_sales.no_sales')}
           </div>
         ) : (
           <div className="space-y-3">
@@ -49,11 +49,11 @@ export default function PendingSalesDrawer({
                         <div className="flex items-center gap-2 mb-2">
                           <div className="badge badge-info badge-sm">#{idx + 1}</div>
                           <span className="font-semibold">
-                            {vente.clientName || vente.manualClientName || t('facturation.pending_sales.unspecified_client')}
+                            {vente.clientName || vente.manualClientName || t('pending_sales.unspecified_client')}
                           </span>
                         </div>
                         <div className="text-sm text-base-content/60 space-y-1">
-                          <div>{t('facturation.pending_sales.items_count', { count: vente.lignes.length })}</div>
+                          <div>{t('pending_sales.items_count', { count: vente.lignes.length })}</div>
                           <div className="font-medium text-primary">{formatCurrency(totalNet)} FCFA</div>
                           <div className="text-xs opacity-50">
                             {new Date(vente.timestamp).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}

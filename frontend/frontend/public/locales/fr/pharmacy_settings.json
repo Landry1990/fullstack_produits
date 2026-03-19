@@ -1,0 +1,18 @@
+{
+    "title": "Paramètres de la Pharmacie",
+    "header": "Configuration de l'Officine",
+    "fields": {
+        "name": "Nom de la pharmacie",
+        "address": "Adresse",
+        "phone": "Téléphone",
+        "email": "Email",
+        "manager": "Directeur / Gérant",
+        "logo": "Logo",
+        "currency": "Devise",
+        "tax_id": "NIF / Registre Commerce"
+    },
+    "messages": {
+        "save_success": "Paramètres enregistrés avec succès",
+        "save_error": "Erreur lors de l'enregistrement des paramètres"
+    }
+}

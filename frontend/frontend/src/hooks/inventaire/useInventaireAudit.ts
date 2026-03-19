@@ -38,7 +38,7 @@ export interface AuditData {
 }
 
 export const useInventaireAudit = () => {
-    const { t } = useTranslation();
+    const { t } = useTranslation(['stock', 'common']);
     const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || '/api';
     const auditEndpoint = `${String(apiBaseUrl).replace(/\/$/, '')}/inventaires/audit_discrepancies/`;
 

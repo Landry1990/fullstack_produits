@@ -63,7 +63,7 @@ export default function Dashboard() {
   const formatCurrencyLocal = (val: number) => formatCurrency(val, currentLocale, currencySymbol);
 
   const loading = statsLoading || chartLoading;
-  const error = statsError ? t('error_loading') : null;
+  const error = statsError ? t('messages.error_loading') : null;
 
   const handleRefreshAll = async () => {
     await Promise.all([

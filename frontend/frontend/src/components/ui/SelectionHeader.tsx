@@ -17,7 +17,7 @@ const SelectionHeader: React.FC<SelectionHeaderProps> = ({
   actions,
   children
 }) => {
-  const { t } = useTranslation();
+  const { t } = useTranslation(['common']);
 
   return (
     <th colSpan={colSpan} className="sticky top-0 z-30 bg-base-200 opacity-100 border-b border-base-300 py-3">

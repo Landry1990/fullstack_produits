@@ -321,7 +321,7 @@ const propsTabsContentMovements = (stockHistory: any[], loadingHistory: boolean,
                                             ? 'badge-warning text-warning-content'
                                             : isPositive ? 'badge-success text-white' : 'badge-error text-white'
                                     }`}>
-                                        {item.type}
+                                        {t(`products:detail.movements.types.${item.type}`, { defaultValue: item.type })}
                                     </span>
                                 </td>
                                 <td className="max-w-[200px] truncate text-xs" title={item.libelle}>

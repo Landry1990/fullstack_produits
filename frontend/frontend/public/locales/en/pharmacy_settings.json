@@ -1,0 +1,18 @@
+{
+    "title": "Pharmacy Settings",
+    "header": "Pharmacy Configuration",
+    "fields": {
+        "name": "Pharmacy Name",
+        "address": "Address",
+        "phone": "Phone",
+        "email": "Email",
+        "manager": "Manager",
+        "logo": "Logo",
+        "currency": "Currency",
+        "tax_id": "Tax ID / Business Reg"
+    },
+    "messages": {
+        "save_success": "Settings saved successfully",
+        "save_error": "Error saving settings"
+    }
+}

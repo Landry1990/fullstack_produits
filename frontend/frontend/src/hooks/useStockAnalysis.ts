@@ -43,7 +43,7 @@ export interface Fournisseur {
 }
 
 export const useStockAnalysis = () => {
-    const { t } = useTranslation();
+    const { t } = useTranslation(['stock', 'common']);
     const navigate = useNavigate();
     const apiBaseUrl = useMemo(() => {
         const baseUrl = import.meta.env.VITE_API_BASE_URL ?? '';
@@ -80,7 +80,7 @@ export const useStockAnalysis = () => {
 
     useEffect(() => {
         fetchFournisseurs();
-    }, [fetchFournisseurs]);
+    }, []); // Only on mount
 
     // Fetch analysis data
     const fetchData = useCallback(async () => {
@@ -109,7 +109,7 @@ export const useStockAnalysis = () => {
 
     useEffect(() => {
         fetchData();
-    }, [fetchData]);
+    }, [fetchData]); // This is safe now because dependencies of fetchData are stable or correctly tracked
 
     // Reset pagination when tab or filters change
     useEffect(() => {

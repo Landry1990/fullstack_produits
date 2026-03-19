@@ -72,6 +72,9 @@ describe('ModuleFinancier Component', () => {
     (useFinanceStats.useAnalyseCategories as any).mockReturnValue({ data: { data: [] }, isLoading: false });
     (useFinanceStats.useEvolutionCategories as any).mockReturnValue({ data: { series: [] }, isLoading: false });
     (useFinanceStats.useAnalyseMarges as any).mockReturnValue({ data: null, isLoading: false });
+    (useFinanceStats.useAnalyseFournisseurs as any).mockReturnValue({ data: { results: [], count: 0 }, isLoading: false });
+    (useFinanceStats.useComparaisonPrix as any).mockReturnValue({ data: [], isLoading: false });
+    (useFinanceStats.useRepartitionAchats as any).mockReturnValue({ data: [], isLoading: false });
   });
 
   it('renders correctly and displays KPI cards', async () => {

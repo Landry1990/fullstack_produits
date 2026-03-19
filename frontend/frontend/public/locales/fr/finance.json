@@ -1,5 +1,5 @@
 {
-    "title": "Analyse Financière",
+    "title": "Tableau de Bord Financier",
     "subtitle": "Analyse et prédictions du chiffre d'affaires",
     "periode": {
         "mois": "Ce mois",
@@ -17,7 +17,7 @@
         "ca_evolution": "Évolution CA",
         "margins": "Marges",
         "predictions": "Prédictions",
-        "ca_12_months": "Chiffre d'Affaires (12 derniers mois)",
+        "ca_12_months": "Évolution du Chiffre d'Affaires",
         "margin_evolution": "Évolution des Marges",
         "predictions_3m": "Prédictions CA (3 prochains mois)",
         "repartition": "Répartition CA",

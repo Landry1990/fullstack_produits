@@ -50,7 +50,7 @@ export interface UseSaleCompletionReturn {
 export function useSaleCompletion(options: UseSaleCompletionOptions = {}): UseSaleCompletionReturn {
     const { onSuccess, onError, onReset } = options;
     const { settings: pharmacySettings } = usePharmacySettings();
-    const { t } = useTranslation();
+    const { t } = useTranslation(['sales', 'common']);
 
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -122,12 +122,12 @@ export function useSaleCompletion(options: UseSaleCompletionOptions = {}): UseSa
 
         const difference = result.difference;
         if (difference > 0) {
-            toast.success(t('sales.messages.additional_payment', { amount: formatNumber(Math.round(difference)) }));
+            toast.success(t('messages.additional_payment', { amount: formatNumber(Math.round(difference)) }));
         } else if (difference < 0) {
-            toast.success(t('sales.messages.refund_amount', { amount: formatNumber(Math.round(Math.abs(difference))) }));
+            toast.success(t('messages.refund_amount', { amount: formatNumber(Math.round(Math.abs(difference))) }));
         }
         else {
-            toast.success(t('sales.messages.same_total'));
+            toast.success(t('messages.same_total'));
         }
 
         return { success: true, facture: result.facture };
@@ -158,7 +158,7 @@ export function useSaleCompletion(options: UseSaleCompletionOptions = {}): UseSa
                 if (proError) {
                     setError(proError);
                     onError?.(proError);
-                    toast.error(t('sales.messages.credit_limit_exceeded'), {
+                    toast.error(t('messages.credit_limit_exceeded'), {
                         duration: 6000,
                         style: { background: '#dc2626', color: 'white', fontWeight: 'bold' }
                     });
@@ -319,7 +319,7 @@ export function useSaleCompletion(options: UseSaleCompletionOptions = {}): UseSa
                     reference: params.reference || null
                 };
 
-                toast.success(t('sales.messages.success_with_id', { id: finalFacture.numero_facture || finalFacture.id }));
+                toast.success(t('messages.success_with_id', { id: finalFacture.numero_facture || finalFacture.id }));
 
                 const result: SaleCompletionResult = { success: true, facture: finalFacture, ticketCaisse, rendu };
                 setLastResult(result);
@@ -327,7 +327,7 @@ export function useSaleCompletion(options: UseSaleCompletionOptions = {}): UseSa
                 onReset?.();
                 return result;
             } else {
-                toast.success(t('sales.messages.sent_to_caisse', { id: finalFacture.numero_facture || finalFacture.id }));
+                toast.success(t('messages.sent_to_caisse', { id: finalFacture.numero_facture || finalFacture.id }));
                 const result: SaleCompletionResult = { success: true, facture: finalFacture };
                 setLastResult(result);
                 onSuccess?.(result);
@@ -448,7 +448,7 @@ export function useSaleCompletion(options: UseSaleCompletionOptions = {}): UseSa
                         facture_id: updatedFacture.numero_facture || updatedFacture.id,
                         is_paid: true
                     });
-                    toast.success(t('sales.messages.promis_recorded'));
+                    toast.success(t('messages.promis_recorded'));
                 } catch (err: unknown) {
                     console.error("Erreur création/génération promis:", err);
                 }
@@ -467,7 +467,7 @@ export function useSaleCompletion(options: UseSaleCompletionOptions = {}): UseSa
                             surveillance_category: l.surveillance_category || 'NONE'
                         }))
                     });
-                    toast.success(t('sales.messages.prescription_recorded'));
+                    toast.success(t('messages.prescription_recorded'));
                 } catch (err: unknown) {
                     console.error("Erreur ordonnancier:", err);
                 }

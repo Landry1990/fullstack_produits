@@ -24,7 +24,7 @@ const Pagination: React.FC<PaginationProps> = ({
   label,
   className = ""
 }) => {
-  const { t } = useTranslation();
+  const { t } = useTranslation(['common']);
 
   return (
     <div className={`p-4 border-t border-base-200 flex items-center justify-between bg-base-100/50 ${className}`}>

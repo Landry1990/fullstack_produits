@@ -31,39 +31,39 @@ interface PurgeResult {
 // Group tables by category for display
 const getTableCategories = (t: any) => ({
   ventes: {
-    label: t('maintenance.categories.ventes'),
+    label: t('categories.ventes'),
     icon: '💰',
     keys: ['factures', 'caisse', 'releves', 'coupons', 'promis'],
   },
   achats: {
-    label: t('maintenance.categories.achats'),
+    label: t('categories.achats'),
     icon: '📦',
     keys: ['commandes', 'avoirs', 'paiements_fournisseur'],
   },
   stock: {
-    label: t('maintenance.categories.stock'),
+    label: t('categories.stock'),
     icon: '📊',
     keys: ['mouvements_stock', 'ajustements_stock'],
   },
   caisse: {
-    label: t('maintenance.categories.caisse'),
+    label: t('categories.caisse'),
     icon: '🏦',
     keys: ['clotures_caisse', 'mouvements_caisse'],
   },
   audit: {
-    label: t('maintenance.categories.audit'),
+    label: t('categories.audit'),
     icon: '📋',
     keys: ['ordonnancier', 'audit_logs', 'activity_logs', 'sms_logs'],
   },
   objectifs: {
-    label: t('maintenance.categories.objectifs'),
+    label: t('categories.objectifs'),
     icon: '🎯',
     keys: ['objectifs'],
   },
 });
 
 export default function Maintenance() {
-  const { t } = useTranslation();
+  const { t } = useTranslation(['maintenance', 'common']);
   const TABLE_CATEGORIES = getTableCategories(t);
   const [tables, setTables] = useState<PurgeTable[]>([]);
   const [selectedTables, setSelectedTables] = useState<Set<string>>(new Set());
@@ -153,7 +153,7 @@ export default function Maintenance() {
 
   const handlePreview = async () => {
     if (selectedTables.size === 0) {
-      toast.error('Sélectionnez au moins une table');
+      toast.error(t('toasts.select_table'));
       return;
     }
     setLoading(true);
@@ -166,7 +166,7 @@ export default function Maintenance() {
       });
       setPreview(res.data);
     } catch {
-      toast.error('Erreur lors de la prévisualisation');
+      toast.error(t('toasts.preview_error'));
     } finally {
       setLoading(false);
     }
@@ -174,7 +174,7 @@ export default function Maintenance() {
 
   const handleExport = async () => {
     if (selectedTables.size === 0) {
-      toast.error('Sélectionnez au moins une table');
+      toast.error(t('toasts.select_table'));
       return;
     }
     setExporting(true);
@@ -193,9 +193,9 @@ export default function Maintenance() {
       link.click();
       link.remove();
       window.URL.revokeObjectURL(url);
-      toast.success('Export CSV téléchargé !');
+      toast.success(t('toasts.export_success'));
     } catch {
-      toast.error('Erreur lors de l\'export');
+      toast.error(t('toasts.export_error'));
     } finally {
       setExporting(false);
     }
@@ -203,7 +203,7 @@ export default function Maintenance() {
 
   const handlePurge = async () => {
     if (!password) {
-      toast.error('Mot de passe requis');
+      toast.error(t('toasts.password_required'));
       return;
     }
     setPurging(true);
@@ -218,9 +218,9 @@ export default function Maintenance() {
       setPreview(null);
       setShowConfirmModal(false);
       setPassword('');
-      toast.success('Purge effectuée avec succès !');
+      toast.success(t('toasts.purge_success'));
     } catch (err: any) {
-      const msg = err.response?.data?.detail || 'Erreur lors de la purge';
+      const msg = err.response?.data?.detail || t('toasts.purge_error');
       toast.error(msg);
     } finally {
       setPurging(false);
@@ -256,8 +256,8 @@ export default function Maintenance() {
       const res = await axios.post('/api/maintenance/backup/');
       clearInterval(progressInterval);
       setBackupProgress(100);
-      setBackupStep('Sauvegarde terminée !');
-      toast.success(res.data.message || 'Sauvegarde terminée !');
+      toast.success(t('toasts.backup_success'));
+      toast.success(res.data.message || t('toasts.backup_finished'));
       
       // Reset after success
       setTimeout(() => {
@@ -270,7 +270,7 @@ export default function Maintenance() {
       setBackupLoading(false);
       setBackupProgress(0);
       setBackupStep('');
-      toast.error(err.response?.data?.detail || 'Erreur lors de la sauvegarde');
+      toast.error(err.response?.data?.detail || t('toasts.backup_error'));
     }
   };
 
@@ -283,9 +283,9 @@ export default function Maintenance() {
         backup_time: pharmacySettings.backup_time,
         secondary_backup_path: pharmacySettings.secondary_backup_path,
       });
-      toast.success('Paramètres de sauvegarde enregistrés !');
+      toast.success(t('toasts.settings_saved'));
     } catch {
-      toast.error('Erreur lors de l\'enregistrement');
+      toast.error(t('toasts.save_error'));
     } finally {
       setSavingSettings(false);
     }
@@ -293,7 +293,7 @@ export default function Maintenance() {
 
   const handleRestore = async () => {
     if (!restoreFile || !restorePassword) {
-      toast.error('Fichier et mot de passe requis');
+      toast.error(t('toasts.restore_input_required'));
       return;
     }
 
@@ -326,13 +326,13 @@ export default function Maintenance() {
     formData.append('password', restorePassword);
 
     try {
-      const res = await axios.post('/api/maintenance/restore/', formData, {
+      await axios.post('/api/maintenance/restore/', formData, {
         headers: { 'Content-Type': 'multipart/form-data' }
       });
       clearInterval(progressInterval);
       setRestoreProgress(100);
       setRestoreStep('Restauration terminée !');
-      toast.success(res.data.message || 'Restauration réussie !');
+      toast.success(t('toasts.restore_success'));
       setShowRestoreConfirm(false);
       setRestoreFile(null);
       setRestorePassword('');
@@ -344,7 +344,7 @@ export default function Maintenance() {
       setRestoring(false);
       setRestoreProgress(0);
       setRestoreStep('');
-      toast.error(err.response?.data?.detail || 'Erreur lors de la restauration');
+      toast.error(err.response?.data?.detail || t('toasts.restore_error'));
     }
   };
 
@@ -360,7 +360,7 @@ export default function Maintenance() {
       link.click();
       link.remove();
       window.URL.revokeObjectURL(url);
-      toast.success(t('maintenance.code_management.backup_success'));
+      toast.success(t('code_management.backup_success'));
     } catch {
       toast.error(t('common.error_occurred'));
     } finally {
@@ -380,7 +380,7 @@ export default function Maintenance() {
       await axios.post('/api/code-backup/restore/', formData, {
         headers: { 'Content-Type': 'multipart/form-data' }
       });
-      toast.success(t('maintenance.code_management.restore_success'));
+      toast.success(t('code_management.restore_success'));
       setCodeRestoreFile(null);
     } catch (err: any) {
       toast.error(err.response?.data?.detail || t('common.error_occurred'));
@@ -404,8 +404,8 @@ export default function Maintenance() {
           <Wrench className="w-7 h-7 text-red-400" />
         </div>
         <div>
-          <h1 className="text-2xl font-bold">{t('maintenance.title')}</h1>
-          <p className="text-sm text-base-content/60">{t('maintenance.subtitle')}</p>
+          <h1 className="text-2xl font-bold">{t('title')}</h1>
+          <p className="text-sm text-base-content/60">{t('subtitle')}</p>
         </div>
       </div>
 
@@ -413,8 +413,8 @@ export default function Maintenance() {
       <div className="alert alert-warning mb-6 shadow-lg">
         <AlertTriangle className="w-5 h-5" />
         <div>
-          <h3 className="font-bold">{t('maintenance.irreversible')}</h3>
-          <p className="text-sm">{t('maintenance.warning_msg')}</p>
+          <h3 className="font-bold">{t('irreversible')}</h3>
+          <p className="text-sm">{t('warning_msg')}</p>
         </div>
       </div>
 
@@ -426,11 +426,11 @@ export default function Maintenance() {
               <div className="flex items-center justify-between mb-4">
                 <h2 className="card-title text-lg">
                   <CheckSquare className="w-5 h-5 text-primary" />
-                  {t('maintenance.tables_title')}
+                  {t('tables_title')}
                 </h2>
                 <div className="flex gap-2">
-                  <button className="btn btn-xs btn-ghost" onClick={selectAll}>{t('maintenance.select_all')}</button>
-                  <button className="btn btn-xs btn-ghost" onClick={deselectAll}>{t('maintenance.deselect_all')}</button>
+                  <button className="btn btn-xs btn-ghost" onClick={selectAll}>{t('select_all')}</button>
+                  <button className="btn btn-xs btn-ghost" onClick={deselectAll}>{t('deselect_all')}</button>
                 </div>
               </div>
 
@@ -485,7 +485,7 @@ export default function Maintenance() {
                                   checked={isSelected}
                                   onChange={() => toggleTable(key)}
                                 />
-                                  <span className="text-sm flex-1">{t('maintenance.tables.' + table.key, table.label)}</span>
+                                  <span className="text-sm flex-1">{t('tables.' + table.key, table.label)}</span>
                                 {table.children.length > 0 && (
                                   <span className="text-xs text-base-content/50">
                                     +{table.children.length} {t('common.sub_table', { count: table.children.length })}
@@ -511,10 +511,10 @@ export default function Maintenance() {
             <div className="card-body">
               <h2 className="card-title text-lg mb-2">
                 <Calendar className="w-5 h-5 text-secondary" />
-                {t('maintenance.period_title')}
+                {t('period_title')}
               </h2>
               <div className="form-control mb-2">
-                <label className="label"><span className="label-text text-xs">{t('maintenance.date_from')}</span></label>
+                <label className="label"><span className="label-text text-xs">{t('date_from')}</span></label>
                 <input
                   type="date"
                   className="input input-bordered input-sm"
@@ -523,7 +523,7 @@ export default function Maintenance() {
                 />
               </div>
               <div className="form-control">
-                <label className="label"><span className="label-text text-xs">{t('maintenance.date_to')}</span></label>
+                <label className="label"><span className="label-text text-xs">{t('date_to')}</span></label>
                 <input
                   type="date"
                   className="input input-bordered input-sm"
@@ -532,7 +532,7 @@ export default function Maintenance() {
                 />
               </div>
               {!dateFrom && !dateTo && (
-                <p className="text-xs text-warning mt-2">{t('maintenance.date_warning')}</p>
+                <p className="text-xs text-warning mt-2">{t('date_warning')}</p>
               )}
             </div>
           </div>
@@ -540,7 +540,7 @@ export default function Maintenance() {
           {/* Action Buttons */}
           <div className="card bg-base-100 shadow-xl">
             <div className="card-body gap-3">
-              <h2 className="card-title text-lg">{t('maintenance.actions')}</h2>
+              <h2 className="card-title text-lg">{t('actions')}</h2>
 
               <button
                 className="btn btn-primary btn-sm w-full gap-2"
@@ -548,7 +548,7 @@ export default function Maintenance() {
                 disabled={loading || selectedTables.size === 0}
               >
                 {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Eye className="w-4 h-4" />}
-                {t('maintenance.preview_btn')}
+                {t('preview_btn')}
               </button>
 
               <button
@@ -557,7 +557,7 @@ export default function Maintenance() {
                 disabled={exporting || selectedTables.size === 0}
               >
                 {exporting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
-                {t('maintenance.export_btn')}
+                {t('export_btn')}
               </button>
 
               <div className="divider my-0"></div>
@@ -568,7 +568,7 @@ export default function Maintenance() {
                 disabled={selectedTables.size === 0}
               >
                 <Trash2 className="w-4 h-4" />
-                {t('maintenance.purge_btn')}
+                {t('purge_btn')}
               </button>
             </div>
           </div>
@@ -578,20 +578,20 @@ export default function Maintenance() {
             <div className="card-body gap-4">
               <h2 className="card-title text-lg flex items-center gap-2">
                 <Database className="w-5 h-5 text-primary" />
-                {t('maintenance.backup_title')}
+                {t('backup_title')}
               </h2>
 
               <div className="space-y-4">
                 {/* Manual Backup */}
                 <div>
-                  <p className="text-xs text-base-content/60 mb-2">{t('maintenance.backup_desc')}</p>
+                  <p className="text-xs text-base-content/60 mb-2">{t('backup_desc')}</p>
                   <button
                     className="btn btn-primary btn-sm w-full gap-2"
                     onClick={handleManualBackup}
                     disabled={backupLoading}
                   >
                     {backupLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
-                    {t('maintenance.backup_now')}
+                    {t('backup_now')}
                   </button>
 
                   {backupLoading && (
@@ -615,7 +615,7 @@ export default function Maintenance() {
                 <div className="space-y-3">
                   <h3 className="text-xs font-bold uppercase tracking-wider text-base-content/50 flex items-center gap-2">
                     <Clock className="w-4 h-4" />
-                    {t('maintenance.automatic')}
+                    {t('automatic')}
                   </h3>
                   
                   <div className="form-control">
@@ -626,13 +626,13 @@ export default function Maintenance() {
                         checked={pharmacySettings?.backup_enabled || false}
                         onChange={e => setPharmacySettings({...pharmacySettings, backup_enabled: e.target.checked})}
                       />
-                      <span className="label-text">{t('maintenance.enable_auto')}</span>
+                      <span className="label-text">{t('enable_auto')}</span>
                     </label>
                   </div>
 
                   <div className="form-control">
                     <label className="label p-0 py-1">
-                      <span className="label-text text-xs">{t('maintenance.scheduled_time')}</span>
+                      <span className="label-text text-xs">{t('scheduled_time')}</span>
                     </label>
                     <input 
                       type="time" 
@@ -644,7 +644,7 @@ export default function Maintenance() {
 
                   <div className="form-control">
                     <label className="label p-0 py-1">
-                      <span className="label-text text-xs">{t('maintenance.secondary_path')}</span>
+                      <span className="label-text text-xs">{t('secondary_path')}</span>
                     </label>
                     <input 
                       type="text" 
@@ -661,7 +661,7 @@ export default function Maintenance() {
                     disabled={savingSettings || !pharmacySettings}
                   >
                     {savingSettings ? <Loader2 className="w-3 h-3 animate-spin" /> : <Save className="w-3 h-3" />}
-                    {t('maintenance.save_settings')}
+                    {t('save_settings')}
                   </button>
                 </div>
               </div>
@@ -674,11 +674,11 @@ export default function Maintenance() {
             <div className="card-body gap-4">
               <h2 className="card-title text-lg flex items-center gap-2">
                 <Upload className="w-5 h-5 text-error" />
-                {t('maintenance.restore_title')}
+                {t('restore_title')}
               </h2>
 
               <div className="space-y-4">
-                <p className="text-xs text-base-content/60">{t('maintenance.restore_desc')}</p>
+                <p className="text-xs text-base-content/60">{t('restore_desc')}</p>
                 
                 <div className="form-control w-full">
                   <input 
@@ -695,7 +695,7 @@ export default function Maintenance() {
                   disabled={restoring || !restoreFile}
                 >
                   {restoring ? <Loader2 className="w-4 h-4 animate-spin" /> : <ShieldAlert className="w-4 h-4" />}
-                  {t('maintenance.restore_now')}
+                  {t('restore_now')}
                 </button>
                 
                 {restoring && (
@@ -709,7 +709,7 @@ export default function Maintenance() {
                       value={restoreProgress} 
                       max="100"
                     ></progress>
-                    <p className="text-[10px] text-center text-error/60 italic">{t('maintenance.restore_restart_msg')}</p>
+                    <p className="text-[10px] text-center text-error/60 italic">{t('restore_restart_msg')}</p>
                   </div>
                 )}
               </div>
@@ -722,20 +722,20 @@ export default function Maintenance() {
             <div className="card-body gap-4">
               <h2 className="card-title text-lg flex items-center gap-2">
                 <ShieldAlert className="w-5 h-5 text-secondary" />
-                {t('maintenance.code_management.title')}
+                {t('code_management.title')}
               </h2>
 
               <div className="space-y-4">
                 {/* Code Backup */}
                 <div>
-                  <p className="text-xs text-base-content/60 mb-2">{t('maintenance.code_management.desc')}</p>
+                  <p className="text-xs text-base-content/60 mb-2">{t('code_management.desc')}</p>
                   <button
                     className="btn btn-secondary btn-sm w-full gap-2"
                     onClick={handleCodeBackup}
                     disabled={codeBackupLoading}
                   >
                     {codeBackupLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
-                    {t('maintenance.code_management.backup_now')}
+                    {t('code_management.backup_now')}
                   </button>
                 </div>
 
@@ -743,7 +743,7 @@ export default function Maintenance() {
 
                 {/* Code Restore */}
                 <div>
-                  <p className="text-xs text-base-content/60 mb-2">{t('maintenance.code_management.restore_desc')}</p>
+                  <p className="text-xs text-base-content/60 mb-2">{t('code_management.restore_desc')}</p>
                   <div className="form-control w-full mb-2">
                     <input 
                       type="file" 
@@ -758,7 +758,7 @@ export default function Maintenance() {
                     disabled={codeRestoring || !codeRestoreFile}
                   >
                     {codeRestoring ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
-                    {t('maintenance.code_management.restore_now')}
+                    {t('code_management.restore_now')}
                   </button>
                 </div>
               </div>
@@ -770,10 +770,10 @@ export default function Maintenance() {
           <div className="card bg-base-200/50">
             <div className="card-body py-3">
               <p className="text-sm">
-                <span className="font-bold text-primary">{selectedTables.size}</span> {t('maintenance.selection_summary', { count: selectedTables.size })}
+                <span className="font-bold text-primary">{selectedTables.size}</span> {t('selection_summary', { count: selectedTables.size })}
               </p>
-              {dateFrom && <p className="text-xs text-base-content/60">Du: {dateFrom}</p>}
-              {dateTo && <p className="text-xs text-base-content/60">Au: {dateTo}</p>}
+              {dateFrom && <p className="text-xs text-base-content/60">{t('from')}: {dateFrom}</p>}
+              {dateTo && <p className="text-xs text-base-content/60">{t('to')}: {dateTo}</p>}
             </div>
           </div>
         </div>
@@ -785,7 +785,7 @@ export default function Maintenance() {
           <div className="card-body">
             <h2 className="card-title text-lg mb-4">
               <Eye className="w-5 h-5 text-info" />
-              {t('maintenance.preview_title', { count: totalPreviewCount })}
+              {t('preview_title', { count: totalPreviewCount })}
             </h2>
             <div className="overflow-x-auto">
               <table className="table table-sm table-zebra">
@@ -799,7 +799,7 @@ export default function Maintenance() {
                 <tbody>
                    {preview.map(p => (
                      <tr key={p.key}>
-                       <td className="font-medium">{t('maintenance.tables.' + p.key, p.label)}</td>
+                       <td className="font-medium">{t('tables.' + p.key, p.label)}</td>
                       <td className="text-right">
                         <span className={`badge ${p.count > 0 ? 'badge-error' : 'badge-ghost'} badge-sm`}>
                           {formatNumber(p.count)}
@@ -810,7 +810,7 @@ export default function Maintenance() {
                           <div className="flex gap-2 flex-wrap">
                              {p.children.map((c, i) => (
                                <span key={i} className="badge badge-sm badge-outline">
-                                 {t('maintenance.tables.children.' + c.label.toLowerCase().replace(/ /g, '_').normalize("NFD").replace(/[\u0300-\u036f]/g, ""), c.label)}: {formatNumber(c.count)}
+                                 {t('tables.children.' + c.label.toLowerCase().replace(/ /g, '_').normalize("NFD").replace(/[\u0300-\u036f]/g, ""), c.label)}: {formatNumber(c.count)}
                                </span>
                              ))}
                           </div>
@@ -833,7 +833,7 @@ export default function Maintenance() {
           <div className="card-body">
             <h2 className="card-title text-lg text-success mb-4">
               <Trash2 className="w-5 h-5" />
-              {t('maintenance.purge_finished')}
+              {t('purge_finished')}
             </h2>
             <div className="overflow-x-auto">
               <table className="table table-sm">
@@ -846,7 +846,7 @@ export default function Maintenance() {
                 <tbody>
                    {purgeResults.map(r => (
                      <tr key={r.key}>
-                       <td>{t('maintenance.tables.' + r.key, r.label)}</td>
+                       <td>{t('tables.' + r.key, r.label)}</td>
                       <td className="text-right font-bold text-success">{formatNumber(r.deleted)}</td>
                     </tr>
                   ))}
@@ -865,13 +865,13 @@ export default function Maintenance() {
               <div className="p-2 rounded-full bg-error/20">
                 <ShieldAlert className="w-6 h-6 text-error" />
               </div>
-              <h3 className="font-bold text-lg">{t('maintenance.confirm_title')}</h3>
+              <h3 className="font-bold text-lg">{t('confirm_title')}</h3>
             </div>
 
             <div className="alert alert-error mb-4">
               <AlertTriangle className="w-5 h-5" />
               <span className="text-sm">
-                {t('maintenance.confirm_msg')}
+                {t('confirm_msg')}
               </span>
             </div>
 
@@ -880,24 +880,24 @@ export default function Maintenance() {
               <ul className="text-xs space-y-0.5">
                  {Array.from(selectedTables).map(key => {
                    const tbl = tableMap.get(key);
-                   return <li key={key}>• {t('maintenance.tables.' + key, tbl?.label || key)}</li>;
+                   return <li key={key}>• {t('tables.' + key, tbl?.label || key)}</li>;
                  })}
               </ul>
               {(dateFrom || dateTo) && (
                 <p className="text-xs mt-2 text-base-content/60">
-                  Période : {dateFrom || '...'} → {dateTo || '...'}
+                  {t('period')} : {dateFrom || '...'} → {dateTo || '...'}
                 </p>
               )}
             </div>
 
             <div className="form-control mb-4">
               <label className="label">
-                <span className="label-text text-sm font-semibold">{t('maintenance.password_label')}</span>
+                <span className="label-text text-sm font-semibold">{t('password_label')}</span>
               </label>
               <input
                 type="password"
                 className="input input-bordered"
-                placeholder="Saisissez votre mot de passe"
+                placeholder={t('placeholders.enter_password')}
                 value={password}
                 onChange={e => setPassword(e.target.value)}
                 onKeyDown={e => { if (e.key === 'Enter') handlePurge(); }}
@@ -907,7 +907,7 @@ export default function Maintenance() {
 
             <div className="modal-action">
               <button className="btn btn-ghost" onClick={() => { setShowConfirmModal(false); setPassword(''); }}>
-                {t('maintenance.cancel')}
+                {t('cancel')}
               </button>
               <button
                 className="btn btn-error gap-2"
@@ -915,7 +915,7 @@ export default function Maintenance() {
                 disabled={purging || !password}
               >
                 {purging ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
-                {t('maintenance.confirm_purge')}
+                {t('confirm_purge')}
               </button>
             </div>
           </div>
@@ -931,25 +931,25 @@ export default function Maintenance() {
               <div className="p-2 rounded-full bg-error/20">
                 <AlertTriangle className="w-6 h-6 text-error" />
               </div>
-              <h3 className="font-bold text-lg text-error">{t('maintenance.restore_title')}</h3>
+              <h3 className="font-bold text-lg text-error">{t('restore_title')}</h3>
             </div>
 
             <div className="alert alert-error mb-4 shadow-sm">
               <ShieldAlert className="w-5 h-5" />
               <span className="text-sm">
-                {t('maintenance.confirm_msg')}
+                {t('confirm_msg')}
                 <div className="font-mono mt-1 font-bold text-xs">{restoreFile?.name}</div>
               </span>
             </div>
 
             <div className="form-control mb-4">
               <label className="label">
-                <span className="label-text text-sm font-semibold">{t('maintenance.password_label')}</span>
+                <span className="label-text text-sm font-semibold">{t('password_label')}</span>
               </label>
               <input
                 type="password"
                 className="input input-bordered border-error"
-                placeholder="Mot de passe requis"
+                placeholder={t('placeholders.password_required')}
                 value={restorePassword}
                 onChange={e => setRestorePassword(e.target.value)}
                 onKeyDown={e => { if (e.key === 'Enter') handleRestore(); }}
@@ -959,7 +959,7 @@ export default function Maintenance() {
 
             <div className="modal-action">
               <button className="btn btn-ghost" onClick={() => { setShowRestoreConfirm(false); setRestorePassword(''); }}>
-                {t('maintenance.cancel')}
+                {t('cancel')}
               </button>
               <button
                 className="btn btn-error gap-2 px-8"
@@ -967,7 +967,7 @@ export default function Maintenance() {
                 disabled={restoring || !restorePassword}
               >
                 {restoring ? <Loader2 className="w-4 h-4 animate-spin" /> : <Database className="w-4 h-4" />}
-                {t('maintenance.restore_now')}
+                {t('restore_now')}
               </button>
             </div>
           </div>

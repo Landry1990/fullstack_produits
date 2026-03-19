@@ -37,7 +37,7 @@ const COLORS = [
 ];
 
 export default function StatistiquesFournisseur() {
-  const { t, i18n } = useTranslation(['translation', 'common']);
+  const { t, i18n } = useTranslation(['supplier_stats', 'common']);
   const [activeTab, setActiveTab] = useState('ventes');
 
   // Helper pour formater les dates en YYYY-MM-DD local
@@ -106,15 +106,15 @@ export default function StatistiquesFournisseur() {
     <div className="p-6 space-y-6 animate-fade-in">
       <div className="flex flex-col md:flex-row justify-between items-center gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-base-content">{t('statistiques_fournisseur.title')}</h1>
-          <p className="text-sm text-base-content/80">{t('statistiques_fournisseur.subtitle')}</p>
+          <h1 className="text-2xl font-bold text-base-content">{t('title')}</h1>
+          <p className="text-sm text-base-content/80">{t('subtitle')}</p>
         </div>
         
         {/* Date Filter only for Sales Tab currently */}
         {activeTab === 'ventes' && (
             <div className="flex items-end gap-2 bg-base-100 p-2 rounded-lg shadow-sm border border-base-200">
             <div className="form-control">
-                <label className="label py-1"><span className="label-text text-xs">{t('statistiques_fournisseur.filters.from')}</span></label>
+                <label className="label py-1"><span className="label-text text-xs">{t('filters.from')}</span></label>
                 <input 
                 type="date" 
                 className="input input-bordered input-sm" 
@@ -123,7 +123,7 @@ export default function StatistiquesFournisseur() {
                 />
             </div>
             <div className="form-control">
-                <label className="label py-1"><span className="label-text text-xs">{t('statistiques_fournisseur.filters.to')}</span></label>
+                <label className="label py-1"><span className="label-text text-xs">{t('filters.to')}</span></label>
                 <input 
                 type="date" 
                 className="input input-bordered input-sm" 
@@ -136,7 +136,7 @@ export default function StatistiquesFournisseur() {
                 onClick={fetchStats}
                 disabled={loading}
             >
-                {loading ? <span className="loading loading-spinner loading-xs"></span> : t('statistiques_fournisseur.filters.refresh')}
+                {loading ? <span className="loading loading-spinner loading-xs"></span> : t('filters.refresh')}
             </button>
             </div>
         )}
@@ -144,10 +144,10 @@ export default function StatistiquesFournisseur() {
 
       {/* Tabs Navigation */}
       <div className="tabs tabs-boxed bg-base-100 p-1">
-        <a className={`tab ${activeTab === 'ventes' ? 'tab-active' : ''}`} onClick={() => setActiveTab('ventes')}>{t('statistiques_fournisseur.tabs.sales')}</a>
-        <a className={`tab ${activeTab === 'performance' ? 'tab-active' : ''}`} onClick={() => setActiveTab('performance')}>{t('statistiques_fournisseur.tabs.performance')}</a>
-        <a className={`tab ${activeTab === 'prix' ? 'tab-active' : ''}`} onClick={() => setActiveTab('prix')}>{t('statistiques_fournisseur.tabs.price_comparison')}</a>
-        <a className={`tab ${activeTab === 'concentration' ? 'tab-active' : ''}`} onClick={() => setActiveTab('concentration')}>{t('statistiques_fournisseur.tabs.concentration')}</a>
+        <a className={`tab ${activeTab === 'ventes' ? 'tab-active' : ''}`} onClick={() => setActiveTab('ventes')}>{t('tabs.sales')}</a>
+        <a className={`tab ${activeTab === 'performance' ? 'tab-active' : ''}`} onClick={() => setActiveTab('performance')}>{t('tabs.performance')}</a>
+        <a className={`tab ${activeTab === 'prix' ? 'tab-active' : ''}`} onClick={() => setActiveTab('prix')}>{t('tabs.price_comparison')}</a>
+        <a className={`tab ${activeTab === 'concentration' ? 'tab-active' : ''}`} onClick={() => setActiveTab('concentration')}>{t('tabs.concentration')}</a>
       </div>
 
       {/* TAB 1: VENTES (Existing Content) */}
@@ -159,9 +159,9 @@ export default function StatistiquesFournisseur() {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                 </svg>
                 <div>
-                <h3 className="font-bold">{t('statistiques_fournisseur.sales_tab.calculation_method')}</h3>
+                <h3 className="font-bold">{t('sales_tab.calculation_method')}</h3>
                 <div className="text-sm">
-                    {t('statistiques_fournisseur.sales_tab.info_text')}
+                    {t('sales_tab.info_text')}
                 </div>
                 </div>
             </div>
@@ -182,13 +182,13 @@ export default function StatistiquesFournisseur() {
                 <div className="card-body p-4">
                     <h3 className="text-2xl font-bold text-amber-600">{formatCurrency(Math.round(totaux.marge_brute), i18n.language === 'fr' ? 'fr-FR' : 'en-US', t('common:currency'))}</h3>
                     <p className="text-xs text-base-content/60">
-                    {totaux.ca_ttc > 0 ? ((totaux.marge_brute / totaux.ca_ttc) * 100).toFixed(1) : 0}% {t('statistiques_fournisseur.sales_tab.cards.margin_percentage')}
+                    {totaux.ca_ttc > 0 ? ((totaux.marge_brute / totaux.ca_ttc) * 100).toFixed(1) : 0}% {t('sales_tab.cards.margin_percentage')}
                     </p>
                 </div>
                 </div>
                 <div className="card bg-base-100 shadow-sm border border-base-200">
                 <div className="card-body p-4">
-                    <p className="text-sm font-medium text-base-content/70">{t('statistiques_fournisseur.sales_tab.cards.units_sold')}</p>
+                    <p className="text-sm font-medium text-base-content/70">{t('sales_tab.cards.units_sold')}</p>
                     <h3 className="text-2xl font-bold text-purple-600">{totaux.quantite_vendue}</h3>
                 </div>
                 </div>
@@ -197,7 +197,7 @@ export default function StatistiquesFournisseur() {
             {/* Graphique */}
             <div className="card bg-base-100 shadow-sm border border-base-200">
                 <div className="card-body p-4">
-                <h2 className="card-title text-lg font-bold mb-4">{t('statistiques_fournisseur.sales_tab.chart.title')}</h2>
+                <h2 className="card-title text-lg font-bold mb-4">{t('sales_tab.chart.title')}</h2>
                 <div className="h-80">
                     <ResponsiveContainer width="100%" height="100%">
                     <BarChart data={stats} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
@@ -206,8 +206,8 @@ export default function StatistiquesFournisseur() {
                         <YAxis />
                         <Tooltip formatter={(value) => `${formatCurrency(Number(value), i18n.language === 'fr' ? 'fr-FR' : 'en-US', t('common:currency'))}`} />
                         <Legend />
-                        <Bar dataKey="ca_ttc" name={t('statistiques_fournisseur.sales_tab.chart.ca')} fill="#10b981" />
-                        <Bar dataKey="marge_brute" name={t('statistiques_fournisseur.sales_tab.chart.margin')} fill="#f59e0b" />
+                        <Bar dataKey="ca_ttc" name={t('sales_tab.chart.ca')} fill="#10b981" />
+                        <Bar dataKey="marge_brute" name={t('sales_tab.chart.margin')} fill="#f59e0b" />
                     </BarChart>
                     </ResponsiveContainer>
                 </div>
@@ -221,19 +221,19 @@ export default function StatistiquesFournisseur() {
                     <table className="table table-zebra w-full">
                     <thead>
                         <tr className="bg-base-200">
-                        <th>{t('statistiques_fournisseur.sales_tab.table.supplier')}</th>
-                        <th className="text-right">{t('statistiques_fournisseur.sales_tab.table.qty_sold')}</th>
-                        <th className="text-right">{t('statistiques_fournisseur.sales_tab.table.purchase_cost')}</th>
-                        <th className="text-right">{t('statistiques_fournisseur.sales_tab.table.ca_ttc')}</th>
-                        <th className="text-right">{t('statistiques_fournisseur.sales_tab.table.gross_margin')}</th>
-                        <th className="text-right">{t('statistiques_fournisseur.sales_tab.table.margin_percent')}</th>
+                        <th>{t('sales_tab.table.supplier')}</th>
+                        <th className="text-right">{t('sales_tab.table.qty_sold')}</th>
+                        <th className="text-right">{t('sales_tab.table.purchase_cost')}</th>
+                        <th className="text-right">{t('sales_tab.table.ca_ttc')}</th>
+                        <th className="text-right">{t('sales_tab.table.gross_margin')}</th>
+                        <th className="text-right">{t('sales_tab.table.margin_percent')}</th>
                         </tr>
                     </thead>
                     <tbody>
                         {stats.length === 0 ? (
                         <tr>
                             <td colSpan={6} className="text-center py-8 text-base-content/50">
-                            {t('statistiques_fournisseur.sales_tab.table.no_data')}
+                            {t('sales_tab.table.no_data')}
                             </td>
                         </tr>
                         ) : (
@@ -266,8 +266,8 @@ export default function StatistiquesFournisseur() {
              <div className="alert alert-warning shadow-sm">
                 <svg xmlns="http://www.w3.org/2000/svg" className="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
                 <div>
-                <h3 className="font-bold">{t('statistiques_fournisseur.performance_tab.alert_title')}</h3>
-                <div className="text-sm">{t('statistiques_fournisseur.performance_tab.alert_text')}</div>
+                <h3 className="font-bold">{t('performance_tab.alert_title')}</h3>
+                <div className="text-sm">{t('performance_tab.alert_text')}</div>
                 </div>
             </div>
             
@@ -297,18 +297,18 @@ export default function StatistiquesFournisseur() {
 
                                  <div className="grid grid-cols-3 gap-4 text-center">
                                      <div>
-                                         <div className="text-xs uppercase font-bold text-base-content/50">{t('statistiques_fournisseur.performance_tab.metrics.volume')}</div>
+                                         <div className="text-xs uppercase font-bold text-base-content/50">{t('performance_tab.metrics.volume')}</div>
                                           <div className="font-bold text-lg">{formatCurrency(Math.round(item.details.volume.valeur ?? 0), i18n.language === 'fr' ? 'fr-FR' : 'en-US', t('common:currency'))}</div>
                                          <progress className="progress progress-primary w-full" value={item.details.volume.score} max="100"></progress>
                                      </div>
                                      <div>
-                                         <div className="text-xs uppercase font-bold text-base-content/50">{t('statistiques_fournisseur.performance_tab.metrics.quality')}</div>
-                                         <div className="font-bold text-lg">{item.details.qualite.incidents} {t('statistiques_fournisseur.performance_tab.metrics.incidents')}</div>
+                                         <div className="text-xs uppercase font-bold text-base-content/50">{t('performance_tab.metrics.quality')}</div>
+                                         <div className="font-bold text-lg">{item.details.qualite.incidents} {t('performance_tab.metrics.incidents')}</div>
                                          <progress className={`progress w-full ${item.details.qualite.score > 80 ? 'progress-success' : 'progress-error'}`} value={item.details.qualite.score} max="100"></progress>
                                      </div>
                                      <div>
-                                         <div className="text-xs uppercase font-bold text-base-content/50">{t('statistiques_fournisseur.performance_tab.metrics.consistency')}</div>
-                                         <div className="font-bold text-lg">{item.details.regularite.nb_livraisons} {t('statistiques_fournisseur.performance_tab.metrics.deliveries')}</div>
+                                         <div className="text-xs uppercase font-bold text-base-content/50">{t('performance_tab.metrics.consistency')}</div>
+                                         <div className="font-bold text-lg">{item.details.regularite.nb_livraisons} {t('performance_tab.metrics.deliveries')}</div>
                                          <progress className="progress progress-info w-full" value={item.details.regularite.score} max="100"></progress>
                                      </div>
                                  </div>
@@ -326,8 +326,8 @@ export default function StatistiquesFournisseur() {
              <div className="alert alert-success shadow-sm">
                 <svg xmlns="http://www.w3.org/2000/svg" className="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
                 <div>
-                <h3 className="font-bold">{t('statistiques_fournisseur.prices_tab.alert_title')}</h3>
-                <div className="text-sm">{t('statistiques_fournisseur.prices_tab.alert_text')}</div>
+                <h3 className="font-bold">{t('prices_tab.alert_title')}</h3>
+                <div className="text-sm">{t('prices_tab.alert_text')}</div>
                 </div>
             </div>
 
@@ -340,10 +340,10 @@ export default function StatistiquesFournisseur() {
                     <table className="table table-zebra w-full">
                         <thead>
                             <tr>
-                                <th>{t('statistiques_fournisseur.prices_tab.table.product')}</th>
-                                <th>{t('statistiques_fournisseur.prices_tab.table.max_gap')}</th>
-                                <th>{t('statistiques_fournisseur.prices_tab.table.offers')}</th>
-                                <th>{t('statistiques_fournisseur.prices_tab.table.best_price')}</th>
+                                <th>{t('prices_tab.table.product')}</th>
+                                <th>{t('prices_tab.table.max_gap')}</th>
+                                <th>{t('prices_tab.table.offers')}</th>
+                                <th>{t('prices_tab.table.best_price')}</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -385,7 +385,7 @@ export default function StatistiquesFournisseur() {
         <div className="space-y-6 animate-fade-in">
              <div className="card bg-base-100 shadow-sm border border-base-200">
                 <div className="card-body">
-                    <h2 className="card-title">{t('statistiques_fournisseur.concentration_tab.title')}</h2>
+                    <h2 className="card-title">{t('concentration_tab.title')}</h2>
                     
                     {loadingRepartition ? (
                         <div className="h-64 flex items-center justify-center">
@@ -419,10 +419,10 @@ export default function StatistiquesFournisseur() {
                                 <table className="table w-full">
                                     <thead>
                                         <tr>
-                                            <th>{t('statistiques_fournisseur.concentration_tab.table.color')}</th>
-                                            <th>{t('statistiques_fournisseur.concentration_tab.table.supplier')}</th>
-                                            <th>{t('statistiques_fournisseur.concentration_tab.table.market_share')}</th>
-                                            <th>{t('statistiques_fournisseur.concentration_tab.table.volume')}</th>
+                                            <th>{t('concentration_tab.table.color')}</th>
+                                            <th>{t('concentration_tab.table.supplier')}</th>
+                                            <th>{t('concentration_tab.table.market_share')}</th>
+                                            <th>{t('concentration_tab.table.volume')}</th>
                                         </tr>
                                     </thead>
                                     <tbody>

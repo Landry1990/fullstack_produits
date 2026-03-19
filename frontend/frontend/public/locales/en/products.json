@@ -194,7 +194,18 @@
             "empty": "No movements recorded",
             "view_invoice": "Click to view invoice",
             "view_order": "Click to view order",
-            "stock_after": "Stock after"
+            "stock_after": "Stock after",
+            "types": {
+                "AJUSTEMENT": "Adjustment",
+                "ENTREE": "Stock Entry",
+                "SORTIE": "Stock Exit",
+                "VENTE": "Sale",
+                "RETOUR": "Return",
+                "TRANSFORMATION_ENTREE": "Transf. Input",
+                "TRANSFORMATION_SORTIE": "Transf. Output",
+                "AVOIR": "Supplier Return",
+                "UG": "Free Unit"
+            }
         }
     },
     "messages": {

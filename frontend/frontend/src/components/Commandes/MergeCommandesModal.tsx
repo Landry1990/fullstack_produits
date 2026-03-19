@@ -23,7 +23,7 @@ export default function MergeCommandesModal({
     commandesEndpoint,
     onMergeSuccess
 }: MergeCommandesModalProps) {
-    const { t } = useTranslation();
+    const { t } = useTranslation(['orders', 'common']);
     const [mergeTargetOrderId, setMergeTargetOrderId] = useState<number | null>(null);
     const [mergeOrdersDetails, setMergeOrdersDetails] = useState<Commande[]>([]);
     const [loadingMergeDetails, setLoadingMergeDetails] = useState(false);

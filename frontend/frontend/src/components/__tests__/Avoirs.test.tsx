@@ -8,7 +8,7 @@ import { MemoryRouter } from 'react-router-dom'
 vi.mock('react-hot-toast', () => ({
   toast: { success: vi.fn(), error: vi.fn() }
 }))
-vi.mock('axios') 
+// axios is mocked globally in setup.ts
 vi.mock('use-debounce', () => ({
   useDebounce: (val: any) => [val]
 }))
@@ -48,10 +48,10 @@ describe('Avoirs Component', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     vi.mocked(axios.get).mockImplementation((url: string) => {
-        if (url.includes('/avoirs/')) {
+        if (url.includes('avoirs/')) {
             return Promise.resolve({ data: mockAvoirs })
         }
-        if (url.includes('/fournisseurs/')) {
+        if (url.includes('fournisseurs/')) {
             return Promise.resolve({ data: [] })
         }
         return Promise.resolve({ data: [] })
@@ -61,9 +61,9 @@ describe('Avoirs Component', () => {
   it('affiche la liste des avoirs', async () => {
     render(<MemoryRouter><Avoirs /></MemoryRouter>)
     
-    expect(screen.getByText('Avoirs Fournisseurs (Retours)')).toBeInTheDocument()
+    expect(screen.getByText(/Gestion des Avoirs/i)).toBeInTheDocument()
     
-    expect(await screen.findByText('AV-001', {}, { timeout: 2000 })).toBeInTheDocument()
+    expect(await screen.findByText('AV-001', {}, { timeout: 3000 })).toBeInTheDocument()
     
     expect(screen.getByText('Laborex')).toBeInTheDocument()
     expect(screen.getByText(/P.rim./i)).toBeInTheDocument()
@@ -72,10 +72,10 @@ describe('Avoirs Component', () => {
   it('permet de créer un nouvel avoir', async () => {
     render(<MemoryRouter><Avoirs /></MemoryRouter>)
 
-    const newBtn = await screen.findByText('+ Nouvel Avoir', {}, { timeout: 2000 })
+    const newBtn = await screen.findByText(/Nouvel Avoir/i)
     fireEvent.click(newBtn)
     
     expect(screen.getByText('Nouvel Avoir')).toBeInTheDocument()
-    expect(screen.getByPlaceholderText('Rechercher fournisseur...')).toBeInTheDocument()
+    expect(screen.getByPlaceholderText(/Rechercher.*fournisseur/i)).toBeInTheDocument()
   })
 })

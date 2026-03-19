@@ -47,7 +47,7 @@ export default function TransferCommandeModal({
     fournisseursEndpoint,
     onTransferSuccess
 }: TransferCommandeModalProps) {
-    const { t } = useTranslation();
+    const { t } = useTranslation(['orders', 'common']);
     const [transferTargetFournisseur, setTransferTargetFournisseur] = useState('');
     const [transferCataloguePrices, setTransferCataloguePrices] = useState<Map<number, number>>(new Map());
     const [loadingCatalogue, setLoadingCatalogue] = useState(false);

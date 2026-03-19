@@ -1,13 +1,14 @@
 import axios from 'axios'
-import { render, screen, fireEvent, waitFor } from '@testing-library/react'
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { render, screen, fireEvent, waitFor, act } from '@testing-library/react'
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import InventaireComponent from '../Inventaire'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { MemoryRouter } from 'react-router-dom'
 
 // Mock des libs externes
 vi.mock('react-hot-toast', () => ({
   toast: { success: vi.fn(), error: vi.fn() }
 }))
-vi.mock('axios')
 
 // Mock des hooks
 vi.mock('../../hooks/useConfirm', () => ({
@@ -44,9 +45,26 @@ const mockInventaires = [
   }
 ]
 
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: { retry: false, gcTime: 0 }
+  }
+})
+
+const renderWithContext = (ui: React.ReactElement) => {
+  return render(
+    <QueryClientProvider client={queryClient}>
+        <MemoryRouter>
+            {ui}
+        </MemoryRouter>
+    </QueryClientProvider>
+  )
+}
+
 describe('Inventaire Component', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    vi.useFakeTimers()
     // Mock Axios get response
     vi.mocked(axios.get).mockImplementation((url: string) => {
         if (url.includes('/inventaires/')) {
@@ -56,29 +74,44 @@ describe('Inventaire Component', () => {
     })
   })
 
+  afterEach(() => {
+    vi.useRealTimers()
+  })
+
   it('affiche la liste des inventaires', async () => {
-    render(<InventaireComponent />)
+    renderWithContext(<InventaireComponent />)
+    
+    // Attendre le debounce de 500ms
+    await act(async () => {
+      vi.advanceTimersByTime(600)
+    })
 
     // Vérifier titre
-    expect(screen.getByText('Inventaires')).toBeInTheDocument()
+    expect(screen.getByText(/Inventaires/i)).toBeInTheDocument()
     
     // Attendre le chargement des données
     await waitFor(() => {
-        expect(screen.getByText('Inventaire Janvier')).toBeInTheDocument()
+        expect(screen.getByText(/Inventaire Janvier/i)).toBeInTheDocument()
     })
     
     // Vérifier statut
-    expect(screen.getByText('EN_COURS')).toBeInTheDocument()
+    expect(screen.getByText(/EN_COURS|En cours/i)).toBeInTheDocument()
   })
 
   it('permet de créer un nouvel inventaire', async () => {
-    render(<InventaireComponent />)
+    renderWithContext(<InventaireComponent />)
     
-    const createBtn = screen.getByText('+ Nouvel Inventaire')
+    // Attendre le debounce et le chargement
+    await act(async () => {
+        vi.advanceTimersByTime(600)
+    })
+    
+    // Attendre que le bouton soit disponible (fin du chargement)
+    const createBtn = await screen.findByText(/\+ Nouvel Inventaire/i)
     fireEvent.click(createBtn)
     
     // Vérifier changement de vue
-    expect(screen.getByText('Nouvel Inventaire')).toBeInTheDocument()
+    expect(screen.getByText(/Nouvel Inventaire/i)).toBeInTheDocument()
     // Vérifier présence champ description
     expect(screen.getByPlaceholderText(/Ex: Inventaire Annuel/i)).toBeInTheDocument()
   })

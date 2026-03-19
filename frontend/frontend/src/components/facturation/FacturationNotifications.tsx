@@ -25,7 +25,7 @@ export default function FacturationNotifications({
   onPrintA4,
   ticketCaisse
 }: FacturationNotificationsProps) {
-  const { t } = useTranslation()
+  const { t } = useTranslation(['facturation', 'common'])
 
   if (!error && !successInfo) return null
 
@@ -49,8 +49,8 @@ export default function FacturationNotifications({
           <div className="flex items-center gap-2 w-full">
             <svg xmlns="http://www.w3.org/2000/svg" className="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
             <div className="flex-1">
-              <h3 className="font-bold">{t('facturation.sale_recorded')} !</h3>
-              <div className="text-xs">{t('facturation.invoice')} <span className="font-mono font-bold">{successInfo.numero_facture}</span> • {Math.round(Number(successInfo.total_ttc))} F</div>
+              <h3 className="font-bold">{t('sale_recorded')} !</h3>
+              <div className="text-xs">{t('invoice')} <span className="font-mono font-bold">{successInfo.numero_facture}</span> • {Math.round(Number(successInfo.total_ttc))} F</div>
             </div>
             <button className="btn btn-sm btn-ghost btn-circle self-start" onClick={() => setSuccessInfo(null)}>✕</button>
           </div>

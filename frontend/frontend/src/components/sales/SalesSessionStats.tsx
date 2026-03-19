@@ -9,7 +9,7 @@ interface SalesSessionStatsProps {
 }
 
 export const SalesSessionStats: React.FC<SalesSessionStatsProps> = ({ session }) => {
-    const { t } = useTranslation();
+    const { t } = useTranslation(['sales', 'common']);
 
     if (!session) return null;
 
@@ -21,7 +21,7 @@ export const SalesSessionStats: React.FC<SalesSessionStatsProps> = ({ session })
                 <div className="flex justify-between items-start mb-4">
                     <div className="flex items-center gap-2 text-primary-content/90 bg-white/10 px-3 py-1 rounded-full text-xs font-medium backdrop-blur-sm">
                         <TrendingUp className="w-3 h-3" />
-                         {t('sales.stats.session_total', { defaultValue: "Caisse Session" })}
+                         {t('stats.session_total', { defaultValue: "Caisse Session" })}
                     </div>
                 </div>
 

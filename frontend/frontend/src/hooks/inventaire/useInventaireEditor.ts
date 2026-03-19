@@ -10,7 +10,7 @@ export const useInventaireEditor = (
     requireSudo: (action: (validatorId: number, password?: string) => Promise<void>, options?: { title?: string; message?: string; permission?: string }) => void,
     confirm: (options: { title?: string; message: string; variant?: 'success' | 'warning' | 'danger' | 'info'; confirmText?: string }) => Promise<boolean>
 ) => {
-    const { t } = useTranslation();
+    const { t } = useTranslation(['stock', 'common']);
 
     const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || '/api';
     const inventairesEndpoint = `${String(apiBaseUrl).replace(/\/$/, '')}/inventaires/`;
@@ -48,7 +48,7 @@ export const useInventaireEditor = (
             // 1. Create the inventory header
             const response = await axios.post(inventairesEndpoint, {
                 date: new Date().toISOString().split('T')[0],
-                description: t('stock.inventaire.detail.placeholder_desc'),
+                description: t('inventaire.detail.placeholder_desc'),
                 status: 'EN_COURS',
                 inventory_type: options.stockType
             });
@@ -83,7 +83,7 @@ export const useInventaireEditor = (
             return newInv;
         } catch (error) {
             console.error(error);
-            toast.error(t('stock.inventaire.detail.auto_create_error'));
+            toast.error(t('inventaire.detail.auto_create_error'));
         } finally {
             setSaving(false);
         }
@@ -115,11 +115,11 @@ export const useInventaireEditor = (
                 date: dateInventaire,
                 description
             });
-            toast.success(t('stock.inventaire.detail.header_saved'));
+            toast.success(t('inventaire.detail.header_saved'));
             // Optionally update the active inventaire object
             setActiveInventaire(prev => prev ? { ...prev, date: dateInventaire, description } : null);
         } catch (err) {
-            toast.error(t('stock.inventaire.detail.save_error'));
+            toast.error(t('inventaire.detail.save_error'));
         }
     };
 
@@ -162,7 +162,7 @@ export const useInventaireEditor = (
             setLignes(prev => prev.filter(l => l.id !== lineId));
         } catch (err) {
             console.error("Erreur suppression ligne", err);
-            toast.error(t('stock.inventaire.lines.delete_error'));
+            toast.error(t('inventaire.lines.delete_error'));
         }
     };
 
@@ -188,10 +188,10 @@ export const useInventaireEditor = (
         if (selectedLines.size === 0) return;
 
         const confirmed = await confirm({
-            title: t('stock.inventaire.detail.bulk_delete_title'),
-            message: t('stock.inventaire.detail.bulk_delete_message', { count: selectedLines.size }),
+            title: t('inventaire.detail.bulk_delete_title'),
+            message: t('inventaire.detail.bulk_delete_message', { count: selectedLines.size }),
             variant: 'danger',
-            confirmText: t('stock.inventaire.detail.bulk_delete_confirm')
+            confirmText: t('inventaire.detail.bulk_delete_confirm')
         });
         if (!confirmed) return;
 
@@ -214,11 +214,11 @@ export const useInventaireEditor = (
             // 2. Mise à jour locale
             setLignes(prev => prev.filter(l => !selectedLines.has(l.id)));
             setSelectedLines(new Set());
-            toast.success(t('stock.inventaire.detail.bulk_delete_success', { count: idsToDelete.length }));
+            toast.success(t('inventaire.detail.bulk_delete_success', { count: idsToDelete.length }));
 
         } catch (err) {
             console.error("Erreur suppression bulk", err);
-            toast.error(t('stock.inventaire.detail.save_error'));
+            toast.error(t('inventaire.detail.save_error'));
         } finally {
             setSaving(false);
         }
@@ -239,12 +239,12 @@ export const useInventaireEditor = (
         try {
             setSaving(true);
             await axios.post(`${inventairesEndpoint}${activeInventaire.id}/validate/`, creds);
-            toast.success(t('stock.inventaire.validation.success'));
+            toast.success(t('inventaire.validation.success'));
             setViewMode('LIST');
             fetchInventaires();
         } catch (err: unknown) {
             const error = err as { response?: { data?: { detail?: string } } };
-            toast.error(error.response?.data?.detail || t('stock.inventaire.validation.error'));
+            toast.error(error.response?.data?.detail || t('inventaire.validation.error'));
             console.error(err);
         } finally {
             setSaving(false);
@@ -273,7 +273,7 @@ export const useInventaireEditor = (
                 setLignes(res.data.map((l: LigneInventaire) => ({ ...l, isLocalOnly: false })));
             } catch (err) {
                 console.error("Auto-save before validate failed", err);
-                toast.error(t('stock.inventaire.detail.save_error'));
+                toast.error(t('inventaire.detail.save_error'));
                 setSaving(false);
                 return; // Stop if auto-save fails
             } finally {
@@ -286,8 +286,8 @@ export const useInventaireEditor = (
                 await handleValidateConfirm({ validated_by_id: validatorId, sudo_password: password || '' });
             },
             {
-                title: t('stock.inventaire.validation.title'),
-                message: t('stock.inventaire.validation.message')
+                title: t('inventaire.validation.title'),
+                message: t('inventaire.validation.message')
             }
         );
     };
@@ -324,7 +324,7 @@ export const useInventaireEditor = (
             toast.success(t('common.messages.saved'));
         } catch (error) {
             console.error("Erreur save manual", error);
-            toast.error(t('stock.inventaire.detail.save_error'));
+            toast.error(t('inventaire.detail.save_error'));
         } finally {
             setSaving(false);
         }

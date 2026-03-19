@@ -1,0 +1,84 @@
+{
+    "title": "Monthly Activity Summary",
+    "subtitle": "Complete report of your monthly activity",
+    "filters": {
+        "month": "Month",
+        "generate": "Generate",
+        "loading": "Loading..."
+    },
+    "kpis": {
+        "ca_ttc": "Turnover (incl. Tax)",
+        "ca_ht": "Net Turnover",
+        "gross_margin": "Gross Margin",
+        "purchase_cost": "Purchase Cost",
+        "margin_info": "{{pct}}% of turnover",
+        "sales_count": "{{count}} sales"
+    },
+    "suppliers": {
+        "title": "Purchases by Supplier",
+        "name": "Supplier",
+        "orders": "Order Count",
+        "amount": "Total Amount",
+        "no_data": "No purchases this month",
+        "total": "Total"
+    },
+    "pro_clients": {
+        "title": "Professional Clients",
+        "ca_total": "Total Turnover",
+        "paid": "Paid",
+        "balance": "Balance",
+        "recovery_rate": "Recovery Rate",
+        "top_clients": "Top Pro Clients"
+    },
+    "free_units": {
+        "title": "Free Units (UG)",
+        "value": "Value",
+        "quantity": "Quantity",
+        "ca_pct": "% of Turnover",
+        "top_products": "Top Free Products",
+        "product": "Product",
+        "qty": "Qty"
+    },
+    "encaissements": {
+        "title": "Cash-ins of the Month",
+        "mode": "Mode",
+        "amount": "Amount",
+        "no_data": "No cash-ins this month",
+        "total": "Total"
+    },
+    "caisse_mvts": {
+        "title": "Other Cash Movements",
+        "in": "Various Inflows",
+        "out": "Various Outflows",
+        "balance": "Movement Balance",
+        "date": "Date",
+        "type": "Type",
+        "reason": "Reason",
+        "user": "User",
+        "no_data": "No extra-accounting movements this month"
+    },
+    "tva": {
+        "title": "Turnover by VAT Rate",
+        "rate": "Rate",
+        "ht": "Net Rev.",
+        "tax": "VAT",
+        "ttc": "Total"
+    },
+    "receivables": {
+        "title": "Receivables to Collect",
+        "total_to_recover": "Total amount to recover",
+        "desc": "On all credit sales"
+    },
+    "empty": {
+        "title": "Select a month and click \"Generate\"",
+        "subtitle": "To visualize the complete monthly summary"
+    },
+    "messages": {
+        "load_error": "Error loading report",
+        "download_error": "Error downloading PDF"
+    },
+    "pdf": {
+        "download": "PDF",
+        "tooltip": "Download report as PDF"
+    }
+}

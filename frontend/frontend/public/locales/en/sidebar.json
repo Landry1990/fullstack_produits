@@ -37,6 +37,9 @@
         "analyse": {
             "title": "Stock Analysis"
         },
+        "reappro": {
+            "title": "Shelf Replenishment"
+        },
         "avoirs": "Claims",
         "promis": "Promised",
         "transformations": {
@@ -70,15 +73,18 @@
         "mensuel": "Monthly Report",
         "finances": "Financial Module",
         "classement_vendeurs": "Seller Ranking",
-        "analyse_temporelle": "Temporal Analysis"
+        "analyse_temporelle": "Temporal Analysis",
+        "guide": "Financial Guide 📖"
     },
     "parametres": {
         "title": "Settings",
         "facture": "Invoice Configuration",
         "pharmacie": "Pharmacy Information",
+        "whatsapp": "WhatsApp History",
         "etiquettes": "Label Templates",
         "imprimantes": "Printer Configuration"
     },
+    "maintenance": "Maintenance",
     "logout": "Logout",
     "app_subtitle": "Professional Management",
     "roles": {

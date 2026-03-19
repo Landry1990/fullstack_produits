@@ -34,7 +34,7 @@ export function useCommandeActions({
     setSelectedCommande,
     setViewMode,
 }: UseCommandeActionsProps) {
-    const { t } = useTranslation();
+    const { t } = useTranslation(['orders', 'common']);
     const [executingAction, setExecutingAction] = useState(false);
 
     const handleSaveCommande = async (
@@ -48,13 +48,13 @@ export function useCommandeActions({
         if (!isAutoSave) setExecutingAction(true);
 
         if (!commandeData.fournisseur) {
-            if (!isAutoSave) toast.error(t('orders.messages.provider_required'));
+            if (!isAutoSave) toast.error(t('messages.provider_required'));
             if (!isAutoSave) setExecutingAction(false);
             return;
         }
 
         if (viewMode === 'EDIT' && !selectedCommande?.id) {
-            if (!isAutoSave) toast.error(t('orders.messages.no_selection'));
+            if (!isAutoSave) toast.error(t('messages.no_selection'));
             if (!isAutoSave) setExecutingAction(false);
             return;
         }
@@ -66,7 +66,7 @@ export function useCommandeActions({
             if (viewMode === 'CREATE') {
                 const newCmd = await commandeService.create(commandeData);
                 commandeId = newCmd.id;
-                if (!isAutoSave) toast.success(t('orders.messages.create_success', { id: commandeId }));
+                if (!isAutoSave) toast.success(t('messages.create_success', { id: commandeId }));
 
                 if (isAutoSave) {
                     const createdCmd = await commandeService.getById(commandeId);
@@ -75,7 +75,7 @@ export function useCommandeActions({
                 }
             } else if (viewMode === 'EDIT' && commandeId) {
                 await commandeService.update(commandeId, commandeData);
-                if (!isAutoSave) toast.success(t('orders.messages.update_success'));
+                if (!isAutoSave) toast.success(t('messages.update_success'));
             }
 
             if (!commandeId) {
@@ -131,12 +131,12 @@ export function useCommandeActions({
         setExecutingAction(true);
         try {
             await commandeService.delete(commande.id, sudoCredentials);
-            toast.success(t('orders.messages.delete_success'));
+            toast.success(t('messages.delete_success'));
             fetchCommandes();
             setSelectedCommande(null);
             setViewMode('LIST');
         } catch (err: any) {
-            toast.error(err.response?.data?.message || t('orders.messages.delete_error'));
+            toast.error(err.response?.data?.message || t('messages.delete_error'));
         } finally {
             setExecutingAction(false);
         }
@@ -147,7 +147,7 @@ export function useCommandeActions({
         setExecutingAction(true);
         try {
             const res = await commandeService.cloturer(commande.id, sudoCredentials);
-            toast.success(res.message || t('orders.messages.close_success'));
+            toast.success(res.message || t('messages.close_success'));
             fetchCommandes();
             const updated = await commandeService.getById(commande.id);
             setSelectedCommande(updated);
@@ -164,8 +164,8 @@ export function useCommandeActions({
         try {
             const newStatus = commande.status === 'ATT' ? 'PREP' : 'ATT';
             await commandeService.update(commande.id, { status: newStatus });
-            const statusDisplay = newStatus === 'ATT' ? t('orders.status.pending') : t('orders.status.prep');
-            toast.success(t('orders.messages.status_update_success', { status: statusDisplay }));
+            const statusDisplay = newStatus === 'ATT' ? t('status.pending') : t('status.prep');
+            toast.success(t('messages.status_update_success', { status: statusDisplay }));
             const updated = await commandeService.getById(commande.id);
             setSelectedCommande(updated);
             fetchCommandes();
@@ -181,7 +181,7 @@ export function useCommandeActions({
         setExecutingAction(true);
         try {
             await commandeService.annulerReception(commande.id, sudoCredentials);
-            toast.success(t('orders.messages.cancel_reception_success'));
+            toast.success(t('messages.cancel_reception_success'));
             fetchCommandes();
             const updated = await commandeService.getById(commande.id);
             setSelectedCommande(updated);
@@ -205,7 +205,7 @@ export function useCommandeActions({
             link.click();
             link.parentNode?.removeChild(link);
         } catch (err) {
-            toast.error(t('orders.messages.print_error'));
+            toast.error(t('messages.print_error'));
         } finally {
             setExecutingAction(false);
         }
@@ -216,12 +216,12 @@ export function useCommandeActions({
         setExecutingAction(true);
         try {
             await commandeService.bulkDelete(ids, sudoCredentials);
-            toast.success(t('orders.messages.bulk_delete_success', { count: ids.length }));
+            toast.success(t('messages.bulk_delete_success', { count: ids.length }));
             fetchCommandes();
             setSelectedCommande(null);
             setViewMode('LIST');
         } catch (err) {
-            toast.error(t('orders.messages.bulk_delete_error'));
+            toast.error(t('messages.bulk_delete_error'));
         } finally {
             setExecutingAction(false);
         }

@@ -43,6 +43,9 @@
         "analyse": {
             "title": "Analyse Stock"
         },
+        "reappro": {
+            "title": "Réappro Rayon"
+        },
         "avoirs": "Réclamations",
         "promis": "Promis",
         "transformations": {
@@ -83,10 +86,11 @@
         "title": "Paramètres",
         "facture": "Configuration Facture",
         "pharmacie": "Informations Pharmacie",
+        "whatsapp": "Historique WhatsApp",
         "etiquettes": "Templates d'Étiquettes",
         "imprimantes": "Configuration Imprimantes"
     },
-    "maintenance": "Maintenance",
+    "maintenance": "Entretien",
     "logout": "Déconnexion",
     "app_subtitle": "Gestion Professionnelle",
     "roles": {

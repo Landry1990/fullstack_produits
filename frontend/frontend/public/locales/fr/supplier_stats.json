@@ -1,0 +1,71 @@
+{
+    "title": "Statistiques par Fournisseur",
+    "subtitle": "Analyse détaillée des performances achats et ventes",
+    "filters": {
+        "from": "Du",
+        "to": "Au",
+        "refresh": "Actualiser"
+    },
+    "tabs": {
+        "sales": "Ventes & Marges",
+        "performance": "Performance (Scoring)",
+        "price_comparison": "Comparateur Prix",
+        "concentration": "Concentration Achats"
+    },
+    "sales_tab": {
+        "calculation_method": "Méthode : Chiffre d'Affaires Net Facturé",
+        "info_text": "Ces statistiques concernent les produits facturés sur la période (CA net après remises).",
+        "cards": {
+            "total_ca": "CA Total TTC",
+            "purchase_cost": "Coût d'Achat (Vendu)",
+            "gross_margin": "Marge Brute",
+            "margin_percentage": "% du CA",
+            "units_sold": "Unités Vendues"
+        },
+        "chart": {
+            "title": "Répartition du CA par Fournisseur",
+            "ca": "Chiffre d'Affaires",
+            "margin": "Marge Brute"
+        },
+        "table": {
+            "supplier": "Fournisseur",
+            "qty_sold": "Qté Vendue",
+            "purchase_cost": "Coût Achat",
+            "ca_ttc": "CA TTC",
+            "gross_margin": "Marge Brute",
+            "margin_percent": "% Marge",
+            "no_data": "Aucune donnée pour la période sélectionnée"
+        }
+    },
+    "performance_tab": {
+        "alert_title": "Analyse sur 12 mois glissants",
+        "alert_text": "Scores calculés sur l'historique des réceptions.",
+        "score": "Score",
+        "metrics": {
+            "volume": "Volume (30%)",
+            "quality": "Qualité (30%)",
+            "incidents": "Incidents",
+            "consistency": "Régularité (40%)",
+            "deliveries": "Livraisons"
+        }
+    },
+    "prices_tab": {
+        "alert_title": "Opportunités d'économie",
+        "alert_text": "Produits achetés chez plusieurs fournisseurs avec écarts de prix significatifs.",
+        "table": {
+            "product": "Produit",
+            "max_gap": "Écart Max",
+            "offers": "Offres (Prix Moyen)",
+            "best_price": "Meilleur Prix"
+        }
+    },
+    "concentration_tab": {
+        "title": "Concentration des Achats (Volume Financier)",
+        "table": {
+            "color": "Couleur",
+            "supplier": "Fournisseur",
+            "market_share": "Part de Marché",
+            "volume": "Volume Acheté"
+        }
+    }
+}

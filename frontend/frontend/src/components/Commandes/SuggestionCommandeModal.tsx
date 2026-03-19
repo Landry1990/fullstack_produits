@@ -30,7 +30,7 @@ export default function SuggestionCommandeModal({
   fournisseurs,
   produitsList 
 }: SuggestionCommandeModalProps) {
-  const { t } = useTranslation()
+  const { t } = useTranslation(['orders', 'common'])
   const apiBaseUrl = import.meta.env.VITE_API_BASE_URL ?? ''
   
   // Internal State

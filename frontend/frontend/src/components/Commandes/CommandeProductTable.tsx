@@ -64,7 +64,7 @@ export default function CommandeProductTable({
     commandeSortBy,
     onSortProduits
 }: CommandeProductTableProps) {
-    const { t } = useTranslation();
+    const { t } = useTranslation(['orders', 'common']);
     const [searchQuery, setSearchQuery] = useState('');
     const [expandedRow, setExpandedRow] = useState<number | null>(null);
     

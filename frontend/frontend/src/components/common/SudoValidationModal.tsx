@@ -28,7 +28,7 @@ export default function SudoValidationModal({
     title,
     message
 }: SudoValidationModalProps) {
-    const { t } = useTranslation();
+    const { t } = useTranslation(['common']);
     const { user: currentUser } = useAuth();
     const [users, setUsers] = useState<User[]>([]);
     const [selectedValidator, setSelectedValidator] = useState<number | null>(null);
