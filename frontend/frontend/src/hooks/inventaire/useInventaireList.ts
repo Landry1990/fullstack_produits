@@ -74,7 +74,7 @@ export const useInventaireList = () => {
             }
         } catch (error) {
             console.error(error);
-            toast.error(t('common.messages.error_loading', { defaultValue: 'Erreur lors du chargement' }));
+            toast.error(t('common:messages.error_loading', { defaultValue: 'Erreur lors du chargement' }));
         } finally {
             setLoading(false);
         }
@@ -113,11 +113,11 @@ export const useInventaireList = () => {
         setDeleting(true);
         try {
             await axios.delete(`${inventairesEndpoint}${id}/`);
-            toast.success(t('common.messages.deleted'));
+            toast.success(t('common:messages.deleted'));
             fetchInventaires();
         } catch (error) {
             console.error(error);
-            toast.error(t('common.messages.error_deleting'));
+            toast.error(t('common:messages.error_deleting'));
         } finally {
             setDeleting(false);
         }
@@ -145,3 +145,4 @@ export const useInventaireList = () => {
         inventairesEndpoint
     };
 };
+

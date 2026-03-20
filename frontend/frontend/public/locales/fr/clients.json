@@ -17,7 +17,12 @@
         "email": "Email",
         "type": "Type de Client",
         "address": "Adresse",
-        "status": "Statut"
+        "status": "Statut",
+        "loyalty_member": "Membre Fidélité"
+    },
+    "hints": {
+        "is_active": "Le client est visible et peut effectuer des achats",
+        "loyalty_member": "Le client participe au programme de points et récompenses"
     },
     "types": {
         "individual": "Particulier",
@@ -45,7 +50,8 @@
         "name_placeholder": "Nom du bénéficiaire",
         "id_placeholder": "ID / Matricule",
         "col_name": "Nom Complet",
-        "col_id": "Matricule"
+        "col_id": "Matricule",
+        "company": "Société"
     },
     "history": {
         "total_visits": "Visites Totales",

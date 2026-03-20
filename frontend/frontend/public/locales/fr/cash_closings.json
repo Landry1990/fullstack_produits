@@ -7,7 +7,9 @@
     "select_placeholder": "Sélectionner...",
     "filter_btn": "Filtrer",
     "reset_btn": "Réinitialiser",
-    "reset_title": "Réinitialiser les filtres"
+    "reset_title": "Réinitialiser les filtres",
+    "cashier": "Caissier",
+    "all_cashiers": "Tous les caissiers"
   },
   "performance": {
     "title": "Performance par Caissier",

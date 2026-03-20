@@ -98,7 +98,7 @@ export default function Maintenance() {
   useEffect(() => {
     axios.get('/api/maintenance/tables/')
       .then(res => setTables(res.data))
-      .catch(() => toast.error(t('common.error_loading_data')));
+      .catch(() => toast.error(t('common:error_loading_data')));
 
     axios.get('/api/pharmacy-settings/')
       .then(res => setPharmacySettings(res.data))
@@ -362,7 +362,7 @@ export default function Maintenance() {
       window.URL.revokeObjectURL(url);
       toast.success(t('code_management.backup_success'));
     } catch {
-      toast.error(t('common.error_occurred'));
+      toast.error(t('common:error_occurred'));
     } finally {
       setCodeBackupLoading(false);
     }
@@ -370,7 +370,7 @@ export default function Maintenance() {
 
   const handleCodeRestore = async () => {
     if (!codeRestoreFile) {
-      toast.error(t('common.select_file'));
+      toast.error(t('common:select_file'));
       return;
     }
     setCodeRestoring(true);
@@ -383,7 +383,7 @@ export default function Maintenance() {
       toast.success(t('code_management.restore_success'));
       setCodeRestoreFile(null);
     } catch (err: any) {
-      toast.error(err.response?.data?.detail || t('common.error_occurred'));
+      toast.error(err.response?.data?.detail || t('common:error_occurred'));
     } finally {
       setCodeRestoring(false);
     }
@@ -488,7 +488,7 @@ export default function Maintenance() {
                                   <span className="text-sm flex-1">{t('tables.' + table.key, table.label)}</span>
                                 {table.children.length > 0 && (
                                   <span className="text-xs text-base-content/50">
-                                    +{table.children.length} {t('common.sub_table', { count: table.children.length })}
+                                    +{table.children.length} {t('common:sub_table', { count: table.children.length })}
                                   </span>
                                 )}
                               </label>
@@ -564,7 +564,7 @@ export default function Maintenance() {
 
               <button
                 className="btn btn-error btn-sm w-full gap-2"
-                onClick={() => { if (selectedTables.size > 0) setShowConfirmModal(true); else toast.error(t('common.select_tables')); }}
+                onClick={() => { if (selectedTables.size > 0) setShowConfirmModal(true); else toast.error(t('common:select_tables')); }}
                 disabled={selectedTables.size === 0}
               >
                 <Trash2 className="w-4 h-4" />
@@ -691,7 +691,7 @@ export default function Maintenance() {
 
                 <button
                   className="btn btn-error btn-outline btn-sm w-full gap-2"
-                  onClick={() => { if (restoreFile) setShowRestoreConfirm(true); else toast.error(t('common.select_file')); }}
+                  onClick={() => { if (restoreFile) setShowRestoreConfirm(true); else toast.error(t('common:select_file')); }}
                   disabled={restoring || !restoreFile}
                 >
                   {restoring ? <Loader2 className="w-4 h-4 animate-spin" /> : <ShieldAlert className="w-4 h-4" />}
@@ -791,9 +791,9 @@ export default function Maintenance() {
               <table className="table table-sm table-zebra">
                 <thead>
                   <tr>
-                    <th>{t('common.table')}</th>
-                    <th className="text-right">{t('common.rows')}</th>
-                    <th>{t('common.sub_tables')}</th>
+                    <th>{t('common:table')}</th>
+                    <th className="text-right">{t('common:rows')}</th>
+                    <th>{t('common:sub_tables')}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -839,8 +839,8 @@ export default function Maintenance() {
               <table className="table table-sm">
                 <thead>
                   <tr>
-                    <th>{t('common.table')}</th>
-                    <th className="text-right">{t('common.rows_deleted')}</th>
+                    <th>{t('common:table')}</th>
+                    <th className="text-right">{t('common:rows_deleted')}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -876,7 +876,7 @@ export default function Maintenance() {
             </div>
 
             <div className="bg-base-200 rounded-lg p-3 mb-4 max-h-32 overflow-y-auto">
-              <p className="text-xs font-semibold mb-1">{t('common.concerned_tables')} :</p>
+              <p className="text-xs font-semibold mb-1">{t('common:concerned_tables')} :</p>
               <ul className="text-xs space-y-0.5">
                  {Array.from(selectedTables).map(key => {
                    const tbl = tableMap.get(key);
@@ -977,3 +977,4 @@ export default function Maintenance() {
     </div>
   );
 }
+

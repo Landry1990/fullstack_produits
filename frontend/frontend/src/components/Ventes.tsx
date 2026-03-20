@@ -104,6 +104,7 @@ const Ventes: React.FC = () => {
                     loading={loading}
                     onView={actions.handleViewProducts}
                     onPrint={actions.handlePrintInvoice}
+                    onPrintBL={actions.handlePrintBL}
                     onPrintTicket={actions.handlePrintTicket}
                     onRefund={actions.handleEditInvoice}
                     onDuplicate={actions.handleDuplicateInvoice}

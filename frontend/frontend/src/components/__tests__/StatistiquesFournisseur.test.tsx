@@ -9,20 +9,16 @@ import { MemoryRouter } from 'react-router-dom';
 // (using global mock from setup.ts)
 
 // Mock Recharts
-vi.mock('recharts', () => {
-    const OriginalModule = vi.importActual('recharts');
-    return {
-        ...OriginalModule,
-        ResponsiveContainer: ({ children }: any) => <div className="recharts-responsive-container">{children}</div>,
-        BarChart: ({ children }: any) => <div data-testid="bar-chart">{children}</div>,
-        Bar: () => <div data-testid="bar" />,
-        XAxis: () => <div data-testid="x-axis" />,
-        YAxis: () => <div data-testid="y-axis" />,
-        CartesianGrid: () => <div data-testid="grid" />,
-        Tooltip: () => <div data-testid="tooltip" />,
-        Legend: () => <div data-testid="legend" />,
-    };
-});
+vi.mock('recharts', () => ({
+    ResponsiveContainer: ({ children }: any) => <div className="recharts-responsive-container">{children}</div>,
+    BarChart: ({ children }: any) => <div data-testid="bar-chart">{children}</div>,
+    Bar: () => <div data-testid="bar" />,
+    XAxis: () => <div data-testid="x-axis" />,
+    YAxis: () => <div data-testid="y-axis" />,
+    CartesianGrid: () => <div data-testid="grid" />,
+    Tooltip: () => <div data-testid="tooltip" />,
+    Legend: () => <div data-testid="legend" />,
+}));
 
 const queryClient = new QueryClient({
     defaultOptions: {

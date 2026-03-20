@@ -74,7 +74,7 @@ export default function Creances() {
                                 <div className="h-8 w-px bg-base-200"></div>
                                 <div className="flex flex-col items-end mr-2">
                                     <span className="text-[10px] font-black uppercase tracking-widest text-base-content/40">{t('creances:total_due')}</span>
-                                    <span className="text-sm font-black text-base-content">{formatCurrency(Math.round(bulkTotalAmount))} {t('common:currency')}</span>
+                                    <span className="text-sm font-black text-base-content">{formatCurrency(Math.round(bulkTotalAmount))}</span>
                                 </div>
                                 <button 
                                     onClick={actions.actions.handleBulkPayment} 

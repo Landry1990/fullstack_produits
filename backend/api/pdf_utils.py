@@ -366,3 +366,79 @@ def format_currency(amount):
         return f"{int(amount):,} F".replace(',', ' ')
     except (ValueError, TypeError):
         return "0 F"
+
+def number_to_french(number):
+    """
+    Convertit un nombre en toutes lettres (Français) pour les factures.
+    Optimisé pour les montants en FCFA.
+    """
+    if number == 0:
+        return "Zéro"
+    
+    units = ["", "un", "deux", "trois", "quatre", "cinq", "six", "sept", "huit", "neuf"]
+    tens = ["", "dix", "vingt", "trente", "quarante", "cinquante", "soixante", "soixante-dix", "quatre-vingt", "quatre-vingt-dix"]
+    teens = ["dix", "onze", "douze", "treize", "quatorze", "quinze", "seize", "dix-sept", "dix-huit", "dix-neuf"]
+    
+    def _convert_group(n):
+        if n == 0:
+            return ""
+        res = ""
+        h = n // 100
+        t = (n % 100) // 10
+        u = n % 10
+        
+        # Hundreds
+        if h > 0:
+            if h == 1:
+                res += "cent "
+            else:
+                res += units[h] + " cent" + ("s " if t == 0 and u == 0 else " ")
+        
+        # Tens & Units
+        if t == 1:
+            res += teens[u]
+        elif t == 7:
+            res += "soixante-" + teens[u]
+        elif t == 8:
+            res += "quatre-vingt" + ("s" if u == 0 else "-" + units[u])
+        elif t == 9:
+            res += "quatre-vingt-" + teens[u]
+        else:
+            if t > 1:
+                res += tens[t]
+                if u == 1:
+                    res += "-et-un"
+                elif u > 1:
+                    res += "-" + units[u]
+            elif u > 0:
+                res += units[u]
+        return res.strip()
+
+    res = ""
+    # Billions
+    if number >= 10**9:
+        b = number // 10**9
+        res += _convert_group(b) + " milliard" + ("s " if b > 1 else " ")
+        number %= 10**9
+    
+    # Millions
+    if number >= 10**6:
+        m = number // 10**6
+        res += _convert_group(m) + " million" + ("s " if m > 1 else " ")
+        number %= 10**6
+    
+    # Thousands
+    if number >= 1000:
+        k = number // 1000
+        if k == 1:
+            res += "mille "
+        else:
+            res += _convert_group(k) + " mille "
+        number %= 1000
+        
+    # Rest
+    if number > 0:
+        res += _convert_group(number)
+        
+    final = res.strip().capitalize()
+    return f"{final} Francs CFA"

@@ -66,7 +66,7 @@ const getPalierInfo = (actual: number, target: number) => {
 export const ManagerKPIs: React.FC<ManagerKPIsProps> = ({ kpis }) => {
     const { t } = useTranslation(['dashboard', 'common']);
     const currentLocale = t('common:locale', { defaultValue: 'fr-FR' });
-    const currencySymbol = t('common.currency_symbol', 'F');
+    const currencySymbol = t('common:currency_symbol', 'F');
 
     const formatCurrencyLocal = (amount: number) => formatCurrency(amount, currentLocale, currencySymbol);
 

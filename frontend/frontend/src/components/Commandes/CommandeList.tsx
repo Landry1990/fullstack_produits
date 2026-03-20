@@ -328,7 +328,7 @@ export default function CommandeList({
                     </span>
                 </td>
                 <td className="font-bold text-right text-primary">
-                    {formatCurrency(Number(commande.total))} {t('common:currency_symbol', 'F')}
+                    {formatCurrency(Number(commande.total))}
                 </td>
                 <td className="text-center">
                     <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-bold border uppercase tracking-wider ${getStatusStyle(commande.status)}`}>

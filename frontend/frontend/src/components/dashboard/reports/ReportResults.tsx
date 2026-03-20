@@ -159,14 +159,14 @@ export const ReportResults: React.FC<ReportResultsProps> = ({
                             onClick={() => onPageChange(pagination.previous)}
                         >
                             <ChevronLeft className="w-4 h-4" />
-                            {t('common.previous', 'Précédent')}
+                            {t('common:previous', 'Précédent')}
                         </button>
                         <button 
                             className="btn btn-sm btn-outline rounded-xl font-bold uppercase tracking-widest text-[10px] gap-2"
                             disabled={!pagination.next || loading}
                             onClick={() => onPageChange(pagination.next)}
                         >
-                            {t('common.next', 'Suivant')}
+                            {t('common:next', 'Suivant')}
                             <ChevronRight className="w-4 h-4" />
                         </button>
                     </div>
@@ -175,3 +175,4 @@ export const ReportResults: React.FC<ReportResultsProps> = ({
         </div>
     );
 };
+

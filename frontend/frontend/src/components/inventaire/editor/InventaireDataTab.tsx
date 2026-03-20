@@ -196,7 +196,7 @@ export const InventaireDataTab: React.FC<InventaireDataTabProps> = ({
                                     </div>
 
                                     <div className="col-span-1 text-right text-xs font-medium text-base-content/80">
-                                        {formatCurrency(normalizeNumberInput(l.pmp_snapshot || l.produit_cost_price || '0'), 2)} F
+                                        {formatCurrency(normalizeNumberInput(l.pmp_snapshot || l.produit_cost_price || '0'), 2)}
                                     </div>
 
                                     {/* Stock Théorique */}
@@ -310,7 +310,7 @@ export const InventaireDataTab: React.FC<InventaireDataTabProps> = ({
                     <div className="text-right">
                         <div className="text-[10px] uppercase font-bold opacity-40 leading-none mb-1">{t('inventaire.detail.total_gap_value')}</div>
                         <div className={`text-lg font-black font-mono ${totalEcartValeur > 0 ? "text-success" : totalEcartValeur < 0 ? "text-error" : "text-base-content/40"}`}>
-                            {totalEcartValeur > 0 ? '+' : ''}{formatCurrency(totalEcartValeur)} F
+                            {totalEcartValeur > 0 ? '+' : ''}{formatCurrency(totalEcartValeur)}
                         </div>
                     </div>
                 </div>

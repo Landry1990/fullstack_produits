@@ -156,7 +156,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
             <div className="text-xs uppercase tracking-wider text-base-content/50 mb-1">
               {hasTiersPayant ? t('payment.part_patient') : t('payment.amount_to_pay')}
             </div>
-            <div className="text-4xl font-light text-primary">{montantDu} F</div>
+            <div className="text-4xl font-light text-primary">{montantDu} {t('common:currency_symbol', 'F')}</div>
             {coupon && (
               <div className="text-xs text-success mt-1">
                 {t('payment.coupon_discount', { num: coupon.numero, amount: Number(coupon.montant) })}
@@ -224,7 +224,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
                 <div key={idx} className="flex justify-between items-center px-3 py-2 border-t border-base-200">
                   <span className="text-sm">{getModeLabel(p.mode)}</span>
                   <div className="flex items-center gap-2">
-                    <span className="font-mono font-bold">{p.montant} F</span>
+                    <span className="font-mono font-bold">{p.montant} {t('common:currency_symbol', 'F')}</span>
                     <button
                       onClick={() => handleRemovePayment(idx)}
                       className="btn btn-ghost btn-xs text-error h-5 w-5 min-h-0 p-0"
@@ -234,7 +234,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
               ))}
               <div className="flex justify-between items-center px-3 py-2 border-t border-base-300 bg-base-200/30">
                 <span className="text-sm font-bold">{t('payment.total_paid')}</span>
-                <span className="font-mono font-bold text-primary">{totalVerse} F</span>
+                <span className="font-mono font-bold text-primary">{totalVerse} {t('common:currency_symbol', 'F')}</span>
               </div>
             </div>
           )}
@@ -245,13 +245,13 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
               {resteAPayer > 0 && (
                 <div className="flex justify-between items-center px-3 py-2 bg-warning/10 border border-warning/30 rounded-lg">
                   <span className="text-sm font-semibold text-warning">{t('payment.remaining', { amount: '' }).replace(' F', '')}</span>
-                  <span className="font-mono font-bold text-warning text-lg">{resteAPayer} F</span>
+                  <span className="font-mono font-bold text-warning text-lg">{resteAPayer} {t('common:currency_symbol', 'F')}</span>
                 </div>
               )}
               {resteAPayer < 0 && (
                 <div className="flex justify-between items-center px-3 py-3 bg-success/10 border border-success/30 rounded-lg">
                   <span className="text-sm font-semibold text-success">💰 {t('payment.change_back')}</span>
-                  <span className="font-mono font-bold text-success text-2xl">{Math.abs(resteAPayer)} F</span>
+                  <span className="font-mono font-bold text-success text-2xl">{Math.abs(resteAPayer)} {t('common:currency_symbol', 'F')}</span>
                 </div>
               )}
             </div>

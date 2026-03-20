@@ -101,7 +101,7 @@ export default function FinanceFournisseurModal({ isOpen, onClose, fournisseur, 
                 <div className="text-right">
                     <p className="text-[10px] text-slate-500 uppercase font-bold tracking-wider">{t('providers:details.debt_balance')}</p>
                     <p className={`text-xl font-black font-mono ${ normalizeNumberInput(fournisseur.solde_dette || 0) > 0 ? 'text-red-500' : 'text-emerald-600'}`}>
-                        {formatCurrency(normalizeNumberInput(fournisseur.solde_dette || 0))} {t('common:currency')}
+                        {formatCurrency(normalizeNumberInput(fournisseur.solde_dette || 0))}
                     </p>
                 </div>
             </div>
@@ -208,7 +208,7 @@ export default function FinanceFournisseurModal({ isOpen, onClose, fournisseur, 
                                     {paiements.map((paiement) => (
                                         <tr key={paiement.id} className="hover:bg-white transition-colors border-b border-slate-100">
                                             <td className="font-mono text-sm">
-                                                {new Date(paiement.date_paiement).toLocaleDateString(t('common.date_format_short') === 'dd/MM/yyyy' ? 'fr-FR' : 'en-US')}
+                                                {new Date(paiement.date_paiement).toLocaleDateString(t('common:date_format_short') === 'dd/MM/yyyy' ? 'fr-FR' : 'en-US')}
                                             </td>
                                             <td>
                                                 <span className={`badge badge-sm font-semibold capitalize ${
@@ -238,7 +238,7 @@ export default function FinanceFournisseurModal({ isOpen, onClose, fournisseur, 
                                                 )}
                                             </td>
                                             <td className="text-right font-bold font-mono">
-                                                {formatCurrency(normalizeNumberInput(paiement.montant))} {t('common:currency')}
+                                                {formatCurrency(normalizeNumberInput(paiement.montant))}
                                             </td>
                                             <td className="text-center">
                                                 <button 
@@ -262,3 +262,4 @@ export default function FinanceFournisseurModal({ isOpen, onClose, fournisseur, 
         </PremiumModal>
     );
 }
+

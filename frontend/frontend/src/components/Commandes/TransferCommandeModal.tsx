@@ -242,16 +242,16 @@ export default function TransferCommandeModal({
                                         <span className="text-base-content/50 ml-2">({t('orders:transfer_modal.qty_label', { qty: quantity })})</span>
                                     </div>
                                     <div className="flex items-center gap-2">
-                                        <span className="text-base-content/60">{formatCurrency(currentPrice)} {t('common:currency_symbol', 'F')}</span>
+                                        <span className="text-base-content/60">{formatCurrency(currentPrice)}</span>
                                         {hasPriceInfo && (
                                             <>
                                                 <span className="text-base-content/40">→</span>
                                                 <span className={newPrice < currentPrice ? 'text-success font-semibold' : newPrice > currentPrice ? 'text-error font-semibold' : ''}>
-                                                    {formatCurrency(newPrice)} {t('common:currency_symbol', 'F')}
+                                                    {formatCurrency(newPrice)}
                                                 </span>
                                                 {priceDiff !== 0 && (
                                                     <span className={`badge badge-xs ${priceDiff > 0 ? 'badge-success' : 'badge-error'}`}>
-                                                        {priceDiff > 0 ? '+' : ''}{formatCurrency(priceDiff * quantity)} {t('common:currency_symbol', 'F')}
+                                                        {priceDiff > 0 ? '+' : ''}{formatCurrency(priceDiff * quantity)}
                                                     </span>
                                                 )}
                                             </>
@@ -272,18 +272,18 @@ export default function TransferCommandeModal({
                         <div className="grid grid-cols-3 gap-4 text-center">
                             <div>
                                 <div className="text-xs text-base-content/50 uppercase">{t('orders:transfer_modal.current_cost')}</div>
-                                <div className="font-bold">{formatCurrency(transferCalc.totalCurrentCost)} {t('common:currency_symbol', 'F')}</div>
+                                <div className="font-bold">{formatCurrency(transferCalc.totalCurrentCost)}</div>
                             </div>
                             <div>
                                 <div className="text-xs text-base-content/50 uppercase">{t('orders:transfer_modal.new_cost')}</div>
-                                <div className="font-bold">{formatCurrency(transferCalc.totalNewCost)} {t('common:currency_symbol', 'F')}</div>
+                                <div className="font-bold">{formatCurrency(transferCalc.totalNewCost)}</div>
                             </div>
                             <div>
                                 <div className="text-xs text-base-content/50 uppercase">
                                     {transferCalc.isGain ? t('orders:transfer_modal.savings') : t('orders:transfer_modal.overspend')}
                                 </div>
                                 <div className={`font-bold text-lg ${transferCalc.isGain ? 'text-success' : transferCalc.difference < 0 ? 'text-error' : ''}`}>
-                                    {transferCalc.isGain ? '+' : ''}{formatCurrency(transferCalc.difference)} {t('common:currency_symbol', 'F')}
+                                    {transferCalc.isGain ? '+' : ''}{formatCurrency(transferCalc.difference)}
                                 </div>
                             </div>
                         </div>

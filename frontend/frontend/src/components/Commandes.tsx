@@ -301,8 +301,8 @@ export default function Commandes({ forcedType }: CommandesProps) {
       );
   }
 
-  const onImprimer = () => {
-     if (selectedCommande) handleImprimerReception(selectedCommande);
+  const onImprimer = (fournisseurName: string) => {
+     if (selectedCommande) handleImprimerReception(selectedCommande, fournisseurName);
   }
 
   const onBulkDelete = () => {

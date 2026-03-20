@@ -77,7 +77,7 @@ export default function CentreRapports() {
                                                 <button 
                                                     className="btn btn-ghost btn-sm h-10 rounded-lg gap-2 text-base-content/60 hover:text-primary transition-colors"
                                                     onClick={() => window.print()}
-                                                    title={t('common.print')}
+                                                    title={t('common:print')}
                                                 >
                                                     <Printer className="w-4 h-4" />
                                                 </button>
@@ -176,3 +176,4 @@ export default function CentreRapports() {
         </div>
     );
 }
+

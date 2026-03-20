@@ -157,7 +157,7 @@ function GestionVitrine({ products, isLoading, searchTerm, setSearchTerm, showPu
                                     </div>
                                 </td>
                                 <td className="font-mono whitespace-nowrap">
-                                    {formatCurrency(product.selling_price)} FCFA
+                                    {formatCurrency(product.selling_price)}
                                 </td>
                                 <td>
                                     <div className="join">
@@ -355,7 +355,7 @@ function SimulateurClient() {
                                                 )}
                                                 
                                                 <span className="font-mono text-sm opacity-70">
-                                                    {formatCurrency(normalizeNumberInput(item.public_price || item.selling_price))} FCFA
+                                                    {formatCurrency(normalizeNumberInput(item.public_price || item.selling_price))}
                                                 </span>
                                             </div>
                                         </div>

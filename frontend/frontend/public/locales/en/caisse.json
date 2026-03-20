@@ -7,6 +7,14 @@
     "pending_count": "{{count}} pending invoice(s)",
     "no_pending": "No pending invoices",
     "no_pending_desc": "All invoices have been processed. Ready for the next sale.",
+    "shortcuts": {
+        "title": "Shortcuts:",
+        "navigate": "Navigate",
+        "cash_in": "Cash In",
+        "coupon": "Coupon",
+        "refresh": "Refresh",
+        "quick_select": "Quick select"
+    },
     "table": {
         "ticket": "Ticket",
         "invoice": "Invoice",
@@ -22,7 +30,18 @@
         "remove_coupon": "Remove coupon",
         "coupon_applied": "Coupon applied",
         "cash_in": "Cash In",
-        "not_authorized": "Not authorized"
+        "not_authorized": "Not authorized",
+        "product_placeholder": "Product #{{id}}",
+        "passerby_client": "Walk-in Customer",
+        "view_products": "View products",
+        "products_preview_title": "📦 Products — #{{numero}}",
+        "close": "Close",
+        "product": "Product",
+        "quantity": "Qty",
+        "unit_price_short": "U.P",
+        "total": "Total",
+        "total_ttc": "Total TTC",
+        "no_products": "No products"
     },
     "ticket": {
         "title": "Receipt"
@@ -73,8 +92,17 @@
         "modification_success": "Invoice modified successfully",
         "product_removed": "Product removed from invoice",
         "confirm_cancel_empty": "The invoice is empty. Do you want to cancel it?",
-        "modification_error": "Error during modification"
+        "modification_error": "Error during modification",
+        "save_payment_error": "Error saving payment",
+        "whatsapp_send_error": "Error sending WhatsApp",
+        "cancel_invoice_success": "Invoice cancelled",
+        "cancel_invoice_error": "Error cancelling invoice",
+        "empty_invoice_error": "This invoice contains no products",
+        "load_invoice_error": "Could not load invoice for modification",
+        "enter_whatsapp_number_desc": "Enter WhatsApp number (international format e.g: 237...)"
     },
+    "confirm_cancel_invoice": "Do you really want to cancel invoice #{{numero}}?",
+    "confirm_modify_invoice": "Modify this invoice?\nIt will be removed from the list and reloaded in the sales screen.",
     "confirm_delete_product": "Remove {{name}} from this invoice?",
     "payment": {
         "title": "Payment",

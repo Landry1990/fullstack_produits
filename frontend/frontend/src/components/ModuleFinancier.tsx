@@ -422,7 +422,7 @@ export default function ModuleFinancier() {
               </ResponsiveContainer>
             ) : (
               <div className="h-64 flex items-center justify-center text-base-content/50">
-                {t('common.no_data', 'Aucune donnée')}
+                {t('common:no_data', 'Aucune donnée')}
               </div>
             )}
           </div>
@@ -477,7 +477,7 @@ export default function ModuleFinancier() {
               </div>
             ) : (
               <div className="h-64 flex items-center justify-center text-base-content/50">
-                {t('common.no_data', 'Aucune donnée')}
+                {t('common:no_data', 'Aucune donnée')}
               </div>
             )}
           </div>
@@ -747,7 +747,7 @@ export default function ModuleFinancier() {
             </div>
           ) : (
             <div className="h-48 flex items-center justify-center text-base-content/50">
-              {t('common.no_data', 'Aucune donnée disponible')}
+              {t('common:no_data', 'Aucune donnée disponible')}
             </div>
           )}
         </div>
@@ -858,3 +858,4 @@ export default function ModuleFinancier() {
     </div>
   );
 }
+

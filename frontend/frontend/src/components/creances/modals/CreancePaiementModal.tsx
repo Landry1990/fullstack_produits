@@ -49,7 +49,7 @@ export const CreancePaiementModal: React.FC<CreancePaiementModalProps> = ({
                         <div className="text-blue-700/70 font-medium">{t('creances:payment_modal.by_client')} {creance.client_name}</div>
                         <div className="mt-2 flex items-center gap-2">
                             <span className="text-[10px] font-black uppercase text-blue-400">{t('creances:payment_modal.remaining_balance')}</span>
-                            <span className="text-blue-900 font-black">{formatCurrency(remainingAmount)} {t('common:currency')}</span>
+                            <span className="text-blue-900 font-black">{formatCurrency(remainingAmount)}</span>
                         </div>
                     </div>
                 </div>

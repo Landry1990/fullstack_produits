@@ -282,7 +282,7 @@ const PromotionForm: React.FC<PromotionFormProps> = ({ onClose, onSave, initialD
                                                 onChange={e => setValue(Number(e.target.value))} 
                                             />
                                             <span className="absolute right-4 top-1/2 -translate-y-1/2 font-bold text-gray-400">
-                                                {discountType === DiscountType.PERCENTAGE ? '%' : t('common.currency')}
+                                                {discountType === DiscountType.PERCENTAGE ? '%' : t('common:currency')}
                                             </span>
                                         </div>
                                     </div>
@@ -479,3 +479,4 @@ const PromotionForm: React.FC<PromotionFormProps> = ({ onClose, onSave, initialD
 };
 
 export default PromotionForm;
+

@@ -59,7 +59,7 @@ export const useInventaireAudit = () => {
             setData(response.data);
         } catch (error) {
             console.error("Erreur audit", error);
-            toast.error(t('common.messages.error_loading'));
+            toast.error(t('common:messages.error_loading'));
         } finally {
             setLoading(false);
         }
@@ -77,3 +77,4 @@ export const useInventaireAudit = () => {
         fetchAudit
     };
 };
+

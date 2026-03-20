@@ -1,6 +1,6 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { Eye, Printer, Trash2, RotateCcw, User, Calendar, Receipt, Clock, Copy, FileDigit } from 'lucide-react';
+import { Eye, Printer, Trash2, RotateCcw, User, Calendar, Receipt, Clock, Copy, FileDigit, Truck } from 'lucide-react';
 import type { Facture } from '../../types';
 import { formatCurrency, normalizeNumberInput } from '../../utils/formatters';
 import ActionIcon from '../ui/ActionIcon';
@@ -10,6 +10,7 @@ interface SalesTableProps {
     factures: Facture[];
     onView: (facture: Facture) => void;
     onPrint: (facture: Facture) => void;
+    onPrintBL: (facture: Facture) => void;
     onPrintTicket: (facture: Facture) => void;
     onRefund: (facture: Facture) => void;
     onDuplicate: (facture: Facture) => void;
@@ -23,6 +24,7 @@ export const SalesTable: React.FC<SalesTableProps> = ({
     factures,
     onView,
     onPrint,
+    onPrintBL,
     onPrintTicket,
     onRefund,
     onDuplicate,
@@ -134,9 +136,15 @@ export const SalesTable: React.FC<SalesTableProps> = ({
                         </a>
                     </li>
                     <li>
+                        <a onClick={() => onPrintBL(selectedFacture)} className="gap-3 py-3">
+                            <Truck className="w-4 h-4 text-primary" />
+                            Bon de livraison
+                        </a>
+                    </li>
+                    <li>
                         <a onClick={() => onDuplicate(selectedFacture)} className="gap-3 py-3">
                             <Copy className="w-4 h-4 text-info" />
-                            {t('common.duplicate', { defaultValue: 'Dupliquer' })}
+                            {t('common:duplicate', { defaultValue: 'Dupliquer' })}
                         </a>
                     </li>
                     {(selectedFacture.status === 'VALIDEE' || selectedFacture.status === 'PAY' || selectedFacture.status === 'VAL' || selectedFacture.status === 'PAYEE') && (
@@ -151,7 +159,7 @@ export const SalesTable: React.FC<SalesTableProps> = ({
                         <li>
                             <a onClick={() => onRefund(selectedFacture)} className="gap-3 py-3">
                                 <RotateCcw className="w-4 h-4 text-warning" />
-                                {t('common.refund', { defaultValue: "Modifier/Retour" })}
+                                {t('common:refund', { defaultValue: "Modifier/Retour" })}
                             </a>
                         </li>
                     )}
@@ -167,7 +175,7 @@ export const SalesTable: React.FC<SalesTableProps> = ({
         }
         return (
             <>
-                <li className="menu-title text-xs opacity-50 px-4 py-2 uppercase tracking-widest">{t('common.bulk_actions')}</li>
+                <li className="menu-title text-xs opacity-50 px-4 py-2 uppercase tracking-widest">{t('common:bulk_actions')}</li>
                 <li>
                     <a onClick={handleBulkDelete} className="gap-3 py-3 text-error hover:bg-error/10 font-bold">
                         <Trash2 className="w-4 h-4" />
@@ -179,11 +187,11 @@ export const SalesTable: React.FC<SalesTableProps> = ({
     };
 
     return (
-        <div className="overflow-x-auto min-h-[450px]">
-            <table className="w-full">
-                <thead className="sticky top-0 z-30 bg-base-200 opacity-100">
-                    <tr className="bg-base-200 border-b border-base-300 text-left text-xs font-semibold text-base-content/60 uppercase tracking-wider">
-                        <th className="px-4 py-4 w-10">
+        <div className="overflow-x-auto overflow-y-visible min-h-[450px]">
+            <table className="w-full border-separate border-spacing-0">
+                <thead className="sticky top-0 z-30">
+                    <tr className="bg-base-200 text-left text-xs font-semibold text-base-content/60 uppercase tracking-wider">
+                        <th className="px-4 py-4 w-10 sticky top-0 bg-base-200 border-b border-base-300">
                             <input 
                                 type="checkbox" 
                                 className="checkbox checkbox-xs checkbox-primary"
@@ -203,15 +211,15 @@ export const SalesTable: React.FC<SalesTableProps> = ({
                             </SelectionHeader>
                         ) : (
                             <>
-                                <th className="px-6 py-4">{t('sales:table.invoice_number')}</th>
-                                <th className="px-6 py-4">{t('sales:table.client')}</th>
-                                <th className="px-6 py-4 hidden xl:table-cell">{t('sales:table.operator')}</th>
-                                <th className="px-6 py-4 text-center">{t('sales:table.amount')}</th>
-                                <th className="px-6 py-4 text-center">{t('sales:table.amount_settled')}</th>
-                                <th className="px-6 py-4 text-center">{t('sales:table.amount_on_account')}</th>
-                                <th className="px-6 py-4 text-center">{t('sales:table.discount')}</th>
-                                <th className="px-6 py-4 text-center hidden md:table-cell">{t('sales:table.status')}</th>
-                                <th className="px-6 py-4 text-right pr-6">{t('sales:table.actions')}</th>
+                                <th className="px-6 py-4 sticky top-0 bg-base-200 border-b border-base-300">{t('sales:table.invoice_number')}</th>
+                                <th className="px-6 py-4 sticky top-0 bg-base-200 border-b border-base-300">{t('sales:table.client')}</th>
+                                <th className="px-6 py-4 sticky top-0 bg-base-200 border-b border-base-300 hidden xl:table-cell">{t('sales:table.operator')}</th>
+                                <th className="px-6 py-4 sticky top-0 bg-base-200 border-b border-base-300 text-center">{t('sales:table.amount')}</th>
+                                <th className="px-6 py-4 sticky top-0 bg-base-200 border-b border-base-300 text-center">{t('sales:table.amount_settled')}</th>
+                                <th className="px-6 py-4 sticky top-0 bg-base-200 border-b border-base-300 text-center">{t('sales:table.amount_on_account')}</th>
+                                <th className="px-6 py-4 sticky top-0 bg-base-200 border-b border-base-300 text-center">{t('sales:table.discount')}</th>
+                                <th className="px-6 py-4 sticky top-0 bg-base-200 border-b border-base-300 text-center hidden md:table-cell">{t('sales:table.status')}</th>
+                                <th className="px-6 py-4 sticky top-0 bg-base-200 border-b border-base-300 text-right pr-6">{t('sales:table.actions')}</th>
                             </>
                         )}
                     </tr>
@@ -235,12 +243,12 @@ export const SalesTable: React.FC<SalesTableProps> = ({
                                     <span className="font-bold text-base-content flex items-center gap-2">
                                         #{facture.numero_facture || facture.id}
                                     </span>
-                                    <span className="text-xs text-base-content/60 flex flex-wrap items-center gap-x-3 gap-y-1 mt-0.5">
-                                        <span className="flex items-center gap-1.5">
+                                    <span className="text-xs text-base-content/60 flex flex-nowrap items-center gap-x-3 gap-y-1 mt-0.5 whitespace-nowrap">
+                                        <span className="flex items-center gap-1.5 shrink-0">
                                             <Calendar className="w-3 h-3" />
                                             {formatDateOnlyFr(facture.date)}
                                         </span>
-                                        <span className="flex items-center gap-1.5 text-primary/70 font-medium">
+                                        <span className="flex items-center gap-1.5 text-primary/70 font-medium shrink-0">
                                             <Clock className="w-3 h-3" />
                                             {formatTimeOnlyFr(facture.date)}
                                         </span>
@@ -249,13 +257,18 @@ export const SalesTable: React.FC<SalesTableProps> = ({
                             </td>
                             <td className="px-6 py-4">
                                 <div className="flex items-center gap-2">
-                                    <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary">
+                                    <div className={`w-8 h-8 rounded-full flex items-center justify-center ${facture.ayant_droit_details ? 'bg-info/10 text-info' : 'bg-primary/10 text-primary'}`}>
                                         <User className="w-4 h-4" />
                                     </div>
-                                    <div>
-                                        <div className="font-medium text-base-content">
-                                        {facture.client_name || facture.client_name_override || t('common:passerby_client')}
+                                    <div className="flex flex-col">
+                                        <div className="font-medium text-base-content whitespace-nowrap">
+                                            {facture.ayant_droit_details?.nom || facture.client_name || facture.client_name_override || t('common:passerby_client')}
                                         </div>
+                                        {facture.ayant_droit_details && (
+                                            <div className="text-[10px] text-base-content/50 uppercase font-black tracking-tight leading-none mt-0.5">
+                                                {facture.client_name}
+                                            </div>
+                                        )}
                                     </div>
                                 </div>
                             </td>
@@ -265,24 +278,24 @@ export const SalesTable: React.FC<SalesTableProps> = ({
                                 </div>
                             </td>
                             <td className="px-6 py-4 text-center">
-                                <span className="inline-flex items-center px-2.5 py-1 rounded-lg bg-base-200 text-base-content font-mono font-bold text-sm border border-base-300 group-hover:bg-base-100 group-hover:border-primary/30 group-hover:text-primary group-hover:shadow-sm transition-all">
+                                <span className="inline-flex items-center px-1.5 py-1 rounded-lg bg-base-200 text-base-content font-mono font-bold text-sm border border-base-300 group-hover:bg-base-100 group-hover:border-primary/30 group-hover:text-primary group-hover:shadow-sm transition-all whitespace-nowrap">
                                     {formatCurrency(normalizeNumberInput(facture.total_ttc))}
                                 </span>
                             </td>
-                            <td className="px-6 py-4 text-center">
-                                <span className="text-success font-bold font-mono text-sm">
+                            <td className="px-6 py-4 text-center whitespace-nowrap">
+                                <span className="text-success font-bold font-mono text-sm uppercase">
                                     {formatCurrency(normalizeNumberInput(facture.montant_regle || '0'))}
                                 </span>
 
                                 
                             </td>
-                            <td className="px-6 py-4 text-center">
-                                <span className={`${normalizeNumberInput(facture.montant_en_compte || '0') > 0 ? 'text-warning' : 'text-base-content/30'} font-bold font-mono text-sm`}>
+                            <td className="px-6 py-4 text-center whitespace-nowrap">
+                                <span className={`${normalizeNumberInput(facture.montant_en_compte || '0') > 0 ? 'text-warning' : 'text-base-content/30'} font-bold font-mono text-sm uppercase`}>
                                     {formatCurrency(normalizeNumberInput(facture.montant_en_compte || '0'))}
                                 </span>
                             </td>
-                            <td className="px-6 py-4 text-center">
-                                <span className="text-error font-medium font-mono text-sm">
+                            <td className="px-6 py-4 text-center whitespace-nowrap">
+                                <span className="text-error font-medium font-mono text-sm uppercase">
                                     {formatCurrency(normalizeNumberInput(facture.remise || '0'))}
                                 </span>
                             </td>
@@ -318,6 +331,12 @@ export const SalesTable: React.FC<SalesTableProps> = ({
                                             title="Ticket Caisse"
                                             variant="primary"
                                         />
+                                        <ActionIcon 
+                                            icon={Truck}
+                                            onClick={() => onPrintBL(facture)}
+                                            title="Bon de livraison"
+                                            variant="primary"
+                                        />
                                     </div>
                                 )}
                             </td>
@@ -328,3 +347,4 @@ export const SalesTable: React.FC<SalesTableProps> = ({
         </div>
     );
 };
+

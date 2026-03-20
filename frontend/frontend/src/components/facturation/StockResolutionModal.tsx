@@ -118,7 +118,7 @@ export default function StockResolutionModal({
           <table className="table w-full">
             <thead className="bg-base-100">
               <tr>
-                <th>{t('common.product')}</th>
+                <th>{t('common:product')}</th>
                 <th>{t('stock_resolution.demand')}</th>
                 <th className="text-right">{t('stock_resolution.stock')}</th>
                 <th className="text-right">{t('stock_resolution.missing')}</th>
@@ -189,3 +189,4 @@ export default function StockResolutionModal({
     </PremiumModal>
   )
 }
+

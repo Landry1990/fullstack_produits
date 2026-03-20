@@ -104,14 +104,14 @@ export const ObjectiveModal: React.FC<ObjectiveModalProps> = ({
                             onClick={onClose} 
                             className="btn btn-ghost flex-1 rounded-xl font-bold uppercase text-xs"
                         >
-                            {t('common.cancel')}
+                            {t('common:cancel')}
                         </button>
                         <button 
                             onClick={onSave} 
                             className="btn btn-primary flex-1 rounded-xl font-bold uppercase text-xs gap-2"
                         >
                             <Save className="w-4 h-4" />
-                            {t('common.save')}
+                            {t('common:save')}
                         </button>
                     </div>
                 </div>
@@ -120,3 +120,4 @@ export const ObjectiveModal: React.FC<ObjectiveModalProps> = ({
         </div>
     );
 };
+

@@ -25,7 +25,7 @@ export const ClientNameModal: React.FC<ClientNameModalProps> = ({
             let initialName = '';
             if (facture.client_name_override) {
                 initialName = facture.client_name_override;
-            } else if (facture.client_name && facture.client_name !== t('common.passerby_client')) {
+            } else if (facture.client_name && facture.client_name !== t('common:passerby_client')) {
                 initialName = facture.client_name;
             }
             setClientNameInput(initialName);
@@ -88,14 +88,14 @@ export const ClientNameModal: React.FC<ClientNameModalProps> = ({
                             onClick={onClose}
                             className="px-4 py-2 text-gray-600 font-medium hover:bg-gray-100 rounded-lg transition-colors"
                         >
-                            {t('common.cancel')}
+                            {t('common:cancel')}
                         </button>
                         <button
                             type="submit"
                             className="px-6 py-2 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 focus:ring-4 focus:ring-blue-200 transition-all flex items-center gap-2 shadow-lg shadow-blue-600/20"
                         >
                             <Printer className="w-4 h-4" />
-                            {t('common.print')}
+                            {t('common:print')}
                         </button>
                     </div>
                 </form>
@@ -103,3 +103,4 @@ export const ClientNameModal: React.FC<ClientNameModalProps> = ({
         </div>
     );
 };
+

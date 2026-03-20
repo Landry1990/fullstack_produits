@@ -20,4 +20,6 @@ export interface Client {
     ayants_droit?: AyantDroit[]
     current_debt?: string
     is_active?: boolean
+    points_fidelite?: number
+    is_loyalty_member?: boolean
 }

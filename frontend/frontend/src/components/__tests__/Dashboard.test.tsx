@@ -5,23 +5,20 @@ import Dashboard from '../Dashboard';
 import * as useDashboardHooks from '../../hooks/useDashboard';
 
 // Mock recharts
-vi.mock('recharts', () => {
-    const OriginalModule = vi.importActual('recharts');
-    return {
-        ...OriginalModule,
-        ResponsiveContainer: ({ children }: any) => <div style={{ width: 500, height: 300 }}>{children}</div>,
-        BarChart: ({ children }: any) => <div data-testid="bar-chart">{children}</div>,
-        Bar: () => <div data-testid="bar" />,
-        AreaChart: ({ children }: any) => <div data-testid="area-chart">{children}</div>,
-        Area: () => <div data-testid="area" />,
-        LineChart: ({ children }: any) => <div data-testid="line-chart">{children}</div>,
-        Line: () => <div data-testid="line" />,
-        XAxis: () => <div data-testid="x-axis" />,
-        YAxis: () => <div data-testid="y-axis" />,
-        CartesianGrid: () => <div data-testid="cartesian-grid" />,
-        Tooltip: () => <div data-testid="tooltip" />,
-    };
-});
+// Mock recharts
+vi.mock('recharts', () => ({
+    ResponsiveContainer: ({ children }: any) => <div style={{ width: 500, height: 300 }}>{children}</div>,
+    BarChart: ({ children }: any) => <div data-testid="bar-chart">{children}</div>,
+    Bar: () => <div data-testid="bar" />,
+    AreaChart: ({ children }: any) => <div data-testid="area-chart">{children}</div>,
+    Area: () => <div data-testid="area" />,
+    LineChart: ({ children }: any) => <div data-testid="line-chart">{children}</div>,
+    Line: () => <div data-testid="line" />,
+    XAxis: () => <div data-testid="x-axis" />,
+    YAxis: () => <div data-testid="y-axis" />,
+    CartesianGrid: () => <div data-testid="cartesian-grid" />,
+    Tooltip: () => <div data-testid="tooltip" />,
+}));
 
 // Mock hooks — includes ALL hooks used by Dashboard
 vi.mock('../../hooks/useDashboard', () => ({

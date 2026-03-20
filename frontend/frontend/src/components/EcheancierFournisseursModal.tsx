@@ -149,7 +149,7 @@ export default function EcheancierFournisseursModal({ isOpen, onClose, onRegler,
                     </td>
                     <td className="py-3 text-right">
                       <div className={`font-black tracking-tight ${e.status === 'EN RETARD' ? 'text-red-600' : 'text-slate-700'}`}>
-                        {formatCurrency(e.montant_du)} F
+                        {formatCurrency(e.montant_du)}
                       </div>
                     </td>
                     <td className="py-3 text-center">

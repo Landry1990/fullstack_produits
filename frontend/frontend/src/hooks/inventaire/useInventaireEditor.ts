@@ -104,7 +104,7 @@ export const useInventaireEditor = (
             await fetchInventoryStats(inv.id);
         } catch (error) {
             console.error(error);
-            toast.error(t('common.messages.error_loading'));
+            toast.error(t('common:messages.error_loading'));
         }
     };
 
@@ -321,7 +321,7 @@ export const useInventaireEditor = (
                 await fetchInventoryStats(activeInventaire.id);
             }
 
-            toast.success(t('common.messages.saved'));
+            toast.success(t('common:messages.saved'));
         } catch (error) {
             console.error("Erreur save manual", error);
             toast.error(t('inventaire.detail.save_error'));
@@ -481,3 +481,4 @@ export const useInventaireEditor = (
         inventoryStats, fetchInventoryStats
     };
 };
+

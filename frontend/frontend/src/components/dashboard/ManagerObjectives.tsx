@@ -33,7 +33,7 @@ export const ManagerObjectives: React.FC<ManagerObjectivesProps> = ({ currentObj
                 <button 
                     onClick={onRefresh} 
                     className="btn btn-ghost btn-sm btn-circle"
-                    title={t('common.refresh')}
+                    title={t('common:refresh')}
                 >
                     <RefreshCw className="w-4 h-4" />
                 </button>
@@ -70,3 +70,4 @@ export const ManagerObjectives: React.FC<ManagerObjectivesProps> = ({ currentObj
         </div>
     );
 };
+

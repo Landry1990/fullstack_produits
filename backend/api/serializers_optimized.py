@@ -47,6 +47,7 @@ class ClientListSerializer(serializers.ModelSerializer):
     Serializer allégé pour la liste des clients.
     """
     current_debt = serializers.DecimalField(max_digits=12, decimal_places=2, read_only=True)
+    ayants_droit_count = serializers.IntegerField(source='ayants_droit.count', read_only=True)
     
     class Meta:
         model = Client
@@ -54,7 +55,7 @@ class ClientListSerializer(serializers.ModelSerializer):
             'id', 'name', 'phone', 'email', 'address',
             'client_type', 'current_debt', 'is_loyalty_member',
             'points_fidelite', 'taux_couverture', 'plafond',
-            'remise_automatique'
+            'remise_automatique', 'ayants_droit_count'
         ]
 
 
@@ -79,16 +80,25 @@ class FactureListSerializer(serializers.ModelSerializer):
     total_ttc = serializers.DecimalField(max_digits=10, decimal_places=2, read_only=True)
     montant_regle = serializers.DecimalField(max_digits=10, decimal_places=2, read_only=True)
     montant_en_compte = serializers.DecimalField(max_digits=10, decimal_places=2, read_only=True)
+    ayant_droit_details = serializers.SerializerMethodField()
     
     class Meta:
         model = Facture
         fields = [
             'id', 'numero_facture', 'client', 'client_name', 'created_by_name',
-            'validated_by_name',
+            'validated_by_name', 'ayant_droit_details',
             'date', 'status', 'status_display',
             'total_ht', 'total_ttc', 'remise', 'session_ticket_number',
             'montant_regle', 'montant_en_compte'
         ]
+
+    def get_ayant_droit_details(self, obj):
+        if obj.ayant_droit:
+            return {
+                'nom': obj.ayant_droit.nom,
+                'matricule': obj.ayant_droit.matricule
+            }
+        return None
 
     session_ticket_number = serializers.IntegerField(source='ticket_session', read_only=True)
     

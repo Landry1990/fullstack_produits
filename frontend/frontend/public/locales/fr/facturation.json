@@ -2,7 +2,7 @@
     "title": "Vente & Facturation",
     "shortcuts": {
         "search": "Rechercher (F2)",
-        "pay": "Encaisser (F9)"
+        "pay": "Valider (F9)"
     },
     "cart": {
         "title": "Panier de vente",
@@ -46,8 +46,9 @@
         "view_pending_tooltip": "Voir les ventes en attente (F8)",
         "proforma": "Proforma",
         "proforma_tooltip": "Générer une facture proforma / Devis (F10)",
-        "pay": "Encaisser",
-        "pay_tooltip": "Procéder au paiement (Ctrl+Entrée)",
+        "delivery_note": "Bon de Livraison",
+        "pay": "Valider",
+        "pay_tooltip": "Valider la vente (Ctrl+Entrée)",
         "retrocession_mode": "Rétrocession",
         "facture_a4": "Facture A4",
         "facture_a4_tooltip": "Imprimer directement une Facture A4 (désactive le ticket)"
@@ -160,5 +161,24 @@
         "to_collect": "à encaisser",
         "to_refund": "à rembourser",
         "cancelled": "Modification annulée"
+    },
+    "common": {
+        "receipt": "Ticket de caisse",
+        "close": "Fermer",
+        "print": "Imprimer",
+        "pay": "Valider"
+    },
+    "sale_recorded": "Vente enregistrée avec succès",
+    "invoice": "Facture",
+    "create_client": {
+        "title": "Créer un nouveau client",
+        "individual": "Particulier",
+        "professional": "Professionnel",
+        "name": "Nom complet",
+        "phone": "Téléphone",
+        "email": "Email",
+        "address": "Adresse",
+        "cancel": "Annuler",
+        "submit": "Créer le client"
     }
 }

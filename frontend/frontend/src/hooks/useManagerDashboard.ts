@@ -81,7 +81,7 @@ export const useManagerDashboard = () => {
 
                     const filename = `stocks_morts_${now.toISOString().split('T')[0]}.xlsx`;
                     XLSX.writeFile(wb, filename);
-                    toast.success(t('common.export_success', 'Export réussi'));
+                    toast.success(t('common:export_success', 'Export réussi'));
                 } else {
                     toast(t('manager_dashboard.no_dead_stock', 'Aucun stock mort trouvé.'));
                 }
@@ -101,10 +101,10 @@ export const useManagerDashboard = () => {
             document.body.appendChild(link);
             link.click();
             link.remove();
-            toast.success(t('common.export_success', 'Export réussi'));
+            toast.success(t('common:export_success', 'Export réussi'));
         } catch (error: unknown) {
             console.error('Export error:', error);
-            toast.error(t('common.export_error', 'Erreur lors de l\'export'));
+            toast.error(t('common:export_error', 'Erreur lors de l\'export'));
         } finally {
             setExporting(false);
         }

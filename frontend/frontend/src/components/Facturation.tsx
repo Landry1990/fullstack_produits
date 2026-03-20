@@ -58,6 +58,7 @@ export default function Facturation() {
 
   // Refs - declared early for hook usage
   const quantityInputsRef = useRef<Map<number, HTMLInputElement>>(new Map())
+  const hasLoadedDevisRef = useRef(false)
   
   // Ref for barcode callback (to avoid hook ordering issues)
   const addProductRef = useRef<((product: ProduitModel, options?: { isRetrocession?: boolean; preventFocus?: boolean }) => void) | null>(null)
@@ -402,6 +403,7 @@ export default function Facturation() {
 
       isModificationMode, setIsModificationMode,
       modificationInvoiceId, setModificationInvoiceId,
+      modificationInvoiceStatus, setModificationInvoiceStatus,
       originalTotalTtc, setOriginalTotalTtc,
 
       // Actions
@@ -538,10 +540,13 @@ export default function Facturation() {
   // Charger un devis depuis safeStorage si présent (navigation depuis Ventes)
   useEffect(() => {
     const loadDevis = async () => {
+      if (hasLoadedDevisRef.current) return
+      
       const devisString = safeStorage.getItem('devis_to_load', 'local')
       if (!devisString) return
       
       try {
+        hasLoadedDevisRef.current = true
         const devis = JSON.parse(devisString) as Facture
         
         // Charger les informations du client
@@ -614,6 +619,7 @@ export default function Facturation() {
           // Mode modification - facture déjà validée/payée
           setIsModificationMode(true)
           setModificationInvoiceId(devis.id)
+          setModificationInvoiceStatus(devis.status || null)
           setOriginalTotalTtc(Number(devis.total_ttc || 0))
           toast.success(`Facture #${devis.numero_facture || devis.id} chargée en mode modification`)
         } else if (devis.id) {
@@ -963,7 +969,8 @@ export default function Facturation() {
         // Sudo Mode - pass the operator selected during line edits or stock force
         validated_by_id: effectiveSudo?.validatorId || null,
         sudo_password: effectiveSudo?.password || undefined,
-        modificationInvoiceId: modificationInvoiceId
+        modificationInvoiceId: modificationInvoiceId,
+        modificationInvoiceStatus: modificationInvoiceStatus || undefined
     };
 
     await completeSale(params);
@@ -1087,6 +1094,86 @@ export default function Facturation() {
     } catch (error) {
       console.error("Erreur lors de la génération du proforma:", error)
       toast.error("Erreur lors de la création du proforma")
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleBonDeLivraison = async () => {
+    if (lignesFacture.length === 0) {
+      toast.error("Le panier est vide")
+      return
+    }
+
+    if (isModificationMode && modificationInvoiceId) {
+      window.open(`/app/print-invoice/${modificationInvoiceId}?type=BL`, '_blank')
+      return
+    }
+
+    setLoading(true)
+    try {
+      // 1. Create Facture (Status PROF)
+      const facturesEndpoint = apiBaseUrl ? `${apiBaseUrl}/api/factures/` : '/api/factures/'
+      const factureProduitsEndpoint = apiBaseUrl ? `${apiBaseUrl}/api/facture-produits/` : '/api/facture-produits/'
+
+      const facturePayload = {
+        client: selectedClient || null,
+        client_name_override: manualClientName || null,
+        ayant_droit: selectedAyantDroit || null,
+        status: 'PROF',
+        remise: Number(remiseGlobale) || 0,
+        notes: "Généré via Bon de Livraison"
+      }
+      
+      const res = await axios.post(facturesEndpoint, facturePayload, {
+        headers: { Authorization: `Token ${safeStorage.getItem('authToken')}` }
+      })
+      const createdFacture = res.data
+      
+      // 2. Add Products
+      const produitsPayload = lignesFacture.map(ligne => {
+        const prixUnitaire = Number(ligne.prix_unitaire)
+        const remiseProduit = Number(ligne.remise_produit) || 0
+        const prixNet = prixUnitaire * (1 - remiseProduit / 100)
+        
+        // Sécuriser l'ID du lot (doit être un nombre ou null)
+        const lotIdNum = ligne.lotId && !isNaN(Number(ligne.lotId)) ? Number(ligne.lotId) : null
+        
+        return {
+          facture: createdFacture.id,
+          produit: ligne.produit.id,
+          produit_nom: ligne.produit.name,
+          quantity: Number(ligne.quantite),
+          selling_price: prixNet.toFixed(2),
+          discount: (prixUnitaire - prixNet).toFixed(2),
+          stock_lot_id: lotIdNum,
+          lot: ligne.lotText || null,
+          date_expiration: ligne.lotExpiration || ligne.produit.expire_date || null,
+        }
+      })
+      
+      // On utilise une boucle simple pour mieux capturer les erreurs individuelles si besoin
+      for (const payload of produitsPayload) {
+        await axios.post(factureProduitsEndpoint, payload, {
+          headers: { Authorization: `Token ${safeStorage.getItem('authToken')}` }
+        })
+      }
+      
+      // 3. Open Print Window with type=BL
+      window.open(`/app/print-invoice/${createdFacture.id}?type=BL`, '_blank')
+      
+      // 4. Switch to modification mode to reuse this invoice ID for final validation
+      setModificationInvoiceId(createdFacture.id)
+      setModificationInvoiceStatus('PROF')
+      setIsModificationMode(true)
+      
+      toast.success("Bon de livraison généré - Document prêt pour validation")
+      
+    } catch (error: any) {
+      console.error("Erreur lors de la génération du bon de livraison:", error)
+      const errorMsg = error.response?.data?.detail || error.response?.data ? JSON.stringify(error.response.data) : error.message
+      console.log("Détails de l'erreur:", errorMsg)
+      toast.error(`Erreur lors de la création du document : ${errorMsg}`)
     } finally {
       setLoading(false)
     }
@@ -1367,11 +1454,11 @@ export default function Facturation() {
           <div className="flex-1">
             <h3 className="font-bold">{t('facturation:modification_mode.title')}</h3>
             <div className="text-xs flex flex-wrap gap-4">
-              <span>{t('facturation:modification_mode.original_total')}: <strong>{formatCurrency(Math.round(originalTotalTtc))} F</strong></span>
-              <span>{t('facturation:modification_mode.new_total')}: <strong>{formatCurrency(Math.round(totals.totalTtc))} F</strong></span>
+              <span>{t('facturation:modification_mode.original_total')}: <strong>{formatCurrency(Math.round(originalTotalTtc))}</strong></span>
+              <span>{t('facturation:modification_mode.new_total')}: <strong>{formatCurrency(Math.round(totals.totalTtc))}</strong></span>
               {totals.totalTtc !== originalTotalTtc && (
                 <span className={totals.totalTtc > originalTotalTtc ? 'text-success font-bold' : 'text-error font-bold'}>
-                  {t('facturation:modification_mode.difference')}: {totals.totalTtc > originalTotalTtc ? '+' : ''}{formatCurrency(Math.round(totals.totalTtc - originalTotalTtc))} F
+                  {t('facturation:modification_mode.difference')}: {totals.totalTtc > originalTotalTtc ? '+' : ''}{formatCurrency(Math.round(totals.totalTtc - originalTotalTtc))}
                   {totals.totalTtc > originalTotalTtc ? ` (${t('facturation:modification_mode.to_collect')})` : ` (${t('facturation:modification_mode.to_refund')})`}
                 </span>
               )}
@@ -1519,6 +1606,7 @@ export default function Facturation() {
           <ActionButtons
             onPayment={handlePaymentClick}
             onProforma={handleProforma}
+            onBonDeLivraison={handleBonDeLivraison}
             onSuspend={mettreEnAttente}
             onViewPending={() => setShowPendingSales(true)}
             pendingCount={ventesEnAttente.length}

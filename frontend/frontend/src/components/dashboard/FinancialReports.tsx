@@ -64,7 +64,7 @@ export const FinancialReports: React.FC<FinancialReportsProps> = ({ onExport, ex
                             disabled={exporting}
                         >
                             {exporting ? <span className="loading loading-spinner loading-xs"></span> : <Download className="w-4 h-4" />}
-                            {t('common.download', 'Télécharger')}
+                            {t('common:download', 'Télécharger')}
                         </button>
                     </div>
                 ))}
@@ -72,3 +72,4 @@ export const FinancialReports: React.FC<FinancialReportsProps> = ({ onExport, ex
         </div>
     );
 };
+

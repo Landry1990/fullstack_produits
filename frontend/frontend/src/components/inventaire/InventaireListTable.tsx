@@ -31,7 +31,7 @@ export const InventaireListTable: React.FC<InventaireListTableProps> = ({
         return (
             <div className="flex flex-col items-center justify-center py-20 text-gray-400 animate-in fade-in duration-500">
                 <div className="w-16 h-16 border-4 border-primary/20 border-t-primary rounded-full animate-spin mb-4"></div>
-                <p className="font-medium animate-pulse">{t('common.loading')}</p>
+                <p className="font-medium animate-pulse">{t('common:loading')}</p>
             </div>
         );
     }
@@ -136,7 +136,7 @@ export const InventaireListTable: React.FC<InventaireListTableProps> = ({
                                     <button 
                                         className="p-2 text-base-content/60 hover:text-primary hover:bg-primary/10 rounded-lg transition-all" 
                                         onClick={() => onEdit(inv)}
-                                        title={t('common.details')}
+                                        title={t('common:details')}
                                     >
                                         <ChevronRight className="h-5 w-5" />
                                     </button>
@@ -157,3 +157,4 @@ export const InventaireListTable: React.FC<InventaireListTableProps> = ({
         </div>
     );
 }
+

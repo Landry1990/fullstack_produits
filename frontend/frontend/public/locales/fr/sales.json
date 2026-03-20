@@ -135,8 +135,14 @@
         "tiers_payant_validated": "Facture {{number}} validée (Tiers payant 100%)",
         "sent_to_caisse": "Vente envoyée à la Caisse Centralisée (Ticket #{{id}})",
         "load_error": "Erreur lors du chargement",
-        "load_details_error": "Impossible de charger le détail."
+        "load_details_error": "Impossible de charger le détail.",
+        "loading_details": "Chargement des détails..."
     },
     "confirm_delete": "Supprimer cette facture ?",
-    "confirm_bulk_delete": "Confirmer la suppression de {{count}} factures ? (Seuls les brouillons/annulés seront supprimés)"
+    "confirm_bulk_delete": "Confirmer la suppression de {{count}} factures ? (Seuls les brouillons/annulés seront supprimés)",
+    "common": {
+        "passerby_client": "Client de passage",
+        "cancel": "Annuler",
+        "print": "Imprimer"
+    }
 }

@@ -20,8 +20,10 @@ vi.mock('../../hooks/usePharmacySettings')
 vi.mock('../../hooks/usePendingSales')
 
 vi.mock('@tanstack/react-query', () => ({
-  useQueryClient: vi.fn()
-}))
+    useQuery: vi.fn().mockReturnValue({ data: null, isLoading: false }),
+    useMutation: vi.fn().mockReturnValue({ mutate: vi.fn(), isLoading: false }),
+    useQueryClient: vi.fn().mockReturnValue({ invalidateQueries: vi.fn() }),
+}));
 
 // Mock des sous-composants
 vi.mock('../LotSelectionModal', () => ({ default: () => <div data-testid="lot-modal" /> }))

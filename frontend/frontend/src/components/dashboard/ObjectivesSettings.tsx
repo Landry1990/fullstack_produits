@@ -173,7 +173,7 @@ export function ObjectivesSettings({ isOpen, onClose }: Props) {
                                                     value={config.seuil_rentabilite_mensuel}
                                                     onChange={e => setConfig({...config, seuil_rentabilite_mensuel: normalizeNumberInput(e.target.value)})}
                                                 />
-                                                <span className="btn join-item pointer-events-none bg-base-200 border-base-200">{t('common.currency_symbol', 'F')}</span>
+                                                <span className="btn join-item pointer-events-none bg-base-200 border-base-200">{t('common:currency_symbol', 'F')}</span>
                                             </div>
                                             <label className="label">
                                                 <span className="label-text-alt text-base-content/60">{t('manager_dashboard.settings.fixed.expenses_help')}</span>
@@ -236,7 +236,7 @@ export function ObjectivesSettings({ isOpen, onClose }: Props) {
                         className="btn btn-ghost rounded-xl font-bold"
                         disabled={mutation.isPending}
                     >
-                        {t('common.cancel')}
+                        {t('common:cancel')}
                     </button>
                     <button 
                         onClick={handleSave}
@@ -248,7 +248,7 @@ export function ObjectivesSettings({ isOpen, onClose }: Props) {
                         ) : (
                             <>
                                 <Save className="w-4 h-4" />
-                                {t('common.save')}
+                                {t('common:save')}
                             </>
                         )}
                     </button>
@@ -257,3 +257,4 @@ export function ObjectivesSettings({ isOpen, onClose }: Props) {
         </div>
     );
 }
+

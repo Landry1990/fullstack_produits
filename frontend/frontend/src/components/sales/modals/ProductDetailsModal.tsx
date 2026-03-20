@@ -82,30 +82,32 @@ export const ProductDetailsModal: React.FC<ProductDetailsModalProps> = ({
                                 {facture.status_display}
                             </span>
                         </div>
-                        <div className="flex items-center gap-4 text-sm text-gray-500">
-                            <span className="flex items-center gap-1.5">
+                        <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-gray-500">
+                            <span className="flex items-center gap-1.5 shrink-0">
                                 <span className="font-mono font-medium text-gray-700">#{facture.numero_facture || facture.id}</span>
                             </span>
-                            <span className="w-1 h-1 bg-gray-300 rounded-full" />
-                            <span className="flex items-center gap-1.5">
+                            <span className="w-1 h-1 bg-gray-300 rounded-full hidden sm:block" />
+                            <span className="flex items-center gap-1.5 shrink-0">
                                 <Calendar className="w-3.5 h-3.5" />
                                 {new Date(facture.date).toLocaleString()}
                             </span>
-                            <span className="w-1 h-1 bg-gray-300 rounded-full" />
-                            <span className="flex items-center gap-1.5">
-                                <User className="w-3.5 h-3.5" />
-                                {facture.client_name || facture.client_name_override || t('common.passerby_client')}
+                            <span className="w-1 h-1 bg-gray-300 rounded-full hidden sm:block" />
+                            <span className="flex items-center gap-1.5 min-w-0">
+                                <User className="w-3.5 h-3.5 shrink-0" />
+                                <span className="truncate max-w-[200px] sm:max-w-none font-medium text-gray-700">
+                                    {facture.client_name || facture.client_name_override || t('common:passerby_client')}
+                                </span>
                             </span>
-                            <span className="w-1 h-1 bg-gray-300 rounded-full" />
-                            <span className="flex items-center gap-1.5" title={t('table.operator')}>
+                            <span className="w-1 h-1 bg-gray-300 rounded-full hidden sm:block" />
+                            <span className="flex items-center gap-1.5 shrink-0" title={t('table.operator')}>
                                 <User className="w-3.5 h-3.5 text-blue-500" />
                                 <span className="text-gray-500 text-xs">{t('table.operator')} :</span>
                                 <span className="text-gray-600 font-medium">{facture.created_by_name || '-'}</span>
                             </span>
                             {facture.paiements && facture.paiements.length > 0 && facture.paiements[0].user_details ? (
                                 <>
-                                    <span className="w-1 h-1 bg-gray-300 rounded-full" />
-                                    <span className="flex items-center gap-1.5" title="Caissier">
+                                    <span className="w-1 h-1 bg-gray-300 rounded-full hidden sm:block" />
+                                    <span className="flex items-center gap-1.5 shrink-0" title="Caissier">
                                         <div className="w-3.5 h-3.5 rounded-full bg-green-100 flex items-center justify-center">
                                             <User className="w-2.5 h-2.5 text-green-600" />
                                         </div>
@@ -115,8 +117,8 @@ export const ProductDetailsModal: React.FC<ProductDetailsModalProps> = ({
                                 </>
                             ) : facture.validated_by_name && (
                                 <>
-                                    <span className="w-1 h-1 bg-gray-300 rounded-full" />
-                                    <span className="flex items-center gap-1.5" title="Caissier">
+                                    <span className="w-1 h-1 bg-gray-300 rounded-full hidden sm:block" />
+                                    <span className="flex items-center gap-1.5 shrink-0" title="Caissier">
                                         <div className="w-3.5 h-3.5 rounded-full bg-green-100 flex items-center justify-center">
                                             <User className="w-2.5 h-2.5 text-green-600" />
                                         </div>
@@ -125,10 +127,10 @@ export const ProductDetailsModal: React.FC<ProductDetailsModalProps> = ({
                                     </span>
                                 </>
                             )}
-                             {facture.cancelled_by_name && (
+                            {facture.cancelled_by_name && (
                                 <>
-                                    <span className="w-1 h-1 bg-gray-300 rounded-full" />
-                                    <span className="flex items-center gap-1.5" title="Annulé par">
+                                    <span className="w-1 h-1 bg-gray-300 rounded-full hidden sm:block" />
+                                    <span className="flex items-center gap-1.5 shrink-0" title="Annulé par">
                                         <div className="w-3.5 h-3.5 rounded-full bg-red-100 flex items-center justify-center">
                                             <User className="w-2.5 h-2.5 text-red-600" />
                                         </div>
@@ -144,7 +146,7 @@ export const ProductDetailsModal: React.FC<ProductDetailsModalProps> = ({
                                 <div className="flex gap-2">
                                     {facture.paiements.map((p, idx) => (
                                         <span key={idx} className="bg-gray-100 px-1.5 py-0.5 rounded text-gray-700 border border-gray-200">
-                                            {p.mode_paiement_display} ({formatCurrency(parseFloat(p.montant))} F)
+                                            {p.mode_paiement_display} ({formatCurrency(parseFloat(p.montant))})
                                         </span>
                                     ))}
                                 </div>
@@ -206,7 +208,7 @@ export const ProductDetailsModal: React.FC<ProductDetailsModalProps> = ({
                                                     )}
                                                     {remiseUnitaire > 0 && (
                                                         <span className="text-[10px] text-orange-600 font-medium bg-orange-50 px-1.5 py-0.5 rounded border border-orange-100">
-                                                            Remise: -{formatCurrency(remiseUnitaire)} F /unité
+                                                            Remise: -{formatCurrency(remiseUnitaire)} /unité
                                                         </span>
                                                     )}
                                                     {prod.treatment_duration_days && (
@@ -222,10 +224,10 @@ export const ProductDetailsModal: React.FC<ProductDetailsModalProps> = ({
                                                 </span>
                                             </td>
                                              <td className="px-6 py-3 text-right text-gray-600 font-mono">
-                                                {formatCurrency(puNet)} F
+                                                {formatCurrency(puNet)}
                                             </td>
                                             <td className="px-6 py-3 text-right font-medium font-mono text-gray-900 group-hover:text-blue-600 transition-colors">
-                                                {formatCurrency(totalLigne)} F
+                                                {formatCurrency(totalLigne)}
                                             </td>
                                             <td className="px-6 py-3 text-center">
                                                 {prod.is_chronic && (
@@ -255,31 +257,35 @@ export const ProductDetailsModal: React.FC<ProductDetailsModalProps> = ({
                 {/* Footer Totals */}
                 <div className="bg-gray-50 border-t border-gray-200 p-6">
                     <div className="flex justify-end">
-                        <div className="w-72 space-y-2">
-                             <div className="flex justify-between text-sm text-gray-600">
+                        <div className="w-80 space-y-2">
+                             <div className="grid grid-cols-[1fr,auto] items-baseline text-sm text-gray-600 px-2">
                                 <span>{t('fields.subtotal_ht')}</span>
-                                <span className="font-mono">{formatCurrency(totals.totalHt)} F</span>
+                                <span className="font-mono font-bold text-gray-900">{formatCurrency(totals.totalHt)}</span>
                             </div>
-                             <div className="flex justify-between text-sm text-gray-600">
+                             <div className="grid grid-cols-[1fr,auto] items-baseline text-sm text-gray-600 px-2">
                                 <span>{t('fields.vat')}</span>
-                                <span className="font-mono">{formatCurrency(totals.totalTva)} F</span>
+                                <span className="font-mono font-bold text-gray-900">{formatCurrency(totals.totalTva)}</span>
                             </div>
                             {totals.remise > 0 && (
-                                 <div className="flex justify-between text-sm text-orange-600 font-medium bg-orange-50 px-2 py-1 rounded border border-orange-100">
+                                 <div className="grid grid-cols-[1fr,auto] items-baseline text-sm text-orange-600 font-medium bg-orange-50 px-2 py-1.5 rounded-md border border-orange-100">
                                     <span>{t('table.discount')}</span>
-                                    <span className="font-mono">-{formatCurrency(totals.remise)} F</span>
+                                    <span className="font-mono font-bold">-{formatCurrency(totals.remise)}</span>
                                 </div>
                             )}
-                             <div className="flex justify-between text-lg font-bold text-gray-900 border-t border-gray-200 pt-2 mt-2">
-                                <span>{t('fields.total_ttc')}</span>
-                                <span className="font-mono text-blue-600">{formatCurrency(totals.totalTtc)} F</span>
+                             <div className="grid grid-cols-[1fr,auto] items-baseline font-bold text-gray-900 border-t border-gray-200 pt-2 mt-2 px-2">
+                                <span className="uppercase tracking-tight text-[10px] text-gray-500">{t('fields.total_ttc')}</span>
+                                <span className="font-mono text-lg text-blue-600 tracking-tight">
+                                    {formatCurrency(totals.totalTtc)}
+                                </span>
                             </div>
                             
                             {/* Part Client (Tiers Payant) */}
                              {Math.abs(totals.partClient - totals.totalTtc) > 1 && (
-                                <div className="flex justify-between text-xl font-black text-white bg-blue-600 p-3 rounded-lg shadow-md mt-4 animate-pulse">
-                                    <span className="uppercase text-sm">À payer client</span>
-                                    <span className="font-mono">{formatCurrency(totals.partClient)} F</span>
+                                <div className="grid grid-cols-[1fr,auto] items-center text-white bg-blue-600 py-2 px-3 rounded-lg shadow-sm mt-2 animate-in slide-in-from-bottom-1 duration-500">
+                                    <span className="uppercase text-[10px] font-black tracking-widest opacity-80">À payer client</span>
+                                    <span className="font-mono text-xl font-black tracking-tight">
+                                        {formatCurrency(totals.partClient)}
+                                    </span>
                                 </div>
                             )}
                         </div>
@@ -289,3 +295,4 @@ export const ProductDetailsModal: React.FC<ProductDetailsModalProps> = ({
         </div>
     );
 };
+

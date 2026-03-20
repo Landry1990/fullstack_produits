@@ -59,7 +59,7 @@ export default function CaisseCentralisee() {
       const facturesEndpoint = apiBaseUrl ? `${apiBaseUrl}/api/factures/` : '/api/factures/'
       
       // Fetch list of pending invoices
-      const response = await axios.get(`${facturesEndpoint}?status__in=BROU,VAL`)
+      const response = await axios.get(`${facturesEndpoint}?status__in=BROU,VAL&include_pending=true`)
       const facturesList = response.data.results || response.data || []
       
       // Fetch full details for each invoice to get products
@@ -437,10 +437,10 @@ export default function CaisseCentralisee() {
         })
       }
 
-      toast.success(`Facture #${factureFinale.numero_facture} encaissée avec succès !`)
+      toast.success(t('messages.modification_success'))
     } catch (err: any) {
       console.error('Erreur lors du paiement:', err)
-      toast.error(err.response?.data?.detail || "Erreur lors de l'enregistrement du paiement")
+      toast.error(err.response?.data?.detail || t('messages.save_payment_error'))
     } finally {
       setLoading(false)
     }
@@ -452,7 +452,7 @@ export default function CaisseCentralisee() {
     const facture = ticketCaisse.facture as any
     // Déterminer le numéro (priorité au numéro du client si présent)
     const clientPhone = (typeof facture.client === 'object' ? facture.client?.phone : '') || facture.client_phone
-    const phone = window.prompt(t('messages.enter_whatsapp_number') || 'Entrez le numéro WhatsApp (format international ex: 237...)', clientPhone || '')
+    const phone = window.prompt(t('messages.enter_whatsapp_number') || t('messages.enter_whatsapp_number_desc'), clientPhone || '')
     
     if (!phone) return
 
@@ -465,7 +465,7 @@ export default function CaisseCentralisee() {
       toast.success(response.data.detail || 'Ticket envoyé par WhatsApp !')
     } catch (err: any) {
       console.error('Erreur envoi WhatsApp:', err)
-      toast.error(err.response?.data?.detail || "Erreur lors de l'envoi WhatsApp")
+      toast.error(err.response?.data?.detail || t('messages.whatsapp_send_error'))
     } finally {
       setLoading(false)
     }
@@ -475,23 +475,23 @@ export default function CaisseCentralisee() {
 
   // Annuler une facture
   const handleAnnuler = async (facture: Facture) => {
-    if (!window.confirm(`Voulez-vous vraiment annuler la facture #${facture.numero_facture} ?`)) return
+    if (!window.confirm(t('confirm_cancel_invoice', { numero: facture.numero_facture }))) return
 
     try {
       const facturesEndpoint = apiBaseUrl ? `${apiBaseUrl}/api/factures/` : '/api/factures/'
       // Utiliser l'endpoint d'annulation
       await axios.post(`${facturesEndpoint}${facture.id}/annuler/`, { motif: 'Annulation depuis Caisse Centrale' })
-      toast.success('Facture annulée')
+      toast.success(t('messages.cancel_invoice_success'))
       fetchFacturesEnAttente()
     } catch (err) {
       console.error('Erreur annulation:', err)
-      toast.error('Erreur lors de l\'annulation')
+      toast.error(t('messages.cancel_invoice_error'))
     }
   }
 
   // Modifier une facture (Redirection vers Facturation)
   const handleModifier = async (facture: Facture) => {
-    if (!window.confirm(`Modifier cette facture ?\nElle sera retirée de la liste et rechargée dans l'écran de vente.`)) return
+    if (!window.confirm(t('confirm_modify_invoice'))) return
 
     try {
       setLoading(true)
@@ -502,7 +502,7 @@ export default function CaisseCentralisee() {
       const { data: fullFacture } = await axios.get<Facture>(`${facturesEndpoint}${facture.id}/`)
       
       if (!fullFacture.produits || fullFacture.produits.length === 0) {
-        toast.error('Cette facture ne contient aucun produit')
+        toast.error(t('messages.empty_invoice_error'))
         setLoading(false)
         return
       }
@@ -551,7 +551,7 @@ export default function CaisseCentralisee() {
       
     } catch (err) {
       console.error('Erreur modification:', err)
-      toast.error('Impossible de charger la facture pour modification')
+      toast.error(t('messages.load_invoice_error'))
     } finally {
       setLoading(false)
     }
@@ -691,7 +691,7 @@ export default function CaisseCentralisee() {
             <div className="text-xs font-bold text-primary uppercase tracking-wider mb-1 flex items-center gap-1">
               <Banknote className="w-3 h-3" /> {t('stats_total_title', { defaultValue: 'Montant Total' })}
             </div>
-            <div className="text-2xl font-bold text-base-content">{formatCurrency(Math.round(totalMontantEnAttente))} F</div>
+            <div className="text-2xl font-bold text-base-content">{formatCurrency(Math.round(totalMontantEnAttente))}</div>
             <div className="text-xs text-base-content/60">{t('stats_total_desc', { defaultValue: 'à encaisser' })}</div>
           </div>
           <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
@@ -755,14 +755,14 @@ export default function CaisseCentralisee() {
           <div className="p-3 border-t border-base-200 flex items-center justify-between text-xs text-base-content/40">
             <div className="flex items-center gap-1">
               <Keyboard className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline">Raccourcis :</span>
+              <span className="hidden sm:inline">{t('shortcuts.title')}</span>
             </div>
             <div className="flex gap-3">
-              <span><kbd className="kbd kbd-xs">↑↓</kbd> Naviguer</span>
-              <span><kbd className="kbd kbd-xs">Entrée</kbd> Encaisser</span>
-              <span><kbd className="kbd kbd-xs">C</kbd> Coupon</span>
-              <span><kbd className="kbd kbd-xs">R</kbd> Rafraîchir</span>
-              <span><kbd className="kbd kbd-xs">1-9</kbd> Sélection rapide</span>
+              <span><kbd className="kbd kbd-xs">↑↓</kbd> {t('shortcuts.navigate')}</span>
+              <span><kbd className="kbd kbd-xs">Entrée</kbd> {t('shortcuts.cash_in')}</span>
+              <span><kbd className="kbd kbd-xs">C</kbd> {t('shortcuts.coupon')}</span>
+              <span><kbd className="kbd kbd-xs">R</kbd> {t('shortcuts.refresh')}</span>
+              <span><kbd className="kbd kbd-xs">1-9</kbd> {t('shortcuts.quick_select')}</span>
             </div>
           </div>
         </div>
@@ -916,7 +916,7 @@ export default function CaisseCentralisee() {
                   }
                 }}
               >
-                {t('common.print')}
+                {t('common:print')}
               </button>
             </div>
         }
@@ -1133,7 +1133,7 @@ export default function CaisseCentralisee() {
   <div class="coupon-box">
     <div class="coupon-label">Coupon de Monnaie</div>
     <div class="coupon-number">#${couponTrouve.numero}</div>
-    <div class="coupon-amount">${formatCurrency(Math.round(Number(couponTrouve.montant)))} F</div>
+    <div class="coupon-amount">${formatCurrency(Math.round(Number(couponTrouve.montant)))}</div>
   </div>
   
   <div class="info-section">
@@ -1259,4 +1259,5 @@ export default function CaisseCentralisee() {
     </div>
   )
 }
+
 

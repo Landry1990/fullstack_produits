@@ -44,7 +44,7 @@ export const SalesQuickStats: React.FC<SalesQuickStatsProps> = ({ stats, onClose
                     {t('sales:stats.daily_revenue')}
                 </div>
                 <div className="text-2xl font-black text-primary">
-                    {formatCurrency(Number(stats.total_regle) + Number(stats.total_en_compte))} <span className="text-sm font-normal">F</span>
+                    {formatCurrency(Number(stats.total_regle) + Number(stats.total_en_compte))}
                 </div>
             </div>
 
@@ -53,7 +53,7 @@ export const SalesQuickStats: React.FC<SalesQuickStatsProps> = ({ stats, onClose
                     {t('sales:stats.total_collected')}
                 </div>
                 <div className="text-2xl font-black text-success">
-                    {formatCurrency(Number(stats.total_regle))} <span className="text-sm font-normal">F</span>
+                    {formatCurrency(Number(stats.total_regle))}
                 </div>
             </div>
 
@@ -62,7 +62,7 @@ export const SalesQuickStats: React.FC<SalesQuickStatsProps> = ({ stats, onClose
                     {t('sales:stats.total_on_account')}
                 </div>
                 <div className="text-2xl font-black text-warning">
-                    {formatCurrency(Number(stats.total_en_compte))} <span className="text-sm font-normal">F</span>
+                    {formatCurrency(Number(stats.total_en_compte))}
                 </div>
             </div>
 
@@ -76,7 +76,7 @@ export const SalesQuickStats: React.FC<SalesQuickStatsProps> = ({ stats, onClose
                         <div>
                             <div className="text-lg font-bold text-base-content">{stats.top_vendeur.name}</div>
                             <div className="text-xs text-base-content/60">
-                                {t('sales:stats.sales_count', { count: stats.top_vendeur.count })} • {formatCurrency(stats.top_vendeur.amount || 0)} F
+                                {t('sales:stats.sales_count', { count: stats.top_vendeur.count })} • {formatCurrency(stats.top_vendeur.amount || 0)}
                             </div>
                         </div>
                     ) : (

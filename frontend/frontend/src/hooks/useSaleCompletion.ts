@@ -195,8 +195,10 @@ export function useSaleCompletion(options: UseSaleCompletionOptions = {}): UseSa
             }
 
 
-            // === MODE MODIFICATION ===
-            if (params.isModificationMode && params.modificationInvoiceId) {
+            // === MODE MODIFICATION (Rectification de vente VALIDÉE/PAYÉE) ===
+            const isProformaFinalization = params.isModificationMode && params.modificationInvoiceStatus === 'PROF';
+            
+            if (params.isModificationMode && params.modificationInvoiceId && !isProformaFinalization) {
                 const result = await handleModificationMode(params);
                 setLastResult(result);
                 onSuccess?.(result);
@@ -259,7 +261,8 @@ export function useSaleCompletion(options: UseSaleCompletionOptions = {}): UseSa
                 },
                 type: params.isRetrocession ? 'RETRO' : 'STD',
                 centralized_cash_register: params.centralizedCashRegister,
-                coupon_numero: params.couponNumero
+                coupon_numero: params.couponNumero,
+                existing_id: params.modificationInvoiceId // Pass existing ID to reuse the record
             };
 
             const finalFacture = await venteService.finaliser(finalPayload);

@@ -1,5 +1,6 @@
 import React, { useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import { formatCurrency } from '../../utils/formatters'
 import type { ProduitModel } from '../../types'
 import { useSearchNavigation } from '../../hooks/useSearchNavigation'
 import { Package, Pill } from 'lucide-react'
@@ -220,7 +221,7 @@ export default function ProductSearchSection({
                         <span className={(produit.stock ?? 0) <= 0 ? 'text-error font-bold' : ''}>
                             {t('facturation:search.stock_label')} {produit.stock}
                         </span>
-                        <span>{produit.selling_price} F</span>
+                        <span>{formatCurrency(Number(produit.selling_price))}</span>
                         </div>
                     </div>
                     {(produit.stock ?? 0) > 0 && (
@@ -259,7 +260,7 @@ export default function ProductSearchSection({
                     <div className="flex-1 min-w-0">
                         <div className="font-bold text-secondary text-sm">{pack.name}</div>
                         <div className="text-xs text-gray-500 mt-0.5">
-                            {pack.value} F • {pack.products_count || pack.pack_items?.length || '?'} {t('facturation:search.products_count')}
+                            {formatCurrency(Number(pack.value))} • {pack.products_count || pack.pack_items?.length || '?'} {t('facturation:search.products_count')}
                         </div>
                     </div>
                      <button className="btn btn-ghost btn-sm btn-circle opacity-0 group-hover:opacity-100 text-secondary">
