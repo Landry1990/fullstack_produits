@@ -35,6 +35,35 @@ class CaisseViewSet(viewsets.ModelViewSet):
     filterset_fields = ['facture', 'mode_paiement', 'statut', 'user']
     permission_classes = [IsAuthenticated]
     pagination_class = StandardResultsSetPagination
+
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        date_debut = self.request.query_params.get('date_debut')
+        date_fin = self.request.query_params.get('date_fin')
+        
+        if date_debut:
+            try:
+                clean = date_debut.replace('T', ' ').replace('Z', '')
+                try:
+                    dt = datetime.strptime(clean, '%Y-%m-%d %H:%M:%S')
+                except ValueError:
+                    dt = datetime.strptime(clean, '%Y-%m-%d %H:%M')
+                if timezone.is_naive(dt): dt = timezone.make_aware(dt)
+                queryset = queryset.filter(date_paiement__gte=dt)
+            except ValueError: pass
+            
+        if date_fin:
+            try:
+                clean = date_fin.replace('T', ' ').replace('Z', '')
+                try:
+                    dt = datetime.strptime(clean, '%Y-%m-%d %H:%M:%S')
+                except ValueError:
+                    dt = datetime.strptime(clean, '%Y-%m-%d %H:%M')
+                if timezone.is_naive(dt): dt = timezone.make_aware(dt)
+                queryset = queryset.filter(date_paiement__lte=dt)
+            except ValueError: pass
+            
+        return queryset
     
     def perform_create(self, serializer):
         validation_user, error_res = validate_sudo_mode(self.request)
@@ -77,7 +106,7 @@ class CaisseViewSet(viewsets.ModelViewSet):
     def get_totals(self, request):
         date_debut = request.query_params.get('date_debut')
         date_fin = request.query_params.get('date_fin')
-        user_id = request.query_params.get('user_id')
+        user_id = request.query_params.get('user_id') or request.query_params.get('user')
         
         start_date = None
         end_date = None
@@ -122,11 +151,16 @@ class CaisseViewSet(viewsets.ModelViewSet):
         if user_id:
             transactions = transactions.filter(user_id=user_id)
 
+        # Filtre pour exclure le recouvrement (qui ne correspond pas à une vente "journalière" standard)
         recouvrement_q = Q(mode_paiement='recouvrement') | Q(reference__icontains='[RECOUV]')
         paiements_sales = transactions.exclude(recouvrement_q).exclude(mode_paiement='en_compte')
 
         total_ventes = paiements_sales.aggregate(Sum('montant'))['montant__sum'] or Decimal('0.00')
         total_ventes_especes = paiements_sales.filter(mode_paiement='especes').aggregate(Sum('montant'))['montant__sum'] or Decimal('0.00')
+
+        paiements_recouv = transactions.filter(recouvrement_q)
+        total_recouvrement = paiements_recouv.aggregate(Sum('montant'))['montant__sum'] or Decimal('0.00')
+        total_recouv_especes = paiements_recouv.filter(mode_paiement='especes').aggregate(Sum('montant'))['montant__sum'] or Decimal('0.00')
 
         modes = paiements_sales.values('mode_paiement').annotate(total=Sum('montant'))
         details = {item['mode_paiement']: float(item['total']) for item in modes}
@@ -164,6 +198,8 @@ class CaisseViewSet(viewsets.ModelViewSet):
             'end_date': end_date,
             'total_theorique': total_theorique,
             'total_ventes': total_ventes,
+            'total_recouvrement': total_recouvrement,
+            'total_recouv_especes': total_recouv_especes,
             'total_entrees': total_entrees,
             'total_sorties': total_sorties,
             'total_coupons': total_coupons,
@@ -310,7 +346,10 @@ class CaisseViewSet(viewsets.ModelViewSet):
         if end_date:
             transactions = transactions.filter(date_paiement__lte=end_date)
             
-        recouvrement_q = Q(mode_paiement='recouvrement') | Q(facture__client__client_type='PROFESSIONNEL') | Q(reference__icontains='[RECOUV]')
+        # Filtre pour exclure les montants de recouvrement du calcul de clôture journalière
+        # NOTE : On n'exclut PLUS le type PROFESSIONNEL ici, car s'ils paient en espèces, 
+        # l'argent est bien dans la caisse physique du vendeur.
+        recouvrement_q = Q(mode_paiement='recouvrement') | Q(reference__icontains='[RECOUV]')
         paiements_sales = transactions.exclude(recouvrement_q)
 
         total_ventes = paiements_sales.aggregate(Sum('montant'))['montant__sum'] or Decimal('0.00')
@@ -365,10 +404,15 @@ class ClotureCaisseViewSet(viewsets.ReadOnlyModelViewSet):
         queryset = ClotureCaisse.objects.select_related('user').order_by('-date')
         date_debut = self.request.query_params.get('date_debut')
         date_fin = self.request.query_params.get('date_fin')
+        user_id = self.request.query_params.get('user') or self.request.query_params.get('user_id')
+        
         if date_debut:
             queryset = queryset.filter(date__date__gte=date_debut)
         if date_fin:
             queryset = queryset.filter(date__date__lte=date_fin)
+        if user_id:
+            queryset = queryset.filter(user_id=user_id)
+            
         return queryset
 
     def list(self, request, *args, **kwargs):

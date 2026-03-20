@@ -50,7 +50,7 @@ export const StockAnalysisStats: React.FC<StockAnalysisStatsProps> = ({
         },
         {
             label: getValueLabel(),
-            value: `${formatCurrency(Math.round(totalValue))} ${t('common:currency_symbol', { defaultValue: 'F' })}`,
+            value: `${formatCurrency(Math.round(totalValue))}`,
             icon: <TrendingUp className="w-6 h-6" />,
             color: 'error',
             bg: 'bg-error/10',

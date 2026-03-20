@@ -93,7 +93,7 @@ export function InventaireMergeModal({
                             >
                                 <option value="" disabled>-- {t('inventaire.merge.choose_placeholder')} --</option>
                                 {loadingMergeCandidates ? (
-                                    <option disabled>{t('common.loading')}</option>
+                                    <option disabled>{t('common:loading')}</option>
                                 ) : (
                                     mergeCandidates.map(c => (
                                         <option key={c.id} value={c.id}>
@@ -115,7 +115,7 @@ export function InventaireMergeModal({
                             setSelectedMergeSource(null);
                         }}
                     >
-                        {t('common.cancel')}
+                        {t('common:cancel')}
                     </button>
                     <button 
                         className="btn btn-info text-white rounded-xl shadow-lg shadow-info/20 px-6" 
@@ -133,3 +133,4 @@ export function InventaireMergeModal({
         </dialog>
     );
 }
+

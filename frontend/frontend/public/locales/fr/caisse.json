@@ -7,6 +7,14 @@
     "pending_count": "{{count}} facture(s) en attente",
     "no_pending": "Aucune facture en attente",
     "no_pending_desc": "Toutes les factures ont été encaissées. Prêt pour la prochaine vente.",
+    "shortcuts": {
+        "title": "Raccourcis :",
+        "navigate": "Naviguer",
+        "cash_in": "Encaisser",
+        "coupon": "Coupon",
+        "refresh": "Rafraîchir",
+        "quick_select": "Sélection rapide"
+    },
     "table": {
         "ticket": "Ticket",
         "invoice": "Facture",
@@ -22,7 +30,18 @@
         "remove_coupon": "Retirer le coupon",
         "coupon_applied": "Coupon appliqué",
         "cash_in": "Encaisser",
-        "not_authorized": "Non autorisé"
+        "not_authorized": "Non autorisé",
+        "product_placeholder": "Produit #{{id}}",
+        "passerby_client": "Client de passage",
+        "view_products": "Voir les produits",
+        "products_preview_title": "📦 Produits — #{{numero}}",
+        "close": "Fermer",
+        "product": "Produit",
+        "quantity": "Qté",
+        "unit_price_short": "P.U",
+        "total": "Total",
+        "total_ttc": "Total TTC",
+        "no_products": "Aucun produit"
     },
     "ticket": {
         "title": "Ticket de Caisse"
@@ -73,8 +92,17 @@
         "modification_success": "Facture modifiée avec succès",
         "product_removed": "Produit supprimé de la facture",
         "confirm_cancel_empty": "La facture est vide. Voulez-vous l'annuler ?",
-        "modification_error": "Erreur lors de la modification"
+        "modification_error": "Erreur lors de la modification",
+        "save_payment_error": "Erreur lors de l'enregistrement du paiement",
+        "whatsapp_send_error": "Erreur lors de l'envoi WhatsApp",
+        "cancel_invoice_success": "Facture annulée",
+        "cancel_invoice_error": "Erreur lors de l'annulation",
+        "empty_invoice_error": "Cette facture ne contient aucun produit",
+        "load_invoice_error": "Impossible de charger la facture pour modification",
+        "enter_whatsapp_number_desc": "Entrez le numéro WhatsApp (format international ex: 237...)"
     },
+    "confirm_cancel_invoice": "Voulez-vous vraiment annuler la facture #{{numero}} ?",
+    "confirm_modify_invoice": "Modifier cette facture ?\nElle sera retirée de la liste et rechargée dans l'écran de vente.",
     "confirm_delete_product": "Supprimer {{name}} de cette facture ?",
     "payment": {
         "title": "Encaissement",
@@ -349,6 +377,9 @@
         "pieces": "pièces",
         "piece": "PIÈCE",
         "cancel": "Annuler",
+        "print": "Imprimer",
+        "close": "Fermer",
+        "receipt": "Ticket",
         "pagination": {
             "prev": "Précédent",
             "next": "Suivant"

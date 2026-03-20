@@ -47,6 +47,7 @@ export interface FacturationUIState {
     devisIdToValidate: number | null
     isModificationMode: boolean
     modificationInvoiceId: number | null
+    modificationInvoiceStatus: string | null
     originalTotalTtc: number
 
     // Ordonnancier
@@ -105,6 +106,7 @@ export function useFacturationUI() {
     const [devisIdToValidate, setDevisIdToValidate] = useState<number | null>(null)
     const [isModificationMode, setIsModificationMode] = useState(false)
     const [modificationInvoiceId, setModificationInvoiceId] = useState<number | null>(null)
+    const [modificationInvoiceStatus, setModificationInvoiceStatus] = useState<string | null>(null)
     const [originalTotalTtc, setOriginalTotalTtc] = useState<number>(0)
 
 
@@ -128,6 +130,7 @@ export function useFacturationUI() {
         setDevisIdToValidate(null)
         setIsModificationMode(false)
         setModificationInvoiceId(null)
+        setModificationInvoiceStatus(null)
         setOriginalTotalTtc(0)
     }, [])
 
@@ -190,6 +193,7 @@ export function useFacturationUI() {
         devisIdToValidate, setDevisIdToValidate,
         isModificationMode, setIsModificationMode,
         modificationInvoiceId, setModificationInvoiceId,
+        modificationInvoiceStatus, setModificationInvoiceStatus,
         originalTotalTtc, setOriginalTotalTtc,
 
         // Actions

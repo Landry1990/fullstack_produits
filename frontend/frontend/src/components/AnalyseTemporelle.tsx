@@ -73,7 +73,7 @@ export default function AnalyseTemporelle() {
                   <div>
                     <h3 className="font-bold text-lg">{t('stock:temporal_analysis.peak_hour_title')}</h3>
                     <p className="text-sm opacity-70">
-                      {loadingHours ? t('common.loading') : 
+                      {loadingHours ? t('common:loading') : 
                        peakHoursData?.peak_hour ? 
                        t('stock:temporal_analysis.peak_hour_summary', { 
                           hour: peakHoursData.peak_hour, 
@@ -88,9 +88,9 @@ export default function AnalyseTemporelle() {
                   value={hoursDays}
                   onChange={(e) => setHoursDays(Number(e.target.value))}
                 >
-                  <option value={7}>{t('common.last_7_days', '7 derniers jours')}</option>
-                  <option value={30}>{t('common.last_30_days', '30 derniers jours')}</option>
-                  <option value={90}>{t('common.last_90_days', '90 derniers jours')}</option>
+                  <option value={7}>{t('common:last_7_days', '7 derniers jours')}</option>
+                  <option value={30}>{t('common:last_30_days', '30 derniers jours')}</option>
+                  <option value={90}>{t('common:last_90_days', '90 derniers jours')}</option>
                 </select>
               </div>
 
@@ -115,7 +115,7 @@ export default function AnalyseTemporelle() {
                       <Tooltip 
                         contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
                         formatter={(value: number, name: string) => [
-                          name === 'revenue' || name === 'avg_basket' ? `${formatCurrency(Math.round(value))} F` : formatNumber(value),
+                          name === 'revenue' || name === 'avg_basket' ? `${formatCurrency(Math.round(value))}` : formatNumber(value),
                           name === 'revenue' ? t('stock:temporal_analysis.columns.avg_revenue') : name === 'sales_count' ? t('stock:temporal_analysis.columns.avg_sales') : t('stock:temporal_analysis.columns.avg_basket')
                         ]}
                       />
@@ -156,7 +156,7 @@ export default function AnalyseTemporelle() {
                   <div>
                     <h3 className="font-bold text-lg">{t('stock:temporal_analysis.best_day_title')}</h3>
                     <p className="text-sm opacity-70">
-                      {loadingDays ? t('common.loading') : 
+                      {loadingDays ? t('common:loading') : 
                        dailyData?.best_day ? 
                        t('stock:temporal_analysis.best_day_summary', {
                           day: dailyData.best_day,
@@ -171,9 +171,9 @@ export default function AnalyseTemporelle() {
                   value={daysWeeks}
                   onChange={(e) => setDaysWeeks(Number(e.target.value))}
                 >
-                  <option value={4}>{t('common.last_4_weeks', '4 dernières semaines')}</option>
-                  <option value={12}>{t('common.last_12_weeks', '12 dernières semaines')}</option>
-                  <option value={26}>{t('common.last_6_months', '6 derniers mois')}</option>
+                  <option value={4}>{t('common:last_4_weeks', '4 dernières semaines')}</option>
+                  <option value={12}>{t('common:last_12_weeks', '12 dernières semaines')}</option>
+                  <option value={26}>{t('common:last_6_months', '6 derniers mois')}</option>
                 </select>
               </div>
 
@@ -192,7 +192,7 @@ export default function AnalyseTemporelle() {
                         <Tooltip 
                           cursor={{fill: 'transparent'}}
                           contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
-                        formatter={(value: number) => [`${formatCurrency(Math.round(value))} F`, t('stock:temporal_analysis.columns.avg_revenue')]}
+                        formatter={(value: number) => [`${formatCurrency(Math.round(value))}`, t('stock:temporal_analysis.columns.avg_revenue')]}
                         />
                         <Bar dataKey="revenue" fill="#10b981" radius={[4, 4, 0, 0]} />
                       </BarChart>
@@ -218,8 +218,8 @@ export default function AnalyseTemporelle() {
                               {day.is_best && <span className="badge badge-sm badge-success text-white">Top</span>}
                             </td>
                             <td className="text-right">{day.sales_count}</td>
-                            <td className="text-right">{formatCurrency(Math.round(day.avg_basket))} F</td>
-                            <td className="text-right font-bold">{formatCurrency(Math.round(day.revenue))} F</td>
+                            <td className="text-right">{formatCurrency(Math.round(day.avg_basket))}</td>
+                            <td className="text-right font-bold">{formatCurrency(Math.round(day.revenue))}</td>
                           </tr>
                         ))}
                       </tbody>
@@ -241,7 +241,7 @@ export default function AnalyseTemporelle() {
                   <div>
                     <h3 className="font-bold text-lg">{t('stock:temporal_analysis.seasonality_title')}</h3>
                     <p className="text-sm opacity-70">
-                      {loadingSeasons ? t('common.loading') : 
+                      {loadingSeasons ? t('common:loading') : 
                        t('stock:temporal_analysis.seasonality_summary', {
                           months: seasonsMonths,
                           count: seasonalityData?.seasonal_products?.length || 0
@@ -254,8 +254,8 @@ export default function AnalyseTemporelle() {
                   value={seasonsMonths}
                   onChange={(e) => setSeasonsMonths(Number(e.target.value))}
                 >
-                  <option value={12}>{t('common.last_12_months', '12 derniers mois')}</option>
-                  <option value={24}>{t('common.last_24_months', '24 derniers mois')}</option>
+                  <option value={12}>{t('common:last_12_months', '12 derniers mois')}</option>
+                  <option value={24}>{t('common:last_24_months', '24 derniers mois')}</option>
                 </select>
               </div>
 
@@ -275,7 +275,7 @@ export default function AnalyseTemporelle() {
                         <YAxis tick={{ fontSize: 12 }} tickFormatter={(val) => `${val/1000000}M`} />
                         <Tooltip 
                           contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
-                          formatter={(value: number) => [`${formatCurrency(Math.round(value))} F`, t('stock:temporal_analysis.columns.avg_revenue')]}
+                          formatter={(value: number) => [`${formatCurrency(Math.round(value))}`, t('stock:temporal_analysis.columns.avg_revenue')]}
                         />
                         <Line type="monotone" dataKey="revenue" stroke="#f97316" strokeWidth={3} dot={{ r: 4 }} />
                       </LineChart>
@@ -332,3 +332,4 @@ export default function AnalyseTemporelle() {
     </div>
   );
 }
+

@@ -46,7 +46,7 @@ const PromotionList: React.FC = () => {
             case DiscountType.PERCENTAGE:
                 return `-${promo.value}%`;
             case DiscountType.FIXED_AMOUNT:
-                return `-${promo.value} ${t('common.currency')}`;
+                return `-${promo.value} ${t('common:currency')}`;
             case DiscountType.BUY_X_GET_Y:
                 return t('promotions:list.discount.buy_get', { buy: promo.buy_quantity, get: promo.get_quantity });
             default:
@@ -143,8 +143,8 @@ const PromotionList: React.FC = () => {
                                     {getDiscountLabel(promo)}
                                 </td>
                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                    {format(new Date(promo.start_date), t('common.date_format_short', 'dd/MM/yyyy'))} 
-                                    {promo.end_date ? ` - ${format(new Date(promo.end_date), t('common.date_format_short', 'dd/MM/yyyy'))}` : ` ${t('promotions:list.period.indefinite')}`}
+                                    {format(new Date(promo.start_date), t('common:date_format_short', 'dd/MM/yyyy'))} 
+                                    {promo.end_date ? ` - ${format(new Date(promo.end_date), t('common:date_format_short', 'dd/MM/yyyy'))}` : ` ${t('promotions:list.period.indefinite')}`}
                                 </td>
                                 <td className="px-6 py-4 whitespace-nowrap">
                                     <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${promo.active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
@@ -175,3 +175,4 @@ const PromotionList: React.FC = () => {
 };
 
 export default PromotionList;
+

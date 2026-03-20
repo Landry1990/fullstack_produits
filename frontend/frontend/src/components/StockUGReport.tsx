@@ -162,11 +162,11 @@ export default function StockUGReport() {
                 </div>
                 <div class="kpi-card">
                   <div class="kpi-label">${t('stock:rapport_ug.stats.estimated_value')}</div>
-                  <div class="kpi-value">${formatCurrency(data.global_total_valeur)} F</div>
+                  <div class="kpi-value">${formatCurrency(data.global_total_valeur)}</div>
                 </div>
                 <div class="kpi-card" style="border-left: 4px solid #3b82f6;">
                   <div class="kpi-label" style="color: #3b82f6;">${t('stock:rapport_ug.stats.latent_cash')}</div>
-                  <div class="kpi-value">${formatCurrency(data.global_total_valeur_restante)} F</div>
+                  <div class="kpi-value">${formatCurrency(data.global_total_valeur_restante)}</div>
                 </div>
               </div>
 
@@ -186,7 +186,7 @@ export default function StockUGReport() {
                       <td colspan="2">${f.fournisseur_nom} (${f.lots_count} lots)</td>
                       <td style="text-align: right;">${formatNumber(f.total_ug)}</td>
                       <td style="text-align: right;">${formatNumber(f.total_ug_restantes)}</td>
-                      <td style="text-align: right;">${formatCurrency(f.total_valeur_restante)} F</td>
+                      <td style="text-align: right;">${formatCurrency(f.total_valeur_restante)}</td>
                     </tr>
                     ${f.details.map(d => `
                       <tr>
@@ -194,7 +194,7 @@ export default function StockUGReport() {
                         <td style="color: #64748b; font-size: 9px;">Lot: ${d.lot_numero}<br/>Fact: ${d.facture_numero}</td>
                         <td style="text-align: right;">${formatNumber(d.quantity_free)}</td>
                         <td style="text-align: right; font-weight: bold; color: #10b981;">${formatNumber(d.quantity_free_remaining)}</td>
-                        <td style="text-align: right; font-weight: bold; color: #1e293b;">${formatCurrency(d.valeur_restante)} F</td>
+                        <td style="text-align: right; font-weight: bold; color: #1e293b;">${formatCurrency(d.valeur_restante)}</td>
                       </tr>
                     `).join('')}
                   `).join('')}
@@ -302,7 +302,7 @@ export default function StockUGReport() {
               <div>
                 <p className="text-xs font-bold text-slate-400 tracking-wider uppercase">{t('stock:rapport_ug.stats.estimated_value')}</p>
                 <p className="text-2xl font-black text-slate-600 tracking-tight">
-                  {loading ? '...' : `${formatCurrency(data?.global_total_valeur ?? 0)} F`}
+                  {loading ? '...' : `${formatCurrency(data?.global_total_valeur ?? 0)}`}
                 </p>
               </div>
             </div>
@@ -316,7 +316,7 @@ export default function StockUGReport() {
               <div>
                 <p className="text-xs font-bold text-blue-400 tracking-wider uppercase">{t('stock:rapport_ug.stats.latent_cash')}</p>
                 <p className="text-2xl font-black text-slate-800 tracking-tight">
-                  {loading ? '...' : `${formatCurrency(data?.global_total_valeur_restante ?? 0)} F`}
+                  {loading ? '...' : `${formatCurrency(data?.global_total_valeur_restante ?? 0)}`}
                 </p>
               </div>
             </div>
@@ -425,7 +425,7 @@ export default function StockUGReport() {
                         </span>
                       </td>
                       <td className="px-6 py-3 text-right font-black text-slate-800 bg-blue-50/30">
-                        {formatCurrency(stat.total_valeur_restante)} F
+                        {formatCurrency(stat.total_valeur_restante)}
                       </td>
                     </tr>
                     {expandedSupplierIds.has(stat.fournisseur_id) && (
@@ -457,10 +457,10 @@ export default function StockUGReport() {
                                        </td>
                                        <td className="text-slate-500 font-mono text-xs">{detail.commande_numero}</td>
                                        <td className="text-slate-500 font-mono text-xs">{detail.facture_numero}</td>
-                                       <td className="text-right text-slate-600">{formatCurrency(detail.prix_vente)} F</td>
+                                       <td className="text-right text-slate-600">{formatCurrency(detail.prix_vente)}</td>
                                        <td className="text-right text-slate-400">{formatNumber(detail.quantity_free)}</td>
                                        <td className="text-right font-bold text-emerald-600">{formatNumber(detail.quantity_free_remaining)}</td>
-                                       <td className="text-right font-bold text-blue-600">{formatCurrency(detail.valeur_restante)} F</td>
+                                       <td className="text-right font-bold text-blue-600">{formatCurrency(detail.valeur_restante)}</td>
                                      </tr>
                                    ))}
                                  </tbody>

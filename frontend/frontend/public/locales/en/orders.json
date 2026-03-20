@@ -63,6 +63,7 @@
         "date": "Issue Date",
         "status": "Current Status",
         "closed_by": "Closed by",
+        "created_by": "Entered by",
         "financial_summary": "Financial Summary",
         "ug_title": "Free Units (UG)",
         "ug_message": "This order contains {{count}} free units offered by the supplier.",
@@ -126,8 +127,10 @@
         "headers": {
             "product": "Product / Description",
             "cip": "CIP / Code",
+            "stAnt": "Prev. St",
             "qty": "Quantity",
             "ug": "F.U",
+            "stock": "Stock",
             "dev_price": "Dev. Price",
             "buy_price_ht": "B.P HT",
             "tva": "VAT %",
@@ -180,7 +183,10 @@
         "confirm_sudo_message": "Do you want to validate this action as an administrator?",
         "confirm_sudo_me": "Myself",
         "confirm_sudo_admin": "Other Admin",
-        "confirm_sudo_cancel": "Cancel"
+        "confirm_sudo_cancel": "Cancel",
+        "merge_select_two": "Please select exactly two orders to merge",
+        "create_new_product": "Do you want to create a new product?",
+        "validation_required": "Validation required"
     },
     "history": {
         "title": "Purchase History",
@@ -200,6 +206,42 @@
         "pagination": {
             "page": "Page"
         }
+    },
+    "suggestion_modal": {
+        "title": "Order Suggestions",
+        "subtitle_config": "Configure analysis settings",
+        "mode_simple_title": "Simple Mode",
+        "mode_simple_desc": "Analysis based on stock outs and alerts.",
+        "mode_smart_title": "Smart Mode",
+        "mode_smart_desc": "Predictive analysis based on sales history.",
+        "supplier_label": "Supplier",
+        "all_suppliers": "All suppliers",
+        "budget_label": "Estimated Budget (FCFA)",
+        "budget_tooltip": "The system will filter priority products to respect this budget.",
+        "budget_placeholder": "Max amount...",
+        "period_label": "Coverage Period",
+        "period_guard": "Guard (Min. stock)",
+        "period_week": "Week (7d)",
+        "period_decade": "Decade (10d)",
+        "period_fortnight": "Fortnight (15d)",
+        "period_month": "Month (30d)",
+        "days_unit": "days",
+        "close": "Close",
+        "launch_analysis": "Launch Analysis",
+        "back_to_params": "Back to settings",
+        "create_order": "Create order",
+        "subtitle_results": "Analysis results and recommendations",
+        "analysis_done": "Analysis successfully completed",
+        "results_count": "{{count}} recommended products",
+        "total_estimated": "Estimated total",
+        "table_designation": "Designation",
+        "table_stock": "Curr. Stock",
+        "table_sales": "Sales (per.)",
+        "table_qty": "Sugg. Qty",
+        "table_total_ht": "Total HT",
+        "table_priority": "Priority",
+        "critical_badge": "CRITICAL",
+        "standard_badge": "STANDARD"
     }
 }
 

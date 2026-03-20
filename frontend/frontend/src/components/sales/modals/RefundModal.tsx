@@ -69,13 +69,13 @@ export const RefundModal: React.FC<RefundModalProps> = ({
                             onClick={onClose}
                             className="px-4 py-2 text-gray-600 font-medium hover:bg-gray-100 rounded-lg transition-colors"
                         >
-                            {t('common.cancel')}
+                            {t('common:cancel')}
                         </button>
                         <button
                             type="submit"
                             className="px-6 py-2 bg-red-600 text-white font-medium rounded-lg hover:bg-red-700 focus:ring-4 focus:ring-red-200 transition-all shadow-lg shadow-red-600/20"
                         >
-                            {t('common.confirm')}
+                            {t('common:confirm')}
                         </button>
                     </div>
                 </form>
@@ -83,3 +83,4 @@ export const RefundModal: React.FC<RefundModalProps> = ({
         </div>
     );
 };
+

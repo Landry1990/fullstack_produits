@@ -59,11 +59,11 @@ export const CreanceDetailsModal: React.FC<CreanceDetailsModalProps> = ({
                         <div className="text-[10px] font-black uppercase text-base-content/40 tracking-widest">{t('creances:details_modal.financial_summary')}</div>
                         <div className="flex items-center gap-2">
                             <span className="text-xs font-bold">{t('creances:details_modal.total')}</span>
-                            <span className="font-black">{formatCurrency(Math.round(parseFloat(creance.total_ttc)))} {t('common:currency')}</span>
+                            <span className="font-black">{formatCurrency(Math.round(parseFloat(creance.total_ttc)))}</span>
                         </div>
                         <div className="flex items-center gap-2">
                             <span className="text-xs font-bold text-warning">{t('creances:details_modal.remaining')}</span>
-                            <span className="font-black text-warning">{formatCurrency(Math.round(parseFloat(creance.reste_a_payer)))} {t('common:currency')}</span>
+                            <span className="font-black text-warning">{formatCurrency(Math.round(parseFloat(creance.reste_a_payer)))}</span>
                         </div>
                     </div>
                 </div>
@@ -101,7 +101,7 @@ export const CreanceDetailsModal: React.FC<CreanceDetailsModalProps> = ({
                                                 </div>
                                             </td>
                                             <td className="font-mono text-xs text-base-content/50">{p.reference || '-'}</td>
-                                            <td className="text-right font-black italic">{formatCurrency(Math.round(parseFloat(p.montant)))} {t('common:currency')}</td>
+                                            <td className="text-right font-black italic">{formatCurrency(Math.round(parseFloat(p.montant)))}</td>
                                             <td className="text-center">
                                                 <button 
                                                     onClick={() => onPrintReceipt(creance.id, p.id)}
@@ -122,7 +122,7 @@ export const CreanceDetailsModal: React.FC<CreanceDetailsModalProps> = ({
                 <div className="flex justify-between items-center bg-primary/5 p-4 rounded-2xl border border-primary/10">
                     <div className="text-xs font-bold text-primary/60 uppercase tracking-widest">{t('creances:details_modal.total_collected')}</div>
                     <div className="text-2xl font-black text-primary italic tracking-tighter">
-                        {formatCurrency(Math.round(parseFloat(creance.montant_paye)))} {t('common:currency')}
+                        {formatCurrency(Math.round(parseFloat(creance.montant_paye)))}
                     </div>
                 </div>
 

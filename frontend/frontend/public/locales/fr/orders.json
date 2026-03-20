@@ -63,6 +63,7 @@
         "date": "Date d'émission",
         "status": "Statut actuel",
         "closed_by": "Clôturée par",
+        "created_by": "Saisie par",
         "financial_summary": "Résumé Financier",
         "ug_title": "Unités Gratuites (UG)",
         "ug_message": "Cette commande contient {{count}} unités gratuites offertes par le fournisseur.",
@@ -126,8 +127,10 @@
         "headers": {
             "product": "Produit / Désignation",
             "cip": "CIP / Code",
+            "stAnt": "stAnt",
             "qty": "Quantité",
             "ug": "U.G",
+            "stock": "Stock",
             "dev_price": "Prix Dev.",
             "buy_price_ht": "P.A HT",
             "tva": "TVA %",
@@ -180,7 +183,10 @@
         "confirm_sudo_message": "Voulez-vous valider cette action en tant qu'administrateur ?",
         "confirm_sudo_me": "Moi-même",
         "confirm_sudo_admin": "Autre Administrateur",
-        "confirm_sudo_cancel": "Annuler"
+        "confirm_sudo_cancel": "Annuler",
+        "merge_select_two": "Veuillez sélectionner exactement deux commandes à fusionner",
+        "create_new_product": "Voulez-vous créer un nouveau produit ?",
+        "validation_required": "Validation requise"
     },
     "history": {
         "title": "Historique des Achats",
@@ -200,6 +206,42 @@
         "pagination": {
             "page": "Page"
         }
+    },
+    "suggestion_modal": {
+        "title": "Suggestions de Commande",
+        "subtitle_config": "Configurez les paramètres de l'analyse",
+        "mode_simple_title": "Mode Simple",
+        "mode_simple_desc": "Analyse basée sur les ruptures et alertes stock.",
+        "mode_smart_title": "Mode Intelligent",
+        "mode_smart_desc": "Analyse prédictive basée sur l'historique des ventes.",
+        "supplier_label": "Fournisseur",
+        "all_suppliers": "Tous les fournisseurs",
+        "budget_label": "Budget estimatif (FCFA)",
+        "budget_tooltip": "Le système filtrera les produits prioritaires pour respecter ce budget.",
+        "budget_placeholder": "Montant max...",
+        "period_label": "Période de couverture",
+        "period_guard": "Garde (Stock min.)",
+        "period_week": "Semaine (7j)",
+        "period_decade": "Décade (10j)",
+        "period_fortnight": "Quinzaine (15j)",
+        "period_month": "Mois (30j)",
+        "days_unit": "jours",
+        "close": "Fermer",
+        "launch_analysis": "Lancer l'analyse",
+        "back_to_params": "Retour aux paramètres",
+        "create_order": "Créer la commande",
+        "subtitle_results": "Résultats de l'analyse et recommandations",
+        "analysis_done": "Analyse terminée avec succès",
+        "results_count": "{{count}} produits recommandés",
+        "total_estimated": "Total estimé",
+        "table_designation": "Désignation",
+        "table_stock": "Stock act.",
+        "table_sales": "Ventes (pér.)",
+        "table_qty": "Qté sugg.",
+        "table_total_ht": "Total HT",
+        "table_priority": "Priorité",
+        "critical_badge": "CRITIQUE",
+        "standard_badge": "STANDARD"
     }
 }
 

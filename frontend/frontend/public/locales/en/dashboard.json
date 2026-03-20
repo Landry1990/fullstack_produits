@@ -1,4 +1,8 @@
 {
+    "refresh_tooltip": "Refresh all",
+    "hourly_traffic_title": "Hourly Traffic",
+    "hourly_traffic_desc": "Number of sales by time slot",
+    "dashboard.charts.sales_label": "Sales",
     "title": "Dashboard",
     "manager": "Manager",
     "subtitle": "Gross Margin tracking and expense coverage",

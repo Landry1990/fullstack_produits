@@ -541,7 +541,7 @@ export default function CategoryManager({
                               </div>
                               <div className="flex items-center gap-3">
                                  <div className="text-right hidden sm:block">
-                                    <div className="font-bold text-sm">{formatCurrency(normalizeNumberInput(p.selling_price))} F</div>
+                                    <div className="font-bold text-sm">{formatCurrency(normalizeNumberInput(p.selling_price))}</div>
                                  </div>
                                  <button 
                                    onClick={() => handleRemoveProduct(p)}

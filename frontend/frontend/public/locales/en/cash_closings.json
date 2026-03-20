@@ -7,7 +7,9 @@
     "select_placeholder": "Select...",
     "filter_btn": "Filter",
     "reset_btn": "Reset",
-    "reset_title": "Reset filters"
+    "reset_title": "Reset filters",
+    "cashier": "Cashier",
+    "all_cashiers": "All cashiers"
   },
   "performance": {
     "title": "Cashier Performance",

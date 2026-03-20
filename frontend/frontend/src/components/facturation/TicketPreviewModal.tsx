@@ -81,29 +81,31 @@ export default function TicketPreviewModal({
         padding: 0; 
       }
       #ticket-print {
-        width: ${ticketWidth}mm !important;
-        max-width: ${ticketWidth}mm !important;
-        min-width: ${ticketWidth}mm !important;
-        margin: 0 auto;
+        width: 100% !important;
+        margin: 0 !important;
+        padding: 0 !important;
       }
+    }
+    * {
+      box-sizing: border-box;
     }
     body {
       margin: 0;
       padding: 0;
       background: white;
-      font-family: 'Courier New', monospace;
+      font-family: sans-serif;
     }
     #ticket-print {
       width: ${ticketWidth}mm;
       max-width: ${ticketWidth}mm;
       min-width: ${ticketWidth}mm;
       margin: 0 auto;
-      padding: 1rem;
+      padding: 0;
       background: white;
       color: black;
-      font-family: 'Courier New', monospace;
+      font-family: sans-serif;
       font-size: 11px;
-      line-height: 1.4;
+      line-height: 1.2;
     }
     ${additionalStyles}
   </style>
@@ -127,7 +129,7 @@ export default function TicketPreviewModal({
     <div className="modal modal-open">
       <div className="modal-box p-0 max-w-sm bg-white overflow-hidden">
         <div className="bg-base-50 p-3 flex justify-between items-center border-b border-base-200">
-          <h3 className="font-bold text-lg">{t('common.receipt')}</h3>
+          <h3 className="font-bold text-lg">{t('common:receipt')}</h3>
           <button className="btn btn-sm btn-circle btn-ghost" onClick={onClose}>✕</button>
         </div>
 
@@ -138,7 +140,7 @@ export default function TicketPreviewModal({
         </div>
 
         <div className="p-3 bg-base-50 border-t border-base-200 flex justify-end gap-2">
-          <button className="btn btn-ghost btn-sm" onClick={onClose}>{t('common.close')} (Esc)</button>
+          <button className="btn btn-ghost btn-sm" onClick={onClose}>{t('common:close')} (Esc)</button>
           
           {settings?.whatsapp_enabled && onSendWhatsApp && (
              <button 
@@ -156,7 +158,7 @@ export default function TicketPreviewModal({
             className="btn btn-primary btn-sm"
             onClick={handlePrint}
           >
-            {t('common.print')}
+            {t('common:print')}
           </button>
         </div>
       </div>

@@ -112,11 +112,11 @@ export const ProductTabsContent: React.FC<ProductTabsContentProps> = ({
           <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
             <div className="stat bg-base-200/30 rounded-xl border border-base-200 p-4">
                <div className="stat-title text-sm">{t('products:detail.price.cost')}</div>
-              <div className="stat-value text-blue-600 text-xl">{formatCurrency(Math.round(Number(selectedProduit.cost_price || 0)))} F</div>
+              <div className="stat-value text-blue-600 text-xl">{formatCurrency(Math.round(Number(selectedProduit.cost_price || 0)))}</div>
             </div>
             <div className="stat bg-primary text-primary-content rounded-xl p-4">
                <div className="stat-title text-primary-content/80 text-sm">{t('products:detail.price.selling')}</div>
-              <div className="stat-value text-xl">{formatCurrency(Math.round(Number(selectedProduit.selling_price || 0)))} F</div>
+              <div className="stat-value text-xl">{formatCurrency(Math.round(Number(selectedProduit.selling_price || 0)))}</div>
             </div>
             <div className="stat bg-base-200/30 rounded-xl border border-base-200 p-4">
                <div className="stat-title text-sm">{t('products:detail.price.vat')}</div>
@@ -174,7 +174,7 @@ const propsTabsContentPurchases = (achats: any[], t: any, lng: string) => {
                             <td className="text-xs truncate max-w-[150px]" title={achat.fournisseur_name}>{achat.fournisseur_name}</td>
                             <td className="text-right text-xs font-bold">{achat.quantity}</td>
                             <td className="text-right text-xs">
-                                {formatCurrency(Math.round(Number(achat.price_cost)))} {t('common:currency_symbol', 'F')}
+                                {formatCurrency(Math.round(Number(achat.price_cost)))}
                             </td>
                             <td>
                                 <span className="badge badge-outline badge-xs font-mono">{achat.lot || '-'}</span>

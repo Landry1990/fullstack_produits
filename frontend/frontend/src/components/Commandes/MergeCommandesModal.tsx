@@ -123,7 +123,7 @@ export default function MergeCommandesModal({
                                 {mergeOrdersDetails.map(order => (
                                     <option key={order.id} value={order.id}>
                                         #{order.id} - {fournisseurs.find(f => f.id === order.fournisseur)?.name} 
-                                        ({order.produits?.length || 0} {t('orders:merge_modal.products_badge', { count: order.produits?.length || 0 }).split(' ').slice(1).join(' ')}, {formatCurrency(Number(order.total))} {t('common:currency_symbol', 'F')})
+                                        ({order.produits?.length || 0} {t('orders:merge_modal.products_badge', { count: order.produits?.length || 0 }).split(' ').slice(1).join(' ')}, {formatCurrency(Number(order.total))})
                                     </option>
                                 ))}
                             </select>
@@ -154,7 +154,7 @@ export default function MergeCommandesModal({
                                             </div>
                                             <div className="flex items-center gap-2">
                                                 <span className="badge badge-ghost">{t('orders:merge_modal.products_badge', { count: order.produits?.length || 0 })}</span>
-                                                <span className="font-bold">{formatCurrency(Number(order.total))} {t('common:currency_symbol', 'F')}</span>
+                                                <span className="font-bold">{formatCurrency(Number(order.total))}</span>
                                             </div>
                                         </div>
                                     );
@@ -172,7 +172,7 @@ export default function MergeCommandesModal({
                                 <div>
                                     <div className="text-xs text-base-content/50 uppercase">{t('orders:merge_modal.total_amount')}</div>
                                     <div className="font-bold text-lg text-primary">
-                                        {formatCurrency(mergeOrdersDetails.reduce((sum, c) => sum + parseFloat(c.total || '0'), 0))} {t('common:currency_symbol', 'F')}
+                                        {formatCurrency(mergeOrdersDetails.reduce((sum, c) => sum + parseFloat(c.total || '0'), 0))}
                                     </div>
                                 </div>
                             </div>

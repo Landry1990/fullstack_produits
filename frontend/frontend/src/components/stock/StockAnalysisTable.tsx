@@ -180,10 +180,10 @@ export const StockAnalysisTable: React.FC<StockAnalysisTableProps> = ({
                                             </div>
                                         </td>
                                         <td className="text-right font-mono font-bold text-base-content/40">
-                                            {formatCurrency(Math.round(item.cost_price))} {t('common:currency_symbol', { defaultValue: 'F' })}
+                                            {formatCurrency(Math.round(item.cost_price))}
                                         </td>
                                         <td className="text-right font-black text-error px-6">
-                                            {formatCurrency(Math.round(item.value))} {t('common:currency_symbol', { defaultValue: 'F' })}
+                                            {formatCurrency(Math.round(item.value))}
                                         </td>
                                     </>
                                 ) : activeTab === 'overstock' ? (
@@ -197,7 +197,7 @@ export const StockAnalysisTable: React.FC<StockAnalysisTableProps> = ({
                                             <span className="text-error font-black italic">+{item.excess_qty}</span>
                                         </td>
                                         <td className="text-right font-black text-error px-6">
-                                            {formatCurrency(Math.round(item.value))} {t('common:currency_symbol', { defaultValue: 'F' })}
+                                            {formatCurrency(Math.round(item.value))}
                                         </td>
                                     </>
                                 ) : (
@@ -218,7 +218,7 @@ export const StockAnalysisTable: React.FC<StockAnalysisTableProps> = ({
                                             {getUrgencyBadge(item.urgency || '')}
                                         </td>
                                         <td className="text-right font-black text-error px-6">
-                                            {formatCurrency(Math.round(item.value))} {t('common:currency_symbol', { defaultValue: 'F' })}
+                                            {formatCurrency(Math.round(item.value))}
                                         </td>
                                     </>
                                 )}

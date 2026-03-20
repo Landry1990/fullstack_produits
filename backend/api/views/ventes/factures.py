@@ -21,20 +21,19 @@ from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib.colors import HexColor
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Table, TableStyle, Spacer
 
-from ...models import (
+from api.models import (
     Facture, FactureProduit, InvoiceSettings, AuditLog
 )
-from ...services import SalesService
-from ...serializers import FactureSerializer, FacturePrintSerializer
-from ...serializers_optimized import FactureListSerializer, FactureDetailSerializer
-from ...serializer_mixins import OptimizedSerializerMixin
-from ...audit_helpers import log_audit
-from ...sudo_utils import validate_sudo_mode
-from ...whatsapp_service import WhatsAppService
-from ...pagination import StandardResultsSetPagination
+from api.services import SalesService
+from api.serializers import FactureSerializer, FacturePrintSerializer
+from api.serializers_optimized import FactureListSerializer, FactureDetailSerializer
+from api.serializer_mixins import OptimizedSerializerMixin
+from api.audit_helpers import log_audit
+from api.sudo_utils import validate_sudo_mode
+from api.whatsapp_service import WhatsAppService
+from api.pagination import StandardResultsSetPagination
 
 logger = logging.getLogger(__name__)
-business_logger = logging.getLogger('api.business')
 
 
 def header_footer_facture(canvas, doc, company_info, facture_info, facture):
@@ -114,6 +113,13 @@ class FactureViewSet(OptimizedSerializerMixin, viewsets.ModelViewSet):
                 output_field=DecimalField()
             )
         )
+        
+        # Masquer les factures 'envoyées à la caisse' (VAL sans paiement) de la liste par défaut
+        # sauf si on demande explicitement les brouillons ou les attentes.
+        if self.action == 'list':
+            include_pending = self.request.query_params.get('include_pending', 'false').lower() == 'true'
+            if not include_pending:
+                queryset = queryset.annotate(num_p=Count('paiements')).exclude(status=Facture.Status.VALIDEE, num_p=0)
 
         # Add prefetch only for detail view where products/payments are shown
         if self.action == 'retrieve':
@@ -520,7 +526,9 @@ class FactureViewSet(OptimizedSerializerMixin, viewsets.ModelViewSet):
         today = timezone.now().date()
         
         # Build base queryset for filtering
+        # On exclut les factures VALIDEE qui n'ont AUCUN paiement (ce sont celles juste 'envoyées à la caisse')
         base_qs = self.get_queryset().filter(status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE])
+        base_qs = base_qs.annotate(num_paiements=Count('paiements')).exclude(status=Facture.Status.VALIDEE, num_paiements=0)
         
         if date_gte:
             base_qs = base_qs.filter(date__gte=date_gte)
@@ -531,8 +539,8 @@ class FactureViewSet(OptimizedSerializerMixin, viewsets.ModelViewSet):
             base_qs = base_qs.filter(date__lte=date_lte)
 
         # Base filters for related models
-        vendeur_qs = Facture.objects.filter(status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE])
-        produit_qs = FactureProduit.objects.filter(facture__status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE])
+        vendeur_qs = Facture.objects.filter(status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE]).annotate(num_paiements=Count('paiements')).exclude(status=Facture.Status.VALIDEE, num_paiements=0)
+        produit_qs = FactureProduit.objects.filter(facture__status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE]).annotate(num_paiements=Count('facture__paiements')).exclude(facture__status=Facture.Status.VALIDEE, num_paiements=0)
 
         if date_gte:
             vendeur_qs = vendeur_qs.filter(date__gte=date_gte)

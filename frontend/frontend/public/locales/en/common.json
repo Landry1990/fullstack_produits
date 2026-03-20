@@ -2,7 +2,8 @@
     "loading": "Loading...",
     "details": "Details",
     "print": "Print",
-    "refund": "Refund",
+    "refund": "Edit/Return",
+    "duplicate": "Duplicate",
     "delete": "Delete",
     "cancel": "Cancel",
     "save": "Save",
@@ -42,7 +43,7 @@
     },
     "selection_count": "{{count}} selected",
     "import": "Import",
-    "units_short": "units",
+    "units_short": "u",
     "sort": {
         "asc": "Ascending",
         "desc": "Descending"

@@ -318,6 +318,12 @@ class StatsJourTests(APITestCase):
         TestDataFactory.create_facture_produit(
             facture=facture, produit=produit2, quantity=1, selling_price=Decimal('150')
         )
+        
+        # Add a payment so the invoice is included in stats
+        TestDataFactory.create_caisse(
+            facture=facture, montant=Decimal('1350.00'), mode_paiement='especes',
+            user=self.user
+        )
 
         url = reverse('facture-stats-jour')
         response = self.client.get(url)

@@ -45,6 +45,7 @@ export interface Facture {
     session_ticket_number?: number
     montant_regle?: string
     montant_en_compte?: string
+    total_lettres?: string
 }
 
 export interface PaymentDetails {
@@ -74,6 +75,7 @@ export interface TicketCaisse {
     paiements_details?: PaymentDetails[]
     montant_verse?: string | number
     rendu?: string | number
+    total_lettres?: string
 }
 
 export interface Paiement {
@@ -115,6 +117,7 @@ export interface CaisseTransaction {
     is_creance_settlement?: boolean
     facture_created_by_name?: string
     facture_validated_by_name?: string
+    total_lettres?: string
 }
 
 export interface CaisseParTranche {
@@ -255,6 +258,7 @@ export interface SaleCompletionParams {
     centralizedCashRegister: boolean;
     isModificationMode: boolean;
     modificationInvoiceId: number | null;
+    modificationInvoiceStatus?: string;
     devisIdToValidate: number | null;
     tempOrdonnanceData: OrdonnanceData | null;
     validated_by_id?: number | null;

@@ -218,7 +218,8 @@ class CommandeViewSet(MultiTermSearchMixin, OptimizedSerializerMixin, viewsets.M
              return error_res
         # -------------------------
 
-        # Enregistrer la date de clôture (maintenant, en timezone local)
+        # Enregistrer l'utilisateur qui clôture
+        commande.closed_by = request.user
         commande.date_cloture = timezone.now()
 
         # Prefetch tous les produits de la commande en une seule requête
@@ -376,7 +377,7 @@ class CommandeViewSet(MultiTermSearchMixin, OptimizedSerializerMixin, viewsets.M
             else:
                 commande.date_echeance = commande.date_cloture.date()
 
-        commande.save(update_fields=['status', 'date_cloture', 'date', 'date_echeance', 'numero_facture'])
+        commande.save(update_fields=['status', 'date_cloture', 'date', 'date_echeance', 'numero_facture', 'closed_by'])
         
         # 2.4 Mettre à jour la date de dernier achat pour tous les produits
         today = date.today()

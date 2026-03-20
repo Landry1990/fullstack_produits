@@ -232,7 +232,7 @@ const HistoriqueAchats = ({ forcedType }: HistoriqueAchatsProps) => {
                         <span className="text-base font-black text-base-content group-hover:text-primary transition-colors">
                           {formatMoney(row.total_achat)}
                         </span>
-                        <span className="text-[10px] font-bold text-base-content/30 ml-1">{t('common:currency_symbol')}CFA</span>
+                        <span className="text-[10px] font-bold text-base-content/30 ml-1">{t('common:currency_symbol')}</span>
                       </td>
                     </tr>
                   ))}

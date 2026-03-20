@@ -221,7 +221,7 @@ export const InventaireAudit: React.FC<InventaireAuditProps> = ({ onBack }) => {
                         <TrendingDown className="h-4 w-4 text-error" />
                     </div>
                     <div className="text-2xl font-black text-error font-mono">
-                        {formatCurrency(Math.abs(stats?.total_perte || 0))} F
+                        {formatCurrency(Math.abs(stats?.total_perte || 0))}
                     </div>
                 </div>
 
@@ -231,7 +231,7 @@ export const InventaireAudit: React.FC<InventaireAuditProps> = ({ onBack }) => {
                         <TrendingUp className="h-4 w-4 text-success" />
                     </div>
                     <div className="text-2xl font-black text-success font-mono">
-                        {formatCurrency(Math.abs(stats?.total_gain || 0))} F
+                        {formatCurrency(Math.abs(stats?.total_gain || 0))}
                     </div>
                 </div>
 

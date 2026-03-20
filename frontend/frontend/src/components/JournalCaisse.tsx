@@ -21,7 +21,7 @@ registerLocale('fr', fr)
 export default function JournalCaisse() {
   const { t } = useTranslation(['cash_journal', 'common'])
   const currentLocale = t('common:locale', { defaultValue: 'fr-FR' })
-  const currencySymbol = t('common.currency_symbol', 'F')
+  const currencySymbol = t(['common:currency_symbol', 'currency_symbol'], 'F')
 
   const formatCurrencyLocal = (amount: number) => formatCurrency(amount, currentLocale, currencySymbol)
   const [transactions, setTransactions] = useState<CaisseTransaction[]>([])
@@ -166,6 +166,15 @@ export default function JournalCaisse() {
   useEffect(() => {
     if (selectedUser) {
       handleUserShiftDetection(selectedUser)
+    } else {
+      // Reset to full today when "All" is selected
+      setDetectedShift(null)
+      const today = getServerDate()
+      today.setHours(0, 0, 0, 0)
+      const endToday = getServerDate()
+      endToday.setHours(23, 59, 59, 999)
+      setDateDebut(today)
+      setDateFin(endToday)
     }
   }, [selectedUser])
 
@@ -201,33 +210,9 @@ export default function JournalCaisse() {
   }
 
   const fetchData = async () => {
-    setLoading(true)
-    setError(null)
-    try {
-      await Promise.all([
-        fetchTransactions(),
-        fetchMouvements(),
-        fetchTotals()
-      ])
-    } catch (err) {
-      setError(t('table.loading_error') || 'Erreur lors du chargement des données')
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  const fetchMouvements = async () => {
-      try {
-          const params = new URLSearchParams()
-          if (selectedUser) params.append('user', selectedUser)
-          
-          const response = await axios.get(`${apiBaseUrl}/api/mouvements-caisse/`, { params })
-          // Handle both array and paginated responses
-          const data: any = response.data
-          setMouvements(Array.isArray(data) ? data : (data.results || []))
-      } catch (err) {
-          console.error("Erreur chargement mouvements", err)
-      }
+    // Sequential fallback: use the unified page_init instead of 3 concurrent requests
+    // to avoid potential DB lock contention (deadlocks)
+    await fetchPageInit()
   }
 
   const fetchTransactions = async () => {
@@ -235,6 +220,8 @@ export default function JournalCaisse() {
       const params = new URLSearchParams()
       params.append('page', page.toString())
       if (selectedUser) params.append('user', selectedUser)
+      if (dateDebut) params.append('date_debut', formatLocalISOString(dateDebut))
+      if (dateFin) params.append('date_fin', formatLocalISOString(dateFin))
       
       const response = await axios.get(caisseEndpoint, { params })
       processTransactionsData(response.data)
@@ -458,21 +445,6 @@ export default function JournalCaisse() {
     const seconds = pad(date.getSeconds())
     return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}`
   }
-
-  const fetchTotals = async () => {
-    try {
-      const params: any = {}
-      if (dateDebut) params.date_debut = formatLocalISOString(dateDebut)
-      if (dateFin) params.date_fin = formatLocalISOString(dateFin)
-      if (selectedUser) params.user_id = selectedUser
-      
-      const response = await axios.get(`${caisseEndpoint}get_totals/`, { params })
-      setServerTotals(response.data)
-      return response.data
-    } catch (err) {
-      console.error('Erreur chargement totaux:', err)
-    }
-  }
   
   
   const openClosingModal = () => {
@@ -677,39 +649,41 @@ export default function JournalCaisse() {
     <div className="h-full flex flex-col bg-base-200/50">
       
       {/* Header and Filters Card */}
-      <div className="bg-base-100 border-b border-base-200 shrink-0 p-6 sticky-header">
-        <div className="flex flex-col xl:flex-row gap-6 justify-between items-start xl:items-end">
-          <div>
-            <h1 className="text-xl md:text-2xl font-bold text-base-content flex items-center gap-3">
-              <div className="p-2 bg-primary/10 rounded-lg text-primary shrink-0">
-                <Banknote className="w-6 h-6" />
-              </div>
-              <span className="truncate">{t('title')}</span>
-            </h1>
-            <div className="text-base-content/60 mt-1 pl-0 md:pl-12 text-xs md:text-sm flex flex-wrap items-center gap-x-2 gap-y-1">
+      <div className="bg-base-100 border-b border-base-200 shrink-0 p-4 sticky-header shadow-sm">
+        <div className="flex flex-col lg:flex-row gap-4 justify-between items-start lg:items-center">
+          <div className="flex items-center gap-4">
+            <div className="p-2.5 bg-primary/10 rounded-xl text-primary shrink-0">
+              <Banknote className="w-6 h-6" />
+            </div>
+            <div>
+              <h1 className="text-xl font-bold text-base-content tracking-tight">{t('title')}</h1>
+              <div className="text-base-content/50 text-xs flex items-center gap-2 mt-0.5">
                 <span>{t('subtitle')}</span>
-                <span className="hidden md:inline w-1 h-1 rounded-full bg-base-300"></span>
-                <span className="font-mono text-primary font-semibold">{t('operations_count', { count: totalCount })}</span>
+                <span className="w-1 h-1 rounded-full bg-base-300"></span>
+                <span className="font-semibold text-primary/80">{t('operations_count', { count: totalCount })}</span>
+              </div>
             </div>
           </div>
           
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:flex lg:flex-nowrap gap-3 items-end w-full lg:w-auto mt-4 xl:mt-0">
-             <div className="relative w-full lg:w-48">
+          <div className="flex flex-wrap lg:flex-nowrap items-center gap-3 w-full lg:w-auto">
+             {/* Search box - Expanded */}
+             <div className="relative flex-1 min-w-[200px] lg:w-64">
                 <input
                     type="text"
                     placeholder={t('search_placeholder')}
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="input input-sm input-bordered w-full pl-8 bg-base-50"
+                    className="input input-sm input-bordered w-full pl-9 bg-base-200/50 border-base-300 focus:bg-base-100 transition-all text-sm"
                 />
-                <Search className="w-4 h-4 absolute left-2.5 top-1/2 -translate-y-1/2 opacity-40 text-base-content" />
+                <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 opacity-50 text-base-content" />
              </div>
 
-             <div className="form-control flex-1 lg:w-40">
+             {/* Mode filter */}
+             <div className="w-full sm:w-auto">
                 <select
                     value={filterMode}
                     onChange={(e) => setFilterMode(e.target.value)}
-                    className="select select-bordered select-sm w-full bg-base-50 font-medium"
+                    className="select select-bordered select-sm w-full bg-base-200/50 border-base-300 font-medium text-sm"
                 >
                     <option value="all">{t('all_modes')}</option>
                     <option value="especes">💵 {t('common:payment_modes.especes')}</option>
@@ -721,11 +695,12 @@ export default function JournalCaisse() {
                 </select>
              </div>
 
-             <div className="form-control w-full lg:w-40">
+             {/* Cashier filter */}
+             <div className="w-full sm:w-auto">
                 <select
                     value={selectedUser}
                     onChange={(e) => setSelectedUser(e.target.value)}
-                    className="select select-bordered select-sm w-full bg-base-50 font-medium"
+                    className="select select-bordered select-sm w-full bg-base-200/50 border-base-300 font-medium text-sm"
                 >
                     <option value="">👤 {t('all_cashiers')}</option>
                     {users.map((u: any) => (
@@ -736,35 +711,40 @@ export default function JournalCaisse() {
                 </select>
              </div>
 
-             <div className="flex flex-wrap sm:flex-nowrap items-center gap-2 bg-base-50 border border-base-200 rounded-lg p-1 w-full lg:w-auto justify-between sm:justify-start">
-                 <DatePicker
-                    selected={dateDebut}
-                    onChange={(date: Date | null) => setDateDebut(date)}
-                    showTimeSelect
-                    timeFormat="HH:mm"
-                    dateFormat="dd/MM/yy HH:mm"
-                    placeholderText={t('date_start')}
-                    locale="fr"
-                     className="w-28 text-xs bg-transparent focus:outline-none cursor-pointer text-center font-medium"
-                    isClearable
-                 />
+             {/* Date Pickers - Unified and Cleaner */}
+             <div className="flex items-center gap-1 bg-base-200/50 border border-base-300 rounded-lg p-0.5 w-full lg:w-auto">
+                 <div className="flex items-center px-2 py-1 gap-1">
+                    <DatePicker
+                        selected={dateDebut}
+                        onChange={(date: Date | null) => setDateDebut(date)}
+                        showTimeInput
+                        timeFormat="HH:mm"
+                        dateFormat="dd/MM/yy HH:mm"
+                        placeholderText={t('date_start')}
+                        locale="fr"
+                        className="w-36 text-xs bg-transparent focus:outline-none cursor-pointer pr-8 font-medium"
+                        isClearable
+                    />
+                    <span className="text-base-content/30 text-[10px]">→</span>
+                    <DatePicker
+                        selected={dateFin}
+                        onChange={(date: Date | null) => setDateFin(date)}
+                        showTimeInput
+                        timeFormat="HH:mm"
+                        dateFormat="dd/MM/yy HH:mm"
+                        placeholderText={t('date_end')}
+                        locale="fr"
+                        className="w-36 text-xs bg-transparent focus:outline-none cursor-pointer pr-8 font-medium"
+                        isClearable
+                    />
+                 </div>
+                 
                  {detectedShift?.active && (
-                    <div className="flex flex-col items-center justify-center px-1 border-x border-base-200">
+                    <div className="flex flex-col items-center justify-center px-2 py-1 border-l border-base-300">
                         <span className="text-[8px] font-black text-primary uppercase leading-none">Shift</span>
-                        <div className="w-1 h-1 rounded-full bg-primary animate-pulse mt-0.5"></div>
                     </div>
                  )}
-                 <DatePicker
-                    selected={dateFin}
-                    onChange={(date: Date | null) => setDateFin(date)}
-                    showTimeSelect
-                    timeFormat="HH:mm"
-                    dateFormat="dd/MM/yy HH:mm"
-                    placeholderText={t('date_end')}
-                    locale="fr"
-                    className="w-28 text-xs bg-transparent focus:outline-none cursor-pointer text-center font-medium"
-                    isClearable
-                 />
+
                  <button
                     onClick={() => {
                         const today = getServerDate()
@@ -774,32 +754,35 @@ export default function JournalCaisse() {
                         setDateDebut(today)
                         setDateFin(endToday)
                     }}
-                    className="btn btn-xs btn-ghost text-primary px-1 sm:px-2"
+                    className="btn btn-xs btn-ghost text-primary hover:bg-primary/10 px-2 min-h-0 h-7"
                     title={t('today')}
                  >
                     {t('today_short') || 'Auj.'}
                   </button>
-             </div>
 
-             <div className="flex gap-2 w-full lg:w-nowrap justify-end sm:justify-start">
-                <button
+                 <div className="w-px h-4 bg-base-300 mx-0.5"></div>
+
+                 <button
                     onClick={fetchData}
-                    className="btn btn-sm btn-ghost btn-square"
+                    className="btn btn-xs btn-ghost btn-square min-h-0 h-7"
                     disabled={loading}
                     title={t('refresh')}
-                >
-                    {loading ? <span className="loading loading-spinner loading-xs"></span> : <RefreshCw className="w-4 h-4 text-base-content/70" />}
+                 >
+                    {loading ? <span className="loading loading-spinner loading-[10px]"></span> : <RefreshCw className="w-3.5 h-3.5 text-base-content/60" />}
                 </button>
-                <div className="h-8 w-px bg-base-200 mx-1"></div>
+             </div>
+
+             {/* Action Buttons */}
+             <div className="flex gap-2 w-full sm:w-auto ml-auto">
                 <button
                     onClick={() => setIsMovementModalOpen(true)}
-                    className="btn btn-sm btn-outline border-base-300 btn-primary gap-2 flex-1 sm:flex-none"
+                    className="btn btn-sm btn-outline border-base-300 btn-primary gap-2 flex-1 sm:flex-none shadow-sm"
                 >
                     <Plus className="w-4 h-4" /> <span className="sm:inline">{t('new_operation')}</span>
                 </button>
                 <button
                     onClick={openClosingModal}
-                    className="btn btn-sm btn-primary shadow-sm gap-2 flex-1 sm:flex-none"
+                    className="btn btn-sm btn-primary shadow-md gap-2 flex-1 sm:flex-none"
                     disabled={loading || !selectedUser}
                     title={!selectedUser ? t('messages.no_cashier_selected') : t('close_register')}
                 >
@@ -808,6 +791,7 @@ export default function JournalCaisse() {
              </div>
           </div>
         </div>
+
 
         {/* Status Filters Bar */}
         <div className="mt-4 pt-4 border-t border-base-200 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
@@ -915,7 +899,7 @@ export default function JournalCaisse() {
       </div>
 
       {/* Adaptive Details Bar: Only show if there are secondary payments or movements */}
-      <div className="px-6 flex flex-wrap gap-2 items-center mb-4 min-h-[32px]">
+      <div className="px-4 md:px-6 flex flex-wrap gap-2 items-center mb-4 min-h-[32px]">
           <span className="text-[10px] font-black uppercase text-base-content/40 mr-2">{t('stats.flow_details')}</span>
           
           {/* Part 1: Sales breakdown - using server totals details if avail */}
@@ -961,7 +945,7 @@ export default function JournalCaisse() {
           )}
 
           {/* Performance Summary Bar: Strictly Interval Operations */}
-          <div className="flex items-center gap-0">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-0 mt-4 sm:mt-0">
               {/* Part 1: Breakdown (Ventes + Flux) */}
               <div className="flex items-center gap-4 bg-base-200 py-2 px-6 rounded-l-full border border-base-300">
                   <div className="flex flex-col">
@@ -988,7 +972,7 @@ export default function JournalCaisse() {
       </div>
 
       {/* Main Content: Table Wrapper */}
-      <div className="flex-1 bg-base-100 rounded-2xl border border-base-200 shadow-sm flex flex-col overflow-hidden mx-6 mb-6">
+      <div className="flex-1 bg-base-100 rounded-2xl border border-base-200 shadow-sm flex flex-col overflow-hidden mx-4 md:mx-6 mb-6">
         {error && (
             <div className="p-3 bg-error/10 border-b border-error/20 flex items-center gap-2 text-error text-sm font-medium">
                 <span className="text-lg">⚠️</span>
@@ -1003,12 +987,59 @@ export default function JournalCaisse() {
                     <p className="text-base-content/60 font-medium animate-pulse">{t('table.loading')}</p>
                 </div>
             ) : filteredItems.length === 0 ? (
-                <div className="flex flex-col items-center justify-center h-64 text-base-content/30 gap-3">
-                    <span className="text-6xl opacity-20">📂</span>
-                    <p className="text-lg font-medium italic">{t('table.no_transaction')}</p>
+                <div className="flex flex-col items-center justify-center p-12 text-base-content/30 gap-3 text-center">
+                    <div className="w-20 h-20 bg-base-200 rounded-full flex items-center justify-center text-4xl mb-2 opacity-50 shadow-inner">📂</div>
+                    <p className="text-lg font-bold italic">{t('table.no_transaction')}</p>
+                    <p className="text-xs opacity-60 max-w-xs">{t('table.no_transaction_desc') || "Aucune opération ne correspond à vos filtres actuels."}</p>
                 </div>
             ) : (
-                <table className="table table-sm w-full border-separate border-spacing-0">
+                <>
+                    {/* Vue Mobile: Cartes */}
+                    <div className="md:hidden divide-y divide-base-200 overflow-y-auto max-h-[60vh]">
+                        {groupedItems.map((item: any) => {
+                             const isMouvement = item._kind === 'mouvement';
+                             const transaction = item as CaisseTransaction & { isReleveGroup?: boolean, items?: CaisseTransaction[] };
+                             const info = isMouvement ? {
+                                 title: item.motif,
+                                 subtitle: item.user_nom,
+                                 amount: normalizeNumberInput(item.montant),
+                                 type: item.type === 'ENTREE' ? 'success' : 'error',
+                                 badge: item.type === 'ENTREE' ? 'ENTRÉE' : 'SORTIE',
+                                 date: formatDate(item.date)
+                             } : {
+                                 title: transaction.client_name,
+                                 subtitle: transaction.user_details?.full_name,
+                                 amount: normalizeNumberInput(transaction.montant),
+                                 type: transaction.statut === 'completee' ? 'primary' : 'warning',
+                                 badge: transaction.mode_paiement_display,
+                                 date: formatDate(transaction.date_paiement)
+                             };
+
+                             return (
+                                 <div key={item.id} className="p-4 active:bg-base-200 transition-colors flex flex-col gap-2">
+                                     <div className="flex justify-between items-start">
+                                         <div className="flex flex-col">
+                                             <span className="text-[10px] font-black text-base-content/40 uppercase tracking-tighter">{info.date}</span>
+                                             <span className="font-bold text-sm text-base-content leading-tight mt-0.5">{info.title}</span>
+                                             <span className="text-[11px] text-base-content/60 font-medium">👤 {info.subtitle}</span>
+                                         </div>
+                                         <div className="text-right flex flex-col items-end">
+                                            <span className={`font-black text-base ${isMouvement ? (item.type === 'ENTREE' ? 'text-success' : 'text-error') : 'text-base-content'}`}>
+                                                {isMouvement && (item.type === 'ENTREE' ? '+' : '-')}
+                                                {formatCurrencyLocal(info.amount)}
+                                            </span>
+                                            <span className={`badge badge-xs font-bold border-none py-2 px-2 mt-1 ${isMouvement ? (item.type === 'ENTREE' ? 'bg-success text-white' : 'bg-error text-white') : 'bg-base-200'}`}>
+                                                {info.badge}
+                                            </span>
+                                         </div>
+                                     </div>
+                                 </div>
+                             );
+                        })}
+                    </div>
+
+                    {/* Vue Desktop: Table */}
+                    <table className="hidden md:table table-sm w-full border-separate border-spacing-0">
                     <thead className="sticky top-0 z-30 bg-base-200 opacity-100">
                         <tr className="border-b border-base-300">
                             <th className="border-b-2 border-base-200 text-xs font-bold text-base-content/50 py-3 pl-6">{t('table.date_time')}</th>
@@ -1090,7 +1121,7 @@ export default function JournalCaisse() {
                                                 </div>
                                                 <div className="flex flex-col">
                                                     <span className="font-semibold text-sm">
-                                                        {transaction.user_details?.full_name || t('common.unknown') || 'Inconnu'}
+                                                        {transaction.user_details?.full_name || t('common:unknown') || 'Inconnu'}
                                                     </span>
                                                     <span className="text-[10px] text-base-content/40 font-mono tracking-tight">
                                                         @{transaction.user_details?.username || 'user'}
@@ -1116,7 +1147,7 @@ export default function JournalCaisse() {
                                             <div className="flex items-center gap-2">
                                                 <span className="font-bold text-sm text-base-content">{transaction.client_name}</span>
                                                 {transaction.is_creance_settlement && (
-                                                    <span className="badge badge-sm badge-info text-white font-bold text-[9px] px-1.5">{t('common.creance') || 'CRÉANCE'}</span>
+                                                    <span className="badge badge-sm badge-info text-white font-bold text-[9px] px-1.5">{t('common:creance') || 'CRÉANCE'}</span>
                                                 )}
                                             </div>
                                             {transaction.isReleveGroup && (
@@ -1125,7 +1156,7 @@ export default function JournalCaisse() {
                                         </td>
                                         <td className="font-mono text-xs py-4">
                                             {transaction.isReleveGroup ? (
-                                                <span className="text-primary/70 font-bold italic">{transaction.items?.length} {t('common.pieces') || 'pièces'}</span>
+                                                <span className="text-primary/70 font-bold italic">{transaction.items?.length} {t('common:pieces') || 'pièces'}</span>
                                             ) : (
                                                 <span className="bg-base-200 px-2 py-1 rounded font-bold text-base-content/60">{transaction.facture_numero || '-'}</span>
                                             )}
@@ -1185,6 +1216,7 @@ export default function JournalCaisse() {
                         })}
                     </tbody>
                 </table>
+                </>
             )}
         </div>
 
@@ -1317,3 +1349,4 @@ export default function JournalCaisse() {
     </div>
   )
 }
+

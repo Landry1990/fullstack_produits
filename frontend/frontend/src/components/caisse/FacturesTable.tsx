@@ -79,7 +79,7 @@ export const FacturesTable: React.FC<FacturesTableProps> = ({
     }
     if (p.produit_name) return p.produit_name
     if (p.produit_nom) return p.produit_nom
-    return `Produit #${p.produit}`
+    return t('table.product_placeholder', { id: p.produit })
   }
 
   // Get product summary text for table cell  
@@ -148,7 +148,7 @@ export const FacturesTable: React.FC<FacturesTableProps> = ({
                     )}
                   </td>
                   <td>
-                    <div className="font-bold">{facture.client_name || 'Client de passage'}</div>
+                    <div className="font-bold">{facture.client_name || t('table.passerby_client')}</div>
                   </td>
                   <td className="text-xs hidden lg:table-cell">
                     <div>{new Date(facture.date).toLocaleDateString('fr-FR', {
@@ -170,16 +170,16 @@ export const FacturesTable: React.FC<FacturesTableProps> = ({
                         setPreviewFacture(facture)
                       }}
                       onDoubleClick={(e) => e.stopPropagation()}
-                      title="Voir les produits"
+                      title={t('table.view_products')}
                     >
                       {getProductsSummary(facture)}
                     </button>
                   </td>
                   <td className="text-right font-mono font-bold text-lg">
-                    {montantAPayer} F
+                    {montantAPayer} {t('common:currency_symbol', 'F')}
                     {couponPourCetteFacture && (
                       <div className="text-xs font-normal text-success line-through opacity-70 flex items-center justify-end gap-1">
-                        {hasTiersPayant ? Number(facture.part_client) : Number(facture.total_ttc)} F
+                        {hasTiersPayant ? Number(facture.part_client) : Number(facture.total_ttc)} {t('common:currency_symbol', 'F')}
                          <button 
                           onClick={(e) => { 
                             e.stopPropagation()
@@ -267,10 +267,10 @@ export const FacturesTable: React.FC<FacturesTableProps> = ({
       <PremiumModal
         isOpen={!!previewFacture}
         onClose={() => setPreviewFacture(null)}
-        title={`📦 Produits — #${previewFacture?.numero_facture}`}
+        title={t('table.products_preview_title', { numero: previewFacture?.numero_facture })}
         footer={
           <div className="flex justify-end w-full">
-            <button className="btn btn-sm" onClick={() => setPreviewFacture(null)}>Fermer</button>
+            <button className="btn btn-sm" onClick={() => setPreviewFacture(null)}>{t('table.close')}</button>
           </div>
         }
       >
@@ -280,10 +280,10 @@ export const FacturesTable: React.FC<FacturesTableProps> = ({
               <table className="table table-sm table-zebra w-full">
                 <thead>
                   <tr>
-                    <th>Produit</th>
-                    <th className="text-center">Qté</th>
-                    <th className="text-right">P.U</th>
-                    <th className="text-right">Total</th>
+                    <th>{t('table.product')}</th>
+                    <th className="text-center">{t('table.quantity')}</th>
+                    <th className="text-right">{t('table.unit_price_short')}</th>
+                    <th className="text-right">{t('table.total')}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -334,8 +334,8 @@ export const FacturesTable: React.FC<FacturesTableProps> = ({
                             )}
                           </div>
                         </td>
-                        <td className="text-right font-mono">{Math.round(price)} F</td>
-                        <td className="text-right font-mono font-bold">{Math.round(qty * price)} F</td>
+                        <td className="text-right font-mono">{Math.round(price)} {t('common:currency_symbol', 'F')}</td>
+                        <td className="text-right font-mono font-bold">{Math.round(qty * price)} {t('common:currency_symbol', 'F')}</td>
                         <td className="text-right">
                           {canModify && (
                             <button 
@@ -359,9 +359,9 @@ export const FacturesTable: React.FC<FacturesTableProps> = ({
                 </tbody>
                 <tfoot>
                   <tr>
-                    <td colSpan={3} className="text-right font-bold">Total TTC</td>
+                    <td colSpan={3} className="text-right font-bold">{t('table.total_ttc')}</td>
                     <td className="text-right font-mono font-bold text-primary">
-                      {Math.round(Number(previewFacture.total_ttc))} F
+                      {Math.round(Number(previewFacture.total_ttc))} {t('common:currency_symbol', 'F')}
                     </td>
                     <td></td>
                   </tr>
@@ -369,7 +369,7 @@ export const FacturesTable: React.FC<FacturesTableProps> = ({
               </table>
             </div>
           ) : (
-            <p className="text-center text-base-content/50 py-4">Aucun produit</p>
+            <p className="text-center text-base-content/50 py-4">{t('table.no_products')}</p>
           )}
         </div>
       </PremiumModal>

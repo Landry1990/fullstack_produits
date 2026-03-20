@@ -63,99 +63,95 @@ export const TicketTemplate = forwardRef<HTMLDivElement, TicketTemplateProps>(({
   return (
     <div 
       ref={ref} 
-      className="p-2 bg-white text-black font-sans text-[11px] leading-tight" 
+      className="p-1 bg-white text-black font-sans text-[10px] leading-tight" 
       style={{ 
         width: `${ticketWidth}mm`, 
         maxWidth: `${ticketWidth}mm`,
         margin: '0 auto',
         minWidth: `${ticketWidth}mm`,
-        letterSpacing: '-0.01em'
+        letterSpacing: '-0.01em',
       }}
     >
       
-      {/* HEADER */}
-      <div className="text-center mb-4 border-b border-black pb-2">
+      {/* HEADER - Compact */}
+      <div className="text-center mb-2 border-b-2 border-black pb-2">
         {settings.logo && (
           <img src={settings.logo} alt="Logo" className="h-10 mx-auto mb-2 grayscale object-contain" />
         )}
-        <h2 className="text-base font-black uppercase mb-0.5 tracking-tight">{settings.pharmacy_name || 'PHARMACIE'}</h2>
-        <div className="space-y-0 text-[10px] leading-snug">
-            {settings.address && <p className="italic">{settings.address}</p>}
-            <div className="flex justify-center gap-2 mt-1 font-bold">
-               {settings.phone && <span>Tél: {settings.phone}</span>}
-            </div>
-            <div className="flex justify-center gap-2 opacity-70 text-[9px] uppercase mt-0.5">
-               {settings.niu && <span>NIU: {settings.niu}</span>}
-               {settings.registre_commerce && <span>RC: {settings.registre_commerce}</span>}
+        <h2 className="text-sm font-black uppercase mb-1 leading-none">{settings.pharmacy_name || 'PHARMACIE'}</h2>
+        <div className="text-[10px] leading-tight space-y-0.5">
+            {settings.address && <p>{settings.address}</p>}
+            <div className="font-bold flex flex-wrap justify-center gap-x-2">
+               {settings.phone && <span className="whitespace-nowrap">Tél: {settings.phone}</span>}
+               {settings.niu && <span className="whitespace-nowrap">NIU: {settings.niu}</span>}
+               {settings.registre_commerce && <span className="whitespace-nowrap">RC: {settings.registre_commerce}</span>}
             </div>
         </div>
       </div>
 
-      {/* TICKET INFO */}
-      <div className="mb-3 space-y-0.5 text-[10px]">
-        {ticket.is_duplicate && (
-            <div className="text-center bg-black text-white font-black text-xs py-1 mb-2">
-                *** DUPLICATA ***
-            </div>
-        )}
-        <div className="flex justify-between border-b border-dotted border-black/20 pb-0.5">
-            <span className="font-bold">Facture N°:</span>
-            <span>{facture?.numero_facture || `#${ticket.id}`}</span>
-        </div>
-        {facture?.session_ticket_number && (
-            <div className="flex justify-between bg-black/5 px-1 font-bold">
-                <span>N° d'ordre:</span>
-                <span className="text-sm">{facture.session_ticket_number}</span>
-            </div>
-        )}
-        <div className="flex justify-between">
-            <span className="font-bold">Date:</span>
-            <span>{formatDate(ticket.date_paiement)}</span>
-        </div>
-        <div className="flex justify-between">
-            <span className="font-bold">Client:</span>
-            <span className="text-right truncate ml-2 font-medium">{clientName.toUpperCase()}</span>
-        </div>
-        <div className="flex justify-between opacity-80">
-            <span>Caissier:</span>
-            <span className="truncate ml-2">{ticket.user_details?.username || '---'}</span>
-        </div>
-      </div>
+      {/* TICKET INFO - Table layout for robustness */}
+      <table className="w-full mb-2 text-[10px] border-collapse">
+        <tbody>
+            {ticket.is_duplicate && (
+                <tr>
+                    <td colSpan={2} className="text-center bg-black text-white font-black py-1">*** DUPLICATA ***</td>
+                </tr>
+            )}
+            <tr className="border-b border-dotted border-black/20">
+                <td className="font-bold py-0.5">Facture N°:</td>
+                <td className="text-right py-0.5">{facture?.numero_facture || `#${ticket.id}`}</td>
+            </tr>
+            {facture?.session_ticket_number && (
+                <tr className="bg-black/5">
+                    <td className="font-bold py-0.5 px-1">N° d'ordre:</td>
+                    <td className="text-right py-0.5 px-1 font-black text-sm">{facture.session_ticket_number}</td>
+                </tr>
+            )}
+            <tr>
+                <td className="font-bold py-0.5">Date:</td>
+                <td className="text-right py-0.5 whitespace-nowrap">{formatDate(ticket.date_paiement)}</td>
+            </tr>
+            <tr>
+                <td className="font-bold py-0.5">Client:</td>
+                <td className="text-right py-0.5 font-bold uppercase">{clientName}</td>
+            </tr>
+            <tr className="opacity-70">
+                <td className="py-0.5">Caissier:</td>
+                <td className="text-right py-0.5">{ticket.user_details?.username || '---'}</td>
+            </tr>
+        </tbody>
+      </table>
 
-      {/* ITEMS TABLE HEADER */}
-      <div className="flex justify-between border-y border-black py-1 font-black text-[9px] uppercase mb-1">
-          <span className="flex-1">Désignation / Qté</span>
-          <span className="w-16 text-right">Total</span>
-      </div>
-
-      {/* PRODUCTS */}
-      <div className="mb-2 space-y-1.5">
-        {produits.map((p: any, idx: number) => {
-          const qty = Math.abs(p.quantity);
-          const price = Number(p.selling_price || 0);
-          const lineTotal = qty * price;
-          
-          return (
-            <div key={idx} className="flex flex-col">
-              <div className="flex justify-between items-start gap-1">
-                <span className="flex-1 font-bold leading-none uppercase">
+      {/* ITEMS TABLE */}
+      <table className="w-full mb-2 text-[10px] border-collapse">
+        <thead>
+            <tr className="border-y border-black font-black uppercase text-[9px]">
+                <th className="py-1 text-left">Désignation</th>
+                <th className="py-1 text-center w-8">Qté</th>
+                <th className="py-1 text-right w-20">Total</th>
+            </tr>
+        </thead>
+        <tbody>
+            {produits.map((p: any, idx: number) => {
+              const qty = Math.abs(p.quantity);
+              const price = Number(p.selling_price || 0);
+              const lineTotal = qty * price;
+              
+              return (
+                <tr key={idx} className="border-b border-black/5 align-top">
+                  <td className="py-1.5 pr-1 uppercase font-bold leading-tight">
                     {getProductName(p)}
-                </span>
-                <span className="font-black whitespace-nowrap">
-                    {formatM(lineTotal)}
-                </span>
-              </div>
-              <div className="text-[9px] text-black/70 italic">
-                {qty} x {formatM(price)}
-              </div>
-            </div>
-          );
-        })}
-      </div>
+                  </td>
+                  <td className="py-1.5 text-center">{qty}</td>
+                  <td className="py-1.5 text-right font-black">{formatM(lineTotal)}</td>
+                </tr>
+              );
+            })}
+        </tbody>
+      </table>
 
-      {/* TOTALS BOX */}
-      <div className="border-t-2 border-dashed border-black mt-2 pt-2 pb-1 space-y-1">
-        
+      {/* TOTALS & PAYMENTS */}
+      <div className="border-t-2 border-black pt-1 space-y-1">
         {remise > 0 && (
             <div className="flex justify-between text-[10px]">
                 <span>Remise commerciale</span>
@@ -163,31 +159,35 @@ export const TicketTemplate = forwardRef<HTMLDivElement, TicketTemplateProps>(({
             </div>
         )}
 
-        <div className="flex justify-between text-lg font-black leading-none py-1 border-y border-black mt-1">
-            <span>TOTAL</span>
-            <span>{formatM(totalTTC)} <span className="text-[10px] font-normal">F</span></span>
+        <div className="flex justify-between items-baseline text-sm font-black py-1 border-y-2 border-black">
+            <span className="uppercase mr-2">TOTAL NET</span>
+            <span className="whitespace-nowrap">{formatM(totalTTC)} F</span>
         </div>
 
-        {/* PAYMENTS */}
-        <div className="pt-1 text-[10px]">
+        {(ticket.total_lettres || facture?.total_lettres) && (
+            <div className="text-[9px] font-bold italic py-1 border-b border-black/10 uppercase leading-snug">
+                {ticket.total_lettres || facture?.total_lettres}
+            </div>
+        )}
+
+        <div className="pt-1 text-[10px] space-y-0.5">
           {ticket.paiements_details && ticket.paiements_details.length > 0 ? (
               ticket.paiements_details.map((paiement, idx) => (
-                  <div key={idx} className="flex justify-between font-medium">
-                      <span>{getModeLabel((paiement as any).mode_paiement || paiement.mode)}</span>
-                      <span>{formatM(paiement.montant)}</span>
+                  <div key={idx} className="flex justify-between">
+                      <span className="mr-2 uppercase text-[9px]">{getModeLabel((paiement as any).mode_paiement || paiement.mode)}</span>
+                      <span className="font-bold whitespace-nowrap">{formatM(paiement.montant)}</span>
                   </div>
               ))
           ) : (
               <div className="flex justify-between">
                    <span>Mode: {getModeLabel(ticket.mode_paiement)}</span>
-                   <span>{formatM(totalTTC)}</span>
+                   <span className="font-bold">{formatM(totalTTC)}</span>
               </div>
           )}
         </div>
 
-        {/* CASH DETAILS */}
         {(Number(ticket.montant_verse) > 0 || Number(ticket.rendu) > 0) && (
-          <div className="mt-1 pt-1 border-t border-dotted border-black/30 text-[9px] space-y-0.5">
+          <div className="mt-1 pt-1 border-t border-dotted border-black/30 text-[9px] space-y-0.5 opacity-80">
             {Number(ticket.montant_verse) > 0 && (
                 <div className="flex justify-between">
                     <span>Espèces reçues</span>
@@ -204,24 +204,23 @@ export const TicketTemplate = forwardRef<HTMLDivElement, TicketTemplateProps>(({
         )}
       </div>
 
-      {/* TAX SUMMARY MINI */}
       {totalTVA > 0 && (
-        <div className="mt-2 text-[8px] text-black/60 text-center leading-none">
-          Dont TVA: {formatM(totalTVA)} F (HT: {formatM(totalHT)} F)
+        <div className="mt-2 text-[8px] text-center opacity-60">
+          Base HT: {formatM(totalHT)} | TVA: {formatM(totalTVA)}
         </div>
       )}
 
       {/* FOOTER */}
-      <div className="text-center mt-4 pt-2 border-t border-black pb-4">
-        <p className="font-black text-[10px] uppercase">{settings.ticket_footer_message || 'Merci de votre visite'}</p>
-        <p className="text-[9px] mt-0.5 opacity-80 italic italic">A bientôt !</p>
+      <div className="text-center mt-4 border-t border-black pt-2 pb-2">
+        <p className="font-black text-[10px] uppercase mb-1">{settings.ticket_footer_message || 'Merci de votre visite'}</p>
+        <p className="text-[9px] mt-1 italic">Bienvenue chez nous !</p>
         
         {facture?.numero_facture && (
-             <div className="flex flex-col items-center mt-3 opacity-90">
+             <div className="flex flex-col items-center mt-3 scale-90">
                 <Barcode 
                     value={facture.numero_facture} 
-                    height={25} 
-                    width={1.2} 
+                    height={20} 
+                    width={1} 
                     fontSize={8} 
                     displayValue={true}
                     margin={0}
@@ -229,8 +228,8 @@ export const TicketTemplate = forwardRef<HTMLDivElement, TicketTemplateProps>(({
                 />
             </div>
         )}
-        <div className="text-[7px] mt-2 text-black/30 font-bold tracking-widest uppercase">
-          Logiciel de Gestion Antigravity
+        <div className="text-[7px] mt-3 opacity-30 font-bold tracking-widest uppercase">
+          Logiciel de Gestion ZENITH
         </div>
       </div>
 

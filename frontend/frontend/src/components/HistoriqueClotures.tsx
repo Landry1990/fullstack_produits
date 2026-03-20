@@ -42,9 +42,13 @@ interface ClotureCaisse {
 export default function HistoriqueClotures() {
   const { t } = useTranslation(['cash_closings', 'common'])
   const currentLocale = t('common:locale', { defaultValue: 'fr-FR' })
-  const currencySymbol = t('common.currency_symbol', 'F')
+  const currencySymbol = t(['common:currency_symbol', 'currency_symbol'], 'F')
   const [clotures, setClotures] = useState<ClotureCaisse[]>([])
   const [loading, setLoading] = useState(false)
+  
+  // Utilisateurs pour le filtrage
+  const [users, setUsers] = useState<any[]>([])
+  const [selectedUser, setSelectedUser] = useState<string>('')
   
   // Filtres
   const [dateDebut, setDateDebut] = useState<Date | null>(null)
@@ -65,12 +69,25 @@ export default function HistoriqueClotures() {
   // Metric month/year (default to now)
   const [metricMonth, setMetricMonth] = useState<string>(format(new Date(), 'MM'))
   const [metricYear, setMetricYear] = useState<string>(format(new Date(), 'yyyy'))
-  const [showMetric, setShowMetric] = useState(true)
+  const [showMetric, setShowMetric] = useState(false)
 
   const apiBaseUrl = useMemo(() => {
     const baseUrl = import.meta.env.VITE_API_BASE_URL ?? ''
     return baseUrl ? String(baseUrl).replace(/\/$/, '') : ''
   }, [])
+
+  // Récupérer les utilisateurs au montage
+  useEffect(() => {
+    const fetchUsers = async () => {
+      try {
+        const response = await axios.get(`${apiBaseUrl}/api/caisse/page_init/`)
+        setUsers(response.data.users || [])
+      } catch (err) {
+        console.error('Erreur chargement utilisateurs:', err)
+      }
+    }
+    fetchUsers()
+  }, [apiBaseUrl])
 
   // Helper pour formater la date en YYYY-MM-DD
   const formatDateForApi = (date: Date): string => {
@@ -91,6 +108,7 @@ export default function HistoriqueClotures() {
       
       if (dateDebut) params.date_debut = formatDateForApi(dateDebut)
       if (dateFin) params.date_fin = formatDateForApi(dateFin)
+      if (selectedUser) params.user = selectedUser
       
       const response = await axios.get(`${apiBaseUrl}/api/clotures-caisse/`, { params })
       
@@ -108,7 +126,7 @@ export default function HistoriqueClotures() {
 
   useEffect(() => {
     fetchClotures()
-  }, [currentPage]) // Re-fetch quand la page change
+  }, [currentPage, selectedUser, dateDebut, dateFin]) // Re-fetch quand les filtres changent
 
   const handleSearch = () => {
     setCurrentPage(1)
@@ -118,6 +136,7 @@ export default function HistoriqueClotures() {
   const resetFilters = () => {
     setDateDebut(null)
     setDateFin(null)
+    setSelectedUser('')
     setCurrentPage(1)
     setTimeout(() => handleSearch(), 0)
   }
@@ -237,6 +256,24 @@ export default function HistoriqueClotures() {
               />
             </div>
 
+            <div className="form-control flex-1 lg:w-48">
+                <label className="label py-1">
+                    <span className="label-text text-xs font-bold uppercase tracking-wider text-base-content/70">{t('filters.cashier')}</span>
+                </label>
+                <select
+                    value={selectedUser}
+                    onChange={(e) => setSelectedUser(e.target.value)}
+                    className="select select-bordered select-sm w-full bg-base-50 font-medium"
+                >
+                    <option value="">👤 {t('filters.all_cashiers')}</option>
+                    {users.map((u: any) => (
+                        <option key={u.id} value={u.id}>
+                            {u.first_name ? `${u.first_name} ${u.last_name || ''}` : u.username}
+                        </option>
+                    ))}
+                </select>
+            </div>
+
             <div className="flex gap-2">
               <button 
                 onClick={handleSearch} 
@@ -329,7 +366,7 @@ export default function HistoriqueClotures() {
              <div className="flex justify-between items-start">
                <div>
                   <h3 className="text-base-content/60 text-xs font-bold uppercase tracking-wider">{t('stats.theoretical_total')}</h3>
-                  <p className="text-2xl font-bold mt-1">{formatMoney(globalTotals.montant_theorique)} <span className="text-base font-normal text-base-content/50">F</span></p>
+                  <p className="text-2xl font-bold mt-1">{formatMoney(globalTotals.montant_theorique)}</p>
                </div>
                <div className="p-3 bg-base-200/50 rounded-lg text-base-content">
                  <Banknote className="w-6 h-6" />
@@ -341,7 +378,7 @@ export default function HistoriqueClotures() {
              <div className="flex justify-between items-start">
                <div>
                   <h3 className="text-base-content/60 text-xs font-bold uppercase tracking-wider">{t('stats.real_total')}</h3>
-                  <p className="text-2xl font-bold mt-1 text-primary">{formatMoney(globalTotals.montant_reel)} <span className="text-base font-normal text-primary/50">F</span></p>
+                  <p className="text-2xl font-bold mt-1 text-primary">{formatMoney(globalTotals.montant_reel)}</p>
                </div>
                <div className="p-3 bg-primary/10 rounded-lg text-primary">
                  <CheckCircle className="w-6 h-6" />
@@ -512,7 +549,7 @@ export default function HistoriqueClotures() {
                 {t('modal.title')}
               </h3>
               <p className="opacity-80 text-sm mt-1 pb-1">
-                {t('modal.cash_of', { name: selectedCloture.user_name || selectedCloture.username || t('common.unknown') })}
+                {t('modal.cash_of', { name: selectedCloture.user_name || selectedCloture.username || t('common:unknown') })}
                 {selectedCloture.cloture_par_name && t('modal.closed_by', { name: selectedCloture.cloture_par_name })}
               </p>
             </div>
@@ -536,11 +573,11 @@ export default function HistoriqueClotures() {
               <div className="grid grid-cols-2 gap-4">
                 <div className="bg-base-100 p-4 rounded-xl border border-base-200">
                   <div className="text-xs uppercase font-bold text-base-content/50 mb-1">{t('modal.theoretical_label')}</div>
-                  <div className="text-2xl font-bold">{formatMoney(selectedCloture.montant_theorique)} F</div>
+                  <div className="text-2xl font-bold">{formatMoney(selectedCloture.montant_theorique)}</div>
                 </div>
                 <div className="bg-primary/5 p-4 rounded-xl border border-primary/20">
                   <div className="text-xs uppercase font-bold text-primary mb-1">{t('modal.real_label')}</div>
-                  <div className="text-2xl font-bold text-primary">{formatMoney(selectedCloture.montant_reel)} F</div>
+                  <div className="text-2xl font-bold text-primary">{formatMoney(selectedCloture.montant_reel)}</div>
                 </div>
               </div>
 
@@ -548,7 +585,7 @@ export default function HistoriqueClotures() {
               <div className={`p-4 rounded-xl flex items-center justify-between ${normalizeNumberInput(selectedCloture.ecart_caisse) === 0 ? 'bg-success/10 text-success' : normalizeNumberInput(selectedCloture.ecart_caisse) > 0 ? 'bg-success/10 text-success' : 'bg-error/10 text-error'}`}>
                 <div className="font-bold uppercase tracking-wider text-sm">{t('modal.gap_label')}</div>
                 <div className="font-bold text-xl">
-                  {normalizeNumberInput(selectedCloture.ecart_caisse) > 0 ? '+' : ''}{formatMoney(selectedCloture.ecart_caisse)} F
+                  {normalizeNumberInput(selectedCloture.ecart_caisse) > 0 ? '+' : ''}{formatMoney(selectedCloture.ecart_caisse)}
                 </div>
               </div>
 
@@ -587,7 +624,7 @@ export default function HistoriqueClotures() {
                           {(mode === 'om' || mode === 'momo') && '📱'}
                           {getModeLabel(mode)}
                         </span>
-                        <span className="font-semibold">{formatMoney(montant)} F</span>
+                        <span className="font-semibold">{formatMoney(montant)}</span>
                       </div>
                     ))}
                   </div>
@@ -621,3 +658,4 @@ export default function HistoriqueClotures() {
     </div>
   )
 }
+

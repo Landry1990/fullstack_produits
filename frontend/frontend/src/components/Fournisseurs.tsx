@@ -282,7 +282,7 @@ export default function Fournisseurs() {
   }
 
   function formatBackendErrors(data: unknown): string {
-    if (data == null) return t('common.unknown_error') || 'Erreur inconnue du serveur'
+    if (data == null) return t('common:unknown_error') || 'Erreur inconnue du serveur'
     if (typeof data === 'string') return data
     if (typeof data === 'object') {
       try {
@@ -359,8 +359,8 @@ export default function Fournisseurs() {
         if (err.response?.status === 500 || (err.response?.data?.detail && String(err.response.data.detail).includes('protected'))) {
              toast.error(t('providers:messages.delete_protected'));
         } else {
-             const msg = err.response?.data?.message ?? err.message ?? t('common.network_error');
-             toast.error(`${t('common.error')}: ${msg}`);
+             const msg = err.response?.data?.message ?? err.message ?? t('common:network_error');
+             toast.error(`${t('common:error')}: ${msg}`);
         }
       } else {
         toast.error(t('providers:messages.delete_error'));
@@ -491,16 +491,16 @@ export default function Fournisseurs() {
                           <div className="dropdown dropdown-bottom">
                             <div tabIndex={0} role="button" className="btn btn-sm btn-primary gap-2 h-9">
                               <MoreVertical className="w-4 h-4" />
-                              {t('common.actions_title', { defaultValue: 'Actions' })}
+                              {t('common:actions_title', { defaultValue: 'Actions' })}
                               <span className="badge badge-sm bg-primary-focus border-none text-white">{selectedIds.length}</span>
                             </div>
                             <ul tabIndex={0} className="dropdown-content z-[100] menu p-2 shadow-2xl bg-base-100 rounded-box w-56 border border-base-200 mt-2">
                               <li className="menu-title px-4 py-2 text-[10px] font-bold uppercase tracking-widest text-base-content/40">
-                                {t('common.bulk_actions', { defaultValue: 'Actions Groupées' })}
+                                {t('common:bulk_actions', { defaultValue: 'Actions Groupées' })}
                               </li>
                               <li>
                                 <a onClick={handleBulkDelete} className="flex items-center gap-3 py-3 hover:bg-error/10 text-error font-medium">
-                                  <Trash2 className="w-4 h-4" /> {t('common.actions.delete')}
+                                  <Trash2 className="w-4 h-4" /> {t('common:actions.delete')}
                                 </a>
                               </li>
                             </ul>
@@ -510,7 +510,7 @@ export default function Fournisseurs() {
                             className="btn btn-sm btn-ghost gap-2 text-base-content/60 hover:text-base-content h-9"
                           >
                             <X className="w-4 h-4" />
-                            {t('common.actions.cancel', { defaultValue: 'Annuler' })}
+                            {t('common:actions.cancel', { defaultValue: 'Annuler' })}
                           </button>
                         </div>
                      ) : (
@@ -628,7 +628,7 @@ export default function Fournisseurs() {
             {totalPages > 1 && (
               <div className="p-2 border-t border-slate-200 bg-white flex items-center justify-between text-xs shrink-0">
                 <span className="text-slate-400">
-                  {totalCount} {t('common.items', { defaultValue: 'fournisseur' })}{totalCount > 1 ? 's' : ''}
+                  {totalCount} {t('common:items', { defaultValue: 'fournisseur' })}{totalCount > 1 ? 's' : ''}
                 </span>
                 <div className="join">
                   <button
@@ -758,7 +758,7 @@ export default function Fournisseurs() {
                            <div className="p-4 rounded-xl bg-slate-50 border border-slate-100">
                               <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">{t('providers:details.debt_balance')}</div>
                               <div className={`text-2xl font-black font-mono ${Number(selectedFournisseur.solde_dette) > 0 ? 'text-red-500' : 'text-emerald-600'}`}>
-                                 {formatCurrency(Number(selectedFournisseur.solde_dette || 0))} F
+                                 {formatCurrency(Number(selectedFournisseur.solde_dette || 0))}
                               </div>
                            </div>
                            <div className="p-4 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-400 text-xs italic">
@@ -866,7 +866,7 @@ export default function Fournisseurs() {
                                         </td>
                                         <td className="py-2 text-right">
                                           <span className="text-xs font-semibold text-slate-700">
-                                            {formatCurrency(item.dernier_prix_achat)} F
+                                            {formatCurrency(item.dernier_prix_achat)}
                                           </span>
                                         </td>
                                         <td className="py-2 text-center">
@@ -879,7 +879,7 @@ export default function Fournisseurs() {
                                         </td>
                                         <td className="py-2 text-right">
                                           <span className={`text-xs font-semibold ${item.marge >= 0 ? 'text-emerald-600' : 'text-red-500'}`}>
-                                            {formatCurrency(item.marge)} F
+                                            {formatCurrency(item.marge)}
                                           </span>
                                           <span className="text-[9px] text-slate-400 ml-1">
                                             ({item.marge_pourcent}%)
@@ -1266,3 +1266,4 @@ export default function Fournisseurs() {
     </div>
   );
 }
+

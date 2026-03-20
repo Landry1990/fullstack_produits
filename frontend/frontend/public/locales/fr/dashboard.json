@@ -1,4 +1,8 @@
 {
+    "refresh_tooltip": "Actualiser tout",
+    "hourly_traffic_title": "Fréquentation par Heure",
+    "hourly_traffic_desc": "Nombre de ventes par tranche horaire",
+    "dashboard.charts.sales_label": "Ventes",
     "title": "Tableau de Bord",
     "manager": "Manager",
     "subtitle": "Suivi de la Marge Brute et couverture des charges",

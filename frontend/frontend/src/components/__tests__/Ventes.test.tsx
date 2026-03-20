@@ -6,21 +6,20 @@ import Ventes from '../Ventes';
 import { safeStorage } from '../../utils/storage';
 
 // Mock axios
-vi.mock('axios', () => {
-    return {
-        default: {
-            get: vi.fn(),
-            post: vi.fn(),
-            delete: vi.fn(),
-            isAxiosError: vi.fn(),
-            create: vi.fn().mockReturnThis(),
-            interceptors: {
-                request: { use: vi.fn(), eject: vi.fn() },
-                response: { use: vi.fn(), eject: vi.fn() }
-            }
-        },
-    };
-});
+// Mock axios using global mock from setup.ts is preferred, but for this test fix structure
+vi.mock('axios', () => ({
+    default: {
+        get: vi.fn(),
+        post: vi.fn(),
+        delete: vi.fn(),
+        isAxiosError: vi.fn(),
+        create: vi.fn().mockReturnThis(),
+        interceptors: {
+            request: { use: vi.fn(), eject: vi.fn() },
+            response: { use: vi.fn(), eject: vi.fn() }
+        }
+    },
+}));
 
 // Helper to access mocks
 const mockedAxios = axios as any;

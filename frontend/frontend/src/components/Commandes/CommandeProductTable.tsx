@@ -147,15 +147,15 @@ export default function CommandeProductTable({
                             <div className="flex gap-2 text-xs md:text-sm">
                                 <div className="bg-base-200 px-2 py-1 rounded flex flex-col items-end">
                                     <span className="text-[10px] text-base-content/60 uppercase">{t('orders:product_table.total_ht')}</span>
-                                    <span className="font-bold">{formatCurrency(stats.ht)} {t('common:currency_symbol', 'F')}</span>
+                                    <span className="font-bold">{formatCurrency(stats.ht)}</span>
                                 </div>
                                 <div className="bg-base-200 px-2 py-1 rounded flex flex-col items-end">
                                     <span className="text-[10px] text-base-content/60 uppercase">{t('orders:product_table.total_tva')}</span>
-                                    <span className="font-bold">{formatCurrency(stats.tva)} {t('common:currency_symbol', 'F')}</span>
+                                    <span className="font-bold">{formatCurrency(stats.tva)}</span>
                                 </div>
                                 <div className="bg-primary/10 px-3 py-1 rounded-lg flex flex-col items-end border border-primary/20">
                                     <span className="text-[10px] text-primary/70 uppercase">{t('orders:product_table.total_ttc')}</span>
-                                    <span className="font-bold text-primary">{formatCurrency(totalTTC)} {t('common:currency_symbol', 'F')}</span>
+                                    <span className="font-bold text-primary">{formatCurrency(totalTTC)}</span>
                                 </div>
                             </div>
                         );
@@ -554,7 +554,7 @@ export default function CommandeProductTable({
                                             <div>
                                                 <div className="text-xs uppercase font-bold text-base-content/50 mb-1">{t('orders:product_table.info_row.purchase_history', "Historique d'Achat")}</div>
                                                 <div className="font-medium text-base-content">{formatAchat}</div>
-                                                <div className="text-xs text-base-content/60 mt-0.5">{t('orders:product_table.info_row.last_buy_price', "Dernier prix d'achat")}: {stats.cost_price ? formatCurrency(Number(stats.cost_price)) + ' ' + t('common:currency_symbol', 'F') : '-'}</div>
+                                                <div className="text-xs text-base-content/60 mt-0.5">{t('orders:product_table.info_row.last_buy_price', "Dernier prix d'achat")}: {stats.cost_price ? formatCurrency(Number(stats.cost_price)) : '-'}</div>
                                             </div>
                                             <div>
                                                 <div className="text-xs uppercase font-bold text-base-content/50 mb-1">{t('orders:product_table.info_row.sales_history', "Historique de Vente")}</div>

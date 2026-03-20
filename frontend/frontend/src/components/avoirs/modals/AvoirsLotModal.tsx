@@ -42,7 +42,7 @@ export const AvoirsLotModal: React.FC<LotModalProps> = ({
                                     <th>{t('avoirs.table.date')}</th>
                                     <th>{t('stock.table_stock')}</th>
                                     <th>{t('avoirs.form.table_price')}</th>
-                                    <th className="text-right">{t('common.actions_title')}</th>
+                                    <th className="text-right">{t('common:actions_title')}</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -79,3 +79,4 @@ export const AvoirsLotModal: React.FC<LotModalProps> = ({
         </PremiumModal>
     );
 };
+

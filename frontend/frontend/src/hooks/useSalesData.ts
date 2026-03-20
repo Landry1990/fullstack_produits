@@ -67,7 +67,7 @@ export const useSalesData = () => {
 
         } catch (error) {
             console.error('Erreur chargement page_init:', error);
-            toast.error(t('sales.messages.load_error'));
+            toast.error(t('messages.load_error'));
             setFactures([]);
         } finally {
             setLoading(false);
@@ -84,7 +84,7 @@ export const useSalesData = () => {
             processFacturesData(data);
         } catch (error) {
             console.error('Erreur chargement factures:', error);
-            toast.error(t('sales.messages.load_error'));
+            toast.error(t('messages.load_error'));
             setFactures([]);
         } finally {
             setLoading(false);
@@ -120,38 +120,38 @@ export const useSalesData = () => {
     }, [startDate, endDate, statusFilter, sellerFilter, fetchPageInit]);
 
     const handleDeleteBrouillons = async () => {
-        if (!window.confirm(t('sales.confirm_delete_drafts'))) return;
+        if (!window.confirm(t('messages.delete_drafts_confirm'))) return;
         try {
             await venteService.deleteBrouillons();
-            toast.success(t('sales.messages.delete_drafts_success'));
+            toast.success(t('messages.delete_drafts_success'));
             fetchFactures(currentPage);
         } catch (error) {
             console.error(error);
-            toast.error(t('sales.messages.delete_drafts_error'));
+            toast.error(t('messages.delete_drafts_error'));
         }
     };
 
     const deleteFacture = async (id: number) => {
-        if (!window.confirm(t('sales.confirm_delete'))) return;
+        if (!window.confirm(t('confirm_delete'))) return;
         try {
             await venteService.deleteFacture(id);
-            toast.success(t('sales.messages.delete_success'));
+            toast.success(t('messages.delete_success'));
             fetchFactures(currentPage);
         } catch (error) {
             console.error(error);
-            toast.error(t('sales.messages.delete_error'));
+            toast.error(t('messages.delete_error'));
         }
     };
 
     const bulkDeleteFactures = async (ids: number[]) => {
-        if (!window.confirm(t('sales.confirm_bulk_delete', { count: ids.length }))) return;
+        if (!window.confirm(t('confirm_bulk_delete', { count: ids.length }))) return;
         try {
             await venteService.bulkDelete(ids);
-            toast.success(t('sales.messages.bulk_delete_success'));
+            toast.success(t('messages.bulk_delete_success'));
             fetchFactures(currentPage);
         } catch (error) {
             console.error(error);
-            toast.error(t('sales.messages.bulk_delete_error'));
+            toast.error(t('messages.bulk_delete_error'));
         }
     };
 

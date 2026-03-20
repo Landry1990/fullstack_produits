@@ -197,7 +197,7 @@ export default function PointageReleveModal({ isOpen, onClose, fournisseurs, onR
                   <label className="block text-[10px] font-bold uppercase text-slate-400 mb-1">{t('providers:pointage_modal.month_label')}</label>
                   <select className="select select-sm select-bordered w-full md:w-32" value={month} onChange={e => setMonth(Number(e.target.value))} disabled={periodeType === 'CUSTOM'}>
                     {Array.from({length: 12}, (_, i) => i + 1).map(m => (
-                      <option key={m} value={m}>{new Date(0, m - 1).toLocaleString(t('common.locale', { defaultValue: 'fr-FR' }), { month: 'long' })}</option>
+                      <option key={m} value={m}>{new Date(0, m - 1).toLocaleString(t('common:locale', { defaultValue: 'fr-FR' }), { month: 'long' })}</option>
                     ))}
                   </select>
                 </div>
@@ -248,7 +248,7 @@ export default function PointageReleveModal({ isOpen, onClose, fournisseurs, onR
                <div className="bg-white px-4 py-2 rounded-lg border border-slate-200 shadow-sm text-right">
                  <div className="text-[10px] font-bold uppercase text-slate-400">{t('providers:pointage_modal.total_period')}</div>
                  <div className="text-lg font-black text-purple-600 font-mono">
-                   {formatCurrency(data.montant_total_periode)} F
+                   {formatCurrency(data.montant_total_periode)}
                  </div>
                </div>
             )}
@@ -293,7 +293,7 @@ export default function PointageReleveModal({ isOpen, onClose, fournisseurs, onR
                    </button>
                 </div>
                 <div className="text-sm font-bold text-slate-700">
-                  {t('providers:pointage_modal.pointed_sum')} <span className="font-mono text-emerald-600 bg-emerald-50 px-2 py-1 rounded ml-1">{formatCurrency(pointageSum)} F</span>
+                  {t('providers:pointage_modal.pointed_sum')} <span className="font-mono text-emerald-600 bg-emerald-50 px-2 py-1 rounded ml-1">{formatCurrency(pointageSum)}</span>
                 </div>
               </div>
 
@@ -327,7 +327,7 @@ export default function PointageReleveModal({ isOpen, onClose, fournisseurs, onR
                           </td>
                           <td>
                             <div className={`font-medium ${isPointed ? 'text-emerald-700' : 'text-slate-600'}`}>
-                              {new Date(f.date_cloture).toLocaleDateString(t('common.locale', { defaultValue: 'fr-FR' }), { weekday: 'short', day: '2-digit', month: 'short', year: 'numeric' })}
+                              {new Date(f.date_cloture).toLocaleDateString(t('common:locale', { defaultValue: 'fr-FR' }), { weekday: 'short', day: '2-digit', month: 'short', year: 'numeric' })}
                             </div>
                           </td>
                           <td>
@@ -337,7 +337,7 @@ export default function PointageReleveModal({ isOpen, onClose, fournisseurs, onR
                           </td>
                           <td className="text-right">
                             <div className={`font-black font-mono ${isPointed ? 'text-emerald-700' : 'text-slate-700'}`}>
-                              {formatCurrency(f.montant)} F
+                              {formatCurrency(f.montant)}
                             </div>
                           </td>
                         </tr>
@@ -369,3 +369,4 @@ export default function PointageReleveModal({ isOpen, onClose, fournisseurs, onR
     </PremiumModal>
   );
 }
+

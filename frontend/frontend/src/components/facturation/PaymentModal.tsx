@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react'
 import type { Facture } from '../../types'
 import { useTranslation } from 'react-i18next'
+import { formatCurrency } from '../../utils/formatters'
 import PremiumModal from '../common/PremiumModal'
 
 type PaymentItem = {
@@ -94,15 +95,15 @@ export default function PaymentModal({
                     {isNewSale && totals.tauxCouverture > 0 ? t('facturation:totals.part_patient') : t('facturation:payment.amount_due')}
                 </div>
                 <div className="text-4xl font-light text-primary">
-                    {isNewSale 
-                        ? Math.round(totals.tauxCouverture > 0 
+                    {formatCurrency(Math.round(isNewSale 
+                        ? (totals.tauxCouverture > 0 
                             ? totals.partPatient 
                             : (totals.totalTtc - (totals.couponMontant || 0) - (totals.loyaltyDeduction || 0)))
-                        : Math.round(Number(facturePourPaiement?.total_ttc))} F
+                        : Number(facturePourPaiement?.total_ttc)))}
                 </div>
                 {(totals.couponMontant && totals.couponMontant > 0) && (
                     <div className="text-sm text-success font-medium mt-1">
-                        {t('common:coupon')} : -{Math.round(totals.couponMontant)} F
+                        {t('common:coupon')} : -{formatCurrency(Math.round(totals.couponMontant))}
                     </div>
                 )}
               </div>
@@ -120,9 +121,9 @@ export default function PaymentModal({
                     
                     {/* Part Patient */}
                     <div className="bg-white rounded-lg p-3 border border-success/20">
-                      <div className="flex justify-between items-center mb-2">
+                      <div className="grid grid-cols-[1fr,auto] items-center mb-2">
                         <span className="text-sm font-medium text-success">{t('facturation:totals.part_patient')} ({100 - totals.tauxCouverture}%)</span>
-                        <span className="text-lg font-bold text-success">{Math.round(totals.partPatient)} F</span>
+                        <span className="text-lg font-bold text-success">{formatCurrency(Math.round(totals.partPatient))}</span>
                       </div>
                       <div className="form-control w-full space-y-2">
                             {/* Liste des paiements déjà ajoutés pour la part patient */}
@@ -132,7 +133,7 @@ export default function PaymentModal({
                                         <div key={idx} className="flex justify-between items-center text-xs p-1 px-2 bg-white rounded border border-base-200">
                                             <span>{p.mode === 'especes' ? t('facturation:payment.modes.especes') : p.mode === 'carte' ? t('facturation:payment.modes.carte') : p.mode === 'om' ? t('facturation:payment.modes.mobile') : p.mode === 'momo' ? t('facturation:payment.modes.momo') : p.mode === 'cheque' ? t('facturation:payment.modes.cheque') : t('facturation:payment.modes.other')}</span>
                                             <div className="flex items-center gap-2">
-                                                <span className="font-mono font-bold">{p.montant} F</span>
+                                                <span className="font-mono font-bold">{formatCurrency(p.montant)}</span>
                                                 <button 
                                                     type="button"
                                                     onClick={() => setPaiements(paiements.filter((_, i) => i !== idx))}
@@ -142,7 +143,7 @@ export default function PaymentModal({
                                         </div>
                                     ))}
                                     <div className="text-right text-xs text-base-content/60 pt-1 border-t border-base-200">
-                                        {t('facturation:payment.remaining_to_allocate')} <span className="font-bold text-error">{totals.partPatient - paiements.reduce((acc, p) => acc + p.montant, 0) - (Number(montantPaye) || 0)} F</span>
+                                        {t('facturation:payment.remaining_to_allocate')} <span className="font-bold text-error">{formatCurrency(totals.partPatient - paiements.reduce((acc, p) => acc + p.montant, 0) - (Number(montantPaye) || 0))}</span>
                                     </div>
                                 </div>
                             )}
@@ -199,7 +200,7 @@ export default function PaymentModal({
                     <div className="bg-white rounded-lg p-3 border border-info/20">
                       <div className="flex justify-between items-center">
                         <span className="text-sm font-medium text-info">{t('facturation:totals.part_assurance')} ({totals.tauxCouverture}%)</span>
-                        <span className="text-lg font-bold text-info">{Math.round(totals.partAssurance)} F</span>
+                        <span className="text-lg font-bold text-info">{formatCurrency(Math.round(totals.partAssurance))}</span>
                       </div>
                       <div className="text-xs text-base-content/60 mt-1">
                         <span className="badge badge-ghost badge-xs">{t('facturation:payment.en_compte_auto')}</span>
@@ -225,7 +226,7 @@ export default function PaymentModal({
                             <div key={idx} className="flex justify-between items-center text-sm p-1 px-2 bg-white rounded border border-base-200">
                                 <span>{t('facturation:payment.caisse_centrale')}</span>
                                 <div className="flex items-center gap-2">
-                                    <span className="font-mono">{p.montant} F</span>
+                                    <span className="font-mono">{formatCurrency(p.montant)}</span>
                                     <button 
                                         type="button"
                                         onClick={() => setPaiements(paiements.filter((_, i) => i !== idx))}
@@ -308,12 +309,12 @@ export default function PaymentModal({
                     <div className="flex justify-between items-center mb-4">
                         <div className="text-sm">
                             {rendu >= 0 
-                                ? <span className="text-success font-bold">{t('facturation:payment.change_due_label')} {Math.round(rendu)} F</span>
-                                : <span className="text-error font-bold">{t('facturation:payment.remaining_due_label')} {Math.round(Math.abs(rendu))} F</span>
+                                ? <span className="text-success font-bold">{t('facturation:payment.change_due_label')} {formatCurrency(Math.round(rendu))}</span>
+                                : <span className="text-error font-bold">{t('facturation:payment.remaining_due_label')} {formatCurrency(Math.round(Math.abs(rendu)))}</span>
                             }
                         </div>
                         <div className="text-xl font-bold">
-                            {t('facturation:payment.total_label')} {Math.round(totalVerse)} / {Math.round(totalAPayer)} F
+                            {t('facturation:payment.total_label')} {formatCurrency(Math.round(totalVerse))} / {formatCurrency(Math.round(totalAPayer))}
                         </div>
                     </div>
                     

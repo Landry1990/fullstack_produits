@@ -274,14 +274,14 @@ export default function Perimes() {
                 <td style="border: 1px solid #ddd; padding: 8px;">${adj.produit_name}</td>
                 <td style="border: 1px solid #ddd; padding: 8px;">${adj.lot_number || '-'}</td>
                 <td style="border: 1px solid #ddd; padding: 8px; text-align: right;">${Math.abs(adj.quantity_change)}</td>
-                <td style="border: 1px solid #ddd; padding: 8px; text-align: right; font-weight: bold;">${formatCurrency(adj.valorisation)} ${t('common:currency')}</td>
+                <td style="border: 1px solid #ddd; padding: 8px; text-align: right; font-weight: bold;">${formatCurrency(adj.valorisation)}</td>
               </tr>
             `).join('')}
           </tbody>
           <tfoot>
             <tr style="background-color: #f9fafb; font-weight: bold;">
               <td colspan="4" style="border: 1px solid #ddd; padding: 8px; text-align: right;">${t('stock:perimes.history.total_valorization').toUpperCase()}</td>
-              <td style="border: 1px solid #ddd; padding: 8px; text-align: right; color: #dc2626;">${formatCurrency(totalVal)} ${t('common:currency')}</td>
+              <td style="border: 1px solid #ddd; padding: 8px; text-align: right; color: #dc2626;">${formatCurrency(totalVal)}</td>
             </tr>
           </tfoot>
         </table>
@@ -402,7 +402,7 @@ export default function Perimes() {
                         </div>
                         <div>
                           <p className="text-sm text-base-content/60">{t('perimes.stats.valeur_perimes')}</p>
-                          <p className="text-2xl font-bold text-error">{formatCurrency(stats.perimes.valeur_cout)} F</p>
+                          <p className="text-2xl font-bold text-error">{formatCurrency(stats.perimes.valeur_cout)}</p>
                           <p className="text-xs text-base-content/50">{t('perimes.stats.lots_count', { count: stats.perimes.count_lots })}</p>
                         </div>
                       </div>
@@ -418,7 +418,7 @@ export default function Perimes() {
                         </div>
                         <div>
                           <p className="text-sm text-base-content/60">{t('perimes.stats.manque_gagner')}</p>
-                          <p className="text-2xl font-bold text-warning">{formatCurrency(stats.perimes.valeur_vente_perdue)} F</p>
+                          <p className="text-2xl font-bold text-warning">{formatCurrency(stats.perimes.valeur_vente_perdue)}</p>
                           <p className="text-xs text-base-content/50">{t('perimes.stats.at_sale_price')}</p>
                         </div>
                       </div>
@@ -435,7 +435,7 @@ export default function Perimes() {
                         <div>
                           <p className="text-sm text-base-content/60">{t('perimes.stats.taux_perte')}</p>
                           <p className="text-2xl font-bold text-info">{stats.indicateurs.taux_perte_pct}%</p>
-                          <p className="text-xs text-base-content/50">{t('perimes.stats.vs_ca')} ({formatCurrency(stats.indicateurs.ca_periode)} F)</p>
+                          <p className="text-xs text-base-content/50">{t('perimes.stats.vs_ca')} ({formatCurrency(stats.indicateurs.ca_periode)})</p>
                         </div>
                       </div>
                     </div>
@@ -455,7 +455,7 @@ export default function Perimes() {
                           <span className="font-bold text-base-content">{t('common:count_days', { count: 30 })}</span>
                           <span className="badge badge-sm">{t('perimes.prevision.lots_count', { count: stats.previsions['30j'].count_lots })}</span>
                         </div>
-                        <p className="text-xl font-bold">{formatCurrency(stats.previsions['30j'].valeur_vente)} F</p>
+                        <p className="text-xl font-bold">{formatCurrency(stats.previsions['30j'].valeur_vente)}</p>
                         <p className="text-xs text-base-content/60 mt-1">{t('perimes.prevision.potential_risk')}</p>
                      </div>
 
@@ -465,7 +465,7 @@ export default function Perimes() {
                            <span className="font-bold text-base-content">{t('common:count_days', { count: 60 })}</span>
                           <span className="badge badge-sm">{t('perimes.prevision.lots_count', { count: stats.previsions['60j'].count_lots })}</span>
                         </div>
-                        <p className="text-xl font-bold">{formatCurrency(stats.previsions['60j'].valeur_vente)} F</p>
+                        <p className="text-xl font-bold">{formatCurrency(stats.previsions['60j'].valeur_vente)}</p>
                         <p className="text-xs text-base-content/60 mt-1">{t('perimes.prevision.potential_risk')}</p>
                       </div>
 
@@ -475,7 +475,7 @@ export default function Perimes() {
                            <span className="font-bold text-base-content">{t('common:count_days', { count: 90 })}</span>
                           <span className="badge badge-sm">{t('perimes.prevision.lots_count', { count: stats.previsions['90j'].count_lots })}</span>
                         </div>
-                        <p className="text-xl font-bold">{formatCurrency(stats.previsions['90j'].valeur_vente)} F</p>
+                        <p className="text-xl font-bold">{formatCurrency(stats.previsions['90j'].valeur_vente)}</p>
                         <p className="text-xs text-base-content/60 mt-1">{t('perimes.prevision.potential_risk')}</p>
                       </div>
                     </div>
@@ -512,8 +512,8 @@ export default function Perimes() {
                                   </span>
                                 </td>
                                 <td className="text-right font-bold">{item.quantity}</td>
-                                <td className="text-right text-error">{formatCurrency(item.valeur_cout)} {t('common:currency')}</td>
-                                <td className="text-right text-warning">{formatCurrency(item.valeur_vente)} {t('common:currency')}</td>
+                                <td className="text-right text-error">{formatCurrency(item.valeur_cout)}</td>
+                                <td className="text-right text-warning">{formatCurrency(item.valeur_vente)}</td>
                               </tr>
                             ))}
                           </tbody>
@@ -682,7 +682,7 @@ export default function Perimes() {
                             </div>
                         </td>
                         <td className="py-2.5 px-4 text-right text-error font-mono font-black text-xs">
-                          {formatCurrency(Number(lot.price_cost || 0) * lot.quantity_remaining)} {t('common:currency')}
+                          {formatCurrency(Number(lot.price_cost || 0) * lot.quantity_remaining)}
                         </td>
                         <td className="py-2.5 px-4 text-center">
                           {lot.quantity_remaining > 0 ? (
@@ -758,7 +758,7 @@ export default function Perimes() {
                     <div className="stat">
                         <div className="stat-title text-xs font-bold uppercase text-base-content/50">{t('perimes.history.total_valorization')}</div>
                         <div className="stat-value text-error text-2xl">
-                             {formatCurrency(adjustments.reduce((sum, a) => sum + (a.valorisation || 0), 0))} {t('common:currency')}
+                             {formatCurrency(adjustments.reduce((sum, a) => sum + (a.valorisation || 0), 0))}
                         </div>
                         <div className="stat-desc font-medium text-base-content/40">{t('perimes.history.operations_count', { count: adjustments.length })}</div>
                     </div>
@@ -802,7 +802,7 @@ export default function Perimes() {
                                             {adj.quantity_change}
                                         </td>
                                         <td className="text-right font-bold">
-                                             {formatCurrency(adj.valorisation)} {t('common:currency')}
+                                             {formatCurrency(adj.valorisation)}
                                         </td>
                                         <td className="text-xs">{adj.user_name}</td>
                                         <td className="text-xs truncate max-w-[150px]" title={adj.reason_detail}>

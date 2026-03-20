@@ -54,7 +54,7 @@ export default function PendingSalesDrawer({
                         </div>
                         <div className="text-sm text-base-content/60 space-y-1">
                           <div>{t('pending_sales.items_count', { count: vente.lignes.length })}</div>
-                          <div className="font-medium text-primary">{formatCurrency(totalNet)} FCFA</div>
+                          <div className="font-medium text-primary">{formatCurrency(totalNet)}</div>
                           <div className="text-xs opacity-50">
                             {new Date(vente.timestamp).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
                           </div>
@@ -65,13 +65,13 @@ export default function PendingSalesDrawer({
                           onClick={() => onRestore(vente.id)}
                           className="btn btn-primary btn-sm"
                         >
-                          {t('common.restore')}
+                          {t('common:restore')}
                         </button>
                         <button
                           onClick={() => onDelete(vente.id)}
                           className="btn btn-error btn-outline btn-sm"
                         >
-                          {t('common.delete')}
+                          {t('common:delete')}
                         </button>
                       </div>
                     </div>
@@ -86,3 +86,4 @@ export default function PendingSalesDrawer({
     </div>
   )
 }
+

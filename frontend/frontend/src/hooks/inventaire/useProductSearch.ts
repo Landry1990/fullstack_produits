@@ -43,7 +43,7 @@ export const useProductSearch = (
                 setSelectedItemIndex(productsList?.length > 0 ? 0 : -1);
             } catch (err) {
                 console.error("Erreur recherche produits", err);
-                toast.error(t('common.messages.error_loading', { defaultValue: 'Erreur recherche' }));
+                toast.error(t('common:messages.error_loading', { defaultValue: 'Erreur recherche' }));
             } finally {
                 setLoadingSearch(false);
             }
@@ -101,7 +101,7 @@ export const useProductSearch = (
             setSelectedLotIndex(lots?.length > 0 ? 0 : -1);
         } catch (err) {
             console.error("Erreur chargement lots", err);
-            toast.error(t('common.messages.error_loading', { defaultValue: 'Erreur lors du chargement' }));
+            toast.error(t('common:messages.error_loading', { defaultValue: 'Erreur lors du chargement' }));
         } finally {
             setLoadingLots(false);
         }
@@ -254,3 +254,4 @@ export const useProductSearch = (
         handleLotSelection, handleLotModalKeyDown
     };
 };
+

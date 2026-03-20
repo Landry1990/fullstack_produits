@@ -1,22 +1,17 @@
-from decimal import Decimal, InvalidOperation
+from decimal import Decimal
 from django.db import transaction, models
 from django.db.models import F, Sum, Q, Value, DecimalField
 from django.utils import timezone
 from django.core.cache import cache
-from django.db.models import ProtectedError
-import logging
 
 from ..models import (
     Facture, FactureProduit, FactureProduitAllocation, Caisse, 
     Produit, StockLot, LoyaltySetting, Promis, Ordonnancier, 
-    LigneOrdonnancier, MouvementStock, AuditLog, get_next_ticket_session,
+    LigneOrdonnancier, MouvementStock, get_next_ticket_session,
     CouponMonnaie
 )
-from ..audit_helpers import log_audit
 from .promotion_service import PromotionService
 
-logger = logging.getLogger(__name__)
-business_logger = logging.getLogger('api.business')
 
 class SalesService:
     @staticmethod
@@ -41,17 +36,39 @@ class SalesService:
         if not produits_data:
             raise ValueError("La liste des produits ne peut pas être vide.")
 
-        # 2. Create Facture
-        facture = Facture.objects.create(
-            client_id=client_id,
-            client_name_override=client_name_override,
-            ayant_droit_id=ayant_droit_id,
-            remise=remise_montant,
-            status=Facture.Status.BROUILLON,
-            created_by=user,
-            validated_by=validation_user,
-            ticket_session=get_next_ticket_session() if centralized else None
-        )
+        # 2. Handle Existing Facture or Create New
+        existing_id = data.get('existing_id')
+        if existing_id:
+            try:
+                facture = Facture.objects.get(id=existing_id)
+                # Ensure we reset status to draft before re-validating
+                facture.status = Facture.Status.BROUILLON
+                facture.client_id = client_id
+                facture.client_name_override = client_name_override
+                facture.ayant_droit_id = ayant_droit_id
+                facture.remise = remise_montant
+                facture.validated_by = validation_user
+                if centralized and not facture.ticket_session:
+                    facture.ticket_session = get_next_ticket_session()
+                facture.save()
+                
+                # Cleanup existing lines and associated objects to replace them with the current cart
+                facture.produits.all().delete()
+                Promis.objects.filter(facture=facture).delete()
+                Ordonnancier.objects.filter(facture=facture).delete()
+            except Facture.DoesNotExist:
+                raise ValueError(f"La facture #{existing_id} est introuvable.")
+        else:
+            facture = Facture.objects.create(
+                client_id=client_id,
+                client_name_override=client_name_override,
+                ayant_droit_id=ayant_droit_id,
+                remise=remise_montant,
+                status=Facture.Status.BROUILLON,
+                created_by=user,
+                validated_by=validation_user,
+                ticket_session=get_next_ticket_session() if centralized else None
+            )
 
         # 3. Add products (Optimized: bulk_create)
         facture_produits_to_create = [
@@ -243,6 +260,7 @@ class SalesService:
                         target_lot.quantity_free_remaining -= min(qty_to_alloc, target_lot.quantity_free_remaining)
                     lots_to_update_set.add(target_lot)
                     item.lot = target_lot.lot[:20] 
+                    item.date_expiration = target_lot.date_expiration
                     items_to_update.append(item)
                     lots_updated = True
                 else:
@@ -264,6 +282,8 @@ class SalesService:
                         lots_updated = True
                     if used_lots_names:
                         item.lot = ",".join([n for n in used_lots_names if n])[:20]
+                        if available:
+                            item.date_expiration = available[0].date_expiration
                         items_to_update.append(item)
             elif item.quantity < 0:
                 target_lot = locked_lots_dict.get(item.stock_lot_id) or (StockLot.objects.filter(produit=produit).order_by('-created_at').first() if produit.use_lot_management else None)
@@ -275,6 +295,7 @@ class SalesService:
                         target_lot.quantity_free_remaining += min(restoring_qty, space_for_free)
                     lots_to_update_set.add(target_lot)
                     item.lot = (target_lot.lot or "RETOUR")[:20] 
+                    item.date_expiration = target_lot.date_expiration
                     items_to_update.append(item)
                     lots_updated = True
 
@@ -285,7 +306,7 @@ class SalesService:
 
         # EXECUTE BULK OPS
         if allocations_to_create: FactureProduitAllocation.objects.bulk_create(allocations_to_create)
-        if items_to_update: FactureProduit.objects.bulk_update(items_to_update, ['lot'])
+        if items_to_update: FactureProduit.objects.bulk_update(items_to_update, ['lot', 'date_expiration'])
         if lots_to_update_set: StockLot.objects.bulk_update(list(lots_to_update_set), ['quantity_remaining', 'quantity_free_remaining'])
         if manual_stock_decrements:
             for pid, qty in manual_stock_decrements.items():
@@ -421,6 +442,9 @@ class SalesService:
             facture.notes = f"{facture.notes or ''}\n[Annulation le {facture.date_annulation.strftime('%d/%m/%Y %H:%M')}] Motif: {motif}".strip()
         facture.save(update_fields=['status', 'notes', 'date_annulation', 'cancelled_by'])
 
+        # 3. Cancel associated payments (Caisse)
+        Caisse.objects.filter(facture=facture).update(statut='annulee')
+
         cache_key = f'stats_jour_{timezone.now().strftime("%Y-%m-%d")}'
         cache.delete(cache_key)
         
@@ -500,6 +524,23 @@ class SalesService:
                         if lot.quantity_free_remaining > 0: lot.quantity_free_remaining -= min(qty_from_lot, lot.quantity_free_remaining)
                         lot.save()
                         quantity_to_allocate -= qty_from_lot
+
+            # Sync FactureProduit fields from allocated lots
+            if prod_data.get('lot_id'):
+                target_lot = StockLot.objects.get(id=prod_data.get('lot_id'))
+                fp.lot = target_lot.lot[:20]
+                fp.date_expiration = target_lot.date_expiration
+                fp.save(update_fields=['lot', 'date_expiration'])
+            else:
+                # FIFO allocation details already handled in the loop above?
+                # Actually, modify_sale loop already creates allocations but doesn't update fp.lot/date_expiration
+                # Let's fix that too.
+                # Actually, I'll just refetch because its easier given the loop structure.
+                allocations = FactureProduitAllocation.objects.filter(facture_produit=fp).select_related('stock_lot')
+                if allocations.exists():
+                    fp.lot = ",".join([a.stock_lot.lot for a in allocations if a.stock_lot and a.stock_lot.lot])[:20]
+                    fp.date_expiration = min([a.stock_lot.date_expiration for a in allocations if a.stock_lot and a.stock_lot.date_expiration]) if any(a.stock_lot.date_expiration for a in allocations if a.stock_lot) else None
+                    fp.save(update_fields=['lot', 'date_expiration'])
         
         # 4. Finalize totals and adjustment
         PromotionService.apply_promotions_to_invoice(facture)

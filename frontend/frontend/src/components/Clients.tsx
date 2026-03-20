@@ -109,13 +109,22 @@ export default function Clients() {
   }, [showInactive, currentPage, debouncedSearch]);
 
   const handleSelectClient = async (client: Client) => {
-    setSelectedClient(client);
     setLoadingHistory(true);
     try {
-      const history = await clientService.getPurchaseHistory(client.id);
+      // Fetch full details or at least beneficiaries to ensure the right panel is complete
+      const [history, ayantsDroit] = await Promise.all([
+        clientService.getPurchaseHistory(client.id),
+        clientService.getAyantsDroit(client.id)
+      ]);
+      
       setPurchaseHistory(history);
+      setSelectedClient({
+        ...client,
+        ayants_droit: ayantsDroit
+      });
     } catch (err) {
       console.error(err);
+      setSelectedClient(client);
     } finally {
       setLoadingHistory(false);
     }
@@ -275,8 +284,14 @@ export default function Clients() {
                                 {client.client_type === 'PROFESSIONNEL' ? t('clients:types.pro_short') : t('clients:types.part_short')}
                              </span>
                           </div>
-                          <div className="flex items-center gap-1.5 text-[10px] text-base-content/40 font-mono font-bold">
-                             <Phone className="w-3 h-3" /> {client.phone || '--'}
+                          <div className="flex items-center justify-between gap-1.5 text-[10px] text-base-content/40 font-mono font-bold">
+                             <span className="flex items-center gap-1"><Phone className="w-3 h-3" /> {client.phone || '--'}</span>
+                             {client.client_type === 'PROFESSIONNEL' && (client as any).ayants_droit_count > 0 && (
+                               <span className="flex items-center gap-0.5 bg-info/10 text-info px-1 rounded">
+                                 <Users className="w-2.5 h-2.5" />
+                                 {(client as any).ayants_droit_count}
+                               </span>
+                             )}
                           </div>
                        </div>
                     </div>
@@ -372,7 +387,9 @@ export default function Clients() {
                      <div className="p-6 grid grid-cols-2 gap-4">
                         <div className="p-4 bg-secondary/5 border border-secondary/10 rounded-2xl flex flex-col gap-1">
                            <span className="text-[9px] font-black uppercase tracking-widest text-secondary/40">{t('clients:history.loyalty')}</span>
-                           <div className="text-xl font-black text-secondary">0 {t('clients:units.pts')}</div>
+                           <div className="text-xl font-black text-secondary">
+                              {selectedClient.points_fidelite ?? 0} {t('clients:units.pts')}
+                           </div>
                         </div>
                         <div className="p-4 bg-primary/5 border border-primary/10 rounded-2xl flex flex-col gap-1">
                            <span className="text-[9px] font-black uppercase tracking-widest text-primary/40">{t('clients:finance.auto_discount')}</span>
@@ -406,6 +423,7 @@ export default function Clients() {
                              <thead className="bg-base-50">
                                 <tr>
                                    <th className="py-3 px-6 text-[9px] uppercase font-black tracking-widest">{t('clients:beneficiaries.col_name')}</th>
+                                   <th className="py-3 px-6 text-[9px] uppercase font-black tracking-widest">{t('clients:beneficiaries.company') || 'Société'}</th>
                                    <th className="py-3 px-6 text-[9px] uppercase font-black tracking-widest text-right">{t('clients:beneficiaries.col_id')}</th>
                                 </tr>
                              </thead>
@@ -414,6 +432,7 @@ export default function Clients() {
                                   selectedClient.ayants_droit.map((ad: AyantDroit, idx: number) => (
                                     <tr key={idx} className="hover:bg-base-200/20 border-b border-base-200/50 last:border-0">
                                        <td className="py-4 px-6 text-sm font-black">{ad.nom}</td>
+                                       <td className="py-4 px-6 text-sm font-bold opacity-60 italic">{ad.societe || '—'}</td>
                                        <td className="py-4 px-6 text-sm font-black text-right font-mono text-secondary">{ad.matricule}</td>
                                     </tr>
                                   ))

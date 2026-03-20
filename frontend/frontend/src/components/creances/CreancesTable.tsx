@@ -100,14 +100,14 @@ export const CreancesTable: React.FC<CreancesTableProps> = ({
                                     <span className="px-2 py-1 bg-base-200 rounded-lg font-mono text-xs font-black text-base-content/60">{groupe.count}</span>
                                 </td>
                                 <td className="text-right py-4 px-6">
-                                    <span className="font-black text-sm text-base-content">{formatCurrency(groupe.total)} {t('common:currency')}</span>
+                                    <span className="font-black text-sm text-base-content">{formatCurrency(groupe.total)}</span>
                                 </td>
                                 <td className="text-right py-4 px-6 font-bold text-success text-sm">
-                                    {formatCurrency(groupe.paye)} {t('common:currency')}
+                                    {formatCurrency(groupe.paye)}
                                 </td>
                                 <td className="text-right py-4 px-6">
                                     <span className="bg-warning/10 text-warning px-4 py-2 rounded-xl font-black text-sm shadow-sm border border-warning/20">
-                                        {formatCurrency(groupe.reste)} {t('common:currency')}
+                                        {formatCurrency(groupe.reste)}
                                     </span>
                                 </td>
                                 <td className="text-center py-4 px-6">
@@ -211,11 +211,11 @@ export const CreancesTable: React.FC<CreancesTableProps> = ({
                                     <span className="font-black text-sm text-primary tracking-tight">{creance.numero_facture || '-'}</span>
                                 </td>
                                 <td className="p-4 font-bold text-sm text-base-content/70">{creance.ayant_droit_details?.nom || '-'}</td>
-                                <td className="p-4 text-right font-black text-sm text-base-content">{formatCurrency(normalizeNumberInput(creance.total_ttc))} {t('common:currency')}</td>
-                                <td className="p-4 text-right text-success font-black text-sm">{formatCurrency(normalizeNumberInput(creance.montant_paye))} {t('common:currency')}</td>
+                                <td className="p-4 text-right font-black text-sm text-base-content">{formatCurrency(normalizeNumberInput(creance.total_ttc))}</td>
+                                <td className="p-4 text-right text-success font-black text-sm">{formatCurrency(normalizeNumberInput(creance.montant_paye))}</td>
                                 <td className="p-4 text-right">
                                     <span className={`${isPaid ? 'opacity-30' : 'text-warning'} font-black text-sm bg-base-200/50 px-3 py-1.5 rounded-lg border border-base-300/30 shadow-inner`}>
-                                        {formatCurrency(remaining)} {t('common:currency')}
+                                        {formatCurrency(remaining)}
                                     </span>
                                 </td>
                                 <td className="p-4 text-center">

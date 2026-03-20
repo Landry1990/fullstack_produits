@@ -21,6 +21,8 @@ export interface InvoiceItem {
   total_ligne?: number;
   cip?: string; // Code13Ref
   stock_lot?: any;
+  lot?: string;
+  date_expiration?: string;
 }
 
 export interface TvaAnalysisItem {
@@ -40,6 +42,7 @@ export interface InvoiceData {
   total_ttc: number;
   remise: number;
   vendeur_nom?: string;
+  validated_by_name?: string;
   type: string;
   status: string; // Added status
   montant_recu?: number;
@@ -48,6 +51,14 @@ export interface InvoiceData {
   tva_analysis?: TvaAnalysisItem[];
   total_lettres?: string; // Added total_lettres
   notes?: string;
+  client_name_override?: string;
+  part_client?: number;
+  part_assurance?: number;
+  ayant_droit_details?: {
+    nom: string;
+    matricule: string;
+    societe?: string;
+  };
 }
 
 export interface PharmacySettings {
@@ -65,14 +76,11 @@ export interface PharmacySettings {
 interface InvoiceTemplateProps {
   settings: PharmacySettings;
   data: InvoiceData;
+  isBonDeLivraison?: boolean;
 }
 
-const InvoiceTemplate: React.FC<InvoiceTemplateProps> = ({ settings, data }) => {
-  const primaryColor = settings.primary_color || '#10b981';
+const InvoiceTemplate: React.FC<InvoiceTemplateProps> = ({ settings, data, isBonDeLivraison }) => {
 
-  const formatPrice = (price: number) => {
-    return new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'XAF', maximumFractionDigits: 0 }).format(price);
-  };
   
   const formatNumber = (num: number, decimals = 2) => {
     return new Intl.NumberFormat('fr-FR', { minimumFractionDigits: decimals, maximumFractionDigits: decimals }).format(num);
@@ -87,6 +95,14 @@ const InvoiceTemplate: React.FC<InvoiceTemplateProps> = ({ settings, data }) => 
     });
   };
 
+  const formatExpiryDate = (dateStr: string) => {
+    if (!dateStr) return '';
+    const date = new Date(dateStr);
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const year = String(date.getFullYear()).slice(-2);
+    return `${month}/${year}`;
+  };
+
   const calculateHTUnit = (priceTTC: number, tva: number) => {
     return priceTTC / (1 + (Number(tva) || 0) / 100);
   };
@@ -94,211 +110,261 @@ const InvoiceTemplate: React.FC<InvoiceTemplateProps> = ({ settings, data }) => 
   const totalQuantity = data.produits.reduce((acc, item) => acc + item.quantity, 0);
 
   return (
-    <div className="bg-white p-12 max-w-[210mm] mx-auto text-slate-900 font-sans text-[11px] leading-relaxed shadow-none print:shadow-none print:p-8" style={{ minHeight: '297mm', display: 'flex', flexDirection: 'column' }}>
+    <div className="bg-white p-4 max-w-[210mm] mx-auto text-slate-900 font-sans text-[11px] leading-tight shadow-none print:shadow-none print:max-w-none print:w-full" style={{ display: 'flex', flexDirection: 'column' }}>
       
-      {/* HEADER SECTION - PREMIUM */}
-      <div className="flex justify-between items-start mb-12 border-b-2 border-slate-100 pb-8">
+      {/* HEADER SECTION - SYNCED WITH IMAGE */}
+      <div className="flex justify-between items-start mb-6 border-b-2 border-slate-900 pb-4">
         
-        {/* Left: Pharmacy Info & Logo */}
+        {/* Left: Pharmacy Info */}
         <div className="flex-1">
-             {settings.logo ? (
-                <img src={settings.logo} alt="Logo" className="h-24 mb-4 object-contain" />
-              ) : (
-                <div style={{ color: primaryColor }} className="text-3xl font-black mb-2 uppercase tracking-tight">
-                    {settings.pharmacy_name}
-                </div>
-              )}
+            <h1 className="text-2xl font-black uppercase tracking-tight text-slate-900 mb-1 leading-none">
+                {settings.pharmacy_name}
+            </h1>
             
-            <div className="space-y-1.5 text-slate-600 max-w-sm">
-                <div className="font-bold text-slate-800 uppercase text-sm tracking-wide">{settings.pharmacy_name}</div>
-                <div className="whitespace-pre-line leading-relaxed italic">
+            <div className="space-y-1 text-slate-500 max-w-sm text-[11px]">
+                <div className="whitespace-pre-line leading-tight italic">
                     {settings.address}
                 </div>
-                <div className="grid grid-cols-1 gap-1 mt-3">
+                <div className="flex flex-col gap-0.5 mt-2 font-bold text-slate-700">
                     {settings.phone && (
-                      <div className="flex items-center gap-2">
-                        <span className="font-bold text-slate-400 text-[10px] uppercase tracking-widest w-8">Tél</span>
-                        <span className="text-slate-700 font-medium">{settings.phone}</span>
+                      <div className="flex items-center gap-1">
+                        <span>Tél : {settings.phone} |</span>
                       </div>
                     )}
-                    {settings.email && (
-                      <div className="flex items-center gap-2">
-                        <span className="font-bold text-slate-400 text-[10px] uppercase tracking-widest w-8">Email</span>
-                        <span className="text-slate-700 font-medium lowercase">{settings.email}</span>
-                      </div>
-                    )}
+                    <div className="flex items-center gap-1 uppercase">
+                        {settings.niu && <span>NIU : {settings.niu} |</span>}
+                        {settings.registre_commerce && <span>RC : {settings.registre_commerce}</span>}
+                    </div>
                 </div>
             </div>
         </div>
 
-        {/* Right: Invoice Info & Client */}
-        <div className="w-1/3 flex flex-col items-end">
-            <div className="mb-8 text-right">
-                <h1 className="text-4xl font-light tracking-tighter text-slate-900 leading-none">
-                    {data.type === 'DEVIS' || data.status === 'PROFORMA' ? 'PROFORMA' : 'FACTURE'}
-                </h1>
-                <div className="mt-2 flex flex-col items-end gap-1">
-                  <div className="bg-slate-900 text-white px-3 py-1 text-xs font-bold rounded">
-                    N° {data.numero_facture || data.id}
-                  </div>
-                  <div className="text-slate-400 font-bold uppercase tracking-widest text-[10px] mt-1">
-                    Émis le {formatDate(data.date)}
-                  </div>
-                </div>
+        {/* Right: Invoice Info Boxed */}
+        <div className="text-right">
+            <div className="border-2 border-slate-900 text-slate-900 px-6 py-2 rounded-sm text-xl font-black mb-2 inline-block uppercase tracking-wider">
+                {isBonDeLivraison ? 'BON DE LIVRAISON' : (data.type === 'DEVIS' || data.status === 'PROFORMA' ? 'PROFORMA' : 'FACTURE')}
             </div>
+            <div className="text-slate-500 font-bold text-[10px] uppercase tracking-widest">
+                Réf : {data.numero_facture || data.id}
+            </div>
+        </div>
+      </div>
 
-            <div className="bg-slate-50 p-5 rounded-xl border border-slate-200 w-full relative overflow-hidden">
-                <div className="absolute top-0 right-0 w-16 h-16 bg-slate-200/50 rotate-45 translate-x-8 -translate-y-8"></div>
-                <div className="text-[10px] uppercase tracking-[0.2em] font-black text-slate-400 mb-3 border-b border-slate-200 pb-2">Destinataire</div>
-                
-                <div className="font-black text-lg text-slate-900 mb-1 leading-tight">{data.client?.name || "CLIENT COMPTOIR"}</div>
-                
-                <div className="text-slate-600 space-y-1 mt-2">
-                    {data.client?.address && <div className="flex items-start gap-2"><span className="text-slate-300">📍</span> {data.client.address}</div>}
-                    {data.client?.phone && <div className="flex items-start gap-2"><span className="text-slate-300">📞</span> {data.client.phone}</div>}
-                    {data.client?.niu && <div className="text-[10px] bg-white px-2 py-0.5 rounded border border-slate-100 inline-block mt-1">NIU: {data.client.niu}</div>}
+      {/* METADATA BOXES - SYNCED WITH IMAGE */}
+      <div className="grid grid-cols-2 gap-6 mb-6">
+        <div className="bg-white p-4 rounded-xl border border-slate-200">
+            <div className="text-[9px] uppercase tracking-widest font-black text-slate-400 mb-2 border-b border-slate-100 pb-1.5">
+                Client
+            </div>
+            <div className="flex flex-col gap-1 text-sm">
+              <p className="font-bold text-gray-800 uppercase">{data.client_name_override || data.client?.name || 'Client de passage'}</p>
+              {data.ayant_droit_details && (
+                <p className="font-medium text-blue-700">Ayant-droit: {data.ayant_droit_details.nom}</p>
+              )}
+              {data.client?.address && <p>{data.client.address}</p>}
+              {data.client?.phone && <p>Tél : {data.client.phone}</p>}
+            </div>
+        </div>
+
+        <div className="bg-white p-4 rounded-xl border border-slate-200">
+            <div className="text-[9px] uppercase tracking-widest font-black text-slate-400 mb-2 border-b border-slate-100 pb-1.5">
+                Détails de Facturation
+            </div>
+            <div className="space-y-1 text-[11px]">
+                <div className="flex justify-between">
+                    <span className="text-slate-500">Date :</span>
+                    <span className="font-bold">{formatDate(data.date)}</span>
+                </div>
+                <div className="flex justify-between border-t border-slate-100 pt-1 mt-1">
+                    <span className="text-slate-500">Saisie par :</span>
+                    <span className="font-bold uppercase">{data.vendeur_nom || 'N/A'}</span>
+                </div>
+                {data.validated_by_name && (
+                  <div className="flex justify-between">
+                      <span className="text-slate-500">Validé par :</span>
+                      <span className="font-bold uppercase">{data.validated_by_name}</span>
+                  </div>
+                )}
+                <div className="flex justify-between">
+                    <span className="text-slate-500">Règlement :</span>
+                    <span className="font-bold uppercase text-emerald-600">{data.mode_reglement || 'COMPTANT'}</span>
                 </div>
             </div>
         </div>
       </div>
 
-      {/* METADATA BAR */}
-      <div className="bg-slate-50/50 rounded-xl p-4 flex justify-between border border-slate-100 mb-8 text-[10px]">
-          <div className="flex flex-col gap-1">
-              <span className="uppercase tracking-widest font-black text-slate-400">Vendeur</span>
-              <span className="font-bold text-slate-900 uppercase text-xs">{data.vendeur_nom || '---'}</span>
-          </div>
-          <div className="flex flex-col gap-1 px-8 border-x border-slate-200">
-              <span className="uppercase tracking-widest font-black text-slate-400">Règlement</span>
-              <span className="font-bold text-slate-900 text-xs">{data.mode_reglement || 'Non défini'}</span>
-          </div>
-          <div className="flex flex-col gap-1 text-right">
-              <span className="uppercase tracking-widest font-black text-slate-400">Échéance</span>
-              <span className="font-bold text-slate-900 text-xs text-emerald-600">À RÉCEPTION</span>
-          </div>
-      </div>
 
       {/* PRODUCTS TABLE - PREMIUM COMPACT */}
       <div className="flex-grow">
-        <table className="w-full mb-8 border-collapse">
-            <thead>
-                <tr className="bg-slate-900 text-white text-[10px] uppercase tracking-[0.15em]">
-                    <th className="py-4 px-4 text-left font-black rounded-l-lg">Désignation</th>
-                    <th className="py-4 px-2 text-center font-black w-16">Qté</th>
-                    <th className="py-4 px-2 text-right font-black w-24">P.U HT</th>
-                    <th className="py-4 px-2 text-right font-black w-20">Rem.</th>
-                    <th className="py-4 px-4 text-right font-black w-28 rounded-r-lg">Total HT</th>
+        <table className="w-full mb-4 border-collapse">
+            <thead className="table-header-group">
+                <tr className="bg-slate-50 text-slate-900 border-b-2 border-slate-900 text-[9px] uppercase tracking-[0.1em]">
+                    <th className="py-2.5 px-3 text-left font-black rounded-l">Désignation</th>
+                    <th className="py-2.5 px-2 text-center font-black w-12">Qté</th>
+                    <th className="py-2.5 px-2 text-right font-black w-24">P.U HT</th>
+                    <th className="py-2.5 px-2 text-right font-black w-20">Rem.</th>
+                    <th className="py-2.5 px-3 text-right font-black w-28 rounded-r">Total HT</th>
                 </tr>
             </thead>
-            <tbody className="text-[11px]">
+            <tbody className="text-[10px]">
                 {data.produits.map((item, idx) => {
                     const htUnit = calculateHTUnit(item.selling_price, item.tva);
                     const totalLineNetHT = ((Number(item.selling_price) - Number(item.discount)) * item.quantity) / (1 + (Number(item.tva)||0)/100);
                     
                     return (
-                      <tr key={idx} className="group border-b border-slate-50 hover:bg-slate-50/30 transition-colors">
-                          <td className="py-4 px-4">
-                              <div className="font-bold text-slate-800 text-xs">{item.produit_nom}</div>
-                              {item.cip && <div className="text-[9px] text-slate-400 font-mono mt-0.5 tracking-tight">CIP: {item.cip}</div>}
+                      <tr key={idx} className="group border-b border-slate-50 hover:bg-slate-50/30 transition-colors break-inside-avoid">
+                          <td className="py-2 px-3">
+                              <div className="font-bold text-slate-800 text-[10.5px] uppercase leading-tight">{item.produit_nom}</div>
+                              {item.cip && <div className="text-[8.5px] text-slate-400 font-mono mt-0.5 tracking-tight inline-block mr-3">CIP: {item.cip}</div>}
+                              {(item.lot || item.date_expiration) && (
+                                <div className="text-[7.5px] text-slate-500 font-mono mt-0.5 flex flex-wrap gap-x-3 gap-y-0.5">
+                                    {item.lot && <span>LOT: {item.lot}</span>}
+                                    {item.date_expiration && <span>EXP: {formatExpiryDate(item.date_expiration)}</span>}
+                                </div>
+                              )}
                           </td>
-                          <td className="py-4 px-2 text-center align-middle font-bold text-slate-900">{item.quantity}</td>
-                          <td className="py-4 px-2 text-right align-middle text-slate-600 font-medium">{formatNumber(htUnit, 0)}</td>
-                          <td className="py-4 px-2 text-right align-middle text-red-400/80 font-medium">{item.discount > 0 ? `-${formatNumber(item.discount, 0)}` : '—'}</td>
-                          <td className="py-4 px-4 text-right align-middle font-black text-slate-900 text-xs px-4">{formatNumber(totalLineNetHT, 0)}</td>
+                          <td className="py-2 px-2 text-center align-middle font-bold text-slate-900">{item.quantity}</td>
+                          <td className="py-2 px-2 text-right align-middle text-slate-600 font-medium">{formatNumber(htUnit, 0)}</td>
+                          <td className="py-2 px-2 text-right align-middle text-red-400 font-medium">{item.discount > 0 ? `-${formatNumber(item.discount, 0)}` : '—'}</td>
+                          <td className="py-2 px-3 text-right align-middle font-black text-slate-900 text-[10.5px]">{formatNumber(totalLineNetHT, 0)}</td>
                       </tr>
                     );
                 })}
             </tbody>
         </table>
         
-        <div className="px-4 py-3 bg-slate-50 rounded-lg flex justify-between items-center text-[10px] uppercase font-bold text-slate-400 tracking-widest">
-             <div className="flex gap-8">
+        <div className="px-3 py-2 bg-slate-50 rounded-lg flex justify-between items-center text-[9px] uppercase font-bold text-slate-400 tracking-widest">
+             <div className="flex gap-6">
                <span>Lignes : <span className="text-slate-900">{data.produits.length}</span></span>
                <span>Articles : <span className="text-slate-900">{totalQuantity}</span></span>
              </div>
-             <div className="text-slate-300 italic">Document généré numériquement</div>
+             <div className="text-slate-300 italic">Document système certifié</div>
         </div>
       </div>
 
       {/* FOOTER AREA */}
-      <div className="mt-12">
-        <div className="flex gap-12 items-start border-t-2 border-slate-900 pt-8">
+      <div className="mt-6">
+        <div className="flex gap-8 items-start border-t-2 border-slate-900 pt-4">
             
             {/* VAT Analysis & Text Amount */}
             <div className="flex-1">
-                <div className="text-[10px] uppercase tracking-widest font-black text-slate-400 mb-3 ml-1">Analyse des taxes (TVA)</div>
-                <div className="bg-slate-50 rounded-xl p-4 border border-slate-100 mb-8">
-                  <table className="w-full text-[10px]">
+                <div className="text-[9px] uppercase tracking-widest font-black text-slate-400 mb-2 ml-1">Analyse des taxes (TVA)</div>
+                <div className="bg-slate-50 rounded-lg p-3 border border-slate-100 mb-4">
+                  <table className="w-full text-[9.5px]">
                       <thead>
                           <tr className="text-slate-400 font-bold border-b border-slate-200">
-                              <th className="py-2 text-left pb-2">Code TVA</th>
-                              <th className="py-2 text-right pb-2">Taux</th>
-                              <th className="py-2 text-right pb-2">Base HT</th>
-                              <th className="py-2 text-right pb-2">Montant TVA</th>
+                              <th className="py-1 text-left pb-1">Code TVA</th>
+                              <th className="py-1 text-right pb-1">Taux</th>
+                              <th className="py-1 text-right pb-1">Base HT</th>
+                              <th className="py-1 text-right pb-1">Montant TVA</th>
                           </tr>
                       </thead>
-                      <tbody>
+                      <tbody className="leading-tight">
                           {data.tva_analysis && data.tva_analysis.length > 0 ? (
                               data.tva_analysis.map((line, idx) => (
                                   <tr key={idx} className="text-slate-700">
-                                      <td className="py-2 text-left font-bold">TVA-{idx+1}</td>
-                                      <td className="py-2 text-right">{formatNumber(Number(line.taux), 1)}%</td>
-                                      <td className="py-2 text-right font-medium">{formatNumber(line.base_ht, 0)}</td>
-                                      <td className="py-2 text-right font-bold">{formatNumber(line.montant_tva, 0)}</td>
+                                      <td className="py-1 text-left font-bold uppercase">TVA-{idx+1}</td>
+                                      <td className="py-1 text-right font-medium">{formatNumber(Number(line.taux), 1)}%</td>
+                                      <td className="py-1 text-right">{formatNumber(line.base_ht, 0)}</td>
+                                      <td className="py-1 text-right font-bold text-slate-900">{formatNumber(line.montant_tva, 0)}</td>
                                   </tr>
                               ))
                           ) : (
                             <tr className="text-slate-700">
-                                <td className="py-2 text-left font-bold">TVA-EXO</td>
-                                <td className="py-2 text-right">0.0%</td>
-                                <td className="py-2 text-right font-medium">{formatNumber(data.total_ht, 0)}</td>
-                                <td className="py-2 text-right font-bold">0</td>
+                                <td className="py-1 text-left font-bold">TVA-EXO</td>
+                                <td className="py-1 text-right">0.0%</td>
+                                <td className="py-1 text-right">{formatNumber(data.total_ht, 0)}</td>
+                                <td className="py-1 text-right font-bold">0</td>
                             </tr>
                           )}
                       </tbody>
                   </table>
                 </div>
                 
-                <div className="bg-emerald-50/30 border border-emerald-100 rounded-xl p-5">
-                    <div className="text-[9px] uppercase tracking-[0.2em] font-black text-emerald-800/40 mb-2">Montant en toutes lettres</div>
-                    <div className="font-bold italic text-slate-900 text-sm uppercase leading-snug tracking-tight">
+                <div className="bg-slate-50 border border-slate-100 rounded-lg p-3">
+                    <div className="text-[8.5px] uppercase tracking-[0.2em] font-black text-slate-400 mb-1.5">Montant en toutes lettres</div>
+                    <div className="font-bold italic text-slate-900 text-[12.5px] uppercase leading-snug tracking-tight">
                        {data.total_lettres || '---'}
                     </div>
                 </div>
             </div>
 
             {/* Totals & Signature */}
-            <div className="w-72">
-                <div className="space-y-3 mb-10">
-                    <div className="flex justify-between items-center px-2 py-1 text-slate-500">
-                        <span className="text-[10px] uppercase font-bold tracking-widest">Total HT</span>
-                        <span className="font-mono font-bold text-slate-900">{formatPrice(data.total_ht)}</span>
-                    </div>
-                    <div className="flex justify-between items-center px-2 py-1 text-slate-500">
-                        <span className="text-[10px] uppercase font-bold tracking-widest">Taxes (TVA)</span>
-                        <span className="font-mono font-bold text-slate-900">{formatPrice(data.total_tva)}</span>
-                    </div>
+            <div className="w-64">
+                <div className="space-y-1 mt-4 p-0">
+                    {/* Rows use grid-cols-[1fr,115px] to have a fixed amount area */}
                     
-                    {data.remise > 0 && (
-                      <div className="flex justify-between items-center px-2 py-2 bg-red-50 rounded-lg text-red-600">
-                          <span className="text-[10px] uppercase font-black tracking-widest">Remise commerciale</span>
-                          <span className="font-mono font-black text-sm">-{formatPrice(data.remise)}</span>
+                    {/* Total HT */}
+                    <div className="grid grid-cols-[1fr,115px] items-center px-1 text-slate-500">
+                        <span className="text-[9px] uppercase font-bold tracking-widest pl-1">Total HT</span>
+                        <div className="text-right font-mono font-bold text-slate-900 pr-2">
+                          {formatNumber(data.total_ht, 0)} <span className="text-[8px] font-normal opacity-60">FCFA</span>
+                        </div>
+                    </div>
+
+                    {data.total_tva > 0 && (
+                      <div className="grid grid-cols-[1fr,115px] items-center px-1 text-slate-500">
+                          <span className="text-[9px] uppercase font-bold tracking-widest pl-1">Taxes (TVA)</span>
+                          <div className="text-right font-mono font-bold text-slate-900 pr-2">
+                            {formatNumber(data.total_tva, 0)} <span className="text-[8px] font-normal opacity-60">FCFA</span>
+                          </div>
                       </div>
                     )}
                     
-                    <div className="bg-slate-900 text-white rounded-xl p-4 shadow-xl shadow-slate-200 mt-6 relative overflow-hidden group">
-                        <div className="absolute top-0 right-0 w-24 h-24 bg-white/5 rotate-45 translate-x-12 -translate-y-12"></div>
-                        <div className="text-[10px] uppercase font-black tracking-[0.3em] text-white/40 mb-1">Net à Payer</div>
-                        <div className="text-3xl font-black font-mono tracking-tighter text-white flex justify-between items-baseline">
-                          {formatNumber(data.total_ttc, 0)}
-                          <span className="text-sm font-light ml-1 opacity-60">FCFA</span>
+                    {data.remise > 0 && (
+                      <div className="grid grid-cols-[1fr,115px] items-center px-1 py-1 bg-red-50/50 rounded-md text-red-600 border border-red-100/50">
+                          <span className="text-[9px] uppercase font-black tracking-widest pl-1">Remise</span>
+                          <div className="text-right font-mono font-black pr-2">
+                            -{formatNumber(data.remise, 0)} <span className="text-[8px] font-normal opacity-60">FCFA</span>
+                          </div>
+                      </div>
+                    )}
+
+                    <div className="border-t border-slate-200 my-1 mx-2"></div>
+                    
+                    {/* Bloc TOTAL GÉNÉRAL / NET À PAYER */}
+                    <div className={`mx-0 rounded-lg py-2.5 shadow-sm transition-all overflow-hidden relative ${
+                      isBonDeLivraison && (data.part_assurance ?? 0) > 0 
+                        ? 'bg-slate-50 border border-slate-200 text-slate-900' 
+                        : 'bg-slate-900 text-white'
+                    }`}>
+                        <div className="grid grid-cols-[1fr,115px] items-center px-1">
+                          <span className={`text-[8px] uppercase font-black tracking-[0.2em] pl-1 ${
+                            isBonDeLivraison && (data.part_assurance ?? 0) > 0 ? 'text-slate-400' : 'text-slate-400'
+                          }`}>
+                            {isBonDeLivraison && (data.part_assurance ?? 0) > 0 ? 'TOTAL GÉNÉRAL' : 'NET À PAYER'}
+                          </span>
+                          <div className={`text-right font-black font-mono tracking-tighter pr-2 ${
+                             isBonDeLivraison && (data.part_assurance ?? 0) > 0 ? 'text-lg' : 'text-xl'
+                          }`}>
+                            {formatNumber(data.total_ttc, 0)}
+                            <span className="text-[9px] font-normal opacity-60 ml-1">FCFA</span>
+                          </div>
                         </div>
                     </div>
+
+                    {/* Bloc Tiers-Payant (Patient/Assurance) */}
+                    {isBonDeLivraison && (data.part_assurance ?? 0) > 0 && (
+                      <div className="space-y-1.5 pt-1">
+                        <div className="grid grid-cols-[1fr,115px] items-center px-1 py-0.5 text-slate-600">
+                          <span className="text-[9px] uppercase font-bold tracking-widest pl-1">PART PATIENT</span>
+                          <div className="text-right font-mono font-bold text-slate-900 text-base pr-2 text-right">
+                            {formatNumber(data.part_client ?? 0, 0)} <span className="text-[8px] font-normal opacity-60">FCFA</span>
+                          </div>
+                        </div>
+                        <div className="bg-emerald-600 rounded-lg shadow-sm text-white grid grid-cols-[1fr,115px] items-center px-1 py-2.5 ring-1 ring-emerald-700/10">
+                          <span className="text-[9px] uppercase font-black tracking-[0.1em] pl-1">PART ASSURANCE</span>
+                          <div className="text-right font-mono font-black text-lg leading-none pr-2 text-right">
+                            {formatNumber(data.part_assurance ?? 0, 0)} <span className="text-[8px] font-normal opacity-60 text-emerald-100">FCFA</span>
+                          </div>
+                        </div>
+                      </div>
+                    )}
                 </div>
 
-                <div className="mt-8 pt-8 border-t border-slate-100 flex flex-col items-center">
-                    <div className="text-[9px] uppercase font-black tracking-widest text-slate-400 mb-12">Cachet & Signature</div>
-                    <div className="w-48 h-24 border-2 border-dashed border-slate-100 rounded-2xl flex items-center justify-center text-[9px] text-slate-200 bg-slate-50/30">
+                <div className="mt-4 pt-4 border-t border-slate-100 flex flex-col items-center">
+                    <div className="text-[8px] uppercase font-black tracking-widest text-slate-400 mb-6 text-center">Cachet & Signature</div>
+                    <div className="w-full h-20 border-2 border-dashed border-slate-100 rounded-xl flex items-center justify-center text-[8px] text-slate-200 bg-slate-50/10 italic">
                         EMPLACEMENT CACHET
                     </div>
                 </div>
@@ -306,13 +372,13 @@ const InvoiceTemplate: React.FC<InvoiceTemplateProps> = ({ settings, data }) => 
         </div>
 
         {/* LEGAL FOOTER */}
-        <div className="mt-16 pt-8 border-t border-slate-200 text-center">
-            <p className="font-bold text-slate-800 text-[11px] mb-2">{settings.ticket_footer_message || 'Merci de votre confiance.'}</p>
+        <div className="mt-8 pt-4 border-t border-slate-200 text-center">
+            <p className="font-bold text-slate-800 text-[10.5px] mb-1.5">{settings.ticket_footer_message || 'Merci de votre confiance.'}</p>
             
-            <div className="flex justify-center flex-wrap gap-x-12 gap-y-2 text-[9px] uppercase tracking-[0.15em] font-bold text-slate-400">
-               {settings.niu && <div className="flex items-center gap-1.5"><span className="text-slate-300">●</span> NIU: <span className="text-slate-600">{settings.niu}</span></div>}
-               {settings.registre_commerce && <div className="flex items-center gap-1.5"><span className="text-slate-300">●</span> RC: <span className="text-slate-600">{settings.registre_commerce}</span></div>}
-               <div className="flex items-center gap-1.5"><span className="text-slate-300">●</span> LOGICIEL: <span className="text-slate-600">ANTIGRAVITY POS</span></div>
+            <div className="flex justify-center flex-wrap gap-x-8 gap-y-1 text-[8.5px] uppercase tracking-[0.1em] font-bold text-slate-300">
+               {settings.niu && <div className="flex items-center gap-1">NIU: <span className="text-slate-600">{settings.niu}</span></div>}
+               {settings.registre_commerce && <div className="flex items-center gap-1">RC: <span className="text-slate-600">{settings.registre_commerce}</span></div>}
+               <div className="flex items-center gap-1">LOGICIEL: <span className="text-slate-600 uppercase">ZENITH</span></div>
             </div>
         </div>
       </div>

@@ -1,4 +1,5 @@
 {
+    "currency_symbol": "F",
     "title": "Journal de Caisse",
     "subtitle": "Historique des flux de caisse",
     "operations_count": "{{count}} opérations",

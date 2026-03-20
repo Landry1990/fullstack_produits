@@ -53,11 +53,14 @@ export const useInvoiceActions = ({ setFacturesLocal }: UseInvoiceActionsProps) 
     };
 
     // --- PRINTING ---
-    const printInvoicePDF = (factureId: number, clientName?: string | null) => {
+    const printInvoicePDF = (factureId: number, clientName?: string | null, type?: string) => {
         let url = `/app/print-invoice/${factureId}`;
-        if (clientName) {
-            url += `?client_name=${encodeURIComponent(clientName)}`;
-        }
+        const params = new URLSearchParams();
+        if (clientName) params.append('client_name', clientName);
+        if (type) params.append('type', type);
+        
+        const queryString = params.toString();
+        if (queryString) url += `?${queryString}`;
 
         // Ouvrir dans une popup centrée
         const width = 1000;
@@ -73,26 +76,13 @@ export const useInvoiceActions = ({ setFacturesLocal }: UseInvoiceActionsProps) 
     };
 
     const handlePrintInvoice = (facture: Facture) => {
-        // Logique de vérification si nom client nécessaire
-        // On vérifie si client_name est vide, null, ou contient "passage" ou "divers" (insensible à la casse)
-        const normalize = (str: string) => str?.toLowerCase().trim() || '';
-        const clientName = normalize(facture.client_name || '');
-        
-        const isGenericClient = !facture.client_name_override && (
-            !clientName || 
-            clientName.includes('passage') || 
-            clientName.includes('divers')
-        );
+        const nameToUse = facture.client_name_override || facture.client_name;
+        printInvoicePDF(facture.id, nameToUse);
+    };
 
-        if (isGenericClient) {
-            setPendingPrintFacture(facture);
-            setShowClientNameModal(true);
-        } else {
-            // Imprimer directement avec le nom existant
-            // On peut passer le nom override s'il existe, sinon le nom standard
-            const nameToUse = facture.client_name_override || facture.client_name;
-            printInvoicePDF(facture.id, nameToUse);
-        }
+    const handlePrintBL = (facture: Facture) => {
+        const nameToUse = facture.client_name_override || facture.client_name;
+        printInvoicePDF(facture.id, nameToUse, 'BL');
     };
 
     const handleConfirmPrintClientName = async (clientNameInput: string) => {
@@ -336,6 +326,7 @@ export const useInvoiceActions = ({ setFacturesLocal }: UseInvoiceActionsProps) 
         actions: {
             handleViewProducts,
             handlePrintInvoice,
+            handlePrintBL,
             handleConfirmPrintClientName,
             handlePrintTicket, // New action
             handleEditInvoice,

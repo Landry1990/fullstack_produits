@@ -16,6 +16,7 @@ const PrintPage: React.FC = () => {
 
     const [searchParams] = useSearchParams();
     const clientNameOverride = searchParams.get('client_name');
+    const type = searchParams.get('type');
 
     useEffect(() => {
         const fetchData = async () => {
@@ -45,24 +46,39 @@ const PrintPage: React.FC = () => {
                 
                 const endpoints = [
                     `${apiBaseUrl}/factures/${id}/print_data/`,
-                    `${apiBaseUrl}/invoice-settings/`
+                    `${apiBaseUrl}/invoice-settings/`,
+                    `${apiBaseUrl}/pharmacy-settings/`
                 ];
                 console.log("PrintPage: Fetching from endpoints:", endpoints);
 
                 // Parallel fetch
-                const [invoiceRes, settingsRes] = await Promise.all([
+                const [invoiceRes, invoiceSettingsRes, pharmacySettingsRes] = await Promise.all([
                     axios.get(endpoints[0], config),
-                    axios.get(endpoints[1], config)
+                    axios.get(endpoints[1], config),
+                    axios.get(endpoints[2], config)
                 ]);
 
-                console.log("PrintPage: Data received", { invoice: invoiceRes.status, settings: settingsRes.status });
+                console.log("PrintPage: Data received", { 
+                    invoice: invoiceRes.status, 
+                    invoiceSettings: invoiceSettingsRes.status,
+                    pharmacySettings: pharmacySettingsRes.status 
+                });
+
+                // Merge settings: 
+                // Identity from PharmacySettings (name, address, logo, niu, rc, phone, email)
+                // Styling from InvoiceSettings (primaryColor, headerLayout)
+                const mergedSettings: PharmacySettings = {
+                    ...pharmacySettingsRes.data,
+                    // Map InvoiceSettings fields if they exist and are preferred
+                    primary_color: invoiceSettingsRes.data.primary_color || pharmacySettingsRes.data.primary_color,
+                    // If PharmacySettings doesn't have a logo but InvoiceSettings does (rare but possible)
+                    logo: pharmacySettingsRes.data.logo || invoiceSettingsRes.data.logo,
+                };
 
                 // Transform invoice data if needed, but serializer should match interface
                 let data = invoiceRes.data;
                 
                 // Override client name logic
-                // 1. URL parameter takes precedence (temporary override for this print)
-                // 2. Backend stored override (client_name_override)
                 const effectiveClientName = clientNameOverride || data.client_name_override;
 
                 if (effectiveClientName) {
@@ -76,7 +92,7 @@ const PrintPage: React.FC = () => {
                 }
 
                 setInvoiceData(data);
-                setSettings(settingsRes.data);
+                setSettings(mergedSettings);
                 
                 clearTimeout(safetyTimeout);
                 setLoading(false);
@@ -135,10 +151,10 @@ const PrintPage: React.FC = () => {
             <style>
                 {`
                     @media print {
-                        @page { margin: 0; size: auto; }
+                        @page { margin: 10mm; size: A4; }
                         body { margin: 0; background: white; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
                         .no-print { display: none !important; }
-                        .print-page { padding: 0 !important; background: white !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+                        .print-page { background: white !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
                     }
                 `}
             </style>
@@ -163,7 +179,11 @@ const PrintPage: React.FC = () => {
                 </button>
             </div>
 
-            <InvoiceTemplate settings={settings} data={invoiceData} />
+            <InvoiceTemplate 
+                settings={settings} 
+                data={invoiceData} 
+                isBonDeLivraison={type === 'BL'}
+            />
         </div>
     );
 };

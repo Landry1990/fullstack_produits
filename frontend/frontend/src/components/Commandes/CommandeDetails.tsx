@@ -13,7 +13,7 @@ interface CommandeDetailsProps {
   onMettreEnAttente: () => void;
   onCloture: () => void;
   onDelete: () => void;
-  onImprimer: () => void;
+  onImprimer: (fournisseurName: string) => void;
   onAnnulerReception: () => void;
   onCreateAvoir: () => void;
   onOpenLabelsModal: () => void;
@@ -100,7 +100,10 @@ const CommandeDetails: React.FC<CommandeDetailsProps> = ({
           </button>
           <button
             className="btn btn-primary btn-outline btn-sm"
-            onClick={onImprimer}
+            onClick={() => {
+              const fName = fournisseurs.find(f => f.id === selectedCommande.fournisseur)?.name ?? `ID: ${selectedCommande.fournisseur}`;
+              onImprimer(fName);
+            }}
             disabled={selectedCommande.status !== 'CLOT' || executingAction}
           >
             {executingAction ? <span className="loading loading-spinner loading-xs"></span> : t('orders:details.print_receipt')}
@@ -179,15 +182,15 @@ const CommandeDetails: React.FC<CommandeDetailsProps> = ({
               <div className="flex flex-col gap-0.5 text-xs">
                 <div className="flex justify-between">
                   <span className="text-base-content/60">{t('orders:product_table.total_ht', 'HT')}:</span>
-                  <span className="font-semibold">{formatCurrency(stats.ht)} {t('common:currency_symbol', 'F')}</span>
+                  <span className="font-semibold">{formatCurrency(stats.ht)}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-base-content/60">{t('orders:product_table.total_tva', 'TVA')}:</span>
-                  <span className="font-semibold">{formatCurrency(stats.tva)} {t('common:currency_symbol', 'F')}</span>
+                  <span className="font-semibold">{formatCurrency(stats.tva)}</span>
                 </div>
                 <div className="flex justify-between border-t border-base-200 pt-0.5 mt-0.5">
                   <span className="font-bold text-primary">{t('orders:product_table.total_ttc', 'TTC')}:</span>
-                  <span className="font-bold text-primary text-sm">{formatCurrency(totalTTC)} {t('common:currency_symbol', 'F')}</span>
+                  <span className="font-bold text-primary text-sm">{formatCurrency(totalTTC)}</span>
                 </div>
               </div>
             );
@@ -331,10 +334,10 @@ const CommandeDetails: React.FC<CommandeDetailsProps> = ({
                         <td className="text-center bg-success/5">
                           <span className={`font-bold ${(p.unites_gratuites || 0) > 0 ? 'text-success' : 'text-base-content/20'}`}>{p.unites_gratuites || 0}</span>
                         </td>
-                        <td className="text-right font-mono">{formatCurrency(normalizeNumberInput(p.price))} {t('common:currency_symbol', 'F')}</td>
+                        <td className="text-right font-mono">{formatCurrency(normalizeNumberInput(p.price))}</td>
                         <td className="text-xs font-mono">{p.lot || '-'}</td>
                         <td className="text-xs text-gray-400">{p.date_expiration ? (() => { const d = new Date(p.date_expiration); return `${String(d.getMonth() + 1).padStart(2, '0')}/${String(d.getFullYear()).slice(-2)}`; })() : ''}</td>
-                        <td className="text-right font-bold text-primary">{formatCurrency(normalizeNumberInput(p.quantity) * normalizeNumberInput(p.price))} {t('common:currency_symbol', 'F')}</td>
+                        <td className="text-right font-bold text-primary">{formatCurrency(normalizeNumberInput(p.quantity) * normalizeNumberInput(p.price))}</td>
                       </tr>
                     );
                   })}

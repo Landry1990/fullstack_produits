@@ -141,7 +141,7 @@ export const InventaireFilters: React.FC<InventaireFiltersProps> = ({ filters, o
                     <button
                         onClick={onRefresh}
                         className="btn btn-ghost btn-sm text-base-content/60"
-                        title={t('common.refresh', { defaultValue: 'Actualiser' })}
+                        title={t('common:refresh', { defaultValue: 'Actualiser' })}
                     >
                         <RefreshCw className="w-5 h-5" />
                     </button>
@@ -150,3 +150,4 @@ export const InventaireFilters: React.FC<InventaireFiltersProps> = ({ filters, o
         </div>
     );
 };
+

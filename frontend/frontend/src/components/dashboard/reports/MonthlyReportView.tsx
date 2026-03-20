@@ -20,7 +20,7 @@ interface MonthlyReportViewProps {
 
 export const MonthlyReportView: React.FC<MonthlyReportViewProps> = ({ data }) => {
     const { t } = useTranslation(['reports', 'common']);
-    const formatMoney = (v: number) => formatCurrency(Math.round(v || 0)) + ' F';
+    const formatMoney = (v: number) => formatCurrency(Math.round(v || 0));
     
     return (
         <div className="space-y-8 animate-in fade-in duration-500">

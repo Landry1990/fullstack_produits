@@ -428,18 +428,18 @@ const JournalAudit: React.FC = () => {
                 disabled={page === 1} 
                 onClick={() => setPage(page - 1)}
               >
-                ← {t('common.pagination.prev')}
+                ← {t('common:pagination.prev')}
               </button>
               <div className="px-4 py-2 bg-white rounded-lg shadow-md">
-                <span className="font-semibold">{t('common.pagination.page_info_simple', { page })}</span>
-                {totalPages > 1 && <span className="text-gray-500"> {t('common.pagination.page_of', { count: totalPages })}</span>}
+                <span className="font-semibold">{t('common:pagination.page_info_simple', { page })}</span>
+                {totalPages > 1 && <span className="text-gray-500"> {t('common:pagination.page_of', { count: totalPages })}</span>}
               </div>
               <button 
                 className="btn btn-outline" 
                 disabled={page >= totalPages} 
                 onClick={() => setPage(page + 1)}
               >
-                {t('common.pagination.next')} →
+                {t('common:pagination.next')} →
               </button>
             </div>
           )}

@@ -2,7 +2,7 @@
     "title": "Sales & Invoicing",
     "shortcuts": {
         "search": "Search (F2)",
-        "pay": "Checkout (F9)"
+        "pay": "Validate (F9)"
     },
     "cart": {
         "title": "Sales Cart",
@@ -46,8 +46,8 @@
         "view_pending_tooltip": "View pending sales (F8)",
         "proforma": "Proforma",
         "proforma_tooltip": "Generate proforma invoice / Quote (F10)",
-        "pay": "Pay / Checkout",
-        "pay_tooltip": "Proceed to payment (Ctrl+Enter)",
+        "pay": "Validate",
+        "pay_tooltip": "Validate sale (Ctrl+Enter)",
         "retrocession_mode": "Retrocession",
         "facture_a4": "A4 Invoice",
         "facture_a4_tooltip": "Print directly an A4 Invoice (disables ticket)"

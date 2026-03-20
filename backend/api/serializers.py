@@ -15,6 +15,7 @@ from .models import (
     WhatsAppLog
 )
 from .services import PromotionService
+from .pdf_utils import number_to_french
 
 class PromotionPackItemSerializer(serializers.ModelSerializer):
     product_name = serializers.CharField(source='product.name', read_only=True)
@@ -614,6 +615,7 @@ class CaisseSerializer(serializers.ModelSerializer):
     # Nouveaux champs pour traçabilité (Saisie vs Validation)
     facture_created_by_name = serializers.SerializerMethodField()
     facture_validated_by_name = serializers.SerializerMethodField()
+    total_lettres = serializers.SerializerMethodField()
 
     class Meta:
         model = Caisse
@@ -621,7 +623,8 @@ class CaisseSerializer(serializers.ModelSerializer):
             'id', 'facture', 'facture_numero', 'mode_paiement', 'mode_paiement_display',
             'montant', 'reference', 'statut', 'date_paiement', 'user', 'user_details',
             'client_name', 'client_type', 'is_creance_settlement', 'releve_reference', 
-            'releve_id', 'facture_created_by_name', 'facture_validated_by_name'
+            'releve_id', 'facture_created_by_name', 'facture_validated_by_name',
+            'total_lettres'
         ]
         read_only_fields = ['date_paiement']
     
@@ -673,6 +676,14 @@ class CaisseSerializer(serializers.ModelSerializer):
         except AttributeError:
             pass
         return ''
+
+    def get_total_lettres(self, obj):
+        try:
+            # On utilise le montant du paiement (le ticket)
+            # Utilisation de float puis int pour gérer les chaînes avec décimales
+            return number_to_french(int(float(obj.montant)))
+        except Exception:
+            return ""
 
 class FactureSerializer(serializers.ModelSerializer):
     client_nom = serializers.SerializerMethodField()
@@ -1139,28 +1150,42 @@ class FacturePrintSerializer(serializers.ModelSerializer):
     """
     client = ClientSerializer(read_only=True)
     vendeur_nom = serializers.SerializerMethodField()
+    validated_by_name = serializers.SerializerMethodField()
     produits = FactureProduitSerializer(many=True, read_only=True)
     montant_recu = serializers.SerializerMethodField()
     montant_rendu = serializers.SerializerMethodField()
     mode_reglement = serializers.SerializerMethodField()
     tva_analysis = serializers.SerializerMethodField()
     total_lettres = serializers.SerializerMethodField()
+    part_assurance = serializers.SerializerMethodField()
+    ayant_droit_details = AyantDroitSerializer(source='ayant_droit', read_only=True)
 
     class Meta:
         model = Facture
         fields = [
             'id', 'numero_facture', 'date', 'status',
-            'client', 'client_name_override', 
+            'client', 'client_name_override', 'ayant_droit', 'ayant_droit_details',
             'total_ht', 'total_tva', 'total_ttc', 'remise',
-            'vendeur_nom', 'produits',
+            'vendeur_nom', 'validated_by_name', 'produits',
             'montant_recu', 'montant_rendu', 'mode_reglement',
-            'tva_analysis', 'total_lettres', 'notes'
+            'tva_analysis', 'total_lettres', 'notes',
+            'part_client', 'part_assurance'
         ]
+
+    def get_part_assurance(self, obj):
+        if obj.part_client is not None:
+            return obj.total_ttc - obj.part_client
+        return Decimal('0.00')
 
     def get_vendeur_nom(self, obj):
         if obj.created_by:
             return f"{obj.created_by.first_name} {obj.created_by.last_name}".strip() or obj.created_by.username
         return "Système"
+
+    def get_validated_by_name(self, obj):
+        if obj.validated_by:
+            return f"{obj.validated_by.first_name} {obj.validated_by.last_name}".strip() or obj.validated_by.username
+        return ""
 
     def get_montant_recu(self, obj):
         # Somme des paiements
@@ -1197,9 +1222,10 @@ class FacturePrintSerializer(serializers.ModelSerializer):
         ]
 
     def get_total_lettres(self, obj):
-        # TODO: Implémenter la conversion chiffres -> lettres si besoin
-        # Pour l'instant on retourne une chaîne vide ou on utilise une lib
-        return ""
+        try:
+            return number_to_french(int(obj.total_ttc))
+        except Exception:
+            return ""
 
 
 class CouponMonnaieSerializer(serializers.ModelSerializer):
