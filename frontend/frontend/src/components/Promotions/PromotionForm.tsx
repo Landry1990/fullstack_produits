@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { Promotion } from '../../types/Promotion';
 import { DiscountType, ApplicationMode } from '../../types/Promotion';
@@ -200,15 +200,15 @@ const PromotionForm: React.FC<PromotionFormProps> = ({ onClose, onSave, initialD
 
     return (
         <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
-            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-5xl max-h-[92vh] overflow-hidden flex flex-col">
+            <div className="bg-base-100 rounded-2xl shadow-2xl w-full max-w-5xl max-h-[92vh] overflow-hidden flex flex-col">
                 {/* Header */}
-                <div className="p-6 border-b flex justify-between items-center bg-gray-50">
+                <div className="p-6 border-b flex justify-between items-center bg-base-200/50">
                     <div>
-                        <h2 className="text-2xl font-bold text-gray-800 flex items-center gap-2">
+                        <h2 className="text-2xl font-bold text-base-content flex items-center gap-2">
                             {initialData ? <Tag className="text-primary" /> : <Plus className="text-success" />}
                             {initialData ? t('promotions:form.title_edit') : t('promotions:form.title_new')}
                         </h2>
-                        <p className="text-sm text-gray-500">{t('promotions:form.subtitle')}</p>
+                        <p className="text-sm text-base-content/60">{t('promotions:form.subtitle')}</p>
                     </div>
                     <button onClick={onClose} className="btn btn-ghost btn-circle">
                         <X size={24} />
@@ -219,12 +219,12 @@ const PromotionForm: React.FC<PromotionFormProps> = ({ onClose, onSave, initialD
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                         {/* Info Section */}
                         <div className="md:col-span-2 space-y-6">
-                            <div className="bg-white p-5 rounded-xl border shadow-sm space-y-4">
-                                <h3 className="text-xs font-bold uppercase text-gray-400 tracking-wider flex items-center gap-2">
+                            <div className="bg-base-100 p-5 rounded-xl border shadow-sm space-y-4">
+                                <h3 className="text-xs font-bold uppercase text-base-content/40 tracking-wider flex items-center gap-2">
                                     <ShoppingBag size={14} /> {t('promotions:form.general_info')}
                                 </h3>
                                 <div>
-                                    <label className="block text-sm font-semibold text-gray-700 mb-1">{t('promotions:form.pack_name')}</label>
+                                    <label className="block text-sm font-semibold text-base-content/90 mb-1">{t('promotions:form.pack_name')}</label>
                                     <input 
                                         type="text" 
                                         className="input input-bordered w-full font-medium" 
@@ -236,13 +236,13 @@ const PromotionForm: React.FC<PromotionFormProps> = ({ onClose, onSave, initialD
                                 </div>
                                 <div className="grid grid-cols-2 gap-4">
                                     <div>
-                                        <label className="block text-sm font-semibold text-gray-700 mb-1 flex items-center gap-2 text-primary">
+                                        <label className="block text-sm font-semibold text-base-content/90 mb-1 flex items-center gap-2 text-primary">
                                             <Calendar size={14} /> {t('promotions:form.start_date')}
                                         </label>
                                         <input type="date" className="input input-bordered w-full" value={startDate} onChange={e => setStartDate(e.target.value)} required />
                                     </div>
                                     <div>
-                                        <label className="block text-sm font-semibold text-gray-700 mb-1 flex items-center gap-2 text-error">
+                                        <label className="block text-sm font-semibold text-base-content/90 mb-1 flex items-center gap-2 text-error">
                                             <Calendar size={14} /> {t('promotions:form.end_date')}
                                         </label>
                                         <input type="date" className="input input-bordered w-full" value={endDate} onChange={e => setEndDate(e.target.value)} />
@@ -254,9 +254,9 @@ const PromotionForm: React.FC<PromotionFormProps> = ({ onClose, onSave, initialD
                         {/* Configuration Section */}
                         <div className="space-y-6">
                             <div className="bg-base-200/50 p-5 rounded-xl border border-base-300 space-y-4">
-                                <h3 className="text-xs font-bold uppercase text-gray-400 tracking-wider">{t('promotions:form.type_value')}</h3>
+                                <h3 className="text-xs font-bold uppercase text-base-content/40 tracking-wider">{t('promotions:form.type_value')}</h3>
                                 <div>
-                                    <label className="block text-sm font-semibold text-gray-700 mb-1">{t('promotions:form.promo_type')}</label>
+                                    <label className="block text-sm font-semibold text-base-content/90 mb-1">{t('promotions:form.promo_type')}</label>
                                     <select 
                                         className="select select-bordered w-full font-bold" 
                                         value={discountType} 
@@ -270,8 +270,8 @@ const PromotionForm: React.FC<PromotionFormProps> = ({ onClose, onSave, initialD
                                 </div>
 
                                 {(discountType === DiscountType.PERCENTAGE || discountType === DiscountType.FIXED_AMOUNT || discountType === DiscountType.BUNDLE) && (
-                                    <div className="bg-white p-3 rounded-lg border">
-                                        <label className="block text-xs font-bold uppercase text-gray-500 mb-1">
+                                    <div className="bg-base-100 p-3 rounded-lg border">
+                                        <label className="block text-xs font-bold uppercase text-base-content/60 mb-1">
                                             {discountType === DiscountType.BUNDLE ? t('promotions:form.labels.pack_price') : t('promotions:form.labels.discount_value')}
                                         </label>
                                         <div className="relative">
@@ -281,7 +281,7 @@ const PromotionForm: React.FC<PromotionFormProps> = ({ onClose, onSave, initialD
                                                 value={value} 
                                                 onChange={e => setValue(Number(e.target.value))} 
                                             />
-                                            <span className="absolute right-4 top-1/2 -translate-y-1/2 font-bold text-gray-400">
+                                            <span className="absolute right-4 top-1/2 -translate-y-1/2 font-bold text-base-content/40">
                                                 {discountType === DiscountType.PERCENTAGE ? '%' : t('common:currency')}
                                             </span>
                                         </div>
@@ -290,12 +290,12 @@ const PromotionForm: React.FC<PromotionFormProps> = ({ onClose, onSave, initialD
                                 
                                 {discountType === DiscountType.BUY_X_GET_Y && (
                                     <div className="grid grid-cols-2 gap-2">
-                                        <div className="bg-white p-2 rounded-lg border">
-                                            <label className="block text-[10px] font-bold uppercase text-gray-500">{t('promotions:form.labels.buy')}</label>
+                                        <div className="bg-base-100 p-2 rounded-lg border">
+                                            <label className="block text-[10px] font-bold uppercase text-base-content/60">{t('promotions:form.labels.buy')}</label>
                                             <input type="number" className="input input-bordered w-full input-sm font-bold" value={buyQuantity} onChange={e => setBuyQuantity(Number(e.target.value))} min="1" />
                                         </div>
-                                        <div className="bg-white p-2 rounded-lg border">
-                                            <label className="block text-[10px] font-bold uppercase text-gray-500">{t('promotions:form.labels.get')}</label>
+                                        <div className="bg-base-100 p-2 rounded-lg border">
+                                            <label className="block text-[10px] font-bold uppercase text-base-content/60">{t('promotions:form.labels.get')}</label>
                                             <input type="number" className="input input-bordered w-full input-sm font-bold text-success" value={getQuantity} onChange={e => setGetQuantity(Number(e.target.value))} />
                                         </div>
                                     </div>
@@ -316,7 +316,7 @@ const PromotionForm: React.FC<PromotionFormProps> = ({ onClose, onSave, initialD
                             </div>
 
                             <div className="relative group">
-                                <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-primary transition-colors z-10">
+                                <div className="absolute left-4 top-1/2 -translate-y-1/2 text-base-content/40 group-focus-within:text-primary transition-colors z-10">
                                     <Search size={24} />
                                 </div>
                                 <input 
@@ -330,7 +330,7 @@ const PromotionForm: React.FC<PromotionFormProps> = ({ onClose, onSave, initialD
                                 />
                                 
                                 {searchResults.length > 0 && (
-                                    <div className="absolute z-[100] left-0 right-0 mt-2 bg-white border border-gray-200 rounded-xl shadow-2xl overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
+                                    <div className="absolute z-[100] left-0 right-0 mt-2 bg-base-100 border border-base-200 rounded-xl shadow-2xl overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
                                         <div className="max-h-80 overflow-y-auto">
                                             {searchResults.map((p, idx) => (
                                                 <div 
@@ -340,12 +340,12 @@ const PromotionForm: React.FC<PromotionFormProps> = ({ onClose, onSave, initialD
                                                     onClick={() => addProduct(p)}
                                                 >
                                                     <div className="flex items-center gap-4">
-                                                        <div className="w-10 h-10 rounded-lg bg-gray-100 flex items-center justify-center text-gray-400 font-bold">
+                                                        <div className="w-10 h-10 rounded-lg bg-base-200 flex items-center justify-center text-base-content/40 font-bold">
                                                             {p.name.charAt(0)}
                                                         </div>
                                                         <div>
-                                                            <div className="font-bold text-gray-800">{p.name}</div>
-                                                            <div className="text-xs text-gray-500 flex gap-4">
+                                                            <div className="font-bold text-base-content">{p.name}</div>
+                                                            <div className="text-xs text-base-content/60 flex gap-4">
                                                                 <span>{t('common:cip')}: {p.cip1 || t('common:not_available')}</span>
                                                                 <span className="flex items-center gap-1">
                                                                     {t('promotions:form.products.stock')} <b className={`font-black ${p.stock <= 0 ? 'text-error' : 'text-success'}`}>{p.stock}</b>
@@ -369,8 +369,8 @@ const PromotionForm: React.FC<PromotionFormProps> = ({ onClose, onSave, initialD
                         {/* Selected Products Table */}
                         <div className="mt-6 border rounded-2xl overflow-hidden shadow-sm">
                             <table className="table w-full">
-                                <thead className="bg-gray-50 border-b">
-                                    <tr className="text-gray-500 uppercase text-[10px] tracking-widest">
+                                <thead className="bg-base-200/50 border-b">
+                                    <tr className="text-base-content/60 uppercase text-[10px] tracking-widest">
                                         <th className="py-4">{t('promotions:form.products.table.product')}</th>
                                         <th className="py-4 text-center">{t('promotions:form.products.table.stock')}</th>
                                         <th className="py-4 text-center w-32">{t('promotions:form.products.table.qty')}</th>
@@ -383,7 +383,7 @@ const PromotionForm: React.FC<PromotionFormProps> = ({ onClose, onSave, initialD
                                     {selectedProducts.length === 0 ? (
                                         <tr>
                                             <td colSpan={6} className="text-center py-16">
-                                                <div className="flex flex-col items-center gap-3 text-gray-400">
+                                                <div className="flex flex-col items-center gap-3 text-base-content/40">
                                                     <Search size={48} strokeWidth={1} />
                                                     <p className="italic">{t('promotions:form.products.table.empty')}</p>
                                                 </div>
@@ -393,11 +393,11 @@ const PromotionForm: React.FC<PromotionFormProps> = ({ onClose, onSave, initialD
                                         selectedProducts.map((p, idx) => (
                                             <tr 
                                                 key={p.id} 
-                                                className={`hover:bg-gray-50 transition-colors ${tableSelectedIndex === idx ? 'bg-primary/5 ring-1 ring-inset ring-primary' : ''}`}
+                                                className={`hover:bg-base-200/50 transition-colors ${tableSelectedIndex === idx ? 'bg-primary/5 ring-1 ring-inset ring-primary' : ''}`}
                                             >
                                                 <td className="py-4">
-                                                    <div className="font-bold text-gray-800">{p.name}</div>
-                                                    <div className="text-[10px] font-mono text-gray-400">{p.cip1 || '#'+p.id}</div>
+                                                    <div className="font-bold text-base-content">{p.name}</div>
+                                                    <div className="text-[10px] font-mono text-base-content/40">{p.cip1 || '#'+p.id}</div>
                                                 </td>
                                                 <td className="py-4 text-center">
                                                     <span className={`font-black ${p.stock <= 0 ? 'text-error' : 'text-success'}`}>
@@ -406,7 +406,7 @@ const PromotionForm: React.FC<PromotionFormProps> = ({ onClose, onSave, initialD
                                                 </td>
                                                 <td className="py-4">
                                                     <div className="flex items-center justify-center">
-                                                        <div className="flex items-center bg-gray-100 rounded-lg p-1 border">
+                                                        <div className="flex items-center bg-base-200 rounded-lg p-1 border">
                                                             <button 
                                                                 type="button"
                                                                 className="btn btn-xs btn-ghost"
@@ -427,7 +427,7 @@ const PromotionForm: React.FC<PromotionFormProps> = ({ onClose, onSave, initialD
                                                         </div>
                                                     </div>
                                                 </td>
-                                                <td className="py-4 text-right font-medium text-gray-600">
+                                                <td className="py-4 text-right font-medium text-base-content/80">
                                                     {p.selling_price} {t('common:currency')}
                                                 </td>
                                                 {discountType !== DiscountType.BUNDLE && (
@@ -459,8 +459,8 @@ const PromotionForm: React.FC<PromotionFormProps> = ({ onClose, onSave, initialD
                 </form>
 
                 {/* Footer */}
-                <div className="p-6 border-t bg-gray-50 flex justify-between items-center">
-                    <div className="flex gap-4 text-xs font-bold text-gray-400 uppercase">
+                <div className="p-6 border-t bg-base-200/50 flex justify-between items-center">
+                    <div className="flex gap-4 text-xs font-bold text-base-content/40 uppercase">
                         <span>Status: {loading ? t('promotions:form.status.loading') : t('promotions:form.status.ready')}</span>
                         {discountType === DiscountType.BUNDLE && (
                             <span className="text-secondary">{t('promotions:form.status.total_fixed', { value })}</span>

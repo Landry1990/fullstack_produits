@@ -203,9 +203,9 @@ export default function Clients() {
   };
 
   return (
-    <div className="flex h-[calc(100vh-64px)] overflow-hidden bg-base-100">
+    <div className="flex flex-col lg:flex-row h-full lg:h-[calc(100vh-64px)] bg-base-100">
       {/* LEFT PANEL */}
-      <div className="w-1/3 border-r border-base-200 flex flex-col bg-base-100/50">
+      <div className={`w-full lg:w-1/3 border-b lg:border-b-0 lg:border-r border-base-200 flex flex-col bg-base-100/50 ${selectedClient ? 'hidden lg:flex' : 'flex'} h-[calc(100vh-140px)] lg:h-full`}>
         <div className="p-4 border-b border-base-200 space-y-4">
            {selectedIds.length > 0 ? (
              <SelectionHeader 
@@ -312,12 +312,18 @@ export default function Clients() {
       </div>
 
       {/* RIGHT PANEL */}
-      <div className="flex-1 bg-base-50/50 flex flex-col overflow-hidden">
+      <div className={`flex-1 bg-base-50/50 flex flex-col overflow-hidden max-w-full ${!selectedClient ? 'hidden lg:flex' : 'flex'} h-[calc(100vh-80px)] lg:h-full`}>
         {selectedClient ? (
           <>
-            <div className="p-6 border-b border-base-200 bg-base-100/30 backdrop-blur-md flex justify-between items-center shrink-0">
-               <div className="flex items-center gap-4">
-                  <div className="w-14 h-14 bg-primary/10 text-primary rounded-2xl flex items-center justify-center text-2xl font-black italic shadow-inner">
+            <div className="p-4 lg:p-6 border-b border-base-200 bg-base-100/30 backdrop-blur-md flex flex-col sm:flex-row justify-between items-start sm:items-center shrink-0 gap-4">
+               <div className="flex items-center gap-4 w-full">
+                  <button 
+                    className="lg:hidden btn btn-ghost btn-circle btn-sm mr-1" 
+                    onClick={() => setSelectedClient(null)}
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7" /></svg>
+                  </button>
+                  <div className="w-12 h-12 lg:w-14 lg:h-14 bg-primary/10 text-primary rounded-2xl flex items-center justify-center text-xl lg:text-2xl font-black italic shadow-inner shrink-0">
                     {selectedClient.name.charAt(0)}
                   </div>
                   <div>

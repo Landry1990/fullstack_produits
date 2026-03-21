@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { CommandeProduit, ProduitModel, Commande } from '../../types';
 import { formatCurrency } from '../../utils/formatters';
@@ -78,7 +78,7 @@ export default function CommandeProductTable({
     };
     
     return (
-        <div className="flex-1 min-h-0 flex flex-col bg-white rounded-xl shadow-sm border border-base-200">
+        <div className="flex-1 min-h-0 flex flex-col bg-base-100 rounded-xl shadow-sm border border-base-200">
             <div className="p-4 border-b border-base-100 flex justify-between items-center shrink-0 flex-wrap gap-2">
             <div className="flex items-center gap-4 flex-wrap">
                 <h2 className="font-bold text-sm md:text-base text-base-content whitespace-nowrap">

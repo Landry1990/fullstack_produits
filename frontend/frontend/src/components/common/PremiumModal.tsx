@@ -1,4 +1,4 @@
-import React, { useEffect, useCallback } from 'react';
+﻿import React, { useEffect, useCallback } from 'react';
 
 interface PremiumModalProps {
   /** Whether the modal is visible */
@@ -90,7 +90,7 @@ const PremiumModal: React.FC<PremiumModalProps> = ({
       onClick={() => !disableClose && onClose()}
     >
       <div
-        className={`bg-white rounded-2xl shadow-2xl w-full ${maxWidth} overflow-hidden flex flex-col max-h-[90vh] ${className}`}
+        className={`bg-base-100 rounded-2xl shadow-2xl w-full ${maxWidth} overflow-hidden flex flex-col max-h-[90vh] ${className}`}
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
@@ -103,8 +103,8 @@ const PremiumModal: React.FC<PremiumModalProps> = ({
                 </div>
               )}
               <div className="min-w-0">
-                <h3 className="font-bold text-lg text-gray-800 truncate">{title}</h3>
-                {subtitle && <p className="text-xs text-gray-400 truncate">{subtitle}</p>}
+                <h3 className="font-bold text-lg text-base-content truncate">{title}</h3>
+                {subtitle && <p className="text-xs text-base-content/40 truncate">{subtitle}</p>}
               </div>
             </div>
             <button

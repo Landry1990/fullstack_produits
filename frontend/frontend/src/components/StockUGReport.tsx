@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { PackageOpen, Calendar, Download, RefreshCw, Banknote, Printer } from 'lucide-react';
 import axios from 'axios';
 import { format } from 'date-fns';
@@ -214,7 +214,7 @@ export default function StockUGReport() {
   };
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] p-4 lg:p-8">
+    <div className="min-h-screen bg-base-200 p-4 lg:p-8">
       <Toaster position="top-right" />
       
       <div className="max-w-7xl mx-auto space-y-8">
@@ -222,14 +222,14 @@ export default function StockUGReport() {
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
           <div>
             <div className="flex items-center gap-3 mb-2">
-              <div className="w-12 h-12 rounded-2xl bg-indigo-500 flex items-center justify-center text-white shadow-lg shadow-indigo-500/20">
+              <div className="w-12 h-12 rounded-2xl bg-indigo-500/100 flex items-center justify-center text-white shadow-lg shadow-indigo-500/20">
                 <PackageOpen className="w-7 h-7" />
               </div>
               <div>
-                <h1 className="text-3xl font-black tracking-tight text-slate-800">
+                <h1 className="text-3xl font-black tracking-tight text-base-content">
                   {t('stock:rapport_ug.title_part1')} <span className="text-indigo-500 italic">{t('stock:rapport_ug.title_part2')}</span>
                 </h1>
-                <p className="text-sm font-semibold text-slate-500 uppercase tracking-widest mt-1">
+                <p className="text-sm font-semibold text-base-content/60 uppercase tracking-widest mt-1">
                   {t('stock:rapport_ug.subtitle')}
                 </p>
               </div>
@@ -239,7 +239,7 @@ export default function StockUGReport() {
           <div className="flex gap-2">
             <button 
               onClick={handlePrint}
-              className="btn bg-white hover:bg-slate-50 border-slate-200 text-slate-700 shadow-sm"
+              className="btn bg-base-100 hover:bg-base-200/50 border-base-200 text-base-content/90 shadow-sm"
               disabled={loading || !data?.fournisseurs.length}
             >
               <Printer className="w-4 h-4" />
@@ -247,7 +247,7 @@ export default function StockUGReport() {
             </button>
             <button 
               onClick={exportCSV}
-              className="btn bg-white hover:bg-slate-50 border-slate-200 text-slate-700 shadow-sm"
+              className="btn bg-base-100 hover:bg-base-200/50 border-base-200 text-base-content/90 shadow-sm"
               disabled={loading || !data?.fournisseurs.length}
             >
               <Download className="w-4 h-4" />
@@ -266,56 +266,56 @@ export default function StockUGReport() {
 
         {/* Global KPIs */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <div className="bg-white rounded-3xl p-6 shadow-sm border border-slate-200 flex flex-col justify-center">
+          <div className="bg-base-100 rounded-3xl p-6 shadow-sm border border-base-200 flex flex-col justify-center">
             <div className="flex items-center gap-4 mb-2">
-              <div className="w-12 h-12 rounded-xl bg-slate-100 text-slate-500 flex items-center justify-center">
+              <div className="w-12 h-12 rounded-xl bg-base-200 text-base-content/60 flex items-center justify-center">
                  <PackageOpen className="w-6 h-6" />
               </div>
               <div>
-                <p className="text-xs font-bold text-slate-400 tracking-wider uppercase">{t('stock:rapport_ug.stats.history_ug')}</p>
-                <p className="text-2xl font-black text-slate-800 tracking-tight">
+                <p className="text-xs font-bold text-base-content/40 tracking-wider uppercase">{t('stock:rapport_ug.stats.history_ug')}</p>
+                <p className="text-2xl font-black text-base-content tracking-tight">
                   {loading ? '...' : formatNumber(data?.global_total_ug ?? 0)}
                 </p>
               </div>
             </div>
           </div>
           
-          <div className="bg-white rounded-3xl p-6 shadow-sm border border-slate-200 flex flex-col justify-center">
+          <div className="bg-base-100 rounded-3xl p-6 shadow-sm border border-base-200 flex flex-col justify-center">
             <div className="flex items-center gap-4 mb-2">
-              <div className="w-12 h-12 rounded-xl bg-emerald-50 text-emerald-500 flex items-center justify-center">
+              <div className="w-12 h-12 rounded-xl bg-emerald-500/10 text-emerald-500 flex items-center justify-center">
                  <PackageOpen className="w-6 h-6" />
               </div>
               <div>
-                <p className="text-xs font-bold text-slate-400 tracking-wider uppercase">{t('stock:rapport_ug.stats.current_stock_ug')}</p>
-                <p className="text-2xl font-black text-emerald-600 tracking-tight">
+                <p className="text-xs font-bold text-base-content/40 tracking-wider uppercase">{t('stock:rapport_ug.stats.current_stock_ug')}</p>
+                <p className="text-2xl font-black text-emerald-500 tracking-tight">
                   {loading ? '...' : formatNumber(data?.global_total_ug_restantes ?? 0)}
                 </p>
               </div>
             </div>
           </div>
           
-          <div className="bg-white rounded-3xl p-6 shadow-sm border border-slate-200 flex flex-col justify-center">
+          <div className="bg-base-100 rounded-3xl p-6 shadow-sm border border-base-200 flex flex-col justify-center">
             <div className="flex items-center gap-4 mb-2">
-              <div className="w-12 h-12 rounded-xl bg-slate-100 text-slate-500 flex items-center justify-center">
+              <div className="w-12 h-12 rounded-xl bg-base-200 text-base-content/60 flex items-center justify-center">
                  <Banknote className="w-6 h-6" />
               </div>
               <div>
-                <p className="text-xs font-bold text-slate-400 tracking-wider uppercase">{t('stock:rapport_ug.stats.estimated_value')}</p>
-                <p className="text-2xl font-black text-slate-600 tracking-tight">
+                <p className="text-xs font-bold text-base-content/40 tracking-wider uppercase">{t('stock:rapport_ug.stats.estimated_value')}</p>
+                <p className="text-2xl font-black text-base-content/80 tracking-tight">
                   {loading ? '...' : `${formatCurrency(data?.global_total_valeur ?? 0)}`}
                 </p>
               </div>
             </div>
           </div>
           
-          <div className="bg-white rounded-3xl p-6 shadow-sm border border-slate-200 flex flex-col justify-center border-l-4 border-l-blue-500">
+          <div className="bg-base-100 rounded-3xl p-6 shadow-sm border border-base-200 flex flex-col justify-center border-l-4 border-l-blue-500">
             <div className="flex items-center gap-4 mb-2">
-              <div className="w-12 h-12 rounded-xl bg-blue-50 text-blue-500 flex items-center justify-center">
+              <div className="w-12 h-12 rounded-xl bg-blue-500/10 text-blue-500 flex items-center justify-center">
                  <Banknote className="w-6 h-6" />
               </div>
               <div>
                 <p className="text-xs font-bold text-blue-400 tracking-wider uppercase">{t('stock:rapport_ug.stats.latent_cash')}</p>
-                <p className="text-2xl font-black text-slate-800 tracking-tight">
+                <p className="text-2xl font-black text-base-content tracking-tight">
                   {loading ? '...' : `${formatCurrency(data?.global_total_valeur_restante ?? 0)}`}
                 </p>
               </div>
@@ -324,31 +324,31 @@ export default function StockUGReport() {
         </div>
 
         {/* List Card */}
-        <div className="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden flex flex-col">
+        <div className="bg-base-100 rounded-3xl shadow-sm border border-base-200 overflow-hidden flex flex-col">
           {/* Toolbar */}
-          <div className="px-6 py-4 border-b border-slate-100 flex flex-col sm:flex-row justify-between items-center gap-4 bg-slate-50/50">
-            <h2 className="text-lg font-bold text-slate-800 flex items-center gap-2">
+          <div className="px-6 py-4 border-b border-base-200 flex flex-col sm:flex-row justify-between items-center gap-4 bg-base-200/50">
+            <h2 className="text-lg font-bold text-base-content flex items-center gap-2">
               {t('stock:rapport_ug.filters.supplier_split')}
               {data && <span className="badge badge-primary badge-sm ml-2">{data.fournisseurs.length}</span>}
             </h2>
             
             <div className="flex items-center gap-3 w-full sm:w-auto">
-              <div className="flex items-center gap-2 bg-white px-3 py-1.5 rounded-xl border border-slate-200 focus-within:ring-2 focus-within:ring-indigo-100 focus-within:border-indigo-300 transition-all shadow-sm w-full sm:w-auto">
-                <Calendar className="w-4 h-4 text-slate-400" />
+              <div className="flex items-center gap-2 bg-base-100 px-3 py-1.5 rounded-xl border border-base-200 focus-within:ring-2 focus-within:ring-indigo-100 focus-within:border-indigo-300 transition-all shadow-sm w-full sm:w-auto">
+                <Calendar className="w-4 h-4 text-base-content/40" />
                 <input 
                   type="date" 
-                  className="bg-transparent border-none outline-none text-sm text-slate-700 w-full"
+                  className="bg-transparent border-none outline-none text-sm text-base-content/90 w-full"
                   value={dateDebut}
                   onChange={e => setDateDebut(e.target.value)}
                   placeholder={t('stock:rapport_ug.filters.date_from')}
                 />
               </div>
-              <span className="text-slate-400 font-medium whitespace-nowrap">{t('stock:rapport_ug.filters.to')}</span>
-              <div className="flex items-center gap-2 bg-white px-3 py-1.5 rounded-xl border border-slate-200 focus-within:ring-2 focus-within:ring-indigo-100 focus-within:border-indigo-300 transition-all shadow-sm w-full sm:w-auto">
-                <Calendar className="w-4 h-4 text-slate-400" />
+              <span className="text-base-content/40 font-medium whitespace-nowrap">{t('stock:rapport_ug.filters.to')}</span>
+              <div className="flex items-center gap-2 bg-base-100 px-3 py-1.5 rounded-xl border border-base-200 focus-within:ring-2 focus-within:ring-indigo-100 focus-within:border-indigo-300 transition-all shadow-sm w-full sm:w-auto">
+                <Calendar className="w-4 h-4 text-base-content/40" />
                 <input 
                   type="date" 
-                  className="bg-transparent border-none outline-none text-sm text-slate-700 w-full"
+                  className="bg-transparent border-none outline-none text-sm text-base-content/90 w-full"
                   value={dateFin}
                   onChange={e => setDateFin(e.target.value)}
                   placeholder={t('stock:rapport_ug.filters.date_to')}
@@ -357,7 +357,7 @@ export default function StockUGReport() {
               
               {(dateDebut || dateFin) && (
                 <button 
-                  className="btn btn-ghost btn-sm btn-circle text-slate-400 hover:text-red-500"
+                  className="btn btn-ghost btn-sm btn-circle text-base-content/40 hover:text-red-500"
                   onClick={() => { setDateDebut(''); setDateFin(''); }}
                   title={t('stock:rapport_ug.filters.clear_dates')}
                 >
@@ -370,71 +370,71 @@ export default function StockUGReport() {
           {/* Table */}
           <div className="overflow-x-auto w-full">
             <table className="table table-zebra w-full whitespace-nowrap">
-              <thead className="bg-slate-50 sticky top-0 opacity-100 z-10 text-slate-500 text-xs uppercase font-extrabold tracking-wider border-b border-slate-200">
+              <thead className="bg-base-200/50 sticky top-0 opacity-100 z-10 text-base-content/60 text-xs uppercase font-extrabold tracking-wider border-b border-base-200">
                 <tr>
                   <th className="px-6 py-4">{t('stock:rapport_ug.table.supplier')}</th>
                   <th className="px-6 py-4 text-right">{t('stock:rapport_ug.table.lots_count')}</th>
                   <th className="px-6 py-4 text-right">{t('stock:rapport_ug.table.received_ug')}</th>
-                  <th className="px-6 py-4 text-right text-emerald-600 bg-emerald-50">{t('stock:rapport_ug.table.remaining_stock')}</th>
-                  <th className="px-6 py-4 text-right text-blue-600 bg-blue-50">{t('stock:rapport_ug.table.remaining_value')}</th>
+                  <th className="px-6 py-4 text-right text-emerald-500 bg-emerald-500/10">{t('stock:rapport_ug.table.remaining_stock')}</th>
+                  <th className="px-6 py-4 text-right text-blue-500 bg-blue-500/10">{t('stock:rapport_ug.table.remaining_value')}</th>
                 </tr>
               </thead>
-              <tbody className="text-sm font-medium text-slate-600">
+              <tbody className="text-sm font-medium text-base-content/80">
                 {loading ? (
                   Array.from({ length: 5 }).map((_, i) => (
                     <tr key={i} className="animate-pulse">
-                      <td className="px-6 py-4"><div className="h-4 bg-slate-200 rounded w-48"></div></td>
-                      <td className="px-6 py-4"><div className="h-4 bg-slate-200 rounded w-16 ml-auto"></div></td>
-                      <td className="px-6 py-4"><div className="h-4 bg-slate-200 rounded w-20 ml-auto"></div></td>
-                      <td className="px-6 py-4"><div className="h-4 bg-slate-200 rounded w-24 ml-auto"></div></td>
+                      <td className="px-6 py-4"><div className="h-4 bg-base-300 rounded w-48"></div></td>
+                      <td className="px-6 py-4"><div className="h-4 bg-base-300 rounded w-16 ml-auto"></div></td>
+                      <td className="px-6 py-4"><div className="h-4 bg-base-300 rounded w-20 ml-auto"></div></td>
+                      <td className="px-6 py-4"><div className="h-4 bg-base-300 rounded w-24 ml-auto"></div></td>
                     </tr>
                   ))
                 ) : data?.fournisseurs.length === 0 ? (
                   <tr>
-                    <td colSpan={5} className="px-6 py-12 text-center text-slate-400">
+                    <td colSpan={5} className="px-6 py-12 text-center text-base-content/40">
                       <PackageOpen className="w-12 h-12 mx-auto mb-3 opacity-20" />
-                      <p className="font-medium text-slate-500">{t('stock:rapport_ug.table.empty')}</p>
+                      <p className="font-medium text-base-content/60">{t('stock:rapport_ug.table.empty')}</p>
                     </td>
                   </tr>
                 ) : (
                   data?.fournisseurs.map((stat, idx) => (
                     <React.Fragment key={stat.fournisseur_id || idx}>
                     <tr 
-                      className={`hover hover:bg-slate-50/50 transition-colors cursor-pointer ${expandedSupplierIds.has(stat.fournisseur_id) ? 'bg-indigo-50/30' : ''}`}
+                      className={`hover hover:bg-base-200/50 transition-colors cursor-pointer ${expandedSupplierIds.has(stat.fournisseur_id) ? 'bg-indigo-500/100/5' : ''}`}
                       onClick={() => toggleRow(stat.fournisseur_id)}
                     >
-                      <td className="px-6 py-3 font-semibold text-slate-700 flex items-center gap-2">
-                        <svg xmlns="http://www.w3.org/2000/svg" className={`h-4 w-4 text-slate-400 transition-transform ${expandedSupplierIds.has(stat.fournisseur_id) ? 'rotate-90' : ''}`} viewBox="0 0 20 20" fill="currentColor">
+                      <td className="px-6 py-3 font-semibold text-base-content/90 flex items-center gap-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" className={`h-4 w-4 text-base-content/40 transition-transform ${expandedSupplierIds.has(stat.fournisseur_id) ? 'rotate-90' : ''}`} viewBox="0 0 20 20" fill="currentColor">
                           <path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd" />
                         </svg>
                         {stat.fournisseur_nom}
                       </td>
                       <td className="px-6 py-3 text-right">
-                        <span className="badge badge-sm badge-ghost font-bold text-slate-500">
+                        <span className="badge badge-sm badge-ghost font-bold text-base-content/60">
                           {stat.lots_count} lots
                         </span>
                       </td>
                       <td className="px-6 py-3 text-right">
-                        <span className="font-medium text-slate-400">
+                        <span className="font-medium text-base-content/40">
                           {formatNumber(stat.total_ug)}
                         </span>
                       </td>
-                      <td className="px-6 py-3 text-right bg-emerald-50/30">
-                        <span className="font-bold text-emerald-600 px-3 py-1 rounded-lg">
+                      <td className="px-6 py-3 text-right bg-emerald-500/100/5">
+                        <span className="font-bold text-emerald-500 px-3 py-1 rounded-lg">
                           {formatNumber(stat.total_ug_restantes)} UG
                         </span>
                       </td>
-                      <td className="px-6 py-3 text-right font-black text-slate-800 bg-blue-50/30">
+                      <td className="px-6 py-3 text-right font-black text-base-content bg-blue-500/100/5">
                         {formatCurrency(stat.total_valeur_restante)}
                       </td>
                     </tr>
                     {expandedSupplierIds.has(stat.fournisseur_id) && (
                       <tr>
-                        <td colSpan={5} className="px-0 py-0 bg-slate-50/50 border-b border-slate-200">
+                        <td colSpan={5} className="px-0 py-0 bg-base-200/50 border-b border-base-200">
                            <div className="px-10 py-4">
                              <div className="overflow-x-auto">
-                               <table className="table table-sm w-full bg-white rounded-xl shadow-sm border border-slate-200">
-                                 <thead className="bg-slate-100 text-slate-500">
+                               <table className="table table-sm w-full bg-base-100 rounded-xl shadow-sm border border-base-200">
+                                 <thead className="bg-base-200 text-base-content/60">
                                    <tr>
                                      <th>{t('stock:rapport_ug.table.details.product')}</th>
                                      <th>{t('stock:rapport_ug.table.details.lot')}</th>
@@ -443,24 +443,24 @@ export default function StockUGReport() {
                                      <th>{t('stock:rapport_ug.table.details.invoice')}</th>
                                      <th className="text-right">{t('stock:rapport_ug.table.details.price')}</th>
                                      <th className="text-right">{t('stock:rapport_ug.table.details.received')}</th>
-                                     <th className="text-right text-emerald-600">{t('stock:rapport_ug.table.details.remaining')}</th>
-                                     <th className="text-right text-blue-600">{t('stock:rapport_ug.table.details.val_rest')}</th>
+                                     <th className="text-right text-emerald-500">{t('stock:rapport_ug.table.details.remaining')}</th>
+                                     <th className="text-right text-blue-500">{t('stock:rapport_ug.table.details.val_rest')}</th>
                                    </tr>
                                  </thead>
                                  <tbody>
                                    {stat.details.map(detail => (
                                      <tr key={detail.lot_id} className={detail.quantity_free_remaining === 0 ? 'opacity-50' : ''}>
-                                       <td className="font-medium text-slate-700">{detail.produit_nom}</td>
-                                       <td className="text-slate-500 font-mono text-xs">{detail.lot_numero}</td>
-                                       <td className="text-slate-600">
+                                       <td className="font-medium text-base-content/90">{detail.produit_nom}</td>
+                                       <td className="text-base-content/60 font-mono text-xs">{detail.lot_numero}</td>
+                                       <td className="text-base-content/80">
                                           {detail.date_reception ? format(new Date(detail.date_reception), 'dd/MM/yyyy HH:mm') : 'N/A'}
                                        </td>
-                                       <td className="text-slate-500 font-mono text-xs">{detail.commande_numero}</td>
-                                       <td className="text-slate-500 font-mono text-xs">{detail.facture_numero}</td>
-                                       <td className="text-right text-slate-600">{formatCurrency(detail.prix_vente)}</td>
-                                       <td className="text-right text-slate-400">{formatNumber(detail.quantity_free)}</td>
-                                       <td className="text-right font-bold text-emerald-600">{formatNumber(detail.quantity_free_remaining)}</td>
-                                       <td className="text-right font-bold text-blue-600">{formatCurrency(detail.valeur_restante)}</td>
+                                       <td className="text-base-content/60 font-mono text-xs">{detail.commande_numero}</td>
+                                       <td className="text-base-content/60 font-mono text-xs">{detail.facture_numero}</td>
+                                       <td className="text-right text-base-content/80">{formatCurrency(detail.prix_vente)}</td>
+                                       <td className="text-right text-base-content/40">{formatNumber(detail.quantity_free)}</td>
+                                       <td className="text-right font-bold text-emerald-500">{formatNumber(detail.quantity_free_remaining)}</td>
+                                       <td className="text-right font-bold text-blue-500">{formatCurrency(detail.valeur_restante)}</td>
                                      </tr>
                                    ))}
                                  </tbody>

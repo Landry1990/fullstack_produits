@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { Promotion } from '../../types/Promotion';
 import { DiscountType } from '../../types/Promotion';
@@ -91,9 +91,9 @@ const PromotionList: React.FC = () => {
     if (error) return <div className="p-6 text-center text-red-500 font-bold">{error}</div>;
 
     return (
-        <div className="p-6 bg-white rounded-lg shadow-md">
+        <div className="p-6 bg-base-100 rounded-lg shadow-md">
             <div className="flex justify-between items-center mb-6">
-                <h2 className="text-2xl font-bold text-gray-800">{t('promotions:title')}</h2>
+                <h2 className="text-2xl font-bold text-base-content">{t('promotions:title')}</h2>
                 <button 
                     className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition"
                     onClick={handleCreate}
@@ -118,31 +118,31 @@ const PromotionList: React.FC = () => {
             )}
 
             <div className="overflow-x-auto">
-                <table className="min-w-full divide-y divide-gray-200">
-                    <thead className="bg-gray-50">
+                <table className="min-w-full divide-y divide-base-200">
+                    <thead className="bg-base-200/50">
                         <tr>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('promotions:list.table.name')}</th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('promotions:list.table.type')}</th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('promotions:list.table.detail')}</th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('promotions:list.table.period')}</th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('promotions:list.table.status')}</th>
-                            <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">{t('promotions:list.table.actions')}</th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-base-content/60 uppercase tracking-wider">{t('promotions:list.table.name')}</th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-base-content/60 uppercase tracking-wider">{t('promotions:list.table.type')}</th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-base-content/60 uppercase tracking-wider">{t('promotions:list.table.detail')}</th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-base-content/60 uppercase tracking-wider">{t('promotions:list.table.period')}</th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-base-content/60 uppercase tracking-wider">{t('promotions:list.table.status')}</th>
+                            <th className="px-6 py-3 text-right text-xs font-medium text-base-content/60 uppercase tracking-wider">{t('promotions:list.table.actions')}</th>
                         </tr>
                     </thead>
-                    <tbody className="bg-white divide-y divide-gray-200">
+                    <tbody className="bg-base-100 divide-y divide-base-200">
                         {promotions.map((promo) => (
                             <tr key={promo.id}>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{promo.name}</td>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-base-content">{promo.name}</td>
+                                <td className="px-6 py-4 whitespace-nowrap text-sm text-base-content/60">
                                     <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
                                         ${promo.discount_type === DiscountType.BUY_X_GET_Y ? 'bg-purple-100 text-purple-800' : 'bg-blue-100 text-blue-800'}`}>
                                         {promo.discount_type === DiscountType.BUY_X_GET_Y ? t('promotions:list.types.special_offer') : t('promotions:list.types.discount')}
                                     </span>
                                 </td>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 font-bold">
+                                <td className="px-6 py-4 whitespace-nowrap text-sm text-base-content/60 font-bold">
                                     {getDiscountLabel(promo)}
                                 </td>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                <td className="px-6 py-4 whitespace-nowrap text-sm text-base-content/60">
                                     {format(new Date(promo.start_date), t('common:date_format_short', 'dd/MM/yyyy'))} 
                                     {promo.end_date ? ` - ${format(new Date(promo.end_date), t('common:date_format_short', 'dd/MM/yyyy'))}` : ` ${t('promotions:list.period.indefinite')}`}
                                 </td>

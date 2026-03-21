@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+﻿import React, { useState, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import axios from '../config/axios';
 import { format } from 'date-fns';
@@ -140,7 +140,7 @@ const JournalAudit: React.FC = () => {
           case 'INV_VAL':
             return { badge: 'badge-primary', icon: '✅', bg: 'bg-purple-50', color: 'text-purple-700' };
           default:
-            return { badge: 'badge-ghost', icon: '📝', bg: 'bg-gray-50', color: 'text-gray-700' };
+            return { badge: 'badge-ghost', icon: '📝', bg: 'bg-base-200/50', color: 'text-base-content/90' };
         }
     };
 
@@ -181,8 +181,8 @@ const JournalAudit: React.FC = () => {
     return (
         <div className="p-6 max-w-7xl mx-auto">
           <div className="mb-6">
-            <h2 className="text-3xl font-bold text-gray-800 mb-2">📋 {t('title')}</h2>
-            <p className="text-gray-600">{t('subtitle')}</p>
+            <h2 className="text-3xl font-bold text-base-content mb-2">📋 {t('title')}</h2>
+            <p className="text-base-content/80">{t('subtitle')}</p>
           </div>
           
           {error && (
@@ -430,9 +430,9 @@ const JournalAudit: React.FC = () => {
               >
                 ← {t('common:pagination.prev')}
               </button>
-              <div className="px-4 py-2 bg-white rounded-lg shadow-md">
+              <div className="px-4 py-2 bg-base-100 rounded-lg shadow-md">
                 <span className="font-semibold">{t('common:pagination.page_info_simple', { page })}</span>
-                {totalPages > 1 && <span className="text-gray-500"> {t('common:pagination.page_of', { count: totalPages })}</span>}
+                {totalPages > 1 && <span className="text-base-content/60"> {t('common:pagination.page_of', { count: totalPages })}</span>}
               </div>
               <button 
                 className="btn btn-outline" 

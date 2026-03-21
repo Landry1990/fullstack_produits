@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, type ReactNode } from 'react'
+import { createContext, useContext, useState, useEffect, type ReactNode } from 'react'
 
 interface SidebarContextType {
   isOpen: boolean
@@ -23,7 +23,20 @@ export function SidebarProvider({ children }: { children: ReactNode }) {
     return saved === 'true'
   })
   const [isZenithMode, setIsZenithMode] = useState(false)
-  const [isMidnightTheme, setIsMidnightTheme] = useState(false)
+  const [isMidnightTheme, setIsMidnightTheme] = useState(() => {
+    return localStorage.getItem('theme-midnight') === 'true'
+  })
+
+  // Appliquer le thème à la racine du document (pour affecter aussi les Modals et SweetAlerts)
+  useEffect(() => {
+    if (isMidnightTheme) {
+      document.documentElement.classList.add('theme-midnight')
+      document.documentElement.setAttribute('data-theme', 'dark')
+    } else {
+      document.documentElement.classList.remove('theme-midnight')
+      document.documentElement.setAttribute('data-theme', 'light')
+    }
+  }, [isMidnightTheme])
 
   const toggleSidebar = () => setIsOpen(prev => !prev)
   const closeSidebar = () => setIsOpen(false)
@@ -36,7 +49,11 @@ export function SidebarProvider({ children }: { children: ReactNode }) {
     })
   }
   const toggleZenithMode = () => setIsZenithMode(prev => !prev)
-  const toggleMidnightTheme = () => setIsMidnightTheme(prev => !prev)
+  const toggleMidnightTheme = () => setIsMidnightTheme(prev => {
+    const next = !prev
+    localStorage.setItem('theme-midnight', String(next))
+    return next
+  })
 
   return (
     <SidebarContext.Provider value={{ 

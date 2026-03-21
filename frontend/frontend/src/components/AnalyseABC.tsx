@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react'
+﻿import { useState, useEffect, useMemo } from 'react'
 import axios from 'axios'
 import { toast } from 'react-hot-toast'
 import { useTranslation } from 'react-i18next'
@@ -258,7 +258,7 @@ export default function AnalyseABC() {
       {/* Stats Cards */}
       {data && (
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6 shrink-0">
-          <div className="stat bg-white rounded-lg shadow border border-base-200">
+          <div className="stat bg-base-100 rounded-lg shadow border border-base-200">
             <div className="stat-title">{t('stock:abc.stats.total_ca')}</div>
             <div className="stat-value text-primary text-2xl">{formatNumber(data.ca_total)} F</div>
             <div className="stat-desc">{t('stock:abc.stats.period_info', { count: data.periode_mois })}</div>
@@ -307,7 +307,7 @@ export default function AnalyseABC() {
       </div>
 
       {/* Table */}
-      <div className="flex-1 bg-white rounded-lg shadow border border-base-200 overflow-hidden">
+      <div className="flex-1 bg-base-100 rounded-lg shadow border border-base-200 overflow-hidden">
         <div className="overflow-auto h-full">
           <table className="table table-sm table-pin-rows w-full">
             <thead className="bg-base-100">

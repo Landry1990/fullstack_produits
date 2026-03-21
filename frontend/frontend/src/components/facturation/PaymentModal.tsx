@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react'
+﻿import { useEffect, useRef } from 'react'
 import type { Facture } from '../../types'
 import { useTranslation } from 'react-i18next'
 import { formatCurrency } from '../../utils/formatters'
@@ -120,7 +120,7 @@ export default function PaymentModal({
                     <h4 className="text-xs uppercase font-bold text-base-content/50 mb-3">{t('facturation:payment.detail_title')}</h4>
                     
                     {/* Part Patient */}
-                    <div className="bg-white rounded-lg p-3 border border-success/20">
+                    <div className="bg-base-100 rounded-lg p-3 border border-success/20">
                       <div className="grid grid-cols-[1fr,auto] items-center mb-2">
                         <span className="text-sm font-medium text-success">{t('facturation:totals.part_patient')} ({100 - totals.tauxCouverture}%)</span>
                         <span className="text-lg font-bold text-success">{formatCurrency(Math.round(totals.partPatient))}</span>
@@ -130,7 +130,7 @@ export default function PaymentModal({
                             {paiements.length > 0 && (
                                 <div className="bg-base-50 rounded p-2 space-y-1 mb-2">
                                     {paiements.map((p, idx) => (
-                                        <div key={idx} className="flex justify-between items-center text-xs p-1 px-2 bg-white rounded border border-base-200">
+                                        <div key={idx} className="flex justify-between items-center text-xs p-1 px-2 bg-base-100 rounded border border-base-200">
                                             <span>{p.mode === 'especes' ? t('facturation:payment.modes.especes') : p.mode === 'carte' ? t('facturation:payment.modes.carte') : p.mode === 'om' ? t('facturation:payment.modes.mobile') : p.mode === 'momo' ? t('facturation:payment.modes.momo') : p.mode === 'cheque' ? t('facturation:payment.modes.cheque') : t('facturation:payment.modes.other')}</span>
                                             <div className="flex items-center gap-2">
                                                 <span className="font-mono font-bold">{formatCurrency(p.montant)}</span>
@@ -197,7 +197,7 @@ export default function PaymentModal({
                       </div>
                     </div>
                     
-                    <div className="bg-white rounded-lg p-3 border border-info/20">
+                    <div className="bg-base-100 rounded-lg p-3 border border-info/20">
                       <div className="flex justify-between items-center">
                         <span className="text-sm font-medium text-info">{t('facturation:totals.part_assurance')} ({totals.tauxCouverture}%)</span>
                         <span className="text-lg font-bold text-info">{formatCurrency(Math.round(totals.partAssurance))}</span>
@@ -223,7 +223,7 @@ export default function PaymentModal({
                   {paiements.length > 0 && (
                     <div className="bg-base-50 rounded-lg p-2 space-y-1">
                         {paiements.map((p, idx) => (
-                            <div key={idx} className="flex justify-between items-center text-sm p-1 px-2 bg-white rounded border border-base-200">
+                            <div key={idx} className="flex justify-between items-center text-sm p-1 px-2 bg-base-100 rounded border border-base-200">
                                 <span>{t('facturation:payment.caisse_centrale')}</span>
                                 <div className="flex items-center gap-2">
                                     <span className="font-mono">{formatCurrency(p.montant)}</span>

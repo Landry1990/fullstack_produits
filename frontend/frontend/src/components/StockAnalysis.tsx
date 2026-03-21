@@ -1,4 +1,4 @@
-/* eslint-disable react-hooks/exhaustive-deps */
+﻿/* eslint-disable react-hooks/exhaustive-deps */
 import { Toaster } from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import { PackageSearch, ShoppingBag, X, ChevronLeft, ChevronRight } from 'lucide-react';
@@ -27,7 +27,7 @@ const StockAnalysis = () => {
     } = useStockAnalysis();
 
     return (
-        <div className="min-h-screen bg-[#F8FAFC] p-4 lg:p-8">
+        <div className="min-h-screen bg-base-200 p-4 lg:p-8">
             <Toaster position="top-right" />
             
             <div className="max-w-[1600px] mx-auto space-y-8">
@@ -63,7 +63,7 @@ const StockAnalysis = () => {
                 )}
 
                 {/* Filters & Tabs Section */}
-                <div className="bg-white rounded-[32px] shadow-sm border border-base-200 overflow-hidden">
+                <div className="bg-base-100 rounded-[32px] shadow-sm border border-base-200 overflow-hidden">
                     <StockAnalysisFilters 
                         activeTab={activeTab}
                         onTabChange={setActiveTab}
@@ -78,7 +78,7 @@ const StockAnalysis = () => {
                 </div>
 
                 {/* Table Section */}
-                <div className="bg-white rounded-[32px] shadow-sm border border-base-200 overflow-hidden flex flex-col min-h-[600px] relative">
+                <div className="bg-base-100 rounded-[32px] shadow-sm border border-base-200 overflow-hidden flex flex-col min-h-[600px] relative">
                     {error && (
                         <div className="m-6 alert alert-error shadow-sm rounded-2xl">
                             <X className="w-5 h-5" />
@@ -104,19 +104,19 @@ const StockAnalysis = () => {
                             
                             <div className="join join-horizontal shadow-sm">
                                 <button 
-                                    className="join-item btn btn-sm bg-white hover:bg-base-200 border-base-200 text-base-content"
+                                    className="join-item btn btn-sm bg-base-100 hover:bg-base-200 border-base-200 text-base-content"
                                     onClick={() => setPage((p) => Math.max(1, p - 1))}
                                     disabled={page === 1}
                                 >
                                     <ChevronLeft className="w-4 h-4" />
                                 </button>
                                 
-                                <button className="join-item btn btn-sm px-6 bg-white border-base-200 text-base-content font-bold pointer-events-none">
+                                <button className="join-item btn btn-sm px-6 bg-base-100 border-base-200 text-base-content font-bold pointer-events-none">
                                     {page}
                                 </button>
 
                                 <button 
-                                    className="join-item btn btn-sm bg-white hover:bg-base-200 border-base-200 text-base-content"
+                                    className="join-item btn btn-sm bg-base-100 hover:bg-base-200 border-base-200 text-base-content"
                                     onClick={() => setPage((p) => Math.min(data.total_pages || 1, p + 1))}
                                     disabled={page === data.total_pages}
                                 >

@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import { useTranslation } from 'react-i18next';
 import type { ProduitModel, StockLot } from '../../types';
 import { ProductTabsContent } from './ProductTabsContent';
@@ -30,7 +30,7 @@ export const ProductDetailPanel: React.FC<ProductDetailPanelProps> = (props) => 
 
   if (detailsLoading) {
     return (
-      <div className="md:col-span-2 bg-white rounded-lg shadow flex items-center justify-center">
+      <div className="md:col-span-2 bg-base-100 rounded-lg shadow flex items-center justify-center">
         <span className="loading loading-spinner loading-lg"></span>
       </div>
     );
@@ -38,18 +38,18 @@ export const ProductDetailPanel: React.FC<ProductDetailPanelProps> = (props) => 
 
   if (!selectedProduit) {
     return (
-      <div className="md:col-span-2 bg-white rounded-lg shadow flex flex-col items-center justify-center text-slate-300 p-10 text-center">
-        <div className="w-20 h-20 rounded-full bg-slate-50 flex items-center justify-center mb-4">
+      <div className="md:col-span-2 bg-base-100 rounded-lg shadow flex flex-col items-center justify-center text-base-content/30 p-10 text-center">
+        <div className="w-20 h-20 rounded-full bg-base-200/50 flex items-center justify-center mb-4">
           <span className="text-3xl">📦</span>
         </div>
-        <p className="font-bold text-slate-400">{t('products:detail.none_selected')}</p>
-        <p className="text-sm text-slate-300 mt-1 max-w-[200px]">{t('products:detail.select_hint')}</p>
+        <p className="font-bold text-base-content/40">{t('products:detail.none_selected')}</p>
+        <p className="text-sm text-base-content/30 mt-1 max-w-[200px]">{t('products:detail.select_hint')}</p>
       </div>
     );
   }
 
   return (
-    <div className="md:col-span-2 bg-white rounded-lg shadow flex flex-col overflow-hidden">
+    <div className="md:col-span-2 bg-base-100 rounded-lg shadow flex flex-col overflow-hidden">
       <div className="flex flex-col h-full">
         {/* Header produit */}
         <div className="p-4 border-b bg-gradient-to-r from-slate-50 to-white shrink-0">
@@ -68,14 +68,14 @@ export const ProductDetailPanel: React.FC<ProductDetailPanelProps> = (props) => 
                   )}
                 </span>
               </div>
-              <h2 className="text-2xl font-black text-slate-800 uppercase">{selectedProduit.name}</h2>
-              <p className="text-sm text-slate-500 font-mono mt-1">
+              <h2 className="text-2xl font-black text-base-content uppercase">{selectedProduit.name}</h2>
+              <p className="text-sm text-base-content/60 font-mono mt-1">
                 {t('products:detail.cip')}: {selectedProduit.cip1 || '-'} / {selectedProduit.cip2 || '-'} / {selectedProduit.cip3 || '-'}
               </p>
             </div>
             <div className="flex gap-1">
               <button 
-                className="btn btn-sm btn-ghost text-slate-400 hover:text-warning" 
+                className="btn btn-sm btn-ghost text-base-content/40 hover:text-warning" 
                 onClick={props.onOpenAdjustment}
                 title={t('products:actions.adjust_stock')}
               >
@@ -91,28 +91,28 @@ export const ProductDetailPanel: React.FC<ProductDetailPanelProps> = (props) => 
                 </button>
               )}
               <button 
-                className="btn btn-sm btn-ghost text-slate-400 hover:text-primary" 
+                className="btn btn-sm btn-ghost text-base-content/40 hover:text-primary" 
                 onClick={() => props.onOpenEdit(selectedProduit)}
                 title={t('products:actions.edit')}
               >
                 ✏️
               </button>
               <button 
-                className="btn btn-sm btn-ghost text-slate-400 hover:text-secondary" 
+                className="btn btn-sm btn-ghost text-base-content/40 hover:text-secondary" 
                 onClick={() => props.onGenerateLabels(selectedProduit)}
                 title={t('products:actions.labels')}
               >
                 🏷️
               </button>
               <button 
-                className="btn btn-sm btn-ghost text-slate-400 hover:text-error" 
+                className="btn btn-sm btn-ghost text-base-content/40 hover:text-error" 
                 onClick={() => props.onDelete(selectedProduit)}
                 title={t('products:actions.delete')}
               >
                 🗑️
               </button>
               <button 
-                className={`btn btn-sm btn-ghost ${selectedProduit.is_active === false ? 'text-warning' : 'text-slate-400 hover:text-warning'}`}
+                className={`btn btn-sm btn-ghost ${selectedProduit.is_active === false ? 'text-warning' : 'text-base-content/40 hover:text-warning'}`}
                 onClick={() => props.onToggleActive(selectedProduit)}
                 title={selectedProduit.is_active === false ? t('products:actions.reactivate') : t('products:actions.deactivate')}
               >

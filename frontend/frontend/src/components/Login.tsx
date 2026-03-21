@@ -76,47 +76,47 @@ export default function Login() {
   };
 
   return (
-    <div className="relative min-h-screen flex items-center justify-center overflow-hidden font-sans bg-slate-950">
+    <div className="relative min-h-[100dvh] flex items-center justify-center overflow-x-hidden overflow-y-auto font-sans bg-slate-950 p-4">
       
       {/* Cinematic Background Elements */}
-      <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none">
+      <div className="fixed inset-0 z-0 overflow-hidden pointer-events-none">
         <div className="absolute top-[-10%] left-[-10%] w-[60vw] h-[60vw] bg-emerald-500/10 rounded-full blur-[120px] animate-pulse"></div>
         <div className="absolute bottom-[-10%] right-[-10%] w-[50vw] h-[50vw] bg-blue-600/10 rounded-full blur-[100px] animate-pulse delay-700"></div>
         <div className="absolute top-[30%] right-[20%] w-[30vw] h-[30vw] bg-indigo-500/5 rounded-full blur-[80px] animate-pulse delay-1000"></div>
       </div>
 
       {/* Main Glassmorphic Container */}
-      <div className="relative z-10 w-full max-w-[min(420px,92%)] p-2 sm:p-4 group">
+      <div className="relative z-10 w-full max-w-[min(420px,100%)] group my-auto">
         
         {/* Decorative elements outside the card */}
         <div className="absolute -top-4 -right-4 w-24 h-24 bg-emerald-500/10 blur-xl rounded-full group-hover:bg-emerald-500/20 transition-colors duration-500 hidden sm:block"></div>
         <div className="absolute -bottom-4 -left-4 w-32 h-32 bg-blue-500/10 blur-xl rounded-full group-hover:bg-blue-500/20 transition-colors duration-500 hidden sm:block"></div>
 
-        <div className="bg-white/5 backdrop-blur-2xl border border-white/10 shadow-2xl rounded-[2rem] sm:rounded-[2.5rem] p-5 sm:p-10 transition-all duration-300 hover:border-white/20">
+        <div className="bg-white/5 backdrop-blur-2xl border border-white/10 shadow-2xl rounded-[1.5rem] sm:rounded-[2.5rem] p-5 sm:p-10 transition-all duration-300 hover:border-white/20">
           
           {/* Header & Identity */}
-          <div className="text-center mb-6 sm:mb-10">
-            <div className="relative inline-block mb-4 sm:mb-6">
+          <div className="text-center mb-5 sm:mb-10">
+            <div className="relative inline-block mb-3 sm:mb-6">
               <div className="absolute inset-0 bg-emerald-500/20 blur-2xl rounded-full animate-pulse"></div>
-              <div className="relative w-20 h-20 sm:w-24 sm:h-24 flex items-center justify-center rounded-2xl sm:rounded-3xl bg-slate-900/50 backdrop-blur-md border border-white/10 shadow-inner transform rotate-6 transition-transform hover:rotate-12 duration-500">
-                <ZenithLogo variant={1} size={48} className="sm:hidden" />
+              <div className="relative w-16 h-16 sm:w-24 sm:h-24 flex items-center justify-center rounded-[1rem] sm:rounded-3xl bg-slate-900/50 backdrop-blur-md border border-white/10 shadow-inner transform rotate-6 transition-transform hover:rotate-12 duration-500">
+                <ZenithLogo variant={1} size={40} className="sm:hidden" />
                 <ZenithLogo variant={1} size={56} className="hidden sm:block" />
               </div>
             </div>
             
-            <h1 className="text-2xl sm:text-4xl font-black text-white tracking-tighter uppercase mb-1 sm:mb-2">
+            <h1 className="text-xl sm:text-4xl font-black text-white tracking-tighter uppercase mb-1 sm:mb-2">
               Zenith
             </h1>
             <div className="flex items-center justify-center gap-2">
-              <div className="h-px w-8 bg-gradient-to-r from-transparent to-white/20"></div>
-              <p className="text-[10px] font-black text-white/40 uppercase tracking-[0.3em]">
+              <div className="h-px w-6 sm:w-8 bg-gradient-to-r from-transparent to-white/20"></div>
+              <p className="text-[9px] sm:text-[10px] font-black text-white/40 uppercase tracking-[0.3em]">
                 {t('subtitle')}
               </p>
-              <div className="h-px w-8 bg-gradient-to-l from-transparent to-white/20"></div>
+              <div className="h-px w-6 sm:w-8 bg-gradient-to-l from-transparent to-white/20"></div>
             </div>
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
+          <form onSubmit={handleSubmit} className="space-y-3 sm:space-y-6">
             
             {/* Error Message */}
             {error && (

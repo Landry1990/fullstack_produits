@@ -1,4 +1,4 @@
-
+﻿
 import React, { useState, useMemo, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
@@ -392,41 +392,34 @@ export default function Produit() {
   const error = loadError instanceof Error ? loadError.message : (loadError ? String(loadError) : null);
 
   return (
-    <div className="min-h-screen bg-base-200 p-6 space-y-6 font-sans">
-      {/* Header Section */}
-      <div className="bg-base-100 rounded-2xl shadow-sm border border-base-300 p-6">
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-          <div>
-            <h1 className="text-2xl font-black text-base-content tracking-tight flex items-center gap-3">
-              <span className="p-2 bg-primary/10 text-primary rounded-xl">
-                <svg xmlns="http://www.w3.org/2000/svg" className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
-                </svg>
-              </span>
-              {t('products:title')}
-            </h1>
-            <p className="text-base-content/60 text-sm mt-1 ml-11">
-              {t('products:subtitle', { defaultValue: 'Gérez votre inventaire et vos stocks en temps réel' })}
-            </p>
-          </div>
-          
-          <div className="flex items-center gap-2">
+    <div className="min-h-screen bg-base-200/50 md:p-6 p-3 space-y-6 font-sans">
+      {/* Header Section (AppSwite Style) */}
+      <div className="w-full max-w-7xl mx-auto px-1">
+        <div className="flex items-center gap-2 mb-3">
+           <div className="bg-blue-100 text-blue-600 p-2 rounded-xl">
+             <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" /></svg>
+           </div>
+           <div className="bg-base-300 text-base-content/60 p-2 rounded-xl cursor-pointer hover:bg-slate-300 transition-colors" title="Tags">
+             <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" /></svg>
+           </div>
+           
+           <div className="ml-auto flex items-center gap-2">
             <button 
               onClick={() => recalculateRotationMutation.mutate()} 
-              className="btn btn-sm btn-ghost gap-2 font-bold text-base-content/60 hover:text-primary transition-colors"
+              className="btn btn-sm btn-ghost gap-2 font-bold text-base-content/60 hover:text-blue-600 transition-colors"
               title={t('products:actions.rotation')}
             >
               <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
               </svg>
-              {t('products:actions.rotation')}
+              <span className="hidden md:inline">{t('products:actions.rotation')}</span>
             </button>
             <button 
               onClick={() => refetchProduits()} 
-              className={`btn btn-sm btn-ghost ${loading ? 'btn-disabled' : ''} text-base-content/60 hover:text-primary transition-colors`}
+              className={`btn btn-sm btn-ghost ${loading ? 'btn-disabled' : ''} text-base-content/60 hover:text-blue-600 transition-colors`}
               disabled={loading}
             >
-              {loading ? <span className="loading loading-spinner loading-xs"></span> : (
+              {loading ? <span className="loading loading-spinner loading-xs text-blue-600"></span> : (
                 <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                 </svg>
@@ -434,10 +427,31 @@ export default function Produit() {
             </button>
           </div>
         </div>
+        
+        <h1 className="text-2xl md:text-3xl font-bold text-base-content tracking-tight">
+          {t('products:title', { defaultValue: 'Gestion des produits' })}
+        </h1>
+        <p className="text-base-content/60 text-sm md:text-base mt-1">
+          {t('products:subtitle', { defaultValue: 'Créez et gérez vos produits et services' })}
+        </p>
+        
+        <div className="mt-4">
+          <button 
+            className="btn btn-primary bg-blue-600 hover:bg-blue-700 border-none text-white rounded-xl shadow-sm px-6 font-medium normal-case"
+            onClick={() => setIsCreateModalOpen(true)}
+          >
+            + {t('products:actions.new', { defaultValue: 'Nouveau' })}
+          </button>
+        </div>
+        
+        <div className="text-sm text-base-content/60 mt-6 flex items-center gap-2 font-medium">
+          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+          <span className="cursor-pointer hover:text-base-content/90">{t('common:dashboard', { defaultValue: 'Tableau de bord' })}</span> {'>'} <span className="text-base-content">{t('products:title', { defaultValue: 'Produits' })}</span>
+        </div>
       </div>
 
       {error && (
-        <div className="alert alert-error shadow-sm rounded-xl py-3 border-none bg-error/10 text-error font-medium">
+        <div className="alert alert-error shadow-sm rounded-xl py-3 border-none bg-red-50 text-red-600 font-medium max-w-7xl mx-auto">
           <svg xmlns="http://www.w3.org/2000/svg" className="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
           </svg>
@@ -446,25 +460,9 @@ export default function Produit() {
       )}
 
       {/* Main Content Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 min-h-[600px]">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 min-h-[600px] max-w-7xl mx-auto w-full">
         {/* Left Panel: List & Actions */}
-        <div className="lg:col-span-4 bg-base-100 rounded-2xl shadow-sm border border-base-300 flex flex-col overflow-hidden">
-          <div className="p-4 border-b border-base-200 bg-base-100 flex justify-between items-center shrink-0">
-            <div className="flex items-center gap-3">
-              <span className="font-black text-xs uppercase tracking-widest text-base-content/40">Inventaire</span>
-              <span className="bg-primary/10 text-primary px-2.5 py-0.5 rounded-full text-[10px] font-black">{totalCount}</span>
-            </div>
-            <button 
-              className="btn btn-sm btn-primary rounded-xl px-4 gap-2 shadow-sm shadow-primary/20" 
-              onClick={() => setIsCreateModalOpen(true)}
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" />
-              </svg>
-              {t('products:actions.create')}
-            </button>
-          </div>
-          
+        <div className="lg:col-span-5 bg-base-100 rounded-2xl shadow-sm border border-base-200 flex flex-col overflow-hidden">
           <ProductFilters 
             searchQuery={searchQuery} setSearchQuery={setSearchQuery} 
             filterRayon={filterRayon} setFilterRayon={setFilterRayon}
@@ -512,19 +510,19 @@ export default function Produit() {
             </div>
           )}
 
-          <div className="p-3 border-t border-base-200 bg-base-100 shrink-0 flex justify-between px-6">
+          <div className="p-3 border-t border-slate-100 bg-base-200/50 shrink-0 flex justify-between px-6">
             <div className="flex items-center gap-1.5">
-              <span className="text-[10px] font-black text-base-content/30 uppercase tracking-widest">Global</span>
-              <span className="text-primary font-black text-sm">{totalCount}</span>
+              <span className="text-[10px] font-bold text-base-content/40 uppercase tracking-widest">Global</span>
+              <span className="text-blue-600 font-black text-sm">{totalCount}</span>
             </div>
             <div className="flex items-center gap-4">
               <div className="flex items-center gap-1.5" title="Stock Faible">
-                <div className="w-2 h-2 rounded-full bg-warning animate-pulse"></div>
-                <span className="text-warning font-black text-sm">{lowStockCount}</span>
+                <div className="w-2 h-2 rounded-full bg-amber-400 animate-pulse"></div>
+                <span className="text-amber-500 font-bold text-sm">{lowStockCount}</span>
               </div>
               <div className="flex items-center gap-1.5" title="Rupture">
-                <div className="w-2 h-2 rounded-full bg-error"></div>
-                <span className="text-error font-black text-sm">{outOfStockCount}</span>
+                <div className="w-2 h-2 rounded-full bg-red-500"></div>
+                <span className="text-red-500 font-bold text-sm">{outOfStockCount}</span>
               </div>
             </div>
           </div>
@@ -539,7 +537,7 @@ export default function Produit() {
         </div>
 
         {/* Right Panel: Details */}
-        <div className="lg:col-span-8 bg-base-100 rounded-2xl shadow-sm border border-base-300 flex flex-col overflow-hidden">
+        <div className="lg:col-span-7 bg-base-100 rounded-2xl shadow-sm border border-base-200 flex flex-col overflow-hidden">
           <ProductDetailPanel 
             selectedProduit={selectedProduit} detailsLoading={detailsLoading} 
             activeTab={activeTab} setActiveTab={setActiveTab}

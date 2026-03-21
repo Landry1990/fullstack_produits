@@ -24,52 +24,20 @@ export default function TicketPreviewModal({
     const ticketElement = document.getElementById('ticket-preview');
     if (!ticketElement) return;
     
-    // Get computed styles from the preview element
-    const ticketWidth = settings.ticket_paper_width || 80;
+    const ticketWidth = settings?.ticket_paper_width || 80;
     
-    // Clone the element to preserve all styles
-    const clonedElement = ticketElement.cloneNode(true) as HTMLElement;
+    // Get all stylesheets and styles from the parent document to properly apply Tailwind classes
+    const styleTags = Array.from(document.querySelectorAll('style, link[rel="stylesheet"]'))
+      .map(node => node.outerHTML)
+      .join('\n');
     
-    // Get all styles from the original element and its children
-    const getAllStyles = (element: HTMLElement): string => {
-      let styles = '';
-      const computed = window.getComputedStyle(element);
-      const tagName = element.tagName.toLowerCase();
-      
-      // Get inline styles
-      if (element.style.cssText) {
-        styles += `#ticket-print ${tagName} { ${element.style.cssText} }\n`;
-      }
-      
-      // Get computed styles for key properties
-      const importantProps = ['font-family', 'font-size', 'font-weight', 'color', 'background-color', 
-                              'padding', 'margin', 'border', 'text-align', 'display', 'flex-direction',
-                              'justify-content', 'align-items', 'width', 'max-width', 'min-width'];
-      
-      importantProps.forEach(prop => {
-        const value = computed.getPropertyValue(prop);
-        if (value) {
-          styles += `#ticket-print ${tagName} { ${prop}: ${value}; }\n`;
-        }
-      });
-      
-      // Recursively get styles from children
-      Array.from(element.children).forEach(child => {
-        styles += getAllStyles(child as HTMLElement);
-      });
-      
-      return styles;
-    };
-    
-    const content = clonedElement.outerHTML;
-    const additionalStyles = getAllStyles(ticketElement);
-    
-    const win = window.open('', '', 'height=600,width=400');
-    if (win && content) {
+    const win = window.open('', '', 'height=800,width=600');
+    if (win) {
       win.document.write(`<!DOCTYPE html>
 <html>
 <head>
   <title>Ticket de Caisse</title>
+  ${styleTags}
   <style>
     @media print {
       @page { 
@@ -79,61 +47,44 @@ export default function TicketPreviewModal({
       body { 
         margin: 0; 
         padding: 0; 
+        background: white !important;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
       }
-      #ticket-print {
-        width: 100% !important;
-        margin: 0 !important;
-        padding: 0 !important;
-      }
-    }
-    * {
-      box-sizing: border-box;
     }
     body {
+      background: white;
       margin: 0;
       padding: 0;
-      background: white;
-      font-family: sans-serif;
+      display: flex;
+      justify-content: center;
     }
-    #ticket-print {
-      width: ${ticketWidth}mm;
-      max-width: ${ticketWidth}mm;
-      min-width: ${ticketWidth}mm;
-      margin: 0 auto;
-      padding: 0;
-      background: white;
-      color: black;
-      font-family: sans-serif;
-      font-size: 11px;
-      line-height: 1.2;
-    }
-    ${additionalStyles}
   </style>
 </head>
-<body>
-  <div id="ticket-print">
-    ${content}
-  </div>
+<body class="bg-white text-black">
+  ${ticketElement.innerHTML}
 </body>
 </html>`);
       win.document.close();
       win.focus();
+      
+      // Wait for fonts/styles to fully apply in the new window before printing
       setTimeout(() => {
         win.print();
         win.close();
-      }, 250);
+      }, 500);
     }
   }
 
   return (
     <div className="modal modal-open">
-      <div className="modal-box p-0 max-w-sm bg-white overflow-hidden">
+      <div className="modal-box p-0 max-w-sm bg-base-100 overflow-hidden">
         <div className="bg-base-50 p-3 flex justify-between items-center border-b border-base-200">
           <h3 className="font-bold text-lg">{t('common:receipt')}</h3>
           <button className="btn btn-sm btn-circle btn-ghost" onClick={onClose}>✕</button>
         </div>
 
-        <div className="max-h-[70vh] overflow-y-auto bg-gray-50 flex justify-center py-4" id="ticket-preview-container">
+        <div className="max-h-[70vh] overflow-y-auto bg-base-200/50 flex justify-center py-4" id="ticket-preview-container">
           <div id="ticket-preview">
             <TicketTemplate ticket={ticket} settings={settings} />
           </div>

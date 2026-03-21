@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo } from 'react'
+﻿import { useState, useEffect, useCallback, useMemo } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import { useNavigate } from 'react-router-dom'
 import axios from 'axios'
@@ -921,9 +921,9 @@ export default function CaisseCentralisee() {
             </div>
         }
       >
-        <div className="max-h-[70vh] overflow-y-auto bg-gray-50 flex justify-center py-4">
+        <div className="max-h-[70vh] overflow-y-auto bg-base-200/50 flex justify-center py-4">
           {ticketCaisse && (
-            <div id="ticket-preview" className="shadow-lg bg-white">
+            <div id="ticket-preview" className="shadow-lg bg-base-100">
               <TicketTemplate ticket={ticketCaisse} settings={pharmacySettings} />
             </div>
           )}
@@ -1246,7 +1246,7 @@ export default function CaisseCentralisee() {
                 )}
                 
                 {couponTrouve.notes && (
-                  <div className="mt-2 p-2 bg-white rounded italic border border-base-200">
+                  <div className="mt-2 p-2 bg-base-100 rounded italic border border-base-200">
                     <span className="font-bold not-italic opacity-50 block text-[10px] mb-1">Notes:</span>
                     "{couponTrouve.notes}"
                   </div>

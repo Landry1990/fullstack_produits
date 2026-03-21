@@ -1,4 +1,4 @@
-import { useTranslation } from 'react-i18next';
+﻿import { useTranslation } from 'react-i18next';
 import { Package, TrendingUp, AlertTriangle, Info } from 'lucide-react';
 import { formatCurrency } from '../../utils/formatters';
 
@@ -74,7 +74,7 @@ export const StockAnalysisStats: React.FC<StockAnalysisStatsProps> = ({
             {stats.map((stat, idx) => (
                 <div 
                     key={idx}
-                    className={`bg-white p-6 rounded-3xl border ${stat.border} shadow-sm flex items-center gap-5 transition-all hover:shadow-md group`}
+                    className={`bg-base-100 p-6 rounded-3xl border ${stat.border} shadow-sm flex items-center gap-5 transition-all hover:shadow-md group`}
                 >
                     <div className={`p-4 ${stat.bg} ${stat.text} rounded-2xl transition-transform group-hover:scale-110 duration-300`}>
                         {stat.icon}

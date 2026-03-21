@@ -1,4 +1,4 @@
-import { useStockLots } from '../hooks/useStockLots'
+﻿import { useStockLots } from '../hooks/useStockLots'
 import { formatPrice } from '../utils/formatters'
 import type { ProduitModel, StockLot } from '../types'
 import PremiumModal from './common/PremiumModal'
@@ -40,7 +40,7 @@ export default function LotSelectionModal({ isOpen, onClose, produit, onSelectLo
         ) : (
           <div className="overflow-x-auto rounded-xl border border-gray-100">
             <table className="table table-sm w-full">
-              <thead className="bg-gray-50">
+              <thead className="bg-base-200/50">
                 <tr>
                   <th>Lot</th>
                   <th>Expiration</th>

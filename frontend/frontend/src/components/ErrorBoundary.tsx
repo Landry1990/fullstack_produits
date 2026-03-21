@@ -1,4 +1,4 @@
-import { Component, type ErrorInfo, type ReactNode } from 'react';
+﻿import { Component, type ErrorInfo, type ReactNode } from 'react';
 
 interface Props {
   children: ReactNode;
@@ -26,11 +26,11 @@ class ErrorBoundary extends Component<Props, State> {
   public render() {
     if (this.state.hasError) {
       return (
-        <div className="min-h-screen flex items-center justify-center bg-gray-100 p-4">
+        <div className="min-h-screen flex items-center justify-center bg-base-200 p-4">
           <div className="card w-96 bg-base-100 shadow-xl">
             <div className="card-body items-center text-center">
               <h2 className="card-title text-error">Oups ! Une erreur est survenue.</h2>
-              <p className="py-4 text-sm text-gray-500">
+              <p className="py-4 text-sm text-base-content/60">
                 L'application a rencontré un problème inattendu.
               </p>
               {this.state.error && (

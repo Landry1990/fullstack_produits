@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+﻿import { useState, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import axios from 'axios';
 import { useAuth } from '../../context/AuthContext';
@@ -97,11 +97,11 @@ export default function SudoValidationModal({
         >
             <div className="p-6 space-y-5">
                 {message && (
-                    <p className="text-sm text-gray-600" dangerouslySetInnerHTML={{ __html: message }}></p>
+                    <p className="text-sm text-base-content/80" dangerouslySetInnerHTML={{ __html: message }}></p>
                 )}
 
                 <div>
-                    <label className="block text-xs font-bold uppercase tracking-wider text-gray-400 mb-2">
+                    <label className="block text-xs font-bold uppercase tracking-wider text-base-content/40 mb-2">
                         {t('common:sudo.validate_as')}
                         <span className="text-warning ml-2 normal-case">{t('common:sudo.validate_admin')}</span>
                     </label>
@@ -122,7 +122,7 @@ export default function SudoValidationModal({
 
                 {selectedValidator && (
                     <div>
-                        <label className="block text-xs font-bold uppercase tracking-wider text-gray-400 mb-2">
+                        <label className="block text-xs font-bold uppercase tracking-wider text-base-content/40 mb-2">
                             {t('common:sudo.validate_password')}
                             <span className="text-error ml-2 normal-case">{t('common:sudo.validate_required')}</span>
                         </label>

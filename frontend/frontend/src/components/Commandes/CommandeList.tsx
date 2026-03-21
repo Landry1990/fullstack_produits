@@ -1,4 +1,4 @@
-import { useTranslation } from 'react-i18next';
+﻿import { useTranslation } from 'react-i18next';
 import { Eye, Trash2, Printer, GitMerge } from 'lucide-react';
 import type { Commande, Fournisseur } from '../../types';
 import { formatCurrency } from '../../utils/formatters';
@@ -110,19 +110,19 @@ export default function CommandeList({
             <span className="text-[10px] font-black uppercase tracking-widest text-base-content/40">{t('orders:list.sort_by')}:</span>
             <div className="flex bg-base-200 p-1 rounded-lg">
                 <button 
-                className={`btn btn-xs px-3 border-none ${sortKey === 'date' ? 'bg-white text-primary shadow-sm' : 'btn-ghost text-base-content/60'}`}
+                className={`btn btn-xs px-3 border-none ${sortKey === 'date' ? 'bg-base-100 text-primary shadow-sm' : 'btn-ghost text-base-content/60'}`}
                 onClick={() => onSortChange('date')}
                 >
                 {t('orders:list.table.date')} {sortKey === 'date' && (sortOrder === 'asc' ? '↑' : '↓')}
                 </button>
                 <button 
-                className={`btn btn-xs px-3 border-none ${sortKey === 'numero' ? 'bg-white text-primary shadow-sm' : 'btn-ghost text-base-content/60'}`}
+                className={`btn btn-xs px-3 border-none ${sortKey === 'numero' ? 'bg-base-100 text-primary shadow-sm' : 'btn-ghost text-base-content/60'}`}
                 onClick={() => onSortChange('numero')}
                 >
                 {t('orders:list.table.id')} {sortKey === 'numero' && (sortOrder === 'asc' ? '↑' : '↓')}
                 </button>
                 <button 
-                className={`btn btn-xs px-3 border-none ${sortKey === 'status' ? 'bg-white text-primary shadow-sm' : 'btn-ghost text-base-content/60'}`}
+                className={`btn btn-xs px-3 border-none ${sortKey === 'status' ? 'bg-base-100 text-primary shadow-sm' : 'btn-ghost text-base-content/60'}`}
                 onClick={() => onSortChange('status')}
                 >
                 {t('orders:list.table.status')} {sortKey === 'status' && (sortOrder === 'asc' ? '↑' : '↓')}

@@ -1,4 +1,4 @@
-import { useTranslation } from 'react-i18next';
+﻿import { useTranslation } from 'react-i18next';
 import type { ProduitModel, StockLot } from '../../types';
 import { formatCurrency } from '../../utils/formatters';
 
@@ -30,7 +30,7 @@ export const ProductTabsContent: React.FC<ProductTabsContentProps> = ({
   return (
     <div className="flex flex-col h-full">
       {/* Onglets */}
-      <div role="tablist" className="tabs tabs-boxed bg-slate-100 rounded-none px-4 pt-2 shrink-0">
+      <div role="tablist" className="tabs tabs-boxed bg-base-200 rounded-none px-4 pt-2 shrink-0">
         {[
           { id: 'general', label: t('products:detail.tabs.general') },
           { id: 'prix', label: t('products:detail.tabs.price') },

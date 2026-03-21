@@ -1,4 +1,4 @@
-import React from 'react'
+﻿import React from 'react'
 import { useTranslation } from 'react-i18next'
 import type { CouponMonnaie, User } from '../../types'
 
@@ -23,7 +23,7 @@ export const CouponPanel: React.FC<CouponPanelProps> = ({
 }) => {
   const { t } = useTranslation('caisse')
   return (
-    <div className="w-96 bg-white border-r border-base-200 flex flex-col animate-fade-in-right">
+    <div className="w-96 bg-base-100 border-r border-base-200 flex flex-col animate-fade-in-right">
       <div className="p-4 border-b border-base-100 bg-base-50/50">
         <div className="flex justify-between items-center mb-4">
           <h2 className="font-bold text-lg flex items-center gap-2">

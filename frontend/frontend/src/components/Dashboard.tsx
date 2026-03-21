@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from 'react';
+﻿import { useState, useMemo, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { toast } from 'react-hot-toast';
 import { 
@@ -234,7 +234,7 @@ export default function Dashboard() {
           );
 
           return (
-            <div key={index} className="card bg-white shadow-sm border border-base-300 rounded-2xl overflow-hidden">
+            <div key={index} className="card bg-base-100 shadow-sm border border-base-300 rounded-2xl overflow-hidden">
               {stat.link ? (
                 <Link to={stat.link} className="block h-full">
                   {content}
@@ -249,7 +249,7 @@ export default function Dashboard() {
 
       {/* Section Unités Gratuites (UG) - Hide for VENDEUR */}
       {ugStats && (ugStats as any).results && stats?.role !== 'VENDEUR' && stats?.role !== 'CAISSIER' && (
-        <div className="card bg-white shadow-sm border border-base-300 rounded-2xl overflow-hidden">
+        <div className="card bg-base-100 shadow-sm border border-base-300 rounded-2xl overflow-hidden">
           <div className="card-body p-6">
             <div className="flex items-center justify-between mb-6">
               <div className="flex items-center gap-3">
@@ -319,7 +319,7 @@ export default function Dashboard() {
         <div className="xl:col-span-2 space-y-6">
           {(!stats?.role || (stats.role !== 'VENDEUR' && stats.role !== 'CAISSIER')) && (
           /* Revenue Bar Chart */
-          <div className="card bg-white shadow-sm border border-base-300 rounded-2xl overflow-hidden">
+          <div className="card bg-base-100 shadow-sm border border-base-300 rounded-2xl overflow-hidden">
             <div className="card-body p-6">
               <div className="flex items-center justify-between mb-6">
                 <div className="flex items-center gap-3">
@@ -386,7 +386,7 @@ export default function Dashboard() {
 
           {(!stats?.role || (stats.role !== 'VENDEUR' && stats.role !== 'CAISSIER')) && (
           /* Hourly Traffic Chart */
-          <div className="card bg-white shadow-sm border border-base-300 rounded-2xl overflow-hidden">
+          <div className="card bg-base-100 shadow-sm border border-base-300 rounded-2xl overflow-hidden">
             <div className="card-body p-6">
               <div className="flex items-center justify-between mb-6">
                 <div className="flex items-center gap-3">
@@ -451,7 +451,7 @@ export default function Dashboard() {
 
           {(!stats?.role || (stats.role !== 'VENDEUR' && stats.role !== 'CAISSIER')) && (
           /* Supplier Debts Section */
-          <div className="card bg-white shadow-sm border border-base-300 rounded-2xl overflow-hidden">
+          <div className="card bg-base-100 shadow-sm border border-base-300 rounded-2xl overflow-hidden">
             <div className="card-body p-6">
               <div className="flex items-center justify-between mb-6">
                 <div className="flex items-center gap-3">
@@ -511,7 +511,7 @@ export default function Dashboard() {
                   </div>
               ) : (
                   <div className="flex flex-col items-center justify-center py-12 rounded-2xl bg-base-200/30 border-2 border-dashed border-base-300">
-                      <div className="p-4 bg-white shadow-sm rounded-2xl mb-4">
+                      <div className="p-4 bg-base-100 shadow-sm rounded-2xl mb-4">
                         <ShoppingBag className="w-8 h-8 text-base-content/10" />
                       </div>
                       <p className="text-[10px] font-black uppercase tracking-widest text-base-content/30">{t('debts.no_supplier_debts')}</p>
@@ -527,7 +527,7 @@ export default function Dashboard() {
         {/* Right Column: Quick Actions & Alerts */}
         <div className="space-y-6">
           {/* Quick Actions */}
-          <div className="card bg-white shadow-sm border border-base-300 rounded-2xl overflow-hidden">
+          <div className="card bg-base-100 shadow-sm border border-base-300 rounded-2xl overflow-hidden">
             <div className="card-body p-6">
               <h2 className="text-[10px] font-black uppercase tracking-widest text-base-content/40 mb-4">{t('actions.title')}</h2>
               <div className="grid grid-cols-1 gap-3">
@@ -578,7 +578,7 @@ export default function Dashboard() {
                 </div>
                 <div className="space-y-2">
                   {promisDisponibles.slice(0, 3).map((p) => (
-                    <div key={p.id} className="flex items-center justify-between p-3 rounded-xl bg-white border border-emerald-100 shadow-sm transition-all hover:border-emerald-300">
+                    <div key={p.id} className="flex items-center justify-between p-3 rounded-xl bg-base-100 border border-emerald-100 shadow-sm transition-all hover:border-emerald-300">
                       <div className="flex-1 min-w-0">
                         <span className="text-xs font-black text-base-content block truncate">{p.produit_nom}</span>
                         <div className="flex items-center gap-1.5 mt-0.5">
@@ -601,7 +601,7 @@ export default function Dashboard() {
           )}
 
           {/* Stock Alerts */}
-          <div className="card bg-white shadow-sm border border-base-300 rounded-2xl overflow-hidden">
+          <div className="card bg-base-100 shadow-sm border border-base-300 rounded-2xl overflow-hidden">
             <div className="card-body p-6">
               <div className="flex items-center justify-between mb-4">
                 <div 
@@ -685,7 +685,7 @@ export default function Dashboard() {
           </div>
 
           {/* Expiring Lots */}
-          <div className="card bg-white shadow-sm border border-base-300 rounded-2xl overflow-hidden">
+          <div className="card bg-base-100 shadow-sm border border-base-300 rounded-2xl overflow-hidden">
             <div className="card-body p-6">
               <div className="flex items-center justify-between mb-4">
                 <div 

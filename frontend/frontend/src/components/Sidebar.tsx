@@ -8,7 +8,7 @@ import { useTranslation } from 'react-i18next';
 export default function Sidebar() {
   const { t, i18n } = useTranslation(['sidebar', 'common']);
   const { user, logout } = useAuth();
-  const { isOpen, isCollapsed, toggleSidebar, closeSidebar, toggleCollapse } = useSidebar();
+  const { isOpen, isCollapsed, toggleSidebar, closeSidebar, toggleCollapse, isMidnightTheme, toggleMidnightTheme } = useSidebar();
   const location = useLocation();
   const [openMenu, setOpenMenu] = useState<string | null>(null);
   
@@ -370,9 +370,22 @@ export default function Sidebar() {
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>
                 {t('logout')}
               </button>
-              <div className="mt-3 flex gap-2 justify-center">
-                <button className={`btn btn-xs ${i18n.language === 'fr' ? 'btn-primary' : 'btn-ghost text-white/50'}`} onClick={() => i18n.changeLanguage('fr')}>FR</button>
-                <button className={`btn btn-xs ${i18n.language === 'en' ? 'btn-primary' : 'btn-ghost text-white/50'}`} onClick={() => i18n.changeLanguage('en')}>EN</button>
+              <div className="mt-3 flex items-center justify-between w-full px-2">
+                <div className="flex gap-2">
+                  <button className={`btn btn-xs ${i18n.language === 'fr' ? 'btn-primary' : 'btn-ghost text-white/50'}`} onClick={() => i18n.changeLanguage('fr')}>FR</button>
+                  <button className={`btn btn-xs ${i18n.language === 'en' ? 'btn-primary' : 'btn-ghost text-white/50'}`} onClick={() => i18n.changeLanguage('en')}>EN</button>
+                </div>
+                <button 
+                  onClick={toggleMidnightTheme} 
+                  className="btn btn-xs btn-ghost text-white/70 hover:text-white"
+                  title={isMidnightTheme ? "Passer au thème clair" : "Passer au thème sombre"}
+                >
+                  {isMidnightTheme ? (
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" /></svg>
+                  ) : (
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" /></svg>
+                  )}
+                </button>
               </div>
             </>
           ) : (
@@ -380,6 +393,17 @@ export default function Sidebar() {
               <div className="w-9 h-9 rounded-full bg-green-500 text-white flex items-center justify-center text-sm uppercase font-bold mb-2" title={user?.username || 'Admin'}>
                 {user?.username.charAt(0) || 'A'}
               </div>
+              <button 
+                  onClick={toggleMidnightTheme} 
+                  className="btn btn-xs btn-ghost text-white/70 hover:text-white mb-2"
+                  title={isMidnightTheme ? "Thème clair" : "Thème sombre"}
+                >
+                  {isMidnightTheme ? (
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" /></svg>
+                  ) : (
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" /></svg>
+                  )}
+              </button>
               <button onClick={logout} className="btn btn-xs btn-ghost text-red-400 hover:bg-red-500/10 hover:text-red-300" title="Déconnexion">
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>
               </button>

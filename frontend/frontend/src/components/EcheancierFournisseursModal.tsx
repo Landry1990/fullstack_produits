@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+﻿import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useTranslation } from 'react-i18next';
 import PremiumModal from './common/PremiumModal';
@@ -86,7 +86,7 @@ export default function EcheancierFournisseursModal({ isOpen, onClose, onRegler,
         <div className="flex gap-4 mb-4 shrink-0">
           <div className="relative flex-1">
             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-base-content/40" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
               </svg>
             </div>
@@ -115,13 +115,13 @@ export default function EcheancierFournisseursModal({ isOpen, onClose, onRegler,
             <span className="loading loading-spinner loading-lg text-primary"></span>
           </div>
         ) : filteredEcheances.length === 0 ? (
-          <div className="text-center flex-1 flex flex-col justify-center p-10 bg-slate-50 rounded-xl border border-slate-100">
+          <div className="text-center flex-1 flex flex-col justify-center p-10 bg-base-200/50 rounded-xl border border-slate-100">
             <div className="text-4xl mb-4 opacity-50">✅</div>
-            <h3 className="text-lg font-bold text-slate-700">{t('providers:schedule.empty')}</h3>
-            <p className="text-sm text-slate-500">{t('providers:schedule.empty_subtitle')}</p>
+            <h3 className="text-lg font-bold text-base-content/90">{t('providers:schedule.empty')}</h3>
+            <p className="text-sm text-base-content/60">{t('providers:schedule.empty_subtitle')}</p>
           </div>
         ) : (
-          <div className="overflow-auto rounded-xl border border-slate-200 shadow-sm flex-1">
+          <div className="overflow-auto rounded-xl border border-base-200 shadow-sm flex-1">
             <table className="table table-sm w-full table-pin-rows">
               <thead className="bg-[#f8fafc] text-[#64748b]">
                 <tr>
@@ -133,27 +133,27 @@ export default function EcheancierFournisseursModal({ isOpen, onClose, onRegler,
                   <th className="font-semibold uppercase text-[10px] tracking-wider text-center py-3">{t('providers:schedule.table.action')}</th>
                 </tr>
               </thead>
-              <tbody className="bg-white">
+              <tbody className="bg-base-100">
                 {filteredEcheances.map((e) => (
-                  <tr key={`${e.fournisseur_id}-${e.commande_id || 'releve'}`} className="hover:bg-slate-50 transition-colors border-b border-slate-100 last:border-0">
+                  <tr key={`${e.fournisseur_id}-${e.commande_id || 'releve'}`} className="hover:bg-base-200/50 transition-colors border-b border-slate-100 last:border-0">
                     <td className="py-3">
-                      <div className="font-bold text-slate-800">{e.fournisseur_nom}</div>
+                      <div className="font-bold text-base-content">{e.fournisseur_nom}</div>
                     </td>
                     <td className="py-3">
-                        <div className="font-mono text-xs text-slate-600 font-medium bg-slate-100 px-2 py-0.5 rounded inline-block">
+                        <div className="font-mono text-xs text-base-content/80 font-medium bg-base-200 px-2 py-0.5 rounded inline-block">
                           {e.numero_facture}
                         </div>
-                        <div className="text-[10px] text-slate-400 mt-0.5 uppercase tracking-wide">
+                        <div className="text-[10px] text-base-content/40 mt-0.5 uppercase tracking-wide">
                           {e.type_reglement === 'RELEVE' ? t('providers:schedule.type_statement') : t('providers:schedule.type_invoice')}
                         </div>
                     </td>
                     <td className="py-3 text-right">
-                      <div className={`font-black tracking-tight ${e.status === 'EN RETARD' ? 'text-red-600' : 'text-slate-700'}`}>
+                      <div className={`font-black tracking-tight ${e.status === 'EN RETARD' ? 'text-red-600' : 'text-base-content/90'}`}>
                         {formatCurrency(e.montant_du)}
                       </div>
                     </td>
                     <td className="py-3 text-center">
-                      <div className="font-semibold text-sm text-slate-700">
+                      <div className="font-semibold text-sm text-base-content/90">
                         {new Date(e.date_echeance).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' })}
                       </div>
                     </td>

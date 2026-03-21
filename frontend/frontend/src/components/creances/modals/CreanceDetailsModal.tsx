@@ -1,4 +1,4 @@
-import { Printer, History } from 'lucide-react';
+﻿import { Printer, History } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import type { Creance } from '../../../types';
 import PremiumModal from '../../common/PremiumModal';
@@ -79,7 +79,7 @@ export const CreanceDetailsModal: React.FC<CreanceDetailsModalProps> = ({
                             <p className="text-base-content/30 italic text-sm">{t('creances:details_modal.no_payments')}</p>
                         </div>
                     ) : (
-                        <div className="bg-white rounded-2xl border border-base-200 overflow-hidden shadow-sm">
+                        <div className="bg-base-100 rounded-2xl border border-base-200 overflow-hidden shadow-sm">
                             <table className="table w-full">
                                 <thead>
                                     <tr className="bg-base-100 border-b border-base-200">

@@ -1,4 +1,4 @@
-import { useState } from 'react'
+﻿import { useState } from 'react'
 import axios from 'axios'
 import { toast } from 'react-hot-toast'
 import PremiumModal from './common/PremiumModal'
@@ -60,7 +60,7 @@ export default function SimplePrintLabelsModal({
       <div className="p-6 space-y-5">
         {/* Format Selection */}
         <div>
-          <label className="block text-xs font-bold uppercase tracking-wider text-gray-400 mb-3">Format des étiquettes</label>
+          <label className="block text-xs font-bold uppercase tracking-wider text-base-content/40 mb-3">Format des étiquettes</label>
           <div className="flex gap-4">
             <label className="label cursor-pointer gap-2 border rounded-xl p-4 flex-1 hover:bg-base-200 transition-colors">
               <input

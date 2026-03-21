@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+﻿import { useState, useMemo } from 'react';
 import axios from 'axios';
 import { toast } from 'react-hot-toast';
 import { formatCurrency } from '../utils/formatters';
@@ -105,7 +105,7 @@ export default function RapportMensuel() {
   return (
     <div className="p-6 space-y-6 animate-fade-in max-w-7xl mx-auto">
       {/* Header */}
-      <div className="flex flex-col md:flex-row justify-between items-center gap-4 bg-white p-6 rounded-lg shadow-sm border border-base-200">
+      <div className="flex flex-col md:flex-row justify-between items-center gap-4 bg-base-100 p-6 rounded-lg shadow-sm border border-base-200">
         <div>
           <h1 className="text-3xl font-bold text-base-content">📊 {t('title')}</h1>
           <p className="text-sm text-base-content/70 mt-1">{t('subtitle')}</p>
@@ -203,7 +203,7 @@ export default function RapportMensuel() {
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* 2. Achats par Fournisseur */}
-            <div className="card bg-white shadow-lg border border-base-200">
+            <div className="card bg-base-100 shadow-lg border border-base-200">
               <div className="card-body">
                 <h2 className="card-title text-lg flex items-center gap-2">
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -256,7 +256,7 @@ export default function RapportMensuel() {
             </div>
 
             {/* 3. Clients Professionnels */}
-            <div className="card bg-white shadow-lg border border-base-200">
+            <div className="card bg-base-100 shadow-lg border border-base-200">
               <div className="card-body">
                 <h2 className="card-title text-lg flex items-center gap-2">
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-info" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -319,7 +319,7 @@ export default function RapportMensuel() {
             </div>
 
             {/* 4. Unités Gratuites */}
-            <div className="card bg-white shadow-lg border border-base-200">
+            <div className="card bg-base-100 shadow-lg border border-base-200">
               <div className="card-body">
                 <h2 className="card-title text-lg flex items-center gap-2">
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-success" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -370,7 +370,7 @@ export default function RapportMensuel() {
             </div>
 
             {/* 5. Encaissements */}
-            <div className="card bg-white shadow-lg border border-base-200">
+            <div className="card bg-base-100 shadow-lg border border-base-200">
               <div className="card-body">
                 <h2 className="card-title text-lg flex items-center gap-2">
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-success" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -415,7 +415,7 @@ export default function RapportMensuel() {
           </div>
 
           {/* 6. Mouvements de Caisse Extra-Comptables */}
-          <div className="card bg-white shadow-lg border border-base-200">
+          <div className="card bg-base-100 shadow-lg border border-base-200">
             <div className="card-body">
               <h2 className="card-title text-lg flex items-center gap-2">
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-warning" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -482,7 +482,7 @@ export default function RapportMensuel() {
 
           {/* 7. CA par TVA + Créances */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <div className="card bg-white shadow-lg border border-base-200">
+            <div className="card bg-base-100 shadow-lg border border-base-200">
               <div className="card-body">
                 <h2 className="card-title text-lg">{t('tva.title')}</h2>
                 <div className="overflow-x-auto">
@@ -510,7 +510,7 @@ export default function RapportMensuel() {
               </div>
             </div>
 
-            <div className="card bg-white shadow-lg border border-base-200">
+            <div className="card bg-base-100 shadow-lg border border-base-200">
               <div className="card-body">
                 <h2 className="card-title text-lg flex items-center gap-2">
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-warning" fill="none" viewBox="0 0 24 24" stroke="currentColor">

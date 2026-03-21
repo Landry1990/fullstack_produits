@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+﻿import { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { usePharmacySettings, type PharmacySettings } from '../../hooks/usePharmacySettings'
 import { useTVA } from '../../hooks/useTVA'
@@ -59,7 +59,7 @@ export default function PharmacySettingsForm() {
   return (
     <div className="h-full flex flex-col bg-base-100 overflow-hidden">
       {/* Header */}
-      <div className="flex items-center justify-between px-6 py-4 border-b border-base-200 bg-white shrink-0">
+      <div className="flex items-center justify-between px-6 py-4 border-b border-base-200 bg-base-100 shrink-0">
         <div>
           <h1 className="text-2xl font-bold text-base-content flex items-center gap-3">
             <svg xmlns="http://www.w3.org/2000/svg" className="h-7 w-7 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -97,7 +97,7 @@ export default function PharmacySettingsForm() {
         <form onSubmit={handleSubmit} className="max-w-4xl mx-auto space-y-6">
           
           {/* Section: Identité */}
-          <div className="bg-white rounded-xl shadow-sm border border-base-200 overflow-hidden">
+          <div className="bg-base-100 rounded-xl shadow-sm border border-base-200 overflow-hidden">
             <div className="bg-base-100 px-6 py-4 border-b border-base-200">
               <h2 className="font-semibold text-lg flex items-center gap-2">
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -161,7 +161,7 @@ export default function PharmacySettingsForm() {
           </div>
 
           {/* Section: Coordonnées */}
-          <div className="bg-white rounded-xl shadow-sm border border-base-200 overflow-hidden">
+          <div className="bg-base-100 rounded-xl shadow-sm border border-base-200 overflow-hidden">
             <div className="bg-base-100 px-6 py-4 border-b border-base-200">
               <h2 className="font-semibold text-lg flex items-center gap-2">
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -242,7 +242,7 @@ export default function PharmacySettingsForm() {
           </div>
 
           {/* Section: Messages Ticket */}
-          <div className="bg-white rounded-xl shadow-sm border border-base-200 overflow-hidden">
+          <div className="bg-base-100 rounded-xl shadow-sm border border-base-200 overflow-hidden">
             <div className="bg-base-100 px-6 py-4 border-b border-base-200">
               <h2 className="font-semibold text-lg flex items-center gap-2">
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -287,7 +287,7 @@ export default function PharmacySettingsForm() {
           </div>
 
           {/* Section: Paramètres Système & Alertes */}
-          <div className="bg-white rounded-xl shadow-sm border border-base-200 overflow-hidden">
+          <div className="bg-base-100 rounded-xl shadow-sm border border-base-200 overflow-hidden">
             <div className="bg-base-100 px-6 py-4 border-b border-base-200">
               <h2 className="font-semibold text-lg flex items-center gap-2">
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -397,7 +397,7 @@ export default function PharmacySettingsForm() {
           {/* Section: Gestion de la TVA */}
 
           {/* Section: Gestion de la TVA */}
-          <div className="bg-white rounded-xl shadow-sm border border-base-200 overflow-hidden">
+          <div className="bg-base-100 rounded-xl shadow-sm border border-base-200 overflow-hidden">
             <div className="bg-base-100 px-6 py-4 border-b border-base-200">
               <h2 className="font-semibold text-lg flex items-center gap-2">
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -490,7 +490,7 @@ export default function PharmacySettingsForm() {
           </div>
 
           {/* Section: Configuration Commandes */}
-          <div className="bg-white rounded-xl shadow-sm border border-base-200 overflow-hidden">
+          <div className="bg-base-100 rounded-xl shadow-sm border border-base-200 overflow-hidden">
             <div className="bg-base-100 px-6 py-4 border-b border-base-200">
               <h2 className="font-semibold text-lg flex items-center gap-2">
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -526,7 +526,7 @@ export default function PharmacySettingsForm() {
 
           {/* Mobile Submit Button */}
           {/* Section: WhatsApp Business API */}
-          <div className="bg-white rounded-xl shadow-sm border border-base-200 overflow-hidden">
+          <div className="bg-base-100 rounded-xl shadow-sm border border-base-200 overflow-hidden">
             <div className="bg-base-100 px-6 py-4 border-b border-base-200 flex items-center justify-between">
               <h2 className="font-semibold text-lg flex items-center gap-2">
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-[#25D366]" fill="currentColor" viewBox="0 0 448 512">

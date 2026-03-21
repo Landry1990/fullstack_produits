@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+﻿import { useState, useEffect } from 'react'
 import axios from 'axios'
 import { toast } from 'react-hot-toast'
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors } from '@dnd-kit/core'
@@ -31,7 +31,7 @@ function SortableItem({ option, onEdit, onDelete }: { option: ConfigurationOptio
 
   return (
     <div ref={setNodeRef} style={style} className="bg-base-100 p-3 mb-2 rounded border flex items-center gap-3">
-      <div {...attributes} {...listeners} className="cursor-grab text-gray-400 hover:text-gray-600">
+      <div {...attributes} {...listeners} className="cursor-grab text-base-content/40 hover:text-base-content/80">
         <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8h16M4 16h16" />
         </svg>
@@ -42,7 +42,7 @@ function SortableItem({ option, onEdit, onDelete }: { option: ConfigurationOptio
           <span className="font-bold">{option.label}</span>
           {!option.is_active && <span className="badge badge-warning badge-xs">Inactif</span>}
         </div>
-        <div className="text-xs text-gray-500 flex gap-2">
+        <div className="text-xs text-base-content/60 flex gap-2">
           <span className="font-mono bg-base-200 px-1 rounded">{option.code}</span>
           {option.value && <span>Val: {option.value}</span>}
         </div>
@@ -228,7 +228,7 @@ export default function ConfigurationOptions() {
                 </DndContext>
 
                 {filteredItems.length === 0 && (
-                    <div className="text-center text-gray-500 mt-10">Aucune option configurée</div>
+                    <div className="text-center text-base-content/60 mt-10">Aucune option configurée</div>
                 )}
             </div>
         )}

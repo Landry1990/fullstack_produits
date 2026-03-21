@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { toast } from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
@@ -97,21 +97,21 @@ const OrdonnancierPage: React.FC = () => {
             {/* Stats Cards */}
             {stats && (
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div className="stats shadow bg-white">
+                    <div className="stats shadow bg-base-100">
                         <div className="stat">
                             <div className="stat-title">{t('stats.total_entries')}</div>
                             <div className="stat-value text-primary">{stats.total_entries}</div>
                             <div className="stat-desc">{t('stats.total_entries_desc')}</div>
                         </div>
                     </div>
-                    <div className="stats shadow bg-white">
+                    <div className="stats shadow bg-base-100">
                         <div className="stat">
                             <div className="stat-title">{t('stats.delivered_meds')}</div>
                             <div className="stat-value text-secondary">{stats.total_medicaments}</div>
                             <div className="stat-desc">{t('stats.delivered_meds_desc')}</div>
                         </div>
                     </div>
-                    <div className="stats shadow bg-white">
+                    <div className="stats shadow bg-base-100">
                         <div className="stat">
                             <div className="stat-title">{t('stats.under_surveillance')}</div>
                             <div className="stat-value text-warning">{stats.surveillance_count}</div>
@@ -122,7 +122,7 @@ const OrdonnancierPage: React.FC = () => {
             )}
 
             {/* Filters */}
-            <div className="card bg-white shadow-sm border border-base-200 p-4">
+            <div className="card bg-base-100 shadow-sm border border-base-200 p-4">
                 <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-3">
                     <div className="form-control">
                         <label className="label text-xs">{t('filters.date_start')}</label>
@@ -188,7 +188,7 @@ const OrdonnancierPage: React.FC = () => {
             </div>
 
             {/* Table */}
-            <div className="card bg-white shadow-xl border border-base-200 flex-1 overflow-hidden">
+            <div className="card bg-base-100 shadow-xl border border-base-200 flex-1 overflow-hidden">
                 <div className="overflow-x-auto h-full">
                     <table className="table table-pin-rows">
                         <thead>

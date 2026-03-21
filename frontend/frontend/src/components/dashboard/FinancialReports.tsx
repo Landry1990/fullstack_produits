@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { FileText, Download, FileSpreadsheet, FileBarChart } from 'lucide-react';
 
@@ -49,7 +49,7 @@ export const FinancialReports: React.FC<FinancialReportsProps> = ({ onExport, ex
             <div className="p-6 grid grid-cols-1 md:grid-cols-3 gap-6">
                 {reports.map((report) => (
                     <div key={report.id} className="p-6 rounded-2xl bg-base-200/50 border border-base-300 hover:bg-base-100 hover:border-primary/20 transition-all flex flex-col h-full group">
-                        <div className={`p-4 rounded-2xl bg-white shadow-sm w-fit mb-4 text-${report.color}`}>
+                        <div className={`p-4 rounded-2xl bg-base-100 shadow-sm w-fit mb-4 text-${report.color}`}>
                             {report.icon}
                         </div>
                         <h4 className={`font-bold text-sm uppercase tracking-tight text-${report.color} mb-2`}>

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+﻿import { useState, useEffect } from 'react'
 import axios from 'axios'
 import { toast } from 'react-hot-toast'
 import { useTranslation } from 'react-i18next'
@@ -122,44 +122,44 @@ export default function LoyaltyConfigModal({ isOpen, onClose }: Props) {
                 ) : settings ? (
                     <form onSubmit={handleSave} className="space-y-5">
                         <div>
-                            <label className="block text-xs font-bold uppercase tracking-wider text-gray-400 mb-2">{t('clients:loyalty.amount_per_point')}</label>
+                            <label className="block text-xs font-bold uppercase tracking-wider text-base-content/40 mb-2">{t('clients:loyalty.amount_per_point')}</label>
                             <input 
                                 type="number" 
                                 className="input input-bordered w-full h-12 rounded-xl"
                                 value={settings.amount_per_point}
                                 onChange={e => setSettings({...settings, amount_per_point: e.target.value})}
                             />
-                            <p className="text-xs text-gray-400 mt-1">{t('clients:loyalty.amount_per_point_hint')}</p>
+                            <p className="text-xs text-base-content/40 mt-1">{t('clients:loyalty.amount_per_point_hint')}</p>
                         </div>
 
                         <div className="divider text-xs uppercase tracking-wider">{t('clients:loyalty.manual_usage')}</div>
 
                         <div>
-                            <label className="block text-xs font-bold uppercase tracking-wider text-gray-400 mb-2">{t('clients:loyalty.point_value')}</label>
+                            <label className="block text-xs font-bold uppercase tracking-wider text-base-content/40 mb-2">{t('clients:loyalty.point_value')}</label>
                             <input 
                                 type="number" 
                                 className="input input-bordered w-full h-12 rounded-xl"
                                 value={settings.point_value}
                                 onChange={e => setSettings({...settings, point_value: e.target.value})}
                             />
-                            <p className="text-xs text-gray-400 mt-1">{t('clients:loyalty.point_value_hint')}</p>
+                            <p className="text-xs text-base-content/40 mt-1">{t('clients:loyalty.point_value_hint')}</p>
                         </div>
 
                         <div className="divider text-xs uppercase tracking-wider">{t('clients:loyalty.auto_reward')}</div>
 
                         <div className="grid grid-cols-2 gap-4">
                             <div>
-                                <label className="block text-xs font-bold uppercase tracking-wider text-gray-400 mb-2">{t('clients:loyalty.threshold')}</label>
+                                <label className="block text-xs font-bold uppercase tracking-wider text-base-content/40 mb-2">{t('clients:loyalty.threshold')}</label>
                                 <input 
                                     type="number" 
                                     className="input input-bordered w-full h-12 rounded-xl"
                                     value={settings.auto_reward_threshold}
                                     onChange={e => setSettings({...settings, auto_reward_threshold: parseInt(e.target.value) || 0})}
                                 />
-                                <p className="text-xs text-gray-400 mt-1">{t('clients:loyalty.threshold_hint')}</p>
+                                <p className="text-xs text-base-content/40 mt-1">{t('clients:loyalty.threshold_hint')}</p>
                             </div>
                             <div>
-                                <label className="block text-xs font-bold uppercase tracking-wider text-gray-400 mb-2">{t('clients:loyalty.discount')}</label>
+                                <label className="block text-xs font-bold uppercase tracking-wider text-base-content/40 mb-2">{t('clients:loyalty.discount')}</label>
                                 <input 
                                     type="number" 
                                     className="input input-bordered w-full h-12 rounded-xl"
@@ -167,7 +167,7 @@ export default function LoyaltyConfigModal({ isOpen, onClose }: Props) {
                                     value={settings.auto_reward_percent}
                                     onChange={e => setSettings({...settings, auto_reward_percent: e.target.value})}
                                 />
-                                <p className="text-xs text-gray-400 mt-1">{t('clients:loyalty.discount_hint')}</p>
+                                <p className="text-xs text-base-content/40 mt-1">{t('clients:loyalty.discount_hint')}</p>
                             </div>
                         </div>
 
