@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import { Layers, CreditCard, Hash, AlertTriangle, CheckCircle2, Info } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import PremiumModal from '../../common/PremiumModal';
@@ -38,7 +38,7 @@ export const BulkPaiementModal: React.FC<BulkPaiementModalProps> = ({
             <div className="space-y-6">
                 {/* Summary Section */}
                 <div className="bg-primary/5 border border-primary/20 p-6 rounded-2xl flex flex-col items-center gap-4 text-center">
-                    <div className="p-3 bg-white rounded-2xl shadow-sm">
+                    <div className="p-3 bg-base-100 rounded-2xl shadow-sm">
                         <Layers className="w-8 h-8 text-primary" />
                     </div>
                     <div>
@@ -96,7 +96,7 @@ export const BulkPaiementModal: React.FC<BulkPaiementModalProps> = ({
                 </div>
 
                 <div className="bg-base-50 p-3 rounded-xl flex items-center gap-3 border border-base-200">
-                    <div className="p-2 bg-white rounded-lg shadow-sm">
+                    <div className="p-2 bg-base-100 rounded-lg shadow-sm">
                         <Info className="w-3 h-3 text-base-content/40" />
                     </div>
                     <p className="text-[10px] text-base-content/50 font-medium">

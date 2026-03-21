@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { X, AlertTriangle } from 'lucide-react';
 import type { Facture } from '../../../types';
@@ -29,17 +29,17 @@ export const RefundModal: React.FC<RefundModalProps> = ({
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-in fade-in duration-200">
-            <div className="bg-white rounded-xl shadow-2xl w-full max-w-md overflow-hidden animate-in scale-95 duration-200">
+            <div className="bg-base-100 rounded-xl shadow-2xl w-full max-w-md overflow-hidden animate-in scale-95 duration-200">
                 <div className="border-b border-gray-100 p-4 flex justify-between items-center bg-red-50/50">
                     <div className="flex items-center gap-3">
                         <div className="bg-red-100 p-2 rounded-lg">
                             <AlertTriangle className="w-5 h-5 text-red-600" />
                         </div>
-                        <h3 className="font-bold text-gray-900">
+                        <h3 className="font-bold text-base-content">
                             {t('refund_title')}
                         </h3>
                     </div>
-                    <button onClick={onClose} className="p-1 hover:bg-gray-200 rounded-full transition-colors text-gray-400 hover:text-gray-600">
+                    <button onClick={onClose} className="p-1 hover:bg-base-300 rounded-full transition-colors text-base-content/40 hover:text-base-content/80">
                         <X className="w-5 h-5" />
                     </button>
                 </div>
@@ -50,13 +50,13 @@ export const RefundModal: React.FC<RefundModalProps> = ({
                             Cette action générera un avoir et annulera la facture <strong>#{facture.numero_facture || facture.id}</strong>.
                         </div>
 
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                        <label className="block text-sm font-medium text-base-content/90 mb-2">
                             {t('refund.refund_reason')} <span className="text-red-500">*</span>
                         </label>
                         <textarea
                             value={refundReason}
                             onChange={(e) => setRefundReason(e.target.value)}
-                            className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-red-500 focus:border-red-500 transition-all outline-none resize-none"
+                            className="w-full px-4 py-3 rounded-lg border border-base-200 focus:ring-2 focus:ring-red-500 focus:border-red-500 transition-all outline-none resize-none"
                             placeholder="Erreur de saisie, retour client, etc."
                             rows={3}
                             required
@@ -67,7 +67,7 @@ export const RefundModal: React.FC<RefundModalProps> = ({
                         <button
                             type="button"
                             onClick={onClose}
-                            className="px-4 py-2 text-gray-600 font-medium hover:bg-gray-100 rounded-lg transition-colors"
+                            className="px-4 py-2 text-base-content/80 font-medium hover:bg-base-200 rounded-lg transition-colors"
                         >
                             {t('common:cancel')}
                         </button>

@@ -1,4 +1,4 @@
-import { DollarSign, CreditCard, Hash, Info, UserCheck } from 'lucide-react';
+﻿import { DollarSign, CreditCard, Hash, Info, UserCheck } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { formatCurrency, normalizeNumberInput } from '../../../utils/formatters';
 import type { Creance } from '../../../types';
@@ -41,7 +41,7 @@ export const CreancePaiementModal: React.FC<CreancePaiementModalProps> = ({
             <div className="space-y-6">
                 {/* Info Card */}
                 <div className="bg-blue-50 border border-blue-100 p-4 rounded-2xl flex gap-3 shadow-sm">
-                    <div className="p-2 bg-white rounded-xl shadow-sm h-fit">
+                    <div className="p-2 bg-base-100 rounded-xl shadow-sm h-fit">
                         <Info className="w-4 h-4 text-blue-500" />
                     </div>
                     <div className="text-sm">

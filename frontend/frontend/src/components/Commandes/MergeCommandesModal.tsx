@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+﻿import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import axios from 'axios';
 import { toast } from 'react-hot-toast';
@@ -143,7 +143,7 @@ export default function MergeCommandesModal({
                                     return (
                                         <div 
                                             key={order.id} 
-                                            className={`flex justify-between items-center text-sm p-2 rounded ${isTarget ? 'bg-primary/20 border border-primary' : 'bg-white'}`}
+                                            className={`flex justify-between items-center text-sm p-2 rounded ${isTarget ? 'bg-primary/20 border border-primary' : 'bg-base-100'}`}
                                         >
                                             <div className="flex items-center gap-2">
                                                 {isTarget && <span className="badge badge-primary badge-xs">{t('orders:merge_modal.main_badge')}</span>}

@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react'
+﻿import React, { useState, useRef, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { Client, AyantDroit } from '../../types'
 
@@ -140,7 +140,7 @@ export default function ClientSection({
   const selectedClientData = clients.find(c => c.id === selectedClient)
 
   return (
-    <div className="bg-white rounded-xl p-3 md:p-4 shadow-sm border border-base-200 w-full md:w-64 lg:w-80 shrink-0">
+    <div className="bg-base-100 rounded-xl p-3 md:p-4 shadow-sm border border-base-200 w-full md:w-64 lg:w-80 shrink-0">
       <div className="flex items-center justify-between mb-2">
         <label className="label text-xs font-bold text-base-content/50 uppercase tracking-wider py-0">{t('facturation:client.label')}</label>
         <button
@@ -170,7 +170,7 @@ export default function ClientSection({
               }
           }}
           placeholder={t('facturation:client.manual_placeholder')}
-          className="input input-bordered w-full input-sm bg-base-50 focus:bg-white transition-colors"
+          className="input input-bordered w-full input-sm bg-base-50 focus:bg-base-100 transition-colors"
         />
       ) : (
         <div ref={clientSearchRef} className="relative">
@@ -190,7 +190,7 @@ export default function ClientSection({
             }}
             onKeyDown={handleKeyDown}
             placeholder={t('facturation:client.search_placeholder')}
-            className="input input-bordered w-full input-sm bg-base-50 focus:bg-white transition-colors pr-8"
+            className="input input-bordered w-full input-sm bg-base-50 focus:bg-base-100 transition-colors pr-8"
           />
           {selectedClient && (
             <button
@@ -208,7 +208,7 @@ export default function ClientSection({
           
           {/* Dropdown des résultats */}
           {showClientDropdown && (clientSearch || !selectedClient) && (
-            <div className="absolute z-50 mt-1 w-full bg-white border border-base-300 rounded-lg shadow-lg max-h-60 overflow-auto">
+            <div className="absolute z-50 mt-1 w-full bg-base-100 border border-base-300 rounded-lg shadow-lg max-h-60 overflow-auto">
               {filteredClients.length > 0 ? (
                 <>
                   {filteredClients.map((client, index) => (
@@ -291,28 +291,28 @@ export default function ClientSection({
                 value={ayantDroitNom}
                 onChange={(e) => setAyantDroitNom(e.target.value)}
                 placeholder={t('facturation:client.ayant_droit.name_placeholder')}
-                className="input input-bordered w-full input-xs bg-base-50 focus:bg-white transition-colors"
+                className="input input-bordered w-full input-xs bg-base-50 focus:bg-base-100 transition-colors"
               />
               <input
                 type="text"
                 value={ayantDroitMatricule}
                 onChange={(e) => setAyantDroitMatricule(e.target.value)}
                 placeholder={t('facturation:client.ayant_droit.matricule_placeholder')}
-                className="input input-bordered w-full input-xs bg-base-50 focus:bg-white transition-colors"
+                className="input input-bordered w-full input-xs bg-base-50 focus:bg-base-100 transition-colors"
               />
               <input
                 type="text"
                 value={ayantDroitSociete}
                 onChange={(e) => setAyantDroitSociete(e.target.value)}
                 placeholder={t('facturation:client.ayant_droit.societe_placeholder')}
-                className="input input-bordered w-full input-xs bg-base-50 focus:bg-white transition-colors"
+                className="input input-bordered w-full input-xs bg-base-50 focus:bg-base-100 transition-colors"
                 />
             </div>
           ) : (
             <select
               value={selectedAyantDroit !== null ? String(selectedAyantDroit) : ''}
               onChange={(e) => setSelectedAyantDroit(e.target.value ? Number(e.target.value) : null)}
-              className="select select-bordered w-full select-xs bg-base-50 focus:bg-white transition-colors"
+              className="select select-bordered w-full select-xs bg-base-50 focus:bg-base-100 transition-colors"
             >
               <option value="">{t('facturation:client.ayant_droit.select_placeholder')}</option>
               {Array.isArray(ayantsDroitList) && ayantsDroitList.map((ad) => (

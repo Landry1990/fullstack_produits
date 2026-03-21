@@ -23,8 +23,8 @@ export const CreancesQuickStats: React.FC<CreancesQuickStatsProps> = ({
             label: t('creances:stats.total_invoices'),
             value: `${formatCurrency(Math.round(totalDue))} ${t('common:currency')}`,
             icon: <CreditCard className="w-5 h-5 text-blue-500" />,
-            bgColor: 'bg-blue-50',
-            borderColor: 'border-blue-100'
+            bgColor: 'bg-blue-500/10',
+            borderColor: 'border-blue-500/20'
         },
         {
             label: t('creances:stats.total_paid'),
@@ -44,8 +44,8 @@ export const CreancesQuickStats: React.FC<CreancesQuickStatsProps> = ({
             label: t('creances:stats.debtors'),
             value: debtorsCount,
             icon: <Users className="w-5 h-5 text-purple-500" />,
-            bgColor: 'bg-purple-50',
-            borderColor: 'border-purple-100'
+            bgColor: 'bg-purple-500/10',
+            borderColor: 'border-purple-500/20'
         }
     ];
 
@@ -56,7 +56,7 @@ export const CreancesQuickStats: React.FC<CreancesQuickStatsProps> = ({
                     key={idx}
                     className={`${stat.bgColor} ${stat.borderColor} border p-4 rounded-2xl shadow-sm transition-all hover:shadow-md flex items-center gap-4`}
                 >
-                    <div className="p-3 bg-white rounded-xl shadow-sm">
+                    <div className="p-3 bg-base-100 rounded-xl shadow-sm">
                         {stat.icon}
                     </div>
                     <div>

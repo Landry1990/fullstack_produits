@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { Calendar, History, CheckCircle2, AlertCircle, ChevronRight, Trash2, Package } from 'lucide-react';
 import type { Inventaire } from '../../types';
@@ -29,7 +29,7 @@ export const InventaireListTable: React.FC<InventaireListTableProps> = ({
 
     if (loading) {
         return (
-            <div className="flex flex-col items-center justify-center py-20 text-gray-400 animate-in fade-in duration-500">
+            <div className="flex flex-col items-center justify-center py-20 text-base-content/40 animate-in fade-in duration-500">
                 <div className="w-16 h-16 border-4 border-primary/20 border-t-primary rounded-full animate-spin mb-4"></div>
                 <p className="font-medium animate-pulse">{t('common:loading')}</p>
             </div>
@@ -38,11 +38,11 @@ export const InventaireListTable: React.FC<InventaireListTableProps> = ({
 
     if (inventaires.length === 0) {
         return (
-            <div className="flex flex-col items-center justify-center py-20 text-gray-400 bg-white/50 m-4 rounded-2xl border border-dashed border-gray-200">
-                <div className="bg-gray-50 p-4 rounded-full mb-4">
-                    <Package className="w-10 h-10 text-gray-300" />
+            <div className="flex flex-col items-center justify-center py-20 text-base-content/40 bg-base-100/50 m-4 rounded-2xl border border-dashed border-base-200">
+                <div className="bg-base-200/50 p-4 rounded-full mb-4">
+                    <Package className="w-10 h-10 text-base-content/30" />
                 </div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-1">{t('inventaire.list.empty', { defaultValue: 'Aucun inventaire trouvé' })}</h3>
+                <h3 className="text-lg font-semibold text-base-content mb-1">{t('inventaire.list.empty', { defaultValue: 'Aucun inventaire trouvé' })}</h3>
             </div>
         );
     }

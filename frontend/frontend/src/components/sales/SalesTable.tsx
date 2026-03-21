@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { Eye, Printer, Trash2, RotateCcw, User, Calendar, Receipt, Clock, Copy, FileDigit, Truck } from 'lucide-react';
 import type { Facture } from '../../types';
@@ -94,7 +94,7 @@ export const SalesTable: React.FC<SalesTableProps> = ({
 
     if (loading) {
          return (
-             <div className="flex flex-col items-center justify-center py-20 text-gray-400 animate-in fade-in duration-500">
+             <div className="flex flex-col items-center justify-center py-20 text-base-content/40 animate-in fade-in duration-500">
                 <div className="w-16 h-16 border-4 border-blue-100 border-t-blue-600 rounded-full animate-spin mb-4"></div>
                 <p className="font-medium animate-pulse">{t('common:loading')}</p>
             </div>
@@ -103,8 +103,8 @@ export const SalesTable: React.FC<SalesTableProps> = ({
 
     if (factures.length === 0) {
         return (
-            <div className="flex flex-col items-center justify-center py-20 text-gray-400 bg-white/50 m-4 rounded-2xl border border-dashed border-gray-200">
-                <h3 className="text-lg font-semibold text-gray-900 mb-1">{t('sales:no_sales_found')}</h3>
+            <div className="flex flex-col items-center justify-center py-20 text-base-content/40 bg-base-100/50 m-4 rounded-2xl border border-dashed border-base-200">
+                <h3 className="text-lg font-semibold text-base-content mb-1">{t('sales:no_sales_found')}</h3>
                 <p className="text-sm">{t('sales:try_different_filters')}</p>
             </div>
         );

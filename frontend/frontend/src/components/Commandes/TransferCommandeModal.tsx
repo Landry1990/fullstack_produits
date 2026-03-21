@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+﻿import React, { useState, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import axios from 'axios';
 import { toast } from 'react-hot-toast';
@@ -234,7 +234,7 @@ export default function TransferCommandeModal({
                             const priceDiff = hasPriceInfo ? currentPrice - newPrice : 0;
 
                             return (
-                                <div key={i} className="flex justify-between items-center text-sm bg-white p-2 rounded">
+                                <div key={i} className="flex justify-between items-center text-sm bg-base-100 p-2 rounded">
                                     <div>
                                         <span className={`font-medium ${isDeleted ? 'italic text-base-content/50' : ''}`}>
                                             {produitName}

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { safeStorage } from '../utils/storage';
 
@@ -70,7 +70,7 @@ const InvoiceSettings: React.FC = () => {
 
     return (
         <div className="p-6 max-w-4xl mx-auto">
-            <h1 className="text-2xl font-bold mb-6 text-gray-800">Personnalisation de la Facture</h1>
+            <h1 className="text-2xl font-bold mb-6 text-base-content">Personnalisation de la Facture</h1>
 
             {message && (
                 <div className={`p-4 mb-6 rounded ${message.type === 'success' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
@@ -80,11 +80,11 @@ const InvoiceSettings: React.FC = () => {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                 {/* Formulaire */}
-                <div className="bg-white p-6 rounded-lg shadow-md space-y-6">
-                    <h2 className="text-xl font-semibold mb-4 text-gray-700">Informations</h2>
+                <div className="bg-base-100 p-6 rounded-lg shadow-md space-y-6">
+                    <h2 className="text-xl font-semibold mb-4 text-base-content/90">Informations</h2>
                     
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Nom de l'entreprise</label>
+                        <label className="block text-sm font-medium text-base-content/90 mb-1">Nom de l'entreprise</label>
                         <input 
                             type="text" 
                             className="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500"
@@ -94,18 +94,18 @@ const InvoiceSettings: React.FC = () => {
                     </div>
 
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Adresse & Coordonnées</label>
+                        <label className="block text-sm font-medium text-base-content/90 mb-1">Adresse & Coordonnées</label>
                         <textarea 
                             className="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500 h-24"
                             value={settings.company_address}
                             onChange={(e) => setSettings({...settings, company_address: e.target.value})}
                             placeholder="Adresse, Téléphone, Email..."
                         />
-                        <p className="text-xs text-gray-500 mt-1">Les sauts de ligne seront respectés.</p>
+                        <p className="text-xs text-base-content/60 mt-1">Les sauts de ligne seront respectés.</p>
                     </div>
 
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Pied de page (Remerciements, etc.)</label>
+                        <label className="block text-sm font-medium text-base-content/90 mb-1">Pied de page (Remerciements, etc.)</label>
                         <textarea 
                             className="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500 h-20"
                             value={settings.footer_text}
@@ -114,7 +114,7 @@ const InvoiceSettings: React.FC = () => {
                     </div>
 
                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Couleur Principale</label>
+                        <label className="block text-sm font-medium text-base-content/90 mb-1">Couleur Principale</label>
                         <div className="flex items-center space-x-3">
                             <input 
                                 type="color" 
@@ -122,7 +122,7 @@ const InvoiceSettings: React.FC = () => {
                                 value={settings.primary_color}
                                 onChange={(e) => setSettings({...settings, primary_color: e.target.value})}
                             />
-                            <span className="text-gray-600 font-mono">{settings.primary_color}</span>
+                            <span className="text-base-content/80 font-mono">{settings.primary_color}</span>
                         </div>
                         </div>
 
@@ -135,8 +135,8 @@ const InvoiceSettings: React.FC = () => {
                                 onChange={(e) => setSettings({...settings, centralized_cash_register: e.target.checked})}
                             />
                             <div>
-                                <span className="block text-sm font-medium text-gray-700">Mode Caisse Centralisée</span>
-                                <span className="block text-xs text-gray-500">Si activé, seuls les utilisateurs autorisés peuvent encaisser. Les autres envoient les commandes en attente.</span>
+                                <span className="block text-sm font-medium text-base-content/90">Mode Caisse Centralisée</span>
+                                <span className="block text-xs text-base-content/60">Si activé, seuls les utilisateurs autorisés peuvent encaisser. Les autres envoient les commandes en attente.</span>
                             </div>
                         </label>
                     </div>
@@ -144,8 +144,8 @@ const InvoiceSettings: React.FC = () => {
 
                 {/* Layout Selector & Preview */}
                 <div className="space-y-6">
-                    <div className="bg-white p-6 rounded-lg shadow-md">
-                        <h2 className="text-xl font-semibold mb-4 text-gray-700">Mise en page de l'en-tête</h2>
+                    <div className="bg-base-100 p-6 rounded-lg shadow-md">
+                        <h2 className="text-xl font-semibold mb-4 text-base-content/90">Mise en page de l'en-tête</h2>
                         <div className="grid grid-cols-2 gap-4">
                             {[
                                 { id: 'split', label: 'Séparé', desc: 'Logo G / Info D' },
@@ -159,26 +159,26 @@ const InvoiceSettings: React.FC = () => {
                                     className={`p-4 border-2 rounded-lg text-left transition-all ${
                                         settings.header_layout === layout.id 
                                         ? 'border-blue-500 bg-blue-50' 
-                                        : 'border-gray-200 hover:border-blue-300'
+                                        : 'border-base-200 hover:border-blue-300'
                                     }`}
                                 >
-                                    <div className="font-semibold text-gray-800">{layout.label}</div>
-                                    <div className="text-xs text-gray-500">{layout.desc}</div>
+                                    <div className="font-semibold text-base-content">{layout.label}</div>
+                                    <div className="text-xs text-base-content/60">{layout.desc}</div>
                                 </button>
                             ))}
                         </div>
                     </div>
 
                     {/* Mini Preview Mockup */}
-                    <div className="bg-gray-100 p-4 rounded-lg border border-gray-300">
-                        <h3 className="text-xs uppercase font-bold text-gray-400 mb-2 text-center">Aperçu Simplifié (Entête)</h3>
-                        <div className="bg-white p-4 shadow-sm min-h-[150px] text-sm" style={{ fontFamily: 'Arial, sans-serif' }}>
+                    <div className="bg-base-200 p-4 rounded-lg border border-base-200">
+                        <h3 className="text-xs uppercase font-bold text-base-content/40 mb-2 text-center">Aperçu Simplifié (Entête)</h3>
+                        <div className="bg-base-100 p-4 shadow-sm min-h-[150px] text-sm" style={{ fontFamily: 'Arial, sans-serif' }}>
                             {/* Dynamic Layout Rendering for Preview */}
                             {settings.header_layout === 'split' && (
                                 <div className="flex justify-between items-start">
                                     <div className="w-1/2">
                                         <div style={{ color: settings.primary_color, fontSize: '1.2em', fontWeight: 'bold' }}>{settings.company_name || 'Nom Société'}</div>
-                                        <div className="text-xs text-gray-600 whitespace-pre-line">{settings.company_address || 'Adresse...'}</div>
+                                        <div className="text-xs text-base-content/80 whitespace-pre-line">{settings.company_address || 'Adresse...'}</div>
                                     </div>
                                     <div className="w-1/2 text-right">
                                         <div className="font-bold">FACTURE N°...</div>
@@ -190,7 +190,7 @@ const InvoiceSettings: React.FC = () => {
                             {settings.header_layout === 'left' && (
                                 <div className="text-left">
                                      <div style={{ color: settings.primary_color, fontSize: '1.2em', fontWeight: 'bold' }}>{settings.company_name || 'Nom Société'}</div>
-                                     <div className="text-xs text-gray-600 whitespace-pre-line mb-4">{settings.company_address || 'Adresse...'}</div>
+                                     <div className="text-xs text-base-content/80 whitespace-pre-line mb-4">{settings.company_address || 'Adresse...'}</div>
                                      <div className="font-bold">FACTURE N°...</div>
                                 </div>
                             )}
@@ -198,21 +198,21 @@ const InvoiceSettings: React.FC = () => {
                             {settings.header_layout === 'center' && (
                                 <div className="text-center">
                                      <div style={{ color: settings.primary_color, fontSize: '1.2em', fontWeight: 'bold' }}>{settings.company_name || 'Nom Société'}</div>
-                                     <div className="text-xs text-gray-600 whitespace-pre-line mb-4">{settings.company_address || 'Adresse...'}</div>
+                                     <div className="text-xs text-base-content/80 whitespace-pre-line mb-4">{settings.company_address || 'Adresse...'}</div>
                                      <div className="font-bold">FACTURE N°...</div>
                                 </div>
                             )}
                              {settings.header_layout === 'right' && (
                                 <div className="text-right">
                                      <div style={{ color: settings.primary_color, fontSize: '1.2em', fontWeight: 'bold' }}>{settings.company_name || 'Nom Société'}</div>
-                                     <div className="text-xs text-gray-600 whitespace-pre-line mb-4">{settings.company_address || 'Adresse...'}</div>
+                                     <div className="text-xs text-base-content/80 whitespace-pre-line mb-4">{settings.company_address || 'Adresse...'}</div>
                                      <div className="font-bold">FACTURE N°...</div>
                                 </div>
                             )}
                              <div className="mt-8 border-t pt-2">
                                 <div className="h-6 w-full opacity-20 mb-1" style={{ backgroundColor: settings.primary_color }}></div>
-                                <div className="h-2 w-full bg-gray-100 mb-1"></div>
-                                <div className="h-2 w-full bg-gray-100"></div>
+                                <div className="h-2 w-full bg-base-200 mb-1"></div>
+                                <div className="h-2 w-full bg-base-200"></div>
                              </div>
                         </div>
                     </div>

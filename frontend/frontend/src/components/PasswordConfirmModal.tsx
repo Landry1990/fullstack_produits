@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+﻿import { useState, useRef, useEffect } from 'react';
 import axios from 'axios';
 import { toast } from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
@@ -78,7 +78,7 @@ export default function PasswordConfirmModal({
     >
       <form onSubmit={handleSubmit} className="p-6 space-y-5">
         <div>
-          <label className="block text-xs font-bold uppercase tracking-wider text-gray-400 mb-2">
+          <label className="block text-xs font-bold uppercase tracking-wider text-base-content/40 mb-2">
             {t('password_confirm.label')}
           </label>
           <input

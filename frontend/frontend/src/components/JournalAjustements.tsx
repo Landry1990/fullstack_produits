@@ -1,4 +1,4 @@
-import { Toaster } from 'react-hot-toast';
+﻿import { Toaster } from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import { useAjustementsData } from '../hooks/useAjustementsData';
 import { AjustementsQuickStats } from './adjustments/AjustementsQuickStats';
@@ -21,7 +21,7 @@ export default function JournalAjustements() {
     } = useAjustementsData();
 
     return (
-        <div className="min-h-screen bg-[#F8FAFC] p-4 lg:p-8">
+        <div className="min-h-screen bg-base-200 p-4 lg:p-8">
             <Toaster position="top-right" />
             
             <div className="max-w-[1600px] mx-auto space-y-8">
@@ -52,7 +52,7 @@ export default function JournalAjustements() {
                 />
 
                 {/* Search & Filter Bar */}
-                <div className="bg-white rounded-[32px] shadow-sm border border-base-200 overflow-hidden">
+                <div className="bg-base-100 rounded-[32px] shadow-sm border border-base-200 overflow-hidden">
                     <AjustementsFilters 
                         searchQuery={filters.searchQuery}
                         onSearchChange={setFilters.setSearchQuery}
@@ -75,7 +75,7 @@ export default function JournalAjustements() {
                 </div>
 
                 {/* Table Section */}
-                <div className="bg-white rounded-[32px] shadow-sm border border-base-200 overflow-hidden flex flex-col min-h-[600px]">
+                <div className="bg-base-100 rounded-[32px] shadow-sm border border-base-200 overflow-hidden flex flex-col min-h-[600px]">
                     <AjustementsTable 
                         adjustments={adjustments}
                         loading={loading}

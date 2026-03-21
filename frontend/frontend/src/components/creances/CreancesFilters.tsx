@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { Search, RotateCcw, Printer, History, Users, Calendar } from 'lucide-react';
 import type { Client } from '../../types';
@@ -105,10 +105,10 @@ export const CreancesFilters: React.FC<CreancesFiltersProps> = ({
                             className={`flex items-center gap-1 p-1 bg-base-200/50 rounded-xl cursor-pointer transition-all h-10 ${showHistory ? 'ring-2 ring-primary/20' : ''}`}
                             onClick={() => onHistoryToggle(!showHistory)}
                         >
-                            <div className={`flex-1 text-center py-1.5 rounded-lg text-[10px] font-black uppercase transition-all ${!showHistory ? 'bg-white shadow-sm text-primary' : 'text-base-content/40 hover:text-base-content/60'}`}>
+                            <div className={`flex-1 text-center py-1.5 rounded-lg text-[10px] font-black uppercase transition-all ${!showHistory ? 'bg-base-100 shadow-sm text-primary' : 'text-base-content/40 hover:text-base-content/60'}`}>
                                 {t('creances:invoice_list.pending_badge')}
                             </div>
-                            <div className={`flex-1 text-center py-1.5 rounded-lg text-[10px] font-black uppercase transition-all ${showHistory ? 'bg-white shadow-sm text-primary' : 'text-base-content/40 hover:text-base-content/60'}`}>
+                            <div className={`flex-1 text-center py-1.5 rounded-lg text-[10px] font-black uppercase transition-all ${showHistory ? 'bg-base-100 shadow-sm text-primary' : 'text-base-content/40 hover:text-base-content/60'}`}>
                                 {t('creances:history_toggle')}
                             </div>
                         </div>

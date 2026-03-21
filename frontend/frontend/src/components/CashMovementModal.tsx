@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+﻿import { useState, useMemo } from 'react'
 import axios from 'axios'
 import { useTranslation } from 'react-i18next'
 import { normalizeNumberInput } from '../utils/formatters'
@@ -101,7 +101,7 @@ export default function CashMovementModal({ isOpen, onClose, onSuccess }: CashMo
         </div>
 
         <div>
-          <label className="block text-xs font-bold uppercase tracking-wider text-gray-400 mb-2">{t('movement_modal.amount')}</label>
+          <label className="block text-xs font-bold uppercase tracking-wider text-base-content/40 mb-2">{t('movement_modal.amount')}</label>
           <input 
             type="number" 
             placeholder={t('movement_modal.amount_placeholder')} 
@@ -114,7 +114,7 @@ export default function CashMovementModal({ isOpen, onClose, onSuccess }: CashMo
         </div>
 
         <div>
-          <label className="block text-xs font-bold uppercase tracking-wider text-gray-400 mb-2">{t('movement_modal.reason')}</label>
+          <label className="block text-xs font-bold uppercase tracking-wider text-base-content/40 mb-2">{t('movement_modal.reason')}</label>
           <input 
             type="text" 
             placeholder={t('movement_modal.reason_placeholder')} 
@@ -126,7 +126,7 @@ export default function CashMovementModal({ isOpen, onClose, onSuccess }: CashMo
         </div>
 
         <div>
-          <label className="block text-xs font-bold uppercase tracking-wider text-gray-400 mb-2">{t('movement_modal.description')}</label>
+          <label className="block text-xs font-bold uppercase tracking-wider text-base-content/40 mb-2">{t('movement_modal.description')}</label>
           <textarea 
             className="textarea textarea-bordered w-full h-24 rounded-xl resize-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all" 
             placeholder={t('movement_modal.description_placeholder')}

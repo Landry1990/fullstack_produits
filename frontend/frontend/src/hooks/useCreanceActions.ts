@@ -3,8 +3,6 @@ import { toast } from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import type { Creance } from '../types';
 import { useSudo } from './useSudo';
-import { usePharmacySettings } from './usePharmacySettings';
-import { formatCurrency } from '../utils/formatters';
 import creanceService from '../services/creanceService';
 
 interface UseCreanceActionsProps {
@@ -21,7 +19,6 @@ export const useCreanceActions = ({
     setSelectedIds
 }: UseCreanceActionsProps) => {
     const { t } = useTranslation(['creances', 'common']);
-    const { settings: pharmacySettings } = usePharmacySettings();
     const { sudoState, requireSudo, closeSudo } = useSudo();
 
     // Modal states
@@ -167,111 +164,57 @@ export const useCreanceActions = ({
         requireSudo(performBulkPayment);
     };
 
-    const handleImprimerReleve = useCallback(async (selectedClient: string, dateDebut: string, dateFin: string) => {
+    const handleImprimerReleve = useCallback(async (selectedClient: string, _dateDebut: string, _dateFin: string) => {
         if (!selectedClient) {
             toast.error(t('creances:toasts.select_client_error'));
             return;
         }
 
         try {
-            const data = await creanceService.getReleve({
-                client_id: selectedClient,
-                date_debut: dateDebut || undefined,
-                date_fin: dateFin || undefined
-            });
+            const templateNode = document.getElementById('hidden-releve-template');
+            if (!templateNode) {
+                toast.error("Erreur de préparation du relevé.");
+                return;
+            }
 
-            // Simple HTML printing fallback as used in original code
-            const win = window.open('', '', 'height=800,width=600');
+            // Get all stylesheets to ensure Tailwind classes are properly applied
+            const styleTags = Array.from(document.querySelectorAll('style, link[rel="stylesheet"]'))
+                .map(node => node.outerHTML)
+                .join('\n');
+
+            const win = window.open('', '', 'height=800,width=800');
             if (win) {
-                const content = `
-          <div style="font-family: Arial, sans-serif; padding: 20px; max-width: 800px; margin: 0 auto;">
-            <div style="text-align: center; margin-bottom: 30px; border-bottom: 2px solid #333; padding-bottom: 20px;">
-              <h1 style="margin: 0; font-size: 24px;">${t('creances:print_view.title')}</h1>
-              <p style="margin: 5px 0;">${pharmacySettings.pharmacy_name}</p>
-              <p style="margin: 5px 0; font-size: 12px;">${pharmacySettings.city || ''}, ${pharmacySettings.country || ''}</p>
-              ${pharmacySettings.niu ? `<p style="margin: 5px 0; font-size: 12px;">NIU: ${pharmacySettings.niu}</p>` : ''}
-              ${pharmacySettings.registre_commerce ? `<p style="margin: 5px 0; font-size: 12px;">RC: ${pharmacySettings.registre_commerce}</p>` : ''}
-            </div>
-
-            <div style="margin-bottom: 20px;">
-              <h3 style="margin: 10px 0;">${t('creances:print_view.client')}</h3>
-              <p style="margin: 5px 0;"><strong>${t('creances:print_view.name')}</strong> ${data.client.name}</p>
-              <p style="margin: 5px 0;"><strong>${t('creances:print_view.address')}</strong> ${data.client.address || ''}</p>
-              <p style="margin: 5px 0;"><strong>${t('creances:print_view.phone')}</strong> ${data.client.phone || ''}</p>
-              <p style="margin: 5px 0;"><strong>${t('creances:print_view.email')}</strong> ${data.client.email || ''}</p>
-            </div>
-
-            ${data.periode.date_debut || data.periode.date_fin ? `
-              <div style="margin-bottom: 20px;">
-                <h3 style="margin: 10px 0;">${t('creances:print_view.period')}</h3>
-                ${data.periode.date_debut ? `<p style="margin: 5px 0;"><strong>${t('creances:print_view.from')}</strong> ${new Date(data.periode.date_debut).toLocaleDateString(t('common:locale'))}</p>` : ''}
-                ${data.periode.date_fin ? `<p style="margin: 5px 0;"><strong>${t('creances:print_view.to')}</strong> ${new Date(data.periode.date_fin).toLocaleDateString(t('common:locale'))}</p>` : ''}
-              </div>
-            ` : ''}
-
-            <table style="width: 100%; border-collapse: collapse; margin-top: 20px; font-size: 10px;">
-              <thead>
-                <tr style="background-color: #f0f0f0;">
-                  <th style="border: 1px solid #ddd; padding: 4px; text-align: left;">${t('creances:print_view.date_header')}</th>
-                  <th style="border: 1px solid #ddd; padding: 4px; text-align: left;">${t('creances:print_view.invoice_header')}</th>
-                  <th style="border: 1px solid #ddd; padding: 4px; text-align: left;">${t('creances:print_view.beneficiary_header')}</th>
-                  <th style="border: 1px solid #ddd; padding: 4px; text-align: right;">${t('creances:print_view.total_header')}</th>
-                  <th style="border: 1px solid #ddd; padding: 4px; text-align: right;">${t('creances:print_view.paid_header')}</th>
-                  <th style="border: 1px solid #ddd; padding: 4px; text-align: right;">${t('creances:print_view.remaining_header')}</th>
-                </tr>
-              </thead>
-              <tbody>
-                ${data.creances.map((c: Creance) => `
-                  <tr>
-                    <td style="border: 1px solid #ddd; padding: 4px;">${new Date(c.date).toLocaleDateString(t('common:locale'))}</td>
-                    <td style="border: 1px solid #ddd; padding: 4px;">${c.numero_facture || '-'}</td>
-                    <td style="border: 1px solid #ddd; padding: 4px;">${c.ayant_droit || '-'}</td>
-                    <td style="border: 1px solid #ddd; padding: 4px; text-align: right;">${formatCurrency(parseFloat(c.total_ttc))} ${t('common:currency')}</td>
-                    <td style="border: 1px solid #ddd; padding: 4px; text-align: right;">${formatCurrency(parseFloat(c.montant_paye))} ${t('common:currency')}</td>
-                    <td style="border: 1px solid #ddd; padding: 4px; text-align: right;">${formatCurrency(parseFloat(c.reste_a_payer))} ${t('common:currency')}</td>
-                  </tr>
-                `).join('')}
-              </tbody>
-              <tfoot>
-                <tr style="background-color: #f0f0f0; font-weight: bold;">
-                  <td colspan="3" style="border: 1px solid #ddd; padding: 4px; text-align: right;">${t('creances:print_view.totals_label')}</td>
-                  <td style="border: 1px solid #ddd; padding: 4px; text-align: right;">${formatCurrency(parseFloat(data.totaux.total_factures))} ${t('common:currency')}</td>
-                  <td style="border: 1px solid #ddd; padding: 4px; text-align: right;">${formatCurrency(parseFloat(data.totaux.total_paye))} ${t('common:currency')}</td>
-                  <td style="border: 1px solid #ddd; padding: 4px; text-align: right;">${formatCurrency(parseFloat(data.totaux.total_reste))} ${t('common:currency')}</td>
-                </tr>
-              </tfoot>
-            </table>
-
-            <div style="margin-top: 40px; display: flex; justify-content: space-between;">
-              <div style="text-align: center;">
-                <p style="margin-bottom: 60px;">${t('creances:print_view.client_signature')}</p>
-                <p>_____________________</p>
-              </div>
-              <div style="text-align: center;">
-                <p style="margin-bottom: 60px;">${t('creances:print_view.pharmacy_signature')}</p>
-                <p>_____________________</p>
-              </div>
-            </div>
-
-            <div style="text-align: center; margin-top: 30px; font-size: 12px; color: #666;">
-              <p>${t('creances:print_view.generated_on')} ${new Date().toLocaleString(t('common:locale'))}</p>
-            </div>
-          </div>
-        `;
-
-                win.document.write('<html><head><title>Relevé de Créances</title>');
-                win.document.write('<style>@media print { body { margin: 0; } }</style>');
-                win.document.write('</head><body>');
-                win.document.write(content);
-                win.document.write('</body></html>');
+                win.document.write(`<!DOCTYPE html>
+<html>
+<head>
+  <title>Relevé de Compte</title>
+  ${styleTags}
+  <style>
+    @media print {
+      @page { margin: 10mm; size: A4 portrait; }
+      body { margin: 0; background: white !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    }
+    body { background: white; margin: 0; display: flex; justify-content: center; padding: 20px; }
+  </style>
+</head>
+<body class="bg-white text-black print:p-0">
+  ${templateNode.innerHTML}
+</body>
+</html>`);
                 win.document.close();
-                win.print();
+                win.focus();
+                
+                // Wait for styles and fonts to fully load
+                setTimeout(() => {
+                    win.print();
+                    win.close();
+                }, 500);
             }
         } catch (err) {
             console.error('Erreur impression relevé:', err);
             toast.error(t('creances:toasts.error_print_statement'));
         }
-    }, [pharmacySettings]);
+    }, [t]);
 
     return {
         selectedCreance,

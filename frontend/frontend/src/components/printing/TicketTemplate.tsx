@@ -63,7 +63,8 @@ export const TicketTemplate = forwardRef<HTMLDivElement, TicketTemplateProps>(({
   return (
     <div 
       ref={ref} 
-      className="p-1 bg-white text-black font-sans text-[10px] leading-tight" 
+      data-theme="light"
+      className="p-1 bg-base-100 text-base-content font-sans text-[10px] leading-tight" 
       style={{ 
         width: `${ticketWidth}mm`, 
         maxWidth: `${ticketWidth}mm`,

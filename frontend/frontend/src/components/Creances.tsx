@@ -11,6 +11,8 @@ import { CreancePaiementModal } from './creances/modals/CreancePaiementModal';
 import { CreanceDetailsModal } from './creances/modals/CreanceDetailsModal';
 import { BulkPaiementModal } from './creances/modals/BulkPaiementModal';
 import SudoValidationModal from './common/SudoValidationModal';
+import { ReleveTemplate } from './printing/ReleveTemplate';
+import { usePharmacySettings } from '../hooks/usePharmacySettings';
 
 import { Wallet, DollarSign } from 'lucide-react';
 import { normalizeNumberInput, formatCurrency } from '../utils/formatters';
@@ -18,6 +20,7 @@ import { normalizeNumberInput, formatCurrency } from '../utils/formatters';
 export default function Creances() {
     const { t } = useTranslation(['creances', 'common']);
     const data = useCreancesData();
+    const { settings: pharmacySettings } = usePharmacySettings();
     
     const apiBaseUrl = useMemo(() => {
         const baseUrl = import.meta.env.VITE_API_BASE_URL ?? '';
@@ -47,7 +50,7 @@ export default function Creances() {
             {/* Header Area */}
             <div className="flex flex-col gap-6">
                 <div className="bg-base-100 rounded-2xl shadow-sm border border-base-300 flex flex-col">
-                    <div className="p-6 border-b border-base-200 flex justify-between items-center bg-white/50">
+                    <div className="p-6 border-b border-base-200 flex justify-between items-center bg-base-100/50">
                         <div>
                             <div className="flex items-center gap-3">
                                 <div className="p-2 bg-primary/10 text-primary rounded-xl">
@@ -190,6 +193,19 @@ export default function Creances() {
                 title={actions.modals.sudoState.title}
                 message={actions.modals.sudoState.message}
             />
+
+            <div id="hidden-releve-template" className="hidden">
+                {data.filters.selectedClient && (
+                    <ReleveTemplate 
+                        client={data.clients.find(c => c.id.toString() === data.filters.selectedClient) || null}
+                        creances={data.filteredCreances}
+                        settings={pharmacySettings}
+                        dateDebut={data.filters.dateDebut}
+                        dateFin={data.filters.dateFin}
+                        totals={data.totals}
+                    />
+                )}
+            </div>
         </div>
     );
 }

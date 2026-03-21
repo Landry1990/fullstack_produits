@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+﻿import React, { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { X, Calendar, User, CreditCard, Smartphone, CheckCircle2 } from 'lucide-react';
 import type { Facture } from '../../../types';
@@ -64,12 +64,12 @@ export const ProductDetailsModal: React.FC<ProductDetailsModalProps> = ({
 
     return (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-in fade-in duration-200">
-            <div className="bg-white rounded-xl shadow-2xl w-full max-w-4xl max-h-[90vh] flex flex-col overflow-hidden animate-in zoom-in-95 duration-200">
+            <div className="bg-base-100 rounded-xl shadow-2xl w-full max-w-4xl max-h-[90vh] flex flex-col overflow-hidden animate-in zoom-in-95 duration-200">
                 {/* Header */}
                 <div className="border-b border-gray-100 p-6 flex justify-between items-center bg-gradient-to-r from-gray-50 to-white">
                     <div>
                         <div className="flex items-center gap-3 mb-1">
-                            <h2 className="text-xl font-bold text-gray-900">
+                            <h2 className="text-xl font-bold text-base-content">
                                 {t('invoice_details')}
                             </h2>
                             <span className={`px-2.5 py-0.5 rounded-full text-xs font-semibold ${
@@ -82,9 +82,9 @@ export const ProductDetailsModal: React.FC<ProductDetailsModalProps> = ({
                                 {facture.status_display}
                             </span>
                         </div>
-                        <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-gray-500">
+                        <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-base-content/60">
                             <span className="flex items-center gap-1.5 shrink-0">
-                                <span className="font-mono font-medium text-gray-700">#{facture.numero_facture || facture.id}</span>
+                                <span className="font-mono font-medium text-base-content/90">#{facture.numero_facture || facture.id}</span>
                             </span>
                             <span className="w-1 h-1 bg-gray-300 rounded-full hidden sm:block" />
                             <span className="flex items-center gap-1.5 shrink-0">
@@ -94,15 +94,15 @@ export const ProductDetailsModal: React.FC<ProductDetailsModalProps> = ({
                             <span className="w-1 h-1 bg-gray-300 rounded-full hidden sm:block" />
                             <span className="flex items-center gap-1.5 min-w-0">
                                 <User className="w-3.5 h-3.5 shrink-0" />
-                                <span className="truncate max-w-[200px] sm:max-w-none font-medium text-gray-700">
+                                <span className="truncate max-w-[200px] sm:max-w-none font-medium text-base-content/90">
                                     {facture.client_name || facture.client_name_override || t('common:passerby_client')}
                                 </span>
                             </span>
                             <span className="w-1 h-1 bg-gray-300 rounded-full hidden sm:block" />
                             <span className="flex items-center gap-1.5 shrink-0" title={t('table.operator')}>
                                 <User className="w-3.5 h-3.5 text-blue-500" />
-                                <span className="text-gray-500 text-xs">{t('table.operator')} :</span>
-                                <span className="text-gray-600 font-medium">{facture.created_by_name || '-'}</span>
+                                <span className="text-base-content/60 text-xs">{t('table.operator')} :</span>
+                                <span className="text-base-content/80 font-medium">{facture.created_by_name || '-'}</span>
                             </span>
                             {facture.paiements && facture.paiements.length > 0 && facture.paiements[0].user_details ? (
                                 <>
@@ -111,8 +111,8 @@ export const ProductDetailsModal: React.FC<ProductDetailsModalProps> = ({
                                         <div className="w-3.5 h-3.5 rounded-full bg-green-100 flex items-center justify-center">
                                             <User className="w-2.5 h-2.5 text-green-600" />
                                         </div>
-                                        <span className="text-gray-500 text-xs">Caissier :</span>
-                                        <span className="text-gray-600 font-medium">{facture.paiements[0].user_details.full_name || facture.paiements[0].user_details.username}</span>
+                                        <span className="text-base-content/60 text-xs">Caissier :</span>
+                                        <span className="text-base-content/80 font-medium">{facture.paiements[0].user_details.full_name || facture.paiements[0].user_details.username}</span>
                                     </span>
                                 </>
                             ) : facture.validated_by_name && (
@@ -122,8 +122,8 @@ export const ProductDetailsModal: React.FC<ProductDetailsModalProps> = ({
                                         <div className="w-3.5 h-3.5 rounded-full bg-green-100 flex items-center justify-center">
                                             <User className="w-2.5 h-2.5 text-green-600" />
                                         </div>
-                                        <span className="text-gray-500 text-xs">Caissier :</span>
-                                        <span className="text-gray-600 font-medium">{facture.validated_by_name}</span>
+                                        <span className="text-base-content/60 text-xs">Caissier :</span>
+                                        <span className="text-base-content/80 font-medium">{facture.validated_by_name}</span>
                                     </span>
                                 </>
                             )}
@@ -134,18 +134,18 @@ export const ProductDetailsModal: React.FC<ProductDetailsModalProps> = ({
                                         <div className="w-3.5 h-3.5 rounded-full bg-red-100 flex items-center justify-center">
                                             <User className="w-2.5 h-2.5 text-red-600" />
                                         </div>
-                                        <span className="text-gray-600 font-medium">{facture.cancelled_by_name}</span>
+                                        <span className="text-base-content/80 font-medium">{facture.cancelled_by_name}</span>
                                     </span>
                                 </>
                             )}
                         </div>
                         {facture.paiements && facture.paiements.length > 0 && (
-                            <div className="mt-2 flex items-center gap-2 text-xs text-gray-500">
+                            <div className="mt-2 flex items-center gap-2 text-xs text-base-content/60">
                                 <CreditCard className="w-3.5 h-3.5" />
                                 <span>Règlements:</span>
                                 <div className="flex gap-2">
                                     {facture.paiements.map((p, idx) => (
-                                        <span key={idx} className="bg-gray-100 px-1.5 py-0.5 rounded text-gray-700 border border-gray-200">
+                                        <span key={idx} className="bg-base-200 px-1.5 py-0.5 rounded text-base-content/90 border border-base-200">
                                             {p.mode_paiement_display} ({formatCurrency(parseFloat(p.montant))})
                                         </span>
                                     ))}
@@ -155,7 +155,7 @@ export const ProductDetailsModal: React.FC<ProductDetailsModalProps> = ({
                     </div>
                     <button
                         onClick={onClose}
-                        className="p-2 hover:bg-gray-100 rounded-full transition-colors text-gray-400 hover:text-gray-600"
+                        className="p-2 hover:bg-base-200 rounded-full transition-colors text-base-content/40 hover:text-base-content/80"
                     >
                         <X className="w-6 h-6" />
                     </button>
@@ -164,13 +164,13 @@ export const ProductDetailsModal: React.FC<ProductDetailsModalProps> = ({
                 {/* Content */}
                 <div className="flex-1 overflow-auto p-0">
                     {loading ? (
-                        <div className="flex justify-center items-center h-48 text-gray-500">
+                        <div className="flex justify-center items-center h-48 text-base-content/60">
                             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mr-3"></div>
                             {t('common:loading')}
                         </div>
                     ) : (
                         <table className="w-full text-left border-collapse">
-                            <thead className="bg-gray-50 sticky top-0 z-10 text-xs uppercase text-gray-500 font-semibold tracking-wider">
+                            <thead className="bg-base-200/50 sticky top-0 z-10 text-xs uppercase text-base-content/60 font-semibold tracking-wider">
                                 <tr>
                                     <th className="px-6 py-4 border-b border-gray-100">{t('fields.product')}</th>
                                     <th className="px-6 py-4 text-center border-b border-gray-100">{t('fields.quantity')}</th>
@@ -190,7 +190,7 @@ export const ProductDetailsModal: React.FC<ProductDetailsModalProps> = ({
                                         <tr key={prod.id} className="hover:bg-gray-50/50 transition-colors group">
                                             <td className="px-6 py-3">
                                                 <div className="flex items-center gap-2">
-                                                    <div className="font-medium text-gray-900 uppercase">
+                                                    <div className="font-medium text-base-content uppercase">
                                                         {prod.produit_nom}
                                                     </div>
                                                     {prod.is_chronic && (
@@ -212,21 +212,21 @@ export const ProductDetailsModal: React.FC<ProductDetailsModalProps> = ({
                                                         </span>
                                                     )}
                                                     {prod.treatment_duration_days && (
-                                                        <span className="text-[10px] text-gray-500 bg-gray-100 px-1.5 py-0.5 rounded">
+                                                        <span className="text-[10px] text-base-content/60 bg-base-200 px-1.5 py-0.5 rounded">
                                                             Durée: {prod.treatment_duration_days} jours
                                                         </span>
                                                     )}
                                                 </div>
                                             </td>
                                             <td className="px-6 py-3 text-center">
-                                                <span className="font-mono bg-gray-100 px-2 py-1 rounded text-gray-700 font-medium">
+                                                <span className="font-mono bg-base-200 px-2 py-1 rounded text-base-content/90 font-medium">
                                                     {prod.quantity}
                                                 </span>
                                             </td>
-                                             <td className="px-6 py-3 text-right text-gray-600 font-mono">
+                                             <td className="px-6 py-3 text-right text-base-content/80 font-mono">
                                                 {formatCurrency(puNet)}
                                             </td>
-                                            <td className="px-6 py-3 text-right font-medium font-mono text-gray-900 group-hover:text-blue-600 transition-colors">
+                                            <td className="px-6 py-3 text-right font-medium font-mono text-base-content group-hover:text-blue-600 transition-colors">
                                                 {formatCurrency(totalLigne)}
                                             </td>
                                             <td className="px-6 py-3 text-center">
@@ -255,16 +255,16 @@ export const ProductDetailsModal: React.FC<ProductDetailsModalProps> = ({
                 </div>
 
                 {/* Footer Totals */}
-                <div className="bg-gray-50 border-t border-gray-200 p-6">
+                <div className="bg-base-200/50 border-t border-base-200 p-6">
                     <div className="flex justify-end">
                         <div className="w-80 space-y-2">
-                             <div className="grid grid-cols-[1fr,auto] items-baseline text-sm text-gray-600 px-2">
+                             <div className="grid grid-cols-[1fr,auto] items-baseline text-sm text-base-content/80 px-2">
                                 <span>{t('fields.subtotal_ht')}</span>
-                                <span className="font-mono font-bold text-gray-900">{formatCurrency(totals.totalHt)}</span>
+                                <span className="font-mono font-bold text-base-content">{formatCurrency(totals.totalHt)}</span>
                             </div>
-                             <div className="grid grid-cols-[1fr,auto] items-baseline text-sm text-gray-600 px-2">
+                             <div className="grid grid-cols-[1fr,auto] items-baseline text-sm text-base-content/80 px-2">
                                 <span>{t('fields.vat')}</span>
-                                <span className="font-mono font-bold text-gray-900">{formatCurrency(totals.totalTva)}</span>
+                                <span className="font-mono font-bold text-base-content">{formatCurrency(totals.totalTva)}</span>
                             </div>
                             {totals.remise > 0 && (
                                  <div className="grid grid-cols-[1fr,auto] items-baseline text-sm text-orange-600 font-medium bg-orange-50 px-2 py-1.5 rounded-md border border-orange-100">
@@ -272,8 +272,8 @@ export const ProductDetailsModal: React.FC<ProductDetailsModalProps> = ({
                                     <span className="font-mono font-bold">-{formatCurrency(totals.remise)}</span>
                                 </div>
                             )}
-                             <div className="grid grid-cols-[1fr,auto] items-baseline font-bold text-gray-900 border-t border-gray-200 pt-2 mt-2 px-2">
-                                <span className="uppercase tracking-tight text-[10px] text-gray-500">{t('fields.total_ttc')}</span>
+                             <div className="grid grid-cols-[1fr,auto] items-baseline font-bold text-base-content border-t border-base-200 pt-2 mt-2 px-2">
+                                <span className="uppercase tracking-tight text-[10px] text-base-content/60">{t('fields.total_ttc')}</span>
                                 <span className="font-mono text-lg text-blue-600 tracking-tight">
                                     {formatCurrency(totals.totalTtc)}
                                 </span>

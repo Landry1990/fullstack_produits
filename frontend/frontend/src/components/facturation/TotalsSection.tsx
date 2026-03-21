@@ -1,4 +1,4 @@
-import { useTranslation } from 'react-i18next'
+﻿import { useTranslation } from 'react-i18next'
 import { formatCurrency } from '../../utils/formatters'
 
 interface TotalsSectionProps {
@@ -34,7 +34,7 @@ export default function TotalsSection({
   const { t } = useTranslation(['facturation', 'common'])
 
   return (
-    <div className="bg-white border-t border-base-200 p-3 md:p-4 shadow-sm">
+    <div className="bg-base-100 border-t border-base-200 p-3 md:p-4 shadow-sm">
       <div className="flex flex-col gap-4">
         {/* Ligne principale des totaux */}
         <div className="flex flex-col sm:flex-row flex-wrap gap-3 sm:gap-6 md:gap-8 items-end justify-end text-sm">
@@ -61,7 +61,7 @@ export default function TotalsSection({
                 type="text"
                 value={remiseGlobale}
                 onChange={(e) => setRemiseGlobale(e.target.value)}
-                className="input input-xs sm:input-sm input-bordered w-16 sm:w-20 text-right focus:bg-white bg-base-50 transition-colors h-7 sm:h-8"
+                className="input input-xs sm:input-sm input-bordered w-16 sm:w-20 text-right focus:bg-base-100 bg-base-50 transition-colors h-7 sm:h-8"
                 placeholder={remiseMode === 'taux' ? '0%' : '0 F'}
               />
                 <span className="text-error font-medium whitespace-nowrap text-xs sm:text-sm">-{formatCurrency(Math.round(remiseMontant))}</span>

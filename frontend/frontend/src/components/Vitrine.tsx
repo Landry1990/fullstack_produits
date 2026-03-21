@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+﻿import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import axios from 'axios';
@@ -48,7 +48,7 @@ function GestionVitrine({ products, isLoading, searchTerm, setSearchTerm, showPu
              {/* Filters */}
             <div className="flex flex-col lg:flex-row gap-4 items-stretch lg:items-center bg-base-100 p-4 rounded-lg shadow">
                 <div className="relative flex-1">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-base-content/40" />
                     <input 
                         type="text" 
                         placeholder={t('gestion.search_placeholder')}
@@ -132,7 +132,7 @@ function GestionVitrine({ products, isLoading, searchTerm, setSearchTerm, showPu
                     {isLoading ? (
                     <tr><td colSpan={7} className="text-center p-8"><span className="loading loading-spinner loading-lg"></span></td></tr>
                     ) : products.length === 0 ? (
-                        <tr><td colSpan={7} className="text-center p-8 text-gray-500">{t('gestion.table.empty')}</td></tr>
+                        <tr><td colSpan={7} className="text-center p-8 text-base-content/60">{t('gestion.table.empty')}</td></tr>
                     ) : (
                         products.map((product: Product) => (
                             <tr key={product.id} className={`hover:bg-base-50 ${selectedIds.includes(product.id) ? 'bg-base-200' : ''}`}>
@@ -146,7 +146,7 @@ function GestionVitrine({ products, isLoading, searchTerm, setSearchTerm, showPu
                                 </td>
                                 <td>
                                     <div className="font-bold whitespace-nowrap">{product.name}</div>
-                                    <div className="text-xs text-gray-400">{product.cip1}</div>
+                                    <div className="text-xs text-base-content/40">{product.cip1}</div>
                                 </td>
                                 <td>
                                     <span className="badge badge-ghost badge-sm whitespace-nowrap">{product.rayon_name || t('gestion.table.uncategorized')}</span>
@@ -333,7 +333,7 @@ function SimulateurClient() {
 
                         <div className="space-y-4 overflow-y-auto max-h-[300px] lg:max-h-[500px]">
                             {cart.length === 0 ? (
-                                <div className="text-center text-gray-400 py-10">
+                                <div className="text-center text-base-content/40 py-10">
                                     <ShoppingCart className="w-16 h-16 mx-auto mb-2 opacity-20" />
                                     {t('simulateur.empty_list')}
                                 </div>
@@ -480,7 +480,7 @@ export default function Vitrine() {
             <Globe className="w-6 h-6 lg:w-8 lg:h-8 text-blue-500" />
             {t('title')}
           </h1>
-          <p className="text-sm lg:text-base text-gray-500 mt-1">{t('subtitle')}</p>
+          <p className="text-sm lg:text-base text-base-content/60 mt-1">{t('subtitle')}</p>
         </div>
         
         <div className="flex flex-col sm:flex-row items-stretch lg:items-center gap-4 lg:gap-6">
@@ -489,7 +489,7 @@ export default function Vitrine() {
                   <Cloud className="w-5 h-5" />
                 </div>
                 <div>
-                  <div className="text-xs text-gray-500 font-medium uppercase tracking-wider">{t('online_count')}</div>
+                  <div className="text-xs text-base-content/60 font-medium uppercase tracking-wider">{t('online_count')}</div>
                   <div className="text-xl font-bold leading-none">
                       {formatNumber(publicCount)}
                   </div>

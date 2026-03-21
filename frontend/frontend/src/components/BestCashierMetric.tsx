@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useTranslation } from 'react-i18next';
 import { formatCurrency } from '../utils/formatters';
@@ -150,7 +150,7 @@ const BestCashierMetric: React.FC<BestCashierMetricProps> = ({ month, year }) =>
                                         {index === 0 ? (
                                             <div className="badge bg-yellow-400 border-none text-yellow-900 font-black px-3 h-7 italic shadow-sm">{t('performance.badges.1st')}</div>
                                         ) : index === 1 ? (
-                                            <div className="badge bg-slate-300 border-none text-slate-700 font-black px-3 h-7 italic shadow-sm">{t('performance.badges.2nd')}</div>
+                                            <div className="badge bg-slate-300 border-none text-base-content/90 font-black px-3 h-7 italic shadow-sm">{t('performance.badges.2nd')}</div>
                                         ) : index === 2 ? (
                                              <div className="badge bg-amber-600 border-none text-amber-50 font-black px-3 h-7 italic shadow-sm">{t('performance.badges.3rd')}</div>
                                         ) : (

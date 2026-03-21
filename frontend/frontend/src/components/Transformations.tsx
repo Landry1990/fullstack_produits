@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useMemo } from 'react';
+﻿import React, { useState, useEffect, useRef, useMemo } from 'react';
 import axios from 'axios';
 import { toast } from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
@@ -84,7 +84,7 @@ const ProductAutocomplete: React.FC<ProductAutocompleteProps> = ({
   if (selected) {
     return (
       <div>
-        <label className="block text-xs font-bold uppercase tracking-wider text-gray-400 mb-2 flex items-center gap-2">
+        <label className="block text-xs font-bold uppercase tracking-wider text-base-content/40 mb-2 flex items-center gap-2">
           {icon} {label}
         </label>
         <div className="flex items-center gap-3 bg-gradient-to-r from-primary/5 to-primary/10 border-2 border-primary/30 rounded-xl px-4 py-3 transition-all">
@@ -92,8 +92,8 @@ const ProductAutocomplete: React.FC<ProductAutocompleteProps> = ({
             {selected.name.charAt(0).toUpperCase()}
           </div>
           <div className="flex-1 min-w-0">
-            <div className="font-bold text-gray-800 truncate">{selected.name}</div>
-            <div className="text-[11px] text-gray-500 flex gap-3">
+            <div className="font-bold text-base-content truncate">{selected.name}</div>
+            <div className="text-[11px] text-base-content/60 flex gap-3">
               <span>{t('common:cip')}: {selected.cip1 || t('common:not_available')}</span>
               <span>{t('common:stock')}: <b className={selected.stock <= 0 ? 'text-error' : 'text-success'}>{formatNumber(selected.stock)}</b></span>
             </div>
@@ -101,7 +101,7 @@ const ProductAutocomplete: React.FC<ProductAutocompleteProps> = ({
           <button
             type="button"
             onClick={onClear}
-            className="btn btn-ghost btn-circle btn-sm text-gray-400 hover:text-error hover:bg-error/10 transition-colors"
+            className="btn btn-ghost btn-circle btn-sm text-base-content/40 hover:text-error hover:bg-error/10 transition-colors"
           >
             <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
               <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
@@ -116,11 +116,11 @@ const ProductAutocomplete: React.FC<ProductAutocompleteProps> = ({
 
   return (
     <div ref={containerRef}>
-      <label className="block text-xs font-bold uppercase tracking-wider text-gray-400 mb-2 flex items-center gap-2">
+      <label className="block text-xs font-bold uppercase tracking-wider text-base-content/40 mb-2 flex items-center gap-2">
         {icon} {label}
       </label>
       <div className="relative">
-        <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none">
+        <div className="absolute left-3 top-1/2 -translate-y-1/2 text-base-content/40 pointer-events-none">
           <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
           </svg>
@@ -147,9 +147,9 @@ const ProductAutocomplete: React.FC<ProductAutocompleteProps> = ({
 
         {/* Dropdown résultats */}
         {showResults && (
-          <div className="absolute z-50 left-0 right-0 mt-1 bg-white border border-gray-200 rounded-xl shadow-2xl overflow-hidden max-h-60 overflow-y-auto">
+          <div className="absolute z-50 left-0 right-0 mt-1 bg-base-100 border border-base-200 rounded-xl shadow-2xl overflow-hidden max-h-60 overflow-y-auto">
             {produits.length === 0 && !loading && (
-              <div className="p-4 text-center text-gray-400 italic text-sm">
+              <div className="p-4 text-center text-base-content/40 italic text-sm">
                 {t('common:no_results_found')}
               </div>
             )}
@@ -164,7 +164,7 @@ const ProductAutocomplete: React.FC<ProductAutocompleteProps> = ({
                   style={itemProps.style}
                   onClick={() => handleSelect(p)}
                 >
-                  <div className="w-8 h-8 rounded-lg bg-gray-100 group-hover:bg-primary/10 flex items-center justify-center text-gray-500 group-hover:text-primary font-bold text-xs transition-colors"
+                  <div className="w-8 h-8 rounded-lg bg-base-200 group-hover:bg-primary/10 flex items-center justify-center text-base-content/60 group-hover:text-primary font-bold text-xs transition-colors"
                     style={itemProps.style.backgroundColor ? { backgroundColor: 'rgba(255,255,255,0.2)' } : {}}
                   >
                     {p.name.charAt(0).toUpperCase()}

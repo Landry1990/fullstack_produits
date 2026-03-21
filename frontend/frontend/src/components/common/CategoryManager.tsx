@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+﻿import React, { useState, useEffect, useMemo } from 'react';
 import axios from 'axios';
 import { 
   Sparkles, Pencil, Trash2, Plus, 
@@ -531,7 +531,7 @@ export default function CategoryManager({
                         {products.map(p => (
                            <div key={p.id} className="bg-base-200/30 border border-base-100 p-4 rounded-2xl flex items-center justify-between group hover:bg-base-200/50 transition-all">
                               <div className="flex items-center gap-4 overflow-hidden">
-                                 <div className="w-12 h-12 bg-white rounded-xl flex items-center justify-center shadow-sm">
+                                 <div className="w-12 h-12 bg-base-100 rounded-xl flex items-center justify-center shadow-sm">
                                     <Package size={20} className="text-primary/40" />
                                  </div>
                                  <div className="overflow-hidden">
@@ -569,7 +569,7 @@ export default function CategoryManager({
                           >
                              <ChevronLeft size={18} />
                           </button>
-                          <div className="px-3 py-1 bg-white rounded-lg border border-base-200 text-xs font-bold">
+                          <div className="px-3 py-1 bg-base-100 rounded-lg border border-base-200 text-xs font-bold">
                              {t('common:pagination.page_of', { page: currentPage, count: totalPages })}
                           </div>
                           <button
@@ -609,7 +609,7 @@ export default function CategoryManager({
       >
         <form onSubmit={handleSubmit} className="p-6 space-y-5">
            <div>
-              <label className="block text-xs font-bold uppercase tracking-wider text-gray-400 mb-2">{t('stock:organisation.category_manager.name_label', { type })}</label>
+              <label className="block text-xs font-bold uppercase tracking-wider text-base-content/40 mb-2">{t('stock:organisation.category_manager.name_label', { type })}</label>
               <input 
                 type="text" 
                 className="input input-bordered w-full h-12 rounded-xl focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all font-medium" 
@@ -622,7 +622,7 @@ export default function CategoryManager({
 
             {hasHierarchy && (
                <div>
-                  <label className="block text-xs font-bold uppercase tracking-wider text-gray-400 mb-2">{t('stock:organisation.category_manager.parent_label')}</label>
+                  <label className="block text-xs font-bold uppercase tracking-wider text-base-content/40 mb-2">{t('stock:organisation.category_manager.parent_label')}</label>
                   <select 
                     className="select select-bordered w-full h-12 rounded-xl focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
                     value={formData.parent}
@@ -638,7 +638,7 @@ export default function CategoryManager({
 
             {hasDescription && (
                <div>
-                  <label className="block text-xs font-bold uppercase tracking-wider text-gray-400 mb-2">{t('stock:organisation.category_manager.description_label')}</label>
+                  <label className="block text-xs font-bold uppercase tracking-wider text-base-content/40 mb-2">{t('stock:organisation.category_manager.description_label')}</label>
                   <textarea 
                     className="textarea textarea-bordered w-full rounded-xl focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
                     value={formData.description}
@@ -686,7 +686,7 @@ export default function CategoryManager({
                ) : searchResults.length > 0 ? (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                      {searchResults.map(p => (
-                        <div key={p.id} className="bg-white rounded-2xl p-4 flex items-center justify-between shadow-sm hover:shadow-md transition-shadow">
+                        <div key={p.id} className="bg-base-100 rounded-2xl p-4 flex items-center justify-between shadow-sm hover:shadow-md transition-shadow">
                            <div className="overflow-hidden">
                               <h5 className="font-bold truncate">{p.name}</h5>
                               <p className="text-xs opacity-50">{p.cip1}</p>

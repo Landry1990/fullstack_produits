@@ -1,4 +1,4 @@
-import { useTranslation } from 'react-i18next'
+﻿import { useTranslation } from 'react-i18next'
 
 interface ActionButtonsProps {
   onPayment: () => void
@@ -34,7 +34,7 @@ export default function ActionButtons({
   const { t } = useTranslation(['facturation', 'common'])
 
   return (
-    <div className="bg-white border-t border-base-200 p-1.5 sm:p-4 shadow-sm shrink-0">
+    <div className="bg-base-100 border-t border-base-200 p-1.5 sm:p-4 shadow-sm shrink-0">
       <div className="flex flex-col md:flex-row gap-1.5 sm:gap-3 justify-between items-stretch sm:items-center">
           <button
             onClick={onCancel}

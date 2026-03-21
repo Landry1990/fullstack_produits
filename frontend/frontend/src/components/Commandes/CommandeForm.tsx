@@ -1,4 +1,4 @@
-import React, { type FormEvent, type RefObject } from 'react';
+﻿import React, { type FormEvent, type RefObject } from 'react';
 import type { Commande, Fournisseur, ProduitModel, CommandeProduit } from '../../types';
 import { useTranslation } from 'react-i18next';
 import CommandeProductTable from './CommandeProductTable';
@@ -165,7 +165,7 @@ export default function CommandeForm({
             {/* Section supérieure : Informations et Recherche */}
             <div className="shrink-0 space-y-4 mb-4">
               {/* Informations de la commande */}
-              <div className="bg-white rounded-xl p-4 shadow-sm border border-base-200">
+              <div className="bg-base-100 rounded-xl p-4 shadow-sm border border-base-200">
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <label className="form-control w-full">
                     <div className="label py-1">
@@ -173,7 +173,7 @@ export default function CommandeForm({
                     </div>
                     <select
                       ref={fournisseurSelectRef}
-                      className="select select-bordered w-full select-sm bg-base-50 focus:bg-white"
+                      className="select select-bordered w-full select-sm bg-base-50 focus:bg-base-100"
                       value={newCommandeFournisseurId}
                       onChange={(e) => setNewCommandeFournisseurId(e.target.value)}
                       required
@@ -190,7 +190,7 @@ export default function CommandeForm({
                     <input 
                       type="text"
                       placeholder={t('orders:form.invoice_placeholder')}
-                      className="input input-bordered w-full input-sm bg-base-50 focus:bg-white"
+                      className="input input-bordered w-full input-sm bg-base-50 focus:bg-base-100"
                       value={numeroFacture}
                       onChange={(e) => setNumeroFacture(e.target.value.toUpperCase())}
                     />
@@ -258,7 +258,7 @@ export default function CommandeForm({
                         type="number"
                         step="0.001"
                         placeholder="655.957"
-                        className="input input-bordered input-xs w-24 bg-white"
+                        className="input input-bordered input-xs w-24 bg-base-100"
                         value={tauxChange}
                         onChange={(e) => setTauxChange(e.target.value)}
                       />
@@ -269,7 +269,7 @@ export default function CommandeForm({
                         type="number"
                         step="0.01"
                         placeholder="1.35"
-                        className="input input-bordered input-xs w-20 bg-white"
+                        className="input input-bordered input-xs w-20 bg-base-100"
                         value={fraisCoefficient}
                         onChange={(e) => setFraisCoefficient(e.target.value)}
                       />
@@ -280,7 +280,7 @@ export default function CommandeForm({
               )}
 
               {/* Recherche produit */}
-              <div className="bg-white rounded-xl shadow-sm border border-base-200 p-4 relative">
+              <div className="bg-base-100 rounded-xl shadow-sm border border-base-200 p-4 relative">
                 <label className="label py-1 mb-2">
                   <span className="label-text text-xs font-bold text-base-content/50 uppercase tracking-wider">{t('orders:form.search_label')}</span>
                 </label>
@@ -289,7 +289,7 @@ export default function CommandeForm({
                     ref={searchInputRef}
                     type="text" 
                     placeholder={t('orders:form.search_placeholder')}
-                    className="input input-bordered w-full pl-12 text-base h-12 bg-base-50 focus:bg-white focus:ring-2 focus:ring-primary/20"
+                    className="input input-bordered w-full pl-12 text-base h-12 bg-base-50 focus:bg-base-100 focus:ring-2 focus:ring-primary/20"
                     value={searchProduitQuery}
                       onChange={(e) => setSearchProduitQuery(e.target.value)}
                     onKeyDown={handleSearchKeyDown}
@@ -301,7 +301,7 @@ export default function CommandeForm({
                 
                 {/* Dropdown résultats */}
                 {searchProduitQuery && (
-                  <div className="absolute left-4 right-4 top-full mt-2 bg-white rounded-xl shadow-xl border border-base-200 max-h-96 overflow-y-auto z-50">
+                  <div className="absolute left-4 right-4 top-full mt-2 bg-base-100 rounded-xl shadow-xl border border-base-200 max-h-96 overflow-y-auto z-50">
                     {filteredProduits.length === 0 ? (
                       <div className="text-center py-8 text-base-content/40 text-sm">
                         {t('orders:form.no_product_found')}

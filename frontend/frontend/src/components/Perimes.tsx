@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react'
+﻿import { useState, useEffect, useMemo } from 'react'
 import axios from 'axios'
 import { toast } from 'react-hot-toast'
 import { useTranslation } from 'react-i18next'
@@ -775,7 +775,7 @@ export default function Perimes() {
                     <p className="text-lg font-bold">{t('perimes.history.no_result')}</p>
                 </div>
              ) : (
-                <div className="bg-white rounded-2xl shadow-sm border border-base-200 overflow-hidden">
+                <div className="bg-base-100 rounded-2xl shadow-sm border border-base-200 overflow-hidden">
                     <div className="overflow-x-auto">
                         <table className="table table-sm w-full">
                             <thead>

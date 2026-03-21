@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { Commande, Fournisseur, ProduitModel } from '../../types';
 import { formatCurrency, normalizeNumberInput } from '../../utils/formatters';
@@ -135,25 +135,25 @@ const CommandeDetails: React.FC<CommandeDetailsProps> = ({
       </div>
 
       {/* Grid Info */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 bg-white p-4 rounded-lg shadow-sm shrink-0">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 bg-base-100 p-4 rounded-lg shadow-sm shrink-0">
         <div>
-          <div className="text-xs text-gray-500 uppercase">{t('orders:details.id')}</div>
+          <div className="text-xs text-base-content/60 uppercase">{t('orders:details.id')}</div>
           <div className="font-bold">{selectedCommande.id}</div>
         </div>
         <div>
-          <div className="text-xs text-gray-500 uppercase">{t('orders:details.invoice')}</div>
+          <div className="text-xs text-base-content/60 uppercase">{t('orders:details.invoice')}</div>
           <div className="font-bold">{selectedCommande.numero_facture || 'N/A'}</div>
         </div>
         <div>
-          <div className="text-xs text-gray-500 uppercase">{t('orders:details.provider')}</div>
+          <div className="text-xs text-base-content/60 uppercase">{t('orders:details.provider')}</div>
           <div className="font-bold">{fournisseurs.find(f => f.id === selectedCommande.fournisseur)?.name ?? `ID: ${selectedCommande.fournisseur}`}</div>
         </div>
         <div>
-          <div className="text-xs text-gray-500 uppercase">{t('orders:details.date')}</div>
+          <div className="text-xs text-base-content/60 uppercase">{t('orders:details.date')}</div>
           <div className="font-bold">{new Date(selectedCommande.date).toLocaleDateString(t('common:locale', 'fr-FR'))}</div>
         </div>
         <div>
-          <div className="text-xs text-gray-500 uppercase">{t('orders:details.status')}</div>
+          <div className="text-xs text-base-content/60 uppercase">{t('orders:details.status')}</div>
           <div><span className={getStatusBadgeClass(selectedCommande.status)}>
             {selectedCommande.status === 'PREP' ? t('orders:status.prep') : 
              selectedCommande.status === 'ATT' ? t('orders:status.pending') : 
@@ -162,12 +162,12 @@ const CommandeDetails: React.FC<CommandeDetailsProps> = ({
         </div>
         {selectedCommande.status === 'CLOT' && selectedCommande.closed_by_name && (
           <div>
-            <div className="text-xs text-gray-500 uppercase">{t('orders:details.closed_by')}</div>
+            <div className="text-xs text-base-content/60 uppercase">{t('orders:details.closed_by')}</div>
             <div className="font-bold">{selectedCommande.closed_by_name}</div>
           </div>
         )}
         <div className="col-span-2 md:col-span-1 border-l pl-4 border-base-200">
-          <div className="text-xs text-gray-500 uppercase mb-1">{t('orders:details.financial_summary')}</div>
+          <div className="text-xs text-base-content/60 uppercase mb-1">{t('orders:details.financial_summary')}</div>
           {(() => {
             const stats = (selectedCommande.produits || []).reduce((acc, p) => {
               const qty = normalizeNumberInput(p.quantity || 0);
@@ -222,7 +222,7 @@ const CommandeDetails: React.FC<CommandeDetailsProps> = ({
       })()}
 
       {/* Liste des produits (Read Only) */}
-      <div className="bg-white rounded-lg shadow overflow-hidden flex flex-col flex-1 min-h-0">
+      <div className="bg-base-100 rounded-lg shadow overflow-hidden flex flex-col flex-1 min-h-0">
         <div className="p-3 border-b border-base-200 flex justify-between items-center gap-4 bg-base-50 shrink-0">
           <h3 className="font-bold text-sm text-base-content/80">{t('orders:details.products_list', 'Produits de la commande')}</h3>
           {selectedCommande.produits && selectedCommande.produits.length > 0 && (
@@ -336,7 +336,7 @@ const CommandeDetails: React.FC<CommandeDetailsProps> = ({
                         </td>
                         <td className="text-right font-mono">{formatCurrency(normalizeNumberInput(p.price))}</td>
                         <td className="text-xs font-mono">{p.lot || '-'}</td>
-                        <td className="text-xs text-gray-400">{p.date_expiration ? (() => { const d = new Date(p.date_expiration); return `${String(d.getMonth() + 1).padStart(2, '0')}/${String(d.getFullYear()).slice(-2)}`; })() : ''}</td>
+                        <td className="text-xs text-base-content/40">{p.date_expiration ? (() => { const d = new Date(p.date_expiration); return `${String(d.getMonth() + 1).padStart(2, '0')}/${String(d.getFullYear()).slice(-2)}`; })() : ''}</td>
                         <td className="text-right font-bold text-primary">{formatCurrency(normalizeNumberInput(p.quantity) * normalizeNumberInput(p.price))}</td>
                       </tr>
                     );

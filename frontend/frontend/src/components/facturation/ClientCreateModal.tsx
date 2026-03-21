@@ -1,4 +1,4 @@
-import { useTranslation } from 'react-i18next'
+﻿import { useTranslation } from 'react-i18next'
 import PremiumModal from '../common/PremiumModal'
 
 interface ClientCreateModalProps {
@@ -70,7 +70,7 @@ export default function ClientCreateModal({
         {/* Infos de base */}
         <div className="grid grid-cols-2 gap-3">
           <div>
-            <label className="block text-xs font-bold uppercase tracking-wider text-gray-400 mb-2">{t('create_client.name')} *</label>
+            <label className="block text-xs font-bold uppercase tracking-wider text-base-content/40 mb-2">{t('create_client.name')} *</label>
             <input
               type="text"
               value={newClientForm.name}
@@ -81,7 +81,7 @@ export default function ClientCreateModal({
             />
           </div>
           <div>
-            <label className="block text-xs font-bold uppercase tracking-wider text-gray-400 mb-2">{t('create_client.phone')} *</label>
+            <label className="block text-xs font-bold uppercase tracking-wider text-base-content/40 mb-2">{t('create_client.phone')} *</label>
             <input
               type="tel"
               value={newClientForm.phone}
@@ -94,7 +94,7 @@ export default function ClientCreateModal({
         </div>
 
         <div>
-          <label className="block text-xs font-bold uppercase tracking-wider text-gray-400 mb-2">{t('create_client.email')} *</label>
+          <label className="block text-xs font-bold uppercase tracking-wider text-base-content/40 mb-2">{t('create_client.email')} *</label>
           <input
             type="email"
             value={newClientForm.email}
@@ -106,7 +106,7 @@ export default function ClientCreateModal({
         </div>
 
         <div>
-          <label className="block text-xs font-bold uppercase tracking-wider text-gray-400 mb-2">{t('create_client.address')} *</label>
+          <label className="block text-xs font-bold uppercase tracking-wider text-base-content/40 mb-2">{t('create_client.address')} *</label>
           <textarea
             value={newClientForm.address}
             onChange={e => setNewClientForm((prev: any) => ({ ...prev, address: e.target.value }))}
@@ -122,7 +122,7 @@ export default function ClientCreateModal({
             <h4 className="text-sm font-bold text-secondary">{t('create_client.pro_options')}</h4>
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="block text-xs font-bold uppercase tracking-wider text-gray-400 mb-2">{t('create_client.credit_limit')}</label>
+                <label className="block text-xs font-bold uppercase tracking-wider text-base-content/40 mb-2">{t('create_client.credit_limit')}</label>
                 <input
                   type="number"
                   value={newClientForm.plafond}
@@ -132,7 +132,7 @@ export default function ClientCreateModal({
                 />
               </div>
               <div>
-                <label className="block text-xs font-bold uppercase tracking-wider text-gray-400 mb-2">{t('create_client.coverage')}</label>
+                <label className="block text-xs font-bold uppercase tracking-wider text-base-content/40 mb-2">{t('create_client.coverage')}</label>
                 <input
                   type="number"
                   value={newClientForm.taux_couverture}

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import type { Facture, ProduitModel } from '../types';
 import { useTranslation } from 'react-i18next';
 import PremiumModal from './common/PremiumModal';
@@ -123,7 +123,7 @@ const OrdonnanceModal: React.FC<OrdonnanceModalProps> = ({ isOpen, onClose, onSa
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label className="block text-xs font-bold uppercase tracking-wider text-gray-400 mb-2">{t('modal.patient_name')}</label>
+            <label className="block text-xs font-bold uppercase tracking-wider text-base-content/40 mb-2">{t('modal.patient_name')}</label>
             <input 
               type="text" 
               required
@@ -135,7 +135,7 @@ const OrdonnanceModal: React.FC<OrdonnanceModalProps> = ({ isOpen, onClose, onSa
           </div>
 
           <div>
-            <label className="block text-xs font-bold uppercase tracking-wider text-gray-400 mb-2">{t('modal.prescriber_name')}</label>
+            <label className="block text-xs font-bold uppercase tracking-wider text-base-content/40 mb-2">{t('modal.prescriber_name')}</label>
             <input 
               type="text" 
               required
@@ -147,7 +147,7 @@ const OrdonnanceModal: React.FC<OrdonnanceModalProps> = ({ isOpen, onClose, onSa
           </div>
 
            <div>
-            <label className="block text-xs font-bold uppercase tracking-wider text-gray-400 mb-2">{t('modal.order_number')}</label>
+            <label className="block text-xs font-bold uppercase tracking-wider text-base-content/40 mb-2">{t('modal.order_number')}</label>
             <input 
               type="text" 
               className="input input-bordered w-full h-12 rounded-xl" 
@@ -158,7 +158,7 @@ const OrdonnanceModal: React.FC<OrdonnanceModalProps> = ({ isOpen, onClose, onSa
           </div>
 
            <div>
-            <label className="block text-xs font-bold uppercase tracking-wider text-gray-400 mb-2">{t('modal.prescription_date')}</label>
+            <label className="block text-xs font-bold uppercase tracking-wider text-base-content/40 mb-2">{t('modal.prescription_date')}</label>
             <input 
               type="date" 
               className="input input-bordered w-full h-12 rounded-xl" 

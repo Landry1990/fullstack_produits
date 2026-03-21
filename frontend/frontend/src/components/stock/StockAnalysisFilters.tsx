@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { User, Calendar, RotateCcw, AlertTriangle, TrendingUp, Accessibility } from 'lucide-react';
 import type { Fournisseur } from '../../hooks/useStockAnalysis';
@@ -44,8 +44,8 @@ export const StockAnalysisFilters: React.FC<StockAnalysisFiltersProps> = ({
                         onClick={() => onTabChange(tab.id as any)}
                         className={`btn btn-sm px-6 rounded-[14px] border-none transition-all gap-2 ${
                             activeTab === tab.id 
-                            ? 'bg-white text-primary shadow-sm font-black' 
-                            : 'btn-ghost text-base-content/40 font-bold hover:bg-white/50'
+                            ? 'bg-base-100 text-primary shadow-sm font-black' 
+                            : 'btn-ghost text-base-content/40 font-bold hover:bg-base-100/50'
                         }`}
                     >
                         {tab.icon}

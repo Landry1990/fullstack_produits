@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+﻿import React, { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { formatCurrency } from '../../utils/formatters'
 import type { ProduitModel } from '../../types'
@@ -121,22 +121,22 @@ export default function ProductSearchSection({
   }
 
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-base-200 flex-1 p-3 md:p-4 relative flex flex-col gap-2">
+    <div className="bg-base-100 rounded-xl shadow-sm border border-base-200 flex-1 p-3 md:p-4 relative flex flex-col gap-2">
       <div className="flex justify-between items-center">
             <label className="label text-xs font-bold text-base-content/50 uppercase tracking-wider py-0">
                 {searchMode === 'products' ? t('facturation:search.label') : t('facturation:search.label_pack')}
             </label>
             
             {/* Tabs */}
-            <div className="flex bg-gray-100 p-1 rounded-lg items-center gap-1">
+            <div className="flex bg-base-200 p-1 rounded-lg items-center gap-1">
                 <button 
-                    className={`px-3 py-1 text-xs font-bold rounded-md flex items-center gap-1 transition-all ${searchMode === 'products' ? 'bg-white shadow text-primary' : 'text-gray-500 hover:text-gray-700'}`}
+                    className={`px-3 py-1 text-xs font-bold rounded-md flex items-center gap-1 transition-all ${searchMode === 'products' ? 'bg-base-100 shadow text-primary' : 'text-base-content/60 hover:text-base-content/90'}`}
                     onClick={() => { setSearchMode('products'); setSearchQuery(''); searchInputRef.current?.focus() }}
                 >
                     <Pill size={14} /> {t('facturation:search.tabs_products')}
                 </button>
                 <button 
-                    className={`px-3 py-1 text-xs font-bold rounded-md flex items-center gap-1 transition-all ${searchMode === 'packs' ? 'bg-white shadow text-secondary' : 'text-gray-500 hover:text-gray-700'}`}
+                    className={`px-3 py-1 text-xs font-bold rounded-md flex items-center gap-1 transition-all ${searchMode === 'packs' ? 'bg-base-100 shadow text-secondary' : 'text-base-content/60 hover:text-base-content/90'}`}
                     onClick={() => { setSearchMode('packs'); setSearchQuery(''); searchInputRef.current?.focus() }}
                 >
                     <Package size={14} /> {t('facturation:search.tabs_packs')}
@@ -144,7 +144,7 @@ export default function ProductSearchSection({
                 
                 {/* File Upload for CSV */}
                 {onCsvImport && (
-                    <div className="relative border-l border-gray-300 pl-1 ml-1 flex items-center">
+                    <div className="relative border-l border-base-200 pl-1 ml-1 flex items-center">
                         <input 
                             type="file" 
                             accept=".csv" 
@@ -161,7 +161,7 @@ export default function ProductSearchSection({
                         />
                         <label 
                             htmlFor="csv_import" 
-                            className="btn btn-xs btn-ghost text-gray-500 hover:text-primary hover:bg-white rounded-md flex items-center gap-1 cursor-pointer"
+                            className="btn btn-xs btn-ghost text-base-content/60 hover:text-primary hover:bg-base-100 rounded-md flex items-center gap-1 cursor-pointer"
                             title={t('facturation:search.csv_import_tooltip')}
                         >
                             <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" x2="12" y1="3" y2="15"/></svg>
@@ -180,14 +180,14 @@ export default function ProductSearchSection({
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           onKeyDown={onInternalKeyDown}
-          className={`input input-bordered w-full pl-12 text-lg h-14 bg-base-50 focus:bg-white transition-colors focus:ring-2 ${searchMode === 'products' ? 'focus:ring-primary/20' : 'focus:ring-secondary/20'}`}
+          className={`input input-bordered w-full pl-12 text-lg h-14 bg-base-50 focus:bg-base-100 transition-colors focus:ring-2 ${searchMode === 'products' ? 'focus:ring-primary/20' : 'focus:ring-secondary/20'}`}
         />
         <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 absolute left-4 top-1/2 -translate-y-1/2 text-base-content/40" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
       </div>
       
       {/* Search Results Dropdown */}
       {searchQuery && (
-        <div className="absolute left-0 right-0 top-full mt-2 bg-white rounded-xl shadow-xl border border-base-200 max-h-[60vh] overflow-y-auto z-50">
+        <div className="absolute left-0 right-0 top-full mt-2 bg-base-100 rounded-xl shadow-xl border border-base-200 max-h-[60vh] overflow-y-auto z-50">
           
           {/* PRODUCT MODE */}
           {searchMode === 'products' && (
@@ -259,7 +259,7 @@ export default function ProductSearchSection({
                     >
                     <div className="flex-1 min-w-0">
                         <div className="font-bold text-secondary text-sm">{pack.name}</div>
-                        <div className="text-xs text-gray-500 mt-0.5">
+                        <div className="text-xs text-base-content/60 mt-0.5">
                             {formatCurrency(Number(pack.value))} • {pack.products_count || pack.pack_items?.length || '?'} {t('facturation:search.products_count')}
                         </div>
                     </div>

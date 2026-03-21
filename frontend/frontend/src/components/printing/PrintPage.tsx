@@ -1,4 +1,4 @@
-
+﻿
 import React, { useEffect, useState } from 'react';
 import { useParams, useSearchParams } from 'react-router-dom';
 import axios from 'axios';
@@ -147,7 +147,7 @@ const PrintPage: React.FC = () => {
     if (!invoiceData || !settings) return <div>Données incomplètes</div>;
 
     return (
-        <div className="print-page bg-gray-100 min-h-screen p-8">
+        <div className="print-page bg-base-200 min-h-screen p-8">
             <style>
                 {`
                     @media print {
