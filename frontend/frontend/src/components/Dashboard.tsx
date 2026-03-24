@@ -1,4 +1,4 @@
-﻿import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { toast } from 'react-hot-toast';
 import { 
@@ -606,7 +606,7 @@ export default function Dashboard() {
               <div className="flex items-center justify-between mb-4">
                 <div 
                   className="flex items-center gap-3 cursor-pointer hover:opacity-80 transition-opacity"
-                  onClick={() => navigate('/app/centre-rapports?report=alertes_stock')}
+                  onClick={() => navigate('/app/ruptures')}
                 >
                   <div className="p-2 bg-amber-100 text-amber-600 rounded-xl">
                     <Package className="w-5 h-5" />
@@ -674,7 +674,7 @@ export default function Dashboard() {
                   </button>
                 )}
                 <Link 
-                  to="/app/produits" 
+                  to="/app/ruptures" 
                   className="btn btn-ghost bg-base-100 hover:bg-base-200 btn-sm flex-1 text-base-content/60 text-[9px] font-black uppercase tracking-widest rounded-lg border border-base-300"
                   onClick={(e) => e.stopPropagation()}
                 >

@@ -12,7 +12,8 @@
         "gross_margin": "Gross Margin",
         "purchase_cost": "Purchase Cost",
         "margin_info": "{{pct}}% of turnover",
-        "sales_count": "{{count}} sales"
+        "sales_count": "{{count}} sales",
+        "total_discounts": "Total Discounts"
     },
     "suppliers": {
         "title": "Purchases by Supplier",
@@ -28,6 +29,7 @@
         "paid": "Paid",
         "balance": "Balance",
         "recovery_rate": "Recovery Rate",
+        "recoveries": "Recoveries",
         "top_clients": "Top Pro Clients"
     },
     "free_units": {
@@ -44,7 +46,9 @@
         "mode": "Mode",
         "amount": "Amount",
         "no_data": "No cash-ins this month",
-        "total": "Total"
+        "total": "Total",
+        "subtotal": "Encashments Subtotal",
+        "non_cash_items": "Other than Cash"
     },
     "caisse_mvts": {
         "title": "Other Cash Movements",
@@ -80,5 +84,17 @@
     "pdf": {
         "download": "PDF",
         "tooltip": "Download report as PDF"
+    },
+    "stock_balance": {
+        "export_btn": "Stock Balance (Excel)",
+        "excel_filename": "Stock_Balance_{{date}}.xlsx",
+        "headers": {
+            "cip": "CIP Code",
+            "designation": "Designation",
+            "stock_initial": "Initial Stock",
+            "achats": "Purchases",
+            "ventes": "Sales",
+            "stock_final": "Final Stock"
+        }
     }
 }

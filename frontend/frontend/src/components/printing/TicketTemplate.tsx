@@ -10,7 +10,6 @@ interface TicketTemplateProps {
 }
 
 export const TicketTemplate = forwardRef<HTMLDivElement, TicketTemplateProps>(({ ticket, settings }, ref) => {
-  // Safe helper for product name
   const getProductName = (p: any) => {
     if (!p) return 'Article inconnu';
     if (typeof p.produit === 'object') return p.produit.name;
@@ -41,7 +40,8 @@ export const TicketTemplate = forwardRef<HTMLDivElement, TicketTemplateProps>(({
         'om': 'Orange Money',
         'momo': 'Mobile Money',
         'en_compte': 'En compte',
-        'coupon': 'Coupon de Monnaie'
+        'coupon': 'Coupon de Monnaie',
+        'depot': 'Dépôt Client'
       };
       return labels[mode] || mode?.toUpperCase() || 'N/A';
   };
@@ -64,173 +64,205 @@ export const TicketTemplate = forwardRef<HTMLDivElement, TicketTemplateProps>(({
     <div 
       ref={ref} 
       data-theme="light"
-      className="p-1 bg-base-100 text-base-content font-sans text-[10px] leading-tight" 
+      className="p-1 bg-white text-black font-sans text-[10px] leading-tight print:p-0" 
       style={{ 
         width: `${ticketWidth}mm`, 
         maxWidth: `${ticketWidth}mm`,
         margin: '0 auto',
         minWidth: `${ticketWidth}mm`,
-        letterSpacing: '-0.01em',
       }}
     >
       
-      {/* HEADER - Compact */}
-      <div className="text-center mb-2 border-b-2 border-black pb-2">
+      {/* HEADER */}
+      <div className="text-center mb-2">
         {settings.logo && (
-          <img src={settings.logo} alt="Logo" className="h-10 mx-auto mb-2 grayscale object-contain" />
+          <div className="mb-2">
+            <img src={settings.logo} alt="Logo" className="h-12 inline-block grayscale object-contain" />
+          </div>
         )}
-        <h2 className="text-sm font-black uppercase mb-1 leading-none">{settings.pharmacy_name || 'PHARMACIE'}</h2>
-        <div className="text-[10px] leading-tight space-y-0.5">
-            {settings.address && <p>{settings.address}</p>}
-            <div className="font-bold flex flex-wrap justify-center gap-x-2">
-               {settings.phone && <span className="whitespace-nowrap">Tél: {settings.phone}</span>}
-               {settings.niu && <span className="whitespace-nowrap">NIU: {settings.niu}</span>}
-               {settings.registre_commerce && <span className="whitespace-nowrap">RC: {settings.registre_commerce}</span>}
+        <h2 className="text-sm font-black uppercase mb-1 leading-none tracking-tight">
+            {settings.pharmacy_name || 'PHARMACIE'}
+        </h2>
+        <div className="border-b-2 border-black w-3/4 mx-auto mb-2"></div>
+        <div className="text-[9px] leading-tight">
+            {settings.address && <p className="mb-1 font-bold">{settings.address}</p>}
+            <div className="font-mono text-[8px]">
+               {settings.phone && <div>Tél: {settings.phone}</div>}
+               {settings.niu && <div>NIU: {settings.niu}</div>}
+               {settings.registre_commerce && <div>RC: {settings.registre_commerce}</div>}
             </div>
         </div>
       </div>
 
-      {/* TICKET INFO - Table layout for robustness */}
-      <table className="w-full mb-2 text-[10px] border-collapse">
-        <tbody>
-            {ticket.is_duplicate && (
-                <tr>
-                    <td colSpan={2} className="text-center bg-black text-white font-black py-1">*** DUPLICATA ***</td>
+      {/* TICKET INFO */}
+      <div className="border-y border-black border-dashed py-2 my-2 space-y-1">
+          {ticket.is_duplicate && (
+              <div className="text-center font-black text-xs uppercase mb-1 underline">
+                  *** DUPLICATA ***
+              </div>
+          )}
+          
+          <table className="w-full text-[9px] font-mono">
+            <tbody>
+              <tr>
+                <td className="font-bold uppercase">Ticket N°</td>
+                <td className="text-right font-black">{facture?.numero_facture || `#${ticket.id}`}</td>
+              </tr>
+              <tr>
+                <td>Date</td>
+                <td className="text-right">{formatDate(ticket.date_paiement)}</td>
+              </tr>
+              <tr>
+                <td className="pt-2 font-bold uppercase">Client</td>
+                <td className="pt-2 text-right font-black uppercase text-[10px]">{clientName}</td>
+              </tr>
+              {ticket.client_solde_depot && Number(ticket.client_solde_depot) > 0 && (
+                <tr className="border-t border-black border-dotted mt-1">
+                  <td className="py-1 font-bold">SOLDE DÉPÔT</td>
+                  <td className="py-1 text-right font-black text-[11px]">{formatM(ticket.client_solde_depot)}</td>
                 </tr>
-            )}
-            <tr className="border-b border-dotted border-black/20">
-                <td className="font-bold py-0.5">Facture N°:</td>
-                <td className="text-right py-0.5">{facture?.numero_facture || `#${ticket.id}`}</td>
-            </tr>
-            {facture?.session_ticket_number && (
-                <tr className="bg-black/5">
-                    <td className="font-bold py-0.5 px-1">N° d'ordre:</td>
-                    <td className="text-right py-0.5 px-1 font-black text-sm">{facture.session_ticket_number}</td>
-                </tr>
-            )}
-            <tr>
-                <td className="font-bold py-0.5">Date:</td>
-                <td className="text-right py-0.5 whitespace-nowrap">{formatDate(ticket.date_paiement)}</td>
-            </tr>
-            <tr>
-                <td className="font-bold py-0.5">Client:</td>
-                <td className="text-right py-0.5 font-bold uppercase">{clientName}</td>
-            </tr>
-            <tr className="opacity-70">
-                <td className="py-0.5">Caissier:</td>
-                <td className="text-right py-0.5">{ticket.user_details?.username || '---'}</td>
-            </tr>
-        </tbody>
-      </table>
+              )}
+              <tr>
+                <td className="pt-1">Caissier</td>
+                <td className="pt-1 text-right uppercase">{ticket.user_details?.username || 'ADMIN'}</td>
+              </tr>
+            </tbody>
+          </table>
+      </div>
 
       {/* ITEMS TABLE */}
-      <table className="w-full mb-2 text-[10px] border-collapse">
-        <thead>
-            <tr className="border-y border-black font-black uppercase text-[9px]">
+      <div className="mb-2">
+          <table className="w-full border-collapse">
+            <thead>
+              <tr className="border-b border-black text-[9px] font-black uppercase">
                 <th className="py-1 text-left">Désignation</th>
                 <th className="py-1 text-center w-8">Qté</th>
                 <th className="py-1 text-right w-20">Total</th>
-            </tr>
-        </thead>
-        <tbody>
-            {produits.map((p: any, idx: number) => {
-              const qty = Math.abs(p.quantity);
-              const price = Number(p.selling_price || 0);
-              const lineTotal = qty * price;
-              
-              return (
-                <tr key={idx} className="border-b border-black/5 align-top">
-                  <td className="py-1.5 pr-1 uppercase font-bold leading-tight">
-                    {getProductName(p)}
-                  </td>
-                  <td className="py-1.5 text-center">{qty}</td>
-                  <td className="py-1.5 text-right font-black">{formatM(lineTotal)}</td>
-                </tr>
-              );
-            })}
-        </tbody>
-      </table>
+              </tr>
+            </thead>
+            <tbody className="text-[10px]">
+              {produits.map((p: any, idx: number) => {
+                const qty = Math.abs(p.quantity);
+                const price = Number(p.selling_price || 0);
+                const lineTotal = qty * price;
+                
+                return (
+                  <tr key={idx} className="border-b border-black/10">
+                    <td className="py-2 align-top leading-tight">
+                        <div className="font-bold uppercase">{getProductName(p)}</div>
+                        <div className="text-[8px] font-mono italic">
+                            {qty} x {formatM(price)}
+                        </div>
+                    </td>
+                    <td className="py-2 text-center align-top font-mono">{qty}</td>
+                    <td className="py-2 text-right align-top font-mono font-black">{formatM(lineTotal)}</td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+      </div>
 
-      {/* TOTALS & PAYMENTS */}
-      <div className="border-t-2 border-black pt-1 space-y-1">
+      {/* TOTALS */}
+      <div className="mt-2 space-y-1">
         {remise > 0 && (
-            <div className="flex justify-between text-[10px]">
-                <span>Remise commerciale</span>
-                <span className="font-bold">-{formatM(remise)}</span>
+            <div className="flex justify-between text-[9px] font-bold">
+                <span>SOUS-TOTAL</span>
+                <span className="font-mono">{formatM(totalTTC + remise)}</span>
+            </div>
+        )}
+        
+        {remise > 0 && (
+            <div className="flex justify-between text-[10px] font-black">
+                <span>REMISE (-)</span>
+                <span className="font-mono">-{formatM(remise)}</span>
             </div>
         )}
 
-        <div className="flex justify-between items-baseline text-sm font-black py-1 border-y-2 border-black">
-            <span className="uppercase mr-2">TOTAL NET</span>
-            <span className="whitespace-nowrap">{formatM(totalTTC)} F</span>
+        <div className="flex justify-between items-center py-2 border-y-2 border-black font-black">
+            <span className="text-xs uppercase tracking-tight">NET À PAYER (CFA)</span>
+            <span className="text-xl font-mono tracking-tighter tabular-nums">
+                {formatM(totalTTC)}
+            </span>
         </div>
 
         {(ticket.total_lettres || facture?.total_lettres) && (
-            <div className="text-[9px] font-bold italic py-1 border-b border-black/10 uppercase leading-snug">
+            <div className="text-[9px] font-bold italic py-2 text-center uppercase border-b border-black border-dashed">
                 {ticket.total_lettres || facture?.total_lettres}
             </div>
         )}
 
-        <div className="pt-1 text-[10px] space-y-0.5">
-          {ticket.paiements_details && ticket.paiements_details.length > 0 ? (
-              ticket.paiements_details.map((paiement, idx) => (
-                  <div key={idx} className="flex justify-between">
-                      <span className="mr-2 uppercase text-[9px]">{getModeLabel((paiement as any).mode_paiement || paiement.mode)}</span>
-                      <span className="font-bold whitespace-nowrap">{formatM(paiement.montant)}</span>
-                  </div>
-              ))
-          ) : (
-              <div className="flex justify-between">
-                   <span>Mode: {getModeLabel(ticket.mode_paiement)}</span>
-                   <span className="font-bold">{formatM(totalTTC)}</span>
-              </div>
-          )}
+        {/* PAYMENTS */}
+        <div className="pt-2">
+          <table className="w-full text-[9px]">
+            <tbody>
+              {ticket.paiements_details && ticket.paiements_details.length > 0 ? (
+                  ticket.paiements_details.map((paiement, idx) => (
+                      <tr key={idx}>
+                          <td className="uppercase font-bold">[{getModeLabel((paiement as any).mode_paiement || paiement.mode)}]</td>
+                          <td className="text-right font-mono font-black">{formatM(paiement.montant)}</td>
+                      </tr>
+                  ))
+              ) : (
+                  <tr>
+                       <td className="uppercase font-bold">[{getModeLabel(ticket.mode_paiement)}]</td>
+                       <td className="text-right font-mono font-black">{formatM(totalTTC)}</td>
+                  </tr>
+              )}
+            </tbody>
+          </table>
         </div>
 
+        {/* CHANGE */}
         {(Number(ticket.montant_verse) > 0 || Number(ticket.rendu) > 0) && (
-          <div className="mt-1 pt-1 border-t border-dotted border-black/30 text-[9px] space-y-0.5 opacity-80">
+          <div className="mt-2 pt-2 border-t border-black border-dotted space-y-1">
             {Number(ticket.montant_verse) > 0 && (
-                <div className="flex justify-between">
-                    <span>Espèces reçues</span>
-                    <span className="font-bold">{formatM(ticket.montant_verse || 0)}</span>
+                <div className="flex justify-between text-[9px]">
+                    <span className="uppercase italic">Espèces reçues</span>
+                    <span className="font-mono font-bold">{formatM(ticket.montant_verse || 0)}</span>
                 </div>
             )}
             {Number(ticket.rendu) > 0 && (
-                <div className="flex justify-between">
-                    <span>Monnaie rendue</span>
-                    <span className="font-bold">{formatM(ticket.rendu || 0)}</span>
+                <div className="flex justify-between text-xs font-black">
+                    <span className="uppercase tracking-tighter">MONNAIE RENDUE</span>
+                    <span className="font-mono">{formatM(ticket.rendu || 0)}</span>
                 </div>
             )}
           </div>
         )}
       </div>
 
+      {/* TAXES */}
       {totalTVA > 0 && (
-        <div className="mt-2 text-[8px] text-center opacity-60">
-          Base HT: {formatM(totalHT)} | TVA: {formatM(totalTVA)}
+        <div className="mt-4 text-[8px] text-center font-mono italic border-t border-black border-dotted pt-2">
+          BASE HT: {formatM(totalHT)} | TVA: {formatM(totalTVA)}
         </div>
       )}
 
       {/* FOOTER */}
-      <div className="text-center mt-4 border-t border-black pt-2 pb-2">
-        <p className="font-black text-[10px] uppercase mb-1">{settings.ticket_footer_message || 'Merci de votre visite'}</p>
-        <p className="text-[9px] mt-1 italic">Bienvenue chez nous !</p>
+      <div className="text-center mt-6">
+        <div className="mb-4 border-t border-black border-dashed pt-4">
+            <p className="font-black text-[10px] uppercase mb-1">{settings.ticket_footer_message || 'Merci de votre visite'}</p>
+            <p className="text-[9px] italic">À bientôt dans votre pharmacie !</p>
+        </div>
         
         {facture?.numero_facture && (
-             <div className="flex flex-col items-center mt-3 scale-90">
+             <div className="inline-block px-2 bg-white text-center">
                 <Barcode 
                     value={facture.numero_facture} 
-                    height={20} 
-                    width={1} 
-                    fontSize={8} 
-                    displayValue={true}
+                    height={35} 
+                    width={1.2} 
+                    fontSize={10} 
+                    displayValue={false}
                     margin={0}
                     background="#ffffff"
                 />
+                <div className="font-mono text-[10px] mt-1 font-black">{facture.numero_facture}</div>
             </div>
         )}
-        <div className="text-[7px] mt-3 opacity-30 font-bold tracking-widest uppercase">
-          Logiciel de Gestion ZENITH
+
+        <div className="mt-8 text-[7px] font-black tracking-[0.2em] uppercase border-t border-black pt-2">
+          ZENITH POS SYSTEM
         </div>
       </div>
 

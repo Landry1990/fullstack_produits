@@ -37,6 +37,8 @@
         "credit_limit": "Credit Limit",
         "coverage": "Coverage Rate",
         "current_debt": "Current Debt",
+        "solde_depot": "Deposit Balance",
+        "manage_deposit": "Manage Deposit",
         "debt_usage": "Current Debt / Limit"
     },
     "beneficiaries": {

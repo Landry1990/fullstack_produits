@@ -1,0 +1,7 @@
+Checking 131 invoices for March 2026...
+Facture #FAC-000457 (ID: 457)
+  Total TTC: 3030.00
+  Total Payé: 1345.00
+  Différence: 1685.00
+    - 3030.00 F (especes)
+    - -1685.00 F (especes)

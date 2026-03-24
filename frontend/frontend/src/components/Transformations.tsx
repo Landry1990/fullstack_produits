@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect, useRef, useMemo } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import axios from 'axios';
 import { toast } from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
@@ -459,8 +459,8 @@ const Transformations: React.FC = () => {
                       {historique.map(hist => (
                         <tr key={hist.id} className="hover:bg-base-200/30 transition-colors group">
                           <td className="pl-6 py-4">
-                             <div className="font-bold text-xs">{new Date(hist.date_transformation).toLocaleDateString()}</div>
-                             <div className="text-[10px] opacity-40 font-mono uppercase tracking-tighter">{new Date(hist.date_transformation).toLocaleTimeString()}</div>
+                             <div className="font-bold text-xs">{new Date(hist.date_transformation).toLocaleDateString('fr-FR')}</div>
+                             <div className="text-[10px] opacity-40 font-mono uppercase tracking-tighter">{new Date(hist.date_transformation).toLocaleTimeString('fr-FR')}</div>
                           </td>
                           <td className="font-black text-xs text-primary/70">{hist.user_nom}</td>
                           <td className="max-w-xs">

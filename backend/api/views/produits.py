@@ -71,6 +71,33 @@ class ProduitViewSet(CachedSearchMixin, MultiTermSearchMixin, OptimizedSerialize
                 queryset = queryset.filter(stock__lt=val)
             except ValueError:
                 pass
+
+        # Filtrage manuel pour stock__lte
+        stock_lte = self.request.query_params.get('stock__lte')
+        if stock_lte is not None:
+            try:
+                val = float(stock_lte)
+                queryset = queryset.filter(stock__lte=val)
+            except ValueError:
+                pass
+
+        # Filtrage pour rotation_moyenne__gte
+        rotation_gte = self.request.query_params.get('rotation_moyenne__gte')
+        if rotation_gte is not None:
+            try:
+                val = float(rotation_gte)
+                queryset = queryset.filter(rotation_moyenne__gte=val)
+            except ValueError:
+                pass
+
+        # Filtrage pour rotation_moyenne__gt
+        rotation_gt = self.request.query_params.get('rotation_moyenne__gt')
+        if rotation_gt is not None:
+            try:
+                val = float(rotation_gt)
+                queryset = queryset.filter(rotation_moyenne__gt=val)
+            except ValueError:
+                pass
         
         # Filtrage pour TVA (utilisé dans les rapports)
         tva_gt = self.request.query_params.get('tva_gt')

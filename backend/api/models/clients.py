@@ -72,13 +72,13 @@ class Client(models.Model):
     """Model representing a client."""
     id = models.AutoField(primary_key=True)
     name = models.CharField(max_length=100)
-    address = models.TextField()
+    address = models.TextField(blank=True, null=True)
     phone_regex = RegexValidator(
         regex=r'^\+?1?\d{9,15}$',
         message="Le numéro de téléphone doit être au format: '+999999999'. Jusqu'à 15 chiffres autorisés."
     )
     phone = models.CharField(validators=[phone_regex], max_length=17, unique=True)
-    email = models.EmailField(unique=True)
+    email = models.EmailField(blank=True, null=True)
     
     CLIENT_TYPE_CHOICES = [
         ('PARTICULIER', 'Particulier'),
@@ -110,6 +110,19 @@ class Client(models.Model):
     is_loyalty_member = models.BooleanField(
         default=True, 
         help_text="Si activé, ce client participe au programme de fidélité"
+    )
+    
+    solde_depot = models.DecimalField(
+        max_digits=12, 
+        decimal_places=2, 
+        default=0.00,
+        help_text="Solde actuel du dépôt/acompte du client"
+    )
+    
+    is_deposit_enabled = models.BooleanField(
+        default=False,
+        blank=True,
+        help_text="Si activé, ce client peut utiliser le système de dépôt"
     )
 
     created_at = models.DateTimeField(default=timezone.now)

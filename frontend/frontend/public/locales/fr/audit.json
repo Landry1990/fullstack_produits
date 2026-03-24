@@ -10,6 +10,7 @@
         "PROD_CREATE": "Création Produit",
         "PROD_UPDATE": "Modification Produit",
         "INV_CREATE": "Facturation",
+        "INV_CRE": "Facturation",
         "INV_DELETE": "Suppression de Facture",
         "INV_CANCEL": "Annulation de Facture",
         "INV_DEL": "Suppression de Facture",
@@ -44,11 +45,36 @@
         "export": "EXPORTER CSV",
         "reset": "RÉINITIALISER"
     },
+    "view": {
+        "flux": "Flux d'Audit",
+        "items": "éléments",
+        "cards_btn": "Vue Cartes",
+        "table_btn": "Vue Table",
+        "loading": "Chargement des logs...",
+        "empty_title": "Aucun log trouvé",
+        "empty_subtitle": "Essayez de modifier vos filtres de recherche",
+        "sudo_badge": "SUDO",
+        "system_user": "Système",
+        "json_btn": "Détails",
+        "raw_data": "Données Brutes (JSON)"
+    },
     "table": {
         "date": "Date & Heure",
+        "timestamp": "Date & Heure",
         "user": "Utilisateur",
         "action": "Action",
+        "operation": "Opération",
         "description": "Description",
-        "details": "Détails"
+        "details": "Détails",
+        "status": "Statut",
+        "sudo": "VALIDATION SUDO"
+    },
+    "details": {
+        "price_change": "Prix: {{old}} ➔ {{new}}",
+        "stock_adj": "Stock: {{old}} ➔ {{new}} ({{reason}})",
+        "sudo_val": "Sudo: {{user}} ({{permission}})",
+        "amount": "Montant: {{amount}}",
+        "quantity": "Quantité: {{quantity}}",
+        "ecart": "Écart: {{ecart}}"
     }
 }

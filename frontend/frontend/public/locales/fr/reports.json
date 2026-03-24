@@ -79,10 +79,20 @@
         "produits_annules": {
             "name": "Produits Annulés",
             "description": "Liste des produits de factures annulées avec quantités et lots"
+        },
+        "balance_stock": {
+            "name": "Balance des Stocks (Comptabilité)",
+            "description": "Détails des stocks : Initial, Achats, Ventes et Final sur une période (Excel)"
+        },
+        "rapport_remises": {
+            "name": "Suivi des Remises",
+            "description": "Détails des remises accordées par utilisateur (Global, Lignes, Fidélité, UG)"
         }
     },
     "params": {
         "mois": "Mois",
+        "month": "Mois",
+        "year": "Année",
         "facture__client": "Client",
         "date_debut": "Date de début",
         "date_fin": "Date de fin",
@@ -142,5 +152,7 @@
         "given_quantity": "Quantité Donnée",
         "ca_impact": "Impact sur CA",
         "no_payments": "Aucun encaissement"
-    }
+    },
+    "ca_tva": "CA TVA",
+    "ca_exo": "CA Exonéré"
 }

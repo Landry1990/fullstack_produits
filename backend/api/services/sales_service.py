@@ -8,7 +8,7 @@ from ..models import (
     Facture, FactureProduit, FactureProduitAllocation, Caisse, 
     Produit, StockLot, LoyaltySetting, Promis, Ordonnancier, 
     LigneOrdonnancier, MouvementStock, get_next_ticket_session,
-    CouponMonnaie
+    CouponMonnaie, DepotClient
 )
 from .promotion_service import PromotionService
 
@@ -150,7 +150,7 @@ class SalesService:
         # 8. Non-Centralized Payments
         if not centralized:
             for p_data in paiements_data:
-                Caisse.objects.create(
+                paiement = Caisse.objects.create(
                     facture=facture,
                     mode_paiement=p_data['mode'],
                     montant=Decimal(str(p_data['montant'])),
@@ -160,6 +160,8 @@ class SalesService:
                     part_patient=p_data.get('part_patient'),
                     part_assurance=p_data.get('part_assurance')
                 )
+                from .payment_service import PaymentService
+                PaymentService.process_payment(paiement, is_created=True)
             facture.refresh_from_db()
 
         return facture
@@ -184,7 +186,7 @@ class SalesService:
 
         # 2. Lock products and check stock
         product_ids = [item.produit_id for item in items]
-        locked_products = {p.id: p for p in Produit.objects.select_for_update().filter(id__in=product_ids)}
+        locked_products = {p.id: p for p in Produit.objects.select_for_update().filter(id__in=product_ids).order_by('id')}
         
         # PLAFOND DE CRÉDIT check
         if facture.client and facture.client.client_type == 'PROFESSIONNEL':
@@ -221,7 +223,7 @@ class SalesService:
 
         # 3. Lot Allocation (FIFO/FEFO)
         lot_ids_to_lock = [item.stock_lot_id for item in items if item.stock_lot_id]
-        locked_lots_dict = {l.id: l for l in StockLot.objects.select_for_update().filter(id__in=lot_ids_to_lock)} if lot_ids_to_lock else {}
+        locked_lots_dict = {l.id: l for l in StockLot.objects.select_for_update().filter(id__in=lot_ids_to_lock).order_by('id')} if lot_ids_to_lock else {}
         
         # Prepare FIFO queues
         fifo_prods = [item.produit_id for item in items if item.quantity > 0 and not item.stock_lot_id]
@@ -384,18 +386,22 @@ class SalesService:
         if facture.client and facture.client.client_type == 'PROFESSIONNEL' and facture.part_client is not None:
             part_assurance = facture.total_ttc - Decimal(str(facture.part_client))
             if part_assurance > 0:
-                Caisse.objects.create(
+                paiement_en_compte = Caisse.objects.create(
                     facture=facture, mode_paiement='en_compte', montant=part_assurance, statut='completee',
                     user=validation_user, part_assurance=part_assurance, part_patient=Decimal('0.00')
                 )
+                from .payment_service import PaymentService
+                PaymentService.process_payment(paiement_en_compte, is_created=True)
         
         # 8. Single payment Record if mode_paiement provided
         mode_paiement = data.get('mode_paiement')
         if mode_paiement and facture.total_ttc > 0 and not Caisse.objects.filter(facture=facture).exists():
-            Caisse.objects.create(
+            paiement_single = Caisse.objects.create(
                 facture=facture, mode_paiement=mode_paiement, montant=facture.total_ttc,
                 statut='completee', user=validation_user
             )
+            from .payment_service import PaymentService
+            PaymentService.process_payment(paiement_single, is_created=True)
 
         # Cache invalidation
         cache_key = f'stats_jour_{timezone.now().strftime("%Y-%m-%d")}'
@@ -443,7 +449,19 @@ class SalesService:
         facture.save(update_fields=['status', 'notes', 'date_annulation', 'cancelled_by'])
 
         # 3. Cancel associated payments (Caisse)
-        Caisse.objects.filter(facture=facture).update(statut='annulee')
+        payments = Caisse.objects.filter(facture=facture, statut='completee')
+        for p in payments:
+            if p.mode_paiement == 'depot' and facture.client:
+                DepotClient.objects.create(
+                    client=facture.client,
+                    type=DepotClient.Type.ANNULATION_ACHAT,
+                    montant=p.montant,
+                    facture=facture,
+                    created_by=user,
+                    notes=f"Annulation Facture {facture.numero_facture or facture.id}"
+                )
+        
+        payments.update(statut='annulee')
 
         cache_key = f'stats_jour_{timezone.now().strftime("%Y-%m-%d")}'
         cache.delete(cache_key)
@@ -556,9 +574,11 @@ class SalesService:
             )['total'] or Decimal('0')
 
             if total_paye > 0 or facture.status == Facture.Status.PAYEE:
-                Caisse.objects.create(
+                paiement_adj = Caisse.objects.create(
                     facture=facture, mode_paiement='especes', montant=difference,
                     statut='completee', user=user, reference=f"Ajustement modification facture {facture.numero_facture or facture.id}"
                 )
+                from .payment_service import PaymentService
+                PaymentService.process_payment(paiement_adj, is_created=True)
 
         return facture, old_total, difference

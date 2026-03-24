@@ -14,6 +14,9 @@
             "title": "Inventory Validation",
             "message": "Are you sure you want to validate this inventory? This action will update official stock."
         },
+        "types": {
+            "global": "GLOBAL STOCK"
+        },
         "filters": {
             "search_placeholder": "Search an inventory...",
             "status_all": "All statuses",
@@ -85,7 +88,16 @@
             "col_phys": "Phys.",
             "col_gap": "Gap",
             "total_gap_value": "Total Gap Amount",
-            "items_count": "Items"
+            "items_count": "Items",
+            "sort": {
+                "title": "Sort by:",
+                "chronologie": "Chronological (Added)",
+                "nom": "Label (A-Z)",
+                "ecart": "Value Gap (F)",
+                "prix": "Buy Price"
+            },
+            "col_cmp": "WAP",
+            "lot_label": "Lot"
         },
         "lines": {
             "selected": "{{count}} line(s) selected",
@@ -883,6 +895,62 @@
             "title": "Free Units Report",
             "situation": "Promotional stock situation as of {{date}}",
             "footer": "End of promotional stock report"
+        }
+    },
+    "ruptures": {
+        "title": "Shortages Tracking",
+        "subtitle": "Manage internal shortages and report supplier unavailability",
+        "tabs": {
+            "pharmacie": "Pharmacy Shortages",
+            "fournisseur": "Supplier Shortages",
+            "stats": "History & Stats"
+        },
+        "pharmacie": {
+            "info": "This list automatically displays all your products with <strong>stock at 0</strong> but an <strong>average sales rotation &gt; 0</strong>. Great for detecting real out-of-stock and lost sales!",
+            "columns": {
+                "cip": "CIP",
+                "produit": "Product",
+                "rayon": "Shelf",
+                "rotation": "Avg. Rotation/Month",
+                "fournisseur": "Last Supplier",
+                "dernier_achat": "Last Purchase",
+                "dernier_vente": "Last Sale",
+                "prix_achat": "Purchase Price"
+            },
+            "empty": "No pharmacy shortages to report.",
+            "per_month": "/ month"
+        },
+        "fournisseur": {
+            "signaler": "Report Unavailability",
+            "search_placeholder": "Search a product...",
+            "searching": "Searching...",
+            "no_results": "No product found",
+            "stock": "Stock",
+            "fournisseur": "Supplier",
+            "declare_success": "Supplier shortage reported",
+            "declare_error": "Error reporting shortage",
+            "active_list": "Currently Unavailable Products",
+            "columns": {
+                "produit": "Product",
+                "fournisseur": "Last Supplier",
+                "date": "Report Date",
+                "action": "Action"
+            },
+            "empty": "No active supplier shortages.",
+            "mark_resolved": "Resolved",
+            "mark_resolved_title": "Mark as available again",
+            "resolve_success": "Product marked as available",
+            "resolve_error": "Error during resolution"
+        },
+        "stats": {
+            "title": "Products most frequently out of stock (Top 200)",
+            "columns": {
+                "rang": "Rank",
+                "produit": "Product",
+                "frequence": "Shortage Frequency"
+            },
+            "empty": "Empty history.",
+            "times": "times"
         }
     }
 }

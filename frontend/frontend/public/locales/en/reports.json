@@ -79,11 +79,21 @@
         "produits_annules": {
             "name": "Cancelled Products",
             "description": "List of products from cancelled invoices with quantities and lots"
+        },
+        "balance_stock": {
+            "name": "Accounting Stock Balance",
+            "description": "Stock details: Initial, Purchases, Sales and Final for a period (Excel)"
+        },
+        "rapport_ca_multi_annuel": {
+            "name": "Multi-Year Turnover Comparison",
+            "description": "VAT vs Exempt turnover per month for all years (direct comparison)"
         }
     },
     "params": {
         "mois": "Month",
-        "facture__client": "Customer",
+        "month": "Month",
+        "year": "Year",
+        "facture__client": "Client",
         "date_debut": "Start date",
         "date_fin": "End date",
         "expiring_within_days": "Days before expiry",
@@ -142,5 +152,7 @@
         "given_quantity": "Given Quantity",
         "ca_impact": "Impact on Revenue",
         "no_payments": "No payments"
-    }
+    },
+    "ca_tva": "TVA Revenue",
+    "ca_exo": "Exempt Revenue"
 }

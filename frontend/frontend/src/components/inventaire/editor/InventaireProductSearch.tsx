@@ -181,7 +181,7 @@ export const InventaireProductSearch: React.FC<InventaireProductSearchProps> = (
                                             <div>
                                                 <div className="font-bold font-mono text-lg">{lot.lot}</div>
                                                 <div className={`text-xs mt-1 ${idx === selectedLotIndex ? 'text-primary-content/70' : 'text-base-content/60'}`}>
-                                                    Exp: {lot.date_expiration ? new Date(lot.date_expiration).toLocaleDateString() : 'N/A'}
+                                                    Exp: {lot.date_expiration ? new Date(lot.date_expiration).toLocaleDateString('fr-FR') : 'N/A'}
                                                 </div>
                                             </div>
                                             <div className="text-right">

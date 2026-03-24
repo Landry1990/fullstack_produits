@@ -99,7 +99,8 @@
         "transfer": "Transfer",
         "orange_money": "Orange Money",
         "mobile_money": "Mobile Money",
-        "account": "Account"
+        "account": "Account",
+        "depot": "Deposit/Account"
     },
     "messages": {
         "no_results": "No invoice found",
@@ -132,6 +133,7 @@
         "ordonnancier_saved": "Prescription log saved",
         "ordonnancier_error": "Error saving prescription log",
         "credit_limit_exceeded": "⚠️ Credit limit exceeded!",
+        "insufficient_deposit": "Insufficient deposit balance",
         "tiers_payant_validated": "Invoice {{number}} validated (Third-party payer 100%)",
         "sent_to_caisse": "Sale sent to Centralized Cash Register (Ticket #{{id}})",
         "load_error": "Error loading data",

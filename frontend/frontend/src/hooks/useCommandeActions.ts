@@ -250,7 +250,7 @@ export function useCommandeActions({
                 // Formule: stAnt + qtyTotal = currentStock
                 const stAnt = currentStock - qtyTotal;
 
-                const lotInfo = p.lot ? `<div style="font-size: 9px; color: #666; font-family: monospace;">LOT: ${p.lot} | EXP: ${p.date_expiration ? new Date(p.date_expiration).toLocaleDateString() : '-'}</div>` : '';
+                const lotInfo = p.lot ? `<div style="font-size: 9px; color: #666; font-family: monospace;">LOT: ${p.lot} | EXP: ${p.date_expiration ? new Date(p.date_expiration).toLocaleDateString('fr-FR') : '-'}</div>` : '';
                 const tvaLabel = p.tva ? `<span style="font-size: 8px; color: #64748b; margin-left: 4px;">(${p.tva}%)</span>` : '';
                 
                 return `

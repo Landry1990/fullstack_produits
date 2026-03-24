@@ -44,7 +44,7 @@ export const InventaireEditor: React.FC<InventaireEditorProps> = ({
         inventoryStats
     } = editorLogic;
 
-    const { generateEtatPDF, generateEcartsPDF } = useInventairePDF({ t });
+    const { generateEtatPDF, generateEcartsPDF } = useInventairePDF();
     
     const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || '/api';
     
@@ -124,7 +124,7 @@ export const InventaireEditor: React.FC<InventaireEditorProps> = ({
 
                   <button 
                     className="btn btn-primary rounded-xl px-6 gap-2 shadow-lg shadow-primary/20" 
-                    onClick={() => activeInventaire && generateEtatPDF(activeInventaire, lignes)}
+                    onClick={() => activeInventaire && generateEtatPDF(activeInventaire)}
                     disabled={!activeInventaire?.id}
                   >
                     <Download className="h-5 w-5" />
@@ -233,7 +233,7 @@ export const InventaireEditor: React.FC<InventaireEditorProps> = ({
                 inventoryStats && activeInventaire && (
                     <InventaireAnalysisTab 
                         inventoryStats={inventoryStats}
-                        handlePrintEcartsFrontend={() => activeInventaire && generateEcartsPDF(activeInventaire, lignes)}
+                        handlePrintEcartsFrontend={() => activeInventaire && generateEcartsPDF(activeInventaire)}
                     />
                 )
             )}

@@ -241,7 +241,7 @@ export function useJournalCaisse() {
         transaction.facture_numero?.toLowerCase().includes(searchQuery.toLowerCase()) ||
         transaction.user_details?.full_name.toLowerCase().includes(searchQuery.toLowerCase());
 
-      if (transaction.mode_paiement === 'en_compte') return false;
+      if (transaction.mode_paiement === 'en_compte' || transaction.mode_paiement === 'depot') return false;
       if (filterType !== 'all') return false;
 
       const matchesMode = filterMode === 'all' || transaction.mode_paiement === filterMode;
@@ -333,54 +333,57 @@ export function useJournalCaisse() {
       om: 0,
       momo: 0,
       en_compte: 0,
+      depot: 0,
       total: 0,
       entrees: 0,
       sorties: 0,
       recouvrement: 0,
       ventes: 0,
-      ventes_par_mode: { especes: 0, cheque: 0, carte: 0, virement: 0, om: 0, momo: 0 } as Record<string, number>,
+      ventes_par_mode: { especes: 0, cheque: 0, carte: 0, virement: 0, om: 0, momo: 0, depot: 0, en_compte: 0 } as Record<string, number>,
       recouv_par_mode: { especes: 0, cheque: 0, carte: 0, virement: 0, om: 0, momo: 0 } as Record<string, number>
     };
 
-    filteredItems.forEach((item: any) => {
+    // Note: We used to use filteredItems, but for accurate CA stats we should look at all transactions 
+    // of the period, while only adding physical ones to the 'total' (cash).
+    transactions.forEach((item: any) => {
+       if (item.statut !== 'completee') return;
        const montant = normalizeNumberInput(item.montant);
-       if (item._kind === 'mouvement') {
-           if (item.type === 'ENTREE') {
-               totaux.entrees += montant;
-               totaux.total += montant;
-           } else {
-               totaux.sorties += montant;
-               totaux.total -= montant;
+       const isRecouvrement = item.mode_paiement === 'recouvrement' || item.is_creance_settlement || (item.reference && item.reference.includes('[RECOUV]'));
+       
+       if (isRecouvrement) {
+           totaux.recouvrement += montant;
+           if (totaux.recouv_par_mode[item.mode_paiement] !== undefined) {
+               totaux.recouv_par_mode[item.mode_paiement] += montant;
            }
        } else {
-          if (item.statut === 'completee') {
-            const isRecouvrement = item.mode_paiement === 'recouvrement' || item.is_creance_settlement || (item.reference && item.reference.includes('[RECOUV]'));
-            
-            if (isRecouvrement) {
-                totaux.recouvrement += montant;
-                if (totaux.recouv_par_mode[item.mode_paiement] !== undefined) {
-                    totaux.recouv_par_mode[item.mode_paiement] += montant;
-                }
-            } else {
-                totaux.ventes += montant;
-                if (totaux.ventes_par_mode[item.mode_paiement] !== undefined) {
-                    totaux.ventes_par_mode[item.mode_paiement] += montant;
-                }
-                
-                if (totaux[item.mode_paiement as keyof typeof totaux] !== undefined) {
-                    (totaux as any)[item.mode_paiement] += montant;
-                }
-                
-                if (item.mode_paiement === 'especes') {
-                    totaux.total += montant;
-                }
-            }
-          }
+           totaux.ventes += montant;
+           if (totaux.ventes_par_mode[item.mode_paiement] !== undefined) {
+               totaux.ventes_par_mode[item.mode_paiement] += montant;
+           }
+           
+           if ((totaux as any)[item.mode_paiement] !== undefined) {
+               (totaux as any)[item.mode_paiement] += montant;
+           }
+           
+           if (item.mode_paiement === 'especes') {
+               totaux.total += montant;
+           }
+       }
+    });
+
+    mouvements.forEach((item: any) => {
+       const montant = normalizeNumberInput(item.montant);
+       if (item.type === 'ENTREE') {
+           totaux.entrees += montant;
+           totaux.total += montant;
+       } else {
+           totaux.sorties += montant;
+           totaux.total -= montant;
        }
     });
 
     return totaux;
-  }, [filteredItems]);
+  }, [transactions, mouvements]);
 
   const openClosingModal = () => {
       const currentTotals = (serverTotals || totauxParMode) as any;

@@ -7,7 +7,7 @@ import {
 } from '../../../hooks/useCentreRapports';
 import type { QueryDefinition, PaginationData } from '../../../hooks/useCentreRapports';
 import { MonthlyReportView } from './MonthlyReportView';
-import { ChevronLeft, ChevronRight, Inbox, Eye } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Inbox, Eye, Download } from 'lucide-react';
 
 interface ReportResultsProps {
     selectedQuery: QueryDefinition;
@@ -39,6 +39,19 @@ export const ReportResults: React.FC<ReportResultsProps> = ({
         // Special case: Monthly Report
         if (selectedQuery.id === 'rapport_mensuel' && typeof results === 'object' && !Array.isArray(results)) {
             return <MonthlyReportView data={results} />;
+        }
+
+        // Special case: Direct Download / Raw results
+        if (selectedQuery.resultType === 'raw') {
+            return (
+                <div className="flex flex-col items-center justify-center py-20 text-success animate-in zoom-in duration-500">
+                    <Download className="w-16 h-16 mb-4" />
+                    <p className="text-lg font-black uppercase tracking-widest">{t('results.export_success_short', { defaultValue: 'Rapport Généré' })}</p>
+                    {results && typeof results === 'object' && (results as any).filename && (
+                         <p className="text-xs opacity-60 mt-2">{(results as any).filename}</p>
+                    )}
+                </div>
+            );
         }
 
         // Generic Cards Display
@@ -91,12 +104,12 @@ export const ReportResults: React.FC<ReportResultsProps> = ({
                         <table className="w-full border-separate border-spacing-0">
                             <thead>
                                 <tr className="bg-base-200/50">
-                                    {columns.slice(0, 8).map((col, idx) => (
+                                    {columns.map((col, idx) => (
                                         <th 
                                             key={col} 
                                             className={`text-xs font-semibold uppercase tracking-wider text-base-content/60 py-4 px-4 ${idx === 0 ? 'pl-6 rounded-tl-2xl' : ''} ${isNumericColumn(col) ? 'text-right' : 'text-left'}`}
                                         >
-                                            {formatColumnHeader(col)}
+                                            {formatColumnHeader(col, t)}
                                         </th>
                                     ))}
                                     <th className="w-10 rounded-tr-2xl"></th>
@@ -105,7 +118,7 @@ export const ReportResults: React.FC<ReportResultsProps> = ({
                             <tbody className="divide-y divide-base-100">
                                 {results.slice(0, 100).map((row, idx) => (
                                     <tr key={idx} className="hover:bg-primary/5 transition-all group">
-                                        {columns.slice(0, 8).map((col, subIdx) => (
+                                        {columns.map((col, subIdx) => (
                                             <td 
                                                 key={col} 
                                                 className={`py-4 px-4 text-sm font-medium text-base-content/80 ${subIdx === 0 ? 'pl-6 font-bold' : ''} ${isNumericColumn(col) ? 'text-right' : 'text-left'}`}

@@ -12,7 +12,8 @@
         "gross_margin": "Marge Brute",
         "purchase_cost": "Coût d'Achat",
         "margin_info": "{{pct}}% du CA",
-        "sales_count": "{{count}} ventes"
+        "sales_count": "{{count}} ventes",
+        "total_discounts": "Total Remises"
     },
     "suppliers": {
         "title": "Achats par Fournisseur",
@@ -28,6 +29,7 @@
         "paid": "Payé",
         "balance": "Reste",
         "recovery_rate": "Taux de recouvrement",
+        "recoveries": "Recouvrements",
         "top_clients": "Top Clients Pro"
     },
     "free_units": {
@@ -44,7 +46,9 @@
         "mode": "Mode",
         "amount": "Montant",
         "no_data": "Aucun encaissement ce mois-ci",
-        "total": "Total"
+        "total": "Total",
+        "subtotal": "Sous-total Encaissements",
+        "non_cash_items": "Éléments hors encaissement"
     },
     "caisse_mvts": {
         "title": "Autres Mouvements de Caisse",
@@ -80,5 +84,17 @@
     "pdf": {
         "download": "PDF",
         "tooltip": "Télécharger le rapport en PDF"
+    },
+    "stock_balance": {
+        "export_btn": "Balance des Stocks (Excel)",
+        "excel_filename": "Balance_Stocks_{{date}}.xlsx",
+        "headers": {
+            "cip": "Code CIP",
+            "designation": "Désignation",
+            "stock_initial": "Stock Initial",
+            "achats": "Achats",
+            "ventes": "Ventes",
+            "stock_final": "Stock Final"
+        }
     }
 }

@@ -232,7 +232,8 @@ class CommandeViewSet(MultiTermSearchMixin, OptimizedSerializerMixin, viewsets.M
         product_ids = [item.produit_id for item in items]
         
         # On verrouille les produits pour empêcher toute modification de stock (ex: vente concomitante)
-        locked_products = list(Produit.objects.select_for_update().filter(id__in=product_ids))
+        # TRÈS IMPORTANT: order_by('id') pour éviter les deadlocks en DB !
+        locked_products = list(Produit.objects.select_for_update().filter(id__in=product_ids).order_by('id'))
         product_map = {p.id: p for p in locked_products}
         
         # Préparer les lots de stock à créer en batch
@@ -506,8 +507,9 @@ class CommandeViewSet(MultiTermSearchMixin, OptimizedSerializerMixin, viewsets.M
             return Response({'status': 'Commande vide, statut repassé en préparation.'})
         
         # Verrouiller les produits pour éviter les modifications concurrentes
+        # TRÈS IMPORTANT: order_by('id') pour éviter les deadlocks en DB !
         product_ids = [item.produit_id for item in items]
-        locked_products = list(Produit.objects.select_for_update().filter(id__in=product_ids))
+        locked_products = list(Produit.objects.select_for_update().filter(id__in=product_ids).order_by('id'))
         product_map = {p.id: p for p in locked_products}
         
         produits_to_update = []

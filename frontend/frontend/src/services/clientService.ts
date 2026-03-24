@@ -56,6 +56,16 @@ const clientService = {
 
     bulkDelete: async (ids: number[]): Promise<void> => {
         await api.post('clients/bulk_delete/', { ids });
+    },
+    
+    getDepotHistory: async (id: number): Promise<any> => {
+        const response = await api.get(`clients/${id}/depot_history/`);
+        return response.data;
+    },
+
+    addDepot: async (id: number, data: { type: string, montant: number, mode_paiement?: string, notes?: string }): Promise<any> => {
+        const response = await api.post(`clients/${id}/add_depot/`, data);
+        return response.data;
     }
 };
 

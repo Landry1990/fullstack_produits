@@ -17,10 +17,12 @@ import {
   History as HistoryIcon,
   ShieldCheck,
   Edit,
-  Activity
+  Activity,
+  CreditCard
 } from 'lucide-react';
 
 import type { Client, AyantDroit } from '../types';
+import ClientDepositModal from './clients/ClientDepositModal';
 import clientService from '../services/clientService';
 import { formatCurrency, normalizeNumberInput } from '../utils/formatters';
 
@@ -42,7 +44,8 @@ const emptyForm: Partial<Client> = {
   taux_couverture: '0',
   remise_automatique: '0',
   ayants_droit: [],
-  is_active: true
+  is_active: true,
+  is_deposit_enabled: false
 };
 
 export default function Clients() {
@@ -66,6 +69,7 @@ export default function Clients() {
   const [debouncedSearch, setDebouncedSearch] = useState<string>('');
   const [isLoyaltyConfigOpen, setIsLoyaltyConfigOpen] = useState(false);
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
+  const [isDepositModalOpen, setIsDepositModalOpen] = useState(false);
 
   // Purchase History State
   const [purchaseHistory, setPurchaseHistory] = useState<any | null>(null);
@@ -350,6 +354,14 @@ export default function Clients() {
                     variant="primary"
                     title={t('clients:sections.purchase_history')}
                   />
+                  {selectedClient.client_type === 'PARTICULIER' && selectedClient.is_deposit_enabled && (
+                    <ActionIcon 
+                      icon={CreditCard}
+                      onClick={() => setIsDepositModalOpen(true)}
+                      variant="ghost"
+                      title={t('clients:finance.manage_deposit')}
+                    />
+                  )}
                   <ActionIcon 
                     icon={selectedClient.is_active ? EyeOff : Eye}
                     onClick={handleToggleActive}
@@ -397,10 +409,31 @@ export default function Clients() {
                               {selectedClient.points_fidelite ?? 0} {t('clients:units.pts')}
                            </div>
                         </div>
-                        <div className="p-4 bg-primary/5 border border-primary/10 rounded-2xl flex flex-col gap-1">
-                           <span className="text-[9px] font-black uppercase tracking-widest text-primary/40">{t('clients:finance.auto_discount')}</span>
-                           <div className="text-xl font-black text-primary">{selectedClient.remise_automatique || 0}{t('clients:units.percent')}</div>
-                        </div>
+                        {selectedClient.client_type === 'PARTICULIER' && (
+                          <>
+                            {selectedClient.is_deposit_enabled ? (
+                              <div className="p-4 bg-primary/5 border border-primary/10 rounded-2xl flex flex-col gap-1 cursor-pointer hover:bg-primary/10 transition-colors" onClick={() => setIsDepositModalOpen(true)}>
+                                 <span className="text-[9px] font-black uppercase tracking-widest text-primary/40">{t('clients:finance.solde_depot')}</span>
+                                 <div className="text-xl font-black text-primary">{formatCurrency(parseFloat(selectedClient.solde_depot || '0'))}</div>
+                              </div>
+                            ) : (
+                              <div className="p-4 bg-base-100 border border-base-200 rounded-2xl flex flex-col gap-1 opacity-40 grayscale">
+                                 <span className="text-[9px] font-black uppercase tracking-widest text-base-content/40">{t('clients:finance.solde_depot')}</span>
+                                 <div className="text-xl font-black text-base-content">{formatCurrency(0)}</div>
+                              </div>
+                            )}
+                            <div className="p-4 bg-base-100 border border-base-200 rounded-2xl flex flex-col gap-1">
+                               <span className="text-[9px] font-black uppercase tracking-widest text-base-content/40">{t('clients:finance.auto_discount')}</span>
+                               <div className="text-xl font-black text-base-content">{selectedClient.remise_automatique || 0}{t('clients:units.percent')}</div>
+                            </div>
+                          </>
+                        )}
+                        {selectedClient.client_type === 'PROFESSIONNEL' && (
+                          <div className="col-span-2 p-4 bg-primary/5 border border-primary/10 rounded-2xl flex flex-col gap-1">
+                             <span className="text-[9px] font-black uppercase tracking-widest text-primary/40">{t('clients:finance.auto_discount')}</span>
+                             <div className="text-xl font-black text-primary">{selectedClient.remise_automatique || 0}{t('clients:units.percent')}</div>
+                          </div>
+                        )}
                         {selectedClient.client_type === 'PROFESSIONNEL' && (
                           <div className="col-span-2 p-4 bg-warning/5 border border-warning/10 rounded-2xl flex justify-between items-center">
                              <div>
@@ -486,6 +519,15 @@ export default function Clients() {
         isOpen={isLoyaltyConfigOpen}
         onClose={() => setIsLoyaltyConfigOpen(false)}
       />
+
+      {selectedClient && (
+        <ClientDepositModal
+          isOpen={isDepositModalOpen}
+          onClose={() => setIsDepositModalOpen(false)}
+          client={selectedClient}
+          onSuccess={fetchClients}
+        />
+      )}
     </div>
   );
 }

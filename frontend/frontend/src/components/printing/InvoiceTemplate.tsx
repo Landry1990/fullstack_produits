@@ -59,6 +59,7 @@ export interface InvoiceData {
     matricule: string;
     societe?: string;
   };
+  client_solde_depot?: string;
 }
 
 export interface PharmacySettings {
@@ -163,6 +164,12 @@ const InvoiceTemplate: React.FC<InvoiceTemplateProps> = ({ settings, data, isBon
               )}
               {data.client?.address && <p>{data.client.address}</p>}
               {data.client?.phone && <p>Tél : {data.client.phone}</p>}
+              {data.client_solde_depot && Number(data.client_solde_depot) > 0 && (
+                <div className="mt-2 pt-2 border-t border-slate-100 flex justify-between items-center">
+                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-tighter">Solde Dépôt Restant</span>
+                    <span className="font-black text-slate-900 text-sm">{formatNumber(Number(data.client_solde_depot), 0)} F</span>
+                </div>
+              )}
             </div>
         </div>
 

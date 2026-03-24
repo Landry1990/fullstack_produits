@@ -40,6 +40,9 @@
         "reappro": {
             "title": "Shelf Replenishment"
         },
+        "ruptures": {
+            "title": "Out of Stock Tracking"
+        },
         "avoirs": "Claims",
         "promis": "Promised",
         "transformations": {

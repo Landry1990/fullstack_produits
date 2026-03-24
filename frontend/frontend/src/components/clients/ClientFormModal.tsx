@@ -11,7 +11,8 @@ import {
   Mail,
   Phone,
   MapPin,
-  ShieldCheck
+  ShieldCheck,
+  CreditCard
 } from 'lucide-react';
 import type { Client, AyantDroit } from '../../types';
 
@@ -219,6 +220,26 @@ export default function ClientFormModal({
                         />
                     </div>
                </div>
+
+               {data.client_type === 'PARTICULIER' && (
+                 <div className="group bg-base-200/30 p-4 rounded-[1.25rem] border border-base-200/60 hover:border-primary/30 transition-all flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                          <div className={`p-2 rounded-xl transition-all ${data.is_deposit_enabled ? 'bg-primary/10 text-primary' : 'bg-base-300 text-base-content/30'}`}>
+                             <CreditCard className="w-5 h-5" />
+                          </div>
+                          <div>
+                              <span className="block font-black text-xs">{t('clients:fields.is_deposit_enabled')}</span>
+                              <p className="text-[9px] text-base-content/40 font-bold uppercase">{t('clients:hints.is_deposit_enabled')}</p>
+                          </div>
+                      </div>
+                      <input 
+                        type="checkbox" 
+                        checked={data.is_deposit_enabled ?? false} 
+                        onChange={e => setData({...data, is_deposit_enabled: e.target.checked})}
+                        className="toggle toggle-primary toggle-md" 
+                      />
+                 </div>
+               )}
             </div>
 
             {/* Financial Conditions Section - More compact */}

@@ -1,4 +1,4 @@
-﻿import React from 'react';
+import React from 'react';
 import { useTranslation } from 'react-i18next';
 import type { ProduitModel } from '../../types';
 import { formatCurrency } from '../../utils/formatters';
@@ -85,10 +85,10 @@ export const ProductTable: React.FC<ProductTableProps> = (props) => {
                       data-product-id={produit.id}
                       className={`hover cursor-pointer transition-colors ${
                         isSelected 
-                          ? 'bg-blue-50/50 border-l-4 border-l-blue-500 font-medium' 
-                          : isChecked 
-                            ? 'bg-green-50/50 border-l-4 border-l-green-500' 
-                            : 'border-b border-slate-100 text-base-content/90'
+                        ? 'bg-primary/10 border-l-4 border-l-primary font-medium' 
+                        : isChecked 
+                          ? 'bg-success/10 border-l-4 border-l-success' 
+                          : 'border-b border-base-200 text-base-content/90'
                       } ${stock < 0 ? 'text-red-600' : stock === 0 ? 'opacity-60 text-base-content/60' : ''}`}
                       onClick={() => onViewDetails(produit)}
                       onDoubleClick={(e) => {
@@ -122,7 +122,7 @@ export const ProductTable: React.FC<ProductTableProps> = (props) => {
                               className="tooltip tooltip-right z-50 inline-flex shrink-0" 
                               data-tip={`${t('products:table.exclusivity', { defaultValue: 'Exclusivité' })}: ${produit.fournisseur_name || t('products:form.provider_placeholder')}`}
                             >
-                              <span className="bg-green-100 text-green-700 px-1.5 rounded-sm font-bold text-[9px] border border-green-200 uppercase tracking-tighter">
+                              <span className="badge badge-success badge-outline font-bold text-[9px] uppercase tracking-tighter px-1 h-auto min-h-0">
                                 EXCLU
                               </span>
                             </div>
@@ -176,14 +176,14 @@ export const ProductTable: React.FC<ProductTableProps> = (props) => {
                        
                        <div className="flex items-center gap-2 mb-2">
                            {produit.is_supplier_exclusive && (
-                              <span className="bg-green-100 text-green-700 px-1.5 py-0.5 rounded text-[9px] font-bold tracking-tight uppercase">EXCLUSIF</span>
+                               <span className="badge badge-success badge-outline text-[9px] font-bold tracking-tight uppercase px-1 h-auto min-h-0">EXCLUSIF</span>
                            )}
                            <span className="text-[11px] text-base-content/60 font-mono tracking-tight">
                               {produit.cip1 || 'AUCUN CIP'}
                            </span>
                        </div>
 
-                       <div className="flex items-center justify-between w-full pt-1.5 border-t border-slate-100">
+                        <div className="flex items-center justify-between w-full pt-1.5 border-t border-base-200">
                           <div className="flex items-center gap-1">
                              <span className="text-[10px] text-base-content/40 font-medium uppercase">Stock</span>
                              <span className={`text-xs font-black ${stock < 0 ? 'text-red-500' : stock === 0 ? 'text-base-content/40' : 'text-base-content/90'}`}>

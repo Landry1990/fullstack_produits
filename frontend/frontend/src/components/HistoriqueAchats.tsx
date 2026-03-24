@@ -101,7 +101,7 @@ const HistoriqueAchats = ({ forcedType }: HistoriqueAchatsProps) => {
   };
 
   const formatMoney = (amount: number) => {
-    return new Intl.NumberFormat(i18n.language.startsWith('fr') ? 'fr-FR' : 'en-US', { maximumFractionDigits: 0 }).format(amount);
+    return new Intl.NumberFormat(i18n.language.startsWith('fr') ? 'fr-FR' : 'en-GB', { maximumFractionDigits: 0 }).format(amount);
   };
 
   const totalPages = Math.ceil(totalCount / pageSize);

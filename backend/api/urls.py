@@ -12,7 +12,8 @@ from .views import (
     PharmacySettingsView, ProductImportView, ConfigurationOptionViewSet,
     AuditLogViewSet, LoyaltySettingViewSet, UserViewSet, CustomAuthToken,
     CategoriesListView, CategoriesDetailView, PromisViewSet,
-    PromotionViewSet, TVAViewSet, UserDailySessionViewSet
+    PromotionViewSet, TVAViewSet, UserDailySessionViewSet,
+    DepotClientViewSet
 )
 from .views.formes import FormeViewSet
 from .views.paiements import PaiementFournisseurViewSet
@@ -29,7 +30,7 @@ from .views.configuration_objectifs import ConfigurationObjectifsViewSet
 from .views.temporal_analysis import TemporalAnalysisViewSet
 from .views.purge import PurgeViewSet
 from .views.code_backup import CodeBackupViewSet
-
+from .views.stocks.ruptures import RuptureFournisseurViewSet
 
 # Create a router and register our viewsets with it.
 router = DefaultRouter()
@@ -84,6 +85,8 @@ router.register(r'tva', TVAViewSet, basename='tva')
 router.register(r'maintenance', PurgeViewSet, basename='maintenance')
 router.register(r'code-backup', CodeBackupViewSet, basename='code-backup')
 router.register(r'user-sessions', UserDailySessionViewSet, basename='user-session')
+router.register(r'ruptures-fournisseurs', RuptureFournisseurViewSet, basename='rupture-fournisseur')
+router.register(r'depots-clients', DepotClientViewSet, basename='depotclient')
 
 
 # The API URLs are now determined automatically by the router.

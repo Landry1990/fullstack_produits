@@ -7,6 +7,12 @@
     "delete": "Delete",
     "cancel": "Cancel",
     "save": "Save",
+    "deposit": "Deposit",
+    "balance": "Balance",
+    "available_balance": "Available Balance",
+    "add_deposit": "Add Deposit",
+    "make_withdrawal": "Make Withdrawal",
+    "history": "History",
     "passerby_client": "Walk-in Customer",
     "close": "Close",
     "no_number": "No number",
@@ -23,6 +29,7 @@
     "units": "stk",
     "refresh": "Refresh",
     "remove": "Remove",
+    "insurance": "Insurance / Third-party",
     "restore": "Restore",
     "actions": {
         "confirm": "Confirm",
@@ -98,9 +105,9 @@
     "no_address": "No address",
     "not_available": "N/A",
     "cip": "CIP",
-    "date_format_short": "MM/dd/yyyy",
-    "date_format_long": "MMMM dd, yyyy",
-    "date_locale": "en-US",
+    "date_format_short": "dd/MM/yyyy",
+    "date_format_long": "dd MMMM yyyy",
+    "date_locale": "en-GB",
     "search_product_placeholder": "Search for a product...",
     "last_7_days": "Last 7 days",
     "last_30_days": "Last 30 days",
@@ -132,7 +139,7 @@
         "recouvrement": "Debt Collection",
         "recouvrement_caps": "DEBT COLLECTION"
     },
-    "locale": "en-US",
+    "locale": "en-GB",
     "currency_symbol": "F",
     "currency": "F",
     "sudo": {
@@ -161,7 +168,8 @@
         "september": "September",
         "october": "October",
         "november": "November",
-        "december": "December"
+        "december": "December",
+        "total_general": "GRAND TOTAL"
     },
     "from": "From",
     "to": "To",

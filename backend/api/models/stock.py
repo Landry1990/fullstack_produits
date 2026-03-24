@@ -251,6 +251,37 @@ class MouvementStock(models.Model):
         return f"{self.date} - {produit_name} - {self.type_mouvement} ({self.quantite})"
 
 
+class RuptureFournisseur(models.Model):
+    """
+    Historique des ruptures fournisseurs.
+    Permet de suivre les produits indisponibles chez les grossistes.
+    """
+    produit = models.ForeignKey(
+        'Produit', on_delete=models.CASCADE, 
+        related_name='ruptures_fournisseurs'
+    )
+    fournisseur = models.ForeignKey(
+        'Fournisseur', on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='ruptures_signalees'
+    )
+    date_debut = models.DateTimeField(auto_now_add=True)
+    date_fin = models.DateTimeField(null=True, blank=True, help_text="Date à laquelle le produit est redevenu disponible")
+    est_resolu = models.BooleanField(default=False)
+    utilisateur = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
+    remarques = models.TextField(blank=True, default='')
+
+    class Meta:
+        ordering = ['-date_debut']
+        indexes = [
+            models.Index(fields=['est_resolu', '-date_debut']),
+            models.Index(fields=['produit', 'est_resolu']),
+        ]
+
+    def __str__(self):
+        status = "RÉSOLU" if self.est_resolu else "EN COURS"
+        return f"Rupture {self.produit.name} - {status} (depuis {self.date_debut})"
+
+
 # ============== SIGNALS ==============
 
 @receiver(pre_save, sender=StockLot)
