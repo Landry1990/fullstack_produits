@@ -19,7 +19,24 @@ export interface Client {
     remise_automatique?: string
     ayants_droit?: AyantDroit[]
     current_debt?: string
+    solde_depot?: string
     is_active?: boolean
     points_fidelite?: number
     is_loyalty_member?: boolean
+    is_deposit_enabled?: boolean
+}
+
+export interface DepotClient {
+    id: number
+    client: number
+    type: 'DEPOT' | 'RETRAIT' | 'ACHAT' | 'ANNULATION_ACHAT'
+    type_display: string
+    montant: string
+    date: string
+    mode_paiement?: string
+    facture?: number
+    facture_numero?: string
+    created_by?: number
+    created_by_name?: string
+    notes?: string
 }

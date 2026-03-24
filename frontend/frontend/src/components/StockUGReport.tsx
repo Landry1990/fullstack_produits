@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { PackageOpen, Calendar, Download, RefreshCw, Banknote, Printer } from 'lucide-react';
 import axios from 'axios';
 import { format } from 'date-fns';
@@ -191,7 +191,7 @@ export default function StockUGReport() {
                     ${f.details.map(d => `
                       <tr>
                         <td style="padding-left: 25px;">${d.produit_nom}</td>
-                        <td style="color: #64748b; font-size: 9px;">Lot: ${d.lot_numero}<br/>Fact: ${d.facture_numero}</td>
+                        <td style="color: #64748b; font-size: 9px; white-space: nowrap;">Lot: ${d.lot_numero}<br/>Fact: ${d.facture_numero}</td>
                         <td style="text-align: right;">${formatNumber(d.quantity_free)}</td>
                         <td style="text-align: right; font-weight: bold; color: #10b981;">${formatNumber(d.quantity_free_remaining)}</td>
                         <td style="text-align: right; font-weight: bold; color: #1e293b;">${formatCurrency(d.valeur_restante)}</td>
@@ -456,7 +456,7 @@ export default function StockUGReport() {
                                           {detail.date_reception ? format(new Date(detail.date_reception), 'dd/MM/yyyy HH:mm') : 'N/A'}
                                        </td>
                                        <td className="text-base-content/60 font-mono text-xs">{detail.commande_numero}</td>
-                                       <td className="text-base-content/60 font-mono text-xs">{detail.facture_numero}</td>
+                                       <td className="text-base-content/60 font-mono text-xs whitespace-nowrap">{detail.facture_numero}</td>
                                        <td className="text-right text-base-content/80">{formatCurrency(detail.prix_vente)}</td>
                                        <td className="text-right text-base-content/40">{formatNumber(detail.quantity_free)}</td>
                                        <td className="text-right font-bold text-emerald-500">{formatNumber(detail.quantity_free_remaining)}</td>

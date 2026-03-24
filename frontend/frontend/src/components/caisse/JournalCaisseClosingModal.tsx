@@ -72,12 +72,25 @@ export default function JournalCaisseClosingModal({ state }: Props) {
                 </div>
                 <div className="collapse-content"> 
                   <div className="space-y-2 pt-2 border-t border-base-200 mt-2">
-                    {Object.entries(closingTotals.details).filter(([,v]) => v !== 0).map(([mode, montant]) => (
-                      <div key={mode} className="flex items-center justify-between text-xs">
-                        <span className="font-medium text-base-content/60 capitalize ">{mode}</span>
-                        <span className="font-black text-base-content">{formatCurrencyLocal(Math.round(montant as number))}</span>
-                      </div>
-                    ))}
+                    {Object.entries(closingTotals.details).filter(([,v]) => (v as number) !== 0).map(([mode, montant]) => {
+                      const modeLabels: Record<string, string> = {
+                        especes: t('common:payment_modes.especes'),
+                        cheque: t('common:payment_modes.cheque'),
+                        carte: t('common:payment_modes.carte'),
+                        virement: t('common:payment_modes.virement'),
+                        om: 'Orange Money',
+                        momo: 'Mobile Money',
+                        depot: t('common:payment_modes.depot'),
+                        en_compte: t('common:payment_modes.en_compte'),
+                        recouvrement: t('common:payment_modes.recouvrement'),
+                      };
+                      return (
+                        <div key={mode} className="flex items-center justify-between text-xs">
+                          <span className="font-medium text-base-content/60 capitalize ">{modeLabels[mode] || mode}</span>
+                          <span className="font-black text-base-content">{formatCurrencyLocal(Math.round(montant as number))}</span>
+                        </div>
+                      );
+                    })}
                   </div>
                 </div>
               </div>

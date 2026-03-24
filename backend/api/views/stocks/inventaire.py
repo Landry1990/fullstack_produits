@@ -1027,6 +1027,52 @@ class InventaireViewSet(MultiTermSearchMixin, viewsets.ModelViewSet):
         response.write(pdf)
         return response
 
+    @action(detail=True, methods=['get'])
+    def print_data(self, request, pk=None):
+        """
+        Retourne les données structurées pour l'impression frontend (React).
+        Supporte les feuilles de saisie et les rapports d'écarts.
+        """
+        inventaire = self.get_object()
+        lignes = inventaire.lignes.select_related('produit', 'produit__rayon', 'stock_lot').order_by('produit__rayon__name', 'produit__name')
+        
+        grouped = {}
+        total_global_ecart = 0
+        
+        for l in lignes:
+            rayon = l.produit.rayon.name if l.produit and l.produit.rayon else "AUTRES"
+            if rayon not in grouped: grouped[rayon] = []
+            
+            # Calcul du PMP/Coût pour la valeur de l'écart
+            pmp = l.pmp_snapshot or (l.produit.pmp if l.produit else 0) or (l.produit.cost_price if l.produit else 0)
+            valeur_ecart = float(l.ecart) * float(pmp if pmp else 0)
+            total_global_ecart += valeur_ecart
+            
+            grouped[rayon].append({
+                'id': l.id,
+                'cip1': l.produit.cip1 if l.produit else '-',
+                'name': l.produit.name if l.produit else '-',
+                'lot_numero': l.stock_lot.lot if l.stock_lot else (l.lot_numero if hasattr(l, 'lot_numero') else '-'),
+                'stock': float(l.stock_theorique),
+                'stock_theorique': float(l.stock_theorique),
+                'quantite_physique': float(l.quantite_physique),
+                'ecart': float(l.ecart),
+                'valeur_ecart': valeur_ecart,
+                'selling_price': float(l.produit.selling_price) if l.produit and l.produit.selling_price else 0,
+                'is_lot_line': False
+            })
+            
+        is_report = request.query_params.get('report', '0') == '1' or inventaire.status == Inventaire.Status.VALIDEE
+        
+        return Response({
+            'title': "RAPPORT D'INVENTAIRE" if is_report else "FEUILLE DE SAISIE INVENTAIRE",
+            'subtitle': f"Réf: #{inventaire.id} - {inventaire.description}" if inventaire.description else f"Réf: #{inventaire.id}",
+            'date': inventaire.date.isoformat(),
+            'groups': grouped,
+            'is_report': is_report,
+            'total_global_ecart': total_global_ecart
+        })
+
 
     @action(detail=True, methods=['get'])
     def imprimer_etat(self, request, pk=None):

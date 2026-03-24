@@ -1,4 +1,4 @@
-﻿
+
 import React, { useState, useMemo, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
@@ -396,7 +396,7 @@ export default function Produit() {
       {/* Header Section (AppSwite Style) */}
       <div className="w-full max-w-7xl mx-auto px-1">
         <div className="flex items-center gap-2 mb-3">
-           <div className="bg-blue-100 text-blue-600 p-2 rounded-xl">
+           <div className="bg-primary/20 text-primary p-2 rounded-xl">
              <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" /></svg>
            </div>
            <div className="bg-base-300 text-base-content/60 p-2 rounded-xl cursor-pointer hover:bg-slate-300 transition-colors" title="Tags">
@@ -451,7 +451,7 @@ export default function Produit() {
       </div>
 
       {error && (
-        <div className="alert alert-error shadow-sm rounded-xl py-3 border-none bg-red-50 text-red-600 font-medium max-w-7xl mx-auto">
+        <div className="alert alert-error shadow-sm rounded-xl py-3 border-none font-medium max-w-7xl mx-auto">
           <svg xmlns="http://www.w3.org/2000/svg" className="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
           </svg>

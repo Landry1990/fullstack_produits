@@ -37,6 +37,7 @@ export default function TicketPreviewModal({
 <html>
 <head>
   <title>Ticket de Caisse</title>
+  <base href="${window.location.origin}/">
   ${styleTags}
   <style>
     @media print {
@@ -58,21 +59,36 @@ export default function TicketPreviewModal({
       padding: 0;
       display: flex;
       justify-content: center;
+      font-family: 'Inter', 'Poppins', sans-serif;
     }
   </style>
 </head>
-<body class="bg-white text-black">
-  ${ticketElement.innerHTML}
+<body class="bg-white text-black font-sans">
+  <div id="print-root">
+    ${ticketElement.innerHTML}
+  </div>
+  <script>
+    window.onload = () => {
+        // Additional wait for fonts if document.fonts is available
+        if (document.fonts) {
+            document.fonts.ready.then(() => {
+                setTimeout(() => {
+                    window.print();
+                    window.close();
+                }, 300);
+            });
+        } else {
+            setTimeout(() => {
+                window.print();
+                window.close();
+            }, 800);
+        }
+    };
+  </script>
 </body>
 </html>`);
       win.document.close();
       win.focus();
-      
-      // Wait for fonts/styles to fully apply in the new window before printing
-      setTimeout(() => {
-        win.print();
-        win.close();
-      }, 500);
     }
   }
 
@@ -84,8 +100,8 @@ export default function TicketPreviewModal({
           <button className="btn btn-sm btn-circle btn-ghost" onClick={onClose}>✕</button>
         </div>
 
-        <div className="max-h-[70vh] overflow-y-auto bg-base-200/50 flex justify-center py-4" id="ticket-preview-container">
-          <div id="ticket-preview">
+        <div className="max-h-[75vh] overflow-y-auto bg-slate-900/90 flex justify-center py-8 px-4" id="ticket-preview-container">
+          <div id="ticket-preview" className="shadow-2xl ring-1 ring-white/10">
             <TicketTemplate ticket={ticket} settings={settings} />
           </div>
         </div>

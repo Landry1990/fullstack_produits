@@ -10,6 +10,7 @@
         "PROD_CREATE": "Product Creation",
         "PROD_UPDATE": "Product Modification",
         "INV_CREATE": "Invoicing",
+        "INV_CRE": "Invoicing",
         "INV_DELETE": "Invoice Deletion",
         "INV_CANCEL": "Invoice Cancellation",
         "INV_DEL": "Invoice Deletion",
@@ -44,11 +45,36 @@
         "export": "EXPORT CSV",
         "reset": "RESET"
     },
+    "view": {
+        "flux": "Audit Feed",
+        "items": "items",
+        "cards_btn": "Card View",
+        "table_btn": "Table View",
+        "loading": "Loading logs...",
+        "empty_title": "No logs found",
+        "empty_subtitle": "Try adjusting your search filters",
+        "sudo_badge": "SUDO",
+        "system_user": "System",
+        "json_btn": "Details",
+        "raw_data": "Raw Data (JSON)"
+    },
     "table": {
         "date": "Date & Time",
+        "timestamp": "Date & Time",
         "user": "User",
         "action": "Action",
+        "operation": "Operation",
         "description": "Description",
-        "details": "Details"
+        "details": "Details",
+        "status": "Status",
+        "sudo": "SUDO VALIDATION"
+    },
+    "details": {
+        "price_change": "Price: {{old}} ➔ {{new}}",
+        "stock_adj": "Stock: {{old}} ➔ {{new}} ({{reason}})",
+        "sudo_val": "Sudo: {{user}} ({{permission}})",
+        "amount": "Amount: {{amount}}",
+        "quantity": "Quantity: {{quantity}}",
+        "ecart": "Gap: {{ecart}}"
     }
 }

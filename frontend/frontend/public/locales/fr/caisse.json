@@ -129,7 +129,8 @@
             "momo": "Mobile Money",
             "cheque": "Chèque",
             "virement": "Virement",
-            "credit": "En Compte"
+            "credit": "En Compte",
+            "depot": "Dépôt/Acompte"
         },
         "confirm": "Valider le paiement",
         "success": "Paiement enregistré"
@@ -270,6 +271,8 @@
             "coupon": "Coupon",
             "om_short": "O.M.",
             "momo_short": "MoMo",
+            "en_compte": "En Compte",
+            "depot": "Dépôt",
             "entry_caps": "ENTRÉE",
             "exit_caps": "SORTIE"
         }

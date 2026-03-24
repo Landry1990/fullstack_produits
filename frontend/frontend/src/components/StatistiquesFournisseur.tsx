@@ -170,17 +170,17 @@ export default function StatistiquesFournisseur() {
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                 <div className="card bg-base-100 shadow-sm border border-base-200">
                 <div className="card-body p-4">
-                    <h3 className="text-2xl font-bold text-emerald-600">{formatCurrency(Math.round(totaux.ca_ttc), i18n.language === 'fr' ? 'fr-FR' : 'en-US', t('common:currency'))}</h3>
+                    <h3 className="text-2xl font-bold text-emerald-600">{formatCurrency(Math.round(totaux.ca_ttc), i18n.language === 'fr' ? 'fr-FR' : 'en-GB', t('common:currency'))}</h3>
                 </div>
                 </div>
                 <div className="card bg-base-100 shadow-sm border border-base-200">
                 <div className="card-body p-4">
-                    <h3 className="text-2xl font-bold text-blue-600">{formatCurrency(Math.round(totaux.cout_achat), i18n.language === 'fr' ? 'fr-FR' : 'en-US', t('common:currency'))}</h3>
+                    <h3 className="text-2xl font-bold text-blue-600">{formatCurrency(Math.round(totaux.cout_achat), i18n.language === 'fr' ? 'fr-FR' : 'en-GB', t('common:currency'))}</h3>
                 </div>
                 </div>
                 <div className="card bg-base-100 shadow-sm border border-base-200">
                 <div className="card-body p-4">
-                    <h3 className="text-2xl font-bold text-amber-600">{formatCurrency(Math.round(totaux.marge_brute), i18n.language === 'fr' ? 'fr-FR' : 'en-US', t('common:currency'))}</h3>
+                    <h3 className="text-2xl font-bold text-amber-600">{formatCurrency(Math.round(totaux.marge_brute), i18n.language === 'fr' ? 'fr-FR' : 'en-GB', t('common:currency'))}</h3>
                     <p className="text-xs text-base-content/60">
                     {totaux.ca_ttc > 0 ? ((totaux.marge_brute / totaux.ca_ttc) * 100).toFixed(1) : 0}% {t('sales_tab.cards.margin_percentage')}
                     </p>
@@ -204,7 +204,7 @@ export default function StatistiquesFournisseur() {
                         <CartesianGrid strokeDasharray="3 3" />
                         <XAxis dataKey="nom" />
                         <YAxis />
-                        <Tooltip formatter={(value) => `${formatCurrency(Number(value), i18n.language === 'fr' ? 'fr-FR' : 'en-US', t('common:currency'))}`} />
+                        <Tooltip formatter={(value) => `${formatCurrency(Number(value), i18n.language === 'fr' ? 'fr-FR' : 'en-GB', t('common:currency'))}`} />
                         <Legend />
                         <Bar dataKey="ca_ttc" name={t('sales_tab.chart.ca')} fill="#10b981" />
                         <Bar dataKey="marge_brute" name={t('sales_tab.chart.margin')} fill="#f59e0b" />
@@ -241,9 +241,9 @@ export default function StatistiquesFournisseur() {
                             <tr key={stat.id}>
                             <td className="font-medium">{stat.nom}</td>
                             <td className="text-right">{stat.quantite_vendue}</td>
-                             <td className="text-right">{formatCurrency(Math.round(Number(stat.cout_achat)), i18n.language === 'fr' ? 'fr-FR' : 'en-US', t('common:currency'))}</td>
-                             <td className="text-right font-bold">{formatCurrency(Math.round(Number(stat.ca_ttc)), i18n.language === 'fr' ? 'fr-FR' : 'en-US', t('common:currency'))}</td>
-                             <td className="text-right text-success">{formatCurrency(Math.round(Number(stat.marge_brute)), i18n.language === 'fr' ? 'fr-FR' : 'en-US', t('common:currency'))}</td>
+                             <td className="text-right">{formatCurrency(Math.round(Number(stat.cout_achat)), i18n.language === 'fr' ? 'fr-FR' : 'en-GB', t('common:currency'))}</td>
+                             <td className="text-right font-bold">{formatCurrency(Math.round(Number(stat.ca_ttc)), i18n.language === 'fr' ? 'fr-FR' : 'en-GB', t('common:currency'))}</td>
+                             <td className="text-right text-success">{formatCurrency(Math.round(Number(stat.marge_brute)), i18n.language === 'fr' ? 'fr-FR' : 'en-GB', t('common:currency'))}</td>
                             <td className="text-right text-sm">
                                 {Number(stat.ca_ttc) > 0 
                                 ? ((Number(stat.marge_brute) / Number(stat.ca_ttc)) * 100).toFixed(1) 
@@ -298,7 +298,7 @@ export default function StatistiquesFournisseur() {
                                  <div className="grid grid-cols-3 gap-4 text-center">
                                      <div>
                                          <div className="text-xs uppercase font-bold text-base-content/50">{t('performance_tab.metrics.volume')}</div>
-                                          <div className="font-bold text-lg">{formatCurrency(Math.round(item.details.volume.valeur ?? 0), i18n.language === 'fr' ? 'fr-FR' : 'en-US', t('common:currency'))}</div>
+                                          <div className="font-bold text-lg">{formatCurrency(Math.round(item.details.volume.valeur ?? 0), i18n.language === 'fr' ? 'fr-FR' : 'en-GB', t('common:currency'))}</div>
                                          <progress className="progress progress-primary w-full" value={item.details.volume.score} max="100"></progress>
                                      </div>
                                      <div>
@@ -363,13 +363,13 @@ export default function StatistiquesFournisseur() {
                                             <div key={idx} className="flex justify-between text-xs w-64">
                                                 <span>{offre.fournisseur}:</span>
                                                  <span className={offre.prix_moyen === prod.meilleur_prix ? 'font-bold text-success' : ''}>
-                                                     {formatCurrency(Math.round(offre.prix_moyen), i18n.language === 'fr' ? 'fr-FR' : 'en-US', t('common:currency'))}
+                                                     {formatCurrency(Math.round(offre.prix_moyen), i18n.language === 'fr' ? 'fr-FR' : 'en-GB', t('common:currency'))}
                                                  </span>
                                              </div>
                                          ))}
                                      </td>
                                       <td className="font-bold text-success text-lg">
-                                         {formatCurrency(Math.round(prod.meilleur_prix), i18n.language === 'fr' ? 'fr-FR' : 'en-US', t('common:currency'))}
+                                         {formatCurrency(Math.round(prod.meilleur_prix), i18n.language === 'fr' ? 'fr-FR' : 'en-GB', t('common:currency'))}
                                       </td>
                                 </tr>
                             ))}
@@ -410,7 +410,7 @@ export default function StatistiquesFournisseur() {
                                                 <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                                             ))}
                                         </Pie>
-                                         <Tooltip formatter={(value) => `${formatCurrency(Number(value), i18n.language === 'fr' ? 'fr-FR' : 'en-US', t('common:currency'))}`} />
+                                         <Tooltip formatter={(value) => `${formatCurrency(Number(value), i18n.language === 'fr' ? 'fr-FR' : 'en-GB', t('common:currency'))}`} />
                                     </PieChart>
                                 </ResponsiveContainer>
                             </div>
@@ -433,7 +433,7 @@ export default function StatistiquesFournisseur() {
                                                 </td>
                                                 <td className="font-bold">{entry.nom}</td>
                                                 <td>{entry.pourcentage}%</td>
-                                                 <td>{formatCurrency(Math.round(entry.value), i18n.language === 'fr' ? 'fr-FR' : 'en-US', t('common:currency'))}</td>
+                                                 <td>{formatCurrency(Math.round(entry.value), i18n.language === 'fr' ? 'fr-FR' : 'en-GB', t('common:currency'))}</td>
                                             </tr>
                                         ))}
                                     </tbody>

@@ -95,12 +95,8 @@ class CaisseViewSet(viewsets.ModelViewSet):
         
         instance = serializer.instance
         if instance.facture:
-            facture = instance.facture
-            total_paye = Caisse.objects.filter(facture=facture, statut='completee').aggregate(Sum('montant'))['montant__sum'] or Decimal('0')
-            if total_paye >= (facture.total_ttc - Decimal('0.1')):
-                 if facture.status != Facture.Status.PAYEE:
-                     facture.status = Facture.Status.PAYEE
-                     facture.save()
+            from ...services.payment_service import PaymentService
+            PaymentService.process_payment(instance, is_created=True)
 
     @action(detail=False, methods=['get'], url_path='get_totals')
     def get_totals(self, request):
@@ -151,9 +147,9 @@ class CaisseViewSet(viewsets.ModelViewSet):
         if user_id:
             transactions = transactions.filter(user_id=user_id)
 
-        # Filtre pour exclure le recouvrement (qui ne correspond pas à une vente "journalière" standard)
+        # Filtre pour exclure le recouvrement et le dépôt (déjà compté en ENTREE)
         recouvrement_q = Q(mode_paiement='recouvrement') | Q(reference__icontains='[RECOUV]')
-        paiements_sales = transactions.exclude(recouvrement_q).exclude(mode_paiement='en_compte')
+        paiements_sales = transactions.exclude(recouvrement_q).exclude(mode_paiement__in=['en_compte', 'depot'])
 
         total_ventes = paiements_sales.aggregate(Sum('montant'))['montant__sum'] or Decimal('0.00')
         total_ventes_especes = paiements_sales.filter(mode_paiement='especes').aggregate(Sum('montant'))['montant__sum'] or Decimal('0.00')
@@ -331,7 +327,7 @@ class CaisseViewSet(viewsets.ModelViewSet):
             last_cloture = ClotureCaisse.objects.order_by('-date').first()
             start_date = last_cloture.date if last_cloture else None
         
-        transactions = Caisse.objects.filter(statut='completee').exclude(mode_paiement='en_compte')
+        transactions = Caisse.objects.filter(statut='completee').exclude(mode_paiement__in=['en_compte', 'depot'])
         if not user_id:
             return Response({'detail': 'Veuillez sélectionner un caissier spécifique pour clôturer.'}, status=status.HTTP_400_BAD_REQUEST)
             

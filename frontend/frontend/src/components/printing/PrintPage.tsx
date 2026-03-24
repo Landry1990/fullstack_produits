@@ -1,8 +1,9 @@
-﻿
+
 import React, { useEffect, useState } from 'react';
 import { useParams, useSearchParams } from 'react-router-dom';
 import axios from 'axios';
 import InvoiceTemplate, { type InvoiceData, type PharmacySettings } from './InvoiceTemplate';
+import InventairePrintTemplate, { type InventairePrintData } from './InventairePrintTemplate';
 import { safeStorage } from '../../utils/storage';
 
 const PrintPage: React.FC = () => {
@@ -18,23 +19,23 @@ const PrintPage: React.FC = () => {
     const clientNameOverride = searchParams.get('client_name');
     const type = searchParams.get('type');
 
+    const [inventoryData, setInventoryData] = useState<any>(null);
+
     useEffect(() => {
         const fetchData = async () => {
-            console.log("PrintPage: fetchData called for ID:", id);
+            console.log("PrintPage: fetchData called for ID:", id, "Type:", type);
             
             // Safety timeout to prevent infinite loading
             const safetyTimeout = setTimeout(() => {
                 if (loading) {
                     console.error("PrintPage: Fetch timed out");
-                    setError("Délai d'attente dépassé pour le chargement de la facture.");
+                    setError("Délai d'attente dépassé pour le chargement du document.");
                     setLoading(false);
                 }
             }, 10000);
 
             try {
                 const token = safeStorage.getItem('authToken');
-                console.log("PrintPage: Token present?", !!token);
-                
                 if (!token) {
                     setError("Authentification requise");
                     setLoading(false);
@@ -44,55 +45,50 @@ const PrintPage: React.FC = () => {
 
                 const config = { headers: { Authorization: `Token ${token}` } };
                 
-                const endpoints = [
-                    `${apiBaseUrl}/factures/${id}/print_data/`,
-                    `${apiBaseUrl}/invoice-settings/`,
-                    `${apiBaseUrl}/pharmacy-settings/`
-                ];
-                console.log("PrintPage: Fetching from endpoints:", endpoints);
-
-                // Parallel fetch
-                const [invoiceRes, invoiceSettingsRes, pharmacySettingsRes] = await Promise.all([
-                    axios.get(endpoints[0], config),
-                    axios.get(endpoints[1], config),
-                    axios.get(endpoints[2], config)
+                // Fetch settings first (needed for both types)
+                const [invoiceSettingsRes, pharmacySettingsRes] = await Promise.all([
+                    axios.get(`${apiBaseUrl}/invoice-settings/`, config),
+                    axios.get(`${apiBaseUrl}/pharmacy-settings/`, config)
                 ]);
 
-                console.log("PrintPage: Data received", { 
-                    invoice: invoiceRes.status, 
-                    invoiceSettings: invoiceSettingsRes.status,
-                    pharmacySettings: pharmacySettingsRes.status 
-                });
-
-                // Merge settings: 
-                // Identity from PharmacySettings (name, address, logo, niu, rc, phone, email)
-                // Styling from InvoiceSettings (primaryColor, headerLayout)
                 const mergedSettings: PharmacySettings = {
                     ...pharmacySettingsRes.data,
-                    // Map InvoiceSettings fields if they exist and are preferred
                     primary_color: invoiceSettingsRes.data.primary_color || pharmacySettingsRes.data.primary_color,
-                    // If PharmacySettings doesn't have a logo but InvoiceSettings does (rare but possible)
                     logo: pharmacySettingsRes.data.logo || invoiceSettingsRes.data.logo,
                 };
-
-                // Transform invoice data if needed, but serializer should match interface
-                let data = invoiceRes.data;
-                
-                // Override client name logic
-                const effectiveClientName = clientNameOverride || data.client_name_override;
-
-                if (effectiveClientName) {
-                    data = {
-                        ...data,
-                        client: {
-                            ...(data.client || {}),
-                            name: effectiveClientName
-                        }
-                    };
-                }
-
-                setInvoiceData(data);
                 setSettings(mergedSettings);
+
+                // Fetch document data based on type
+                if (type === 'INVENTAIRE') {
+                    // Logic for "Etat Inventaire" (rolling inventory)
+                    const groupBy = searchParams.get('group_by');
+                    const stockDisplay = searchParams.get('stock_display');
+                    const filterId = searchParams.get('filter_id');
+                    
+                    let url = `${apiBaseUrl}/produits/etat-inventaire/pdf/?format=json&group_by=${groupBy}&stock_display=${stockDisplay}`;
+                    if (filterId) url += `&filter_id=${filterId}`;
+                    
+                    const res = await axios.get(url, config);
+                    setInventoryData({
+                        ...res.data,
+                        is_report: false
+                    });
+                } else if (type === 'INVENTAIRE_REPORT') {
+                    // Specific inventory results (discrepancy report)
+                    const res = await axios.get(`${apiBaseUrl}/inventaires/${id}/print_data/`, config);
+                    setInventoryData(res.data);
+                } else {
+                    // Default to Invoice
+                    const endpoints = [`${apiBaseUrl}/factures/${id}/print_data/`];
+                    const invoiceRes = await axios.get(endpoints[0], config);
+                    
+                    let data = invoiceRes.data;
+                    const effectiveClientName = clientNameOverride || data.client_name_override;
+                    if (effectiveClientName) {
+                        data = { ...data, client: { ...(data.client || {}), name: effectiveClientName } };
+                    }
+                    setInvoiceData(data);
+                }
                 
                 clearTimeout(safetyTimeout);
                 setLoading(false);
@@ -100,19 +96,13 @@ const PrintPage: React.FC = () => {
             } catch (err) {
                 clearTimeout(safetyTimeout);
                 console.error("PrintPage: Error fetching print data:", err);
-                setError("Erreur lors du chargement de la facture. " + (err instanceof Error ? err.message : String(err)));
+                setError("Erreur lors du chargement des données. " + (err instanceof Error ? err.message : String(err)));
                 setLoading(false);
             }
         };
 
-        if (id) {
-            fetchData();
-        } else {
-            console.error("PrintPage: No ID found in params");
-            setError("ID de facture manquant");
-            setLoading(false);
-        }
-    }, [id, clientNameOverride]);
+        fetchData();
+    }, [id, clientNameOverride, type, searchParams]);
 
     const [isPrinting, setIsPrinting] = useState(false);
 
@@ -142,9 +132,9 @@ const PrintPage: React.FC = () => {
     }, []); 
     */
 
-    if (loading) return <div className="flex items-center justify-center h-screen">Chargement de la facture...</div>;
+    if (loading) return <div className="flex items-center justify-center h-screen">Chargement du document...</div>;
     if (error) return <div className="flex items-center justify-center h-screen text-red-600 font-bold">{error}</div>;
-    if (!invoiceData || !settings) return <div>Données incomplètes</div>;
+    if (!settings || (!invoiceData && !inventoryData)) return <div>Données incomplètes</div>;
 
     return (
         <div className="print-page bg-base-200 min-h-screen p-8">
@@ -179,11 +169,18 @@ const PrintPage: React.FC = () => {
                 </button>
             </div>
 
-            <InvoiceTemplate 
-                settings={settings} 
-                data={invoiceData} 
-                isBonDeLivraison={type === 'BL'}
-            />
+            {inventoryData ? (
+                <InventairePrintTemplate 
+                    settings={settings} 
+                    data={inventoryData} 
+                />
+            ) : invoiceData ? (
+                <InvoiceTemplate 
+                    settings={settings} 
+                    data={invoiceData} 
+                    isBonDeLivraison={type === 'BL'}
+                />
+            ) : null}
         </div>
     );
 };

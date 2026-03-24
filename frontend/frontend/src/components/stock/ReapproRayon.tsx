@@ -1,4 +1,4 @@
-﻿import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import axios from 'axios';
 import { toast } from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
@@ -278,7 +278,7 @@ export default function ReapproRayon() {
       {/* Print Only Header */}
       <div className="print-only mb-8">
         <h1 className="text-3xl font-bold border-b-2 border-primary pb-2">{t('reappro.print_title')}</h1>
-        <p className="mt-2 text-base-content/80">{t('common:date')}: {new Date().toLocaleString(i18n.language === 'fr' ? 'fr-FR' : 'en-US')}</p>
+        <p className="mt-2 text-base-content/80">{t('common:date')}: {new Date().toLocaleString(i18n.language === 'fr' ? 'fr-FR' : 'en-GB')}</p>
         <p className="text-sm italic">{t('reappro.print_hint')}</p>
       </div>
 

@@ -1,4 +1,4 @@
-﻿import React from 'react';
+import React from 'react';
 import type { useJournalCaisse } from '../../hooks/useJournalCaisse';
 import type { CaisseTransaction, MouvementCaisse } from '../../types';
 import { normalizeNumberInput } from '../../utils/formatters';
@@ -34,6 +34,7 @@ export default function JournalCaisseTable({ state }: Props) {
       case 'om': return '🟧';
       case 'momo': return '📱';
       case 'en_compte': return '📒';
+      case 'depot': return '🏦';
       default: return '💰';
     }
   };
@@ -113,7 +114,7 @@ export default function JournalCaisseTable({ state }: Props) {
                   <th className="border-b-2 border-base-200 text-xs font-bold text-base-content/50 py-3">{t('table.cashier')}</th>
                   <th className="border-b-2 border-base-200 text-xs font-bold text-base-content/50 py-3">{t('table.entered_by')}</th>
                   <th className="border-b-2 border-base-200 text-xs font-bold text-base-content/50 py-3">{t('table.client_label')}</th>
-                  <th className="border-b-2 border-base-200 text-xs font-bold text-base-content/50 py-3">{t('table.piece_num')}</th>
+                  <th className="border-b-2 border-base-200 text-xs font-bold text-base-content/50 py-3 min-w-[140px] uppercase tracking-wider">{t('table.piece_num')}</th>
                   <th className="border-b-2 border-base-200 text-xs font-bold text-base-content/50 py-3 text-right">{t('table.amount')}</th>
                   <th className="border-b-2 border-base-200 text-xs font-bold text-base-content/50 py-3">{t('table.mode')}</th>
                   <th className="border-b-2 border-base-200 text-xs font-bold text-base-content/50 py-3 pr-6 text-right">{t('table.status')}</th>
@@ -225,7 +226,7 @@ export default function JournalCaisseTable({ state }: Props) {
                           {transaction.isReleveGroup ? (
                             <span className="text-primary/70 font-bold italic">{transaction.items?.length} {t('common:pieces') || 'pièces'}</span>
                           ) : (
-                            <span className="bg-base-200 px-2 py-1 rounded font-bold text-base-content/60">{transaction.facture_numero || '-'}</span>
+                            <span className="bg-base-200 px-2 py-1 rounded font-bold text-base-content/60 whitespace-nowrap">{transaction.facture_numero || '-'}</span>
                           )}
                         </td>
                         <td className="text-right font-black text-base py-4 text-base-content">
@@ -268,7 +269,7 @@ export default function JournalCaisseTable({ state }: Props) {
                           <td className="pl-12 py-3 text-[11px] opacity-60 font-mono">↳ {formatDate(subItem.date_paiement).split(' ')[1]}</td>
                           <td className="py-3 opacity-40 text-[11px]">-</td>
                           <td className="py-3 opacity-40 text-[11px]">-</td>
-                          <td className="font-mono text-[11px] py-3 font-bold text-primary/70">{subItem.facture_numero}</td>
+                          <td className="font-mono text-[11px] py-3 font-bold text-primary/70 whitespace-nowrap">{subItem.facture_numero}</td>
                           <td className="text-right text-[11px] py-3 pr-4 font-bold text-base-content/80">
                             {formatCurrencyLocal(normalizeNumberInput(subItem.montant))}
                           </td>

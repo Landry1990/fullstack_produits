@@ -3,7 +3,7 @@ from .produits import (
     CategoriesListView, CategoriesDetailView
 )
 from .groupes import GroupeViewSet
-from .clients import ClientViewSet, AyantDroitViewSet
+from .clients import ClientViewSet, AyantDroitViewSet, DepotClientViewSet
 from .commandes import (
     CommandeViewSet, CommandeProduitViewSet, AvoirViewSet, LigneAvoirViewSet, 
     PromisViewSet, generer_suggestions_commande
@@ -44,7 +44,7 @@ from ..ordonnancier_view import OrdonnancierViewSet
 __all__ = [
     'ProduitViewSet', 'CategorieViewSet', 'FournisseurViewSet',
     'CategoriesListView', 'CategoriesDetailView', 'GroupeViewSet',
-    'ClientViewSet', 'AyantDroitViewSet',
+    'ClientViewSet', 'AyantDroitViewSet', 'DepotClientViewSet',
     'PaiementFournisseurViewSet',
     'CommandeViewSet', 'CommandeProduitViewSet', 'AvoirViewSet', 'LigneAvoirViewSet',
     'PromisViewSet', 'generer_suggestions_commande',

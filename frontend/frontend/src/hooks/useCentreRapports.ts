@@ -7,13 +7,13 @@ import * as XLSX from 'xlsx';
 import { formatCurrency, formatNumber } from '../utils/formatters';
 
 // Types
-export type ParamType = 'month' | 'date' | 'datetime' | 'select' | 'number' | 'text' | 'client_id';
+export type ParamType = 'month' | 'date' | 'datetime' | 'select' | 'number' | 'text' | 'client_id' | 'checkbox';
 
 export interface QueryParam {
     key: string;
     label: string;
     type: ParamType;
-    default?: string | number;
+    default?: string | number | boolean;
     options?: { value: string; label: string }[];
     required?: boolean;
 }
@@ -219,6 +219,37 @@ export const QUERIES: QueryDefinition[] = [
             { key: 'date_fin', label: 'Fin', type: 'date', required: false }
         ],
         resultType: 'table'
+    },
+    {
+        id: 'balance_stock',
+        name: 'Balance des Stocks (Comptabilité)',
+        description: 'Stock Initial, Achats, Ventes et Final sur une période (Excel)',
+        endpoint: '/api/rapports/balance_stock_excel/',
+        params: [
+            { key: 'date_debut', label: 'Date début', type: 'date', required: true, default: new Date(new Date().getFullYear(), 0, 1).toISOString().split('T')[0] },
+            { key: 'date_fin', label: 'Date fin', type: 'date', required: true, default: new Date().toISOString().split('T')[0] },
+            { key: 'exclude_zero', label: 'Exclure stocks à zéro', type: 'checkbox', default: true }
+        ],
+        resultType: 'raw'
+    },
+    {
+        id: 'rapport_ca_multi_annuel',
+        name: 'Comparatif CA Multi-Annuel',
+        description: 'CA TVA vs Exonéré par mois pour toutes les années disponibles',
+        endpoint: '/api/rapports/rapport_ca_multi_annuel/',
+        params: [],
+        resultType: 'table'
+    },
+    {
+        id: 'rapport_remises',
+        name: 'Suivi des Remises',
+        description: 'Détail des remises accordées par utilisateur (Global, Lignes, Fidélité, UG)',
+        endpoint: '/api/rapports/rapport_remises/',
+        params: [
+            { key: 'date_debut', label: 'Début', type: 'date', required: true },
+            { key: 'date_fin', label: 'Fin', type: 'date', required: true }
+        ],
+        resultType: 'table'
     }
 ];
 
@@ -253,11 +284,31 @@ export const COLUMN_LABELS: Record<string, string> = {
     stock_actuel: 'Stock Actuel',
     annule_par: 'Annulé Par',
     motif: 'Motif',
-    source: 'Source'
+    source: 'Source',
+    remise_globale: 'Remise Glob.',
+    remise_lignes: 'Remise Lignes',
+    remise_fidelite: 'Fidélité',
+    valeur_ug: 'Valeur UG',
+    total_remise: 'Total Remise',
+    ratio_remise_pct: '% / CA'
 };
 
-export const formatColumnHeader = (col: string): string => {
-    return COLUMN_LABELS[col] || col.replace(/_/g, ' ');
+export const formatColumnHeader = (col: string, t?: any): string => {
+    if (COLUMN_LABELS[col]) return COLUMN_LABELS[col];
+    
+    // Pattern: 2024_ca_tva, 2024_ca_exo, 2024_total
+    const match = col.match(/^(\d{4})_(.*)$/);
+    if (match && t) {
+        const year = match[1];
+        const type = match[2];
+        let label = type;
+        if (type === 'ca_tva') label = t('reports:ca_tva', { defaultValue: 'CA TVA' });
+        else if (type === 'ca_exo') label = t('reports:ca_exo', { defaultValue: 'CA Exo' });
+        else if (type === 'total') label = t('common:total', { defaultValue: 'Total' });
+        return `${year} ${label}`;
+    }
+
+    return col.replace(/_/g, ' ');
 };
 
 export const isNumericColumn = (col: string): boolean => {
@@ -273,18 +324,27 @@ export const isNumericColumn = (col: string): boolean => {
            c.includes('quantite') ||
            c.includes('nbre_ventes') ||
            c.includes('nb_ventes') ||
-           c.includes('panier_moyen');
+           c.includes('panier_moyen') ||
+           c.includes('remise') ||
+           c.includes('ug');
 };
 
 export const formatValue = (key: string, value: unknown, t?: any): string => {
     if (value === null || value === undefined) return '-';
     
+    if (key === 'Mois' && t) {
+        return t(`common:months.${value}`, { defaultValue: String(value) });
+    }
+
+    if (key === 'total_general' && t) {
+        return t('common:total_general', { defaultValue: 'TOTAL GÉNÉRAL' });
+    }
+
     if (key === 'source' && t) {
         return t(`reports.results.sources.${value}`, { defaultValue: String(value) });
     }
 
     if (key === 'status' && t) {
-        // Handle common status translations if needed
         return t(`common.status.${String(value).toLowerCase()}`, { defaultValue: String(value) });
     }
 
@@ -308,7 +368,7 @@ export const formatValue = (key: string, value: unknown, t?: any): string => {
 
 // Hook Implementation
 export function useCentreRapports() {
-    const { t } = useTranslation(['reports', 'common']);
+    const { t, i18n } = useTranslation(['reports', 'common']);
     const [searchParams] = useSearchParams();
 
     const [selectedQuery, setSelectedQuery] = useState<QueryDefinition | null>(null);
@@ -426,6 +486,29 @@ export function useCentreRapports() {
             }
 
             const config = urlOverride ? {} : { params };
+            
+            // Special case for direct Excel downloads
+            if (selectedQuery.id === 'balance_stock' && !urlOverride) {
+                const { date_debut, date_fin } = params;
+                const lang = i18n.language;
+                const response = await axios.get(endpoint, {
+                    params: { ...params, lang },
+                    responseType: 'blob'
+                });
+                
+                const url = window.URL.createObjectURL(new Blob([response.data]));
+                const link = document.createElement('a');
+                link.href = url;
+                link.setAttribute('download', `Balance_Stocks_${date_debut}_${date_fin}.xlsx`);
+                document.body.appendChild(link);
+                link.click();
+                link.remove();
+                toast.success(t('results.export_success', { filename: `Balance_Stocks_${date_debut}_${date_fin}.xlsx` }));
+                setResults({ status: 'success', filename: `Balance_Stocks_${date_debut}_${date_fin}.xlsx` });
+                setLoading(false);
+                return;
+            }
+
             const response = await axios.get(endpoint, config);
 
             let data = response.data;
@@ -459,9 +542,37 @@ export function useCentreRapports() {
         if (url) executeQuery(url);
     }, [executeQuery]);
 
-    const downloadExcel = useCallback(() => {
+    const downloadExcel = useCallback(async () => {
         if (!results || !selectedQuery) {
             toast.error(t('results.export_no_result'));
+            return;
+        }
+
+        if (selectedQuery.id === 'rapport_remises') {
+            const { date_debut, date_fin } = params;
+            const endpoint = apiBaseUrl
+                ? `${apiBaseUrl.replace(/\/$/, '')}/api/rapports/rapport_remises_excel/`
+                : '/api/rapports/rapport_remises_excel/';
+            
+            try {
+                const response = await axios.get(endpoint, {
+                    params: { date_debut, date_fin },
+                    responseType: 'blob'
+                });
+                
+                const url = window.URL.createObjectURL(new Blob([response.data]));
+                const link = document.createElement('a');
+                link.href = url;
+                link.setAttribute('download', `Rapport_Remises_${date_debut}_${date_fin}.xlsx`);
+                document.body.appendChild(link);
+                link.click();
+                link.remove();
+                window.URL.revokeObjectURL(url);
+                toast.success(t('results.export_success', { filename: `Rapport_Remises.xlsx` }));
+            } catch (err) {
+                console.error('Excel download error:', err);
+                toast.error("Erreur lors du téléchargement Excel");
+            }
             return;
         }
 
@@ -472,14 +583,22 @@ export function useCentreRapports() {
             data = (results as Record<string, unknown>[]).map(row => {
                 const obj: Record<string, string | number | boolean> = {};
                 columns.forEach(col => {
-                    const header = formatColumnHeader(col);
+                    const header = formatColumnHeader(col, t);
                     const val = row[col];
                     if (val === null || val === undefined) {
                         obj[header] = '';
                     } else if (typeof val === 'object' && val !== null) {
                         obj[header] = (val as { name?: string }).name || JSON.stringify(val);
+                    } else if (typeof val === 'number') {
+                        // Rounding for Excel export as requested
+                        obj[header] = Math.round(val);
                     } else {
-                        obj[header] = val as string | number | boolean;
+                        // Translation for values in Excel if needed (like months)
+                        if (col === 'Mois') {
+                            obj[header] = t(`common:months.${val}`, { defaultValue: String(val) });
+                        } else {
+                            obj[header] = val as string | boolean;
+                        }
                     }
                 });
                 return obj;
@@ -520,7 +639,7 @@ export function useCentreRapports() {
         const filename = `${selectedQuery.id}_${today}.xlsx`;
         XLSX.writeFile(wb, filename);
         toast.success(t('results.export_success', { filename }));
-    }, [results, selectedQuery, t]);
+    }, [results, selectedQuery, t, params, apiBaseUrl]);
 
     // Auto-select from URL
     useEffect(() => {

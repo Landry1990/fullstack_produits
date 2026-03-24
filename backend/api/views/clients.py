@@ -5,10 +5,11 @@ from rest_framework.permissions import IsAuthenticated
 from django.db import transaction
 from django.db.models import F, Sum, Value, DecimalField, OuterRef, Subquery, ProtectedError
 from django.db.models.functions import Coalesce
+from decimal import Decimal
 from django_filters.rest_framework import DjangoFilterBackend
 
-from ..models import Client, Facture, Caisse, AyantDroit
-from ..serializers import ClientSerializer, AyantDroitSerializer
+from ..models import Client, Facture, Caisse, AyantDroit, DepotClient
+from ..serializers import ClientSerializer, AyantDroitSerializer, DepotClientSerializer
 from ..serializers_optimized import ClientListSerializer, ClientDetailSerializer
 from ..serializer_mixins import OptimizedSerializerMixin
 from ..pagination import StandardResultsSetPagination
@@ -125,6 +126,46 @@ class ClientViewSet(OptimizedSerializerMixin, viewsets.ModelViewSet):
             'factures': result
         })
 
+    @action(detail=True, methods=['get'])
+    def depot_history(self, request, pk=None):
+        """Retourne l'historique des dépôts/retraits d'un client."""
+        client = self.get_object()
+        history = DepotClient.objects.filter(client=client).order_by('-date')
+        serializer = DepotClientSerializer(history, many=True)
+        return Response(serializer.data)
+
+    @action(detail=True, methods=['post'])
+    @transaction.atomic
+    def add_depot(self, request, pk=None):
+        """Enregistre un nouveau dépôt ou retrait manuel."""
+        client = self.get_object()
+        data = request.data
+        
+        try:
+            amount = Decimal(str(data.get('montant', 0)))
+            if amount <= 0:
+                return Response({'detail': "Le montant doit être supérieur à 0."}, status=400)
+            
+            depot_type = data.get('type')
+            if depot_type not in ['DEPOT', 'RETRAIT']:
+                return Response({'detail': "Type de transaction invalide."}, status=400)
+            
+            if depot_type == DepotClient.Type.RETRAIT and client.solde_depot < amount:
+                return Response({'detail': "Solde insuffisant pour ce retrait."}, status=400)
+
+            depot = DepotClient.objects.create(
+                client=client,
+                type=depot_type,
+                montant=amount,
+                mode_paiement=data.get('mode_paiement', 'ESP'),
+                notes=data.get('notes', ''),
+                created_by=request.user
+            )
+            
+            return Response(DepotClientSerializer(depot).data, status=201)
+        except Exception as e:
+            return Response({'detail': str(e)}, status=400)
+
     @action(detail=False, methods=['post'])
     def bulk_delete(self, request):
         """Supprime plusieurs clients par lot."""
@@ -158,3 +199,13 @@ class AyantDroitViewSet(viewsets.ModelViewSet):
     pagination_class = StandardResultsSetPagination
     filter_backends = (DjangoFilterBackend,)
     filterset_fields = ['client']
+
+class DepotClientViewSet(viewsets.ReadOnlyModelViewSet):
+    """API endpoint for viewing deposit history globally."""
+    queryset = DepotClient.objects.select_related('client', 'created_by').order_by('-date')
+    serializer_class = DepotClientSerializer
+    permission_classes = [IsAuthenticated]
+    pagination_class = StandardResultsSetPagination
+    filter_backends = [DjangoFilterBackend, filters.SearchFilter]
+    filterset_fields = ['client', 'type']
+    search_fields = ['client__name', 'notes']

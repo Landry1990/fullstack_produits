@@ -35,9 +35,15 @@ class RelationTransformationViewSet(viewsets.ModelViewSet):
             return Response({'error': 'La quantité doit être positive'}, status=status.HTTP_400_BAD_REQUEST)
 
         with transaction.atomic():
-            # Verrouillage des produits pour éviter les conditions de course
-            source = Produit.objects.select_for_update().get(pk=relation.produit_source.pk)
-            destination = Produit.objects.select_for_update().get(pk=relation.produit_destination.pk)
+            # Verrouillage coordonné des produits par ordre d'ID pour éviter les deadlocks (conditions de course croisées)
+            p_ids = [relation.produit_source.pk, relation.produit_destination.pk]
+            locked_prods = {p.id: p for p in Produit.objects.select_for_update().filter(id__in=p_ids).order_by('id')}
+            
+            source = locked_prods.get(relation.produit_source.pk)
+            destination = locked_prods.get(relation.produit_destination.pk)
+            
+            if not source or not destination:
+                 return Response({'error': 'Produit source ou destination introuvable'}, status=status.HTTP_404_NOT_FOUND)
 
             if source.stock < quantite:
                 return Response({'error': f'Stock insuffisant pour {source.name}'}, status=status.HTTP_400_BAD_REQUEST)

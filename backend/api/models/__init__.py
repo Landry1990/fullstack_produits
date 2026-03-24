@@ -23,12 +23,13 @@ from .products import (
 # Stock
 from .stock import (
     StockLot, LotSequence, StockAdjustment, MouvementStock,
-    TicketSessionSequence,
+    TicketSessionSequence, RuptureFournisseur,
     generate_lot_number, get_next_ticket_session
 )
 
 # Clients
 from .clients import Fournisseur, Client, AyantDroit
+from .depot import DepotClient
 
 # Orders
 from .orders import Commande, CommandeProduit, Avoir, LigneAvoir
@@ -73,10 +74,10 @@ __all__ = [
     'Substance', 'DrugInteraction', 'Produit',
     # Stock
     'StockLot', 'LotSequence', 'StockAdjustment', 'MouvementStock',
-    'TicketSessionSequence',
+    'TicketSessionSequence', 'RuptureFournisseur',
     'generate_lot_number', 'get_next_ticket_session',
     # Clients
-    'Fournisseur', 'Client', 'AyantDroit',
+    'Fournisseur', 'Client', 'AyantDroit', 'DepotClient',
     # Orders
     'Commande', 'CommandeProduit', 'Avoir', 'LigneAvoir', 'PaiementFournisseur',
     # Billing

@@ -53,8 +53,8 @@ class ClientListSerializer(serializers.ModelSerializer):
         model = Client
         fields = [
             'id', 'name', 'phone', 'email', 'address',
-            'client_type', 'current_debt', 'is_loyalty_member',
-            'points_fidelite', 'taux_couverture', 'plafond',
+            'client_type', 'current_debt', 'solde_depot', 'is_deposit_enabled', 
+            'is_loyalty_member', 'points_fidelite', 'taux_couverture', 'plafond',
             'remise_automatique', 'ayants_droit_count'
         ]
 

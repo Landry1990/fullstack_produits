@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
-import { toast } from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
 type GroupByOption = 'FORME' | 'RAYON' | 'GROUPE';
@@ -15,7 +14,6 @@ export default function EtatsInventaire() {
   const { t } = useTranslation(['stock', 'common']);
   const [groupBy, setGroupBy] = useState<GroupByOption>('RAYON');
   const [stockDisplay, setStockDisplay] = useState<StockDisplayOption>('MACHINE');
-  const [loading, setLoading] = useState(false);
   const [entities, setEntities] = useState<EntityOption[]>([]);
   const [selectedEntity, setSelectedEntity] = useState<number | null>(null);
   const [loadingEntities, setLoadingEntities] = useState(false);
@@ -58,38 +56,12 @@ export default function EtatsInventaire() {
     fetchEntities();
   }, [groupBy, apiBaseUrl]);
 
-  const handleDownloadPDF = async () => {
-    setLoading(true);
-    try {
-      const baseUrlClean = String(apiBaseUrl).replace(/\/$/, '');
-      let url = `${baseUrlClean}/api/produits/etat-inventaire/pdf/?group_by=${groupBy}&stock_display=${stockDisplay}`;
-      
-      if (selectedEntity) {
-        url += `&filter_id=${selectedEntity}`;
-      }
-      
-      const response = await axios.get(url, {
-        responseType: 'blob'
-      });
-
-      // Créer un lien de téléchargement
-      const blob = new Blob([response.data], { type: 'application/pdf' });
-      const downloadUrl = window.URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = downloadUrl;
-      link.download = `etat_inventaire_${groupBy.toLowerCase()}_${stockDisplay.toLowerCase()}_${new Date().toISOString().split('T')[0]}.pdf`;
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-      window.URL.revokeObjectURL(downloadUrl);
-
-      toast.success(t('stock:etats_inventaire.messages.success'));
-    } catch (error) {
-      console.error('Erreur téléchargement PDF', error);
-      toast.error(t('stock:etats_inventaire.messages.error'));
-    } finally {
-      setLoading(false);
+  const handlePrint = () => {
+    let url = `/app/printing/0?type=INVENTAIRE&group_by=${groupBy}&stock_display=${stockDisplay}`;
+    if (selectedEntity) {
+      url += `&filter_id=${selectedEntity}`;
     }
+    window.open(url, '_blank');
   };
 
   const groupByOptions = [
@@ -205,16 +177,13 @@ export default function EtatsInventaire() {
 
           <div className="card-actions justify-end mt-4">
             <button 
-              className={`btn btn-primary gap-2 ${loading ? 'loading' : ''}`}
-              onClick={handleDownloadPDF}
-              disabled={loading}
+              className="btn btn-primary gap-2"
+              onClick={handlePrint}
             >
-              {!loading && (
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                  <path fillRule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clipRule="evenodd" />
-                </svg>
-              )}
-              {loading ? t('stock:etats_inventaire.generating') : t('stock:etats_inventaire.download_btn')}
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M5 4v3H4a2 2 0 00-2 2v3a2 2 0 002 2h1v2a2 2 0 002 2h6a2 2 0 002-2v-2h1a2 2 0 002-2V9a2 2 0 00-2-2h-1V4a2 2 0 00-2-2H7a2 2 0 00-2 2zm8 0H7v3h6V4zM4 9h12v3H4V9zm1 5h10v2H5v-2z" clipRule="evenodd" />
+              </svg>
+              {t('stock:etats_inventaire.download_btn')}
             </button>
           </div>
         </div>

@@ -218,6 +218,9 @@ class CreanceViewSet(viewsets.ReadOnlyModelViewSet):
         
         paiement = Caisse.objects.create(facture=facture, mode_paiement=mode_paiement, montant=montant, reference=reference, statut='completee', user=validation_user)
         
+        from ...services.payment_service import PaymentService
+        PaymentService.process_payment(paiement, is_created=True)
+        
         facture.refresh_from_db()
         serializer = self.get_serializer(facture)
         return Response({'detail': 'Paiement enregistré avec succès.', 'paiement_id': paiement.id, 'creance': serializer.data})
@@ -316,7 +319,11 @@ class CreanceViewSet(viewsets.ReadOnlyModelViewSet):
             reste = facture.total_ttc - montant_paye
             if reste <= 0:
                 continue
-            Caisse.objects.create(facture=facture, mode_paiement=mode_paiement, montant=reste, reference=reference, statut='completee', user=validation_user, releve=releve)
+            paiement = Caisse.objects.create(facture=facture, mode_paiement=mode_paiement, montant=reste, reference=reference, statut='completee', user=validation_user, releve=releve)
+            
+            from ...services.payment_service import PaymentService
+            PaymentService.process_payment(paiement, is_created=True)
+            
             total_paid_bulk += reste
             count_processed += 1
             

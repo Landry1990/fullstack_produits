@@ -99,7 +99,8 @@
         "transfer": "Virement",
         "orange_money": "Orange Money",
         "mobile_money": "Mobile Money",
-        "account": "En compte"
+        "account": "En compte",
+        "depot": "Dépôt/Acompte"
     },
     "messages": {
         "no_results": "Aucune facture trouvée",
@@ -132,6 +133,7 @@
         "ordonnancier_saved": "Ordonnancier enregistré",
         "ordonnancier_error": "Erreur lors de l'enregistrement de l'ordonnancier",
         "credit_limit_exceeded": "⚠️ Plafond crédit dépassé !",
+        "insufficient_deposit": "Solde de dépôt insuffisant",
         "tiers_payant_validated": "Facture {{number}} validée (Tiers payant 100%)",
         "sent_to_caisse": "Vente envoyée à la Caisse Centralisée (Ticket #{{id}})",
         "load_error": "Erreur lors du chargement",

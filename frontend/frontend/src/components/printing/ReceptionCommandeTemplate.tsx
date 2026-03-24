@@ -138,7 +138,7 @@ export const ReceptionCommandeTemplate: React.FC<ReceptionCommandeTemplateProps>
                                 <tr key={idx} className="border-b border-slate-100 break-inside-avoid">
                                     <td className="py-1 px-3">
                                         <div className="font-bold text-base-content uppercase text-[10px] leading-tight">{produitName}</div>
-                                        {p.lot && <div className="text-[7.5px] text-base-content/60 font-mono">LOT: {p.lot} | EXP: {p.date_expiration ? new Date(p.date_expiration).toLocaleDateString() : '-'}</div>}
+                                        {p.lot && <div className="text-[7.5px] text-base-content/60 font-mono">LOT: {p.lot} | EXP: {p.date_expiration ? new Date(p.date_expiration).toLocaleDateString('fr-FR') : '-'}</div>}
                                     </td>
                                     <td className="py-1 px-2 text-center font-mono text-[8.5px] text-base-content/60">{cip}</td>
                                     <td className="py-1 px-2 text-center font-black">{stAnt}</td>

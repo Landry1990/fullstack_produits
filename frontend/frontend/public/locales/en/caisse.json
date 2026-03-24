@@ -129,7 +129,8 @@
             "momo": "Mobile Money",
             "cheque": "Check",
             "virement": "Bank Transfer",
-            "credit": "On Account"
+            "credit": "On Account",
+            "depot": "Deposit/Account"
         },
         "confirm": "Confirm payment",
         "success": "Payment recorded"
@@ -270,6 +271,8 @@
             "coupon": "Coupon",
             "om_short": "O.M.",
             "momo_short": "MoMo",
+            "en_compte": "On Account",
+            "depot": "Deposit",
             "entry_caps": "ENTRY",
             "exit_caps": "EXIT"
         }

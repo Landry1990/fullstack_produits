@@ -6,10 +6,13 @@ from rest_framework.permissions import IsAuthenticated
 from django.db.models import Sum, F, DecimalField, Q, Count, Value
 from django.db.models.functions import TruncDate, Coalesce
 from django.utils import timezone
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, time
 from decimal import Decimal
 from api.pagination import StandardResultsSetPagination
-from api.models import Facture, FactureProduitAllocation, Caisse, FactureProduit, CommandeProduit, Produit
+from django.http import HttpResponse
+import openpyxl
+from openpyxl.styles import Font, Alignment, Border, Side, PatternFill
+from api.models import Facture, FactureProduitAllocation, Caisse, FactureProduit, CommandeProduit, Produit, MouvementStock
 
 
 class RapportViewSet(viewsets.ViewSet):
@@ -29,15 +32,43 @@ class RapportViewSet(viewsets.ViewSet):
         ).prefetch_related('produits', 'produits__produit', 'paiements')
 
     def _calculate_ca_stats(self, factures):
-        """Calcule CA TTC, CA HT et nombre de ventes."""
+        """Calcule CA TTC, CA HT, nombre de ventes et remises."""
         ca_stats = factures.aggregate(
             ca_ttc=Coalesce(Sum('total_ttc'), Decimal('0.00')),
-            ca_ht=Coalesce(Sum('total_ht'), Decimal('0.00'))
+            ca_ht=Coalesce(Sum('total_ht'), Decimal('0.00')),
+            total_remises_global=Coalesce(Sum('remise'), Decimal('0.00')),
+            total_remises_fidelite=Coalesce(Sum('montant_fidelite'), Decimal('0.00')),
+            part_client=Coalesce(Sum('part_client'), Decimal('0.00'))
         )
+        
+        # Remises sur lignes et Valeur des Unités Gratuites (UG)
+        from api.models import FactureProduit
+        prod_stats = FactureProduit.objects.filter(
+            facture__in=factures
+        ).aggregate(
+            total_remises_lignes=Coalesce(Sum(F('discount') * F('quantity'), output_field=DecimalField()), Decimal('0.00')),
+            total_valeur_ug=Coalesce(Sum(F('free_quantity') * F('selling_price'), output_field=DecimalField()), Decimal('0.00'))
+        )
+
+        part_assurance = ca_stats['ca_ttc'] - ca_stats['part_client']
         
         return {
             'ca_ttc': ca_stats['ca_ttc'],
             'ca_ht': ca_stats['ca_ht'],
+            'total_remises': (
+                ca_stats['total_remises_global'] + 
+                ca_stats['total_remises_fidelite'] + 
+                prod_stats['total_remises_lignes'] + 
+                prod_stats['total_valeur_ug']
+            ),
+            'total_remises_detail': {
+                'global': ca_stats['total_remises_global'],
+                'fidelite': ca_stats['total_remises_fidelite'],
+                'lignes': prod_stats['total_remises_lignes'],
+                'unites_gratuites': prod_stats['total_valeur_ug'],
+            },
+            'part_assurance': part_assurance,
+            'part_client': ca_stats['part_client'],
             'nb_ventes': factures.count()
         }
 
@@ -66,28 +97,44 @@ class RapportViewSet(viewsets.ViewSet):
 
     def _calculate_encaissements(self, date_debut, date_fin, factures):
         """Calcule les encaissements par mode, ventes à crédit et coupons."""
-        # Détection Hybride : nouveau mode + anciens marqueurs
-        recouvrement_q = Q(mode_paiement='recouvrement') | Q(facture__client__client_type='PROFESSIONNEL') | Q(reference__icontains='[RECOUV]')
+        # Détection des recouvrements : mode spécifique ou mention [RECOUV]
+        recouvrement_q = Q(mode_paiement='recouvrement') | Q(reference__icontains='[RECOUV]')
 
-        # Encaissements réels (Cash flow) - Exclure recouvrement car géré à part
-        encaissements = Caisse.objects.filter(
+        # Encaissements réels (Cash flow) - Exclure recouvrement, en_compte et depot
+        encaissements_qs = Caisse.objects.filter(
             date_paiement__gte=date_debut,
             date_paiement__lt=date_fin,
             statut='completee'
         ).exclude(
-            recouvrement_q | Q(mode_paiement__in=['en_compte', 'coupon'])
+            recouvrement_q | Q(mode_paiement__in=['en_compte', 'coupon', 'depot'])
         ).values('mode_paiement').annotate(
             total=Sum('montant')
-        ).order_by('-total')
+        )
         
-        encaissements_data = [
-            {
-                'mode': enc['mode_paiement'],
-                'mode_label': dict(Caisse.MODES_PAIEMENT).get(enc['mode_paiement'], enc['mode_paiement']),
-                'montant': enc['total']
-            }
-            for enc in encaissements
-        ]
+        # Mapper les résultats pour garantir la présence de tous les modes essentiels
+        results_map = {enc['mode_paiement']: enc['total'] for enc in encaissements_qs}
+        
+        # Liste des modes à afficher systématiquement
+        modes_a_afficher = ['especes', 'momo', 'om', 'carte', 'virement', 'cheque']
+        
+        encaissements_data = []
+        caisse_modes_dict = dict(Caisse.MODES_PAIEMENT)
+        
+        for m in modes_a_afficher:
+            encaissements_data.append({
+                'mode': m,
+                'mode_label': caisse_modes_dict.get(m, m.replace('_', ' ').title()),
+                'montant': results_map.get(m, Decimal('0.00'))
+            })
+            
+        # Ajouter d'autres modes qui auraient pu être utilisés mais ne sont pas dans la liste fixe
+        for m_code, m_total in results_map.items():
+            if m_code not in modes_a_afficher:
+                encaissements_data.append({
+                    'mode': m_code,
+                    'mode_label': caisse_modes_dict.get(m_code, m_code),
+                    'montant': m_total
+                })
 
         # Recouvrements (Encaissements de créances anciennes - Hybride)
         recouvrements_total = Caisse.objects.filter(
@@ -105,6 +152,14 @@ class RapportViewSet(viewsets.ViewSet):
             mode_paiement='en_compte'
         ).aggregate(total=Sum('montant'))['total'] or Decimal('0.00')
 
+        # Dépôts utilisés (Non-physique)
+        depots_total = Caisse.objects.filter(
+            date_paiement__gte=date_debut,
+            date_paiement__lt=date_fin,
+            statut='completee',
+            mode_paiement='depot'
+        ).aggregate(total=Sum('montant'))['total'] or Decimal('0.00')
+
         # Coupons utilisés
         from api.models import CouponMonnaie
         coupons_total = CouponMonnaie.objects.filter(
@@ -116,6 +171,7 @@ class RapportViewSet(viewsets.ViewSet):
             'encaissements': encaissements_data,
             'recouvrements_total': recouvrements_total,
             'ventes_credit': ventes_credit,
+            'depots_total': depots_total,
             'coupons_total': coupons_total
         }
 
@@ -452,6 +508,7 @@ class RapportViewSet(viewsets.ViewSet):
                 'total': creances['total'],
                 'nb_factures': creances['nb_factures']
             },
+            'depots_total': encaissements['depots_total'],
             'ca_par_tva': ca_par_tva,
             'achats_par_fournisseur': achats,
             'clients_professionnels': clients_pro,
@@ -589,6 +646,90 @@ class RapportViewSet(viewsets.ViewSet):
             
             running_cost = start_day_cost
             running_ttc = start_day_ttc
+
+
+        return Response(resultats)
+
+    @action(detail=False, methods=['get'])
+    def rapport_ca_multi_annuel(self, request):
+        """
+        Calcule le CA par mois et par année (TVA vs Exonéré).
+        Retourne un tableau pivoté exploitable directement par le frontend avec i18n.
+        """
+        annees_dispo = Facture.objects.filter(
+            status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE]
+        ).dates('date', 'year', order='DESC')
+        
+        annees = [d.year for d in annees_dispo]
+        if not annees:
+            return Response([])
+
+        month_keys = [
+            'january', 'february', 'march', 'april', 'may', 'june',
+            'july', 'august', 'september', 'october', 'november', 'december'
+        ]
+        
+        # Structure de retour
+        resultats = []
+        for i in range(12):
+            resultats.append({
+                'Mois': month_keys[i],
+                '_index': i + 1
+            })
+
+        # Ligne de totaux
+        totaux_generaux = {
+            'Mois': 'total_general',
+            '_index': 13
+        }
+
+        # 2. Calculer pour chaque année
+        for annee in sorted(annees):
+            annee_total_tva = Decimal('0.00')
+            annee_total_exo = Decimal('0.00')
+            
+            for m_idx in range(1, 13):
+                date_debut = timezone.make_aware(datetime(annee, m_idx, 1))
+                if m_idx == 12:
+                    date_fin = timezone.make_aware(datetime(annee + 1, 1, 1))
+                else:
+                    date_fin = timezone.make_aware(datetime(annee, m_idx + 1, 1))
+                
+                factures = self._get_factures_periode(date_debut, date_fin)
+                ca_par_tva = self._calculate_ca_par_tva(factures)
+                
+                ca_tva = Decimal('0.00')
+                ca_exonerer = Decimal('0.00')
+                
+                for item in ca_par_tva:
+                    if item['taux'] > 0:
+                        ca_tva += item['ca_ttc']
+                    else:
+                        ca_exonerer += item['ca_ttc']
+                
+                # Ajouter les colonnes dynamiques
+                row = resultats[m_idx - 1]
+                row[f"{annee}_ca_tva"] = ca_tva
+                row[f"{annee}_ca_exo"] = ca_exonerer
+                row[f"{annee}_total"] = ca_tva + ca_exonerer
+                
+                # Accumuler pour le total annuel de la ligne finale
+                annee_total_tva += ca_tva
+                annee_total_exo += ca_exonerer
+
+            # Ajouter les totaux pour l'année dans la ligne finale
+            totaux_generaux[f"{annee}_ca_tva"] = annee_total_tva
+            totaux_generaux[f"{annee}_ca_exo"] = annee_total_exo
+            totaux_generaux[f"{annee}_total"] = annee_total_tva + annee_total_exo
+
+        resultats.append(totaux_generaux)
+
+        # Trier les mois
+        resultats.sort(key=lambda x: x['_index'])
+        
+        # Nettoyer
+        for r in resultats:
+            del r['_index']
 
         return Response(resultats)
 
@@ -728,6 +869,7 @@ class RapportViewSet(viewsets.ViewSet):
                 'credit': "Ventes à Crédit",
                 'coupons': "Coupons",
                 'recouvrements': "Recouvrements",
+                'depots_util': "Utilisation Dépôts",
                 'mouvements': "Mouvements Caisse",
                 'entrees': "Entrées",
                 'sorties': "Sorties",
@@ -745,6 +887,9 @@ class RapportViewSet(viewsets.ViewSet):
                 'paye': "Payé",
                 'reste': "Reste",
                 'taux_rec': "Taux",
+                'insurance': "Assurances / Tiers-Payant",
+                'grand_total': "TOTAL GÉNÉRAL",
+                'subtotal_enc': "Sous-total Encaissements",
                 'months': ["Janvier", "Février", "Mars", "Avril", "Mai", "Juin", "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre"]
             },
             'en': {
@@ -757,6 +902,10 @@ class RapportViewSet(viewsets.ViewSet):
                 'credit': "Credit Sales",
                 'coupons': "Coupons",
                 'recouvrements': "Recoveries",
+                'insurance': "Insurance / Third-party",
+                'grand_total': "GRAND TOTAL",
+                'subtotal_enc': "Total Encashments",
+                'depots_util': "Deposit Usage",
                 'mouvements': "Cash Movements",
                 'entrees': "Cash In",
                 'sorties': "Cash Out",
@@ -841,17 +990,17 @@ class RapportViewSet(viewsets.ViewSet):
         ca_ttc_label = "CA TTC" if lang == 'fr' else "TOTAL REV"
         ca_ht_label = "CA HT" if lang == 'fr' else "NET REV"
         marge_label = "Marge" if lang == 'fr' else "Margin"
-        ventes_label = "Ventes" if lang == 'fr' else "Sales"
         creances_label = "Créances" if lang == 'fr' else "Receivables"
+        remises_label = "Remises" if lang == 'fr' else "Discounts"
         
         kpi_data = [[
             f"{ca_ttc_label}\n{format_currency(data['ca']['ca_ttc'])}",
             f"{ca_ht_label}\n{format_currency(data['ca']['ca_ht'])}",
             f"{marge_label} ({data['marge']['marge_pct']}%)\n{format_currency(data['marge']['marge_brute'])}",
-            f"{ventes_label}\n{data['ca']['nb_ventes']}",
+            f"{remises_label}\n{format_currency(data['ca']['total_remises'])}",
             f"{creances_label}\n{format_currency(data['creances']['total'])}"
         ]]
-        t_kpi = Table(kpi_data, colWidths=[3.5*cm, 3.5*cm, 3.5*cm, 2.5*cm, 3.5*cm])
+        t_kpi = Table(kpi_data, colWidths=[3.5*cm, 3.5*cm, 3.5*cm, 3.5*cm, 3.5*cm])
         t_kpi.setStyle([
             ('BACKGROUND', (0, 0), (-1, -1), PharmaColors.GREEN_LIGHT),
             ('FONTNAME', (0, 0), (-1, -1), 'Helvetica-Bold'),
@@ -869,28 +1018,47 @@ class RapportViewSet(viewsets.ViewSet):
         # Encaissements
         story.append(Paragraph(t['encaissements'], compact_title))
         enc_rows = [[t['mode'], t['montant']]]
-        for enc in data['encaissements'][:4]:
+        for enc in data['encaissements']:
             enc_rows.append([enc['mode_label'], format_currency(enc['montant'])])
-        total_enc = sum(e['montant'] for e in data['encaissements'])
-        enc_rows.append([t['total'], format_currency(total_enc)])
+        
+        # Ajouter les dépôts avant le total
+        if data.get('depots_total', 0) > 0:
+            enc_rows.append([t['depots_util'], format_currency(data['depots_total'])])
+
+        # Sous-total des encaissements (Cash + Dépôts)
+        total_enc = sum((Decimal(str(e['montant'])) for e in data['encaissements']), Decimal('0.00')) + Decimal(str(data.get('depots_total', 0)))
+        enc_rows.append([t['subtotal_enc'], format_currency(total_enc)])
+        
         t_enc = Table(enc_rows, colWidths=[5*cm, 3*cm])
         t_enc.setStyle(compact_table_style())
         story.append(t_enc)
         
         if data.get('ventes_credit', 0) > 0 or data.get('coupons_total', 0) > 0 or data.get('recouvrements_total', 0) > 0:
             extra_rows = []
+            
+            # Titre pour les éléments hors-caisse
+            titre_hors_caisse = "HORS ENCAISSEMENT" if lang == 'fr' else "NON-CASH ITEMS"
+            extra_rows.append([titre_hors_caisse, ""])
+
             if data.get('ventes_credit', 0) > 0:
                 extra_rows.append([t['credit'], format_currency(data['ventes_credit'])])
             if data.get('coupons_total', 0) > 0:
                 extra_rows.append([t['coupons'], format_currency(data['coupons_total'])])
+            if data['ca'].get('part_assurance', 0) > 0:
+                extra_rows.append([t['insurance'], format_currency(data['ca']['part_assurance'])])
             if data.get('recouvrements_total', 0) > 0:
                 extra_rows.append([t['recouvrements'], format_currency(data['recouvrements_total'])])
             
-            total_expl = sum(e['montant'] for e in data['encaissements']) + data.get('ventes_credit', 0) + data.get('coupons_total', 0) + data.get('recouvrements_total', 0)
-            extra_rows.append([t['total_expl'], format_currency(total_expl)])
+            # TOTAL GENERAL (CA)
+            extra_rows.append([t['grand_total'], format_currency(data['ca']['ca_ttc'])])
             
             t_extra = Table(extra_rows, colWidths=[5*cm, 3*cm])
-            t_extra.setStyle(compact_table_style())
+            style = compact_table_style()
+            # Mettre en gras la dernière ligne (Total Général)
+            style.append(('FONTNAME', (0, -1), (-1, -1), 'Helvetica-Bold'))
+            style.append(('FONTSIZE', (0, -1), (-1, -1), 9))
+            style.append(('BACKGROUND', (0, -1), (-1, -1), PharmaColors.GRAY_LIGHT))
+            t_extra.setStyle(style)
             story.append(Spacer(1, 2))
             story.append(t_extra)
 
@@ -941,11 +1109,12 @@ class RapportViewSet(viewsets.ViewSet):
         
         # Clients Pro
         pro_data = data['clients_professionnels']
-        if pro_data['ca_total'] > 0:
+        if pro_data['ca_total'] > 0 or data.get('recouvrements_total', 0) > 0:
             story.append(Paragraph(t['clients_pro'], compact_title))
+            recov_label = "Recouvrements" if lang == 'fr' else "Recoveries"
             p_rows = [
                 [t['ca_pro'], format_currency(pro_data['ca_total']), t['paye'], format_currency(pro_data['montant_paye'])],
-                [t['reste'], format_currency(pro_data['reste_a_payer']), t['taux_rec'], f"{pro_data['taux_recouvrement_pct']}%"]
+                [t['reste'], format_currency(pro_data['reste_a_payer']), recov_label, format_currency(data.get('recouvrements_total', 0))]
             ]
             t_pro = Table(p_rows, colWidths=[2.5*cm, 4*cm, 2.5*cm, 4*cm])
             t_pro.setStyle(compact_table_style())
@@ -1630,3 +1799,296 @@ class RapportViewSet(viewsets.ViewSet):
             })
             
         return Response(response_data)
+
+    @action(detail=False, methods=['get'])
+    def balance_stock_excel(self, request):
+        """
+        Génère un état de balance des stocks (Stock Initial, Achats, Ventes, Stock Final)
+        pour une période donnée au format Excel.
+        Params: date_debut, date_fin, lang, exclude_zero
+        """
+        date_debut_param = request.query_params.get('date_debut')
+        date_fin_param = request.query_params.get('date_fin')
+        lang = request.query_params.get('lang', 'fr')
+        exclude_zero = request.query_params.get('exclude_zero') == 'true'
+
+        if not date_debut_param or not date_fin_param:
+            return Response({'error': 'Date debut and date fin are required.'}, status=400)
+
+        try:
+            from django.utils.dateparse import parse_date
+            date_debut = datetime.combine(parse_date(date_debut_param), time.min)
+            date_fin = datetime.combine(parse_date(date_fin_param), time.max)
+        except (ValueError, TypeError):
+            return Response({'error': 'Invalid date format. Use YYYY-MM-DD.'}, status=400)
+
+        # 1. Récupérer tous les produits actifs
+        produits = Produit.objects.filter(is_active=True).only('id', 'name', 'cip1', 'stock', 'stock_reserve')
+        
+        # 2. OPTIMISATION : Calculer tous les stocks initiaux en une seule requête (Bulk)
+        # Somme de TOUS les mouvements avant la date de début pour chaque produit
+        stock_initial_bulk = MouvementStock.objects.filter(
+            date__lt=date_debut
+        ).values('produit_id').annotate(total=Sum('quantite'))
+        stock_initial_dict = {item['produit_id']: item['total'] or 0 for item in stock_initial_bulk}
+
+        # 3. OPTIMISATION : Calculer tous les mouvements de la période en une seule requête (Bulk)
+        mouvements_periode_bulk = MouvementStock.objects.filter(
+            date__range=(date_debut, date_fin)
+        ).values('produit_id', 'type_mouvement').annotate(total=Sum('quantite'))
+        
+        # Organiser en dictionnaire {produit_id: {type: total}}
+        mouvements_dict = {}
+        for item in mouvements_periode_bulk:
+            pid = item['produit_id']
+            tm = item['type_mouvement']
+            val = item['total'] or 0
+            if pid not in mouvements_dict:
+                mouvements_dict[pid] = {}
+            mouvements_dict[pid][tm] = val
+
+        # 4. Préparer le classeur Excel
+        wb = openpyxl.Workbook()
+        ws = wb.active
+        
+        # Traductions des en-têtes
+        headers_lang = {
+            'fr': {
+                'title': f"Balance des Stocks - {date_debut.strftime('%d/%m/%Y')} au {date_fin.strftime('%d/%m/%Y')}",
+                'cip': "Code CIP",
+                'designation': "Désignation",
+                'stock_initial': "Stock Initial",
+                'achats': "Achats",
+                'ventes': "Ventes",
+                'ajustements': "Ajustements",
+                'stock_final': "Stock Final"
+            },
+            'en': {
+                'title': f"Stock Balance - {date_debut.strftime('%d/%m/%Y')} to {date_fin.strftime('%d/%m/%Y')}",
+                'cip': "CIP Code",
+                'designation': "Designation",
+                'stock_initial': "Initial Stock",
+                'achats': "Purchases",
+                'ventes': "Sales",
+                'ajustements': "Adjustments",
+                'stock_final': "Final Stock"
+            }
+        }
+        
+        h = headers_lang.get(lang, headers_lang['fr'])
+        
+        # Style des titres
+        title_font = Font(name='Arial', size=14, bold=True, color="1B4F72")
+        header_font = Font(name='Arial', size=11, bold=True, color="FFFFFF")
+        header_fill = PatternFill(start_color="2E86C1", end_color="2E86C1", fill_type="solid")
+        border = Border(left=Side(style='thin'), right=Side(style='thin'), top=Side(style='thin'), bottom=Side(style='thin'))
+
+        ws.merge_cells('A1:G1')
+        ws['A1'] = h['title']
+        ws['A1'].font = title_font
+        ws['A1'].alignment = Alignment(horizontal='center')
+        
+        ws.append([]) # Ligne vide
+        
+        headers = [h['cip'], h['designation'], h['stock_initial'], h['achats'], h['ventes'], h['ajustements'], h['stock_final']]
+        ws.append(headers)
+        
+        for cell in ws[3]:
+            cell.font = header_font
+            cell.fill = header_fill
+            
+        # 5. Remplir les données
+        row_idx = 4
+        for produit in produits:
+            # Récupérer les données pré-calculées
+            stock_initial = stock_initial_dict.get(produit.id, 0)
+            
+            prod_mouv = mouvements_dict.get(produit.id, {})
+            achats = prod_mouv.get(MouvementStock.TypeMouvement.ENTREE, 0)
+            ventes = prod_mouv.get(MouvementStock.TypeMouvement.SORTIE, 0)
+            
+            # Ajustements (Total mouvements - Entrées - Sorties)
+            ajustements = sum(val for tm, val in prod_mouv.items() if tm not in [MouvementStock.TypeMouvement.ENTREE, MouvementStock.TypeMouvement.SORTIE])
+            
+            # Calcul du stock final
+            mouvements_totaux_periode = sum(prod_mouv.values())
+            stock_final = stock_initial + mouvements_totaux_periode
+
+            # Filtre exclusion si tout est à zéro
+            if exclude_zero and stock_initial == 0 and achats == 0 and ventes == 0 and ajustements == 0 and stock_final == 0:
+                continue
+
+            ws.append([
+                produit.cip1 or "",
+                produit.name,
+                stock_initial,
+                achats,
+                -ventes, # Afficher en positif pour la lecture
+                ajustements,
+                stock_final
+            ])
+            
+            # Appliquer des bordures
+            for cell in ws[row_idx]:
+                cell.border = border
+                
+            row_idx += 1
+
+        # Ajuster la largeur des colonnes
+        dims = {}
+        for row in ws.rows:
+            for cell in row:
+                if cell.value:
+                    dims[cell.column_letter] = max((dims.get(cell.column_letter, 0), len(str(cell.value))))
+        for col, value in dims.items():
+            ws.column_dimensions[col].width = value + 2
+
+        # 6. Envoyer la réponse
+        response = HttpResponse(
+            content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+        )
+        filename = f"Balance_Stocks_{date_debut.strftime('%Y%m%d')}_{date_fin.strftime('%Y%m%d')}.xlsx"
+        response['Content-Disposition'] = f'attachment; filename="{filename}"'
+        wb.save(response)
+        return response
+
+    @action(detail=False, methods=['get'])
+    def rapport_remises(self, request):
+        date_debut_str = request.query_params.get('date_debut')
+        date_fin_str = request.query_params.get('date_fin')
+        
+        try:
+            date_debut = timezone.make_aware(datetime.combine(datetime.strptime(date_debut_str, '%Y-%m-%d'), time.min))
+            date_fin = timezone.make_aware(datetime.combine(datetime.strptime(date_fin_str, '%Y-%m-%d'), time.max))
+        except (ValueError, TypeError):
+            return Response({"error": "Dates invalides. Format attendu: YYYY-MM-DD"}, status=status.HTTP_400_BAD_REQUEST)
+
+        factures = Facture.objects.filter(
+            status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE],
+            date__gte=date_debut,
+            date__lte=date_fin
+        ).select_related('validated_by')
+
+        # 1. Stats par utilisateur (Remises Globales et Fidélité)
+        stats_users = factures.values(
+            'validated_by__id', 
+            'validated_by__username', 
+            'validated_by__first_name', 
+            'validated_by__last_name'
+        ).annotate(
+            remise_globale=Coalesce(Sum('remise'), Decimal('0.00')),
+            remise_fidelite=Coalesce(Sum('montant_fidelite'), Decimal('0.00')),
+            ca_ttc=Coalesce(Sum('total_ttc'), Decimal('0.00')),
+            nb_factures=Count('id')
+        ).order_by('-remise_globale')
+
+        # 2. Remises par ligne (Discount et Unités Gratuites)
+        line_stats = FactureProduit.objects.filter(
+            facture__in=factures
+        ).values('facture__validated_by__id').annotate(
+            remise_lignes=Coalesce(Sum(F('discount') * F('quantity'), output_field=DecimalField()), Decimal('0.00')),
+            valeur_ug=Coalesce(Sum(F('free_quantity') * F('selling_price'), output_field=DecimalField()), Decimal('0.00'))
+        )
+
+        # 3. Fusionner les stats
+        line_stats_dict = {s['facture__validated_by__id']: s for s in line_stats}
+        
+        results = []
+        for s in stats_users:
+            user_id = s['validated_by__id']
+            ls = line_stats_dict.get(user_id, {})
+            
+            remise_lignes = ls.get('remise_lignes', Decimal('0.00'))
+            valeur_ug = ls.get('valeur_ug', Decimal('0.00'))
+            
+            total_remise = s['remise_globale'] + s['remise_fidelite'] + remise_lignes + valeur_ug
+            
+            results.append({
+                'user_id': user_id,
+                'username': s['validated_by__username'],
+                'full_name': f"{s['validated_by__first_name'] or ''} {s['validated_by__last_name'] or ''}".strip() or s['validated_by__username'],
+                'nb_factures': s['nb_factures'],
+                'ca_ttc': s['ca_ttc'],
+                'remise_globale': s['remise_globale'],
+                'remise_lignes': remise_lignes,
+                'remise_fidelite': s['remise_fidelite'],
+                'valeur_ug': valeur_ug,
+                'total_remise': total_remise,
+                'ratio_remise_pct': float(total_remise / s['ca_ttc'] * 100) if s['ca_ttc'] > 0 else 0
+            })
+
+        return Response(results)
+
+    @action(detail=False, methods=['get'])
+    def rapport_remises_excel(self, request):
+        # Utilise la même logique que rapport_remises
+        data = self.rapport_remises(request).data
+        if isinstance(data, dict) and "error" in data:
+            return Response(data, status=status.HTTP_400_BAD_REQUEST)
+
+        wb = openpyxl.Workbook()
+        ws = wb.active
+        ws.title = "Rapport des Remises"
+
+        # Styles
+        header_font = Font(bold=True, color="FFFFFF")
+        header_fill = PatternFill(start_color="4F81BD", end_color="4F81BD", fill_type="solid")
+        center_align = Alignment(horizontal="center")
+        right_align = Alignment(horizontal="right")
+        border = Border(
+            left=Side(style='thin'), right=Side(style='thin'), 
+            top=Side(style='thin'), bottom=Side(style='thin')
+        )
+
+        # En-têtes
+        headers = [
+            "Utilisateur", "Nb Factures", "CA TTC", "Remise Globale", 
+            "Remise Lignes", "Remise Fidélité", "Valeur UG", "Total Remise", "% / CA"
+        ]
+        ws.append(headers)
+        for cell in ws[1]:
+            cell.font = header_font
+            cell.fill = header_fill
+            cell.alignment = center_align
+            cell.border = border
+
+        # Données
+        for item in data:
+            row = [
+                item['full_name'],
+                item['nb_factures'],
+                item['ca_ttc'],
+                item['remise_globale'],
+                item['remise_lignes'],
+                item['remise_fidelite'],
+                item['valeur_ug'],
+                item['total_remise'],
+                f"{item['ratio_remise_pct']:.2f}%"
+            ]
+            ws.append(row)
+            # Appliquer les formats et bordures
+            curr_row = ws.max_row
+            for i, val in enumerate(row):
+                cell = ws.cell(row=curr_row, column=i+1)
+                cell.border = border
+                if i >= 2 and i <= 7: # Colonnes monétaires
+                    cell.number_format = '#,##0.00'
+                    cell.alignment = right_align
+
+        # Ajuster les colonnes
+        for col in ws.columns:
+            max_length = 0
+            column = col[0].column_letter
+            for cell in col:
+                try:
+                    if len(str(cell.value)) > max_length:
+                        max_length = len(str(cell.value))
+                except: pass
+            ws.column_dimensions[column].width = max_length + 2
+
+        response = HttpResponse(
+            content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+        )
+        response['Content-Disposition'] = f'attachment; filename="Rapport_Remises_{request.query_params.get("date_debut")}.xlsx"'
+        wb.save(response)
+        return response

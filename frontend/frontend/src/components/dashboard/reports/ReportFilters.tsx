@@ -182,6 +182,20 @@ export const ReportFilters: React.FC<ReportFiltersProps> = ({
                                 ))}
                             </select>
                         )}
+
+                        {param.type === 'checkbox' && (
+                            <div className="flex items-center gap-3 bg-base-200/50 px-4 h-12 rounded-xl border border-base-300">
+                                <input
+                                    type="checkbox"
+                                    checked={!!params[param.key]}
+                                    onChange={e => setParam(param.key, e.target.checked)}
+                                    className="checkbox checkbox-primary checkbox-sm rounded-lg"
+                                />
+                                <span className="text-xs font-bold uppercase tracking-tight text-base-content/70">
+                                    {t(`params.${param.key}_active`, { defaultValue: 'Activé' })}
+                                </span>
+                            </div>
+                        )}
                 </div>
             ))}
         </div>

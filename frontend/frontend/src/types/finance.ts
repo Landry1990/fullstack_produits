@@ -22,6 +22,9 @@ export interface Facture {
     client: number
     client_name?: string
     client_name_override?: string | null
+    client_solde_depot?: string
+    client_type?: 'PARTICULIER' | 'PROFESSIONNEL'
+    client_is_deposit_enabled?: boolean
     ayant_droit?: number | null
     ayant_droit_details?: AyantDroit
     numero_facture: string | null
@@ -60,7 +63,7 @@ export interface TicketCaisse {
     facture: number | Facture
     facture_numero?: string
     client_name?: string
-    mode_paiement: 'especes' | 'cheque' | 'carte' | 'virement' | 'om' | 'momo' | 'en_compte' | 'Mixte'
+    mode_paiement: 'especes' | 'cheque' | 'carte' | 'virement' | 'om' | 'momo' | 'en_compte' | 'depot' | 'Mixte'
     montant: string
     reference: string | null
     statut: string
@@ -76,6 +79,7 @@ export interface TicketCaisse {
     montant_verse?: string | number
     rendu?: string | number
     total_lettres?: string
+    client_solde_depot?: string
 }
 
 export interface Paiement {
@@ -99,7 +103,7 @@ export interface CaisseTransaction {
     id: number
     facture: number
     facture_numero: string
-    mode_paiement: 'especes' | 'cheque' | 'carte' | 'virement' | 'om' | 'momo' | 'en_compte'
+    mode_paiement: 'especes' | 'cheque' | 'carte' | 'virement' | 'om' | 'momo' | 'en_compte' | 'depot'
     mode_paiement_display: string
     montant: string
     reference: string | null

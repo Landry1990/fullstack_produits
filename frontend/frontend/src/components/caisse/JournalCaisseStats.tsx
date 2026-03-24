@@ -108,6 +108,8 @@ export default function JournalCaisseStats({ state }: Props) {
             virement: { label: t('common:payment_modes.virement'), color: 'info' },
             om: { label: 'O.M.', color: 'warning' },
             momo: { label: 'MoMo', color: 'warning' },
+            depot: { label: t('common:payment_modes.depot'), color: 'info' },
+            en_compte: { label: t('common:payment_modes.en_compte'), color: 'warning' },
             recouvrement: { label: t('common:payment_modes.recouvrement'), color: 'primary' }
           };
           

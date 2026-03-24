@@ -301,6 +301,9 @@
             "title": "Validation d'Inventaire",
             "message": "Êtes-vous sûr de vouloir valider cet inventaire ? Cette action mettra à jour le stock officiel."
         },
+        "types": {
+            "global": "STOCK GLOBAL"
+        },
         "filters": {
             "search_placeholder": "Rechercher un inventaire...",
             "status_all": "Tous les statuts",
@@ -372,7 +375,16 @@
             "col_phys": "Phys.",
             "col_gap": "Écart",
             "total_gap_value": "Montant Total Écarts",
-            "items_count": "Articles"
+            "items_count": "Articles",
+            "sort": {
+                "title": "Trier par :",
+                "chronologie": "Chronologie (Ajout)",
+                "nom": "Libellé (A-Z)",
+                "ecart": "Écart Valeur (F)",
+                "prix": "Prix Achat"
+            },
+            "col_cmp": "PMP",
+            "lot_label": "Lot"
         },
         "lines": {
             "selected": "{{count}} ligne(s) sélectionnée(s)",
@@ -902,6 +914,91 @@
         "modal_sudo": {
             "title": "Validation Administrative",
             "message": "Un mot de passe de pharmacien ou d'administrateur est requis pour ajuster les stocks."
+        }
+    },
+    "ruptures": {
+        "title": "Suivi des Ruptures",
+        "subtitle": "Gérez les ruptures internes et signalez les indisponibilités grossistes",
+        "tabs": {
+            "pharmacie": "Ruptures Pharmacie",
+            "fournisseur": "Ruptures Fournisseurs",
+            "stats": "Historique & Stats"
+        },
+        "pharmacie": {
+            "info": "Cette liste affiche automatiquement tous vos produits dont le <strong>stock est à 0</strong> mais qui ont une <strong>rotation moyenne de vente &gt; 0</strong>. Idéal pour détecter les vraies ruptures et pertes de ventes !",
+            "columns": {
+                "cip": "CIP",
+                "produit": "Produit",
+                "rayon": "Rayon",
+                "rotation": "Rotation Moy/Mois",
+                "fournisseur": "Dernier Fournisseur",
+                "dernier_achat": "Dernier Achat",
+                "dernier_vente": "Dernière Vente",
+                "prix_achat": "Prix Achat"
+            },
+            "empty": "Aucune rupture pharmacie à signaler.",
+            "per_month": "/ mois"
+        },
+        "fournisseur": {
+            "signaler": "Signaler une Indisponibilité",
+            "search_placeholder": "Chercher un produit...",
+            "searching": "Recherche...",
+            "no_results": "Aucun produit trouvé",
+            "stock": "Stock",
+            "fournisseur": "Fournisseur",
+            "declare_success": "Rupture fournisseur signalée",
+            "declare_error": "Erreur lors du signalement",
+            "active_list": "Produits Actuellement Indisponibles",
+            "columns": {
+                "produit": "Produit",
+                "fournisseur": "Dernier Fournisseur",
+                "date": "Date Signalement",
+                "action": "Action"
+            },
+            "empty": "Aucune rupture grossiste active.",
+            "mark_resolved": "Résolu",
+            "mark_resolved_title": "Signaler comme de nouveau disponible",
+            "resolve_success": "Produit marqué comme disponible",
+            "resolve_error": "Erreur lors de la résolution"
+        },
+        "stats": {
+            "title": "Produits tombant le plus souvent en rupture (Top 200)",
+            "columns": {
+                "rang": "Rang",
+                "produit": "Produit",
+                "frequence": "Fréquence de Rupture"
+            },
+            "empty": "Historique vierge.",
+            "times": "fois"
+        }
+    },
+    "temporal_analysis": {
+        "title": "Analyse Temporelle",
+        "subtitle": "Analysez vos heures de pointe, jours et saisons.",
+        "peak_hours": "Heures de pointe",
+        "daily_comparison": "Jours rentables",
+        "seasonality": "Saisonnalité",
+        "peak_hour_title": "Affluence Maximale",
+        "peak_hour_summary": "Pic à {{hour}}:00 avec un chiffre d'affaires de {{revenue}}",
+        "best_day_title": "Meilleur Jour de Performance",
+        "best_day_summary": "{{day}} est votre meilleur jour avec {{revenue}} en moyenne",
+        "seasonality_title": "Tendances Saisonnières",
+        "seasonality_summary": "Analyse sur {{months}} mois • {{count}} produits saisonniers détectés",
+        "global_revenue_evolution": "Évolution Globale du CA",
+        "top_seasonal_products": "Top Produits Saisonniers",
+        "no_seasonality_detected": "Aucune tendance saisonnière forte détectée pour le moment.",
+        "no_data": "Aucune donnée",
+        "columns": {
+            "day": "Jour",
+            "avg_sales": "Ventes Moy.",
+            "avg_basket": "Panier Moy.",
+            "avg_revenue": "CA Moy.",
+            "product": "Produit",
+            "peak_month": "Mois de Pointe",
+            "peak_volume": "Vol. de Pointe",
+            "monthly_avg": "Moy. Mensuelle",
+            "variation": "Variation",
+            "avg_basket_short": "Panier M."
         }
     }
 }

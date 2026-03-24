@@ -115,6 +115,17 @@ class EtatInventairePDFView(APIView):
         # Trier les groupes alphabétiquement
         sorted_groups = sorted(grouped_data.keys())
 
+        # Support du format JSON pour l'impression frontend
+        if request.query_params.get('format', '').lower() == 'json':
+            return Response({
+                'title': f"ÉTAT D'INVENTAIRE PAR {group_by}",
+                'filter_name': filter_name,
+                'group_label': group_by,
+                'stock_label': 'Stock Machine' if stock_display == 'MACHINE' else 'Stock à Zéro',
+                'date': datetime.now().isoformat(),
+                'groups': {g: grouped_data[g] for g in sorted_groups}
+            })
+
         # Générer le PDF
         buffer = io.BytesIO()
         doc = SimpleDocTemplate(

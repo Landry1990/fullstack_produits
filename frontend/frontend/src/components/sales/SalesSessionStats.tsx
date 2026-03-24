@@ -38,7 +38,7 @@ export const SalesSessionStats: React.FC<SalesSessionStatsProps> = ({ session })
                         Tranche: {session.tranche}
                    </div>
                    <div className="opacity-90">
-                       {new Date(session.date_debut).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})} - {new Date(session.date_fin).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                       {new Date(session.date_debut).toLocaleTimeString('fr-FR', {hour: '2-digit', minute:'2-digit'})} - {new Date(session.date_fin).toLocaleTimeString('fr-FR', {hour: '2-digit', minute:'2-digit'})}
                    </div>
                    <div className="mt-1 font-medium bg-white/10 self-start px-2 py-0.5 rounded text-white">
                        {session.nombre_factures} ventes

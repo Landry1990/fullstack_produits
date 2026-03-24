@@ -1,4 +1,4 @@
-﻿import React, { useState } from 'react';
+import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { CommandeProduit, ProduitModel, Commande } from '../../types';
 import { formatCurrency } from '../../utils/formatters';
@@ -124,7 +124,7 @@ export default function CommandeProductTable({
                 )}
                 <div className="flex items-center gap-2 md:gap-4 overflow-x-auto">
                     {saving && <span className="text-sm text-warning animate-pulse">{t('orders:form.saving')}</span>}
-                    {!saving && lastSaved && <span className="text-xs text-success hidden md:inline">{t('orders:product_table.saved_at', { time: lastSaved.toLocaleTimeString() })}</span>}
+                    {!saving && lastSaved && <span className="text-xs text-success hidden md:inline">{t('orders:product_table.saved_at', { time: lastSaved.toLocaleTimeString('fr-FR') })}</span>}
                     
                     {(() => {
                         const stats = commandeProduits.reduce((acc, p) => {

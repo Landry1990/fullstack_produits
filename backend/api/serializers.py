@@ -12,7 +12,7 @@ from .models import (
     Ordonnancier, LigneOrdonnancier, PharmacySettings, CouponMonnaie,
     Groupe, SmsLog, SmsTemplate, PaiementFournisseur, ConfigurationOption,
     Promotion, PromotionPackItem, ObjectifCommercial, ConfigurationObjectifs, TVA,
-    WhatsAppLog
+    WhatsAppLog, RuptureFournisseur, DepotClient
 )
 from .services import PromotionService
 from .pdf_utils import number_to_french
@@ -105,6 +105,7 @@ class LoyaltySettingSerializer(serializers.ModelSerializer):
     class Meta:
         model = LoyaltySetting
         fields = '__all__'
+        read_only_fields = ['points_earned', 'points_spent', 'current_points']
 
 
 class PharmacySettingsSerializer(serializers.ModelSerializer):
@@ -215,7 +216,15 @@ class FournisseurSerializer(serializers.ModelSerializer):
 
 from django.db import transaction
 
-# ... (imports)
+class DepotClientSerializer(serializers.ModelSerializer):
+    created_by_name = serializers.CharField(source='created_by.get_full_name', read_only=True)
+    type_display = serializers.CharField(source='get_type_display', read_only=True)
+    facture_numero = serializers.CharField(source='facture.numero_facture', read_only=True)
+
+    class Meta:
+        model = DepotClient
+        fields = '__all__'
+        read_only_fields = ['date', 'created_by']
 
 class AyantDroitSerializer(serializers.ModelSerializer):
     id = serializers.IntegerField(required=False)
@@ -233,6 +242,7 @@ class ClientSerializer(serializers.ModelSerializer):
     class Meta:
         model = Client
         fields = '__all__'
+        read_only_fields = ['solde_depot', 'points_fidelite', 'pending_discount']
 
     @transaction.atomic
     def create(self, validated_data):
@@ -617,16 +627,26 @@ class CaisseSerializer(serializers.ModelSerializer):
     facture_validated_by_name = serializers.SerializerMethodField()
     total_lettres = serializers.SerializerMethodField()
 
+    client_solde_depot = serializers.SerializerMethodField()
+
     class Meta:
         model = Caisse
         fields = [
             'id', 'facture', 'facture_numero', 'mode_paiement', 'mode_paiement_display',
             'montant', 'reference', 'statut', 'date_paiement', 'user', 'user_details',
-            'client_name', 'client_type', 'is_creance_settlement', 'releve_reference', 
+            'client_name', 'client_type', 'client_solde_depot', 'is_creance_settlement', 'releve_reference', 
             'releve_id', 'facture_created_by_name', 'facture_validated_by_name',
             'total_lettres'
         ]
         read_only_fields = ['date_paiement']
+
+    def get_client_solde_depot(self, obj):
+        try:
+            if obj.facture and obj.facture.client:
+                return str(obj.facture.client.solde_depot)
+        except AttributeError:
+            pass
+        return None
     
     def get_user_details(self, obj):
         if obj.user:
@@ -686,8 +706,11 @@ class CaisseSerializer(serializers.ModelSerializer):
             return ""
 
 class FactureSerializer(serializers.ModelSerializer):
-    client_nom = serializers.SerializerMethodField()
     client_name = serializers.SerializerMethodField()
+    client_nom = serializers.SerializerMethodField()
+    client_solde_depot = serializers.SerializerMethodField()
+    client_type = serializers.CharField(source='client.client_type', read_only=True)
+    client_is_deposit_enabled = serializers.BooleanField(source='client.is_deposit_enabled', read_only=True)
     produits = FactureProduitSerializer(many=True, read_only=True)
     ayant_droit_details = AyantDroitSerializer(source='ayant_droit', read_only=True)
     status_display = serializers.CharField(source='get_status_display', read_only=True)
@@ -718,6 +741,12 @@ class FactureSerializer(serializers.ModelSerializer):
         if obj.client:
             return obj.client.name
         return "Client de passage"
+    
+    def get_client_solde_depot(self, obj):
+        if obj.client:
+            # We use solde_depot which is on the client model
+            return str(obj.client.solde_depot)
+        return "0.00"
     
     def get_validated_by_name(self, obj):
         if obj.validated_by:
@@ -769,6 +798,7 @@ class FactureSerializer(serializers.ModelSerializer):
         model = Facture
         fields = [
             'id', 'numero_facture', 'client', 'client_name', 'client_nom', 'client_name_override', 
+            'client_solde_depot', 'client_type', 'client_is_deposit_enabled',
             'ayant_droit', 'ayant_droit_details',
             'date', 'date_document', 'status', 'status_display', 'produits', 
             'total_ht', 'remise', 'tva', 'total_tva', 'total_ttc', 'notes',
@@ -1313,4 +1343,14 @@ class WhatsAppLogSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = WhatsAppLog
+        fields = '__all__'
+
+
+class RuptureFournisseurSerializer(serializers.ModelSerializer):
+    produit_nom = serializers.CharField(source='produit.name', read_only=True)
+    fournisseur_nom = serializers.CharField(source='fournisseur.name', read_only=True)
+    utilisateur_nom = serializers.CharField(source='utilisateur.username', read_only=True)
+    
+    class Meta:
+        model = RuptureFournisseur
         fields = '__all__'

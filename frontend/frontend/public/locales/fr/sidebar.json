@@ -46,6 +46,9 @@
         "reappro": {
             "title": "Réappro Rayon"
         },
+        "ruptures": {
+            "title": "Suivi des Ruptures"
+        },
         "avoirs": "Réclamations",
         "promis": "Promis",
         "transformations": {

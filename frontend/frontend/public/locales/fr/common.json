@@ -12,6 +12,12 @@
     "delete": "Supprimer",
     "cancel": "Annuler",
     "save": "Enregistrer",
+    "deposit": "Dépôt",
+    "balance": "Solde",
+    "available_balance": "Solde disponible",
+    "add_deposit": "Ajouter un dépôt",
+    "make_withdrawal": "Effectuer un retrait",
+    "history": "Historique",
     "passerby_client": "Client de passage",
     "close": "Fermer",
     "receipt": "Ticket de caisse",
@@ -37,6 +43,10 @@
         "cancel": "Annuler"
     },
     "actions_title": "Actions",
+    "sort": {
+        "asc": "Croissant",
+        "desc": "Décroissant"
+    },
     "validate": "Valider",
     "validate_all": "Tout valider",
     "delete_all": "Tout supprimer",
@@ -153,8 +163,10 @@
         "september": "Septembre",
         "october": "Octobre",
         "november": "Novembre",
-        "december": "Décembre"
+        "december": "Décembre",
+        "total_general": "TOTAL GÉNÉRAL"
     },
+    "total": "Total",
     "from": "Du",
     "to": "Au",
     "period": "Période",
@@ -168,6 +180,7 @@
     "no_cip": "Sans CIP",
     "unknown_product": "Produit Inconnu",
     "coupon": "Coupon",
+    "insurance": "Assurances / Tiers-Payant",
     "remove": "Retirer",
     "maintenance": {
         "title": "Entretien & Purge",

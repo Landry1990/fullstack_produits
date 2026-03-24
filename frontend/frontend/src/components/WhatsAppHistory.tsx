@@ -169,7 +169,7 @@ const WhatsAppHistory: React.FC = () => {
                                         <div className="max-w-md">
                                             <p className="text-sm line-clamp-2" title={log.message}>{log.message}</p>
                                             {log.facture_numero && (
-                                                <span className="badge badge-ghost badge-xs gap-1 mt-1 font-mono">
+                                                <span className="badge badge-ghost badge-sm gap-1 mt-1 font-mono whitespace-nowrap">
                                                     <FileText className="w-2 h-2" /> {log.facture_numero}
                                                 </span>
                                             )}

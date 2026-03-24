@@ -18,11 +18,13 @@
         "type": "Type de Client",
         "address": "Adresse",
         "status": "Statut",
-        "loyalty_member": "Membre Fidélité"
+        "loyalty_member": "Membre Fidélité",
+        "is_deposit_enabled": "Privilège Dépôt"
     },
     "hints": {
         "is_active": "Le client est visible et peut effectuer des achats",
-        "loyalty_member": "Le client participe au programme de points et récompenses"
+        "loyalty_member": "Le client participe au programme de points et récompenses",
+        "is_deposit_enabled": "Autoriser ce client à effectuer des dépôts et à les utiliser comme mode de paiement"
     },
     "types": {
         "individual": "Particulier",
@@ -42,6 +44,8 @@
         "credit_limit": "Plafond de Crédit",
         "coverage": "Taux de Couverture",
         "current_debt": "Dette Actuelle",
+        "solde_depot": "Solde Dépôt",
+        "manage_deposit": "Gérer le dépôt",
         "debt_usage": "Dette Actuelle / Plafond"
     },
     "beneficiaries": {

@@ -1,4 +1,4 @@
-﻿import React from 'react';
+import React from 'react';
 import { useTranslation } from 'react-i18next';
 import type { ProduitModel, StockLot } from '../../types';
 import { ProductTabsContent } from './ProductTabsContent';
@@ -52,11 +52,11 @@ export const ProductDetailPanel: React.FC<ProductDetailPanelProps> = (props) => 
     <div className="md:col-span-2 bg-base-100 rounded-lg shadow flex flex-col overflow-hidden">
       <div className="flex flex-col h-full">
         {/* Header produit */}
-        <div className="p-4 border-b bg-gradient-to-r from-slate-50 to-white shrink-0">
+        <div className="p-4 border-b bg-base-200/50 shrink-0">
           <div className="flex justify-between items-start">
             <div>
               <div className="flex items-center gap-2 mb-1">
-                <span className="px-2 py-1 rounded bg-blue-100 text-blue-700 text-xs font-bold uppercase">#{selectedProduit.id}</span>
+                <span className="badge badge-info badge-sm font-bold uppercase">#{selectedProduit.id}</span>
                 <span className={`badge badge-md ${
                   (selectedProduit.stock ?? 0) <= 0 ? 'badge-error' :
                   (selectedProduit.stock ?? 0) <= (selectedProduit.stock_alert ?? 0) ? 'badge-warning' :

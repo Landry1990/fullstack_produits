@@ -1,4 +1,4 @@
-﻿import { useState, useMemo } from 'react';
+import { useState, useMemo } from 'react';
 import axios from 'axios';
 import { toast } from 'react-hot-toast';
 import { formatCurrency } from '../utils/formatters';
@@ -10,6 +10,9 @@ interface RapportData {
     ca_ttc: number;
     ca_ht: number;
     nb_ventes: number;
+    total_remises: number;
+    part_assurance: number;
+    part_client: number;
   };
   marge: {
     cout_achat: number;
@@ -21,6 +24,10 @@ interface RapportData {
     mode_label: string;
     montant: number;
   }>;
+  depots_total: number;
+  coupons_total: number;
+  ventes_credit: number;
+  recouvrements_total: number;
   creances_a_percevoir: number;
   ca_par_tva: Array<{
     taux: number;
@@ -177,27 +184,32 @@ export default function RapportMensuel() {
       {rapport && (
         <>
           {/* 1. KPIs Principaux */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
             <div className="stat bg-gradient-to-br from-emerald-500 to-emerald-600 text-white rounded-lg shadow-lg">
               <div className="stat-title text-emerald-100 font-semibold">{t('kpis.ca_ttc')}</div>
-              <div className="stat-value text-3xl">{formatCurrency(Math.round(rapport.ca.ca_ttc))}</div>
+              <div className="stat-value text-3xl text-white">{formatCurrency(Math.round(rapport.ca.ca_ttc))}</div>
               <div className="stat-desc text-emerald-100">{t('kpis.sales_count', { count: rapport.ca.nb_ventes })}</div>
             </div>
 
             <div className="stat bg-gradient-to-br from-blue-500 to-blue-600 text-white rounded-lg shadow-lg">
               <div className="stat-title text-blue-100 font-semibold">{t('kpis.ca_ht')}</div>
-              <div className="stat-value text-3xl">{formatCurrency(Math.round(rapport.ca.ca_ht))}</div>
+              <div className="stat-value text-3xl text-white">{formatCurrency(Math.round(rapport.ca.ca_ht))}</div>
+            </div>
+
+            <div className="stat bg-gradient-to-br from-rose-500 to-rose-600 text-white rounded-lg shadow-lg">
+              <div className="stat-title text-rose-100 font-semibold">{t('kpis.total_discounts', 'Total Remises')}</div>
+              <div className="stat-value text-3xl text-white">{formatCurrency(Math.round(rapport.ca.total_remises))}</div>
             </div>
 
             <div className="stat bg-gradient-to-br from-amber-500 to-amber-600 text-white rounded-lg shadow-lg">
               <div className="stat-title text-amber-100 font-semibold">{t('kpis.gross_margin')}</div>
-              <div className="stat-value text-3xl">{formatCurrency(Math.round(rapport.marge.marge_brute))}</div>
+              <div className="stat-value text-3xl text-white">{formatCurrency(Math.round(rapport.marge.marge_brute))}</div>
               <div className="stat-desc text-amber-100">{t('kpis.margin_info', { pct: rapport.marge.marge_pct.toFixed(1) })}</div>
             </div>
 
             <div className="stat bg-gradient-to-br from-purple-500 to-purple-600 text-white rounded-lg shadow-lg">
               <div className="stat-title text-purple-100 font-semibold">{t('kpis.purchase_cost')}</div>
-              <div className="stat-value text-3xl">{formatCurrency(Math.round(rapport.marge.cout_achat))}</div>
+              <div className="stat-value text-3xl text-white">{formatCurrency(Math.round(rapport.marge.cout_achat))}</div>
             </div>
           </div>
 
@@ -265,7 +277,7 @@ export default function RapportMensuel() {
                   {t('pro_clients.title')}
                 </h2>
 
-                <div className="grid grid-cols-3 gap-4 mb-4">
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
                   <div className="text-center p-3 bg-base-50 rounded-lg">
                     <div className="text-xs text-base-content/60 font-medium">{t('pro_clients.ca_total')}</div>
                     <div className="text-lg font-bold text-info">{formatCurrency(Math.round(rapport.clients_professionnels.ca_total))}</div>
@@ -277,6 +289,10 @@ export default function RapportMensuel() {
                   <div className="text-center p-3 bg-warning/10 rounded-lg">
                     <div className="text-xs text-warning/70 font-medium">{t('pro_clients.balance')}</div>
                     <div className="text-lg font-bold text-warning">{formatCurrency(Math.round(rapport.clients_professionnels.reste_a_payer))}</div>
+                  </div>
+                  <div className="text-center p-3 bg-indigo-500/10 rounded-lg">
+                    <div className="text-xs text-indigo-500/70 font-medium">{t('pro_clients.recoveries', 'Recouvrements')}</div>
+                    <div className="text-lg font-bold text-indigo-600">{formatCurrency(Math.round(rapport.recouvrements_total))}</div>
                   </div>
                 </div>
 
@@ -396,12 +412,63 @@ export default function RapportMensuel() {
                         ))}
                       </tbody>
                       <tfoot className="bg-base-200 font-bold text-base-content">
-                        <tr>
-                          <td>{t('encaissements.total')}</td>
+                        {Number(rapport.depots_total) > 0 && (
+                          <tr className="text-info bg-info/5">
+                            <td>{t('caisse:journal.modes.depot')}</td>
+                            <td className="text-right">
+                              {formatCurrency(Math.round(Number(rapport.depots_total)))}
+                            </td>
+                          </tr>
+                        )}
+                        <tr className="border-t-2 border-base-300">
+                          <td>{t('encaissements.subtotal', 'Sous-total Encaissements')}</td>
                           <td className="text-right text-success">
-                            {formatCurrency(Math.round(rapport.encaissements.reduce((sum, e) => sum + Number(e.montant), 0)))}
+                            {formatCurrency(Math.round(
+                              rapport.encaissements.reduce((sum, e) => sum + Number(e.montant), 0) + 
+                              Number(rapport.depots_total || 0)
+                            ))}
                           </td>
                         </tr>
+
+                        {(Number(rapport.ventes_credit) > 0 || Number(rapport.coupons_total) > 0 || Number(rapport.ca.part_assurance) > 0) && (
+                          <>
+                            <tr className="border-t border-base-300">
+                                <td colSpan={2} className="text-[10px] text-base-content/40 pt-2 uppercase tracking-tighter">
+                                    {t('encaissements.non_cash_items', 'Éléments hors encaissement')}
+                                </td>
+                            </tr>
+                            {Number(rapport.ventes_credit) > 0 && (
+                              <tr className="text-warning bg-warning/5">
+                                  <td>{t('caisse:journal.modes.en_compte')}</td>
+                                  <td className="text-right">
+                                  {formatCurrency(Math.round(Number(rapport.ventes_credit)))}
+                                  </td>
+                              </tr>
+                            )}
+                            {Number(rapport.coupons_total) > 0 && (
+                              <tr className="text-secondary bg-secondary/5">
+                                  <td>{t('caisse:journal.modes.coupon')}</td>
+                                  <td className="text-right">
+                                  {formatCurrency(Math.round(Number(rapport.coupons_total)))}
+                                  </td>
+                              </tr>
+                            )}
+                            {Number(rapport.ca.part_assurance) > 0 && (
+                              <tr className="text-accent bg-accent/5">
+                                  <td>{t('common:insurance', 'Assurances / Tiers-Payant')}</td>
+                                  <td className="text-right">
+                                  {formatCurrency(Math.round(Number(rapport.ca.part_assurance)))}
+                                  </td>
+                              </tr>
+                            )}
+                            <tr className="border-t-2 border-double border-base-300 bg-base-300/30">
+                              <td className="uppercase">{t('common:total_general', 'Total Général (CA)')}</td>
+                              <td className="text-right text-lg">
+                                {formatCurrency(Math.round(Number(rapport.ca.ca_ttc)))}
+                              </td>
+                            </tr>
+                          </>
+                        )}
                       </tfoot>
                     </table>
                   ) : (
@@ -456,7 +523,7 @@ export default function RapportMensuel() {
                     <tbody>
                       {rapport.mouvements_caisse.liste.map((mvt) => (
                         <tr key={mvt.id} className="hover">
-                          <td>{new Date(mvt.date).toLocaleDateString(i18n.language === 'fr' ? 'fr-FR' : 'en-US')}</td>
+                          <td>{new Date(mvt.date).toLocaleDateString(i18n.language === 'fr' ? 'fr-FR' : 'en-GB')}</td>
                           <td>
                             <span className={`badge badge-sm ${mvt.type === 'ENTREE' ? 'badge-success badge-outline' : 'badge-error badge-outline'}`}>
                               {mvt.type === 'ENTREE' ? t('caisse:journal.modes.entry_caps') : t('caisse:journal.modes.exit_caps')}

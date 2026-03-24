@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
+import { toast } from 'react-hot-toast'
 import type { Facture, CouponMonnaie } from '../../types'
 import PremiumModal from '../common/PremiumModal'
 
@@ -41,6 +42,10 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
   const resteAPayer = montantDu - totalVerse
   const peutValider = totalVerse >= montantDu && paiements.length > 0
 
+  const soldeDepot = parseFloat(facture.client_solde_depot || '0')
+  const isIndividual = facture.client_type === 'PARTICULIER'
+  const isDepositEnabled = facture.client_is_deposit_enabled ?? false
+
   const paymentModes = [
     { value: 'especes', label: t('payment.modes.especes') },
     { value: 'carte', label: t('payment.modes.carte') },
@@ -48,6 +53,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
     { value: 'momo', label: t('payment.modes.momo') },
     { value: 'cheque', label: t('payment.modes.cheque') },
     { value: 'virement', label: t('payment.modes.virement') },
+    ...(soldeDepot > 0 && isIndividual && isDepositEnabled ? [{ value: 'depot', label: `${t('payment.modes.depot')} (${soldeDepot})` }] : [])
   ]
 
   const getModeLabel = (value: string) => paymentModes.find(m => m.value === value)?.label || value
@@ -80,6 +86,17 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
   const handleAddPayment = () => {
     const montant = Number(montantPaye)
     if (!montant || montant === 0) return
+
+    if (modePaiement === 'depot') {
+      const alreadyPaidWithDepot = paiements
+        .filter(p => p.mode === 'depot')
+        .reduce((acc, p) => acc + p.montant, 0)
+      
+      if (montant + alreadyPaidWithDepot > soldeDepot) {
+        toast.error(t('messages.insufficient_deposit'))
+        return
+      }
+    }
     
     const newPaiements = [...paiements, { mode: modePaiement, montant }]
     setPaiements(newPaiements)

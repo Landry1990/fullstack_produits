@@ -24,6 +24,7 @@ import RapportMensuel from './components/RapportMensuel'
 import Transformations from './components/Transformations'
 import InvoiceSettings from './components/InvoiceSettings'
 import ReapproRayon from './components/stock/ReapproRayon'
+import Ruptures from './components/stock/Ruptures'
 
 import JournalAudit from './components/JournalAudit'
 import JournalAjustements from './components/JournalAjustements'
@@ -116,6 +117,7 @@ const router = createBrowserRouter([
     element: <ProtectedRoute />,
     children: [
       { path: 'print-invoice/:id', element: <PrintPage /> },
+      { path: 'printing/:id', element: <PrintPage /> },
       {
         element: <Layout />,
         children: [
@@ -151,6 +153,7 @@ const router = createBrowserRouter([
           { path: 'avoirs', element: <Avoirs /> },
           { path: 'promis', element: <Promis /> },
           { path: 'stock-analysis', element: <StockAnalysis /> },
+          { path: 'ruptures', element: <Ruptures /> },
           { path: 'reappro-rayon', element: <ReapproRayon /> },
           { path: 'rapport-ug', element: <StockUGReport /> },
           { path: 'etats-inventaire', element: <EtatsInventaire /> },
