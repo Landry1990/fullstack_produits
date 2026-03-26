@@ -26,7 +26,7 @@ services:
       - ${STACK_NAME}_static_volume:/app/staticfiles
       - ${STACK_NAME}_media_volume:/app/media
     environment:
-      - DEBUG=False
+      - DJANGO_DEBUG=False
       - DJANGO_SECRET_KEY=${DJANGO_SECRET_KEY}
       - DJANGO_ALLOWED_HOSTS=${DJANGO_ALLOWED_HOSTS:-localhost,127.0.0.1,backend}
       - DB_ENGINE=django.db.backends.postgresql

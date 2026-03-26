@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import axios from 'axios';
@@ -14,6 +14,28 @@ export default function Login() {
   const [loading, setLoading] = useState(false);
   const { login } = useAuth();
   const navigate = useNavigate();
+  const [users, setUsers] = useState<{username: string, full_name: string}[]>([]);
+
+  useEffect(() => {
+    const fetchUsers = async () => {
+      try {
+        const url = import.meta.env.VITE_API_BASE_URL 
+          ? `${String(import.meta.env.VITE_API_BASE_URL).replace(/\/$/, '')}/api/users/login_options/`
+          : '/api/users/login_options/';
+        const response = await axios.get(url);
+        if (Array.isArray(response.data)) {
+          setUsers(response.data);
+          // Set first user as default if username is empty
+          if (response.data.length > 0 && !username) {
+            setUsername(response.data[0].username);
+          }
+        }
+      } catch (err) {
+        console.error('Error fetching users:', err);
+      }
+    };
+    fetchUsers();
+  }, []);
 
   // Workstation naming logic
   const getDeviceType = () => {
@@ -22,6 +44,19 @@ export default function Login() {
     if (/Mobile|iP(hone|od)|Android|BlackBerry|IEMobile|Kindle|NetFront|Silk-Accelerated|(hpw|web)OS|Opera M(obi|ini)/.test(ua)) return "MOBILE";
     return "PC";
   };
+  
+  const dropdownRef = useRef<HTMLDivElement>(null);
+  const [isOpen, setIsOpen] = useState(false);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   const [workstationName, setWorkstationName] = useState(() => {
     const saved = localStorage.getItem('zenith_workstation');
@@ -134,14 +169,54 @@ export default function Login() {
                    <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-white/20 group-focus-within/input:text-emerald-500 transition-colors duration-200">
                      <User className="h-4 w-4" />
                    </div>
-                   <input
-                    type="text"
-                    required
-                    className="block w-full pl-11 sm:pl-12 pr-4 py-3 sm:py-4 rounded-xl sm:rounded-2xl bg-white/[0.03] border border-white/5 text-white text-sm focus:outline-none focus:bg-white/[0.05] focus:border-emerald-500/50 focus:ring-4 focus:ring-emerald-500/10 transition-all duration-300 placeholder-white/10"
-                    placeholder="ADMIN"
-                    value={username}
-                    onChange={(e) => setUsername(e.target.value)}
-                   />
+                   {users.length > 0 ? (
+                     <div className="relative" ref={dropdownRef}>
+                       <button
+                         type="button"
+                         onClick={() => setIsOpen(!isOpen)}
+                         className="flex items-center justify-between w-full pl-11 sm:pl-12 pr-4 py-3 sm:py-4 rounded-xl sm:rounded-2xl bg-white/[0.03] border border-emerald-500/20 text-white text-sm focus:outline-none focus:bg-white/[0.05] focus:border-emerald-500/50 transition-all duration-300 cursor-pointer"
+                       >
+                         <span className="truncate">
+                           {users.find(u => u.username === username)?.full_name || username}
+                         </span>
+                         <ArrowRight className={`h-4 w-4 transition-transform duration-300 ${isOpen ? 'rotate-90' : 'rotate-0 opacity-40'}`} />
+                       </button>
+
+                       {isOpen && (
+                         <div className="absolute z-50 w-full mt-2 py-2 bg-slate-900/95 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl animate-in fade-in zoom-in-95 duration-200">
+                           <div className="max-h-60 overflow-y-auto custom-scrollbar">
+                             {users.map((u) => (
+                               <button
+                                 key={u.username}
+                                 type="button"
+                                 className={`w-full text-left px-5 py-3 text-sm transition-colors hover:bg-emerald-500/10 ${
+                                   username === u.username ? 'text-emerald-400 bg-emerald-500/5 font-bold' : 'text-white/70'
+                                 }`}
+                                 onClick={() => {
+                                   setUsername(u.username);
+                                   setIsOpen(false);
+                                 }}
+                               >
+                                 <div className="flex items-baseline gap-2">
+                                   <span className="font-bold truncate">{u.full_name}</span>
+                                   <span className="text-[10px] opacity-40 uppercase tracking-wider shrink-0">@{u.username}</span>
+                                 </div>
+                               </button>
+                             ))}
+                           </div>
+                         </div>
+                       )}
+                     </div>
+                   ) : (
+                     <input
+                      type="text"
+                      required
+                      className="block w-full pl-11 sm:pl-12 pr-4 py-3 sm:py-4 rounded-xl sm:rounded-2xl bg-white/[0.03] border border-white/5 text-white text-sm focus:outline-none focus:bg-white/[0.05] focus:border-emerald-500/50 focus:ring-4 focus:ring-emerald-500/10 transition-all duration-300 placeholder-white/10"
+                      placeholder="ADMIN"
+                      value={username}
+                      onChange={(e) => setUsername(e.target.value)}
+                     />
+                   )}
                 </div>
               </div>
 

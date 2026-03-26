@@ -1,9 +1,10 @@
-﻿import { useState, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import axios from 'axios'
 import { toast } from 'react-hot-toast'
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors } from '@dnd-kit/core'
 import { SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy, useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
+import { useTranslation } from 'react-i18next'
 
 interface ConfigurationOption {
   id: number
@@ -16,12 +17,13 @@ interface ConfigurationOption {
 }
 
 const TABS = [
-  { id: 'STOCK_ADJ', label: 'Motifs Ajustement Stock' },
-  { id: 'SUPPLIER_RET', label: 'Motifs Retour Fournisseur' },
-  { id: 'MONEY_DENOM', label: 'Coupures Monnaie' }
+  { id: 'STOCK_ADJ', labelKey: 'tabs.STOCK_ADJ' },
+  { id: 'SUPPLIER_RET', labelKey: 'tabs.SUPPLIER_RET' },
+  { id: 'MONEY_DENOM', labelKey: 'tabs.MONEY_DENOM' }
 ]
 
 function SortableItem({ option, onEdit, onDelete }: { option: ConfigurationOption, onEdit: (o: ConfigurationOption) => void, onDelete: (o: ConfigurationOption) => void }) {
+  const { t } = useTranslation('config')
   const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id: option.id })
   
   const style = {
@@ -40,11 +42,11 @@ function SortableItem({ option, onEdit, onDelete }: { option: ConfigurationOptio
       <div className="flex-1">
         <div className="flex items-center gap-2">
           <span className="font-bold">{option.label}</span>
-          {!option.is_active && <span className="badge badge-warning badge-xs">Inactif</span>}
+          {!option.is_active && <span className="badge badge-warning badge-xs">{t('inactive')}</span>}
         </div>
         <div className="text-xs text-base-content/60 flex gap-2">
           <span className="font-mono bg-base-200 px-1 rounded">{option.code}</span>
-          {option.value && <span>Val: {option.value}</span>}
+          {option.value && <span>{t('value_label', { value: option.value })}</span>}
         </div>
       </div>
 
@@ -61,6 +63,7 @@ function SortableItem({ option, onEdit, onDelete }: { option: ConfigurationOptio
 }
 
 export default function ConfigurationOptions() {
+  const { t } = useTranslation(['config', 'common'])
   const [activeTab, setActiveTab] = useState(TABS[0].id)
   const [items, setItems] = useState<ConfigurationOption[]>([])
   const [loading, setLoading] = useState(false)
@@ -83,7 +86,7 @@ export default function ConfigurationOptions() {
       setItems(res.data.results || res.data)
     } catch (err) {
       console.error(err)
-      toast.error('Erreur chargement options')
+      toast.error(t('errors.load'))
     } finally {
       setLoading(false)
     }
@@ -109,13 +112,13 @@ export default function ConfigurationOptions() {
   }
 
   const handleDelete = async (item: ConfigurationOption) => {
-    if (!confirm(`Supprimer ${item.label} ?`)) return
+    if (!confirm(t('delete_confirm', { label: item.label }))) return
     try {
       await axios.delete(`/api/configuration-options/${item.id}/`)
       setItems(prev => prev.filter(i => i.id !== item.id))
-      toast.success('Supprimé')
+      toast.success(t('success.deleted'))
     } catch (err) {
-      toast.error('Erreur suppression')
+      toast.error(t('errors.delete'))
     }
   }
 
@@ -127,20 +130,20 @@ export default function ConfigurationOptions() {
       if (editingItem) {
         const res = await axios.patch(`/api/configuration-options/${editingItem.id}/`, payload)
         setItems(prev => prev.map(i => i.id === editingItem.id ? res.data : i))
-        toast.success('Mis à jour')
+        toast.success(t('success.updated'))
       } else {
         const res = await axios.post('/api/configuration-options/', { 
           ...payload,
           order: filteredItems.length 
         })
         setItems(prev => [...prev, res.data])
-        toast.success('Créé')
+        toast.success(t('success.created'))
       }
       setIsModalOpen(false)
       setEditingItem(null)
       setFormData({ code: '', label: '', value: '', is_active: true })
     } catch (err) {
-      toast.error('Erreur sauvegarde')
+      toast.error(t('errors.save'))
     }
   }
 
@@ -164,19 +167,12 @@ export default function ConfigurationOptions() {
         const oldIndex = filteredItems.findIndex(i => i.id === active.id);
         const newIndex = filteredItems.findIndex(i => i.id === over.id);
         
-        // Reordering logic handled by backend usually, but here we can just update order locally and sync
-        // Naive reorder: just update order field
         const newItems = [...filteredItems]
         const [moved] = newItems.splice(oldIndex, 1)
         newItems.splice(newIndex, 0, moved)
         
-        // Update local state largely
         const allOtherItems = items.filter(i => i.type !== activeTab)
         setItems([...allOtherItems, ...newItems.map((item, idx) => ({ ...item, order: idx }))])
-
-        // Send backend update (simple loop or bulk endpoint if available)
-        // For now just update the moved item's order, but ideally valid reorder needs bulk update.
-        // We'll skip backend exact sync for specific order indexes unless critical.
     }
   };
 
@@ -184,9 +180,9 @@ export default function ConfigurationOptions() {
   return (
     <div className="p-6 h-full flex flex-col">
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold">Options de Configuration</h1>
+        <h1 className="text-2xl font-bold">{t('title')}</h1>
         <button onClick={handleCreate} className="btn btn-primary gap-2">
-          + Ajouter Option
+          + {t('add_option')}
         </button>
       </div>
 
@@ -197,7 +193,7 @@ export default function ConfigurationOptions() {
             className={`tab ${activeTab === tab.id ? 'tab-active' : ''}`}
             onClick={() => setActiveTab(tab.id as any)}
           >
-            {tab.label}
+            {t(tab.labelKey)}
           </a>
         ))}
       </div>
@@ -228,7 +224,7 @@ export default function ConfigurationOptions() {
                 </DndContext>
 
                 {filteredItems.length === 0 && (
-                    <div className="text-center text-base-content/60 mt-10">Aucune option configurée</div>
+                    <div className="text-center text-base-content/60 mt-10">{t('empty')}</div>
                 )}
             </div>
         )}
@@ -238,11 +234,11 @@ export default function ConfigurationOptions() {
       {isModalOpen && (
         <div className="modal modal-open">
           <div className="modal-box">
-             <h3 className="font-bold text-lg mb-4">{editingItem ? 'Modifier' : 'Nouvelle Option'}</h3>
+             <h3 className="font-bold text-lg mb-4">{editingItem ? t('modal.edit_title') : t('modal.new_title')}</h3>
              
              <form onSubmit={handleSave} className="flex flex-col gap-4">
                 <div className="form-control">
-                    <label className="label">Label (Affiché)</label>
+                    <label className="label">{t('modal.label')}</label>
                     <input 
                         className="input input-bordered" 
                         value={formData.label}
@@ -253,7 +249,7 @@ export default function ConfigurationOptions() {
                 
                 <div className="grid grid-cols-2 gap-4">
                     <div className="form-control">
-                        <label className="label">Code (Technique)</label>
+                        <label className="label">{t('modal.code')}</label>
                         <input 
                             className="input input-bordered" 
                             value={formData.code}
@@ -262,19 +258,19 @@ export default function ConfigurationOptions() {
                         />
                     </div>
                     <div className="form-control">
-                         <label className="label">Valeur (Optionnel)</label>
+                         <label className="label">{t('modal.value')}</label>
                          <input 
                             className="input input-bordered" 
                             value={formData.value}
                             onChange={e => setFormData({...formData, value: e.target.value})}
-                            placeholder={activeTab === 'MONEY_DENOM' ? 'Ex: 10000' : ''}
+                            placeholder={activeTab === 'MONEY_DENOM' ? t('modal.value_hint') : ''}
                          />
                     </div>
                 </div>
 
                 <div className="form-control">
                     <label className="cursor-pointer label justify-start gap-4">
-                        <span className="label-text">Actif</span> 
+                        <span className="label-text">{t('modal.active')}</span> 
                         <input 
                             type="checkbox" 
                             className="toggle toggle-success" 
@@ -285,8 +281,8 @@ export default function ConfigurationOptions() {
                 </div>
 
                 <div className="modal-action">
-                    <button type="button" className="btn" onClick={() => setIsModalOpen(false)}>Annuler</button>
-                    <button type="submit" className="btn btn-primary">{editingItem ? 'Enregistrer' : 'Créer'}</button>
+                    <button type="button" className="btn" onClick={() => setIsModalOpen(false)}>{t('modal.cancel')}</button>
+                    <button type="submit" className="btn btn-primary">{editingItem ? t('modal.save') : t('modal.create')}</button>
                 </div>
              </form>
           </div>

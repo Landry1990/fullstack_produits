@@ -33,7 +33,7 @@ export interface PharmacySettings {
 
 const DEFAULT_SETTINGS: PharmacySettings = {
   id: 1,
-  pharmacy_name: 'PHARMA STOCK',
+  pharmacy_name: 'ZENITH',
   address: '',
   city: 'Douala',
   country: 'Cameroun',

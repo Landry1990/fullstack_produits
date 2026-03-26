@@ -1,0 +1,22 @@
+{
+    "modal_title": "Impression d'Étiquettes",
+    "subtitle": "Commande: {{numero}}",
+    "format_label": "Format des étiquettes",
+    "format_standard": "Format standard",
+    "format_compact": "Format compact",
+    "info_title": "Contenu des étiquettes:",
+    "info_items": {
+        "name": "Nom du produit",
+        "barcode": "Code-barres (CIP1/CIP2/CIP3)",
+        "lot": "Numéro de lot",
+        "supplier": "Fournisseur",
+        "date": "Date d'entrée",
+        "price": "Prix de vente"
+    },
+    "debug_mode": "Mode Debug",
+    "debug_desc": "Affiche les bordures et la grille pour tester les positions",
+    "cancel": "Annuler",
+    "generate": "Générer PDF",
+    "generating": "Génération en cours...",
+    "error_print": "Erreur lors de l'impression des étiquettes"
+}

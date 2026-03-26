@@ -215,7 +215,7 @@ class FactureProduitAllocation(models.Model):
     facture_produit = models.ForeignKey(
         'FactureProduit', on_delete=models.CASCADE, related_name='allocations'
     )
-    stock_lot = models.ForeignKey('StockLot', on_delete=models.PROTECT)
+    stock_lot = models.ForeignKey('StockLot', on_delete=models.SET_NULL, null=True, blank=True)
     quantity = models.IntegerField(help_text="Quantité prélevée de ce lot")
     cost_price = models.DecimalField(max_digits=10, decimal_places=2, help_text="Prix d'achat du lot")
     selling_price = models.DecimalField(max_digits=10, decimal_places=2, help_text="Prix de vente")

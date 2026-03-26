@@ -1,3 +1,5 @@
+import i18next from 'i18next';
+
 /**
  * Utilitaires d'assistance pour l'impression
  */
@@ -63,7 +65,23 @@ export function printTotal(label: string, value: string): string {
  * Retourne le libellé d'un mode de paiement
  */
 export function getModeLabel(mode: string): string {
-  const labels: Record<string, string> = {
+  const keys: Record<string, string> = {
+    especes: 'common:payment_modes.cash',
+    cheque: 'common:payment_modes.check',
+    carte: 'common:payment_modes.card',
+    virement: 'common:payment_modes.transfer',
+    om: 'common:payment_modes.orange_money',
+    momo: 'common:payment_modes.mobile_money',
+    coupon: 'common:payment_modes.coupon',
+    en_compte: 'common:payment_modes.recouvrement'
+  };
+  
+  const key = keys[mode];
+  if (key && i18next.exists(key)) {
+    return i18next.t(key);
+  }
+  
+  const fallbacks: Record<string, string> = {
     especes: 'Espèces',
     cheque: 'Chèque',
     carte: 'Carte',
@@ -73,5 +91,5 @@ export function getModeLabel(mode: string): string {
     coupon: 'Coupon de Monnaie',
     en_compte: 'En Compte'
   };
-  return labels[mode] || mode?.toUpperCase() || 'N/A';
+  return fallbacks[mode] || mode?.toUpperCase() || 'N/A';
 }

@@ -19,7 +19,6 @@ interface CommandeProductTableProps {
     viewMode: 'CREATE' | 'EDIT' | 'LIST' | 'DETAILS';
     selectedCommande: Commande | null;
     saving: boolean;
-    lastSaved: Date | null;
     fieldsConfig: FieldConfig[];
     focusedField: { row: number; field: number } | null;
 
@@ -51,7 +50,6 @@ export default function CommandeProductTable({
     viewMode,
     selectedCommande,
     saving,
-    lastSaved,
     fieldsConfig,
     focusedField,
     toggleRowSelection,
@@ -79,111 +77,87 @@ export default function CommandeProductTable({
     
     return (
         <div className="flex-1 min-h-0 flex flex-col bg-base-100 rounded-xl shadow-sm border border-base-200">
-            <div className="p-4 border-b border-base-100 flex justify-between items-center shrink-0 flex-wrap gap-2">
-            <div className="flex items-center gap-4 flex-wrap">
-                <h2 className="font-bold text-sm md:text-base text-base-content whitespace-nowrap">
-                {t('orders:product_table.title', { count: commandeProduits.length })}
-                </h2>
-                {/* SEARCH INPUT */}
-                {commandeProduits.length > 0 && (
-                    <div className="relative">
-                        <input
-                            type="text"
-                            placeholder={t('orders:product_table.search_placeholder', 'Rechercher un produit...')}
-                            className="input input-sm input-bordered w-full sm:w-64 pl-8"
-                            value={searchQuery}
-                            onChange={(e) => setSearchQuery(e.target.value)}
-                        />
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 absolute left-2.5 top-2.5 text-base-content/50" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                        </svg>
-                        {searchQuery && (
-                            <button 
-                                className="btn btn-ghost btn-xs btn-circle absolute right-1 top-1.5"
-                                onClick={() => setSearchQuery('')}
-                            >
-                                ✕
-                            </button>
-                        )}
-                    </div>
-                )}
-                {commandeProduits.length > 0 && onSortProduits && (
-                    <div className="flex items-center gap-2">
-                        <span className="text-xs text-base-content/60 font-medium whitespace-nowrap">{t('common:sort.title', 'Trier par:')}</span>
+            <div className="py-1.5 px-3 border-b border-base-100 flex justify-between items-center shrink-0 flex-wrap gap-x-4 gap-y-2">
+                {/* PARTIE GAUCHE: Titre + Recherche + Tri */}
+                <div className="flex items-center gap-2 flex-wrap">
+                    <h2 className="font-bold text-xs text-base-content whitespace-nowrap">
+                    📦 {commandeProduits.length}
+                    </h2>
+                    {/* SEARCH INPUT COMPACT */}
+                    {commandeProduits.length > 0 && (
+                        <div className="relative">
+                            <input
+                                type="text"
+                                placeholder={t('orders:product_table.search_placeholder')}
+                                className="input input-xs input-bordered w-40 pl-7"
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                            />
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 absolute left-2 top-2 text-base-content/50" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                            </svg>
+                        </div>
+                    )}
+                    {commandeProduits.length > 0 && onSortProduits && (
                         <select 
-                            className="select select-bordered select-sm text-xs" 
+                            className="select select-bordered select-xs text-[10px] h-7 min-h-7" 
                             value={commandeSortBy || 'chrono'} 
                             onChange={(e) => onSortProduits(e.target.value as any)}
                         >
-                            <option value="chrono">{t('orders:product_table.sort_options.chrono', 'Chronologie')}</option>
-                            <option value="stock">{t('orders:product_table.sort_options.stock', 'Qté en stock')}</option>
-                            <option value="name">{t('orders:product_table.sort_options.name', 'Nom')}</option>
-                            <option value="qty">{t('orders:product_table.sort_options.qty', 'Qté saisie')}</option>
+                            <option value="chrono">🕒 {t('orders:product_table.sort_options.chrono')}</option>
+                            <option value="stock">📦 {t('orders:product_table.sort_options.stock')}</option>
+                            <option value="name">ABC {t('orders:product_table.sort_options.name')}</option>
+                            <option value="qty">🔢 {t('orders:product_table.sort_options.qty')}</option>
                         </select>
-                    </div>
-                )}
-                <div className="flex items-center gap-2 md:gap-4 overflow-x-auto">
-                    {saving && <span className="text-sm text-warning animate-pulse">{t('orders:form.saving')}</span>}
-                    {!saving && lastSaved && <span className="text-xs text-success hidden md:inline">{t('orders:product_table.saved_at', { time: lastSaved.toLocaleTimeString('fr-FR') })}</span>}
-                    
+                    )}
+                    {saving && <span className="text-[10px] text-warning animate-pulse font-bold">{t('orders:form.saving')}</span>}
+                </div>
+                
+                {/* PARTIE DROITE: STATS AGRANDIES */}
+                <div className="flex items-center gap-3">
                     {(() => {
                         const stats = commandeProduits.reduce((acc, p) => {
                             const qty = Number(p.quantity || 0);
                             const price = Number(p.price || 0);
                             const tvaRate = Number(p.tva || 0);
-                            
                             const lineHT = qty * price;
                             const lineTVA = lineHT * (tvaRate / 100);
-                            
-                            return {
-                                ht: acc.ht + lineHT,
-                                tva: acc.tva + lineTVA
-                            };
+                            return { ht: acc.ht + lineHT, tva: acc.tva + lineTVA };
                         }, { ht: 0, tva: 0 });
-                        
                         const totalTTC = stats.ht + stats.tva;
                         
                         return (
-                            <div className="flex gap-2 text-xs md:text-sm">
-                                <div className="bg-base-200 px-2 py-1 rounded flex flex-col items-end">
-                                    <span className="text-[10px] text-base-content/60 uppercase">{t('orders:product_table.total_ht')}</span>
-                                    <span className="font-bold">{formatCurrency(stats.ht)}</span>
+                            <div className="flex items-center gap-4">
+                                <div className="flex flex-col items-end">
+                                    <span className="text-[9px] uppercase font-bold text-base-content/40 -mb-1">{t('orders:product_table.total_ht')}</span>
+                                    <span className="text-sm font-bold">{formatCurrency(stats.ht)}</span>
                                 </div>
-                                <div className="bg-base-200 px-2 py-1 rounded flex flex-col items-end">
-                                    <span className="text-[10px] text-base-content/60 uppercase">{t('orders:product_table.total_tva')}</span>
-                                    <span className="font-bold">{formatCurrency(stats.tva)}</span>
+                                <div className="flex flex-col items-end border-l pl-4 border-base-200">
+                                    <span className="text-[9px] uppercase font-bold text-base-content/40 -mb-1">TVA</span>
+                                    <span className="text-sm font-bold text-base-content/70">{formatCurrency(stats.tva)}</span>
                                 </div>
-                                <div className="bg-primary/10 px-3 py-1 rounded-lg flex flex-col items-end border border-primary/20">
-                                    <span className="text-[10px] text-primary/70 uppercase">{t('orders:product_table.total_ttc')}</span>
-                                    <span className="font-bold text-primary">{formatCurrency(totalTTC)}</span>
+                                <div className="bg-primary/10 text-primary border border-primary/20 px-4 py-1.5 rounded flex flex-col items-end shadow-sm">
+                                    <span className="text-[9px] uppercase font-black -mb-1">Total TTC</span>
+                                    <span className="text-lg font-black leading-none">{formatCurrency(totalTTC)}</span>
                                 </div>
                             </div>
                         );
                     })()}
+
+                    {selectedRows.size > 0 && (
+                        <div className="flex items-center gap-1.5 border-l pl-3 ml-1">
+                            <span className="text-[10px] text-base-content/70 font-bold">{selectedRows.size} sél.</span>
+                            <button type="button" className="btn btn-error btn-xs h-6 min-h-6 px-2 text-[10px]" onClick={() => setIsDeletingMultiple(true)}>
+                                Suppr.
+                            </button>
+                            {viewMode === 'EDIT' && selectedCommande?.status === 'PREP' && (
+                                <button type="button" className="btn btn-info btn-xs h-6 min-h-6 px-2 text-[10px]" onClick={openTransferModal}>
+                                    ➡️
+                                </button>
+                            )}
+                        </div>
+                    )}
                 </div>
-            </div>
-            {selectedRows.size > 0 && (
-                <div className="flex items-center gap-2">
-                <span className="text-sm text-base-content/70">{t('orders:product_table.selected_count', { count: selectedRows.size })}</span>
-                <button
-                    type="button"
-                    className="btn btn-error btn-xs"
-                    onClick={() => setIsDeletingMultiple(true)}
-                >
-                    {t('orders:product_table.delete_btn')}
-                </button>
-                {/* Bouton Transférer - visible uniquement en mode EDIT sur commande PREP */}
-                {viewMode === 'EDIT' && selectedCommande?.status === 'PREP' && (
-                    <button
-                    type="button"
-                    className="btn btn-info btn-xs gap-1"
-                    onClick={openTransferModal}
-                    >
-                    ➡️ {t('orders:product_table.transfer_btn')}
-                    </button>
-                )}
-                </div>
-            )}
             </div>
 
             <div className="flex-1 overflow-x-auto overflow-y-auto">
@@ -195,10 +169,10 @@ export default function CommandeProductTable({
                 <p className="font-light">{t('orders:product_table.empty_state')}</p>
                 </div>
             ) : (
-                <table className="table table-pin-rows w-full">
-                <thead>
-                    <tr className="bg-base-50 text-xs uppercase tracking-wider text-base-content/60 font-semibold border-b border-base-200">
-                    <th className="bg-base-50 w-12">
+                <table className="table table-xs table-pin-rows w-full relative">
+                <thead className="sticky top-0 z-30">
+                    <tr className="!bg-base-200 text-[10px] uppercase tracking-wider text-base-content/80 font-bold border-b-2 border-base-300">
+                    <th className="!bg-base-200 w-8 px-2">
                         <input
                         type="checkbox"
                         className="checkbox checkbox-xs"
@@ -206,21 +180,21 @@ export default function CommandeProductTable({
                         onChange={toggleAllRows}
                         />
                     </th>
-                    <th className="bg-base-200 pl-4 font-semibold text-xs uppercase">{t('orders:product_table.headers.product')}</th>
-                    <th className="bg-base-200 pl-2 font-semibold text-xs uppercase w-28">{t('orders:product_table.headers.cip')}</th>
-                    <th className="bg-base-200 text-center w-24 font-semibold text-xs uppercase text-orange-600 bg-orange-50">{t('orders:product_table.info_row.stock', 'Stock')}</th>
-                    <th className="bg-base-200 text-right w-24 font-semibold text-xs uppercase">{t('orders:product_table.headers.qty')}</th>
-                    <th className="bg-base-200 text-center w-20 bg-success/10 font-semibold text-xs uppercase text-success">{t('orders:product_table.headers.ug')}</th>
+                    <th className="!bg-base-200 pl-2 font-bold w-[35%] min-w-[350px]">{t('orders:product_table.headers.product')}</th>
+                    <th className="!bg-base-200 pl-2 font-bold w-24">{t('orders:product_table.headers.cip')}</th>
+                    <th className="!bg-base-200 text-center w-14 text-orange-600 font-bold border-x border-base-300/30">{t('orders:product_table.info_row.stock', 'Stk')}</th>
+                    <th className="!bg-base-200 text-right w-16 font-bold">{t('orders:product_table.headers.qty')}</th>
+                    <th className="!bg-base-200 text-center w-14 font-bold text-success border-l border-base-300/30">{t('orders:product_table.headers.ug')}</th>
                     {commandeType === 'DIR' && (
-                        <th className="bg-base-200 text-right w-28 font-semibold text-xs uppercase text-blue-600 bg-blue-50">{t('orders:product_table.headers.dev_price')}</th>
+                        <th className="!bg-base-200 text-right w-20 font-bold text-blue-600 border-l border-base-300/30">{t('orders:product_table.headers.dev_price')}</th>
                     )}
-                    <th className="bg-base-200 text-right w-32 font-semibold text-xs uppercase">{t('orders:product_table.headers.buy_price_ht')}</th>
-                    <th className="bg-base-200 text-right w-24 font-semibold text-xs uppercase">{t('orders:product_table.headers.tva')}</th>
-                    <th className="bg-base-200 text-right w-24 font-semibold text-xs uppercase">{t('orders:product_table.headers.margin')}</th>
-                    <th className="bg-base-200 text-right w-32 font-semibold text-xs uppercase">{t('orders:product_table.headers.sell_price')}</th>
-                    <th className="bg-base-200 text-left w-32 font-semibold text-xs uppercase">{t('orders:product_table.headers.lot')}</th>
-                    <th className="bg-base-200 text-left w-36 font-semibold text-xs uppercase">{t('orders:product_table.headers.exp_date')}</th>
-                    <th className="bg-base-200 w-10"></th>
+                    <th className="!bg-base-200 text-right w-20 font-bold border-l border-base-300/30">{t('orders:product_table.headers.buy_price_ht')}</th>
+                    <th className="!bg-base-200 text-right w-14 font-bold">{t('orders:product_table.headers.tva')}</th>
+                    <th className="!bg-base-200 text-right w-14 font-bold">{t('orders:product_table.headers.margin')}</th>
+                    <th className="!bg-base-200 text-right w-20 font-bold border-l border-base-300/30">{t('orders:product_table.headers.sell_price')}</th>
+                    <th className="!bg-base-200 text-left w-24 font-bold border-l border-base-300/30">{t('orders:product_table.headers.lot')}</th>
+                    <th className="!bg-base-200 text-left w-24 font-bold border-l border-base-300/30">{t('orders:product_table.headers.exp_date')}</th>
+                    <th className="!bg-base-200 w-12 rounded-tr-lg"></th>
                     </tr>
                 </thead>
                 <tbody>
@@ -248,7 +222,7 @@ export default function CommandeProductTable({
                                 isExclusive = found.is_supplier_exclusive || false;
                                 supplierName = found.fournisseur_name || '';
                             } else if ((p as any).produit_nom) {
-                                 // Fallback to flattened fields from API (backend already appends "(supprimé)" if needed)
+                                 // Fallback to flattened fields from API
                                  produitName = (p as any).produit_nom;
                                  cip = (p as any).produit_cip || (p as any).produit_ref || '';
                             } else if (p.produit === null) {
@@ -275,7 +249,7 @@ export default function CommandeProductTable({
                         <tr 
                             className={`hover:bg-base-50/50 group border-b border-base-100 last:border-0 ${selectedRows.has(index) ? 'bg-primary/5' : ''}`}
                         >
-                            <td>
+                            <td className="px-2">
                             <input
                                 type="checkbox"
                                 className="checkbox checkbox-xs"
@@ -283,18 +257,18 @@ export default function CommandeProductTable({
                                 onChange={() => toggleRowSelection(index)}
                             />
                             </td>
-                            <td className="pl-4 py-2 md:py-3">
-                            <div className="font-medium text-sm">
-                                <div className="flex items-center gap-1 flex-wrap">
-                                    <span className={`break-words max-w-[200px] ${isDeleted ? 'italic text-base-content/50' : ''}`}>
+                            <td className="pl-2 py-0.5 min-w-[350px]">
+                            <div className="font-medium text-xs">
+                                <div className="flex items-center gap-1">
+                                    <span className={`${isDeleted ? 'italic text-base-content/50' : ''} whitespace-nowrap overflow-hidden text-ellipsis`} title={produitName}>
                                         {produitName}
                                     </span>
                                     {isExclusive && (
                                         <div 
-                                            className="tooltip tooltip-right z-50 ml-1 inline-flex shrink-0" 
+                                            className="tooltip tooltip-right z-50 inline-flex shrink-0" 
                                             data-tip={t('orders:product_table.exclusivity_tooltip', { provider: supplierName || t('orders:product_table.specific_provider') })}
                                         >
-                                            <span className="badge badge-success badge-sm font-bold text-white w-5 h-5 p-0 flex items-center justify-center text-[10px]">
+                                            <span className="badge badge-success badge-xs font-bold text-white w-4 h-4 p-0 flex items-center justify-center text-[8px]">
                                               E
                                             </span>
                                         </div>
@@ -303,62 +277,55 @@ export default function CommandeProductTable({
                             </div>
                             </td>
                             {/* CIP Column */}
-                        <td className="pl-2 py-2 md:py-3">
-                            <span className="text-xs font-mono text-base-content/70">
+                        <td className="pl-2 py-0.5">
+                            <span className="text-xs font-mono font-bold text-base-content/80">
                                 {(() => {
-                                    // 1. Try direct object
                                     if (p.produit && typeof p.produit === 'object' && p.produit.cip1) return p.produit.cip1;
-                                    
-                                    // 2. Try lookup in list
                                     const produitId = (p.produit && typeof p.produit === 'object') ? p.produit.id : p.produit;
                                     const found = produitsList.find(prod => prod.id === produitId);
                                     if (found && found.cip1) return found.cip1;
-                                    
-                                    // 3. Fallback to flat fields
                                     const flatCip = (p as any).cip || (p as any).produit_cip || (p as any).produit_ref;
                                     if (flatCip && flatCip !== (p as any).produit_nom) return flatCip;
-                                    
                                     return '-';
                                 })()}
                             </span>
                         </td>
                         {/* Stock Actuel */}
-                        <td className="text-center py-2 md:py-3 bg-orange-50/20">
+                        <td className="text-center py-0.5 bg-orange-50/20">
                             {(() => {
                                 const currentStock = (p.produit && typeof p.produit === 'object' && p.produit.stock !== undefined) 
                                     ? p.produit.stock 
                                     : (p as any).produit_stock ?? 0;
-                                
                                 return (
-                                    <span className={`text-xs font-bold px-2 py-1 rounded ${currentStock <= 0 ? 'text-error bg-error/10' : 'text-orange-600 bg-orange-100/50'}`}>
+                                    <span className={`text-[10px] font-bold px-1 rounded ${currentStock <= 0 ? 'text-error bg-error/10' : 'text-orange-600'}`}>
                                         {currentStock}
                                     </span>
                                 );
                             })()}
                         </td>
                         {/* Quantity (0) */}
-                        <td className="text-right py-2 md:py-3">
+                        <td className="text-right py-0.5">
                         <input
                             type="text"
                             data-row={index}
-                            data-field={0}
+                            data-field="quantity"
                             value={p.quantity}
                             onChange={(e) => updateCommandeProduitField(index, 'quantity', e.target.value)}
                             onKeyDown={(e) => handleTableFieldKeyDown(e, index, 0)}
                             onFocus={handleSelectAll}
-                            className={`input input-ghost input-sm text-base w-full text-right font-medium focus:bg-base-100 focus:text-primary ${!fieldsConfig[0].editable ? 'bg-base-200 cursor-not-allowed' : ''}`}
+                            className={`input input-ghost h-7 min-h-7 px-1 text-sm w-full text-right font-bold focus:bg-base-100 focus:text-primary ${!fieldsConfig[0].editable ? 'bg-base-200 cursor-not-allowed' : ''}`}
                             autoFocus={focusedField?.row === index && focusedField?.field === 0}
                             readOnly={!fieldsConfig[0].editable}
                             tabIndex={!fieldsConfig[0].editable ? -1 : 0}
                         />
                         </td>
-                        {/* Unites Gratuites (1) - NEW */}
-                        <td className="text-center py-2 md:py-3">
+                        {/* Unites Gratuites (1) */}
+                        <td className="text-center py-0.5">
                         <input
                             type="text"
                             inputMode="numeric"
                             data-row={index}
-                            data-field={1}
+                            data-field="unites_gratuites"
                             value={p.unites_gratuites || 0}
                             onChange={(e) => {
                             const val = e.target.value;
@@ -368,133 +335,121 @@ export default function CommandeProductTable({
                             }}
                             onKeyDown={(e) => handleTableFieldKeyDown(e, index, 1)}
                             onFocus={handleSelectAll}
-                            className={`input input-ghost input-sm text-sm w-full text-center font-medium bg-success/10 focus:bg-success/20 focus:text-success ${!fieldsConfig[1].editable ? 'bg-base-200 cursor-not-allowed' : ''}`}
+                            className={`input input-ghost h-7 min-h-7 px-1 text-xs w-full text-center font-bold bg-success/5 focus:bg-success/10 focus:text-success ${!fieldsConfig[1].editable ? 'bg-base-200 cursor-not-allowed' : ''}`}
                             placeholder="0"
                             autoFocus={focusedField?.row === index && focusedField?.field === 1}
                             readOnly={!fieldsConfig[1].editable}
                             tabIndex={!fieldsConfig[1].editable ? -1 : 0}
                         />
                         </td>
-                        {/* Prix Euro (Direct Only) - with keyboard navigation */}
+                        {/* Prix Euro (Direct Only) */}
                         {commandeType === 'DIR' && (
-                            <td className="text-right py-2 md:py-3 bg-blue-50/10 border-l border-blue-100">
+                            <td className="text-right py-0.5 bg-blue-50/10 border-l border-blue-100">
                             <input
                                 type="text"
                                 data-row={index}
-                                data-field="euro"
+                                data-field="prix_euro"
                                 value={p.prix_euro || ''}
                                 onChange={(e) => updateCommandeProduitField(index, 'prix_euro', e.target.value)}
                                 onFocus={handleSelectAll}
-                                onKeyDown={(e) => {
-                                    if (e.key === 'Enter' || e.key === 'Tab') {
-                                        e.preventDefault();
-                                        // Move to price field (field 2)
-                                        setTimeout(() => {
-                                            const nextInput = document.querySelector(
-                                                `input[data-row="${index}"][data-field="2"]`
-                                            ) as HTMLInputElement;
-                                            nextInput?.focus();
-                                            nextInput?.select();
-                                        }, 0);
-                                    }
-                                }}
-                                className="input input-ghost input-sm text-base w-full text-right focus:bg-blue-50 focus:text-blue-600 font-mono"
-                                placeholder="Dev."
+                                onKeyDown={(e) => handleTableFieldKeyDown(e, index, 2)}
+                                className="input input-ghost h-7 min-h-7 px-1 text-sm w-full text-right focus:bg-blue-50 focus:text-blue-600 font-mono"
+                                placeholder="..."
                             />
                             </td>
                         )}
-                        {/* Price (2) - Index updated */}
-                        <td className="text-right py-2 md:py-3">
+                        {/* Price (2) */}
+                        <td className="text-right py-0.5">
                         <input
                             type="text"
                             data-row={index}
-                            data-field={2}
+                            data-field="price"
                             value={p.price}
                             onChange={(e) => updateCommandeProduitField(index, 'price', e.target.value)}
-                            onKeyDown={(e) => handleTableFieldKeyDown(e, index, 2)}
+                            onKeyDown={(e) => handleTableFieldKeyDown(e, index, (commandeType === 'DIR' ? 3 : 2))}
                             onFocus={handleSelectAll}
-                            className={`input input-ghost input-sm text-base w-full text-right focus:bg-base-100 focus:text-primary ${!fieldsConfig[2].editable ? 'bg-base-200 cursor-not-allowed' : ''}`}
+                            className={`input input-ghost h-7 min-h-7 px-1 text-sm w-full text-right focus:bg-base-100 focus:text-primary ${!fieldsConfig[2].editable ? 'bg-base-200 cursor-not-allowed' : ''}`}
                             autoFocus={focusedField?.row === index && focusedField?.field === 2}
                             readOnly={!fieldsConfig[2].editable}
                             tabIndex={!fieldsConfig[2].editable ? -1 : 0}
                         />
                         </td>
-                        {/* TVA (3) - Index updated */}
-                        <td className="text-right py-2 md:py-3">
+                        {/* TVA (3) */}
+                        <td className="text-right py-0.5">
                         <input
                             type="text"
                             data-row={index}
-                            data-field={3}
+                            data-field="tva"
                             value={p.tva || ''}
                             onChange={(e) => updateCommandeProduitField(index, 'tva', e.target.value)}
-                            onKeyDown={(e) => handleTableFieldKeyDown(e, index, 3)}
+                            onKeyDown={(e) => handleTableFieldKeyDown(e, index, (commandeType === 'DIR' ? 4 : 3))}
                             onFocus={handleSelectAll}
-                            className={`input input-ghost input-sm text-base w-full text-right focus:bg-base-100 focus:text-primary ${!fieldsConfig[3].editable ? 'bg-base-200 cursor-not-allowed' : ''}`}
+                            className={`input input-ghost h-7 min-h-7 px-1 text-sm w-full text-right opacity-70 focus:opacity-100 ${!fieldsConfig[3].editable ? 'bg-base-200 cursor-not-allowed' : ''}`}
                             autoFocus={focusedField?.row === index && focusedField?.field === 3}
                             readOnly={!fieldsConfig[3].editable}
                             tabIndex={!fieldsConfig[3].editable ? -1 : 0}
                         />
                         </td>
-                        {/* Marge (4) - Index updated */}
-                        <td className="text-right py-2 md:py-3">
+                        {/* Marge (4) */}
+                        <td className="text-right py-0.5">
                         <input
                             type="text"
                             data-row={index}
-                            data-field={4}
+                            data-field="marge"
                             value={p.marge || ''}
                             onChange={(e) => updateCommandeProduitField(index, 'marge', e.target.value)}
-                            onKeyDown={(e) => handleTableFieldKeyDown(e, index, 4)}
+                            onKeyDown={(e) => handleTableFieldKeyDown(e, index, (commandeType === 'DIR' ? 5 : 4))}
                             onFocus={handleSelectAll}
-                            className={`input input-ghost input-sm text-base w-full text-right focus:bg-base-100 focus:text-primary ${!fieldsConfig[4].editable ? 'bg-base-200 cursor-not-allowed' : ''}`}
+                            className={`input input-ghost h-7 min-h-7 px-1 text-sm w-full text-right font-bold focus:bg-base-100 ${Number(p.marge || 0) >= 1.34 ? 'text-success' : 'text-warning'} ${!fieldsConfig[4].editable ? 'bg-base-200 cursor-not-allowed' : ''}`}
                             autoFocus={focusedField?.row === index && focusedField?.field === 4}
                             readOnly={!fieldsConfig[4].editable}
                             tabIndex={!fieldsConfig[4].editable ? -1 : 0}
                         />
                         </td>
-                        {/* Selling Price (5) - Index updated */}
-                        <td className="text-right py-2 md:py-3">
+                        {/* Selling Price (5) */}
+                        <td className="text-right py-0.5">
                         <input
                             type="text"
                             data-row={index}
-                            data-field={5}
+                            data-field="selling_price"
                             value={p.selling_price}
                             onChange={(e) => updateCommandeProduitField(index, 'selling_price', e.target.value)}
-                            onKeyDown={(e) => handleTableFieldKeyDown(e, index, 5)}
+                            onKeyDown={(e) => handleTableFieldKeyDown(e, index, (commandeType === 'DIR' ? 6 : 5))}
                             onFocus={handleSelectAll}
-                            className={`input input-ghost input-sm text-base w-full text-right focus:bg-base-100 focus:text-primary ${!fieldsConfig[5].editable ? 'bg-base-200 cursor-not-allowed' : ''}`}
+                            className={`input input-ghost h-7 min-h-7 px-1 text-sm w-full text-right font-bold focus:bg-base-100 focus:text-primary ${!fieldsConfig[5].editable ? 'bg-base-200 cursor-not-allowed' : ''}`}
                             autoFocus={focusedField?.row === index && focusedField?.field === 5}
                             readOnly={!fieldsConfig[5].editable}
                             tabIndex={!fieldsConfig[5].editable ? -1 : 0}
                         />
                         </td>
-                        {/* Lot (6) - Index updated */}
-                        <td className="text-left py-2 md:py-3">
+                        {/* Lot (6) */}
+                        <td className="text-left py-0.5">
                         <input
                             type="text"
                             data-row={index}
-                            data-field={6}
+                            data-field="lot"
                             value={p.lot || ''}
                             onChange={(e) => updateCommandeProduitField(index, 'lot', e.target.value)}
-                            onKeyDown={(e) => handleTableFieldKeyDown(e, index, 6)}
+                            onKeyDown={(e) => handleTableFieldKeyDown(e, index, (commandeType === 'DIR' ? 7 : 6))}
                             onFocus={handleSelectAll}
-                            className={`input input-ghost input-sm text-xs w-full focus:bg-base-100 focus:text-primary ${!fieldsConfig[6].editable ? 'bg-base-200 cursor-not-allowed' : ''}`}
-                            placeholder={t('orders:product_table.headers.lot', 'N° Lot')}
+                            className={`input input-ghost h-7 min-h-7 px-1 text-[10px] w-full focus:bg-base-100 ${!fieldsConfig[6].editable ? 'bg-base-200 cursor-not-allowed' : ''}`}
+                            placeholder="Lot"
                             autoFocus={focusedField?.row === index && focusedField?.field === 6}
                             readOnly={!fieldsConfig[6].editable}
                             tabIndex={!fieldsConfig[6].editable ? -1 : 0}
                         />
                         </td>
-                        {/* Expiration (7) - Index updated */}
-                        <td className="text-left py-2 md:py-3">
+                        {/* Expiration (7) */}
+                        <td className="text-left py-0.5">
                         <input
                             type="text"
                             data-row={index}
-                            data-field={7}
+                            data-field="date_expiration"
                             value={p.date_expiration || ''}
                             onChange={(e) => updateCommandeProduitField(index, 'date_expiration', e.target.value)}
-                            onKeyDown={(e) => handleTableFieldKeyDown(e, index, 7)}
+                            onKeyDown={(e) => handleTableFieldKeyDown(e, index, (commandeType === 'DIR' ? 8 : 7))}
                             onFocus={handleSelectAll}
-                            className={`input input-ghost input-sm text-xs w-full focus:bg-base-100 focus:text-primary ${!fieldsConfig[7].editable ? 'bg-base-200 cursor-not-allowed' : ''} ${p.date_expiration && !/^(0[1-9]|1[0-2])\/\d{2}$/.test(p.date_expiration) ? 'input-error' : ''}`}
+                            className={`input input-ghost h-7 min-h-7 px-1 text-[10px] w-full focus:bg-base-100 ${!fieldsConfig[7].editable ? 'bg-base-200 cursor-not-allowed' : ''} ${p.date_expiration && !/^(0[1-9]|1[0-2])\/\d{2}$/.test(p.date_expiration) ? 'input-error text-error' : ''}`}
                             placeholder="MM/YY"
                             maxLength={5}
                             autoFocus={focusedField?.row === index && focusedField?.field === 7}
@@ -502,25 +457,10 @@ export default function CommandeProductTable({
                             tabIndex={!fieldsConfig[7].editable ? -1 : 0}
                         />
                         </td>
-                        <td className="w-16 text-center">
-                            <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                <button
-                                    type="button"
-                                    className="btn btn-ghost btn-xs text-info"
-                                    title={t('common:info_help', "Infos d'aide à la décision")}
-                                    onClick={() => setExpandedRow(expandedRow === index ? null : index)}
-                                >
-                                    ℹ️
-                                </button>
-                                <button 
-                                    type="button"
-                                    className="btn btn-ghost btn-xs text-error"
-                                    onClick={() => setProductToDelete(index)}
-                                >
-                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                                    </svg>
-                                </button>
+                        <td className="w-12 text-center p-0">
+                            <div className="flex items-center justify-center gap-0.5 opacity-0 group-hover:opacity-100">
+                                <button type="button" className="btn btn-ghost btn-xs h-6 w-6 p-0 text-info" onClick={() => setExpandedRow(expandedRow === index ? null : index)}>ℹ️</button>
+                                <button type="button" className="btn btn-ghost btn-xs h-6 w-6 p-0 text-error" onClick={() => setProductToDelete(index)}>🗑️</button>
                             </div>
                         </td>
                     </tr>
@@ -596,6 +536,22 @@ export default function CommandeProductTable({
                     );
                     })}
                 </tbody>
+                <tfoot className="sticky bottom-0 z-30">
+                    <tr className="!bg-base-200 text-[10px] uppercase font-bold text-base-content/70 border-t-2 border-base-300 shadow-[0_-2px_4px_rgba(0,0,0,0.05)]">
+                        <th colSpan={3} className="!bg-base-200 pl-4 py-2">Fin de liste - {commandeProduits.length} articles</th>
+                        <th className="!bg-base-200 py-2"></th>
+                        <th className="!bg-base-200 py-2"></th>
+                        <th className="!bg-base-200 py-2"></th>
+                        {commandeType === 'DIR' && <th className="!bg-base-200 py-2"></th>}
+                        <th className="!bg-base-200 py-2"></th>
+                        <th className="!bg-base-200 py-2"></th>
+                        <th className="!bg-base-200 py-2"></th>
+                        <th className="!bg-base-200 py-2"></th>
+                        <th className="!bg-base-200 py-2"></th>
+                        <th className="!bg-base-200 py-2"></th>
+                        <th className="!bg-base-200 py-2 rounded-br-lg"></th>
+                    </tr>
+                </tfoot>
                 </table>
             )}
             </div>

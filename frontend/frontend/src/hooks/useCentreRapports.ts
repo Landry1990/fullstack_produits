@@ -83,10 +83,21 @@ export const QUERIES: QueryDefinition[] = [
     },
     {
         id: 'creances',
-        name: 'Créances en Cours',
-        description: 'Factures avec solde restant à payer',
+        name: 'Créances en Cours (Détail)',
+        description: 'Liste détaillée des factures non soldées',
         endpoint: '/api/creances/',
         params: [],
+        resultType: 'table'
+    },
+    {
+        id: 'creances_synthese',
+        name: 'Synthèse Créances par Client',
+        description: 'Total des dettes regroupées par client',
+        endpoint: '/api/creances/synthese_clients/',
+        params: [
+            { key: 'date_debut', label: 'Depuis', type: 'date' },
+            { key: 'date_fin', label: 'Jusqu\'à', type: 'date' }
+        ],
         resultType: 'table'
     },
     {
@@ -242,9 +253,20 @@ export const QUERIES: QueryDefinition[] = [
     },
     {
         id: 'rapport_remises',
-        name: 'Suivi des Remises',
-        description: 'Détail des remises accordées par utilisateur (Global, Lignes, Fidélité, UG)',
+        name: 'Suivi des Remises (Résumé)',
+        description: 'Résumé des remises par utilisateur (Global, Lignes, Fidélité)',
         endpoint: '/api/rapports/rapport_remises/',
+        params: [
+            { key: 'date_debut', label: 'Début', type: 'date', required: true },
+            { key: 'date_fin', label: 'Fin', type: 'date', required: true }
+        ],
+        resultType: 'table'
+    },
+    {
+        id: 'rapport_remises_details',
+        name: 'Suivi des Remises (Détail)',
+        description: 'Liste détaillée des factures avec remises',
+        endpoint: '/api/rapports/rapport_remises_details/',
         params: [
             { key: 'date_debut', label: 'Début', type: 'date', required: true },
             { key: 'date_fin', label: 'Fin', type: 'date', required: true }
@@ -288,9 +310,19 @@ export const COLUMN_LABELS: Record<string, string> = {
     remise_globale: 'Remise Glob.',
     remise_lignes: 'Remise Lignes',
     remise_fidelite: 'Fidélité',
-    valeur_ug: 'Valeur UG',
     total_remise: 'Total Remise',
-    ratio_remise_pct: '% / CA'
+    ratio_remise_pct: '% / CA',
+    ratio_pct: '%',
+    numero: 'Facture',
+    date: 'Date',
+    client: 'Client',
+    ayant_droit_details: 'Bénéficiaire',
+    montant_paye: 'Déjà Réglé',
+    reste_a_payer: 'Solde Dû',
+    solde_du: 'Solde Dû',
+    total_facture: 'Total Facturé',
+    nb_factures: 'Nb Factures',
+    status_display: 'Statut'
 };
 
 export const formatColumnHeader = (col: string, t?: any): string => {
@@ -326,7 +358,7 @@ export const isNumericColumn = (col: string): boolean => {
            c.includes('nb_ventes') ||
            c.includes('panier_moyen') ||
            c.includes('remise') ||
-           c.includes('ug');
+           c.includes('pct');
 };
 
 export const formatValue = (key: string, value: unknown, t?: any): string => {
@@ -360,9 +392,18 @@ export const formatValue = (key: string, value: unknown, t?: any): string => {
     if (typeof value === 'object' && value !== null) {
         const obj = value as Record<string, unknown>;
         if (obj.name) return String(obj.name);
+        if (obj.nom) return String(obj.nom);
         if (obj.numero_facture) return String(obj.numero_facture);
         return JSON.stringify(value);
     }
+    
+    if (typeof value === 'string' && /^\d{4}-\d{2}-\d{2}T/.test(value)) {
+        const date = new Date(value);
+        if (!isNaN(date.getTime())) {
+            return date.toLocaleDateString('fr-FR');
+        }
+    }
+    
     return String(value);
 };
 
@@ -548,11 +589,15 @@ export function useCentreRapports() {
             return;
         }
 
-        if (selectedQuery.id === 'rapport_remises') {
+        if (selectedQuery.id === 'rapport_remises' || selectedQuery.id === 'rapport_remises_details') {
             const { date_debut, date_fin } = params;
+            const isDetails = selectedQuery.id === 'rapport_remises_details';
+            const action = isDetails ? 'rapport_remises_details_excel' : 'rapport_remises_excel';
+            const filename = isDetails ? `Details_Remises_${date_debut}.xlsx` : `Rapport_Remises_${date_debut}.xlsx`;
+            
             const endpoint = apiBaseUrl
-                ? `${apiBaseUrl.replace(/\/$/, '')}/api/rapports/rapport_remises_excel/`
-                : '/api/rapports/rapport_remises_excel/';
+                ? `${apiBaseUrl.replace(/\/$/, '')}/api/rapports/${action}/`
+                : `/api/rapports/${action}/`;
             
             try {
                 const response = await axios.get(endpoint, {
@@ -563,12 +608,12 @@ export function useCentreRapports() {
                 const url = window.URL.createObjectURL(new Blob([response.data]));
                 const link = document.createElement('a');
                 link.href = url;
-                link.setAttribute('download', `Rapport_Remises_${date_debut}_${date_fin}.xlsx`);
+                link.setAttribute('download', filename);
                 document.body.appendChild(link);
                 link.click();
                 link.remove();
                 window.URL.revokeObjectURL(url);
-                toast.success(t('results.export_success', { filename: `Rapport_Remises.xlsx` }));
+                toast.success(t('results.export_success', { filename }));
             } catch (err) {
                 console.error('Excel download error:', err);
                 toast.error("Erreur lors du téléchargement Excel");

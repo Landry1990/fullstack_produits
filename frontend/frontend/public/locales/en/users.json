@@ -22,13 +22,14 @@
         "PHARMACIEN": "Pharmacist / Manager",
         "pharmacist": "Pharmacist (Full Admin)",
         "CASHIER": "Cashier",
-        "cashier": "Cashier (Billing + Checkout)",
+        "cashier": "Cashier (Billing + Payout)",
         "SELLER": "Seller",
         "seller": "Seller (Sales only)"
     },
     "badges": {
         "pharmacist": "Pharmacist",
-        "full_access": "Full Access"
+        "full_access": "Full Access",
+        "inactive": "Inactive"
     },
     "status": {
         "active": "Active",
@@ -42,7 +43,8 @@
         "firstname": "First Name",
         "lastname": "Last Name",
         "email": "Email",
-        "max_discount": "Max Discount (%)"
+        "is_active": "Active Account",
+        "max_discount": "Max Discount Rate (%)"
     },
     "modal": {
         "new_title": "New User",
@@ -55,14 +57,14 @@
     },
     "permissions": {
         "cash_out": "Can Cash Out",
-        "cash_out_desc": "Grants full access to the checkout module",
+        "cash_out_desc": "Grants full access to the payment module",
         "returns": "Can perform returns",
-        "negative_stock": "Negative Stock allowed",
+        "negative_stock": "Negative stock authorized",
         "modify_price": "Can modify price",
         "generate_coupon": "Can generate coupons",
         "modify_invoice": "Can modify invoices",
         "cancel_invoice": "Cancel Invoices",
-        "cancel_promis": "Cancel Promis",
+        "cancel_promis": "Cancel Promised",
         "delete_product": "Delete Products",
         "delete_fournisseur": "Delete Suppliers",
         "adjust_stock": "Adjust Stock",
@@ -77,13 +79,18 @@
         "updated": "User updated successfully",
         "deleted": "User {{username}} deleted",
         "delete_error": "Error deleting user",
+        "deactivated": "User {{username}} deactivated",
+        "deactivate_error": "Error during deactivation",
+        "protected_title": "Protected Item",
+        "protected_message": "This user has archives (invoices, etc.) and cannot be deleted. Would you like to deactivate their account instead?",
+        "deactivate_btn": "Deactivate",
         "save_error": "Error saving user",
-        "delete_confirm_title": "Delete User?",
+        "delete_confirm_title": "Delete user?",
         "delete_confirm": "Are you sure you want to delete {{username}}? This action is irreversible.",
         "delete_btn": "Delete User",
-        "sudo_title": "Confirmation Required",
-        "sudo_message": "Please confirm your administrator password to perform this critical action.",
-        "access_denied": "Access restricted to administrators"
+        "sudo_title": "Confirmation required",
+        "sudo_message": "Please confirm your admin password to perform this critical action.",
+        "access_denied": "Access reserved for administrators"
     },
     "sessions": {
         "title": "User Sessions",
@@ -102,20 +109,20 @@
         "status": "Status",
         "filter": "Filter",
         "loading": "Loading sessions...",
-        "no_result": "No sessions found for this period",
+        "no_result": "No session found for this period",
         "not_closed": "Not closed",
         "closed": "Closed",
         "ongoing": "Ongoing",
-        "force_logout": "Force Logout",
-        "force_logout_confirm": "Are you sure you want to force logout {{username}}?",
-        "force_logout_success": "User {{username}} disconnected",
+        "force_logout": "Force logout",
+        "force_logout_confirm": "Do you really want to force logout {{username}}?",
+        "force_logout_success": "User {{username}} logged out",
         "force_logout_error": "Error during force logout",
         "recap": {
             "month": "Month",
             "year": "Year",
             "days_present": "Days present",
             "total_hours": "Total Hours",
-            "avg_hours": "Average / Day",
+            "avg_hours": "Avg / Day",
             "avg": "Avg."
         },
         "months": {

@@ -106,7 +106,7 @@ export function useCommandeActions({
                     price_cost: parseAndFormat(p.price),
                     selling_price: parseAndFormat(p.selling_price),
                     prix_euro: parseEuro(p.prix_euro),
-                    tva: parseAndFormat(p.tva, '18'),
+                    tva: p.tva !== undefined && p.tva !== null ? String(p.tva) : undefined,
                     marge: parseFloat(String(p.marge || 1.3)).toFixed(4),
                     lot: p.lot || null,
                     date_expiration: parseMMYYToDate(p.date_expiration)
@@ -121,7 +121,7 @@ export function useCommandeActions({
             }
 
         } catch (err: any) {
-            toast.error(err.response?.data?.message || "Erreur de sauvegarde");
+            toast.error(err.response?.data?.error || err.response?.data?.detail || err.response?.data?.message || "Erreur de sauvegarde");
         } finally {
             if (!isAutoSave) setExecutingAction(false);
         }

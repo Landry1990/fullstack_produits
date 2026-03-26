@@ -1,4 +1,4 @@
-﻿import React, { useState } from 'react';
+import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { Commande, Fournisseur, ProduitModel } from '../../types';
 import { formatCurrency, normalizeNumberInput } from '../../utils/formatters';
@@ -20,6 +20,14 @@ interface CommandeDetailsProps {
   selectedRows: Set<number>;
   toggleRowSelection: (index: number) => void;
   setSelectedRows: (rows: Set<number>) => void;
+  orderTotals?: {
+      totalTVA: number;
+      totalTTC: number;
+      totalBuyHT: number;
+      totalMarginValue: number;
+      globalMargin: string;
+      globalMarginPercent: string;
+  };
 }
 
 const CommandeDetails: React.FC<CommandeDetailsProps> = ({
@@ -39,6 +47,7 @@ const CommandeDetails: React.FC<CommandeDetailsProps> = ({
   selectedRows,
   toggleRowSelection,
   setSelectedRows,
+  orderTotals,
 }) => {
   const { t } = useTranslation(['orders', 'products', 'common']);
   const [searchDetailQuery, setSearchDetailQuery] = useState('');
@@ -167,34 +176,33 @@ const CommandeDetails: React.FC<CommandeDetailsProps> = ({
           </div>
         )}
         <div className="col-span-2 md:col-span-1 border-l pl-4 border-base-200">
-          <div className="text-xs text-base-content/60 uppercase mb-1">{t('orders:details.financial_summary')}</div>
-          {(() => {
-            const stats = (selectedCommande.produits || []).reduce((acc, p) => {
-              const qty = normalizeNumberInput(p.quantity || 0);
-              const price = normalizeNumberInput(p.price || 0);
-              const tvaRate = normalizeNumberInput(p.tva || 0);
-              const lineHT = qty * price;
-              const lineTVA = lineHT * (tvaRate / 100);
-              return { ht: acc.ht + lineHT, tva: acc.tva + lineTVA };
-            }, { ht: 0, tva: 0 });
-            const totalTTC = stats.ht + stats.tva;
-            return (
-              <div className="flex flex-col gap-0.5 text-xs">
-                <div className="flex justify-between">
-                  <span className="text-base-content/60">{t('orders:product_table.total_ht', 'HT')}:</span>
-                  <span className="font-semibold">{formatCurrency(stats.ht)}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-base-content/60">{t('orders:product_table.total_tva', 'TVA')}:</span>
-                  <span className="font-semibold">{formatCurrency(stats.tva)}</span>
-                </div>
-                <div className="flex justify-between border-t border-base-200 pt-0.5 mt-0.5">
-                  <span className="font-bold text-primary">{t('orders:product_table.total_ttc', 'TTC')}:</span>
-                  <span className="font-bold text-primary text-sm">{formatCurrency(totalTTC)}</span>
-                </div>
-              </div>
-            );
-          })()}
+          <div className="text-xs text-base-content/60 uppercase mb-2 font-bold">{t('orders:details.financial_summary')}</div>
+          <div className="flex flex-col gap-1.5 text-xs">
+            <div className="flex justify-between items-center">
+              <span className="text-base-content/60">{t('orders:product_table.total_ht', 'HT (Achat)')}:</span>
+              <span className="font-mono font-bold text-sm">{formatCurrency(orderTotals?.totalBuyHT || 0)}</span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-base-content/60">{t('orders:product_table.total_tva', 'TVA (Vente)')}:</span>
+              <span className="font-mono font-bold text-sm text-base-content/50">{formatCurrency(orderTotals?.totalTVA || 0)}</span>
+            </div>
+            <div className="flex justify-between items-center border-t border-base-200 pt-1">
+              <span className="font-bold text-primary">{t('orders:product_table.total_ttc', 'TTC (Vente)')}:</span>
+              <span className="font-mono font-black text-primary text-base md:text-lg">{formatCurrency(orderTotals?.totalTTC || 0)}</span>
+            </div>
+            <div className="flex justify-between items-center mt-1 pt-1 border-t border-dashed border-base-300">
+               <span className="text-base-content/60">{t('orders:product_table.info_row.margin_value', 'Montant Marge')}:</span>
+               <span className={`font-mono font-bold text-sm ${Number(orderTotals?.globalMargin || 0) >= 1.34 ? 'text-success' : 'text-warning'}`}>
+                 {formatCurrency(orderTotals?.totalMarginValue || 0)}
+               </span>
+            </div>
+            <div className="flex justify-between items-center bg-base-200/50 rounded px-1.5 py-1 mt-1">
+               <span className="font-bold text-[10px] uppercase">Ratio / %:</span>
+               <span className={`font-mono font-black text-base ${Number(orderTotals?.globalMargin || 0) >= 1.34 ? 'text-success' : 'text-warning'}`}>
+                 x{orderTotals?.globalMargin || '1.0000'} ({orderTotals?.globalMarginPercent || '0'}%)
+               </span>
+            </div>
+          </div>
         </div>
       </div>
 

@@ -1,7 +1,7 @@
 from rest_framework import viewsets, status, filters, permissions
 from rest_framework.decorators import action
 from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated, AllowAny
+from rest_framework.permissions import IsAuthenticated, AllowAny, IsAdminUser
 from rest_framework.authtoken.views import ObtainAuthToken
 from rest_framework.authtoken.models import Token
 from rest_framework.settings import api_settings
@@ -51,12 +51,8 @@ class CustomAuthToken(ObtainAuthToken):
         user = None
         if username and password:
             user_obj = User.objects.filter(username__iexact=username).first()
-            if user_obj:
-                if user_obj.check_password(password) or \
-                   user_obj.check_password(password.lower()) or \
-                   user_obj.check_password(password.upper()) or \
-                   user_obj.check_password(password.capitalize()):
-                    user = user_obj
+            if user_obj and user_obj.check_password(password):
+                user = user_obj
                     
         if not user or not user.is_active:
             return Response({'non_field_errors': ['Impossible de se connecter avec les identifiants fournis.']}, status=status.HTTP_400_BAD_REQUEST)
@@ -140,6 +136,16 @@ class UserViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
     pagination_class = StandardResultsSetPagination
     parser_classes = (MultiPartParser, FormParser, JSONParser)
+
+    def get_permissions(self):
+        # login_options est ouvert à tous pour la page de connexion
+        if self.action == 'login_options':
+            return [AllowAny()]
+        # CRUD utilisateur réservé aux admins; endpoints utilitaires pour utilisateurs authentifiés.
+        admin_actions = {'list', 'retrieve', 'create', 'update', 'partial_update', 'destroy'}
+        if self.action in admin_actions:
+            return [IsAdminUser()]
+        return [IsAuthenticated()]
     
     def get_queryset(self):
         user = self.request.user
@@ -216,13 +222,24 @@ class UserViewSet(viewsets.ModelViewSet):
         except User.DoesNotExist:
             return Response({'valid': False, 'detail': 'Utilisateur introuvable.'}, status=status.HTTP_404_NOT_FOUND)
         
-        if target_user.check_password(password) or \
-           target_user.check_password(password.lower()) or \
-           target_user.check_password(password.upper()) or \
-           target_user.check_password(password.capitalize()):
+        if target_user.check_password(password):
             return Response({'valid': True})
         else:
             return Response({'valid': False, 'detail': 'Mot de passe incorrect.'})
+
+    @action(detail=False, methods=['get'])
+    def login_options(self, request):
+        """
+        Liste des utilisateurs pour la page de connexion (accessible sans authentification).
+        """
+        users = User.objects.filter(is_active=True).order_by('username')
+        return Response([
+            {
+                'username': u.username,
+                'full_name': f"{u.first_name} {u.last_name}".strip() or u.username
+            }
+            for u in users
+        ])
 
     @action(detail=False, methods=['get'])
     def operators(self, request):

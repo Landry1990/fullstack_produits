@@ -1,4 +1,4 @@
-﻿import { useEffect, useRef } from 'react'
+import { useEffect, useRef } from 'react'
 import type { Facture } from '../../types'
 import { useTranslation } from 'react-i18next'
 import { formatCurrency } from '../../utils/formatters'
@@ -36,6 +36,7 @@ type PaymentModalProps = {
     selectedClient: number | null
     useManualClient: boolean
     paymentInputRef: React.RefObject<HTMLInputElement | null>
+    clientSoldeDepot?: string | number
 }
 
 export default function PaymentModal({
@@ -55,7 +56,8 @@ export default function PaymentModal({
     onRegisterPayment,
     selectedClient,
     useManualClient: _useManualClient,
-    paymentInputRef
+    paymentInputRef,
+    clientSoldeDepot
 }: PaymentModalProps) {
     const { t } = useTranslation(['facturation', 'common'])
 
@@ -106,6 +108,26 @@ export default function PaymentModal({
                         {t('common:coupon')} : -{formatCurrency(Math.round(totals.couponMontant))}
                     </div>
                 )}
+                {(() => {
+                    const amountToPay = Math.round(isNewSale 
+                        ? (totals.tauxCouverture > 0 
+                            ? totals.partPatient 
+                            : (totals.totalTtc - (totals.couponMontant || 0) - (totals.loyaltyDeduction || 0)))
+                        : Number(facturePourPaiement?.total_ttc));
+                    
+                    if (facturePourPaiement?.client_solde_depot || clientSoldeDepot) {
+                        const soldeVal = parseFloat(String(facturePourPaiement?.client_solde_depot || clientSoldeDepot || '0'));
+                        
+                        if (soldeVal > 0 && amountToPay > soldeVal) {
+                             return (
+                                <div className="mt-2 p-2 bg-warning/10 border border-warning/20 rounded text-warning text-[10px] font-bold uppercase animate-pulse text-center">
+                                    ⚠️ {t('facturation:client.insufficient_deposit_warning', { solde: soldeVal })}
+                                </div>
+                             )
+                        }
+                    }
+                    return null;
+                })()}
               </div>
 
               {/* Tiers Payant Display - Show breakdown if applicable */}

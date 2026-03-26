@@ -153,7 +153,8 @@
             "indicators": "Indicateurs",
             "stock_out": "Stock en rupture",
             "stock_life": "Durée de vie stock actuel",
-            "rotation_unknown": "Rotation inconnue"
+            "rotation_unknown": "Rotation inconnue",
+            "margin_value": "Montant Marge"
         }
     },
     "messages": {
@@ -186,7 +187,9 @@
         "confirm_sudo_cancel": "Annuler",
         "merge_select_two": "Veuillez sélectionner exactement deux commandes à fusionner",
         "create_new_product": "Voulez-vous créer un nouveau produit ?",
-        "validation_required": "Validation requise"
+        "validation_required": "Validation requise",
+        "no_deletable_orders": "Aucune des commandes sélectionnées n'est supprimable (elles sont peut-être clôturées).",
+        "some_orders_closed_warning": "Certaines commandes clôturées ont été ignorées lors de la suppression."
     },
     "history": {
         "title": "Historique des Achats",
@@ -241,7 +244,15 @@
         "table_total_ht": "Total HT",
         "table_priority": "Priorité",
         "critical_badge": "CRITIQUE",
-        "standard_badge": "STANDARD"
+        "standard_badge": "STANDARD",
+        "exclusive_badge": "EXCLUSIF",
+        "promis_badge": "PROMIS ×{{count}}",
+        "rupture_badge": "RUPTURE FOURNISSEUR",
+        "mode_hourly_title": "Ventes sur tranche horaire",
+        "mode_hourly_desc": "Commander les produits vendus sur une plage date/heure précise",
+        "hourly_range_label": "Plage horaire des ventes",
+        "date_from": "Du",
+        "date_to": "Au"
     }
 }
 

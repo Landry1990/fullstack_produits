@@ -24,6 +24,7 @@ export interface Client {
     points_fidelite?: number
     is_loyalty_member?: boolean
     is_deposit_enabled?: boolean
+    pending_discount?: string
 }
 
 export interface DepotClient {

@@ -91,7 +91,12 @@
             "existing_button": "Sélectionner",
             "new_tooltip": "Saisir un nouveau bénéficiaire",
             "select_existing_tooltip": "Sélectionner un bénéficiaire existant"
-        }
+        },
+        "solde_depot_label": "Solde Dépôt",
+        "insufficient_deposit_warning": "Attention : Le montant de la vente dépasse le solde du dépôt du client ({{solde}} F).",
+        "deposit_reminder": "Rappel : Ce client dispose d'un dépôt de {{solde}} F.",
+        "points_balance": "{{points}} pts",
+        "pending_reward": "Remise de {{discount}}% acquise !"
     },
     "payment": {
         "modal_title": "Paiement",
@@ -151,7 +156,8 @@
         "scan_added": "Produit ajouté: {{name}}",
         "pack_empty": "Ce pack ne contient aucun article.",
         "adding_pack": "Ajout des articles du pack...",
-        "pack_items_error": "Certains articles du pack n'ont pas pu être récupérés."
+        "pack_items_error": "Certains articles du pack n'ont pas pu être récupérés.",
+        "reward_reminder": "Fidélité : Ce client a une remise de {{discount}}% disponible pour cette vente."
     },
     "modification_mode": {
         "title": "Mode Modification de Facture",
@@ -168,6 +174,10 @@
         "print": "Imprimer",
         "pay": "Valider"
     },
+    "ticket": {
+        "loyalty_points": "Solde Points Fidélité : {{points}} pts",
+        "remaining_deposit": "Solde Dépôt Restant : {{amount}} F"
+    },
     "sale_recorded": "Vente enregistrée avec succès",
     "invoice": "Facture",
     "create_client": {
@@ -180,5 +190,19 @@
         "address": "Adresse",
         "cancel": "Annuler",
         "submit": "Créer le client"
+    },
+    "stock_resolution": {
+        "title": "Résolution de Stock",
+        "message": "Certains articles demandés dépassent le stock disponible. Comment souhaitez-vous procéder ?",
+        "cancel_and_edit_cart": "Annuler et modifier le panier",
+        "validate_and_cash": "Valider et Encaisser (Vente à Terme)",
+        "demand": "Demandé",
+        "stock": "En Stock",
+        "missing": "Manquant",
+        "promised": "Promis",
+        "client_name": "Nom du Client",
+        "optional": "(Optionnel)",
+        "client_phone_for_promised_ticket": "Téléphone pour suivi des promis",
+        "phone_number_placeholder": "Numéro de téléphone..."
     }
 }

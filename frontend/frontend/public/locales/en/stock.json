@@ -169,7 +169,48 @@
             "total_rayon": "TOTAL",
             "total_global": "TOTAL GLOBAL GAPS (VALUE): {{sign}}{{amount}} F",
             "no_gaps": "No discrepancy found."
-        }
+        },
+        "stats": {
+            "en_cours": "Inventories In Progress",
+            "val_phys": "Total Physical Value",
+            "ecart_global": "Global Gap",
+            "to_validate": "To validate",
+            "all_inventories": "All inventories"
+        },
+        "audit": {
+            "title": "Loss and Discrepancy Audit",
+            "subtitle": "In-depth analysis of stock integrity",
+            "loading": "Analyzing stock...",
+            "error_title": "Load error",
+            "error_msg": "We could not load audit data. This might be due to a server error or lack of validated inventories.",
+            "retry": "Retry",
+            "back": "Back",
+            "filter_by_rayon": "BY SHELF",
+            "filter_by_groupe": "BY GROUP",
+            "metric_value": "VALUE",
+            "metric_freq": "FREQUENCY",
+            "stats": {
+                "total_loss": "Total Losses",
+                "total_gain": "Total Gains",
+                "net_result": "Net Result",
+                "analyzed_count": "Analyzed Inventories",
+                "lines_info": "over {{count}} product lines"
+            },
+            "chart": {
+                "title_value": "Net losses by {{type}}",
+                "title_freq": "Gap occurrences by {{type}}"
+            },
+            "table": {
+                "title": "Top Problem Products (Losses/Frequency)",
+                "critical_badge": "CRITICAL",
+                "col_product": "Product",
+                "col_gap_qty": "Qty Gap",
+                "col_total_val": "Total Value",
+                "col_occurrences": "Occurrences",
+                "empty": "No critical data"
+            }
+        },
+        "audit_btn": "Flash Audit"
     },
     "ajustements": {
         "title": "Stock Adjustments",
@@ -811,7 +852,13 @@
             "products_found": "{{count}} product found",
             "products_found_plural": "{{count}} products found",
             "preview": "Preview",
-            "no_results": "No product matches criteria"
+            "more_products": "+ {{count}} other products...",
+            "no_results": "No products match criteria",
+            "processing": "Organizing...",
+            "apply_btn": "Organize in {{name}}",
+            "success_message": "{{count}} products have been organized into \"{{name}}\"",
+            "load_error": "Error retrieving product list",
+            "bulk_error": "Error during bulk organizing"
         }
     },
     "etats_inventaire": {

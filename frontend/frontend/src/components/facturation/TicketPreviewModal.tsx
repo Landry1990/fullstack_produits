@@ -40,36 +40,59 @@ export default function TicketPreviewModal({
   <base href="${window.location.origin}/">
   ${styleTags}
   <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
     @media print {
       @page { 
         size: ${ticketWidth}mm auto; 
         margin: 0; 
       }
-      body { 
-        margin: 0; 
-        padding: 0; 
+      html, body { 
+        width: ${ticketWidth}mm !important;
+        margin: 0 !important; 
+        padding: 0 !important; 
         background: white !important;
         -webkit-print-color-adjust: exact;
         print-color-adjust: exact;
       }
     }
-    body {
-      background: white;
-      margin: 0;
+    html, body {
+      width: ${ticketWidth}mm;
+      max-width: ${ticketWidth}mm;
+      margin: 0 auto;
       padding: 0;
-      display: flex;
-      justify-content: center;
+      background: white;
       font-family: 'Inter', 'Poppins', sans-serif;
+      overflow: hidden;
     }
+    #print-root {
+      width: ${ticketWidth}mm;
+      max-width: ${ticketWidth}mm;
+      overflow: hidden;
+    }
+    #ticket-preview {
+      width: ${ticketWidth}mm !important;
+      max-width: ${ticketWidth}mm !important;
+      min-width: 0 !important;
+      margin: 0 !important;
+      padding: 2mm !important;
+      background: white;
+      color: black;
+      box-shadow: none !important;
+      outline: none !important;
+      overflow: hidden;
+      word-break: break-word;
+      overflow-wrap: break-word;
+    }
+    #ticket-preview table { table-layout: fixed; width: 100% !important; }
+    #ticket-preview td, #ticket-preview th { overflow: hidden; text-overflow: ellipsis; }
   </style>
 </head>
-<body class="bg-white text-black font-sans">
+<body>
   <div id="print-root">
-    ${ticketElement.innerHTML}
+    ${ticketElement.outerHTML}
   </div>
   <script>
     window.onload = () => {
-        // Additional wait for fonts if document.fonts is available
         if (document.fonts) {
             document.fonts.ready.then(() => {
                 setTimeout(() => {

@@ -3,7 +3,7 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from django.db import transaction
-from django.db.models import Sum
+from django.db.models import Sum, Count, F, Q, Value, DecimalField
 from rest_framework.permissions import IsAdminUser
 from django.utils import timezone
 from django.http import HttpResponse
@@ -97,6 +97,55 @@ class CreanceViewSet(viewsets.ReadOnlyModelViewSet):
                 total_creances += reste
                 count += 1
         return Response({'total': total_creances, 'count': count})
+    
+    @action(detail=False, methods=['get'])
+    def synthese_clients(self, request):
+        from django.db.models import Count
+        
+        # Base queryset logic (re-annotating to ensure we have remainder etc)
+        from django.db.models import Sum, F, Q, Value, DecimalField
+        from django.db.models.functions import Coalesce
+
+        queryset = Facture.objects.filter(
+            status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE]
+        ).annotate(
+            paid_amount_sum=Coalesce(
+                Sum('paiements__montant', filter=Q(paiements__statut='completee') & ~Q(paiements__mode_paiement='en_compte')),
+                Value(0, output_field=DecimalField())
+            ),
+            remainder_val=F('total_ttc') - F('paid_amount_sum')
+        ).filter(remainder_val__gt=0.5)
+
+        # Filter by dates if provided
+        date_debut = self.request.query_params.get('date_debut', None)
+        date_fin = self.request.query_params.get('date_fin', None)
+        if date_debut:
+            queryset = queryset.filter(date__gte=date_debut)
+        if date_fin:
+            queryset = queryset.filter(date__lte=date_fin)
+
+        # Aggregate by client
+        summary = queryset.values(
+            'client__id', 'client__name'
+        ).annotate(
+            total_facture=Sum('total_ttc'),
+            total_paye=Sum('paid_amount_sum'),
+            solde_du=Sum('remainder_val'),
+            nb_factures=Count('id')
+        ).order_by('-solde_du')
+        
+        results = []
+        for s in summary:
+            if s['client__id']:
+                results.append({
+                    'client': s['client__name'],
+                    'nb_factures': s['nb_factures'],
+                    'total_facture': s['total_facture'],
+                    'montant_paye': s['total_paye'],
+                    'solde_du': s['solde_du']
+                })
+        
+        return Response(results)
     
     @action(detail=True, methods=['get'])
     def imprimer_recu(self, request, pk=None):

@@ -132,6 +132,7 @@
             "credit": "On Account",
             "depot": "Deposit/Account"
         },
+        "deposit_available": "Available deposit: {{amount}} F",
         "confirm": "Confirm payment",
         "success": "Payment recorded"
     },
@@ -379,11 +380,13 @@
         "creance": "DEBT",
         "pieces": "pieces",
         "piece": "PIECE",
-        "print": "Print",
         "cancel": "Cancel",
+        "print": "Print",
+        "close": "Close",
+        "receipt": "Receipt",
         "pagination": {
             "prev": "Previous",
             "next": "Next"
         }
     }
-}
+}

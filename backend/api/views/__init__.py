@@ -36,8 +36,8 @@ from .configuration_objectifs import ConfigurationObjectifsViewSet
 from .temporal_analysis import TemporalAnalysisViewSet
 from .purge import PurgeViewSet
 
-# Import from parent api module (not yet migrated to views package)
-from ..rapport_view import RapportViewSet
+# Import from modular rapports
+from .rapports import RapportViewSet
 from ..ordonnancier_view import OrdonnancierViewSet
 
 # Expose all for import from api.views

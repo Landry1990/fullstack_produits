@@ -184,6 +184,14 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
                 {t('payment.part_assurance', { amount: Math.round(Number(facture.total_ttc) - Number(facture.part_client!)) })}
               </div>
             )}
+            {/* Reminder for Cashier about existing deposit */}
+            {soldeDepot > 0 && (
+              <div className="mt-2 text-center">
+                <span className="badge badge-success badge-sm gap-1 py-2 h-auto text-[10px] font-bold uppercase tracking-wider">
+                  💡 {t('payment.deposit_available', { amount: soldeDepot })}
+                </span>
+              </div>
+            )}
           </div>
 
           {/* Ligne de saisie : Mode + Montant + Ajouter */}

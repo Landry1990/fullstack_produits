@@ -85,8 +85,16 @@
             "description": "Détails des stocks : Initial, Achats, Ventes et Final sur une période (Excel)"
         },
         "rapport_remises": {
-            "name": "Suivi des Remises",
-            "description": "Détails des remises accordées par utilisateur (Global, Lignes, Fidélité, UG)"
+            "name": "Suivi des Remises (Résumé)",
+            "description": "Résumé des remises accordées par utilisateur"
+        },
+        "rapport_remises_details": {
+            "name": "Suivi des Remises (Détail)",
+            "description": "Liste détaillée des factures avec remises"
+        },
+        "rapport_ca_multi_annuel": {
+            "name": "Comparatif CA Multi-Annuel",
+            "description": "CA TVA vs Exonéré par mois pour toutes les années disponibles"
         }
     },
     "params": {

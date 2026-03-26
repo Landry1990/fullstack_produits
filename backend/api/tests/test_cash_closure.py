@@ -148,7 +148,8 @@ class CashClosureCreationTestCase(APITestCase):
         response = self.client.post(url, {
             'date_debut': f'{today}T00:00:00',
             'date_fin': f'{today}T23:59:59',
-            'montant_reel': '1000.00'
+            'montant_reel': '1000.00',
+            'user_id': self.user.id
         })
         
         self.assertEqual(response.status_code, status.HTTP_200_OK)
@@ -182,7 +183,8 @@ class CashClosureCreationTestCase(APITestCase):
         response = self.client.post(url, {
             'date_debut': f'{today}T00:00:00',
             'date_fin': f'{today}T23:59:59',
-            'montant_reel': '950.00'
+            'montant_reel': '950.00',
+            'user_id': self.user.id
         })
         
         self.assertEqual(response.status_code, status.HTTP_200_OK)

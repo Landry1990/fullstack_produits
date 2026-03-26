@@ -22,7 +22,7 @@ import Creances from './components/Creances'
 import Avoirs from './components/Avoirs'
 import RapportMensuel from './components/RapportMensuel'
 import Transformations from './components/Transformations'
-import InvoiceSettings from './components/InvoiceSettings'
+// import InvoiceSettings from './components/InvoiceSettings' (removed)
 import ReapproRayon from './components/stock/ReapproRayon'
 import Ruptures from './components/stock/Ruptures'
 
@@ -177,7 +177,7 @@ const router = createBrowserRouter([
           { path: 'historique-achats/directes', element: <HistoriqueAchats forcedType="DIR" /> },
           { path: 'utilisateurs', element: <GestionUtilisateurs /> },
           { path: 'user-sessions', element: <UserSessions /> },
-          { path: 'invoice-settings', element: <InvoiceSettings /> },
+          // { path: 'invoice-settings', element: <InvoiceSettings /> }, (removed)
 
           { path: 'pharmacy-settings', element: <PharmacySettingsForm /> },
           { path: 'settings/options', element: <ConfigurationOptions /> },

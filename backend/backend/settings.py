@@ -20,7 +20,7 @@ if not SECRET_KEY:
     raise ImproperlyConfigured("DJANGO_SECRET_KEY manquant ! Ajoutez-le dans backend/.env")
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = os.getenv('DJANGO_DEBUG', 'True').lower() == 'true'
+DEBUG = os.getenv('DJANGO_DEBUG', 'False').lower() == 'true'
 
 ALLOWED_HOSTS = os.getenv('DJANGO_ALLOWED_HOSTS', 'localhost,127.0.0.1,192.168.1.192').split(',')
 
@@ -213,9 +213,11 @@ if not DEBUG:
     CSRF_COOKIE_SECURE = True
     SECURE_BROWSER_XSS_FILTER = True
     SECURE_CONTENT_TYPE_NOSNIFF = True
-    SECURE_HSTS_SECONDS = int(os.getenv('DJANGO_SECURE_HSTS_SECONDS', '0'))
-    SECURE_HSTS_INCLUDE_SUBDOMAINS = False
-    SECURE_HSTS_PRELOAD = False
+    X_FRAME_OPTIONS = 'DENY'
+    SECURE_REFERRER_POLICY = 'same-origin'
+    SECURE_HSTS_SECONDS = int(os.getenv('DJANGO_SECURE_HSTS_SECONDS', '31536000'))
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+    SECURE_HSTS_PRELOAD = True
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field

@@ -1,4 +1,4 @@
-﻿import { useState } from 'react'
+import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import axios from 'axios'
 import { toast } from 'react-hot-toast'
@@ -8,6 +8,7 @@ import PremiumModal from '../common/PremiumModal'
 import { 
     Brain, 
     Calendar, 
+    Clock,
     DollarSign, 
     Info,
     Package,
@@ -34,11 +35,17 @@ export default function SuggestionCommandeModal({
   const apiBaseUrl = import.meta.env.VITE_API_BASE_URL ?? ''
   
   // Internal State
+  // Smart defaults for datetime: today 08:00 → now
+  const todayStr = new Date().toISOString().slice(0, 10);
+  const nowStr = new Date().toISOString().slice(0, 16);
+  
   const [suggestionParams, setSuggestionParams] = useState({
       periode: 30,
       fournisseurId: '',
-      mode: 'optimise', // 'simple' | 'optimise'
-      budgetMax: '' // New field for budget limit
+      mode: 'optimise', // 'simple' | 'optimise' | 'ventes_horaire'
+      budgetMax: '', // Budget limit
+      dateDebut: `${todayStr}T08:00`,
+      dateFin: nowStr,
   });
   
   const [suggestions, setSuggestions] = useState<any[]>([]);
@@ -51,12 +58,18 @@ export default function SuggestionCommandeModal({
   async function fetchSuggestions() {
       setLoadingSuggestions(true);
       try {
-          const payload = {
+          const payload: any = {
               mode: suggestionParams.mode,
-              periode: Number(suggestionParams.periode),
               fournisseur_id: suggestionParams.fournisseurId ? parseInt(suggestionParams.fournisseurId) : null,
-              budget_max: suggestionParams.budgetMax ? Number(suggestionParams.budgetMax) : null
           };
+          
+          if (suggestionParams.mode === 'ventes_horaire') {
+              payload.date_debut = suggestionParams.dateDebut;
+              payload.date_fin = suggestionParams.dateFin;
+          } else {
+              payload.periode = Number(suggestionParams.periode);
+              payload.budget_max = suggestionParams.budgetMax ? Number(suggestionParams.budgetMax) : null;
+          }
           
           const response = await axios.post(`${apiBaseUrl ? apiBaseUrl.replace(/\/$/, '') : ''}/api/generer-suggestions/`, payload);
           setSuggestions(response.data.suggestions || []);
@@ -269,8 +282,38 @@ export default function SuggestionCommandeModal({
                         </label>
                     </div>
 
+                    {/* Mode 3: Ventes sur tranche horaire */}
+                    <label 
+                        className={`relative flex items-center gap-4 p-4 cursor-pointer rounded-2xl border-2 transition-all ${
+                            suggestionParams.mode === 'ventes_horaire' 
+                            ? 'border-primary bg-primary/5 shadow-md' 
+                            : 'border-base-200 bg-base-100 hover:border-primary/50'
+                        }`}
+                    >
+                        <input 
+                            type="radio" 
+                            name="mode" 
+                            className="hidden" 
+                            checked={suggestionParams.mode === 'ventes_horaire'}
+                            onChange={() => setSuggestionParams(prev => ({ ...prev, mode: 'ventes_horaire' }))}
+                        />
+                        <div className={`p-2 rounded-lg shrink-0 ${suggestionParams.mode === 'ventes_horaire' ? 'bg-primary text-white' : 'bg-base-200 text-base-content/60'}`}>
+                            <Clock className="w-5 h-5" />
+                        </div>
+                        <div>
+                            <span className="font-bold text-base-content">{t('orders:suggestion_modal.mode_hourly_title')}</span>
+                            <p className="text-sm text-base-content/60">{t('orders:suggestion_modal.mode_hourly_desc')}</p>
+                        </div>
+                        {suggestionParams.mode === 'ventes_horaire' && (
+                            <div className="absolute top-4 right-4 text-primary">
+                                <div className="w-2 h-2 rounded-full bg-primary animate-ping absolute"></div>
+                                <div className="w-2 h-2 rounded-full bg-primary relative"></div>
+                            </div>
+                        )}
+                    </label>
+
                     <div className="bg-base-100 rounded-2xl p-6 border border-gray-100 shadow-sm space-y-6">
-                        {/* Filters */}
+                        {/* Supplier filter (always visible) */}
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div className="space-y-2">
                                 <label className="text-xs font-bold text-base-content/40 uppercase tracking-wider flex items-center gap-2">
@@ -289,62 +332,93 @@ export default function SuggestionCommandeModal({
                                 </select>
                             </div>
 
-                            <div className="space-y-2">
-                                <label className="text-xs font-bold text-base-content/40 uppercase tracking-wider flex items-center gap-2">
-                                    <DollarSign className="w-3 h-3" />
-                                    {t('orders:suggestion_modal.budget_label')}
-                                    <div className="tooltip" data-tip={t('orders:suggestion_modal.budget_tooltip')}>
-                                        <Info className="w-3 h-3 text-base-content/30" />
+                            {suggestionParams.mode !== 'ventes_horaire' && (
+                                <div className="space-y-2">
+                                    <label className="text-xs font-bold text-base-content/40 uppercase tracking-wider flex items-center gap-2">
+                                        <DollarSign className="w-3 h-3" />
+                                        {t('orders:suggestion_modal.budget_label')}
+                                        <div className="tooltip" data-tip={t('orders:suggestion_modal.budget_tooltip')}>
+                                            <Info className="w-3 h-3 text-base-content/30" />
+                                        </div>
+                                    </label>
+                                    <div className="join w-full">
+                                        <input 
+                                            type="number" 
+                                            placeholder={t('orders:suggestion_modal.budget_placeholder')}
+                                            className="input input-bordered join-item w-full bg-base-200/50 border-base-200 focus:border-primary rounded-l-xl"
+                                            value={suggestionParams.budgetMax}
+                                            onChange={(e) => setSuggestionParams(prev => ({ ...prev, budgetMax: e.target.value }))}
+                                        />
+                                        <span className="join-item px-4 bg-base-200 border border-base-200 border-l-0 flex items-center font-bold text-base-content/40 rounded-r-xl">{t('common:currency_symbol', 'F')}</span>
                                     </div>
-                                </label>
-                                <div className="join w-full">
-                                    <input 
-                                        type="number" 
-                                        placeholder={t('orders:suggestion_modal.budget_placeholder')}
-                                        className="input input-bordered join-item w-full bg-base-200/50 border-base-200 focus:border-primary rounded-l-xl"
-                                        value={suggestionParams.budgetMax}
-                                        onChange={(e) => setSuggestionParams(prev => ({ ...prev, budgetMax: e.target.value }))}
-                                    />
-                                    <span className="join-item px-4 bg-base-200 border border-base-200 border-l-0 flex items-center font-bold text-base-content/40 rounded-r-xl">{t('common:currency_symbol', 'F')}</span>
                                 </div>
-                            </div>
+                            )}
                         </div>
 
-                        {/* Period Selection */}
-                        <div className="space-y-3">
-                            <label className="text-xs font-bold text-base-content/40 uppercase tracking-wider flex items-center gap-2">
-                                <Calendar className="w-3 h-3" />
-                                {t('orders:suggestion_modal.period_label')}
-                            </label>
-                            
-                            <div className="flex flex-wrap gap-2">
-                                {periodOptions.map(p => (
-                                    <button
-                                        key={p.value}
-                                        type="button"
-                                        className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
-                                            suggestionParams.periode === p.value
-                                            ? 'bg-primary text-white shadow-md'
-                                            : 'bg-base-200 text-base-content/80 hover:bg-base-300'
-                                        }`}
-                                        onClick={() => setSuggestionParams(prev => ({ ...prev, periode: p.value }))}
-                                    >
-                                        {p.label}
-                                    </button>
-                                ))}
-                                <div className="flex items-center gap-2 px-3 py-1 bg-base-200/50 border border-base-200 rounded-full ml-auto">
-                                   <input 
-                                        type="number" 
-                                        className="w-12 bg-transparent border-none focus:outline-none text-right font-bold text-primary"
-                                        value={suggestionParams.periode}
-                                        min={1}
-                                        max={365}
-                                        onChange={(e) => setSuggestionParams(prev => ({ ...prev, periode: parseInt(e.target.value) || 0 }))}
-                                    />
-                                    <span className="text-xs text-base-content/40 pr-1">{t('orders:suggestion_modal.days_unit')}</span>
+                        {/* Conditional: Period OR DateTime range */}
+                        {suggestionParams.mode === 'ventes_horaire' ? (
+                            <div className="space-y-3">
+                                <label className="text-xs font-bold text-base-content/40 uppercase tracking-wider flex items-center gap-2">
+                                    <Clock className="w-3 h-3" />
+                                    {t('orders:suggestion_modal.hourly_range_label')}
+                                </label>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div className="space-y-1">
+                                        <span className="text-xs text-base-content/60">{t('orders:suggestion_modal.date_from')}</span>
+                                        <input 
+                                            type="datetime-local" 
+                                            className="input input-bordered w-full bg-base-200/50 border-base-200 focus:border-primary rounded-xl"
+                                            value={suggestionParams.dateDebut}
+                                            onChange={(e) => setSuggestionParams(prev => ({ ...prev, dateDebut: e.target.value }))}
+                                        />
+                                    </div>
+                                    <div className="space-y-1">
+                                        <span className="text-xs text-base-content/60">{t('orders:suggestion_modal.date_to')}</span>
+                                        <input 
+                                            type="datetime-local" 
+                                            className="input input-bordered w-full bg-base-200/50 border-base-200 focus:border-primary rounded-xl"
+                                            value={suggestionParams.dateFin}
+                                            onChange={(e) => setSuggestionParams(prev => ({ ...prev, dateFin: e.target.value }))}
+                                        />
+                                    </div>
                                 </div>
                             </div>
-                        </div>
+                        ) : (
+                            <div className="space-y-3">
+                                <label className="text-xs font-bold text-base-content/40 uppercase tracking-wider flex items-center gap-2">
+                                    <Calendar className="w-3 h-3" />
+                                    {t('orders:suggestion_modal.period_label')}
+                                </label>
+                                
+                                <div className="flex flex-wrap gap-2">
+                                    {periodOptions.map(p => (
+                                        <button
+                                            key={p.value}
+                                            type="button"
+                                            className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
+                                                suggestionParams.periode === p.value
+                                                ? 'bg-primary text-white shadow-md'
+                                                : 'bg-base-200 text-base-content/80 hover:bg-base-300'
+                                            }`}
+                                            onClick={() => setSuggestionParams(prev => ({ ...prev, periode: p.value }))}
+                                        >
+                                            {p.label}
+                                        </button>
+                                    ))}
+                                    <div className="flex items-center gap-2 px-3 py-1 bg-base-200/50 border border-base-200 rounded-full ml-auto">
+                                       <input 
+                                            type="number" 
+                                            className="w-12 bg-transparent border-none focus:outline-none text-right font-bold text-primary"
+                                            value={suggestionParams.periode}
+                                            min={1}
+                                            max={365}
+                                            onChange={(e) => setSuggestionParams(prev => ({ ...prev, periode: parseInt(e.target.value) || 0 }))}
+                                        />
+                                        <span className="text-xs text-base-content/40 pr-1">{t('orders:suggestion_modal.days_unit')}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
                     </div>
                 </div>
             ) : (
@@ -417,10 +491,16 @@ export default function SuggestionCommandeModal({
                                             </td>
                                             <td>
                                                 <div className="flex flex-col">
-                                                    <div className="font-bold text-base-content/90 flex items-center gap-2">
+                                                    <div className="font-bold text-base-content/90 flex items-center gap-2 flex-wrap">
                                                         {item.produit_nom}
                                                         {item.is_supplier_exclusive && (
                                                             <span className="badge badge-sm badge-success text-[8px] font-bold text-white">{t('orders:suggestion_modal.exclusive_badge')}</span>
+                                                        )}
+                                                        {item.promis_count > 0 && (
+                                                            <span className="badge badge-sm badge-warning text-[8px] font-bold text-white">{t('orders:suggestion_modal.promis_badge', { count: item.promis_count })}</span>
+                                                        )}
+                                                        {item.en_rupture_fournisseur && (
+                                                            <span className="badge badge-sm badge-error text-[8px] font-bold text-white animate-pulse">{t('orders:suggestion_modal.rupture_badge')}</span>
                                                         )}
                                                     </div>
                                                     <div className="text-xs text-base-content/40 font-mono tracking-tighter">REF: {item.produit_ref}</div>
