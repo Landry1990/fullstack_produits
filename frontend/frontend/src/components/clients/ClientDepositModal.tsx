@@ -85,7 +85,7 @@ export default function ClientDepositModal({ isOpen, onClose, client, onSuccess 
             title={`${t('clients:finance.manage_deposit')} - ${client.name}`}
             subtitle={`${t('clients:finance.solde_depot')}: ${formatCurrency(parseFloat(client.solde_depot || '0'))}`}
             icon={<CreditCard className="w-5 h-5 text-primary" />}
-            maxWidth="max-w-2xl"
+            maxWidth="max-w-3xl"
         >
             <div className="flex flex-col h-full">
                 {/* Tabs */}
@@ -198,7 +198,7 @@ export default function ClientDepositModal({ isOpen, onClose, client, onSuccess 
                                                 <th>Type</th>
                                                 <th className="text-right">{t('common:total')}</th>
                                                 <th>Mode</th>
-                                                <th>Info</th>
+                                                <th className="min-w-[150px]">{t('common:info') || 'Info'}</th>
                                             </tr>
                                         </thead>
                                         <tbody>

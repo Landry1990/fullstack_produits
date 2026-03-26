@@ -23,6 +23,7 @@ export interface Facture {
     client_name?: string
     client_name_override?: string | null
     client_solde_depot?: string
+    client_points_fidelite?: number
     client_type?: 'PARTICULIER' | 'PROFESSIONNEL'
     client_is_deposit_enabled?: boolean
     ayant_droit?: number | null
@@ -80,6 +81,7 @@ export interface TicketCaisse {
     rendu?: string | number
     total_lettres?: string
     client_solde_depot?: string
+    client_points_fidelite?: number
 }
 
 export interface Paiement {

@@ -1,7 +1,8 @@
-﻿import { useState } from 'react'
+import { useState } from 'react'
 import axios from 'axios'
 import { toast } from 'react-hot-toast'
 import PremiumModal from './common/PremiumModal'
+import { useTranslation } from 'react-i18next'
 
 interface SimplePrintLabelsModalProps {
   commandeId: number
@@ -14,6 +15,7 @@ export default function SimplePrintLabelsModal({
   commandeNumero,
   onClose 
 }: SimplePrintLabelsModalProps) {
+  const { t } = useTranslation('labels')
   const [printing, setPrinting] = useState(false)
   const [labelFormat, setLabelFormat] = useState<'40x20' | '30x15'>('40x20')
   const [debugMode, setDebugMode] = useState(false)
@@ -36,7 +38,7 @@ export default function SimplePrintLabelsModal({
       onClose()
     } catch (err: any) {
       console.error('Erreur impression étiquettes:', err)
-      toast.error('Erreur lors de l\'impression des étiquettes')
+      toast.error(t('error_print'))
     } finally {
       setPrinting(false)
     }
@@ -46,8 +48,8 @@ export default function SimplePrintLabelsModal({
     <PremiumModal
       isOpen={true}
       onClose={onClose}
-      title="Impression d'Étiquettes"
-      subtitle={`Commande: ${commandeNumero}`}
+      title={t('modal_title')}
+      subtitle={t('subtitle', { numero: commandeNumero })}
       icon={
         <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
@@ -60,7 +62,7 @@ export default function SimplePrintLabelsModal({
       <div className="p-6 space-y-5">
         {/* Format Selection */}
         <div>
-          <label className="block text-xs font-bold uppercase tracking-wider text-base-content/40 mb-3">Format des étiquettes</label>
+          <label className="block text-xs font-bold uppercase tracking-wider text-base-content/40 mb-3">{t('format_label')}</label>
           <div className="flex gap-4">
             <label className="label cursor-pointer gap-2 border rounded-xl p-4 flex-1 hover:bg-base-200 transition-colors">
               <input
@@ -72,7 +74,7 @@ export default function SimplePrintLabelsModal({
               />
               <div className="flex-1">
                 <span className="label-text font-semibold">40mm × 20mm</span>
-                <p className="text-xs text-base-content/60">Format standard</p>
+                <p className="text-xs text-base-content/60">{t('format_standard')}</p>
               </div>
             </label>
             <label className="label cursor-pointer gap-2 border rounded-xl p-4 flex-1 hover:bg-base-200 transition-colors">
@@ -85,7 +87,7 @@ export default function SimplePrintLabelsModal({
               />
               <div className="flex-1">
                 <span className="label-text font-semibold">30mm × 15mm</span>
-                <p className="text-xs text-base-content/60">Format compact</p>
+                <p className="text-xs text-base-content/60">{t('format_compact')}</p>
               </div>
             </label>
           </div>
@@ -97,14 +99,14 @@ export default function SimplePrintLabelsModal({
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
           </svg>
           <div className="text-sm">
-            <p><strong>Contenu des étiquettes:</strong></p>
+            <p><strong>{t('info_title')}</strong></p>
             <ul className="list-disc list-inside mt-1 text-xs">
-              <li>Nom du produit</li>
-              <li>Code-barres (CIP1/CIP2/CIP3)</li>
-              <li>Numéro de lot</li>
-              <li>Fournisseur</li>
-              <li>Date d'entrée</li>
-              <li>Prix de vente</li>
+              <li>{t('info_items.name')}</li>
+              <li>{t('info_items.barcode')}</li>
+              <li>{t('info_items.lot')}</li>
+              <li>{t('info_items.supplier')}</li>
+              <li>{t('info_items.date')}</li>
+              <li>{t('info_items.price')}</li>
             </ul>
           </div>
         </div>
@@ -119,8 +121,8 @@ export default function SimplePrintLabelsModal({
               onChange={(e) => setDebugMode(e.target.checked)}
             />
             <div>
-              <span className="label-text font-semibold">Mode Debug</span>
-              <p className="text-xs text-base-content/60">Affiche les bordures et la grille pour tester les positions</p>
+              <span className="label-text font-semibold">{t('debug_mode')}</span>
+              <p className="text-xs text-base-content/60">{t('debug_desc')}</p>
             </div>
           </label>
         </div>
@@ -128,7 +130,7 @@ export default function SimplePrintLabelsModal({
         {/* Actions */}
         <div className="flex justify-end gap-3 pt-2">
           <button onClick={onClose} className="btn btn-ghost px-6 rounded-xl">
-            Annuler
+            {t('cancel')}
           </button>
           <button
             onClick={handlePrint}
@@ -138,14 +140,14 @@ export default function SimplePrintLabelsModal({
             {printing ? (
               <>
                 <span className="loading loading-spinner loading-sm"></span>
-                Génération en cours...
+                {t('generating')}
               </>
             ) : (
               <>
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
                 </svg>
-                Générer PDF
+                {t('generate')}
               </>
             )}
           </button>

@@ -1,10 +1,12 @@
 import { useState, useEffect, useMemo, useCallback } from 'react'
+import { useTranslation } from 'react-i18next'
 import clientService from '../services/clientService'
 import { toast } from 'react-hot-toast'
 import type { Client, AyantDroit } from '../types'
 import axios from 'axios'
 
 export function useFacturationClients() {
+    const { t } = useTranslation(['facturation', 'common'])
     const [clients, setClients] = useState<Client[]>([])
     const [loading, setLoading] = useState(false)
     const [selectedClient, setSelectedClient] = useState<number | null>(null)
@@ -105,6 +107,35 @@ export function useFacturationClients() {
         }
         fetchAyantsDroit()
     }, [selectedClient, clients, useManualClient])
+    
+    const selectedClientData = useMemo(() => {
+        if (selectedClient === null) return null
+        return clients.find(c => c.id === selectedClient) || null
+    }, [clients, selectedClient])
+
+    // Toast reminder when client with deposit is selected
+    useEffect(() => {
+        if (selectedClient && !useManualClient && selectedClientData) {
+            const solde = parseFloat(selectedClientData.solde_depot || '0')
+            if (solde > 0) {
+                toast.success(t('facturation:client.deposit_reminder', { solde }), {
+                    icon: '💡',
+                    duration: 4000,
+                    id: `deposit-reminder-${selectedClient}`
+                })
+            }
+
+            // Reward reminder
+            const discount = parseFloat(selectedClientData.pending_discount || '0')
+            if (discount > 0) {
+                toast.success(t('facturation:messages.reward_reminder', { discount }), {
+                    icon: '⭐',
+                    duration: 5000,
+                    id: `reward-reminder-${selectedClient}`
+                })
+            }
+        }
+    }, [selectedClient, selectedClientData, useManualClient, t])
 
     // Filtered clients
     const filteredClients = useMemo(() => {
@@ -157,6 +188,7 @@ export function useFacturationClients() {
         clients,
         loading,
         selectedClient, setSelectedClient,
+        selectedClientData,
         manualClientName, setManualClientName,
         useManualClient, setUseManualClient,
         clientSearch, setClientSearch,

@@ -1,4 +1,4 @@
-# 📊 Analyse Objective du Projet - Pharma Stock
+# 📊 Analyse Objective du Projet - ZENITH
 
 **Date d'analyse** : Janvier 2025  
 **Type** : Application de gestion pharmaceutique fullstack  

@@ -69,7 +69,8 @@ export const TicketTemplate = forwardRef<HTMLDivElement, TicketTemplateProps>(({
         width: `${ticketWidth}mm`, 
         maxWidth: `${ticketWidth}mm`,
         margin: '0 auto',
-        minWidth: `${ticketWidth}mm`,
+        overflow: 'hidden',
+        wordBreak: 'break-word' as const,
       }}
     >
       
@@ -118,8 +119,14 @@ export const TicketTemplate = forwardRef<HTMLDivElement, TicketTemplateProps>(({
               </tr>
               {ticket.client_solde_depot && Number(ticket.client_solde_depot) > 0 && (
                 <tr className="border-t border-black border-dotted mt-1">
-                  <td className="py-1 font-bold">SOLDE DÉPÔT</td>
+                  <td className="py-1 font-bold uppercase">Solde Dépôt</td>
                   <td className="py-1 text-right font-black text-[11px]">{formatM(ticket.client_solde_depot)}</td>
+                </tr>
+              )}
+              {ticket.client_points_fidelite !== undefined && ticket.client_points_fidelite !== null && (
+                <tr className={ticket.client_solde_depot && Number(ticket.client_solde_depot) > 0 ? "" : "border-t border-black border-dotted mt-1"}>
+                  <td className="py-1 font-bold uppercase">Points Fidélité</td>
+                  <td className="py-1 text-right font-black text-[11px]">{ticket.client_points_fidelite} pts</td>
                 </tr>
               )}
               <tr>
@@ -132,12 +139,12 @@ export const TicketTemplate = forwardRef<HTMLDivElement, TicketTemplateProps>(({
 
       {/* ITEMS TABLE */}
       <div className="mb-2">
-          <table className="w-full border-collapse">
+          <table className="w-full border-collapse" style={{ tableLayout: 'fixed' }}>
             <thead>
               <tr className="border-b border-black text-[9px] font-black uppercase">
-                <th className="py-1 text-left">Désignation</th>
-                <th className="py-1 text-center w-8">Qté</th>
-                <th className="py-1 text-right w-20">Total</th>
+                <th className="py-1 text-left" style={{ width: '55%' }}>Désignation</th>
+                <th className="py-1 text-center" style={{ width: '15%' }}>Qté</th>
+                <th className="py-1 text-right" style={{ width: '30%' }}>Total</th>
               </tr>
             </thead>
             <tbody className="text-[10px]">
@@ -148,8 +155,8 @@ export const TicketTemplate = forwardRef<HTMLDivElement, TicketTemplateProps>(({
                 
                 return (
                   <tr key={idx} className="border-b border-black/10">
-                    <td className="py-2 align-top leading-tight">
-                        <div className="font-bold uppercase">{getProductName(p)}</div>
+                    <td className="py-2 align-top leading-tight overflow-hidden">
+                        <div className="font-bold uppercase" style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>{getProductName(p)}</div>
                         <div className="text-[8px] font-mono italic">
                             {qty} x {formatM(price)}
                         </div>

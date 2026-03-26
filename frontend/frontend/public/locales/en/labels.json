@@ -1,0 +1,22 @@
+{
+  "modal_title": "Label Printing",
+  "subtitle": "Printing for order {{numero}}",
+  "format_label": "Label Format",
+  "format_standard": "Standard format for thermal printers",
+  "format_compact": "Compact format for small boxes",
+  "info_title": "Information included:",
+  "info_items": {
+    "name": "Product Name",
+    "barcode": "Barcode (CIP)",
+    "lot": "Lot Number",
+    "supplier": "Supplier",
+    "date": "Expiration Date",
+    "price": "Selling Price"
+  },
+  "debug_mode": "Debug Mode",
+  "debug_desc": "Shows borders and markers on the label",
+  "cancel": "Cancel",
+  "generate": "Generate PDF",
+  "generating": "Generating...",
+  "error_print": "Error while generating labels"
+}

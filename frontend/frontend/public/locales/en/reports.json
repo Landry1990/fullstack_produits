@@ -87,6 +87,14 @@
         "rapport_ca_multi_annuel": {
             "name": "Multi-Year Turnover Comparison",
             "description": "VAT vs Exempt turnover per month for all years (direct comparison)"
+        },
+        "rapport_remises": {
+            "name": "Discount Tracking (Summary)",
+            "description": "Summary of discounts granted by user"
+        },
+        "rapport_remises_details": {
+            "name": "Discount Tracking (Detail)",
+            "description": "Detailed list of invoices with discounts"
         }
     },
     "params": {

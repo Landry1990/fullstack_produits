@@ -28,7 +28,8 @@
     },
     "badges": {
         "pharmacist": "Pharmacien",
-        "full_access": "Accès Total"
+        "full_access": "Accès Total",
+        "inactive": "Inactif"
     },
     "status": {
         "active": "Actif",
@@ -42,6 +43,7 @@
         "firstname": "Prénom",
         "lastname": "Nom",
         "email": "Email",
+        "is_active": "Compte Actif",
         "max_discount": "Taux de remise max (%)"
     },
     "modal": {
@@ -77,6 +79,11 @@
         "updated": "Utilisateur mis à jour avec succès",
         "deleted": "Utilisateur {{username}} supprimé",
         "delete_error": "Erreur lors de la suppression de l'utilisateur",
+        "deactivated": "Utilisateur {{username}} désactivé",
+        "deactivate_error": "Erreur lors de la désactivation",
+        "protected_title": "Élément protégé",
+        "protected_message": "Cet utilisateur possède des archives (factures, etc.) et ne peut être supprimé. Souhaitez-vous désactiver son compte à la place ?",
+        "deactivate_btn": "Désactiver",
         "save_error": "Erreur lors de l'enregistrement de l'utilisateur",
         "delete_confirm_title": "Supprimer l'utilisateur ?",
         "delete_confirm": "Êtes-vous sûr de vouloir supprimer {{username}} ? Cette action est irréversible.",

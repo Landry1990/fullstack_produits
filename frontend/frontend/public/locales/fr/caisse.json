@@ -132,6 +132,7 @@
             "credit": "En Compte",
             "depot": "Dépôt/Acompte"
         },
+        "deposit_available": "Dépôt disponible : {{amount}} F",
         "confirm": "Valider le paiement",
         "success": "Paiement enregistré"
     },

@@ -9,9 +9,9 @@ from ..models import Produit, MouvementStock, Commande, CommandeProduit
 
 class GlobalStockHistoryTestCase(APITestCase):
     def setUp(self):
-        self.user = TestDataFactory.create_superuser(username='admin', password='adminpass123')
+        self.user = TestDataFactory.create_superuser(username='admin_hist', password='adminpass123')
         # Standard users might not have can_adjust_stock, so we need a supervisor for Sudo
-        self.supervisor = TestDataFactory.create_superuser(username='supervisor', password='passsupervisor')
+        self.supervisor = TestDataFactory.create_superuser(username='super_hist', password='passsupervisor')
         
         self.client.force_authenticate(user=self.user)
         # Create product with reserve storage
@@ -92,16 +92,16 @@ class GlobalStockHistoryTestCase(APITestCase):
         # Line 1: Entrée Rayon (Positive)
         self.assertEqual(history[1]['type'], 'REAPPRO_INTERSTOCK')
         self.assertEqual(history[1]['quantity'], 40)
-        self.assertEqual(history[1]['libelle'], 'Entrée Rayon: 40 unités. (Validé par supervisor)')
+        self.assertEqual(history[1]['libelle'], f'Entrée Rayon: 40 unités. (Validé par {self.supervisor.username})')
         self.assertEqual(history[1]['stock_apres'], 100)
-        self.assertEqual(history[1]['user'], 'supervisor')
+        self.assertEqual(history[1]['user'], self.supervisor.username)
         
         # Line 2: Sortie Réserve (Negative)
         self.assertEqual(history[2]['type'], 'REAPPRO_INTERSTOCK')
         self.assertEqual(history[2]['quantity'], -40)
-        self.assertEqual(history[2]['libelle'], 'Sortie Réserve: 40 unités. (Validé par supervisor)')
+        self.assertEqual(history[2]['libelle'], f'Sortie Réserve: 40 unités. (Validé par {self.supervisor.username})')
         self.assertEqual(history[2]['stock_apres'], 100)
-        self.assertEqual(history[2]['user'], 'supervisor')
+        self.assertEqual(history[2]['user'], self.supervisor.username)
         
         # Final: ENTREE (Commande)
         self.assertEqual(history[3]['stock_apres'], 100)

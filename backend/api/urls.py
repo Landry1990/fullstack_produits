@@ -21,7 +21,7 @@ from .views.coupons import CouponMonnaieViewSet
 from .views.groupes import GroupeViewSet
 from .views.auth import verify_password
 from .views.etat_inventaire import EtatInventairePDFView
-from .rapport_view import RapportViewSet
+from .views.rapports import RapportViewSet
 from .ordonnancier_view import OrdonnancierViewSet
 from .views.communication import SmsViewSet, SmsTemplateViewSet, WhatsAppLogViewSet
 from .views.finance_stats import FinanceStatsViewSet

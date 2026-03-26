@@ -10,6 +10,7 @@
     "refund": "Modifier/Retour",
     "duplicate": "Dupliquer",
     "delete": "Supprimer",
+    "product": "Produit",
     "cancel": "Annuler",
     "save": "Enregistrer",
     "deposit": "Dépôt",
@@ -33,6 +34,12 @@
     "refresh": "Actualiser",
     "add": "Ajouter",
     "restore": "Restaurer",
+    "import": "Import",
+    "no_address": "Sans adresse",
+    "search_product_placeholder": "Rechercher un produit...",
+    "selection_count": "Sélection : {{count}}",
+    "status_title": "Statut",
+    "supplier": "Fournisseur",
     "status": {
         "draft": "Brouillon"
     },
@@ -40,7 +47,8 @@
     "stock": "Stock",
     "actions": {
         "confirm": "Confirmer",
-        "cancel": "Annuler"
+        "cancel": "Annuler",
+        "delete": "Supprimer"
     },
     "actions_title": "Actions",
     "sort": {
@@ -57,6 +65,7 @@
     "pagination": {
         "prev": "Précédent",
         "next": "Suivant",
+        "page_info": "Page {{page}} sur {{total}}",
         "page_info_simple": "Page {{page}}",
         "page_of": "sur {{count}}"
     },

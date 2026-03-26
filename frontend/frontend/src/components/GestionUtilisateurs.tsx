@@ -13,6 +13,7 @@ interface User {
   first_name: string;
   last_name: string;
   is_superuser: boolean;
+  is_active: boolean;
   profile: {
     role: string;
     allowed_menus: string[];
@@ -36,80 +37,80 @@ interface User {
 }
 
 const MENU_HIERARCHY = [
-  { key: 'dashboard', labelKey: 'sidebar.dashboard' },
-  { key: 'manager_sidebar', labelKey: 'sidebar.manager_sidebar' },
+  { key: 'dashboard', labelKey: 'sidebar:dashboard' },
+  { key: 'manager_sidebar', labelKey: 'sidebar:manager_sidebar' },
   { 
     key: 'ventes', 
-    labelKey: 'sidebar.ventes.title',
+    labelKey: 'sidebar:ventes.title',
     submenus: [
-      { key: 'ventes_consultation', labelKey: 'sidebar.ventes.consultation' },
-      { key: 'ventes_historique', labelKey: 'sidebar.ventes.historique' },
-      { key: 'ventes_journal', labelKey: 'sidebar.ventes.journal' },
-      { key: 'ventes_clotures', labelKey: 'sidebar.ventes.clotures' },
-      { key: 'ventes_ordonnancier', labelKey: 'sidebar.ventes.ordonnancier' },
-      { key: 'ventes_promotions', labelKey: 'sidebar.ventes.promotions' },
-      { key: 'caisse', labelKey: 'sidebar.ventes.caisse_centralisee' }
+      { key: 'ventes_consultation', labelKey: 'sidebar:ventes.consultation' },
+      { key: 'ventes_historique', labelKey: 'sidebar:ventes.historique' },
+      { key: 'ventes_journal', labelKey: 'sidebar:ventes.journal' },
+      { key: 'ventes_clotures', labelKey: 'sidebar:ventes.clotures' },
+      { key: 'ventes_ordonnancier', labelKey: 'sidebar:ventes.ordonnancier' },
+      { key: 'ventes_promotions', labelKey: 'sidebar:ventes.promotions' },
+      { key: 'caisse', labelKey: 'sidebar:ventes.caisse_centralisee' }
     ]
   },
-  { key: 'facturation', labelKey: 'sidebar.facturation' },
-  { key: 'produits', labelKey: 'sidebar.produits' },
-  { key: 'vitrine', labelKey: 'sidebar.vitrine' },
+  { key: 'facturation', labelKey: 'sidebar:facturation' },
+  { key: 'produits', labelKey: 'sidebar:produits' },
+  { key: 'vitrine', labelKey: 'sidebar:vitrine' },
   { 
     key: 'commandes_loc', 
-    labelKey: 'sidebar.commandes.local_title',
+    labelKey: 'sidebar:commandes.local_title',
     submenus: [
-      { key: 'commandes_loc_current', labelKey: 'sidebar.commandes.new_current' },
-      { key: 'commandes_loc_history', labelKey: 'sidebar.commandes.history' }
+      { key: 'commandes_loc_current', labelKey: 'sidebar:commandes.new_current' },
+      { key: 'commandes_loc_history', labelKey: 'sidebar:commandes.history' }
     ]
   },
   { 
     key: 'commandes_dir', 
-    labelKey: 'sidebar.commandes.direct_title',
+    labelKey: 'sidebar:commandes.direct_title',
     submenus: [
-      { key: 'commandes_dir_current', labelKey: 'sidebar.commandes.new_current' },
-      { key: 'commandes_dir_history', labelKey: 'sidebar.commandes.history' }
+      { key: 'commandes_dir_current', labelKey: 'sidebar:commandes.new_current' },
+      { key: 'commandes_dir_history', labelKey: 'sidebar:commandes.history' }
     ]
   },
-  { key: 'fournisseurs', labelKey: 'sidebar.fournisseurs.title' },
-  { key: 'clients', labelKey: 'sidebar.clients' },
-  { key: 'creances', labelKey: 'sidebar.creances' },
+  { key: 'fournisseurs', labelKey: 'sidebar:fournisseurs.title' },
+  { key: 'clients', labelKey: 'sidebar:clients' },
+  { key: 'creances', labelKey: 'sidebar:creances' },
   { 
     key: 'inventaire', 
-    labelKey: 'sidebar.stock.title',
+    labelKey: 'sidebar:stock.title',
     submenus: [
-      { key: 'inventaire_saisie', labelKey: 'sidebar.stock.inventaire.title' },
-      { key: 'inventaire_journal', labelKey: 'sidebar.stock.journal' },
-      { key: 'inventaire_analyse', labelKey: 'sidebar.stock.analyse.title' },
-      { key: 'inventaire_reappro', labelKey: 'sidebar.stock.reappro.title' },
-      { key: 'inventaire_avoirs', labelKey: 'sidebar.stock.avoirs' },
-      { key: 'inventaire_promis', labelKey: 'sidebar.stock.promis' },
-      { key: 'inventaire_transformations', labelKey: 'sidebar.stock.transformations.title' },
-      { key: 'inventaire_perimes', labelKey: 'sidebar.stock.perimes.title' },
-      { key: 'inventaire_organisation', labelKey: 'sidebar.stock.organisation.title' },
-      { key: 'inventaire_etats', labelKey: 'sidebar.stock.etats_inventaire.title' }
+      { key: 'inventaire_saisie', labelKey: 'sidebar:stock.inventaire.title' },
+      { key: 'inventaire_journal', labelKey: 'sidebar:stock.journal' },
+      { key: 'inventaire_analyse', labelKey: 'sidebar:stock.analyse.title' },
+      { key: 'inventaire_reappro', labelKey: 'sidebar:stock.reappro.title' },
+      { key: 'inventaire_avoirs', labelKey: 'sidebar:stock.avoirs' },
+      { key: 'inventaire_promis', labelKey: 'sidebar:stock.promis' },
+      { key: 'inventaire_transformations', labelKey: 'sidebar:stock.transformations.title' },
+      { key: 'inventaire_perimes', labelKey: 'sidebar:stock.perimes.title' },
+      { key: 'inventaire_organisation', labelKey: 'sidebar:stock.organisation.title' },
+      { key: 'inventaire_etats', labelKey: 'sidebar:stock.etats_inventaire.title' }
     ]
   },
   { 
     key: 'statistiques', 
-    labelKey: 'sidebar.statistiques.title',
+    labelKey: 'sidebar:statistiques.title',
     submenus: [
-      { key: 'statistiques_rapports', labelKey: 'sidebar.statistiques.rapports' },
-      { key: 'statistiques_abc', labelKey: 'sidebar.statistiques.abc' },
-      { key: 'statistiques_fournisseurs', labelKey: 'sidebar.statistiques.fournisseurs' },
-      { key: 'statistiques_mensuels', labelKey: 'sidebar.statistiques.mensuel' },
-      { key: 'statistiques_finances', labelKey: 'sidebar.statistiques.finances' },
-      { key: 'statistiques_vendeurs', labelKey: 'sidebar.statistiques.classement_vendeurs' },
-      { key: 'statistiques_temporelle', labelKey: 'sidebar.statistiques.analyse_temporelle' }
+      { key: 'statistiques_rapports', labelKey: 'sidebar:statistiques.rapports' },
+      { key: 'statistiques_abc', labelKey: 'sidebar:statistiques.abc' },
+      { key: 'statistiques_fournisseurs', labelKey: 'sidebar:statistiques.fournisseurs' },
+      { key: 'statistiques_mensuels', labelKey: 'sidebar:statistiques.mensuel' },
+      { key: 'statistiques_finances', labelKey: 'sidebar:statistiques.finances' },
+      { key: 'statistiques_vendeurs', labelKey: 'sidebar:statistiques.classement_vendeurs' },
+      { key: 'statistiques_temporelle', labelKey: 'sidebar:statistiques.analyse_temporelle' }
     ]
   },
   {
     key: 'settings',
-    labelKey: 'sidebar.parametres.title',
+    labelKey: 'sidebar:parametres.title',
     submenus: [
-      { key: 'settings_facture', labelKey: 'sidebar.parametres.facture' },
-      { key: 'settings_pharmacie', labelKey: 'sidebar.parametres.pharmacie' },
-      { key: 'settings_whatsapp', labelKey: 'sidebar.parametres.whatsapp' },
-      { key: 'settings_etiquettes', labelKey: 'sidebar.parametres.etiquettes' }
+      { key: 'settings_facture', labelKey: 'sidebar:parametres.facture' },
+      { key: 'settings_pharmacie', labelKey: 'sidebar:parametres.pharmacie' },
+      { key: 'settings_whatsapp', labelKey: 'sidebar:parametres.whatsapp' },
+      { key: 'settings_etiquettes', labelKey: 'sidebar:parametres.etiquettes' }
     ]
   }
 ];
@@ -126,9 +127,9 @@ const getAllMenuKeys = () => {
 };
 
 const ROLES = [
-  { value: 'PHARMACIEN', labelKey: 'users.roles.pharmacist' },
-  { value: 'CAISSIER', labelKey: 'users.roles.cashier' },
-  { value: 'VENDEUR', labelKey: 'users.roles.seller' }
+  { value: 'PHARMACIEN', labelKey: 'roles.pharmacist' },
+  { value: 'CAISSIER', labelKey: 'roles.cashier' },
+  { value: 'VENDEUR', labelKey: 'roles.seller' }
 ];
 
 export default function GestionUtilisateurs() {
@@ -154,6 +155,7 @@ export default function GestionUtilisateurs() {
     last_name: '',
     role: 'VENDEUR',
     is_superuser: false,
+    is_active: true,
     allowed_menus: [] as string[],
     can_do_returns: false,
     can_sell_negative_stock: false,
@@ -260,6 +262,7 @@ export default function GestionUtilisateurs() {
         last_name: user.last_name,
         role: user.profile?.role || (user.is_superuser ? 'PHARMACIEN' : 'VENDEUR'),
         is_superuser: user.is_superuser,
+        is_active: user.is_active,
         allowed_menus: user.profile?.allowed_menus || [],
         can_do_returns: user.profile?.can_do_returns || false,
         can_sell_negative_stock: user.profile?.can_sell_negative_stock || false,
@@ -288,6 +291,7 @@ export default function GestionUtilisateurs() {
         last_name: '',
         role: 'VENDEUR',
         is_superuser: false,
+        is_active: true,
         allowed_menus: ['facturation', 'produits', 'vitrine'],
         can_do_returns: false,
         can_sell_negative_stock: false,
@@ -360,9 +364,30 @@ export default function GestionUtilisateurs() {
       await axios.delete(`/api/users/${userId}/`);
       toast.success(t('messages.deleted', { username }));
       fetchUsers();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error deleting user:', error);
-      toast.error(t('messages.delete_error'));
+      
+      // Fallback to deactivation if protected resource
+      if (error.response?.data?.error_code === 'protected_resource') {
+          const confirmDeactivate = await confirm({
+              title: t('messages.protected_title', 'Élément protégé'),
+              message: t('messages.protected_message', 'Cet utilisateur possède des archives (factures, etc.) et ne peut être supprimé. Souhaitez-vous désactiver son compte à la place ?'),
+              variant: 'warning',
+              confirmText: t('messages.deactivate_btn', 'Désactiver')
+          });
+
+          if (confirmDeactivate) {
+              try {
+                  await axios.patch(`/api/users/${userId}/`, { is_active: false });
+                  toast.success(t('messages.deactivated', { username }));
+                  fetchUsers();
+              } catch (err) {
+                  toast.error(t('messages.deactivate_error'));
+              }
+          }
+      } else {
+          toast.error(t('messages.delete_error'));
+      }
     }
   };
 
@@ -401,6 +426,7 @@ export default function GestionUtilisateurs() {
         first_name: formData.first_name,
         last_name: formData.last_name,
         is_superuser: formData.is_superuser,
+        is_active: formData.is_active,
         ...(formData.password ? { password: formData.password } : {}),
         profile: {
           role: formData.role,
@@ -477,7 +503,10 @@ export default function GestionUtilisateurs() {
                       </div>
                     </div>
                     <div>
-                      <div className="font-bold">{user.username}</div>
+                      <div className="font-bold flex items-center gap-2">
+                        {user.username}
+                        {!user.is_active && <span className="badge badge-error badge-xs p-1 h-auto text-[8px] uppercase">{t('badges.inactive', 'Inactif')}</span>}
+                      </div>
                       <div className="text-sm opacity-50">{user.first_name} {user.last_name}</div>
                       <div className="text-xs opacity-50">{user.email}</div>
                     </div>
@@ -585,6 +614,16 @@ export default function GestionUtilisateurs() {
                       value={formData.username}
                       onChange={e => setFormData({...formData, username: e.target.value})}
                       required
+                    />
+                  </div>
+                  
+                  <div className="form-control flex flex-row items-center gap-4 border border-base-200 rounded-lg px-4 h-12 mt-auto">
+                    <span className="text-xs font-semibold">{t('form.is_active', 'Compte Actif')}</span>
+                    <input 
+                        type="checkbox" 
+                        className="toggle toggle-success toggle-sm"
+                        checked={formData.is_active}
+                        onChange={e => setFormData({...formData, is_active: e.target.checked})}
                     />
                   </div>
                   
@@ -796,8 +835,8 @@ export default function GestionUtilisateurs() {
             </form>
 
             <div className="p-4 bg-base-200 border-t border-base-300 flex justify-end gap-3 flex-none">
-              <button type="button" className="btn btn-ghost" onClick={() => setModalOpen(false)}>{t('modal.cancel')}</button>
-              <button type="submit" onClick={() => handleSubmit({ preventDefault: () => {} } as React.FormEvent)} className="btn btn-primary px-10 shadow-lg shadow-primary/20">{t('modal.save')}</button>
+              <button type="button" className="btn btn-ghost" onClick={() => setModalOpen(false)}>{t('common:cancel')}</button>
+              <button type="submit" onClick={() => handleSubmit({ preventDefault: () => {} } as React.FormEvent)} className="btn btn-primary px-10 shadow-lg shadow-primary/20">{t('common:save')}</button>
             </div>
           </div>
         </div>

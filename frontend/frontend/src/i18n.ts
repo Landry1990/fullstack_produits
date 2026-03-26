@@ -47,7 +47,9 @@ i18n
             'maintenance',
             'pharmacy_settings',
             'monthly_report',
-            'supplier_stats'
+            'supplier_stats',
+            'labels',
+            'config'
         ],
         defaultNS: 'common',
         interpolation: {

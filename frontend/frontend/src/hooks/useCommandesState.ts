@@ -116,7 +116,6 @@ export function useCommandesState(forcedType?: 'LOC' | 'DIR') {
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
   const [showPrintLabelsModal, setShowPrintLabelsModal] = useState(false);
 
-  const [lastSaved, setLastSaved] = useState<Date | null>(null);
   const [isImporting, setIsImporting] = useState(false);
   const [isCreateProduitModalOpen, setIsCreateProduitModalOpen] = useState(false);
 
@@ -246,12 +245,72 @@ export function useCommandesState(forcedType?: 'LOC' | 'DIR') {
      if (selectedCommande) handleImprimerReception(selectedCommande, fournisseurName);
   }
 
+  // Calcul des totaux de la commande (Edition ou Consultation)
+  const orderTotals = useMemo(() => {
+    let totalTVA = 0;
+    let totalTTC = 0;
+    let totalBuyHT = 0;
+    let totalSellHT = 0;
+    
+    // On prend soit la liste éditable, soit les produits de la commande sélectionnée
+    const productsToCalc = (commandeProduits.length > 0) 
+      ? commandeProduits 
+      : (selectedCommande?.produits || []);
+
+    productsToCalc.forEach(item => {
+      const qty = normalizeNumberInput(String(item.quantity || 0));
+      const buyPriceHT = normalizeNumberInput(String(item.price || 0));
+      const sellPriceTTC = normalizeNumberInput(String(item.selling_price || 0));
+      const tvaRate = normalizeNumberInput(String(item.tva || 0));
+
+      const lineBuyHT = qty * buyPriceHT;
+      const lineSellTTC = qty * sellPriceTTC;
+      const lineSellHT = lineSellTTC / (1 + tvaRate / 100);
+      const lineTVA = lineSellTTC - lineSellHT;
+
+      totalBuyHT += lineBuyHT;
+      totalSellHT += lineSellHT;
+      totalTVA += lineTVA;
+      totalTTC += lineSellTTC;
+    });
+
+    const globalMargin = totalBuyHT > 0 ? (totalSellHT / totalBuyHT) : 0;
+    const globalMarginPercent = totalSellHT > 0 ? ((totalSellHT - totalBuyHT) / totalSellHT * 100) : 0;
+    const totalMarginValue = totalSellHT - totalBuyHT;
+
+    return {
+      totalHT: totalSellHT,
+      totalTVA,
+      totalTTC,
+      totalBuyHT,
+      totalMarginValue,
+      globalMargin: globalMargin.toFixed(4),
+      globalMarginPercent: globalMarginPercent.toFixed(2)
+    };
+  }, [commandeProduits, selectedCommande]);
+
   const onBulkDelete = () => {
     if (selectedOrderIds.size === 0) return;
 
+    const selectedIds = Array.from(selectedOrderIds);
+    // Filtrer les commandes qui ne sont pas clôturées
+    const deletableIds = selectedIds.filter(id => {
+        const cmd = commandes.find(c => c.id === id);
+        return cmd && cmd.status !== 'CLOT';
+    });
+
+    if (deletableIds.length === 0) {
+        toast.error(t('orders:messages.no_deletable_orders'));
+        return;
+    }
+
+    if (deletableIds.length < selectedIds.length) {
+        toast.error(t('orders:messages.some_orders_closed_warning'));
+    }
+
     requireSudo(
         async (validatorId, password) => {
-            await handleBulkDelete(Array.from(selectedOrderIds), {
+            await handleBulkDelete(deletableIds, {
                 validated_by_id: validatorId,
                 sudo_password: password
             });
@@ -312,7 +371,6 @@ export function useCommandesState(forcedType?: 'LOC' | 'DIR') {
                      const mode = (viewMode === 'CREATE' ? 'CREATE' : 'EDIT') as 'CREATE' | 'EDIT';
                      
                      await handleSaveCommande(cleanCommande, commandeProduits, mode, selectedCommande, true);
-                     setLastSaved(new Date());
                  } catch (err) {
                      console.error("Auto-save error:", err);
                  } finally {
@@ -535,21 +593,60 @@ export function useCommandesState(forcedType?: 'LOC' | 'DIR') {
       case 'ArrowDown':
         e.preventDefault();
         if (rowIndex < commandeProduits.length - 1) {
-          setFocusedField({ row: rowIndex + 1, field: fieldIndex });
-          setTimeout(() => {
-            const nextInput = document.querySelector(`input[data-row="${rowIndex + 1}"][data-field="${fieldsConfig[fieldIndex].name}"]`) as HTMLInputElement;
-            nextInput?.focus(); nextInput?.select();
-          }, 0);
+          const nextRow = rowIndex + 1;
+          const fieldName = fieldsConfig[fieldIndex]?.name;
+          if (fieldName) {
+            setFocusedField({ row: nextRow, field: fieldIndex });
+            setTimeout(() => {
+                const query = `input[data-row="${nextRow}"][data-field="${fieldName}"]`;
+                const nextInput = document.querySelector(query) as HTMLInputElement;
+                if (nextInput) {
+                    nextInput.focus();
+                    nextInput.select();
+                }
+            }, 10);
+          }
         }
         break;
       case 'ArrowUp':
         e.preventDefault();
         if (rowIndex > 0) {
-          setFocusedField({ row: rowIndex - 1, field: fieldIndex });
-          setTimeout(() => {
-            const nextInput = document.querySelector(`input[data-row="${rowIndex - 1}"][data-field="${fieldsConfig[fieldIndex].name}"]`) as HTMLInputElement;
-            nextInput?.focus(); nextInput?.select();
-          }, 0);
+          const prevRow = rowIndex - 1;
+          const fieldName = fieldsConfig[fieldIndex]?.name;
+          if (fieldName) {
+            setFocusedField({ row: prevRow, field: fieldIndex });
+            setTimeout(() => {
+                const query = `input[data-row="${prevRow}"][data-field="${fieldName}"]`;
+                const prevInput = document.querySelector(query) as HTMLInputElement;
+                if (prevInput) {
+                    prevInput.focus();
+                    prevInput.select();
+                }
+            }, 10);
+          }
+        }
+        break;
+      case 'Delete':
+        const input = e.target as HTMLInputElement;
+        const isFullySelected = input.selectionStart === 0 && input.selectionEnd === input.value.length;
+        const isEmpty = input.value === '';
+        
+        if (e.ctrlKey || isFullySelected || isEmpty) {
+            e.preventDefault();
+            removeProductFromCommande(rowIndex);
+            toast.success(t('products:messages.delete_success', { defaultValue: 'Produit retiré' }), { icon: '🗑️', duration: 1000 });
+            
+            setTimeout(() => {
+                const nextRow = Math.min(rowIndex, commandeProduits.length - 1);
+                if (nextRow >= 0) {
+                    const fieldName = fieldsConfig[fieldIndex]?.name;
+                    const nextInput = document.querySelector(`input[data-row="${nextRow}"][data-field="${fieldName}"]`) as HTMLInputElement;
+                    nextInput?.focus();
+                    nextInput?.select();
+                } else {
+                    searchInputRef.current?.focus();
+                }
+            }, 50);
         }
         break;
       case 'ArrowRight': if (e.ctrlKey) { e.preventDefault(); moveToNextField(); } break;
@@ -754,7 +851,7 @@ export function useCommandesState(forcedType?: 'LOC' | 'DIR') {
                const tva = normalizeNumberInput(String(newItem.tva || 0));
                if (!isNaN(price) && !isNaN(selling) && price > 0) {
                    const sellingHT = selling / (1 + tva / 100);
-                   newItem.marge = (sellingHT / price).toFixed(0);
+                   newItem.marge = (sellingHT / price).toFixed(4); // Plus de précision
                }
           }
             return newItem;
@@ -1176,6 +1273,7 @@ export function useCommandesState(forcedType?: 'LOC' | 'DIR') {
       selectedRows,
       toggleRowSelection,
       setSelectedRows,
+      orderTotals,
     },
     formProps: {
       viewMode: viewMode as any, // Typed internally, let compiler infer or force
@@ -1207,8 +1305,8 @@ export function useCommandesState(forcedType?: 'LOC' | 'DIR') {
       commandeProduits,
       produitsList,
       selectedRows,
+      orderTotals,
       saving: saving || executingAction,
-      lastSaved,
       fieldsConfig,
       focusedField,
       toggleRowSelection,

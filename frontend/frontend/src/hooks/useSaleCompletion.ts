@@ -164,6 +164,17 @@ export function useSaleCompletion(options: UseSaleCompletionOptions = {}): UseSa
                     });
                     return { success: false, error: proError };
                 }
+
+                // New Check: Deposit Balance Warning for Individuals
+                if (client.client_type === 'PARTICULIER' && (parseFloat(client.solde_depot || '0') > 0)) {
+                    const solde = parseFloat(client.solde_depot || '0');
+                    if (params.totals.totalTtc > solde) {
+                        toast.error(
+                            t('facturation:client.insufficient_deposit_warning', { solde }),
+                            { duration: 5000, icon: '⚠️' }
+                        );
+                    }
+                }
             }
 
             // 3. VÉRIFICATION DU STOCK EN TEMPS RÉEL

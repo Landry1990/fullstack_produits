@@ -605,20 +605,20 @@ class DashboardViewSet(viewsets.ViewSet):
             debt_db=F('total_ordered_db') - F('total_paid_db')
         ).filter(
             debt_db__gt=0
-        ).order_by('-debt_db')
+        ).order_by('-debt_db').values('id', 'name', 'debt_db', 'phone')
         
         data = []
         total_debt_global = Decimal('0.00')
         
         for s in suppliers:
-            debt = s.debt_db
+            debt = s['debt_db']
             total_debt_global += debt
             
             data.append({
-                'id': s.id,
-                'name': s.name,
+                'id': s['id'],
+                'name': s['name'],
                 'debt': float(debt),
-                'phone': s.phone
+                'phone': s['phone']
             })
         
         return Response({

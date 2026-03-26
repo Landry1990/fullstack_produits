@@ -1,7 +1,6 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react'
 import axios from 'axios'
 import { toast } from 'react-hot-toast'
-import { useAuth } from '../context/AuthContext'
 import { useQueryClient } from '@tanstack/react-query'
 import type { ProduitModel, Facture, LigneFacture } from '../types'
 import { useProductSearch } from './useProductSearch'
@@ -22,7 +21,6 @@ import type { OrdonnanceData } from '../components/OrdonnanceModal'
 
 export function useFacturationState() {
   const { t } = useTranslation(['prescriptions', 'common', 'facturation', 'sales'])
-  const { user } = useAuth()
   const queryClient = useQueryClient()
   const { settings: pharmacySettings } = usePharmacySettings()
   const { isZenithMode, toggleZenithMode, isMidnightTheme, toggleMidnightTheme } = useSidebar()
@@ -37,7 +35,6 @@ export function useFacturationState() {
   const addProductRef = useRef<((product: ProduitModel, options?: { isRetrocession?: boolean; preventFocus?: boolean }) => void) | null>(null)
   
   const searchInputRef = useRef<HTMLInputElement>(null)
-  const clientSelectRef = useRef<HTMLSelectElement>(null)
   const paymentInputRef = useRef<HTMLInputElement>(null)
   const clientSearchRef = useRef<HTMLInputElement>(null)
 
@@ -85,7 +82,7 @@ export function useFacturationState() {
           cart.updateQuantite(produitId, newQty);
       }, {
           title: t('facturation:payment.sudo_mode.validate_by'),
-          message: `Confirmer la quantité <strong>${newQty}</strong> pour le produit <strong>${currentLine?.produit.name}</strong> ?`
+          message: `Confirmer la quantité ${newQty} pour le produit ${currentLine?.produit.name ?? ''} ?`
       });
     } else {
       cart.updateQuantite(produitId, newQty);
@@ -101,7 +98,7 @@ export function useFacturationState() {
           cart.updatePrix(produitId, newPrice);
       }, {
           title: t('facturation:payment.sudo_mode.validate_by'),
-          message: `Confirmer le changement de prix de <strong>${currentLine.prix_unitaire}</strong> à <strong>${newPrice}</strong> pour <strong>${currentLine.produit.name}</strong> ?`
+          message: `Confirmer le changement de prix de ${currentLine.prix_unitaire} à ${newPrice} pour ${currentLine.produit.name} ?`
       });
     } else {
       cart.updatePrix(produitId, newPrice);
@@ -117,7 +114,7 @@ export function useFacturationState() {
           cart.updateRemiseProduit(produitId, newRemise);
       }, {
           title: t('facturation:payment.sudo_mode.validate_by'),
-          message: `Confirmer une remise de <strong>${newRemise}%</strong> sur le produit <strong>${currentLine.produit.name}</strong> ?`
+          message: `Confirmer une remise de ${newRemise}% sur le produit ${currentLine.produit.name} ?`
       });
     } else {
       cart.updateRemiseProduit(produitId, newRemise);
@@ -1049,6 +1046,7 @@ export function useFacturationState() {
     handleCompleteSale,
     handleProforma,
     handleBonDeLivraison,
+    addPackToFacture,
     mettreEnAttente,
     annulerVente,
     restaurerVente,
@@ -1061,6 +1059,8 @@ export function useFacturationState() {
     handleConfirmPrintClientName,
     handleOrdonnanceSave,
     handleLotSelect,
+    handleQuantityShortcut,
+    handleCsvImport,
     removeLigne: cart.removeLigne,
     secureUpdateQuantite,
     secureUpdatePrix,

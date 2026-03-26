@@ -14,6 +14,19 @@ from rest_framework.viewsets import ViewSet
 class CodeBackupViewSet(ViewSet):
     permission_classes = [IsAdminUser]
 
+    @staticmethod
+    def _is_safe_zip_member(member_name, project_root):
+        # Reject absolute paths and any traversal attempt.
+        normalized = os.path.normpath(member_name)
+        if os.path.isabs(normalized):
+            return False
+        if normalized.startswith("..") or f"..{os.sep}" in normalized:
+            return False
+
+        target_path = os.path.abspath(os.path.join(project_root, normalized))
+        project_root_abs = os.path.abspath(project_root)
+        return target_path.startswith(project_root_abs + os.sep) or target_path == project_root_abs
+
     @action(detail=False, methods=['get'])
     def backup(self, request):
         """
@@ -66,9 +79,17 @@ class CodeBackupViewSet(ViewSet):
         
         try:
             with zipfile.ZipFile(file_obj, 'r') as zf:
-                # Extract all files, overwriting existing ones
-                # NOTE: This is dangerous and will update the running code!
-                zf.extractall(project_root)
+                unsafe_members = [m.filename for m in zf.infolist() if not self._is_safe_zip_member(m.filename, project_root)]
+                if unsafe_members:
+                    return Response(
+                        {'detail': 'Archive ZIP invalide: chemins dangereux détectés.'},
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
+
+                for member in zf.infolist():
+                    if member.is_dir():
+                        continue
+                    zf.extract(member, project_root)
                 
             return Response({'message': 'Code source restauré avec succès. Redémarrez le serveur pour appliquer les changements.'})
         except Exception as e:

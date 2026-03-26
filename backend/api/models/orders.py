@@ -111,6 +111,7 @@ class CommandeProduit(models.Model):
     price = models.DecimalField(max_digits=10, decimal_places=2)
     price_cost = models.DecimalField(max_digits=10, decimal_places=2)
     lot = models.CharField(max_length=20, blank=True, null=True)
+    tva = models.DecimalField(max_digits=5, decimal_places=2, default=0.00)
     selling_price = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
     date_expiration = models.DateField(blank=True, null=True)
     created_at = models.DateTimeField(default=timezone.now)

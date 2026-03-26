@@ -6,7 +6,7 @@ from decimal import Decimal
 from django.db import transaction
 from django_filters.rest_framework import DjangoFilterBackend
 
-from ...models import Commande, CommandeProduit, StockLot
+from ...models import Commande, CommandeProduit, StockLot, Produit
 from ...serializers import CommandeProduitSerializer
 import logging
 
@@ -59,79 +59,114 @@ class CommandeProduitViewSet(viewsets.ModelViewSet):
         except Commande.DoesNotExist:
             return Response({'error': 'Commande introuvable'}, status=status.HTTP_404_NOT_FOUND)
         
-        # Get existing product IDs for this order
-        existing_items = {cp.id: cp for cp in commande.produits.all()}
-        existing_ids = set(existing_items.keys())
+        from django.db.models import ProtectedError
         
-        # Track which IDs are in the new payload
+        logger.info(f"[BULK_SYNC] Called for commande_id={commande_id}, {len(produits_data)} produits in payload")
+        
+        # Track which IDs are in the new payload to identify what to delete
         payload_ids = set()
-        # Group and merge incoming data by (produit_id, lot)
-        merged_data = {}
-        for p in produits_data:
-            produit_id = p.get('produit')
-            lot = p.get('lot') or None
-            key = (produit_id, lot)
-            
-            if key not in merged_data:
-                merged_data[key] = {
-                    'id': p.get('id'),
-                    'produit_id': produit_id,
-                    'quantity': int(p.get('quantity', 0)),
-                    'unites_gratuites': int(p.get('unites_gratuites', 0)),
-                    'price': Decimal(str(p.get('price', 0))),
-                    'price_cost': Decimal(str(p.get('price_cost', p.get('price', 0)))),
-                    'selling_price': Decimal(str(p.get('selling_price', 0))) if p.get('selling_price') else Decimal('0'),
-                    'prix_euro': Decimal(str(p.get('prix_euro'))) if p.get('prix_euro') else None,
-                    'lot': lot,
-                    'date_expiration': p.get('date_expiration') or None,
-                }
-            else:
-                # Merge: accumulate quantities
-                merged_data[key]['quantity'] += int(p.get('quantity', 0))
-                merged_data[key]['unites_gratuites'] += int(p.get('unites_gratuites', 0))
-                # Keep existing ID if we already had one (prefer keeping the record)
-                if not merged_data[key]['id'] and p.get('id'):
-                    merged_data[key]['id'] = p.get('id')
         
         items_to_create = []
         items_to_update = []
         
-        for item_data in merged_data.values():
-            item_id = item_data.pop('id', None)
-            
+        # Helper to convert values to Decimal safely
+        def to_decimal(val, default=0):
+            if val is None or val == '' or str(val).strip() == '':
+                return Decimal(str(default))
+            try:
+                return Decimal(str(val))
+            except:
+                return Decimal(str(default))
+
+        # Get product TVAs for fallback
+        product_ids_in_payload = {p.get('produit') for p in produits_data if p.get('produit')}
+        product_tva_map = {p.id: p.tva for p in Produit.objects.filter(id__in=product_ids_in_payload)}
+
+        # Fetch existing items for this order to know what to update vs create
+        existing_qs = CommandeProduit.objects.filter(commande=commande)
+        existing_items = {item.id: item for item in existing_qs}
+        existing_ids = set(existing_items.keys())
+
+        # Process each item in the payload individually (NO MERGING)
+        # Merging existing lines with distinct IDs is dangerous for dependencies.
+        for p in produits_data:
+            item_id = p.get('id')
+            produit_id = p.get('produit')
+            lot = p.get('lot') or None
+
+            data = {
+                'produit_id': produit_id,
+                'quantity': int(p.get('quantity', 0)) if p.get('quantity') else 0,
+                'unites_gratuites': int(p.get('unites_gratuites', 0)) if p.get('unites_gratuites') else 0,
+                'price': to_decimal(p.get('price', 0)),
+                'price_cost': to_decimal(p.get('price_cost', p.get('price', 0))),
+                'selling_price': to_decimal(p.get('selling_price', 0)),
+                'prix_euro': to_decimal(p.get('prix_euro'), None) if p.get('prix_euro') else None,
+                'tva': to_decimal(p.get('tva') if p.get('tva') is not None else product_tva_map.get(produit_id, 19.25)),
+                'lot': lot,
+                'date_expiration': p.get('date_expiration') or None,
+            }
+
             if item_id and item_id in existing_ids:
-                # Update existing item
                 payload_ids.add(item_id)
                 existing_item = existing_items[item_id]
-                for key, value in item_data.items():
+                for key, value in data.items():
                     setattr(existing_item, key, value)
                 items_to_update.append(existing_item)
             else:
                 # Create new item
-                items_to_create.append(CommandeProduit(commande=commande, **item_data))
+                items_to_create.append(CommandeProduit(commande=commande, **data))
         
         # Bulk create new items
         if items_to_create:
-            StockLot.objects.filter(id__in=[]) # Placeholder to avoid issues if needed, but bulk_create is fine
             CommandeProduit.objects.bulk_create(items_to_create, batch_size=100)
         
         # Bulk update existing items
         if items_to_update:
             CommandeProduit.objects.bulk_update(
                 items_to_update,
-                ['quantity', 'unites_gratuites', 'price', 'price_cost', 'selling_price', 
-                 'prix_euro', 'lot', 'date_expiration', 'produit_id'],
+                ['produit_id', 'quantity', 'unites_gratuites', 'price', 'price_cost', 'selling_price', 
+                 'prix_euro', 'tva', 'lot', 'date_expiration'],
                 batch_size=100
             )
+
+        # Synchronisation avec la fiche produit (TVA, Prix, Marge)
+        # On ne sync que les produits présents dans le payload
+        for p_id in product_ids_in_payload:
+            # On prend la dernière ligne de ce produit pour la sync
+            # (Si l'utilisateur a plusieurs lignes identiques, la dernière gagne)
+            latest_p_data = next((p for p in reversed(produits_data) if p.get('produit') == p_id), None)
+            if latest_p_data:
+                Produit.objects.filter(id=p_id).update(
+                    tva=to_decimal(latest_p_data.get('tva'), product_tva_map.get(p_id, 19.25)),
+                    selling_price=to_decimal(latest_p_data.get('selling_price', 0)),
+                    cost_price=to_decimal(latest_p_data.get('price', 0))
+                )
+                p_obj = Produit.objects.get(id=p_id)
+                p_obj.save(update_fields=['taux_marge', 'pourcentage_marge'])
         
-        # Delete items that are no longer in the payload OR were merged away
+        # Delete items that are no longer in the payload
         ids_to_delete = existing_ids - payload_ids
+        deleted_count = 0
         if ids_to_delete:
-            CommandeProduit.objects.filter(id__in=ids_to_delete).delete()
+            try:
+                deleted_count = CommandeProduit.objects.filter(id__in=ids_to_delete).count()
+                CommandeProduit.objects.filter(id__in=ids_to_delete).delete()
+            except ProtectedError as e:
+                # Identification des objets protecteurs pour un message clair
+                protected_elements = []
+                for obj in e.protected_objects:
+                    if hasattr(obj, 'facture'):
+                        protected_elements.append(f"Facture {obj.facture.numero_facture or obj.facture.id}")
+                    else:
+                        protected_elements.append(str(obj))
+                
+                error_msg = "Certains produits ne peuvent pas être retirés car ils sont déjà utilisés dans : " + ", ".join(set(protected_elements))
+                return Response({'error': error_msg}, status=status.HTTP_400_BAD_REQUEST)
         
         return Response({
             'status': 'success',
             'created': len(items_to_create),
             'updated': len(items_to_update),
-            'deleted': len(ids_to_delete)
+            'deleted': deleted_count
         })

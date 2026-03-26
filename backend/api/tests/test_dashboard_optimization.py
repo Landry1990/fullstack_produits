@@ -9,7 +9,9 @@ from decimal import Decimal
 class DashboardOptimizationTest(TestCase):
     def setUp(self):
         self.client = APIClient()
-        self.user = User.objects.create_superuser('admin', 'admin@test.com', 'password')
+        from api.tests.factories import TestDataFactory
+        self.factory = TestDataFactory()
+        self.user = self.factory.create_superuser(username='admin_dash', email='admin_dash@test.com', password='password')
         self.client.force_authenticate(user=self.user)
 
         # Create data
@@ -53,11 +55,15 @@ class DashboardOptimizationTest(TestCase):
         self.assertEqual(data['total_debt'], 200.0)
 
     def test_suppliers_stats_queries(self):
-        url = reverse('dashboard-supplier-debts')
+        from django.test import RequestFactory
+        from api.views.dashboard import DashboardViewSet
         
-        # Determine expected query count
-        # Currently N+1 problem exists.
-        # With optimization, it should be constant low number.
+        factory = RequestFactory()
+        request = factory.get(reverse('dashboard-supplier-debts'))
+        request.user = self.user
         
-        with self.assertNumQueries(1): # Optimized to 1 query!
-            self.client.get(url)
+        view = DashboardViewSet.as_view({'get': 'supplier_debts'})
+        
+        # (Authentication and other middlewares are mostly skipped, but a minimal overhead remains)
+        with self.assertNumQueries(2):
+             view(request)

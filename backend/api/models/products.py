@@ -136,7 +136,7 @@ class Produit(models.Model):
     stock_alert = models.IntegerField(default=0)
     stock_minimum = models.IntegerField(default=0)
     stock_maximum = models.IntegerField(default=0)
-    tva = models.DecimalField(max_digits=5, decimal_places=2, default=19.25)
+    tva = models.DecimalField(max_digits=5, decimal_places=2, default=0.00)
     rotation_moyenne = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
     taux_marge = models.DecimalField(max_digits=10, decimal_places=2, default=0.00, editable=False)
     pourcentage_marge = models.DecimalField(max_digits=10, decimal_places=2, default=0.00, editable=False)

@@ -46,6 +46,7 @@
         "view_pending_tooltip": "View pending sales (F8)",
         "proforma": "Proforma",
         "proforma_tooltip": "Generate proforma invoice / Quote (F10)",
+        "delivery_note": "Delivery Note",
         "pay": "Validate",
         "pay_tooltip": "Validate sale (Ctrl+Enter)",
         "retrocession_mode": "Retrocession",
@@ -90,7 +91,12 @@
             "existing_button": "Select",
             "new_tooltip": "Enter new beneficiary",
             "select_existing_tooltip": "Select existing beneficiary"
-        }
+        },
+        "solde_depot_label": "Deposit Balance",
+        "insufficient_deposit_warning": "Warning: Sale amount exceeds client's deposit balance ({{solde}} F).",
+        "deposit_reminder": "Reminder: This client has a deposit of {{solde}} F.",
+        "points_balance": "{{points}} pts",
+        "pending_reward": "Earned {{discount}}% discount!"
     },
     "payment": {
         "modal_title": "Payment",
@@ -110,7 +116,10 @@
         "add_btn": "Add",
         "sudo_mode": {
             "validate_by": "Validated by",
-            "password": "Password (Sudo)"
+            "password": "Password (Sudo)",
+            "confirm_qty": "Confirm quantity <strong>{{qty}}</strong> for product <strong>{{name}}</strong>?",
+            "confirm_price": "Confirm price change from <strong>{{oldPrice}}</strong> to <strong>{{newPrice}}</strong> for <strong>{{name}}</strong>?",
+            "confirm_discount": "Confirm <strong>{{discount}}%</strong> discount on product <strong>{{name}}</strong>?"
         },
         "sudo_self": "(Myself)",
         "password_placeholder": "Validator password...",
@@ -147,7 +156,8 @@
         "scan_added": "Product added: {{name}}",
         "pack_empty": "This pack contains no items.",
         "adding_pack": "Adding pack items...",
-        "pack_items_error": "Failed to retrieve some items from the pack."
+        "pack_items_error": "Failed to retrieve some items from the pack.",
+        "reward_reminder": "Loyalty: This client has a {{discount}}% discount available for this sale."
     },
     "modification_mode": {
         "title": "Invoice Modification Mode",
@@ -157,5 +167,42 @@
         "to_collect": "to collect",
         "to_refund": "to refund",
         "cancelled": "Modification cancelled"
+    },
+    "common": {
+        "receipt": "Cash Receipt",
+        "close": "Close",
+        "print": "Print",
+        "pay": "Validate"
+    },
+    "ticket": {
+        "loyalty_points": "Loyalty Points Balance: {{points}} pts",
+        "remaining_deposit": "Remaining Deposit Balance: {{amount}} F"
+    },
+    "sale_recorded": "Sale registered successfully",
+    "invoice": "Invoice",
+    "create_client": {
+        "title": "Create New Client",
+        "individual": "Individual",
+        "professional": "Professional",
+        "name": "Full Name",
+        "phone": "Phone",
+        "email": "Email",
+        "address": "Address",
+        "cancel": "Cancel",
+        "submit": "Create Client"
+    },
+    "stock_resolution": {
+        "title": "Stock Resolution",
+        "message": "Some requested items exceed available stock. How do you want to proceed?",
+        "cancel_and_edit_cart": "Cancel and edit cart",
+        "validate_and_cash": "Validate and Cash (Term Sale)",
+        "demand": "Requested",
+        "stock": "In Stock",
+        "missing": "Missing",
+        "promised": "Promised",
+        "client_name": "Client Name",
+        "optional": "(Optional)",
+        "client_phone_for_promised_ticket": "Phone for promised items follow-up",
+        "phone_number_placeholder": "Phone number..."
     }
 }

@@ -1,4 +1,4 @@
-﻿import React, { useState, useRef, useEffect } from 'react'
+import React, { useState, useRef, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { Client, AyantDroit } from '../../types'
 
@@ -252,6 +252,38 @@ export default function ClientSection({
                   </button>
                 </div>
               )}
+            </div>
+          )}
+          {selectedClient && selectedClientData && selectedClientData.client_type === 'PARTICULIER' && (selectedClientData.is_deposit_enabled || parseFloat(selectedClientData.solde_depot || '0') > 0) && (
+            <div className="mt-2 px-3 py-1.5 bg-primary/10 rounded-lg flex justify-between items-center animate-in fade-in slide-in-from-top-1 duration-200">
+              <span className="text-[10px] font-bold text-primary uppercase tracking-wider">{t('facturation:client.solde_depot_label')}</span>
+              <span className="text-sm font-bold text-primary">{parseFloat(selectedClientData.solde_depot || '0')} F</span>
+            </div>
+          )}
+
+          {/* Points de Fidélité */}
+          {selectedClient && selectedClientData && selectedClientData.is_loyalty_member && (
+            <div className="mt-2 px-3 py-1.5 bg-secondary/10 rounded-lg flex justify-between items-center animate-in fade-in slide-in-from-top-1 duration-200">
+              <span className="text-[10px] font-bold text-secondary uppercase tracking-wider">{t('facturation:client.label')} Fidélité</span>
+              <span className="text-sm font-bold text-secondary">{t('facturation:client.points_balance', { points: selectedClientData.points_fidelite || 0 })}</span>
+            </div>
+          )}
+
+          {/* Récompense disponible */}
+          {selectedClient && selectedClientData && parseFloat(selectedClientData.pending_discount || '0') > 0 && (
+            <div className="mt-2 px-3 py-1.5 bg-accent/10 rounded-lg border border-accent/20 flex flex-col gap-1 animate-in zoom-in-95 duration-300">
+              <div className="flex justify-between items-center">
+                <span className="text-[10px] font-bold text-accent-content uppercase tracking-wider flex items-center gap-1">
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-3 h-3">
+                    <path fillRule="evenodd" d="M10.868 2.884c-.321-.772-1.415-.772-1.736 0l-1.83 4.401-4.753.381c-.833.067-1.171 1.107-.536 1.651l3.62 3.102-1.106 4.637c-.194.813.691 1.456 1.405 1.02L10 15.591l4.069 2.485c.713.436 1.598-.207 1.404-1.02l-1.106-4.637 3.62-3.102c.635-.544.297-1.584-.536-1.65l-4.752-.382-1.831-4.401Z" clipRule="evenodd" />
+                  </svg>
+                  Récompense
+                </span>
+                <span className="badge badge-accent badge-sm font-bold">-{selectedClientData.pending_discount}%</span>
+              </div>
+              <div className="text-[10px] text-accent-content/70 italic">
+                {t('facturation:client.pending_reward', { discount: selectedClientData.pending_discount })}
+              </div>
             </div>
           )}
         </div>

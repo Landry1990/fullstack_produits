@@ -7,17 +7,23 @@
         "historique": "Daily History",
         "journal": "Cash Journal",
         "clotures": "Closing History",
-        "ordonnancier": "Prescriptions",
+        "ordonnancier": "Prescription Book",
         "promotions": "Promotions",
         "caisse_centralisee": "Centralized Register"
     },
-    "produits": "Products",
     "facturation": "Invoicing",
-    "vitrine": "Web Storefront",
+    "produits": "Products",
+    "vitrine": "My Storefront (Web)",
     "commandes": {
         "title": "Orders",
         "local_title": "Wholesale Orders (Local)",
-        "direct_title": "Direct Orders (Foreign)",
+        "direct_title": "Direct Orders (Overseas)",
+        "new_current": "New / In Progress",
+        "history": "Purchase History"
+    },
+    "commande": {
+        "local_title": "Wholesale Orders (Local)",
+        "direct_title": "Direct Orders (Overseas)",
         "new_current": "New / In Progress",
         "history": "Purchase History"
     },
@@ -26,7 +32,7 @@
         "list": "List & Contacts",
         "finance": "Finance & Payments"
     },
-    "clients": "Customers",
+    "clients": "Clients",
     "creances": "Debts",
     "stock": {
         "title": "Stock",
@@ -38,10 +44,10 @@
             "title": "Stock Analysis"
         },
         "reappro": {
-            "title": "Shelf Replenishment"
+            "title": "Shelf Restocking"
         },
         "ruptures": {
-            "title": "Out of Stock Tracking"
+            "title": "Shortage Tracking"
         },
         "avoirs": "Claims",
         "promis": "Promised",
@@ -65,23 +71,23 @@
         }
     },
     "utilisateurs": "Users",
-    "user_sessions_sidebar": "Attendance Tracking",
+    "user_sessions_sidebar": "Presence Tracking",
     "audit": "Audit Log",
     "statistiques": {
         "title": "Statistics",
         "rapports": "Report Center",
         "abc": "ABC Analysis",
         "produits": "Products",
-        "fournisseurs": "Supplier Statistics",
+        "fournisseurs": "Supplier Stats",
         "mensuel": "Monthly Report",
         "finances": "Financial Module",
         "classement_vendeurs": "Seller Ranking",
-        "analyse_temporelle": "Temporal Analysis",
+        "analyse_temporelle": "Time Analysis",
         "guide": "Financial Guide 📖"
     },
     "parametres": {
         "title": "Settings",
-        "facture": "Invoice Configuration",
+        "facture": "Invoice Settings",
         "pharmacie": "Pharmacy Information",
         "whatsapp": "WhatsApp History",
         "etiquettes": "Label Templates",

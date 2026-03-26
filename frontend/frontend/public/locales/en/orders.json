@@ -153,7 +153,8 @@
             "indicators": "Indicators",
             "stock_out": "Out of stock",
             "stock_life": "Current stock lifespan",
-            "rotation_unknown": "Unknown rotation"
+            "rotation_unknown": "Unknown rotation",
+            "margin_value": "Margin Amount"
         }
     },
     "messages": {
@@ -186,7 +187,9 @@
         "confirm_sudo_cancel": "Cancel",
         "merge_select_two": "Please select exactly two orders to merge",
         "create_new_product": "Do you want to create a new product?",
-        "validation_required": "Validation required"
+        "validation_required": "Validation required",
+        "no_deletable_orders": "None of the selected orders can be deleted (they may be closed).",
+        "some_orders_closed_warning": "Some closed orders were ignored during deletion."
     },
     "history": {
         "title": "Purchase History",
@@ -241,7 +244,15 @@
         "table_total_ht": "Total HT",
         "table_priority": "Priority",
         "critical_badge": "CRITICAL",
-        "standard_badge": "STANDARD"
+        "standard_badge": "STANDARD",
+        "exclusive_badge": "EXCLUSIVE",
+        "promis_badge": "PROMISED ×{{count}}",
+        "rupture_badge": "SUPPLIER STOCKOUT",
+        "mode_hourly_title": "Sales by time range",
+        "mode_hourly_desc": "Order products sold during a specific date/time range",
+        "hourly_range_label": "Sales time range",
+        "date_from": "From",
+        "date_to": "To"
     }
 }
 

@@ -142,9 +142,14 @@ class CommandeViewSet(MultiTermSearchMixin, OptimizedSerializerMixin, viewsets.M
         Supprime plusieurs commandes en une seule requête.
         Seules les commandes EN_PREPARATION ou EN_ATTENTE peuvent être supprimées.
         """
+        import logging
+        logger = logging.getLogger(__name__)
+
         ids = request.data.get('ids', [])
         if not ids:
             return Response({'detail': 'Aucun ID fourni.'}, status=status.HTTP_400_BAD_REQUEST)
+        
+        logger.info(f"Bulk delete requested for IDs: {ids}")
         
         # Validation Sudo (Optionnelle, selon la politique)
         # validation_user, error_res = validate_sudo_mode(request, permission_attr='can_delete_commande')
@@ -156,19 +161,40 @@ class CommandeViewSet(MultiTermSearchMixin, OptimizedSerializerMixin, viewsets.M
         deletable = commandes.exclude(status=Commande.Status.CLOTUREE)
         total_deletable = deletable.count()
         
+        if total_found > 0 and total_deletable == 0:
+            logger.warning(f"Bulk delete failed: {total_found} orders found but all are closed.")
+            return Response({
+                'detail': 'Les commandes sélectionnées sont déjà clôturées et ne peuvent pas être supprimées.'
+            }, status=status.HTTP_400_BAD_REQUEST)
+            
         if total_deletable == 0:
-            return Response({'detail': 'Aucune commande supprimable trouvée (elles sont peut-être clôturées).'}, status=status.HTTP_400_BAD_REQUEST)
+             return Response({'detail': 'Aucune commande supprimable trouvée (elles sont peut-être introuvables ou déjà supprimées).'}, status=status.HTTP_400_BAD_REQUEST)
 
         deleted_ids = list(deletable.values_list('id', flat=True))
         
         try:
             # On laisse le cascade delete ou ProtectedError faire son travail
+            logger.info(f"Deleting {total_deletable} orders: {deleted_ids}")
             deletable.delete()
-        except ProtectedError:
+        except ProtectedError as e:
+            logger.error(f"ProtectedError during bulk delete: {str(e)}")
+            # Extraire les objets qui empêchent la suppression (ex: FactureProduitAllocation)
+            protected_list = list(e.protected_objects)
+            descriptions = []
+            for obj in protected_list[:3]: # Limiter à 3 pour la lisibilité
+                descriptions.append(str(obj))
+            
+            error_detail = "Certaines commandes ne peuvent pas être supprimées car des produits ont déjà été vendus ou alloués."
+            if descriptions:
+                error_detail += f" Éléments bloquants : {', '.join(descriptions)}"
+                if len(protected_list) > 3:
+                    error_detail += " ..."
+                    
             return Response({
-                'detail': 'Certaines commandes ne peuvent pas être supprimées car elles contiennent des lots déjà utilisés ou vendus.'
+                'detail': error_detail
             }, status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
+             logger.exception(f"Unexpected error during bulk delete: {str(e)}")
              transaction.set_rollback(True)
              return Response({'detail': f'Erreur lors de la suppression : {str(e)}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 

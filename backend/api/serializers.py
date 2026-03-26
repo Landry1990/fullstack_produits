@@ -124,11 +124,20 @@ class UserSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ['id', 'username', 'email', 'first_name', 'last_name', 'is_superuser', 'password', 'profile']
+        fields = ['id', 'username', 'email', 'first_name', 'last_name', 'is_superuser', 'is_active', 'password', 'profile']
+        read_only_fields = ['is_superuser']
 
     def create(self, validated_data):
         profile_data = validated_data.pop('profile', {})
-        password = validated_data.pop('password')
+        password = validated_data.pop('password', None)
+        if not password:
+            raise serializers.ValidationError({'password': 'Ce champ est obligatoire.'})
+
+        request = self.context.get('request')
+        if not (request and request.user and request.user.is_superuser):
+            validated_data.pop('is_superuser', None)
+            validated_data.pop('is_staff', None)
+
         user = User(**validated_data)
         user.set_password(password)
         user.save()
@@ -159,11 +168,17 @@ class UserSerializer(serializers.ModelSerializer):
     def update(self, instance, validated_data):
         profile_data = validated_data.pop('profile', {})
         password = validated_data.pop('password', None)
+
+        request = self.context.get('request')
+        if not (request and request.user and request.user.is_superuser):
+            validated_data.pop('is_superuser', None)
+            validated_data.pop('is_staff', None)
         
         instance.username = validated_data.get('username', instance.username)
         instance.email = validated_data.get('email', instance.email)
         instance.first_name = validated_data.get('first_name', instance.first_name)
         instance.last_name = validated_data.get('last_name', instance.last_name)
+        instance.is_active = validated_data.get('is_active', instance.is_active)
         
         if password:
             instance.set_password(password)
@@ -628,13 +643,14 @@ class CaisseSerializer(serializers.ModelSerializer):
     total_lettres = serializers.SerializerMethodField()
 
     client_solde_depot = serializers.SerializerMethodField()
+    client_points_fidelite = serializers.SerializerMethodField()
 
     class Meta:
         model = Caisse
         fields = [
             'id', 'facture', 'facture_numero', 'mode_paiement', 'mode_paiement_display',
             'montant', 'reference', 'statut', 'date_paiement', 'user', 'user_details',
-            'client_name', 'client_type', 'client_solde_depot', 'is_creance_settlement', 'releve_reference', 
+            'client_name', 'client_type', 'client_solde_depot', 'client_points_fidelite', 'is_creance_settlement', 'releve_reference', 
             'releve_id', 'facture_created_by_name', 'facture_validated_by_name',
             'total_lettres'
         ]
@@ -647,6 +663,14 @@ class CaisseSerializer(serializers.ModelSerializer):
         except AttributeError:
             pass
         return None
+    
+    def get_client_points_fidelite(self, obj):
+        try:
+            if obj.facture and obj.facture.client:
+                return obj.facture.client.points_fidelite
+        except AttributeError:
+            pass
+        return 0
     
     def get_user_details(self, obj):
         if obj.user:
@@ -710,6 +734,7 @@ class FactureSerializer(serializers.ModelSerializer):
     client_nom = serializers.SerializerMethodField()
     client_solde_depot = serializers.SerializerMethodField()
     client_type = serializers.CharField(source='client.client_type', read_only=True)
+    client_points_fidelite = serializers.SerializerMethodField()
     client_is_deposit_enabled = serializers.BooleanField(source='client.is_deposit_enabled', read_only=True)
     produits = FactureProduitSerializer(many=True, read_only=True)
     ayant_droit_details = AyantDroitSerializer(source='ayant_droit', read_only=True)
@@ -747,6 +772,11 @@ class FactureSerializer(serializers.ModelSerializer):
             # We use solde_depot which is on the client model
             return str(obj.client.solde_depot)
         return "0.00"
+    
+    def get_client_points_fidelite(self, obj):
+        if obj.client:
+            return obj.client.points_fidelite
+        return 0
     
     def get_validated_by_name(self, obj):
         if obj.validated_by:
@@ -798,7 +828,7 @@ class FactureSerializer(serializers.ModelSerializer):
         model = Facture
         fields = [
             'id', 'numero_facture', 'client', 'client_name', 'client_nom', 'client_name_override', 
-            'client_solde_depot', 'client_type', 'client_is_deposit_enabled',
+            'client_solde_depot', 'client_points_fidelite', 'client_type', 'client_is_deposit_enabled',
             'ayant_droit', 'ayant_droit_details',
             'date', 'date_document', 'status', 'status_display', 'produits', 
             'total_ht', 'remise', 'tva', 'total_tva', 'total_ttc', 'notes',
@@ -869,15 +899,15 @@ class CreanceSerializer(serializers.ModelSerializer):
     total_ttc = serializers.DecimalField(max_digits=10, decimal_places=2, read_only=True)
     montant_paye = serializers.SerializerMethodField()
     reste_a_payer = serializers.SerializerMethodField()
-    paiements = CaisseSerializer(many=True, read_only=True)
+    _paiements = CaisseSerializer(many=True, read_only=True, source='paiements')
     
     class Meta:
         model = Facture
         fields = [
-            'id', 'numero_facture', 'client', 'client_name', 'client_name_override',
-            'ayant_droit', 'ayant_droit_details', 'date', 'status', 'status_display',
+            'numero_facture', 'client_name', 
+            'ayant_droit_details', 'date', 'status_display',
             'total_ht', 'remise', 'tva', 'total_tva', 'total_ttc',
-            'montant_paye', 'reste_a_payer', 'paiements', 'notes'
+            'montant_paye', 'reste_a_payer', '_paiements', 'notes'
         ]
     
     def get_client_name(self, obj):

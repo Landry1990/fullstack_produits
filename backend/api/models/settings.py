@@ -40,7 +40,7 @@ class LoyaltySetting(models.Model):
 
 class PharmacySettings(models.Model):
     """Configuration de la pharmacie (Singleton) - Nom, Adresse, Téléphone, etc."""
-    pharmacy_name = models.CharField(max_length=200, default="PHARMA STOCK")
+    pharmacy_name = models.CharField(max_length=200, default="ZENITH")
     address = models.CharField(max_length=300, blank=True, default="")
     city = models.CharField(max_length=100, blank=True, default="Douala")
     country = models.CharField(max_length=100, blank=True, default="Cameroun")

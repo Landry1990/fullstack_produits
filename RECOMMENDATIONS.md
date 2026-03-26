@@ -1,4 +1,4 @@
-# 📋 Recommandations d'Amélioration - Pharma Stock
+# 📋 Recommandations d'Amélioration - ZENITH
 
 > Date d'analyse : 12 Décembre 2025  
 > Contexte : Application de gestion pharmaceutique (Django + React/TypeScript)
@@ -248,7 +248,7 @@
 
 ## 💡 Conclusion
 
-Le projet **Pharma Stock** est déjà fonctionnel et démontre une bonne compréhension du métier pharmaceutique. Les recommandations ci-dessus visent à le rendre **production-ready** et **maintenable à long terme**.
+Le projet **ZENITH** est déjà fonctionnel et démontre une bonne compréhension du métier pharmaceutique. Les recommandations ci-dessus visent à le rendre **production-ready** et **maintenable à long terme**.
 
 **Prochaine étape suggérée** : Commencer par la Phase 1 (Sécurité) car c'est la base pour un déploiement en production.
 

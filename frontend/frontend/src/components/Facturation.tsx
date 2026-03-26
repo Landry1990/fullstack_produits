@@ -1,4 +1,3 @@
-﻿import React from 'react'
 import { Eye, EyeOff, Moon, Sun } from 'lucide-react'
 import { formatCurrency } from '../utils/formatters'
 import PaymentModal from './facturation/PaymentModal'
@@ -151,7 +150,7 @@ export default function Facturation() {
             searchLoading={hook.productSearch.loading}
             filteredProduits={hook.productSearch.produits}
             addProduitToFacture={(p) => hook.cart.addProduit(p, { isRetrocession: hook.isRetrocession })}
-            addPackToFacture={hook.cart.addPackToFacture}
+            addPackToFacture={hook.addPackToFacture}
             searchInputRef={hook.searchInputRef}
             placeholder={hook.t('facturation:search.placeholder')}
             onQuantityShortcut={hook.handleQuantityShortcut}
@@ -252,6 +251,7 @@ export default function Facturation() {
           paiements={hook.ui.paiements}
           setPaiements={hook.ui.setPaiements}
           onCompleteSale={hook.handleCompleteSale}
+          clientSoldeDepot={hook.clientsHook.selectedClientData?.solde_depot}
           onRegisterPayment={async () => {
              if (hook.ui.facturePourPaiement) {
                  await hook.completeExistingInvoicePayment({
@@ -404,3 +404,4 @@ export default function Facturation() {
     </div>
   )
 }
+

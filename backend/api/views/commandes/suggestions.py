@@ -2,9 +2,9 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from django.utils import timezone
-from datetime import timedelta
+from datetime import timedelta, datetime
 
-from ...models import Produit, Facture
+from ...models import Produit, Facture, FactureProduit
 
 
 @api_view(['POST'])
@@ -26,7 +26,17 @@ def generer_suggestions_commande(request):
         except (ValueError, TypeError):
             budget_max = None
     
-    if mode == 'simple':
+    if mode == 'ventes_horaire':
+        date_debut = request.data.get('date_debut')
+        date_fin = request.data.get('date_fin')
+        if not date_debut or not date_fin:
+            return Response({'error': 'date_debut et date_fin sont requis pour le mode ventes_horaire'}, status=400)
+        suggestions, total_ht = calculer_ventes_tranche_horaire(
+            date_debut=date_debut,
+            date_fin=date_fin,
+            fournisseur_id=fournisseur_id
+        )
+    elif mode == 'simple':
         suggestions, total_ht = calculer_reapprovisionnement_simple(
             periode=periode,
             fournisseur_id=fournisseur_id,
@@ -38,6 +48,31 @@ def generer_suggestions_commande(request):
             fournisseur_id=fournisseur_id,
             budget_max=budget_max
         )
+    
+    # ── Enrichir avec indicateurs Promis & Rupture Fournisseur ──
+    if suggestions:
+        from django.db.models import Sum, Q
+        from api.models import Promis, RuptureFournisseur
+        
+        produit_ids = [s['produit_id'] for s in suggestions]
+        
+        # Promis en attente: agrège quantité par produit
+        promis_qs = Promis.objects.filter(
+            produit_id__in=produit_ids,
+            status=Promis.Status.EN_ATTENTE
+        ).values('produit_id').annotate(total_promis=Sum('quantite'))
+        promis_map = {p['produit_id']: p['total_promis'] for p in promis_qs}
+        
+        # Ruptures fournisseur actives
+        rupture_ids = set(RuptureFournisseur.objects.filter(
+            produit_id__in=produit_ids,
+            est_resolu=False
+        ).values_list('produit_id', flat=True))
+        
+        for s in suggestions:
+            pid = s['produit_id']
+            s['promis_count'] = promis_map.get(pid, 0)
+            s['en_rupture_fournisseur'] = pid in rupture_ids
     
     return Response({
         'mode': mode,
@@ -337,5 +372,101 @@ def calculer_optimisation_intelligente(periode, fournisseur_id=None, budget_max=
         return filtered_suggestions, round(cumul_ht, 2)
     
     # Calculer le total HT
+    total_ht = sum(item['montant_ht'] for item in suggestions)
+    return suggestions, round(total_ht, 2)
+
+
+def calculer_ventes_tranche_horaire(date_debut, date_fin, fournisseur_id=None):
+    """
+    Génère des suggestions basées sur les produits vendus pendant une tranche horaire.
+    Agrège les quantités vendues par produit sur la plage [date_debut, date_fin].
+    """
+    from django.db.models import Sum, Q
+    from django.utils.dateparse import parse_datetime
+    
+    # Parser les dates ISO
+    dt_debut = parse_datetime(date_debut)
+    dt_fin = parse_datetime(date_fin)
+    
+    if not dt_debut or not dt_fin:
+        return [], 0
+    
+    # Si les dates sont naïves, les rendre aware
+    if timezone.is_naive(dt_debut):
+        dt_debut = timezone.make_aware(dt_debut)
+    if timezone.is_naive(dt_fin):
+        dt_fin = timezone.make_aware(dt_fin)
+    
+    # Filtrer les lignes de facture dans la plage horaire
+    qs = FactureProduit.objects.filter(
+        facture__date__gte=dt_debut,
+        facture__date__lte=dt_fin,
+        facture__status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE],
+        produit__isnull=False
+    )
+    
+    # Filtrer par fournisseur si demandé
+    fournisseur_obj = None
+    if fournisseur_id:
+        from api.models import Fournisseur, StockLot
+        fournisseur_obj = Fournisseur.objects.filter(id=fournisseur_id).first()
+        lots_produit_ids = set(StockLot.objects.filter(fournisseur_id=fournisseur_id).values_list('produit_id', flat=True))
+        qs = qs.filter(
+            Q(produit__fournisseur_id=fournisseur_id) | Q(produit_id__in=lots_produit_ids)
+        )
+    
+    # Agréger les quantités par produit
+    ventes = qs.values('produit_id').annotate(
+        total_vendu=Sum('quantity')
+    ).order_by('-total_vendu')
+    
+    # Récupérer les objets Produit en une seule requête
+    produit_ids = [v['produit_id'] for v in ventes]
+    produits_map = {p.id: p for p in Produit.objects.filter(id__in=produit_ids).select_related('fournisseur')}
+    
+    suggestions = []
+    
+    for vente in ventes:
+        produit = produits_map.get(vente['produit_id'])
+        if not produit:
+            continue
+        
+        qte_vendue = vente['total_vendu'] or 0
+        if qte_vendue <= 0:
+            continue
+        
+        stock_actuel = produit.stock or 0
+        prix_achat = float(produit.cost_price or 0)
+        montant_ht = prix_achat * qte_vendue
+        
+        raison = f"Vendu: {qte_vendue} unités ({dt_debut.strftime('%d/%m %H:%M')} → {dt_fin.strftime('%d/%m %H:%M')})"
+        if stock_actuel <= 0:
+            raison += " (RUPTURE)"
+        elif stock_actuel < qte_vendue:
+            raison += f" | Stock restant: {stock_actuel}"
+        
+        suggestions.append({
+            'produit_id': produit.id,
+            'produit_nom': produit.name,
+            'produit_ref': produit.cip1 or '',
+            'fournisseur_id': fournisseur_obj.id if fournisseur_obj else (produit.fournisseur.id if produit.fournisseur else None),
+            'fournisseur_nom': fournisseur_obj.name if fournisseur_obj else (produit.fournisseur.name if produit.fournisseur else 'N/A'),
+            'stock_actuel': stock_actuel,
+            'ventes_periode': qte_vendue,
+            'quantite_suggeree': qte_vendue,
+            'prix_achat': prix_achat,
+            'montant_ht': montant_ht,
+            'prix_vente': float(produit.selling_price or 0),
+            'tva': str(produit.tva or '0'),
+            'taux_marge': str(produit.taux_marge or '1.3'),
+            'rotation': 'N/A',
+            'tendance': 'N/A',
+            'urgence': 'urgent' if stock_actuel <= 0 else 'normal',
+            'couverture_jours': 0,
+            'is_supplier_exclusive': produit.is_supplier_exclusive,
+            'exclusive_fournisseur_nom': produit.fournisseur.name if (produit.is_supplier_exclusive and produit.fournisseur) else None,
+            'raison': raison
+        })
+    
     total_ht = sum(item['montant_ht'] for item in suggestions)
     return suggestions, round(total_ht, 2)

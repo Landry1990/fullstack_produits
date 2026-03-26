@@ -1,4 +1,4 @@
-﻿import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import axios from 'axios';
 import { useAuth } from '../../context/AuthContext';
@@ -56,7 +56,7 @@ export default function SudoValidationModal({
         try {
             setLoadingUsers(true);
             const apiBaseUrl = import.meta.env.VITE_API_BASE_URL ?? '';
-            const res = await axios.get(`${String(apiBaseUrl).replace(/\/$/, '')}/api/users/`);
+            const res = await axios.get(`${String(apiBaseUrl).replace(/\/$/, '')}/api/users/operators/`);
             const userList = res.data.results || res.data;
             setUsers(userList);
 
@@ -97,7 +97,7 @@ export default function SudoValidationModal({
         >
             <div className="p-6 space-y-5">
                 {message && (
-                    <p className="text-sm text-base-content/80" dangerouslySetInnerHTML={{ __html: message }}></p>
+                    <p className="text-sm text-base-content/80 whitespace-pre-wrap">{message}</p>
                 )}
 
                 <div>

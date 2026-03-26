@@ -1,4 +1,4 @@
-# 🔒 Audit de Sécurité - Pharma Stock
+# 🔒 Audit de Sécurité - ZENITH
 
 **Date**: 17 Décembre 2025  
 **Projet**: Gestion Pharmaceutique (Django + React/TypeScript)

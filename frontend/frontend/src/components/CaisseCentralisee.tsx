@@ -1,4 +1,4 @@
-﻿import { useState, useEffect, useCallback, useMemo } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import { useNavigate } from 'react-router-dom'
 import axios from 'axios'
@@ -808,111 +808,88 @@ export default function CaisseCentralisee() {
                   if (!ticketElement) return;
                   
                   const ticketWidth = pharmacySettings.ticket_paper_width || 80;
-                  const clonedElement = ticketElement.cloneNode(true) as HTMLElement;
-                  const content = clonedElement.outerHTML;
+                  const content = ticketElement.outerHTML;
+                  const styleTags = Array.from(document.querySelectorAll('style, link[rel="stylesheet"]'))
+                    .map(node => node.outerHTML)
+                    .join('\n');
                   
-                  const win = window.open('', '', 'height=600,width=400');
+                  const win = window.open('', '', 'height=800,width=600');
                   if (win && content) {
                     win.document.write(`<!DOCTYPE html>
 <html>
 <head>
   <title>Ticket de Caisse</title>
+  <base href="${window.location.origin}/">
+  ${styleTags}
   <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
     @media print {
       @page { 
         size: ${ticketWidth}mm auto; 
         margin: 0; 
       }
-      body { 
-        margin: 0; 
-        padding: 0; 
-      }
-      #ticket-print {
+      html, body { 
         width: ${ticketWidth}mm !important;
-        max-width: ${ticketWidth}mm !important;
-        min-width: ${ticketWidth}mm !important;
-        margin: 0 auto;
+        margin: 0 !important; 
+        padding: 0 !important; 
+        background: white !important;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
       }
     }
-    body {
-      margin: 0;
-      padding: 0;
-      background: white;
-      font-family: 'Courier New', monospace;
-    }
-    #ticket-print {
+    html, body {
       width: ${ticketWidth}mm;
       max-width: ${ticketWidth}mm;
-      min-width: ${ticketWidth}mm;
       margin: 0 auto;
-      padding: 1rem;
+      padding: 0;
+      background: white;
+      font-family: 'Inter', 'Poppins', sans-serif;
+      overflow: hidden;
+    }
+    #print-root {
+      width: ${ticketWidth}mm;
+      max-width: ${ticketWidth}mm;
+      overflow: hidden;
+    }
+    #ticket-preview {
+      width: ${ticketWidth}mm !important;
+      max-width: ${ticketWidth}mm !important;
+      min-width: 0 !important;
+      margin: 0 !important;
+      padding: 2mm !important;
       background: white;
       color: black;
-      font-family: 'Courier New', monospace;
-      font-size: 11px;
-      line-height: 1.4;
+      box-shadow: none !important;
+      outline: none !important;
+      overflow: hidden;
+      word-break: break-word;
+      overflow-wrap: break-word;
     }
-    /* Preserve Tailwind-like classes */
-    .text-center { text-align: center; }
-    .text-right { text-align: right; }
-    .font-bold { font-weight: bold; }
-    .font-semibold { font-weight: 600; }
-    .font-black { font-weight: 900; }
-    .uppercase { text-transform: uppercase; }
-    .border-b { border-bottom: 1px solid black; }
-    .border-b-2 { border-bottom: 2px solid black; }
-    .border-t { border-top: 1px solid black; }
-    .border-y { border-top: 1px solid black; border-bottom: 1px solid black; }
-    .border-y-2 { border-top: 2px solid black; border-bottom: 2px solid black; }
-    .border-dashed { border-style: dashed; }
-    .border-dotted { border-style: dotted; }
-    .border-black { border-color: black; }
-    .flex { display: flex; }
-    .justify-between { justify-content: space-between; }
-    .justify-center { justify-content: center; }
-    .justify-end { justify-content: flex-end; }
-    .items-start { align-items: flex-start; }
-    .space-y-1 > * + * { margin-top: 0.25rem; }
-    .space-y-0\.5 > * + * { margin-top: 0.125rem; }
-    .mb-1 { margin-bottom: 0.25rem; }
-    .mb-2 { margin-bottom: 0.5rem; }
-    .mb-3 { margin-bottom: 0.75rem; }
-    .mb-4 { margin-bottom: 1rem; }
-    .mt-1 { margin-top: 0.25rem; }
-    .mt-2 { margin-top: 0.5rem; }
-    .mt-4 { margin-top: 1rem; }
-    .py-1 { padding-top: 0.25rem; padding-bottom: 0.25rem; }
-    .py-2 { padding-top: 0.5rem; padding-bottom: 0.5rem; }
-    .pb-2 { padding-bottom: 0.5rem; }
-    .pb-3 { padding-bottom: 0.75rem; }
-    .pt-1 { padding-top: 0.25rem; }
-    .pt-2 { padding-top: 0.5rem; }
-    .pr-2 { padding-right: 0.5rem; }
-    .p-4 { padding: 1rem; }
-    .text-xs { font-size: 0.75rem; }
-    .text-\[11px\] { font-size: 11px; }
-    .text-\[10px\] { font-size: 10px; }
-    .text-base { font-size: 1rem; }
-    .text-lg { font-size: 1.125rem; }
-    .leading-relaxed { line-height: 1.625; }
-    .whitespace-nowrap { white-space: nowrap; }
-    .truncate { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-    .max-w-\[50\%\] { max-width: 50%; }
-    .flex-1 { flex: 1 1 0%; }
+    #ticket-preview table { table-layout: fixed; width: 100% !important; }
+    #ticket-preview td, #ticket-preview th { overflow: hidden; text-overflow: ellipsis; }
   </style>
 </head>
 <body>
-  <div id="ticket-print">
+  <div id="print-root">
     ${content}
   </div>
 </body>
 </html>`);
                     win.document.close();
                     win.focus();
-                    setTimeout(() => {
-                      win.print();
-                      win.close();
-                    }, 250);
+                    if (win.document.fonts) {
+                      win.document.fonts.ready.then(() => {
+                        setTimeout(() => {
+                          win.print();
+                          win.close();
+                        }, 300);
+                      });
+                    } else {
+                      setTimeout(() => {
+                        win.print();
+                        win.close();
+                      }, 800);
+                    }
                   }
                 }}
               >
