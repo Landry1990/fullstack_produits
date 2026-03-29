@@ -130,6 +130,21 @@ export const ProductEditModal: React.FC<ProductEditModalProps> = ({
                      }
                   </select>
                </label>
+
+            <div className="pt-4 border-t border-error/10">
+               <label className="form-control w-full">
+                  <div className="label"><span className="label-text font-bold text-error flex items-center gap-2">⚠️ Message d'alerte comptoir (Optionnel)</span></div>
+                  <textarea 
+                    className="textarea textarea-bordered w-full textarea-error bg-error/5 focus:bg-base-100 transition-colors"
+                    placeholder="Ex: Changement de conditionnement, vérifier le code barre..."
+                    value={form.message_alerte || ''}
+                    onChange={(e) => setForm({ ...form, message_alerte: e.target.value })}
+                  />
+                  <div className="label">
+                    <span className="label-text-alt text-error/70">Ce message s'affichera en plein écran lors du passage de ce produit en caisse.</span>
+                  </div>
+               </label>
+            </div>
           </div>
 
           <div className="space-y-4">

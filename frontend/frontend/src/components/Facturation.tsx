@@ -17,6 +17,8 @@ import PremiumModal from './common/PremiumModal'
 import { ClientNameModal } from './sales/modals/ClientNameModal'
 import { StockResolutionHandler } from './facturation/StockResolutionHandler'
 import FacturationNotifications from './facturation/FacturationNotifications'
+import AlertMessageModal from './facturation/AlertMessageModal'
+import DisplayAlertModal from './facturation/DisplayAlertModal'
 
 import { useFacturationState } from '../hooks/useFacturationState'
 
@@ -223,8 +225,6 @@ export default function Facturation() {
             onProforma={hook.handleProforma}
             onBonDeLivraison={hook.handleBonDeLivraison}
             onSuspend={hook.mettreEnAttente}
-            onViewPending={() => hook.setShowPendingSales(true)}
-            pendingCount={hook.ventesEnAttente.length}
             onCancel={hook.annulerVente}
             isValid={hook.lignesFacture.length > 0}
             isRetrocession={hook.isRetrocession}
@@ -392,6 +392,63 @@ export default function Facturation() {
           facture={hook.pendingPrintFacture}
       />
 
+      {/* Shortcut Help Modal (F1) */}
+      <PremiumModal
+        isOpen={hook.showHelp}
+        onClose={() => hook.setShowHelp(false)}
+        title="Raccourcis Clavier - Pharmacie"
+        icon={<span className="text-primary text-xl">⌨️</span>}
+        gradientFrom="primary/10"
+        gradientTo="primary/5"
+      >
+        <div className="p-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-3">
+              <h3 className="font-bold text-primary border-b border-primary/20 pb-1 mb-2">Navigation & Recherche</h3>
+              <div className="flex justify-between items-center text-sm">
+                <span>Recherche Produit</span>
+                <kbd className="kbd kbd-sm font-sans">F2</kbd>
+              </div>
+              <div className="flex justify-between items-center text-sm">
+                <span>Focus Recherche (si non-input)</span>
+                <kbd className="kbd kbd-sm font-sans">/</kbd>
+              </div>
+              <div className="flex justify-between items-center text-sm">
+                <span>Recherche Client / Focus Quantité</span>
+                <kbd className="kbd kbd-sm font-sans">F4</kbd>
+              </div>
+              <div className="flex justify-between items-center text-sm">
+                <span>Recherche Client (direct)</span>
+                <kbd className="kbd kbd-sm font-sans">Ctrl + F</kbd>
+              </div>
+            </div>
+            
+            <div className="space-y-3">
+              <h3 className="font-bold text-secondary border-b border-secondary/20 pb-1 mb-2">Actions Vente</h3>
+              <div className="flex justify-between items-center text-sm">
+                <span className="font-bold text-success">Payer / Encaisser</span>
+                <kbd className="kbd kbd-sm font-sans">F9</kbd>
+              </div>
+              <div className="flex justify-between items-center text-sm">
+                <span className="font-bold text-warning">Suspendre (Mettre en attente)</span>
+                <kbd className="kbd kbd-sm font-sans">Ctrl + S</kbd>
+              </div>
+              <div className="flex justify-between items-center text-sm">
+                <span>Mode Zenith (Plein écran)</span>
+                <kbd className="kbd kbd-sm font-sans">Alt + Z</kbd>
+              </div>
+              <div className="flex justify-between items-center text-sm">
+                <span>Fermer / Annuler</span>
+                <kbd className="kbd kbd-sm font-sans">Esc</kbd>
+              </div>
+            </div>
+          </div>
+          <div className="mt-6 p-3 bg-base-200 rounded-lg text-xs text-center text-base-content/60 italic">
+            Astuce : Utilisez les touches fléchées pour naviguer dans les résultats de recherche et la touche Entrée pour valider.
+          </div>
+        </div>
+      </PremiumModal>
+
       {/* Sudo Validation Modal */}
       <SudoValidationModal
         isOpen={hook.sudoState.isOpen}
@@ -401,6 +458,39 @@ export default function Facturation() {
         title={hook.sudoState.title || "Validation Requise"}
         message={hook.sudoState.message || ""}
       />
+
+      <AlertMessageModal
+         isOpen={hook.ui.isAlertModalOpen}
+         onClose={() => hook.ui.setIsAlertModalOpen(false)}
+         target={hook.ui.alertTarget}
+         onSuccess={(newTarget) => {
+             hook.ui.setAlertTarget(newTarget);
+             // Update the current state objects so it reflects immediately
+             if (newTarget?.type === 'product') {
+                const refreshedLignes = hook.cart.lignesFacture.map((l: any) => {
+                   if (l.produit.id === newTarget.id) {
+                      return { ...l, produit: { ...l.produit, message_alerte: newTarget.currentMessage }};
+                   }
+                   return l;
+                });
+                hook.cart.setLignesFacture(refreshedLignes);
+             } else if (newTarget?.type === 'client') {
+                // To keep it simple, we don't force a full refetch here directly
+                // Next search/reload will pick it up
+             }
+             setTimeout(() => hook.searchInputRef.current?.focus(), 100);
+         }}
+      />
+
+      {hook.ui.displayAlertQueue.length > 0 && (
+          <DisplayAlertModal
+             alerts={hook.ui.displayAlertQueue}
+             onAcknowledge={() => {
+                 hook.ui.popDisplayAlert();
+                 setTimeout(() => hook.searchInputRef.current?.focus(), 100);
+             }}
+          />
+      )}
     </div>
   )
 }

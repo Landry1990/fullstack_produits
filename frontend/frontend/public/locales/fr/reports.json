@@ -1,4 +1,13 @@
 {
+    "columns": {
+        "cip1": "CIP1",
+        "libelle": "Désignation",
+        "qty": "Qté",
+        "ca_ttc_brut": "CA TTC",
+        "marge_brute": "Marge Brute",
+        "prix_achat_moyen": "P.A Moyen",
+        "prix_vente_moyen": "P.V Moyen"
+    },
     "title": "Centre de Rapports",
     "subtitle": "Sélectionnez une requête, configurez les paramètres et visualisez les résultats",
     "queries_title": "Liste des Requêtes",
@@ -95,6 +104,14 @@
         "rapport_ca_multi_annuel": {
             "name": "Comparatif CA Multi-Annuel",
             "description": "CA TVA vs Exonéré par mois pour toutes les années disponibles"
+        },
+        "creances_synthese": {
+            "name": "Synthèse Créances par Client",
+            "description": "Total des dettes regroupées par client"
+        },
+        "top_selling_products": {
+            "name": "Produits les plus vendus",
+            "description": "Analyse du CA, quantité et marge par produit"
         }
     },
     "params": {
@@ -116,7 +133,8 @@
         "client_id": "Client",
         "seuil": "Seuil (%)",
         "nb_jours": "Nombre de jours",
-        "exclude_zero": "Exclure les stocks 0"
+        "exclude_zero": "Exclure les stocks 0",
+        "fournisseur_id": "Fournisseur"
     },
     "results": {
         "title": "Résultats",

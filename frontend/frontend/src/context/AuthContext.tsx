@@ -38,6 +38,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     // On tente de récupérer les infos de connexion depuis le stockage sécurisé
     const token = safeStorage.getItem('authToken');
     const username = safeStorage.getItem('username');
+    const userId = safeStorage.getItem('userId');
     const is_superuser = safeStorage.getItem('is_superuser') === 'true';
     const allowed_menus = JSON.parse(safeStorage.getItem('allowed_menus') || '[]');
     const can_do_returns = safeStorage.getItem('can_do_returns') === 'true';
@@ -58,6 +59,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     // Si un token et un username existent, on restaure la session
     if (token && username) {
       setUser({ 
+        id: userId ? parseInt(userId, 10) : undefined,
         username, 
         token, 
         is_superuser, 
@@ -118,6 +120,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     safeStorage.setItem('can_delete_commande', String(userData.can_delete_commande || userData.profile?.can_delete_commande || false));
     safeStorage.setItem('can_close_commande', String(userData.can_close_commande || userData.profile?.can_close_commande || false));
     safeStorage.setItem('can_generate_coupon', String(userData.can_generate_coupon || userData.profile?.can_generate_coupon || false));
+    
+    // Support either id or user_id from backend
+    const userId = userData.id || (userData as any).user_id;
+    if (userId) {
+      safeStorage.setItem('userId', String(userId));
+      userData.id = userId;
+    }
     
     // 2. On met à jour l'état de l'application
     setUser(userData);

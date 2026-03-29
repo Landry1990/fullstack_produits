@@ -1,4 +1,5 @@
-import React from 'react';
+import { useEffect } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { useCommandesState } from '../hooks/useCommandesState';
 
 import CommandeList from './Commandes/CommandeList';
@@ -18,6 +19,15 @@ interface CommandesProps {
 export default function Commandes({ forcedType }: CommandesProps) {
   const hook = useCommandesState(forcedType);
   const { state, listProps, detailsProps, formProps, modals } = hook;
+  
+  const location = useLocation();
+  const navigate = useNavigate();
+  useEffect(() => {
+    if (location.state?.action === 'NEW_ORDER') {
+      listProps.onOpenCreateView();
+      navigate(location.pathname, { replace: true, state: {} });
+    }
+  }, [location.state, listProps, navigate, location.pathname]);
   
   return (
     <div className="h-full flex flex-col overflow-hidden bg-base-100">

@@ -70,8 +70,9 @@
             "title": "Rapport Unités Gratuites (UG)"
         }
     },
-    "utilisateurs": "Utilisateurs",
-    "user_sessions_sidebar": "Suivi des Présences",
+    "utilisateurs": "Gestion Utilisateurs",
+    "user_sessions_sidebar": "Sessions Utilisateurs",
+    "aide_formation": "Aide et Formation",
     "audit": "Journal d'Audit",
     "statistiques": {
         "title": "Statistiques",

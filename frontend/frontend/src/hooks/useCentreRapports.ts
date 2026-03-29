@@ -7,7 +7,7 @@ import * as XLSX from 'xlsx';
 import { formatCurrency, formatNumber } from '../utils/formatters';
 
 // Types
-export type ParamType = 'month' | 'date' | 'datetime' | 'select' | 'number' | 'text' | 'client_id' | 'checkbox';
+export type ParamType = 'month' | 'date' | 'datetime' | 'select' | 'number' | 'text' | 'client_id' | 'fournisseur_id' | 'checkbox';
 
 export interface QueryParam {
     key: string;
@@ -32,6 +32,11 @@ export interface Client {
     id: number;
     name: string;
     phone?: string;
+}
+
+export interface Supplier {
+    id: number;
+    name: string;
 }
 
 export interface PaginationData {
@@ -272,6 +277,18 @@ export const QUERIES: QueryDefinition[] = [
             { key: 'date_fin', label: 'Fin', type: 'date', required: true }
         ],
         resultType: 'table'
+    },
+    {
+        id: 'top_selling_products',
+        name: 'Produits les plus vendus',
+        description: 'Classement des produits par quantité, CA et marge',
+        endpoint: '/api/rapports/top_selling_products/',
+        params: [
+            { key: 'date_debut', label: 'Début', type: 'date', required: true },
+            { key: 'date_fin', label: 'Fin', type: 'date', required: true },
+            { key: 'fournisseur_id', label: 'Fournisseur', type: 'fournisseur_id' }
+        ],
+        resultType: 'table'
     }
 ];
 
@@ -322,7 +339,12 @@ export const COLUMN_LABELS: Record<string, string> = {
     solde_du: 'Solde Dû',
     total_facture: 'Total Facturé',
     nb_factures: 'Nb Factures',
-    status_display: 'Statut'
+    status_display: 'Statut',
+    qty: 'Qté',
+    catttc: 'CA TTC (F)',
+    marge: 'Marge Brute (F)',
+    taux_marge: 'Taux Marge (%)',
+    cip1: 'CIP1'
 };
 
 export const formatColumnHeader = (col: string, t?: any): string => {
@@ -426,6 +448,13 @@ export function useCentreRapports() {
     const [showClientDropdown, setShowClientDropdown] = useState(false);
     const [selectedClientName, setSelectedClientName] = useState('');
 
+    // Supplier search states
+    const [suppliers, setSuppliers] = useState<Supplier[]>([]);
+    const [supplierSearch, setSupplierSearch] = useState('');
+    const [filteredSuppliers, setFilteredSuppliers] = useState<Supplier[]>([]);
+    const [showSupplierDropdown, setShowSupplierDropdown] = useState(false);
+    const [selectedSupplierName, setSelectedSupplierName] = useState('');
+
     const apiBaseUrl = useMemo(() => import.meta.env.VITE_API_BASE_URL ?? '', []);
 
     // Helpers
@@ -472,7 +501,32 @@ export function useCentreRapports() {
             }
         };
         loadClients();
+
+        const loadSuppliers = async () => {
+            try {
+                const endpoint = apiBaseUrl ? `${apiBaseUrl}/api/rapports/suppliers_with_stock/` : '/api/rapports/suppliers_with_stock/';
+                const { data } = await axios.get(endpoint);
+                setSuppliers(data);
+            } catch (err) {
+                console.error('Erreur chargement fournisseurs:', err);
+            }
+        };
+        loadSuppliers();
     }, [apiBaseUrl]);
+
+    // Filter suppliers
+    useEffect(() => {
+        if (supplierSearch.length > 0) {
+            const filtered = suppliers.filter(s =>
+                s.name.toLowerCase().includes(supplierSearch.toLowerCase())
+            );
+            setFilteredSuppliers(filtered.slice(0, 10));
+            setShowSupplierDropdown(true);
+        } else {
+            setFilteredSuppliers([]);
+            setShowSupplierDropdown(false);
+        }
+    }, [supplierSearch, suppliers]);
 
     // Filter clients
     useEffect(() => {
@@ -496,6 +550,8 @@ export function useCentreRapports() {
         setError(null);
         setClientSearch('');
         setSelectedClientName('');
+        setSupplierSearch('');
+        setSelectedSupplierName('');
 
         const defaultParams: Record<string, string | number | boolean> = {};
         query.params.forEach(p => {
@@ -708,7 +764,11 @@ export function useCentreRapports() {
             clientSearch,
             filteredClients,
             showClientDropdown,
-            selectedClientName
+            selectedClientName,
+            supplierSearch,
+            filteredSuppliers,
+            showSupplierDropdown,
+            selectedSupplierName
         },
         actions: {
             handleSelectQuery,
@@ -719,6 +779,9 @@ export function useCentreRapports() {
             setClientSearch,
             setShowClientDropdown,
             setSelectedClientName,
+            setSupplierSearch,
+            setShowSupplierDropdown,
+            setSelectedSupplierName,
             safeDate
         }
     };

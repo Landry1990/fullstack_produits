@@ -48,6 +48,7 @@ export function useFacturationState() {
   const [pointsToUse, setPointsToUse] = useState(0)
   const [usePendingDiscount, setUsePendingDiscount] = useState(false)
   const [centralizedCashRegister, setCentralizedCashRegister] = useState<boolean>(true)
+  const [showHelp, setShowHelp] = useState(false)
 
   const apiBaseUrl = useMemo(() => {
     const baseUrl = import.meta.env.VITE_API_BASE_URL ?? ''
@@ -71,6 +72,7 @@ export function useFacturationState() {
   const cart = useCart({
     apiBaseUrl: import.meta.env.VITE_API_BASE_URL,
     onRequirePrescription: () => ui.setShowOrdonnanceModal(true),
+    onAlert: (message, title, type, is_blocking) => ui.pushDisplayAlert({ message, title, type, is_blocking }),
     quantityInputsRef
   })
 
@@ -455,12 +457,22 @@ export function useFacturationState() {
       ui.setRemiseGlobale(client.remise_automatique)
       ui.setRemiseMode('taux')
     }
+    if (client?.message_alerte) {
+      ui.pushDisplayAlert({ 
+        message: client.message_alerte, 
+        title: client.name, 
+        type: 'client', 
+        is_blocking: !!client.blocking_alerte 
+      })
+    }
   }, [clientsHook.selectedClient, clientsHook.clients, clientsHook.useManualClient])
 
   useEffect(() => {
     setPointsToUse(0)
     setUsePendingDiscount(false)
   }, [clientsHook.selectedClient, isNewSale])
+
+
 
   // Payment Preparation
   const handlePaymentClick = async () => {
@@ -581,31 +593,35 @@ export function useFacturationState() {
     enabled: !ui.isPaymentModalOpen && !ui.showOrdonnanceModal && !clientsHook.showClientCreateModal && !ui.lotModal.isOpen && !ui.showStockResolution
   })
 
-  useFacturationKeyboardShortcuts({
-    searchInputRef,
-    clientSearchRef,
-    lignesFacture: cart.lignesFacture,
-    quantityInputsRef,
-    handlePaymentClick,
-    toggleZenithMode,
-    isPaymentModalOpen: ui.isPaymentModalOpen,
-    closePaymentModal: ui.closePaymentModal,
-    showTicketPreview: ui.showTicketPreview,
-    setShowTicketPreview: ui.setShowTicketPreview,
-    showOrdonnanceModal: ui.showOrdonnanceModal,
-    setShowOrdonnanceModal: ui.setShowOrdonnanceModal,
-    lotModalOpen: ui.lotModal.isOpen,
-    closeLotModal: ui.closeLotModal,
-    showClientCreateModal: clientsHook.showClientCreateModal,
-    setShowClientCreateModal: clientsHook.setShowClientCreateModal,
-    showStockResolution: ui.showStockResolution,
-    setShowStockResolution: ui.setShowStockResolution,
-    confirmModal: ui.confirmModal,
-    setConfirmModal: ui.setConfirmModal,
-    setSearchQuery: productSearch.setSearchQuery,
-    successInfo,
-    setSuccessInfo
-  })
+  const handleAddAlertMessage = useCallback(() => {
+    // 1. Check if a product is selected
+    if (keyboardNav.selectedIndex >= 0 && sortedLignes[keyboardNav.selectedIndex]) {
+      const ligne = sortedLignes[keyboardNav.selectedIndex];
+      ui.setAlertTarget({
+         type: 'product',
+         id: ligne.produit.id,
+         name: ligne.produit.name,
+         currentMessage: ligne.produit.message_alerte || ''
+      });
+      ui.setIsAlertModalOpen(true);
+      return;
+    }
+    
+    // 2. Check if a client is selected
+    if (clientsHook.selectedClient && !clientsHook.useManualClient) {
+      const client = clientsHook.clients.find(c => c.id === clientsHook.selectedClient);
+      if (client) {
+         ui.setAlertTarget({
+            type: 'client',
+            id: client.id,
+            name: client.name,
+            currentMessage: client.message_alerte || ''
+         });
+         ui.setIsAlertModalOpen(true);
+      }
+    }
+  }, [keyboardNav.selectedIndex, sortedLignes, clientsHook.selectedClient, clientsHook.useManualClient, clientsHook.clients, ui.setAlertTarget, ui.setIsAlertModalOpen]);
+
 
   const handleLotSelect = (lot: any | null) => {
       if (!ui.lotModal.product) return
@@ -997,6 +1013,35 @@ export function useFacturationState() {
      });
   }
 
+  useFacturationKeyboardShortcuts({
+    searchInputRef,
+    clientSearchRef,
+    lignesFacture: cart.lignesFacture,
+    quantityInputsRef,
+    handlePaymentClick,
+    toggleZenithMode,
+    isPaymentModalOpen: ui.isPaymentModalOpen,
+    closePaymentModal: ui.closePaymentModal,
+    showTicketPreview: ui.showTicketPreview,
+    setShowTicketPreview: ui.setShowTicketPreview,
+    showOrdonnanceModal: ui.showOrdonnanceModal,
+    setShowOrdonnanceModal: ui.setShowOrdonnanceModal,
+    lotModalOpen: ui.lotModal.isOpen,
+    closeLotModal: ui.closeLotModal,
+    showClientCreateModal: clientsHook.showClientCreateModal,
+    setShowClientCreateModal: clientsHook.setShowClientCreateModal,
+    showStockResolution: ui.showStockResolution,
+    setShowStockResolution: ui.setShowStockResolution,
+    confirmModal: ui.confirmModal,
+    setConfirmModal: ui.setConfirmModal,
+    setSearchQuery: productSearch.setSearchQuery,
+    successInfo,
+    setSuccessInfo,
+    setShowHelp,
+    handleSuspendSale: mettreEnAttente,
+    handleAddAlertMessage
+  })
+
   return {
     t,
     isZenithMode, toggleZenithMode,
@@ -1006,6 +1051,7 @@ export function useFacturationState() {
     successInfo, setSuccessInfo,
     showClientNameModal, setShowClientNameModal,
     pendingPrintFacture, setPendingPrintFacture,
+    showHelp, setShowHelp,
     
     // Core state
     isRetrocession, setIsRetrocession,

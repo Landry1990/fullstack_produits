@@ -1,8 +1,10 @@
+from django.utils import timezone
+from django.db import models
 from rest_framework import viewsets, status, permissions
 from rest_framework.decorators import action
 from rest_framework.response import Response
-from ..models import SmsLog, SmsTemplate, Promis, Client, WhatsAppLog
-from ..serializers import SmsLogSerializer, SmsTemplateSerializer, WhatsAppLogSerializer
+from ..models import SmsLog, SmsTemplate, Promis, Client, WhatsAppLog, InternalMessage, MessageTemplate
+from ..serializers import SmsLogSerializer, SmsTemplateSerializer, WhatsAppLogSerializer, InternalMessageSerializer, MessageTemplateSerializer
 from ..services.sms import SmsService
 from ..pagination import StandardResultsSetPagination
 
@@ -106,3 +108,55 @@ class WhatsAppLogViewSet(viewsets.ReadOnlyModelViewSet):
             qs = qs.filter(client_id=client_id)
             
         return qs
+
+class InternalMessageViewSet(viewsets.ModelViewSet):
+    """
+    Messagerie interne entre utilisateurs.
+    """
+    serializer_class = InternalMessageSerializer
+    permission_classes = [permissions.IsAuthenticated]
+    pagination_class = StandardResultsSetPagination
+
+    def get_queryset(self):
+        user = self.request.user
+        # Voir ses messages reçus (individuels ou collectifs) ou envoyés
+        return InternalMessage.objects.filter(
+            models.Q(recipient=user) | 
+            models.Q(recipient__isnull=True) |
+            models.Q(sender=user)
+        ).distinct().order_by('-created_at').prefetch_related('read_by', 'archived_by', 'parent', 'parent__sender')
+
+    def perform_create(self, serializer):
+        serializer.save(sender=self.request.user)
+
+    @action(detail=True, methods=['post'])
+    def archive(self, request, pk=None):
+        message = self.get_object()
+        message.archived_by.add(request.user)
+        return Response({'status': 'message archived'})
+
+    @action(detail=True, methods=['post'])
+    def mark_as_read(self, request, pk=None):
+        message = self.get_object()
+        message.read_by.add(request.user)
+        return Response({'status': 'message marked as read'})
+
+    @action(detail=False, methods=['get'])
+    def unread_count(self, request):
+        from django.db.models import Q
+        count = InternalMessage.objects.filter(
+            Q(recipient=request.user) | Q(recipient__isnull=True)
+        ).exclude(sender=request.user).exclude(read_by=request.user).exclude(archived_by=request.user).distinct().count()
+        return Response({'count': count})
+
+
+class MessageTemplateViewSet(viewsets.ModelViewSet):
+    """
+    Modèles de messages prédéfinis.
+    """
+    queryset = MessageTemplate.objects.all().order_by('title')
+    serializer_class = MessageTemplateSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def perform_create(self, serializer):
+        serializer.save(created_by=self.request.user)

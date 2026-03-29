@@ -204,7 +204,7 @@ export default function Dashboard() {
             isPositive: (stats.revenue?.change || 0) >= 0,
             details: t('stats.revenue_details', { amount: formatCurrency(stats.discount?.value ?? 0) })
           },
-          { title: t('stats.receivables'), value: formatCurrency(stats.receivables?.value ?? 0), change: t('stats.invoices_count', { count: stats.receivables?.count || 0 }), icon: Users, color: "text-orange-600", bgColor: "bg-orange-100/50", borderColor: "border-orange-200/50", isPositive: false, link: '/creances' },
+          { title: t('stats.receivables'), value: formatCurrency(stats.receivables?.value ?? 0), change: t('stats.invoices_count', { count: stats.receivables?.count || 0 }), icon: Users, color: "text-orange-600", bgColor: "bg-orange-100/50", borderColor: "border-orange-200/50", isPositive: false, link: '/app/creances' },
           { title: t('stats.stock_value'), value: formatCurrencyLocal(stats.stock_value?.value ?? 0), change: t('stats.products_count', { count: stats.stock_value?.count ?? 0 }), icon: Package, color: "text-amber-600", bgColor: "bg-amber-100/50", borderColor: "border-amber-200/50", isPositive: true }
         ]) : []).map((stat: any, index) => {
           const Icon = stat.icon;
@@ -531,7 +531,7 @@ export default function Dashboard() {
             <div className="card-body p-6">
               <h2 className="text-[10px] font-black uppercase tracking-widest text-base-content/40 mb-4">{t('actions.title')}</h2>
               <div className="grid grid-cols-1 gap-3">
-                <Link to="/facturation" className="btn btn-primary h-14 w-full justify-between gap-3 text-white shadow-md hover:shadow-lg transition-all rounded-xl border-none group">
+                <Link to="/app/facturation" className="btn btn-primary h-14 w-full justify-between gap-3 text-white shadow-md hover:shadow-lg transition-all rounded-xl border-none group">
                   <div className="flex items-center gap-3">
                     <div className="p-2 bg-white/20 rounded-lg group-hover:scale-110 transition-transform">
                       <Plus className="w-5 h-5 text-white" />
@@ -540,7 +540,7 @@ export default function Dashboard() {
                   </div>
                   <ArrowRight className="w-4 h-4 opacity-50 group-hover:opacity-100 transition-opacity" />
                 </Link>
-                <Link to="/produits" className="btn bg-base-100 hover:bg-base-200 h-12 w-full justify-between gap-3 text-base-content shadow-sm transition-all rounded-xl border border-base-300 group">
+                <Link to="/app/produits" className="btn bg-base-100 hover:bg-base-200 h-12 w-full justify-between gap-3 text-base-content shadow-sm transition-all rounded-xl border border-base-300 group">
                   <div className="flex items-center gap-3">
                     <div className="p-2 bg-base-200 rounded-lg group-hover:bg-primary/10 group-hover:text-primary transition-all">
                       <Package className="w-4 h-4" />
@@ -549,7 +549,7 @@ export default function Dashboard() {
                   </div>
                   <ArrowRight className="w-4 h-4 text-base-content/30 group-hover:text-primary group-hover:translate-x-1 transition-all" />
                 </Link>
-                <Link to="/clients" className="btn bg-base-100 hover:bg-base-200 h-12 w-full justify-between gap-3 text-base-content shadow-sm transition-all rounded-xl border border-base-300 group">
+                <Link to="/app/clients" className="btn bg-base-100 hover:bg-base-200 h-12 w-full justify-between gap-3 text-base-content shadow-sm transition-all rounded-xl border border-base-300 group">
                   <div className="flex items-center gap-3">
                     <div className="p-2 bg-base-200 rounded-lg group-hover:bg-primary/10 group-hover:text-primary transition-all">
                       <Users className="w-4 h-4" />

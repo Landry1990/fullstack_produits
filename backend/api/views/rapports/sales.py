@@ -1,11 +1,11 @@
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework import status
-from django.db.models import Sum, DecimalField, Count
+from django.db.models import Sum, DecimalField, Count, F, Q
 from django.utils import timezone
 from datetime import datetime, timedelta
 from decimal import Decimal
-from api.models import Facture, FactureProduit
+from api.models import Facture, FactureProduit, FactureProduitAllocation, Fournisseur
 from django.utils.formats import date_format
 import csv
 from django.http import HttpResponse
@@ -154,3 +154,67 @@ class RapportSalesMixin:
                 hist.append({'mois': m['key'], 'label': m['label'], 'chiffre_affaires': float(ca)})
             res.append({'vendeur': v.get_full_name() or v.username, 'vendeur_id': v.id, 'data': hist})
         return Response(res)
+
+    @action(detail=False, methods=['get'])
+    def top_selling_products(self, request):
+        """
+        Rapport des produits les plus vendus.
+        Optimisé pour calculer CA, Qté et Marge via les allocations de lots.
+        """
+        db_str = request.query_params.get('date_debut')
+        df_str = request.query_params.get('date_fin')
+        fid = request.query_params.get('fournisseur_id')
+        
+        try:
+            date_debut = timezone.make_aware(datetime.fromisoformat(db_str.replace('Z', '+00:00'))) if db_str else timezone.now() - timedelta(days=30)
+            date_fin = timezone.make_aware(datetime.fromisoformat(df_str.replace('Z', '+00:00'))) if df_str else timezone.now()
+            if date_fin.hour == 0 and date_fin.minute == 0: date_fin += timedelta(days=1)
+        except: return Response({'error': 'Dates invalides'}, status=400)
+
+        # Base QuerySet: Filtrage sur les factures validées/payées ayant au moins un paiement
+        # On utilise FactureProduitAllocation pour la précision des marges (prix d'achat réel du lot)
+        qs = FactureProduitAllocation.objects.annotate(
+            num_p=Count('facture_produit__facture__paiements')
+        ).filter(
+            facture_produit__facture__status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE],
+            facture_produit__facture__date__range=(date_debut, date_fin)
+        ).exclude(facture_produit__facture__status='VAL', num_p=0)
+
+        if fid:
+            qs = qs.filter(stock_lot__fournisseur_id=fid)
+
+        # Agrégation optimisée
+        stats = qs.values(
+            'facture_produit__produit__id',
+            'facture_produit__produit__name',
+            'facture_produit__produit__cip1'
+        ).annotate(
+            qty=Sum('quantity'),
+            catttc=Sum(F('quantity') * F('selling_price'), output_field=DecimalField(max_digits=12, decimal_places=2)),
+            marge=Sum(F('quantity') * (F('selling_price') - F('cost_price')), output_field=DecimalField(max_digits=12, decimal_places=2))
+        ).order_by('-qty')
+
+        # Pagination
+        page = self.paginator.paginate_queryset(stats, request, view=self)
+        
+        results = []
+        for item in (page if page is not None else stats):
+            results.append({
+                'id': item['facture_produit__produit__id'],
+                'name': item['facture_produit__produit__name'],
+                'cip1': item['facture_produit__produit__cip1'],
+                'qty': item['qty'],
+                'catttc': float(item['catttc']),
+                'marge': float(item['marge']),
+                'taux_marge': round((float(item['marge']) / float(item['catttc']) * 100), 2) if item['catttc'] > 0 else 0
+            })
+
+        return self.paginator.get_paginated_response(results) if page is not None else Response(results)
+
+    @action(detail=False, methods=['get'])
+    def suppliers_with_stock(self, request):
+        """Retourne la liste des fournisseurs ayant déjà effectué des entrées en stock (lots)."""
+        from api.models import StockLot
+        active_fids = StockLot.objects.filter(fournisseur__isnull=False).values_list('fournisseur_id', flat=True).distinct()
+        suppliers = Fournisseur.objects.filter(id__in=active_fids, is_active=True).values('id', 'name').order_by('name')
+        return Response(list(suppliers))

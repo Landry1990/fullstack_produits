@@ -24,6 +24,9 @@ interface UseFacturationKeyboardShortcutsProps {
   setSearchQuery: (val: string) => void;
   successInfo?: any;
   setSuccessInfo: (val: any) => void;
+  setShowHelp: (val: boolean) => void;
+  handleSuspendSale: () => void;
+  handleAddAlertMessage: () => void;
 }
 
 /**
@@ -53,12 +56,22 @@ export function useFacturationKeyboardShortcuts({
   setConfirmModal,
   setSearchQuery,
   successInfo,
-  setSuccessInfo
+  setSuccessInfo,
+  setShowHelp,
+  handleSuspendSale,
+  handleAddAlertMessage
 }: UseFacturationKeyboardShortcutsProps) {
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       // Ignorer si on est dans un input mais que c'est une touche de fonction (F2, F4...)
       const isInput = document.activeElement?.tagName === 'INPUT' || document.activeElement?.tagName === 'TEXTAREA'
+
+      // F1: Aide Raccourcis
+      if (e.key === 'F1') {
+        e.preventDefault()
+        setShowHelp(true)
+        return
+      }
 
       // F2: Focus Recherche Produit
       if (e.key === 'F2') {
@@ -96,6 +109,22 @@ export function useFacturationKeyboardShortcuts({
       if ((e.ctrlKey || e.metaKey) && (e.key === 'f' || e.key === 'F')) {
         e.preventDefault()
         clientSearchRef.current?.focus()
+        return
+      }
+
+      // Ctrl+M: Add Alert Message to Product/Client
+      if ((e.ctrlKey || e.metaKey) && (e.key === 'm' || e.key === 'M')) {
+        e.preventDefault()
+        handleAddAlertMessage()
+        return
+      }
+
+      // Ctrl+S: Suspendre la vente (si panier non vide)
+      if ((e.ctrlKey || e.metaKey) && (e.key === 's' || e.key === 'S')) {
+        e.preventDefault()
+        if (lignesFacture.length > 0) {
+            handleSuspendSale()
+        }
         return
       }
 
@@ -147,6 +176,7 @@ export function useFacturationKeyboardShortcuts({
     showStockResolution, setShowStockResolution, 
     confirmModal, setConfirmModal, 
     successInfo, setSuccessInfo,
-    setSearchQuery, searchInputRef, clientSearchRef, quantityInputsRef
+    setSearchQuery, searchInputRef, clientSearchRef, quantityInputsRef,
+    setShowHelp, handleSuspendSale, handleAddAlertMessage
   ])
 }

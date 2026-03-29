@@ -20,6 +20,7 @@ class ProduitListSerializer(serializers.ModelSerializer):
     rayon_name = serializers.CharField(source='rayon.name', read_only=True)
     fournisseur_name = serializers.CharField(source='fournisseur.name', read_only=True)
     forme_nom = serializers.CharField(source='forme.nom', read_only=True)
+    active_promis_count = serializers.IntegerField(read_only=True)
     
     class Meta:
         model = Produit
@@ -30,7 +31,8 @@ class ProduitListSerializer(serializers.ModelSerializer):
             'use_lot_management',
             'tva', 'cost_price', 'taux_marge',
             'dernier_achat', 'dernier_vente', 'is_supplier_exclusive',
-            'stock_reserve', 'has_reserve_storage', 'capacite_rayon', 'min_rayon'
+            'stock_reserve', 'has_reserve_storage', 'capacite_rayon', 'min_rayon',
+            'active_promis_count'
         ]
 
 

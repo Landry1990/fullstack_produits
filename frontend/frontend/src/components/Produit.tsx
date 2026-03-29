@@ -1,6 +1,6 @@
 
 import React, { useState, useMemo, useEffect } from 'react'
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import axios from '../config/axios'
 import { toast } from 'react-hot-toast'
@@ -37,11 +37,13 @@ import { ProductDetailPanel } from './products/ProductDetailPanel';
 import { ProductDetailsModal } from './products/modals/ProductDetailsModal';
 import { ProductEditModal } from './products/modals/ProductEditModal';
 import { StockAdjustmentModal } from './products/modals/StockAdjustmentModal';
+import ImportProductsModal from './products/ImportProductsModal';
 
 export default function Produit() {
   console.log('[Produit] Rendering component...');
   const confirm = useConfirm()
   const navigate = useNavigate()
+  const location = useLocation()
   const { t } = useTranslation(['products', 'common']);
   const { user } = useAuth();
   const [page, setPage] = useState(1)
@@ -57,6 +59,7 @@ export default function Produit() {
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false)
   const [isEditModalOpen, setIsEditModalOpen] = useState(false)
   const [isAdjustmentModalOpen, setIsAdjustmentModalOpen] = useState(false)
+  const [isImportModalOpen, setIsImportModalOpen] = useState(false)
   
   // Selection
   const [selectedProduit, setSelectedProduit] = useState<ProduitModel | null>(null)
@@ -89,6 +92,29 @@ export default function Produit() {
     fournisseur: filterFournisseur,
     include_inactive: showInactive
   });
+
+  // Handle incoming redirect from Omnisearch
+  useEffect(() => {
+    if (location.state?.action === 'NEW_PRODUCT') {
+      setIsCreateModalOpen(true);
+      navigate(location.pathname, { replace: true, state: {} });
+    }
+    if (location.state?.searchProduitId && productsData?.results) {
+      const pid = location.state.searchProduitId;
+      const found = productsData.results.find((p: ProduitModel) => p.id === pid);
+      if (found) {
+        setSelectedProduit(found);
+        setActiveTab('stats');
+        // Clear state to avoid re-triggering
+        navigate(location.pathname, { replace: true, state: {} });
+      } else {
+        // If not in current page, maybe search for it specifically 
+        if (searchQuery !== String(pid)) {
+          setSearchQuery(String(pid));
+        }
+      }
+    }
+  }, [location.state, productsData]);
 
   console.log('[Produit] useProduits hook state:', { 
     productsCount: productsData?.results?.length, 
@@ -137,7 +163,7 @@ export default function Produit() {
     expire_date: '', stock_alert: '', stock_minimum: '', stock_maximum: '', tva: '19.25',
     rayon: '', fournisseur: '', forme: '', use_lot_management: true, requires_prescription: false,
     surveillance_category: 'NONE', is_supplier_exclusive: false, has_reserve_storage: false,
-    capacite_rayon: '0', min_rayon: '0'
+    capacite_rayon: '0', min_rayon: '0', message_alerte: ''
   })
   
   const [adjustmentForm, setAdjustmentForm] = useState({
@@ -256,7 +282,8 @@ export default function Produit() {
       is_supplier_exclusive: produit.is_supplier_exclusive ?? false,
       has_reserve_storage: produit.has_reserve_storage ?? false,
       capacite_rayon: String(produit.capacite_rayon ?? '0'),
-      min_rayon: String(produit.min_rayon ?? '0')
+      min_rayon: String(produit.min_rayon ?? '0'),
+      message_alerte: produit.message_alerte || ''
     })
     setIsEditModalOpen(true)
   }
@@ -286,7 +313,8 @@ export default function Produit() {
         fournisseur: editForm.fournisseur ? parseInt(editForm.fournisseur, 10) : null,
         forme: editForm.forme ? parseInt(editForm.forme, 10) : null,
         capacite_rayon: parseInt(editForm.capacite_rayon || '0', 10),
-        min_rayon: parseInt(editForm.min_rayon || '0', 10)
+        min_rayon: parseInt(editForm.min_rayon || '0', 10),
+        message_alerte: editForm.message_alerte?.trim() || null
       }
       const updatedProduit = await updateProduitMutation.mutateAsync({ id: selectedProduit.id, data: payload })
       setSelectedProduit(updatedProduit)
@@ -442,6 +470,12 @@ export default function Produit() {
           >
             + {t('products:actions.new', { defaultValue: 'Nouveau' })}
           </button>
+          <button 
+            className="btn btn-outline border-blue-600 text-blue-600 hover:bg-blue-50 rounded-xl shadow-sm px-6 font-medium normal-case ml-2"
+            onClick={() => setIsImportModalOpen(true)}
+          >
+            📥 {t('products:import.title')}
+          </button>
         </div>
         
         <div className="text-sm text-base-content/60 mt-6 flex items-center gap-2 font-medium">
@@ -577,6 +611,12 @@ export default function Produit() {
         open={isCreateModalOpen} onClose={() => setIsCreateModalOpen(false)} onCreated={() => { refetchProduits(); setIsCreateModalOpen(false); }}
         produitsEndpoint={produitsEndpoint} rayons={rayons} fournisseurs={fournisseurs} formes={formes} groupes={groupes as any}
       />
+      {isImportModalOpen && (
+        <ImportProductsModal 
+          onClose={() => setIsImportModalOpen(false)} 
+          onSuccess={() => { refetchProduits(); setIsImportModalOpen(false); }} 
+        />
+      )}
       <SalesDetailsModal isOpen={showSalesModal} onClose={() => { setShowSalesModal(false); setSelectedFacture(null); }} facture={selectedFacture} loading={loadingFacture} />
       <ProductDetailsModal 
         isOpen={isDetailsModalOpen} 

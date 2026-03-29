@@ -11,10 +11,11 @@ import { showExpirationToast } from '../utils/toastUtils'
 interface UseCartOptions {
     apiBaseUrl?: string
     onRequirePrescription?: () => void
+    onAlert?: (msg: string, title: string, type: 'product', is_blocking: boolean) => void
     quantityInputsRef?: React.MutableRefObject<Map<number, HTMLInputElement>>
 }
 
-export function useCart({ apiBaseUrl = '', onRequirePrescription, quantityInputsRef }: UseCartOptions = {}) {
+export function useCart({ apiBaseUrl = '', onRequirePrescription, onAlert, quantityInputsRef }: UseCartOptions = {}) {
     const { user } = useAuth()
     const [lignesFacture, setLignesFacture] = useState<LigneFacture[]>([])
     const [loading, setLoading] = useState(false)
@@ -111,6 +112,11 @@ export function useCart({ apiBaseUrl = '', onRequirePrescription, quantityInputs
             if (requiresOrdonnance && onRequirePrescription) {
                 onRequirePrescription()
                 toast('Produit sous ordonnance/surveillance détecté', { icon: '📋' })
+            }
+
+            // CHECKOUT ALERT MESSAGE CHECK
+            if (fullProduit.message_alerte && onAlert) {
+                onAlert(fullProduit.message_alerte, fullProduit.name, 'product', !!fullProduit.blocking_alerte)
             }
 
             // PEREMPTION CHECK

@@ -1,5 +1,6 @@
 {
     "title": "Product Management",
+    "subtitle": "Create and manage your products and services",
     "create_title": "New Product",
     "edit_title": "Edit Product",
     "stats": {
@@ -53,6 +54,7 @@
         }
     },
     "actions": {
+        "new": "New",
         "create": "Create Product",
         "refresh": "Refresh",
         "rotation": "Rotation",

@@ -25,6 +25,8 @@ export interface Client {
     is_loyalty_member?: boolean
     is_deposit_enabled?: boolean
     pending_discount?: string
+    message_alerte?: string | null
+    blocking_alerte?: boolean
 }
 
 export interface DepotClient {

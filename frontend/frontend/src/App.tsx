@@ -45,6 +45,7 @@ import AnalyseTemporelle from './components/AnalyseTemporelle';
 import StockUGReport from './components/StockUGReport';
 import UserSessions from './components/UserSessions';
 import GuideFinancier from './components/GuideFinancier';
+import HelpTraining from './components/HelpTraining';
 import { AuthProvider, useAuth } from './context/AuthContext'
 import { ConfirmProvider } from './hooks/useConfirm'
 import { PharmacySettingsProvider } from './context/PharmacySettingsContext'
@@ -171,6 +172,7 @@ const router = createBrowserRouter([
           { path: 'historique-ventes', element: <HistoriqueVentes /> },
           { path: 'ordonnancier', element: <OrdonnancierPage /> },
           { path: 'whatsapp-history', element: <WhatsAppHistory /> },
+          { path: 'aide-formation', element: <HelpTraining /> },
           
           { path: 'historique-achats', element: <HistoriqueAchats /> },
           { path: 'historique-achats/locales', element: <HistoriqueAchats forcedType="LOC" /> },

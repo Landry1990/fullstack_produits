@@ -4,7 +4,7 @@ import DatePicker, { registerLocale } from 'react-datepicker';
 import { fr } from 'date-fns/locale';
 import 'react-datepicker/dist/react-datepicker.css';
 import type { QueryDefinition, Client } from '../../../hooks/useCentreRapports';
-import { Search, User } from 'lucide-react';
+import { Search, User, Truck } from 'lucide-react';
 
 registerLocale('fr', fr);
 
@@ -24,6 +24,17 @@ interface ReportFiltersProps {
         setShowDropdown: (show: boolean) => void;
         setSelectedName: (name: string) => void;
     };
+    supplierSearch: {
+        query: string;
+        filtered: any[];
+        showDropdown: boolean;
+        selectedName: string;
+    };
+    supplierActions: {
+        setQuery: (q: string) => void;
+        setShowDropdown: (show: boolean) => void;
+        setSelectedName: (name: string) => void;
+    };
 }
 
 export const ReportFilters: React.FC<ReportFiltersProps> = ({
@@ -32,9 +43,11 @@ export const ReportFilters: React.FC<ReportFiltersProps> = ({
     onParamsChange,
     safeDate,
     clientSearch,
-    clientActions
+    clientActions,
+    supplierSearch,
+    supplierActions
 }) => {
-    const { t } = useTranslation(['reports', 'common']);
+    const { t } = useTranslation(['reports', 'common', 'products']);
 
     if (selectedQuery.params.length === 0) return null;
 
@@ -162,6 +175,51 @@ export const ReportFilters: React.FC<ReportFiltersProps> = ({
                                                     <div className="flex-1">
                                                         <div className="font-bold text-sm">{client.name}</div>
                                                         {client.phone && <div className="text-[10px] text-base-content/40 font-bold">{client.phone}</div>}
+                                                    </div>
+                                                </button>
+                                            </li>
+                                        ))}
+                                    </ul>
+                                )}
+                            </div>
+                        )}
+
+                        {param.type === 'fournisseur_id' && (
+                            <div className="relative group">
+                                <div className="absolute left-3 top-1/2 -translate-y-1/2 text-base-content/30 group-focus-within:text-primary transition-colors">
+                                    <Search className="w-4 h-4" />
+                                </div>
+                                <input
+                                    type="text"
+                                    value={supplierSearch.query || supplierSearch.selectedName}
+                                    onChange={e => {
+                                        supplierActions.setQuery(e.target.value);
+                                        supplierActions.setSelectedName('');
+                                        setParam(param.key, '');
+                                    }}
+                                    onFocus={() => supplierSearch.query.length > 0 && supplierActions.setShowDropdown(true)}
+                                    placeholder={t('params.fournisseur_id', 'Rechercher un fournisseur...')}
+                                    className="input input-bordered input-md w-full pl-10 rounded-xl font-bold bg-base-200/50"
+                                />
+                                {supplierSearch.showDropdown && supplierSearch.filtered.length > 0 && (
+                                    <ul className="absolute z-50 w-full bg-base-100 shadow-xl rounded-2xl mt-2 max-h-60 overflow-auto border border-base-200 py-2 animate-in fade-in zoom-in duration-200">
+                                        {supplierSearch.filtered.map(supplier => (
+                                            <li key={supplier.id}>
+                                                <button
+                                                    type="button"
+                                                    className="w-full text-left px-4 py-3 hover:bg-base-200 transition-colors flex items-center gap-3"
+                                                    onClick={() => {
+                                                        setParam(param.key, supplier.id);
+                                                        supplierActions.setSelectedName(supplier.name);
+                                                        supplierActions.setQuery('');
+                                                        supplierActions.setShowDropdown(false);
+                                                    }}
+                                                >
+                                                    <div className="w-8 h-8 rounded-full bg-success/10 flex items-center justify-center text-success">
+                                                        <Truck className="w-4 h-4" />
+                                                    </div>
+                                                    <div className="flex-1">
+                                                        <div className="font-bold text-sm">{supplier.name}</div>
                                                     </div>
                                                 </button>
                                             </li>

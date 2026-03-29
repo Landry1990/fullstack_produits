@@ -41,22 +41,22 @@ class FinanceStatsViewSet(viewsets.ViewSet):
         start_date_n1 = start_date - relativedelta(years=1)
         
         # Current year data
-        ca_current = Facture.objects.filter(
+        ca_current = Facture.objects.annotate(num_p=Count('paiements')).filter(
             date__date__gte=start_date,
             date__date__lte=today,
             status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE]
-        ).annotate(
+        ).exclude(status='VAL', num_p=0).annotate(
             month=TruncMonth('date')
         ).values('month').annotate(
             total=Coalesce(Sum('total_ttc'), Decimal('0'))
         ).order_by('month')
         
         # N-1 data
-        ca_n1 = Facture.objects.filter(
+        ca_n1 = Facture.objects.annotate(num_p=Count('paiements')).filter(
             date__date__gte=start_date_n1,
             date__date__lt=start_date,
             status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE]
-        ).annotate(
+        ).exclude(status='VAL', num_p=0).annotate(
             month=TruncMonth('date')
         ).values('month').annotate(
             total=Coalesce(Sum('total_ttc'), Decimal('0'))
@@ -113,10 +113,12 @@ class FinanceStatsViewSet(viewsets.ViewSet):
         start_date = start_date.replace(day=1)
         
         # Aggregate margin data from allocations
-        allocations = FactureProduitAllocation.objects.filter(
+        allocations = FactureProduitAllocation.objects.annotate(
+            num_p=Count('facture_produit__facture__paiements')
+        ).filter(
             facture_produit__facture__date__date__gte=start_date,
             facture_produit__facture__status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE]
-        ).annotate(
+        ).exclude(facture_produit__facture__status='VAL', num_p=0).annotate(
             month=TruncMonth('facture_produit__facture__date')
         ).values('month').annotate(
             ca=Coalesce(Sum(F('quantity') * F('selling_price'), output_field=DecimalField()), Decimal('0')),
@@ -178,11 +180,11 @@ class FinanceStatsViewSet(viewsets.ViewSet):
         start_date = start_date.replace(day=1)
         
         # Get monthly CA
-        ca_data = Facture.objects.filter(
+        ca_data = Facture.objects.annotate(num_p=Count('paiements')).filter(
             date__date__gte=start_date,
             date__date__lte=today,
             status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE]
-        ).annotate(
+        ).exclude(status='VAL', num_p=0).annotate(
             month=TruncMonth('date')
         ).values('month').annotate(
             total=Coalesce(Sum('total_ttc'), Decimal('0'))
@@ -306,11 +308,11 @@ class FinanceStatsViewSet(viewsets.ViewSet):
         start_of_year = today.replace(month=1, day=1)
         
         # --- Monthly KPIs ---
-        monthly_invoices = Facture.objects.filter(
+        monthly_invoices = Facture.objects.annotate(num_p=Count('paiements')).filter(
             date__date__gte=start_of_month,
             date__date__lte=today,
             status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE]
-        )
+        ).exclude(status='VAL', num_p=0)
         
         monthly_stats = monthly_invoices.aggregate(
             ca=Coalesce(Sum('total_ttc'), Decimal('0')),
@@ -322,11 +324,11 @@ class FinanceStatsViewSet(viewsets.ViewSet):
             panier_moyen_mois = float(monthly_stats['ca']) / monthly_stats['count']
         
         # --- Yearly KPIs ---
-        yearly_invoices = Facture.objects.filter(
+        yearly_invoices = Facture.objects.annotate(num_p=Count('paiements')).filter(
             date__date__gte=start_of_year,
             date__date__lte=today,
             status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE]
-        )
+        ).exclude(status='VAL', num_p=0)
         
         yearly_stats = yearly_invoices.aggregate(
             ca=Coalesce(Sum('total_ttc'), Decimal('0')),
@@ -338,10 +340,12 @@ class FinanceStatsViewSet(viewsets.ViewSet):
             panier_moyen_annee = float(yearly_stats['ca']) / yearly_stats['count']
         
         # --- Margin Rate (from allocations, current month) ---
-        monthly_allocations = FactureProduitAllocation.objects.filter(
+        monthly_allocations = FactureProduitAllocation.objects.annotate(
+            num_p=Count('facture_produit__facture__paiements')
+        ).filter(
             facture_produit__facture__date__date__gte=start_of_month,
             facture_produit__facture__status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE]
-        ).aggregate(
+        ).exclude(facture_produit__facture__status='VAL', num_p=0).aggregate(
             ca=Coalesce(Sum(F('quantity') * F('selling_price'), output_field=DecimalField()), Decimal('0')),
             marge=Coalesce(Sum((F('selling_price') - F('cost_price')) * F('quantity'), output_field=DecimalField()), Decimal('0'))
         )
@@ -359,10 +363,12 @@ class FinanceStatsViewSet(viewsets.ViewSet):
         
         # Get last 30 days COGS
         last_30_days = today - timedelta(days=30)
-        cogs_30d = FactureProduitAllocation.objects.filter(
+        cogs_30d = FactureProduitAllocation.objects.annotate(
+            num_p=Count('facture_produit__facture__paiements')
+        ).filter(
             facture_produit__facture__date__date__gte=last_30_days,
             facture_produit__facture__status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE]
-        ).aggregate(
+        ).exclude(facture_produit__facture__status='VAL', num_p=0).aggregate(
             total=Coalesce(Sum(F('quantity') * F('cost_price'), output_field=DecimalField()), Decimal('0'))
         )['total']
         
@@ -375,11 +381,11 @@ class FinanceStatsViewSet(viewsets.ViewSet):
         prev_month_start = start_of_month - relativedelta(months=1)
         prev_month_end = start_of_month - timedelta(days=1)
         
-        prev_month_ca = Facture.objects.filter(
+        prev_month_ca = Facture.objects.annotate(num_p=Count('paiements')).filter(
             date__date__gte=prev_month_start,
             date__date__lte=prev_month_end,
             status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE]
-        ).aggregate(ca=Coalesce(Sum('total_ttc'), Decimal('0')))['ca']
+        ).exclude(status='VAL', num_p=0).aggregate(ca=Coalesce(Sum('total_ttc'), Decimal('0')))['ca']
         
         croissance_mensuelle = 0
         if prev_month_ca > 0:
@@ -420,10 +426,12 @@ class FinanceStatsViewSet(viewsets.ViewSet):
             start_date = today.replace(day=1)
         
         # Aggregate from allocations
-        products = FactureProduitAllocation.objects.filter(
+        products = FactureProduitAllocation.objects.annotate(
+            num_p=Count('facture_produit__facture__paiements')
+        ).filter(
             facture_produit__facture__date__date__gte=start_date,
             facture_produit__facture__status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE]
-        ).values(
+        ).exclude(facture_produit__facture__status='VAL', num_p=0).values(
             'facture_produit__produit__id',
             'facture_produit__produit__name',
             'facture_produit__produit__cip1'
@@ -479,10 +487,12 @@ class FinanceStatsViewSet(viewsets.ViewSet):
         else:  # mois
             start_date = today.replace(day=1)
         
-        base_qs = FactureProduitAllocation.objects.filter(
+        base_qs = FactureProduitAllocation.objects.annotate(
+            num_p=Count('facture_produit__facture__paiements')
+        ).filter(
             facture_produit__facture__date__date__gte=start_date,
             facture_produit__facture__status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE]
-        )
+        ).exclude(facture_produit__facture__status='VAL', num_p=0)
         
         if by == 'fournisseur':
             # Use product's default supplier as fallback when lot has no supplier
@@ -577,10 +587,12 @@ class FinanceStatsViewSet(viewsets.ViewSet):
         else:  # mois
             start_date = today.replace(day=1)
         
-        base_qs = FactureProduitAllocation.objects.filter(
+        base_qs = FactureProduitAllocation.objects.annotate(
+            num_p=Count('facture_produit__facture__paiements')
+        ).filter(
             facture_produit__facture__date__date__gte=start_date,
             facture_produit__facture__status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE]
-        )
+        ).exclude(facture_produit__facture__status='VAL', num_p=0)
         
         # Determine field based on type
         if cat_type == 'groupe':
@@ -654,10 +666,12 @@ class FinanceStatsViewSet(viewsets.ViewSet):
             name_field = 'facture_produit__produit__rayon__name'
         
         # Get top categories by CA
-        top_categories = FactureProduitAllocation.objects.filter(
+        top_categories = FactureProduitAllocation.objects.annotate(
+            num_p=Count('facture_produit__facture__paiements')
+        ).filter(
             facture_produit__facture__date__date__gte=start_date,
             facture_produit__facture__status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE]
-        ).values(id_field, name_field).annotate(
+        ).exclude(facture_produit__facture__status='VAL', num_p=0).values(id_field, name_field).annotate(
             total_ca=Coalesce(Sum(F('quantity') * F('selling_price'), output_field=DecimalField()), Decimal('0'))
         ).order_by('-total_ca')[:top_n]
         
@@ -665,11 +679,13 @@ class FinanceStatsViewSet(viewsets.ViewSet):
         category_names = {item[id_field]: item[name_field] for item in top_categories}
         
         # Get monthly data for top categories
-        monthly_data = FactureProduitAllocation.objects.filter(
+        monthly_data = FactureProduitAllocation.objects.annotate(
+            num_p=Count('facture_produit__facture__paiements')
+        ).filter(
             facture_produit__facture__date__date__gte=start_date,
             facture_produit__facture__status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE],
             **{f'{id_field}__in': top_ids}
-        ).annotate(
+        ).exclude(facture_produit__facture__status='VAL', num_p=0).annotate(
             month=TruncMonth('facture_produit__facture__date')
         ).values('month', id_field).annotate(
             ca=Coalesce(Sum(F('quantity') * F('selling_price'), output_field=DecimalField()), Decimal('0'))
@@ -728,10 +744,12 @@ class FinanceStatsViewSet(viewsets.ViewSet):
         today = timezone.now().date()
         start_date = today - relativedelta(months=3)
         
-        base_qs = FactureProduit.objects.filter(
+        base_qs = FactureProduit.objects.annotate(
+            num_p=Count('facture__paiements')
+        ).filter(
             facture__date__date__gte=start_date,
             facture__status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE]
-        )
+        ).exclude(facture__status='VAL', num_p=0)
         
         # 1. Calculer les moyennes globales pour références
         stats_globales = base_qs.aggregate(

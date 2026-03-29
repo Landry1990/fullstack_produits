@@ -12,7 +12,7 @@ from .models import (
     Ordonnancier, LigneOrdonnancier, PharmacySettings, CouponMonnaie,
     Groupe, SmsLog, SmsTemplate, PaiementFournisseur, ConfigurationOption,
     Promotion, PromotionPackItem, ObjectifCommercial, ConfigurationObjectifs, TVA,
-    WhatsAppLog, RuptureFournisseur, DepotClient
+    WhatsAppLog, RuptureFournisseur, DepotClient, InternalMessage, MessageTemplate
 )
 from .services import PromotionService
 from .pdf_utils import number_to_french
@@ -350,7 +350,7 @@ class ProduitSerializer(serializers.ModelSerializer):
         fields = [
             'id', 'rayon', 'rayon_nom', 'fournisseur', 'fournisseur_nom', 'forme', 'forme_nom',
             'groupe', 'groupe_nom', 'famille_risque', 'famille_risque_nom', 'famille_risque_niveau',
-            'name', 'description', 
+            'name', 'description', 'message_alerte',
             'stock', 'total_stock', 'stock_alert', 'cip1', 'cip2', 'cip3',
             'cost_price', 'selling_price', 'expire_date', 
             'valeur_stock', 'tva', 'use_lot_management', 'next_expiring_date',
@@ -359,7 +359,7 @@ class ProduitSerializer(serializers.ModelSerializer):
             'taux_marge', 'pourcentage_marge', 'is_supplier_exclusive',
             'active_promotion', 'is_chronic', 'default_treatment_days',
             'stock_reserve', 'has_reserve_storage', 'capacite_rayon', 'min_rayon',
-            'stock_minimum', 'stock_maximum', 'is_active'
+            'stock_minimum', 'stock_maximum', 'is_active', 'blocking_alerte'
         ]
         read_only_fields = ['created_at', 'updated_at', 'taux_marge', 'pourcentage_marge', 'total_stock']
 
@@ -904,7 +904,7 @@ class CreanceSerializer(serializers.ModelSerializer):
     class Meta:
         model = Facture
         fields = [
-            'numero_facture', 'client_name', 
+            'id', 'client', 'numero_facture', 'client_name', 
             'ayant_droit_details', 'date', 'status_display',
             'total_ht', 'remise', 'tva', 'total_tva', 'total_ttc',
             'montant_paye', 'reste_a_payer', '_paiements', 'notes'
@@ -1384,3 +1384,48 @@ class RuptureFournisseurSerializer(serializers.ModelSerializer):
     class Meta:
         model = RuptureFournisseur
         fields = '__all__'
+
+class InternalMessageSerializer(serializers.ModelSerializer):
+    sender_name = serializers.CharField(source='sender.username', read_only=True)
+    recipient_name = serializers.SerializerMethodField()
+    is_read = serializers.SerializerMethodField()
+    parent_content = serializers.CharField(source='parent.content', read_only=True)
+    parent_sender_name = serializers.CharField(source='parent.sender.username', read_only=True)
+    is_archived = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = InternalMessage
+        fields = '__all__'
+        read_only_fields = ['sender', 'created_at', 'read_by', 'archived_by']
+
+    def get_recipient_name(self, obj):
+        return obj.recipient.username if obj.recipient else "Tous"
+
+    def get_is_archived(self, obj):
+        request = self.context.get('request')
+        if not request or not request.user:
+            return False
+        if hasattr(obj, '_prefetched_objects_cache') and 'archived_by' in obj._prefetched_objects_cache:
+            return any(u.id == request.user.id for u in obj.archived_by.all())
+        return obj.archived_by.filter(id=request.user.id).exists()
+
+    def get_is_read(self, obj):
+        request = self.context.get('request')
+        if not request or not request.user:
+            return False
+        if obj.sender_id == request.user.id:
+            return True
+            
+        # Optimization: use python check if prefetched
+        if hasattr(obj, '_prefetched_objects_cache') and 'read_by' in obj._prefetched_objects_cache:
+            return any(u.id == request.user.id for u in obj.read_by.all())
+        
+        return obj.read_by.filter(id=request.user.id).exists()
+
+class MessageTemplateSerializer(serializers.ModelSerializer):
+    created_by_name = serializers.CharField(source='created_by.username', read_only=True)
+
+    class Meta:
+        model = MessageTemplate
+        fields = '__all__'
+        read_only_fields = ['created_by', 'created_at']

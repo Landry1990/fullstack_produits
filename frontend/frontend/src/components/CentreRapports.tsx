@@ -19,7 +19,11 @@ export default function CentreRapports() {
         clientSearch,
         filteredClients,
         showClientDropdown,
-        selectedClientName
+        selectedClientName,
+        supplierSearch,
+        filteredSuppliers,
+        showSupplierDropdown,
+        selectedSupplierName
     } = state;
 
     return (
@@ -110,6 +114,17 @@ export default function CentreRapports() {
                                                 setQuery: actions.setClientSearch,
                                                 setShowDropdown: actions.setShowClientDropdown,
                                                 setSelectedName: actions.setSelectedClientName
+                                            }}
+                                            supplierSearch={{
+                                                query: supplierSearch,
+                                                filtered: filteredSuppliers,
+                                                showDropdown: showSupplierDropdown,
+                                                selectedName: selectedSupplierName
+                                            }}
+                                            supplierActions={{
+                                                setQuery: actions.setSupplierSearch,
+                                                setShowDropdown: actions.setShowSupplierDropdown,
+                                                setSelectedName: actions.setSelectedSupplierName
                                             }}
                                         />
                                     </div>

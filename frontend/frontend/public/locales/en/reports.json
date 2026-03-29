@@ -95,6 +95,10 @@
         "rapport_remises_details": {
             "name": "Discount Tracking (Detail)",
             "description": "Detailed list of invoices with discounts"
+        },
+        "creances_synthese": {
+            "name": "Aged Receivables Summary",
+            "description": "Total debts grouped by client"
         }
     },
     "params": {

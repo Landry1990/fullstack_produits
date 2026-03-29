@@ -57,6 +57,11 @@ const creanceService = {
             responseType: 'blob'
         });
         return response.data;
+    },
+
+    getSynthese: async (params: { date_debut?: string; date_fin?: string } = {}): Promise<any[]> => {
+        const response = await api.get('creances/synthese_clients/', { params });
+        return Array.isArray(response.data) ? response.data : [];
     }
 };
 
