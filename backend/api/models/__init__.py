@@ -54,7 +54,7 @@ from .audit import (
 )
 
 # Communication
-from .communication import SmsLog, SmsTemplate, WhatsAppLog
+from .communication import SmsLog, SmsTemplate, WhatsAppLog, InternalMessage, MessageTemplate
 
 # Signals for soft delete (preserving names before deletion)
 from .signals import (
@@ -90,7 +90,7 @@ __all__ = [
     'ActivityLog', 'AuditLog', 'MouvementCaisse', 
     'Ordonnancier', 'LigneOrdonnancier',
     # Communication
-    'SmsLog', 'SmsTemplate', 'WhatsAppLog',
+    'SmsLog', 'SmsTemplate', 'WhatsAppLog', 'InternalMessage', 'MessageTemplate',
     # Promotions
     'Promotion', 'PromotionPackItem',
     # Objectifs

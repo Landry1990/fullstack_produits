@@ -1,0 +1,76 @@
+{
+  "title": "Aide et Formation",
+  "subtitle": "Guides et documentation pour l'utilisation de ZENITH",
+  "import": {
+    "title": "Importation de Base Produit",
+    "description": "ZENITH permet d'importer massivement vos produits depuis des fichiers CSV ou Excel (XLSX/XLS).",
+    "format": {
+      "title": "Formats Supportés",
+      "csv": "Fichiers CSV (délimiteur ';' ou ',')",
+      "excel": "Fichiers Excel (.xlsx, .xls)"
+    },
+    "columns": {
+      "title": "Colonnes du Fichier",
+      "required": "Champs Obligatoires",
+      "optional": "Champs Optionnels",
+      "required_details": "Vous devez fournir au moins le **Nom** et l'un des deux **Prix** (Achat ou Vente).",
+      "nom": "Désignation / Nom du produit",
+      "prix_public": "Prix de Vente (Public)",
+      "prix_cession": "Prix d'Achat (Cession)",
+      "stock": "Quantité en stock",
+      "cip": "Codes CIP (1, 2 ou 3)",
+      "tva": "TVA ou Code TVA",
+      "expire_date": "Date d'expiration"
+    },
+    "logic": {
+      "title": "Logique d'Importation",
+      "tva": "Si la TVA n'est pas spécifiée, elle est calculée automatiquement : 0% si un prix public existe, 19.25% si le prix public est 0.",
+      "update": "Si un produit existe déjà (même CIP ou même Nom), il sera mis à jour. Sinon, il sera créé.",
+      "delimiter": "Le système détecte automatiquement si vous utilisez le point-virgule (;) ou la virgule (,) dans vos fichiers CSV."
+    }
+  },
+  "billing": {
+    "title": "Gestion de la Facturation",
+    "description": "Le module de facturation est conçu pour une productivité maximale avec le concept 'Zero Mouse' (Tout au clavier).",
+    "shortcuts": {
+      "title": "Raccourcis 'Zero Mouse'",
+      "f2": "Focus Recherche Produit / Vider le champ",
+      "slash": "Focus Recherche (depuis n'importe où)",
+      "f4": "Sélection Client / Focus Quantité (Panier)",
+      "f9": "Encaisser / Finaliser la vente",
+      "ctrl_s": "Mettre la vente en attente",
+      "alt_z": "Mode Zenith (Plein écran épuré)",
+      "esc": "Annuler l'action en cours / Fermer"
+    },
+    "tips": {
+      "title": "Astuces de Productivité",
+      "qty_shortcut": {
+        "title": "Raccourci Quantité Rapide",
+        "description": "Dans la barre de recherche, tapez '*' suivi d'un nombre (ex: *5) pour changer instantanément la quantité du dernier produit ajouté."
+      },
+      "navigation": {
+        "title": "Navigation dans le Panier",
+        "description": "Utilisez les flèches ↑↓ pour sélectionner une ligne, '+' et '-' pour ajuster la quantité, et 'Suppr' pour retirer l'article."
+      },
+      "search": {
+        "title": "Recherche Intelligente",
+        "description": "Le système recherche simultanément par Nom, Code CIP ou Code-barres. Le scan est automatique."
+      }
+    },
+    "guide": {
+      "title": "Comment vendre : Guide étape par étape",
+      "step1": {
+        "title": "Étape 1 : Ouvrir la Vente",
+        "description": "Accédez au menu 'Facturation'. L'interface ZENITH est épurée pour vous permettre de vous concentrer sur l'essentiel."
+      },
+      "step2": {
+        "title": "Étape 2 : Rechercher un Produit",
+        "description": "Utilisez le champ 'Recherche Produit' (F2). Tapez le nom ou scannez directement. ZENITH affiche les stocks en temps réel."
+      },
+      "step3": {
+        "title": "Étape 3 : Gérer le Panier",
+        "description": "Une fois ajouté, ajustez les quantités. Le système sépare automatiquement ce que le patient doit payer."
+      }
+    }
+  }
+}

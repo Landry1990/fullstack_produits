@@ -40,9 +40,9 @@
     "actions": {
         "cancel": "Annuler la Vente",
         "reset_tooltip": "Réinitialiser tout le panier (F4)",
-        "suspend_short": "Mettre en attente",
-        "suspend_tooltip": "Mettre la vente en attente (F9)",
-        "pending": "En attente",
+        "suspend_short": "Suspendre la vente",
+        "suspend_tooltip": "Mettre la vente en attente (Ctrl+S)",
+        "pending": "Ventes en attente",
         "view_pending_tooltip": "Voir les ventes en attente (F8)",
         "proforma": "Proforma",
         "proforma_tooltip": "Générer une facture proforma / Devis (F10)",

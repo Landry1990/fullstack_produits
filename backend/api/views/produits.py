@@ -4,7 +4,8 @@ from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated, IsAdminUser
 from rest_framework.views import APIView
 from django.db import transaction
-from django.db.models import F, Sum, Count, Q, ProtectedError
+from django.db.models import F, Sum, Count, Q, ProtectedError, OuterRef, Subquery, IntegerField
+from django.db.models.functions import Coalesce
 from django.http import HttpResponse
 import io
 from datetime import datetime
@@ -18,7 +19,7 @@ from django.utils import timezone
 
 from ..models import (
     Produit, Rayon, Forme, Groupe, Fournisseur, StockLot, StockAdjustment, 
-    FactureProduit, CommandeProduit, AuditLog, Facture, Commande
+    FactureProduit, CommandeProduit, AuditLog, Facture, Commande, Promis
 )
 from ..serializers import (
     ProduitSerializer, RayonSerializer, FournisseurSerializer,
@@ -58,6 +59,16 @@ class ProduitViewSet(CachedSearchMixin, MultiTermSearchMixin, OptimizedSerialize
 
     def get_queryset(self):
         queryset = super().get_queryset()
+        
+        # Annotation pour le nombre de promis actifs
+        promis_subquery = Promis.objects.filter(
+            produit=OuterRef('pk'),
+            status='ATT'
+        ).values('produit').annotate(count=Count('id')).values('count')
+        
+        queryset = queryset.annotate(
+            active_promis_count=Coalesce(Subquery(promis_subquery), 0, output_field=IntegerField())
+        )
         
         # Par défaut, ne montrer que les produits actifs (sauf si include_inactive=true)
         if not self.request.query_params.get('include_inactive'):

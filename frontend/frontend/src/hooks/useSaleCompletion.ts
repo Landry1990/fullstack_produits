@@ -17,7 +17,7 @@ import type {
 import { normalizeNumberInput, formatNumber } from '../utils/formatters';
 import { generatePromisTicket, type PromisItem } from '../utils/print/promisPdf';
 import { buildPaymentsList } from '../utils/finance';
-import { validateSaleData, validateProfessionalClient } from '../utils/validation';
+import { validateSaleData, validateClientCreditLimit } from '../utils/validation';
 import { usePharmacySettings } from './usePharmacySettings';
 import clientService from '../services/clientService';
 import produitService from '../services/produitService';
@@ -154,15 +154,15 @@ export function useSaleCompletion(options: UseSaleCompletionOptions = {}): UseSa
 
             // 2. Validation client professionnel
             if (client) {
-                const proError = validateProfessionalClient(params, client);
-                if (proError) {
-                    setError(proError);
-                    onError?.(proError);
+                const clientError = validateClientCreditLimit(params, client);
+                if (clientError) {
+                    setError(clientError);
+                    onError?.(clientError);
                     toast.error(t('messages.credit_limit_exceeded'), {
                         duration: 6000,
                         style: { background: '#dc2626', color: 'white', fontWeight: 'bold' }
                     });
-                    return { success: false, error: proError };
+                    return { success: false, error: clientError };
                 }
 
                 // New Check: Deposit Balance Warning for Individuals

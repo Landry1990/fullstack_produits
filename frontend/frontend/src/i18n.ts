@@ -49,7 +49,8 @@ i18n
             'monthly_report',
             'supplier_stats',
             'labels',
-            'config'
+            'config',
+            'help'
         ],
         defaultNS: 'common',
         interpolation: {

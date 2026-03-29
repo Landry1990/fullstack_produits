@@ -23,7 +23,7 @@ from .views.auth import verify_password
 from .views.etat_inventaire import EtatInventairePDFView
 from .views.rapports import RapportViewSet
 from .ordonnancier_view import OrdonnancierViewSet
-from .views.communication import SmsViewSet, SmsTemplateViewSet, WhatsAppLogViewSet
+from .views.communication import SmsViewSet, SmsTemplateViewSet, WhatsAppLogViewSet, InternalMessageViewSet, MessageTemplateViewSet
 from .views.finance_stats import FinanceStatsViewSet
 from .views.objectifs import ObjectifViewSet
 from .views.configuration_objectifs import ConfigurationObjectifsViewSet
@@ -31,6 +31,7 @@ from .views.temporal_analysis import TemporalAnalysisViewSet
 from .views.purge import PurgeViewSet
 from .views.code_backup import CodeBackupViewSet
 from .views.stocks.ruptures import RuptureFournisseurViewSet
+from .views.omnisearch import GlobalSearchView
 
 # Create a router and register our viewsets with it.
 router = DefaultRouter()
@@ -87,6 +88,8 @@ router.register(r'code-backup', CodeBackupViewSet, basename='code-backup')
 router.register(r'user-sessions', UserDailySessionViewSet, basename='user-session')
 router.register(r'ruptures-fournisseurs', RuptureFournisseurViewSet, basename='rupture-fournisseur')
 router.register(r'depots-clients', DepotClientViewSet, basename='depotclient')
+router.register(r'internal-messages', InternalMessageViewSet, basename='internalmessage')
+router.register(r'message-templates', MessageTemplateViewSet, basename='messagetemplate')
 
 
 # The API URLs are now determined automatically by the router.
@@ -104,5 +107,6 @@ urlpatterns = [
     path('products/import/', ProductImportView.as_view(), name='product-import'),
     path('generer-suggestions/', generer_suggestions_commande, name='generer-suggestions'),
     path('produits/etat-inventaire/pdf/', EtatInventairePDFView.as_view(), name='etat-inventaire-pdf'),
+    path('omnisearch/', GlobalSearchView.as_view(), name='global-search'),
     path('', include(router.urls)),
 ]

@@ -122,6 +122,11 @@ class Produit(models.Model):
     )
     name = models.CharField(max_length=100)
     description = models.TextField(blank=True, null=True)
+    message_alerte = models.TextField(blank=True, null=True, help_text="Message d'alerte affiché lors de la saisie en caisse")
+    blocking_alerte = models.BooleanField(
+        default=False, 
+        help_text="Si coché, l'alerte bloque la validation de la vente tant qu'elle n'est pas acquittée."
+    )
     stock = models.IntegerField(default=0)
     use_lot_management = models.BooleanField(
         default=True,

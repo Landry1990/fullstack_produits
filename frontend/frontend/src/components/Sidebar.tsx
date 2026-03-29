@@ -5,10 +5,11 @@ import ZenithLogo from './ZenithLogo';
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 
+
 export default function Sidebar() {
-  const { t, i18n } = useTranslation(['sidebar', 'common']);
-  const { user, logout } = useAuth();
-  const { isOpen, isCollapsed, toggleSidebar, closeSidebar, toggleCollapse, isMidnightTheme, toggleMidnightTheme } = useSidebar();
+  const { t } = useTranslation(['sidebar', 'common']);
+  const { user } = useAuth();
+  const { isOpen, isCollapsed, toggleSidebar, closeSidebar, toggleCollapse } = useSidebar();
   const location = useLocation();
   const [openMenu, setOpenMenu] = useState<string | null>(null);
   
@@ -126,6 +127,9 @@ export default function Sidebar() {
         { path: '/app/settings/options', label: t('parametres.etiquettes'), key: 'settings_etiquettes' }
       ]
     },
+    { path: '/app/aide-formation', label: t('aide_formation'), key: 'aide_formation', icon: (
+      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 10 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" /></svg>
+    )},
   ];
 
   // Logic to calculate menuItems based on authentication
@@ -352,65 +356,6 @@ export default function Sidebar() {
             })}
           </ul>
         </nav>
-
-        <div className={`p-3 border-t border-white/10 ${isCollapsed ? 'flex flex-col items-center' : ''}`}>
-          {!isCollapsed ? (
-            <>
-              <div className="flex items-center gap-3 p-2 rounded-lg bg-white/5 mb-2">
-                <div className="w-8 h-8 rounded-full bg-green-500 text-white flex items-center justify-center text-sm uppercase font-bold">
-                  {user?.username.charAt(0) || 'A'}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-white truncate">{user?.username || 'Admin'}</p>
-                  <p className="text-xs text-white/60 truncate">
-                    {user?.is_superuser ? t('roles.pharmacist') : t('roles.user')}
-                  </p>
-                </div>
-              </div>
-              <button onClick={logout} className="btn btn-sm btn-ghost w-full text-red-400 hover:bg-red-500/10 hover:text-red-300 gap-2">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>
-                {t('logout')}
-              </button>
-              <div className="mt-3 flex items-center justify-between w-full px-2">
-                <div className="flex gap-2">
-                  <button className={`btn btn-xs ${i18n.language === 'fr' ? 'btn-primary' : 'btn-ghost text-white/50'}`} onClick={() => i18n.changeLanguage('fr')}>FR</button>
-                  <button className={`btn btn-xs ${i18n.language === 'en' ? 'btn-primary' : 'btn-ghost text-white/50'}`} onClick={() => i18n.changeLanguage('en')}>EN</button>
-                </div>
-                <button 
-                  onClick={toggleMidnightTheme} 
-                  className="btn btn-xs btn-ghost text-white/70 hover:text-white"
-                  title={isMidnightTheme ? "Passer au thème clair" : "Passer au thème sombre"}
-                >
-                  {isMidnightTheme ? (
-                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" /></svg>
-                  ) : (
-                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" /></svg>
-                  )}
-                </button>
-              </div>
-            </>
-          ) : (
-            <>
-              <div className="w-9 h-9 rounded-full bg-green-500 text-white flex items-center justify-center text-sm uppercase font-bold mb-2" title={user?.username || 'Admin'}>
-                {user?.username.charAt(0) || 'A'}
-              </div>
-              <button 
-                  onClick={toggleMidnightTheme} 
-                  className="btn btn-xs btn-ghost text-white/70 hover:text-white mb-2"
-                  title={isMidnightTheme ? "Thème clair" : "Thème sombre"}
-                >
-                  {isMidnightTheme ? (
-                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" /></svg>
-                  ) : (
-                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" /></svg>
-                  )}
-              </button>
-              <button onClick={logout} className="btn btn-xs btn-ghost text-red-400 hover:bg-red-500/10 hover:text-red-300" title="Déconnexion">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>
-              </button>
-            </>
-          )}
-        </div>
       </aside>
     </>
   );

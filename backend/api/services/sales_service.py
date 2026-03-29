@@ -189,7 +189,7 @@ class SalesService:
         locked_products = {p.id: p for p in Produit.objects.select_for_update().filter(id__in=product_ids).order_by('id')}
         
         # PLAFOND DE CRÉDIT check
-        if facture.client and facture.client.client_type == 'PROFESSIONNEL':
+        if facture.client:
             paiement_immediat = Decimal(str(data.get('paiement_immediat', 0)))
             new_debt_increment = max(Decimal('0'), facture.total_ttc - paiement_immediat)
             if facture.client.plafond > 0 and (facture.client.current_debt + new_debt_increment) > facture.client.plafond:

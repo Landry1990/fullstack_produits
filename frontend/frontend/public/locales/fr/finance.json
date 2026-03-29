@@ -1,6 +1,7 @@
 {
     "title": "Tableau de Bord Financier",
     "subtitle": "Analyse et prédictions du chiffre d'affaires",
+    "margin_rate": "Taux",
     "periode": {
         "mois": "Ce mois",
         "trimestre": "Ce trimestre",
@@ -23,7 +24,11 @@
         "repartition": "Répartition CA",
         "total": "Total:",
         "units": "Unités",
-        "sales_count": "Nb Ventes"
+        "sales_count": "Nb Ventes",
+        "current_revenue": "CA Actuel",
+        "n1_revenue": "CA N-1",
+        "history": "Historique",
+        "prediction": "Prédiction"
     },
     "by_category": "Par Catégorie",
     "by_supplier": "Par Fournisseur",

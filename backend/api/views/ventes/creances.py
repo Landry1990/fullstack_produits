@@ -124,26 +124,30 @@ class CreanceViewSet(viewsets.ReadOnlyModelViewSet):
         if date_fin:
             queryset = queryset.filter(date__lte=date_fin)
 
-        # Aggregate by client
-        summary = queryset.values(
-            'client__id', 'client__name'
-        ).annotate(
-            total_facture=Sum('total_ttc'),
-            total_paye=Sum('paid_amount_sum'),
-            solde_du=Sum('remainder_val'),
-            nb_factures=Count('id')
-        ).order_by('-solde_du')
+        # Aggregate by client in Python to avoid "Sum of Aggregate" error and SQL JOIN duplication
+        client_map = {}
+        for inv in queryset.values('client__id', 'client__name', 'total_ttc', 'paid_amount_sum', 'remainder_val'):
+            cid = inv['client__id']
+            if not cid: continue
+            
+            if cid not in client_map:
+                client_map[cid] = {
+                    'id': cid,
+                    'client': inv['client__name'],
+                    'nb_factures': 0,
+                    'total_facture': 0,
+                    'montant_paye': 0,
+                    'solde_du': 0
+                }
+            
+            item = client_map[cid]
+            item['nb_factures'] += 1
+            item['total_facture'] += inv['total_ttc']
+            item['montant_paye'] += inv['paid_amount_sum']
+            item['solde_du'] += inv['remainder_val']
         
-        results = []
-        for s in summary:
-            if s['client__id']:
-                results.append({
-                    'client': s['client__name'],
-                    'nb_factures': s['nb_factures'],
-                    'total_facture': s['total_facture'],
-                    'montant_paye': s['total_paye'],
-                    'solde_du': s['solde_du']
-                })
+        # Sort by balance due
+        results = sorted(client_map.values(), key=lambda x: x['solde_du'], reverse=True)
         
         return Response(results)
     

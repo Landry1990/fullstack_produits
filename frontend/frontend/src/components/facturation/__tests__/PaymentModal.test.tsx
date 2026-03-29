@@ -133,7 +133,7 @@ describe('PaymentModal', () => {
   it('affiche le total versé', () => {
     const paiementsMock = [{ mode: 'especes', montant: 5000 }]
     renderWithContext(<PaymentModal {...defaultProps} paiements={paiementsMock} />)
-    expect(screen.getByText(/5\s?000\s?\/\s?5\s?000\s?F/)).toBeInTheDocument()
+    expect(screen.getByText(/5\s?000\s?F\s?\/\s?5\s?000\s?F/)).toBeInTheDocument()
   })
 
   it('appelle setMontantPaye lors de la saisie du montant', () => {

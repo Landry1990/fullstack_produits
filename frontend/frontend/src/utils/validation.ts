@@ -47,43 +47,53 @@ export function validateSaleData(params: SaleCompletionParams): string | null {
 }
 
 /**
- * Valide les données spécifiques d'un client professionnel (ayants-droit, plafond de crédit)
+ * Valide les données spécifiques d'un client (ayants-droit pour pros, plafond de crédit pour tous)
  */
-export function validateProfessionalClient(params: SaleCompletionParams, client: Client | undefined): string | null {
-    if (!client || client.client_type !== 'PROFESSIONNEL') return null;
+export function validateClientCreditLimit(params: SaleCompletionParams, client: Client | undefined): string | null {
+    if (!client) return null;
 
     const {
         useManualClient, showNewAyantDroit, ayantsDroitList,
-        ayantDroitNom, ayantDroitMatricule, selectedAyantDroit, totals
+        ayantDroitNom, ayantDroitMatricule, selectedAyantDroit, totals,
+        montantPaye, paiements
     } = params;
 
-    // Validation ayant droit
-    if (!useManualClient) {
-        if (showNewAyantDroit || ayantsDroitList.length === 0) {
-            if (!ayantDroitNom || !ayantDroitMatricule) {
-                return "Pour un client professionnel, veuillez renseigner le nom et le matricule de l'ayant droit";
+    // 1. Validation ayant droit (UNIQUEMENT pour les professionnels)
+    if (client.client_type === 'PROFESSIONNEL') {
+        if (!useManualClient) {
+            if (showNewAyantDroit || ayantsDroitList.length === 0) {
+                if (!ayantDroitNom || !ayantDroitMatricule) {
+                    return "Pour un client professionnel, veuillez renseigner le nom et le matricule de l'ayant droit";
+                }
             }
-        }
-    } else {
-        if (!selectedAyantDroit) {
-            return 'Pour un client professionnel, veuillez sélectionner un ayant droit ou en créer un nouveau';
+        } else {
+            if (!selectedAyantDroit) {
+                return 'Pour un client professionnel, veuillez sélectionner un ayant droit ou en créer un nouveau';
+            }
         }
     }
 
-    // Validation du PLAFOND DE CRÉDIT
+    // 2. Validation du PLAFOND DE CRÉDIT (POUR TOUS les clients ayant un plafond défini)
     const plafond = Number(client.plafond || 0);
     if (plafond > 0) {
         const currentDebt = Number(client.current_debt || 0);
 
-        // Calculer le paiement immédiat total
-        const immediatePayment = Number(params.montantPaye || 0) +
-            params.paiements.reduce((acc: number, p) => acc + (p.montant || 0), 0);
+        // Calculer le paiement immédiat total (Somme de tous les modes de paiement saisis)
+        const totalPaidSaisie = Number(montantPaye || 0);
+        const totalSplits = (paiements || []).reduce((acc: number, p) => acc + (Number(p.montant) || 0), 0);
+        const totalImmediatePayment = totalPaidSaisie + totalSplits;
 
-        const debtIncrement = Math.max(0, totals.totalTtc - immediatePayment);
-        const newTotal = currentDebt + debtIncrement;
+        // La nouvelle dette est ce qui reste après paiement immédiat
+        const debtIncrement = Math.max(0, totals.totalTtc - totalImmediatePayment);
+        const theoreticalTotalDebt = currentDebt + debtIncrement;
 
-        if (newTotal > plafond) {
-            return `⚠️ PLAFOND DÉPASSÉ !\nDette actuelle: ${formatNumber(Math.round(currentDebt))} F\nIncrément dette (TTC - Payé): ${formatNumber(Math.round(debtIncrement))} F\nTotal: ${formatNumber(Math.round(newTotal))} F\nPlafond: ${formatNumber(Math.round(plafond))} F`;
+        if (theoreticalTotalDebt > plafond) {
+            return `⚠️ PLAFOND DE CRÉDIT DÉPASSÉ !\n` +
+                   `Dette actuelle : ${formatNumber(Math.round(currentDebt))} F\n` +
+                   `Nouvelle dette (TTC - Payé) : ${formatNumber(Math.round(debtIncrement))} F\n` +
+                   `Total théorique : ${formatNumber(Math.round(theoreticalTotalDebt))} F\n` +
+                   `Limite autorisée (Plafond) : ${formatNumber(Math.round(plafond))} F\n\n` +
+                   `La vente ne peut pas être finalisée car ce client a atteint sa limite de crédit.`;
         }
     }
 

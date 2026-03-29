@@ -99,15 +99,22 @@ const CartRow = React.memo(({
   return (
     <tr
       className={`hover:bg-base-50/50 group border-b border-base-100 last:border-0 cursor-pointer transition-colors duration-150 
-        ${index === selectedIndex ? '!bg-blue-500/20 border-l-4 border-l-primary' : ''}
+        ${index === selectedIndex ? '!bg-primary/10 border-l-4 border-l-primary shadow-sm' : ''}
         ${isReturn ? 'bg-red-50 text-red-600 font-semibold' : ''}`}
       ref={index === selectedIndex ? (el) => el?.scrollIntoView({ behavior: 'smooth', block: 'nearest' }) : null}
       onClick={() => onSelectLine?.(index)}
     >
       <td className="pl-2 md:pl-4 py-1">
         <div className={`font-medium ${ligne.produit.is_deleted ? 'italic' : ''}`}>
-          {ligne.produit.name}
-          {ligne.produit.is_deleted && <span className="text-xs ml-2 opacity-75">{t('facturation:cart.product_status.deleted')}</span>}
+          <div className="flex items-center gap-2">
+            <span className="truncate">{ligne.produit.name}</span>
+            {ligne.isPromis && (
+              <span className="px-1.5 py-0.5 text-[10px] font-bold bg-warning/20 text-warning-content border border-warning/30 rounded animate-pulse shrink-0">
+                PROMIS
+              </span>
+            )}
+          </div>
+          {ligne.produit.is_deleted && <span className="text-xs ml-2 opacity-75 text-error">{t('facturation:cart.product_status.deleted')}</span>}
           {ligne.produit.is_chronic && (
             <div className="flex items-center gap-2 mt-1">
               <span className="badge badge-success badge-xs gap-1 py-1.5 px-2">

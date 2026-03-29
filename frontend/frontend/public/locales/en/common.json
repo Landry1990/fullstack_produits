@@ -1,5 +1,6 @@
 {
     "loading": "Loading...",
+    "dashboard": "Dashboard",
     "name": "Name",
     "phone": "Phone",
     "email": "Email",
@@ -295,6 +296,56 @@
         "placeholders": {
             "enter_password": "Enter your password",
             "password_required": "Password required"
+        }
+    },
+    "omnisearch": {
+        "placeholder": "Search (products, clients, navigation)...",
+        "empty": "No results found.",
+        "groups": {
+            "actions": "⚡ Quick Actions",
+            "navigation": "📍 Quick Navigation",
+            "products": "💊 Products",
+            "clients": "👥 Clients",
+            "invoices": "📄 Invoices / Sales",
+            "procurements": "📦 Purchase Orders",
+            "suppliers": "🏭 Suppliers"
+        },
+        "nav": {
+            "billing": "Billing / POS",
+            "sales_list": "Sales List",
+            "cash_journal": "Cash Journal",
+            "clients": "Clients / Beneficiaries",
+            "dashboard": "Dashboard"
+        },
+        "actions": {
+            "new_sale": "New Sale",
+            "new_product": "Create new product",
+            "new_client": "Add a client",
+            "new_order": "Create supplier order"
+        },
+        "preview": {
+            "title": "God Mode Omnisearch",
+            "subtitle": "Navigate for instant preview.",
+            "stock_rayon": "Shelf Stock",
+            "stock_reserve": "Reserve Stock",
+            "expiry": "Next Expiry",
+            "expiry_none": "None",
+            "last_purchase": "Last Purchase",
+            "manage_product": "Enter to manage this product",
+            "loyalty_points": "Loyalty Points",
+            "deposit_balance": "Deposit Balance",
+            "contact": "Direct Contact",
+            "address": "Address",
+            "active": "ACTIVE",
+            "inactive": "INACTIVE",
+            "perishable": "Perishable",
+            "invoice_number": "Invoice No.",
+            "total_amount": "Total Amount",
+            "client": "Client",
+            "supplier": "Supplier",
+            "items": "Items",
+            "status": "Status",
+            "date": "Date"
         }
     }
 }

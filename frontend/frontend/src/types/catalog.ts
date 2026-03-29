@@ -83,6 +83,9 @@ export interface ProduitModel {
     quantity_after?: number
     use_lot_management?: boolean
     last_purchase_price?: string | number
+    active_promis_count?: number
+    message_alerte?: string | null
+    blocking_alerte?: boolean
 }
 
 export interface ProduitForm {
@@ -114,6 +117,8 @@ export interface ProduitForm {
     has_reserve_storage?: boolean
     capacite_rayon?: string
     min_rayon?: string
+    message_alerte?: string
+    blocking_alerte?: boolean
 }
 
 export interface StockAdjustment {

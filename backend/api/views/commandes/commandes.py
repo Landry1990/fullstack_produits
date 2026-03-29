@@ -184,7 +184,7 @@ class CommandeViewSet(MultiTermSearchMixin, OptimizedSerializerMixin, viewsets.M
             for obj in protected_list[:3]: # Limiter à 3 pour la lisibilité
                 descriptions.append(str(obj))
             
-            error_detail = "Certaines commandes ne peuvent pas être supprimées car des produits ont déjà été vendus ou alloués."
+            error_detail = "Certaines commandes ne peuvent pas être supprimées car elles contiennent des lots déjà utilisés."
             if descriptions:
                 error_detail += f" Éléments bloquants : {', '.join(descriptions)}"
                 if len(protected_list) > 3:

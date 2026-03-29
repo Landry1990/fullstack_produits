@@ -33,6 +33,18 @@ export interface FacturationUIState {
         onConfirm: () => void
     } | null
 
+    alertTarget: {
+        type: 'product' | 'client'
+        id: number
+        name: string
+        currentMessage: string
+    } | null
+    isAlertModalOpen: boolean
+
+    displayAlertQueue: { id: string; title: string; message: string; type: 'product'|'client'; is_blocking: boolean }[]
+    popDisplayAlert: () => void
+    pushDisplayAlert: (alert: { title: string; message: string; type: 'product'|'client'; is_blocking: boolean }) => void
+
     // Payment State
     modePaiement: 'especes' | 'cheque' | 'carte' | 'virement' | 'en_compte'
     montantPaye: string
@@ -96,6 +108,24 @@ export function useFacturationUI() {
         message: string;
         onConfirm: () => void;
     } | null>(null)
+
+    const [alertTarget, setAlertTarget] = useState<{
+        type: 'product' | 'client'
+        id: number
+        name: string
+        currentMessage: string
+    } | null>(null)
+    const [isAlertModalOpen, setIsAlertModalOpen] = useState(false)
+
+    const [displayAlertQueue, setDisplayAlertQueue] = useState<{ id: string; title: string; message: string; type: 'product'|'client'; is_blocking: boolean }[]>([])
+    
+    const popDisplayAlert = useCallback(() => {
+        setDisplayAlertQueue(prev => prev.slice(1))
+    }, [])
+
+    const pushDisplayAlert = useCallback((alert: { title: string; message: string; type: 'product'|'client'; is_blocking: boolean }) => {
+        setDisplayAlertQueue(prev => [...prev, { ...alert, id: Math.random().toString(36).substring(7) }])
+    }, [])
 
     // Ordonnancier State
     const [showOrdonnanceModal, setShowOrdonnanceModal] = useState(false)
@@ -185,6 +215,11 @@ export function useFacturationUI() {
 
         lotModal, openLotModal, closeLotModal,
         confirmModal, setConfirmModal,
+
+        alertTarget, setAlertTarget,
+        isAlertModalOpen, setIsAlertModalOpen,
+
+        displayAlertQueue, popDisplayAlert, pushDisplayAlert,
 
         showOrdonnanceModal, setShowOrdonnanceModal,
         tempOrdonnanceData, setTempOrdonnanceData,

@@ -105,3 +105,38 @@ class WhatsAppLog(models.Model):
 
     def __str__(self):
         return f"WhatsApp à {self.recipient_name or self.recipient_number} ({self.get_status_display()})"
+
+class InternalMessage(models.Model):
+    """Messages internes entre utilisateurs (vendeurs, pharmaciens)."""
+    sender = models.ForeignKey(User, on_delete=models.CASCADE, related_name='sent_messages')
+    recipient = models.ForeignKey(User, on_delete=models.CASCADE, related_name='received_messages', null=True, blank=True, help_text="Laisser vide pour envoyer à tous")
+    content = models.TextField()
+    attachment = models.FileField(upload_to='internal_messages/attachments/', null=True, blank=True)
+    read_by = models.ManyToManyField(User, related_name='read_internal_messages', blank=True)
+    archived_by = models.ManyToManyField(User, related_name='archived_internal_messages', blank=True)
+    parent = models.ForeignKey('self', on_delete=models.SET_NULL, null=True, blank=True, related_name='replies')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at']
+        verbose_name = "Message Interne"
+        verbose_name_plural = "Messages Internes"
+
+    def __str__(self):
+        return f"De {self.sender} à {self.recipient or 'Tous'}: {self.content[:20]}..."
+
+
+class MessageTemplate(models.Model):
+    """Modèles de messages prédéfinis pour la messagerie interne."""
+    title = models.CharField(max_length=100, unique=True)
+    content = models.TextField()
+    is_active = models.BooleanField(default=True)
+    created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = "Modèle de Message"
+        verbose_name_plural = "Modèles de Messages"
+
+    def __str__(self):
+        return self.title

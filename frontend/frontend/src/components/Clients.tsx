@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'react-hot-toast';
 import { 
@@ -58,6 +59,8 @@ export default function Clients() {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
   const itemsPerPage = 50;
+  const location = useLocation();
+  const navigate = useNavigate();
 
   // View/Navigation State
   const [isFormModalOpen, setIsFormModalOpen] = useState(false);
@@ -111,6 +114,27 @@ export default function Clients() {
   useEffect(() => {
     fetchClients();
   }, [showInactive, currentPage, debouncedSearch]);
+
+  // Handle incoming redirect from Omnisearch
+  useEffect(() => {
+    if (location.state?.action === 'NEW_CLIENT') {
+      handleOpenCreate();
+      navigate(location.pathname, { replace: true, state: {} });
+    }
+    if (location.state?.selectedClientId && clients.length > 0) {
+      const cid = location.state.selectedClientId;
+      const found = clients.find((c: Client) => c.id === cid);
+      if (found) {
+        handleSelectClient(found);
+        // Clear state to avoid re-triggering
+        navigate(location.pathname, { replace: true, state: {} });
+      } else {
+        if (searchTerm !== String(cid)) {
+          setSearchTerm(String(cid));
+        }
+      }
+    }
+  }, [location.state, clients]);
 
   const handleSelectClient = async (client: Client) => {
     setLoadingHistory(true);

@@ -7,6 +7,6 @@ class ApiConfig(AppConfig):
 
     def ready(self):
         import api.signals
-        import api.signals_restock # Register restock signals
+        # import api.signals_restock # Désactivé : fonction reassort_auto
         import api.signals_depot # Register deposit signals
         import api.cache_invalidation # Register smart cache invalidation on stock changes

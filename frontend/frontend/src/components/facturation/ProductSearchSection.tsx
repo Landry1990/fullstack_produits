@@ -1,4 +1,4 @@
-﻿import React, { useState } from 'react'
+import React, { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { formatCurrency } from '../../utils/formatters'
 import type { ProduitModel } from '../../types'
@@ -216,7 +216,14 @@ export default function ProductSearchSection({
                     `}
                     >
                     <div className="flex-1 min-w-0">
-                        <div className="font-medium truncate text-sm">{produit.name}</div>
+                        <div className="flex items-center gap-2">
+                            <div className="font-medium truncate text-sm">{produit.name}</div>
+                            {produit.active_promis_count && produit.active_promis_count > 0 ? (
+                                <span className="px-1.5 py-0.5 text-[10px] font-bold bg-warning/20 text-warning-content border border-warning/30 rounded animate-pulse shrink-0">
+                                    PROMIS ({produit.active_promis_count})
+                                </span>
+                            ) : null}
+                        </div>
                         <div className="text-xs flex gap-3 mt-0.5 opacity-80">
                         <span className={(produit.stock ?? 0) <= 0 ? 'text-error font-bold' : ''}>
                             {t('facturation:search.stock_label')} {produit.stock}

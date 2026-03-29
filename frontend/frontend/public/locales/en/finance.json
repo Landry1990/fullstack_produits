@@ -1,6 +1,7 @@
 {
     "title": "Financial Analysis",
     "subtitle": "Analysis and predictions of turnover",
+    "margin_rate": "Rate",
     "periode": {
         "mois": "This month",
         "trimestre": "This quarter",
@@ -23,7 +24,11 @@
         "repartition": "Revenue Breakdown",
         "total": "Total:",
         "units": "Units",
-        "sales_count": "Sales Count"
+        "sales_count": "Sales Count",
+        "current_revenue": "Current Revenue",
+        "n1_revenue": "Revenue N-1",
+        "history": "History",
+        "prediction": "Prediction"
     },
     "by_category": "By Category",
     "by_supplier": "By Supplier",

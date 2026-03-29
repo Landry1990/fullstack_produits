@@ -1,5 +1,6 @@
 {
     "title": "Gestion des Produits",
+    "subtitle": "Créez et gérez vos produits et services",
     "create_title": "Nouveau Produit",
     "edit_title": "Modifier le Produit",
     "stats": {
@@ -53,6 +54,7 @@
         }
     },
     "actions": {
+        "new": "Nouveau",
         "create": "Créer Produit",
         "refresh": "Actualiser",
         "rotation": "Rotation",

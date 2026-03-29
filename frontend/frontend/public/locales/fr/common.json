@@ -1,5 +1,6 @@
 {
     "loading": "Chargement...",
+    "dashboard": "Tableau de bord",
     "name": "Nom",
     "phone": "Téléphone",
     "email": "Email",
@@ -96,7 +97,20 @@
         "confirm_action": "Voulez-vous vraiment effectuer cette action ?",
         "copy_success": "Copié dans le presse-papier",
         "import_success": "Importation terminée avec succès",
-        "import_error": "Erreur lors de l'importation"
+        "import_error": "Erreur lors de l'importation",
+        "internal": {
+            "title": "Messagerie Interne",
+            "inbox": "Boîte de réception",
+            "sent": "Messages envoyés",
+            "templates": "Modèles",
+            "new": "Nouveau message",
+            "recipient": "Destinataire",
+            "broadcast": "Tous (Broadcast)",
+            "content": "Message",
+            "send": "Envoyer",
+            "delete_template": "Supprimer le modèle ?",
+            "template_title": "Titre du modèle"
+        }
     },
     "last_7_days": "7 derniers jours",
     "last_30_days": "30 derniers jours",
@@ -295,6 +309,56 @@
         "placeholders": {
             "enter_password": "Saisissez votre mot de passe",
             "password_required": "Mot de passe requis"
+        }
+    },
+    "omnisearch": {
+        "placeholder": "Rechercher (produits, clients, navigation)...",
+        "empty": "Aucun résultat trouvé.",
+        "groups": {
+            "actions": "⚡ Actions Rapides",
+            "navigation": "📍 Navigation Rapide",
+            "products": "💊 Produits",
+            "clients": "👥 Clients",
+            "invoices": "📄 Factures / Ventes",
+            "procurements": "📦 Commandes Fournisseurs",
+            "suppliers": "🏭 Fournisseurs"
+        },
+        "nav": {
+            "billing": "Facturation / Caisse",
+            "sales_list": "Liste des ventes",
+            "cash_journal": "Journal de caisse",
+            "clients": "Clients / Ayants Droit",
+            "dashboard": "Tableau de Bord"
+        },
+        "actions": {
+            "new_sale": "Nouvelle Vente",
+            "new_product": "Créer un nouveau produit",
+            "new_client": "Ajouter un client",
+            "new_order": "Créer une commande fournisseur"
+        },
+        "preview": {
+            "title": "God Mode Omnisearch",
+            "subtitle": "Naviguez pour l'aperçu instantané.",
+            "stock_rayon": "Stock Rayon",
+            "stock_reserve": "Stock Réserve",
+            "expiry": "Prochaine Péremption",
+            "expiry_none": "Aucune",
+            "last_purchase": "Dernier Achat",
+            "manage_product": "Entrée pour gérer ce produit",
+            "loyalty_points": "Points Fidélité",
+            "deposit_balance": "Solde Dépôt",
+            "contact": "Contact Direct",
+            "address": "Adresse",
+            "active": "ACTIF",
+            "inactive": "INACTIF",
+            "perishable": "Périssable",
+            "invoice_number": "N° Facture",
+            "total_amount": "Montant Total",
+            "client": "Client",
+            "supplier": "Fournisseur",
+            "items": "Articles",
+            "status": "Statut",
+            "date": "Date"
         }
     }
 }

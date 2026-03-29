@@ -125,6 +125,16 @@ class Client(models.Model):
         help_text="Si activé, ce client peut utiliser le système de dépôt"
     )
 
+    message_alerte = models.TextField(
+        blank=True, 
+        null=True, 
+        help_text="Message d'alerte affiché lors de la sélection du client en caisse"
+    )
+    blocking_alerte = models.BooleanField(
+        default=False, 
+        help_text="Si coché, l'alerte bloque la facturation tant qu'elle n'est pas acquittée."
+    )
+
     created_at = models.DateTimeField(default=timezone.now)
     is_active = models.BooleanField(
         default=True, 
