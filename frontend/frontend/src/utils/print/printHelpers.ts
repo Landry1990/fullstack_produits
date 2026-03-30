@@ -1,4 +1,5 @@
 import i18next from 'i18next';
+import { formatDate, formatDateTime } from '../dateUtils';
 
 /**
  * Utilitaires d'assistance pour l'impression
@@ -13,21 +14,11 @@ export function formatMoney(value: number | string): string {
 }
 
 /**
- * Formate une date en format français pour l'impression
+ * Formate une date pour l'impression (inclut l'heure par défaut)
  */
 export function formatDateFr(dateString: string): string {
   if (!dateString) return '';
-  try {
-    return new Date(dateString).toLocaleString('fr-FR', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
-  } catch (e) {
-    return dateString;
-  }
+  return formatDateTime(dateString);
 }
 
 /**

@@ -276,6 +276,7 @@ select {
   background-color: hsl(var(--b1)) !important;
   background-clip: padding-box;
   border-bottom: 2px solid hsl(var(--b2)) !important;
+  background-color: hsl(var(--b1));
 }
 
 .table tfoot {
@@ -334,4 +335,16 @@ select {
 [data-theme] .sticky-header,
 [data-theme] .table thead th {
   background-color: hsl(var(--b1));
+}
+
+/* Forcer le centrage de TOUS les modals DaisyUI */
+.modal {
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+.modal-box {
+  margin-top: 0 !important;
+  margin-bottom: 0 !important;
+  top: 0 !important;
 }

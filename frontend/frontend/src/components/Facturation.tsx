@@ -1,5 +1,6 @@
 import { Eye, EyeOff, Moon, Sun } from 'lucide-react'
 import { formatCurrency } from '../utils/formatters'
+import { formatDateShort } from '../utils/dateUtils'
 import PaymentModal from './facturation/PaymentModal'
 import OrdonnanceModal from './OrdonnanceModal'
 import LotSelectionModal from './LotSelectionModal'
@@ -54,7 +55,7 @@ export default function Facturation() {
         </div>
         <div className="flex flex-col items-end shrink-0">
           <div className="text-[10px] sm:text-sm font-medium text-base-content/60">
-            {new Date().toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })}
+            {formatDateShort(new Date())}
           </div>
           <div className="flex gap-2 sm:gap-4 text-[8px] sm:text-[10px] text-base-content/40 mt-1 uppercase font-bold tracking-tight">
             <span className="flex items-center gap-0.5 sm:gap-1"><kbd className="kbd kbd-xs py-0 h-3 sm:h-4 font-sans">/</kbd> <span className="hidden xs:inline">{hook.t('facturation:shortcuts.search')}</span></span>

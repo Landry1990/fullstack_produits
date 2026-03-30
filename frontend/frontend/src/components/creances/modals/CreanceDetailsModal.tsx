@@ -1,8 +1,9 @@
-﻿import { Printer, History } from 'lucide-react';
+import { Printer, History } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import type { Creance } from '../../../types';
 import PremiumModal from '../../common/PremiumModal';
 import { formatCurrency } from '../../../utils/formatters';
+import { formatDate, formatDateTime } from '../../../utils/dateUtils';
 
 interface CreanceDetailsModalProps {
     isOpen: boolean;
@@ -48,7 +49,7 @@ export const CreanceDetailsModal: React.FC<CreanceDetailsModalProps> = ({
                     <div className="flex-1 space-y-1">
                         <div className="text-[10px] font-black uppercase text-base-content/40 tracking-widest">{t('creances:details_modal.invoice')}</div>
                         <div className="text-xl font-black text-primary tracking-tighter">{creance.numero_facture}</div>
-                        <div className="text-sm font-bold text-base-content/60">{t('creances:details_modal.issued_on')} {new Date(creance.date).toLocaleDateString(t('common:locale'))}</div>
+                        <div className="text-sm font-bold text-base-content/60">{t('creances:details_modal.issued_on')} {formatDate(creance.date)}</div>
                     </div>
                     <div className="flex-1 space-y-1 md:border-l md:pl-4 border-base-300">
                         <div className="text-[10px] font-black uppercase text-base-content/40 tracking-widest">{t('creances:details_modal.client_beneficiary')}</div>
@@ -93,7 +94,7 @@ export const CreanceDetailsModal: React.FC<CreanceDetailsModalProps> = ({
                                 <tbody className="text-sm">
                                     {paiements.map((p: any) => (
                                         <tr key={p.id} className="hover:bg-base-50 transition-colors border-b border-base-100 last:border-none">
-                                            <td className="font-mono text-base-content/60">{new Date(p.date_paiement || p.created_at).toLocaleString(t('common:locale'))}</td>
+                                            <td className="font-mono text-base-content/60">{formatDateTime(p.date_paiement || p.created_at)}</td>
                                             <td className="font-bold">
                                                 <div className="flex items-center gap-2">
                                                     <span className="text-lg leading-none">{getModeIcon(p.mode_paiement)}</span>

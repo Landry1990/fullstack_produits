@@ -1,5 +1,7 @@
 import { useCallback, useRef } from 'react';
 import { usePharmacySettings } from './usePharmacySettings';
+import { formatDateTime } from '../utils/dateUtils';
+import { useTranslation } from 'react-i18next';
 
 /**
  * Types de documents imprimables
@@ -73,6 +75,7 @@ export interface UsePrintReturn {
  */
 export function usePrint(): UsePrintReturn {
   const { settings } = usePharmacySettings();
+  const { t } = useTranslation('common');
   const printRef = useRef<HTMLDivElement>(null);
 
   /**
@@ -172,7 +175,7 @@ export function usePrint(): UsePrintReturn {
       <div class="print-footer">
         <p>${footerText}</p>
         <p style="margin-top: 5px; font-size: 0.7em;">
-          Imprimé le ${new Date().toLocaleDateString('fr-FR', { day: '2-digit', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' } as Intl.DateTimeFormatOptions)}
+          ${t('print.printed_on', { defaultValue: 'Imprimé le' })} ${formatDateTime(new Date())}
         </p>
       </div>
     `;
