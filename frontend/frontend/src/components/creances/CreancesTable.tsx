@@ -1,6 +1,7 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { formatCurrency, normalizeNumberInput } from '../../utils/formatters';
+import { formatDate, formatTime } from '../../utils/dateUtils';
 import { Eye, DollarSign, ArrowUpRight, ChevronRight, Hash, Calendar, Users } from 'lucide-react';
 import type { Creance, Client } from '../../types';
 
@@ -200,10 +201,10 @@ export const CreancesTable: React.FC<CreancesTableProps> = ({
                                 <td className="p-4">
                                     <div className="flex flex-col">
                                         <span className="font-mono text-xs font-black text-base-content/60">
-                                            {new Date(creance.date).toLocaleDateString(t('common:locale'), { day: '2-digit', month: 'short', year: 'numeric' })}
+                                            {formatDate(creance.date)}
                                         </span>
                                         <span className="text-[10px] font-bold text-base-content/20 uppercase tracking-widest">
-                                            {new Date(creance.date).toLocaleTimeString(t('common:locale'), { hour: '2-digit', minute: '2-digit' })}
+                                            {formatTime(creance.date)}
                                         </span>
                                     </div>
                                 </td>

@@ -26,6 +26,7 @@ import { useDebounce } from 'use-debounce';
 
 import omnisearchService from '../../services/omnisearchService';
 import type { ProduitModel, Client, Facture, Commande, Fournisseur } from '../../types';
+import { formatDate } from '../../utils/dateUtils';
 
 export default function Omnisearch() {
   const [open, setOpen] = useState(false);
@@ -194,7 +195,7 @@ export default function Omnisearch() {
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-start justify-center pt-[10vh] bg-base-300/40 backdrop-blur-md transition-all duration-300" onClick={() => setOpen(false)}>
+    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-base-300/40 backdrop-blur-md transition-all duration-300" onClick={() => setOpen(false)}>
       <div 
         className="w-full max-w-5xl bg-base-100 rounded-2xl shadow-[0_32px_64px_-12px_rgba(0,0,0,0.5)] overflow-hidden border border-base-content/10 transition-all duration-500 transform scale-100 opacity-100 animate-in fade-in zoom-in-95"
         onClick={e => e.stopPropagation()}
@@ -338,7 +339,7 @@ export default function Omnisearch() {
                             </div>
                             <div className="flex-1 flex flex-col items-start overflow-hidden">
                             <span className="font-bold truncate w-full group-aria-selected:text-primary">{f.numero_facture}</span>
-                            <span className="text-[10px] text-base-content/50 font-medium uppercase font-mono">{f.client_name || 'Client de passage'} • {new Date(f.date).toLocaleDateString()}</span>
+                            <span className="text-[10px] text-base-content/50 font-medium uppercase font-mono">{f.client_name || 'Client de passage'} • {formatDate(f.date)}</span>
                             </div>
                             <span className="ml-2 px-3 py-1 bg-base-200 text-base-content rounded-lg text-xs font-black tracking-tight group-aria-selected:bg-primary group-aria-selected:text-white transition-colors">
                                 {Number(f.total_ttc).toLocaleString()} F
@@ -362,7 +363,7 @@ export default function Omnisearch() {
                             </div>
                             <div className="flex-1 flex flex-col items-start overflow-hidden">
                             <span className="font-bold truncate w-full group-aria-selected:text-primary">{o.fournisseur_nom || 'Grossiste'}</span>
-                            <span className="text-[10px] text-base-content/50 font-medium uppercase">{new Date(o.date).toLocaleDateString()} • {o.status_display}</span>
+                            <span className="text-[10px] text-base-content/50 font-medium uppercase">{formatDate(o.date)} • {o.status_display}</span>
                             </div>
                         </Command.Item>
                         ))}
@@ -441,7 +442,7 @@ export default function Omnisearch() {
                                         <Calendar className="w-3 h-3" /> {t('omnisearch.preview.expiry')}
                                     </div>
                                     <div className="text-sm font-black italic">
-                                        {(selectedItem.data as ProduitModel).next_expiring_date ? new Date((selectedItem.data as ProduitModel).next_expiring_date as string).toLocaleDateString() : t('omnisearch.preview.expiry_none')}
+                                        {(selectedItem.data as ProduitModel).next_expiring_date ? formatDate((selectedItem.data as ProduitModel).next_expiring_date as string) : t('omnisearch.preview.expiry_none')}
                                     </div>
                                 </div>
                                 {(selectedItem.data as ProduitModel).is_perissable && (
@@ -459,7 +460,7 @@ export default function Omnisearch() {
                                 </div>
                                 <div className="flex justify-between items-baseline">
                                     <div className="text-lg font-black text-secondary">
-                                        {(selectedItem.data as ProduitModel).dernier_achat ? new Date((selectedItem.data as ProduitModel).dernier_achat as string).toLocaleDateString() : '—'}
+                                        {(selectedItem.data as ProduitModel).dernier_achat ? formatDate((selectedItem.data as ProduitModel).dernier_achat as string) : '—'}
                                     </div>
                                     <div className="text-xs font-mono font-bold opacity-60">
                                         {(selectedItem.data as ProduitModel).last_purchase_price ? `${Number((selectedItem.data as ProduitModel).last_purchase_price).toLocaleString()} F` : ''}
@@ -539,26 +540,51 @@ export default function Omnisearch() {
                             </div>
                         </div>
 
-                        <div className="grid grid-cols-2 gap-4">
-                            <div className="col-span-2 p-5 bg-primary/5 border border-primary/10 rounded-3xl flex items-center justify-between">
-                                <div className="space-y-1">
-                                    <span className="text-[10px] font-black uppercase tracking-widest text-primary/40">{t('omnisearch.preview.total_amount')}</span>
-                                    <div className="text-3xl font-black text-primary">{Number((selectedItem.data as Facture).total_ttc).toLocaleString()} F</div>
+                        <div className="flex-1 overflow-y-auto space-y-4">
+                            <div className="grid grid-cols-2 gap-4">
+                                <div className="col-span-2 p-5 bg-primary/5 border border-primary/10 rounded-3xl flex items-center justify-between">
+                                    <div className="space-y-1">
+                                        <span className="text-[10px] font-black uppercase tracking-widest text-primary/40">{t('omnisearch.preview.total_amount')}</span>
+                                        <div className="text-3xl font-black text-primary">{Number((selectedItem.data as Facture).total_ttc).toLocaleString()} F</div>
+                                    </div>
+                                    <div className="p-3 bg-primary/10 text-primary rounded-2xl">
+                                        <TrendingIcon className="w-6 h-6" />
+                                    </div>
                                 </div>
-                                <div className="p-3 bg-primary/10 text-primary rounded-2xl">
-                                    <TrendingIcon className="w-6 h-6" />
+                                
+                                <div className="p-4 bg-base-100 border border-base-200 rounded-2xl space-y-1">
+                                    <div className="text-[10px] font-black uppercase tracking-widest text-base-content/40">{t('omnisearch.preview.status')}</div>
+                                    <div className="text-sm font-bold uppercase">{(selectedItem.data as Facture).status_display}</div>
+                                </div>
+                                
+                                <div className="p-4 bg-base-100 border border-base-200 rounded-2xl space-y-1">
+                                    <div className="text-[10px] font-black uppercase tracking-widest text-base-content/40">{t('omnisearch.preview.date')}</div>
+                                    <div className="text-sm font-bold tracking-tight">{formatDate((selectedItem.data as Facture).date)}</div>
                                 </div>
                             </div>
-                            
-                            <div className="p-4 bg-base-100 border border-base-200 rounded-2xl space-y-1">
-                                <div className="text-[10px] font-black uppercase tracking-widest text-base-content/40">{t('omnisearch.preview.status')}</div>
-                                <div className="text-sm font-bold uppercase">{(selectedItem.data as Facture).status_display}</div>
-                            </div>
-                            
-                            <div className="p-4 bg-base-100 border border-base-200 rounded-2xl space-y-1">
-                                <div className="text-[10px] font-black uppercase tracking-widest text-base-content/40">{t('omnisearch.preview.date')}</div>
-                                <div className="text-sm font-bold tracking-tight">{new Date((selectedItem.data as Facture).date).toLocaleDateString()}</div>
-                            </div>
+
+                            {/* Produits de la vente */}
+                            {(selectedItem.data as any).produits_details && (selectedItem.data as any).produits_details.length > 0 && (
+                                <div className="space-y-3">
+                                    <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-base-content/30 px-1">Produits ({((selectedItem.data as any).produits_details.length)})</h4>
+                                    <div className="bg-base-200/50 rounded-2xl overflow-hidden border border-base-200">
+                                        {(selectedItem.data as any).produits_details.map((p: any, idx: number) => (
+                                            <div key={idx} className="px-4 py-3 flex items-center justify-between border-b border-base-200/50 last:border-0 hover:bg-base-200/80 transition-colors">
+                                                <div className="flex flex-col gap-0.5">
+                                                    <span className="text-xs font-bold text-base-content line-clamp-1">{p.nom}</span>
+                                                    <span className="text-[10px] font-bold text-base-content/40 uppercase tracking-tight">{Number(p.prix).toLocaleString()} F / unité</span>
+                                                </div>
+                                                <div className="flex items-center gap-2">
+                                                    <span className="px-2 py-0.5 bg-primary/10 text-primary rounded flex items-center gap-1">
+                                                        <span className="text-[10px] font-black">X</span>
+                                                        <span className="text-xs font-black">{p.quantite}</span>
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
                         </div>
                     </div>
                 ) : selectedItem?.type === 'commande' && selectedItem.data ? (
@@ -573,23 +599,47 @@ export default function Omnisearch() {
                             </div>
                         </div>
 
-                        <div className="grid grid-cols-2 gap-4">
-                             <div className="col-span-2 p-5 bg-warning/5 border border-warning/10 rounded-3xl flex items-center justify-between">
-                                <div className="space-y-1">
-                                    <span className="text-[10px] font-black uppercase tracking-widest text-warning/40">{t('omnisearch.preview.total_amount')}</span>
-                                    <div className="text-3xl font-black text-warning">{Number((selectedItem.data as Commande).total || 0).toLocaleString()} F</div>
+                        <div className="flex-1 overflow-y-auto space-y-4">
+                            <div className="grid grid-cols-2 gap-4">
+                                <div className="col-span-2 p-5 bg-warning/5 border border-warning/10 rounded-3xl flex items-center justify-between">
+                                    <div className="space-y-1">
+                                        <span className="text-[10px] font-black uppercase tracking-widest text-warning/40">{t('omnisearch.preview.total_amount')}</span>
+                                        <div className="text-3xl font-black text-warning">{Number((selectedItem.data as Commande).total || 0).toLocaleString()} F</div>
+                                    </div>
+                                </div>
+                                
+                                <div className="p-4 bg-base-100 border border-base-200 rounded-2xl space-y-1">
+                                    <div className="text-[10px] font-black uppercase tracking-widest text-base-content/40">{t('omnisearch.preview.status')}</div>
+                                    <div className="text-xs font-bold uppercase">{(selectedItem.data as Commande).status_display}</div>
+                                </div>
+                                
+                                <div className="p-4 bg-base-100 border border-base-200 rounded-2xl space-y-1">
+                                    <div className="text-[10px] font-black uppercase tracking-widest text-base-content/40">{t('omnisearch.preview.items')}</div>
+                                    <div className="text-xl font-black">{(selectedItem.data as Commande).items_count || 0}</div>
                                 </div>
                             </div>
-                            
-                            <div className="p-4 bg-base-100 border border-base-200 rounded-2xl space-y-1">
-                                <div className="text-[10px] font-black uppercase tracking-widest text-base-content/40">{t('omnisearch.preview.status')}</div>
-                                <div className="text-xs font-bold uppercase">{(selectedItem.data as Commande).status_display}</div>
-                            </div>
-                            
-                            <div className="p-4 bg-base-100 border border-base-200 rounded-2xl space-y-1">
-                                <div className="text-[10px] font-black uppercase tracking-widest text-base-content/40">{t('omnisearch.preview.items')}</div>
-                                <div className="text-xl font-black">{(selectedItem.data as Commande).items_count || 0}</div>
-                            </div>
+
+                            {/* Produits de la commande */}
+                            {(selectedItem.data as any).produits_details && (selectedItem.data as any).produits_details.length > 0 && (
+                                <div className="space-y-3">
+                                    <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-base-content/30 px-1">Articles ({((selectedItem.data as any).produits_details.length)})</h4>
+                                    <div className="bg-base-200/50 rounded-2xl overflow-hidden border border-base-200">
+                                        {(selectedItem.data as any).produits_details.map((p: any, idx: number) => (
+                                            <div key={idx} className="px-4 py-3 flex items-center justify-between border-b border-base-200/50 last:border-0 hover:bg-base-200/80 transition-colors">
+                                                <div className="flex flex-col gap-0.5">
+                                                    <span className="text-xs font-bold text-base-content line-clamp-1">{p.nom}</span>
+                                                    <span className="text-[10px] font-bold text-base-content/40 uppercase tracking-tight">{Number(p.prix).toLocaleString()} F / unité</span>
+                                                </div>
+                                                <div className="flex items-center gap-2">
+                                                    <span className="px-2 py-0.5 bg-warning/10 text-warning rounded flex items-center gap-1">
+                                                        <span className="text-xs font-black">{p.quantite}</span>
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
                         </div>
                     </div>
                 ) : selectedItem?.type === 'fournisseur' && selectedItem.data ? (

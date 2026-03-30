@@ -1,5 +1,5 @@
-
 import React from 'react';
+import { formatDate as formatLocaleDate } from '../../utils/dateUtils';
 
 // Interfaces matching FacturePrintSerializer
 export interface InvoiceClient {
@@ -88,12 +88,7 @@ const InvoiceTemplate: React.FC<InvoiceTemplateProps> = ({ settings, data, isBon
   };
 
   const formatDate = (dateStr: string) => {
-    if (!dateStr) return '';
-    return new Date(dateStr).toLocaleDateString('fr-FR', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric'
-    });
+    return formatLocaleDate(dateStr);
   };
 
   const formatExpiryDate = (dateStr: string) => {

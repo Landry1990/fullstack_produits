@@ -123,7 +123,6 @@ class FactureListSerializer(serializers.ModelSerializer):
             return full_name or obj.validated_by.username
         return ''
 
-
 class FactureDetailSerializer(FactureSerializer):
     """
     Serializer complet pour les détails d'une facture.
@@ -202,6 +201,48 @@ class CommandeListSerializer(serializers.ModelSerializer):
         if paye > 0:
             return "PARTIEL"
         return "IMPAYE"
+
+
+class FactureOmnisearchSerializer(FactureListSerializer):
+    """
+    Serializer spécial pour l'Omnisearch.
+    Inclut les produits pour l'aperçu rapide.
+    """
+    produits_details = serializers.SerializerMethodField()
+
+    class Meta(FactureListSerializer.Meta):
+        fields = FactureListSerializer.Meta.fields + ['produits_details']
+
+    def get_produits_details(self, obj):
+        return [
+            {
+                'nom': p.produit.name if p.produit else p.produit_nom,
+                'quantite': p.quantity,
+                'prix': str(p.selling_price)
+            }
+            for p in obj.produits.all()
+        ]
+
+
+class CommandeOmnisearchSerializer(CommandeListSerializer):
+    """
+    Serializer spécial pour l'Omnisearch des commandes.
+    Inclut les produits pour l'aperçu rapide.
+    """
+    produits_details = serializers.SerializerMethodField()
+
+    class Meta(CommandeListSerializer.Meta):
+        fields = CommandeListSerializer.Meta.fields + ['produits_details']
+
+    def get_produits_details(self, obj):
+        return [
+            {
+                'nom': p.produit.name if p.produit else p.produit_nom,
+                'quantite': p.quantity + p.unites_gratuites,
+                'prix': str(p.price)
+            }
+            for p in obj.produits.all()
+        ]
 
 
 class CommandeDetailSerializer(CommandeSerializer):

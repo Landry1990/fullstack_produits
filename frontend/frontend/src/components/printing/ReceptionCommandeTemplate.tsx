@@ -2,6 +2,7 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 import type { Commande, PharmacySettings } from '../../types';
 import { formatNumber } from '../../utils/formatters';
+import { formatDate as formatLocaleDate, formatDateTime } from '../../utils/dateUtils';
 
 interface ReceptionCommandeTemplateProps {
     commande: Commande;
@@ -13,14 +14,7 @@ export const ReceptionCommandeTemplate: React.FC<ReceptionCommandeTemplateProps>
     const { t } = useTranslation(['orders', 'common']);
 
     const formatDate = (dateStr: string) => {
-        try {
-            return new Date(dateStr).toLocaleDateString('fr-FR', {
-                day: '2-digit', month: '2-digit', year: 'numeric',
-                hour: '2-digit', minute: '2-digit'
-            });
-        } catch (e) {
-            return dateStr;
-        }
+        return formatDateTime(dateStr);
     };
 
     const formatM = (val: number | string) => {
@@ -28,10 +22,7 @@ export const ReceptionCommandeTemplate: React.FC<ReceptionCommandeTemplateProps>
         return formatNumber(Math.round(n || 0));
     };
 
-    const now = new Date().toLocaleString('fr-FR', {
-        day: '2-digit', month: '2-digit', year: 'numeric',
-        hour: '2-digit', minute: '2-digit'
-    });
+    const now = formatDateTime(new Date());
 
     const produits = commande.produits || [];
     
@@ -138,7 +129,7 @@ export const ReceptionCommandeTemplate: React.FC<ReceptionCommandeTemplateProps>
                                 <tr key={idx} className="border-b border-slate-100 break-inside-avoid">
                                     <td className="py-1 px-3">
                                         <div className="font-bold text-base-content uppercase text-[10px] leading-tight">{produitName}</div>
-                                        {p.lot && <div className="text-[7.5px] text-base-content/60 font-mono">LOT: {p.lot} | EXP: {p.date_expiration ? new Date(p.date_expiration).toLocaleDateString('fr-FR') : '-'}</div>}
+                                        {p.lot && <div className="text-[7.5px] text-base-content/60 font-mono">LOT: {p.lot} | EXP: {p.date_expiration ? formatLocaleDate(p.date_expiration) : '-'}</div>}
                                     </td>
                                     <td className="py-1 px-2 text-center font-mono text-[8.5px] text-base-content/60">{cip}</td>
                                     <td className="py-1 px-2 text-center font-black">{stAnt}</td>
