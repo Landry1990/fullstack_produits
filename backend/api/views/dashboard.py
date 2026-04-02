@@ -39,10 +39,10 @@ class DashboardViewSet(viewsets.ViewSet):
         
         global_stats = {}
         
-        facture_qs = Facture.objects.annotate(num_p=Count('paiements')).filter(
+        facture_qs = Facture.objects.filter(
             date__date__in=[today, yesterday],
             status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE]
-        ).exclude(status='VAL', num_p=0)
+        ).exclude(status='VAL', paiements__isnull=True)
         
         # Aggregate everything related to Facture in one pass for [today, yesterday]
         facture_metrics = facture_qs.aggregate(
@@ -104,9 +104,9 @@ class DashboardViewSet(viewsets.ViewSet):
                 s=Sum('montant')
             ).values('s')[:1]
             
-            receivables_agg = Facture.objects.annotate(num_p=Count('paiements')).filter(
+            receivables_agg = Facture.objects.filter(
                 status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE]
-            ).exclude(status='VAL', num_p=0).annotate(
+            ).exclude(status='VAL', paiements__isnull=True).annotate(
                 total_paid=Coalesce(Subquery(paid_sub, output_field=DecimalField()), Decimal('0.00')),
             ).annotate(
                 debt=F('total_ttc') - F('total_paid')
@@ -116,6 +116,76 @@ class DashboardViewSet(viewsets.ViewSet):
                 total_debt=Coalesce(Sum('debt'), Decimal('0')),
                 count=Count('id')
             )
+
+            # 4. Payment Mix (Today)
+            payment_mix = Caisse.objects.filter(
+                date_paiement__date=today,
+                statut='completee'
+            ).values('mode_paiement').annotate(
+                value=Sum('montant')
+            ).order_by('-value')
+            
+            payment_mix_data = [
+                {'mode': item['mode_paiement'], 'label': dict(Caisse.MODES_PAIEMENT).get(item['mode_paiement'], item['mode_paiement']), 'value': float(item['value'])}
+                for item in payment_mix
+            ]
+
+            # 5. Top Products Today
+            from ..models import FactureProduit
+            top_products = FactureProduit.objects.filter(
+                facture__date__date=today,
+                facture__status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE]
+            ).values('produit_id', 'produit__name').annotate(
+                qty=Sum('quantity'),
+                revenue=Sum(F('quantity') * (F('selling_price') - F('discount')))
+            ).order_by('-qty')[:5]
+
+            top_products_data = [
+                {'id': p['produit_id'], 'name': p['produit__name'] or 'Inconnu', 'qty': p['qty'], 'revenue': float(p['revenue'])}
+                for p in top_products
+            ]
+
+            # 6. Today's Margin
+            from ..models import FactureProduitAllocation
+            margin_today = FactureProduitAllocation.objects.filter(
+                facture_produit__facture__date__date=today,
+                facture_produit__facture__status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE]
+            ).exclude(facture_produit__facture__status='VAL', facture_produit__facture__paiements__isnull=True).aggregate(
+                total=Coalesce(Sum((F('selling_price') - F('cost_price')) * F('quantity')), Decimal('0'))
+            )['total']
+
+            # 7. Dormant Stock (6 months defaults)
+            dormant_threshold = today - timedelta(days=6 * 30)
+            
+            dormant_qs = Produit.objects.filter(stock__gt=0).filter(
+                Q(dernier_vente__lte=dormant_threshold) |
+                (Q(dernier_vente__isnull=True) & Q(dernier_achat__lte=dormant_threshold)) |
+                (Q(dernier_vente__isnull=True) & Q(dernier_achat__isnull=True) & Q(created_at__date__lte=dormant_threshold))
+            ).annotate(
+                dormant_value=ExpressionWrapper(F('stock') * F('pmp'), output_field=DecimalField())
+            )
+
+            dormant_total = dormant_qs.aggregate(
+                total_val=Coalesce(Sum('dormant_value'), Decimal('0'))
+            )['total_val']
+
+            top_dormant = dormant_qs.order_by('-dormant_value').values(
+                'id', 'name', 'stock', 'pmp', 'dernier_vente', 'dormant_value'
+            )[:5]
+
+            dormant_stock_data = {
+                'total_value': float(dormant_total),
+                'top_products': [
+                    {
+                        'id': p['id'],
+                        'name': p['name'],
+                        'stock': p['stock'],
+                        'last_sale': p['dernier_vente'].isoformat() if p['dernier_vente'] else None,
+                        'value': float(p['dormant_value'])
+                    }
+                    for p in top_dormant
+                ]
+            }
         user_avg_basket = (user_ca_today / user_sales_count) if user_sales_count > 0 else Decimal('0')
 
         # Base response
@@ -136,7 +206,11 @@ class DashboardViewSet(viewsets.ViewSet):
                 'low_stock': {'value': stock_critique, 'change': 0},
                 'receivables': {'value': float(receivables_agg['total_debt'] or 0), 'count': receivables_agg['count'] or 0},
                 'discount': {'value': float(discount_total), 'change': 0},
-                'stock_value': {'value': float(stock_agg['total'] or 0), 'count': stock_agg['count'] or 0}
+                'stock_value': {'value': float(stock_agg['total'] or 0), 'count': stock_agg['count'] or 0},
+                'payment_mix': payment_mix_data,
+                'top_products': top_products_data,
+                'margin_today': float(margin_today),
+                'dormant_stock': dormant_stock_data
             })
             
         return Response(response_data)
@@ -402,25 +476,39 @@ class DashboardViewSet(viewsets.ViewSet):
             count=Count('id'),
             total=Sum('total_ttc')
         ).order_by('hour')
-        
+
+        # Get today's sales grouped by hour for comparison
+        today_sales_by_hour = Facture.objects.filter(
+            date__date=today,
+            status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE]
+        ).exclude(status='VAL', paiements__isnull=True).annotate(
+            hour=ExtractHour('date')
+        ).values('hour').annotate(
+            count=Count('id')
+        )
+
         # Initialize 24h data
-        traffic_data = {h: {'count': 0, 'total': 0} for h in range(24)}
+        traffic_data = {h: {'count': 0, 'total': 0, 'today_count': 0} for h in range(24)}
         
         days_count = 30 # Fixed 30-day window average
         
-        # Fill with actual data
+        # Fill with average data
         for item in sales_by_hour:
             hour = item['hour']
-            traffic_data[hour] = {
-                'count': float(item['count']) / days_count, # Average per day
-                'total': float(item['total'] or 0) / days_count # Average revenue per day
-            }
+            traffic_data[hour]['count'] = float(item['count']) / days_count
+            traffic_data[hour]['total'] = float(item['total'] or 0) / days_count
+            
+        # Fill with today's data
+        for item in today_sales_by_hour:
+            hour = item['hour']
+            traffic_data[hour]['today_count'] = item['count']
             
         # Format for frontend
         response_data = [
             {
                 'hour': f"{h:02d}h",
                 'sales_count': round(traffic_data[h]['count'], 2),
+                'today_sales_count': traffic_data[h]['today_count'],
                 'revenue': round(traffic_data[h]['total'], 2)
             }
             for h in range(24)

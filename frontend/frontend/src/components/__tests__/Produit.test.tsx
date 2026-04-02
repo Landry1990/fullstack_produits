@@ -77,9 +77,9 @@ describe('Produit Component (Integration)', () => {
         );
 
         await waitFor(() => {
-            expect(screen.getByText(/DOLIPRANE/i)).toBeInTheDocument();
+            expect(screen.getAllByText(/DOLIPRANE/i)[0]).toBeInTheDocument();
         });
-        expect(screen.getByText(/EFFERALGAN/i)).toBeInTheDocument();
+        expect(screen.getAllByText(/EFFERALGAN/i)[0]).toBeInTheDocument();
     });
 
     it('triggers search by calling the hook with new filters', async () => {

@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo } from 'react'
+import { useState, useCallback, useMemo, useEffect, useRef } from 'react'
 import axios from 'axios'
 import { toast } from 'react-hot-toast'
 import type { ProduitModel, LigneFacture, StockLot } from '../types'
@@ -7,6 +7,7 @@ import { calculateLineTotal, calculateCartStats } from '../utils/finance'
 import { useAuth } from '../context/AuthContext'
 import { differenceInDays, parseISO } from 'date-fns'
 import { showExpirationToast } from '../utils/toastUtils'
+import { safeStorage } from '../utils/storage'
 
 interface UseCartOptions {
     apiBaseUrl?: string
@@ -17,8 +18,42 @@ interface UseCartOptions {
 
 export function useCart({ apiBaseUrl = '', onRequirePrescription, onAlert, quantityInputsRef }: UseCartOptions = {}) {
     const { user } = useAuth()
+    
+    // Logic keys (prefixed with user ID for multi-user safety)
+    const cartStorageKey = useMemo(() => user?.id ? `activeCartLignes_${user.id}` : null, [user?.id])
+
     const [lignesFacture, setLignesFacture] = useState<LigneFacture[]>([])
     const [loading, setLoading] = useState(false)
+    const hasHydratedRef = useRef(false)
+
+    // 1. Hydrate from localStorage when user becomes available
+    useEffect(() => {
+        if (cartStorageKey && !hasHydratedRef.current) {
+            try {
+                const saved = safeStorage.getItem(cartStorageKey, 'local')
+                if (saved) {
+                    setLignesFacture(JSON.parse(saved))
+                }
+                hasHydratedRef.current = true
+            } catch (err) {
+                console.error("Failed to hydrate cart:", err)
+            }
+            
+            // Cleanup: remove old global key if it exists
+            safeStorage.removeItem('activeCartLignes', 'local')
+        }
+    }, [cartStorageKey])
+
+    // 2. Persist to localStorage on change (debounced implicitly by render cycle)
+    useEffect(() => {
+        if (!cartStorageKey || !hasHydratedRef.current) return
+
+        if (lignesFacture.length > 0) {
+            safeStorage.setItem(cartStorageKey, JSON.stringify(lignesFacture), 'local')
+        } else {
+            safeStorage.removeItem(cartStorageKey, 'local')
+        }
+    }, [lignesFacture, cartStorageKey])
 
     const addProduit = useCallback(async (produit: ProduitModel, options?: { isRetrocession?: boolean; preventFocus?: boolean }) => {
         setLoading(true)

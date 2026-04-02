@@ -375,12 +375,9 @@ class PromisViewSet(MultiTermSearchMixin, viewsets.ModelViewSet):
         # Promis en attente avec stock suffisant
         promis_disponibles = Promis.objects.filter(
             status=Promis.Status.EN_ATTENTE,
-            produit__isnull=False
-        ).select_related('client', 'produit', 'facture').annotate(
-            stock_actuel=F('produit__stock')
-        ).filter(
-            stock_actuel__gte=F('quantite')
-        ).order_by('-date_promis')
+            produit__isnull=False,
+            produit__stock__gte=F('quantite')
+        ).select_related('client', 'produit', 'facture').order_by('-date_promis')
         
         # Sérialiser
         data = []

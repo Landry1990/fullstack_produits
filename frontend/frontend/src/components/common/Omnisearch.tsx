@@ -20,7 +20,8 @@ import {
   Layers,
   TrendingUp as TrendingIcon,
   ShoppingBag,
-  ClipboardList
+  ClipboardList,
+  BarChart3
 } from 'lucide-react';
 import { useDebounce } from 'use-debounce';
 
@@ -255,6 +256,10 @@ export default function Omnisearch() {
 
                     {!search && (
                     <Command.Group heading={t('omnisearch.groups.navigation')} className="text-[10px] font-black text-base-content/30 pt-4 pb-1 px-3 uppercase tracking-[0.15em]">
+                        <Command.Item onSelect={() => onSelectLink('/app/rapports-mensuels')} value="nav-rapport-mensuel" className="flex items-center px-4 py-3 rounded-xl cursor-pointer hover:bg-base-200 text-base-content aria-selected:bg-primary/5 aria-selected:text-primary transition-all opacity-80 aria-selected:opacity-100">
+                        <BarChart3 className="w-4 h-4 mr-3 text-emerald-500" />
+                        <span className="font-medium">{t('omnisearch.nav.monthly_report')}</span>
+                        </Command.Item>
                         <Command.Item onSelect={() => onSelectLink('/app/facturation')} value="nav-facturation" className="flex items-center px-4 py-3 rounded-xl cursor-pointer hover:bg-base-200 text-base-content aria-selected:bg-primary/5 aria-selected:text-primary transition-all opacity-80 aria-selected:opacity-100">
                         <WalletCards className="w-4 h-4 mr-3" />
                         <span className="font-medium">{t('omnisearch.nav.billing')}</span>

@@ -31,6 +31,19 @@ interface DashboardStats {
         count: number;
         avg_basket: number;
     };
+    payment_mix?: Array<{ mode: string; label: string; value: number }>;
+    top_products?: Array<{ id: number; name: string; qty: number; revenue: number }>;
+    margin_today?: number;
+    dormant_stock?: {
+        total_value: number;
+        top_products: Array<{
+            id: number;
+            name: string;
+            stock: number;
+            last_sale: string | null;
+            value: number;
+        }>;
+    };
 }
 
 interface RevenueChartData {
@@ -150,6 +163,7 @@ export const useExpiringLots = (months: number) => {
 export interface HourlyTrafficData {
     hour: string;
     sales_count: number;
+    today_sales_count?: number;
     revenue: number;
 }
 

@@ -1,5 +1,9 @@
 from django_filters import rest_framework as filters
 from .models import Produit, AuditLog
+from django.db.models import Q
+from django.utils import timezone
+from datetime import timedelta
+
 
 class ProduitFilter(filters.FilterSet):
     # Permet de filtrer par le nom du rayon (insensible à la casse)
@@ -13,6 +17,26 @@ class ProduitFilter(filters.FilterSet):
     stock_lte = filters.NumberFilter(field_name='stock', lookup_expr='lte')
     stock_gt = filters.NumberFilter(field_name='stock', lookup_expr='gt')
     stock_gte = filters.NumberFilter(field_name='stock', lookup_expr='gte')
+
+    # Filtre spécifique pour les Rossignols (Stock dormant)
+    dormant_months = filters.NumberFilter(method='filter_dormant_stock')
+
+    def filter_dormant_stock(self, queryset, name, value):
+        if value is None or value <= 0:
+            return queryset
+            
+        date_threshold = timezone.now().date() - timedelta(days=value * 30)
+        
+        # Filtre: Stock > 0 ET 
+        # (dernière vente avant le seuil OU (jamais vendu ET acheté/créé avant le seuil))
+        return queryset.filter(
+            stock__gt=0
+        ).filter(
+            Q(dernier_vente__lte=date_threshold) |
+            (Q(dernier_vente__isnull=True) & Q(dernier_achat__lte=date_threshold)) |
+            (Q(dernier_vente__isnull=True) & Q(dernier_achat__isnull=True) & Q(created_at__date__lte=date_threshold))
+        )
+
 
     class Meta:
         model = Produit

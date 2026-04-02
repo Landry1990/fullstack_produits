@@ -1,6 +1,7 @@
-import { useMemo, useState, useEffect, useCallback } from 'react'
+import { useMemo, useState, useEffect, useCallback, type Dispatch, type SetStateAction } from 'react'
 import { useTranslation } from 'react-i18next'
 import PremiumModal from '../common/PremiumModal'
+import { ShieldAlert, Package, ArrowDown, History, Zap } from 'lucide-react'
 import type { ProduitModel, Client } from '../../types'
 
 interface StockResolutionModalProps {
@@ -11,8 +12,8 @@ interface StockResolutionModalProps {
     quantity: number
     stock: number
   }[]
-  promisSelections: Set<number>
-  setPromisSelections: (val: Set<number>) => void
+  resolutionActions: Record<number, 'promis' | 'force' | 'reduce'>
+  setResolutionActions: Dispatch<SetStateAction<Record<number, 'promis' | 'force' | 'reduce'>>>
   promisPhone: string
   setPromisPhone: (val: string) => void
   promisClientName: string
@@ -26,8 +27,8 @@ export default function StockResolutionModal({
   isOpen,
   onClose,
   stockResolutionItems,
-  promisSelections,
-  setPromisSelections,
+  resolutionActions = {},
+  setResolutionActions,
   promisPhone,
   setPromisPhone,
   promisClientName,
@@ -36,7 +37,7 @@ export default function StockResolutionModal({
 }: StockResolutionModalProps) {
   const { t } = useTranslation(['facturation', 'common'])
 
-  // --- Local States for Inputs (Performance & Robustness) ---
+  // --- Local States for Inputs ---
   const [localClientName, setLocalClientName] = useState(promisClientName)
   const [localPhone, setLocalPhone] = useState(promisPhone)
 
@@ -53,34 +54,34 @@ export default function StockResolutionModal({
     id: item.product.id,
     nom: item.product.name,
     cip: item.product.cip1 || '',
-    qty: item.quantity
+    qty: item.quantity,
+    stock: item.stock
   })), [stockResolutionItems]);
 
-  const stockMap = useMemo(() => stockResolutionItems.reduce((acc, item) => {
-    acc[item.product.id] = item.stock;
-    return acc;
-  }, {} as Record<number, number>), [stockResolutionItems]);
-
-  const itemsToPromis = useMemo(() => Array.from(promisSelections), [promisSelections]);
+  const hasPromis = useMemo(() => resolutionActions && Object.values(resolutionActions).includes('promis'), [resolutionActions]);
+  const hasForce = useMemo(() => resolutionActions && Object.values(resolutionActions).includes('force'), [resolutionActions]);
 
   // --- Callbacks ---
-  const handleTogglePromis = useCallback((productId: number, checked: boolean) => {
-    const newSelections = new Set(promisSelections)
-    if (checked) {
-      newSelections.add(productId)
-    } else {
-      newSelections.delete(productId)
-    }
-    setPromisSelections(newSelections)
-  }, [promisSelections, setPromisSelections])
+  const handleSetAction = useCallback((productId: number, action: 'promis' | 'force' | 'reduce') => {
+    setResolutionActions(prev => ({
+        ...prev,
+        [productId]: action
+    }))
+  }, [setResolutionActions])
+
+  const handleBulkAction = useCallback((action: 'promis' | 'force' | 'reduce') => {
+    const newActions: Record<number, 'promis' | 'force' | 'reduce'> = {}
+    conflicts.forEach(c => {
+        newActions[c.id] = action
+    })
+    setResolutionActions(newActions)
+  }, [conflicts, setResolutionActions])
 
   const handleConfirm = useCallback(() => {
-    // Sync local states back to parent only on confirm
     setPromisClientName(localClientName)
     setPromisPhone(localPhone)
-    
     onConfirm()
-  }, [localClientName, localPhone, setPromisClientName, setPromisPhone, onConfirm, promisSelections])
+  }, [localClientName, localPhone, setPromisClientName, setPromisPhone, onConfirm])
 
   if (!isOpen) return null
 
@@ -89,64 +90,122 @@ export default function StockResolutionModal({
       isOpen={isOpen}
       onClose={onClose}
       title={t('stock_resolution.title')}
-      icon={
-        <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-warning" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-        </svg>
-      }
+      icon={<ShieldAlert className="h-6 w-6 text-warning" />}
       maxWidth="max-w-5xl"
       footer={
-        <div className="flex justify-end gap-3 w-full">
-          <button className="btn btn-ghost" onClick={onClose}>
-            {t('stock_resolution.cancel_and_edit_cart')}
-          </button>
-          <button className="btn btn-primary px-8" onClick={handleConfirm}>
-            {t('stock_resolution.validate_and_cash')}
-          </button>
+        <div className="flex justify-between items-center w-full">
+            <div className="text-xs text-base-content/50 italic px-4">
+                {hasForce && (
+                    <span className="flex items-center gap-1.5 text-warning font-bold">
+                        <ShieldAlert className="w-3.5 h-3.5" />
+                        {t('stock_resolution.force_warning')}
+                    </span>
+                )}
+            </div>
+            <div className="flex gap-3">
+                <button className="btn btn-ghost" onClick={onClose}>
+                    {t('stock_resolution.cancel_and_edit_cart')}
+                </button>
+                <button className="btn btn-primary px-8 gap-2" onClick={handleConfirm}>
+                    {t('stock_resolution.validate_and_cash')}
+                </button>
+            </div>
         </div>
       }
     >
       <div className="p-6">
-        <div className="alert alert-warning shadow-lg mb-6">
-            <div className="flex items-center gap-2">
-                <svg xmlns="http://www.w3.org/2000/svg" className="stroke-current flex-shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
-                <span>{t('stock_resolution.message')}</span>
+        <div className="alert alert-warning shadow-sm mb-6 flex flex-col md:flex-row gap-4 items-start md:items-center justify-between bg-warning/10 border-warning/20">
+            <div className="flex items-center gap-2 text-warning-content">
+                <ShieldAlert className="h-5 w-5" />
+                <span className="font-medium">{t('stock_resolution.message')}</span>
+            </div>
+            <div className="flex gap-2">
+                <button 
+                    onClick={() => handleBulkAction('reduce')}
+                    className="btn btn-xs btn-outline btn-warning gap-1"
+                >
+                    <ArrowDown className="w-3 h-3" /> {t('stock_resolution.reduce_all')}
+                </button>
+                <button 
+                    onClick={() => handleBulkAction('promis')}
+                    className="btn btn-xs btn-warning gap-1"
+                >
+                    <History className="w-3 h-3" /> {t('stock_resolution.promis_all')}
+                </button>
+                <button 
+                    onClick={() => handleBulkAction('force')}
+                    className="btn btn-xs btn-error gap-1 shadow-sm"
+                >
+                    <Zap className="w-3 h-3" /> {t('stock_resolution.force_all')}
+                </button>
             </div>
         </div>
 
-        <div className="overflow-x-auto border border-base-200 rounded-xl mb-6">
+        <div className="overflow-x-auto border border-base-200 rounded-2xl mb-6 bg-base-100">
           <table className="table w-full">
-            <thead className="bg-base-100">
-              <tr>
-                <th>{t('common:product')}</th>
-                <th>{t('stock_resolution.demand')}</th>
-                <th className="text-right">{t('stock_resolution.stock')}</th>
-                <th className="text-right">{t('stock_resolution.missing')}</th>
-                <th className="text-center">{t('stock_resolution.promised')}</th>
+            <thead>
+              <tr className="bg-base-200/50">
+                <th className="text-[10px] font-black uppercase tracking-widest opacity-40">{t('common:product')}</th>
+                <th className="text-center text-[10px] font-black uppercase tracking-widest opacity-40">{t('stock_resolution.demand')}</th>
+                <th className="text-center text-[10px] font-black uppercase tracking-widest opacity-40">{t('stock_resolution.stock')}</th>
+                <th className="text-center text-[10px] font-black uppercase tracking-widest opacity-40">{t('stock_resolution.missing')}</th>
+                <th className="text-center text-[10px] font-black uppercase tracking-widest opacity-40 py-4">{t('stock_resolution.actions')}</th>
               </tr>
             </thead>
-            <tbody>
+            <tbody className="divide-y divide-base-100">
               {conflicts.map((item) => {
-                const stock = stockMap[item.id] || 0
+                const stock = item.stock || 0
                 const manquant = item.qty - stock
-                const isPromis = itemsToPromis.includes(item.id)
+                const currentAction = resolutionActions[item.id] || 'promis'
                 
                 return (
-                  <tr key={item.id} className={isPromis ? "bg-info/5 text-info-content" : "bg-error/5 text-error-content"}>
+                  <tr key={item.id} className="hover:bg-base-200/20 transition-colors">
                     <td>
-                        <div className="font-bold">{item.nom}</div>
-                        <div className="text-xs opacity-60">{item.cip}</div>
+                        <div className="flex items-center gap-3">
+                            <div className="w-8 h-8 rounded-lg bg-base-200 flex items-center justify-center">
+                                <Package className="w-4 h-4 opacity-30" />
+                            </div>
+                            <div className="flex flex-col">
+                                <span className="font-bold text-sm">{item.nom}</span>
+                                <span className="text-[10px] opacity-40 font-mono tracking-tighter">{item.cip}</span>
+                            </div>
+                        </div>
                     </td>
-                    <td className="font-mono">{item.qty}</td>
-                    <td className="text-right font-mono">{stock}</td>
-                    <td className="text-right font-mono font-bold text-error">-{manquant}</td>
+                    <td className="text-center font-mono font-bold">{item.qty}</td>
+                    <td className="text-center font-mono opacity-60">{stock}</td>
                     <td className="text-center">
-                        <input 
-                            type="checkbox" 
-                            className="toggle toggle-info" 
-                            checked={isPromis}
-                            onChange={(e) => handleTogglePromis(item.id, e.target.checked)}
-                        />
+                        <span className="font-mono font-bold text-error bg-error/10 px-2 py-0.5 rounded text-xs">
+                            -{manquant}
+                        </span>
+                    </td>
+                    <td className="text-center">
+                        <div className="inline-flex p-1 bg-base-200 rounded-xl gap-1">
+                            <button 
+                                onClick={() => handleSetAction(item.id, 'reduce')}
+                                className={`btn btn-xs border-none h-8 px-3 rounded-lg flex items-center gap-1.5 transition-all ${
+                                    currentAction === 'reduce' ? 'bg-base-100 shadow-sm text-primary font-bold' : 'btn-ghost opacity-40'
+                                }`}
+                                title={t('stock_resolution.reduce')}
+                            >
+                                <ArrowDown className="w-3 h-3" /> {t('stock_resolution.reduce')}
+                            </button>
+                            <button 
+                                onClick={() => handleSetAction(item.id, 'promis')}
+                                className={`btn btn-xs border-none h-8 px-3 rounded-lg flex items-center gap-1.5 transition-all ${
+                                    currentAction === 'promis' ? 'bg-info text-info-content shadow-md font-bold' : 'btn-ghost opacity-40'
+                                }`}
+                            >
+                                <History className="w-3 h-3" /> {t('stock_resolution.promised')}
+                            </button>
+                            <button 
+                                onClick={() => handleSetAction(item.id, 'force')}
+                                className={`btn btn-xs border-none h-8 px-3 rounded-lg flex items-center gap-1.5 transition-all ${
+                                    currentAction === 'force' ? 'bg-error text-error-content shadow-md font-bold' : 'btn-ghost opacity-40'
+                                }`}
+                            >
+                                <Zap className="w-3 h-3" /> {t('stock_resolution.force')}
+                            </button>
+                        </div>
                     </td>
                   </tr>
                 )
@@ -155,28 +214,32 @@ export default function StockResolutionModal({
           </table>
         </div>
 
-        {itemsToPromis.length > 0 && (
-            <div className="p-5 bg-base-50 rounded-xl border border-dashed border-base-300">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="form-control">
-                        <label className="label">
-                            <span className="label-text font-semibold">{t('stock_resolution.client_name')} <span className="text-xs font-normal opacity-50">({t('stock_resolution.optional')})</span></span>
+        {hasPromis && (
+            <div className="p-6 bg-info/5 rounded-2xl border border-info/10 shadow-inner space-y-4">
+                <div className="flex items-center gap-2 text-info mb-1">
+                    <History className="w-4 h-4" />
+                    <h4 className="text-xs font-black uppercase tracking-widest">{t('promis:details')}</h4>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="form-control w-full">
+                        <label className="label py-1">
+                            <span className="label-text-alt font-bold uppercase text-base-content/40">{t('stock_resolution.client_name')} <span className="lowercase font-normal opacity-50">({t('stock_resolution.optional')})</span></span>
                         </label>
                         <input 
                             type="text" 
-                            className="input input-bordered focus:input-primary rounded-xl" 
+                            className="input input-bordered focus:input-info rounded-xl bg-base-100" 
                             value={localClientName}
                             onChange={(e) => setLocalClientName(e.target.value)}
                             placeholder={t('client.manual_placeholder')}
                         />
                     </div>
-                    <div className="form-control">
-                        <label className="label">
-                            <span className="label-text font-semibold">{t('stock_resolution.client_phone_for_promised_ticket')}</span>
+                    <div className="form-control w-full">
+                        <label className="label py-1">
+                            <span className="label-text-alt font-bold uppercase text-base-content/40">{t('stock_resolution.client_phone_for_promised_ticket')}</span>
                         </label>
                         <input 
                             type="text" 
-                            className="input input-bordered focus:input-primary rounded-xl" 
+                            className="input input-bordered focus:input-info rounded-xl bg-base-100" 
                             value={localPhone}
                             onChange={(e) => setLocalPhone(e.target.value)}
                             placeholder={t('stock_resolution.phone_number_placeholder')}

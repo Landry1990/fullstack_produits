@@ -4,7 +4,8 @@ from rest_framework.permissions import IsAuthenticated
 from django.db.models import Q, Count, Sum, F, DecimalField
 from django.db.models.functions import Coalesce
 
-from ..models import Produit, Client, Facture, Commande, Fournisseur
+from ..models import Produit, Client, Facture, Commande, Fournisseur, CommandeProduit
+from ..models.paiements import PaiementFournisseur
 from ..serializers_optimized import (
     ProduitListSerializer, ClientListSerializer, 
     FactureListSerializer, FactureOmnisearchSerializer, 
@@ -49,15 +50,35 @@ class GlobalSearchView(APIView):
             Q(client__name__icontains=query)
         ).select_related('client', 'created_by', 'validated_by', 'ayant_droit').prefetch_related('produits__produit')[:limit]
 
-        # 4. COMMANDES
+        from django.db.models import OuterRef, Subquery, Value
+
+        # 4. COMMANDES (Optimisé avec Subqueries pour éviter les doublons SQL)
+        total_items_subquery = CommandeProduit.objects.filter(
+            commande=OuterRef('pk')
+        ).values('commande').annotate(
+            total=Sum(F('quantity') * F('price'), output_field=DecimalField())
+        ).values('total')[:1]
+
+        paid_items_subquery = PaiementFournisseur.objects.filter(
+            commande=OuterRef('pk')
+        ).values('commande').annotate(
+            total=Sum('montant', output_field=DecimalField())
+        ).values('total')[:1]
+
+        count_items_subquery = CommandeProduit.objects.filter(
+            commande=OuterRef('pk')
+        ).values('commande').annotate(
+            cnt=Count('id')
+        ).values('cnt')[:1]
+
         commandes = Commande.objects.filter(
             Q(numero_facture__icontains=query) |
             Q(fournisseur__name__icontains=query) |
             Q(fournisseur_nom__icontains=query)
         ).select_related('fournisseur', 'closed_by').prefetch_related('produits__produit').annotate(
-            total_annotated=Coalesce(Sum('produits__price', output_field=DecimalField()), 0, output_field=DecimalField()),
-            montant_paye_annotated=Coalesce(Sum('paiements__montant', output_field=DecimalField()), 0, output_field=DecimalField()),
-            items_count=Count('produits')
+            total_annotated=Coalesce(Subquery(total_items_subquery), Value(0, output_field=DecimalField())),
+            montant_paye_annotated=Coalesce(Subquery(paid_items_subquery), Value(0, output_field=DecimalField())),
+            items_count=Coalesce(Subquery(count_items_subquery), 0)
         )[:limit]
 
         # 5. FOURNISSEURS

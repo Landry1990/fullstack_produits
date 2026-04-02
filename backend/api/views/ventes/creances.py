@@ -88,67 +88,74 @@ class CreanceViewSet(viewsets.ReadOnlyModelViewSet):
     @action(detail=False, methods=['get'])
     def totals(self, request):
         queryset = self.get_queryset()
-        total_creances = Decimal('0')
-        count = 0
-        for f in queryset:
-            paye = f.paiements.filter(statut='completee').exclude(mode_paiement='en_compte').aggregate(Sum('montant'))['montant__sum'] or Decimal('0')
-            reste = f.total_ttc - paye
-            if reste > 0:
-                total_creances += reste
-                count += 1
-        return Response({'total': total_creances, 'count': count})
+        
+        # Optimization: Use aggregate to get the total in one SQL query
+        # Since get_queryset already annotates 'remainder', we can just sum it up.
+        result = queryset.aggregate(
+            total_reste=Sum('remainder'),
+            count=Count('id')
+        )
+        
+        return Response({
+            'total_reste': result['total_reste'] or Decimal('0'),
+            'count': result['count'] or 0
+        })
     
     @action(detail=False, methods=['get'])
     def synthese_clients(self, request):
-        from django.db.models import Count
-        
-        # Base queryset logic (re-annotating to ensure we have remainder etc)
-        from django.db.models import Sum, F, Q, Value, DecimalField
+        from django.db.models import Sum, F, Q, Value, DecimalField, Count, OuterRef, Subquery
         from django.db.models.functions import Coalesce
 
-        queryset = Facture.objects.filter(
-            status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE]
-        ).annotate(
-            paid_amount_sum=Coalesce(
-                Sum('paiements__montant', filter=Q(paiements__statut='completee') & ~Q(paiements__mode_paiement='en_compte')),
-                Value(0, output_field=DecimalField())
-            ),
-            remainder_val=F('total_ttc') - F('paid_amount_sum')
-        ).filter(remainder_val__gt=0.5)
+        # 1. Subquery to sum payments for an invoice without join duplication
+        paid_subquery = Caisse.objects.filter(
+            facture=OuterRef('pk'), 
+            statut='completee'
+        ).exclude(
+            mode_paiement='en_compte'
+        ).values('facture').annotate(
+            total=Sum('montant')
+        ).values('total')[:1]
 
-        # Filter by dates if provided
-        date_debut = self.request.query_params.get('date_debut', None)
-        date_fin = self.request.query_params.get('date_fin', None)
+        # 2. Base Queryset for Invoices
+        # Each invoice is annotated with its own remainder
+        queryset = Facture.objects.filter(
+            status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE],
+            client__isnull=False
+        ).annotate(
+            paid_amount=Coalesce(Subquery(paid_subquery), Value(0, output_field=DecimalField())),
+            remainder_val=F('total_ttc') - F('paid_amount')
+        ).filter(remainder_val__gt=1)
+
+        # 3. Date filtering
+        date_debut = self.request.query_params.get('date_debut')
+        date_fin = self.request.query_params.get('date_fin')
         if date_debut:
             queryset = queryset.filter(date__gte=date_debut)
         if date_fin:
-            queryset = queryset.filter(date__lte=date_fin)
+            queryset = queryset.filter(date__lt=date_fin)
 
-        # Aggregate by client in Python to avoid "Sum of Aggregate" error and SQL JOIN duplication
-        client_map = {}
-        for inv in queryset.values('client__id', 'client__name', 'total_ttc', 'paid_amount_sum', 'remainder_val'):
-            cid = inv['client__id']
-            if not cid: continue
-            
-            if cid not in client_map:
-                client_map[cid] = {
-                    'id': cid,
-                    'client': inv['client__name'],
-                    'nb_factures': 0,
-                    'total_facture': 0,
-                    'montant_paye': 0,
-                    'solde_du': 0
-                }
-            
-            item = client_map[cid]
-            item['nb_factures'] += 1
-            item['total_facture'] += inv['total_ttc']
-            item['montant_paye'] += inv['paid_amount_sum']
-            item['solde_du'] += inv['remainder_val']
-        
-        # Sort by balance due
-        results = sorted(client_map.values(), key=lambda x: x['solde_du'], reverse=True)
-        
+        # 4. Final aggregation by Client
+        # Since we aggregate an already annotated 'remainder_val', 
+        # Django will correctly sum the individual remainders.
+        summary = queryset.values('client__id', 'client__name').annotate(
+            nb_factures=Count('id'),
+            solde_du=Sum('remainder_val'),
+            total_facture=Sum('total_ttc'),  # Summing pre-annotated rows is safe
+            montant_paye=Sum('paid_amount')
+        ).order_by('-solde_du')
+
+        results = []
+        for item in summary:
+            if not item['client__id']: continue
+            results.append({
+                'id': item['client__id'],
+                'client': item['client__name'],
+                'nb_factures': item['nb_factures'],
+                'total_facture': item['total_facture'],
+                'montant_paye': item['montant_paye'],
+                'solde_du': item['solde_du']
+            })
+
         return Response(results)
     
     @action(detail=True, methods=['get'])
@@ -239,8 +246,13 @@ class CreanceViewSet(viewsets.ReadOnlyModelViewSet):
     @action(detail=True, methods=['post'])
     @transaction.atomic
     def ajouter_paiement(self, request, pk=None):
-        facture = self.get_object()
-        
+        # 1. VERROUILLAGE: On récupère la facture avec select_for_update() 
+        # pour empêcher les modifications concurrentes (double paiement)
+        try:
+            facture = Facture.objects.select_for_update().get(pk=pk)
+        except Facture.DoesNotExist:
+            return Response({'detail': 'Facture introuvable.'}, status=status.HTTP_404_NOT_FOUND)
+            
         if not facture.paiements.filter(mode_paiement='en_compte').exists():
             return Response({'detail': 'Cette facture n\'est pas une créance.'}, status=status.HTTP_400_BAD_REQUEST)
         

@@ -27,6 +27,8 @@ interface UseFacturationKeyboardShortcutsProps {
   setShowHelp: (val: boolean) => void;
   handleSuspendSale: () => void;
   handleAddAlertMessage: () => void;
+  showPendingSales: boolean;
+  setShowPendingSales: (val: boolean) => void;
 }
 
 /**
@@ -59,7 +61,9 @@ export function useFacturationKeyboardShortcuts({
   setSuccessInfo,
   setShowHelp,
   handleSuspendSale,
-  handleAddAlertMessage
+  handleAddAlertMessage,
+  showPendingSales,
+  setShowPendingSales
 }: UseFacturationKeyboardShortcutsProps) {
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -96,6 +100,25 @@ export function useFacturationKeyboardShortcuts({
         return
       }
 
+      // F7: Mettre en attente (si panier non vide)
+      if (e.key === 'F7') {
+        e.preventDefault()
+        e.stopImmediatePropagation()
+        if (lignesFacture.length > 0) {
+           console.log("[KeyboardShortcuts] F7 pressé : Mise en attente...");
+           handleSuspendSale()
+        }
+        return
+      }
+
+      // F8: Rappeler les ventes en attente
+      if (e.key === 'F8') {
+        e.preventDefault()
+        console.log("[KeyboardShortcuts] F8 pressé : Rappel des ventes...");
+        setShowPendingSales(!showPendingSales)
+        return
+      }
+
       // F9: Payer / Encaisser (si panier non vide)
       if (e.key === 'F9') {
         e.preventDefault()
@@ -122,8 +145,12 @@ export function useFacturationKeyboardShortcuts({
       // Ctrl+S: Suspendre la vente (si panier non vide)
       if ((e.ctrlKey || e.metaKey) && (e.key === 's' || e.key === 'S')) {
         e.preventDefault()
+        e.stopImmediatePropagation()
         if (lignesFacture.length > 0) {
+            console.log("[KeyboardShortcuts] Ctrl+S pressé : Mise en attente...");
             handleSuspendSale()
+        } else {
+            console.warn("[KeyboardShortcuts] Ctrl+S ignoré : Le panier est vide");
         }
         return
       }
@@ -177,6 +204,7 @@ export function useFacturationKeyboardShortcuts({
     confirmModal, setConfirmModal, 
     successInfo, setSuccessInfo,
     setSearchQuery, searchInputRef, clientSearchRef, quantityInputsRef,
-    setShowHelp, handleSuspendSale, handleAddAlertMessage
+    setShowHelp, handleSuspendSale, handleAddAlertMessage,
+    showPendingSales, setShowPendingSales
   ])
 }

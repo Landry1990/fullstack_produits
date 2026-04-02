@@ -68,7 +68,9 @@
         "next": "Suivant",
         "page_info": "Page {{page}} sur {{total}}",
         "page_info_simple": "Page {{page}}",
-        "page_of": "sur {{count}}"
+        "page_of": "sur {{count}}",
+        "page": "Page",
+        "of": "sur"
     },
     "auth_required": "Authentification requise",
     "download": "Télécharger",
@@ -324,6 +326,7 @@
             "suppliers": "🏭 Fournisseurs"
         },
         "nav": {
+            "monthly_report": "Rapport / Synthèse Mensuelle",
             "billing": "Facturation / Caisse",
             "sales_list": "Liste des ventes",
             "cash_journal": "Journal de caisse",

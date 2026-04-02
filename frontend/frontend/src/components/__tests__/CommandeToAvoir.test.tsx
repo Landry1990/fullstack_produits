@@ -58,7 +58,7 @@ const mockProps = {
 describe('CommandeForm Avoir Button', () => {
     it('affiche le bouton "Retour / Avoir" si la commande est cloturée et onCreateAvoir est fourni', () => {
         render(<CommandeForm {...mockProps} />);
-        expect(screen.getByText(/Retour \/ Avoir/)).toBeInTheDocument();
+        expect(screen.getByTitle(/Créer un avoir \/ retour fournisseur/)).toBeInTheDocument();
     });
 
     it('n\'affiche pas le bouton si la commande n\'est pas cloturée', () => {
@@ -67,12 +67,12 @@ describe('CommandeForm Avoir Button', () => {
             selectedCommande: { ...mockProps.selectedCommande, status: 'PREP' } 
         };
         render(<CommandeForm {...props} />);
-        expect(screen.queryByText(/Retour \/ Avoir/)).not.toBeInTheDocument();
+        expect(screen.queryByTitle(/Créer un avoir \/ retour fournisseur/)).not.toBeInTheDocument();
     });
 
     it('appelle onCreateAvoir lors du clic', () => {
         render(<CommandeForm {...mockProps} />);
-        fireEvent.click(screen.getByText(/Retour \/ Avoir/));
+        fireEvent.click(screen.getByTitle(/Créer un avoir \/ retour fournisseur/));
         expect(mockProps.onCreateAvoir).toHaveBeenCalled();
     });
 });

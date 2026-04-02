@@ -18,6 +18,7 @@ interface SudoValidationModalProps {
     saving: boolean;
     title?: string;
     message?: string;
+    className?: string;
 }
 
 export default function SudoValidationModal({ 
@@ -26,7 +27,8 @@ export default function SudoValidationModal({
     onValidate, 
     saving,
     title,
-    message
+    message,
+    className
 }: SudoValidationModalProps) {
     const { t } = useTranslation(['common']);
     const { user: currentUser } = useAuth();
@@ -94,6 +96,7 @@ export default function SudoValidationModal({
             gradientVia="warning/5"
             gradientTo="success/10"
             disableClose={saving}
+            className={className}
         >
             <div className="p-6 space-y-5">
                 {message && (

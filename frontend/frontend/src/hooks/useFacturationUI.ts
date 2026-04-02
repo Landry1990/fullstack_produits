@@ -18,7 +18,7 @@ export interface FacturationUIState {
     }
     stockResolutionData: {
         items: { product: ProduitModel, quantity: number, stock: number }[]
-        promisSelections: Set<number>
+        resolutionActions: Record<number, 'promis' | 'force' | 'reduce'>
         promisPhone: string
         promisClientName: string
     }
@@ -89,7 +89,7 @@ export function useFacturationUI() {
 
     const [showStockResolution, setShowStockResolution] = useState(false)
     const [stockResolutionItems, setStockResolutionItems] = useState<{ product: ProduitModel, quantity: number, stock: number }[]>([])
-    const [promisSelections, setPromisSelections] = useState<Set<number>>(new Set())
+    const [resolutionActions, setResolutionActions] = useState<Record<number, 'promis' | 'force' | 'reduce'>>({})
     const [promisPhone, setPromisPhone] = useState('')
     const [promisClientName, setPromisClientName] = useState('')
 
@@ -152,7 +152,7 @@ export function useFacturationUI() {
         setFacturePourPaiement(null)
         setTicketCaisse(null)
         setStockResolutionItems([])
-        setPromisSelections(new Set())
+        setResolutionActions({})
         setPromisPhone('')
         setPromisClientName('')
         setTempOrdonnanceData(null)
@@ -209,7 +209,7 @@ export function useFacturationUI() {
 
         showStockResolution, setShowStockResolution,
         stockResolutionItems, setStockResolutionItems,
-        promisSelections, setPromisSelections,
+        resolutionActions, setResolutionActions,
         promisPhone, setPromisPhone,
         promisClientName, setPromisClientName,
 

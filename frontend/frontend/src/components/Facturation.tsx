@@ -51,6 +51,20 @@ export default function Facturation() {
             >
                 {hook.isMidnightTheme ? <Sun size={18} /> : <Moon size={18} />}
             </button>
+
+            {/* Ventes en Attente Badge */}
+            {hook.ventesEnAttente.length > 0 && (
+                <button 
+                    onClick={() => hook.setShowPendingSales(true)}
+                    className="btn btn-sm btn-warning gap-1 animate-bounce-subtle ml-2 px-3 shadow-lg hover:shadow-warning/20 border-none text-warning-content font-bold"
+                    title={hook.t('facturation:actions.view_pending_tooltip')}
+                >
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                    <span className="text-xs">{hook.ventesEnAttente.length}</span>
+                    <span className="hidden md:inline uppercase text-[10px] tracking-widest">{hook.t('facturation:actions.pending')}</span>
+                    <kbd className="kbd kbd-xs bg-warning-focus border-none text-warning-content opacity-50">F8</kbd>
+                </button>
+            )}
           </div>
         </div>
         <div className="flex flex-col items-end shrink-0">
@@ -289,8 +303,8 @@ export default function Facturation() {
         isOpen={hook.showStockResolution}
         onClose={() => hook.setShowStockResolution(false)}
         stockResolutionItems={hook.ui.stockResolutionItems}
-        promisSelections={hook.ui.promisSelections}
-        setPromisSelections={hook.ui.setPromisSelections}
+        resolutionActions={hook.ui.resolutionActions}
+        setResolutionActions={hook.ui.setResolutionActions}
         promisPhone={hook.ui.promisPhone}
         setPromisPhone={hook.ui.setPromisPhone}
         promisClientName={hook.ui.promisClientName}
@@ -304,6 +318,7 @@ export default function Facturation() {
         setUseManualClient={hook.clientsHook.setUseManualClient}
         setManualClientName={hook.clientsHook.setManualClientName}
         onComplete={hook.handlePaymentClickWithSudo}
+        requireSudo={hook.requireSudo}
       />
 
       {/* Pending Sales Drawer */}
@@ -432,7 +447,11 @@ export default function Facturation() {
               </div>
               <div className="flex justify-between items-center text-sm">
                 <span className="font-bold text-warning">Suspendre (Mettre en attente)</span>
-                <kbd className="kbd kbd-sm font-sans">Ctrl + S</kbd>
+                <kbd className="kbd kbd-sm font-sans">Ctrl + S / F7</kbd>
+              </div>
+              <div className="flex justify-between items-center text-sm">
+                <span className="font-bold text-warning-focus">Rappeler Vente en attente</span>
+                <kbd className="kbd kbd-sm font-sans">F8</kbd>
               </div>
               <div className="flex justify-between items-center text-sm">
                 <span>Mode Zenith (Plein écran)</span>
@@ -458,6 +477,7 @@ export default function Facturation() {
         saving={false}
         title={hook.sudoState.title || "Validation Requise"}
         message={hook.sudoState.message || ""}
+        className="z-[9999]"
       />
 
       <AlertMessageModal

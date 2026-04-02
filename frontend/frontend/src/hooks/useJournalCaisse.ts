@@ -125,11 +125,10 @@ export function useJournalCaisse() {
     setLoading(true);
     setError(null);
     try {
-      const params = new URLSearchParams();
-      params.append('page', '1');
-      if (selectedUser) params.append('user', selectedUser);
-      if (dateDebut) params.append('date_debut', formatLocalISOString(dateDebut));
-      if (dateFin) params.append('date_fin', formatLocalISOString(dateFin));
+      const params: any = { page: '1' };
+      if (selectedUser) params.user = selectedUser;
+      if (dateDebut) params.date_debut = formatLocalISOString(dateDebut);
+      if (dateFin) params.date_fin = formatLocalISOString(dateFin);
 
       const response = await axios.get(`${caisseEndpoint}page_init/`, { params });
       const { transactions: txData, mouvements: mouvData, totals: totalsData, users: usersData } = response.data;
@@ -340,7 +339,8 @@ export function useJournalCaisse() {
       recouvrement: 0,
       ventes: 0,
       ventes_par_mode: { especes: 0, cheque: 0, carte: 0, virement: 0, om: 0, momo: 0, depot: 0, en_compte: 0 } as Record<string, number>,
-      recouv_par_mode: { especes: 0, cheque: 0, carte: 0, virement: 0, om: 0, momo: 0 } as Record<string, number>
+      recouv_par_mode: { especes: 0, cheque: 0, carte: 0, virement: 0, om: 0, momo: 0 } as Record<string, number>,
+      global_par_mode: { especes: 0, cheque: 0, carte: 0, virement: 0, om: 0, momo: 0, depot: 0, en_compte: 0 } as Record<string, number>
     };
 
     // Note: We used to use filteredItems, but for accurate CA stats we should look at all transactions 
@@ -364,10 +364,16 @@ export function useJournalCaisse() {
            if ((totaux as any)[item.mode_paiement] !== undefined) {
                (totaux as any)[item.mode_paiement] += montant;
            }
-           
-           if (item.mode_paiement === 'especes') {
-               totaux.total += montant;
-           }
+       }
+
+       // GLOBAL BREAKDOWN: Add to global mode total (Sales + Recoveries)
+       if (totaux.global_par_mode[item.mode_paiement] !== undefined) {
+           totaux.global_par_mode[item.mode_paiement] += montant;
+       }
+
+       // PHYSICAL CASH: Always add to drawer total if mode is 'especes'
+       if (item.mode_paiement === 'especes') {
+           totaux.total += montant;
        }
     });
 

@@ -29,6 +29,350 @@ class RapportFinanceMixin:
         return Response(self._get_rapport_data(date_debut, date_fin, mois))
 
     @action(detail=False, methods=['get'])
+    def rapport_par_dates(self, request):
+        """Rapport complet sur une tranche de dates arbitraire (jour, semaine, plage personnalisée)."""
+        date_debut_str = request.query_params.get('date_debut')
+        date_fin_str = request.query_params.get('date_fin')
+        if not date_debut_str or not date_fin_str:
+            return Response({'detail': 'date_debut et date_fin requis'}, status=400)
+        try:
+            date_debut = timezone.make_aware(datetime.combine(
+                datetime.strptime(date_debut_str, '%Y-%m-%d').date(), time.min
+            ))
+            date_fin = timezone.make_aware(datetime.combine(
+                datetime.strptime(date_fin_str, '%Y-%m-%d').date(), time.max
+            ))
+            # Ensure date_fin is end-of-day by pushing to next day midnight for lt queries
+            date_fin_exclusive = timezone.make_aware(datetime.combine(
+                datetime.strptime(date_fin_str, '%Y-%m-%d').date() + timedelta(days=1), time.min
+            ))
+        except Exception:
+            return Response({'detail': 'Format de date invalide (YYYY-MM-DD attendu)'}, status=400)
+
+        label = f"{date_debut_str} → {date_fin_str}"
+        data = self._get_rapport_data(date_debut, date_fin_exclusive, label)
+        data['date_debut'] = date_debut_str
+        data['date_fin'] = date_fin_str
+        return Response(data)
+
+    @action(detail=False, methods=['get'])
+    def rapport_par_dates_pdf(self, request):
+        """PDF du rapport sur une tranche de dates arbitraire."""
+        date_debut_str = request.query_params.get('date_debut')
+        date_fin_str = request.query_params.get('date_fin')
+        if not date_debut_str or not date_fin_str:
+            return Response({'detail': 'date_debut et date_fin requis'}, status=400)
+        try:
+            date_debut = timezone.make_aware(datetime.combine(
+                datetime.strptime(date_debut_str, '%Y-%m-%d').date(), time.min
+            ))
+            date_fin_exclusive = timezone.make_aware(datetime.combine(
+                datetime.strptime(date_fin_str, '%Y-%m-%d').date() + timedelta(days=1), time.min
+            ))
+        except Exception:
+            return Response({'detail': 'Format de date invalide'}, status=400)
+
+        label = f"{date_debut_str} → {date_fin_str}"
+        data = self._get_rapport_data(date_debut, date_fin_exclusive, label)
+        title = f"RAPPORT D'ACTIVITÉ — {date_debut_str} au {date_fin_str}"
+        filename = f"rapport_{date_debut_str}_{date_fin_str}.pdf"
+        return self._build_rapport_pdf(data, title, filename)
+
+    @action(detail=False, methods=['get'])
+    def rapport_mensuel_pdf(self, request):
+        from api.pdf_utils import get_pharma_styles, draw_pharma_header, format_currency, PharmaColors
+        mois = request.query_params.get('mois')
+        if not mois: return Response({'detail': 'Mois requis'}, status=400)
+        date_debut = timezone.make_aware(datetime.strptime(f"{mois}-01", '%Y-%m-%d'))
+        date_fin = (date_debut + timedelta(days=32)).replace(day=1)
+        data = self._get_rapport_data(date_debut, date_fin, mois)
+        title = f"RAPPORT MENSUEL — {mois}"
+        filename = f"rapport_{mois}.pdf"
+        return self._build_rapport_pdf(data, title, filename)
+
+    def _build_rapport_pdf(self, data, title_text, filename):
+        """Construit un PDF A4 complet et bien disposé avec toutes les sections du rapport."""
+        from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, KeepTogether
+        from reportlab.lib.pagesizes import A4
+        from reportlab.lib import colors
+        from reportlab.lib.units import cm, mm
+        from reportlab.lib.styles import ParagraphStyle
+        from reportlab.lib.enums import TA_CENTER, TA_RIGHT, TA_LEFT
+        from api.pdf_utils import get_pharma_styles, draw_pharma_header, draw_pharma_footer, format_currency, PharmaColors
+
+        buffer = BytesIO()
+        doc = SimpleDocTemplate(buffer, pagesize=A4, rightMargin=12*mm, leftMargin=12*mm, topMargin=28*mm, bottomMargin=18*mm)
+        story = []
+        styles = get_pharma_styles()
+        W = doc.width  # largeur utile ≈ 186mm
+
+        # -- Styles compacts --
+        s_section = ParagraphStyle('SectionTitle', parent=styles['Heading2'], fontSize=11, textColor=PharmaColors.GREEN_DARK, fontName='Helvetica-Bold', spaceBefore=10, spaceAfter=4)
+        s_cell = ParagraphStyle('Cell', fontSize=7, fontName='Helvetica', leading=9, textColor=PharmaColors.TEXT)
+        s_cell_b = ParagraphStyle('CellBold', fontSize=7, fontName='Helvetica-Bold', leading=9, textColor=PharmaColors.TEXT)
+        s_cell_r = ParagraphStyle('CellRight', fontSize=7, fontName='Helvetica-Bold', leading=9, textColor=PharmaColors.TEXT, alignment=TA_RIGHT)
+        s_header = ParagraphStyle('THeader', fontSize=7, fontName='Helvetica-Bold', leading=9, textColor=colors.white)
+        s_header_r = ParagraphStyle('THeaderR', fontSize=7, fontName='Helvetica-Bold', leading=9, textColor=colors.white, alignment=TA_RIGHT)
+
+        def compact_table_style():
+            return TableStyle([
+                ('BACKGROUND', (0,0), (-1,0), PharmaColors.GREEN),
+                ('TEXTCOLOR', (0,0), (-1,0), colors.white),
+                ('FONTSIZE', (0,0), (-1,-1), 7),
+                ('TOPPADDING', (0,0), (-1,-1), 3),
+                ('BOTTOMPADDING', (0,0), (-1,-1), 3),
+                ('LEFTPADDING', (0,0), (-1,-1), 4),
+                ('RIGHTPADDING', (0,0), (-1,-1), 4),
+                ('ROWBACKGROUNDS', (0,1), (-1,-1), [colors.white, PharmaColors.GRAY_LIGHTER]),
+                ('GRID', (0,0), (-1,-1), 0.3, PharmaColors.GRAY),
+                ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
+            ])
+
+        # =====================================================================
+        # TITRE
+        # =====================================================================
+        story.append(Paragraph(f"<b>{title_text}</b>", styles['Title']))
+        story.append(Spacer(1, 2*mm))
+
+        # =====================================================================
+        # 1. KPIs — barre horizontale compacte
+        # =====================================================================
+        kpi_items = [
+            ('CA TTC', format_currency(data['ca']['ca_ttc'])),
+            ('CA HT', format_currency(data['ca']['ca_ht'])),
+            ('Marge Brute', format_currency(data['marge']['marge_brute'])),
+            (f"Marge %", f"{data['marge']['marge_pct']}%"),
+            ('Remises', format_currency(data['ca']['total_remises'])),
+            ('Nb Ventes', str(data['ca']['nb_ventes'])),
+        ]
+        kpi_header = [[Paragraph(f"<b>{k}</b>", s_header) for k, _ in kpi_items]]
+        kpi_values = [[Paragraph(f"<b>{v}</b>", ParagraphStyle('KpiVal', fontSize=9, fontName='Helvetica-Bold', leading=11, textColor=PharmaColors.GREEN_DARK, alignment=TA_CENTER)) for _, v in kpi_items]]
+        kw = W / len(kpi_items)
+        t_kpi = Table(kpi_header + kpi_values, colWidths=[kw]*len(kpi_items))
+        t_kpi.setStyle(TableStyle([
+            ('BACKGROUND', (0,0), (-1,0), PharmaColors.GREEN),
+            ('BACKGROUND', (0,1), (-1,1), PharmaColors.GREEN_LIGHT),
+            ('ALIGN', (0,0), (-1,-1), 'CENTER'),
+            ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
+            ('TOPPADDING', (0,0), (-1,-1), 4),
+            ('BOTTOMPADDING', (0,0), (-1,-1), 4),
+            ('BOX', (0,0), (-1,-1), 1, PharmaColors.GREEN),
+            ('INNERGRID', (0,0), (-1,-1), 0.3, PharmaColors.GREEN),
+        ]))
+        story.append(t_kpi)
+        story.append(Spacer(1, 4*mm))
+
+        # =====================================================================
+        # 2. DEUX COLONNES: Encaissements (gauche) + Achats Fournisseurs (droite)
+        # =====================================================================
+        half_w = (W - 4*mm) / 2
+
+        # -- Encaissements --
+        enc_rows = [[Paragraph('<b>Mode</b>', s_header), Paragraph('<b>Montant</b>', s_header_r)]]
+        for e in data.get('encaissements', []):
+            montant = float(e.get('montant', 0))
+            if montant > 0:
+                enc_rows.append([Paragraph(str(e.get('mode_label', '')), s_cell), Paragraph(format_currency(montant), s_cell_r)])
+        # Dépôts
+        if float(data.get('depots_total', 0)) > 0:
+            enc_rows.append([Paragraph('Dépôts', s_cell), Paragraph(format_currency(data['depots_total']), s_cell_r)])
+        # Sous-total
+        total_enc = sum(float(e.get('montant', 0)) for e in data.get('encaissements', [])) + float(data.get('depots_total', 0))
+        enc_rows.append([Paragraph('<b>Total Encaissements</b>', s_cell_b), Paragraph(f'<b>{format_currency(total_enc)}</b>', s_cell_r)])
+        # Crédit / Coupons
+        if float(data.get('ventes_credit', 0)) > 0:
+            enc_rows.append([Paragraph('Ventes à crédit', s_cell), Paragraph(format_currency(data['ventes_credit']), s_cell_r)])
+        if float(data.get('coupons_total', 0)) > 0:
+            enc_rows.append([Paragraph('Coupons', s_cell), Paragraph(format_currency(data['coupons_total']), s_cell_r)])
+        t_enc = Table(enc_rows, colWidths=[half_w*0.55, half_w*0.45])
+        t_enc.setStyle(compact_table_style())
+
+        # -- Achats fournisseurs --
+        ach_rows = [[Paragraph('<b>Fournisseur</b>', s_header), Paragraph('<b>Cmd</b>', s_header_r), Paragraph('<b>Montant</b>', s_header_r)]]
+        for f in data.get('achats_par_fournisseur', [])[:10]:
+            ach_rows.append([
+                Paragraph(str(f.get('fournisseur_nom', ''))[:30], s_cell),
+                Paragraph(str(f.get('nb_commandes', 0)), s_cell_r),
+                Paragraph(format_currency(f.get('montant_total', 0)), s_cell_r)
+            ])
+        if not data.get('achats_par_fournisseur'):
+            ach_rows.append([Paragraph('Aucun achat', s_cell), Paragraph('-', s_cell_r), Paragraph('-', s_cell_r)])
+        total_ach = sum(float(f.get('montant_total', 0)) for f in data.get('achats_par_fournisseur', []))
+        ach_rows.append([Paragraph('<b>Total</b>', s_cell_b), Paragraph('', s_cell_r), Paragraph(f'<b>{format_currency(total_ach)}</b>', s_cell_r)])
+        t_ach = Table(ach_rows, colWidths=[half_w*0.50, half_w*0.15, half_w*0.35])
+        t_ach.setStyle(compact_table_style())
+
+        # Assemblage deux colonnes
+        story.append(Paragraph('<b>💰 Encaissements & Achats</b>', s_section))
+        two_col = Table([[t_enc, t_ach]], colWidths=[half_w, half_w], hAlign='LEFT')
+        two_col.setStyle(TableStyle([
+            ('VALIGN', (0,0), (-1,-1), 'TOP'),
+            ('LEFTPADDING', (0,0), (-1,-1), 0),
+            ('RIGHTPADDING', (0,0), (0,0), 2*mm),
+            ('LEFTPADDING', (1,0), (1,0), 2*mm),
+        ]))
+        story.append(two_col)
+        story.append(Spacer(1, 4*mm))
+
+        # =====================================================================
+        # 3. DEUX COLONNES: Clients Pro (gauche) + UG (droite)
+        # =====================================================================
+        pro = data.get('clients_professionnels', {})
+
+        # -- Clients Pro --
+        pro_rows = [[Paragraph('<b>Client</b>', s_header), Paragraph('<b>CA</b>', s_header_r), Paragraph('<b>Reste</b>', s_header_r)]]
+        for c in pro.get('top_clients', [])[:7]:
+            pro_rows.append([
+                Paragraph(str(c.get('client_nom', ''))[:25], s_cell),
+                Paragraph(format_currency(c.get('ca_total', 0)), s_cell_r),
+                Paragraph(format_currency(c.get('reste_a_payer', 0)), s_cell_r)
+            ])
+        # Totaux
+        pro_rows.append([
+            Paragraph(f"<b>Total ({pro.get('taux_recouvrement_pct', 0):.0f}% recouv.)</b>", s_cell_b),
+            Paragraph(f"<b>{format_currency(pro.get('ca_total', 0))}</b>", s_cell_r),
+            Paragraph(f"<b>{format_currency(pro.get('reste_a_payer', 0))}</b>", s_cell_r)
+        ])
+        t_pro = Table(pro_rows, colWidths=[half_w*0.45, half_w*0.28, half_w*0.27])
+        t_pro.setStyle(compact_table_style())
+
+        # -- Unités Gratuites --
+        ug = data.get('unites_gratuites', {})
+        ug_rows = [[Paragraph('<b>Produit</b>', s_header), Paragraph('<b>Qté</b>', s_header_r), Paragraph('<b>Valeur</b>', s_header_r)]]
+        for p in ug.get('top_produits', [])[:7]:
+            ug_rows.append([
+                Paragraph(str(p.get('produit_nom', ''))[:25], s_cell),
+                Paragraph(str(p.get('quantite_gratuite', 0)), s_cell_r),
+                Paragraph(format_currency(p.get('valeur_totale', 0)), s_cell_r)
+            ])
+        ug_rows.append([
+            Paragraph(f"<b>Total ({ug.get('pct_du_ca', 0):.1f}% CA)</b>", s_cell_b),
+            Paragraph(f"<b>{ug.get('quantite_totale', 0)}</b>", s_cell_r),
+            Paragraph(f"<b>{format_currency(ug.get('valeur_totale', 0))}</b>", s_cell_r)
+        ])
+        t_ug = Table(ug_rows, colWidths=[half_w*0.45, half_w*0.20, half_w*0.35])
+        t_ug.setStyle(compact_table_style())
+
+        story.append(Paragraph('<b>👥 Clients Professionnels & Unités Gratuites</b>', s_section))
+        two_col2 = Table([[t_pro, t_ug]], colWidths=[half_w, half_w], hAlign='LEFT')
+        two_col2.setStyle(TableStyle([
+            ('VALIGN', (0,0), (-1,-1), 'TOP'),
+            ('LEFTPADDING', (0,0), (-1,-1), 0),
+            ('RIGHTPADDING', (0,0), (0,0), 2*mm),
+            ('LEFTPADDING', (1,0), (1,0), 2*mm),
+        ]))
+        story.append(two_col2)
+        story.append(Spacer(1, 4*mm))
+
+        # =====================================================================
+        # 4. DEUX COLONNES: TVA (gauche) + Créances + Mouvements Caisse (droite)
+        # =====================================================================
+
+        # -- CA par TVA --
+        tva_rows = [[Paragraph('<b>Taux</b>', s_header), Paragraph('<b>CA HT</b>', s_header_r), Paragraph('<b>TVA</b>', s_header_r), Paragraph('<b>TTC</b>', s_header_r)]]
+        for tva in data.get('ca_par_tva', []):
+            tva_rows.append([
+                Paragraph(f"{tva.get('taux', 0)}%", s_cell),
+                Paragraph(format_currency(tva.get('ca_ht', 0)), s_cell_r),
+                Paragraph(format_currency(tva.get('montant_tva', 0)), s_cell_r),
+                Paragraph(format_currency(tva.get('ca_ttc', 0)), s_cell_r)
+            ])
+        t_tva = Table(tva_rows, colWidths=[half_w*0.20, half_w*0.27, half_w*0.26, half_w*0.27])
+        t_tva.setStyle(compact_table_style())
+
+        # -- Créances + Mouvements caisse (empilés) --
+        mvts = data.get('mouvements_caisse', {})
+        right_elements = []
+
+        # Créances box
+        creance_val = format_currency(data.get('creances_a_percevoir', 0))
+        creance_data = [
+            [Paragraph('<b>Créances à Percevoir</b>', s_header), Paragraph(f'<b>{creance_val}</b>', s_header_r)]
+        ]
+        t_cr = Table(creance_data, colWidths=[half_w*0.55, half_w*0.45])
+        t_cr.setStyle(TableStyle([
+            ('BACKGROUND', (0,0), (-1,-1), PharmaColors.GREEN_LIGHT),
+            ('BOX', (0,0), (-1,-1), 0.5, PharmaColors.GREEN),
+            ('TOPPADDING', (0,0), (-1,-1), 5),
+            ('BOTTOMPADDING', (0,0), (-1,-1), 5),
+            ('LEFTPADDING', (0,0), (-1,-1), 4),
+            ('RIGHTPADDING', (0,0), (-1,-1), 4),
+            ('TEXTCOLOR', (0,0), (-1,-1), PharmaColors.GREEN_DARK),
+        ]))
+        right_elements.append(t_cr)
+        right_elements.append(Spacer(1, 2*mm))
+
+        # Mouvements caisse résumé
+        mvt_data = [
+            [Paragraph('<b>Mouvements Caisse</b>', s_header), Paragraph('<b>Montant</b>', s_header_r)],
+            [Paragraph('Entrées diverses', s_cell), Paragraph(format_currency(mvts.get('total_entrees', 0)), s_cell_r)],
+            [Paragraph('Sorties diverses', s_cell), Paragraph(format_currency(mvts.get('total_sorties', 0)), s_cell_r)],
+            [Paragraph('<b>Solde</b>', s_cell_b), Paragraph(f"<b>{format_currency(mvts.get('solde', 0))}</b>", s_cell_r)],
+        ]
+        t_mvt = Table(mvt_data, colWidths=[half_w*0.55, half_w*0.45])
+        t_mvt.setStyle(compact_table_style())
+        right_elements.append(t_mvt)
+
+        # Stack right column
+        right_table = Table([[e] for e in right_elements], colWidths=[half_w])
+        right_table.setStyle(TableStyle([
+            ('LEFTPADDING', (0,0), (-1,-1), 0),
+            ('RIGHTPADDING', (0,0), (-1,-1), 0),
+            ('TOPPADDING', (0,0), (-1,-1), 0),
+            ('BOTTOMPADDING', (0,0), (-1,-1), 0),
+        ]))
+
+        story.append(Paragraph('<b>📊 TVA, Créances & Mouvements</b>', s_section))
+        two_col3 = Table([[t_tva, right_table]], colWidths=[half_w, half_w], hAlign='LEFT')
+        two_col3.setStyle(TableStyle([
+            ('VALIGN', (0,0), (-1,-1), 'TOP'),
+            ('LEFTPADDING', (0,0), (-1,-1), 0),
+            ('RIGHTPADDING', (0,0), (0,0), 2*mm),
+            ('LEFTPADDING', (1,0), (1,0), 2*mm),
+        ]))
+        story.append(two_col3)
+
+        # =====================================================================
+        # 5. Détails mouvements de caisse (si présents, sur la suite)
+        # =====================================================================
+        mvt_liste = mvts.get('liste', [])
+        if mvt_liste:
+            story.append(Spacer(1, 4*mm))
+            story.append(Paragraph('<b>📋 Détail des Mouvements de Caisse</b>', s_section))
+            mvt_detail_rows = [[
+                Paragraph('<b>Date</b>', s_header),
+                Paragraph('<b>Type</b>', s_header),
+                Paragraph('<b>Motif</b>', s_header),
+                Paragraph('<b>Utilisateur</b>', s_header),
+                Paragraph('<b>Montant</b>', s_header_r),
+            ]]
+            for m in mvt_liste[:15]:
+                date_str = str(m.get('date', ''))[:10]
+                type_label = 'Entrée' if m.get('type') == 'ENTREE' else 'Sortie'
+                sign = '+' if m.get('type') == 'ENTREE' else '-'
+                mvt_detail_rows.append([
+                    Paragraph(date_str, s_cell),
+                    Paragraph(type_label, s_cell),
+                    Paragraph(str(m.get('motif', ''))[:35], s_cell),
+                    Paragraph(str(m.get('user', ''))[:15], s_cell),
+                    Paragraph(f"{sign}{format_currency(m.get('montant', 0))}", s_cell_r),
+                ])
+            t_mvt_d = Table(mvt_detail_rows, colWidths=[W*0.13, W*0.10, W*0.37, W*0.18, W*0.22])
+            t_mvt_d.setStyle(compact_table_style())
+            story.append(t_mvt_d)
+
+        # =====================================================================
+        # BUILD
+        # =====================================================================
+        doc.build(story,
+                  onFirstPage=lambda c, d: (draw_pharma_header(c, d, title="RAPPORT"), draw_pharma_footer(c, d)),
+                  onLaterPages=lambda c, d: (draw_pharma_header(c, d, title="RAPPORT"), draw_pharma_footer(c, d)))
+        response = HttpResponse(content_type='application/pdf')
+        response['Content-Disposition'] = f'attachment; filename="{filename}"'
+        response.write(buffer.getvalue())
+        return response
+
+    @action(detail=False, methods=['get'])
     def rapport_ca_multi_annuel(self, request):
         annees = [d.year for d in Facture.objects.filter(status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE]).dates('date', 'year', order='DESC')]
         if not annees: return Response([])

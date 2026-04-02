@@ -205,23 +205,37 @@ class InventaireViewSet(MultiTermSearchMixin, viewsets.ModelViewSet):
 
         inventaire.validated_by = validator
 
-        # Préparation du traitement groupé et recalcul
-        lignes = list(inventaire.lignes.select_related('produit', 'produit__fournisseur', 'stock_lot').all())
-        products_to_recalculate = set()
+        # 1. Préparation et Verrouillage Atomique
+        # On récupère toutes les lignes avec leurs relations
+        lignes = list(inventaire.lignes.select_related('produit', 'stock_lot').all())
+        if not lignes:
+            return Response({'detail': 'Cet inventaire est vide.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        # On verrouille les Produits et les Lots pour éviter toute modification concurrentielle (ex: vente)
+        product_ids = {l.produit_id for l in lignes if l.produit_id}
+        lot_ids = {l.stock_lot_id for l in lignes if l.stock_lot_id}
         
+        # TRÈS IMPORTANT: order_by('id') pour éviter les deadlocks
+        locked_products_list = list(Produit.objects.select_for_update().filter(id__in=product_ids).order_by('id'))
+        locked_products = {p.id: p for p in locked_products_list}
+        
+        locked_lots_list = list(StockLot.objects.select_for_update().filter(id__in=lot_ids).order_by('id'))
+        locked_lots = {l.id: l for l in locked_lots_list}
+
         # Collections pour les opérations batch
         lots_to_update = {}            # {lot_id: lot_object}
-        remaining_capacities = {}      # {product_id: current_remaining_capacity}
+        produits_to_update = {}        # {product_id: product_object}
         adjustments_to_create = []     # StockAdjustment objects
         mouvements_to_create = []      # MouvementStock objects
+        remaining_capacities = {}      # {product_id: current_remaining_capacity}
         now = timezone.now()
         
-        # Phase 1 : Préparer les données en mémoire (modifications minimales en DB)
+        # Phase 2 : Traitement en mémoire
         for ligne in lignes:
-            produit = ligne.produit
-            products_to_recalculate.add(produit)
+            produit = locked_products.get(ligne.produit_id)
+            if not produit: continue
             
-            target_lot = ligne.stock_lot
+            target_lot = locked_lots.get(ligne.stock_lot_id)
             if not target_lot:
                 lot_number = f"LOT-INV-{inventaire.id}"
                 target_lot, created = StockLot.objects.get_or_create(
@@ -283,32 +297,52 @@ class InventaireViewSet(MultiTermSearchMixin, viewsets.ModelViewSet):
                     date=now
                 ))
         
-        # Phase 2 : Écrire en DB avec des opérations groupées
+        # Phase 3 : Création Groupée (Writings)
         
-        # 2a. Mise à jour groupée des lignes (écart, pmp_snapshot, stock_lot)
+        # 3a. Mise à jour des lignes
         if lignes:
             LigneInventaire.objects.bulk_update(lignes, ['ecart', 'pmp_snapshot', 'stock_lot'])
         
-        # 2b. Mise à jour groupée des lots (quantity_remaining et quantity_reserved)
+        # 3b. Mise à jour des lots
         if lots_to_update:
             StockLot.objects.bulk_update(lots_to_update.values(), ['quantity_remaining', 'quantity_reserved'])
 
-        # 2c. Création groupée des ajustements et mouvements
+        # 3c. Création des ajustements de stock
         if adjustments_to_create:
             StockAdjustment.objects.bulk_create(adjustments_to_create)
-        if mouvements_to_create:
-            MouvementStock.objects.bulk_create(mouvements_to_create)
 
-        # Phase 3 : Recalcul groupé des produits (hors boucle principale)
-        prods_needing_lot_flag = [p for p in products_to_recalculate if not p.use_lot_management]
+        # Phase 4 : Recalcul Groupé des Produits (Performance optimale)
+        # On active la gestion par lots si nécessaire
+        prods_needing_lot_flag = [p for p in locked_products_list if not p.use_lot_management]
         if prods_needing_lot_flag:
             for p in prods_needing_lot_flag:
                 p.use_lot_management = True
             Produit.objects.bulk_update(prods_needing_lot_flag, ['use_lot_management'])
         
-        for prod in products_to_recalculate:
-            prod.calculate_stock_from_lots()
-            MouvementStock.objects.filter(produit=prod, inventaire=inventaire).update(stock_apres=prod.total_stock)
+        # Recalcul massif des stocks consolidés (produit = somme des lots)
+        from django.db.models import Sum
+        for prod in locked_products_list:
+            # On agrège les lots pour ce produit
+            results = StockLot.objects.filter(produit=prod).aggregate(
+                total_remaining=Sum('quantity_remaining'),
+                total_reserved=Sum('quantity_reserved')
+            )
+            prod.stock = results['total_remaining'] or 0
+            prod.stock_reserve = results['total_reserved'] or 0
+            
+            # Mise à jour du snapshot de stock final dans les objets mouvements EN MÉMOIRE
+            # avant qu'ils ne soient créés en base
+            for mov in mouvements_to_create:
+                if mov.produit_id == prod.id:
+                    mov.stock_apres = prod.total_stock
+
+        # Phase 5 : Finalisation des écritures
+        # 5a. Création des mouvements (avec le stock_apres maintenant renseigné)
+        if mouvements_to_create:
+            MouvementStock.objects.bulk_create(mouvements_to_create)
+
+        # 5b. Sauvegarde massive des produits
+        Produit.objects.bulk_update(locked_products_list, ['stock', 'stock_reserve'])
 
         inventaire.status = Inventaire.Status.VALIDEE
         inventaire.save()
@@ -435,6 +469,17 @@ class InventaireViewSet(MultiTermSearchMixin, viewsets.ModelViewSet):
         
         if count == 0:
             return Response({'error': 'Aucune ligne correspondante trouvée'}, status=status.HTTP_404_NOT_FOUND)
+
+        # Log d'audit avant suppression
+        log_audit(
+            user=request.user,
+            action=AuditLog.Action.DELETE,
+            model_name='LigneInventaire',
+            object_id=str(inventaire.id),
+            description=f"Suppression massive de {count} ligne(s) dans l'inventaire #{inventaire.id}",
+            details={'inventaire_id': inventaire.id, 'lignes_count': count, 'lignes_ids': list(ids)},
+            request=request
+        )
 
         lignes.delete()
 

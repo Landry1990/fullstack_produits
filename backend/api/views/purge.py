@@ -387,7 +387,8 @@ class PurgeViewSet(ViewSet):
             if settings.secondary_backup_path:
                 if os.path.exists(settings.secondary_backup_path):
                     # Find the latest backup file
-                    backup_dir = os.path.join(settings.BASE_DIR, 'backups')
+                    from django.conf import settings as django_settings
+                    backup_dir = os.path.join(django_settings.BASE_DIR, 'backups')
                     backups = [f for f in os.listdir(backup_dir) if f.endswith('.sql.gz')]
                     if backups:
                         latest_backup = max([os.path.join(backup_dir, f) for f in backups], key=os.path.getmtime)

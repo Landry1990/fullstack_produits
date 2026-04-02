@@ -4,7 +4,18 @@
     "filters": {
         "month": "Month",
         "generate": "Generate",
-        "loading": "Loading..."
+        "loading": "Loading...",
+        "tab_month": "By month",
+        "tab_range": "By date range",
+        "presets": "Quick period",
+        "preset_today": "Today",
+        "preset_yesterday": "Yesterday",
+        "preset_this_week": "This week",
+        "preset_last_week": "Last week",
+        "preset_custom": "Custom",
+        "date_start": "Start date",
+        "date_end": "End date",
+        "current_period": "Period"
     },
     "kpis": {
         "ca_ttc": "Turnover (incl. Tax)",

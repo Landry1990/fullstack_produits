@@ -5,6 +5,7 @@ from rest_framework.permissions import IsAuthenticated
 from decimal import Decimal
 from django.db import transaction
 from django.db.models import ProtectedError, F, Sum, DecimalField, Value, Count
+from django.core.cache import cache
 from django.contrib.auth.models import User
 from django_filters.rest_framework import DjangoFilterBackend
 from django.utils import timezone
@@ -20,7 +21,7 @@ from reportlab.graphics.barcode import code128
 
 from ...models import (
     Commande, CommandeProduit, Produit, StockLot, StockAdjustment, AuditLog,
-    Facture, MouvementStock
+    Facture, MouvementStock, FactureProduitAllocation
 )
 from ...serializers import CommandeSerializer, CommandeProduitSerializer
 from ...serializers_optimized import CommandeListSerializer, CommandeDetailSerializer
@@ -432,6 +433,22 @@ class CommandeViewSet(MultiTermSearchMixin, OptimizedSerializerMixin, viewsets.M
         if mouvements_to_create:
             MouvementStock.objects.bulk_create(mouvements_to_create, batch_size=100)
 
+        # 2.6 Invalider le cache du dashboard (car bulk_update ne déclenche pas les signaux)
+        cache.delete('dashboard_stats')
+
+        # 2.7 Log d'audit pour chaque produit (car bulk_update ne déclenche pas les signaux)
+        # On le fait de façon groupée ou individuelle selon le besoin de traçabilité fine
+        for p in produits_to_update:
+            log_audit(
+                user=request.user,
+                action=AuditLog.Action.UPDATE,
+                model_name='Produit',
+                object_id=str(p.id),
+                description=f"Stock/PMP mis à jour via clôture commande #{commande.id}",
+                details={'stock': str(p.stock), 'pmp': str(p.pmp)},
+                request=request
+            )
+
         business_logger.info(
             f"[COMMANDE] Cloture OK #{commande.id} | "
             f"fournisseur={commande.fournisseur.name if commande.fournisseur else 'N/A'} | "
@@ -589,8 +606,18 @@ class CommandeViewSet(MultiTermSearchMixin, OptimizedSerializerMixin, viewsets.M
                 description=f"Annulation réception commande #{commande.id}{' (' + commande.numero_facture + ')' if commande.numero_facture else ''}"
             ))
         
-        # Phase 3: Supprimer les lots de stock créés lors de la clôture
+        # Phase 3: Vérifier l'absence de ventes sur ces lots avant suppression
         lots_to_delete = StockLot.objects.filter(commande_produit__commande=commande)
+        
+        # Vérifier si un de ces lots est déjà utilisé dans une vente (via allocation)
+        # On évite le ProtectedError brutal et on renvoie un message métier
+        if FactureProduitAllocation.objects.filter(stock_lot__in=lots_to_delete).exists():
+            business_logger.warning(f"[COMMANDE] Annulation refusee #{commande.id} - du stock a deja ete vendu")
+            return Response(
+                {'detail': 'Impossible d\'annuler la réception : une partie de cette commande a déjà été vendue.'}, 
+                status=status.HTTP_400_BAD_REQUEST
+            )
+            
         deleted_lots_count = lots_to_delete.count()
         lots_to_delete.delete()
         

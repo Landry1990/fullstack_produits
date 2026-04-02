@@ -24,9 +24,11 @@ export const useSudo = () => {
         onSuccess: (validatorId: number, password: string) => void | Promise<void>,
         options?: SudoOptions
     ) => {
+        console.log("[useSudo] requireSudo appelé avec options:", options);
         setSudoState({
             isOpen: true,
             onValidate: async (validatorId: number, password: string) => {
+                console.log("[useSudo] Validation en cours pour validatorId:", validatorId);
                 await onSuccess(validatorId, password);
                 setSudoState(prev => ({ ...prev, isOpen: false }));
             },
@@ -37,6 +39,7 @@ export const useSudo = () => {
     }, []);
 
     const closeSudo = useCallback(() => {
+        console.log("[useSudo] Fermeture du Sudo");
         setSudoState(prev => ({ ...prev, isOpen: false }));
     }, []);
 

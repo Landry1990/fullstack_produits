@@ -486,10 +486,17 @@ def update_facture_totals_on_line_change(sender, instance, **kwargs):
 
 @receiver(post_save, sender=Facture)
 def update_facture_totals_on_change(sender, instance, created, **kwargs):
+    # Guard against recursive signal: calculate_totals(save=True) triggers post_save again
+    if getattr(instance, '_skip_recalculate', False):
+        return
     update_fields = kwargs.get('update_fields')
     if update_fields and ('total_ht' in update_fields or 'total_ttc' in update_fields):
         return
     if not created:
-        instance.calculate_totals(save=True)
+        instance._skip_recalculate = True
+        try:
+            instance.calculate_totals(save=True)
+        finally:
+            instance._skip_recalculate = False
 
 

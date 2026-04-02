@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { validateSaleData, validateProfessionalClient } from '../validation';
+import { validateSaleData, validateClientCreditLimit } from '../validation';
 import type { SaleCompletionParams, Client } from '../../types';
 
 describe('validation utilities', () => {
@@ -37,7 +37,7 @@ describe('validation utilities', () => {
         });
     });
 
-    describe('validateProfessionalClient', () => {
+    describe('validateClientCreditLimit', () => {
         const clientPro: Client = {
             id: 1,
             client_type: 'PROFESSIONNEL',
@@ -56,13 +56,13 @@ describe('validation utilities', () => {
         };
 
         it('should detect credit limit exceeded', () => {
-            const error = validateProfessionalClient(params as SaleCompletionParams, clientPro);
-            expect(error).toContain('PLAFOND DÉPASSÉ');
+            const error = validateClientCreditLimit(params as SaleCompletionParams, clientPro);
+            expect(error).toContain('CRÉDIT DÉPASSÉ');
         });
 
         it('should allow if payment covers the increment', () => {
             const paramsWithPayment = { ...params, montantPaye: '1000' };
-            const error = validateProfessionalClient(paramsWithPayment as SaleCompletionParams, clientPro);
+            const error = validateClientCreditLimit(paramsWithPayment as SaleCompletionParams, clientPro);
             expect(error).toBeNull();
         });
     });

@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import axios from 'axios';
 import { toast } from 'react-hot-toast';
 import { formatCurrency } from '../utils/formatters';
@@ -82,24 +82,89 @@ interface RapportData {
   };
 };
 
+type FilterMode = 'month' | 'range';
+type RangePreset = 'today' | 'yesterday' | 'this_week' | 'last_week' | 'custom';
+
+function toISODate(d: Date): string {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+
+function getPresetDates(preset: RangePreset): { debut: string; fin: string } {
+  const now = new Date();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
+  switch (preset) {
+    case 'today':
+      return { debut: toISODate(today), fin: toISODate(today) };
+    case 'yesterday': {
+      const y = new Date(today); y.setDate(y.getDate() - 1);
+      return { debut: toISODate(y), fin: toISODate(y) };
+    }
+    case 'this_week': {
+      const day = today.getDay();
+      const monday = new Date(today); monday.setDate(today.getDate() - (day === 0 ? 6 : day - 1));
+      return { debut: toISODate(monday), fin: toISODate(today) };
+    }
+    case 'last_week': {
+      const day = today.getDay();
+      const thisMonday = new Date(today); thisMonday.setDate(today.getDate() - (day === 0 ? 6 : day - 1));
+      const lastMonday = new Date(thisMonday); lastMonday.setDate(thisMonday.getDate() - 7);
+      const lastSunday = new Date(thisMonday); lastSunday.setDate(thisMonday.getDate() - 1);
+      return { debut: toISODate(lastMonday), fin: toISODate(lastSunday) };
+    }
+    default:
+      return { debut: toISODate(today), fin: toISODate(today) };
+  }
+}
+
 
 export default function RapportMensuel() {
   const { t, i18n } = useTranslation(['monthly_report', 'common', 'caisse']);
+
+  // Mode de filtre
+  const [filterMode, setFilterMode] = useState<FilterMode>('month');
+  const [activePreset, setActivePreset] = useState<RangePreset | null>(null);
+
+  // Mode mensuel
   const [mois, setMois] = useState(() => {
     const d = new Date();
     return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
   });
+
+  // Mode tranche de dates
+  const [dateDebut, setDateDebut] = useState(() => toISODate(new Date()));
+  const [dateFin, setDateFin] = useState(() => toISODate(new Date()));
+
   const [rapport, setRapport] = useState<RapportData | null>(null);
   const [loading, setLoading] = useState(false);
+  const [periodeLabel, setPeriodeLabel] = useState<string>('');
 
   const apiBaseUrl = useMemo(() => (import.meta.env.VITE_API_BASE_URL ?? '').replace(/\/$/, ''), []);
+
+  const applyPreset = useCallback((preset: RangePreset) => {
+    if (preset !== 'custom') {
+      const { debut, fin } = getPresetDates(preset);
+      setDateDebut(debut);
+      setDateFin(fin);
+    }
+    setActivePreset(preset);
+  }, []);
 
   const fetchRapport = async () => {
     setLoading(true);
     try {
-      const response = await axios.get(`${apiBaseUrl}/api/rapports/rapport_mensuel/`, {
-        params: { mois }
-      });
+      let response;
+      if (filterMode === 'month') {
+        response = await axios.get(`${apiBaseUrl}/api/rapports/rapport_mensuel/`, {
+          params: { mois }
+        });
+        setPeriodeLabel(mois);
+      } else {
+        response = await axios.get(`${apiBaseUrl}/api/rapports/rapport_par_dates/`, {
+          params: { date_debut: dateDebut, date_fin: dateFin }
+        });
+        setPeriodeLabel(`${dateDebut} → ${dateFin}`);
+      }
       setRapport(response.data);
     } catch (error) {
       console.error("Erreur lors du chargement du rapport", error);
@@ -112,72 +177,174 @@ export default function RapportMensuel() {
   return (
     <div className="p-6 space-y-6 animate-fade-in max-w-7xl mx-auto">
       {/* Header */}
-      <div className="flex flex-col md:flex-row justify-between items-center gap-4 bg-base-100 p-6 rounded-lg shadow-sm border border-base-200">
-        <div>
-          <h1 className="text-3xl font-bold text-base-content">📊 {t('title')}</h1>
-          <p className="text-sm text-base-content/70 mt-1">{t('subtitle')}</p>
-        </div>
-        
-        <div className="flex items-end gap-2">
-          <div className="form-control">
-            <label className="label py-1"><span className="label-text text-xs font-medium">{t('filters.month')}</span></label>
-            <input 
-              type="month" 
-              className="input input-bordered input-sm w-44" 
-              value={mois}
-              onChange={(e) => setMois(e.target.value)}
-            />
-          </div>
-          <button 
-            className="btn btn-primary btn-sm gap-2"
-            onClick={fetchRapport}
-            disabled={loading}
-          >
-            {loading ? (
-              <>
-                <span className="loading loading-spinner loading-xs"></span>
-                {t('filters.loading')}
-              </>
-            ) : (
-              <>
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+      <div className="bg-base-100 p-6 rounded-lg shadow-sm border border-base-200 space-y-4">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+          <div>
+            <h1 className="text-3xl font-bold text-base-content">📊 {t('title')}</h1>
+            <p className="text-sm text-base-content/70 mt-1">{t('subtitle')}</p>
+            {periodeLabel && rapport && (
+              <div className="mt-2 inline-flex items-center gap-2 px-3 py-1 bg-primary/10 text-primary rounded-full text-xs font-semibold">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                 </svg>
-                {t('filters.generate')}
-              </>
+                {t('filters.current_period')}: {periodeLabel}
+              </div>
             )}
-          </button>
-          
-          <button 
-            className="btn btn-neutral btn-sm gap-2"
-            onClick={async () => {
-              try {
-                const response = await axios.get(`${apiBaseUrl}/api/rapports/rapport_mensuel_pdf/`, {
-                  params: { mois, lang: i18n.language },
-                  responseType: 'blob'
-                });
-                // Créer un lien de téléchargement
-                const url = window.URL.createObjectURL(new Blob([response.data]));
-                const link = document.createElement('a');
-                link.href = url;
-                link.setAttribute('download', `rapport_mensuel_${mois}.pdf`);
-                document.body.appendChild(link);
-                link.click();
-                link.remove();
-                window.URL.revokeObjectURL(url);
-              } catch (error) {
-                console.error('Erreur téléchargement PDF:', error);
-                toast.error(t('messages.download_error'));
-              }
-            }}
-            disabled={!rapport}
-            title={t('pdf.tooltip')}
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-            </svg>
-            {t('pdf.download')}
-          </button>
+          </div>
+
+          {/* Actions: Générer + PDF */}
+          <div className="flex items-center gap-2 shrink-0">
+            <button 
+              className="btn btn-primary btn-sm gap-2"
+              onClick={fetchRapport}
+              disabled={loading}
+            >
+              {loading ? (
+                <>
+                  <span className="loading loading-spinner loading-xs"></span>
+                  {t('filters.loading')}
+                </>
+              ) : (
+                <>
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  </svg>
+                  {t('filters.generate')}
+                </>
+              )}
+            </button>
+            
+            <button 
+              className="btn btn-neutral btn-sm gap-2"
+              onClick={async () => {
+                try {
+                  let response;
+                  if (filterMode === 'month') {
+                    response = await axios.get(`${apiBaseUrl}/api/rapports/rapport_mensuel_pdf/`, {
+                      params: { mois, lang: i18n.language },
+                      responseType: 'blob'
+                    });
+                  } else {
+                    response = await axios.get(`${apiBaseUrl}/api/rapports/rapport_par_dates_pdf/`, {
+                      params: { date_debut: dateDebut, date_fin: dateFin, lang: i18n.language },
+                      responseType: 'blob'
+                    });
+                  }
+                  const url = window.URL.createObjectURL(new Blob([response.data]));
+                  const link = document.createElement('a');
+                  link.href = url;
+                  const filename = filterMode === 'month' 
+                    ? `rapport_mensuel_${mois}.pdf` 
+                    : `rapport_${dateDebut}_${dateFin}.pdf`;
+                  link.setAttribute('download', filename);
+                  document.body.appendChild(link);
+                  link.click();
+                  link.remove();
+                  window.URL.revokeObjectURL(url);
+                } catch (error) {
+                  console.error('Erreur téléchargement PDF:', error);
+                  toast.error(t('messages.download_error'));
+                }
+              }}
+              disabled={!rapport}
+              title={t('pdf.tooltip')}
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              </svg>
+              {t('pdf.download')}
+            </button>
+          </div>
+        </div>
+
+        {/* Tabs: Mois / Tranche de dates */}
+        <div className="border-t border-base-200 pt-4">
+          <div className="flex items-center gap-2 mb-3">
+            <div className="tabs tabs-boxed bg-base-200/70 p-1">
+              <button
+                className={`tab tab-sm font-medium transition-all ${filterMode === 'month' ? 'tab-active !bg-primary !text-white' : 'hover:bg-base-300'}`}
+                onClick={() => { setFilterMode('month'); setActivePreset(null); }}
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+                {t('filters.tab_month')}
+              </button>
+              <button
+                className={`tab tab-sm font-medium transition-all ${filterMode === 'range' ? 'tab-active !bg-primary !text-white' : 'hover:bg-base-300'}`}
+                onClick={() => { setFilterMode('range'); if (!activePreset) applyPreset('today'); }}
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+                </svg>
+                {t('filters.tab_range')}
+              </button>
+            </div>
+          </div>
+
+          {/* Contenu du filtre */}
+          {filterMode === 'month' ? (
+            <div className="flex items-end gap-3">
+              <div className="form-control">
+                <label className="label py-1"><span className="label-text text-xs font-medium">{t('filters.month')}</span></label>
+                <input 
+                  type="month" 
+                  className="input input-bordered input-sm w-48" 
+                  value={mois}
+                  onChange={(e) => setMois(e.target.value)}
+                />
+              </div>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {/* Préréglages rapides */}
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="text-xs font-semibold text-base-content/50 uppercase tracking-wider mr-1">{t('filters.presets')}:</span>
+                {(['today', 'yesterday', 'this_week', 'last_week', 'custom'] as RangePreset[]).map((preset) => (
+                  <button
+                    key={preset}
+                    className={`btn btn-xs gap-1.5 transition-all ${
+                      activePreset === preset 
+                        ? 'btn-primary shadow-sm' 
+                        : 'btn-ghost bg-base-200/50 hover:bg-base-300'
+                    }`}
+                    onClick={() => applyPreset(preset)}
+                  >
+                    {preset === 'today' && '📅'}
+                    {preset === 'yesterday' && '⏪'}
+                    {preset === 'this_week' && '📆'}
+                    {preset === 'last_week' && '🗓️'}
+                    {preset === 'custom' && '✏️'}
+                    {t(`filters.preset_${preset}`)}
+                  </button>
+                ))}
+              </div>
+
+              {/* Sélecteurs de dates */}
+              <div className="flex items-end gap-3">
+                <div className="form-control">
+                  <label className="label py-1"><span className="label-text text-xs font-medium">{t('filters.date_start')}</span></label>
+                  <input 
+                    type="date" 
+                    className="input input-bordered input-sm w-44" 
+                    value={dateDebut}
+                    onChange={(e) => { setDateDebut(e.target.value); setActivePreset('custom'); }}
+                  />
+                </div>
+                <div className="flex items-center pb-2 text-base-content/30 font-bold">→</div>
+                <div className="form-control">
+                  <label className="label py-1"><span className="label-text text-xs font-medium">{t('filters.date_end')}</span></label>
+                  <input 
+                    type="date" 
+                    className="input input-bordered input-sm w-44" 
+                    value={dateFin}
+                    min={dateDebut}
+                    onChange={(e) => { setDateFin(e.target.value); setActivePreset('custom'); }}
+                  />
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
@@ -462,7 +629,7 @@ export default function RapportMensuel() {
                               </tr>
                             )}
                             <tr className="border-t-2 border-double border-base-300 bg-base-300/30">
-                              <td className="uppercase">{t('common:total_general', 'Total Général (CA)')}</td>
+                              <td className="uppercase font-black text-xs text-base-content/60">{t('common:total_general', 'Chiffre d\'Affaires (Facturation)')}</td>
                               <td className="text-right text-lg">
                                 {formatCurrency(Math.round(Number(rapport.ca.ca_ttc)))}
                               </td>
@@ -480,6 +647,7 @@ export default function RapportMensuel() {
               </div>
             </div>
           </div>
+
 
           {/* 6. Mouvements de Caisse Extra-Comptables */}
           <div className="card bg-base-100 shadow-lg border border-base-200">

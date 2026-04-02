@@ -91,14 +91,22 @@ export default function ActionButtons({
                 onClick={onSuspend} 
                 disabled={!isValid || loading}
                 className="py-2.5"
+                title={t('facturation:actions.suspend_tooltip')}
               >
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-warning" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 9v6m4-6v6m7-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
                 <span className="text-xs uppercase font-bold text-warning">{t('facturation:actions.suspend_short')}</span>
-                <kbd className="kbd kbd-xs ml-auto">Ctrl S</kbd>
+                <div className="ml-auto flex gap-1">
+                    <kbd className="kbd kbd-xs tracking-tighter">F7</kbd>
+                    <kbd className="kbd kbd-xs tracking-tighter">Ctrl+S</kbd>
+                </div>
               </button>
             </li>
             <li>
-              <button onClick={onCancel} className="py-2.5 text-error hover:bg-error/10">
+              <button 
+                onClick={onCancel} 
+                className="py-2.5 text-error hover:bg-error/10"
+                title={t('facturation:actions.reset_tooltip')}
+              >
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" /></svg>
                 <span className="text-xs uppercase font-bold">{t('facturation:actions.cancel')}</span>
                 <kbd className="kbd kbd-xs ml-auto">Esc</kbd>
