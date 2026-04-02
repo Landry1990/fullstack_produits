@@ -3,7 +3,7 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated, IsAdminUser
 from django.db import transaction
-from django.db.models import Sum, Q, Value, DecimalField, Count
+from django.db.models import Sum, Q, Value, DecimalField, Count, Subquery, OuterRef
 from django.db.models.functions import Coalesce
 from django_filters.rest_framework import DjangoFilterBackend
 from django.utils import timezone
@@ -100,17 +100,26 @@ class FactureViewSet(OptimizedSerializerMixin, viewsets.ModelViewSet):
         # Base optimization for all views: select related foreign keys
         queryset = Facture.objects.select_related('client', 'ayant_droit', 'created_by', 'validated_by').order_by('-date').distinct()
         
-        # Add annotations for payments for the list view
+        # FIX BUG: Utilisation de Subquery pour éviter le produit cartésien (multiplication des montants par le nombre d'articles)
+        from api.models import Caisse
+        base_caisse = Caisse.objects.filter(facture=OuterRef('pk'), statut='completee').values('facture').annotate(
+            total=Sum('montant')
+        ).values('total')
+
         queryset = queryset.annotate(
             montant_regle=Coalesce(
-                Sum('paiements__montant', filter=Q(paiements__statut='completee') & ~Q(paiements__mode_paiement='en_compte')),
-                Value(0),
-                output_field=DecimalField()
+                Subquery(
+                    base_caisse.exclude(mode_paiement='en_compte')[:1],
+                    output_field=DecimalField()
+                ),
+                Value(0, output_field=DecimalField())
             ),
             montant_en_compte=Coalesce(
-                Sum('paiements__montant', filter=Q(paiements__statut='completee') & Q(paiements__mode_paiement='en_compte')),
-                Value(0),
-                output_field=DecimalField()
+                Subquery(
+                    base_caisse.filter(mode_paiement='en_compte')[:1],
+                    output_field=DecimalField()
+                ),
+                Value(0, output_field=DecimalField())
             )
         )
         
@@ -240,8 +249,14 @@ class FactureViewSet(OptimizedSerializerMixin, viewsets.ModelViewSet):
         status_initial = instance.status
 
         try:
-            # 1. Si la facture est VALIDEE, PAYEE ou EN_COMPTE, on doit réintégrer le stock
-            if status_initial in [Facture.Status.VALIDEE, Facture.Status.PAYEE, 'PAY', 'VAL', 'EN_COMPTE']:
+            # 1. Si la facture est VALIDEE ou PAYEE, INTERDICTION de suppression physique (Traçabilité comptable)
+            if status_initial in [Facture.Status.VALIDEE, Facture.Status.PAYEE, 'PAY', 'VAL']:
+                 return Response({
+                     'detail': 'Une facture validée ou payée ne peut pas être supprimée physiquement pour garantir la traçabilité comptable. Veuillez l\'annuler si nécessaire.'
+                 }, status=status.HTTP_400_BAD_REQUEST)
+            
+            # 2. Si la facture est EN_COMPTE, on doit réintégrer le stock via annulation (elle n'est pas encore finie mais a impacté le stock)
+            if status_initial == 'EN_COMPTE':
                 success, message = SalesService.cancel_invoice(instance, request.user, motif=f"Réintégration automatique avant suppression par {request.user.username}")
                 if not success:
                     return Response({'detail': f"Erreur lors de la réintégration du stock : {message}"}, status=status.HTTP_400_BAD_REQUEST)
@@ -505,7 +520,21 @@ class FactureViewSet(OptimizedSerializerMixin, viewsets.ModelViewSet):
         """
         brouillons = Facture.objects.filter(status=Facture.Status.BROUILLON)
         count = brouillons.count()
-        brouillons.delete()
+        ids = list(brouillons.values_list('id', flat=True))
+        
+        if count > 0:
+            # Audit Log
+            log_audit(
+                user=request.user,
+                action=AuditLog.Action.INVOICE_DELETE,
+                model_name='Facture',
+                object_id='BROUILLONS_PURGE',
+                description=f"Suppression massive de {count} facture(s) en brouillon",
+                details={'ids': ids},
+                request=request
+            )
+            
+            brouillons.delete()
         
         return Response({
             'detail': f'{count} facture(s) brouillon supprimée(s) avec succès.',

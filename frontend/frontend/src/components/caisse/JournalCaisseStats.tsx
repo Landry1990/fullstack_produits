@@ -63,16 +63,16 @@ export default function JournalCaisseStats({ state }: Props) {
         <div className="bg-base-100 p-5 rounded-xl border border-base-200 shadow-sm flex flex-col justify-between">
           <div className="flex justify-between items-start">
             <h3 className="text-base-content/60 text-xs font-bold uppercase tracking-wider mb-1">{t('stats.mobile_payments')}</h3>
-            <div className="text-xs font-bold text-orange-500">{formatCurrency((serverTotals?.details?.om || 0) + (serverTotals?.details?.momo || 0) || (totauxParMode.ventes_par_mode.om + totauxParMode.ventes_par_mode.momo))}</div>
+            <div className="text-xs font-bold text-orange-500">{formatCurrency((serverTotals?.details?.om || 0) + (serverTotals?.details?.momo || 0) || (totauxParMode.global_par_mode.om + totauxParMode.global_par_mode.momo))}</div>
           </div>
           <div className="flex flex-col gap-1 mt-2">
             <div className="flex justify-between items-center text-[11px]">
               <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-orange-500"></span> OM</span>
-              <span className="font-bold opacity-70">{formatCurrency(serverTotals?.details?.om ?? totauxParMode.ventes_par_mode.om)}</span>
+              <span className="font-bold opacity-70">{formatCurrency(serverTotals?.details?.om ?? totauxParMode.global_par_mode.om)}</span>
             </div>
             <div className="flex justify-between items-center text-[11px]">
               <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-yellow-400"></span> MoMo</span>
-              <span className="font-bold opacity-70">{formatCurrency(serverTotals?.details?.momo ?? totauxParMode.ventes_par_mode.momo)}</span>
+              <span className="font-bold opacity-70">{formatCurrency(serverTotals?.details?.momo ?? totauxParMode.global_par_mode.momo)}</span>
             </div>
           </div>
         </div>
@@ -82,7 +82,7 @@ export default function JournalCaisseStats({ state }: Props) {
           <div className="flex justify-between items-start">
             <div>
               <h3 className="text-base-content/60 text-xs font-bold uppercase tracking-wider mb-1">{t('stats.bank_digital')}</h3>
-              <div className="text-xl font-bold text-info">{formatCurrency((serverTotals?.details?.carte || 0) + (serverTotals?.details?.cheque || 0) + (serverTotals?.details?.virement || 0) || (totauxParMode.ventes_par_mode.carte + totauxParMode.ventes_par_mode.cheque + totauxParMode.ventes_par_mode.virement))}</div>
+              <div className="text-xl font-bold text-info">{formatCurrency((serverTotals?.details?.carte || 0) + (serverTotals?.details?.cheque || 0) + (serverTotals?.details?.virement || 0) || (totauxParMode.global_par_mode.carte + totauxParMode.global_par_mode.cheque + totauxParMode.global_par_mode.virement))}</div>
               <div className="text-[10px] text-base-content/40 mt-1 font-medium uppercase text-xs">{t('stats.non_cash_sales')}</div>
             </div>
             <div className="p-3 bg-info/10 rounded-lg text-info">
@@ -96,8 +96,8 @@ export default function JournalCaisseStats({ state }: Props) {
       <div className="px-4 md:px-6 flex flex-wrap gap-2 items-center mb-4 min-h-[32px]">
         <span className="text-[10px] font-black uppercase text-base-content/40 mr-2">{t('stats.flow_details')}</span>
         
-        {/* Part 1: Sales breakdown */}
-        {Object.entries(serverTotals?.details || totauxParMode.ventes_par_mode).map(([mode, value]) => {
+        {/* Part 1: All payments breakdown (Sales + Recoveries) */}
+        {Object.entries(serverTotals?.details || totauxParMode.global_par_mode).map(([mode, value]) => {
           const numValue = normalizeNumberInput(value);
           if (numValue === 0) return null;
           

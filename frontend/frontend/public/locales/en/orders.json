@@ -11,7 +11,9 @@
         "order_details": "Order Details",
         "delivery": "Reception / Delivery",
         "local": "Local Wholesalers",
-        "direct": "Direct Orders"
+        "direct": "Direct Orders",
+        "purchase_summary": "Daily Summary",
+        "purchase_details": "Product Details"
     },
     "status": {
         "prep": "Prep.",
@@ -197,15 +199,22 @@
         "subtitle_direct": "(Direct)",
         "subtitle_daily": "(Daily History)",
         "results_found": "results found",
-        "all_providers": "All suppliers",
+        "all_providers": "All Suppliers",
         "refresh": "Refresh",
+        "export_excel": "Export Excel",
+        "print_pdf": "Print PDF",
+        "loading": "Loading history...",
+        "product_search_placeholder": "Search product...",
         "columns": {
             "nb_orders": "Number of orders",
             "total_purchase": "Total Purchase",
-            "date": "Date"
+            "date": "Date",
+            "product": "Product Name",
+            "cip": "CIP / Code",
+            "quantity": "Total Quantity",
+            "nb_purchases": "Num. Purchases"
         },
         "no_data": "No data found for the selected period",
-        "loading": "Loading history...",
         "pagination": {
             "page": "Page"
         }

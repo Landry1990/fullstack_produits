@@ -158,8 +158,17 @@ class CaisseViewSet(viewsets.ModelViewSet):
         total_recouvrement = paiements_recouv.aggregate(Sum('montant'))['montant__sum'] or Decimal('0.00')
         total_recouv_especes = paiements_recouv.filter(mode_paiement='especes').aggregate(Sum('montant'))['montant__sum'] or Decimal('0.00')
 
-        modes = paiements_sales.values('mode_paiement').annotate(total=Sum('montant'))
-        details = {item['mode_paiement']: float(item['total']) for item in modes}
+        # Global breakdown par mode (Ventes + Recouvrements)
+        # On exclut ce qui n'est pas un flux financier réel (en_compte, depot)
+        modes_globaux = transactions.exclude(mode_paiement__in=['en_compte', 'depot']).values('mode_paiement').annotate(total=Sum('montant'))
+        details = {item['mode_paiement']: float(item['total']) for item in modes_globaux}
+        
+        # Breakdown séparé pour info (optionnel mais utile pour le frontend)
+        modes_ventes = paiements_sales.values('mode_paiement').annotate(total=Sum('montant'))
+        details_ventes = {item['mode_paiement']: float(item['total']) for item in modes_ventes}
+        
+        modes_recouv = paiements_recouv.values('mode_paiement').annotate(total=Sum('montant'))
+        details_recouv = {item['mode_paiement']: float(item['total']) for item in modes_recouv}
 
         mouvements = MouvementCaisse.objects.all()
         if start_date:
@@ -177,7 +186,10 @@ class CaisseViewSet(viewsets.ModelViewSet):
         total_sorties = moves_aggregated['sorties']
         
         total_coupons = transactions.filter(mode_paiement='coupon').aggregate(Sum('montant'))['montant__sum'] or Decimal('0.00')
-        total_theorique = total_ventes_especes + total_entrees - total_sorties
+        
+        # FIX: Le total théorique (fond de caisse physique) doit inclure 
+        # les ventes espèces ET les recouvrements espèces.
+        total_theorique = total_ventes_especes + total_recouv_especes + total_entrees - total_sorties
         
         mouvements_list = []
         for m in mouvements.select_related('user'):
@@ -200,6 +212,8 @@ class CaisseViewSet(viewsets.ModelViewSet):
             'total_sorties': total_sorties,
             'total_coupons': total_coupons,
             'details': details,
+            'details_ventes': details_ventes,
+            'details_recouvrements': details_recouv,
             'mouvements_audit': mouvements_list
         })
 
@@ -347,10 +361,12 @@ class CaisseViewSet(viewsets.ModelViewSet):
         # l'argent est bien dans la caisse physique du vendeur.
         recouvrement_q = Q(mode_paiement='recouvrement') | Q(reference__icontains='[RECOUV]')
         paiements_sales = transactions.exclude(recouvrement_q)
+        paiements_recouv = transactions.filter(recouvrement_q)
 
         total_ventes = paiements_sales.aggregate(Sum('montant'))['montant__sum'] or Decimal('0.00')
-        modes = paiements_sales.values('mode_paiement').annotate(total=Sum('montant'))
-        details = {item['mode_paiement']: float(item['total']) for item in modes}
+        # Global breakdown par mode (Ventes + Recouvrements)
+        modes_globaux = transactions.exclude(mode_paiement__in=['en_compte', 'depot']).values('mode_paiement').annotate(total=Sum('montant'))
+        details = {item['mode_paiement']: float(item['total']) for item in modes_globaux}
         
         mouvements = MouvementCaisse.objects.all()
         if start_date:
@@ -365,10 +381,18 @@ class CaisseViewSet(viewsets.ModelViewSet):
         if total_ventes == 0 and total_entrees == 0 and total_sorties == 0:
              return Response({'detail': 'Impossible de clôturer : aucun mouvement détecté depuis la dernière clôture.'}, status=status.HTTP_400_BAD_REQUEST)
 
-        total_theorique = total_ventes_especes + total_entrees - total_sorties
+        # FIX: Inclure les recouvrements espèces dans le théorique de clôture
+        recouv_especes = paiements_recouv.filter(mode_paiement='especes').aggregate(Sum('montant'))['montant__sum'] or Decimal('0.00')
+        total_theorique = total_ventes_especes + recouv_especes + total_entrees - total_sorties
         ecart = montant_reel - total_theorique
         
-        details['__meta__'] = {'total_ventes': float(total_ventes), 'total_ventes_especes': float(total_ventes_especes), 'total_entrees': float(total_entrees), 'total_sorties': float(total_sorties)}
+        details['__meta__'] = {
+            'total_ventes': float(total_ventes), 
+            'total_ventes_especes': float(total_ventes_especes),
+            'total_recouvrement_especes': float(recouv_especes),
+            'total_entrees': float(total_entrees), 
+            'total_sorties': float(total_sorties)
+        }
         
         mouvements_list = []
         for m in mouvements.select_related('user'):

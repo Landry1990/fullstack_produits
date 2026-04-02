@@ -4,12 +4,22 @@ import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { useAuth } from '../context/AuthContext';
 import { useTranslation } from 'react-i18next';
-import { Calendar, RefreshCw, Package, TrendingUp, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Calendar, RefreshCw, Package, TrendingUp, ChevronLeft, ChevronRight, FileDown, Printer } from 'lucide-react';
+import * as XLSX from 'xlsx';
 
 interface DailyPurchase {
   date: string;
   nb_commandes: number;
   total_achat: number;
+}
+
+interface DetailedPurchase {
+  produit_id: number;
+  produit__name: string;
+  produit__cip1: string;
+  total_quantite: number;
+  total_achat: number;
+  nb_commandes: number;
 }
 
 interface Supplier {
@@ -24,7 +34,7 @@ interface HistoriqueAchatsProps {
 const HistoriqueAchats = ({ forcedType }: HistoriqueAchatsProps) => {
   const { t, i18n } = useTranslation('orders');
   const { user } = useAuth();
-  const [data, setData] = useState<DailyPurchase[]>([]);
+  const [data, setData] = useState<any[]>([]);
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
   const [loading, setLoading] = useState(true);
   
@@ -37,6 +47,8 @@ const HistoriqueAchats = ({ forcedType }: HistoriqueAchatsProps) => {
   const [dateDebut, setDateDebut] = useState('');
   const [dateFin, setDateFin] = useState('');
   const [selectedSupplier, setSelectedSupplier] = useState<string>('');
+  const [activeTab, setActiveTab] = useState<'summary' | 'details'>('summary');
+  const [searchQuery, setSearchQuery] = useState('');
 
   // Fetch Suppliers on mount
   useEffect(() => {
@@ -67,13 +79,14 @@ const HistoriqueAchats = ({ forcedType }: HistoriqueAchatsProps) => {
       if (selectedSupplier) params.append('fournisseur_id', selectedSupplier);
       if (forcedType) params.append('type', forcedType);
 
-      const response = await axios.get(`/api/historique-achats/?${params.toString()}`, {
+      const endpoint = activeTab === 'summary' ? '/api/historique-achats/' : '/api/historique-achats/produits_details/';
+      
+      const response = await axios.get(`${endpoint}?${params.toString()}`, {
         headers: {
           Authorization: `Token ${user.token}`
         }
       });
       
-      // Handle paginated response
       if (response.data.results) {
         setData(response.data.results);
         setTotalCount(response.data.count);
@@ -93,7 +106,7 @@ const HistoriqueAchats = ({ forcedType }: HistoriqueAchatsProps) => {
       setPage(1);
       fetchHistory(1);
     }
-  }, [dateDebut, dateFin, selectedSupplier, user]);
+  }, [dateDebut, dateFin, selectedSupplier, user, activeTab]);
 
   const handlePageChange = (newPage: number) => {
     setPage(newPage);
@@ -104,141 +117,303 @@ const HistoriqueAchats = ({ forcedType }: HistoriqueAchatsProps) => {
     return new Intl.NumberFormat(i18n.language.startsWith('fr') ? 'fr-FR' : 'en-GB', { maximumFractionDigits: 0 }).format(amount);
   };
 
-  const totalPages = Math.ceil(totalCount / pageSize);
+  function normalizeNumber(val: any) {
+    if (typeof val === 'string') return parseFloat(val);
+    return val;
+  }
 
-  // Summary stats for the current page
-  const totalOrdersPage = data.reduce((acc, row) => acc + row.nb_commandes, 0);
-  const totalAmountPage = data.reduce((acc, row) => acc + row.total_achat, 0);
+  const handleExportExcel = async () => {
+    if (!user?.token) return;
+    setLoading(true);
+    try {
+        const params = new URLSearchParams();
+        params.append('no_pagination', 'true');
+        if (dateDebut) params.append('date_debut', dateDebut);
+        if (dateFin) params.append('date_fin', dateFin);
+        if (selectedSupplier) params.append('fournisseur_id', selectedSupplier);
+        if (forcedType) params.append('type', forcedType);
+        
+        const endpoint = activeTab === 'summary' ? '/api/historique-achats/' : '/api/historique-achats/produits_details/';
+        
+        const response = await axios.get(`${endpoint}?${params.toString()}`, {
+            headers: { Authorization: `Token ${user.token}` }
+        });
+        
+        const exportData = response.data;
+        if (!exportData || exportData.length === 0) return;
+
+        let dataToExport: any[] = [];
+        if (activeTab === 'summary') {
+            dataToExport = exportData.map((row: any) => ({
+                [t('history.columns.date')]: format(new Date(row.date), 'dd/MM/yyyy'),
+                [t('history.columns.nb_orders')]: row.nb_commandes,
+                [t('history.columns.total_purchase')]: normalizeNumber(row.total_achat)
+            }));
+        } else {
+            dataToExport = exportData.map((row: any) => ({
+                [t('history.columns.product')]: row.produit__name,
+                [t('history.columns.cip')]: row.produit__cip1,
+                [t('history.columns.quantity')]: row.total_quantite,
+                [t('history.columns.nb_purchases')]: row.nb_commandes,
+                [t('history.columns.total_purchase')]: normalizeNumber(row.total_achat)
+            }));
+        }
+
+        // Create Excel Workbook and Sheet
+        const ws = XLSX.utils.json_to_sheet(dataToExport);
+        
+        // Auto-adjust column widths
+        const colWidths = Object.keys(dataToExport[0] || {}).map(key => {
+            const headerLen = key.length;
+            const maxContentLen = dataToExport.reduce((max, row) => {
+                const val = String(row[key] || "");
+                return Math.max(max, val.length);
+            }, 0);
+            return { wch: Math.max(headerLen, maxContentLen) + 5 };
+        });
+        ws['!cols'] = colWidths;
+
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, activeTab === 'summary' ? 'Résumé Achats' : 'Détails Achats');
+
+        // Trigger Download
+        const filename = `historique_achats_${activeTab}_${format(new Date(), 'yyyy-MM-dd')}.xlsx`;
+        XLSX.writeFile(wb, filename);
+    } catch (error) {
+        console.error('Error exporting history:', error);
+    } finally {
+        setLoading(false);
+    }
+  };
+
+  const handlePrint = () => {
+    window.print();
+  };
+
+  const totalPages = Math.ceil(totalCount / pageSize);
+  const totalOrdersPage = data.reduce((acc, row) => acc + (row.nb_commandes || 0), 0);
+  const totalAmountPage = data.reduce((acc, row) => acc + (normalizeNumber(row.total_achat) || 0), 0);
 
   return (
-    <div className="h-full flex flex-col p-6 overflow-hidden">
-      <div className="max-w-4xl mx-auto w-full flex flex-col h-full overflow-hidden">
-        {/* Header */}
-        <div className="flex items-center justify-between mb-5 shrink-0">
-          <div>
-            <h1 className="text-xl font-bold text-base-content flex items-center gap-2">
-              <Calendar className="w-5 h-5 text-primary" />
-              {t('history.title')}
-              <span className="text-primary text-sm md:text-xl">
-                {forcedType === 'LOC' ? t('history.subtitle_local') : forcedType === 'DIR' ? t('history.subtitle_direct') : t('history.subtitle_daily')}
-              </span>
-            </h1>
-            <p className="text-[10px] text-base-content/50 mt-0.5 uppercase tracking-wider font-semibold">{totalCount} {t('history.results_found')}</p>
-          </div>
-        </div>
+    <>
+      <div className="h-full flex flex-col p-6 overflow-hidden">
+        <div className="max-w-4xl mx-auto w-full flex flex-col h-full overflow-hidden">
+          {/* Header */}
+          <div className="flex items-center justify-between mb-5 shrink-0">
+            <div>
+              <h1 className="text-xl font-bold text-base-content flex items-center gap-2">
+                <Calendar className="w-5 h-5 text-primary" />
+                {t('history.title')}
+                <span className="text-primary text-sm md:text-xl ml-1">
+                  {forcedType === 'LOC' ? t('history.subtitle_local') : forcedType === 'DIR' ? t('history.subtitle_direct') : t('history.subtitle_daily')}
+                </span>
+              </h1>
+              <p className="text-[10px] text-base-content/50 mt-0.5 uppercase tracking-wider font-semibold">{totalCount} {t('history.results_found')}</p>
+            </div>
 
-        {/* Compact Filters Bar */}
-        <div className="flex flex-wrap items-center gap-3 mb-4 shrink-0">
-          <div className="group relative">
-            <input 
-              type="date" 
-              className="input input-sm input-bordered rounded-lg bg-base-100 w-36 text-xs transition-all focus:ring-2 focus:ring-primary/20" 
-              value={dateDebut}
-              onChange={(e) => setDateDebut(e.target.value)}
-            />
+            <div className="tabs tabs-boxed bg-base-200/50 p-1 rounded-xl no-print">
+              <button 
+                  className={`tab tab-sm font-bold uppercase transition-all ${activeTab === 'summary' ? 'tab-active !bg-primary !text-primary-content shadow-lg' : 'text-base-content/50 hover:text-base-content'}`}
+                  onClick={() => setActiveTab('summary')}
+              >
+                  {t('tabs.purchase_summary')}
+              </button>
+              <button 
+                  className={`tab tab-sm font-bold uppercase transition-all ${activeTab === 'details' ? 'tab-active !bg-primary !text-primary-content shadow-lg' : 'text-base-content/50 hover:text-base-content'}`}
+                  onClick={() => setActiveTab('details')}
+              >
+                  {t('tabs.purchase_details')}
+              </button>
+            </div>
           </div>
-          <span className="text-base-content/30 text-xs font-bold">→</span>
-          <div className="group relative">
-            <input 
-              type="date" 
-              className="input input-sm input-bordered rounded-lg bg-base-100 w-36 text-xs transition-all focus:ring-2 focus:ring-primary/20" 
-              value={dateFin}
-              onChange={(e) => setDateFin(e.target.value)}
-            />
-          </div>
-          <select 
-            className="select select-sm select-bordered rounded-lg bg-base-100 text-xs min-w-[160px] focus:ring-2 focus:ring-primary/20"
-            value={selectedSupplier}
-            onChange={(e) => setSelectedSupplier(e.target.value)}
-          >
-            <option value="">{t('history.all_providers')}</option>
-            {suppliers.map(s => (
-              <option key={s.id} value={s.id}>{s.name}</option>
-            ))}
-          </select>
-          <button 
-            className="btn btn-sm btn-primary rounded-lg gap-2 shadow-sm hover:shadow-md transition-all active:scale-95"
-            onClick={() => fetchHistory(page)}
-          >
-            <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
-            <span className="hidden sm:inline">{t('history.refresh')}</span>
-          </button>
-        </div>
 
-        {/* Summary Info - Centered and Compact */}
-        <div className="grid grid-cols-2 gap-4 mb-4 shrink-0">
-          <div className="bg-gradient-to-br from-primary/5 to-primary/10 border border-primary/20 rounded-2xl px-5 py-3 flex items-center justify-between shadow-sm">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-primary/20 flex items-center justify-center">
-                <Package className="w-5 h-5 text-primary" />
+          {/* Filters Bar */}
+          <div className="flex items-center justify-between gap-4 mb-4 shrink-0 no-print">
+            <div className="flex-1 flex items-center gap-3">
+              <div className="relative flex-1 max-w-sm">
+                <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-base-content/30" />
+                <input 
+                  type="date" 
+                  className="input input-sm input-bordered w-full pl-10 pr-4 font-bold bg-base-100 focus:border-primary transition-all text-xs"
+                  value={dateDebut}
+                  onChange={(e) => setDateDebut(e.target.value)}
+                />
               </div>
-              <div>
-                <p className="text-[10px] font-bold text-base-content/40 uppercase tracking-widest leading-none mb-1">{t('history.columns.nb_orders')}</p>
-                <p className="text-xl font-black text-base-content antialiased leading-none">{totalOrdersPage}</p>
+              <div className="text-base-content/30 font-bold text-xs">→</div>
+              <div className="relative flex-1 max-w-sm">
+                <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-base-content/30" />
+                <input 
+                  type="date" 
+                  className="input input-sm input-bordered w-full pl-10 pr-4 font-bold bg-base-100 focus:border-primary transition-all text-xs"
+                  value={dateFin}
+                  onChange={(e) => setDateFin(e.target.value)}
+                />
+              </div>
+              <select 
+                className="select select-sm select-bordered font-bold bg-base-100 focus:border-primary transition-all text-xs max-w-[200px]"
+                value={selectedSupplier}
+                onChange={(e) => setSelectedSupplier(e.target.value)}
+              >
+                <option value="">{t('history.all_providers')}</option>
+                {suppliers.map(s => (
+                  <option key={s.id} value={s.id}>{s.name}</option>
+                ))}
+              </select>
+              <div className="flex items-center gap-1">
+                <button 
+                  className="btn btn-sm btn-ghost btn-square hover:bg-base-200 transition-all text-primary tooltip tooltip-bottom"
+                  onClick={() => fetchHistory()}
+                  disabled={loading}
+                  data-tip={t('history.refresh')}
+                >
+                  <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+                </button>
+                <button 
+                  className="btn btn-sm btn-ghost btn-square hover:bg-base-200 transition-all text-success tooltip tooltip-bottom"
+                  onClick={handleExportExcel}
+                  disabled={loading}
+                  data-tip={t('history.export_excel')}
+                >
+                  <FileDown className="w-4 h-4" />
+                </button>
+                <button 
+                  className="btn btn-sm btn-ghost btn-square hover:bg-base-200 transition-all text-info tooltip tooltip-bottom"
+                  onClick={handlePrint}
+                  disabled={loading || data.length === 0}
+                  data-tip={t('history.print_pdf')}
+                >
+                  <Printer className="w-4 h-4" />
+                </button>
               </div>
             </div>
           </div>
-          <div className="bg-gradient-to-br from-emerald-500/5 to-emerald-500/10 border border-emerald-500/20 rounded-2xl px-5 py-3 flex items-center justify-between shadow-sm">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-emerald-500/20 flex items-center justify-center">
-                <TrendingUp className="w-5 h-5 text-emerald-600" />
+
+          {/* Search bar inside filters bar logic or below */}
+          {activeTab === 'details' && (
+            <div className="mb-4 no-print">
+              <input 
+                type="text"
+                className="input input-sm input-bordered rounded-lg bg-base-100 w-full text-xs"
+                placeholder={t('history.product_search_placeholder')}
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
+            </div>
+          )}
+
+          {/* Summary Cards */}
+          <div className="grid grid-cols-2 gap-4 mb-4 shrink-0">
+            <div className="bg-gradient-to-br from-primary/5 to-primary/10 border border-primary/20 rounded-2xl px-5 py-3 flex items-center justify-between shadow-sm">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-primary/20 flex items-center justify-center">
+                  <Package className="w-5 h-5 text-primary" />
+                </div>
+                <div>
+                  <p className="text-[10px] font-bold text-base-content/40 uppercase tracking-widest leading-none mb-1">{t('history.columns.nb_orders')}</p>
+                  <p className="text-xl font-black text-base-content leading-none">{totalOrdersPage}</p>
+                </div>
               </div>
-              <div>
-                <p className="text-[10px] font-bold text-base-content/40 uppercase tracking-widest leading-none mb-1">{t('history.columns.total_purchase')}</p>
-                <p className="text-xl font-black text-base-content antialiased leading-none">
-                  {formatMoney(totalAmountPage)} <span className="text-xs font-bold text-base-content/30 ml-0.5">{t('common:currency_symbol')}</span>
-                </p>
+            </div>
+            <div className="bg-gradient-to-br from-emerald-500/5 to-emerald-500/10 border border-emerald-500/20 rounded-2xl px-5 py-3 flex items-center justify-between shadow-sm">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-emerald-500/20 flex items-center justify-center">
+                  <TrendingUp className="w-5 h-5 text-emerald-600" />
+                </div>
+                <div>
+                  <p className="text-[10px] font-bold text-base-content/40 uppercase tracking-widest leading-none mb-1">{t('history.columns.total_purchase')}</p>
+                  <p className="text-xl font-black text-base-content leading-none">
+                    {formatMoney(totalAmountPage)} <span className="text-xs font-bold text-base-content/30 ml-0.5">{t('common:currency_symbol')}</span>
+                  </p>
+                </div>
               </div>
             </div>
           </div>
-        </div>
 
-        {/* Table Content */}
-        {loading && data.length === 0 ? (
-          <div className="flex-1 flex flex-col items-center justify-center py-20 bg-base-100 rounded-3xl border border-base-200">
-            <span className="loading loading-spinner loading-lg text-primary/40"></span>
-            <p className="text-sm text-base-content/40 mt-4 font-medium italic">{t('history.loading')}</p>
-          </div>
-        ) : (
+          {/* Table Container */}
           <div className="flex-1 min-h-0 flex flex-col">
             <div className={`overflow-auto flex-1 rounded-3xl border-2 border-base-200/60 bg-base-100 shadow-sm transition-opacity duration-300 ${loading ? 'opacity-50 pointer-events-none' : 'opacity-100'}`}>
-              <table className="table table-sm table-pin-rows w-full border-separate border-spacing-0">
+              <table className="table table-sm w-full border-separate border-spacing-0">
                 <thead>
-                  <tr className="bg-base-200/80 text-[11px] font-black text-base-content/50 uppercase tracking-[0.15em]">
-                    <th className="py-4 pl-8 border-b border-base-200/60 bg-base-200/80">{t('history.columns.date')}</th>
-                    <th className="text-center py-4 border-b border-base-200/60 bg-base-200/80">{t('history.columns.nb_orders')}</th>
-                    <th className="text-right py-4 pr-8 border-b border-base-200/60 bg-base-200/80">{t('history.columns.total_purchase')}</th>
+                  <tr className="bg-base-300 text-[11px] font-black text-base-content uppercase tracking-[0.15em]">
+                    {activeTab === 'summary' ? (
+                      <>
+                        <th className="sticky top-0 z-30 py-4 pl-8 border-b border-base-300/60 bg-base-300">{t('history.columns.date')}</th>
+                        <th className="sticky top-0 z-30 text-center py-4 border-b border-base-300/60 bg-base-300">{t('history.columns.nb_orders')}</th>
+                        <th className="sticky top-0 z-30 text-right py-4 pr-8 border-b border-base-300/60 bg-base-300">{t('history.columns.total_purchase')}</th>
+                      </>
+                    ) : (
+                      <>
+                        <th className="sticky top-0 z-30 py-4 pl-8 border-b border-base-300/60 bg-base-300">{t('history.columns.product')}</th>
+                        <th className="sticky top-0 z-30 py-4 border-b border-base-300/60 bg-base-300">{t('history.columns.cip')}</th>
+                        <th className="sticky top-0 z-30 text-center py-4 border-b border-base-300/60 bg-base-300">{t('history.columns.quantity')}</th>
+                        <th className="sticky top-0 z-30 text-center py-4 border-b border-base-300/60 bg-base-300">{t('history.columns.nb_purchases')}</th>
+                        <th className="sticky top-0 z-30 text-right py-4 pr-8 border-b border-base-300/60 bg-base-300">{t('history.columns.total_purchase')}</th>
+                      </>
+                    )}
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-base-100">
-                  {data.map((row, i) => (
-                    <tr key={row.date} className="group hover:bg-primary/[0.03] transition-colors">
-                      <td className="py-3 pl-8">
-                        <div className="flex items-center gap-3">
-                          <div className={`w-1.5 h-1.5 rounded-full ${i === 0 ? 'bg-primary shadow-[0_0_8px_rgba(var(--p),0.5)]' : 'bg-base-content/10'}`} />
-                          <span className="text-sm font-bold text-base-content/70">
-                            {format(new Date(row.date), 'dd MMMM yyyy', { 
-                                locale: i18n.language.startsWith('fr') ? fr : undefined 
-                            })}
-                          </span>
-                        </div>
+                <tbody className="divide-y divide-base-100 font-sans">
+                  {loading && data.length === 0 ? (
+                    <tr>
+                      <td colSpan={activeTab === 'summary' ? 3 : 5} className="py-20 text-center">
+                        <span className="loading loading-spinner loading-lg text-primary/40"></span>
                       </td>
-                      <td className="py-3 text-center">
-                        <span className="inline-flex items-center justify-center h-7 px-3 rounded-full bg-base-200 text-base-content/70 text-xs font-black group-hover:bg-primary group-hover:text-primary-content transition-colors">
-                          {row.nb_commandes}
-                        </span>
-                      </td>
-                      <td className="py-3 text-right pr-8">
-                        <span className="text-base font-black text-base-content group-hover:text-primary transition-colors">
-                          {formatMoney(row.total_achat)}
-                        </span>
-                        <span className="text-[10px] font-bold text-base-content/30 ml-1">{t('common:currency_symbol')}</span>
-                      </td>
+                    </tr>
+                  ) : data.filter(row => {
+                      if (activeTab === 'summary' || !searchQuery) return true;
+                      const d = row as DetailedPurchase;
+                      return d.produit__name?.toLowerCase().includes(searchQuery.toLowerCase()) || d.produit__cip1?.includes(searchQuery);
+                  }).map((row, i) => (
+                    <tr key={activeTab === 'summary' ? row.date : row.produit_id} className="group hover:bg-primary/[0.03] transition-colors">
+                      {activeTab === 'summary' ? (
+                        <>
+                          <td className="py-3 pl-8">
+                            <div className="flex items-center gap-3">
+                              <div className={`w-1.5 h-1.5 rounded-full ${i === 0 ? 'bg-primary shadow-[0_0_8px_rgba(var(--p),0.5)]' : 'bg-base-content/10'}`} />
+                              <span className="text-sm font-bold text-base-content/70">
+                                {format(new Date(row.date), 'dd MMMM yyyy', { locale: i18n.language.startsWith('fr') ? fr : undefined })}
+                              </span>
+                            </div>
+                          </td>
+                          <td className="py-3 text-center">
+                            <span className="inline-flex items-center justify-center h-7 px-3 rounded-full bg-base-200 text-base-content/70 text-xs font-black group-hover:bg-primary group-hover:text-primary-content transition-colors">
+                              {row.nb_commandes}
+                            </span>
+                          </td>
+                          <td className="py-3 text-right pr-8">
+                            <span className="text-base font-black text-base-content group-hover:text-primary transition-colors">
+                              {formatMoney(normalizeNumber(row.total_achat))}
+                            </span>
+                            <span className="text-[10px] font-bold text-base-content/30 ml-1">{t('common:currency_symbol')}</span>
+                          </td>
+                        </>
+                      ) : (
+                        <>
+                          <td className="py-3 pl-8">
+                            <div className="font-bold text-sm text-base-content/80 group-hover:text-primary">{row.produit__name}</div>
+                          </td>
+                          <td className="py-3">
+                            <div className="font-mono text-xs opacity-50">{row.produit__cip1}</div>
+                          </td>
+                          <td className="py-3 text-center">
+                            <span className="badge badge-sm font-bold bg-base-200 border-none">{row.total_quantite}</span>
+                          </td>
+                          <td className="py-3 text-center">
+                            <span className="text-xs font-bold opacity-70">{row.nb_commandes}</span>
+                          </td>
+                          <td className="py-3 text-right pr-8">
+                            <span className="text-sm font-black text-base-content">
+                              {formatMoney(normalizeNumber(row.total_achat))}
+                            </span>
+                            <span className="text-[10px] font-bold text-base-content/30 ml-1">{t('common:currency_symbol')}</span>
+                          </td>
+                        </>
+                      )}
                     </tr>
                   ))}
                   {data.length === 0 && !loading && (
                     <tr>
-                      <td colSpan={3} className="text-center py-24">
+                      <td colSpan={activeTab === 'summary' ? 3 : 5} className="text-center py-24 bg-base-100">
                         <div className="flex flex-col items-center gap-3 opacity-20">
                           <Package className="w-12 h-12" />
                           <p className="text-sm font-bold uppercase tracking-widest">{t('history.no_data')}</p>
@@ -250,9 +425,9 @@ const HistoriqueAchats = ({ forcedType }: HistoriqueAchatsProps) => {
               </table>
             </div>
 
-            {/* Pagination */}
+            {/* Pagination Component */}
             {totalPages > 1 && (
-              <div className="flex items-center justify-between mt-5 px-2 shrink-0">
+              <div className="flex items-center justify-between mt-5 px-2 shrink-0 no-print">
                 <div className="text-[10px] font-bold text-base-content/40 uppercase tracking-widest">
                   {t('history.pagination.page')} {page} <span className="mx-1 text-base-content/20">/</span> {totalPages}
                 </div>
@@ -275,9 +450,44 @@ const HistoriqueAchats = ({ forcedType }: HistoriqueAchatsProps) => {
               </div>
             )}
           </div>
-        )}
+        </div>
       </div>
-    </div>
+      <style>{`
+        @media print {
+          .no-print, .tabs, .pagination, button, .select, input, .tooltip {
+            display: none !important;
+          }
+          .card, .rounded-3xl, .border-2, .shadow-sm, .shadow-lg {
+            border: none !important;
+            box-shadow: none !important;
+            border-radius: 0 !important;
+          }
+          .p-6, .max-w-4xl {
+            padding: 0 !important;
+            max-width: 100% !important;
+            margin: 0 !important;
+          }
+          table {
+            border-collapse: collapse !important;
+            width: 100% !important;
+          }
+          th {
+            background-color: #f1f5f9 !important;
+            -webkit-print-color-adjust: exact;
+            color: black !important;
+            border-bottom: 2px solid #e2e8f0 !important;
+          }
+          body {
+            background: white !important;
+            color: black !important;
+          }
+          .h-full, .overflow-hidden, .overflow-auto {
+            height: auto !important;
+            overflow: visible !important;
+          }
+        }
+      `}</style>
+    </>
   );
 };
 

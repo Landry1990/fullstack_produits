@@ -1,6 +1,5 @@
-import React from 'react'
+import React, { type Dispatch, type SetStateAction } from 'react'
 import StockResolutionModal from './StockResolutionModal'
-import { useSudo } from '../../hooks/useSudo'
 import type { LigneFacture, Client, ProduitModel } from '../../types'
 
 interface StockResolutionHandlerProps {
@@ -8,9 +7,9 @@ interface StockResolutionHandlerProps {
     onClose: () => void
     stockResolutionItems: {product: ProduitModel, quantity: number, stock: number}[]
     
-    // Promis State
-    promisSelections: Set<number>
-    setPromisSelections: (ids: Set<number>) => void
+    // Resolution State
+    resolutionActions: Record<number, 'promis' | 'force' | 'reduce'>
+    setResolutionActions: Dispatch<SetStateAction<Record<number, 'promis' | 'force' | 'reduce'>>>
     promisPhone: string
     setPromisPhone: (phone: string) => void
     promisClientName: string
@@ -28,16 +27,17 @@ interface StockResolutionHandlerProps {
     setUseManualClient: (val: boolean) => void
     setManualClientName: (name: string) => void
     
-    // Completion Callback - receives updated lines to avoid state update timing issues
+    // Completion Callback
     onComplete: (updatedLignes?: LigneFacture[], sudoCredentials?: { validatorId: number, password: string }) => void
+    requireSudo: (onSuccess: (validatorId: number, password: string) => void | Promise<void>, options?: any) => void
 }
 
 export const StockResolutionHandler: React.FC<StockResolutionHandlerProps> = ({
     isOpen,
     onClose,
     stockResolutionItems,
-    promisSelections,
-    setPromisSelections,
+    resolutionActions,
+    setResolutionActions,
     promisPhone,
     setPromisPhone,
     promisClientName,
@@ -50,33 +50,45 @@ export const StockResolutionHandler: React.FC<StockResolutionHandlerProps> = ({
     useManualClient,
     setUseManualClient,
     setManualClientName,
-    onComplete
+    onComplete,
+    requireSudo
 }) => {
     
-    const { requireSudo } = useSudo()
 
     const handleConfirm = () => {
-        // Apply Promis selections to the invoice lines
+        console.log("[StockResolutionHandler] Confirmation déclenchée avec actions:", resolutionActions);
+        // Apply Resolution actions to the invoice lines
         const updatedLignes = lignesFacture.map(ligne => {
-            if (promisSelections.has(ligne.produit.id)) {
-                // PromisQty = Demanded - Available. Available = Max(0, Stock).
+            const action = resolutionActions[ligne.produit.id]
+            
+            if (action === 'promis') {
                 const stock = Math.max(0, ligne.produit.stock ?? 0)
                 const promisQty = Math.max(0, ligne.quantite - stock)
                 return {
                     ...ligne,
                     isPromis: true,
                     promisQuantity: promisQty,
-                    promisPhone: promisPhone || undefined
+                    promisPhone: promisPhone || undefined,
+                    // The line quantity for the invoice remains the original requested quantity
+                    // The backend will subtract promisQuantity from the destocking
+                }
+            } else if (action === 'reduce') {
+                const stock = Math.max(0, ligne.produit.stock ?? 0)
+                return {
+                    ...ligne,
+                    quantite: stock,
+                    isPromis: false,
+                    promisQuantity: 0
                 }
             } else {
-                // Forced sale
+                // Action 'force' OR default (not in conflict)
                 return {
                     ...ligne,
                     isPromis: false,
                     promisQuantity: 0,
                 }
             }
-        })
+        }).filter(l => l.quantite > 0 || l.promisQuantity > 0) // Remove lines with 0 in both (e.g. reduce to 0 with no promis)
         
         setLignesFacture(updatedLignes)
         
@@ -90,15 +102,20 @@ export const StockResolutionHandler: React.FC<StockResolutionHandlerProps> = ({
         }
 
         // CHECK IF SUDO IS NEEDED FOR FORCE SALE
-        const hasForceSale = updatedLignes.some(l => !l.isPromis && l.quantite > (l.produit.stock || 0));
+        const hasForceSale = updatedLignes.some(l => {
+            const stock = l.produit.stock ?? 0
+            return !l.isPromis && l.quantite > stock
+        })
 
         if (hasForceSale) {
+            console.log("[StockResolutionHandler] Detection de vente forcée. Déclenchement Sudo...");
+            onClose()
             requireSudo(async (validatorId, password) => {
-                onClose()
+                console.log("[StockResolutionHandler] Sudo validé. Complétion de l'action.");
                 onComplete(updatedLignes, { validatorId, password })
             }, {
-                title: `Validation Vente à Perte / Stock Insuffisant`,
-                message: `Confirmer la vente forcée de produits avec stock insuffisant ?`
+                title: `Validation Vente Forcée / Stock Insuffisant`,
+                message: `Confirmer la vente forcée de produits avec stock insuffisant ? Cette action créera un stock négatif.`
             });
         } else {
             onClose()
@@ -114,8 +131,8 @@ export const StockResolutionHandler: React.FC<StockResolutionHandlerProps> = ({
             onClose={onClose}
             stockResolutionItems={stockResolutionItems}
             onConfirm={handleConfirm}
-            promisSelections={promisSelections}
-            setPromisSelections={setPromisSelections}
+            resolutionActions={resolutionActions}
+            setResolutionActions={setResolutionActions}
             promisPhone={promisPhone}
             setPromisPhone={setPromisPhone}
             promisClientName={promisClientName}

@@ -414,7 +414,9 @@ class ProduitViewSet(CachedSearchMixin, MultiTermSearchMixin, OptimizedSerialize
         produit_nom = instance.name
         
         try:
-            self.perform_destroy(instance)
+            # On tente la suppression physique au cas où le produit soit "neuf" (sans historique)
+            with transaction.atomic():
+                self.perform_destroy(instance)
             
             # Log successful deletion
             log_audit(
@@ -422,35 +424,40 @@ class ProduitViewSet(CachedSearchMixin, MultiTermSearchMixin, OptimizedSerialize
                 action=AuditLog.Action.DELETE,
                 model_name='Produit',
                 object_id=produit_id,
-                description=f"Suppression produit: {produit_nom}",
-                details={
-                    'id': produit_id,
-                    'name': produit_nom
-                },
+                description=f"Suppression physique produit: {produit_nom}",
+                details={'id': produit_id, 'name': produit_nom, 'type': 'HARD_DELETE'},
+                request=request
+            )
+            return Response(status=status.HTTP_204_NO_CONTENT)
+            
+        except ProtectedError:
+            # Si le produit a un historique, on ne le supprime pas, on le MASQUE (Soft Delete)
+            # conformément à la demande : "conserve les libelle en plus de l'indication produit supprime"
+            instance = Produit.objects.get(id=produit_id) # On refresh l'instance après l'échec du delete
+            instance.is_active = False
+            suffix = " (Produit Supprimé)"
+            if suffix not in instance.name:
+                instance.name = f"{instance.name}{suffix}"
+            instance.save(update_fields=['is_active', 'name'])
+            
+            # Log soft deletion
+            log_audit(
+                user=request.user,
+                action=AuditLog.Action.DELETE,
+                model_name='Produit',
+                object_id=produit_id,
+                description=f"Suppression logique (masquage) produit avec historique: {instance.name}",
+                details={'id': produit_id, 'name': instance.name, 'type': 'SOFT_DELETE'},
                 request=request
             )
             
-        except ProtectedError as e:
-            # Extract the protected objects information
-            protected_objects = e.protected_objects
-            
-            # Group by model type
-            model_counts = {}
-            for obj in protected_objects:
-                model_name = obj.__class__.__name__
-                model_counts[model_name] = model_counts.get(model_name, 0) + 1
-            
-            # Build a user-friendly error message
-            references = ', '.join([f"{count} {model}" for model, count in model_counts.items()])
-            
             return Response({
-                'error': 'Cannot delete product',
-                'detail': f'This product cannot be deleted because it is referenced in: {references}. '
-                         'Products with historical records (sales, purchases, inventories, etc.) cannot be deleted to preserve data integrity.',
-                'protected_references': model_counts
-            }, status=status.HTTP_400_BAD_REQUEST)
-        
-        return Response(status=status.HTTP_204_NO_CONTENT)
+                'id': produit_id,
+                'name': instance.name,
+                'is_active': False,
+                'type': 'SOFT_DELETE',
+                'message': "Le produit a été masqué car il possède un historique de transactions (ventes, achats, etc.). Son libellé a été conservé avec une mention 'Supprimé'."
+            }, status=status.HTTP_200_OK)
 
     @action(detail=False, methods=['post'])
     def bulk_delete(self, request):
@@ -460,19 +467,35 @@ class ProduitViewSet(CachedSearchMixin, MultiTermSearchMixin, OptimizedSerialize
             return Response({'detail': 'Aucun ID fourni.'}, status=400)
             
         try:
-            with transaction.atomic():
-                produits = Produit.objects.filter(id__in=ids)
-                names = list(produits.values_list('name', flat=True))
-                count = produits.count()
-                produits.delete()
-                
+                produits = list(Produit.objects.filter(id__in=ids))
+                count = len(produits)
+                deleted_ids = []
+                soft_deleted_ids = []
+
+                for p in produits:
+                    p_id = p.id
+                    p_name = p.name
+                    try:
+                        with transaction.atomic():
+                            p.delete()
+                        deleted_ids.append(p_id)
+                    except ProtectedError:
+                        # Soft Delete
+                        p = Produit.objects.get(id=p_id)
+                        p.is_active = False
+                        suffix = " (Produit Supprimé)"
+                        if suffix not in p.name:
+                            p.name = f"{p.name}{suffix}"
+                        p.save(update_fields=['is_active', 'name'])
+                        soft_deleted_ids.append(p_id)
+
                 log_audit(
                     user=request.user,
                     action=AuditLog.Action.DELETE,
                     model_name='Produit',
-                    object_id=0,
-                    description=f"Suppression groupée de {count} produits: {', '.join(names)}",
-                    details={'ids': ids, 'names': names},
+                    object_id='BULK',
+                    description=f"Suppression groupée de {count} produits ({len(deleted_ids)} physiques, {len(soft_deleted_ids)} logiques)",
+                    details={'deleted_ids': deleted_ids, 'soft_deleted_ids': soft_deleted_ids},
                     request=request
                 )
                 
@@ -481,21 +504,12 @@ class ProduitViewSet(CachedSearchMixin, MultiTermSearchMixin, OptimizedSerialize
                 
                 return Response({
                     'status': 'success',
-                    'message': f'{count} produits supprimés avec succès.'
+                    'deleted_count': len(deleted_ids),
+                    'soft_deleted_count': len(soft_deleted_ids),
+                    'deleted_ids': deleted_ids,
+                    'soft_deleted_ids': soft_deleted_ids,
+                    'message': f'{len(deleted_ids)} supprimés, {len(soft_deleted_ids)} masqués avec succès.'
                 })
-        except ProtectedError as e:
-            # Group by model type for better error message
-            model_counts = {}
-            for obj in e.protected_objects:
-                model_name = obj.__class__.__name__
-                model_counts[model_name] = model_counts.get(model_name, 0) + 1
-            
-            references = ', '.join([f"{count} {model}" for model, count in model_counts.items()])
-            
-            return Response({
-                'error': 'Certains produits ne peuvent pas être supprimés',
-                'detail': f'Certains produits sont référencés dans : {references}.'
-            }, status=400)
         except Exception as e:
             return Response({'error': str(e)}, status=500)
 

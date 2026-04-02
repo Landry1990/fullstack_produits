@@ -129,8 +129,8 @@ vi.mock('react-i18next', () => {
         useTranslation: (ns?: string | string[]) => {
             const defaultNs = Array.isArray(ns) ? ns[0] : ns;
             
-            const resolve = (obj: any, path: string): any => {
-                if (!obj) return null;
+            const resolve = (obj: any, path: any): any => {
+                if (!obj || typeof path !== 'string') return null;
                 const parts = path.split('.');
                 let current = obj;
                 for (const p of parts) {

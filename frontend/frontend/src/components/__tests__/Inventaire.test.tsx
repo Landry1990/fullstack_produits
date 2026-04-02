@@ -55,7 +55,11 @@ vi.mock('../../hooks/inventaire/useInventaireEditor', () => ({
 }));
 
 vi.mock('../../hooks/inventaire/useInventaireMerge', () => ({
-    useInventaireMerge: () => ({ canMerge: { canMerge: false, reason: null } })
+    useInventaireMerge: () => ({ 
+        canMergeSelectedInventaires: () => ({ canMerge: false, reason: null }),
+        showMergeModal: false,
+        setShowMergeModal: vi.fn()
+    })
 }));
 
 vi.mock('../../hooks/useConfirm', () => ({ useConfirm: () => (async () => true) }));
@@ -84,7 +88,7 @@ describe('Inventaire.test.tsx', () => {
         renderWithContext(<InventaireComponent />);
         
         // Titre principal
-        expect(screen.getByText(/Inventaire/i)).toBeInTheDocument();
+        expect(screen.getAllByText(/Inventaire/i)[0]).toBeInTheDocument();
         
         // Données du mock
         await waitFor(() => {

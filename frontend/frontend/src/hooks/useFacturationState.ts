@@ -5,6 +5,7 @@ import { useQueryClient } from '@tanstack/react-query'
 import type { ProduitModel, Facture, LigneFacture } from '../types'
 import { useProductSearch } from './useProductSearch'
 import { useCart } from './useCart'
+import { useAuth } from '../context/AuthContext'
 import { useFacturationClients } from './useFacturationClients'
 import { usePendingSales } from './usePendingSales'
 import { usePharmacySettings } from './usePharmacySettings'
@@ -263,6 +264,78 @@ export function useFacturationState() {
   const clientsHook = useFacturationClients()
   const pendingSales = usePendingSales()
 
+  // --- AUTO-SAVE LOGIC (SESSION CONTEXT) ---
+  const { user } = useAuth();
+  const contextStorageKey = useMemo(() => user?.id ? `activeSaleContext_${user.id}` : null, [user?.id]);
+  const hasHydratedContextRef = useRef(false);
+
+  // 1. Restore Session Data when User ID is available
+  useEffect(() => {
+    if (contextStorageKey && !hasHydratedContextRef.current) {
+        const saved = safeStorage.getItem(contextStorageKey, 'local');
+        if (saved) {
+            try {
+                const data = JSON.parse(saved);
+                if (data.selectedClient !== undefined) clientsHook.setSelectedClient(data.selectedClient);
+                if (data.useManualClient !== undefined) clientsHook.setUseManualClient(data.useManualClient);
+                if (data.manualClientName !== undefined) clientsHook.setManualClientName(data.manualClientName);
+                if (data.remiseGlobale !== undefined) ui.setRemiseGlobale(data.remiseGlobale);
+                if (data.remiseMode !== undefined) ui.setRemiseMode(data.remiseMode);
+                if (data.isRetrocession !== undefined) setIsRetrocession(data.isRetrocession);
+                if (data.isFactureA4 !== undefined) setIsFactureA4(data.isFactureA4);
+                if (data.tempOrdonnanceData !== undefined) ui.setTempOrdonnanceData(data.tempOrdonnanceData);
+                if (data.selectedAyantDroit !== undefined) clientsHook.setSelectedAyantDroit(data.selectedAyantDroit);
+                if (data.ayantDroitNom !== undefined) clientsHook.setAyantDroitNom(data.ayantDroitNom);
+                if (data.ayantDroitMatricule !== undefined) clientsHook.setAyantDroitMatricule(data.ayantDroitMatricule);
+                if (data.ayantDroitSociete !== undefined) clientsHook.setAyantDroitSociete(data.ayantDroitSociete);
+            } catch (e) {
+                console.error("Erreur lors de la restauration de la session:", e);
+            }
+        }
+        hasHydratedContextRef.current = true;
+        
+        // Cleanup old global key
+        safeStorage.removeItem('activeSaleContext', 'local');
+    }
+  }, [contextStorageKey]);
+
+  // 2. Persist Session Data on changes
+  useEffect(() => {
+    if (!contextStorageKey || !hasHydratedContextRef.current) return;
+
+    const sessionData = {
+        selectedClient: clientsHook.selectedClient,
+        useManualClient: clientsHook.useManualClient,
+        manualClientName: clientsHook.manualClientName,
+        remiseGlobale: ui.remiseGlobale,
+        remiseMode: ui.remiseMode,
+        isRetrocession,
+        isFactureA4,
+        tempOrdonnanceData: ui.tempOrdonnanceData,
+        selectedAyantDroit: clientsHook.selectedAyantDroit,
+        ayantDroitNom: clientsHook.ayantDroitNom,
+        ayantDroitMatricule: clientsHook.ayantDroitMatricule,
+        ayantDroitSociete: clientsHook.ayantDroitSociete
+    };
+    
+    // Only save if there's an actual active sale
+    const isDefaultClient = !clientsHook.selectedClient || (clientsHook.clients.find(c => c.id === clientsHook.selectedClient)?.name.toLowerCase().includes('divers'));
+    
+    if (cart.lignesFacture.length > 0 || !isDefaultClient || clientsHook.useManualClient) {
+        safeStorage.setItem(contextStorageKey, JSON.stringify(sessionData), 'local');
+    } else {
+        safeStorage.removeItem(contextStorageKey, 'local');
+    }
+  }, [
+      contextStorageKey,
+      clientsHook.selectedClient, clientsHook.useManualClient, clientsHook.manualClientName,
+      ui.remiseGlobale, ui.remiseMode, isRetrocession, isFactureA4, ui.tempOrdonnanceData,
+      clientsHook.selectedAyantDroit, clientsHook.ayantDroitNom, clientsHook.ayantDroitMatricule,
+      clientsHook.ayantDroitSociete, cart.lignesFacture.length
+  ]);
+
+  // --- END AUTO-SAVE LOGIC ---
+
   const totals = useMemo(() => 
       ui.calculateTotals(cart.cartStats, clientsHook.clients.find(c => c.id === clientsHook.selectedClient)),
       [cart.cartStats, clientsHook.selectedClient, clientsHook.clients, ui.calculateTotals]
@@ -289,6 +362,13 @@ export function useFacturationState() {
       clientsHook.setShowNewAyantDroit(false)
       productSearch.setSearchQuery('')
       ui.setTempOrdonnanceData(null)
+      
+      // Nettoyer explicitement le cache auto-save (clé dynamique)
+      if (user?.id) {
+        safeStorage.removeItem(`activeCartLignes_${user.id}`, 'local')
+        safeStorage.removeItem(`activeSaleContext_${user.id}`, 'local')
+      }
+      
       setTimeout(() => searchInputRef.current?.focus(), 50)
   }
 
@@ -509,8 +589,12 @@ export function useFacturationState() {
       if (problematicLines.length > 0) {
           const items = problematicLines.map((l: any) => ({ product: l.produit, quantity: l.quantite, stock: l.produit.stock ?? 0 }))
           ui.setStockResolutionItems(items)
-          const allIds = new Set(items.map((i: any) => i.product.id))
-          ui.setPromisSelections(allIds)
+          
+          const initialActions: Record<number, 'promis' | 'force' | 'reduce'> = {}
+          items.forEach(item => {
+              initialActions[item.product.id] = 'promis'
+          })
+          ui.setResolutionActions(initialActions)
 
           const client = clientsHook.clients.find(c => c.id === clientsHook.selectedClient)
           ui.setPromisPhone(client?.phone || '')
@@ -1039,7 +1123,9 @@ export function useFacturationState() {
     setSuccessInfo,
     setShowHelp,
     handleSuspendSale: mettreEnAttente,
-    handleAddAlertMessage
+    handleAddAlertMessage,
+    showPendingSales: pendingSales.showPendingSales,
+    setShowPendingSales: pendingSales.setShowPendingSales
   })
 
   return {
@@ -1120,6 +1206,7 @@ export function useFacturationState() {
     ui,
     pendingSales,
     sudoState,
+    requireSudo,
     closeSudo,
     clinicalAlerts,
     keyboardNav,

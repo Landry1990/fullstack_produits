@@ -4,7 +4,18 @@
     "filters": {
         "month": "Mois",
         "generate": "Générer",
-        "loading": "Chargement..."
+        "loading": "Chargement...",
+        "tab_month": "Par mois",
+        "tab_range": "Par tranche de dates",
+        "presets": "Période rapide",
+        "preset_today": "Aujourd'hui",
+        "preset_yesterday": "Hier",
+        "preset_this_week": "Cette semaine",
+        "preset_last_week": "Semaine dernière",
+        "preset_custom": "Personnalisé",
+        "date_start": "Date début",
+        "date_end": "Date fin",
+        "current_period": "Période"
     },
     "kpis": {
         "ca_ttc": "CA TTC",
@@ -96,5 +107,15 @@
             "ventes": "Ventes",
             "stock_final": "Stock Final"
         }
+    },
+    "reconciliation": {
+        "title": "Réconciliation du CA",
+        "formula_desc": "Comment nous passons de la trésorerie au Chiffre d'Affaires",
+        "cash_received": "Encaissements Réels",
+        "credit_part": "Part Crédit du mois",
+        "coupons": "Coupons / Bons",
+        "insurance": "Part Assurances",
+        "final_ca": "CA TTC Final",
+        "note": "Les recouvrements de dettes anciennes sont exclus du CA pour éviter les doubles entrées."
     }
 }

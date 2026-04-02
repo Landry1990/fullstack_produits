@@ -16,6 +16,7 @@ export interface ProduitFilters {
     fournisseur?: string;
     include_inactive?: boolean;
     page_size?: number;
+    dormant_months?: number;
 }
 
 export interface ProduitsResponse {
@@ -42,6 +43,7 @@ const produitService = {
         if (filters.rayon) params.append('rayon', filters.rayon);
         if (filters.fournisseur) params.append('fournisseur', filters.fournisseur);
         if (filters.include_inactive) params.append('include_inactive', 'true');
+        if (filters.dormant_months) params.append('dormant_months', filters.dormant_months.toString());
 
         const response = await api.get<ProduitsResponse | ProduitModel[]>('produits/', { params });
 

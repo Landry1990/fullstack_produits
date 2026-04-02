@@ -6,10 +6,14 @@ import {
   Bar, 
   AreaChart, 
   Area, 
+  PieChart,
+  Pie,
+  Cell,
   XAxis, 
   YAxis, 
   CartesianGrid, 
   Tooltip, 
+  Legend,
   ResponsiveContainer 
 } from 'recharts';
 import { 
@@ -26,7 +30,12 @@ import {
   RefreshCw,
   History,
   LayoutDashboard,
-  CalendarDays
+  CalendarDays,
+  Target,
+  PieChart as PieChartIcon,
+  Medal,
+  CreditCard,
+  Archive
 } from 'lucide-react';
 import { 
   useDashboardStats, 
@@ -204,6 +213,17 @@ export default function Dashboard() {
             isPositive: (stats.revenue?.change || 0) >= 0,
             details: t('stats.revenue_details', { amount: formatCurrency(stats.discount?.value ?? 0) })
           },
+          ...(stats.margin_today !== undefined ? [{
+            title: t('dashboard.stats.margin_today', { defaultValue: 'Marge Brute (Jour)' }),
+            value: formatCurrencyLocal(stats.margin_today),
+            change: `${((stats.margin_today / (stats.revenue?.value || 1)) * 100).toFixed(1)}%`,
+            icon: Target,
+            color: "text-purple-600",
+            bgColor: "bg-purple-100/50",
+            borderColor: "border-purple-200/50",
+            isPositive: true,
+            details: t('dashboard.stats.margin_rate', { defaultValue: 'Taux de marge estimé' })
+          }] : []),
           { title: t('stats.receivables'), value: formatCurrency(stats.receivables?.value ?? 0), change: t('stats.invoices_count', { count: stats.receivables?.count || 0 }), icon: Users, color: "text-orange-600", bgColor: "bg-orange-100/50", borderColor: "border-orange-200/50", isPositive: false, link: '/app/creances' },
           { title: t('stats.stock_value'), value: formatCurrencyLocal(stats.stock_value?.value ?? 0), change: t('stats.products_count', { count: stats.stock_value?.count ?? 0 }), icon: Package, color: "text-amber-600", bgColor: "bg-amber-100/50", borderColor: "border-amber-200/50", isPositive: true }
         ]) : []).map((stat: any, index) => {
@@ -317,6 +337,144 @@ export default function Dashboard() {
 
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
         <div className="xl:col-span-2 space-y-6">
+          {(!stats?.role || (stats.role !== 'VENDEUR' && stats.role !== 'CAISSIER')) && (
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              {/* Payment Mix Chart */}
+              <div className="card bg-base-100 shadow-sm border border-base-300 rounded-2xl overflow-hidden">
+                <div className="card-body p-6">
+                  <div className="flex items-center gap-3 mb-6">
+                    <div className="p-2 bg-emerald-100 text-emerald-600 rounded-xl">
+                      <PieChartIcon className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <h2 className="text-sm font-black text-base-content tracking-tight uppercase">{t('dashboard.charts.payment_mix', { defaultValue: 'Qualité du CA' })}</h2>
+                      <p className="text-[10px] font-bold text-base-content/30 uppercase tracking-widest">{t('dashboard.charts.today_payments', { defaultValue: 'Répartition des paiements du jour' })}</p>
+                    </div>
+                  </div>
+                  <div className="h-[250px]">
+                    {stats?.payment_mix && stats.payment_mix.length > 0 ? (
+                      <ResponsiveContainer width="100%" height="100%">
+                        <PieChart>
+                          <Pie
+                            data={stats.payment_mix}
+                            cx="50%"
+                            cy="50%"
+                            innerRadius={60}
+                            outerRadius={80}
+                            paddingAngle={5}
+                            dataKey="value"
+                            nameKey="label"
+                          >
+                            {stats.payment_mix.map((_, index) => (
+                              <Cell key={`cell-${index}`} fill={['#10b981', '#6366f1', '#f59e0b', '#ec4899', '#8b5cf6', '#ef4444'][index % 6]} />
+                            ))}
+                          </Pie>
+                          <Tooltip 
+                            formatter={(value: number) => formatCurrencyLocal(value)}
+                            contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)' }}
+                          />
+                          <Legend verticalAlign="bottom" iconType="circle" wrapperStyle={{ fontSize: '10px', fontWeight: 900, textTransform: 'uppercase', paddingTop: '20px' }} />
+                        </PieChart>
+                      </ResponsiveContainer>
+                    ) : (
+                      <div className="flex flex-col items-center justify-center h-full opacity-20">
+                        <CreditCard className="w-12 h-12 mb-2" />
+                        <span className="text-[10px] font-black uppercase tracking-widest">{t('dashboard.charts.no_data', { defaultValue: 'Aucun paiement aujourd\'hui' })}</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Top Products Today */}
+              <div className="card bg-base-100 shadow-sm border border-base-300 rounded-2xl overflow-hidden">
+                <div className="card-body p-6">
+                  <div className="flex items-center gap-3 mb-6">
+                    <div className="p-2 bg-amber-100 text-amber-600 rounded-xl">
+                      <Medal className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <h2 className="text-sm font-black text-base-content tracking-tight uppercase">{t('dashboard.charts.top_products', { defaultValue: 'Top Produits' })}</h2>
+                      <p className="text-[10px] font-bold text-base-content/30 uppercase tracking-widest">{t('dashboard.charts.today_bestsellers', { defaultValue: 'Vos meilleures ventes du jour' })}</p>
+                    </div>
+                  </div>
+                  <div className="space-y-3">
+                    {stats?.top_products && stats.top_products.length > 0 ? (
+                      stats.top_products.map((p, i) => (
+                        <div key={p.id} className="flex items-center justify-between p-3 rounded-xl bg-base-200/30 border border-base-300/50 hover:border-amber-200 transition-all group">
+                          <div className="flex items-center gap-3 min-w-0">
+                            <span className="text-xs font-black text-amber-600 bg-amber-50 w-6 h-6 flex items-center justify-center rounded-lg border border-amber-100">{i + 1}</span>
+                            <span className="text-xs font-bold text-base-content truncate">{p.name}</span>
+                          </div>
+                          <div className="flex flex-col items-end">
+                            <span className="text-[10px] font-black text-base-content">{p.qty}u</span>
+                            <span className="text-[9px] font-bold text-primary">{formatCurrencyLocal(p.revenue)}</span>
+                          </div>
+                        </div>
+                      ))
+                    ) : (
+                      <div className="flex flex-col items-center justify-center py-12 opacity-20 text-center">
+                        <ShoppingBag className="w-12 h-12 mb-2" />
+                        <span className="text-[10px] font-black uppercase tracking-widest">{t('dashboard.charts.no_sales', { defaultValue: 'Aucune vente enregistrée' })}</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Dormant Stock (Rossignols) */}
+              <div className="card bg-base-100 shadow-sm border border-base-300 rounded-2xl overflow-hidden">
+                <div className="card-body p-6">
+                  <div className="flex items-center justify-between mb-6">
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 bg-slate-100 text-slate-600 rounded-xl">
+                        <Archive className="w-5 h-5" />
+                      </div>
+                      <div>
+                        <h2 className="text-sm font-black text-base-content tracking-tight uppercase">{t('dashboard.charts.dormant_stock', { defaultValue: 'Stock Dormant' })}</h2>
+                        <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">{t('dashboard.charts.dormant_desc', { defaultValue: 'Rossignols (+6 mois)' })}</p>
+                      </div>
+                    </div>
+                    {stats?.dormant_stock && stats.dormant_stock.total_value > 0 && (
+                      <div className="text-right">
+                        <span className="text-xs font-black text-slate-700 block">{formatCurrencyLocal(stats.dormant_stock.total_value)}</span>
+                        <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">{t('dashboard.charts.immobilized', { defaultValue: 'Bloqués' })}</span>
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="space-y-3 flex-grow">
+                    {stats?.dormant_stock && stats.dormant_stock.top_products.length > 0 ? (
+                      stats.dormant_stock.top_products.map((p, i) => (
+                        <div key={p.id} className="flex items-center justify-between p-3 rounded-xl bg-base-200/30 border border-base-300/50 hover:border-slate-300 transition-all group">
+                          <div className="flex items-center gap-3 min-w-0">
+                            <span className="text-xs font-bold text-base-content truncate">{p.name}</span>
+                          </div>
+                          <div className="flex flex-col items-end shrink-0">
+                            <span className="text-[10px] font-black text-base-content">{p.stock}u</span>
+                            <span className="text-[9px] font-bold text-slate-500">{formatCurrencyLocal(p.value)}</span>
+                          </div>
+                        </div>
+                      ))
+                    ) : (
+                      <div className="flex flex-col items-center justify-center py-12 opacity-20 text-center">
+                        <Archive className="w-12 h-12 mb-2" />
+                        <span className="text-[10px] font-black uppercase tracking-widest">{t('dashboard.charts.no_dormant', { defaultValue: 'Aucun rossignol' })}</span>
+                      </div>
+                    )}
+                  </div>
+                  
+                  <div className="mt-4 pt-4 border-t border-base-200">
+                    <Link to="/app/analyse-stock?tab=unsold&days=180" className="btn btn-sm btn-block btn-ghost hover:bg-slate-50 hover:text-slate-700 text-xs font-bold gap-2">
+                      {t('dashboard.charts.see_all_dormant', { defaultValue: 'Voir la liste complète' })}
+                      <ArrowRight className="w-3 h-3" />
+                    </Link>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
           {(!stats?.role || (stats.role !== 'VENDEUR' && stats.role !== 'CAISSIER')) && (
           /* Revenue Bar Chart */
           <div className="card bg-base-100 shadow-sm border border-base-300 rounded-2xl overflow-hidden">
@@ -436,10 +594,21 @@ export default function Dashboard() {
                         type="monotone" 
                         dataKey="sales_count" 
                         stroke="#6366f1" 
+                        strokeWidth={2}
+                        strokeDasharray="5 5"
+                        fillOpacity={0.1} 
+                        fill="#6366f1" 
+                        name={t('dashboard.charts.avg_sales_label', { defaultValue: 'Moyenne (30j)' })}
+                        animationDuration={1500}
+                      />
+                      <Area 
+                        type="monotone" 
+                        dataKey="today_sales_count" 
+                        stroke="#10b981" 
                         strokeWidth={4}
-                        fillOpacity={1} 
+                        fillOpacity={0.2} 
                         fill="url(#colorTraffic)" 
-                        name={t('dashboard.charts.sales_label')}
+                        name={t('dashboard.charts.today_sales_label', { defaultValue: 'Aujourd\'hui' })}
                         animationDuration={1500}
                       />
                     </AreaChart>

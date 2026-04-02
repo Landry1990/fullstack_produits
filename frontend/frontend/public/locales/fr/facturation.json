@@ -195,14 +195,21 @@
         "title": "Résolution de Stock",
         "message": "Certains articles demandés dépassent le stock disponible. Comment souhaitez-vous procéder ?",
         "cancel_and_edit_cart": "Annuler et modifier le panier",
-        "validate_and_cash": "Valider et Encaisser (Vente à Terme)",
+        "validate_and_cash": "Valider et Encaisser",
         "demand": "Demandé",
         "stock": "En Stock",
         "missing": "Manquant",
         "promised": "Promis",
+        "force": "Forcer",
+        "reduce": "Réduire",
+        "actions": "Actions",
+        "force_all": "Tout Forcer",
+        "promis_all": "Tout en Promis",
+        "reduce_all": "Tout Réduire",
         "client_name": "Nom du Client",
         "optional": "(Optionnel)",
         "client_phone_for_promised_ticket": "Téléphone pour suivi des promis",
-        "phone_number_placeholder": "Numéro de téléphone..."
+        "phone_number_placeholder": "Numéro de téléphone...",
+        "force_warning": "Le forçage de stock nécessite une validation de superviseur."
     }
 }

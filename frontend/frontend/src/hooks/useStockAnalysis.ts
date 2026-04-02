@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import axios from 'axios';
 import { useTranslation } from 'react-i18next';
 
@@ -45,19 +45,32 @@ export interface Fournisseur {
 export const useStockAnalysis = () => {
     const { t } = useTranslation(['stock', 'common']);
     const navigate = useNavigate();
+    const location = useLocation();
+    const { tabParam, daysParam } = useMemo(() => {
+        const queryParams = new URLSearchParams(location.search);
+        return {
+            tabParam: queryParams.get('tab') as 'unsold' | 'overstock' | 'shortage' | null,
+            daysParam: queryParams.get('days')
+        };
+    }, [location.search]);
+
     const apiBaseUrl = useMemo(() => {
         const baseUrl = import.meta.env.VITE_API_BASE_URL ?? '';
         return baseUrl ? String(baseUrl).replace(/\/$/, '') : '';
     }, []);
 
-    const [activeTab, setActiveTab] = useState<'unsold' | 'overstock' | 'shortage'>('unsold');
+    const [activeTab, setActiveTab] = useState<'unsold' | 'overstock' | 'shortage'>(
+        (tabParam && ['unsold', 'overstock', 'shortage'].includes(tabParam)) ? tabParam : 'unsold'
+    );
     const [fournisseurs, setFournisseurs] = useState<Fournisseur[]>([]);
     const [selectedFournisseur, setSelectedFournisseur] = useState<string>('');
     const [data, setData] = useState<StockAnalysisResponse | null>(null);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [selectedItems, setSelectedItems] = useState<Set<number>>(new Set());
-    const [unsoldDays, setUnsoldDays] = useState<number>(30);
+    const [unsoldDays, setUnsoldDays] = useState<number>(
+        daysParam && !isNaN(Number(daysParam)) ? Number(daysParam) : 30
+    );
     const [page, setPage] = useState<number>(1);
     const pageSize = 50; // Fixed page size for now
 

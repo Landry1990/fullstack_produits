@@ -11,7 +11,9 @@
         "order_details": "Détails Commande",
         "delivery": "Réception / Livraison",
         "local": "Grossistes Locaux",
-        "direct": "Commandes Directes"
+        "direct": "Commandes Directes",
+        "purchase_summary": "Résumé par Jour",
+        "purchase_details": "Détails par Produit"
     },
     "status": {
         "prep": "Prép.",
@@ -199,13 +201,20 @@
         "results_found": "résultats trouvés",
         "all_providers": "Tous les fournisseurs",
         "refresh": "Actualiser",
+        "export_excel": "Exporter Excel",
+        "print_pdf": "Imprimer PDF",
+        "loading": "Chargement de l'historique...",
+        "product_search_placeholder": "Rechercher un produit...",
         "columns": {
             "nb_orders": "Nombre de commandes",
             "total_purchase": "Total Achats",
-            "date": "Date"
+            "date": "Date",
+            "product": "Désignation Produit",
+            "cip": "CIP / Code",
+            "quantity": "Quantité Totale",
+            "nb_purchases": "Nb d'achats"
         },
         "no_data": "Aucune donnée trouvée pour la période sélectionnée",
-        "loading": "Chargement de l'historique...",
         "pagination": {
             "page": "Page"
         }

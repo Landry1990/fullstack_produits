@@ -90,8 +90,8 @@ describe('JournalCaisse Component', () => {
     fireEvent.change(userSelect, { target: { value: '1' } });
 
     await waitFor(() => {
-        expect(axios.get).toHaveBeenCalledWith(expect.stringContaining('get_totals'), expect.objectContaining({
-            params: expect.objectContaining({ user_id: '1' })
+        expect(axios.get).toHaveBeenCalledWith(expect.stringContaining('page_init'), expect.objectContaining({
+            params: expect.objectContaining({ user: '1' })
         }));
     });
   });

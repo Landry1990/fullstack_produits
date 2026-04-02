@@ -311,6 +311,7 @@
             "suppliers": "🏭 Suppliers"
         },
         "nav": {
+            "monthly_report": "Monthly Report / Summary",
             "billing": "Billing / POS",
             "sales_list": "Sales List",
             "cash_journal": "Cash Journal",
