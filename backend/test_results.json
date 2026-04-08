@@ -1,0 +1,20 @@
+[
+  {
+    "desc": "Empty payload",
+    "status": 201,
+    "len": 439,
+    "content": "{\"id\":11,\"produits\":[],\"fournisseur_name\":null,\"created_by_name\":\"nkaha\",\"validated_by_name\":\"\",\"total_ht\":\"0.00\",\"status_display\":\"Brouillon\",\"type_avoir_display\":\"Autre\",\"numero\":\"AV-202604-0005\",\"fournisseur_nom\":null,\"type_avoir\":\"AUTRE\",\"date\":\"2026-04-04\",\"observations\":\"\",\"status\":\"BROUILLON\",\"created_at\":\"2026-04-04T19:50:54.681303\",\"updated_at\":\"2026-04-04T19:50:54.681316\",\"fournisseur\":null,\"created_by\":1,\"validated_by\":null}"
+  },
+  {
+    "desc": "Null fournisseur",
+    "status": 201,
+    "len": 451,
+    "content": "{\"id\":12,\"produits\":[],\"fournisseur_name\":null,\"created_by_name\":\"nkaha\",\"validated_by_name\":\"\",\"total_ht\":\"0.00\",\"status_display\":\"Brouillon\",\"type_avoir_display\":\"Produit périmé\",\"numero\":\"AV-202604-0006\",\"fournisseur_nom\":null,\"type_avoir\":\"PERIME\",\"date\":\"2026-04-04\",\"observations\":\"\",\"status\":\"BROUILLON\",\"created_at\":\"2026-04-04T19:50:54.691430\",\"updated_at\":\"2026-04-04T19:50:54.691436\",\"fournisseur\":null,\"created_by\":1,\"validated_by\":null}"
+  },
+  {
+    "desc": "Invalid type_avoir",
+    "status": 400,
+    "len": 55,
+    "content": "{\"type_avoir\":[\"\\\"INVALID_X\\\" is not a valid choice.\"]}"
+  }
+]

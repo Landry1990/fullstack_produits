@@ -1,5 +1,5 @@
-import React from 'react';
 import { formatDate as formatLocaleDate } from '../../utils/dateUtils';
+import { formatNumber, formatCurrency } from '../../utils/formatters';
 
 // Interfaces matching FacturePrintSerializer
 export interface InvoiceClient {
@@ -83,9 +83,7 @@ interface InvoiceTemplateProps {
 const InvoiceTemplate: React.FC<InvoiceTemplateProps> = ({ settings, data, isBonDeLivraison }) => {
 
   
-  const formatNumber = (num: number, decimals = 2) => {
-    return new Intl.NumberFormat('fr-FR', { minimumFractionDigits: decimals, maximumFractionDigits: decimals }).format(num);
-  };
+  // Standardized formatting used below
 
   const formatDate = (dateStr: string) => {
     return formatLocaleDate(dateStr);
@@ -162,7 +160,7 @@ const InvoiceTemplate: React.FC<InvoiceTemplateProps> = ({ settings, data, isBon
               {data.client_solde_depot && Number(data.client_solde_depot) > 0 && (
                 <div className="mt-2 pt-2 border-t border-slate-100 flex justify-between items-center">
                     <span className="text-[10px] font-black text-slate-400 uppercase tracking-tighter">Solde Dépôt Restant</span>
-                    <span className="font-black text-slate-900 text-sm">{formatNumber(Number(data.client_solde_depot), 0)} F</span>
+                    <span className="font-black text-slate-900 text-sm">{formatCurrency(Number(data.client_solde_depot))}</span>
                 </div>
               )}
             </div>
@@ -300,7 +298,7 @@ const InvoiceTemplate: React.FC<InvoiceTemplateProps> = ({ settings, data, isBon
                     <div className="grid grid-cols-[1fr,115px] items-center px-1 text-base-content/60">
                         <span className="text-[9px] uppercase font-bold tracking-widest pl-1">Total HT</span>
                         <div className="text-right font-mono font-bold text-base-content pr-2">
-                          {formatNumber(data.total_ht, 0)} <span className="text-[8px] font-normal opacity-60">FCFA</span>
+                          {formatCurrency(data.total_ht)}
                         </div>
                     </div>
 
@@ -308,7 +306,7 @@ const InvoiceTemplate: React.FC<InvoiceTemplateProps> = ({ settings, data, isBon
                       <div className="grid grid-cols-[1fr,115px] items-center px-1 text-base-content/60">
                           <span className="text-[9px] uppercase font-bold tracking-widest pl-1">Taxes (TVA)</span>
                           <div className="text-right font-mono font-bold text-base-content pr-2">
-                            {formatNumber(data.total_tva, 0)} <span className="text-[8px] font-normal opacity-60">FCFA</span>
+                            {formatCurrency(data.total_tva)}
                           </div>
                       </div>
                     )}
@@ -317,7 +315,7 @@ const InvoiceTemplate: React.FC<InvoiceTemplateProps> = ({ settings, data, isBon
                       <div className="grid grid-cols-[1fr,115px] items-center px-1 py-1 bg-red-50/50 rounded-md text-red-600 border border-red-100/50">
                           <span className="text-[9px] uppercase font-black tracking-widest pl-1">Remise</span>
                           <div className="text-right font-mono font-black pr-2">
-                            -{formatNumber(data.remise, 0)} <span className="text-[8px] font-normal opacity-60">FCFA</span>
+                            -{formatCurrency(data.remise)}
                           </div>
                       </div>
                     )}
@@ -339,8 +337,7 @@ const InvoiceTemplate: React.FC<InvoiceTemplateProps> = ({ settings, data, isBon
                           <div className={`text-right font-black font-mono tracking-tighter pr-2 ${
                              isBonDeLivraison && (data.part_assurance ?? 0) > 0 ? 'text-lg' : 'text-xl'
                           }`}>
-                            {formatNumber(data.total_ttc, 0)}
-                            <span className="text-[9px] font-normal opacity-60 ml-1">FCFA</span>
+                            {formatCurrency(data.total_ttc)}
                           </div>
                         </div>
                     </div>
@@ -351,13 +348,13 @@ const InvoiceTemplate: React.FC<InvoiceTemplateProps> = ({ settings, data, isBon
                         <div className="grid grid-cols-[1fr,115px] items-center px-1 py-0.5 text-base-content/80">
                           <span className="text-[9px] uppercase font-bold tracking-widest pl-1">PART PATIENT</span>
                           <div className="text-right font-mono font-bold text-base-content text-base pr-2 text-right">
-                            {formatNumber(data.part_client ?? 0, 0)} <span className="text-[8px] font-normal opacity-60">FCFA</span>
+                            {formatCurrency(data.part_client ?? 0)}
                           </div>
                         </div>
                         <div className="bg-emerald-600 rounded-lg shadow-sm text-white grid grid-cols-[1fr,115px] items-center px-1 py-2.5 ring-1 ring-emerald-700/10">
                           <span className="text-[9px] uppercase font-black tracking-[0.1em] pl-1">PART ASSURANCE</span>
                           <div className="text-right font-mono font-black text-lg leading-none pr-2 text-right">
-                            {formatNumber(data.part_assurance ?? 0, 0)} <span className="text-[8px] font-normal opacity-60 text-emerald-100">FCFA</span>
+                            {formatCurrency(data.part_assurance ?? 0)}
                           </div>
                         </div>
                       </div>

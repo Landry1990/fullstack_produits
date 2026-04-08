@@ -9,7 +9,7 @@ export interface SimpleUser {
 
 const userService = {
     getAll: async (): Promise<SimpleUser[]> => {
-        const response = await api.get<SimpleUser[] | { results: SimpleUser[] }>('users/');
+        const response = await api.get<SimpleUser[] | { results: SimpleUser[] }>('users/operators/');
         return Array.isArray(response.data) ? response.data : (response.data.results || []);
     }
 };

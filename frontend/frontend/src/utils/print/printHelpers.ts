@@ -1,5 +1,6 @@
 import i18next from 'i18next';
 import { formatDate, formatDateTime } from '../dateUtils';
+import { formatNumber } from '../formatters';
 
 /**
  * Utilitaires d'assistance pour l'impression
@@ -10,7 +11,7 @@ import { formatDate, formatDateTime } from '../dateUtils';
  */
 export function formatMoney(value: number | string): string {
   const num = Math.round(parseFloat(String(value)));
-  return new Intl.NumberFormat('fr-FR').format(num).replace(/\u00a0/g, ' ').replace(/\s/g, ' ');
+  return formatNumber(num);
 }
 
 /**

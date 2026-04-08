@@ -146,7 +146,7 @@ export default function Perimes() {
       const response = await axios.get<StockLot[]>(stockLotsEndpoint, {
         params: {
           date_expiration_lte: dateStr,
-          include_empty: 'true' // We want to see depleted lots to disable the button
+          include_empty: 'false' // Hide depleted lots as they are redundant in the list view (available in History)
         }
       })
       

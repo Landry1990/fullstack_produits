@@ -3,7 +3,7 @@
 
 @theme {
   --font-sans: "Inter", "Roboto", "Segoe UI", sans-serif;
-  --font-heading: "Poppins", "Inter", sans-serif;
+  --font-heading: "Inter", "Roboto", sans-serif;
 
   /* Pharmacy Green (Croix verte) */
   --color-primary: #22c55e;

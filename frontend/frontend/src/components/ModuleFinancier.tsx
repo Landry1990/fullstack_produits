@@ -29,6 +29,8 @@ import {
   useAnalyseFournisseurs
 } from '../hooks/useFinanceStats';
 
+import { formatCurrency, formatNumber } from '../utils/formatters';
+
 // Color palette
 const COLORS = ['#10B981', '#3B82F6', '#F59E0B', '#EF4444', '#8B5CF6', '#EC4899', '#06B6D4', '#84CC16'];
 
@@ -40,11 +42,11 @@ const formatMoney = (value: number) => {
   if (value >= 1000) {
     return `${(value / 1000).toFixed(0)}k`;
   }
-  return value.toFixed(0);
+  return formatNumber(value);
 };
 
 const formatMoneyFull = (value: number) => {
-  return new Intl.NumberFormat('fr-FR', { style: 'decimal', maximumFractionDigits: 0 }).format(value) + ' F';
+  return formatCurrency(value);
 };
 
 export default function ModuleFinancier() {

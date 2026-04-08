@@ -2,6 +2,7 @@ import React, { type FormEvent, type RefObject } from 'react';
 import type { Commande, Fournisseur, ProduitModel, CommandeProduit } from '../../types';
 import { useTranslation } from 'react-i18next';
 import CommandeProductTable from './CommandeProductTable';
+import { formatCurrency } from '../../utils/formatters';
 
 interface FieldConfig {
     name: string;
@@ -386,25 +387,25 @@ export default function CommandeForm({
                     {/* HT (Achat) */}
                     <div className="flex flex-col">
                         <span className="text-[9px] font-bold text-base-content/40 uppercase">{t('orders:product_table.total_ht', 'HT (ACHAT)')}</span>
-                        <span className={`text-sm font-mono font-bold ${htColor}`}>{new Intl.NumberFormat().format(orderTotals?.totalBuyHT || 0)} F</span>
+                        <span className={`text-sm font-mono font-bold ${htColor}`}>{formatCurrency(orderTotals?.totalBuyHT || 0)}</span>
                     </div>
 
                     {/* TVA */}
                     <div className="flex flex-col border-l pl-4 border-base-200">
                         <span className="text-[9px] font-bold text-base-content/40 uppercase">{t('orders:product_table.total_tva', 'TVA (VENTE)')}</span>
-                        <span className="text-sm font-mono font-bold text-base-content/60">{new Intl.NumberFormat().format(orderTotals?.totalTVA || 0)} F</span>
+                        <span className="text-sm font-mono font-bold text-base-content/60">{formatCurrency(orderTotals?.totalTVA || 0)}</span>
                     </div>
 
                     {/* TTC (Vente) */}
                     <div className="flex flex-col border-l pl-4 border-base-200">
                         <span className="text-[9px] font-bold text-base-content/40 uppercase">{t('orders:product_table.total_ttc', 'TTC (VENTE)')}</span>
-                         <span className="text-base md:text-lg font-mono font-black text-primary">{new Intl.NumberFormat().format(orderTotals?.totalTTC || 0)} F</span>
+                         <span className="text-base md:text-lg font-mono font-black text-primary">{formatCurrency(orderTotals?.totalTTC || 0)}</span>
                     </div>
 
                     {/* Montant Marge */}
                     <div className="flex flex-col border-l pl-4 border-base-200">
                         <span className="text-[9px] font-bold text-base-content/40 uppercase">💰 {t('orders:product_table.info_row.margin_value', 'MONTANT MARGE')}</span>
-                        <span className={`text-sm font-mono font-bold ${marginColor}`}>{new Intl.NumberFormat().format(orderTotals?.totalMarginValue || 0)} F</span>
+                        <span className={`text-sm font-mono font-bold ${marginColor}`}>{formatCurrency(orderTotals?.totalMarginValue || 0)}</span>
                     </div>
 
                     {/* Coefficient & Pourcentage */}

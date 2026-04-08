@@ -58,6 +58,10 @@ class CommandeProduitViewSet(viewsets.ModelViewSet):
             commande = Commande.objects.get(pk=commande_id)
         except Commande.DoesNotExist:
             return Response({'error': 'Commande introuvable'}, status=status.HTTP_404_NOT_FOUND)
+            
+        if commande.status == Commande.Status.CLOTUREE:
+            return Response({'error': 'Modification impossible : cette commande est déjà clôturée.'}, status=status.HTTP_400_BAD_REQUEST)
+
         
         from django.db.models import ProtectedError
         

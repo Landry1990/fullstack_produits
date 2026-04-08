@@ -164,8 +164,9 @@ export const AvoirsForm: React.FC<AvoirsFormProps> = ({ data }) => {
                                 onChange={(e) => setTypeAvoir(e.target.value)}
                             >
                                 <option value="PERIME">{t('stock:avoirs.types.perime')}</option>
-                                <option value="CASSE">{t('stock:avoirs.types.casse')}</option>
-                                <option value="ERREUR_LIVRAISON">{t('stock:avoirs.types.erreur_livraison')}</option>
+                                <option value="AVARIE">{t('stock:avoirs.types.avarie', 'Avarie')}</option>
+                                <option value="ERREUR">{t('stock:avoirs.types.erreur_livraison', 'Erreur de livraison')}</option>
+                                <option value="NON_FACTURE">{t('stock:avoirs.types.non_facture', 'Non facturé')}</option>
                                 <option value="AUTRE">{t('stock:avoirs.types.autre')}</option>
                             </select>
                         </div>

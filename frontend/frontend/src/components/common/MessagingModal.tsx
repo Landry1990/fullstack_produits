@@ -179,11 +179,11 @@ export default function MessagingModal({ isOpen, onClose, currentUser, onMessage
       title={t('title')}
       subtitle={t('subtitle')}
       icon={<MessageSquare className="text-primary" />}
-      maxWidth="max-w-2xl"
+      maxWidth="max-w-4xl"
     >
       <div className="flex flex-col md:flex-row h-[75vh] md:h-[500px] max-h-[700px] min-h-[400px] overflow-hidden">
         {/* Navigation Tabs (Sidebar on Desktop, Top Bar on Mobile) */}
-        <div className="w-full md:w-48 border-b md:border-b-0 md:border-r border-base-200 bg-base-200/30 p-2 flex flex-row md:flex-col gap-1 overflow-x-auto md:overflow-y-auto no-scrollbar shrink-0">
+        <div className="w-full md:w-60 border-b md:border-b-0 md:border-r border-base-200 bg-base-200/30 p-2 flex flex-row md:flex-col gap-1 overflow-x-auto md:overflow-y-auto no-scrollbar shrink-0">
           <button 
             onClick={() => setActiveTab('received')}
             className={`flex items-center gap-2 md:gap-3 px-3 md:px-4 py-2 md:py-3 rounded-xl transition-all whitespace-nowrap flex-1 md:flex-none ${activeTab === 'received' ? 'bg-primary text-white shadow-md' : 'hover:bg-base-200'}`}

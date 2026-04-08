@@ -39,10 +39,10 @@ class DashboardViewSet(viewsets.ViewSet):
         
         global_stats = {}
         
-        facture_qs = Facture.objects.filter(
+        facture_qs = Facture.objects.annotate(num_p=Count('paiements')).filter(
             date__date__in=[today, yesterday],
             status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE]
-        ).exclude(status='VAL', paiements__isnull=True)
+        ).exclude(status='VAL', num_p=0)
         
         # Aggregate everything related to Facture in one pass for [today, yesterday]
         facture_metrics = facture_qs.aggregate(
@@ -126,15 +126,19 @@ class DashboardViewSet(viewsets.ViewSet):
             ).order_by('-value')
             
             payment_mix_data = [
-                {'mode': item['mode_paiement'], 'label': dict(Caisse.MODES_PAIEMENT).get(item['mode_paiement'], item['mode_paiement']), 'value': float(item['value'])}
+                {'mode': item['mode_paiement'], 'label': dict(Caisse.MODES_PAIEMENT).get(item['mode_paiement'], item['mode_paiement']), 'value': float(-item['value'] if item['mode_paiement'] == 'coupon' else item['value'])}
                 for item in payment_mix
             ]
 
             # 5. Top Products Today
             from ..models import FactureProduit
-            top_products = FactureProduit.objects.filter(
+            top_products = FactureProduit.objects.annotate(
+                num_p=Count('facture__paiements')
+            ).filter(
                 facture__date__date=today,
                 facture__status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE]
+            ).exclude(
+                facture__status='VAL', num_p=0
             ).values('produit_id', 'produit__name').annotate(
                 qty=Sum('quantity'),
                 revenue=Sum(F('quantity') * (F('selling_price') - F('discount')))

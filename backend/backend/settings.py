@@ -253,20 +253,14 @@ else:
 # ──────────────────────────────────────────────
 # Logging Configuration
 # ──────────────────────────────────────────────
-# Custom Logging Handler for Windows (Fixes PermissionError during rotation)
-from logging.handlers import RotatingFileHandler
+# Concurrent Logging Handler for Windows/Multi-process (Fixes PermissionError during rotation)
+try:
+    from concurrent_log_handler import ConcurrentRotatingFileHandler
+except ImportError:
+    # Fallback to standard handler if not installed
+    from logging.handlers import RotatingFileHandler as ConcurrentRotatingFileHandler
 
-class SafeRotatingFileHandler(RotatingFileHandler):
-    def doRollover(self):
-        try:
-            super().doRollover()
-        except (PermissionError, OSError):
-            # On Windows, if the file is locked by another process (like the dev server),
-            # we catch the PermissionError to prevent the app from crashing.
-            import sys
-            sys.stderr.write("Logging rollover failed (file locked by another process). Continuing with current file.\n")
-
-LOG_DIR = BASE_DIR / 'logs'
+LOG_DIR = (BASE_DIR / 'logs').resolve()
 LOG_DIR.mkdir(exist_ok=True)
 
 LOGGING = {
@@ -294,7 +288,7 @@ LOGGING = {
         },
         # Fichier applicatif (tout le flux INFO+)
         'file_app': {
-            'class': 'backend.settings.SafeRotatingFileHandler',
+            '()': ConcurrentRotatingFileHandler,
             'filename': str(LOG_DIR / 'app.log'),
             'maxBytes': 10 * 1024 * 1024,  # 10 MB
             'backupCount': 5,
@@ -304,7 +298,7 @@ LOGGING = {
         },
         # Fichier erreurs uniquement (ERROR+)
         'file_error': {
-            'class': 'backend.settings.SafeRotatingFileHandler',
+            '()': ConcurrentRotatingFileHandler,
             'filename': str(LOG_DIR / 'error.log'),
             'maxBytes': 10 * 1024 * 1024,  # 10 MB
             'backupCount': 10,
@@ -314,7 +308,7 @@ LOGGING = {
         },
         # Fichier operations metier critiques
         'file_business': {
-            'class': 'backend.settings.SafeRotatingFileHandler',
+            '()': ConcurrentRotatingFileHandler,
             'filename': str(LOG_DIR / 'business.log'),
             'maxBytes': 10 * 1024 * 1024,  # 10 MB
             'backupCount': 10,
@@ -366,18 +360,14 @@ from sentry_sdk.integrations.logging import LoggingIntegration
 SENTRY_DSN = os.getenv('SENTRY_DSN')
 
 if SENTRY_DSN:
-    # Disable Sentry's default logging to prevent Python 3.13 formatting crashes in local dev
-    sentry_logging = LoggingIntegration(
-        level=None,        # Capture info and above as breadcrumbs
-        event_level=None   # Send errors as events
-    )
-    
     sentry_sdk.init(
         dsn=SENTRY_DSN,
         integrations=[
             DjangoIntegration(),
-            sentry_logging,
         ],
+        # Disable LoggingIntegration entirely to prevent Python 3.13 formatting crashes
+        # The monkey-patch on Logger.callHandlers causes issues with %s style messages
+        disabled_integrations=[LoggingIntegration],
         
         # Set traces_sample_rate to 1.0 to capture 100%
         # of transactions for performance monitoring.

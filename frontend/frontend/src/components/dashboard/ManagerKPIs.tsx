@@ -20,12 +20,7 @@ const ProgressBar: React.FC<ProgressBarProps> = ({ rate, colorClass = 'bg-primar
     );
 };
 
-const formatCurrency = (amount: number, locale = 'fr-FR', symbol = 'F') => {
-    return new Intl.NumberFormat(locale, {
-        minimumFractionDigits: 0,
-        maximumFractionDigits: 0,
-    }).format(amount).replace(/\u00a0/g, ' ').replace(/\s/g, ' ') + ' ' + symbol;
-};
+import { formatCurrency as formatCurrencyStandard } from '../../utils/formatters';
 
 interface KPIData {
     actual: number;
@@ -68,7 +63,7 @@ export const ManagerKPIs: React.FC<ManagerKPIsProps> = ({ kpis }) => {
     const currentLocale = t('common:locale', { defaultValue: 'fr-FR' });
     const currencySymbol = t('common:currency_symbol', 'F');
 
-    const formatCurrencyLocal = (amount: number) => formatCurrency(amount, currentLocale, currencySymbol);
+    const formatCurrencyLocal = (amount: number) => formatCurrencyStandard(amount, currentLocale, currencySymbol);
 
     const items = [
         { 

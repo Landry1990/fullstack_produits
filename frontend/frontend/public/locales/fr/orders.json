@@ -261,7 +261,10 @@
         "mode_hourly_desc": "Commander les produits vendus sur une plage date/heure précise",
         "hourly_range_label": "Plage horaire des ventes",
         "date_from": "Du",
-        "date_to": "Au"
+        "date_to": "Au",
+        "no_results_title": "Rien à commander",
+        "no_results_desc": "Aucune vente n'a été trouvée sur cette plage horaire pour les critères sélectionnés.",
+        "modify_params": "Modifier les paramètres"
     }
 }
 

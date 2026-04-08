@@ -34,12 +34,17 @@ export const calculateCartStats = (lignes: LigneFacture[]) => {
 
     let totalTTC = 0;
     let totalTva = 0;
-    let totalHT = 0;
+    let totalSellHT = 0;
+    let totalBuyHT = 0;
 
     lignes.forEach(ligne => {
         const valeurLigneTTC = typeof ligne.total_ligne === 'number' ? ligne.total_ligne : Number(ligne.total_ligne);
         const ligneTTC = Number.isFinite(valeurLigneTTC) ? valeurLigneTTC : 0;
         totalTTC += ligneTTC;
+
+        // Coût d'achat (pour calcul de marge)
+        const costPrice = typeof ligne.produit.cost_price === 'number' ? ligne.produit.cost_price : Number(ligne.produit.cost_price);
+        totalBuyHT += (Number.isFinite(costPrice) ? costPrice : 0) * Number(ligne.quantite);
 
         // Extraction de la TVA par ligne (les prix de vente incluent la TVA)
         const tauxTva = normalizeNumberInput(ligne.produit.tva ?? 0, { min: 0, max: 100 });
@@ -48,25 +53,32 @@ export const calculateCartStats = (lignes: LigneFacture[]) => {
             const ligneHT = ligneTTC / (1 + tauxTva / 100);
             const ligneTvaAmount = ligneTTC - ligneHT;
             totalTva += ligneTvaAmount;
-            totalHT += ligneHT;
+            totalSellHT += ligneHT;
         } else {
-            totalHT += ligneTTC;
+            totalSellHT += ligneTTC;
         }
     });
 
     // Safety check for final stats
-    const safeSousTotal = Number.isFinite(totalHT) ? totalHT : 0;
+    const safeSousTotal = Number.isFinite(totalSellHT) ? totalSellHT : 0;
     const safeTotalTva = Number.isFinite(totalTva) ? totalTva : 0;
     const safeTotalTTC = Number.isFinite(totalTTC) ? totalTTC : 0;
 
-    return { totalLines, totalQty, sousTotal: safeSousTotal, totalTva: safeTotalTva, totalTTC: safeTotalTTC };
+    return { 
+        totalLines, 
+        totalQty, 
+        sousTotal: safeSousTotal, 
+        totalTva: safeTotalTva, 
+        totalTTC: safeTotalTTC,
+        totalBuyHT: Number.isFinite(totalBuyHT) ? totalBuyHT : 0
+    };
 };
 
 /**
  * Calcule les totaux finaux de la facture (Net à payer, Remise, Tiers-payant)
  */
 export const calculateFactureTotals = (
-    cartStats: { sousTotal: number, totalTva: number, totalTTC: number },
+    cartStats: { sousTotal: number, totalTva: number, totalTTC: number, totalBuyHT: number },
     selectedClient: Client | null | undefined,
     remiseGlobale: string | number,
     remiseMode: 'montant' | 'taux'
@@ -107,7 +119,11 @@ export const calculateFactureTotals = (
         remiseMontant: Number.isFinite(remiseMontant) ? remiseMontant : 0,
         tauxCouverture: Number.isFinite(tauxCouverture) ? tauxCouverture : 0,
         partAssurance: Number.isFinite(partAssurance) ? partAssurance : 0,
-        partPatient: Number.isFinite(partPatient) ? partPatient : 0
+        partPatient: Number.isFinite(partPatient) ? partPatient : 0,
+        totalBuyHT: Number.isFinite(cartStats.totalBuyHT) ? cartStats.totalBuyHT : 0,
+        totalMarginValue: Number.isFinite(finalTTC - cartStats.totalBuyHT) ? (finalTTC - cartStats.totalBuyHT) : 0,
+        globalMargin: cartStats.totalBuyHT > 0 ? (finalTTC / cartStats.totalBuyHT).toFixed(4) : '1.0000',
+        globalMarginPercent: cartStats.totalBuyHT > 0 ? ((finalTTC / cartStats.totalBuyHT - 1) * 100).toFixed(2) : '0.00'
     };
 
     return safeResult;

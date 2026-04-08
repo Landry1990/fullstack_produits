@@ -195,6 +195,10 @@ export interface TotalsData {
     tauxCouverture: number;
     partPatient: number;
     partAssurance: number;
+    totalBuyHT: number;
+    totalMarginValue: number;
+    globalMargin: string;
+    globalMarginPercent: string;
 }
 
 export interface TVA {

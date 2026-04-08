@@ -35,16 +35,19 @@ export default function SuggestionCommandeModal({
   const apiBaseUrl = import.meta.env.VITE_API_BASE_URL ?? ''
   
   // Internal State
-  // Smart defaults for datetime: today 08:00 → now
-  const todayStr = new Date().toISOString().slice(0, 10);
-  const nowStr = new Date().toISOString().slice(0, 16);
+  // Smart defaults for datetime: 24h ago → now
+  const now = new Date();
+  const yesterday = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+  
+  const yesterdayStr = yesterday.toISOString().slice(0, 16);
+  const nowStr = now.toISOString().slice(0, 16);
   
   const [suggestionParams, setSuggestionParams] = useState({
       periode: 30,
       fournisseurId: '',
       mode: 'optimise', // 'simple' | 'optimise' | 'ventes_horaire'
       budgetMax: '', // Budget limit
-      dateDebut: `${todayStr}T08:00`,
+      dateDebut: yesterdayStr,
       dateFin: nowStr,
   });
   
@@ -364,7 +367,29 @@ export default function SuggestionCommandeModal({
                                 </label>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     <div className="space-y-1">
-                                        <span className="text-xs text-base-content/60">{t('orders:suggestion_modal.date_from')}</span>
+                                        <div className="flex items-center justify-between">
+                                            <span className="text-xs text-base-content/60">{t('orders:suggestion_modal.date_from')}</span>
+                                            <div className="flex gap-2">
+                                                <button 
+                                                    className="text-[10px] uppercase font-bold text-primary hover:underline"
+                                                    onClick={() => {
+                                                        const d = new Date(new Date().getTime() - 24*60*60*1000).toISOString().slice(0, 16);
+                                                        setSuggestionParams(p => ({ ...p, dateDebut: d, dateFin: new Date().toISOString().slice(0, 16) }));
+                                                    }}
+                                                >
+                                                   24h
+                                                </button>
+                                                <button 
+                                                    className="text-[10px] uppercase font-bold text-primary hover:underline"
+                                                    onClick={() => {
+                                                        const d = new Date().toISOString().slice(0, 10) + "T00:00";
+                                                        setSuggestionParams(p => ({ ...p, dateDebut: d, dateFin: new Date().toISOString().slice(0, 16) }));
+                                                    }}
+                                                >
+                                                    {t('common:today', 'Aujourd\'hui')}
+                                                </button>
+                                            </div>
+                                        </div>
                                         <input 
                                             type="datetime-local" 
                                             className="input input-bordered w-full bg-base-200/50 border-base-200 focus:border-primary rounded-xl"

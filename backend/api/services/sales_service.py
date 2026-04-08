@@ -145,7 +145,7 @@ class SalesService:
         }
         
         # Call the logic directly or via a static method
-        SalesService.validate_invoice(facture, validation_user, validation_data)
+        SalesService.validate_invoice(facture, validation_user, validation_data, operator=user)
 
         # 8. Non-Centralized Payments
         if not centralized:
@@ -168,10 +168,13 @@ class SalesService:
 
     @staticmethod
     @transaction.atomic
-    def validate_invoice(facture, validation_user, data):
+    def validate_invoice(facture, validation_user, data, operator=None):
         """
         Performs stock validation, FIFO/FEFO allocation, loyalty updates.
+        The operator is the person at the desk, validation_user may be a supervisor.
         """
+        if not operator:
+             operator = validation_user
         if facture.status == Facture.Status.VALIDEE:
             return facture
 
@@ -192,8 +195,11 @@ class SalesService:
         if facture.client:
             paiement_immediat = Decimal(str(data.get('paiement_immediat', 0)))
             new_debt_increment = max(Decimal('0'), facture.total_ttc - paiement_immediat)
-            if facture.client.plafond > 0 and (facture.client.current_debt + new_debt_increment) > facture.client.plafond:
-                 raise ValueError("Le plafond de crédit du client est dépassé.")
+            
+            # -1 means unlimited credit. Default 0 means no credit allowed. 
+            # Per user request, this check only applies to PROFESSIONNEL clients.
+            if facture.client.client_type == 'PROFESSIONNEL' and facture.client.plafond != Decimal('-1') and (facture.client.current_debt + new_debt_increment) > facture.client.plafond:
+                 raise ValueError(f"Le plafond de crédit du client professionnel est dépassé (Limite: {facture.client.plafond} F, Dette actuelle: {facture.client.current_debt} F, Nouveau: +{new_debt_increment} F).")
 
         # Aggregate requested quantities
         requested_map = {}
@@ -388,7 +394,7 @@ class SalesService:
             if part_assurance > 0:
                 paiement_en_compte = Caisse.objects.create(
                     facture=facture, mode_paiement='en_compte', montant=part_assurance, statut='completee',
-                    user=validation_user, part_assurance=part_assurance, part_patient=Decimal('0.00')
+                    user=operator, part_assurance=part_assurance, part_patient=Decimal('0.00')
                 )
                 from .payment_service import PaymentService
                 PaymentService.process_payment(paiement_en_compte, is_created=True)
@@ -398,7 +404,7 @@ class SalesService:
         if mode_paiement and facture.total_ttc > 0 and not Caisse.objects.filter(facture=facture).exists():
             paiement_single = Caisse.objects.create(
                 facture=facture, mode_paiement=mode_paiement, montant=facture.total_ttc,
-                statut='completee', user=validation_user
+                statut='completee', user=operator
             )
             from .payment_service import PaymentService
             PaymentService.process_payment(paiement_single, is_created=True)

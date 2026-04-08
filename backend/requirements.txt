@@ -16,3 +16,4 @@ python-dotenv
 django-extensions
 sentry-sdk
 psutil
+concurrent-log-handler

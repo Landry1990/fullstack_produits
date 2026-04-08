@@ -1,0 +1,26 @@
+[
+  {
+    "desc": "Invalid fournisseur ID",
+    "status": 400,
+    "len": 81,
+    "content": "{\"fournisseur\":[\"Clé primaire « 9999 » non valide - l'objet n'existe pas.\"]}"
+  },
+  {
+    "desc": "Invalid string type for fournisseur",
+    "status": 400,
+    "len": 77,
+    "content": "{\"fournisseur\":[\"Type incorrect. Attendait une clé primaire, a reçu str.\"]}"
+  },
+  {
+    "desc": "Invalid type_avoir choices",
+    "status": 400,
+    "len": 61,
+    "content": "{\"type_avoir\":[\"« INVALID » n'est pas un choix valide.\"]}"
+  },
+  {
+    "desc": "Missing type_avoir",
+    "status": 201,
+    "len": 454,
+    "content": "{\"id\":13,\"produits\":[],\"fournisseur_name\":\"Le Fournisseur Local\",\"created_by_name\":\"nkaha\",\"validated_by_name\":\"\",\"total_ht\":\"0.00\",\"status_display\":\"Brouillon\",\"type_avoir_display\":\"Autre\",\"numero\":\"AV-202604-0007\",\"fournisseur_nom\":null,\"type_avoir\":\"AUTRE\",\"date\":\"2026-04-04\",\"observations\":\"\",\"status\":\"BROUILLON\",\"created_at\":\"2026-04-04T19:51:24.989983\",\"updated_at\":\"2026-04-04T19:51:24.989992\",\"fournisseur\":1,\"created_by\":1,\"validated_by\":null}"
+  }
+]

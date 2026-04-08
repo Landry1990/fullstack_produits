@@ -79,7 +79,14 @@
         "filters_label": "Filtres",
         "show_expired_only": "Déjà périmés",
         "no_data": "Aucune donnée disponible",
-        "history_print_generated": "Document généré le"
+        "history_print_generated": "Document généré le",
+        "alerts": {
+            "expired": "⛔ STOP : Ce produit est PÉRIMÉ depuis {{days}} jours !",
+            "warning": "⚠️ ATTENTION : Périme dans {{days}} jours !",
+            "info": "ℹ️ Info : Périme dans {{months}} mois ({{days}} jours)",
+            "click_to_close": "(Cliquez pour fermer)",
+            "click_to_confirm": "(Cliquez pour confirmer)"
+        }
     },
     "transformations": {
         "title": "Gestion des Transformations",

@@ -9,7 +9,7 @@ from django_filters.rest_framework import DjangoFilterBackend
 from django.utils import timezone
 from django.http import HttpResponse
 from datetime import datetime
-from decimal import Decimal
+from decimal import Decimal, InvalidOperation
 import io
 import logging
 
@@ -204,6 +204,22 @@ class FactureViewSet(OptimizedSerializerMixin, viewsets.ModelViewSet):
         data = request.data
         user = request.user
         centralized = data.get('centralized_cash_register', True)
+        
+        # Enforce Sudo for non-positive amounts
+        # Ensure we handle various formats of decimals in data
+        try:
+            total_ttc = Decimal(str(data.get('totals', {}).get('totalTtc', 0)))
+        except (ValueError, InvalidOperation):
+            total_ttc = Decimal('0')
+
+        if total_ttc <= 0:
+            validation_user, error_res = validate_sudo_mode(request)
+            if error_res:
+                return error_res
+            if validation_user == user and not user.is_superuser:
+                return Response({
+                    'detail': "Une vente à montant nul ou négatif nécessite la validation d'un tiers-validateur (Sudo)."
+                }, status=status.HTTP_403_FORBIDDEN)
 
         try:
             facture = SalesService.finalize_sale(user, data, centralized=centralized)
@@ -297,6 +313,12 @@ class FactureViewSet(OptimizedSerializerMixin, viewsets.ModelViewSet):
         validation_user, error_res = validate_sudo_mode(request)
         if error_res:
             return error_res
+        
+        # Enforce Sudo for non-positive amounts on validation
+        if facture.total_ttc <= 0 and validation_user == request.user and not request.user.is_superuser:
+            return Response({
+                'detail': "Cette facture à montant nul ou négatif nécessite la validation d'un tiers (Sudo) pour être validée."
+            }, status=status.HTTP_403_FORBIDDEN)
 
         try:
             SalesService.validate_invoice(facture, validation_user, request.data)
