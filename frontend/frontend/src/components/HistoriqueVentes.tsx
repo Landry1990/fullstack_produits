@@ -4,6 +4,7 @@ import { format } from 'date-fns';
 import { useAuth } from '../context/AuthContext';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'react-hot-toast';
+import { formatCurrency } from '../utils/formatters';
 
 interface DailySale {
   date: string;
@@ -101,7 +102,7 @@ const HistoriqueVentes = () => {
   };
 
   const formatMoney = (amount: number) => {
-    return new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'XAF', maximumFractionDigits: 0 }).format(amount);
+    return formatCurrency(amount);
   };
 
   const totalPages = Math.ceil(totalItems / pageSize);

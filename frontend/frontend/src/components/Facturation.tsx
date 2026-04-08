@@ -214,6 +214,7 @@ export default function Facturation() {
               onReturnFocus={() => hook.searchInputRef.current?.focus()}
               selectedIndex={hook.keyboardNav.selectedIndex}
               onSelectLine={hook.keyboardNav.setSelectedIndex}
+              refreshTrigger={hook.refreshTrigger}
             />
           </div>
 

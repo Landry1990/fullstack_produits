@@ -9,6 +9,7 @@ import { formatCurrency, normalizeNumberInput } from '../utils/formatters';
 
 export function useJournalCaisse() {
   const { t } = useTranslation(['cash_journal', 'common']);
+  const PAGE_SIZE = 50;
   const currentLocale = t('common:locale', { defaultValue: 'fr-FR' });
   const currencySymbol = t(['common:currency_symbol', 'currency_symbol'], 'F');
 
@@ -113,19 +114,22 @@ export function useJournalCaisse() {
     if (data.results) {
       setTransactions(data.results);
       setTotalCount(data.count || 0);
-      setTotalPages(Math.ceil((data.count || 0) / 50));
+      setTotalPages(Math.ceil((data.count || 0) / PAGE_SIZE));
     } else {
       setTransactions(Array.isArray(data) ? data : []);
       setTotalCount(Array.isArray(data) ? data.length : 0);
       setTotalPages(1);
     }
-  }, []);
+  }, [PAGE_SIZE]);
 
   const fetchPageInit = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
-      const params: any = { page: '1' };
+      const params: any = { 
+        page: '1',
+        page_size: PAGE_SIZE.toString()
+      };
       if (selectedUser) params.user = selectedUser;
       if (dateDebut) params.date_debut = formatLocalISOString(dateDebut);
       if (dateFin) params.date_fin = formatLocalISOString(dateFin);
@@ -221,6 +225,7 @@ export function useJournalCaisse() {
     try {
       const params = new URLSearchParams();
       params.append('page', page.toString());
+      params.append('page_size', PAGE_SIZE.toString());
       if (selectedUser) params.append('user', selectedUser);
       if (dateDebut) params.append('date_debut', formatLocalISOString(dateDebut));
       if (dateFin) params.append('date_fin', formatLocalISOString(dateFin));
@@ -240,7 +245,6 @@ export function useJournalCaisse() {
         transaction.facture_numero?.toLowerCase().includes(searchQuery.toLowerCase()) ||
         transaction.user_details?.full_name.toLowerCase().includes(searchQuery.toLowerCase());
 
-      if (transaction.mode_paiement === 'en_compte' || transaction.mode_paiement === 'depot') return false;
       if (filterType !== 'all') return false;
 
       const matchesMode = filterMode === 'all' || transaction.mode_paiement === filterMode;

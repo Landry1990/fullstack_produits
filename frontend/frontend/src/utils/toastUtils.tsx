@@ -1,13 +1,14 @@
 import { toast } from 'react-hot-toast'
+import i18n from '../i18n'
 
 export const showExpirationToast = (daysUntilExpiration: number) => {
     if (daysUntilExpiration <= 0) {
         // PÉRIMÉ
         toast.error((t) => (
             <span onClick={() => toast.dismiss(t.id)} style={{ cursor: 'pointer', display: 'block' }}>
-                ⛔ STOP : Ce produit est PÉRIMÉ depuis {Math.abs(daysUntilExpiration)} jours !
+                {i18n.t('stock:perimes.alerts.expired', { days: Math.abs(daysUntilExpiration) })}
                 <br />
-                <small style={{ fontSize: '0.8em', opacity: 0.8 }}>(Cliquez pour fermer)</small>
+                <small style={{ fontSize: '0.8em', opacity: 0.8 }}>{i18n.t('stock:perimes.alerts.click_to_close')}</small>
             </span>
         ), {
             duration: Infinity,
@@ -18,9 +19,9 @@ export const showExpirationToast = (daysUntilExpiration: number) => {
         // Moins de 3 mois - Alerte FORTE
         toast((t) => (
             <span onClick={() => toast.dismiss(t.id)} style={{ cursor: 'pointer', display: 'block' }}>
-                ⚠️ ATTENTION : Périme dans {daysUntilExpiration} jours !
+                {i18n.t('stock:perimes.alerts.warning', { days: daysUntilExpiration })}
                 <br />
-                <small style={{ fontSize: '0.8em', opacity: 0.8 }}>(Cliquez pour confirmer)</small>
+                <small style={{ fontSize: '0.8em', opacity: 0.8 }}>{i18n.t('stock:perimes.alerts.click_to_confirm')}</small>
             </span>
         ), {
             icon: '📆',
@@ -30,7 +31,10 @@ export const showExpirationToast = (daysUntilExpiration: number) => {
         })
     } else if (daysUntilExpiration <= 180) {
         // Moins de 6 mois - Alerte Info (non bloquante, disparaît seule)
-        toast(`ℹ️ Info : Périme dans ${Math.floor(daysUntilExpiration / 30)} mois (${daysUntilExpiration} jours)`, {
+        toast(i18n.t('stock:perimes.alerts.info', { 
+            months: Math.floor(daysUntilExpiration / 30),
+            days: daysUntilExpiration 
+        }), {
             icon: '⏳',
             style: { border: '1px solid #eab308', color: '#854d0e', minWidth: '300px', textAlign: 'center' },
             duration: 5000,

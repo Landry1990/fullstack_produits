@@ -497,6 +497,19 @@ class CommandeProduitSerializer(serializers.ModelSerializer):
         fields = '__all__'
         read_only_fields = ['created_at', 'updated_at', 'total_quantity', 'effective_cost']
 
+    def to_representation(self, instance):
+        repr = super().to_representation(instance)
+        
+        # Retro-compatibilité pour l'affichage (si le lot n'est pas sur la ligne de commande mais dans StockLot)
+        # Ceci corrige les anciennes commandes et compense le bug d'écrasement des lots par auto-save
+        if not repr.get('lot') and instance.commande and instance.commande.status == 'CLOT':
+            lot = instance.stock_lot.first()  # relation related_name='stock_lot' du FK commande_produit sur StockLot
+            if lot:
+                repr['lot'] = lot.lot
+                if lot.date_expiration:
+                    repr['date_expiration'] = lot.date_expiration.isoformat()
+        return repr
+
     def get_produit_nom(self, obj):
         if obj.produit:
             return obj.produit.name

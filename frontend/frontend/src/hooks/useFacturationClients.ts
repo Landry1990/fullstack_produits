@@ -112,10 +112,10 @@ export function useFacturationClients() {
         if (selectedClient === null) return null
         return clients.find(c => c.id === selectedClient) || null
     }, [clients, selectedClient])
-
-    // Toast reminder when client with deposit is selected
+    // Reminders when client is selected
     useEffect(() => {
         if (selectedClient && !useManualClient && selectedClientData) {
+            // 1. Deposit reminder
             const solde = parseFloat(selectedClientData.solde_depot || '0')
             if (solde > 0) {
                 toast.success(t('facturation:client.deposit_reminder', { solde }), {
@@ -125,7 +125,7 @@ export function useFacturationClients() {
                 })
             }
 
-            // Reward reminder
+            // 2. Reward reminder
             const discount = parseFloat(selectedClientData.pending_discount || '0')
             if (discount > 0) {
                 toast.success(t('facturation:messages.reward_reminder', { discount }), {
@@ -133,6 +133,29 @@ export function useFacturationClients() {
                     duration: 5000,
                     id: `reward-reminder-${selectedClient}`
                 })
+            }
+
+            // 3. Credit limit reminder
+            const plafond = Number(selectedClientData.plafond || 0)
+            const debt = Number(selectedClientData.current_debt || 0)
+            const isPro = selectedClientData.client_type === 'PROFESSIONNEL'
+            
+            if (isPro && plafond !== -1) {
+                if (debt > 0 && debt >= plafond) {
+                    toast.error(
+                        `⚠️ PLAFOND ATTEINT : ${Math.round(debt).toLocaleString()} / ${Math.round(plafond).toLocaleString()} F. Ce client ne peut plus prendre de produits à crédit.`,
+                        {
+                            duration: 6000,
+                            id: `limit-reached-${selectedClient}`,
+                            style: { background: '#dc2626', color: 'white', fontWeight: 'bold' }
+                        }
+                    )
+                } else if (debt > 0 && debt > plafond * 0.8) {
+                     toast.success(
+                        `⚠️ Attention : Plafond de crédit presque atteint (${Math.round(debt).toLocaleString()} / ${Math.round(plafond).toLocaleString()} F)`,
+                        { icon: '⚠️', duration: 4000, id: `limit-warning-${selectedClient}` }
+                    )
+                }
             }
         }
     }, [selectedClient, selectedClientData, useManualClient, t])

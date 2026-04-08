@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import axios from 'axios';
 import { toast } from 'react-hot-toast';
+import { formatCurrency } from '../utils/formatters';
 import {
   LineChart,
   Line,
@@ -49,7 +50,7 @@ interface EvolutionSeries {
 }
 
 const formatMoney = (value: number, currencySymbol: string) => {
-  return new Intl.NumberFormat('fr-FR', { style: 'decimal', maximumFractionDigits: 0 }).format(value) + ' ' + currencySymbol;
+  return formatCurrency(value, 'fr-FR', currencySymbol);
 };
 
 export default function ClassementVendeurs() {

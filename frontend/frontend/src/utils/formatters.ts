@@ -27,21 +27,21 @@ export const formatPrice = (price: number, decimals: number = 0, locale: string 
     return new Intl.NumberFormat(locale, {
         minimumFractionDigits: decimals,
         maximumFractionDigits: decimals,
-    }).format(price).replace(/\u00a0/g, ' ').replace(/\s/g, ' ');
+    }).format(price);
 }
 
 export const formatCurrency = (amount: number, locale: string = 'fr-FR', symbol: string = 'F') => {
     return new Intl.NumberFormat(locale, {
         minimumFractionDigits: 0,
         maximumFractionDigits: 0,
-    }).format(amount).replace(/\u00a0/g, ' ').replace(/\s/g, ' ') + ' ' + symbol;
+    }).format(amount) + '\u00a0' + symbol;
 }
 
 export const formatNumber = (value: number, decimals: number = 0, locale: string = 'fr-FR') => {
     return new Intl.NumberFormat(locale, {
         minimumFractionDigits: decimals,
         maximumFractionDigits: decimals,
-    }).format(value).replace(/\u00a0/g, ' ').replace(/\s/g, ' ');
+    }).format(value);
 }
 
 export const safeFormatNumber = (value: any) => {

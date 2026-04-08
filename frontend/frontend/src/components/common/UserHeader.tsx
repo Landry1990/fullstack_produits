@@ -6,6 +6,7 @@ import { useTranslation } from 'react-i18next';
 import communicationService from '../../services/communicationService';
 import MessagingModal from './MessagingModal';
 import { Bell, ChevronDown, LogOut, Moon, Sun, MessageSquare, User as UserIcon } from 'lucide-react';
+import { playNotificationSound } from '../../utils/audio';
 
 export default function UserHeader() {
   const { t, i18n } = useTranslation(['messaging', 'sidebar', 'common']);
@@ -23,28 +24,33 @@ export default function UserHeader() {
       const newCount = res.data.count || 0;
       
       // Notify if new messages arrive
-      if (newCount > prevUnreadCount.current && !isMessagingOpen) {
-        toast.success(
-          (toastObj: any) => (
-            <div className="flex items-center gap-3">
-              <div className="flex-1">
-                <p className="text-sm font-bold">{t('new.new_notification')}</p>
-                <p className="text-xs opacity-80">{t('subtitle')}</p>
+      if (newCount > prevUnreadCount.current) {
+        // Play an alert sound for the recipient
+        playNotificationSound();
+
+        if (!isMessagingOpen) {
+          toast.success(
+            (toastObj: any) => (
+              <div className="flex items-center gap-3">
+                <div className="flex-1">
+                  <p className="text-sm font-bold">{t('new.new_notification')}</p>
+                  <p className="text-xs opacity-80">{t('subtitle')}</p>
+                </div>
+                <button 
+                  onClick={() => {
+                    setIsMessagingOpen(true);
+                    // @ts-ignore
+                    toast.dismiss(toastObj.id);
+                  }}
+                  className="btn btn-xs btn-primary rounded-lg"
+                >
+                  {t('new.view')}
+                </button>
               </div>
-              <button 
-                onClick={() => {
-                  setIsMessagingOpen(true);
-                  // @ts-ignore
-                  toast.dismiss(toastObj.id);
-                }}
-                className="btn btn-xs btn-primary rounded-lg"
-              >
-                {t('new.view')}
-              </button>
-            </div>
-          ),
-          { duration: 6000, position: 'top-right' }
-        );
+            ),
+            { duration: 6000, position: 'top-right' }
+          );
+        }
       }
       
       setUnreadCount(newCount);

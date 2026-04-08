@@ -17,6 +17,7 @@ interface CartTableProps {
   onReturnFocus: () => void
   selectedIndex?: number
   onSelectLine?: (index: number) => void
+  refreshTrigger?: number
 }
 
 interface CartRowProps {
@@ -35,6 +36,7 @@ interface CartRowProps {
   canModifyPrice: boolean
   maxDiscount: number
   t: (key: string, options?: any) => string
+  refreshTrigger?: number
 }
 
 const CartRow = React.memo(({
@@ -52,7 +54,8 @@ const CartRow = React.memo(({
   onReturnFocus,
   canModifyPrice,
   maxDiscount,
-  t
+  t,
+  refreshTrigger
 }: CartRowProps) => {
   const [localQty, setLocalQty] = React.useState(ligne.quantite.toString())
   const [localPrice, setLocalPrice] = React.useState(ligne.prix_unitaire)
@@ -63,7 +66,7 @@ const CartRow = React.memo(({
     setLocalQty(ligne.quantite.toString())
     setLocalPrice(ligne.prix_unitaire)
     setLocalRemise(ligne.remise_produit)
-  }, [ligne.quantite, ligne.prix_unitaire, ligne.remise_produit])
+  }, [ligne.quantite, ligne.prix_unitaire, ligne.remise_produit, refreshTrigger])
 
   const handleQtyChange = (value: string) => {
     // Regex: allow only digits and a single minus sign at the very beginning
@@ -230,7 +233,8 @@ export default function CartTable({
   quantityInputsRef,
   onReturnFocus,
   selectedIndex = -1,
-  onSelectLine
+  onSelectLine,
+  refreshTrigger
 }: CartTableProps) {
   const { user } = useAuth()
   const { t } = useTranslation(['facturation', 'common'])
@@ -283,6 +287,7 @@ export default function CartTable({
             canModifyPrice={!!canModifyPrice}
             maxDiscount={maxDiscount}
             t={t}
+            refreshTrigger={refreshTrigger}
           />
         ))}
       </tbody>

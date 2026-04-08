@@ -72,7 +72,9 @@ export const useDashboardStats = () => {
             const response = await axios.get<DashboardStats>(`${dashboardEndpoint}stats/`);
             return response.data;
         },
-        staleTime: 1000 * 60 * 5, // 5 minutes
+        staleTime: 1000 * 60, // 1 minute
+        refetchInterval: 1000 * 60, // Auto-update every 1 minute
+        refetchIntervalInBackground: false,
     });
 };
 
@@ -83,22 +85,27 @@ export const useRevenueChart = () => {
             const response = await axios.get<RevenueChartData>(`${dashboardEndpoint}revenue_chart/`);
             return response.data;
         },
-        staleTime: 1000 * 60 * 15, // 15 minutes
+        staleTime: 1000 * 60 * 5, // 5 minutes
+        refetchInterval: 1000 * 60 * 5, // Auto-update every 5 minutes
+        refetchIntervalInBackground: false,
     });
 };
 
-export const useLowStock = () => {
+export const useLowStock = (enabled: boolean = true) => {
     return useQuery<LowStockItem[]>({
         queryKey: ['dashboard', 'lowStock'],
         queryFn: async () => {
             const response = await axios.get<LowStockItem[]>(`${dashboardEndpoint}low_stock/`);
             return response.data;
         },
+        enabled,
         staleTime: 1000 * 60 * 5,
+        refetchInterval: enabled ? 1000 * 60 * 10 : false,
+        refetchIntervalInBackground: false,
     });
 };
 
-export const useUgStats = () => {
+export const useUgStats = (enabled: boolean = true) => {
     return useQuery({
         queryKey: ['dashboard', 'ugStats'],
         queryFn: async () => {
@@ -110,11 +117,12 @@ export const useUgStats = () => {
                 return null;
             }
         },
+        enabled,
         staleTime: 1000 * 60 * 60, // 1 hour
     });
 };
 
-export const usePromisDisponibles = () => {
+export const usePromisDisponibles = (enabled: boolean = true) => {
     return useQuery({
         queryKey: ['dashboard', 'promis'],
         queryFn: async () => {
@@ -126,11 +134,14 @@ export const usePromisDisponibles = () => {
                 return [];
             }
         },
-        staleTime: 1000 * 60 * 2,
+        enabled,
+        staleTime: 1000 * 60 * 5, // 5 minutes
+        refetchInterval: enabled ? 1000 * 60 * 5 : false, // 5 minutes (was 1 min)
+        refetchIntervalInBackground: false,
     });
 };
 
-export const useExpiringLots = (months: number) => {
+export const useExpiringLots = (months: number, enabled: boolean = true) => {
     return useQuery<StockLot[]>({
         queryKey: ['dashboard', 'expiringLots', months],
         queryFn: async () => {
@@ -156,6 +167,7 @@ export const useExpiringLots = (months: number) => {
 
             return validLots;
         },
+        enabled,
         staleTime: 1000 * 60 * 60, // 1 hour
     });
 };
@@ -175,16 +187,19 @@ export const useHourlyTraffic = () => {
             return response.data;
         },
         staleTime: 1000 * 60 * 5, // 5 minutes
+        refetchInterval: 1000 * 60 * 5, // Auto-update every 5 minutes
+        refetchIntervalInBackground: false,
     });
 };
 
-export const useSupplierDebts = () => {
+export const useSupplierDebts = (enabled: boolean = true) => {
     return useQuery({
         queryKey: ['dashboard', 'supplierDebts'],
         queryFn: async () => {
             const response = await axios.get(`${dashboardEndpoint}supplier_debts/`);
             return response.data;
         },
+        enabled,
         staleTime: 1000 * 60 * 5, // 5 minutes
     });
 };
@@ -210,7 +225,8 @@ export const useManagerStats = () => {
             const response = await axios.get<ManagerStats>(`${dashboardEndpoint}manager_stats/`);
             return response.data;
         },
-        staleTime: 1000 * 60 * 5, // 5 minutes
+        staleTime: 1000 * 60, // 1 minute
+        refetchInterval: 1000 * 60 * 2, // Auto-update every 2 minutes
     });
 };
 
@@ -250,6 +266,8 @@ export const useCurrentObjectifs = () => {
                 mois: ObjectifCommercial | null;
             }>(`${objectifsEndpoint}courants/`);
             return response.data;
-        }
+        },
+        staleTime: 1000 * 60,
+        refetchInterval: 1000 * 60 * 5, // Auto-update every 5 minutes
     });
 };

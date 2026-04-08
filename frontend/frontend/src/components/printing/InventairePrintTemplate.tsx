@@ -1,6 +1,7 @@
 
 import React from 'react';
 import type { PharmacySettings } from './InvoiceTemplate';
+import { formatNumber as formatNumberStandard } from '../../utils/formatters';
 
 export interface InventaireItem {
     id: number | string;
@@ -50,13 +51,40 @@ const InventairePrintTemplate: React.FC<InventairePrintTemplateProps> = ({ setti
 
     const formatNumber = (num: number | undefined) => {
         if (num === undefined) return '-';
-        return new Intl.NumberFormat('fr-FR', { minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(num);
+        return formatNumberStandard(num);
     };
 
     const sortedGroups = Object.keys(data.groups).sort();
 
     return (
-        <div data-theme="light" className="bg-base-100 p-4 max-w-[210mm] mx-auto text-base-content font-sans text-[11px] leading-tight shadow-none print:shadow-none print:max-w-none print:w-full">
+        <div data-theme="light" className="bg-base-100 p-4 max-w-[210mm] mx-auto text-base-content font-sans text-[11px] leading-tight shadow-none print:shadow-none print:max-w-none print:w-full relative">
+            <style>
+                {`
+                @media print {
+                    @page {
+                        margin-bottom: 20mm;
+                    }
+                    .page-footer {
+                        position: fixed;
+                        bottom: 0;
+                        right: 0;
+                        width: 100%;
+                        text-align: right;
+                        font-size: 9px;
+                        color: #94a3b8;
+                        border-top: 1px solid #e2e8f0;
+                        padding-top: 5px;
+                    }
+                    .page-number:after {
+                        content: "Page " counter(page);
+                    }
+                }
+                `}
+            </style>
+
+            <div className="page-footer hidden print:block">
+                <span className="page-number"></span>
+            </div>
             
             {/* Header section (Same style as Invoice) */}
             <div className="flex justify-between items-start mb-6 border-b-2 border-slate-900 pb-4">

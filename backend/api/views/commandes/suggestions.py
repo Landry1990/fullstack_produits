@@ -3,6 +3,7 @@ from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from django.utils import timezone
 from datetime import timedelta, datetime
+from django.conf import settings
 
 from ...models import Produit, Facture, FactureProduit
 
@@ -391,11 +392,18 @@ def calculer_ventes_tranche_horaire(date_debut, date_fin, fournisseur_id=None):
     if not dt_debut or not dt_fin:
         return [], 0
     
-    # Si les dates sont naïves, les rendre aware
-    if timezone.is_naive(dt_debut):
-        dt_debut = timezone.make_aware(dt_debut)
-    if timezone.is_naive(dt_fin):
-        dt_fin = timezone.make_aware(dt_fin)
+    # Si les dates sont naïves et que USE_TZ est True, les rendre aware
+    if settings.USE_TZ:
+        if timezone.is_naive(dt_debut):
+            dt_debut = timezone.make_aware(dt_debut)
+        if timezone.is_naive(dt_fin):
+            dt_fin = timezone.make_aware(dt_fin)
+    else:
+        # Si USE_TZ est False, s'assurer que les dates sont naïves pour la comparaison DB
+        if not timezone.is_naive(dt_debut):
+            dt_debut = timezone.make_naive(dt_debut)
+        if not timezone.is_naive(dt_fin):
+            dt_fin = timezone.make_naive(dt_fin)
     
     # Filtrer les lignes de facture dans la plage horaire
     qs = FactureProduit.objects.filter(

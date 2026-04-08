@@ -38,6 +38,12 @@ class CaisseViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         queryset = super().get_queryset()
+        
+        # Exclure les modes non-physiques du journal de caisse (list et page_init)
+        # car ils ne correspondent pas à des flux de trésorerie réels suivis ici.
+        if self.action in ['list', 'page_init']:
+            queryset = queryset.exclude(mode_paiement__in=['en_compte', 'depot'])
+
         date_debut = self.request.query_params.get('date_debut')
         date_fin = self.request.query_params.get('date_fin')
         
@@ -64,11 +70,18 @@ class CaisseViewSet(viewsets.ModelViewSet):
             except ValueError: pass
             
         return queryset
+
     
     def perform_create(self, serializer):
+        # Validate Sudo mode if credentials provided
         validation_user, error_res = validate_sudo_mode(self.request)
-        user = validation_user if not error_res else self.request.user
-        
+        if error_res:
+            # We don't return here as validate_sudo_mode might return error_res 
+            # only if sudo was REQUIRED but failed. 
+            # In CaisseViewSet, sudo is usually optional unless specific 
+            # conditions are met (handled in validate_sudo_mode).
+            pass
+
         facture = serializer.validated_data.get('facture')
         mode = serializer.validated_data.get('mode_paiement')
         
@@ -91,7 +104,9 @@ class CaisseViewSet(viewsets.ModelViewSet):
                 if montant_saisi < reste:
                     serializer.validated_data['montant'] = reste
 
-        serializer.save(user=user)
+        # Note: We always use self.request.user as the 'owner' of the payment (the person at the station),
+        # even if a supervisor (validation_user) authorized the action.
+        serializer.save(user=self.request.user)
         
         instance = serializer.instance
         if instance.facture:
@@ -161,14 +176,14 @@ class CaisseViewSet(viewsets.ModelViewSet):
         # Global breakdown par mode (Ventes + Recouvrements)
         # On exclut ce qui n'est pas un flux financier réel (en_compte, depot)
         modes_globaux = transactions.exclude(mode_paiement__in=['en_compte', 'depot']).values('mode_paiement').annotate(total=Sum('montant'))
-        details = {item['mode_paiement']: float(item['total']) for item in modes_globaux}
+        details = {item['mode_paiement']: float(-item['total'] if item['mode_paiement'] == 'coupon' else item['total']) for item in modes_globaux}
         
         # Breakdown séparé pour info (optionnel mais utile pour le frontend)
         modes_ventes = paiements_sales.values('mode_paiement').annotate(total=Sum('montant'))
-        details_ventes = {item['mode_paiement']: float(item['total']) for item in modes_ventes}
+        details_ventes = {item['mode_paiement']: float(-item['total'] if item['mode_paiement'] == 'coupon' else item['total']) for item in modes_ventes}
         
         modes_recouv = paiements_recouv.values('mode_paiement').annotate(total=Sum('montant'))
-        details_recouv = {item['mode_paiement']: float(item['total']) for item in modes_recouv}
+        details_recouv = {item['mode_paiement']: float(-item['total'] if item['mode_paiement'] == 'coupon' else item['total']) for item in modes_recouv}
 
         mouvements = MouvementCaisse.objects.all()
         if start_date:
@@ -185,7 +200,7 @@ class CaisseViewSet(viewsets.ModelViewSet):
         total_entrees = moves_aggregated['entrees']
         total_sorties = moves_aggregated['sorties']
         
-        total_coupons = transactions.filter(mode_paiement='coupon').aggregate(Sum('montant'))['montant__sum'] or Decimal('0.00')
+        total_coupons = -(transactions.filter(mode_paiement='coupon').aggregate(Sum('montant'))['montant__sum'] or Decimal('0.00'))
         
         # FIX: Le total théorique (fond de caisse physique) doit inclure 
         # les ventes espèces ET les recouvrements espèces.
@@ -366,7 +381,7 @@ class CaisseViewSet(viewsets.ModelViewSet):
         total_ventes = paiements_sales.aggregate(Sum('montant'))['montant__sum'] or Decimal('0.00')
         # Global breakdown par mode (Ventes + Recouvrements)
         modes_globaux = transactions.exclude(mode_paiement__in=['en_compte', 'depot']).values('mode_paiement').annotate(total=Sum('montant'))
-        details = {item['mode_paiement']: float(item['total']) for item in modes_globaux}
+        details = {item['mode_paiement']: float(-item['total'] if item['mode_paiement'] == 'coupon' else item['total']) for item in modes_globaux}
         
         mouvements = MouvementCaisse.objects.all()
         if start_date:

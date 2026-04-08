@@ -73,9 +73,12 @@ export function validateClientCreditLimit(params: SaleCompletionParams, client: 
         }
     }
 
-    // 2. Validation du PLAFOND DE CRÉDIT (POUR TOUS les clients ayant un plafond défini)
+    // 2. Validation du PLAFOND DE CRÉDIT (POUR LES CLIENTS PROFESSIONNELS UNIQUEMENT)
     const plafond = Number(client.plafond || 0);
-    if (plafond > 0) {
+    const isPro = client.client_type === 'PROFESSIONNEL';
+    
+    // -1 = Crédit illimité. 0 = Crédit interdit.
+    if (isPro && plafond !== -1) {
         const currentDebt = Number(client.current_debt || 0);
 
         // Calculer le paiement immédiat total (Somme de tous les modes de paiement saisis)
@@ -87,10 +90,10 @@ export function validateClientCreditLimit(params: SaleCompletionParams, client: 
         const debtIncrement = Math.max(0, totals.totalTtc - totalImmediatePayment);
         const theoreticalTotalDebt = currentDebt + debtIncrement;
 
-        if (theoreticalTotalDebt > plafond) {
+        if (theoreticalTotalDebt > plafond + 0.5) { // Tolérance pour les arrondis
             return `⚠️ PLAFOND DE CRÉDIT DÉPASSÉ !\n` +
                    `Dette actuelle : ${formatNumber(Math.round(currentDebt))} F\n` +
-                   `Nouvelle dette (TTC - Payé) : ${formatNumber(Math.round(debtIncrement))} F\n` +
+                   `Nouvelle dette (Estimation) : ${formatNumber(Math.round(debtIncrement))} F\n` +
                    `Total théorique : ${formatNumber(Math.round(theoreticalTotalDebt))} F\n` +
                    `Limite autorisée (Plafond) : ${formatNumber(Math.round(plafond))} F\n\n` +
                    `La vente ne peut pas être finalisée car ce client a atteint sa limite de crédit.`;

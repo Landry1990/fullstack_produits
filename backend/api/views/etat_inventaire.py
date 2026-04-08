@@ -4,6 +4,7 @@
 Colonnes: ID, CIP1, Libellé, Stock, Prix de Vente, avec lignes par lot si multi-lots.
 """
 import io
+from datetime import datetime
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
@@ -49,6 +50,8 @@ class EtatInventairePDFView(APIView):
         # Récupérer tous les produits actifs avec leurs lots
         produits = Produit.objects.filter(is_active=True).select_related(
             'rayon', 'forme', 'groupe'
+        ).only(
+            'id', 'cip1', 'name', 'stock', 'selling_price', 'rayon', 'forme', 'groupe'
         ).prefetch_related('stock_lots').order_by('name')
         
         # Filtrer par entité spécifique si filter_id est fourni
@@ -96,7 +99,7 @@ class EtatInventairePDFView(APIView):
                         'cip1': produit.cip1 or '-',
                         'name': produit.name,
                         'lot_numero': lot.lot or '-',
-                        'stock': lot.quantity_remaining if stock_display == 'MACHINE' else 0,
+                        'stock': float(lot.quantity_remaining) if stock_display == 'MACHINE' else 0,
                         'selling_price': float(produit.selling_price) if produit.selling_price else 0,
                         'is_lot_line': True,
                     })
@@ -107,7 +110,7 @@ class EtatInventairePDFView(APIView):
                     'cip1': produit.cip1 or '-',
                     'name': produit.name,
                     'lot_numero': lots[0].lot if lots else '-',
-                    'stock': produit.stock if stock_display == 'MACHINE' else 0,
+                    'stock': float(produit.stock) if stock_display == 'MACHINE' else 0,
                     'selling_price': float(produit.selling_price) if produit.selling_price else 0,
                     'is_lot_line': False,
                 })
@@ -176,8 +179,6 @@ class EtatInventairePDFView(APIView):
         # En-tête
         group_label = {'FORME': 'FORME', 'RAYON': 'RAYON', 'GROUPE': 'GROUPE'}[group_by]
         stock_label = 'Stock Machine' if stock_display == 'MACHINE' else 'Stock à Zéro'
-        
-        from datetime import datetime
         date_str = datetime.now().strftime('%d/%m/%Y à %H:%M')
         
         # Titre avec filtre si applicable

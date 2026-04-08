@@ -60,7 +60,8 @@ export const AvoirsTable: React.FC<AvoirsTableProps> = ({
             case 'PÉRIMÉ': return t('stock:avoirs.types.perime');
             case 'CASSE':
             case 'CASSÉ': return t('stock:avoirs.types.casse');
-            case 'ERREUR_LIVRAISON': return t('stock:avoirs.types.erreur_livraison');
+            case 'ERREUR_LIVRAISON': 
+            case 'ERREUR': return t('stock:avoirs.types.erreur_livraison');
             case 'AVARIE': return t('stock:avoirs.types.avarie');
             case 'NON_FACTURE': return t('stock:avoirs.types.non_facture');
             case 'AUTRE': return t('stock:avoirs.types.autre');

@@ -5,6 +5,7 @@ import { fr } from 'date-fns/locale';
 import { useAuth } from '../context/AuthContext';
 import { useTranslation } from 'react-i18next';
 import { Calendar, RefreshCw, Package, TrendingUp, ChevronLeft, ChevronRight, FileDown, Printer } from 'lucide-react';
+import { formatCurrency } from '../utils/formatters';
 import * as XLSX from 'xlsx';
 
 interface DailyPurchase {
@@ -114,7 +115,7 @@ const HistoriqueAchats = ({ forcedType }: HistoriqueAchatsProps) => {
   };
 
   const formatMoney = (amount: number) => {
-    return new Intl.NumberFormat(i18n.language.startsWith('fr') ? 'fr-FR' : 'en-GB', { maximumFractionDigits: 0 }).format(amount);
+    return formatCurrency(amount);
   };
 
   function normalizeNumber(val: any) {

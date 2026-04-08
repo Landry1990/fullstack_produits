@@ -175,35 +175,51 @@ const CommandeDetails: React.FC<CommandeDetailsProps> = ({
             <div className="font-bold">{selectedCommande.closed_by_name}</div>
           </div>
         )}
-        <div className="col-span-2 md:col-span-1 border-l pl-4 border-base-200">
-          <div className="text-xs text-base-content/60 uppercase mb-2 font-bold">{t('orders:details.financial_summary')}</div>
-          <div className="flex flex-col gap-1.5 text-xs">
-            <div className="flex justify-between items-center">
-              <span className="text-base-content/60">{t('orders:product_table.total_ht', 'HT (Achat)')}:</span>
-              <span className="font-mono font-bold text-sm">{formatCurrency(orderTotals?.totalBuyHT || 0)}</span>
-            </div>
-            <div className="flex justify-between items-center">
-              <span className="text-base-content/60">{t('orders:product_table.total_tva', 'TVA (Vente)')}:</span>
-              <span className="font-mono font-bold text-sm text-base-content/50">{formatCurrency(orderTotals?.totalTVA || 0)}</span>
-            </div>
-            <div className="flex justify-between items-center border-t border-base-200 pt-1">
-              <span className="font-bold text-primary">{t('orders:product_table.total_ttc', 'TTC (Vente)')}:</span>
-              <span className="font-mono font-black text-primary text-base md:text-lg">{formatCurrency(orderTotals?.totalTTC || 0)}</span>
-            </div>
-            <div className="flex justify-between items-center mt-1 pt-1 border-t border-dashed border-base-300">
-               <span className="text-base-content/60">{t('orders:product_table.info_row.margin_value', 'Montant Marge')}:</span>
-               <span className={`font-mono font-bold text-sm ${Number(orderTotals?.globalMargin || 0) >= 1.34 ? 'text-success' : 'text-warning'}`}>
-                 {formatCurrency(orderTotals?.totalMarginValue || 0)}
-               </span>
-            </div>
-            <div className="flex justify-between items-center bg-base-200/50 rounded px-1.5 py-1 mt-1">
-               <span className="font-bold text-[10px] uppercase">Ratio / %:</span>
-               <span className={`font-mono font-black text-base ${Number(orderTotals?.globalMargin || 0) >= 1.34 ? 'text-success' : 'text-warning'}`}>
-                 x{orderTotals?.globalMargin || '1.0000'} ({orderTotals?.globalMarginPercent || '0'}%)
-               </span>
-            </div>
+      {/* Barre de synthèse horizontale (Style Premium) */}
+      <div className="flex flex-wrap items-center gap-x-6 gap-y-4 bg-base-100 p-4 rounded-xl border border-base-200 shadow-sm shrink-0 text-sm">
+        
+        {/* HT (Achat) */}
+        <div className="flex flex-col">
+          <span className="text-[9px] font-bold text-base-content/40 uppercase leading-none mb-1">{t('orders:product_table.total_ht', 'HT (Achat)')}</span>
+          <span className="font-mono font-bold text-base-content/80 text-base whitespace-nowrap">
+              {formatCurrency(orderTotals?.totalBuyHT || 0)}
+          </span>
+        </div>
+
+        {/* TVA */}
+        <div className="flex flex-col border-l pl-5 border-base-200">
+          <span className="text-[9px] font-bold text-base-content/40 uppercase leading-none mb-1">{t('orders:product_table.total_tva', 'TVA (Vente)')}</span>
+          <span className="font-mono font-bold text-base-content/50 whitespace-nowrap">
+              {formatCurrency(orderTotals?.totalTVA || 0)}
+          </span>
+        </div>
+
+        {/* TTC (Vente) */}
+        <div className="flex flex-col border-l pl-5 border-base-200">
+          <span className="text-[9px] font-black text-primary uppercase leading-none mb-1">{t('orders:product_table.total_ttc', 'TTC (Vente)')}</span>
+          <span className="font-mono font-black text-lg text-primary">
+              {formatCurrency(orderTotals?.totalTTC || 0)}
+          </span>
+        </div>
+
+        {/* Montant Marge */}
+        <div className="flex flex-col border-l pl-4 border-base-200">
+          <span className="text-[9px] font-bold text-base-content/40 uppercase leading-none mb-1">💰 {t('orders:product_table.info_row.margin_value', 'Montant Marge')}</span>
+          <span className={`font-mono font-bold ${Number(orderTotals?.globalMargin || 0) >= 1.34 ? 'text-success' : 'text-warning'}`}>
+              {formatCurrency(orderTotals?.totalMarginValue || 0)}
+          </span>
+        </div>
+
+        {/* Ratio / % Marge */}
+        <div className="flex flex-col border-l pl-4 border-base-200">
+          <span className="text-[9px] font-bold text-base-content/40 uppercase leading-none mb-1">📦 {t('orders:product_table.headers.margin', 'Coefficient / %')}</span>
+          <div className={`flex items-baseline gap-1 font-mono font-black ${Number(orderTotals?.globalMargin || 0) >= 1.34 ? 'text-success' : 'text-warning'}`}>
+              <span className="text-lg">x{orderTotals?.globalMargin || '1.0000'}</span>
+              <span className="text-[10px]">({orderTotals?.globalMarginPercent || '0'}%)</span>
           </div>
         </div>
+
+      </div>
       </div>
 
       {/* Récapitulatif UG */}

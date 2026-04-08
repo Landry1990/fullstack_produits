@@ -194,6 +194,7 @@ describe('Dashboard Component', () => {
             </MemoryRouter>
         );
         
+        fireEvent.click(screen.getByRole('button', { name: /Stock & Intelligence/i }));
         expect(screen.getByText(/Produit Rare/i)).toBeInTheDocument();
     });
 
@@ -204,6 +205,7 @@ describe('Dashboard Component', () => {
             </MemoryRouter>
         );
         
+        fireEvent.click(screen.getByRole('button', { name: /Stock & Intelligence/i }));
         expect(screen.getByText(/Sirop/i)).toBeInTheDocument();
     });
 
@@ -214,6 +216,7 @@ describe('Dashboard Component', () => {
             </MemoryRouter>
         );
         
+        fireEvent.click(screen.getByRole('button', { name: /Finance/i }));
         expect(screen.getByText("Fournisseur A")).toBeInTheDocument();
         expect(screen.getAllByText(/500/).length).toBeGreaterThan(0);
     });
@@ -225,6 +228,7 @@ describe('Dashboard Component', () => {
             </MemoryRouter>
         );
 
+        fireEvent.click(screen.getByRole('button', { name: /Finance/i }));
         expect(screen.getByText(/Dettes Fournisseurs/i)).toBeInTheDocument();
         expect(screen.getByText(/Pharma Distrib/)).toBeInTheDocument();
         expect(screen.getByText(/MedSupply/)).toBeInTheDocument();
@@ -237,11 +241,12 @@ describe('Dashboard Component', () => {
             </MemoryRouter>
         );
         
+        fireEvent.click(screen.getByRole('button', { name: /Stock & Intelligence/i }));
         const select = screen.getByDisplayValue(/1 MOIS/i);
         fireEvent.change(select, { target: { value: '3' } });
         
         await waitFor(() => {
-             expect(useDashboardHooks.useExpiringLots).toHaveBeenCalledWith(3);
+             expect(useDashboardHooks.useExpiringLots).toHaveBeenCalledWith(3, true);
         });
     });
 
@@ -291,6 +296,8 @@ describe('Dashboard Component', () => {
             </MemoryRouter>
         );
 
+        fireEvent.click(screen.getByRole('button', { name: /Finance/i }));
+        
         // Find the Link in the supplier debts table
         const debtLinks = screen.getAllByRole('link', { name: '' }).filter(link => 
             link.getAttribute('href') === '/app/fournisseurs'
@@ -299,9 +306,5 @@ describe('Dashboard Component', () => {
         // The first one should be Pharma Distrib from mockSupplierDebts
         const pharmaLink = debtLinks[0];
         expect(pharmaLink).toBeInTheDocument();
-        
-        // Since we can't easily check location.state with MemoryRouter in this setup 
-        // without more boilerplate, we trust the Link props or use a more advanced router mock if needed.
-        // But the component is updated to use Link with state.
     });
 });

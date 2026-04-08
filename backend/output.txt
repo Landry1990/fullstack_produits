@@ -1,0 +1,33 @@
+Order #162 - status=CLOT
+ - CommandeProduit(id=1498): RICHFER PLUS SP F/200ML | lot=None | exp=2029-01-31
+ - CommandeProduit(id=1499): SALBUTUS 2MG/5ML SOL BUV F/200ML | lot=ER435 | exp=2028-04-30
+ - CommandeProduit(id=1500): CLARICIN 500MG CPR B/10 | lot=None | exp=2028-05-31
+ - CommandeProduit(id=1501): TEGRETOL LP 400MG CPR B/30 | lot=45637 | exp=2027-04-30
+ - CommandeProduit(id=1502): ZEFLOX 400MG CPR B/10 | lot=None | exp=2027-03-31
+ - CommandeProduit(id=1503): METFORMIN DENK 850MG CPR/120 BL | lot=None | exp=2027-03-31
+ - CommandeProduit(id=1504): RIBATRAN CPR BT 20 | lot=None | exp=2027-03-31
+ - CommandeProduit(id=1505): SOMAZINA GTTE F/30ML | lot=None | exp=2027-03-31
+ - CommandeProduit(id=1506): SOMAZINA 1000MG SOL BUV SACH/10ML B/6 | lot=None | exp=2026-06-30
+ - CommandeProduit(id=1507): FER+AC FOLIQ BIOFAR CPR EFFV20 | lot=None | exp=2029-06-30
+ - CommandeProduit(id=1508): DOLOWIN PLUS 500/100MG CPR PELL SEC B/30 | lot=None | exp=2027-03-31
+ - CommandeProduit(id=1509): RENERVE PLUS GEL B/30 | lot=None | exp=2028-03-31
+ - CommandeProduit(id=1510): CA C 1000 CPR EFFV B/10 | lot=None | exp=2027-03-31
+ - CommandeProduit(id=1511): DOLIPRANE 500MG CPR EFFV B/16 | lot=None | exp=2027-03-31
+ - CommandeProduit(id=1512): ECOUTEURS SOUNDSCORE R50I | lot=None | exp=2027-03-31
+
+StockLots associated with this order:
+ - StockLot(id=1326): RICHFER PLUS SP F/200ML | lot=CMD162-1498 | qty=2
+ - StockLot(id=1328): CLARICIN 500MG CPR B/10 | lot=CMD162-1500 | qty=2
+ - StockLot(id=1329): TEGRETOL LP 400MG CPR B/30 | lot=45637 | qty=2
+ - StockLot(id=1330): ZEFLOX 400MG CPR B/10 | lot=CMD162-1502 | qty=2
+ - StockLot(id=1331): METFORMIN DENK 850MG CPR/120 BL | lot=CMD162-1503 | qty=1
+ - StockLot(id=1332): RIBATRAN CPR BT 20 | lot=CMD162-1504 | qty=1
+ - StockLot(id=1333): SOMAZINA GTTE F/30ML | lot=CMD162-1505 | qty=1
+ - StockLot(id=1334): SOMAZINA 1000MG SOL BUV SACH/10ML B/6 | lot=CMD162-1506 | qty=1
+ - StockLot(id=1335): FER+AC FOLIQ BIOFAR CPR EFFV20 | lot=CMD162-1507 | qty=1
+ - StockLot(id=1336): DOLOWIN PLUS 500/100MG CPR PELL SEC B/30 | lot=CMD162-1508 | qty=1
+ - StockLot(id=1337): RENERVE PLUS GEL B/30 | lot=CMD162-1509 | qty=3
+ - StockLot(id=1338): CA C 1000 CPR EFFV B/10 | lot=CMD162-1510 | qty=1
+ - StockLot(id=1339): DOLIPRANE 500MG CPR EFFV B/16 | lot=CMD162-1511 | qty=1
+ - StockLot(id=1340): ECOUTEURS SOUNDSCORE R50I | lot=CMD162-1512 | qty=1
+ - StockLot(id=1327): SALBUTUS 2MG/5ML SOL BUV F/200ML | lot=ER435 | qty=2

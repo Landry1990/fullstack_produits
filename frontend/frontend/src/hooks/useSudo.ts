@@ -4,11 +4,13 @@ interface SudoOptions {
     title?: string;
     message?: string;
     permission?: string;
+    onCancel?: () => void;
 }
 
 interface SudoState {
     isOpen: boolean;
     onValidate: (validatorId: number, password: string) => Promise<void>;
+    onCancel?: () => void;
     title?: string;
     message?: string;
     permission?: string;
@@ -30,8 +32,9 @@ export const useSudo = () => {
             onValidate: async (validatorId: number, password: string) => {
                 console.log("[useSudo] Validation en cours pour validatorId:", validatorId);
                 await onSuccess(validatorId, password);
-                setSudoState(prev => ({ ...prev, isOpen: false }));
+                setSudoState(prev => ({ ...prev, isOpen: false, onCancel: undefined }));
             },
+            onCancel: options?.onCancel,
             title: options?.title,
             message: options?.message,
             permission: options?.permission,
@@ -40,8 +43,11 @@ export const useSudo = () => {
 
     const closeSudo = useCallback(() => {
         console.log("[useSudo] Fermeture du Sudo");
-        setSudoState(prev => ({ ...prev, isOpen: false }));
-    }, []);
+        if (sudoState.onCancel) {
+            sudoState.onCancel();
+        }
+        setSudoState(prev => ({ ...prev, isOpen: false, onCancel: undefined }));
+    }, [sudoState.onCancel]);
 
     return {
         sudoState,

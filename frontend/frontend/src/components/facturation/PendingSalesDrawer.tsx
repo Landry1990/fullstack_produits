@@ -42,38 +42,60 @@ export default function PendingSalesDrawer({
               const totalNet = total - remiseMontant
 
               return (
-                <div key={vente.id} className="card bg-base-100 border border-base-200 shadow-sm">
-                  <div className="card-body p-4">
-                    <div className="flex justify-between items-start">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-2">
-                          <div className="badge badge-info badge-sm">#{idx + 1}</div>
-                          <span className="font-semibold">
-                            {vente.clientName || vente.manualClientName || t('pending_sales.unspecified_client')}
-                          </span>
-                        </div>
-                        <div className="text-sm text-base-content/60 space-y-1">
-                          <div>{t('pending_sales.items_count', { count: vente.lignes.length })}</div>
-                          <div className="font-medium text-primary">{formatCurrency(totalNet)}</div>
-                          <div className="text-xs opacity-50">
-                            {new Date(vente.timestamp).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
-                          </div>
-                        </div>
+                <div key={vente.id} className="group hover:bg-base-200/50 transition-all rounded-xl border border-base-200 p-2 sm:p-3 shadow-sm">
+                  <div className="flex items-center gap-3 sm:gap-4 w-full">
+                    {/* ID Badge */}
+                    <div className="badge badge-info badge-sm shrink-0 font-black">#{idx + 1}</div>
+                    
+                    {/* Client Info */}
+                    <div className="flex-1 min-w-0">
+                      <div className="font-bold text-sm truncate" title={vente.clientName || vente.manualClientName || t('pending_sales.unspecified_client')}>
+                        {vente.clientName || vente.manualClientName || t('pending_sales.unspecified_client')}
                       </div>
-                      <div className="flex flex-col gap-2">
-                        <button
-                          onClick={() => onRestore(vente.id)}
-                          className="btn btn-primary btn-sm"
-                        >
-                          {t('common:restore')}
-                        </button>
-                        <button
-                          onClick={() => onDelete(vente.id)}
-                          className="btn btn-error btn-outline btn-sm"
-                        >
-                          {t('common:delete')}
-                        </button>
+                    </div>
+
+                    {/* Stats & Time - Hidden/Stacked on mobile, row on desktop */}
+                    <div className="flex items-center gap-3 md:gap-5 shrink-0">
+                      <div className="hidden sm:flex flex-col items-end border-r border-base-200 pr-3 sm:pr-5">
+                        <span className="text-[10px] uppercase font-bold text-base-content/40 tracking-wider">
+                          {t('cart.items_count', { count: vente.lignes.length })}
+                        </span>
+                        <span className="text-xs font-medium tabular-nums opacity-60">
+                           {vente.lignes.length} art.
+                        </span>
                       </div>
+
+                      <div className="flex flex-col items-end border-r border-base-200 pr-3 sm:pr-5">
+                        <span className="text-[10px] uppercase font-bold text-base-content/40 tracking-wider font-sans">Total</span>
+                        <span className="text-sm font-black text-primary tabular-nums">
+                          {formatCurrency(totalNet)}
+                        </span>
+                      </div>
+
+                      <div className="hidden md:flex flex-col items-center">
+                        <span className="text-[10px] uppercase font-bold text-base-content/40 tracking-wider">Heure</span>
+                        <span className="text-xs font-medium opacity-40 tabular-nums">
+                          {new Date(vente.timestamp).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Actions */}
+                    <div className="flex items-center gap-1 sm:gap-2 shrink-0">
+                      <button
+                        onClick={() => onRestore(vente.id)}
+                        className="btn btn-primary btn-sm h-8 min-h-8 px-3 rounded-lg font-bold shadow-sm"
+                        title={t('common:restore')}
+                      >
+                        {t('common:restore')}
+                      </button>
+                      <button
+                        onClick={() => onDelete(vente.id)}
+                        className="btn btn-ghost btn-sm h-8 min-h-8 w-8 p-0 rounded-lg text-error hover:bg-error/10 border-none transition-colors"
+                        title={t('common:delete')}
+                      >
+                         ✕
+                      </button>
                     </div>
                   </div>
                 </div>

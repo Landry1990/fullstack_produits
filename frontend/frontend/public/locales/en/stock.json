@@ -737,7 +737,14 @@
         "filters_label": "Filters",
         "show_expired_only": "Already expired",
         "no_data": "No data available",
-        "history_print_generated": "Document generated on"
+        "history_print_generated": "Document generated on",
+        "alerts": {
+            "expired": "⛔ STOP: This product is EXPIRED since {{days}} days!",
+            "warning": "⚠️ ATTENTION: Expires in {{days}} days!",
+            "info": "ℹ️ Info: Expires in {{months}} months ({{days}} days)",
+            "click_to_close": "(Click to close)",
+            "click_to_confirm": "(Click to confirm)"
+        }
     },
     "transformations": {
         "title": "Transformations Management",

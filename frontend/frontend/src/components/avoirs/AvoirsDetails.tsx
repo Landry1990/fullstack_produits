@@ -57,7 +57,8 @@ export const AvoirsDetails: React.FC<AvoirsDetailsProps> = ({ data }) => {
             case 'PÉRIMÉ': return t('stock:avoirs.types.perime', 'Périmé');
             case 'CASSE':
             case 'CASSÉ': return t('stock:avoirs.types.casse', 'Cassé');
-            case 'ERREUR_LIVRAISON': return t('stock:avoirs.types.erreur_livraison', 'Erreur Livraison');
+            case 'ERREUR_LIVRAISON': 
+            case 'ERREUR': return t('stock:avoirs.types.erreur_livraison', 'Erreur Livraison');
             case 'AVARIE': return t('stock:avoirs.types.avarie', 'Avarie');
             case 'NON_FACTURE': return t('stock:avoirs.types.non_facture', 'Non Facturé');
             case 'AUTRE': return t('stock:avoirs.types.autre', 'Autre');
@@ -161,28 +162,26 @@ export const AvoirsDetails: React.FC<AvoirsDetailsProps> = ({ data }) => {
                         </div>
                     </div>
 
-                    {/* Summary Card */}
-                    <div className="bg-base-100 rounded-2xl shadow-sm border border-base-300 p-5">
-                        <h2 className="text-sm font-bold text-base-content/50 uppercase tracking-widest mb-4">
-                            {t('stock:avoirs.details.financial_summary')}
-                        </h2>
-                        <div className="space-y-3">
-                            <div className="flex justify-between items-center py-2 border-b border-base-200/50">
-                                <span className="text-base-content/70">{t('stock:avoirs.details.items_count')}</span>
-                                <span className="font-bold">{selectedAvoir.produits?.length || 0}</span>
-                            </div>
-                            <div className="flex justify-between items-center py-2 border-b border-base-200/50">
-                                <span className="text-base-content/70">{t('stock:avoirs.details.total_qty')}</span>
-                                <span className="font-bold">
-                                    {selectedAvoir.produits?.reduce((sum, p) => sum + Number(p.quantity || 0), 0)}
-                                </span>
-                            </div>
-                            <div className="flex justify-between items-center pt-2">
-                                <span className="text-base font-bold">{t('stock:avoirs.details.total_ht')}</span>
-                                <span className="text-2xl font-black text-primary font-mono tracking-tight">
-                                    {formatCurrency(Number(selectedAvoir.total_ht) || 0)}
-                                </span>
-                            </div>
+                    <div className="lg:col-span-3 bg-base-100 rounded-2xl shadow-sm border border-base-300 p-4 flex flex-wrap items-center gap-x-8 gap-y-4 text-sm">
+                        <div className="flex flex-col">
+                            <span className="text-[9px] font-bold text-base-content/40 uppercase leading-none mb-1">{t('stock:avoirs.details.items_count')}</span>
+                            <span className="font-mono font-bold text-base-content/80 text-base whitespace-nowrap">
+                                {selectedAvoir.produits?.length || 0}
+                            </span>
+                        </div>
+                        
+                        <div className="flex flex-col border-l pl-5 border-base-200">
+                            <span className="text-[9px] font-bold text-base-content/40 uppercase leading-none mb-1">{t('stock:avoirs.details.total_qty')}</span>
+                            <span className="font-mono font-bold text-base-content/80 text-base whitespace-nowrap">
+                                {selectedAvoir.produits?.reduce((sum, p) => sum + Number(p.quantity || 0), 0)}
+                            </span>
+                        </div>
+
+                        <div className="flex flex-col border-l pl-5 border-base-200">
+                            <span className="text-[9px] font-black text-primary uppercase leading-none mb-1">{t('stock:avoirs.details.total_ht')}</span>
+                            <span className="font-mono font-black text-2xl text-primary leading-none whitespace-nowrap">
+                                {formatCurrency(Number(selectedAvoir.total_ht) || 0)}
+                            </span>
                         </div>
                     </div>
                 </div>

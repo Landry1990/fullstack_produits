@@ -49,6 +49,10 @@ export function useFacturationState() {
   const [pointsToUse, setPointsToUse] = useState(0)
   const [usePendingDiscount, setUsePendingDiscount] = useState(false)
   const [centralizedCashRegister, setCentralizedCashRegister] = useState<boolean>(true)
+  const [refreshTrigger, setRefreshTrigger] = useState(0)
+  const triggerUiRefresh = useCallback(() => {
+    setRefreshTrigger(prev => prev + 1)
+  }, [])
   const [showHelp, setShowHelp] = useState(false)
 
   const apiBaseUrl = useMemo(() => {
@@ -85,12 +89,13 @@ export function useFacturationState() {
           cart.updateQuantite(produitId, newQty);
       }, {
           title: t('facturation:payment.sudo_mode.validate_by'),
-          message: `Confirmer la quantité ${newQty} pour le produit ${currentLine?.produit.name ?? ''} ?`
+          message: `Confirmer la quantité ${newQty} pour le produit ${currentLine?.produit.name ?? ''} ?`,
+          onCancel: triggerUiRefresh
       });
     } else {
       cart.updateQuantite(produitId, newQty);
     }
-  }, [cart.updateQuantite, cart.lignesFacture, requireSudo, t]);
+  }, [cart.updateQuantite, cart.lignesFacture, requireSudo, t, triggerUiRefresh]);
 
   const secureUpdatePrix = useCallback((produitId: number, newPrice: string) => {
     const currentLine = cart.lignesFacture.find((l: any) => l.produit.id === produitId);
@@ -101,12 +106,13 @@ export function useFacturationState() {
           cart.updatePrix(produitId, newPrice);
       }, {
           title: t('facturation:payment.sudo_mode.validate_by'),
-          message: `Confirmer le changement de prix de ${currentLine.prix_unitaire} à ${newPrice} pour ${currentLine.produit.name} ?`
+          message: `Confirmer le changement de prix de ${currentLine.prix_unitaire} à ${newPrice} pour ${currentLine.produit.name} ?`,
+          onCancel: triggerUiRefresh
       });
     } else {
       cart.updatePrix(produitId, newPrice);
     }
-  }, [cart.updatePrix, cart.lignesFacture, requireSudo, t]);
+  }, [cart.updatePrix, cart.lignesFacture, requireSudo, t, triggerUiRefresh]);
 
   const secureUpdateRemiseProduit = useCallback((produitId: number, newRemise: string) => {
     const currentLine = cart.lignesFacture.find((l: any) => l.produit.id === produitId);
@@ -117,12 +123,13 @@ export function useFacturationState() {
           cart.updateRemiseProduit(produitId, newRemise);
       }, {
           title: t('facturation:payment.sudo_mode.validate_by'),
-          message: `Confirmer une remise de ${newRemise}% sur le produit ${currentLine.produit.name} ?`
+          message: `Confirmer une remise de ${newRemise}% sur le produit ${currentLine.produit.name} ?`,
+          onCancel: triggerUiRefresh
       });
     } else {
       cart.updateRemiseProduit(produitId, newRemise);
     }
-  }, [cart.updateRemiseProduit, cart.lignesFacture, requireSudo, t]);
+  }, [cart.updateRemiseProduit, cart.lignesFacture, requireSudo, t, triggerUiRefresh]);
 
   const { alerts: clinicalAlerts } = useClinicalCheck(cart.lignesFacture)
   
@@ -607,9 +614,21 @@ export function useFacturationState() {
           }
           ui.setShowStockResolution(true)
       } else {
-          const montantInitial = (totals.tauxCouverture > 0) ? totals.partPatient : totals.totalTtc
-          ui.setMontantPaye(montantInitial.toString())
-          ui.openPaymentModal()
+          const totalTtc = totals.totalTtc;
+          
+          if (totalTtc <= 0) {
+              // Enforce sudo for non-positive sales
+              requireSudo(async (validatorId, password) => {
+                  await handleCompleteSale({ validatorId, password });
+              }, {
+                  title: t('facturation:payment.sudo_mode.validate_by'),
+                  message: `Cette vente avec un total de ${totalTtc} F nécessite l'autorisation d'un superviseur.`
+              });
+          } else {
+              const montantInitial = (totals.tauxCouverture > 0) ? totals.partPatient : totalTtc;
+              ui.setMontantPaye(montantInitial.toString());
+              ui.openPaymentModal();
+          }
       }
   }
 
@@ -1135,6 +1154,7 @@ export function useFacturationState() {
     loading: loading || saleLoading,
     error, setError,
     successInfo, setSuccessInfo,
+    refreshTrigger,
     showClientNameModal, setShowClientNameModal,
     pendingPrintFacture, setPendingPrintFacture,
     showHelp, setShowHelp,
