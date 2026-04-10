@@ -680,7 +680,7 @@ export function useCentreRapports() {
         let data: Record<string, string | number | boolean>[] = [];
 
         if (Array.isArray(results) && results.length > 0) {
-            const columns = Object.keys(results[0]).filter(k => !k.startsWith('_') && k !== 'id').slice(0, 8);
+            const columns = Object.keys(results[0]).filter(k => !k.startsWith('_') && k !== 'id').slice(0, 20);
             data = (results as Record<string, unknown>[]).map(row => {
                 const obj: Record<string, string | number | boolean> = {};
                 columns.forEach(col => {

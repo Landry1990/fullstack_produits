@@ -16,6 +16,7 @@ interface StockIntelligenceProps {
   expirationMonths: number;
   setExpirationMonths: (val: number) => void;
   getServerDate: () => Date;
+  reapproStats?: { product_count: number; total_units_suggested: number };
   t: any;
   formatCurrencyLocal: (val: number) => string;
 }
@@ -28,6 +29,7 @@ export default function StockIntelligence({
   expirationMonths,
   setExpirationMonths,
   getServerDate,
+  reapproStats,
   t,
   formatCurrencyLocal
 }: StockIntelligenceProps) {
@@ -157,6 +159,54 @@ export default function StockIntelligence({
               <div className="mt-4 shrink-0">
                 <Link to="/app/promis" className="btn btn-sm btn-ghost w-full text-emerald-700 bg-emerald-100 hover:bg-emerald-200 border-none font-black text-[10px] uppercase tracking-widest">
                   {t('alerts.deliver_promis')}
+                </Link>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Reappro Rayon Alert */}
+        {reapproStats && reapproStats.product_count > 0 && (
+          <div className="card bg-blue-50 shadow-sm border border-blue-100 rounded-2xl overflow-hidden h-full flex flex-col">
+            <div className="card-body p-6 flex flex-col h-full">
+              <div 
+                className="flex items-center justify-between mb-4 cursor-pointer hover:opacity-80 transition-opacity shrink-0"
+                onClick={() => navigate('/app/reappro-rayon')}
+              >
+                <div className="flex items-center gap-2">
+                  <div className="p-2 bg-blue-100 text-blue-600 rounded-lg">
+                    <Package className="w-5 h-5" />
+                  </div>
+                  <h2 className="text-sm font-black text-blue-800 tracking-tight uppercase">Réappro Rayon</h2>
+                </div>
+                <span className="bg-blue-600 text-white px-2.5 py-1 rounded-lg text-xs font-black animate-bounce">
+                  {reapproStats.product_count}
+                </span>
+              </div>
+              
+              <div className="flex-grow flex flex-col items-center justify-center p-4 text-center">
+                <div className="w-20 h-20 bg-blue-100/50 rounded-full flex items-center justify-center mb-4 border-4 border-white shadow-inner">
+                  <Package className="w-10 h-10 text-blue-500" />
+                </div>
+                <p className="text-sm font-bold text-blue-900 leading-tight">
+                  {reapproStats.product_count} produits en attente de transfert
+                </p>
+                <p className="text-[10px] text-blue-700/60 font-medium mt-1">
+                  Le niveau en rayon est passé sous le seuil critique
+                </p>
+                
+                {reapproStats.total_units_suggested > 0 && (
+                  <div className="mt-4 px-4 py-2 bg-blue-100/30 rounded-xl border border-blue-100/50">
+                    <span className="text-[10px] font-black uppercase tracking-widest text-blue-600 block">Suggestion totale</span>
+                    <span className="text-lg font-black text-blue-800">+{reapproStats.total_units_suggested} <small className="text-xs">unités</small></span>
+                  </div>
+                )}
+              </div>
+              
+              <div className="mt-4 shrink-0">
+                <Link to="/app/reappro-rayon" className="btn btn-sm btn-block btn-primary bg-blue-600 hover:bg-blue-700 border-none font-black text-[10px] uppercase tracking-widest gap-2">
+                  Aller au menu réappro
+                  <ArrowRight className="w-3.5 h-3.5" />
                 </Link>
               </div>
             </div>

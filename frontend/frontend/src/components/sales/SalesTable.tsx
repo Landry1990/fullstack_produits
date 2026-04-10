@@ -6,6 +6,7 @@ import { formatCurrency, normalizeNumberInput } from '../../utils/formatters';
 import { formatDate, formatTime } from '../../utils/dateUtils';
 import ActionIcon from '../ui/ActionIcon';
 import SelectionHeader from '../ui/SelectionHeader';
+import { Checkbox } from '../ui/Checkbox';
 
 interface SalesTableProps {
     factures: Facture[];
@@ -56,8 +57,8 @@ export const SalesTable: React.FC<SalesTableProps> = ({
         }
     };
 
-    const handleSelectAll = (e: React.ChangeEvent<HTMLInputElement>) => {
-        if (e.target.checked) {
+    const handleSelectAll = (checked: boolean) => {
+        if (checked) {
             setSelectedIds(factures.map(f => f.id));
         } else {
             setSelectedIds([]);

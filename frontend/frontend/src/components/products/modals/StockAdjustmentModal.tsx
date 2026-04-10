@@ -8,7 +8,7 @@ interface StockAdjustmentModalProps {
   onClose: () => void;
   onSubmit: (e: React.FormEvent) => void;
   selectedProduit: ProduitModel | null;
-  form: { new_quantity: string; reason_type: string };
+  form: { new_quantity: string; new_reserve_quantity: string; reason_type: string };
   setForm: (form: any) => void;
 }
 
@@ -41,7 +41,11 @@ export const StockAdjustmentModal: React.FC<StockAdjustmentModalProps> = ({
         
         <div className="space-y-4">
           <label className="form-control w-full">
-            <div className="label"><span className="label-text font-bold">{t('products:adjustment.new_quantity')}</span></div>
+            <div className="label">
+              <span className="label-text font-bold">
+                {selectedProduit?.has_reserve_storage ? "Nouveau Stock Rayon" : t('products:adjustment.new_quantity')}
+              </span>
+            </div>
             <input
               type="number"
               className="input input-bordered w-full text-center text-xl font-bold focus:input-primary"
@@ -62,6 +66,31 @@ export const StockAdjustmentModal: React.FC<StockAdjustmentModalProps> = ({
               </div>
             )}
           </label>
+
+          {selectedProduit?.has_reserve_storage && (
+            <label className="form-control w-full">
+              <div className="label"><span className="label-text font-bold">Nouveau Stock Réserve</span></div>
+              <input
+                type="number"
+                className="input input-bordered w-full text-center text-xl font-bold focus:input-secondary border-secondary/30"
+                value={form.new_reserve_quantity}
+                onChange={(e) => setForm((prev: any) => ({ ...prev, new_reserve_quantity: e.target.value }))}
+                required
+                min={0}
+              />
+              {form.new_reserve_quantity && (
+                <div className="mt-2 text-center">
+                  <span className={`badge badge-sm font-bold ${
+                    parseInt(form.new_reserve_quantity) > (selectedProduit.stock_reserve || 0) ? 'badge-success' : 
+                    parseInt(form.new_reserve_quantity) < (selectedProduit.stock_reserve || 0) ? 'badge-error' : 'badge-ghost'
+                  }`}>
+                    {t('products:adjustment.difference')} {parseInt(form.new_reserve_quantity) - (selectedProduit.stock_reserve || 0) > 0 ? '+' : ''}
+                    {parseInt(form.new_reserve_quantity) - (selectedProduit.stock_reserve || 0)}
+                  </span>
+                </div>
+              )}
+            </label>
+          )}
           
           <label className="form-control w-full">
             <div className="label"><span className="label-text font-bold">{t('products:adjustment.reason_type')}</span></div>

@@ -12,7 +12,8 @@ from .models import (
     Ordonnancier, LigneOrdonnancier, PharmacySettings, CouponMonnaie,
     Groupe, SmsLog, SmsTemplate, PaiementFournisseur, ConfigurationOption,
     Promotion, PromotionPackItem, ObjectifCommercial, ConfigurationObjectifs, TVA,
-    WhatsAppLog, RuptureFournisseur, DepotClient, InternalMessage, MessageTemplate
+    WhatsAppLog, RuptureFournisseur, DepotClient, InternalMessage, MessageTemplate,
+    ReapproSession
 )
 from .services import PromotionService
 from .pdf_utils import number_to_french
@@ -518,7 +519,7 @@ class CommandeProduitSerializer(serializers.ModelSerializer):
         return "Produit inconnu (supprimé)"
 
     def get_produit_stock(self, obj):
-        return obj.produit.stock if obj.produit else 0
+        return obj.produit.total_stock if obj.produit else 0
 
     def get_produit_rotation_moyenne(self, obj):
         return obj.produit.rotation_moyenne if obj.produit else "0"
@@ -1116,6 +1117,7 @@ class StockAdjustmentSerializer(serializers.ModelSerializer):
             'stock_lot', 'lot_number',
             'user', 'user_name', 'username',
             'quantity_before', 'quantity_after', 'quantity_change',
+            'reserve_before', 'reserve_after', 'reserve_change',
             'valorisation',
             'reason_type', 'reason_type_display', 'reason_detail',
             'created_at'
@@ -1442,3 +1444,20 @@ class MessageTemplateSerializer(serializers.ModelSerializer):
         model = MessageTemplate
         fields = '__all__'
         read_only_fields = ['created_by', 'created_at']
+
+class ReapproAdjustmentSerializer(serializers.ModelSerializer):
+    produit_name = serializers.CharField(source='produit.name', read_only=True)
+    lot_num = serializers.CharField(source='stock_lot.lot', read_only=True)
+    expiry = serializers.DateField(source='stock_lot.date_expiration', read_only=True)
+    
+    class Meta:
+        model = StockAdjustment
+        fields = ['id', 'produit', 'produit_name', 'lot_num', 'expiry', 'quantity_change']
+
+class ReapproSessionSerializer(serializers.ModelSerializer):
+    user_name = serializers.CharField(source='user.get_full_name', read_only=True)
+    adjustments = ReapproAdjustmentSerializer(many=True, read_only=True)
+    
+    class Meta:
+        model = ReapproSession
+        fields = ['id', 'user', 'user_name', 'total_products', 'total_units', 'created_at', 'notes', 'adjustments']

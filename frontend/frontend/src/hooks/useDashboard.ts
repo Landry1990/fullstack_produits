@@ -16,6 +16,9 @@ const ugStatsEndpoint = apiBaseUrl
 const promisEndpoint = apiBaseUrl
     ? `${String(apiBaseUrl).replace(/\/$/, '')}/api/promis/disponibles/`
     : '/api/promis/disponibles/';
+const reapproEndpoint = apiBaseUrl
+    ? `${String(apiBaseUrl).replace(/\/$/, '')}/api/produits/reappro_summary/`
+    : '/api/produits/reappro_summary/';
 
 interface DashboardStats {
     role?: 'PHARMACIEN' | 'VENDEUR' | 'CAISSIER';
@@ -269,5 +272,18 @@ export const useCurrentObjectifs = () => {
         },
         staleTime: 1000 * 60,
         refetchInterval: 1000 * 60 * 5, // Auto-update every 5 minutes
+    });
+};
+
+export const useReapproStats = (enabled: boolean = true) => {
+    return useQuery({
+        queryKey: ['dashboard', 'reappro_stats'],
+        queryFn: async () => {
+            const response = await axios.get<{ product_count: number; total_units_suggested: number }>(reapproEndpoint);
+            return response.data;
+        },
+        enabled,
+        staleTime: 1000 * 60 * 2, // 2 minutes
+        refetchInterval: enabled ? 1000 * 60 * 2 : false,
     });
 };

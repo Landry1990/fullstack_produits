@@ -110,6 +110,7 @@ export const useUpdateProduit = () => {
         onSuccess: (updatedProduit) => {
             queryClient.setQueryData(['produit', updatedProduit.id], updatedProduit);
             queryClient.invalidateQueries({ queryKey: ['produits'] });
+            queryClient.invalidateQueries({ queryKey: ['produit-lots', updatedProduit.id] });
         },
     });
 };
@@ -137,12 +138,14 @@ export const useDeleteProduit = () => {
 export const useAdjustStock = () => {
     const queryClient = useQueryClient();
     return useMutation({
-        mutationFn: ({ id, quantity, reason }: { id: number; quantity: number; reason: string }) =>
-            produitService.adjustStock(id, quantity, reason),
+        mutationFn: ({ id, quantity, reason, newReserveQuantity }: { id: number; quantity?: number; reason?: string; newReserveQuantity?: number }) =>
+            produitService.adjustStock(id, quantity, reason, newReserveQuantity),
         onSuccess: (_, variables) => {
             queryClient.invalidateQueries({ queryKey: ['produit', variables.id] });
             queryClient.invalidateQueries({ queryKey: ['produits'] });
             queryClient.invalidateQueries({ queryKey: ['produit-adjustments', variables.id] });
+            queryClient.invalidateQueries({ queryKey: ['produit-lots', variables.id] });
+            queryClient.invalidateQueries({ queryKey: ['produit-history', variables.id] });
         }
     });
 };

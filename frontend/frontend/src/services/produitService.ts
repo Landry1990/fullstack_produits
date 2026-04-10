@@ -17,6 +17,8 @@ export interface ProduitFilters {
     include_inactive?: boolean;
     page_size?: number;
     dormant_months?: number;
+    needs_reappro?: boolean;
+    has_reserve_storage?: boolean;
 }
 
 export interface ProduitsResponse {
@@ -44,6 +46,8 @@ const produitService = {
         if (filters.fournisseur) params.append('fournisseur', filters.fournisseur);
         if (filters.include_inactive) params.append('include_inactive', 'true');
         if (filters.dormant_months) params.append('dormant_months', filters.dormant_months.toString());
+        if (filters.needs_reappro) params.append('needs_reappro', 'true');
+        if (filters.has_reserve_storage !== undefined) params.append('has_reserve_storage', filters.has_reserve_storage.toString());
 
         const response = await api.get<ProduitsResponse | ProduitModel[]>('produits/', { params });
 
@@ -94,7 +98,7 @@ const produitService = {
     getLots: async (produitId: number): Promise<StockLot[]> => {
         const response = await api.get<StockLot[] | { results: StockLot[] }>(
             'stock-lots/',
-            { params: { produit: produitId, ordering: 'date_expiration' } }
+            { params: { produit: produitId, ordering: 'date_expiration', include_empty: 'true' } }
         );
         return Array.isArray(response.data) ? response.data : (response.data.results || []);
     },
@@ -131,9 +135,10 @@ const produitService = {
         await api.delete(`produits/${id}/`);
     },
 
-    adjustStock: async (id: number, quantity: number, reason: string): Promise<ProduitModel> => {
+    adjustStock: async (id: number, quantity?: number, reason?: string, newReserveQuantity?: number): Promise<ProduitModel> => {
         const response = await api.post<ProduitModel>(`produits/${id}/adjust_stock/`, {
             new_quantity: quantity,
+            new_reserve_quantity: newReserveQuantity,
             reason_type: reason
         });
         return response.data;
@@ -160,6 +165,32 @@ const produitService = {
 
     bulkRefresh: async (ids: number[]): Promise<ProduitModel[]> => {
         const response = await api.post<ProduitModel[]>('produits/bulk_refresh/', { ids });
+        return response.data;
+    },
+
+    getReapproSummary: async (): Promise<{ product_count: number; total_units_suggested: number }> => {
+        const response = await api.get<{ product_count: number; total_units_suggested: number }>('produits/reappro_summary/');
+        return response.data;
+    },
+
+    bulkTransferToShelf: async (productIds: number[], sudoCreds?: { validated_by_id: number; sudo_password: string }): Promise<any> => {
+        const payload = {
+            product_ids: productIds,
+            ...(sudoCreds || {})
+        };
+        const response = await api.post('produits/bulk_transfer_to_shelf/', payload);
+        return response.data;
+    },
+
+    getReapproHistory: async (): Promise<any[]> => {
+        const response = await api.get('reappro-sessions/');
+        return response.data;
+    },
+
+    getReapproSessionPdf: async (sessionId: number): Promise<Blob> => {
+        const response = await api.get(`reappro-sessions/${sessionId}/generate_pdf/`, {
+            responseType: 'blob'
+        });
         return response.data;
     }
 };

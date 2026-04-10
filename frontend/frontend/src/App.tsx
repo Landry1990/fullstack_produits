@@ -24,6 +24,7 @@ import RapportMensuel from './components/RapportMensuel'
 import Transformations from './components/Transformations'
 // import InvoiceSettings from './components/InvoiceSettings' (removed)
 import ReapproRayon from './components/stock/ReapproRayon'
+import ReapproHistory from './components/stock/ReapproHistory'
 import Ruptures from './components/stock/Ruptures'
 
 import JournalAudit from './components/JournalAudit'
@@ -54,6 +55,7 @@ import PharmacySettingsForm from './components/settings/PharmacySettingsForm'
 import ConfigurationOptions from './components/settings/ConfigurationOptions'
 import Maintenance from './components/Maintenance'
 import { useAutoLogout } from './hooks/useAutoLogout';
+import { PermissionRoute } from './components/auth/PermissionRoute';
 
 const ProtectedRoute = () => {
   const { isAuthenticated, loading } = useAuth();
@@ -125,64 +127,416 @@ const router = createBrowserRouter([
           { index: true, element: <HomeRedirector /> },
           { 
             path: 'dashboard', 
-            element: <Dashboard />
+            element: (
+              <PermissionRoute permission="dashboard">
+                <Dashboard />
+              </PermissionRoute>
+            )
           },
           { 
             path: 'manager-dashboard', 
-            element: <DashboardManager />
+            element: (
+              <PermissionRoute permission="manager_sidebar">
+                <DashboardManager />
+              </PermissionRoute>
+            )
           },
-          { path: 'produits', element: <Produit /> },
-          { path: 'commandes', element: <Commandes /> },
-          { path: 'commandes/locales', element: <Commandes forcedType="LOC" /> },
-          { path: 'commandes/directes', element: <Commandes forcedType="DIR" /> },
+          { 
+            path: 'produits', 
+            element: (
+              <PermissionRoute permission="produits">
+                <Produit />
+              </PermissionRoute>
+            )
+          },
+          { 
+            path: 'commandes', 
+            element: (
+              <PermissionRoute permission={['commandes', 'commandes_loc', 'commandes_dir']}>
+                <Commandes />
+              </PermissionRoute>
+            )
+          },
+          { 
+            path: 'commandes/locales', 
+            element: (
+              <PermissionRoute permission={['commandes', 'commandes_loc']}>
+                <Commandes forcedType="LOC" />
+              </PermissionRoute>
+            )
+          },
+          { 
+            path: 'commandes/directes', 
+            element: (
+              <PermissionRoute permission={['commandes', 'commandes_dir']}>
+                <Commandes forcedType="DIR" />
+              </PermissionRoute>
+            )
+          },
           
-          { path: 'ventes', element: <Ventes /> },
-          { path: 'fournisseurs', element: <Fournisseurs /> },
-          { path: 'clients', element: <Clients /> },
-           { path: 'inventaire', element: <Inventaire /> },
-           { path: 'organisation', element: <Organisation /> },
-           { path: 'rayons', element: <Organisation defaultTab="rayons" /> },
-           { path: 'formes', element: <Organisation defaultTab="formes" /> },
-           { path: 'groupes', element: <Organisation defaultTab="groupes" /> },
-           { path: 'facturation', element: <Facturation /> },
-          { path: 'caisse-centralisee', element: <CaisseCentralisee /> },
-          { path: 'statistiques-fournisseurs', element: <StatistiquesFournisseur /> },
-          { path: 'journal-caisse', element: <JournalCaisse /> },
-          { path: 'historique-clotures', element: <HistoriqueClotures /> },
-          { path: 'perimes', element: <Perimes /> },
-          { path: 'creances', element: <Creances /> },
-          { path: 'avoirs', element: <Avoirs /> },
-          { path: 'promis', element: <Promis /> },
-          { path: 'stock-analysis', element: <StockAnalysis /> },
-          { path: 'ruptures', element: <Ruptures /> },
-          { path: 'reappro-rayon', element: <ReapproRayon /> },
-          { path: 'rapport-ug', element: <StockUGReport /> },
-          { path: 'etats-inventaire', element: <EtatsInventaire /> },
-          { path: 'vitrine', element: <Vitrine /> },
-          { path: 'journal-ajustements', element: <JournalAjustements /> },
-          { path: 'transformations', element: <Transformations /> },
-          { path: 'rapports-mensuels', element: <RapportMensuel /> },
-          { path: 'centre-rapports', element: <CentreRapports /> },
-          { path: 'analyse-abc', element: <AnalyseABC /> },
-          { path: 'module-financier', element: <ModuleFinancier /> },
-          { path: 'classement-vendeurs', element: <ClassementVendeurs /> },
-          { path: 'analyse-temporelle', element: <AnalyseTemporelle /> },
-          { path: 'promotions', element: <PromotionList /> },
-          { path: 'guide-financier', element: <GuideFinancier /> },
-          { path: 'historique-ventes', element: <HistoriqueVentes /> },
-          { path: 'ordonnancier', element: <OrdonnancierPage /> },
-          { path: 'whatsapp-history', element: <WhatsAppHistory /> },
-          { path: 'aide-formation', element: <HelpTraining /> },
+          { 
+            path: 'ventes', 
+            element: (
+              <PermissionRoute permission="ventes_consultation">
+                <Ventes />
+              </PermissionRoute>
+            )
+          },
+          { 
+            path: 'fournisseurs', 
+            element: (
+              <PermissionRoute permission="fournisseurs">
+                <Fournisseurs />
+              </PermissionRoute>
+            )
+          },
+          { 
+            path: 'clients', 
+            element: (
+              <PermissionRoute permission="clients">
+                <Clients />
+              </PermissionRoute>
+            )
+          },
+           { 
+            path: 'inventaire', 
+            element: (
+              <PermissionRoute permission={['inventaire', 'inventaire_saisie']}>
+                <Inventaire />
+              </PermissionRoute>
+            )
+          },
+          { 
+            path: 'organisation', 
+            element: (
+              <PermissionRoute permission={['inventaire', 'inventaire_organisation']}>
+                <Organisation />
+              </PermissionRoute>
+            )
+          },
+          { 
+            path: 'rayons', 
+            element: (
+              <PermissionRoute permission={['inventaire', 'inventaire_organisation']}>
+                <Organisation defaultTab="rayons" />
+              </PermissionRoute>
+            )
+          },
+          { 
+            path: 'formes', 
+            element: (
+              <PermissionRoute permission={['inventaire', 'inventaire_organisation']}>
+                <Organisation defaultTab="formes" />
+              </PermissionRoute>
+            )
+          },
+          { 
+            path: 'groupes', 
+            element: (
+              <PermissionRoute permission={['inventaire', 'inventaire_organisation']}>
+                <Organisation defaultTab="groupes" />
+              </PermissionRoute>
+            )
+          },
+           { 
+            path: 'facturation', 
+            element: (
+              <PermissionRoute permission="facturation">
+                <Facturation />
+              </PermissionRoute>
+            )
+          },
+          { 
+            path: 'caisse-centralisee', 
+            element: (
+              <PermissionRoute permission="caisse">
+                <CaisseCentralisee />
+              </PermissionRoute>
+            )
+          },
+          { 
+            path: 'statistiques-fournisseurs', 
+            element: (
+              <PermissionRoute permission="statistiques_fournisseurs">
+                <StatistiquesFournisseur />
+              </PermissionRoute>
+            )
+          },
+          { 
+            path: 'journal-caisse', 
+            element: (
+              <PermissionRoute permission="ventes_journal">
+                <JournalCaisse />
+              </PermissionRoute>
+            )
+          },
+          { 
+            path: 'historique-clotures', 
+            element: (
+              <PermissionRoute permission="ventes_clotures">
+                <HistoriqueClotures />
+              </PermissionRoute>
+            )
+          },
+          { 
+            path: 'perimes', 
+            element: (
+              <PermissionRoute permission={['inventaire', 'inventaire_perimes', 'perimes']}>
+                <Perimes />
+              </PermissionRoute>
+            )
+          },
+          { 
+            path: 'creances', 
+            element: (
+              <PermissionRoute permission="creances">
+                <Creances />
+              </PermissionRoute>
+            )
+          },
+          { 
+            path: 'avoirs', 
+            element: (
+              <PermissionRoute permission={['inventaire', 'inventaire_avoirs', 'avoirs']}>
+                <Avoirs />
+              </PermissionRoute>
+            )
+          },
+          { 
+            path: 'promis', 
+            element: (
+              <PermissionRoute permission={['inventaire', 'inventaire_promis', 'promis']}>
+                <Promis />
+              </PermissionRoute>
+            )
+          },
+          { 
+            path: 'stock-analysis', 
+            element: (
+              <PermissionRoute permission={['inventaire', 'inventaire_analyse']}>
+                <StockAnalysis />
+              </PermissionRoute>
+            )
+          },
+          { 
+            path: 'ruptures', 
+            element: (
+              <PermissionRoute permission={['inventaire', 'inventaire_ruptures']}>
+                <Ruptures />
+              </PermissionRoute>
+            )
+          },
+          { 
+            path: 'reappro-rayon', 
+            element: (
+              <PermissionRoute permission={['inventaire', 'inventaire_reappro']}>
+                <ReapproRayon />
+              </PermissionRoute>
+            )
+          },
+          { 
+            path: 'reappro-history', 
+            element: (
+              <PermissionRoute permission={['inventaire', 'inventaire_reappro']}>
+                <ReapproHistory />
+              </PermissionRoute>
+            )
+          },
+          { 
+            path: 'rapport-ug', 
+            element: (
+              <PermissionRoute permission={['inventaire', 'inventaire_rapport_ug']}>
+                <StockUGReport />
+              </PermissionRoute>
+            )
+          },
+          { 
+            path: 'etats-inventaire', 
+            element: (
+              <PermissionRoute permission={['inventaire', 'inventaire_etats']}>
+                <EtatsInventaire />
+              </PermissionRoute>
+            )
+          },
+          { 
+            path: 'vitrine', 
+            element: (
+              <PermissionRoute permission="vitrine">
+                <Vitrine />
+              </PermissionRoute>
+            )
+          },
+          { 
+            path: 'journal-ajustements', 
+            element: (
+              <PermissionRoute permission={['inventaire', 'inventaire_journal']}>
+                <JournalAjustements />
+              </PermissionRoute>
+            )
+          },
+          { 
+            path: 'transformations', 
+            element: (
+              <PermissionRoute permission={['inventaire', 'inventaire_transformations']}>
+                <Transformations />
+              </PermissionRoute>
+            )
+          },
+          { 
+            path: 'rapports-mensuels', 
+            element: (
+              <PermissionRoute permission="statistiques_mensuels">
+                <RapportMensuel />
+              </PermissionRoute>
+            )
+          },
+          { 
+            path: 'centre-rapports', 
+            element: (
+              <PermissionRoute permission="statistiques_rapports">
+                <CentreRapports />
+              </PermissionRoute>
+            )
+          },
+          { 
+            path: 'analyse-abc', 
+            element: (
+              <PermissionRoute permission="statistiques_abc">
+                <AnalyseABC />
+              </PermissionRoute>
+            )
+          },
+          { 
+            path: 'module-financier', 
+            element: (
+              <PermissionRoute permission="statistiques_finances">
+                <ModuleFinancier />
+              </PermissionRoute>
+            )
+          },
+          { 
+            path: 'classement-vendeurs', 
+            element: (
+              <PermissionRoute permission="statistiques_vendeurs">
+                <ClassementVendeurs />
+              </PermissionRoute>
+            )
+          },
+          { 
+            path: 'analyse-temporelle', 
+            element: (
+              <PermissionRoute permission="statistiques_temporelle">
+                <AnalyseTemporelle />
+              </PermissionRoute>
+            )
+          },
+          { 
+            path: 'promotions', 
+            element: (
+              <PermissionRoute permission="ventes_promotions">
+                <PromotionList />
+              </PermissionRoute>
+            )
+          },
+          { 
+            path: 'guide-financier', 
+            element: (
+              <PermissionRoute permission="statistiques_guide">
+                <GuideFinancier />
+              </PermissionRoute>
+            )
+          },
+          { 
+            path: 'historique-ventes', 
+            element: (
+              <PermissionRoute permission="ventes_historique">
+                <HistoriqueVentes />
+              </PermissionRoute>
+            )
+          },
+          { 
+            path: 'ordonnancier', 
+            element: (
+              <PermissionRoute permission="ventes_ordonnancier">
+                <OrdonnancierPage />
+              </PermissionRoute>
+            )
+          },
+          { 
+            path: 'whatsapp-history', 
+            element: (
+              <PermissionRoute permission="settings_whatsapp">
+                <WhatsAppHistory />
+              </PermissionRoute>
+            )
+          },
+          { 
+            path: 'aide-formation', 
+            element: (
+              <PermissionRoute permission="aide_formation">
+                <HelpTraining />
+              </PermissionRoute>
+            )
+          },
           
-          { path: 'historique-achats', element: <HistoriqueAchats /> },
-          { path: 'historique-achats/locales', element: <HistoriqueAchats forcedType="LOC" /> },
-          { path: 'historique-achats/directes', element: <HistoriqueAchats forcedType="DIR" /> },
-          { path: 'utilisateurs', element: <GestionUtilisateurs /> },
-          { path: 'user-sessions', element: <UserSessions /> },
+          { 
+            path: 'historique-achats', 
+            element: (
+              <PermissionRoute permission={['commandes_loc_history', 'commandes_dir_history']}>
+                <HistoriqueAchats />
+              </PermissionRoute>
+            )
+          },
+          { 
+            path: 'historique-achats/locales', 
+            element: (
+              <PermissionRoute permission="commandes_loc_history">
+                <HistoriqueAchats forcedType="LOC" />
+              </PermissionRoute>
+            )
+          },
+          { 
+            path: 'historique-achats/directes', 
+            element: (
+              <PermissionRoute permission="commandes_dir_history">
+                <HistoriqueAchats forcedType="DIR" />
+              </PermissionRoute>
+            )
+          },
+          { 
+            path: 'utilisateurs', 
+            element: (
+              <AdminRoute>
+                <GestionUtilisateurs />
+              </AdminRoute>
+            )
+          },
+          { 
+            path: 'user-sessions', 
+            element: (
+              <AdminRoute>
+                <UserSessions />
+              </AdminRoute>
+            )
+          },
           // { path: 'invoice-settings', element: <InvoiceSettings /> }, (removed)
 
-          { path: 'pharmacy-settings', element: <PharmacySettingsForm /> },
-          { path: 'settings/options', element: <ConfigurationOptions /> },
+          { 
+            path: 'pharmacy-settings', 
+            element: (
+              <PermissionRoute permission="settings_pharmacie">
+                <PharmacySettingsForm />
+              </PermissionRoute>
+            )
+          },
+          { 
+            path: 'settings/options', 
+            element: (
+              <PermissionRoute permission="settings_etiquettes">
+                <ConfigurationOptions />
+              </PermissionRoute>
+            )
+          },
           { 
             path: 'journal-audit', 
             element: (

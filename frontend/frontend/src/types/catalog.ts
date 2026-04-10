@@ -39,6 +39,7 @@ export interface ProduitModel {
     name: string
     description: string
     stock: number
+    total_stock?: number
     cost_price: string
     selling_price: string
     cip1?: string | null

@@ -508,8 +508,19 @@ export default function Facturation() {
           <DisplayAlertModal
              alerts={hook.ui.displayAlertQueue}
              onAcknowledge={() => {
+                 const currentAlert = hook.ui.displayAlertQueue[0];
                  hook.ui.popDisplayAlert();
-                 setTimeout(() => hook.searchInputRef.current?.focus(), 100);
+                 setTimeout(() => {
+                     if (currentAlert?.targetId && hook.quantityInputsRef?.current) {
+                         const qtyInput = hook.quantityInputsRef.current.get(currentAlert.targetId);
+                         if (qtyInput) {
+                             qtyInput.focus();
+                             qtyInput.select();
+                             return;
+                         }
+                     }
+                     hook.searchInputRef.current?.focus();
+                 }, 100);
              }}
           />
       )}

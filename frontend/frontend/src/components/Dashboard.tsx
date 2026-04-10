@@ -14,11 +14,12 @@ import {
   useDashboardStats, 
   useRevenueChart, 
   useHourlyTraffic, 
-  useLowStock, 
-  useUgStats, 
-  usePromisDisponibles, 
   useExpiringLots,
-  useSupplierDebts
+  useSupplierDebts,
+  useReapproStats,
+  useLowStock,
+  usePromisDisponibles,
+  useUgStats
 } from '../hooks/useDashboard';
 
 import { useTranslation } from 'react-i18next';
@@ -49,6 +50,7 @@ export default function Dashboard() {
   const { data: lowStockItems = [], refetch: refetchLowStock } = useLowStock(isStockTab);
   const { data: promisDisponibles = [] } = usePromisDisponibles(isStockTab);
   const { data: expiringLots = [], refetch: refetchExpiring } = useExpiringLots(expirationMonths, isStockTab);
+  const { data: reapproStats } = useReapproStats(true); // Toujours chargé pour l'alerte
 
   // Onglet Finance : lazy-loaded uniquement quand l'onglet est actif
   const isFinanceTab = activeTab === 'finance';
@@ -68,7 +70,8 @@ export default function Dashboard() {
       refetchChart(),
       refetchLowStock(),
       refetchExpiring(),
-      refetchSupplierDebts()
+      refetchSupplierDebts(),
+      // Add refetch for reapproStats if needed, but it has short staleTime
     ]);
     toast.success(t('refresh_success'), { icon: '🔄' });
   };
@@ -194,6 +197,7 @@ export default function Dashboard() {
                     stats={stats}
                     revenueChart={revenueChart}
                     hourlyTraffic={hourlyTraffic}
+                    reapproStats={reapproStats}
                     t={t}
                     formatCurrencyLocal={formatCurrencyLocal}
                 />
@@ -207,6 +211,7 @@ export default function Dashboard() {
                     expirationMonths={expirationMonths}
                     setExpirationMonths={setExpirationMonths}
                     getServerDate={getServerDate}
+                    reapproStats={reapproStats}
                     t={t}
                     formatCurrencyLocal={formatCurrencyLocal}
                 />

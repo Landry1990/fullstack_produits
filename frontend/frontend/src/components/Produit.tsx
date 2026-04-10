@@ -168,6 +168,7 @@ export default function Produit() {
   
   const [adjustmentForm, setAdjustmentForm] = useState({
     new_quantity: '',
+    new_reserve_quantity: '',
     reason_type: 'INVENTAIRE'
   })
 
@@ -329,6 +330,7 @@ export default function Produit() {
       const data = await adjustStockMutation.mutateAsync({
         id: selectedProduit.id,
         quantity: parseInt(adjustmentForm.new_quantity),
+        newReserveQuantity: selectedProduit.has_reserve_storage ? parseInt(adjustmentForm.new_reserve_quantity || '0') : undefined,
         reason: adjustmentForm.reason_type
       });
       const qtyChangeStr = (data.quantity_change ?? 0) >= 0 ? '+' : '';
@@ -338,7 +340,8 @@ export default function Produit() {
         if (!prev) return null;
         return {
           ...prev,
-          stock: (prev.stock ?? 0) + qtyChange
+          stock: (prev.stock ?? 0) + (data.quantity_change ?? 0),
+          stock_reserve: (prev.stock_reserve ?? 0) + (data.reserve_change ?? 0)
         };
       });
       setIsAdjustmentModalOpen(false)
@@ -355,7 +358,12 @@ export default function Produit() {
     setPasswordModalConfig({
         title: t('products:messages.password_confirm_adjust_title'),
         message: t('products:messages.password_confirm_adjust_body', { 
-          name: selectedProduit.name, oldStock: selectedProduit.stock, newStock: adjustmentForm.new_quantity 
+          name: selectedProduit.name, 
+          oldStock: selectedProduit.stock, 
+          newStock: adjustmentForm.new_quantity,
+          ...((selectedProduit.has_reserve_storage) && {
+            reserveDetails: ` (Réserve: ${selectedProduit.stock_reserve} -> ${adjustmentForm.new_reserve_quantity})`
+          })
         })
     })
     setPendingAction(() => executeStockAdjustment)
@@ -580,7 +588,11 @@ export default function Produit() {
             stockHistory={stockHistory} loadingHistory={loadingHistory} transferLoading={transferLoading}
             onMovementClick={handleMovementClick}
             onOpenAdjustment={() => {
-              setAdjustmentForm({ new_quantity: String(selectedProduit?.stock || 0), reason_type: 'INVENTAIRE' });
+              setAdjustmentForm({ 
+                new_quantity: String(selectedProduit?.stock || 0), 
+                new_reserve_quantity: String(selectedProduit?.stock_reserve || 0),
+                reason_type: 'INVENTAIRE' 
+              });
               setIsAdjustmentModalOpen(true);
             }}
             onOpenEdit={handleOpenEditModal}
@@ -631,7 +643,11 @@ export default function Produit() {
         loadingHistory={loadingHistory}
         onMovementClick={handleMovementClick}
         onOpenAdjustment={() => {
-          setAdjustmentForm({ new_quantity: String(selectedProduit?.stock || 0), reason_type: 'INVENTAIRE' });
+          setAdjustmentForm({ 
+            new_quantity: String(selectedProduit?.stock || 0), 
+            new_reserve_quantity: String(selectedProduit?.stock_reserve || 0),
+            reason_type: 'INVENTAIRE' 
+          });
           setIsAdjustmentModalOpen(true);
         }}
         onOpenEdit={handleOpenEditModal}

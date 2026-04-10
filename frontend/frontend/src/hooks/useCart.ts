@@ -12,7 +12,7 @@ import { safeStorage } from '../utils/storage'
 interface UseCartOptions {
     apiBaseUrl?: string
     onRequirePrescription?: () => void
-    onAlert?: (msg: string, title: string, type: 'product', is_blocking: boolean) => void
+    onAlert?: (msg: string, title: string, type: 'product' | 'client', is_blocking: boolean, targetId?: number) => void
     quantityInputsRef?: React.MutableRefObject<Map<number, HTMLInputElement>>
 }
 
@@ -123,19 +123,9 @@ export function useCart({ apiBaseUrl = '', onRequirePrescription, onAlert, quant
                         treatment_duration_days: fullProduit.is_chronic ? fullProduit.default_treatment_days : undefined
                     }
 
-                    // Focus logic
-                    if (!options?.preventFocus) {
-                        setTimeout(() => {
-                            if (quantityInputsRef?.current) {
-                                const qtyInput = quantityInputsRef.current.get(fullProduit.id)
-                                if (qtyInput) {
-                                    qtyInput.focus()
-                                    qtyInput.select()
-                                }
-                            }
-                        }, 50)
-                    }
-
+                    // Focus logic moved to after ALERT check to avoid stealing focus from the modal.
+                    // This prevents typing implicitly behind the modal.
+                    
                     return [...prevLignes, nouvelleLigne]
                 }
             })
@@ -150,8 +140,25 @@ export function useCart({ apiBaseUrl = '', onRequirePrescription, onAlert, quant
             }
 
             // CHECKOUT ALERT MESSAGE CHECK
+            let hasAlert = false;
             if (fullProduit.message_alerte && onAlert) {
-                onAlert(fullProduit.message_alerte, fullProduit.name, 'product', !!fullProduit.blocking_alerte)
+                onAlert(fullProduit.message_alerte, fullProduit.name, 'product', !!fullProduit.blocking_alerte, fullProduit.id)
+                hasAlert = true;
+            }
+
+            // Focus logic: only focus if there is NO alert. If there is an alert, 
+            // the Acknowledge handler of the alert modal will do the focus to avoid stealing 
+            // focus while the modal is open.
+            if (!options?.preventFocus && !hasAlert) {
+                setTimeout(() => {
+                    if (quantityInputsRef?.current) {
+                        const qtyInput = quantityInputsRef.current.get(fullProduit.id)
+                        if (qtyInput) {
+                            qtyInput.focus()
+                            qtyInput.select()
+                        }
+                    }
+                }, 50)
             }
 
             // PEREMPTION CHECK

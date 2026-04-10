@@ -2,6 +2,7 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 import type { ProduitModel } from '../../types';
 import { formatCurrency } from '../../utils/formatters';
+import { Checkbox } from '../ui/Checkbox';
 
 interface ProductTableProps {
   products: ProduitModel[];
@@ -26,6 +27,9 @@ export const ProductTable: React.FC<ProductTableProps> = (props) => {
     loading
   } = props;
   const { t } = useTranslation(['products', 'common']);
+
+  const isAllSelected = selectedProductIds.length === products.length && products.length > 0;
+  const isPartiallySelected = selectedProductIds.length > 0 && selectedProductIds.length < products.length;
 
   return (
     <div className="flex-1 overflow-x-hidden overflow-y-auto">
@@ -61,12 +65,11 @@ export const ProductTable: React.FC<ProductTableProps> = (props) => {
               <thead className="bg-base-200/50 text-base-content/60">
                 <tr>
                   <th className="py-1.5 px-3 w-8">
-                    <input
-                      type="checkbox"
-                      className="checkbox checkbox-xs border-base-200"
-                      checked={selectedProductIds.length === products.length && products.length > 0}
+                    <Checkbox
+                      checked={isAllSelected}
+                      indeterminate={isPartiallySelected}
                       onChange={onSelectAll}
-                      title={t('products:table.select_all', { defaultValue: 'Tout sélectionner' })}
+                      size="sm"
                     />
                   </th>
                   <th className="py-1.5 px-2 font-semibold uppercase text-[10px] tracking-wider w-24">CIP</th>
@@ -97,11 +100,11 @@ export const ProductTable: React.FC<ProductTableProps> = (props) => {
                       }}
                     >
                       <td className="py-2 px-3 w-8 border-none" onClick={(e) => e.stopPropagation()}>
-                        <input
-                          type="checkbox"
-                          className="checkbox checkbox-xs"
+                        <Checkbox
                           checked={isChecked}
                           onChange={() => onSelectProduct(produit.id)}
+                          size="sm"
+                          color={isChecked ? 'success' : 'primary'}
                         />
                       </td>
                       <td className="py-2 px-2 w-24 border-none">
@@ -159,11 +162,11 @@ export const ProductTable: React.FC<ProductTableProps> = (props) => {
 
                   <div className="flex justify-between items-start w-full gap-3 pl-1">
                     <div className="pt-0.5" onClick={e => e.stopPropagation()}>
-                       <input
-                          type="checkbox"
-                          className={`checkbox checkbox-sm rounded-md border-base-200 ${isChecked ? 'checkbox-success' : 'checkbox-primary'}`}
+                       <Checkbox
                           checked={isChecked}
                           onChange={() => onSelectProduct(produit.id)}
+                          size="sm"
+                          color={isChecked ? 'success' : 'primary'}
                         />
                     </div>
                     

@@ -4,7 +4,7 @@ from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated, IsAdminUser
 from rest_framework.views import APIView
 from django.db import transaction
-from django.db.models import F, Sum, Count, Q, ProtectedError, OuterRef, Subquery, IntegerField
+from django.db.models import F, Sum, Count, Q, ProtectedError, OuterRef, Subquery, IntegerField, Case, When
 from django.db.models.functions import Coalesce
 from django.http import HttpResponse
 import io
@@ -18,7 +18,7 @@ from reportlab.lib.styles import getSampleStyleSheet
 from django.utils import timezone
 
 from ..models import (
-    Produit, Rayon, Forme, Groupe, Fournisseur, StockLot, StockAdjustment, 
+    Produit, Rayon, Forme, Groupe, Fournisseur, StockLot, StockAdjustment, ReapproSession,
     FactureProduit, CommandeProduit, AuditLog, Facture, Commande, Promis
 )
 from ..serializers import (
@@ -176,6 +176,20 @@ class ProduitViewSet(CachedSearchMixin, MultiTermSearchMixin, OptimizedSerialize
                 # Combiner avec le queryset actuel en utilisant union
                 queryset = queryset | queryset_by_id.select_related('rayon', 'fournisseur', 'forme')
             
+        # Filtrage pour has_reserve_storage
+        has_reserve = self.request.query_params.get('has_reserve_storage')
+        if has_reserve is not None:
+            queryset = queryset.filter(has_reserve_storage=(has_reserve.lower() == 'true'))
+
+        # Filtre spécial: besoins de réapprovisionnement rayon
+        needs_reappro = self.request.query_params.get('needs_reappro')
+        if needs_reappro is not None and needs_reappro.lower() == 'true':
+            queryset = queryset.filter(
+                has_reserve_storage=True,
+                stock__lte=F('min_rayon'),
+                stock_reserve__gt=0
+            )
+
         return queryset
 
     @action(detail=True, methods=['post'])
@@ -963,9 +977,10 @@ class ProduitViewSet(CachedSearchMixin, MultiTermSearchMixin, OptimizedSerialize
     @transaction.atomic
     def adjust_stock(self, request, pk=None):
         """
-        Ajuste le stock d'un produit avec traçabilité obligatoire.
+        Ajuste le stock d'un produit (Rayon et/ou Réserve) avec traçabilité obligatoire.
         Body: { 
             'new_quantity': 50, 
+            'new_reserve_quantity': 100, # Optionnel
             'reason_type': 'INVENTAIRE',
             'reason_detail': 'Correction après inventaire physique',
             'stock_lot_id': null  # Optionnel
@@ -974,13 +989,14 @@ class ProduitViewSet(CachedSearchMixin, MultiTermSearchMixin, OptimizedSerialize
         produit = self.get_object()
         
         new_quantity = request.data.get('new_quantity')
+        new_reserve_quantity = request.data.get('new_reserve_quantity')
         reason_type = request.data.get('reason_type')
         reason_detail = request.data.get('reason_detail', '')
         stock_lot_id = request.data.get('stock_lot_id')
         
-        # Validation
-        if new_quantity is None:
-            return Response({'detail': 'new_quantity est requis'}, status=status.HTTP_400_BAD_REQUEST)
+        # Validation: au moins une des deux quantités doit être fournie
+        if new_quantity is None and new_reserve_quantity is None:
+            return Response({'detail': 'new_quantity ou new_reserve_quantity est requis'}, status=status.HTTP_400_BAD_REQUEST)
         
         # Valider le type de motif
         valid_reasons = [choice[0] for choice in StockAdjustment.ReasonType.choices]
@@ -988,9 +1004,12 @@ class ProduitViewSet(CachedSearchMixin, MultiTermSearchMixin, OptimizedSerialize
             return Response({'detail': f'reason_type invalide. Choisir parmi: {valid_reasons}'}, status=status.HTTP_400_BAD_REQUEST)
         
         try:
-            new_quantity = int(new_quantity)
+            if new_quantity is not None:
+                new_quantity = int(new_quantity)
+            if new_reserve_quantity is not None:
+                new_reserve_quantity = int(new_reserve_quantity)
         except ValueError:
-            return Response({'detail': 'new_quantity doit être un entier'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'detail': 'Les quantités doivent être des entiers'}, status=status.HTTP_400_BAD_REQUEST)
         
         # Récupérer le lot si spécifié
         stock_lot = None
@@ -1000,9 +1019,17 @@ class ProduitViewSet(CachedSearchMixin, MultiTermSearchMixin, OptimizedSerialize
             except StockLot.DoesNotExist:
                 return Response({'detail': 'Lot introuvable'}, status=status.HTTP_400_BAD_REQUEST)
         
-        # Calculer le changement
+        # Calculer le changement Rayon
         quantity_before = produit.stock
+        if new_quantity is None:
+            new_quantity = quantity_before
         quantity_change = new_quantity - quantity_before
+
+        # Calculer le changement Réserve
+        reserve_before = produit.stock_reserve or 0
+        if new_reserve_quantity is None:
+            new_reserve_quantity = reserve_before
+        reserve_change = new_reserve_quantity - reserve_before
         
         # Créer l'enregistrement d'ajustement
         adjustment = StockAdjustment.objects.create(
@@ -1012,32 +1039,46 @@ class ProduitViewSet(CachedSearchMixin, MultiTermSearchMixin, OptimizedSerialize
             quantity_before=quantity_before,
             quantity_after=new_quantity,
             quantity_change=quantity_change,
+            reserve_before=reserve_before,
+            reserve_after=new_reserve_quantity,
+            reserve_change=reserve_change,
             reason_type=reason_type,
             reason_detail=(reason_detail or '').strip()
         )
         
         # Mettre à jour le stock du produit
         produit.stock = new_quantity
-        produit.save(update_fields=['stock'])
+        produit.stock_reserve = new_reserve_quantity
+        produit.save(update_fields=['stock', 'stock_reserve'])
         
-        # Si un lot spécifique est ciblé, ajuster aussi quantity_remaining du lot
-        if stock_lot and quantity_change != 0:
-            new_lot_qty = stock_lot.quantity_remaining + quantity_change
-            if new_lot_qty < 0:
-                new_lot_qty = 0
-            stock_lot.quantity_remaining = new_lot_qty
-            stock_lot.quantity_remaining = new_lot_qty
-            stock_lot.save(update_fields=['quantity_remaining'])
+        # Si un lot spécifique est ciblé, ajuster aussi les quantités du lot
+        if stock_lot:
+            if quantity_change != 0:
+                new_lot_qty = stock_lot.quantity_remaining + quantity_change
+                stock_lot.quantity_remaining = max(0, new_lot_qty)
+            
+            if reserve_change != 0:
+                new_reserve_qty = stock_lot.quantity_reserved + reserve_change
+                stock_lot.quantity_reserved = max(0, new_reserve_qty)
+                
+            stock_lot.save(update_fields=['quantity_remaining', 'quantity_reserved'])
         
         # Créer un mouvement de stock pour l'historique global
         from ..models import MouvementStock
+        
+        # Déterminer le type de mouvement
+        type_mv = MouvementStock.TypeMouvement.AJUSTEMENT
+        if quantity_change == -reserve_change and quantity_change != 0:
+            # C'est un transfert pur entre rayon et réserve
+            type_mv = MouvementStock.TypeMouvement.REAPPRO_INTERSTOCK
+            
         MouvementStock.objects.create(
             produit=produit,
-            type_mouvement=MouvementStock.TypeMouvement.AJUSTEMENT,
-            quantite=quantity_change,
+            type_mouvement=type_mv,
+            quantite=quantity_change + reserve_change, # Somme des changements pour le stock total
             stock_apres=produit.total_stock,
             user=request.user,
-            description=f"Ajustement manuel: {reason_detail or reason_type}"
+            description=f"Ajustement manuel: {reason_detail or reason_type}. Rayon: {quantity_change:+d}, Réserve: {reserve_change:+d}"
         )
         
         # Log d'audit explicite
@@ -1046,7 +1087,7 @@ class ProduitViewSet(CachedSearchMixin, MultiTermSearchMixin, OptimizedSerialize
             action=AuditLog.Action.STOCK_ADJUST,
             model_name='Produit',
             object_id=produit.id,
-            description=f"Ajustement stock: {quantity_change:+d} ({reason_detail or reason_type})",
+            description=f"Ajustement stock: Rayon {quantity_change:+d}, Réserve {reserve_change:+d} ({reason_detail or reason_type})",
             details={
                 'produit_id': produit.id,
                 'produit_nom': produit.name,
@@ -1355,6 +1396,136 @@ class ProduitViewSet(CachedSearchMixin, MultiTermSearchMixin, OptimizedSerialize
             'stock_rayon': produit.stock,
             'stock_reserve': produit.stock_reserve
         }, status=status.HTTP_200_OK)
+
+    @action(detail=False, methods=['get'])
+    def reappro_summary(self, request):
+        """Returns a summary of products needing replenishment."""
+        needs_reappro_qs = Produit.objects.filter(
+            has_reserve_storage=True,
+            stock__lte=F('min_rayon'),
+            stock_reserve__gt=0,
+            is_active=True
+        )
+        
+        count = needs_reappro_qs.count()
+        
+        # Calculate total units suggested for refill
+        suggestion_aggregate = needs_reappro_qs.annotate(
+            needed=F('capacite_rayon') - F('stock')
+        ).aggregate(
+            total_suggested=Sum(
+                Case(
+                    When(needed__lt=F('stock_reserve'), then=F('needed')),
+                    default=F('stock_reserve'),
+                    output_field=IntegerField()
+                )
+            )
+        )
+        
+        return Response({
+            'product_count': count,
+            'total_units_suggested': suggestion_aggregate['total_suggested'] or 0
+        })
+
+    @action(detail=False, methods=['post'])
+    def bulk_transfer_to_shelf(self, request):
+        """Process multiple products replenishment in one go."""
+        product_ids = request.data.get('product_ids', [])
+        if not product_ids:
+            return Response({'detail': 'Aucun produit sélectionné'}, status=status.HTTP_400_BAD_REQUEST)
+            
+        sudo_password = request.data.get('sudo_password')
+        validated_by_id = request.data.get('validated_by_id')
+        
+        validation_user = request.user
+        if validated_by_id and sudo_password:
+            valid, user_or_err = validate_sudo_mode(validated_by_id, sudo_password)
+            if not valid:
+                return Response({'detail': user_or_err}, status=status.HTTP_403_FORBIDDEN)
+            validation_user = user_or_err
+        elif not (request.user.is_superuser or getattr(request.user, 'can_adjust_stock', False) or (hasattr(request.user, 'profile') and getattr(request.user.profile, 'can_adjust_stock', False))):
+            return Response({'detail': 'Permission refusée (Mode Validation requis)'}, status=status.HTTP_403_FORBIDDEN)
+
+        results = []
+        with transaction.atomic():
+            # Création de la session globale pour ce transfert
+            session = ReapproSession.objects.create(
+                user=request.user,
+                total_products=0,
+                total_units=0
+            )
+
+            for pid in product_ids:
+                try:
+                    produit = Produit.objects.select_for_update().get(pk=pid, has_reserve_storage=True)
+                    needed = max(0, produit.capacite_rayon - produit.stock)
+                    quantity = min(needed, produit.stock_reserve)
+                    
+                    if quantity <= 0:
+                        continue
+                        
+                    # Transfer logic with lot tracking
+                    lots = produit.stock_lots.filter(quantity_reserved__gt=0).order_by('date_expiration', 'id')
+                    remaining_to_transfer = quantity
+                    
+                    for lot in lots:
+                        if remaining_to_transfer <= 0: break
+                        can_take = min(lot.quantity_reserved, remaining_to_transfer)
+                        
+                        # Save state before for adjustment log
+                        rayon_before = produit.stock
+                        reserve_before = produit.stock_reserve
+                        
+                        lot.quantity_reserved -= can_take
+                        lot.quantity_remaining += can_take
+                        lot.save(update_fields=['quantity_reserved', 'quantity_remaining'])
+                        
+                        # Create StockAdjustment for this lot
+                        StockAdjustment.objects.create(
+                            produit=produit,
+                            stock_lot=lot,
+                            user=request.user,
+                            reappro_session=session,
+                            quantity_before=produit.stock, # Note: this updates during the loop
+                            quantity_after=produit.stock + can_take,
+                            quantity_change=can_take,
+                            reserve_before=produit.stock_reserve,
+                            reserve_after=produit.stock_reserve - can_take,
+                            reserve_change=-can_take,
+                            reason_type='REAPPRO', # We need to ensure REAPPRO is in choices or just use string
+                            reason_detail=f"Réappro session #{session.id} - Lot {lot.lot}"
+                        )
+
+                        remaining_to_transfer -= can_take
+                    
+                    produit.stock += quantity
+                    produit.stock_reserve -= quantity
+                    produit.save(update_fields=['stock', 'stock_reserve'])
+                    
+                    # Log movements
+                    from api.models.stock import MouvementStock
+                    MouvementStock.objects.create(
+                        produit=produit, type_mouvement=MouvementStock.TypeMouvement.REAPPRO_INTERSTOCK,
+                        quantite=quantity, stock_apres=produit.total_stock, user=validation_user,
+                        description=f"Transfert groupé (Session #{session.id}): {quantity} unités du stock réserve vers le rayon."
+                    )
+                    
+                    session.total_products += 1
+                    session.total_units += quantity
+                    results.append({'id': pid, 'success': True, 'transferred': quantity})
+                except Exception as e:
+                    results.append({'id': pid, 'success': False, 'error': str(e)})
+            
+            if session.total_products > 0:
+                session.save(update_fields=['total_products', 'total_units'])
+            else:
+                session.delete() # Nothing happened
+
+        return Response({
+            'detail': f"{len([r for r in results if r['success']])} produits réapprovisionnés.",
+            'results': results,
+            'session_id': session.id if session.id else None
+        })
 
 
 class CategorieViewSet(viewsets.ModelViewSet):

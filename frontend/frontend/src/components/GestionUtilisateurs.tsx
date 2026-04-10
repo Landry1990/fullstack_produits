@@ -5,6 +5,10 @@ import { toast } from 'react-hot-toast';
 import { useAuth } from '../context/AuthContext';
 import { useConfirm } from '../hooks/useConfirm';
 import PasswordConfirmModal from './PasswordConfirmModal';
+import { Checkbox } from './ui/Checkbox';
+import { Input } from './ui/Input';
+import { Mail, User, Lock } from 'lucide-react';
+
 
 interface User {
   id: number;
@@ -592,86 +596,59 @@ export default function GestionUtilisateurs() {
                   <h4 className="font-bold text-sm uppercase tracking-wider text-base-content/70">{t('modal.basic_info')}</h4>
                 </div>
                 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div className="form-control">
-                    <label className="label text-xs font-semibold py-1">{t('form.role')}</label>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <Input 
+                    label={t('form.username')}
+                    icon={<User size={16} />}
+                    value={formData.username}
+                    onChange={e => setFormData({...formData, username: e.target.value})}
+                    required
+                  />
+                  <Input 
+                    label={t('form.email')}
+                    type="email"
+                    icon={<Mail size={16} />}
+                    value={formData.email}
+                    onChange={e => setFormData({...formData, email: e.target.value})}
+                  />
+                  <Input 
+                    label={t('form.first_name')}
+                    value={formData.first_name}
+                    onChange={e => setFormData({...formData, first_name: e.target.value})}
+                  />
+                  <Input 
+                    label={t('form.last_name')}
+                    value={formData.last_name}
+                    onChange={e => setFormData({...formData, last_name: e.target.value})}
+                  />
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <Input 
+                    label={t('form.password')}
+                    type="password"
+                    icon={<Lock size={16} />}
+                    value={formData.password}
+                    onChange={e => setFormData({...formData, password: e.target.value})}
+                    placeholder={editingUser ? t('form.password_placeholder_edit') : ''}
+                  />
+                  <div className="form-control w-full">
+                    <label className="label pt-0 px-1">
+                      <span className="label-text font-bold text-base-content/60 uppercase text-[10px] tracking-wider">{t('form.role')}</span>
+                    </label>
                     <select 
-                      className="select select-bordered w-full select-primary font-bold"
+                      className="select select-bordered w-full h-10 select-sm"
                       value={formData.role}
-                      onChange={(e) => handleRoleChange(e.target.value)}
+                      onChange={e => handleRoleChange(e.target.value)}
                     >
                       {ROLES.map(role => (
                         <option key={role.value} value={role.value}>{t(role.labelKey)}</option>
                       ))}
                     </select>
                   </div>
-
-                  <div className="form-control">
-                    <label className="label text-xs font-semibold py-1">{t('form.username')}</label>
-                    <input 
-                      type="text" 
-                      className="input input-bordered" 
-                      value={formData.username}
-                      onChange={e => setFormData({...formData, username: e.target.value})}
-                      required
-                    />
-                  </div>
-                  
-                  <div className="form-control flex flex-row items-center gap-4 border border-base-200 rounded-lg px-4 h-12 mt-auto">
-                    <span className="text-xs font-semibold">{t('form.is_active', 'Compte Actif')}</span>
-                    <input 
-                        type="checkbox" 
-                        className="toggle toggle-success toggle-sm"
-                        checked={formData.is_active}
-                        onChange={e => setFormData({...formData, is_active: e.target.checked})}
-                    />
-                  </div>
-                  
-                  <div className="form-control">
-                    <label className="label text-xs font-semibold py-1">
-                      {t('form.password')}
-                      {editingUser && <span className="label-text-alt text-warning ml-2">{t('form.password_hint')}</span>}
-                    </label>
-                    <input 
-                      type="password" 
-                      className="input input-bordered" 
-                      value={formData.password}
-                      onChange={e => setFormData({...formData, password: e.target.value})}
-                      required={!editingUser}
-                    />
-                  </div>
-
-                  <div className="form-control">
-                    <label className="label text-xs font-semibold py-1">{t('form.firstname')}</label>
-                    <input 
-                      type="text" 
-                      className="input input-bordered" 
-                      value={formData.first_name}
-                      onChange={e => setFormData({...formData, first_name: e.target.value})}
-                    />
-                  </div>
-
-                  <div className="form-control">
-                    <label className="label text-xs font-semibold py-1">{t('form.lastname')}</label>
-                    <input 
-                      type="text" 
-                      className="input input-bordered" 
-                      value={formData.last_name}
-                      onChange={e => setFormData({...formData, last_name: e.target.value})}
-                    />
-                  </div>
-                  
-                  <div className="form-control">
-                    <label className="label text-xs font-semibold py-1">{t('form.email')}</label>
-                    <input 
-                      type="email" 
-                      className="input input-bordered" 
-                      value={formData.email}
-                      onChange={e => setFormData({...formData, email: e.target.value})}
-                    />
-                  </div>
                 </div>
               </div>
+
 
               <div className="space-y-4">
                 <div className="flex items-center gap-2 border-l-4 border-secondary pl-3">
@@ -704,16 +681,16 @@ export default function GestionUtilisateurs() {
                                   {menu.submenus.map(sub => {
                                      const subLabel = t(sub.labelKey);
                                      return (
-                                       <label key={sub.key} className="flex items-start cursor-pointer gap-2 py-0.5 group">
-                                         <input 
-                                           type="checkbox" 
-                                           className="checkbox checkbox-xs checkbox-secondary shrink-0 mt-0.5 group-hover:border-secondary transition-colors"
-                                           checked={formData.allowed_menus.includes(sub.key) || formData.allowed_menus.includes(menu.key)}
-                                           onChange={() => handleSubMenuToggle(sub.key, menu.key, menu.submenus!.length)}
-                                           disabled={formData.is_superuser}
-                                         />
-                                         <span className={`text-xs select-none leading-tight pt-0.5 ${formData.is_superuser ? 'opacity-50' : 'text-base-content/80 group-hover:text-base-content'} transition-colors`}>{subLabel}</span>
-                                       </label>
+                                        <div key={sub.key} className="flex items-start transition-all py-0.5 group">
+                                          <Checkbox 
+                                            size="xs"
+                                            color="primary"
+                                            checked={formData.allowed_menus.includes(sub.key) || formData.allowed_menus.includes(menu.key)}
+                                            onChange={checked => handleSubMenuToggle(sub.key, menu.key, menu.submenus!.length)}
+                                            disabled={formData.is_superuser}
+                                            label={subLabel}
+                                          />
+                                        </div>
                                      );
                                   })}
                                </div>
@@ -751,26 +728,42 @@ export default function GestionUtilisateurs() {
                       </label>
 
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                        <label className="label cursor-pointer justify-start gap-3 p-2 bg-base-100/50 rounded-lg group">
-                          <input type="checkbox" className="checkbox checkbox-xs" checked={formData.can_do_returns} onChange={e => setFormData({...formData, can_do_returns: e.target.checked})} />
-                          <span className="text-xs font-medium opacity-80 group-hover:opacity-100">{t('permissions.returns')}</span>
-                        </label>
-                        <label className="label cursor-pointer justify-start gap-3 p-2 bg-base-100/50 rounded-lg group">
-                          <input type="checkbox" className="checkbox checkbox-xs checkbox-warning" checked={formData.can_sell_negative_stock} onChange={e => setFormData({...formData, can_sell_negative_stock: e.target.checked})} />
-                          <span className="text-xs font-bold text-warning/80 group-hover:text-warning">{t('permissions.negative_stock')}</span>
-                        </label>
-                        <label className="label cursor-pointer justify-start gap-3 p-2 bg-base-100/50 rounded-lg group">
-                          <input type="checkbox" className="checkbox checkbox-xs" checked={formData.can_modify_price} onChange={e => setFormData({...formData, can_modify_price: e.target.checked})} />
-                          <span className="text-xs font-medium opacity-80 group-hover:opacity-100">{t('permissions.modify_price')}</span>
-                        </label>
-                        <label className="label cursor-pointer justify-start gap-3 p-2 bg-base-100/50 rounded-lg group">
-                          <input type="checkbox" className="checkbox checkbox-xs" checked={formData.can_generate_coupon} onChange={e => setFormData({...formData, can_generate_coupon: e.target.checked})} />
-                          <span className="text-xs font-medium opacity-80 group-hover:opacity-100">{t('permissions.generate_coupon')}</span>
-                        </label>
-                        <label className="label cursor-pointer justify-start gap-3 p-2 bg-base-100/50 rounded-lg group">
-                          <input type="checkbox" className="checkbox checkbox-xs" checked={formData.can_modify_invoice} onChange={e => setFormData({...formData, can_modify_invoice: e.target.checked})} />
-                          <span className="text-xs font-medium opacity-80 group-hover:opacity-100">{t('permissions.modify_invoice')}</span>
-                        </label>
+                        <Checkbox 
+                          size="xs"
+                          checked={formData.can_do_returns} 
+                          onChange={checked => setFormData({...formData, can_do_returns: checked})} 
+                          label={t('permissions.returns')} 
+                          className="p-2 bg-base-100/50 rounded-lg"
+                        />
+                        <Checkbox 
+                          size="xs"
+                          color="warning"
+                          checked={formData.can_sell_negative_stock} 
+                          onChange={checked => setFormData({...formData, can_sell_negative_stock: checked})} 
+                          label={t('permissions.negative_stock')} 
+                          className="p-2 bg-base-100/50 rounded-lg text-warning font-bold"
+                        />
+                        <Checkbox 
+                          size="xs"
+                          checked={formData.can_modify_price} 
+                          onChange={checked => setFormData({...formData, can_modify_price: checked})} 
+                          label={t('permissions.modify_price')} 
+                          className="p-2 bg-base-100/50 rounded-lg"
+                        />
+                        <Checkbox 
+                          size="xs"
+                          checked={formData.can_generate_coupon} 
+                          onChange={checked => setFormData({...formData, can_generate_coupon: checked})} 
+                          label={t('permissions.generate_coupon')} 
+                          className="p-2 bg-base-100/50 rounded-lg"
+                        />
+                        <Checkbox 
+                          size="xs"
+                          checked={formData.can_modify_invoice} 
+                          onChange={checked => setFormData({...formData, can_modify_invoice: checked})} 
+                          label={t('permissions.modify_invoice')} 
+                          className="p-2 bg-base-100/50 rounded-lg"
+                        />
                       </div>
 
                       <div className="form-control px-2 mt-1">
@@ -793,42 +786,51 @@ export default function GestionUtilisateurs() {
                     </div>
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 bg-base-200/50 p-4 rounded-xl border border-base-300">
-                      <label className="label cursor-pointer justify-start gap-3 p-2 bg-base-100/50 rounded-lg group">
-                        <input type="checkbox" className="checkbox checkbox-xs checkbox-error" checked={formData.can_cancel_invoice} onChange={e => setFormData({...formData, can_cancel_invoice: e.target.checked})} />
-                        <span className="text-xs font-medium text-error opacity-80 group-hover:opacity-100">{t('permissions.cancel_invoice')}</span>
-                      </label>
-                      <label className="label cursor-pointer justify-start gap-3 p-2 bg-base-100/50 rounded-lg group">
-                        <input type="checkbox" className="checkbox checkbox-xs checkbox-error" checked={formData.can_cancel_promis} onChange={e => setFormData({...formData, can_cancel_promis: e.target.checked})} />
-                        <span className="text-xs font-medium text-error opacity-80 group-hover:opacity-100">{t('permissions.cancel_promis')}</span>
-                      </label>
-                      <label className="label cursor-pointer justify-start gap-3 p-2 bg-base-100/50 rounded-lg group">
-                        <input type="checkbox" className="checkbox checkbox-xs checkbox-error" checked={formData.can_delete_product} onChange={e => setFormData({...formData, can_delete_product: e.target.checked})} />
-                        <span className="text-xs font-medium text-error opacity-80 group-hover:opacity-100">{t('permissions.delete_product')}</span>
-                      </label>
-                      <label className="label cursor-pointer justify-start gap-3 p-2 bg-base-100/50 rounded-lg group">
-                        <input type="checkbox" className="checkbox checkbox-xs checkbox-error" checked={formData.can_delete_fournisseur} onChange={e => setFormData({...formData, can_delete_fournisseur: e.target.checked})} />
-                        <span className="text-xs font-medium text-error opacity-80 group-hover:opacity-100">{t('permissions.delete_fournisseur')}</span>
-                      </label>
-                      <label className="label cursor-pointer justify-start gap-3 p-2 bg-base-100/50 rounded-lg group">
-                        <input type="checkbox" className="checkbox checkbox-xs checkbox-warning" checked={formData.can_adjust_stock} onChange={e => setFormData({...formData, can_adjust_stock: e.target.checked})} />
-                        <span className="text-xs font-medium text-warning opacity-80 group-hover:opacity-100">{t('permissions.adjust_stock')}</span>
-                      </label>
-                      <label className="label cursor-pointer justify-start gap-3 p-2 bg-base-100/50 rounded-lg group">
-                        <input type="checkbox" className="checkbox checkbox-xs checkbox-warning" checked={formData.can_manage_perimes} onChange={e => setFormData({...formData, can_manage_perimes: e.target.checked})} />
-                        <span className="text-xs font-medium text-warning opacity-80 group-hover:opacity-100">{t('permissions.manage_perimes')}</span>
-                      </label>
-                      <label className="label cursor-pointer justify-start gap-3 p-2 bg-base-100/50 rounded-lg group">
-                        <input type="checkbox" className="checkbox checkbox-xs checkbox-warning" checked={formData.can_manage_avoirs} onChange={e => setFormData({...formData, can_manage_avoirs: e.target.checked})} />
-                        <span className="text-xs font-medium text-warning opacity-80 group-hover:opacity-100">{t('permissions.manage_avoirs')}</span>
-                      </label>
-                      <label className="label cursor-pointer justify-start gap-3 p-2 bg-base-100/50 rounded-lg group">
-                        <input type="checkbox" className="checkbox checkbox-xs checkbox-warning" checked={formData.can_delete_commande} onChange={e => setFormData({...formData, can_delete_commande: e.target.checked})} />
-                        <span className="text-xs font-medium text-warning opacity-80 group-hover:opacity-100">{t('permissions.delete_commande')}</span>
-                      </label>
-                      <label className="label cursor-pointer justify-start gap-3 p-2 bg-base-100/50 rounded-lg group">
-                        <input type="checkbox" className="checkbox checkbox-xs checkbox-warning" checked={formData.can_close_commande} onChange={e => setFormData({...formData, can_close_commande: e.target.checked})} />
-                        <span className="text-xs font-medium text-warning opacity-80 group-hover:opacity-100">{t('permissions.close_commande')}</span>
-                      </label>
+                      <Checkbox 
+                        size="xs" color="error"
+                        checked={formData.can_cancel_invoice} onChange={checked => setFormData({...formData, can_cancel_invoice: checked})}
+                        label={t('permissions.cancel_invoice')} className="p-2 bg-base-100/50 rounded-lg text-error font-medium"
+                      />
+                      <Checkbox 
+                        size="xs" color="error"
+                        checked={formData.can_cancel_promis} onChange={checked => setFormData({...formData, can_cancel_promis: checked})}
+                        label={t('permissions.cancel_promis')} className="p-2 bg-base-100/50 rounded-lg text-error font-medium"
+                      />
+                      <Checkbox 
+                        size="xs" color="error"
+                        checked={formData.can_delete_product} onChange={checked => setFormData({...formData, can_delete_product: checked})}
+                        label={t('permissions.delete_product')} className="p-2 bg-base-100/50 rounded-lg text-error font-medium"
+                      />
+                      <Checkbox 
+                        size="xs" color="error"
+                        checked={formData.can_delete_fournisseur} onChange={checked => setFormData({...formData, can_delete_fournisseur: checked})}
+                        label={t('permissions.delete_fournisseur')} className="p-2 bg-base-100/50 rounded-lg text-error font-medium"
+                      />
+                      <Checkbox 
+                        size="xs" color="warning"
+                        checked={formData.can_adjust_stock} onChange={checked => setFormData({...formData, can_adjust_stock: checked})}
+                        label={t('permissions.adjust_stock')} className="p-2 bg-base-100/50 rounded-lg text-warning font-medium"
+                      />
+                      <Checkbox 
+                        size="xs" color="warning"
+                        checked={formData.can_manage_perimes} onChange={checked => setFormData({...formData, can_manage_perimes: checked})}
+                        label={t('permissions.manage_perimes')} className="p-2 bg-base-100/50 rounded-lg text-warning font-medium"
+                      />
+                      <Checkbox 
+                        size="xs" color="warning"
+                        checked={formData.can_manage_avoirs} onChange={checked => setFormData({...formData, can_manage_avoirs: checked})}
+                        label={t('permissions.manage_avoirs')} className="p-2 bg-base-100/50 rounded-lg text-warning font-medium"
+                      />
+                      <Checkbox 
+                        size="xs" color="warning"
+                        checked={formData.can_delete_commande} onChange={checked => setFormData({...formData, can_delete_commande: checked})}
+                        label={t('permissions.delete_commande')} className="p-2 bg-base-100/50 rounded-lg text-warning font-medium"
+                      />
+                      <Checkbox 
+                        size="xs" color="warning"
+                        checked={formData.can_close_commande} onChange={checked => setFormData({...formData, can_close_commande: checked})}
+                        label={t('permissions.close_commande')} className="p-2 bg-base-100/50 rounded-lg text-warning font-medium"
+                      />
                     </div>
                   </div>
               </div>
