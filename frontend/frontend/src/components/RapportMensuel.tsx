@@ -3,6 +3,8 @@ import axios from 'axios';
 import { toast } from 'react-hot-toast';
 import { formatCurrency } from '../utils/formatters';
 import { useTranslation } from 'react-i18next';
+import { usePharmacySettings } from '../context/PharmacySettingsContext';
+import { generateMonthlyReportPdf } from '../utils/print/reportPdf';
 
 interface RapportData {
   mois: string;
@@ -137,7 +139,10 @@ export default function RapportMensuel() {
 
   const [rapport, setRapport] = useState<RapportData | null>(null);
   const [loading, setLoading] = useState(false);
+  const [pdfLoading, setPdfLoading] = useState(false);
   const [periodeLabel, setPeriodeLabel] = useState<string>('');
+  
+  const { settings } = usePharmacySettings();
 
   const apiBaseUrl = useMemo(() => (import.meta.env.VITE_API_BASE_URL ?? '').replace(/\/$/, ''), []);
 
@@ -217,41 +222,28 @@ export default function RapportMensuel() {
             <button 
               className="btn btn-neutral btn-sm gap-2"
               onClick={async () => {
+                if (!rapport) return;
+                setPdfLoading(true);
                 try {
-                  let response;
-                  if (filterMode === 'month') {
-                    response = await axios.get(`${apiBaseUrl}/api/rapports/rapport_mensuel_pdf/`, {
-                      params: { mois, lang: i18n.language },
-                      responseType: 'blob'
-                    });
-                  } else {
-                    response = await axios.get(`${apiBaseUrl}/api/rapports/rapport_par_dates_pdf/`, {
-                      params: { date_debut: dateDebut, date_fin: dateFin, lang: i18n.language },
-                      responseType: 'blob'
-                    });
-                  }
-                  const url = window.URL.createObjectURL(new Blob([response.data]));
-                  const link = document.createElement('a');
-                  link.href = url;
-                  const filename = filterMode === 'month' 
-                    ? `rapport_mensuel_${mois}.pdf` 
-                    : `rapport_${dateDebut}_${dateFin}.pdf`;
-                  link.setAttribute('download', filename);
-                  document.body.appendChild(link);
-                  link.click();
-                  link.remove();
-                  window.URL.revokeObjectURL(url);
+                  await generateMonthlyReportPdf(rapport, settings, periodeLabel, t);
+                  toast.success(t('messages.pdf_success', { defaultValue: 'PDF généré avec succès' }));
                 } catch (error) {
-                  console.error('Erreur téléchargement PDF:', error);
+                  console.error('Erreur génération PDF:', error);
                   toast.error(t('messages.download_error'));
+                } finally {
+                  setPdfLoading(false);
                 }
               }}
-              disabled={!rapport}
+              disabled={!rapport || pdfLoading}
               title={t('pdf.tooltip')}
             >
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-              </svg>
+              {pdfLoading ? (
+                <span className="loading loading-spinner loading-xs"></span>
+              ) : (
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+              )}
               {t('pdf.download')}
             </button>
           </div>

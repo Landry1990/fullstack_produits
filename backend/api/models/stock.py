@@ -154,6 +154,25 @@ class StockLot(models.Model):
         return f"Lot {self.id} - {produit_name} ({self.quantity_remaining}/{self.quantity_initial}{ug_info})"
 
 
+class ReapproSession(models.Model):
+    """
+    Regroupe un ensemble de transferts de stock (Réserve -> Rayon) effectués simultanément.
+    Permet la traçabilité et l'impression de rapports de réapprovisionnement.
+    """
+    user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, help_text="Utilisateur ayant effectué le réappro")
+    total_products = models.IntegerField(default=0, help_text="Nombre de produits distincts impactés")
+    total_units = models.IntegerField(default=0, help_text="Nombre total d'unités transférées")
+    created_at = models.DateTimeField(auto_now_add=True)
+    notes = models.TextField(blank=True, default="")
+
+    class Meta:
+        db_table = 'reappro_session'
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"Session Réappro #{self.id} - {self.created_at.strftime('%d/%m/%Y %H:%M')}"
+
+
 class StockAdjustment(models.Model):
     """Traçabilité des ajustements manuels de stock."""
     
@@ -166,6 +185,7 @@ class StockAdjustment(models.Model):
         AVARIE = 'AVARIE', 'Avarié'
         USAGE_INTERNE = 'USAGE_INT', 'Usage interne'
         PERIME = 'PERIME', 'Périmé'
+        REAPPRO = 'REAPPRO', 'Réapprovisionnement'
     
     produit = models.ForeignKey(
         'Produit', on_delete=models.SET_NULL, null=True, blank=True, 
@@ -178,9 +198,27 @@ class StockAdjustment(models.Model):
     )
     user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
     
-    quantity_before = models.IntegerField(help_text="Stock avant ajustement")
-    quantity_after = models.IntegerField(help_text="Stock après ajustement")
-    quantity_change = models.IntegerField(help_text="Différence (+/-)")
+    reappro_session = models.ForeignKey(
+        'ReapproSession', on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='adjustments',
+        help_text="Session de réapprovisionnement associée (si applicable)"
+    )
+
+    
+    reappro_session = models.ForeignKey(
+        'ReapproSession', on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='adjustments',
+        help_text="Session de réapprovisionnement associée (si applicable)"
+    )
+
+    
+    quantity_before = models.IntegerField(help_text="Stock Rayon avant ajustement")
+    quantity_after = models.IntegerField(help_text="Stock Rayon après ajustement")
+    quantity_change = models.IntegerField(help_text="Différence Rayon (+/-)")
+    
+    reserve_before = models.IntegerField(default=0, help_text="Stock Réserve avant ajustement")
+    reserve_after = models.IntegerField(default=0, help_text="Stock Réserve après ajustement")
+    reserve_change = models.IntegerField(default=0, help_text="Différence Réserve (+/-)")
     
     reason_type = models.CharField(max_length=10, choices=ReasonType.choices)
     reason_detail = models.TextField(blank=True, default='', help_text="Note optionnelle")

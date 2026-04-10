@@ -6,6 +6,7 @@ import { Check, X, Printer, MessageCircle, MoreVertical } from 'lucide-react';
 import type { Promis } from '../../types';
 import ActionIcon from '../ui/ActionIcon';
 import SelectionHeader from '../ui/SelectionHeader';
+import { Checkbox } from '../ui/Checkbox';
 
 interface PromisTableProps {
     promisList: Promis[];
@@ -187,14 +188,13 @@ export const PromisTable: React.FC<PromisTableProps> = ({
                         <tr key={p.id} className={`hover:bg-base-200/50 transition-colors group ${selectedIds.has(p.id) ? 'bg-primary/5' : ''}`}>
                             <td className="text-center">
                                 {p.status === 'ATT' && (
-                                    <label className="cursor-pointer label p-0 justify-center">
-                                        <input 
-                                            type="checkbox" 
-                                            className="checkbox checkbox-sm checkbox-primary" 
+                                    <div className="flex justify-center">
+                                        <Checkbox 
+                                            size="sm"
                                             checked={selectedIds.has(p.id)}
                                             onChange={() => onToggleSelection(p.id)}
                                         />
-                                    </label>
+                                    </div>
                                 )}
                             </td>
                             <td>

@@ -196,9 +196,9 @@ export default function Omnisearch() {
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-base-300/40 backdrop-blur-md transition-all duration-300" onClick={() => setOpen(false)}>
+    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-base-300/20 backdrop-blur-xl transition-all duration-500 animate-in fade-in" onClick={() => setOpen(false)}>
       <div 
-        className="w-full max-w-5xl bg-base-100 rounded-2xl shadow-[0_32px_64px_-12px_rgba(0,0,0,0.5)] overflow-hidden border border-base-content/10 transition-all duration-500 transform scale-100 opacity-100 animate-in fade-in zoom-in-95"
+        className="w-full max-w-5xl bg-base-100 rounded-[2rem] shadow-premium overflow-hidden border border-base-content/5 transition-all duration-500 transform scale-100 opacity-100 animate-in zoom-in-95 slide-in-from-bottom-4"
         onClick={e => e.stopPropagation()}
       >
         <Command 
@@ -208,17 +208,19 @@ export default function Omnisearch() {
             value={activeValue}
             onValueChange={setActiveValue}
         >
-          <div className="flex items-center border-b border-base-200 px-4">
-            <Search className="w-5 h-5 text-base-content/50 mr-2" />
+          <div className="flex items-center border-b border-base-200 px-6 bg-base-100/50 backdrop-blur-sm">
+            <Search className="w-6 h-6 text-primary mr-4 opacity-50" />
             <Command.Input 
               value={search} 
               onValueChange={setSearch} 
               autoFocus
-              className="flex-1 h-14 bg-transparent outline-none border-none text-base-content placeholder-base-content/50 text-lg"
+              className="flex-1 h-16 bg-transparent outline-none border-none text-base-content placeholder:text-base-content/20 text-xl font-medium"
               placeholder={t('omnisearch.placeholder', 'Rechercher (produits, clients, navigation) ...')} 
             />
             {loading && <span className="loading loading-spinner loading-sm text-primary"></span>}
-            <div className="ml-4 text-xs font-mono text-base-content/40 bg-base-200 px-2 py-1 rounded">ESC</div>
+            <div className="ml-4 flex items-center gap-1.5 opacity-30 select-none">
+                <kbd className="kbd kbd-xs font-bold">ESC</kbd>
+            </div>
           </div>
 
           <div className="flex min-h-[320px] max-h-[65vh]">

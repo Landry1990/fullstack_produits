@@ -32,6 +32,7 @@ from .views.purge import PurgeViewSet
 from .views.code_backup import CodeBackupViewSet
 from .views.stocks.ruptures import RuptureFournisseurViewSet
 from .views.omnisearch import GlobalSearchView
+from .views.stocks.reappro_history import ReapproSessionViewSet
 
 # Create a router and register our viewsets with it.
 router = DefaultRouter()
@@ -90,6 +91,7 @@ router.register(r'ruptures-fournisseurs', RuptureFournisseurViewSet, basename='r
 router.register(r'depots-clients', DepotClientViewSet, basename='depotclient')
 router.register(r'internal-messages', InternalMessageViewSet, basename='internalmessage')
 router.register(r'message-templates', MessageTemplateViewSet, basename='messagetemplate')
+router.register(r'reappro-sessions', ReapproSessionViewSet, basename='reapprosession')
 
 
 # The API URLs are now determined automatically by the router.

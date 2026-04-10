@@ -1,5 +1,5 @@
-import jsPDF from 'jspdf';
-import 'jspdf-autotable';
+import { jsPDF } from 'jspdf';
+import autoTable from 'jspdf-autotable';
 import { formatNumber, formatDateFr } from '../../utils/formatters';
 
 interface InvoicePdfData {
@@ -39,6 +39,11 @@ interface InvoicePdfData {
 export function generateInvoiceA4(data: InvoicePdfData): jsPDF {
     const doc = new jsPDF('p', 'mm', 'a4');
     const pageWidth = doc.internal.pageSize.getWidth();
+    
+    // Helper pour formater proprement les nombres pour le PDF
+    const fmt = (val: number, dec: number = 0) => {
+        return formatNumber(val, dec).replace(/[\u00A0\u202F]/g, ' ');
+    };
 
     // --- Header ---
     doc.setFontSize(20);
@@ -74,11 +79,11 @@ export function generateInvoiceA4(data: InvoicePdfData): jsPDF {
     const tableData = data.items.map(item => [
         item.name,
         item.quantity.toString(),
-        formatNumber(item.price),
-        formatNumber(item.total)
+        fmt(item.price),
+        fmt(item.total)
     ]);
 
-    (doc as any).autoTable({
+    autoTable(doc, {
         startY: 50,
         head: [['Désignation', 'Qté', 'P.U', 'Total']],
         body: tableData,
@@ -98,27 +103,27 @@ export function generateInvoiceA4(data: InvoicePdfData): jsPDF {
     const totalsX = pageWidth - 90;
 
     doc.text(`Total HT:`, totalsX, finalY);
-    doc.text(`${formatNumber(data.totals.ht)} F`, pageWidth - 20, finalY, { align: 'right' });
+    doc.text(`${fmt(data.totals.ht)} F`, pageWidth - 20, finalY, { align: 'right' });
 
     doc.text(`Remise:`, totalsX, finalY + 6);
-    doc.text(`${formatNumber(data.totals.remise)} F`, pageWidth - 20, finalY + 6, { align: 'right' });
+    doc.text(`${fmt(data.totals.remise)} F`, pageWidth - 20, finalY + 6, { align: 'right' });
 
     doc.text(`TVA:`, totalsX, finalY + 12);
-    doc.text(`${formatNumber(data.totals.tva)} F`, pageWidth - 20, finalY + 12, { align: 'right' });
+    doc.text(`${fmt(data.totals.tva)} F`, pageWidth - 20, finalY + 12, { align: 'right' });
 
     doc.setFontSize(12);
     doc.setFont('helvetica', 'bold');
     doc.text(`NET À PAYER:`, totalsX, finalY + 20);
-    doc.text(`${formatNumber(data.totals.net)} F`, pageWidth - 20, finalY + 20, { align: 'right' });
+    doc.text(`${fmt(data.totals.net)} F`, pageWidth - 20, finalY + 20, { align: 'right' });
 
     if (data.totals.part_assurance && data.totals.part_assurance > 0) {
         doc.setFontSize(10);
         doc.setFont('helvetica', 'normal');
         doc.text(`Dont Assurance:`, totalsX, finalY + 28);
-        doc.text(`${formatNumber(data.totals.part_assurance)} F`, pageWidth - 20, finalY + 28, { align: 'right' });
+        doc.text(`${fmt(data.totals.part_assurance)} F`, pageWidth - 20, finalY + 28, { align: 'right' });
 
         doc.text(`Part Patient:`, totalsX, finalY + 34);
-        doc.text(`${formatNumber(data.totals.part_client || 0)} F`, pageWidth - 20, finalY + 34, { align: 'right' });
+        doc.text(`${fmt(data.totals.part_client || 0)} F`, pageWidth - 20, finalY + 34, { align: 'right' });
     }
 
     // --- Footer ---

@@ -6,8 +6,10 @@ import {
   Target,
   ArrowUpRight,
   ArrowDownRight,
-  History
+  History,
+  ArrowRight
 } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { 
   BarChart, 
   Bar, 
@@ -26,6 +28,7 @@ interface PerformanceOverviewProps {
   stats: any;
   revenueChart: any;
   hourlyTraffic: any;
+  reapproStats?: { product_count: number; total_units_suggested: number };
   t: any;
   formatCurrencyLocal: (val: number) => string;
 }
@@ -34,9 +37,11 @@ export default function PerformanceOverview({
   stats, 
   revenueChart, 
   hourlyTraffic, 
+  reapproStats,
   t, 
   formatCurrencyLocal 
 }: PerformanceOverviewProps) {
+  const navigate = useNavigate();
   
   const chartData = revenueChart && revenueChart.labels ? revenueChart.labels.map((label: string, index: number) => ({
     jour: label,
@@ -147,6 +152,36 @@ export default function PerformanceOverview({
           );
         })}
       </div>
+      
+      {/* Reappro Rayon Alert - Affichée ici pour visibilité immédiate */}
+      {reapproStats && reapproStats.product_count > 0 && (
+          <div 
+            className="flex items-center justify-between p-4 bg-blue-600 rounded-2xl shadow-lg shadow-blue-500/20 cursor-pointer hover:bg-blue-700 transition-all border border-blue-500/30 group"
+            onClick={() => navigate('/app/reappro-rayon')}
+          >
+              <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center border border-white/30">
+                      <Package className="w-6 h-6 text-white" />
+                  </div>
+                  <div className="text-white">
+                      <h3 className="text-sm font-black uppercase tracking-widest">{t('reappro.alert_title', { defaultValue: 'Réapprovisionnement Rayon nécessaire' })}</h3>
+                      <p className="text-xs font-bold opacity-80 mt-0.5">
+                          {t('reappro.alert_desc', { 
+                              count: reapproStats.product_count, 
+                              units: reapproStats.total_units_suggested,
+                              defaultValue: `Attention : ${reapproStats.product_count} produits doivent être transférés de la réserve (+${reapproStats.total_units_suggested} unités)`
+                          })}
+                      </p>
+                  </div>
+              </div>
+              <div className="flex items-center gap-3 pr-2">
+                  <span className="hidden sm:block text-[10px] font-black uppercase tracking-[0.2em] text-white/60 group-hover:text-white transition-colors">Gérer maintenant</span>
+                  <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center group-hover:translate-x-1 transition-transform border border-white/20">
+                      <ArrowRight className="w-4 h-4 text-white" />
+                  </div>
+              </div>
+          </div>
+      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 auto-rows-fr">
           {/* Revenue Bar Chart */}

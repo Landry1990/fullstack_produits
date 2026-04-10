@@ -4,6 +4,7 @@ import { useSidebar } from '../context/SidebarContext';
 import ZenithLogo from './ZenithLogo';
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useReapproStats } from '../hooks/useDashboard';
 
 
 export default function Sidebar() {
@@ -12,6 +13,7 @@ export default function Sidebar() {
   const { isOpen, isCollapsed, toggleSidebar, closeSidebar, toggleCollapse } = useSidebar();
   const location = useLocation();
   const [openMenu, setOpenMenu] = useState<string | null>(null);
+  const { data: reapproStats } = useReapproStats();
   
   const allMenuItems = [
     { path: '/app', label: t('dashboard'), key: 'dashboard', icon: (
@@ -324,6 +326,11 @@ export default function Sidebar() {
                                   className={({ isActive }) => `rounded-lg text-sm md:text-base py-2 px-4 transition-all ${isActive ? 'bg-white/20 text-white font-black' : 'text-white/60 hover:text-white hover:bg-white/5'}`}
                                 >
                                   {sub.label}
+                                  {sub.key === 'inventaire_reappro' && reapproStats && reapproStats.product_count > 0 && (
+                                    <span className="ml-auto bg-red-500 text-white text-[10px] font-black px-1.5 py-0.5 rounded-full animate-pulse shadow-sm shadow-red-500/50">
+                                      {reapproStats.product_count}
+                                    </span>
+                                  )}
                                 </NavLink>
                               </li>
                             ))}

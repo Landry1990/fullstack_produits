@@ -77,7 +77,7 @@ export function useFacturationState() {
   const cart = useCart({
     apiBaseUrl: import.meta.env.VITE_API_BASE_URL,
     onRequirePrescription: () => ui.setShowOrdonnanceModal(true),
-    onAlert: (message, title, type, is_blocking) => ui.pushDisplayAlert({ message, title, type, is_blocking }),
+    onAlert: (message, title, type, is_blocking, targetId) => ui.pushDisplayAlert({ message, title, type, is_blocking, targetId }),
     quantityInputsRef
   })
 

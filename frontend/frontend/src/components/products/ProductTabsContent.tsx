@@ -1,4 +1,4 @@
-﻿import { useTranslation } from 'react-i18next';
+import { useTranslation } from 'react-i18next';
 import type { ProduitModel, StockLot } from '../../types';
 import { formatCurrency } from '../../utils/formatters';
 
@@ -202,6 +202,7 @@ const propsTabsContentLots = (lots: StockLot[], t: any, lng: string) => {
                         <th className="text-xs">{t('products:detail.lots.lot_number')}</th>
                         <th className="text-xs">{t('products:detail.lots.expiration')}</th>
                         <th className="text-xs">{t('products:detail.lots.provider')}</th>
+                        <th className="text-xs text-right">{t('products:detail.purchases.price', { defaultValue: 'Prix' })}</th>
                         <th className="text-xs text-right">{t('products:detail.lots.initial_qty')}</th>
                         <th className="text-xs text-right">{t('products:detail.lots.remaining_qty')}</th>
                     </tr>
@@ -221,6 +222,9 @@ const propsTabsContentLots = (lots: StockLot[], t: any, lng: string) => {
                                     </span>
                                 </td>
                                 <td className="text-xs truncate max-w-[120px]" title={lot.fournisseur_nom}>{lot.fournisseur_nom}</td>
+                                <td className="text-right text-xs">
+                                    {formatCurrency(Math.round(Number(lot.price_cost || 0)))}
+                                </td>
                                 <td className="text-right text-xs">{lot.quantity_initial}</td>
                                 <td className="text-right font-bold text-xs">
                                     <span className={lot.quantity_remaining > 0 ? 'text-success' : 'text-base-content/30'}>
@@ -306,6 +310,13 @@ const propsTabsContentMovements = (stockHistory: any[], loadingHistory: boolean,
                         const isPositive = item.type === 'AJUSTEMENT' 
                             ? item.quantity > 0 
                             : ['ENTREE', 'RETOUR', 'TRANSFORMATION_ENTREE'].includes(item.type);
+                        
+                        // Cleanup libelle as requested (remove invoice numbers and lot info)
+                        const cleanedLibelle = (item.libelle || '')
+                            .replace(/\s*\(FAC.*?\)/gi, '')
+                            .replace(/\s*-\s*Lot:.*?(?=\s*-\s*|$)/gi, '')
+                            .trim();
+
                         return (
                             <tr 
                                 key={index} 
@@ -316,7 +327,7 @@ const propsTabsContentMovements = (stockHistory: any[], loadingHistory: boolean,
                                     {new Date(item.date).toLocaleDateString(lng)}
                                 </td>
                                 <td>
-                                    <span className={`badge badge-xs font-medium ${
+                                    <span className={`badge badge-sm whitespace-nowrap font-medium ${
                                         item.type === 'AJUSTEMENT' 
                                             ? 'badge-warning text-warning-content'
                                             : isPositive ? 'badge-success text-white' : 'badge-error text-white'
@@ -324,12 +335,12 @@ const propsTabsContentMovements = (stockHistory: any[], loadingHistory: boolean,
                                         {t(`products:detail.movements.types.${item.type}`, { defaultValue: item.type })}
                                     </span>
                                 </td>
-                                <td className="max-w-[200px] truncate text-xs" title={item.libelle}>
+                                <td className="text-xs" title={item.libelle}>
                                     <div className="flex items-center gap-1">
                                         {(item.facture || item.commande) && (
                                             <span className="text-primary" title={item.facture ? t('products:detail.movements.view_invoice') : t('products:detail.movements.view_order')}>🔍</span>
                                         )}
-                                        {item.libelle}
+                                        {cleanedLibelle}
                                         {item.commande_numero && (
                                             <span className="badge badge-ghost badge-xs font-mono ml-auto">
                                                 {item.commande_numero}

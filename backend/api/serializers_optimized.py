@@ -26,7 +26,7 @@ class ProduitListSerializer(serializers.ModelSerializer):
         model = Produit
         fields = [
             'id', 'name', 'cip1', 'cip2', 'cip3',
-            'stock', 'stock_minimum', 'pmp', 'selling_price',
+            'stock', 'total_stock', 'stock_minimum', 'pmp', 'selling_price',
             'rayon_name', 'fournisseur_name', 'forme_nom', 'rotation_moyenne',
             'use_lot_management',
             'tva', 'cost_price', 'taux_marge',
@@ -264,7 +264,7 @@ class StockLotListSerializer(serializers.ModelSerializer):
         model = StockLot
         fields = [
             'id', 'produit', 'produit_nom', 'fournisseur_nom',
-            'lot', 'date_expiration', 'quantity_remaining',
+            'lot', 'date_expiration', 'quantity_remaining', 'quantity_initial',
             'price_cost', 'selling_price', 'date_reception'
         ]
 

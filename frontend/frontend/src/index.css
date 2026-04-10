@@ -83,6 +83,85 @@ input, button, textarea, select {
   font-family: inherit;
 }
 
+/* Premium Primary Button */
+.btn-primary {
+  background: linear-gradient(135deg, var(--color-primary) 0%, color-mix(in srgb, var(--color-primary), #000 10%) 100%);
+  border: none;
+  box-shadow: 0 4px 12px color-mix(in srgb, var(--color-primary), transparent 80%);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.btn-primary:hover {
+  box-shadow: 0 8px 16px color-mix(in srgb, var(--color-primary), transparent 70%);
+  transform: translateY(-1px);
+}
+
+.btn-primary:active {
+  transform: translateY(0);
+}
+
+/* Pharmacy Theme Custom Styles */
+.pharma-sidebar {
+  background: linear-gradient(180deg, #171c26 0%, #0c0f14 100%);
+  border-right: 1px solid rgba(255, 255, 255, 0.05);
+  box-shadow: 10px 0 30px rgba(0, 0, 0, 0.2);
+}
+
+.pharma-sidebar-header {
+  background: rgba(34, 197, 94, 0.03);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.pharma-menu-item {
+  position: relative;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  margin: 0.25rem 0.75rem;
+  border-radius: 0.75rem;
+  color: rgba(255, 255, 255, 0.5);
+  font-weight: 600;
+}
+
+.pharma-menu-item:hover {
+  background: rgba(255, 255, 255, 0.05);
+  color: #ffffff;
+}
+
+.pharma-menu-item.active {
+  background: linear-gradient(90deg, rgba(34, 197, 94, 0.15) 0%, rgba(34, 197, 94, 0.05) 100%);
+  color: #22c55e;
+  box-shadow: inset 0 0 0 1px rgba(34, 197, 94, 0.2);
+}
+
+.pharma-menu-item.active::before {
+  content: '';
+  position: absolute;
+  left: -12px;
+  top: 20%;
+  bottom: 20%;
+  width: 4px;
+  background: #22c55e;
+  border-radius: 0 4px 4px 0;
+  box-shadow: 0 0 10px rgba(34, 197, 94, 0.5);
+}
+
+/* Custom scrollbar for sidebar */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 4px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(34, 197, 94, 0.5);
+}
+
 /* Prevent horizontal overflow globally */
 html,
 body {
@@ -166,84 +245,10 @@ select {
   background: #94a3b8;
 }
 
-/* Global Table Zebra Striping Override */
-.table tbody tr:nth-child(even) {
-  --tw-bg-opacity: 1;
-  background-color: var(--color-base-200);
-}
-
-/* Ensure odd rows are white (or base-100) */
-.table tbody tr:nth-child(odd) {
-  --tw-bg-opacity: 1;
-  background-color: var(--color-base-100);
-}
-
-/* Pharmacy Theme Custom Styles */
-.pharma-sidebar {
-  background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%);
-}
-
-.pharma-sidebar-header {
-  background: rgba(34, 197, 94, 0.05);
-  border-bottom: 1px solid rgba(34, 197, 94, 0.1);
-}
-
-/* Custom scrollbar for sidebar - Forced visibility for laptop users */
-.custom-scrollbar {
-  scrollbar-width: thin;
-  scrollbar-color: rgba(34, 197, 94, 0.5) rgba(0, 0, 0, 0.2);
-  scrollbar-gutter: stable;
-}
-
-.custom-scrollbar::-webkit-scrollbar {
-  width: 8px; /* Increased from 5px */
-  display: block;
-}
-
-.custom-scrollbar::-webkit-scrollbar-track {
-  background: rgba(0, 0, 0, 0.3); /* Darker track for better contrast */
-  border-radius: 10px;
-}
-
-.custom-scrollbar::-webkit-scrollbar-thumb {
-  background: rgba(34, 197, 94, 0.6); /* More opaque green */
-  border-radius: 10px;
-  border: 2px solid rgba(0, 0, 0, 0.3); /* Padding effect */
-}
-
-.custom-scrollbar::-webkit-scrollbar-thumb:hover {
-  background: rgba(34, 197, 94, 0.8);
-}
-
-.pharma-menu-item {
-  position: relative;
-  transition: all 0.2s ease;
-}
-
-.pharma-menu-item:hover {
-  background: rgba(255, 255, 255, 0.05);
-}
-
-.pharma-menu-item.active {
-  background: rgba(34, 197, 94, 0.1);
-  color: #22c55e;
-}
-
-.pharma-menu-item.active::before {
-  content: '';
-  position: absolute;
-  left: 0;
-  top: 0;
-  bottom: 0;
-  width: 3px;
-  background: #22c55e;
-  border-radius: 0 4px 4px 0;
-}
-
 .pharma-card {
   background: var(--color-base-100);
   border-radius: var(--radius-box);
-  border: 1px solid var(--color-base-300);
+  border: 1px solid color-mix(in srgb, var(--color-base-300), transparent 50%);
   box-shadow: var(--shadow-sm);
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   width: 100%;
@@ -252,99 +257,115 @@ select {
 }
 
 .pharma-card:hover {
-  box-shadow: var(--shadow-lg);
-  transform: translateY(-2px);
-}
-
-.badge-pharma {
-  background: color-mix(in srgb, var(--color-primary), transparent 90%);
-  color: var(--color-primary);
-  font-size: 0.75rem;
-  padding: 0.25rem 0.75rem;
-  border-radius: 9999px;
-  font-weight: 600;
-}
-
-/* Global Sticky Tables & Headers */
-.table thead {
-  position: sticky;
-  top: 0;
-  z-index: 20;
-}
-
-.table thead th {
-  background-color: hsl(var(--b1)) !important;
-  background-clip: padding-box;
-  border-bottom: 2px solid hsl(var(--b2)) !important;
-  background-color: hsl(var(--b1));
-}
-
-.table tfoot {
-  position: sticky;
-  bottom: 0;
-  z-index: 10;
-}
-
-.table tfoot td {
-  background-color: hsl(var(--b1)) !important;
-  background-clip: padding-box;
-  border-top: 2px solid hsl(var(--b2)) !important;
-}
-
-/* Ensure background is opaque for sticky headers */
-.table thead tr {
-  background-color: hsl(var(--b1));
+  box-shadow: var(--shadow-premium);
+  transform: translateY(-4px);
 }
 
 .sticky-header {
   position: sticky;
   top: -24px;
-  /* Offset for page padding (p-6) */
   z-index: 30;
-  background-color: hsl(var(--b1));
+  background-color: var(--color-base-100);
   margin-top: -24px;
   padding-top: 24px;
   padding-bottom: 24px;
-  box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
-  border-bottom: 1px solid hsl(var(--b2));
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05);
+  border-bottom: 1px solid var(--color-base-300);
+  backdrop-filter: blur(8px);
 }
 
-/* Specific adjustment for layouts with p-4, p-6 or p-8 */
-.p-4 .sticky-header {
-  top: -16px;
-  margin-top: -16px;
-  padding-top: 16px;
-  padding-bottom: 16px;
+/* Global Table Zebra Striping Override */
+.table tbody tr:nth-child(even) {
+  --tw-bg-opacity: 1;
+  background-color: var(--color-base-200);
 }
 
-.p-6 .sticky-header {
-  top: -24px;
-  margin-top: -24px;
-  padding-top: 24px;
-  padding-bottom: 24px;
+.table tbody tr:nth-child(odd) {
+  --tw-bg-opacity: 1;
+  background-color: var(--color-base-100);
 }
 
-.p-8 .sticky-header {
-  top: -32px;
-  margin-top: -32px;
-  padding-top: 32px;
-  padding-bottom: 32px;
+.table tbody tr {
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    border-bottom: 1px solid color-mix(in srgb, var(--color-base-300), transparent 50%);
 }
 
-/* In dark mode or specific themes, ensure background remains solid */
-[data-theme] .sticky-header,
+.table tbody tr:hover {
+    background-color: color-mix(in srgb, var(--color-primary), transparent 95%) !important;
+    transform: translateX(2px);
+}
+
+/* Premium Sticky Headers with Glassmorphism */
+.table thead {
+  position: sticky;
+  top: 0;
+  z-index: 30;
+}
+
+.table thead th {
+  background: color-mix(in srgb, var(--color-base-100), transparent 5%) !important;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border-bottom: 2px solid var(--color-base-300) !important;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: color-mix(in srgb, var(--color-base-content), transparent 30%);
+}
+
 [data-theme] .table thead th {
-  background-color: hsl(var(--b1));
+  background: color-mix(in srgb, var(--color-base-100), transparent 10%) !important;
 }
 
-/* Forcer le centrage de TOUS les modals DaisyUI */
+/* Badge Refinement (Luxury Look) */
+.badge {
+  border-radius: 6px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  padding-left: 0.6em;
+  padding-right: 0.6em;
+}
+
+.badge-outline {
+  border-width: 1.5px;
+}
+
+.badge-pharma {
+  background: color-mix(in srgb, var(--color-primary), transparent 90%);
+  color: var(--color-primary);
+  border: 1px solid color-mix(in srgb, var(--color-primary), transparent 80%);
+}
+
+/* Scrollbar Refinement */
+::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: color-mix(in srgb, var(--color-base-content), transparent 85%);
+  border-radius: 10px;
+  transition: background 0.3s ease;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: color-mix(in srgb, var(--color-base-content), transparent 60%);
+}
+
+/* Custom Modal Center Fix */
 .modal {
   align-items: center !important;
   justify-content: center !important;
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
 }
 
 .modal-box {
-  margin-top: 0 !important;
-  margin-bottom: 0 !important;
-  top: 0 !important;
+  border-radius: 1.5rem;
+  box-shadow: var(--shadow-premium);
+  border: 1px solid color-mix(in srgb, var(--color-base-300), transparent 20%);
 }
