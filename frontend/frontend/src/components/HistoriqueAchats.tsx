@@ -44,6 +44,13 @@ const HistoriqueAchats = ({ forcedType }: HistoriqueAchatsProps) => {
   const [totalCount, setTotalCount] = useState(0);
   const pageSize = 50;
 
+  // Global Totals from Backend
+  const [globalTotals, setGlobalTotals] = useState({
+    total_achat_global: 0,
+    nb_commandes_global: 0,
+    total_produits_global: 0
+  });
+
   // Filters
   const [dateDebut, setDateDebut] = useState('');
   const [dateFin, setDateFin] = useState('');
@@ -91,6 +98,9 @@ const HistoriqueAchats = ({ forcedType }: HistoriqueAchatsProps) => {
       if (response.data.results) {
         setData(response.data.results);
         setTotalCount(response.data.count);
+        if (response.data.extras) {
+          setGlobalTotals(response.data.extras);
+        }
       } else {
         setData(response.data);
         setTotalCount(response.data.length);
@@ -104,6 +114,7 @@ const HistoriqueAchats = ({ forcedType }: HistoriqueAchatsProps) => {
 
   useEffect(() => {
     if (user?.token) {
+      setData([]); // Reset data to avoid "Invalid Date" errors when switching tabs
       setPage(1);
       fetchHistory(1);
     }
@@ -175,7 +186,7 @@ const HistoriqueAchats = ({ forcedType }: HistoriqueAchatsProps) => {
         ws['!cols'] = colWidths;
 
         const wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, ws, activeTab === 'summary' ? 'Résumé Achats' : 'Détails Achats');
+        XLSX.utils.book_append_sheet(wb, ws, activeTab === 'summary' ? t('tabs.purchase_summary') : t('tabs.purchase_details'));
 
         // Trigger Download
         const filename = `historique_achats_${activeTab}_${format(new Date(), 'yyyy-MM-dd')}.xlsx`;
@@ -192,8 +203,11 @@ const HistoriqueAchats = ({ forcedType }: HistoriqueAchatsProps) => {
   };
 
   const totalPages = Math.ceil(totalCount / pageSize);
-  const totalOrdersPage = data.reduce((acc, row) => acc + (row.nb_commandes || 0), 0);
-  const totalAmountPage = data.reduce((acc, row) => acc + (normalizeNumber(row.total_achat) || 0), 0);
+  // Using global totals instead of page-only totals as requested
+  const totalDisplayCount = activeTab === 'summary' 
+    ? globalTotals.nb_commandes_global 
+    : globalTotals.total_produits_global;
+  const totalDisplayAmount = globalTotals.total_achat_global;
 
   return (
     <>
@@ -310,8 +324,10 @@ const HistoriqueAchats = ({ forcedType }: HistoriqueAchatsProps) => {
                   <Package className="w-5 h-5 text-primary" />
                 </div>
                 <div>
-                  <p className="text-[10px] font-bold text-base-content/40 uppercase tracking-widest leading-none mb-1">{t('history.columns.nb_orders')}</p>
-                  <p className="text-xl font-black text-base-content leading-none">{totalOrdersPage}</p>
+                  <p className="text-[10px] font-bold text-base-content/40 uppercase tracking-widest leading-none mb-1">
+                    {activeTab === 'summary' ? t('history.columns.nb_orders') : t('history.columns.nb_products', { defaultValue: 'Nombre de produits' })}
+                  </p>
+                  <p className="text-xl font-black text-base-content leading-none">{totalDisplayCount}</p>
                 </div>
               </div>
             </div>
@@ -323,7 +339,7 @@ const HistoriqueAchats = ({ forcedType }: HistoriqueAchatsProps) => {
                 <div>
                   <p className="text-[10px] font-bold text-base-content/40 uppercase tracking-widest leading-none mb-1">{t('history.columns.total_purchase')}</p>
                   <p className="text-xl font-black text-base-content leading-none">
-                    {formatMoney(totalAmountPage)} <span className="text-xs font-bold text-base-content/30 ml-0.5">{t('common:currency_symbol')}</span>
+                    {formatMoney(totalDisplayAmount)} <span className="text-xs font-bold text-base-content/30 ml-0.5">{t('common:currency_symbol')}</span>
                   </p>
                 </div>
               </div>
@@ -372,7 +388,7 @@ const HistoriqueAchats = ({ forcedType }: HistoriqueAchatsProps) => {
                             <div className="flex items-center gap-3">
                               <div className={`w-1.5 h-1.5 rounded-full ${i === 0 ? 'bg-primary shadow-[0_0_8px_rgba(var(--p),0.5)]' : 'bg-base-content/10'}`} />
                               <span className="text-sm font-bold text-base-content/70">
-                                {format(new Date(row.date), 'dd MMMM yyyy', { locale: i18n.language.startsWith('fr') ? fr : undefined })}
+                                {row.date ? format(new Date(row.date), 'dd MMMM yyyy', { locale: i18n.language.startsWith('fr') ? fr : undefined }) : '---'}
                               </span>
                             </div>
                           </td>

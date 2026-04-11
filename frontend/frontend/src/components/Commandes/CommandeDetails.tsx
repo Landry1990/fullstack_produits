@@ -94,8 +94,9 @@ const CommandeDetails: React.FC<CommandeDetailsProps> = ({
           </button>
           <button
             onClick={onOpenLabelsModal}
-            className="btn btn-primary btn-sm"
-            disabled={executingAction}
+            className="btn btn-primary btn-sm disabled:bg-primary/20 disabled:text-primary/40 disabled:border-primary/10"
+            disabled={selectedCommande.status !== 'CLOT' || executingAction}
+            title={selectedCommande.status !== 'CLOT' ? t('orders:details.labels_clot_only', { defaultValue: 'Uniquement pour les commandes clôturées' }) : ''}
           >
             {t('orders:details.labels')}
           </button>
@@ -108,7 +109,7 @@ const CommandeDetails: React.FC<CommandeDetailsProps> = ({
             {executingAction ? <span className="loading loading-spinner loading-xs"></span> : t('orders:details.delete')}
           </button>
           <button
-            className="btn btn-primary btn-outline btn-sm"
+            className="btn btn-primary btn-outline btn-sm disabled:bg-transparent disabled:text-base-content/20 disabled:border-base-200"
             onClick={() => {
               const fName = fournisseurs.find(f => f.id === selectedCommande.fournisseur)?.name ?? `ID: ${selectedCommande.fournisseur}`;
               onImprimer(fName);

@@ -424,14 +424,12 @@ export default function GestionUtilisateurs() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const payload = {
+      const payload: any = {
         username: formData.username,
         email: formData.email,
         first_name: formData.first_name,
         last_name: formData.last_name,
-        is_superuser: formData.is_superuser,
         is_active: formData.is_active,
-        ...(formData.password ? { password: formData.password } : {}),
         profile: {
           role: formData.role,
           allowed_menus: formData.allowed_menus,
@@ -454,6 +452,17 @@ export default function GestionUtilisateurs() {
         }
       };
       
+      if (formData.password) {
+        payload.password = formData.password;
+      }
+
+      // Seul un superadmin peut changer le statut superadmin
+      if (currentUser?.is_superuser) {
+        payload.is_superuser = formData.is_superuser;
+      }
+
+      console.log('DEBUG: Payload sending:', payload);
+
       if (editingUser) {
         await axios.patch(`/api/users/${editingUser.id}/`, payload);
         toast.success(t('messages.updated'));
@@ -464,9 +473,10 @@ export default function GestionUtilisateurs() {
       
       setModalOpen(false);
       fetchUsers();
-    } catch (error) {
-      console.error('Error saving user:', error);
-      toast.error(t('messages.save_error'));
+    } catch (error: any) {
+      console.error('Error saving user:', error.response?.data || error);
+      const backendError = error.response?.data ? JSON.stringify(error.response.data) : '';
+      toast.error(`${t('messages.save_error')} ${backendError}`);
     }
   };
 

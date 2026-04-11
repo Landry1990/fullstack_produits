@@ -130,8 +130,12 @@ export const TicketTemplate = forwardRef<HTMLDivElement, TicketTemplateProps>(({
                 </tr>
               )}
               <tr>
-                <td className="pt-1">Caissier</td>
-                <td className="pt-1 text-right uppercase">{ticket.user_details?.username || 'ADMIN'}</td>
+                <td className="pt-1">Vendeur</td>
+                <td className="pt-1 text-right uppercase">{facture?.created_by_name || 'N/A'}</td>
+              </tr>
+              <tr>
+                <td className="">Caissier</td>
+                <td className="text-right uppercase">{ticket.user_details?.username || 'ADMIN'}</td>
               </tr>
             </tbody>
           </table>

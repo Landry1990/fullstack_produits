@@ -1,22 +1,39 @@
 {
-  "modal_title": "Label Printing",
-  "subtitle": "Printing for order {{numero}}",
-  "format_label": "Label Format",
-  "format_standard": "Standard format for thermal printers",
-  "format_compact": "Compact format for small boxes",
-  "info_title": "Information included:",
-  "info_items": {
-    "name": "Product Name",
-    "barcode": "Barcode (CIP)",
-    "lot": "Lot Number",
-    "supplier": "Supplier",
-    "date": "Expiration Date",
-    "price": "Selling Price"
-  },
-  "debug_mode": "Debug Mode",
-  "debug_desc": "Shows borders and markers on the label",
-  "cancel": "Cancel",
-  "generate": "Generate PDF",
-  "generating": "Generating...",
-  "error_print": "Error while generating labels"
+    "modal_title": "Label Printing",
+    "subtitle": "Order: {{numero}}",
+    "format_label": "Label Format",
+    "format_standard": "Standard Format (40x20mm)",
+    "format_compact": "Compact Format (30x15mm)",
+    "info_title": "Label Configuration",
+    "drag_info": "Drag and drop to reorder fields",
+    "fields": {
+        "productName": "Product Name",
+        "rayon": "Shelf / Rayon",
+        "barcode": "Barcode",
+        "sellingPrice": "Selling Price",
+        "pharmacyName": "Pharmacy Name",
+        "fournisseur": "Supplier",
+        "dateEntree": "Entry Date",
+        "dateExpiration": "Expiration Date (MM/YY)",
+        "orderNumber": "Order Number",
+        "lot": "Batch / Lot Number",
+        "invoiceNumber": "Invoice Number"
+    },
+    "prefixes": {
+        "rayon": "S",
+        "lot": "L",
+        "expiration": "EXP",
+        "order": "ORD",
+        "invoice": "INV"
+    },
+    "qty": {
+        "title": "Quantity to Print",
+        "by_unit": "One label per unit received",
+        "fixed": "Fixed quantity for all products",
+        "total_labels": "Total labels: {{count}}"
+    },
+    "preview": "Label Preview",
+    "cancel": "Cancel",
+    "print": "Print Labels",
+    "error_print": "Error while printing labels"
 }

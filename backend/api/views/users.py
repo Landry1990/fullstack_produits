@@ -147,6 +147,14 @@ class UserViewSet(viewsets.ModelViewSet):
             return [IsAdminUser()]
         return [IsAuthenticated()]
     
+    def partial_update(self, request, *args, **kwargs):
+        print(f"DEBUG: Receiving PATCH request for user {kwargs.get('pk')}")
+        print(f"DEBUG: Request Data: {request.data}")
+        
+        # Call the default implementation but catch errors
+        response = super().partial_update(request, *args, **kwargs)
+        return response
+    
     def get_queryset(self):
         user = self.request.user
         if user.is_superuser:
@@ -171,7 +179,12 @@ class UserViewSet(viewsets.ModelViewSet):
         )
 
     def perform_update(self, serializer):
-        user = serializer.save()
+        try:
+            user = serializer.save()
+        except Exception as e:
+            print(f"DEBUG: Exception during serializer.save(): {e}")
+            raise
+            
         log_audit(
             user=self.request.user,
             action=AuditLog.Action.UPDATE,

@@ -21,6 +21,7 @@
         "client": "Client",
         "date": "Date",
         "products": "Products",
+        "seller": "Seller",
         "amount": "Amount",
         "actions": "Actions",
         "tiers_payant": "Third Party Payer",

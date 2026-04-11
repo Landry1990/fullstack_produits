@@ -101,6 +101,7 @@ export const FacturesTable: React.FC<FacturesTableProps> = ({
               <th>{t('table.client')}</th>
               <th className="hidden lg:table-cell">{t('table.date')}</th>
               <th className="hidden xl:table-cell">{t('table.products')}</th>
+              <th className="hidden md:table-cell">{t('table.seller', 'Vendeur')}</th>
               <th className="text-right">{t('table.amount')}</th>
               <th className="text-center">{t('table.actions')}</th>
             </tr>
@@ -174,6 +175,9 @@ export const FacturesTable: React.FC<FacturesTableProps> = ({
                     >
                       {getProductsSummary(facture)}
                     </button>
+                  </td>
+                  <td className="text-xs hidden md:table-cell">
+                    <div className="font-medium">{facture.created_by_name || '-'}</div>
                   </td>
                   <td className="text-right font-mono font-bold text-lg">
                     {montantAPayer} {t('common:currency_symbol', 'F')}
@@ -267,7 +271,7 @@ export const FacturesTable: React.FC<FacturesTableProps> = ({
       <PremiumModal
         isOpen={!!previewFacture}
         onClose={() => setPreviewFacture(null)}
-        title={t('table.products_preview_title', { numero: previewFacture?.numero_facture })}
+        title={`${t('table.products_preview_title', { numero: previewFacture?.numero_facture })} - Vendeur: ${previewFacture?.created_by_name || '?'}`}
         footer={
           <div className="flex justify-end w-full">
             <button className="btn btn-sm" onClick={() => setPreviewFacture(null)}>{t('table.close')}</button>
