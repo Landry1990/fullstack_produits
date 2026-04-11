@@ -100,6 +100,9 @@ export default function Commandes({ forcedType }: CommandesProps) {
         <SimplePrintLabelsModal
           commandeId={state.selectedCommande.id}
           commandeNumero={state.selectedCommande.numero_facture || `#${state.selectedCommande.id}`}
+          commande={state.selectedCommande}
+          produitsList={modals.produitsList}
+          selectedRows={modals.selectedRows}
           onClose={() => state.setShowPrintLabelsModal(false)}
         />
       )}

@@ -2,21 +2,38 @@
     "modal_title": "Impression d'Étiquettes",
     "subtitle": "Commande: {{numero}}",
     "format_label": "Format des étiquettes",
-    "format_standard": "Format standard",
-    "format_compact": "Format compact",
-    "info_title": "Contenu des étiquettes:",
-    "info_items": {
-        "name": "Nom du produit",
-        "barcode": "Code-barres (CIP1/CIP2/CIP3)",
+    "format_standard": "Format standard (40x20mm)",
+    "format_compact": "Format compact (30x15mm)",
+    "info_title": "Configuration de l'étiquette",
+    "drag_info": "Faites glisser pour réorganiser l'ordre d'affichage",
+    "fields": {
+        "productName": "Nom du produit",
+        "rayon": "Rayon",
+        "barcode": "Code-barres",
+        "sellingPrice": "Prix de vente",
+        "pharmacyName": "Nom de la pharmacie",
+        "fournisseur": "Fournisseur",
+        "dateEntree": "Date d'entrée",
+        "dateExpiration": "Date de péremption (MM/YY)",
+        "orderNumber": "Numéro de commande",
         "lot": "Numéro de lot",
-        "supplier": "Fournisseur",
-        "date": "Date d'entrée",
-        "price": "Prix de vente"
+        "invoiceNumber": "Numéro de facture"
     },
-    "debug_mode": "Mode Debug",
-    "debug_desc": "Affiche les bordures et la grille pour tester les positions",
+    "prefixes": {
+        "rayon": "R",
+        "lot": "L",
+        "expiration": "EXP",
+        "order": "CMD",
+        "invoice": "F"
+    },
+    "qty": {
+        "title": "Quantité à imprimer",
+        "by_unit": "Une étiquette par unité reçue",
+        "fixed": "Quantité fixe pour tous les produits",
+        "total_labels": "Total étiquettes : {{count}}"
+    },
+    "preview": "Aperçu de l'étiquette",
     "cancel": "Annuler",
-    "generate": "Générer PDF",
-    "generating": "Génération en cours...",
+    "print": "Imprimer les étiquettes",
     "error_print": "Erreur lors de l'impression des étiquettes"
 }

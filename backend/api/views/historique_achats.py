@@ -57,6 +57,15 @@ class HistoriqueAchatsViewSet(viewsets.ViewSet):
             )
         ).order_by('-jour')
 
+        # Global Totals Aggregation
+        global_totals = queryset.aggregate(
+            total_achat_global=Sum(
+                F('produits__quantity') * F('produits__price'),
+                output_field=DecimalField()
+            ),
+            nb_commandes_global=Count('id', distinct=True)
+        )
+
         # Pagination
         paginator = self.pagination_class()
         page = paginator.paginate_queryset(daily_stats, request)
@@ -69,7 +78,12 @@ class HistoriqueAchatsViewSet(viewsets.ViewSet):
                     'nb_commandes': stat['nb_commandes'],
                     'total_achat': stat['total_achat'] or 0,
                 })
-            return paginator.get_paginated_response(results)
+            response = paginator.get_paginated_response(results)
+            response.data['extras'] = {
+                'total_achat_global': global_totals['total_achat_global'] or 0,
+                'nb_commandes_global': global_totals['nb_commandes_global'],
+            }
+            return response
 
         results = []
         for stat in daily_stats:
@@ -117,6 +131,12 @@ class HistoriqueAchatsViewSet(viewsets.ViewSet):
             nb_commandes=Count('commande_id', distinct=True)
         ).order_by('-total_achat')
 
+        # Global Totals Aggregation
+        global_totals = queryset.aggregate(
+            total_achat_global=Sum(F('quantity') * F('price'), output_field=DecimalField()),
+            total_produits_global=Count('produit_id', distinct=True)
+        )
+
         # Pagination
         if request.query_params.get('no_pagination') == 'true':
             return Response(product_stats)
@@ -125,6 +145,11 @@ class HistoriqueAchatsViewSet(viewsets.ViewSet):
         page = paginator.paginate_queryset(product_stats, request)
         
         if page is not None:
-            return paginator.get_paginated_response(page)
+            response = paginator.get_paginated_response(page)
+            response.data['extras'] = {
+                'total_achat_global': global_totals['total_achat_global'] or 0,
+                'total_produits_global': global_totals['total_produits_global'],
+            }
+            return response
 
         return Response(product_stats)

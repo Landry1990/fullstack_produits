@@ -55,6 +55,7 @@
         "suspend": "Wait / Suspend",
         "close": "Close / Validate",
         "labels": "Labels",
+        "labels_clot_only": "Only for closed orders",
         "delete": "Delete",
         "print_receipt": "Print Receipt",
         "cancel_reception": "Cancel Reception",
@@ -207,6 +208,7 @@
         "product_search_placeholder": "Search product...",
         "columns": {
             "nb_orders": "Number of orders",
+            "nb_products": "Number of products",
             "total_purchase": "Total Purchase",
             "date": "Date",
             "product": "Product Name",

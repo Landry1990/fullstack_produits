@@ -55,6 +55,7 @@
         "suspend": "Mettre en attente",
         "close": "Clôturer",
         "labels": "Étiquettes",
+        "labels_clot_only": "Uniquement pour les commandes clôturées",
         "delete": "Supprimer",
         "print_receipt": "Imprimer Reçu",
         "cancel_reception": "Annuler Réception",
@@ -207,6 +208,7 @@
         "product_search_placeholder": "Rechercher un produit...",
         "columns": {
             "nb_orders": "Nombre de commandes",
+            "nb_products": "Nombre de produits",
             "total_purchase": "Total Achats",
             "date": "Date",
             "product": "Désignation Produit",

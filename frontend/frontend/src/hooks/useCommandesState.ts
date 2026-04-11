@@ -159,11 +159,9 @@ export function useCommandesState(forcedType?: 'LOC' | 'DIR') {
       setSelectedRows(new Set());
   }, [selectedCommande]);
 
-  useEffect(() => {
-    if (selectedCommande && !commandes.some(c => c.id === selectedCommande.id)) {
-      setSelectedCommande(null)
-    }
-  }, [commandes, selectedCommande])
+  // Removed useEffect that sets selectedCommande to null if not in list.
+  // This caused 'messages.no_selection' after an autosave because the newly created command
+  // was not yet in the 'commandes' page array, forcing selectedCommande to null while in EDIT mode.
 
   const onSave = (e: FormEvent) => {
       e.preventDefault();
@@ -1198,6 +1196,7 @@ export function useCommandesState(forcedType?: 'LOC' | 'DIR') {
     
     setCommandeProduits(enrichedProducts); 
     setSearchProduitQuery('')
+    setSelectedCommande(commande);
     setViewMode('EDIT');
   }
 

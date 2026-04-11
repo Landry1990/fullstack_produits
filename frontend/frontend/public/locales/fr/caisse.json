@@ -21,6 +21,7 @@
         "client": "Client",
         "date": "Date",
         "products": "Produits",
+        "seller": "Vendeur",
         "amount": "Montant",
         "actions": "Actions",
         "tiers_payant": "Tiers Payant",

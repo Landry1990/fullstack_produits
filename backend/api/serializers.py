@@ -167,6 +167,12 @@ class UserSerializer(serializers.ModelSerializer):
         return user
 
     def update(self, instance, validated_data):
+        # DEBUG LOG
+        print(f"DEBUG: Updating user {instance.id} ({instance.username})")
+        print(f"DEBUG: validated_data keys: {list(validated_data.keys())}")
+        if 'profile' in validated_data:
+            print(f"DEBUG: profile_data keys: {list(validated_data['profile'].keys())}")
+            
         profile_data = validated_data.pop('profile', {})
         password = validated_data.pop('password', None)
 

@@ -46,6 +46,7 @@ export default defineConfig({
     host: '0.0.0.0', // Accepte les connexions de tous les appareils du réseau
     port: 3000,
     strictPort: true,
+    allowedHosts: true, // Autorise l'accès via n'importe quel nom d'hôte (réseau local)
     proxy: {
       '/api': {
         target: 'http://127.0.0.1:8000',
