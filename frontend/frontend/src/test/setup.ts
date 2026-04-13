@@ -1,7 +1,7 @@
 import '@testing-library/jest-dom';
 import { vi } from 'vitest';
+import React, { createContext } from 'react';
 
-// Global mock for axios to prevent crashes during module initialization
 // Global mock for axios to prevent crashes during module initialization
 const mockAxios: any = {
   get: vi.fn(() => Promise.resolve({ data: {} })),
@@ -81,8 +81,6 @@ const allTranslations = {
 };
 
 // Global mock for AuthContext
-import React, { createContext } from 'react';
-
 const mockAuthValue = { 
     user: { 
         id: 1, 
@@ -204,3 +202,80 @@ vi.mock('react-i18next', () => {
     };
 });
 
+// Mock for Recharts
+vi.mock('recharts', () => {
+  return {
+    ResponsiveContainer: ({ children }: any) => React.createElement('div', { className: 'recharts-responsive-container-mock' }, children),
+    BarChart: ({ children }: any) => React.createElement('div', { className: 'bar-chart-mock' }, children),
+    LineChart: ({ children }: any) => React.createElement('div', { className: 'line-chart-mock' }, children),
+    PieChart: ({ children }: any) => React.createElement('div', { className: 'pie-chart-mock' }, children),
+    AreaChart: ({ children }: any) => React.createElement('div', { className: 'area-chart-mock' }, children),
+    XAxis: () => null,
+    YAxis: () => null,
+    CartesianGrid: () => null,
+    Tooltip: () => null,
+    Legend: () => null,
+    Bar: () => null,
+    Line: () => null,
+    Pie: () => null,
+    Area: () => null,
+    Cell: () => null,
+  };
+});
+
+// Mock for window.matchMedia
+Object.defineProperty(window, 'matchMedia', {
+  writable: true,
+  value: vi.fn().mockImplementation(query => ({
+    matches: false,
+    media: query,
+    onchange: null,
+    addListener: vi.fn(), // deprecated
+    removeListener: vi.fn(), // deprecated
+    addEventListener: vi.fn(),
+    removeEventListener: vi.fn(),
+    dispatchEvent: vi.fn(),
+  })),
+});
+
+// Mock for ResizeObserver
+window.ResizeObserver = vi.fn().mockImplementation(() => ({
+  observe: vi.fn(),
+  unobserve: vi.fn(),
+  disconnect: vi.fn(),
+}));
+
+// Mock for html2pdf/jspdf if needed for environment stability
+vi.mock('jspdf', () => ({
+  default: vi.fn().mockImplementation(() => ({
+    addPage: vi.fn(),
+    save: vi.fn(),
+    text: vi.fn(),
+    setFontSize: vi.fn(),
+    autoTable: vi.fn(),
+  })),
+}));
+
+// Mock for Barcode libs
+vi.mock('jsbarcode', () => ({
+  default: vi.fn(),
+}));
+
+vi.mock('react-barcode', () => ({
+  default: () => React.createElement('div', { 'data-testid': 'barcode-mock' }),
+}));
+
+// Mock for react-datepicker
+vi.mock('react-datepicker', () => {
+  return {
+    default: ({ selected, onChange, placeholderText }: any) => (
+      React.createElement('input', {
+        'data-testid': 'date-picker',
+        placeholder: placeholderText,
+        value: selected ? (selected instanceof Date ? selected.toISOString() : selected) : '',
+        onChange: (e: any) => onChange(new Date(e.target.value)),
+      })
+    ),
+    registerLocale: vi.fn(),
+  };
+});

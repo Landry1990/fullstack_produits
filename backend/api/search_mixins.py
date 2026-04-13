@@ -19,10 +19,21 @@ def apply_multiterm_search(queryset, search_query, search_fields):
     if not search_query or not search_fields:
         return queryset
         
+    search_query = search_query.strip()
+    
+    # --- CHEMIN RAPIDE : Code-barre (CIP) ---
+    # Si la recherche est purement numérique et de longueur >= 7, 
+    # c'est très probablement un scan de code-barre.
+    if search_query.isdigit() and len(search_query) >= 7:
+        barcode_query = Q(cip1=search_query) | Q(cip2=search_query) | Q(cip3=search_query)
+        # On vérifie s'il y a un match exact avant de faire une recherche textuelle plus lourde
+        if queryset.filter(barcode_query).exists():
+            return queryset.filter(barcode_query)
+
     terms = search_query.split()
     is_single_term = len(terms) == 1
     
-    for term in terms:
+    for i, term in enumerate(terms):
         # Chaque terme doit matcher au moins un des champs (OR entre champs)
         # Mais tous les termes doivent être satisfaits (AND entre termes)
         term_query = Q()
@@ -32,19 +43,11 @@ def apply_multiterm_search(queryset, search_query, search_fields):
             
             # Support pour les lookups personnalisés (ex: __startswith)
             if '__' in clean_field:
-                 parts = clean_field.split('__')
-                 known_lookups = ['exact', 'iexact', 'contains', 'icontains', 'startswith', 'istartswith', 'endswith', 'iendswith']
-                 if parts[-1] in known_lookups:
-                     lookup = clean_field
-                 else:
-                     # Recherche simple = préfixe, recherche multi = contient
-                     if is_single_term:
-                         lookup = f"{clean_field}__istartswith"
-                     else:
-                         lookup = f"{clean_field}__icontains"
+                 lookup = clean_field
             else:
-                # Recherche simple = préfixe, recherche multi = contient
-                if is_single_term:
+                # Premier terme d'une recherche commence par... (plus rapide avec index)
+                # Sauf si c'est déjà une recherche au milieu d'un mot
+                if i == 0 and not search_query.startswith(' '):
                     lookup = f"{clean_field}__istartswith"
                 else:
                     lookup = f"{clean_field}__icontains"

@@ -99,7 +99,37 @@
         "creances_synthese": {
             "name": "Aged Receivables Summary",
             "description": "Total debts grouped by client"
+        },
+        "recap_valeur_stock_pdf": {
+            "name": "Stock Value Summary (PDF)",
+            "description": "Total Excl. Tax, VAT, Total Incl. Tax and breakdown by rate (PDF Format)"
         }
+    },
+    "stock_valuation": {
+        "doc_title_pmp": "STOCK VALUE (PURCHASE PMP)",
+        "doc_title_vente": "STOCK VALUE (SALES)",
+        "recap_title": "SUMMARY",
+        "valuation_method": "Valuation Method",
+        "total_general": "Grand Total",
+        "ht_total": "Global Excl. Tax (HT)",
+        "tva_total": "Total VAT Amount",
+        "valuation_pmp": "Purchase Cost (PMP)",
+        "valuation_vente": "Selling Price (incl. tax)",
+        "tva_breakdown_title": "Tax Breakdown",
+        "tva_table_rate": "Rate",
+        "tva_table_base": "Base Excl. Tax",
+        "tva_table_tva": "VAT",
+        "tva_table_total": "Total",
+        "note_title": "Accounting Note",
+        "note_body_pmp": "This report presents the stock valuation based on the Weighted Average Price (PMP) stored in the database as of {{date}}.",
+        "note_body_vente": "This report presents the stock valuation based on current public selling prices including taxes as of {{date}}.",
+        "certification": "This document is certified compliant with ZENITH system data.",
+        "footer_label": "GENERAL VALUATION REPORT",
+        "stamp_placeholder": "Official Stamp Area",
+        "group_by_rayon": "Department/Rayon",
+        "group_by_forme": "Pharmaceutical Form",
+        "group_by_groupe": "Product Group",
+        "category_header": "Category"
     },
     "params": {
         "mois": "Month",

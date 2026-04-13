@@ -1,0 +1,15 @@
+{
+  "transactions": { "results": [], "count": 0 },
+  "mouvements": { "results": [], "count": 0 },
+  "totals": {
+    "total_theorique": 50000,
+    "total_ventes": 45000,
+    "total_entrees": 10000,
+    "total_sorties": 5000,
+    "total_recouvrement": 2000,
+    "details": { "especes": 30000, "carte": 15000 }
+  },
+  "users": [
+    { "id": 1, "username": "caissier1", "first_name": "Ali", "last_name": "Baba", "full_name": "Ali Baba" }
+  ]
+}

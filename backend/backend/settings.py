@@ -41,6 +41,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'django.contrib.postgres',  # Support pour index GIN et Trigrammes
     'api.apps.ApiConfig',  # Custom app for API
     'rest_framework',  # Django REST framework
     'rest_framework.authtoken', # Token Auth

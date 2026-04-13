@@ -106,6 +106,17 @@ class LocalStorageService {
     }
 
     /**
+     * Mettre à jour la quantité d'une ligne locale
+     */
+    async updateLigne(tempId: string, newQuantity: number): Promise<void> {
+        const lignes = await this.getOfflineLignes();
+        const updated = lignes.map(l =>
+            l.tempId === tempId ? { ...l, quantiteComptee: newQuantity } : l
+        );
+        await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+    }
+
+    /**
      * Vider complètement le stockage (pour debug/reset)
      */
     async clearAll(): Promise<void> {

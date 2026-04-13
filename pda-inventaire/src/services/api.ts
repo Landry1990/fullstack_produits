@@ -11,6 +11,13 @@ const api = axios.create({
     },
 });
 
+// Callback pour gérer les erreurs 401 globalement
+let onUnauthorizedCallback: (() => void) | null = null;
+
+export const setUnauthorizedCallback = (callback: () => void) => {
+    onUnauthorizedCallback = callback;
+};
+
 // Intercepteur pour ajouter le token à chaque requête
 api.interceptors.request.use(
     async (config) => {
@@ -33,9 +40,15 @@ api.interceptors.response.use(
     async (error) => {
         if (error.response?.status === 401) {
             // Token expiré ou invalide
-            await SecureStore.deleteItemAsync(STORAGE_KEYS.AUTH_TOKEN);
-            await SecureStore.deleteItemAsync(STORAGE_KEYS.USER_INFO);
-            // Ici on pourrait déclencher une navigation vers login
+            try {
+                await SecureStore.deleteItemAsync(STORAGE_KEYS.AUTH_TOKEN);
+                await SecureStore.deleteItemAsync(STORAGE_KEYS.USER_INFO);
+            } catch (e) {}
+
+            // Déclencher le callback de déconnexion si disponible
+            if (onUnauthorizedCallback) {
+                onUnauthorizedCallback();
+            }
         }
         return Promise.reject(error);
     }

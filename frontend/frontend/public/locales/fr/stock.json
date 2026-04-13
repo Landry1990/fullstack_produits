@@ -297,6 +297,22 @@
         "title": "Inventaires",
         "subtitle": "Gérez et validez vos inventaires de stock",
         "create_btn": "+ Nouvel Inventaire",
+        "create": {
+            "title": "Nouvel Inventaire",
+            "action_title": "Action à effectuer",
+            "action_verify": "Vérifier le stock",
+            "action_verify_desc": "Pointer et corriger le stock existant",
+            "action_entry": "Saisie initiale",
+            "action_entry_desc": "Saisir un stock partant de zéro",
+            "stock_type_title": "Type de stock",
+            "stock_global": "Global",
+            "stock_rayon": "Rayon",
+            "stock_reserve": "Réserve",
+            "perimeter_title": "Périmètre de l'inventaire",
+            "rayon_all": "Tous les rayons",
+            "groupe_all": "Tous les groupes",
+            "forme_all": "Toutes les formes"
+        },
         "bulk_action": "{{count}} inventaire(s) sélectionné(s)",
         "deselect": "Désélectionner",
         "merge_btn": "Fusionner",
@@ -341,7 +357,9 @@
             "ecart": "Ecart Valeur",
             "status": "Statut",
             "created_by": "Crée par",
+            "created_by_prefix": "Par",
             "actions": "Actions",
+            "no_description": "-",
             "empty": "Aucun inventaire"
         },
         "detail": {
@@ -353,6 +371,7 @@
             "tab_entry": "Saisie",
             "tab_analysis": "Analyse",
             "print": "🖨️ Imprimer Etat (PDF)",
+            "import_csv_title": "Importer un fichier CSV (Cip, Quantite)",
             "saved_auto": "Enregistré auto.",
             "merge_to": "🔗 Fusionner vers...",
             "validate": "✓ Valider et Mettre à jour Stock",
@@ -381,6 +400,7 @@
             "col_theo": "Théo.",
             "col_phys": "Phys.",
             "col_gap": "Écart",
+            "col_actions": "Actions",
             "total_gap_value": "Montant Total Écarts",
             "items_count": "Articles",
             "sort": {
@@ -421,7 +441,9 @@
             "top_losses": "📉 Top 10 Pertes",
             "ecarts_by_rayon": "📊 Écarts par Rayon",
             "loss": "Perte",
-            "total_ecart": "Total Écart"
+            "top_surplus": "📈 Top Surplus",
+            "total_ecart": "Total Écart",
+            "print_report": "🖨️ Imprimer le Rapport"
         },
         "lot_modal": {
             "title": "Sélectionner un Lot",
@@ -1006,6 +1028,17 @@
             "monthly_avg": "Moy. Mensuelle",
             "variation": "Variation",
             "avg_basket_short": "Panier M."
+        }
+    },
+    "sidebar": {
+        "stock": {
+            "organisation": {
+                "tabs": {
+                    "rayons": "Rayon",
+                    "groupes": "Groupe",
+                    "formes": "Forme"
+                }
+            }
         }
     }
 }

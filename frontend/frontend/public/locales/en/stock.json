@@ -3,6 +3,22 @@
         "title": "Inventory",
         "subtitle": "Manage and validate your stock inventories",
         "create_btn": "+ New Inventory",
+        "create": {
+            "title": "New Inventory",
+            "action_title": "Action to perform",
+            "action_verify": "Verify stock",
+            "action_verify_desc": "Check and correct existing stock",
+            "action_entry": "Initial entry",
+            "action_entry_desc": "Enter stock from scratch",
+            "stock_type_title": "Stock Type",
+            "stock_global": "Global",
+            "stock_rayon": "Shelf",
+            "stock_reserve": "Reserve",
+            "perimeter_title": "Inventory Perimeter",
+            "rayon_all": "All shelves",
+            "groupe_all": "All groups",
+            "forme_all": "All forms"
+        },
         "bulk_action": "{{count}} inventory(s) selected",
         "deselect": "Deselect",
         "merge_btn": "Merge",
@@ -47,7 +63,9 @@
             "ecart": "Value Gap",
             "status": "Status",
             "created_by": "Created by",
+            "created_by_prefix": "By",
             "actions": "Actions",
+            "no_description": "-",
             "empty": "No inventory found"
         },
         "detail": {
@@ -59,6 +77,7 @@
             "tab_entry": "Entry",
             "tab_analysis": "Analysis",
             "print": "🖨️ Print Status (PDF)",
+            "import_csv_title": "Import CSV file (Cip, Quantity)",
             "saved_auto": "Auto saved.",
             "merge_to": "🔗 Merge to...",
             "validate": "✓ Validate and Update Stock",
@@ -87,6 +106,7 @@
             "col_theo": "Theo.",
             "col_phys": "Phys.",
             "col_gap": "Gap",
+            "col_actions": "Actions",
             "total_gap_value": "Total Gap Amount",
             "items_count": "Items",
             "sort": {
@@ -127,7 +147,9 @@
             "top_losses": "📉 Top 10 Losses",
             "ecarts_by_rayon": "📊 Gaps by Shelf",
             "loss": "Loss",
-            "total_ecart": "Total Gap"
+            "top_surplus": "📈 Top Surplus",
+            "total_ecart": "Total Gap",
+            "print_report": "🖨️ Print Report"
         },
         "lot_modal": {
             "title": "Select a Lot",
@@ -1005,6 +1027,17 @@
             },
             "empty": "Empty history.",
             "times": "times"
+        }
+    },
+    "sidebar": {
+        "stock": {
+            "organisation": {
+                "tabs": {
+                    "rayons": "Shelf",
+                    "groupes": "Group",
+                    "formes": "Form"
+                }
+            }
         }
     }
 }

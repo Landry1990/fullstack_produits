@@ -1,6 +1,13 @@
 import api, { PaginatedResponse } from './api';
 
 // Types
+export interface StockLot {
+    id: number;
+    lot: string;
+    date_expiration: string | null;
+    quantity_remaining: number;
+}
+
 export interface Produit {
     id: number;
     name: string;
@@ -9,8 +16,9 @@ export interface Produit {
     cip3: string | null;
     stock: number;
     selling_price: number;
-    purchase_price: number;
+    cost_price?: number; // Correspond à purchase_price
     use_lot_management?: boolean;
+    stock_lots?: StockLot[];
     rayon?: { id: number; name: string };
 }
 

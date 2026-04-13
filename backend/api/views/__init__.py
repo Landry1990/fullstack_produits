@@ -1,7 +1,6 @@
-from .produits import (
-    ProduitViewSet, CategorieViewSet, FournisseurViewSet, 
-    CategoriesListView, CategoriesDetailView
-)
+from .produits import ProduitViewSet
+from .categories import CategorieViewSet, CategoriesListView, CategoriesDetailView
+from .fournisseurs import FournisseurViewSet
 from .groupes import GroupeViewSet
 from .clients import ClientViewSet, AyantDroitViewSet, DepotClientViewSet
 from .commandes import (

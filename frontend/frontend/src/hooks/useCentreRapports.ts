@@ -249,6 +249,37 @@ export const QUERIES: QueryDefinition[] = [
         resultType: 'raw'
     },
     {
+        id: 'recap_valeur_stock_pdf',
+        name: 'Récapitulatif Valeur Stock (PDF)',
+        description: 'Valeur totale HT, TVA, TTC et répartition détaillée par taux (Format PDF)',
+        endpoint: '/api/rapports/valeur_stock_pdf/',
+        params: [
+            { 
+                key: 'valorisation', 
+                label: 'Type de valorisation', 
+                type: 'select', 
+                default: 'ACHAT',
+                options: [
+                    { value: 'ACHAT', label: "Prix d'Achat (PMP)" },
+                    { value: 'VENTE', label: "Prix de Vente" }
+                ]
+            },
+            { 
+                key: 'group_by', 
+                label: 'Grouper par', 
+                type: 'select', 
+                default: '',
+                options: [
+                    { value: '', label: "Aucun (Global)" },
+                    { value: 'rayon', label: "Rayon" },
+                    { value: 'forme', label: "Forme" },
+                    { value: 'groupe', label: "Groupe" }
+                ]
+            }
+        ],
+        resultType: 'raw'
+    },
+    {
         id: 'rapport_ca_multi_annuel',
         name: 'Comparatif CA Multi-Annuel',
         description: 'CA TVA vs Exonéré par mois pour toutes les années disponibles',
@@ -586,22 +617,34 @@ export function useCentreRapports() {
             
             // Special case for direct Excel downloads
             if (selectedQuery.id === 'balance_stock' && !urlOverride) {
-                const { date_debut, date_fin } = params;
-                const lang = i18n.language;
                 const response = await axios.get(endpoint, {
-                    params: { ...params, lang },
+                    params: { ...params, lang: i18n.language },
                     responseType: 'blob'
                 });
                 
-                const url = window.URL.createObjectURL(new Blob([response.data]));
+                const url = window.URL.createObjectURL(new Blob([response.data], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }));
                 const link = document.createElement('a');
                 link.href = url;
-                link.setAttribute('download', `Balance_Stocks_${date_debut}_${date_fin}.xlsx`);
+                const filename = `Balance_Stocks_${params.date_debut}_${params.date_fin}.xlsx`;
+                
+                link.setAttribute('download', filename);
                 document.body.appendChild(link);
                 link.click();
                 link.remove();
-                toast.success(t('results.export_success', { filename: `Balance_Stocks_${date_debut}_${date_fin}.xlsx` }));
-                setResults({ status: 'success', filename: `Balance_Stocks_${date_debut}_${date_fin}.xlsx` });
+                
+                toast.success(t('results.export_success', { filename }));
+                setResults({ status: 'success', filename });
+                setLoading(false);
+                return;
+            }
+
+            // Special case: Stock Valuation Premium Print (Frontend)
+            if (selectedQuery.id === 'recap_valeur_stock_pdf' && !urlOverride) {
+                const valorisation = params.valorisation || 'ACHAT';
+                const groupBy = params.group_by || '';
+                const printUrl = `/app/printing/0?type=STOCK_VALUATION&valorisation=${valorisation}&group_by=${groupBy}`;
+                window.open(printUrl, '_blank');
+                setResults({ status: 'success', filename: 'Impression lancée' });
                 setLoading(false);
                 return;
             }

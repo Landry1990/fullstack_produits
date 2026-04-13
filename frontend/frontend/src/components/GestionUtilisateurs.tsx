@@ -34,6 +34,7 @@ interface User {
     can_cancel_promis?: boolean;
     can_manage_perimes?: boolean;
     can_manage_avoirs?: boolean;
+    can_validate_zero_amount?: boolean;
     can_modify_price?: boolean;
     can_modify_invoice?: boolean;
     max_discount_rate?: string | number;
@@ -113,8 +114,7 @@ const MENU_HIERARCHY = [
     submenus: [
       { key: 'settings_facture', labelKey: 'sidebar:parametres.facture' },
       { key: 'settings_pharmacie', labelKey: 'sidebar:parametres.pharmacie' },
-      { key: 'settings_whatsapp', labelKey: 'sidebar:parametres.whatsapp' },
-      { key: 'settings_etiquettes', labelKey: 'sidebar:parametres.etiquettes' }
+      { key: 'settings_whatsapp', labelKey: 'sidebar:parametres.whatsapp' }
     ]
   }
 ];
@@ -174,6 +174,7 @@ export default function GestionUtilisateurs() {
     can_cancel_promis: false,
     can_manage_perimes: false,
     can_manage_avoirs: false,
+    can_validate_zero_amount: false,
     can_modify_price: false,
     can_modify_invoice: false,
     max_discount_rate: 0,
@@ -214,6 +215,7 @@ export default function GestionUtilisateurs() {
       updates.can_cancel_promis = true;
       updates.can_manage_perimes = true;
       updates.can_manage_avoirs = true;
+      updates.can_validate_zero_amount = true;
       updates.can_modify_price = true;
       updates.can_modify_invoice = true;
       updates.max_discount_rate = 100;
@@ -246,6 +248,7 @@ export default function GestionUtilisateurs() {
       updates.can_cancel_promis = false;
       updates.can_manage_perimes = false;
       updates.can_manage_avoirs = false;
+      updates.can_validate_zero_amount = false;
       updates.can_modify_price = false;
       updates.can_modify_invoice = false;
       updates.max_discount_rate = 0;
@@ -281,6 +284,7 @@ export default function GestionUtilisateurs() {
         can_cancel_promis: user.profile?.can_cancel_promis || false,
         can_manage_perimes: user.profile?.can_manage_perimes || false,
         can_manage_avoirs: user.profile?.can_manage_avoirs || false,
+        can_validate_zero_amount: user.profile?.can_validate_zero_amount || false,
         can_modify_price: user.profile?.can_modify_price || false,
         can_modify_invoice: user.profile?.can_modify_invoice || false,
         max_discount_rate: Number(user.profile?.max_discount_rate || 0),
@@ -310,6 +314,7 @@ export default function GestionUtilisateurs() {
         can_cancel_promis: false,
         can_manage_perimes: false,
         can_manage_avoirs: false,
+        can_validate_zero_amount: false,
         can_modify_price: false,
         can_modify_invoice: false,
         max_discount_rate: 0,
@@ -446,6 +451,7 @@ export default function GestionUtilisateurs() {
           can_cancel_promis: formData.can_cancel_promis,
           can_manage_perimes: formData.can_manage_perimes,
           can_manage_avoirs: formData.can_manage_avoirs,
+          can_validate_zero_amount: formData.can_validate_zero_amount,
           can_modify_price: formData.can_modify_price,
           can_modify_invoice: formData.can_modify_invoice,
           max_discount_rate: formData.max_discount_rate
@@ -796,6 +802,13 @@ export default function GestionUtilisateurs() {
                     </div>
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 bg-base-200/50 p-4 rounded-xl border border-base-300">
+                      <Checkbox 
+                        size="xs" color="error"
+                        checked={formData.can_validate_zero_amount}
+                        onChange={checked => setFormData({...formData, can_validate_zero_amount: checked})}
+                        label={t('permissions.validate_zero_amount', 'Autoriser ventes à 0F')}
+                        className="p-2 bg-base-100/50 rounded-lg text-error font-bold"
+                      />
                       <Checkbox 
                         size="xs" color="error"
                         checked={formData.can_cancel_invoice} onChange={checked => setFormData({...formData, can_cancel_invoice: checked})}

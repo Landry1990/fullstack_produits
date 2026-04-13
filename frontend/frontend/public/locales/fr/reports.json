@@ -112,7 +112,37 @@
         "top_selling_products": {
             "name": "Produits les plus vendus",
             "description": "Analyse du CA, quantité et marge par produit"
+        },
+        "recap_valeur_stock_pdf": {
+            "name": "Récapitulatif Valeur Stock (PDF)",
+            "description": "Valeur totale HT, TVA, TTC et répartition détaillée par taux (Format PDF)"
         }
+    },
+    "stock_valuation": {
+        "doc_title_pmp": "VALEUR STOCK (ACHAT PMP)",
+        "doc_title_vente": "VALEUR STOCK (VENTE)",
+        "recap_title": "RÉCAPITULATIF",
+        "valuation_method": "Méthode de Valorisation",
+        "total_general": "Total Général",
+        "ht_total": "Valeur Globale HT",
+        "tva_total": "Montant Total TVA",
+        "valuation_pmp": "Coût d'Achat (PMP)",
+        "valuation_vente": "Prix de Vente (TTC)",
+        "tva_breakdown_title": "Répartition des Taxes",
+        "tva_table_rate": "Taux",
+        "tva_table_base": "Base HT",
+        "tva_table_tva": "TVA",
+        "tva_table_total": "Total",
+        "note_title": "Note Comptable",
+        "note_body_pmp": "Ce rapport présente la valorisation du stock fondée sur le Prix Moyen Pondéré (PMP) stocké en base au {{date}}.",
+        "note_body_vente": "Ce rapport présente la valorisation du stock fondée sur les prix de vente publics actuels incluant les taxes au {{date}}.",
+        "certification": "Ce document est certifié conforme aux données du système ZENITH.",
+        "footer_label": "RAPPORT DE VALORISATION GÉNÉRALE",
+        "stamp_placeholder": "Emplacement Cachet Officiel",
+        "group_by_rayon": "Rayon",
+        "group_by_forme": "Forme Pharmaceutique",
+        "group_by_groupe": "Groupe de Produit",
+        "category_header": "Catégorie"
     },
     "params": {
         "mois": "Mois",
@@ -134,7 +164,8 @@
         "seuil": "Seuil (%)",
         "nb_jours": "Nombre de jours",
         "exclude_zero": "Exclure les stocks 0",
-        "fournisseur_id": "Fournisseur"
+        "fournisseur_id": "Fournisseur",
+        "valorisation": "Type de valorisation"
     },
     "results": {
         "title": "Résultats",

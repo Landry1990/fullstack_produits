@@ -4,6 +4,7 @@ import { useParams, useSearchParams } from 'react-router-dom';
 import axios from 'axios';
 import InvoiceTemplate, { type InvoiceData, type PharmacySettings } from './InvoiceTemplate';
 import InventairePrintTemplate, { type InventairePrintData } from './InventairePrintTemplate';
+import StockValuationTemplate, { type StockValuationData } from './StockValuationTemplate';
 import { safeStorage } from '../../utils/storage';
 
 const PrintPage: React.FC = () => {
@@ -20,6 +21,7 @@ const PrintPage: React.FC = () => {
     const type = searchParams.get('type');
 
     const [inventoryData, setInventoryData] = useState<any>(null);
+    const [stockValuationData, setStockValuationData] = useState<StockValuationData | null>(null);
 
     useEffect(() => {
         const fetchData = async () => {
@@ -77,6 +79,11 @@ const PrintPage: React.FC = () => {
                     // Specific inventory results (discrepancy report)
                     const res = await axios.get(`${apiBaseUrl}/inventaires/${id}/print_data/`, config);
                     setInventoryData(res.data);
+                } else if (type === 'STOCK_VALUATION') {
+                    const valorisation = searchParams.get('valorisation') || 'ACHAT';
+                    const groupBy = searchParams.get('group_by') || '';
+                    const res = await axios.get(`${apiBaseUrl}/rapports/valeur_stock_json/?valorisation=${valorisation}&group_by=${groupBy}`, config);
+                    setStockValuationData(res.data);
                 } else {
                     // Default to Invoice
                     const endpoints = [`${apiBaseUrl}/factures/${id}/print_data/`];
@@ -134,7 +141,7 @@ const PrintPage: React.FC = () => {
 
     if (loading) return <div className="flex items-center justify-center h-screen">Chargement du document...</div>;
     if (error) return <div className="flex items-center justify-center h-screen text-red-600 font-bold">{error}</div>;
-    if (!settings || (!invoiceData && !inventoryData)) return <div>Données incomplètes</div>;
+    if (!settings || (!invoiceData && !inventoryData && !stockValuationData)) return <div>Données incomplètes</div>;
 
     return (
         <div className="print-page bg-base-200 min-h-screen p-8">
@@ -179,6 +186,11 @@ const PrintPage: React.FC = () => {
                     settings={settings} 
                     data={invoiceData} 
                     isBonDeLivraison={type === 'BL'}
+                />
+            ) : stockValuationData ? (
+                <StockValuationTemplate 
+                    settings={settings} 
+                    data={stockValuationData} 
                 />
             ) : null}
         </div>

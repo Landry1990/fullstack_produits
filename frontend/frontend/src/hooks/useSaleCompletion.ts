@@ -267,6 +267,11 @@ export function useSaleCompletion(options: UseSaleCompletionOptions = {}): UseSa
                         surveillance_category: l.surveillance_category || 'NONE'
                     }))
                 } : null,
+                totals: {
+                    totalTtc: params.totals.totalTtc,
+                    totalHt: params.totals.totalHt,
+                    totalTva: params.totals.totalTva,
+                },
                 sudo: {
                     validated_by_id: params.validated_by_id,
                     sudo_password: params.sudo_password

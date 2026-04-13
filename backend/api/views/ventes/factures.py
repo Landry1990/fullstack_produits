@@ -206,34 +206,58 @@ class FactureViewSet(OptimizedSerializerMixin, viewsets.ModelViewSet):
         centralized = data.get('centralized_cash_register', True)
         
         # Enforce Sudo for non-positive amounts
-        # Ensure we handle various formats of decimals in data
+        # Robust total TTC extraction
+        totals_obj = data.get('totals', {})
         try:
-            total_ttc = Decimal(str(data.get('totals', {}).get('totalTtc', 0)))
+            total_ttc = Decimal(str(totals_obj.get('totalTtc', 0)))
         except (ValueError, InvalidOperation):
             total_ttc = Decimal('0')
+            
+        # If total is 0 but we have products, try a quick sum to avoid false positives due to missing frontend 'totals'
+        if total_ttc <= 0 and data.get('produits'):
+            try:
+                temp_sum = Decimal('0')
+                for p in data.get('produits', []):
+                    q = Decimal(str(p.get('quantity', 0)))
+                    pr = Decimal(str(p.get('selling_price', 0)))
+                    rem = Decimal(str(p.get('discount', 0)))
+                    temp_sum += (q * pr) - rem
+                remise_globale = Decimal(str(data.get('remise', 0)))
+                total_ttc = temp_sum - remise_globale
+            except Exception:
+                pass
 
         if total_ttc <= 0:
             validation_user, error_res = validate_sudo_mode(request)
             if error_res:
                 return error_res
-            if validation_user == user and not user.is_superuser:
+                
+            # Allow if user is superuser OR has the specific permission
+            has_permission = getattr(validation_user.profile, 'can_validate_zero_amount', False) if hasattr(validation_user, 'profile') else False
+            
+            if validation_user == user and not user.is_superuser and not has_permission:
                 return Response({
                     'detail': "Une vente à montant nul ou négatif nécessite la validation d'un tiers-validateur (Sudo)."
                 }, status=status.HTTP_403_FORBIDDEN)
 
         try:
+            # Transfer validation user to data for SalesService
+            if 'validation_user' not in data and 'validation_user' in locals():
+                 data['validation_user'] = validation_user
+
             facture = SalesService.finalize_sale(user, data, centralized=centralized)
             
-            # Log d'audit
+            # Log d'audit - Safe formatting for Decimal
+            total_display = float(facture.total_ttc)
             log_audit(
                 user=request.user,
                 action=AuditLog.Action.CREATE,
                 model_name='Facture',
                 object_id=facture.id,
-                description=f"Création et finalisation Facture {facture.numero_facture} (Montant: {facture.total_ttc:,.0f} F)",
+                description=f"Création et finalisation Facture {facture.numero_facture} (Montant: {total_display:,.0f} F)",
                 details={
                     'numero_facture': facture.numero_facture,
-                    'total_ttc': float(facture.total_ttc),
+                    'total_ttc': total_display,
                     'client': str(facture.client) if facture.client else facture.client_name_override,
                 },
                 request=request
@@ -315,7 +339,10 @@ class FactureViewSet(OptimizedSerializerMixin, viewsets.ModelViewSet):
             return error_res
         
         # Enforce Sudo for non-positive amounts on validation
-        if facture.total_ttc <= 0 and validation_user == request.user and not request.user.is_superuser:
+        # Allow bypass if superuser OR has specific permission
+        has_permission = getattr(validation_user.profile, 'can_validate_zero_amount', False) if hasattr(validation_user, 'profile') else False
+        
+        if facture.total_ttc <= 0 and validation_user == request.user and not request.user.is_superuser and not has_permission:
             return Response({
                 'detail': "Cette facture à montant nul ou négatif nécessite la validation d'un tiers (Sudo) pour être validée."
             }, status=status.HTTP_403_FORBIDDEN)

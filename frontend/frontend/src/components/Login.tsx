@@ -48,6 +48,7 @@ export default function Login() {
   
   const dropdownRef = useRef<HTMLDivElement>(null);
   const [isOpen, setIsOpen] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -133,8 +134,9 @@ export default function Login() {
           --primary-glow: rgba(16, 185, 129, 0.4);
           --cyan-accent: #06b6d4;
           --obsidian: #020617;
+          --midnight: #0a0f1d;
           --glass-bg: rgba(255, 255, 255, 0.02);
-          --glass-border: rgba(255, 255, 255, 0.06);
+          --glass-border: rgba(255, 255, 255, 0.08);
         }
 
         /* ─── Animations ─── */
@@ -165,9 +167,8 @@ export default function Login() {
           100% { transform: translateX(100%); }
         }
 
-        /* ─── Page Root ─── */
+        /* ─── Page Root & Layout ─── */
         .zl-page {
-          position: relative;
           min-height: 100dvh;
           display: flex;
           font-family: 'Outfit', system-ui, sans-serif;
@@ -176,63 +177,52 @@ export default function Login() {
           color: #fff;
         }
 
-        /* ─── Living Mesh Background (Lightweight) ─── */
-        .zl-mesh-bg {
-          position: absolute;
-          inset: 0;
-          z-index: 0;
-          background: 
-            radial-gradient(circle at 0% 0%, rgba(16, 185, 129, 0.08) 0%, transparent 50%),
-            radial-gradient(circle at 100% 100%, rgba(6, 182, 212, 0.08) 0%, transparent 50%),
-            radial-gradient(circle at 50% 50%, rgba(16, 185, 129, 0.03) 0%, transparent 70%);
-          background-size: 200% 200%;
-          animation: zenMeshMove 20s ease infinite alternate;
-        }
-
-        .zl-mesh-bg::after {
-          content: '';
-          position: absolute;
-          inset: 0;
-          background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
-          opacity: 0.04;
-          mix-blend-mode: overlay;
-        }
-
-        /* ─── Layout ─── */
         .zl-layout {
-          position: relative;
-          z-index: 10;
           display: flex;
           width: 100%;
           min-height: 100dvh;
-          align-items: center;
-          justify-content: center;
         }
 
-        /* ─── Brand Panel (Desktop) ─── */
-        .zl-brand {
-          flex: 1;
+        /* ─── Panels ─── */
+        .zl-panel-left {
+          flex: 0 0 42%;
+          background: var(--obsidian);
+          position: relative;
           display: flex;
           flex-direction: column;
           align-items: center;
           justify-content: center;
           padding: 4rem;
-          color: #fff;
-          background: rgba(0, 0, 0, 0.2);
-          text-align: center;
-          backdrop-filter: blur(10px);
           border-right: 1px solid var(--glass-border);
-          position: relative;
+          overflow: hidden;
         }
 
-        .zl-logo-container {
+        .zl-panel-right {
+          flex: 1;
+          background: var(--midnight);
           position: relative;
-          width: 120px;
-          height: 120px;
           display: flex;
           align-items: center;
           justify-content: center;
-          margin-bottom: 2.5rem;
+          padding: 2rem;
+          overflow-y: auto;
+          /* Texture Noise */
+          background-image: 
+            radial-gradient(circle at 100% 0%, rgba(16, 185, 129, 0.08) 0%, transparent 40%),
+            radial-gradient(circle at 0% 100%, rgba(6, 182, 212, 0.05) 0%, transparent 40%),
+            url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+          background-blend-mode: overlay;
+        }
+
+        /* ─── Elements ─── */
+        .zl-logo-container {
+          position: relative;
+          width: 140px;
+          height: 140px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          margin-bottom: 3rem;
           animation: zenPulseLogo 4s ease-in-out infinite;
         }
 
@@ -330,18 +320,17 @@ export default function Login() {
         .zl-card {
           width: 100%;
           max-width: 440px;
-          background: rgba(15, 23, 42, 0.6);
-          backdrop-filter: blur(40px) saturate(1.8);
-          -webkit-backdrop-filter: blur(40px) saturate(1.8);
+          background: rgba(15, 23, 42, 0.4);
+          backdrop-filter: blur(50px) saturate(2);
+          -webkit-backdrop-filter: blur(50px) saturate(2);
           border: 1px solid var(--glass-border);
           border-radius: 2.5rem;
-          padding: 3rem;
+          padding: 3.5rem;
           box-shadow: 
-            0 25px 50px -12px rgba(0, 0, 0, 0.5),
+            0 50px 100px -20px rgba(0, 0, 0, 0.7),
             inset 0 1px 1px rgba(255, 255, 255, 0.05);
           animation: zenFadeUp 0.8s cubic-bezier(0.16, 1, 0.3, 1);
           position: relative;
-          /* Removed overflow: hidden to allow dropdowns to overflow the card safely */
         }
 
         .zl-card::before {
@@ -485,8 +474,10 @@ export default function Login() {
           border: 1px solid rgba(255, 255, 255, 0.12);
           border-radius: 1.25rem;
           box-shadow: 0 25px 60px rgba(0,0,0,0.8);
-          max-height: 250px;
+          max-height: 50vh;
           overflow-y: auto;
+          display: flex;
+          flex-direction: column;
           animation: zenFadeIn 0.2s ease;
         }
 
@@ -621,12 +612,13 @@ export default function Login() {
         .zl-version-tag {
           position: absolute;
           bottom: 2rem;
-          right: 2rem;
-          font-size: 0.7rem;
-          font-weight: 600;
+          left: 2rem;
+          font-size: 0.65rem;
+          font-weight: 700;
           color: #475569;
-          letter-spacing: 0.2em;
+          letter-spacing: 0.3em;
           text-transform: uppercase;
+          opacity: 0.5;
         }
 
         /* ═══════════════════════════════
@@ -634,12 +626,12 @@ export default function Login() {
            ═══════════════════════════════ */
 
         @media (max-width: 1024px) {
-          .zl-brand {
-            flex: 0 0 40%;
+          .zl-panel-left {
+            flex: 0 0 35%;
             padding: 2.5rem;
           }
           .zl-brand-title {
-            font-size: 3rem;
+            font-size: 2.5rem;
           }
           .zl-card {
             padding: 2.5rem;
@@ -647,10 +639,10 @@ export default function Login() {
         }
 
         @media (max-width: 850px) {
-          .zl-brand {
+          .zl-panel-left {
             display: none;
           }
-          .zl-form-panel {
+          .zl-panel-right {
             padding: 1.5rem;
           }
           .zl-card {
@@ -724,14 +716,11 @@ export default function Login() {
         }
       `}</style>
 
-      {/* Living Background */}
-      <div className="zl-mesh-bg" aria-hidden="true" />
-
       <div className="zl-layout">
-        {/* ═══ Brand Panel (Desktop Content) ═══ */}
-        <div className="zl-brand">
+        {/* ═══ Left Panel: Solid & Brand ═══ */}
+        <div className="zl-panel-left">
           <div className="zl-logo-container">
-            <ZenithLogo variant={1} size={64} />
+            <ZenithLogo variant={1} size={80} />
           </div>
           
           <h1 className="zl-brand-title">Zenith</h1>
@@ -744,7 +733,7 @@ export default function Login() {
               </div>
               <div className="zl-feature-text">
                 <h4>Sécurité Avancée</h4>
-                <p>Authentification SSL et protection des données sensibles.</p>
+                <p>Authentification SSL et protection des données.</p>
               </div>
             </div>
             
@@ -754,17 +743,7 @@ export default function Login() {
               </div>
               <div className="zl-feature-text">
                 <h4>Multi-Postes</h4>
-                <p>Synchronisation temps réel sur tout votre réseau.</p>
-              </div>
-            </div>
-
-            <div className="zl-feature-item">
-              <div className="zl-feature-icon">
-                <Lock size={20} />
-              </div>
-              <div className="zl-feature-text">
-                <h4>Contrôle d'Accès</h4>
-                <p>Gestion précise des rôles et permissions utilisateurs.</p>
+                <p>Synchronisation en temps réel.</p>
               </div>
             </div>
           </div>
@@ -772,8 +751,8 @@ export default function Login() {
           <span className="zl-version-tag">Zenith OS • Phase 2 • v2.1</span>
         </div>
 
-        {/* ═══ Form Panel (Native App Feel) ═══ */}
-        <div className="zl-form-panel">
+        {/* ═══ Right Panel: Textured & Form ═══ */}
+        <div className="zl-panel-right">
           <div className="zl-card">
             
             {/* Mobile-only Centered Header */}
@@ -827,7 +806,34 @@ export default function Login() {
                         
                         {isOpen && (
                           <div className="zl-dropdown-overlay custom-scrollbar">
-                            {users.map((u) => (
+                            {/* Search Box in Dropdown */}
+                            <div style={{ padding: '0.75rem', position: 'sticky', top: 0, background: 'rgba(15, 23, 42, 0.95)', borderBottom: '1px solid rgba(255,255,255,0.05)', zIndex: 10 }}>
+                              <input 
+                                type="text"
+                                autoFocus
+                                placeholder="Rechercher un opérateur..."
+                                value={searchTerm}
+                                onChange={(e) => setSearchTerm(e.target.value)}
+                                onClick={(e) => e.stopPropagation()}
+                                style={{
+                                  width: '100%',
+                                  background: 'rgba(255,255,255,0.05)',
+                                  border: '1px solid rgba(255,255,255,0.1)',
+                                  borderRadius: '0.75rem',
+                                  padding: '0.6rem 1rem',
+                                  color: '#fff',
+                                  fontSize: '0.8rem',
+                                  outline: 'none',
+                                }}
+                              />
+                            </div>
+                            
+                            {users
+                              .filter(u => 
+                                u.full_name.toLowerCase().includes(searchTerm.toLowerCase()) || 
+                                u.username.toLowerCase().includes(searchTerm.toLowerCase())
+                              )
+                              .map((u) => (
                               <button
                                 key={u.username}
                                 type="button"

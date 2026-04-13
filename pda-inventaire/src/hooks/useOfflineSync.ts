@@ -112,6 +112,14 @@ export function useOfflineSync({ inventaireId, onSyncComplete }: UseOfflineSyncO
         setOfflineLignes(prev => prev.filter(l => l.tempId !== tempId));
     }, []);
 
+    // Mettre à jour une ligne offline (quantité)
+    const updateOffline = useCallback(async (tempId: string, newQuantity: number) => {
+        await localStorageService.updateLigne(tempId, newQuantity);
+        setOfflineLignes(prev => prev.map(l => 
+            l.tempId === tempId ? { ...l, quantiteComptee: newQuantity } : l
+        ));
+    }, []);
+
     return {
         isOnline,
         offlineLignes,
@@ -120,6 +128,7 @@ export function useOfflineSync({ inventaireId, onSyncComplete }: UseOfflineSyncO
         saveOffline,
         syncAll,
         removeOffline,
+        updateOffline,
         refreshOffline: loadOfflineLignes,
     };
 }
