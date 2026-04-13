@@ -52,7 +52,6 @@ import { ConfirmProvider } from './hooks/useConfirm'
 import { PharmacySettingsProvider } from './context/PharmacySettingsContext'
 import { Toaster } from 'react-hot-toast'
 import PharmacySettingsForm from './components/settings/PharmacySettingsForm'
-import ConfigurationOptions from './components/settings/ConfigurationOptions'
 import Maintenance from './components/Maintenance'
 import { useAutoLogout } from './hooks/useAutoLogout';
 import { PermissionRoute } from './components/auth/PermissionRoute';
@@ -526,14 +525,6 @@ const router = createBrowserRouter([
             element: (
               <PermissionRoute permission="settings_pharmacie">
                 <PharmacySettingsForm />
-              </PermissionRoute>
-            )
-          },
-          { 
-            path: 'settings/options', 
-            element: (
-              <PermissionRoute permission="settings_etiquettes">
-                <ConfigurationOptions />
               </PermissionRoute>
             )
           },

@@ -61,7 +61,12 @@
         "groupes": "Groups",
         "rayons": "Shelves",
         "organisation": {
-            "title": "Organization"
+            "title": "Organization",
+            "tabs": {
+                "rayons": "Shelves",
+                "groupes": "Groups",
+                "formes": "Forms"
+            }
         },
         "etats_inventaire": {
             "title": "Inventory States"

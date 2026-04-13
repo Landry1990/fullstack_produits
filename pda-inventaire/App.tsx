@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
 import { LoginScreen, HomeScreen, ScannerScreen } from './src/screens';
 import { authService, Inventaire } from './src/services';
+import { setUnauthorizedCallback } from './src/services/api';
 
 // Client React Query
 const queryClient = new QueryClient({
@@ -21,6 +22,14 @@ type Screen = 'loading' | 'login' | 'home' | 'scanner';
 export default function App() {
   const [currentScreen, setCurrentScreen] = useState<Screen>('loading');
   const [selectedInventaire, setSelectedInventaire] = useState<Inventaire | null>(null);
+
+  // Enregistrer le callback de déconnexion globale
+  useEffect(() => {
+    setUnauthorizedCallback(() => {
+      setSelectedInventaire(null);
+      setCurrentScreen('login');
+    });
+  }, []);
 
   // Vérifier l'authentification au démarrage
   useEffect(() => {

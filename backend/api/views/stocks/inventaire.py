@@ -13,6 +13,8 @@ from django.utils import timezone
 from decimal import Decimal
 import io
 from django.http import HttpResponse
+from django.db import IntegrityError
+from django.core.exceptions import ValidationError
 
 # ReportLab imports
 from reportlab.lib import colors
@@ -438,6 +440,25 @@ class InventaireViewSet(MultiTermSearchMixin, viewsets.ModelViewSet):
                     if 'quantite_physique' not in data:
                         data['quantite_physique'] = data.get('quantite_comptee', produit.stock)
                 
+                # --- UPSERT / MERGE LOGIC ---
+                # Chercher si une ligne existe déjà pour cet inventaire, produit et lot
+                existing_ligne = LigneInventaire.objects.filter(
+                    inventaire=inventaire,
+                    produit_id=data.get('produit'),
+                    stock_lot_id=data.get('stock_lot')
+                ).first()
+
+                if existing_ligne:
+                    # Fusionner : on ajoute la quantité physique
+                    # On recalcule l'écart par rapport au théorique initial
+                    new_qte = data.get('quantite_physique', data.get('quantite_comptee', 0))
+                    existing_ligne.quantite_physique += int(new_qte)
+                    existing_ligne.save() # Le ecart est calculé dans save() du modèle
+                    
+                    serializer = LigneInventaireSerializer(existing_ligne)
+                    return Response(serializer.data, status=status.HTTP_200_OK)
+                
+                # Sinon, création normale
                 serializer = LigneInventaireSerializer(data=data)
                 if serializer.is_valid():
                     serializer.save()
@@ -447,6 +468,12 @@ class InventaireViewSet(MultiTermSearchMixin, viewsets.ModelViewSet):
             except (StockLot.DoesNotExist, Produit.DoesNotExist) as e:
                 transaction.set_rollback(True)
                 return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+            except ValidationError as e:
+                transaction.set_rollback(True)
+                return Response({'error': f"Erreur de validation: {str(e)}"}, status=status.HTTP_400_BAD_REQUEST)
+            except IntegrityError as e:
+                transaction.set_rollback(True)
+                return Response({'error': f"Erreur d'intégrité (doublon probable): {str(e)}"}, status=status.HTTP_409_CONFLICT)
             except Exception as e:
                 transaction.set_rollback(True)
                 return Response({'error': f'Erreur interne: {str(e)}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
@@ -515,9 +542,8 @@ class InventaireViewSet(MultiTermSearchMixin, viewsets.ModelViewSet):
             for l in StockLot.objects.filter(produit_id__in=produit_ids):
                 existing_lots_by_num[(l.produit_id, l.lot)] = l
 
-        imported_count = 0
-        errors = []
-        lignes_a_creer = []
+        # Groupement par (produit_id, lot_id) pour fusionner avant bulk_create
+        lignes_finales = {} # {(p_id, lot_id): LigneInventaire}
 
         for index, data in enumerate(lignes_data):
             try:
@@ -538,39 +564,63 @@ class InventaireViewSet(MultiTermSearchMixin, viewsets.ModelViewSet):
                     key = (p_id, data['lot_numero'])
                     target_lot = existing_lots_by_num.get(key)
                     if not target_lot:
-                        # Création à la volée du lot manquant
-                        target_lot = StockLot.objects.create(
-                            produit=produit,
-                            lot=data['lot_numero'],
-                            date_expiration=data.get('lot_expiration'),
-                            quantity_remaining=0,
-                            quantity_initial=0,
-                            price_cost=produit.cost_price or 0,
-                            selling_price=produit.selling_price or 0,
-                            date_reception=timezone.now()
-                        )
-                        existing_lots_by_num[key] = target_lot
+                        try:
+                            # Création à la volée du lot manquant
+                            target_lot = StockLot.objects.create(
+                                produit=produit,
+                                lot=data['lot_numero'],
+                                date_expiration=data.get('lot_expiration') if data.get('lot_expiration') else None,
+                                quantity_remaining=0,
+                                quantity_initial=0,
+                                price_cost=produit.cost_price or 0,
+                                selling_price=produit.selling_price or 0,
+                                date_reception=timezone.now()
+                            )
+                            existing_lots_by_num[key] = target_lot
+                        except ValidationError as ve:
+                            errors.append(f"Ligne {index}: Date invalide pour le lot {data['lot_numero']}")
+                            continue
 
                 # Déterminer le stock théorique
                 stock_theorique = target_lot.quantity_remaining if target_lot else produit.stock
-                quantite_physique = data.get('quantite_physique', data.get('quantite_comptee', stock_theorique))
+                qte_saisie = int(data.get('quantite_physique', data.get('quantite_comptee', stock_theorique)))
 
-                lignes_a_creer.append(LigneInventaire(
-                    inventaire=inventaire,
-                    produit=produit,
-                    stock_lot=target_lot,
-                    stock_theorique=stock_theorique,
-                    quantite_physique=quantite_physique,
-                    ecart=quantite_physique - stock_theorique,
-                    pmp_snapshot=produit.pmp or produit.cost_price or 0
-                ))
-                imported_count += 1
+                # --- MERGE IN BULK ---
+                lot_id = target_lot.id if target_lot else None
+                merge_key = (p_id, lot_id)
+                
+                if merge_key in lignes_finales:
+                    lignes_finales[merge_key].quantite_physique += qte_saisie
+                    # l'écart sera calculé lors du save() ou manuellement
+                    lignes_finales[merge_key].ecart = lignes_finales[merge_key].quantite_physique - stock_theorique
+                else:
+                    # On vérifie s'il existe déjà une ligne en base pour cet inventaire
+                    existing_in_db = LigneInventaire.objects.filter(
+                        inventaire=inventaire, produit=produit, stock_lot=target_lot
+                    ).first()
+                    
+                    if existing_in_db:
+                        existing_in_db.quantite_physique += qte_saisie
+                        existing_in_db.ecart = existing_in_db.quantite_physique - stock_theorique
+                        existing_in_db.save()
+                        imported_count += 1
+                    else:
+                        lignes_finales[merge_key] = LigneInventaire(
+                            inventaire=inventaire,
+                            produit=produit,
+                            stock_lot=target_lot,
+                            stock_theorique=stock_theorique,
+                            quantite_physique=qte_saisie,
+                            ecart=qte_saisie - stock_theorique,
+                            pmp_snapshot=produit.pmp or produit.cost_price or 0
+                        )
+                        imported_count += 1
 
             except Exception as e:
                 errors.append(f"Ligne {index}: {str(e)}")
 
-        if lignes_a_creer:
-            LigneInventaire.objects.bulk_create(lignes_a_creer)
+        if lignes_finales:
+            LigneInventaire.objects.bulk_create(lignes_finales.values())
         
         return Response({
             'status': 'Import terminé',

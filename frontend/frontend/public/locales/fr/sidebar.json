@@ -61,7 +61,12 @@
         "groupes": "Groupes",
         "rayons": "Rayons",
         "organisation": {
-            "title": "Organisation"
+            "title": "Organisation",
+            "tabs": {
+                "rayons": "Rayons",
+                "groupes": "Groupes",
+                "formes": "Formes"
+            }
         },
         "etats_inventaire": {
             "title": "États Inventaires"
@@ -91,7 +96,6 @@
         "facture": "Paramètres Facture",
         "pharmacie": "Informations Pharmacie",
         "whatsapp": "Historique WhatsApp",
-        "etiquettes": "Templates d'Étiquettes",
         "imprimantes": "Configuration Imprimantes"
     },
     "maintenance": "Entretien",

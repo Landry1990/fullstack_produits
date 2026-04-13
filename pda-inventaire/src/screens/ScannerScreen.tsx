@@ -40,7 +40,9 @@ export default function ScannerScreen({ inventaire, onBack }: ScannerScreenProps
     syncAll, 
     offlineCount, 
     syncing, 
-    offlineLignes 
+    offlineLignes,
+    updateOffline, // Ajouté
+    removeOffline  // Ajouté
   } = useOfflineSync({ 
     inventaireId: inventaire.id,
     onSyncComplete: (count) => {
@@ -57,6 +59,11 @@ export default function ScannerScreen({ inventaire, onBack }: ScannerScreenProps
   // Mode édition d'une ligne existante
   const [editingLine, setEditingLine] = useState<LigneInventaire | null>(null);
   const [editQuantity, setEditQuantity] = useState('');
+
+  // Saisie Multi-Lots
+  const [lotQuantities, setLotQuantities] = useState<{[key: string]: string}>({});
+  const [newLotNumber, setNewLotNumber] = useState('');
+  const [newLotExpiration, setNewLotExpiration] = useState('');
 
   // Charger les lignes (Serveur + Local)
   useEffect(() => {
@@ -131,7 +138,7 @@ export default function ScannerScreen({ inventaire, onBack }: ScannerScreenProps
       const product = await produitService.getByCip(code);
       if (product) {
         setScannedProduct(product);
-        setQuantity('1');
+        setQuantity(''); // Vide par défaut pour éviter les nouveaux lots fantômes
         setScanInput('');
         Vibration.vibrate(100);
         setTimeout(() => quantityInputRef.current?.focus(), 100);
@@ -158,72 +165,87 @@ export default function ScannerScreen({ inventaire, onBack }: ScannerScreenProps
   const [lotNumero, setLotNumero] = useState('');
   const [lotExpiration, setLotExpiration] = useState('');
 
-  // Valider la ligne (Smart Offline/Online)
+  // Valider la ligne (Offline First Systematique)
   const handleValidate = async () => {
     if (!scannedProduct) return;
 
-    const qty = parseInt(quantity, 10);
-    if (isNaN(qty) || qty < 0) {
-      Alert.alert('Erreur', 'Quantité invalide');
-      return;
-    }
-
-    // Validation Lot si activé
-    if (scannedProduct.use_lot_management && !lotNumero) {
-        // Optionnel : ne pas bloquer si utilisation de lot existant non scanné, 
-        // mais ici on demande de saisir le lot pour le stock entrant/inventaire précis
-        // On pourrait rendre ça optionnel si stock > 0 ? Pour l'instant on force si flag actif
-        // Sauf si on considère que le backend gère le FIFO auto...
-        // DECISION: On demande le lot si on veut préciser, sinon on laisse vide et le backend gère ?
-        // NON, le but est de renseigner le lot scanné.
-        // Alert.alert('Lot requis', 'Veuillez saisir le numéro de lot pour ce produit.');
-        // return; 
-    }
-
     setLoading(true);
     try {
-      const ligneData = {
-          produit: scannedProduct.id,
-          quantite_comptee: qty,
-          lot_numero: lotNumero || undefined,
-          lot_expiration: lotExpiration || undefined
-      };
+      let savedCount = 0;
 
-      if (isOnline) {
-        // Mode Connecté : Tenter envoi direct
-        try {
-          await inventaireService.addLigne(inventaire.id, ligneData);
-          // Succès direct
-          await loadLignes(); // Rafraîchir
-        } catch (error) {
-          console.warn('Erreur envoi direct, passage en offline:', error);
-          // Fallback Offline si erreur réseau
-          await saveOffline({
-            ...scannedProduct,
-            cip1: scannedProduct.cip1 || undefined
-          }, qty, inventaire, lotNumero, lotExpiration);
-          Alert.alert('Mode Hors-ligne', 'Ligne sauvegardée localement (erreur réseau)');
-        }
-      } else {
-        // Mode Hors-ligne : Sauvegarde locale directe
-        await saveOffline({
-          ...scannedProduct,
-          cip1: scannedProduct.cip1 || undefined
-        }, qty, inventaire, lotNumero, lotExpiration);
+      // 1. Enregistrer les lots existants qui ont une quantité saisie
+      const existingLotEntries = Object.entries(lotQuantities).filter(([_, qty]) => {
+        const q = parseInt(qty, 10);
+        return !isNaN(q) && q > 0;
+      });
+
+      for (const [lotId, qtyStr] of existingLotEntries) {
+        const qty = parseInt(qtyStr, 10);
+        const lot = scannedProduct.stock_lots?.find(l => String(l.id) === lotId);
+        
+        await saveOffline(
+          { 
+            id: scannedProduct.id, 
+            name: scannedProduct.name, 
+            cip1: scannedProduct.cip1 || undefined 
+          },
+          qty,
+          inventaire,
+          lot?.lot,
+          lot?.date_expiration || undefined
+        );
+        savedCount++;
       }
 
-      // Reset UI (Commun)
+      // 2. Enregistrer le nouveau lot si renseigné
+      const newQty = parseInt(quantity, 10);
+      if (!scannedProduct.use_lot_management && !isNaN(newQty) && newQty > 0) {
+          // Produit sans gestion de lot
+          await saveOffline(
+            { id: scannedProduct.id, name: scannedProduct.name, cip1: scannedProduct.cip1 || undefined },
+            newQty,
+            inventaire
+          );
+          savedCount++;
+      } else if (scannedProduct.use_lot_management && !isNaN(newQty) && newQty > 0) {
+          // Nouveau lot pour produit avec gestion de lot
+          
+          // --- VALIDATION DATE ---
+          if (newLotExpiration && !/^\d{4}-\d{2}-\d{2}$/.test(newLotExpiration)) {
+            Alert.alert('Format Date Invalide', 'Veuillez utiliser le format AAAA-MM-JJ (ex: 2026-12-31)');
+            setLoading(false);
+            return;
+          }
+
+          await saveOffline(
+            { id: scannedProduct.id, name: scannedProduct.name, cip1: scannedProduct.cip1 || undefined },
+            newQty,
+            inventaire,
+            newLotNumber || undefined,
+            newLotExpiration || undefined
+          );
+          savedCount++;
+      }
+
+      if (savedCount === 0) {
+        Alert.alert('Attention', 'Veuillez saisir au moins une quantité positive.');
+        setLoading(false);
+        return;
+      }
+
+      // Reset UI
       setScannedProduct(null);
-      setQuantity('1');
-      setLotNumero('');
-      setLotExpiration(''); // Reset lot
+      setQuantity('1'); // Reset pour le prochain scan
+      setLotQuantities({});
+      setNewLotNumber('');
+      setNewLotExpiration('');
       setScanInput('');
       Vibration.vibrate([0, 50, 50, 50]);
       setTimeout(() => scanInputRef.current?.focus(), 200);
 
     } catch (error: any) {
       console.error('Erreur ajout ligne:', error);
-      Alert.alert('Erreur', 'Impossible de sauvegarder la ligne');
+      Alert.alert('Erreur', 'Impossible de sauvegarder localement');
     } finally {
       setLoading(false);
     }
@@ -234,17 +256,15 @@ export default function ScannerScreen({ inventaire, onBack }: ScannerScreenProps
     setScannedProduct(null);
     setEditingLine(null);
     setQuantity('1');
+    setLotQuantities({});
+    setNewLotNumber('');
+    setNewLotExpiration('');
     setEditQuantity('');
     setScanInput('');
     setTimeout(() => scanInputRef.current?.focus(), 100);
   };
 
   const handleEditLine = (ligne: LigneInventaire) => {
-    // Interdire édition lignes offline pour simplifier (ou implémenter update local)
-    if ((ligne as any).details?.isOffline) {
-       Alert.alert('Info', 'Impossible de modifier une ligne en attente de synchro. Supprimez-la et rescannez si besoin.');
-       return;
-    }
     setEditingLine(ligne);
     setEditQuantity(String(ligne.quantite_comptee));
     Vibration.vibrate(50);
@@ -253,10 +273,34 @@ export default function ScannerScreen({ inventaire, onBack }: ScannerScreenProps
   const handleUpdateLine = async () => {
     if (!editingLine) return;
     const qty = parseInt(editQuantity, 10);
-    // ... validation ...
+    if (isNaN(qty) || qty < 0) {
+      Alert.alert('Erreur', 'Quantité invalide');
+      return;
+    }
+    
     setLoading(true);
     try {
-      await inventaireService.updateLigne(inventaire.id, editingLine.id, qty);
+      const isOffline = (editingLine as any).id < 0 || (editingLine as any).details?.isOffline;
+      
+      if (isOffline) {
+        // En mode offline-first, les ID locaux sont négatifs (marqués l.99 loadLignes)
+        // Mais useOfflineSync utilise tempId. On doit retrouver le tempId si possible ou modifier par ID.
+        // AMELIORATION: On va chercher dans offlineLignes celle qui correspond à cet index/id négatif.
+        const offLine = offlineLignes.find(l => {
+             const derivedId = -1 * parseInt(l.tempId.split('_')[1] || '0');
+             return derivedId === editingLine.id;
+        });
+        
+        if (offLine) {
+            await updateOffline(offLine.tempId, qty);
+        } else {
+            // Fallback si on ne retrouve pas via ID négatif
+            Alert.alert('Erreur', 'Ligne locale non trouvée');
+        }
+      } else {
+        await inventaireService.updateLigne(inventaire.id, editingLine.id, qty);
+      }
+      
       await loadLignes();
       setEditingLine(null);
       setEditQuantity('');
@@ -346,64 +390,68 @@ export default function ScannerScreen({ inventaire, onBack }: ScannerScreenProps
       {scannedProduct ? (
         <View style={styles.productCard}>
           <Text style={styles.productName}>{scannedProduct.name}</Text>
-          <Text style={styles.productCip}>
-            CIP: {scannedProduct.cip1 || scannedProduct.cip2 || '-'}
-          </Text>
-          <Text style={styles.productStock}>
-            Stock théorique: <Text style={styles.stockValue}>{scannedProduct.stock}</Text>
-          </Text>
-
-          <View style={styles.quantityRow}>
-            <TouchableOpacity 
-              style={styles.qtyBtn}
-              onPress={() => setQuantity(String(Math.max(0, parseInt(quantity) - 1)))}
-            >
-              <Text style={styles.qtyBtnText}>−</Text>
-            </TouchableOpacity>
-
-            <TextInput
-              ref={quantityInputRef}
-              style={styles.qtyInput}
-              value={quantity}
-              onChangeText={setQuantity}
-              keyboardType="number-pad"
-              selectTextOnFocus
-              showSoftInputOnFocus={isKeyboardEnabled}
-            />
-
-            <TouchableOpacity 
-              style={styles.qtyBtn}
-              onPress={() => setQuantity(String(parseInt(quantity) + 1))}
-            >
-              <Text style={styles.qtyBtnText}>+</Text>
-            </TouchableOpacity>
+          <View style={styles.productMeta}>
+            <Text style={styles.productCip}>CIP: {scannedProduct.cip1 || '-'}</Text>
+            <View style={styles.stockBadge}>
+               <Text style={styles.stockBadgeText}>Stock: {scannedProduct.stock}</Text>
+            </View>
           </View>
 
-          {/* Section Lots - Affichée uniquement si gestion par lot active */}
-          {scannedProduct.use_lot_management && (
-            <View style={styles.lotContainer}>
-                <Text style={styles.lotTitle}>Informations Lot (Optionnel)</Text>
-                <View style={styles.lotInputsRow}>
+          <FlatList
+            style={styles.lotScroll}
+            data={scannedProduct.stock_lots || []}
+            keyExtractor={(item) => String(item.id)}
+            renderItem={({ item }) => (
+              <View style={styles.lotItem}>
+                <View style={styles.lotInfo}>
+                  <Text style={styles.lotLabel}>Lot: <Text style={styles.lotValue}>{item.lot}</Text></Text>
+                  <Text style={styles.lotExp}>Exp: {item.date_expiration || 'N/A'}</Text>
+                  <Text style={styles.lotStock}>Théorique: {item.quantity_remaining}</Text>
+                </View>
+                <View style={styles.lotQtyContainer}>
+                   <TextInput
+                     style={styles.lotQtyInput}
+                     value={lotQuantities[item.id] || ''}
+                     onChangeText={(val) => setLotQuantities(prev => ({...prev, [item.id]: val}))}
+                     placeholder="0"
+                     placeholderTextColor="#444"
+                     keyboardType="number-pad"
+                     selectTextOnFocus
+                   />
+                </View>
+              </View>
+            )}
+            ListFooterComponent={
+              <View style={styles.newLotSection}>
+                <Text style={styles.newLotTitle}>➕ Nouveau Lot / Sans Lot</Text>
+                <View style={styles.newLotRow}>
                     <TextInput
-                        style={styles.lotInput}
-                        placeholder="N° Lot"
-                        placeholderTextColor="#666"
-                        value={lotNumero}
-                        onChangeText={setLotNumero}
-                        showSoftInputOnFocus={isKeyboardEnabled}
+                      style={[styles.lotInput, { flex: 2 }]}
+                      placeholder="Numéro de Lot"
+                      placeholderTextColor="#666"
+                      value={newLotNumber}
+                      onChangeText={setNewLotNumber}
                     />
                     <TextInput
-                        style={styles.lotInput}
-                        placeholder="Date Exp (AAAA-MM-JJ)"
-                        placeholderTextColor="#666"
-                        value={lotExpiration}
-                        onChangeText={setLotExpiration}
-                        showSoftInputOnFocus={isKeyboardEnabled}
-                        // Ajout d'une regex simple ou date picker dans l'idéal
+                      style={[styles.lotInput, { flex: 2 }]}
+                      placeholder="Expiration (AAAA-MM-JJ)"
+                      placeholderTextColor="#666"
+                      value={newLotExpiration}
+                      onChangeText={setNewLotExpiration}
+                    />
+                    <TextInput
+                      style={[styles.lotInput, { flex: 1, backgroundColor: '#2d2d44', color: '#fff', fontWeight: 'bold' }]}
+                      placeholder="Qté"
+                      placeholderTextColor="#888"
+                      value={quantity}
+                      onChangeText={setQuantity}
+                      keyboardType="number-pad"
+                      selectTextOnFocus
                     />
                 </View>
-            </View>
-          )}
+              </View>
+            }
+          />
 
           <View style={styles.actions}>
             <TouchableOpacity style={styles.cancelBtn} onPress={handleCancel}>
@@ -418,7 +466,7 @@ export default function ScannerScreen({ inventaire, onBack }: ScannerScreenProps
                 <ActivityIndicator color="#fff" />
               ) : (
                 <Text style={styles.validateBtnText}>
-                  {isOnline ? '✓ Valider' : '💾 Sauver (Local)'}
+                  💾 Sauver (Local)
                 </Text>
               )}
             </TouchableOpacity>
@@ -703,42 +751,114 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   productCard: {
-    backgroundColor: '#1a1a2e',
-    margin: 16,
-    borderRadius: 16,
+    backgroundColor: '#1e1e35',
+    margin: 15,
     padding: 20,
-    borderWidth: 2,
-    borderColor: '#22c55e',
+    borderRadius: 15,
+    elevation: 5,
+    maxHeight: '65%', // Limiter la hauteur pour garder l'historique visible
+    borderWidth: 1,
+    borderColor: '#4f46e5',
   },
   productName: {
     color: '#fff',
-    fontSize: 20,
+    fontSize: 22,
     fontWeight: 'bold',
-    marginBottom: 8,
+    marginBottom: 5,
+  },
+  productMeta: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 15,
   },
   productCip: {
-    color: '#ccc', // Contraste amélioré
-    fontSize: 16, // Police augmentée
-    marginBottom: 4,
+    color: '#888',
+    fontSize: 14,
   },
+  stockBadge: {
+    backgroundColor: '#2d2d44',
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 8,
+  },
+  stockBadgeText: {
+    color: '#4f46e5',
+    fontWeight: 'bold',
+    fontSize: 12,
+  },
+  lotScroll: {
+    maxHeight: 300,
+    marginBottom: 15,
+  },
+  lotItem: {
+    flexDirection: 'row',
+    backgroundColor: '#151525',
+    padding: 12,
+    borderRadius: 10,
+    marginBottom: 8,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#333',
+  },
+  lotInfo: {
+    flex: 1,
+  },
+  lotLabel: { color: '#ccc', fontSize: 13 },
+  lotValue: { color: '#fff', fontWeight: 'bold' },
+  lotExp: { color: '#888', fontSize: 11 },
+  lotStock: { color: '#4f46e5', fontSize: 11, marginTop: 2 },
+  lotQtyContainer: {
+    width: 70,
+    marginLeft: 10,
+  },
+  lotQtyInput: {
+    backgroundColor: '#2d2d44',
+    color: '#fff',
+    textAlign: 'center',
+    padding: 10,
+    borderRadius: 8,
+    fontWeight: 'bold',
+    fontSize: 18,
+    borderWidth: 1,
+    borderColor: '#4f46e5',
+  },
+  newLotSection: {
+    marginTop: 10,
+    borderTopWidth: 1,
+    borderTopColor: '#333',
+    paddingTop: 15,
+    paddingBottom: 10,
+  },
+  newLotTitle: {
+    color: '#aaa',
+    fontSize: 14,
+    fontWeight: 'bold',
+    marginBottom: 10,
+  },
+  newLotRow: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  // lotInput est défini plus bas avec le reste des éléments de formulaire
   productStock: {
-    color: '#bbb', // Contraste amélioré
-    fontSize: 16, // Police augmentée
-    marginBottom: 16,
+    color: '#888',
+    fontSize: 16,
+    marginBottom: 20,
   },
   stockValue: {
-    color: '#6366f1', // Meilleur contraste (indigo-500)
+    color: '#fff',
     fontWeight: 'bold',
   },
   quantityRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 24, // Espace augmenté
+    marginBottom: 24,
   },
   qtyBtn: {
-    width: 64, // Augmenté pour cible tactile
-    height: 64, // Augmenté pour cible tactile
+    width: 64,
+    height: 64,
     borderRadius: 32,
     backgroundColor: '#2d2d44',
     justifyContent: 'center',
@@ -752,13 +872,13 @@ const styles = StyleSheet.create({
     fontWeight: '300',
   },
   qtyInput: {
-    width: 120, // Plus large
-    height: 64, // Plus haut
+    width: 120,
+    height: 64,
     backgroundColor: '#0f0f1a',
     borderRadius: 16,
     marginHorizontal: 16,
     color: '#fff',
-    fontSize: 32, // Plus grand
+    fontSize: 32,
     textAlign: 'center',
     fontWeight: 'bold',
     borderWidth: 1,
@@ -771,7 +891,7 @@ const styles = StyleSheet.create({
   },
   cancelBtn: {
     flex: 1,
-    padding: 18, // Augmenté
+    padding: 16,
     borderRadius: 16,
     backgroundColor: '#2d2d44',
     alignItems: 'center',
@@ -780,12 +900,12 @@ const styles = StyleSheet.create({
   },
   cancelBtnText: {
     color: '#fff',
-    fontSize: 18, // Augmenté
+    fontSize: 16,
     fontWeight: '600',
   },
   validateBtn: {
     flex: 2,
-    padding: 18, // Augmenté
+    padding: 16,
     borderRadius: 16,
     backgroundColor: '#22c55e',
     alignItems: 'center',
@@ -793,7 +913,7 @@ const styles = StyleSheet.create({
   },
   validateBtnText: {
     color: '#fff',
-    fontSize: 18, // Augmenté
+    fontSize: 16,
     fontWeight: 'bold',
   },
   btnDisabled: {

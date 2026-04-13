@@ -3,6 +3,7 @@
 Product-related models: Rayon, Forme, Groupe, FamilleRisque, Substance, DrugInteraction, Produit.
 """
 from django.db import models
+from django.contrib.postgres.indexes import GinIndex  # Recherche textuelle performante
 from django.utils import timezone
 from decimal import Decimal
 
@@ -120,7 +121,7 @@ class Produit(models.Model):
         'FamilleRisque', on_delete=models.SET_NULL, null=True, blank=True, 
         related_name='produits', help_text="Famille pour contrôle interactions (ex: AINS)"
     )
-    name = models.CharField(max_length=100)
+    name = models.CharField(max_length=100, db_index=True)
     description = models.TextField(blank=True, null=True)
     message_alerte = models.TextField(blank=True, null=True, help_text="Message d'alerte affiché lors de la saisie en caisse")
     blocking_alerte = models.BooleanField(
@@ -132,9 +133,9 @@ class Produit(models.Model):
         default=True,
         help_text="Activer la gestion par lots FIFO pour ce produit (recommandé pour traçabilité)"
     )
-    cip1 = models.CharField(max_length=20, unique=True, blank=True, null=True)
-    cip2 = models.CharField(max_length=20, unique=True, blank=True, null=True)
-    cip3 = models.CharField(max_length=20, unique=True, blank=True, null=True)
+    cip1 = models.CharField(max_length=20, unique=True, blank=True, null=True, db_index=True)
+    cip2 = models.CharField(max_length=20, unique=True, blank=True, null=True, db_index=True)
+    cip3 = models.CharField(max_length=20, unique=True, blank=True, null=True, db_index=True)
     cost_price = models.DecimalField(max_digits=10, decimal_places=2, default=Decimal('0.00'))
     selling_price = models.DecimalField(max_digits=10, decimal_places=2, default=Decimal('0.00'))
     expire_date = models.DateField(blank=True, null=True)
@@ -291,4 +292,6 @@ class Produit(models.Model):
             models.Index(fields=['rayon', 'stock']),
             models.Index(fields=['fournisseur']),
             models.Index(fields=['stock', 'stock_minimum']),
+            # Index Postgres pour recherche textuelle rapide (GIN + Trigramme)
+            GinIndex(fields=['name'], name='produit_name_trgm_idx', opclasses=['gin_trgm_ops']),
         ]

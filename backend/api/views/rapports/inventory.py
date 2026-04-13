@@ -8,7 +8,13 @@ from datetime import datetime, timedelta, time
 from decimal import Decimal
 import openpyxl
 from openpyxl.styles import Font, Alignment, Border, Side, PatternFill
+from io import BytesIO
 from django.http import HttpResponse
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, PageBreak
+from reportlab.lib.pagesizes import A4
+from reportlab.lib import colors
+from reportlab.lib.units import cm, mm
+from reportlab.lib.enums import TA_RIGHT, TA_CENTER, TA_LEFT
 from api.models import Produit, CommandeProduit, Facture, FactureProduit, MouvementStock
 
 class RapportInventoryMixin:
@@ -133,4 +139,164 @@ class RapportInventoryMixin:
 
         response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
         response['Content-Disposition'] = f'attachment; filename="Balance_Stocks.xlsx"'; wb.save(response)
+        return response
+
+    def _get_valeur_stock_summary_data(self, valorisation, group_by=None):
+        """Méthode interne pour calculer les agrégats de valeur de stock avec option de groupement."""
+        is_pmp = valorisation == 'ACHAT'
+        produits = Produit.objects.filter(stock__gt=0, is_active=True)
+        
+        # Optimisation si groupement demandé
+        if group_by in ['rayon', 'forme', 'groupe']:
+            produits = produits.select_related(group_by)
+            
+        tva_map = {}
+        group_map = {}
+        total_ttc_global = Decimal('0')
+        total_ht_global = Decimal('0')
+        total_tva_global = Decimal('0')
+        
+        for p in produits:
+            qty = Decimal(str(p.stock))
+            price_ttc = (p.pmp if is_pmp else p.selling_price) or Decimal('0')
+            tva_rate = p.tva or Decimal('0')
+            
+            ttc_line = qty * price_ttc
+            if tva_rate > 0:
+                ht_line = (ttc_line / (1 + tva_rate / Decimal('100'))).quantize(Decimal('0.01'))
+                tva_line = ttc_line - ht_line
+            else:
+                ht_line = ttc_line
+                tva_line = Decimal('0')
+                
+            total_ttc_global += ttc_line
+            total_ht_global += ht_line
+            total_tva_global += tva_line
+            
+            # 1. Groupement par TVA
+            rate_key = str(float(tva_rate))
+            if rate_key not in tva_map:
+                tva_map[rate_key] = {'rate': float(tva_rate), 'ht': Decimal('0'), 'tva': Decimal('0'), 'ttc': Decimal('0')}
+            tva_map[rate_key]['ht'] += ht_line
+            tva_map[rate_key]['tva'] += tva_line
+            tva_map[rate_key]['ttc'] += ttc_line
+            
+            # 2. Groupement par catégorie (Rayon, Forme, Groupe)
+            if group_by in ['rayon', 'forme', 'groupe']:
+                group_obj = getattr(p, group_by)
+                if group_by == 'rayon':
+                    group_name = group_obj.name if group_obj else "Non classé"
+                else:
+                    group_name = group_obj.nom if group_obj else "Non classé"
+                    
+                if group_name not in group_map:
+                    group_map[group_name] = {'name': group_name, 'ht': Decimal('0'), 'tva': Decimal('0'), 'ttc': Decimal('0')}
+                
+                group_map[group_name]['ht'] += ht_line
+                group_map[group_name]['tva'] += tva_line
+                group_map[group_name]['ttc'] += ttc_line
+            
+        res = {
+            'is_pmp': is_pmp,
+            'type_valorisation': 'PMP' if is_pmp else 'VENTE',
+            'total_ht': total_ht_global,
+            'total_tva': total_tva_global,
+            'total_ttc': total_ttc_global,
+            'tva_breakdown': sorted(tva_map.values(), key=lambda x: x['rate']),
+            'date': timezone.now()
+        }
+        
+        if group_by in ['rayon', 'forme', 'groupe']:
+            res['group_by'] = group_by
+            # Tri par valeur décroissante pour mettre en avant les catégories pesant le plus lourd
+            res['group_breakdown'] = sorted(group_map.values(), key=lambda x: x['ttc'], reverse=True)
+            
+        return res
+
+    @action(detail=False, methods=['get'])
+    def valeur_stock_json(self, request):
+        """Retourne les données de valorisation au format JSON pour l'impression frontend."""
+        valorisation = request.query_params.get('valorisation', 'ACHAT')
+        group_by = request.query_params.get('group_by')
+        data = self._get_valeur_stock_summary_data(valorisation, group_by=group_by)
+        return Response(data)
+
+    @action(detail=False, methods=['get'])
+    def valeur_stock_pdf(self, request):
+        """Génère un récapitulatif PDF (Legacy/Direct) de la valeur du stock."""
+        from api.pdf_utils import (
+            get_pharma_styles, draw_pharma_header, draw_pharma_footer, 
+            format_currency, PharmaColors, get_pharma_table_style, 
+            get_pharma_summary_table_style
+        )
+        
+        valorisation = request.query_params.get('valorisation', 'ACHAT')
+        data = self._get_valeur_stock_summary_data(valorisation)
+        is_pmp = data['is_pmp']
+
+        # 2. Construction du PDF
+        buffer = BytesIO()
+        doc = SimpleDocTemplate(
+            buffer, pagesize=A4, rightMargin=15*mm, leftMargin=15*mm, topMargin=45*mm, bottomMargin=20*mm
+        )
+        story = []
+        styles = get_pharma_styles()
+        
+        story.append(Spacer(1, 5*mm))
+        
+        # --- Section 1: Récapitulatif Global ---
+        type_label = "COÛT D'ACHAT (PMP)" if is_pmp else "PRIX DE VENTE (TTC)"
+        doc_title = "VALEUR STOCK (ACHAT PMP)" if is_pmp else "VALEUR STOCK (VENTE)"
+        
+        story.append(Paragraph(f"RÉCAPITULATIF GÉNÉRAL — {type_label}", styles['PharmaSubtitle']))
+        story.append(Spacer(1, 3*mm))
+        
+        summary_data = [
+            ["MÉTHODE DE VALORISATION", "MONTANT RECONSTITUÉ"],
+            ["Valeur Totale HT", format_currency(data['total_ht'])],
+            ["Montant Total TVA", format_currency(data['total_tva'])],
+            [f"VALEUR TOTALE {('PMP' if is_pmp else 'TTC')}", format_currency(data['total_ttc'])]
+        ]
+        
+        t_summary = Table(summary_data, colWidths=[9*cm, 7*cm])
+        t_summary.setStyle(get_pharma_summary_table_style())
+        story.append(t_summary)
+        
+        story.append(Spacer(1, 12*mm))
+        
+        # --- Section 2: Répartition par TVA ---
+        story.append(Paragraph("RÉPARTITION DÉTAILLÉE PAR TAUX DE TVA", styles['PharmaSubtitle']))
+        story.append(Spacer(1, 3*mm))
+        
+        tva_header = ["Taux TVA", "Base HT", "Montant TVA", "Total Reconstitué"]
+        tva_data = [tva_header]
+        
+        for item in data['tva_breakdown']:
+            tva_data.append([
+                f"{item['rate']}%",
+                format_currency(item['ht']),
+                format_currency(item['tva']),
+                format_currency(item['ttc'])
+            ])
+            
+        t_tva = Table(tva_data, colWidths=[3.5*cm, 4*cm, 4*cm, 4.5*cm])
+        t_tva.setStyle(get_pharma_table_style())
+        story.append(t_tva)
+        
+        # --- Section 3: Notes ---
+        story.append(Spacer(1, 20*mm))
+        methode_desc = "fondée sur le PMP stocké en base." if is_pmp else "fondée sur les prix de vente publics actuels."
+        story.append(Paragraph(f"<b>Note comptable :</b> Cette valorisation est {methode_desc}", styles['PharmaSmall']))
+        
+        doc.build(
+            story, 
+            onFirstPage=lambda c, d: (draw_pharma_header(c, d, title=doc_title), draw_pharma_footer(c, d)),
+            onLaterPages=lambda c, d: (draw_pharma_header(c, d, title=doc_title), draw_pharma_footer(c, d))
+        )
+        
+        suffix = "pmp" if is_pmp else "vente"
+        filename = f"recap_valeur_{suffix}_{timezone.now().strftime('%Y%m%d_%H%M')}.pdf"
+        response = HttpResponse(content_type='application/pdf')
+        response['Content-Disposition'] = f'attachment; filename="{filename}"'
+        response.write(buffer.getvalue())
         return response
