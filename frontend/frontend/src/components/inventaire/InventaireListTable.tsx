@@ -97,7 +97,7 @@ export const InventaireListTable: React.FC<InventaireListTableProps> = ({
                                     </span>
                                     <span className="text-xs text-base-content/60 flex items-center gap-1.5 mt-0.5">
                                         <Calendar className="w-3 h-3" />
-                                        {new Date(inv.date).toLocaleDateString(t('common:date_locale', 'fr-FR'))}
+                                        {new Date(inv.date).toLocaleDateString('fr-FR')}
                                     </span>
                                 </div>
                             </td>

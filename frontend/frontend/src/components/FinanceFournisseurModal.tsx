@@ -208,7 +208,7 @@ export default function FinanceFournisseurModal({ isOpen, onClose, fournisseur, 
                                     {paiements.map((paiement) => (
                                         <tr key={paiement.id} className="hover:bg-base-100 transition-colors border-b border-slate-100">
                                             <td className="font-mono text-sm">
-                                                {new Date(paiement.date_paiement).toLocaleDateString(t('common:date_format_short') === 'dd/MM/yyyy' ? 'fr-FR' : 'en-GB')}
+                                                {new Date(paiement.date_paiement).toLocaleDateString('fr-FR')}
                                             </td>
                                             <td>
                                                 <span className={`badge badge-sm font-semibold capitalize ${

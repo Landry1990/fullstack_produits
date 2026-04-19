@@ -327,7 +327,7 @@ export default function PointageReleveModal({ isOpen, onClose, fournisseurs, onR
                           </td>
                           <td>
                             <div className={`font-medium ${isPointed ? 'text-emerald-700' : 'text-base-content/80'}`}>
-                              {new Date(f.date_cloture).toLocaleDateString(t('common:locale', { defaultValue: 'fr-FR' }), { weekday: 'short', day: '2-digit', month: 'short', year: 'numeric' })}
+                              {new Date(f.date_cloture).toLocaleDateString('fr-FR', { weekday: 'short', day: '2-digit', month: 'short', year: 'numeric' })}
                             </div>
                           </td>
                           <td>

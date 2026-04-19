@@ -304,7 +304,7 @@ export default function CommandeList({
                 </td>
                 <td>
                     <span className="text-sm font-semibold text-base-content/80">
-                        {new Date(commande.date).toLocaleDateString(t('common:locale', 'fr-FR'))}
+                        {new Date(commande.date).toLocaleDateString('fr-FR')}
                     </span>
                 </td>
                 <td>

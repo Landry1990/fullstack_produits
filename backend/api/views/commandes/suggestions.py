@@ -238,75 +238,122 @@ def calculer_optimisation_intelligente(periode, fournisseur_id=None, budget_max=
         # 1. Ventes totales sur période d'analyse
         ventes_total = produit.ventes_total_annotation or 0
         
-        if ventes_total == 0:
-            continue
-        
-        # 2. Consommation journalière moyenne
-        conso_jour = float(ventes_total) / periode_analyse
-        
-        # 3. Stock actuel
+        # 3. Stock actuel et seuils
         stock_actuel = int(produit.stock or 0)
+        stock_alert = int(produit.stock_alert or 0)
+        stock_min = int(produit.stock_minimum or 0)
+        stock_max = int(produit.stock_maximum or 0)
         
-        # 4. Couverture actuelle en jours
-        if conso_jour > 0:
-            couverture_jours = stock_actuel / conso_jour
-        else:
-            couverture_jours = 999
+        stock_moyen_temp = max(stock_actuel, 1)
+        rotation_periode = float(ventes_total) / stock_moyen_temp
+        rotation_historique = float(produit.rotation_moyenne or 0)
+        rotation_effective = rotation_periode if ventes_total > 0 else rotation_historique
         
-        # 5. Rotation (ventes / stock moyen)
-        stock_moyen = max(stock_actuel, 1)
-        rotation = float(ventes_total) / stock_moyen
+        en_rupture = (stock_actuel <= 0) and (rotation_effective > 1)
+        en_alerte = (stock_alert > 0 and stock_actuel <= stock_alert) or (stock_min > 0 and stock_actuel <= stock_min)
         
-        # 6. Tendance (période récente vs ancienne)
-        ventes_recentes = produit.ventes_recentes_annotation or 0
-        
-        ventes_anciennes = ventes_total - ventes_recentes
-        if ventes_anciennes > 0:
-            tendance = ventes_recentes / ventes_anciennes
-        else:
-            tendance = 1.0 if ventes_recentes > 0 else 0
-        
-        # 7. Stock cible = consommation journalière × période demandée
-        stock_cible = conso_jour * periode
-        qte_base = max(0, stock_cible - stock_actuel)
-        
-        # Ajustement selon rotation
-        if rotation > 3:  # Haute rotation
-            qte_base *= 1.2
-            niveau_rotation = 'haute'
-        elif rotation < 1:  # Faible rotation
-            qte_base *= 0.8
-            niveau_rotation = 'faible'
-        else:
+        if ventes_total == 0 and not en_rupture and not en_alerte:
+            continue
+            
+        if ventes_total == 0:
+            # Produit sans ventes récentes mais en rupture ou alerte
+            conso_jour = 0.0
+            couverture_jours = 0
+            rotation = 0.0
+            tendance = 1.0
             niveau_rotation = 'normale'
-        
-        # Ajustement selon tendance
-        qte_base *= min(tendance, 2.0)  # Plafonner à 2x pour éviter les excès
-        
-        qte_finale = int(round(qte_base))
-        
-        # Déterminer urgence selon la couverture vs période demandée
-        ratio_couverture = couverture_jours / periode if periode > 0 else 999
-        if ratio_couverture < 0.25:  # Moins de 25% de la période couverte
-            urgence = 'urgent'
-            score_urgence = 80
-        elif ratio_couverture < 0.5:  # Moins de 50%
-            urgence = 'bientot'
-            score_urgence = 50
+            
+            if stock_max > 0:
+                stock_cible = stock_max
+            elif stock_alert > 0:
+                stock_cible = stock_alert * 1.5
+            elif stock_min > 0:
+                stock_cible = stock_min * 1.5
+            else:
+                stock_cible = 5  # Quantité par défaut pour rupture sans configuration
+                
+            qte_base = max(0, stock_cible - stock_actuel)
+            qte_finale = int(round(qte_base))
+            
+            urgence = 'urgent' if en_rupture else 'bientot'
+            score_urgence = 80 if en_rupture else 50
+            raison = "Rupture de stock (aucune vente récente)." if en_rupture else "Alerte de stock (aucune vente récente)."
         else:
-            urgence = 'normal'
-            score_urgence = 20
-        
-        # Construire la raison
-        raison = f"Couverture: {int(couverture_jours)}j/{periode}j. "
-        if niveau_rotation == 'haute':
-            raison += "Rotation élevée (+20%). "
-        elif niveau_rotation == 'faible':
-            raison += "Rotation faible (-20%). "
-        if tendance > 1.2:
-            raison += f"Tendance hausse (+{int((tendance-1)*100)}%)."
-        elif tendance < 0.8:
-            raison += f"Tendance baisse ({int((tendance-1)*100)}%)."
+            # 2. Consommation journalière moyenne
+            conso_jour = float(ventes_total) / periode_analyse
+            
+            # 4. Couverture actuelle en jours
+            if conso_jour > 0:
+                couverture_jours = stock_actuel / conso_jour
+            else:
+                couverture_jours = 999
+            
+            # 5. Rotation (ventes / stock moyen)
+            stock_moyen = max(stock_actuel, 1)
+            rotation = float(ventes_total) / stock_moyen
+            
+            # 6. Tendance (période récente vs ancienne)
+            ventes_recentes = produit.ventes_recentes_annotation or 0
+            
+            ventes_anciennes = ventes_total - ventes_recentes
+            if ventes_anciennes > 0:
+                tendance = ventes_recentes / ventes_anciennes
+            else:
+                tendance = 1.0 if ventes_recentes > 0 else 0
+            
+            # 7. Stock cible = consommation journalière × période demandée
+            stock_cible = conso_jour * periode
+            qte_base = max(0, stock_cible - stock_actuel)
+            
+            # Ajustement selon rotation
+            if rotation > 3:  # Haute rotation
+                qte_base *= 1.2
+                niveau_rotation = 'haute'
+            elif rotation < 1:  # Faible rotation
+                qte_base *= 0.8
+                niveau_rotation = 'faible'
+            else:
+                niveau_rotation = 'normale'
+            
+            # Ajustement selon tendance
+            qte_base *= min(tendance, 2.0)  # Plafonner à 2x pour éviter les excès
+            
+            qte_finale = int(round(qte_base))
+            
+            # Déterminer urgence selon la couverture vs période demandée
+            ratio_couverture = couverture_jours / periode if periode > 0 else 999
+            if ratio_couverture < 0.25:  # Moins de 25% de la période couverte
+                urgence = 'urgent'
+                score_urgence = 80
+            elif ratio_couverture < 0.5:  # Moins de 50%
+                urgence = 'bientot'
+                score_urgence = 50
+            else:
+                urgence = 'normal'
+                score_urgence = 20
+                
+            # Surcharge urgence si alerte/rupture
+            if en_rupture:
+                urgence = 'urgent'
+                score_urgence = max(score_urgence, 90)
+            elif en_alerte:
+                urgence = 'urgent' if urgence == 'normal' else urgence
+                score_urgence = max(score_urgence, 70)
+            
+            # Construire la raison
+            raison = f"Couverture: {int(couverture_jours)}j/{periode}j. "
+            if niveau_rotation == 'haute':
+                raison += "Rotation élevée (+20%). "
+            elif niveau_rotation == 'faible':
+                raison += "Rotation faible (-20%). "
+            if tendance > 1.2:
+                raison += f"Tendance hausse (+{int((tendance-1)*100)}%). "
+            elif tendance < 0.8:
+                raison += f"Tendance baisse ({int((tendance-1)*100)}%). "
+            if en_rupture:
+                raison += "RUPTURE."
+            elif en_alerte:
+                raison += "ALERTE STOCK."
         
         # Calculer montant HT
         prix_achat = float(produit.cost_price or 0)

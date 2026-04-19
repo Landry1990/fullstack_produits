@@ -15,7 +15,8 @@ interface TotalsSectionProps {
   partAssurance?: number
   partPatient?: number
   onOpenOrdonnanceModal?: () => void
-  ordonnanceData?: any // Adjust type if known
+  ordonnanceData?: any 
+  isSidebarStyle?: boolean
 }
 
 export default function TotalsSection({
@@ -29,9 +30,79 @@ export default function TotalsSection({
   totalTTC,
   tauxCouverture = 0,
   partAssurance = 0,
-  partPatient = 0
+  partPatient = 0,
+  isSidebarStyle
 }: TotalsSectionProps) {
   const { t } = useTranslation(['facturation', 'common'])
+
+  if (isSidebarStyle) {
+    const mainTotal = tauxCouverture > 0 ? partPatient : totalTTC
+
+    return (
+      <div className="flex flex-col gap-3">
+        {/* Subtotal & Discount row */}
+        <div className="flex justify-between items-end border-b border-white/5 pb-3">
+          <div className="flex flex-col">
+            <span className="text-[10px] text-white/30 font-bold uppercase tracking-widest">{t('facturation:totals.subtotal')}</span>
+            <span className="text-sm font-bold text-white/70">{formatCurrency(Math.round(totalHT))}</span>
+          </div>
+          
+          <div className="flex flex-col items-end">
+            <span className="text-[10px] text-white/30 font-bold uppercase tracking-widest">{t('facturation:totals.discount')}</span>
+            <div className="flex items-center gap-2">
+               <div className="flex items-center bg-white/5 border border-white/10 rounded overflow-hidden">
+                  <select 
+                    value={remiseMode} 
+                    onChange={(e) => setRemiseMode(e.target.value as any)}
+                    className="bg-transparent text-[10px] text-white/50 border-r border-white/10 px-1 outline-none"
+                  >
+                    <option value="montant">F</option>
+                    <option value="taux">%</option>
+                  </select>
+                  <input 
+                    type="text" 
+                    value={remiseGlobale}
+                    onChange={(e) => setRemiseGlobale(e.target.value)}
+                    className="w-12 bg-transparent text-xs text-right font-bold text-white outline-none px-1"
+                  />
+               </div>
+               <span className="text-xs font-bold text-red-500/80">-{formatCurrency(Math.round(remiseMontant))}</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Tiers Payant / Insurance Info */}
+        {tauxCouverture > 0 && (
+          <div className="flex justify-between items-center py-2 px-3 bg-secondary/10 border border-secondary/20 rounded-lg">
+             <div className="flex flex-col">
+                <span className="text-[9px] text-secondary font-black uppercase tracking-tighter">Part Assurance ({tauxCouverture}%)</span>
+                <span className="text-sm font-bold text-secondary">{formatCurrency(Math.round(partAssurance))}</span>
+             </div>
+             <div className="text-right">
+                <span className="text-[9px] text-white/20 uppercase font-bold">Total TTC</span>
+                <div className="text-[10px] text-white/40">{formatCurrency(Math.round(totalTTC))}</div>
+             </div>
+          </div>
+        )}
+
+        {/* Main Grand Total */}
+        <div className="relative overflow-hidden group">
+          <div className="flex flex-col items-end p-4 rounded-xl bg-gradient-to-br from-white/5 to-transparent border border-white/10 shadow-2xl">
+             <span className="text-[11px] text-primary/60 font-black uppercase tracking-[0.2em] mb-1">
+                {tauxCouverture > 0 ? t('facturation:totals.part_patient') : t('facturation:totals.total_ttc')}
+             </span>
+             <div className="flex items-baseline gap-2">
+                <span className="text-5xl font-black text-white tracking-tighter">
+                   {formatCurrency(Math.round(mainTotal))}
+                </span>
+             </div>
+          </div>
+          {/* Decorative shine effect */}
+          <div className="absolute top-0 -inset-full h-full w-1/2 z-5 block transform -skew-x-12 bg-gradient-to-r from-transparent via-white/5 to-transparent group-hover:animate-shine" />
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="bg-base-100 border-t border-base-200 p-3 md:p-4 shadow-sm">
@@ -43,7 +114,7 @@ export default function TotalsSection({
           <div className="flex flex-col items-center sm:items-end gap-1">
             <span className="text-base-content/50 text-[10px] sm:text-xs font-bold uppercase tracking-widest leading-none">{t('facturation:totals.subtotal')}</span>
             <span className="font-bold text-lg sm:text-2xl text-base-content/80 whitespace-nowrap">
-                {formatCurrency(Math.round(totalHT))} <span className="text-xs font-normal opacity-50">F</span>
+                {formatCurrency(Math.round(totalHT))}
             </span>
           </div>
 
@@ -106,12 +177,11 @@ export default function TotalsSection({
                 <span className="font-black text-3xl sm:text-5xl text-primary tracking-tighter">
                     {formatCurrency(Math.round(tauxCouverture > 0 ? partPatient : totalTTC))}
                 </span>
-                <span className="text-lg sm:text-2xl font-bold text-primary/70 uppercase">F</span>
             </div>
             
             {tauxCouverture > 0 && (
                 <span className="text-[10px] font-bold text-base-content/40 uppercase tracking-tighter">
-                    {t('facturation:totals.total_ttc')}: {formatCurrency(Math.round(totalTTC))} F
+                    {t('facturation:totals.total_ttc')}: {formatCurrency(Math.round(totalTTC))}
                 </span>
             )}
           </div>

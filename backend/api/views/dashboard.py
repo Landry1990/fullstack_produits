@@ -39,10 +39,10 @@ class DashboardViewSet(viewsets.ViewSet):
         
         global_stats = {}
         
-        facture_qs = Facture.objects.annotate(num_p=Count('paiements')).filter(
+        facture_qs = Facture.objects.filter(
             date__date__in=[today, yesterday],
             status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE]
-        ).exclude(status='VAL', num_p=0)
+        ).exclude(status='VAL', paiements__isnull=True)
         
         # Aggregate everything related to Facture in one pass for [today, yesterday]
         facture_metrics = facture_qs.aggregate(
@@ -85,7 +85,7 @@ class DashboardViewSet(viewsets.ViewSet):
                     Q(is_active=True) & (
                         Q(stock__lte=F('stock_minimum')) | 
                         Q(stock__lte=0) |
-                        (Q(rotation_moyenne__gt=0) & Q(stock__lt=F('rotation_moyenne') / 2.0))
+                        (Q(rotation_moyenne__gt=1) & Q(stock__lt=F('rotation_moyenne') / 2.0))
                     ),
                     then=Value(1)
                 )))
@@ -132,13 +132,11 @@ class DashboardViewSet(viewsets.ViewSet):
 
             # 5. Top Products Today
             from ..models import FactureProduit
-            top_products = FactureProduit.objects.annotate(
-                num_p=Count('facture__paiements')
-            ).filter(
+            top_products = FactureProduit.objects.filter(
                 facture__date__date=today,
                 facture__status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE]
             ).exclude(
-                facture__status='VAL', num_p=0
+                facture__status='VAL', facture__paiements__isnull=True
             ).values('produit_id', 'produit__name').annotate(
                 qty=Sum('quantity'),
                 revenue=Sum(F('quantity') * (F('selling_price') - F('discount')))
@@ -243,10 +241,10 @@ class DashboardViewSet(viewsets.ViewSet):
         from django.db.models import Case, When, Value, DecimalField
         
         # --- Chiffre d'Affaires (Grouped) ---
-        ca_stats = Facture.objects.annotate(num_p=Count('paiements')).filter(
+        ca_stats = Facture.objects.filter(
             date__date__gte=start_of_month,
             status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE]
-        ).exclude(status='VAL', num_p=0).aggregate(
+        ).exclude(status='VAL', paiements__isnull=True).aggregate(
             ca_jour=Coalesce(Sum(Case(When(date__date=today, then=F('total_ttc')), default=Value(0, output_field=DecimalField()))), Decimal('0')),
             ca_sem=Coalesce(Sum(Case(When(date__date__gte=start_of_week, then=F('total_ttc')), default=Value(0, output_field=DecimalField()))), Decimal('0')),
             ca_mois=Coalesce(Sum(F('total_ttc')), Decimal('0'))
@@ -257,12 +255,10 @@ class DashboardViewSet(viewsets.ViewSet):
 
         # --- Marge (Grouped) ---
         from ..models import FactureProduitAllocation
-        margin_stats = FactureProduitAllocation.objects.annotate(
-            num_p=Count('facture_produit__facture__paiements')
-        ).filter(
+        margin_stats = FactureProduitAllocation.objects.filter(
             facture_produit__facture__date__date__gte=start_of_month,
             facture_produit__facture__status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE]
-        ).exclude(facture_produit__facture__status='VAL', num_p=0).aggregate(
+        ).exclude(facture_produit__facture__status='VAL', facture_produit__facture__paiements__isnull=True).aggregate(
             margin_jour=Coalesce(Sum(Case(When(facture_produit__facture__date__date=today, then=(F('selling_price') - F('cost_price')) * F('quantity')), default=Value(0, output_field=DecimalField()))), Decimal('0')),
             margin_sem=Coalesce(Sum(Case(When(facture_produit__facture__date__date__gte=start_of_week, then=(F('selling_price') - F('cost_price')) * F('quantity')), default=Value(0, output_field=DecimalField()))), Decimal('0')),
             margin_mois=Coalesce(Sum((F('selling_price') - F('cost_price')) * F('quantity')), Decimal('0'))
@@ -330,10 +326,10 @@ class DashboardViewSet(viewsets.ViewSet):
         from django.db.models import Subquery, OuterRef
         
         # Sous-requête 1: Total facturé par client (factures VAL/PAY)
-        billed_sub = Facture.objects.annotate(num_p=Count('paiements')).filter(
+        billed_sub = Facture.objects.filter(
             client=OuterRef('pk'),
             status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE]
-        ).exclude(status='VAL', num_p=0).values('client').annotate(
+        ).exclude(status='VAL', paiements__isnull=True).values('client').annotate(
             s=Sum('total_ttc')
         ).values('s')[:1]
         
@@ -401,17 +397,17 @@ class DashboardViewSet(viewsets.ViewSet):
         # Limit Last Week to same number of days
         last_week_limit = last_week_start + timedelta(days=days_passed + 1)
         
-        last_week_partial_ca = Facture.objects.annotate(num_p=Count('paiements')).filter(
+        last_week_partial_ca = Facture.objects.filter(
             date__date__gte=last_week_start,
             date__date__lt=last_week_limit,
             status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE]
-        ).exclude(status='VAL', num_p=0).aggregate(ca=Coalesce(Sum('total_ttc'), Decimal('0')))['ca']
+        ).exclude(status='VAL', paiements__isnull=True).aggregate(ca=Coalesce(Sum('total_ttc'), Decimal('0')))['ca']
         
-        current_week_ca = Facture.objects.annotate(num_p=Count('paiements')).filter(
+        current_week_ca = Facture.objects.filter(
             date__date__gte=current_week_start,
             date__date__lte=today, # Include today explicitly
             status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE]
-        ).exclude(status='VAL', num_p=0).aggregate(ca=Coalesce(Sum('total_ttc'), Decimal('0')))['ca']
+        ).exclude(status='VAL', paiements__isnull=True).aggregate(ca=Coalesce(Sum('total_ttc'), Decimal('0')))['ca']
         
         # Only alert if we have enough history to compare and significant drop
         if last_week_partial_ca > 0 and current_week_ca < last_week_partial_ca * perf_drop_threshold:
@@ -434,9 +430,9 @@ class DashboardViewSet(viewsets.ViewSet):
     @action(detail=False, methods=['get'])
     def recent_transactions(self, request):
         """Returns recent sales and orders."""
-        recent_sales = Facture.objects.annotate(num_p=Count('paiements')).filter(
+        recent_sales = Facture.objects.filter(
             status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE]
-        ).exclude(status='VAL', num_p=0).select_related('client').order_by('-date')[:5]
+        ).exclude(status='VAL', paiements__isnull=True).select_related('client').order_by('-date')[:5]
         
         recent_orders = Commande.objects.filter().select_related('fournisseur').order_by('-date')[:5]
         
@@ -470,11 +466,11 @@ class DashboardViewSet(viewsets.ViewSet):
         date_30_days_ago = today - timedelta(days=30)
         
         # Get sales for last 30 days grouped by hour
-        sales_by_hour = Facture.objects.annotate(num_p=Count('paiements')).filter(
+        sales_by_hour = Facture.objects.filter(
             date__date__gte=date_30_days_ago,
             date__date__lte=today,
             status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE]
-        ).exclude(status='VAL', num_p=0).annotate(
+        ).exclude(status='VAL', paiements__isnull=True).annotate(
             hour=ExtractHour('date')
         ).values('hour').annotate(
             count=Count('id'),
@@ -526,11 +522,11 @@ class DashboardViewSet(viewsets.ViewSet):
         end_date = timezone.now()
         start_date = end_date - timedelta(days=6)  # 7 days including today
         
-        daily_revenue = Facture.objects.annotate(num_p=Count('paiements')).filter(
+        daily_revenue = Facture.objects.filter(
             date__date__gte=start_date.date(),
             date__date__lte=end_date.date(),
             status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE]
-        ).exclude(status='VAL', num_p=0).annotate(
+        ).exclude(status='VAL', paiements__isnull=True).annotate(
             day=TruncDay('date')
         ).values('day').annotate(
             total=Coalesce(Sum('total_ttc'), Decimal('0'))
@@ -569,7 +565,7 @@ class DashboardViewSet(viewsets.ViewSet):
         # Avoid division by zero: only take products with moving stock (rotation > 0)
         # days_remaining = stock / (rotation_moyenne / 30) = stock * 30 / rotation_moyenne
         products = Produit.objects.filter(
-            rotation_moyenne__gt=0
+            rotation_moyenne__gt=1
         ).annotate(
             daily_rotation=Cast(F('rotation_moyenne'), FloatField()) / 30.0,
             days_remaining=Cast(F('stock'), FloatField()) / (Cast(F('rotation_moyenne'), FloatField()) / 30.0)
@@ -617,10 +613,10 @@ class DashboardViewSet(viewsets.ViewSet):
         from django.db.models.functions import Coalesce
 
         # Sous-requête 1: Total facturé par client (factures VAL/PAY)
-        billed_sub = Facture.objects.annotate(num_p=Count('paiements')).filter(
+        billed_sub = Facture.objects.filter(
             client=OuterRef('pk'),
             status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE]
-        ).exclude(status='VAL', num_p=0).values('client').annotate(
+        ).exclude(status='VAL', paiements__isnull=True).values('client').annotate(
             s=Sum('total_ttc')
         ).values('s')[:1]
         

@@ -116,7 +116,7 @@ export const FacturesTable: React.FC<FacturesTableProps> = ({
                   : Number(facture.total_ttc))
                 - (couponPourCetteFacture ? Number(couponPourCetteFacture.montant) : 0)
               )
-              const hasTiersPayant = facture.part_client !== null && Number(facture.part_client) >= 0
+              const hasTiersPayant = facture.part_client !== null && facture.part_client !== undefined && Number(facture.part_client) >= 0 && Number(facture.part_client) < Number(facture.total_ttc)
               const isSelected = index === selectedRowIndex
               
               return (

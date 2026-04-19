@@ -12,6 +12,7 @@ interface ActionButtonsProps {
   isFactureA4?: boolean
   setIsFactureA4?: (v: boolean) => void
   loading?: boolean
+  isSidebarStyle?: boolean
 }
 
 export default function ActionButtons({
@@ -25,9 +26,83 @@ export default function ActionButtons({
   setIsRetrocession,
   isFactureA4 = false,
   setIsFactureA4,
-  loading = false
+  loading = false,
+  isSidebarStyle
 }: ActionButtonsProps) {
   const { t } = useTranslation(['facturation', 'common'])
+
+  if (isSidebarStyle) {
+    return (
+      <div className="flex flex-col gap-3">
+        {/* Modes Bar */}
+        <div className="flex items-center justify-between gap-2 px-1">
+           <label className="flex items-center gap-2 cursor-pointer group">
+              <input 
+                type="checkbox" 
+                checked={isRetrocession} 
+                onChange={(e) => setIsRetrocession?.(e.target.checked)}
+                className="checkbox checkbox-xs checkbox-warning" 
+              />
+              <span className="text-[10px] uppercase font-bold text-white/40 group-hover:text-warning transition-colors">{t('facturation:actions.retrocession_mode')}</span>
+           </label>
+           <label className="flex items-center gap-2 cursor-pointer group">
+              <input 
+                type="checkbox" 
+                checked={isFactureA4} 
+                onChange={(e) => setIsFactureA4?.(e.target.checked)}
+                className="checkbox checkbox-xs checkbox-info" 
+              />
+              <span className="text-[10px] uppercase font-bold text-white/40 group-hover:text-info transition-colors">Format A4</span>
+           </label>
+        </div>
+
+        {/* Action Grid (Secondary Actions) */}
+        <div className="grid grid-cols-2 gap-2">
+           <button 
+             onClick={onProforma} 
+             disabled={!isValid || loading}
+             className="btn btn-sm bg-white/5 border-white/10 hover:bg-white/10 text-white text-[10px] font-bold uppercase tracking-wider"
+           >
+             Proforma
+           </button>
+           <button 
+             onClick={onSuspend} 
+             disabled={!isValid || loading}
+             className="btn btn-sm bg-white/5 border-white/10 hover:bg-white/10 text-warning text-[10px] font-bold uppercase tracking-wider"
+           >
+             {t('facturation:actions.suspend_short')}
+           </button>
+        </div>
+
+        {/* Primary Payment Action */}
+        <button
+          onClick={onPayment}
+          disabled={!isValid || loading}
+          className="btn btn-lg btn-primary w-full shadow-2xl shadow-primary/20 group relative overflow-hidden"
+        >
+          <div className="flex items-center justify-center gap-3">
+            {loading ? (
+              <span className="loading loading-spinner"></span>
+            ) : (
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a1 1 0 11-2 0 1 1 0 012 0z" />
+              </svg>
+            )}
+            <span className="text-xl font-black uppercase tracking-widest">{t('facturation:actions.pay')}</span>
+          </div>
+          <kbd className="absolute right-4 kbd kbd-sm bg-black/20 border-white/10 text-white/60">F9</kbd>
+        </button>
+
+        {/* Cancel Button */}
+        <button 
+          onClick={onCancel}
+          className="btn btn-xs btn-ghost text-error/40 hover:text-error uppercase font-bold tracking-tighter"
+        >
+          {t('facturation:actions.cancel')} (Esc)
+        </button>
+      </div>
+    )
+  }
 
   return (
     <div className="bg-base-100 border-t border-base-200 p-2 sm:p-4 shadow-sm shrink-0">

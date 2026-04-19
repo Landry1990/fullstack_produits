@@ -954,7 +954,7 @@
             "stats": "Historique & Stats"
         },
         "pharmacie": {
-            "info": "Cette liste affiche automatiquement tous vos produits dont le <strong>stock est à 0</strong> mais qui ont une <strong>rotation moyenne de vente &gt; 0</strong>. Idéal pour détecter les vraies ruptures et pertes de ventes !",
+            "info": "Cette liste affiche automatiquement tous vos produits dont le <strong>stock est à 0</strong> mais qui ont une <strong>rotation moyenne de vente &gt; 1</strong>. Idéal pour détecter les vraies ruptures et pertes de ventes !",
             "columns": {
                 "cip": "CIP",
                 "produit": "Produit",

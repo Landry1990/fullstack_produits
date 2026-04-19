@@ -223,9 +223,9 @@ const OrdonnancierPage: React.FC = () => {
                                             </div>
                                         </td>
                                         <td>
-                                            {new Date(entry.date_delivrance).toLocaleDateString(currentLocale)}
+                                            {new Date(entry.date_delivrance).toLocaleDateString('fr-FR')}
                                             <div className="text-xs opacity-50">
-                                                {new Date(entry.date_delivrance).toLocaleTimeString(currentLocale, {hour: '2-digit', minute:'2-digit'})}
+                                                {new Date(entry.date_delivrance).toLocaleTimeString('fr-FR', {hour: '2-digit', minute:'2-digit'})}
                                             </div>
                                         </td>
                                         <td className="font-medium">{entry.patient_nom}</td>

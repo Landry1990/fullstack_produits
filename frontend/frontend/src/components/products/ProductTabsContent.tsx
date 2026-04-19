@@ -85,11 +85,11 @@ export const ProductTabsContent: React.FC<ProductTabsContentProps> = ({
                 </tr>
                 <tr>
                    <td className="font-semibold">{t('products:detail.general.last_purchase')}</td>
-                  <td>{selectedProduit.dernier_achat ? new Date(selectedProduit.dernier_achat).toLocaleDateString(i18n.language) : '-'}</td>
+                  <td>{selectedProduit.dernier_achat ? new Date(selectedProduit.dernier_achat).toLocaleDateString('fr-FR') : '-'}</td>
                 </tr>
                 <tr>
                    <td className="font-semibold">{t('products:detail.general.last_sale')}</td>
-                  <td>{selectedProduit.dernier_vente ? new Date(selectedProduit.dernier_vente).toLocaleDateString(i18n.language) : '-'}</td>
+                  <td>{selectedProduit.dernier_vente ? new Date(selectedProduit.dernier_vente).toLocaleDateString('fr-FR') : '-'}</td>
                 </tr>
                 <tr>
                    <td className="font-semibold">{t('products:detail.general.lot_management')}</td>
@@ -170,7 +170,7 @@ const propsTabsContentPurchases = (achats: any[], t: any, lng: string) => {
                 <tbody>
                     {achats.map((achat) => (
                         <tr key={achat.id} className="hover:bg-base-200/50 transition-colors">
-                            <td className="text-xs font-mono">{new Date(achat.commande_date).toLocaleDateString(lng)}</td>
+                            <td className="text-xs font-mono">{new Date(achat.commande_date).toLocaleDateString('fr-FR')}</td>
                             <td className="text-xs truncate max-w-[150px]" title={achat.fournisseur_name}>{achat.fournisseur_name}</td>
                             <td className="text-right text-xs font-bold">{achat.quantity}</td>
                             <td className="text-right text-xs">
@@ -180,7 +180,7 @@ const propsTabsContentPurchases = (achats: any[], t: any, lng: string) => {
                                 <span className="badge badge-outline badge-xs font-mono">{achat.lot || '-'}</span>
                             </td>
                             <td className="text-xs">
-                                {achat.date_expiration ? new Date(achat.date_expiration).toLocaleDateString(lng) : '-'}
+                                {achat.date_expiration ? new Date(achat.date_expiration).toLocaleDateString('fr-FR') : '-'}
                             </td>
                         </tr>
                     ))}
@@ -212,13 +212,13 @@ const propsTabsContentLots = (lots: StockLot[], t: any, lng: string) => {
                         const isExpired = lot.date_expiration ? new Date(lot.date_expiration) < new Date() : false;
                         return (
                             <tr key={lot.id} className="hover:bg-base-200/50 transition-colors">
-                                <td className="text-xs font-mono">{new Date(lot.date_reception).toLocaleDateString(lng)}</td>
+                                <td className="text-xs font-mono">{new Date(lot.date_reception).toLocaleDateString('fr-FR')}</td>
                                 <td>
                                     <span className="badge badge-outline badge-xs font-mono">{lot.lot || '-'}</span>
                                 </td>
                                 <td>
                                     <span className={`text-xs font-bold ${isExpired ? 'text-error' : ''}`}>
-                                        {lot.date_expiration ? new Date(lot.date_expiration).toLocaleDateString(lng) : '-'}
+                                        {lot.date_expiration ? new Date(lot.date_expiration).toLocaleDateString('fr-FR') : '-'}
                                     </span>
                                 </td>
                                 <td className="text-xs truncate max-w-[120px]" title={lot.fournisseur_nom}>{lot.fournisseur_nom}</td>
@@ -324,7 +324,7 @@ const propsTabsContentMovements = (stockHistory: any[], loadingHistory: boolean,
                                 onClick={() => onMovementClick(item)}
                             >
                                 <td className="whitespace-nowrap text-xs font-mono">
-                                    {new Date(item.date).toLocaleDateString(lng)}
+                                    {new Date(item.date).toLocaleDateString('fr-FR')}
                                 </td>
                                 <td>
                                     <span className={`badge badge-sm whitespace-nowrap font-medium ${

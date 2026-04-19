@@ -31,8 +31,8 @@ export default function Ruptures() {
   const fetchPharmacieRuptures = async (page = 1) => {
     setPharmacieLoading(true);
     try {
-      // Rotation_moyenne__gt=0 implies > 0 boite par mois, stock <= 0
-      const res = await axios.get(`/api/produits/?stock__lte=0&rotation_moyenne__gt=0&page=${page}`);
+      // Rotation_moyenne > 1 implies > 1 boite par mois, stock <= 0 (per user request)
+      const res = await axios.get(`/api/produits/?stock__lte=0&rotation_moyenne__gt=1&latest_supplier=true&page=${page}`);
       setPharmacieData(res.data.results || []);
       setPharmacieTotalPages(Math.ceil((res.data.count || 0) / 50));
     } catch (error) {
@@ -122,7 +122,7 @@ export default function Ruptures() {
   };
 
   return (
-    <div className="p-6 max-w-7xl mx-auto space-y-6">
+    <div className="p-2 md:p-4 max-w-full mx-auto space-y-4">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-black text-base-content tracking-tight">{t('ruptures.title')}</h1>
@@ -156,24 +156,24 @@ export default function Ruptures() {
 
       {activeTab === 'pharmacie' && (
         <div className="card bg-base-100 shadow-sm border border-base-200">
-          <div className="card-body">
+          <div className="card-body p-2 md:p-4">
             <div className="flex items-center gap-2 mb-4 text-emerald-700 bg-emerald-50 p-4 rounded-xl">
               <BadgeInfo className="w-5 h-5 shrink-0" />
               <p className="text-sm font-medium" dangerouslySetInnerHTML={{ __html: t('ruptures.pharmacie.info') }}></p>
             </div>
             
             <div className="overflow-x-auto">
-              <table className="table w-full">
+              <table className="table table-sm w-full">
                 <thead>
                   <tr className="bg-base-200">
-                    <th>{t('ruptures.pharmacie.columns.cip', 'CIP')}</th>
-                    <th>{t('ruptures.pharmacie.columns.produit')}</th>
-                    <th>{t('ruptures.pharmacie.columns.rayon')}</th>
-                    <th className="text-center">{t('ruptures.pharmacie.columns.rotation')}</th>
-                    <th>{t('ruptures.pharmacie.columns.fournisseur')}</th>
-                    <th>{t('ruptures.pharmacie.columns.dernier_achat')}</th>
-                    <th>{t('ruptures.pharmacie.columns.dernier_vente')}</th>
-                    <th className="text-right">{t('ruptures.pharmacie.columns.prix_achat')}</th>
+                    <th className="whitespace-nowrap">{t('ruptures.pharmacie.columns.cip', 'CIP')}</th>
+                    <th className="whitespace-nowrap">{t('ruptures.pharmacie.columns.produit')}</th>
+                    <th className="whitespace-nowrap">{t('ruptures.pharmacie.columns.rayon')}</th>
+                    <th className="text-center whitespace-nowrap">{t('ruptures.pharmacie.columns.rotation')}</th>
+                    <th className="whitespace-nowrap">{t('ruptures.pharmacie.columns.fournisseur')}</th>
+                    <th className="whitespace-nowrap">{t('ruptures.pharmacie.columns.dernier_achat')}</th>
+                    <th className="whitespace-nowrap">{t('ruptures.pharmacie.columns.dernier_vente')}</th>
+                    <th className="text-right whitespace-nowrap">{t('ruptures.pharmacie.columns.prix_achat')}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -184,22 +184,22 @@ export default function Ruptures() {
                   ) : (
                     pharmacieData.map((p) => (
                       <tr key={p.id} className="hover:bg-base-50 transition-colors">
-                        <td className="font-mono text-sm">{p.cip1 || '-'}</td>
-                        <td className="font-bold">{p.name}</td>
-                        <td className="text-sm">{p.rayon_name || '-'}</td>
-                        <td className="text-center">
-                          <span className="badge badge-error gap-1 font-bold">
+                        <td className="font-mono text-sm whitespace-nowrap">{p.cip1 || '-'}</td>
+                        <td className="font-bold whitespace-nowrap">{p.name}</td>
+                        <td className="text-sm whitespace-nowrap">{p.rayon_name || '-'}</td>
+                        <td className="text-center whitespace-nowrap">
+                          <span className="badge badge-error gap-1 font-bold whitespace-nowrap">
                             {Number(p.rotation_moyenne).toFixed(1)} {t('ruptures.pharmacie.per_month')}
                           </span>
                         </td>
-                        <td className="text-sm">{p.fournisseur_name || '-'}</td>
-                        <td className="text-sm text-base-content/70">
+                        <td className="text-sm whitespace-nowrap">{p.fournisseur_name || '-'}</td>
+                        <td className="text-sm text-base-content/70 whitespace-nowrap">
                           {p.dernier_achat ? new Date(p.dernier_achat).toLocaleDateString('fr-FR') : '-'}
                         </td>
-                        <td className="text-sm text-base-content/70">
+                        <td className="text-sm text-base-content/70 whitespace-nowrap">
                           {p.dernier_vente ? new Date(p.dernier_vente).toLocaleDateString('fr-FR') : '-'}
                         </td>
-                        <td className="text-right font-mono text-sm">{formatCurrency(p.cost_price)}</td>
+                        <td className="text-right font-mono text-sm whitespace-nowrap">{formatCurrency(p.cost_price)}</td>
                       </tr>
                     ))
                   )}

@@ -18,7 +18,16 @@ class ProduitListSerializer(serializers.ModelSerializer):
     Contient uniquement les champs essentiels pour l'affichage en liste.
     """
     rayon_name = serializers.CharField(source='rayon.name', read_only=True)
-    fournisseur_name = serializers.CharField(source='fournisseur.name', read_only=True)
+    fournisseur_name = serializers.SerializerMethodField()
+
+    def get_fournisseur_name(self, obj):
+        # Prefer the annotated latest supplier if it was requested and found
+        if hasattr(obj, 'latest_fournisseur_name') and getattr(obj, 'latest_fournisseur_name'):
+            return obj.latest_fournisseur_name
+        # Fallback to the main supplier
+        if obj.fournisseur:
+            return obj.fournisseur.name
+        return None
     forme_nom = serializers.CharField(source='forme.nom', read_only=True)
     active_promis_count = serializers.IntegerField(read_only=True)
     
