@@ -150,7 +150,7 @@ export default function Dashboard() {
             <div className="flex items-center gap-3 bg-base-100 px-4 py-2 rounded-xl shadow-sm border border-base-300 h-10">
                 <CalendarDays className="w-4 h-4 text-primary" />
                 <span className="text-xs font-black uppercase tracking-widest text-base-content/60">
-                    {getServerDate().toLocaleDateString(currentLocale, { day: 'numeric', month: 'short', year: 'numeric' })}
+                    {getServerDate().toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' })}
                 </span>
                 <div className="divider divider-horizontal mx-0"></div>
                 <button 

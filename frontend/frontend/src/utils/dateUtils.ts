@@ -36,7 +36,7 @@ export function formatDate(date: string | Date | null | undefined): string {
     try {
         const d = typeof date === 'string' ? new Date(date) : date;
         if (isNaN(d.getTime())) return '-';
-        return d.toLocaleDateString(getLocale(), DATE_OPTIONS);
+        return d.toLocaleDateString('fr-FR', DATE_OPTIONS);
     } catch {
         return '-';
     }
@@ -70,7 +70,7 @@ export function formatDateLong(date: string | Date | null | undefined): string {
     try {
         const d = typeof date === 'string' ? new Date(date) : date;
         if (isNaN(d.getTime())) return '-';
-        return d.toLocaleDateString(getLocale(), {
+        return d.toLocaleDateString('fr-FR', {
             weekday: 'long',
             day: 'numeric',
             month: 'long',
@@ -89,7 +89,7 @@ export function formatDateShort(date: string | Date | null | undefined): string 
     try {
         const d = typeof date === 'string' ? new Date(date) : date;
         if (isNaN(d.getTime())) return '-';
-        return d.toLocaleDateString(getLocale(), { day: 'numeric', month: 'short' });
+        return d.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' });
     } catch {
         return '-';
     }
@@ -122,7 +122,7 @@ export function formatTime(date: string | Date | null | undefined): string {
     try {
         const d = typeof date === 'string' ? new Date(date) : date;
         if (isNaN(d.getTime())) return '-';
-        return d.toLocaleTimeString(getLocale(), {
+        return d.toLocaleTimeString('fr-FR', {
             hour: '2-digit',
             minute: '2-digit'
         });

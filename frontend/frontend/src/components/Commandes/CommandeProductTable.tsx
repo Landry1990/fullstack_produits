@@ -486,8 +486,8 @@ export default function CommandeProductTable({
                                         stock: pObj?.stock ?? pAny.produit_stock ?? 0,
                                     };
                                     
-                                    const formatAchat = stats.dernier_achat ? new Date(stats.dernier_achat).toLocaleDateString(t('common:locale', 'fr-FR'), { day: 'numeric', month: 'long', year: 'numeric' }) : 'Inconnu';
-                                    const formatVente = stats.dernier_vente ? new Date(stats.dernier_vente).toLocaleDateString(t('common:locale', 'fr-FR'), { day: 'numeric', month: 'long', year: 'numeric' }) : 'Jamais';
+                                    const formatAchat = stats.dernier_achat ? new Date(stats.dernier_achat).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' }) : 'Inconnu';
+                                    const formatVente = stats.dernier_vente ? new Date(stats.dernier_vente).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' }) : 'Jamais';
                                     
                                     return (
                                         <div className="p-4 md:px-8 grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-8 text-sm">

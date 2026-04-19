@@ -232,7 +232,7 @@ export default function ReapproHistory() {
                                 <td className="text-[10px]">
                                     <div className="flex flex-col">
                                         <span className="font-black text-base-content/60">{adj.lot_num}</span>
-                                        <span className="opacity-40">{adj.expiry ? new Date(adj.expiry).toLocaleDateString() : 'N/A'}</span>
+                                        <span className="opacity-40">{adj.expiry ? new Date(adj.expiry).toLocaleDateString('fr-FR') : 'N/A'}</span>
                                     </div>
                                 </td>
                                 <td className="text-center font-black text-xs text-purple-600">+{adj.quantity_change}</td>

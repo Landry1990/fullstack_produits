@@ -185,7 +185,8 @@ const UserSessions: React.FC = () => {
                                     <span className="label-text text-xs font-bold uppercase opacity-60 tracking-wider font-mono">{t('sessions.date')}</span>
                                 </label>
                                 <input 
-                                    type="date" 
+                                    type="date"
+                                    lang="fr-FR" 
                                     className="input input-bordered input-sm focus:input-primary h-10 w-full md:w-44" 
                                     value={startDate}
                                     onChange={(e) => {

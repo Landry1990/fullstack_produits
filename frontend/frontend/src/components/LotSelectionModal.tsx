@@ -1,4 +1,4 @@
-﻿import { useStockLots } from '../hooks/useStockLots'
+import { useStockLots } from '../hooks/useStockLots'
 import { formatPrice } from '../utils/formatters'
 import type { ProduitModel, StockLot } from '../types'
 import PremiumModal from './common/PremiumModal'
@@ -91,7 +91,7 @@ export default function LotSelectionModal({ isOpen, onClose, produit, onSelectLo
                           <td className="text-right font-medium">
                             {lot.quantity_remaining}
                           </td>
-                          <td className="text-right">
+                          <td className="text-right whitespace-nowrap">
                             {formatPrice(Number(lot.selling_price))} F
                           </td>
                           <td>

@@ -121,7 +121,7 @@ describe('StatistiquesFournisseur', () => {
         // Find date inputs (label content is "Du" and "Au")
         // Note: In the component, labels are "Du" and "Au"
         // Since inputs might not have id/for explicitly set properly for screen.getByLabelText, we use closest selectors or placeholder if available, or class.
-        // Looking at code: <label><span>Du</span></label><input type="date"> inside a controlled component.
+        // Looking at code: <label><span>Du</span></label><input type="date" lang="fr-FR" > inside a controlled component.
         // Let's assume fetching button triggers re-fetch.
         
         const refreshBtn = screen.getByText('Actualiser');

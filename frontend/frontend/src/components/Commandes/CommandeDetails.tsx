@@ -160,7 +160,7 @@ const CommandeDetails: React.FC<CommandeDetailsProps> = ({
         </div>
         <div>
           <div className="text-xs text-base-content/60 uppercase">{t('orders:details.date')}</div>
-          <div className="font-bold">{new Date(selectedCommande.date).toLocaleDateString(t('common:locale', 'fr-FR'))}</div>
+          <div className="font-bold">{new Date(selectedCommande.date).toLocaleDateString('fr-FR')}</div>
         </div>
         <div>
           <div className="text-xs text-base-content/60 uppercase">{t('orders:details.status')}</div>

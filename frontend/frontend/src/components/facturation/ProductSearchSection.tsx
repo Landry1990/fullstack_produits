@@ -121,7 +121,7 @@ export default function ProductSearchSection({
   }
 
   return (
-    <div className="bg-base-100 rounded-xl shadow-sm border border-base-200 flex-1 p-3 md:p-4 relative flex flex-col gap-2">
+    <div className="flex-1 relative flex flex-col gap-2 p-3 md:p-4">
       <div className="flex justify-between items-center">
             <label className="label text-xs font-bold text-base-content/50 uppercase tracking-wider py-0">
                 {searchMode === 'products' ? t('facturation:search.label') : t('facturation:search.label_pack')}
@@ -161,7 +161,7 @@ export default function ProductSearchSection({
                         />
                         <label 
                             htmlFor="csv_import" 
-                            className="btn btn-xs btn-ghost text-base-content/60 hover:text-primary hover:bg-base-100 rounded-md flex items-center gap-1 cursor-pointer"
+                            className="btn btn-xs bg-success/90 hover:bg-success text-success-content border-none shadow-sm rounded-md flex items-center gap-1 cursor-pointer font-bold"
                             title={t('facturation:search.csv_import_tooltip')}
                         >
                             <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" x2="12" y1="3" y2="15"/></svg>

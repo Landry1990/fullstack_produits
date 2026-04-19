@@ -16,7 +16,7 @@ export default function JournalCaisseClosingModal({ state }: Props) {
 
   return (
     <dialog className={`modal ${isClosingModalOpen ? 'modal-open' : ''}`}>
-      <div className="modal-box max-w-md p-0 overflow-hidden rounded-2xl border border-base-300 shadow-2xl">
+      <div className="modal-box w-full max-w-2xl p-0 overflow-hidden rounded-2xl border border-base-300 shadow-2xl">
         <div className="bg-primary p-6 text-white overflow-hidden relative">
           <div className="absolute top-0 right-0 p-8 opacity-10 text-9xl">🔒</div>
           <h3 className="font-black text-2xl tracking-tight">{t('closing.title')}</h3>

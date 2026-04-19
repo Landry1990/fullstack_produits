@@ -140,7 +140,7 @@ export default function ClientSection({
   const selectedClientData = clients.find(c => c.id === selectedClient)
 
   return (
-    <div className="bg-base-100 rounded-xl p-3 md:p-4 shadow-sm border border-base-200 w-full md:w-64 lg:w-80 shrink-0">
+    <div className="w-full md:w-64 lg:w-80 shrink-0 p-3 md:p-4">
       <div className="flex items-center justify-between mb-2">
         <label className="label text-xs font-bold text-base-content/50 uppercase tracking-wider py-0">{t('facturation:client.label')}</label>
         <button

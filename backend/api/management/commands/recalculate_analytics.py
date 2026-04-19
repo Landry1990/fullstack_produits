@@ -1,7 +1,7 @@
 from django.core.management.base import BaseCommand
-from django.db.models import Sum
+from django.db.models import Sum, Q
 from django.utils import timezone
-from api.models import Produit, FactureProduit
+from api.models import Produit, Facture
 from decimal import Decimal
 
 class Command(BaseCommand):
@@ -10,7 +10,15 @@ class Command(BaseCommand):
     def handle(self, *args, **kwargs):
         self.stdout.write("Recalculating analytics for all products...")
         
-        produits = Produit.objects.all()
+        # Batch query all products with total sold quantity
+        produits = Produit.objects.annotate(
+            total_vendus=Sum('factureproduit__quantity', filter=Q(
+                factureproduit__facture__status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE]
+            ))
+        )
+        
+        updated_produits = []
+        now = timezone.now()
         count = 0
         
         for p in produits:
@@ -19,12 +27,10 @@ class Command(BaseCommand):
                 try:
                     cp = Decimal(str(p.cost_price))
                     sp = Decimal(str(p.selling_price))
-                    
                     if cp > 0:
                         p.taux_marge = sp / cp
                     else:
                         p.taux_marge = Decimal('0.00')
-                        
                     if sp > 0:
                         p.pourcentage_marge = ((sp - cp) / sp) * 100
                     else:
@@ -33,24 +39,18 @@ class Command(BaseCommand):
                     pass
 
             # 2. Recalculate Rotation (Units Sold / Months)
-            # Months of existence
-            now = timezone.now()
             created_at = p.created_at
-            
-            # Calculate months difference
             months = (now.year - created_at.year) * 12 + (now.month - created_at.month)
-            # Add partial month based on days if needed, or just ensure min 1 month
             if months < 1:
                 months = 1
             
-            # Total units sold (from FactureProduit, linked to valid invoices ideally, but for now all)
-            # Note: We should ideally filter by Facture status (VALIDEE/PAYEE)
-            # Assuming FactureProduit is linked to Facture
-            units_sold = FactureProduit.objects.filter(produit=p).aggregate(total=Sum('quantity'))['total'] or 0
-            
+            units_sold = p.total_vendus or 0
             p.rotation_moyenne = Decimal(units_sold) / Decimal(months)
             
-            p.save()
+            updated_produits.append(p)
             count += 1
-            
-        self.stdout.write(self.style.SUCCESS(f'Successfully recalculated analytics for {count} products'))
+
+        # Bulk update the database for speed
+        Produit.objects.bulk_update(updated_produits, ['rotation_moyenne', 'taux_marge', 'pourcentage_marge'])
+        
+        self.stdout.write(self.style.SUCCESS(f'Successfully recalculated analytics for {count} products in bulk'))

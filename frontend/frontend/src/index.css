@@ -369,3 +369,111 @@ select {
   box-shadow: var(--shadow-premium);
   border: 1px solid color-mix(in srgb, var(--color-base-300), transparent 20%);
 }
+
+/* --- Zenith POS Redesign Styles --- */
+
+/* Left Section Background (Slate & Glass) */
+.pos-discovery {
+  background-color: #0f172a; /* Slate 900 */
+  background-image: 
+    radial-gradient(at 0% 0%, rgba(34, 197, 94, 0.05) 0px, transparent 50%),
+    radial-gradient(at 100% 0%, rgba(59, 130, 246, 0.03) 0px, transparent 50%);
+  position: relative;
+}
+
+.pos-discovery::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+  opacity: 0.015;
+  pointer-events: none;
+}
+
+/* Right Section Background (Checkout Sidebar) */
+.pos-checkout {
+  background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%); 
+  position: relative;
+  box-shadow: -10px 0 50px rgba(0, 0, 0, 0.3);
+}
+
+.pos-checkout::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.6' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+  opacity: 0.02;
+  pointer-events: none;
+}
+
+.glass-panel {
+  background: rgba(255, 255, 255, 0.01);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.03);
+}
+
+/* POS specific glass inputs to replace the 'White Boxes' */
+.pos-glass-input-container {
+  background: rgba(255, 255, 255, 0.05) !important;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+  color: #ffffff !important;
+}
+
+.pos-glass-input-container label {
+  color: rgba(255, 255, 255, 0.6) !important;
+}
+
+.pos-glass-input-container input, 
+.pos-glass-input-container select,
+.pos-glass-input-container .btn-ghost {
+  background: rgba(255, 255, 255, 0.05) !important;
+  border-color: rgba(255, 255, 255, 0.1) !important;
+  color: #ffffff !important;
+}
+
+/* Fix visibility for dropdown results */
+.pos-glass-input-container .absolute,
+.pos-glass-input-container [class*="dropdown-content"] {
+  background: #1e293b !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  color: #ffffff !important;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3) !important;
+}
+
+.pos-glass-input-container div[role="listbox"],
+.pos-glass-input-container div.max-h-96 {
+  background: #1e293b !important;
+  color: #ffffff !important;
+}
+
+.pos-glass-input-container option {
+  background-color: #1e293b !important;
+  color: #ffffff !important;
+}
+
+.pos-glass-input-container div[role="option"] *,
+.pos-glass-input-container .group div {
+  color: #ffffff !important;
+}
+
+.pos-glass-input-container .text-base-content\/50,
+.pos-glass-input-container .text-base-content\/40 {
+  color: rgba(255, 255, 255, 0.4) !important;
+}
+
+.pos-glass-input-container .badge-ghost {
+  background: rgba(255, 255, 255, 0.05) !important;
+  color: white !important;
+}
+
+.pos-sidebar-scroll::-webkit-scrollbar {
+  width: 4px;
+}
+.pos-sidebar-scroll::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 10px;
+}

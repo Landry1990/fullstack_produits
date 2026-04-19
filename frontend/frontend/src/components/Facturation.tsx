@@ -123,86 +123,122 @@ export default function Facturation() {
         ticketCaisse={hook.ticketCaisse}
       />
 
-      {/* Main Layout */}
-      <div className="flex-1 flex flex-col overflow-y-auto sm:overflow-hidden p-2 sm:p-4 lg:p-6 gap-3 sm:gap-4 lg:gap-6">
-        {/* Top Section: Client & Search */}
-        <div className="w-full flex flex-col md:flex-row gap-4 shrink-0">
-          {/* Client Selection */}
-          <ClientSection
-            inputRef={hook.clientSearchRef}
-            clients={hook.clientsHook.clients}
-            filteredClients={hook.clientsHook.filteredClients}
-            useManualClient={hook.clientsHook.useManualClient}
-            setUseManualClient={hook.clientsHook.setUseManualClient}
-            manualClientName={hook.clientsHook.manualClientName}
-            setManualClientName={hook.clientsHook.setManualClientName}
-            selectedClient={hook.clientsHook.selectedClient}
-            setSelectedClient={hook.clientsHook.setSelectedClient}
-            clientSearch={hook.clientsHook.clientSearch}
-            setClientSearch={hook.clientsHook.setClientSearch}
-            showClientDropdown={hook.clientsHook.showClientDropdown}
-            setShowClientDropdown={hook.clientsHook.setShowClientDropdown}
-            onOpenCreateClient={(initialName) => {
-              hook.clientsHook.setNewClientForm(prev => ({ ...prev, name: initialName }))
-              hook.clientsHook.setShowClientCreateModal(true)
-            }}
-            ayantsDroitList={hook.clientsHook.ayantsDroitList}
-            selectedAyantDroit={hook.clientsHook.selectedAyantDroit}
-            setSelectedAyantDroit={hook.clientsHook.setSelectedAyantDroit}
-            showNewAyantDroit={hook.clientsHook.showNewAyantDroit}
-            setShowNewAyantDroit={hook.clientsHook.setShowNewAyantDroit}
-            ayantDroitNom={hook.clientsHook.ayantDroitNom}
-            setAyantDroitNom={hook.clientsHook.setAyantDroitNom}
-            ayantDroitMatricule={hook.clientsHook.ayantDroitMatricule}
-            setAyantDroitMatricule={hook.clientsHook.setAyantDroitMatricule}
-            ayantDroitSociete={hook.clientsHook.ayantDroitSociete}
-            setAyantDroitSociete={hook.clientsHook.setAyantDroitSociete}
-            onEnter={() => hook.searchInputRef.current?.focus()}
-          />
-
-          {/* Product Search */}
-          <ProductSearchSection
-            searchQuery={hook.productSearch.searchQuery}
-            setSearchQuery={hook.productSearch.setSearchQuery}
-            searchLoading={hook.productSearch.loading}
-            filteredProduits={hook.productSearch.produits}
-            addProduitToFacture={(p) => hook.cart.addProduit(p, { isRetrocession: hook.isRetrocession })}
-            addPackToFacture={hook.addPackToFacture}
-            searchInputRef={hook.searchInputRef}
-            placeholder={hook.t('facturation:search.placeholder')}
-            onQuantityShortcut={hook.handleQuantityShortcut}
-            onCsvImport={hook.handleCsvImport}
-          />
-        </div>
-
-        {/* Bottom Section: Cart/Invoice Details */}
-        <div className="flex-none sm:flex-1 flex flex-col min-h-[400px] sm:min-h-0 bg-base-100 rounded-xl shadow-sm border border-base-200 overflow-hidden shrink-0 sm:shrink">
+      {/* Main Layout Area */}
+      <div className="flex-1 flex flex-col lg:flex-row overflow-hidden">
+        
+        {/* LEFT SECTION: Discovery (Search & Client) */}
+        <div className="flex-1 flex flex-col overflow-y-auto pos-discovery p-2 sm:p-4 lg:p-6 gap-6">
           
-          {/* Clinical Alerts Banner */}
-          <ClinicalAlerts alerts={hook.clinicalAlerts} />
-
-          <div className="p-4 border-b border-base-100 flex justify-between items-center shrink-0 flex-wrap gap-2">
-            <div className="flex items-center gap-4">
-              <h2 className="font-bold text-lg text-base-content">{hook.t('facturation:cart.title')}</h2>
-              <div className="badge badge-ghost font-mono">{hook.lignesFacture.length} {hook.t('facturation:cart.items_count', { count: hook.lignesFacture.length })}</div>
+          {/* Top Selection: Client & Search */}
+          <div className="w-full flex flex-col gap-6 shrink-0">
+            {/* Client Selection (Neutralized Glass Design) */}
+            <div className="pos-glass-input-container rounded-2xl relative z-20">
+               <ClientSection
+                 inputRef={hook.clientSearchRef}
+                 clients={hook.clientsHook.clients}
+                 filteredClients={hook.clientsHook.filteredClients}
+                 useManualClient={hook.clientsHook.useManualClient}
+                 setUseManualClient={hook.clientsHook.setUseManualClient}
+                 manualClientName={hook.clientsHook.manualClientName}
+                 setManualClientName={hook.clientsHook.setManualClientName}
+                 selectedClient={hook.clientsHook.selectedClient}
+                 setSelectedClient={hook.clientsHook.setSelectedClient}
+                 clientSearch={hook.clientsHook.clientSearch}
+                 setClientSearch={hook.clientsHook.setClientSearch}
+                 showClientDropdown={hook.clientsHook.showClientDropdown}
+                 setShowClientDropdown={hook.clientsHook.setShowClientDropdown}
+                 onOpenCreateClient={(initialName) => {
+                   hook.clientsHook.setNewClientForm(prev => ({ ...prev, name: initialName }))
+                   hook.clientsHook.setShowClientCreateModal(true)
+                 }}
+                 ayantsDroitList={hook.clientsHook.ayantsDroitList}
+                 selectedAyantDroit={hook.clientsHook.selectedAyantDroit}
+                 setSelectedAyantDroit={hook.clientsHook.setSelectedAyantDroit}
+                 showNewAyantDroit={hook.clientsHook.showNewAyantDroit}
+                 setShowNewAyantDroit={hook.clientsHook.setShowNewAyantDroit}
+                 ayantDroitNom={hook.clientsHook.ayantDroitNom}
+                 setAyantDroitNom={hook.clientsHook.setAyantDroitNom}
+                 ayantDroitMatricule={hook.clientsHook.ayantDroitMatricule}
+                 setAyantDroitMatricule={hook.clientsHook.setAyantDroitMatricule}
+                 ayantDroitSociete={hook.clientsHook.ayantDroitSociete}
+                 setAyantDroitSociete={hook.clientsHook.setAyantDroitSociete}
+                 onEnter={() => hook.searchInputRef.current?.focus()}
+               />
             </div>
-            <div className="flex items-center gap-2">
-              <span className="text-xs text-base-content/60 font-medium">Trier par:</span>
-              <select 
-                className="select select-bordered select-sm text-xs" 
-                value={hook.sortBy} 
-                onChange={(e) => hook.setSortBy(e.target.value as any)}
-                disabled={hook.lignesFacture.length === 0}
-              >
-                <option value="chrono">Chronologie</option>
-                <option value="stock">Qté en stock</option>
-                <option value="name">Nom</option>
-                <option value="qty">Qté saisie</option>
-              </select>
+
+            {/* Product Search (Neutralized Glass Design) */}
+            <div className="pos-glass-input-container rounded-2xl relative z-10">
+               <ProductSearchSection
+                 searchQuery={hook.productSearch.searchQuery}
+                 setSearchQuery={hook.productSearch.setSearchQuery}
+                 searchLoading={hook.productSearch.loading}
+                 filteredProduits={hook.productSearch.produits}
+                 addProduitToFacture={(p) => hook.cart.addProduit(p, { isRetrocession: hook.isRetrocession })}
+                 addPackToFacture={hook.addPackToFacture}
+                 searchInputRef={hook.searchInputRef}
+                 placeholder={hook.t('facturation:search.placeholder')}
+                 onQuantityShortcut={hook.handleQuantityShortcut}
+                 onCsvImport={hook.handleCsvImport}
+               />
             </div>
           </div>
 
-          <div className="flex-1 overflow-x-auto overflow-y-auto">
+          {/* Quick Info & Keyboard Shortcuts (Fills empty space elegantly) */}
+          <div className="flex-1 flex flex-col justify-center items-center opacity-30 hover:opacity-100 transition-opacity duration-500 mt-8 mb-4 min-h-[250px]">
+            <div className="w-full max-w-md glass-panel rounded-3xl p-6 flex flex-col items-center justify-center gap-6 text-center">
+               <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center relative animate-pulse">
+                 <div className="absolute inset-0 rounded-full border border-primary/30 animate-ping" style={{ animationDuration: '3s' }}></div>
+                 <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm14 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z" />
+                 </svg>
+               </div>
+               
+               <div>
+                  <h3 className="text-lg font-black tracking-widest text-white mb-1">PRÊT POUR LA VENTE</h3>
+                  <p className="text-xs text-white/50 font-medium">Lecteur de code-barres actif. Scannez un article.</p>
+               </div>
+
+               <div className="grid grid-cols-2 gap-3 w-full mt-2">
+                  <div className="bg-white/5 border border-white/10 rounded-xl p-2.5 flex flex-col items-center gap-1">
+                     <span className="kbd kbd-sm bg-base-300/50 border-none text-white font-black text-[10px]">F9</span>
+                     <span className="text-[9px] uppercase font-bold text-white/40">Valider Panier</span>
+                  </div>
+                  <div className="bg-white/5 border border-white/10 rounded-xl p-2.5 flex flex-col items-center gap-1">
+                     <span className="kbd kbd-sm bg-base-300/50 border-none text-white font-black text-[10px]">ENTRÉE</span>
+                     <span className="text-[9px] uppercase font-bold text-white/40">Retour Recherche</span>
+                  </div>
+                  <div className="bg-white/5 border border-white/10 rounded-xl p-2.5 flex flex-col items-center gap-1">
+                     <span className="kbd kbd-sm bg-base-300/50 border-none text-white font-black text-[10px]">ESC</span>
+                     <span className="text-[9px] uppercase font-bold text-white/40">Annuler Vente</span>
+                  </div>
+                  <div className="bg-white/5 border border-white/10 rounded-xl p-2.5 flex flex-col items-center gap-1">
+                     <span className="kbd kbd-sm bg-base-300/50 border-none text-white font-black text-[10px]">F8 / LOT</span>
+                     <span className="text-[9px] uppercase font-bold text-white/40">Gestion FEFO</span>
+                  </div>
+               </div>
+            </div>
+          </div>
+        </div>
+
+        {/* RIGHT SECTION: Checkout Sidebar */}
+        <aside className="w-full lg:w-[420px] xl:w-[480px] pos-checkout flex flex-col shadow-2xl z-10 border-l border-white/5 overflow-hidden">
+          
+          {/* Sidebar Header */}
+          <div className="px-4 py-3 bg-white/5 border-b border-white/10 flex items-center justify-between shrink-0">
+             <h2 className="font-bold text-base text-white flex items-center gap-2">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+                </svg>
+                {hook.t('facturation:cart.title')}
+             </h2>
+             <div className="badge badge-primary font-mono text-xs">{hook.lignesFacture.length}</div>
+          </div>
+
+          {/* Clinical Alerts Banner */}
+          <ClinicalAlerts alerts={hook.clinicalAlerts} />
+
+          {/* Cart Items List */}
+          <div className="flex-1 overflow-y-auto pos-sidebar-scroll">
             <CartTable
               lignesFacture={hook.sortedLignes}
               updateQuantite={hook.secureUpdateQuantite}
@@ -215,41 +251,47 @@ export default function Facturation() {
               selectedIndex={hook.keyboardNav.selectedIndex}
               onSelectLine={hook.keyboardNav.setSelectedIndex}
               refreshTrigger={hook.refreshTrigger}
+              isSidebarStyle={true}
             />
           </div>
 
-          {/* Footer Totals */}
-          <TotalsSection
-            totalHT={hook.totals.totalHt}
-            remiseGlobale={hook.ui.remiseGlobale}
-            setRemiseGlobale={hook.ui.setRemiseGlobale}
-            remiseMode={hook.ui.remiseMode}
-            setRemiseMode={hook.ui.setRemiseMode}
-            remiseMontant={hook.totals.remiseMontant}
-            tvaAmount={hook.totals.totalTva}
-            totalTTC={hook.totals.totalTtc}
-            tauxCouverture={hook.totals.tauxCouverture}
-            partAssurance={hook.totals.partAssurance}
-            partPatient={hook.totals.partPatient}
-            onOpenOrdonnanceModal={() => hook.setShowOrdonnanceModal(true)}
-            ordonnanceData={hook.tempOrdonnanceData}
-          />
+          {/* Bottom Checkout Controls (Glass Effect) */}
+          <div className="shrink-0 p-4 border-t border-white/10 bg-black/20 backdrop-blur-md">
+            <TotalsSection
+              totalHT={hook.totals.totalHt}
+              remiseGlobale={hook.ui.remiseGlobale}
+              setRemiseGlobale={hook.ui.setRemiseGlobale}
+              remiseMode={hook.ui.remiseMode}
+              setRemiseMode={hook.ui.setRemiseMode}
+              remiseMontant={hook.totals.remiseMontant}
+              tvaAmount={hook.totals.totalTva}
+              totalTTC={hook.totals.totalTtc}
+              tauxCouverture={hook.totals.tauxCouverture}
+              partAssurance={hook.totals.partAssurance}
+              partPatient={hook.totals.partPatient}
+              onOpenOrdonnanceModal={() => hook.setShowOrdonnanceModal(true)}
+              ordonnanceData={hook.tempOrdonnanceData}
+              isSidebarStyle={true}
+            />
 
-          {/* Action Buttons */}
-          <ActionButtons
-            onPayment={hook.handlePaymentClick}
-            onProforma={hook.handleProforma}
-            onBonDeLivraison={hook.handleBonDeLivraison}
-            onSuspend={hook.mettreEnAttente}
-            onCancel={hook.annulerVente}
-            isValid={hook.lignesFacture.length > 0}
-            isRetrocession={hook.isRetrocession}
-            setIsRetrocession={hook.setIsRetrocession}
-            isFactureA4={hook.isFactureA4}
-            setIsFactureA4={hook.setIsFactureA4}
-            loading={hook.loading}
-          />
-        </div>
+            <div className="mt-4">
+              <ActionButtons
+                onPayment={hook.handlePaymentClick}
+                onProforma={hook.handleProforma}
+                onBonDeLivraison={hook.handleBonDeLivraison}
+                onSuspend={hook.mettreEnAttente}
+                onCancel={hook.annulerVente}
+                isValid={hook.lignesFacture.length > 0}
+                isRetrocession={hook.isRetrocession}
+                setIsRetrocession={hook.setIsRetrocession}
+                isFactureA4={hook.isFactureA4}
+                setIsFactureA4={hook.setIsFactureA4}
+                loading={hook.loading}
+                isSidebarStyle={true}
+              />
+            </div>
+          </div>
+        </aside>
       </div>
 
       {hook.ui.isPaymentModalOpen && (

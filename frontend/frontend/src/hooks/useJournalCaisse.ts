@@ -449,7 +449,7 @@ export function useJournalCaisse() {
             <div style="font-size: 0.8em; margin-bottom: 10px;">
                 <div style="display: flex; justify-content: space-between;">
                     <span>${t('print.print_date')}:</span>
-                    <span>${new Date().toLocaleDateString(currentLocale)} ${new Date().toLocaleTimeString(currentLocale)}</span>
+                    <span>${new Date().toLocaleDateString('fr-FR')} ${new Date().toLocaleTimeString('fr-FR')}</span>
                 </div>
                 <div style="display: flex; justify-content: space-between;">
                     <span>${t('print.operator')}:</span>
@@ -530,7 +530,7 @@ export function useJournalCaisse() {
             </div>
             
             <div style="text-align: center; font-size: 0.6em; margin-top: 15px; font-style: italic; opacity: 0.5;">
-                ${t('print.footer', { date: new Date().toLocaleDateString(currentLocale) })}
+                ${t('print.footer', { date: new Date().toLocaleDateString('fr-FR') })}
             </div>
         </div>
       `;

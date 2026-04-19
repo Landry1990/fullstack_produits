@@ -75,10 +75,10 @@ export const AjustementsTable: React.FC<AjustementsTableProps> = ({
                             <tr key={adj.id} className="hover:bg-base-200/50 transition-colors group">
                                 <td className="px-6 py-4">
                                     <div className="font-mono text-xs text-base-content/60">
-                                        {new Date(adj.created_at).toLocaleDateString(i18n.language)}
+                                        {new Date(adj.created_at).toLocaleDateString('fr-FR')}
                                     </div>
                                     <div className="text-[10px] font-bold text-base-content/40">
-                                        {new Date(adj.created_at).toLocaleTimeString(i18n.language, { hour: '2-digit', minute: '2-digit' })}
+                                        {new Date(adj.created_at).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
                                     </div>
                                 </td>
                                 <td className="font-bold text-base-content tracking-tight">{adj.produit_name}</td>

@@ -52,7 +52,7 @@ export const ManagerObjectives: React.FC<ManagerObjectivesProps> = ({ currentObj
                                 {obj && obj.date_debut && (
                                     <div className="text-[10px] text-base-content/40 font-bold uppercase mt-0.5">
                                         {t('manager_dashboard.since_date', { 
-                                            date: new Date(obj.date_debut).toLocaleDateString(t('common:locale', { defaultValue: 'fr-FR' })) 
+                                            date: new Date(obj.date_debut).toLocaleDateString('fr-FR') 
                                         })}
                                     </div>
                                 )}

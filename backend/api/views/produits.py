@@ -1,9 +1,8 @@
 from rest_framework import viewsets, filters
 from rest_framework.permissions import IsAuthenticated
-from django.db.models import Count, OuterRef, Subquery, IntegerField
+from django.db.models import Count, OuterRef, Subquery, IntegerField, CharField, Q
 from django.db.models.functions import Coalesce
-
-from ..models import Produit, Promis
+from ..models import Produit, Promis, CommandeProduit
 from ..serializers import ProduitSerializer
 from ..serializers_optimized import ProduitListSerializer, ProduitDetailSerializer
 from ..serializer_mixins import OptimizedSerializerMixin
@@ -80,6 +79,11 @@ class ProduitViewSet(
         if rotation_gte is not None:
             try: queryset = queryset.filter(rotation_moyenne__gte=float(rotation_gte))
             except ValueError: pass
+
+        rotation_gt = self.request.query_params.get('rotation_moyenne__gt')
+        if rotation_gt is not None:
+            try: queryset = queryset.filter(rotation_moyenne__gt=float(rotation_gt))
+            except ValueError: pass
             
         rayon_id = self.request.query_params.get('rayon')
         if rayon_id is not None:
@@ -92,6 +96,17 @@ class ProduitViewSet(
         for_inventory = self.request.query_params.get('for_inventory', 'false').lower() == 'true'
         if for_inventory:
              queryset = queryset.filter(is_active=True).exclude(name__icontains="X -")
+
+        if self.request.query_params.get('latest_supplier') == 'true':
+            # Subquery to get the supplier name from the latest order containing this product
+            latest_cp_subquery = CommandeProduit.objects.filter(
+                produit=OuterRef('pk'),
+                commande__fournisseur__isnull=False
+            ).order_by('-commande__date', '-id').values('commande__fournisseur__name')[:1]
+            
+            queryset = queryset.annotate(
+                latest_fournisseur_name=Subquery(latest_cp_subquery, output_field=CharField())
+            )
              
         return queryset
 

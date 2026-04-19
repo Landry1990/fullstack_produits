@@ -173,7 +173,7 @@ export const SalesTable: React.FC<SalesTableProps> = ({
     };
 
     return (
-        <div className="overflow-x-auto overflow-y-visible min-h-[450px]">
+        <div className="overflow-x-auto overflow-y-auto max-h-[calc(100vh-220px)] min-h-[450px]">
             <table className="w-full border-separate border-spacing-0">
                 <thead className="sticky top-0 z-30">
                     <tr className="bg-base-200 text-left text-xs font-semibold text-base-content/60 uppercase tracking-wider">
@@ -181,7 +181,7 @@ export const SalesTable: React.FC<SalesTableProps> = ({
                             <input 
                                 type="checkbox" 
                                 className="checkbox checkbox-xs checkbox-primary"
-                                onChange={handleSelectAll}
+                                onChange={(e) => handleSelectAll(e.target.checked)}
                                 checked={factures.length > 0 && selectedIds.length === factures.length}
                             />
                         </th>

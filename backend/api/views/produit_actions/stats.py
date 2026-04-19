@@ -73,7 +73,7 @@ class ProduitStatsMixin:
     @action(detail=False, methods=['get'])
     def stock_alerts(self, request):
         produits = Produit.objects.filter(is_active=True).filter(
-            Q(stock__lt=F('rotation_moyenne'), rotation_moyenne__gt=0) |
+            Q(stock__lt=F('rotation_moyenne'), rotation_moyenne__gt=1) |
             Q(stock__lte=F('stock_minimum'), stock_minimum__gt=0) |
             Q(stock__lt=0)
         ).order_by('name').values('id', 'name', 'stock', 'rotation_moyenne', 'stock_minimum', 'cip1')
