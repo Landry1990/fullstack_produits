@@ -17,7 +17,8 @@ import {
   XCircle,
   Banknote,
   Eye,
-  Printer
+  Printer,
+  Monitor
 } from 'lucide-react'
 
 interface ClotureCaisse {
@@ -61,6 +62,11 @@ export default function HistoriqueClotures() {
   
   // Totaux globaux de la période
   const [globalTotals, setGlobalTotals] = useState<any>(null)
+
+  // Multi-Caisse
+  const [postesCaisses, setPostesCaisses] = useState<any[]>([])
+  const [selectedPosteCaisse, setSelectedPosteCaisse] = useState<string>('')
+  const [isMultiCaisse, setIsMultiCaisse] = useState(false)
   
   // Sélection
   const [selectedCloture, setSelectedCloture] = useState<ClotureCaisse | null>(null)
@@ -76,17 +82,24 @@ export default function HistoriqueClotures() {
     return baseUrl ? String(baseUrl).replace(/\/$/, '') : ''
   }, [])
 
-  // Récupérer les utilisateurs au montage
+  // Récupérer les données initiales (utilisateurs, réglages, postes)
   useEffect(() => {
-    const fetchUsers = async () => {
+    const initPage = async () => {
       try {
-        const response = await axios.get(`${apiBaseUrl}/api/caisse/page_init/`)
-        setUsers(response.data.users || [])
+        const [usersRes, settingsRes, postesRes] = await Promise.all([
+          axios.get(`${apiBaseUrl}/api/caisse/page_init/`),
+          axios.get(`${apiBaseUrl}/api/invoice-settings/`),
+          axios.get(`${apiBaseUrl}/api/postes-caisses/`)
+        ])
+        
+        setUsers(usersRes.data.users || [])
+        setIsMultiCaisse(settingsRes.data.is_multi_caisse ?? false)
+        setPostesCaisses(postesRes.data.results || postesRes.data || [])
       } catch (err) {
-        console.error('Erreur chargement utilisateurs:', err)
+        console.error('Erreur initialisation HistoriqueClotures:', err)
       }
     }
-    fetchUsers()
+    initPage()
   }, [apiBaseUrl])
 
   // Helper pour formater la date en YYYY-MM-DD
@@ -109,6 +122,7 @@ export default function HistoriqueClotures() {
       if (dateDebut) params.date_debut = formatDateForApi(dateDebut)
       if (dateFin) params.date_fin = formatDateForApi(dateFin)
       if (selectedUser) params.user = selectedUser
+      if (selectedPosteCaisse) params.poste_caisse = selectedPosteCaisse
       
       const response = await axios.get(`${apiBaseUrl}/api/clotures-caisse/`, { params })
       
@@ -126,7 +140,7 @@ export default function HistoriqueClotures() {
 
   useEffect(() => {
     fetchClotures()
-  }, [currentPage, selectedUser, dateDebut, dateFin]) // Re-fetch quand les filtres changent
+  }, [currentPage, selectedUser, selectedPosteCaisse, dateDebut, dateFin]) // Re-fetch quand les filtres changent
 
   const handleSearch = () => {
     setCurrentPage(1)
@@ -137,6 +151,7 @@ export default function HistoriqueClotures() {
     setDateDebut(null)
     setDateFin(null)
     setSelectedUser('')
+    setSelectedPosteCaisse('')
     setCurrentPage(1)
     setTimeout(() => handleSearch(), 0)
   }
@@ -265,7 +280,7 @@ export default function HistoriqueClotures() {
                     onChange={(e) => setSelectedUser(e.target.value)}
                     className="select select-bordered select-sm w-full bg-base-50 font-medium"
                 >
-                    <option value="">👤 {t('filters.all_cashiers')}</option>
+                    <option value="">👤 {t('filters.all_cashiers') || 'Tous les caissiers'}</option>
                     {users.map((u: any) => (
                         <option key={u.id} value={u.id}>
                             {u.first_name ? `${u.first_name} ${u.last_name || ''}` : u.username}
@@ -273,6 +288,24 @@ export default function HistoriqueClotures() {
                     ))}
                 </select>
             </div>
+
+            {isMultiCaisse && (
+                <div className="form-control flex-1 lg:w-48">
+                    <label className="label py-1">
+                        <span className="label-text text-xs font-bold uppercase tracking-wider text-base-content/70">Poste de Caisse</span>
+                    </label>
+                    <select
+                        value={selectedPosteCaisse}
+                        onChange={(e) => setSelectedPosteCaisse(e.target.value)}
+                        className="select select-bordered select-sm w-full bg-base-50 font-medium"
+                    >
+                        <option value="">🖥️ Tous les postes</option>
+                        {postesCaisses.map((p: any) => (
+                            <option key={p.id} value={p.id}>{p.nom}</option>
+                        ))}
+                    </select>
+                </div>
+            )}
 
             <div className="flex gap-2">
               <button 
@@ -410,6 +443,7 @@ export default function HistoriqueClotures() {
               <thead className="bg-base-200 sticky top-0 z-10 opacity-100">
                 <tr>
                   <th className="py-4 text-xs tracking-wider uppercase">{t('table.header_date')}</th>
+                  {isMultiCaisse && <th className="py-4 text-xs tracking-wider uppercase">Poste</th>}
                   <th className="py-4 text-xs tracking-wider uppercase">{t('table.header_cashier')}</th>
                   <th className="py-4 text-xs tracking-wider uppercase">{t('table.header_done_by')}</th>
                   <th className="text-right py-4 text-xs tracking-wider uppercase">{t('table.header_theoretical')}</th>
@@ -447,6 +481,13 @@ export default function HistoriqueClotures() {
                           })}
                         </div>
                       </td>
+                      {isMultiCaisse && (
+                         <td className="py-3">
+                           <div className="badge badge-sm badge-outline font-bold opacity-70">
+                             {(cloture as any).poste_caisse_nom || '-'}
+                           </div>
+                         </td>
+                      )}
                       <td className="py-3">
                          <div className="font-medium">{cloture.user_name || cloture.username || 'N/A'}</div>
                       </td>

@@ -966,7 +966,13 @@
                 "prix_achat": "Prix Achat"
             },
             "empty": "Aucune rupture pharmacie à signaler.",
-            "per_month": "/ mois"
+            "per_month": "/ mois",
+            "filters": {
+                "rayon": "Filtrer par Rayon",
+                "fournisseur": "Filtrer par Fournisseur"
+            },
+            "added_to_order_success": "Produit ajouté à la commande",
+            "added_to_order_error": "Erreur lors de l'ajout à la commande"
         },
         "fournisseur": {
             "signaler": "Signaler une Indisponibilité",
@@ -987,18 +993,24 @@
             "empty": "Aucune rupture grossiste active.",
             "mark_resolved": "Résolu",
             "mark_resolved_title": "Signaler comme de nouveau disponible",
+            "resolve": "Résolu",
             "resolve_success": "Produit marqué comme disponible",
             "resolve_error": "Erreur lors de la résolution"
         },
         "stats": {
-            "title": "Produits tombant le plus souvent en rupture (Top 200)",
+            "title": "Analyses de Fréquence",
+            "subtitle": "Top des produits les plus souvent absents",
             "columns": {
-                "rang": "Rang",
-                "produit": "Produit",
-                "frequence": "Fréquence de Rupture"
+                "rang": "RANG",
+                "produit": "PRODUIT",
+                "frequence": "FRÉQUENCE"
             },
-            "empty": "Historique vierge.",
-            "times": "fois"
+            "empty": "Pas de données statistiques pour cette période",
+            "times": "RUPTURES"
+        },
+        "actions": {
+            "add_to_order": "Ajouter à une commande",
+            "signal_shortage": "Signaler en rupture grossiste"
         }
     },
     "temporal_analysis": {

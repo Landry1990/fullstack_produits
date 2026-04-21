@@ -9,7 +9,13 @@ from .serializers import (
     ProduitSerializer, FactureSerializer, ClientSerializer,
     CommandeSerializer, StockLotSerializer, InventaireSerializer
 )
-from .models import Produit, Facture, Client, Commande, StockLot, Inventaire
+from .models import Produit, Facture, Client, Commande, StockLot, Inventaire, PosteCaisse
+
+
+class PosteCaisseListSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = PosteCaisse
+        fields = ['id', 'nom', 'code', 'est_ouvert']
 
 
 class ProduitListSerializer(serializers.ModelSerializer):
@@ -92,15 +98,16 @@ class FactureListSerializer(serializers.ModelSerializer):
     montant_regle = serializers.DecimalField(max_digits=10, decimal_places=2, read_only=True)
     montant_en_compte = serializers.DecimalField(max_digits=10, decimal_places=2, read_only=True)
     ayant_droit_details = serializers.SerializerMethodField()
+    session_ticket_number = serializers.IntegerField(source='ticket_session', read_only=True)
     
     class Meta:
         model = Facture
         fields = [
             'id', 'numero_facture', 'client', 'client_name', 'created_by_name',
             'validated_by_name', 'ayant_droit_details',
-            'date', 'status', 'status_display',
-            'total_ht', 'total_ttc', 'remise', 'session_ticket_number',
-            'montant_regle', 'montant_en_compte'
+            'date', 'status', 'status_display', 'total_ht', 'total_ttc',
+            'montant_regle', 'montant_en_compte', 'poste_caisse',
+            'ticket_session', 'session_ticket_number'
         ]
 
     def get_ayant_droit_details(self, obj):
@@ -111,7 +118,6 @@ class FactureListSerializer(serializers.ModelSerializer):
             }
         return None
 
-    session_ticket_number = serializers.IntegerField(source='ticket_session', read_only=True)
     
     def get_client_name(self, obj):
         if obj.client_name_override:

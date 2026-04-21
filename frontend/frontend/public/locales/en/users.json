@@ -39,9 +39,12 @@
         "username": "Username *",
         "password": "Password",
         "password_hint": "(leave empty to keep current)",
+        "password_placeholder_edit": "(leave empty to keep current)",
         "role": "Role *",
         "firstname": "First Name",
         "lastname": "Last Name",
+        "first_name": "First Name",
+        "last_name": "Last Name",
         "email": "Email",
         "is_active": "Active Account",
         "max_discount": "Max Discount Rate (%)"
@@ -71,7 +74,8 @@
         "delete_commande": "Delete Order",
         "close_commande": "Close Order",
         "manage_perimes": "Manage Expired",
-        "manage_avoirs": "Manage Credits"
+        "manage_avoirs": "Manage Credits",
+        "validate_zero_amount": "Allow 0F sales"
     },
     "messages": {
         "load_error": "Error loading users",

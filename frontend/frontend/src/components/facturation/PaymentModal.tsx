@@ -37,6 +37,10 @@ type PaymentModalProps = {
     useManualClient: boolean
     paymentInputRef: React.RefObject<HTMLInputElement | null>
     clientSoldeDepot?: string | number
+    isMultiCaisse?: boolean
+    postesCaissesActive?: any[]
+    selectedPosteCaisseId?: number | null
+    setSelectedPosteCaisseId?: (id: number | null) => void
 }
 
 export default function PaymentModal({
@@ -57,7 +61,11 @@ export default function PaymentModal({
     selectedClient,
     useManualClient: _useManualClient,
     paymentInputRef,
-    clientSoldeDepot
+    clientSoldeDepot,
+    isMultiCaisse,
+    postesCaissesActive,
+    selectedPosteCaisseId,
+    setSelectedPosteCaisseId
 }: PaymentModalProps) {
     const { t } = useTranslation(['facturation', 'common'])
 
@@ -128,6 +136,40 @@ export default function PaymentModal({
                     }
                     return null;
                 })()}
+
+                {/* Multi-Caisse Selection */}
+                {isMultiCaisse && isNewSale && postesCaissesActive && postesCaissesActive.length > 0 && (
+                    <div className="bg-primary/5 border border-primary/20 rounded-xl p-4 mt-2 mb-4">
+                        <label className="label py-0 mb-2">
+                            <span className="label-text-alt uppercase font-bold text-primary flex items-center gap-1">
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
+                                </svg>
+                                Envoyer Vers (Poste de Caisse)
+                            </span>
+                        </label>
+                        <div className="grid grid-cols-2 gap-2">
+                            {postesCaissesActive.map((poste) => (
+                                <button
+                                    key={poste.id}
+                                    type="button"
+                                    onClick={() => setSelectedPosteCaisseId?.(poste.id)}
+                                    className={`btn btn-sm text-[10px] font-bold uppercase transition-all duration-200 border-2 ${selectedPosteCaisseId === poste.id ? 'btn-primary border-primary shadow-lg shadow-primary/20 scale-105' : 'btn-ghost border-base-300'}`}
+                                >
+                                    {poste.nom}
+                                </button>
+                            ))}
+                        </div>
+                        {!selectedPosteCaisseId && (
+                            <p className="text-[10px] text-error font-medium mt-2 italic flex items-center gap-1">
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" viewBox="0 0 20 20" fill="currentColor">
+                                    <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                                </svg>
+                                Veuillez sélectionner un poste de caisse actif
+                            </p>
+                        )}
+                    </div>
+                )}
               </div>
 
               {/* Tiers Payant Display - Show breakdown if applicable */}
@@ -343,7 +385,7 @@ export default function PaymentModal({
                     <button 
                         ref={submitBtnRef}
                         type="submit" 
-                        disabled={loading || (isNewSale && rendu < -1 && !selectedClient)}
+                        disabled={loading || (isNewSale && rendu < -1 && !selectedClient) || (isMultiCaisse && isNewSale && !selectedPosteCaisseId)}
                         className={`btn btn-primary w-full gap-2 ${loading ? 'loading' : ''}`}
                     >
                         {loading ? t('facturation:payment.status.processing') : isNewSale ? t('facturation:payment.validate_sale') : t('facturation:payment.register_payment')}

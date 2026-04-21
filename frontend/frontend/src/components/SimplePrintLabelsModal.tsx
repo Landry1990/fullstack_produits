@@ -867,32 +867,32 @@ ${labelsHTML}
         <div className="space-y-3">
           <label className="block text-xs font-bold uppercase tracking-wider text-base-content/40">{t('quantity_label', { defaultValue: 'Quantité d\'étiquettes' })}</label>
           
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <label className={`label cursor-pointer gap-3 border rounded-xl p-3 flex-1 transition-all ${qtyMode === 'received' ? 'border-primary bg-primary/5 shadow-sm' : 'hover:bg-base-200'}`}>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <label className={`label cursor-pointer items-start gap-3 border rounded-xl p-3 h-full transition-all ${qtyMode === 'received' ? 'border-primary bg-primary/5 shadow-sm' : 'hover:bg-base-200'}`}>
               <input
                 type="radio"
                 name="qtyMode"
-                className="radio radio-primary radio-sm"
+                className="radio radio-primary radio-sm mt-1"
                 checked={qtyMode === 'received'}
                 onChange={() => setQtyMode('received')}
               />
-              <div className="flex-1">
-                <span className="label-text font-semibold text-sm">{t('qty.by_unit')}</span>
-                <p className="text-[10px] text-base-content/50">{t('qty.received_desc', { defaultValue: 'Total unités + gratuits' })}</p>
+              <div className="flex-1 min-w-0">
+                <span className="label-text font-bold text-sm block whitespace-normal leading-tight">{t('qty.by_unit')}</span>
+                <p className="text-[10px] text-base-content/50 mt-0.5 leading-snug whitespace-normal">{t('qty.received_desc', { defaultValue: 'Total unités + gratuits' })}</p>
               </div>
             </label>
 
-            <label className={`label cursor-pointer gap-3 border rounded-xl p-3 flex-1 transition-all ${qtyMode === 'fixed' ? 'border-primary bg-primary/5 shadow-sm' : 'hover:bg-base-200'}`}>
+            <label className={`label cursor-pointer items-start gap-3 border rounded-xl p-3 h-full transition-all ${qtyMode === 'fixed' ? 'border-primary bg-primary/5 shadow-sm' : 'hover:bg-base-200'}`}>
               <input
                 type="radio"
                 name="qtyMode"
-                className="radio radio-primary radio-sm"
+                className="radio radio-primary radio-sm mt-1"
                 checked={qtyMode === 'fixed'}
                 onChange={() => setQtyMode('fixed')}
               />
-              <div className="flex-1">
-                <span className="label-text font-semibold text-sm">{t('qty.fixed')}</span>
-                <p className="text-[10px] text-base-content/50">{t('qty.fixed_desc', { defaultValue: 'Nombre identique par produit' })}</p>
+              <div className="flex-1 min-w-0">
+                <span className="label-text font-bold text-sm block whitespace-normal leading-tight">{t('qty.fixed')}</span>
+                <p className="text-[10px] text-base-content/50 mt-0.5 leading-snug whitespace-normal">{t('qty.fixed_desc', { defaultValue: 'Nombre identique par produit' })}</p>
               </div>
             </label>
           </div>

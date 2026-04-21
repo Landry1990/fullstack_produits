@@ -89,6 +89,10 @@ class ProduitViewSet(
         if rayon_id is not None:
              queryset = queryset.filter(rayon_id=rayon_id)
 
+        fournisseur_id = self.request.query_params.get('fournisseur')
+        if fournisseur_id is not None:
+             queryset = queryset.filter(fournisseur_id=fournisseur_id)
+
         groupe_id = self.request.query_params.get('groupe')
         if groupe_id is not None:
              queryset = queryset.filter(groupe_id=groupe_id)

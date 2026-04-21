@@ -6,6 +6,9 @@ from ...models.stock import RuptureFournisseur
 from ...serializers import RuptureFournisseurSerializer
 from django.db.models import Count
 from django.utils import timezone
+from django.http import HttpResponse
+from datetime import timedelta
+import csv
 
 class RuptureFournisseurViewSet(viewsets.ModelViewSet):
     """
@@ -32,23 +35,49 @@ class RuptureFournisseurViewSet(viewsets.ModelViewSet):
         rupture.save(update_fields=['est_resolu', 'date_fin'])
         return Response({'status': 'Rupture marquée comme résolue'})
 
-    @action(detail=False, methods=['get'])
-    def statistiques_frequence(self, request):
-        """
-        Retourne la liste des produits tombant le plus souvent en rupture.
-        """
-        stats = RuptureFournisseur.objects.values(
+    def _get_frequency_stats(self, days=None):
+        queryset = RuptureFournisseur.objects.all()
+        if days:
+            start_date = timezone.now() - timedelta(days=int(days))
+            queryset = queryset.filter(date_debut__gte=start_date)
+            
+        stats = queryset.values(
             'produit__id', 'produit__name'
         ).annotate(
             total_ruptures=Count('id')
         ).order_by('-total_ruptures')[:200]
         
-        # Formatting to list of dicts directly consumable by data grid
-        data = [
+        return [
             {
                 'produit_id': item['produit__id'],
                 'produit_name': item['produit__name'],
                 'total_ruptures': item['total_ruptures']
             } for item in stats
         ]
+
+    @action(detail=False, methods=['get'])
+    def statistiques_frequence(self, request):
+        """
+        Retourne la liste des produits tombant le plus souvent en rupture.
+        """
+        days = request.query_params.get('days')
+        data = self._get_frequency_stats(days)
         return Response(data)
+
+    @action(detail=False, methods=['get'])
+    def export_frequence_csv(self, request):
+        """
+        Exporte les statistiques de fréquence de rupture en CSV.
+        """
+        days = request.query_params.get('days')
+        data = self._get_frequency_stats(days)
+        
+        response = HttpResponse(content_type='text/csv')
+        response['Content-Disposition'] = 'attachment; filename="frequence_ruptures.csv"'
+        
+        writer = csv.writer(response)
+        writer.writerow(['ID Produit', 'Nom Produit', 'Nombre de Ruptures'])
+        for item in data:
+            writer.writerow([item['produit_id'], item['produit_name'], item['total_ruptures']])
+            
+        return response

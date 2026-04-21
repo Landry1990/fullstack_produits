@@ -278,6 +278,7 @@ export function useSaleCompletion(options: UseSaleCompletionOptions = {}): UseSa
                 },
                 type: params.isRetrocession ? 'RETRO' : 'STD',
                 centralized_cash_register: params.centralizedCashRegister,
+                poste_caisse_id: params.poste_caisse_id,
                 coupon_numero: params.couponNumero,
                 existing_id: params.modificationInvoiceId // Pass existing ID to reuse the record
             };

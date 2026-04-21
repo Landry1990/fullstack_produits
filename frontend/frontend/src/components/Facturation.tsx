@@ -326,6 +326,10 @@ export default function Facturation() {
           selectedClient={hook.clientsHook.selectedClient}
           useManualClient={hook.clientsHook.useManualClient}
           paymentInputRef={hook.paymentInputRef}
+          isMultiCaisse={hook.isMultiCaisse}
+          postesCaissesActive={hook.postesCaisses}
+          selectedPosteCaisseId={hook.selectedPosteCaisseId}
+          setSelectedPosteCaisseId={hook.setSelectedPosteCaisseId}
         />
       )}
 

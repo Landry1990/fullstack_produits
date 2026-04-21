@@ -9,7 +9,7 @@ from .commandes import (
 )
 from .ventes import (
     FactureViewSet, FactureProduitViewSet, CaisseViewSet, ClotureCaisseViewSet,
-    CreanceViewSet, MouvementCaisseViewSet
+    CreanceViewSet, MouvementCaisseViewSet, PosteCaisseViewSet
 )
 from .stocks import (
     StockLotViewSet, InventaireViewSet, LigneInventaireViewSet, StockAdjustmentViewSet,
@@ -48,7 +48,7 @@ __all__ = [
     'CommandeViewSet', 'CommandeProduitViewSet', 'AvoirViewSet', 'LigneAvoirViewSet',
     'PromisViewSet', 'generer_suggestions_commande',
     'FactureViewSet', 'FactureProduitViewSet', 'CaisseViewSet', 'ClotureCaisseViewSet',
-    'CreanceViewSet', 'MouvementCaisseViewSet',
+    'CreanceViewSet', 'MouvementCaisseViewSet', 'PosteCaisseViewSet',
     'StockLotViewSet', 'InventaireViewSet', 'LigneInventaireViewSet', 'StockAdjustmentViewSet',
     'StatsUGViewSet', 'RelationTransformationViewSet', 'HistoriqueTransformationViewSet',
     'StockAnalysisUnsoldView', 'StockAnalysisOverstockView', 'StockAnalysisShortageView',

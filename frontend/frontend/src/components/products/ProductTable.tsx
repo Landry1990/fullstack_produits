@@ -62,9 +62,9 @@ export const ProductTable: React.FC<ProductTableProps> = (props) => {
           {/* DESKTOP VIEW (Table) */}
           <div className="hidden md:block overflow-x-auto w-full">
             <table className="table table-xs table-pin-rows w-full">
-              <thead className="bg-base-200/50 text-base-content/60">
+              <thead className="bg-base-200/50 text-base-content/60 border-b border-base-200">
                 <tr>
-                  <th className="py-1.5 px-3 w-8">
+                  <th className="py-3 px-4 w-10">
                     <Checkbox
                       checked={isAllSelected}
                       indeterminate={isPartiallySelected}
@@ -72,8 +72,8 @@ export const ProductTable: React.FC<ProductTableProps> = (props) => {
                       size="sm"
                     />
                   </th>
-                  <th className="py-1.5 px-2 font-semibold uppercase text-[10px] tracking-wider w-24">CIP</th>
-                  <th className="py-1.5 px-2 font-semibold uppercase text-[10px] tracking-wider">{t('products:table.product', { defaultValue: 'Produit' })}</th>
+                  <th className="py-3 px-3 font-black uppercase text-xs tracking-wider w-32 border-none">CIP</th>
+                  <th className="py-3 px-3 font-black uppercase text-xs tracking-wider border-none">{t('products:table.product', { defaultValue: 'Produit' })}</th>
                 </tr>
               </thead>
               <tbody>
@@ -99,23 +99,23 @@ export const ProductTable: React.FC<ProductTableProps> = (props) => {
                         onZoom();
                       }}
                     >
-                      <td className="py-2 px-3 w-8 border-none" onClick={(e) => e.stopPropagation()}>
+                      <td className="py-3.5 px-4 w-10 border-none" onClick={(e) => e.stopPropagation()}>
                         <Checkbox
                           checked={isChecked}
                           onChange={() => onSelectProduct(produit.id)}
-                          size="sm"
+                          size="md"
                           color={isChecked ? 'success' : 'primary'}
                         />
                       </td>
-                      <td className="py-2 px-2 w-24 border-none">
-                        <span className="font-mono text-[11px] text-base-content/60">{produit.cip1 || '-'}</span>
+                      <td className="py-3.5 px-3 w-32 border-none">
+                        <span className="font-mono text-xs font-bold text-base-content/50">{produit.cip1 || '-'}</span>
                       </td>
-                      <td className="py-2 px-2 border-none">
+                      <td className="py-3.5 px-3 border-none">
                         <div 
-                          className={`text-xs uppercase flex items-center flex-wrap gap-1.5 ${
-                            stock < 0 ? 'text-red-600 font-bold' : 
-                            stock === 0 ? 'text-base-content/60 font-medium' : 
-                            'text-base-content font-bold'
+                          className={`text-sm uppercase flex items-center flex-wrap gap-2 ${
+                            stock < 0 ? 'text-red-600 font-black' : 
+                            stock === 0 ? 'text-base-content/60 font-bold' : 
+                            'text-base-content font-black'
                           }`} 
                           title={produit.name}
                         >
@@ -125,7 +125,7 @@ export const ProductTable: React.FC<ProductTableProps> = (props) => {
                               className="tooltip tooltip-right z-50 inline-flex shrink-0" 
                               data-tip={`${t('products:table.exclusivity', { defaultValue: 'Exclusivité' })}: ${produit.fournisseur_name || t('products:form.provider_placeholder')}`}
                             >
-                              <span className="badge badge-success badge-outline font-bold text-[9px] uppercase tracking-tighter px-1 h-auto min-h-0">
+                              <span className="badge badge-success badge-outline font-black text-[10px] uppercase tracking-tighter px-1.5 py-0.5 h-auto min-h-0">
                                 EXCLU
                               </span>
                             </div>
@@ -172,16 +172,16 @@ export const ProductTable: React.FC<ProductTableProps> = (props) => {
                     
                     <div className="flex-1 min-w-0 pr-1 py-0.5">
                        <div className="flex items-center justify-between w-full mb-0.5">
-                          <div className={`text-[13px] font-bold truncate tracking-tight uppercase ${stock < 0 ? 'text-red-600' : stock === 0 ? 'text-base-content/40' : 'text-base-content'}`}>
+                          <div className={`text-sm font-black truncate tracking-tight uppercase ${stock < 0 ? 'text-red-600' : stock === 0 ? 'text-base-content/40' : 'text-base-content'}`}>
                              {produit.name}
                           </div>
                        </div>
                        
                        <div className="flex items-center gap-2 mb-2">
                            {produit.is_supplier_exclusive && (
-                               <span className="badge badge-success badge-outline text-[9px] font-bold tracking-tight uppercase px-1 h-auto min-h-0">EXCLUSIF</span>
+                               <span className="badge badge-success badge-outline text-[10px] font-black tracking-tight uppercase px-1.5 h-auto min-h-0">EXCLUSIF</span>
                            )}
-                           <span className="text-[11px] text-base-content/60 font-mono tracking-tight">
+                           <span className="text-xs text-base-content/60 font-mono font-bold tracking-tight">
                               {produit.cip1 || 'AUCUN CIP'}
                            </span>
                        </div>

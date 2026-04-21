@@ -78,6 +78,10 @@ class MouvementCaisse(models.Model):
         User, on_delete=models.SET_NULL, null=True, blank=True, 
         related_name='mouvements_caisse'
     )
+    poste_caisse = models.ForeignKey(
+        'PosteCaisse', on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='mouvements', help_text="Caisse sur laquelle le mouvement est effectué"
+    )
     
     class Meta:
         ordering = ['-date']

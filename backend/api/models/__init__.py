@@ -38,7 +38,7 @@ from .paiements import PaiementFournisseur
 # Billing
 from .billing import (
     Facture, FactureProduit, FactureProduitAllocation,
-    Caisse, RelevePaiement, ClotureCaisse, CouponMonnaie, Promis
+    Caisse, RelevePaiement, ClotureCaisse, CouponMonnaie, Promis, PosteCaisse
 )
 
 # Inventory
@@ -82,7 +82,7 @@ __all__ = [
     'Commande', 'CommandeProduit', 'Avoir', 'LigneAvoir', 'PaiementFournisseur',
     # Billing
     'Facture', 'FactureProduit', 'FactureProduitAllocation',
-    'Caisse', 'RelevePaiement', 'ClotureCaisse', 'CouponMonnaie', 'Promis',
+    'Caisse', 'RelevePaiement', 'ClotureCaisse', 'CouponMonnaie', 'Promis', 'PosteCaisse',
     # Inventory
     'Inventaire', 'LigneInventaire', 
     'RelationTransformation', 'HistoriqueTransformation',
