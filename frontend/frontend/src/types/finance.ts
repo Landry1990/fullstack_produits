@@ -2,6 +2,16 @@ import type { ProduitModel } from './catalog';
 import type { Client, AyantDroit } from './crm';
 import type { OrdonnanceData } from './regulatory';
 
+export interface PosteCaisse {
+    id: number;
+    nom: string;
+    code: string;
+    est_ouvert: boolean;
+    ouvert_par?: number;
+    ouvert_par_name?: string;
+    date_ouverture?: string;
+}
+
 export interface FactureProduit {
     id: number
     produit: number | ProduitModel
@@ -50,6 +60,7 @@ export interface Facture {
     montant_regle?: string
     montant_en_compte?: string
     total_lettres?: string
+    poste_caisse?: number | PosteCaisse
 }
 
 export interface PaymentDetails {
@@ -273,6 +284,7 @@ export interface SaleCompletionParams {
     tempOrdonnanceData: OrdonnanceData | null;
     validated_by_id?: number | null;
     sudo_password?: string;
+    poste_caisse_id?: number | null;
 }
 
 export interface SaleCompletionResult {

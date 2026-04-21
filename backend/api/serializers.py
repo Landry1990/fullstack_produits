@@ -13,7 +13,7 @@ from .models import (
     Groupe, SmsLog, SmsTemplate, PaiementFournisseur, ConfigurationOption,
     Promotion, PromotionPackItem, ObjectifCommercial, ConfigurationObjectifs, TVA,
     WhatsAppLog, RuptureFournisseur, DepotClient, InternalMessage, MessageTemplate,
-    ReapproSession
+    ReapproSession, PosteCaisse
 )
 from .services import PromotionService
 from .pdf_utils import number_to_french
@@ -93,8 +93,8 @@ class ProfileSerializer(serializers.ModelSerializer):
         fields = [
             'allowed_menus', 'can_do_returns', 'can_sell_negative_stock', 'can_cash_out', 'role',
             'can_delete_product', 'can_adjust_stock', 'can_delete_fournisseur', 'can_delete_commande', 'can_close_commande',
-            'can_generate_coupon', 'can_modify_price', 'max_discount_rate',
-            'can_cancel_invoice', 'can_modify_invoice', 'can_cancel_promis', 'can_manage_perimes', 'can_manage_avoirs'
+            'can_modify_price', 'max_discount_rate', 'can_cancel_invoice', 'can_modify_invoice',
+            'can_cancel_promis', 'can_manage_perimes', 'can_manage_avoirs', 'can_validate_zero_amount'
         ]
 
 class InvoiceSettingsSerializer(serializers.ModelSerializer):
@@ -113,6 +113,14 @@ class PharmacySettingsSerializer(serializers.ModelSerializer):
     class Meta:
         model = PharmacySettings
         fields = '__all__'
+
+class PosteCaisseSerializer(serializers.ModelSerializer):
+    ouvert_par_name = serializers.CharField(source='ouvert_par.username', read_only=True)
+    
+    class Meta:
+        model = PosteCaisse
+        fields = '__all__'
+        read_only_fields = ['created_at', 'updated_at']
 
 class TVASerializer(serializers.ModelSerializer):
     class Meta:
@@ -161,6 +169,7 @@ class UserSerializer(serializers.ModelSerializer):
             profile.can_cancel_promis = profile_data.get('can_cancel_promis', False)
             profile.can_manage_perimes = profile_data.get('can_manage_perimes', False)
             profile.can_manage_avoirs = profile_data.get('can_manage_avoirs', False)
+            profile.can_validate_zero_amount = profile_data.get('can_validate_zero_amount', False)
             profile.role = profile_data.get('role', 'VENDEUR')
             profile.save()
             
@@ -210,6 +219,7 @@ class UserSerializer(serializers.ModelSerializer):
             profile.can_manage_perimes = profile_data.get('can_manage_perimes', profile.can_manage_perimes)
             profile.can_manage_avoirs = profile_data.get('can_manage_avoirs', profile.can_manage_avoirs)
             profile.can_modify_price = profile_data.get('can_modify_price', profile.can_modify_price)
+            profile.can_validate_zero_amount = profile_data.get('can_validate_zero_amount', profile.can_validate_zero_amount)
             profile.max_discount_rate = profile_data.get('max_discount_rate', profile.max_discount_rate)
             profile.role = profile_data.get('role', profile.role)
             profile.save()
@@ -855,7 +865,7 @@ class FactureSerializer(serializers.ModelSerializer):
             'points_fidelite_gagnes', 'points_fidelite_utilises', 'montant_fidelite',
             'is_remise_auto', 'part_client', 'paiements', 'created_by_name',
             'validated_by_name', 'cancelled_by_name', 'session_ticket_number',
-            'montant_regle', 'montant_en_compte'
+            'montant_regle', 'montant_en_compte', 'poste_caisse'
         ]
 
     session_ticket_number = serializers.IntegerField(source='ticket_session', read_only=True)
@@ -893,6 +903,7 @@ class ClotureCaisseSerializer(serializers.ModelSerializer):
     user_name = serializers.SerializerMethodField()
     cloture_par_name = serializers.SerializerMethodField()
     username = serializers.CharField(source='user.username', read_only=True, default='')
+    poste_caisse_nom = serializers.SerializerMethodField()
     
     class Meta:
         model = ClotureCaisse
@@ -908,6 +919,9 @@ class ClotureCaisseSerializer(serializers.ModelSerializer):
         if obj.cloture_par:
             return obj.cloture_par.get_full_name() or obj.cloture_par.username
         return 'N/A'
+
+    def get_poste_caisse_nom(self, obj):
+        return obj.poste_caisse.nom if obj.poste_caisse else 'N/A'
 
 class CreanceSerializer(serializers.ModelSerializer):
     """Serializer pour les créances (ventes en compte)"""

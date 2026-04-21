@@ -267,6 +267,26 @@
         "no_results_title": "Rien à commander",
         "no_results_desc": "Aucune vente n'a été trouvée sur cette plage horaire pour les critères sélectionnés.",
         "modify_params": "Modifier les paramètres"
+    },
+    "merge_modal": {
+        "title": "Fusionner {{count}} commandes",
+        "description": "Cette opération va fusionner toutes les lignes des commandes sélectionnées dans une <strong>commande principale</strong>. Les commandes sources seront supprimées.",
+        "supplier_label": "Commande principale (Cible)",
+        "select_main": "--- Choisir la commande cible ---",
+        "products_badge": "{{count}} produit(s)",
+        "multi_supplier_warning": "⚠️ Attention : les commandes proviennent de {{count}} fournisseurs différents.",
+        "orders_to_merge": "Commandes à fusionner",
+        "main_badge": "CIBLE",
+        "order_label": "Commande #{{id}}",
+        "total_products": "Total Produits",
+        "total_amount": "Montant Total",
+        "cancel": "Annuler",
+        "merge_btn": "Confirmer la fusion",
+        "loading": "Chargement des détails...",
+        "load_error": "Erreur lors du chargement des commandes",
+        "select_main_error": "Veuillez sélectionner une commande principale",
+        "no_orders_error": "Aucune commande à fusionner",
+        "merge_error": "Erreur lors de la fusion"
     }
 }
 

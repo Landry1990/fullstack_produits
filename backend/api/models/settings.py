@@ -175,6 +175,10 @@ class InvoiceSettings(models.Model):
         default=False, 
         help_text="Activer le mode Caisse Centralisée"
     )
+    is_multi_caisse = models.BooleanField(
+        default=False, 
+        help_text="Activer le mode Multi-Caisse (plusieurs postes de caisse)"
+    )
 
     def save(self, *args, **kwargs):
         if not self.pk and InvoiceSettings.objects.exists():

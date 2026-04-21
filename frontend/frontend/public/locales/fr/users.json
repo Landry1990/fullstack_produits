@@ -39,9 +39,12 @@
         "username": "Nom d'utilisateur *",
         "password": "Mot de passe",
         "password_hint": "(laisser vide pour ne pas modifier)",
+        "password_placeholder_edit": "(laisser vide pour garder l'actuel)",
         "role": "Rôle *",
         "firstname": "Prénom",
         "lastname": "Nom",
+        "first_name": "Prénom",
+        "last_name": "Nom",
         "email": "Email",
         "is_active": "Compte Actif",
         "max_discount": "Taux de remise max (%)"
@@ -71,7 +74,8 @@
         "delete_commande": "Supprimer Commande",
         "close_commande": "Clôturer Commande",
         "manage_perimes": "Gérer Périmés",
-        "manage_avoirs": "Gérer Avoirs"
+        "manage_avoirs": "Gérer Avoirs",
+        "validate_zero_amount": "Autoriser ventes à 0F"
     },
     "messages": {
         "load_error": "Erreur lors du chargement des utilisateurs",

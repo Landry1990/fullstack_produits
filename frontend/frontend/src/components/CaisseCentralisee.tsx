@@ -14,7 +14,7 @@ import { CouponPanel } from './caisse/CouponPanel'
 import { useTranslation } from 'react-i18next'
 import PremiumModal from './common/PremiumModal'
 import { TicketTemplate } from './printing/TicketTemplate'
-import { RefreshCw, Ticket, Banknote, Clock, Keyboard } from 'lucide-react'
+import { RefreshCw, Ticket, Banknote, Clock, Keyboard, Monitor } from 'lucide-react'
 
 // TicketTemplate is used for preview and print
 
@@ -50,6 +50,11 @@ export default function CaisseCentralisee() {
   
   // État pour la navigation clavier (mouse killing)
   const [selectedRowIndex, setSelectedRowIndex] = useState<number>(0)
+  
+  // États pour le multi-caisse
+  const [postesCaisses, setPostesCaisses] = useState<any[]>([])
+  const [selectedPosteCaisseId, setSelectedPosteCaisseId] = useState<string>('all')
+  const [isMultiCaisse, setIsMultiCaisse] = useState(false)
 
   const apiBaseUrl = useMemo(() => (import.meta.env.VITE_API_BASE_URL ?? ''), [])
 
@@ -57,9 +62,13 @@ export default function CaisseCentralisee() {
   const fetchFacturesEnAttente = useCallback(async () => {
     try {
       const facturesEndpoint = apiBaseUrl ? `${apiBaseUrl}/api/factures/` : '/api/factures/'
-      
-      // Fetch list of pending invoices
-      const response = await axios.get(`${facturesEndpoint}?status__in=BROU,VAL&include_pending=true`)
+      // Build query string
+      let query = `?status__in=BROU,VAL&include_pending=true`
+      if (selectedPosteCaisseId !== 'all') {
+          query += `&poste_caisse=${selectedPosteCaisseId}`
+      }
+
+      const response = await axios.get(`${facturesEndpoint}${query}`)
       const facturesList = response.data.results || response.data || []
       
       // Fetch full details for each invoice to get products
@@ -98,7 +107,7 @@ export default function CaisseCentralisee() {
     }
   }, [apiBaseUrl])
 
-  // Rafraîchissement automatique toutes les 20 secondes
+  // Rafraîchissement automatique
   useEffect(() => {
     fetchFacturesEnAttente()
     fetchCoupons()
@@ -107,7 +116,7 @@ export default function CaisseCentralisee() {
       fetchCoupons()
     }, 20000)
     return () => clearInterval(interval)
-  }, [fetchFacturesEnAttente, fetchCoupons])
+  }, [fetchFacturesEnAttente, fetchCoupons, selectedPosteCaisseId])
 
   // Générer un nouveau coupon (après validation sudo)
   const handleGenererCoupon = async () => {
@@ -143,6 +152,27 @@ export default function CaisseCentralisee() {
       setLoading(false)
     }
   }
+
+  // Charger les postes de caisse et réglages
+  useEffect(() => {
+    const initPage = async () => {
+      try {
+        const settingsEndpoint = apiBaseUrl ? `${apiBaseUrl}/api/invoice-settings/` : '/api/invoice-settings/'
+        const postesEndpoint = apiBaseUrl ? `${apiBaseUrl}/api/postes-caisses/` : '/api/postes-caisses/'
+        
+        const [settingsRes, postesRes] = await Promise.all([
+          axios.get(settingsEndpoint),
+          axios.get(postesEndpoint)
+        ])
+        
+        setIsMultiCaisse(settingsRes.data?.is_multi_caisse ?? false)
+        setPostesCaisses(postesRes.data.results || postesRes.data || [])
+      } catch (err) {
+        console.error('Erreur initialisation CaisseCentralisee:', err)
+      }
+    }
+    initPage()
+  }, [apiBaseUrl])
 
   // Appliquer un coupon à UNE vente spécifique
   const handleAppliquerCouponAFacture = (coupon: CouponMonnaie, facture: Facture) => {
@@ -648,6 +678,26 @@ export default function CaisseCentralisee() {
             <h1 className="text-2xl font-bold text-base-content tracking-tight">{t('title')}</h1>
             <p className="text-base-content/60 text-sm mt-1">{t('subtitle')}</p>
           </div>
+          
+          {isMultiCaisse && (
+            <div className="flex items-center gap-2 bg-base-200 p-1.5 rounded-xl border border-base-300">
+              <div className="flex items-center gap-2 px-3 text-base-content/60">
+                <Monitor className="w-4 h-4" />
+                <span className="text-xs font-bold uppercase tracking-wider">Poste :</span>
+              </div>
+              <select 
+                className="select select-sm select-ghost font-bold text-xs focus:bg-base-100"
+                value={selectedPosteCaisseId}
+                onChange={(e) => setSelectedPosteCaisseId(e.target.value)}
+              >
+                <option value="all">Tous les postes</option>
+                {postesCaisses.map(p => (
+                  <option key={p.id} value={p.id}>{p.nom}</option>
+                ))}
+              </select>
+            </div>
+          )}
+
           <div className="flex items-center gap-3 flex-wrap">
             <div className="flex items-center gap-1.5 text-xs text-primary bg-primary/10 px-3 py-1.5 rounded-full font-medium">
               <RefreshCw className="w-3.5 h-3.5 animate-spin" style={{ animationDuration: '3s' }} />

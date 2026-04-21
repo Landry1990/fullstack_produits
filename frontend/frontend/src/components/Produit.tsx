@@ -430,7 +430,7 @@ export default function Produit() {
   return (
     <div className="min-h-screen bg-base-200/50 md:p-6 p-3 space-y-6 font-sans">
       {/* Header Section (AppSwite Style) */}
-      <div className="w-full max-w-7xl mx-auto px-1">
+      <div className="w-full max-w-[1800px] mx-auto px-1">
         <div className="flex items-center gap-2 mb-3">
            <div className="bg-primary/20 text-primary p-2 rounded-xl">
              <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" /></svg>
@@ -493,7 +493,7 @@ export default function Produit() {
       </div>
 
       {error && (
-        <div className="alert alert-error shadow-sm rounded-xl py-3 border-none font-medium max-w-7xl mx-auto">
+        <div className="alert alert-error shadow-sm rounded-xl py-3 border-none font-medium max-w-[1800px] mx-auto">
           <svg xmlns="http://www.w3.org/2000/svg" className="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
           </svg>
@@ -502,9 +502,9 @@ export default function Produit() {
       )}
 
       {/* Main Content Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 min-h-[600px] max-w-7xl mx-auto w-full">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 min-h-[600px] max-w-[1800px] mx-auto w-full">
         {/* Left Panel: List & Actions */}
-        <div className="lg:col-span-5 bg-base-100 rounded-2xl shadow-sm border border-base-200 flex flex-col overflow-hidden">
+        <div className="lg:col-span-12 xl:col-span-7 bg-base-100 rounded-2xl shadow-sm border border-base-200 flex flex-col overflow-hidden">
           <ProductFilters 
             searchQuery={searchQuery} setSearchQuery={setSearchQuery} 
             filterRayon={filterRayon} setFilterRayon={setFilterRayon}
@@ -579,7 +579,7 @@ export default function Produit() {
         </div>
 
         {/* Right Panel: Details */}
-        <div className="lg:col-span-7 bg-base-100 rounded-2xl shadow-sm border border-base-200 flex flex-col overflow-hidden">
+        <div className="lg:col-span-12 xl:col-span-5 bg-base-100 rounded-2xl shadow-sm border border-base-200 flex flex-col overflow-hidden">
           <ProductDetailPanel 
             selectedProduit={selectedProduit} detailsLoading={detailsLoading} 
             activeTab={activeTab} setActiveTab={setActiveTab}

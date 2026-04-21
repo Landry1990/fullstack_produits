@@ -118,6 +118,7 @@ class CaisseViewSet(viewsets.ModelViewSet):
         date_debut = request.query_params.get('date_debut')
         date_fin = request.query_params.get('date_fin')
         user_id = request.query_params.get('user_id') or request.query_params.get('user')
+        poste_caisse_id = request.query_params.get('poste_caisse_id')
         
         start_date = None
         end_date = None
@@ -161,6 +162,9 @@ class CaisseViewSet(viewsets.ModelViewSet):
             transactions = transactions.filter(date_paiement__lte=end_date)
         if user_id:
             transactions = transactions.filter(user_id=user_id)
+        if poste_caisse_id:
+            # Assume Caisse belongs to a Facture which belongs to a PosteCaisse
+            transactions = transactions.filter(facture__poste_caisse_id=poste_caisse_id)
 
         # Filtre pour exclure le recouvrement et le dépôt (déjà compté en ENTREE)
         recouvrement_q = Q(mode_paiement='recouvrement') | Q(reference__icontains='[RECOUV]')
@@ -320,6 +324,7 @@ class CaisseViewSet(viewsets.ModelViewSet):
         date_debut = request.data.get('date_debut')
         date_fin = request.data.get('date_fin')
         user_id = request.data.get('user_id')
+        poste_caisse_id = request.data.get('poste_caisse_id')
         
         start_date = None
         end_date = None
@@ -370,6 +375,8 @@ class CaisseViewSet(viewsets.ModelViewSet):
             transactions = transactions.filter(date_paiement__gte=start_date)
         if end_date:
             transactions = transactions.filter(date_paiement__lte=end_date)
+        if poste_caisse_id:
+            transactions = transactions.filter(facture__poste_caisse_id=poste_caisse_id)
             
         # Filtre pour exclure les montants de recouvrement du calcul de clôture journalière
         # NOTE : On n'exclut PLUS le type PROFESSIONNEL ici, car s'ils paient en espèces, 
@@ -418,7 +425,8 @@ class CaisseViewSet(viewsets.ModelViewSet):
             montant_reel=montant_reel, montant_theorique=total_theorique, ecart_caisse=ecart,
             total_ventes=total_ventes, total_entrees=total_entrees, total_sorties=total_sorties,
             details_paiement=details, date_debut=start_date, date_fin=end_date,
-            user=target_user, cloture_par=request.user if request.user.is_authenticated else None
+            user=target_user, cloture_par=request.user if request.user.is_authenticated else None,
+            poste_caisse_id=poste_caisse_id
         )
         
         log_audit(user=request.user, action=AuditLog.Action.CLOTURE_CAISSE, model_name='ClotureCaisse', object_id=cloture.id,
@@ -440,6 +448,7 @@ class ClotureCaisseViewSet(viewsets.ReadOnlyModelViewSet):
         date_debut = self.request.query_params.get('date_debut')
         date_fin = self.request.query_params.get('date_fin')
         user_id = self.request.query_params.get('user') or self.request.query_params.get('user_id')
+        poste_caisse_id = self.request.query_params.get('poste_caisse')
         
         if date_debut:
             queryset = queryset.filter(date__date__gte=date_debut)
@@ -447,6 +456,8 @@ class ClotureCaisseViewSet(viewsets.ReadOnlyModelViewSet):
             queryset = queryset.filter(date__date__lte=date_fin)
         if user_id:
             queryset = queryset.filter(user_id=user_id)
+        if poste_caisse_id:
+            queryset = queryset.filter(poste_caisse_id=poste_caisse_id)
             
         return queryset
 

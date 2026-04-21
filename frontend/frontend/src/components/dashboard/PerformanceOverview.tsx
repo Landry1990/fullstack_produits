@@ -221,8 +221,8 @@ export default function PerformanceOverview({
                           tick={{ fontSize: 10, fontWeight: 900, fill: '#9ca3af' }}
                           axisLine={false}
                           tickLine={false}
-                          tickFormatter={(value) => `${(value / 1000).toFixed(0)}k`}
-                          domain={[0, (dataMax: number) => Math.ceil(dataMax * 1.5)]}
+                          tickFormatter={(value) => formatCurrencyLocal(value)}
+                          width={90}
                         />
                          <Tooltip 
                            formatter={(value: number) => [formatCurrencyLocal(value), t('charts.amount')]}

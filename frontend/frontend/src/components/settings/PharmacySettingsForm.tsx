@@ -1,12 +1,14 @@
-﻿import { useState, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { usePharmacySettings, type PharmacySettings } from '../../hooks/usePharmacySettings'
 import { useTVA } from '../../hooks/useTVA'
+import { useInvoiceSettings } from '../../hooks/useInvoiceSettings'
 
 export default function PharmacySettingsForm() {
   const { t } = useTranslation('pharmacy_settings')
   const { settings, loading, updateSettings } = usePharmacySettings()
   const { tvaList, loading: loadingTVA, addTVA, deleteTVA } = useTVA()
+  const { settings: invSettings, updateSettings: updateInvSettings } = useInvoiceSettings()
   const [formData, setFormData] = useState<Partial<PharmacySettings>>({})
   const [saving, setSaving] = useState(false)
   const [newTvaRate, setNewTvaRate] = useState('')
@@ -394,9 +396,52 @@ export default function PharmacySettingsForm() {
             </div>
           </div>
 
-          {/* Section: Gestion de la TVA */}
-
-          {/* Section: Gestion de la TVA */}
+          {/* Section: Multi-Caisse Setup */}
+          <div className="bg-base-100 rounded-xl shadow-sm border border-base-200 overflow-hidden">
+            <div className="bg-base-100 px-6 py-4 border-b border-base-200 flex items-center justify-between">
+              <h2 className="font-semibold text-lg flex items-center gap-2">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
+                </svg>
+                Gestion Multi-Postes (Caisse)
+              </h2>
+              <div className="flex items-center gap-3">
+                <span className="text-sm font-medium">{invSettings?.is_multi_caisse ? 'Activé' : 'Désactivé'}</span>
+                <input
+                  type="checkbox"
+                  className="toggle toggle-primary"
+                  checked={invSettings?.is_multi_caisse || false}
+                  onChange={(e) => updateInvSettings({ is_multi_caisse: e.target.checked })}
+                />
+              </div>
+            </div>
+            <div className="p-6">
+                <div className="alert alert-info py-3 text-sm flex gap-3">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" className="stroke-current shrink-0 w-5 h-5"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    <div>
+                        <p className="font-bold">Mode Multicaisse</p>
+                        <p className="opacity-80">Si activé, le système demandera sur quel terminal physique envoyer la vente lors de la validation. Assurez-vous d'avoir configuré vos terminaux dans le menu "Utilisateurs &gt; Postes de Caisse".</p>
+                    </div>
+                </div>
+                
+                {invSettings?.is_multi_caisse && (
+                    <div className="mt-4 p-4 bg-base-200 rounded-lg">
+                        <div className="flex items-center justify-between">
+                            <span className="text-sm font-semibold">Caisse Centralisée (Sessions de Ticket)</span>
+                            <input
+                                type="checkbox"
+                                className="toggle toggle-sm"
+                                checked={invSettings?.centralized_cash_register || false}
+                                onChange={(e) => updateInvSettings({ centralized_cash_register: e.target.checked })}
+                            />
+                        </div>
+                        <p className="text-xs text-base-content/60 mt-1 italic">
+                            Active le groupement des ventes par session journalière (utile pour la clôture centralisée).
+                        </p>
+                    </div>
+                )}
+            </div>
+          </div>
           <div className="bg-base-100 rounded-xl shadow-sm border border-base-200 overflow-hidden">
             <div className="bg-base-100 px-6 py-4 border-b border-base-200">
               <h2 className="font-semibold text-lg flex items-center gap-2">

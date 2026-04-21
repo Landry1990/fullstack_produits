@@ -12,6 +12,29 @@ from django.dispatch import receiver
 from decimal import Decimal
 
 
+class PosteCaisse(models.Model):
+    """Représente un poste de caisse physique."""
+    nom = models.CharField(max_length=100, unique=True)
+    code = models.SlugField(max_length=50, unique=True, help_text="Code court pour identification (ex: CAISSE-01)")
+    est_ouvert = models.BooleanField(default=False)
+    ouvert_par = models.ForeignKey(
+        User, on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='postes_caisses_ouverts'
+    )
+    date_ouverture = models.DateTimeField(null=True, blank=True)
+    
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = "Poste de Caisse"
+        verbose_name_plural = "Postes de Caisse"
+        ordering = ['nom']
+
+    def __str__(self):
+        return f"{self.nom} ({'Ouverte' if self.est_ouvert else 'Fermée'})"
+
+
 class Facture(models.Model):
     """Model representing a sales invoice."""
     class Status(models.TextChoices):
@@ -30,6 +53,11 @@ class Facture(models.Model):
     )
     numero_facture = models.CharField(max_length=100, blank=True, null=True, unique=True)
     date = models.DateTimeField(auto_now_add=True)
+    poste_caisse = models.ForeignKey(
+        'PosteCaisse', on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='factures_assignees',
+        help_text="Poste de caisse auquel cette facture est assignée"
+    )
     status = models.CharField(
         max_length=4,
         choices=Status.choices,
@@ -354,6 +382,11 @@ class ClotureCaisse(models.Model):
         help_text="L'utilisateur (admin) ayant effectué la clôture"
     )
     observation = models.TextField(blank=True, null=True, help_text="Notes ou observations sur la clôture")
+    poste_caisse = models.ForeignKey(
+        'PosteCaisse', on_delete=models.SET_NULL, null=True, blank=True, 
+        related_name='clotures',
+        help_text="Le poste de caisse physique associé"
+    )
     
     class Meta:
         ordering = ['-date']

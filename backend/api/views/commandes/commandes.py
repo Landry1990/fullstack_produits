@@ -138,6 +138,154 @@ class CommandeViewSet(MultiTermSearchMixin, OptimizedSerializerMixin, viewsets.M
 
     @action(detail=False, methods=['post'])
     @transaction.atomic
+    def ajouter_produit_auto(self, request):
+        """
+        Ajoute un produit à une commande en préparation pour son fournisseur.
+        Si aucune commande n'existe, en crée une nouvelle.
+        """
+        produit_id = request.data.get('produit_id')
+        quantity = int(request.data.get('quantity', 1))
+        
+        if not produit_id:
+            return Response({'error': 'produit_id requis'}, status=status.HTTP_400_BAD_REQUEST)
+            
+        try:
+            produit = Produit.objects.get(pk=produit_id)
+        except Produit.DoesNotExist:
+            return Response({'error': 'Produit introuvable'}, status=status.HTTP_404_NOT_FOUND)
+            
+        fournisseur = produit.fournisseur
+        if not fournisseur:
+            # Essayer de trouver le dernier fournisseur via les commandes
+            latest_cp = CommandeProduit.objects.filter(produit=produit).order_by('-commande__date').first()
+            if latest_cp and latest_cp.commande.fournisseur:
+                fournisseur = latest_cp.commande.fournisseur
+        
+        if not fournisseur:
+            return Response({'error': 'Aucun fournisseur associé à ce produit. Veuillez en définir un d\'abord.'}, status=status.HTTP_400_BAD_REQUEST)
+            
+        # Chercher une commande en préparation pour ce fournisseur
+        commande = Commande.objects.filter(
+            fournisseur=fournisseur,
+            status=Commande.Status.EN_PREPARATION
+        ).first()
+        
+        created = False
+        if not commande:
+            commande = Commande.objects.create(
+                fournisseur=fournisseur,
+                status=Commande.Status.EN_PREPARATION,
+                numero_facture=f"REASSORT_AUTO_{fournisseur.id}_{timezone.now().strftime('%Y%m%d')}",
+                date=timezone.now()
+            )
+            created = True
+            
+        # Chercher si le produit est déjà dans la commande
+        item = CommandeProduit.objects.filter(commande=commande, produit=produit).first()
+        
+        if item:
+            item.quantity += quantity
+            item.save(update_fields=['quantity'])
+            msg = f"Quantité mise à jour dans la commande #{commande.id}"
+        else:
+            item = CommandeProduit.objects.create(
+                commande=commande,
+                produit=produit,
+                quantity=quantity,
+                price=produit.cost_price,
+                price_cost=produit.cost_price,
+                selling_price=produit.selling_price,
+                tva=produit.tva
+            )
+            msg = f"Produit ajouté à la commande #{commande.id}"
+            
+        return Response({
+            'status': 'success',
+            'message': msg,
+            'commande_id': commande.id,
+            'created_new_order': created
+        })
+
+    @action(detail=False, methods=['post'])
+    @transaction.atomic
+    def ajouter_produits_bulk(self, request):
+        """
+        Ajoute plusieurs produits aux commandes en préparation de leurs fournisseurs respectifs.
+        Regroupe automatiquement les produits par fournisseur.
+        """
+        produit_ids = request.data.get('produit_ids', [])
+        quantity = int(request.data.get('quantity', 1))
+        
+        if not produit_ids or not isinstance(produit_ids, list):
+            return Response({'error': 'Liste de produit_ids requise'}, status=status.HTTP_400_BAD_REQUEST)
+            
+        summary = {
+            'added': 0,
+            'updated': 0,
+            'errors': [],
+            'orders_involved': set()
+        }
+        
+        # Récupérer tous les produits concernés
+        produits = Produit.objects.filter(pk__in=produit_ids).select_related('fournisseur')
+        
+        for produit in produits:
+            fournisseur = produit.fournisseur
+            if not fournisseur:
+                latest_cp = CommandeProduit.objects.filter(produit=produit).order_by('-commande__date').first()
+                if latest_cp and latest_cp.commande.fournisseur:
+                    fournisseur = latest_cp.commande.fournisseur
+            
+            if not fournisseur:
+                summary['errors'].append(f"Produit {produit.name} n'a pas de fournisseur associé.")
+                continue
+                
+            commande = Commande.objects.filter(
+                fournisseur=fournisseur,
+                status=Commande.Status.EN_PREPARATION
+            ).first()
+            
+            if not commande:
+                commande = Commande.objects.create(
+                    fournisseur=fournisseur,
+                    status=Commande.Status.EN_PREPARATION,
+                    numero_facture=f"REASSORT_AUTO_{fournisseur.id}_{timezone.now().strftime('%Y%m%d')}",
+                    date=timezone.now()
+                )
+            
+            summary['orders_involved'].add(commande.id)
+            
+            item = CommandeProduit.objects.filter(commande=commande, produit=produit).first()
+            if item:
+                item.quantity += quantity
+                item.save(update_fields=['quantity'])
+                summary['updated'] += 1
+            else:
+                CommandeProduit.objects.create(
+                    commande=commande,
+                    produit=produit,
+                    quantity=quantity,
+                    price=produit.cost_price,
+                    price_cost=produit.cost_price,
+                    selling_price=produit.selling_price,
+                    tva=produit.tva
+                )
+                summary['added'] += 1
+        
+        summary['orders_involved'] = list(summary['orders_involved'])
+        
+        message = f"Opération terminée : {summary['added']} produits ajoutés, {summary['updated']} mis à jour."
+        if summary['errors']:
+            message += f" ({len(summary['errors'])} erreurs)"
+            
+        return Response({
+            'status': 'success',
+            'message': message,
+            'summary': summary
+        })
+
+    @action(detail=False, methods=['post'])
+    @transaction.atomic
     def bulk_delete(self, request):
         """
         Supprime plusieurs commandes en une seule requête.

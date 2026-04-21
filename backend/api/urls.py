@@ -13,7 +13,7 @@ from .views import (
     AuditLogViewSet, LoyaltySettingViewSet, UserViewSet, CustomAuthToken,
     CategoriesListView, CategoriesDetailView, PromisViewSet,
     PromotionViewSet, TVAViewSet, UserDailySessionViewSet,
-    DepotClientViewSet
+    DepotClientViewSet, PosteCaisseViewSet
 )
 from .views.formes import FormeViewSet
 from .views.paiements import PaiementFournisseurViewSet
@@ -92,6 +92,7 @@ router.register(r'depots-clients', DepotClientViewSet, basename='depotclient')
 router.register(r'internal-messages', InternalMessageViewSet, basename='internalmessage')
 router.register(r'message-templates', MessageTemplateViewSet, basename='messagetemplate')
 router.register(r'reappro-sessions', ReapproSessionViewSet, basename='reapprosession')
+router.register(r'postes-caisses', PosteCaisseViewSet, basename='postecaisse')
 
 
 # The API URLs are now determined automatically by the router.

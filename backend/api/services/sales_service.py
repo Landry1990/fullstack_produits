@@ -38,6 +38,8 @@ class SalesService:
 
         # 2. Handle Existing Facture or Create New
         existing_id = data.get('existing_id')
+        poste_caisse_id = data.get('poste_caisse_id')
+        
         if existing_id:
             try:
                 facture = Facture.objects.get(id=existing_id)
@@ -48,6 +50,8 @@ class SalesService:
                 facture.ayant_droit_id = ayant_droit_id
                 facture.remise = remise_montant
                 facture.validated_by = validation_user
+                if poste_caisse_id:
+                    facture.poste_caisse_id = poste_caisse_id
                 if centralized and not facture.ticket_session:
                     facture.ticket_session = get_next_ticket_session()
                 facture.save()
@@ -67,6 +71,7 @@ class SalesService:
                 status=Facture.Status.BROUILLON,
                 created_by=user,
                 validated_by=validation_user,
+                poste_caisse_id=poste_caisse_id,
                 ticket_session=get_next_ticket_session() if centralized else None
             )
 

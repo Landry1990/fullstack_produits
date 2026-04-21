@@ -4,6 +4,8 @@ from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 
 from django.db.models import Sum, Count, Avg, F, Q, DecimalField, Value, ExpressionWrapper
+from django.db.models import Exists, OuterRef
+from ..models import Caisse
 from django.db.models.functions import TruncDay, TruncMonth, Coalesce
 from django.utils import timezone
 from datetime import datetime, timedelta
@@ -42,7 +44,7 @@ class DashboardViewSet(viewsets.ViewSet):
         facture_qs = Facture.objects.filter(
             date__date__in=[today, yesterday],
             status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE]
-        ).exclude(status='VAL', paiements__isnull=True)
+        ).exclude(~Q(id__in=Caisse.objects.values('facture_id')), status='VAL')
         
         # Aggregate everything related to Facture in one pass for [today, yesterday]
         facture_metrics = facture_qs.aggregate(
@@ -94,7 +96,7 @@ class DashboardViewSet(viewsets.ViewSet):
             stock_agg = {'total': product_stats['stock_value'], 'count': product_stats['stock_count']}
 
             # 3. Receivables (Créances) — Resté séparé car nécessite une sous-requête complexe sur Caisse
-            from django.db.models import Subquery, OuterRef
+            from django.db.models import Subquery
             paid_sub = Caisse.objects.filter(
                 facture=OuterRef('pk'),
                 statut='completee'
@@ -106,7 +108,7 @@ class DashboardViewSet(viewsets.ViewSet):
             
             receivables_agg = Facture.objects.filter(
                 status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE]
-            ).exclude(status='VAL', paiements__isnull=True).annotate(
+            ).exclude(~Q(id__in=Caisse.objects.values('facture_id')), status='VAL').annotate(
                 total_paid=Coalesce(Subquery(paid_sub, output_field=DecimalField()), Decimal('0.00')),
             ).annotate(
                 debt=F('total_ttc') - F('total_paid')
@@ -152,7 +154,7 @@ class DashboardViewSet(viewsets.ViewSet):
             margin_today = FactureProduitAllocation.objects.filter(
                 facture_produit__facture__date__date=today,
                 facture_produit__facture__status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE]
-            ).exclude(facture_produit__facture__status='VAL', facture_produit__facture__paiements__isnull=True).aggregate(
+            ).exclude(~Q(facture_produit__facture_id__in=Caisse.objects.values('facture_id')), facture_produit__facture__status='VAL').aggregate(
                 total=Coalesce(Sum((F('selling_price') - F('cost_price')) * F('quantity')), Decimal('0'))
             )['total']
 
@@ -244,7 +246,7 @@ class DashboardViewSet(viewsets.ViewSet):
         ca_stats = Facture.objects.filter(
             date__date__gte=start_of_month,
             status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE]
-        ).exclude(status='VAL', paiements__isnull=True).aggregate(
+        ).exclude(~Q(id__in=Caisse.objects.values('facture_id')), status='VAL').aggregate(
             ca_jour=Coalesce(Sum(Case(When(date__date=today, then=F('total_ttc')), default=Value(0, output_field=DecimalField()))), Decimal('0')),
             ca_sem=Coalesce(Sum(Case(When(date__date__gte=start_of_week, then=F('total_ttc')), default=Value(0, output_field=DecimalField()))), Decimal('0')),
             ca_mois=Coalesce(Sum(F('total_ttc')), Decimal('0'))
@@ -258,7 +260,7 @@ class DashboardViewSet(viewsets.ViewSet):
         margin_stats = FactureProduitAllocation.objects.filter(
             facture_produit__facture__date__date__gte=start_of_month,
             facture_produit__facture__status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE]
-        ).exclude(facture_produit__facture__status='VAL', facture_produit__facture__paiements__isnull=True).aggregate(
+        ).exclude(~Q(facture_produit__facture_id__in=Caisse.objects.values('facture_id')), facture_produit__facture__status='VAL').aggregate(
             margin_jour=Coalesce(Sum(Case(When(facture_produit__facture__date__date=today, then=(F('selling_price') - F('cost_price')) * F('quantity')), default=Value(0, output_field=DecimalField()))), Decimal('0')),
             margin_sem=Coalesce(Sum(Case(When(facture_produit__facture__date__date__gte=start_of_week, then=(F('selling_price') - F('cost_price')) * F('quantity')), default=Value(0, output_field=DecimalField()))), Decimal('0')),
             margin_mois=Coalesce(Sum((F('selling_price') - F('cost_price')) * F('quantity')), Decimal('0'))
@@ -323,13 +325,13 @@ class DashboardViewSet(viewsets.ViewSet):
         # Find clients with significant debt defined in settings
         debt_threshold = Decimal(debt_alert_val)
         
-        from django.db.models import Subquery, OuterRef
+        from django.db.models import Subquery
         
         # Sous-requête 1: Total facturé par client (factures VAL/PAY)
         billed_sub = Facture.objects.filter(
             client=OuterRef('pk'),
             status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE]
-        ).exclude(status='VAL', paiements__isnull=True).values('client').annotate(
+        ).exclude(~Q(id__in=Caisse.objects.values('facture_id')), status='VAL').values('client').annotate(
             s=Sum('total_ttc')
         ).values('s')[:1]
         
@@ -401,13 +403,13 @@ class DashboardViewSet(viewsets.ViewSet):
             date__date__gte=last_week_start,
             date__date__lt=last_week_limit,
             status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE]
-        ).exclude(status='VAL', paiements__isnull=True).aggregate(ca=Coalesce(Sum('total_ttc'), Decimal('0')))['ca']
+        ).exclude(~Q(id__in=Caisse.objects.values('facture_id')), status='VAL').aggregate(ca=Coalesce(Sum('total_ttc'), Decimal('0')))['ca']
         
         current_week_ca = Facture.objects.filter(
             date__date__gte=current_week_start,
             date__date__lte=today, # Include today explicitly
             status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE]
-        ).exclude(status='VAL', paiements__isnull=True).aggregate(ca=Coalesce(Sum('total_ttc'), Decimal('0')))['ca']
+        ).exclude(~Q(id__in=Caisse.objects.values('facture_id')), status='VAL').aggregate(ca=Coalesce(Sum('total_ttc'), Decimal('0')))['ca']
         
         # Only alert if we have enough history to compare and significant drop
         if last_week_partial_ca > 0 and current_week_ca < last_week_partial_ca * perf_drop_threshold:
@@ -432,7 +434,7 @@ class DashboardViewSet(viewsets.ViewSet):
         """Returns recent sales and orders."""
         recent_sales = Facture.objects.filter(
             status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE]
-        ).exclude(status='VAL', paiements__isnull=True).select_related('client').order_by('-date')[:5]
+        ).exclude(~Q(id__in=Caisse.objects.values('facture_id')), status='VAL').select_related('client').order_by('-date')[:5]
         
         recent_orders = Commande.objects.filter().select_related('fournisseur').order_by('-date')[:5]
         
@@ -470,7 +472,7 @@ class DashboardViewSet(viewsets.ViewSet):
             date__date__gte=date_30_days_ago,
             date__date__lte=today,
             status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE]
-        ).exclude(status='VAL', paiements__isnull=True).annotate(
+        ).exclude(~Q(id__in=Caisse.objects.values('facture_id')), status='VAL').annotate(
             hour=ExtractHour('date')
         ).values('hour').annotate(
             count=Count('id'),
@@ -481,7 +483,7 @@ class DashboardViewSet(viewsets.ViewSet):
         today_sales_by_hour = Facture.objects.filter(
             date__date=today,
             status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE]
-        ).exclude(status='VAL', paiements__isnull=True).annotate(
+        ).exclude(~Q(id__in=Caisse.objects.values('facture_id')), status='VAL').annotate(
             hour=ExtractHour('date')
         ).values('hour').annotate(
             count=Count('id')
@@ -526,7 +528,7 @@ class DashboardViewSet(viewsets.ViewSet):
             date__date__gte=start_date.date(),
             date__date__lte=end_date.date(),
             status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE]
-        ).exclude(status='VAL', paiements__isnull=True).annotate(
+        ).exclude(~Q(id__in=Caisse.objects.values('facture_id')), status='VAL').annotate(
             day=TruncDay('date')
         ).values('day').annotate(
             total=Coalesce(Sum('total_ttc'), Decimal('0'))
@@ -538,11 +540,8 @@ class DashboardViewSet(viewsets.ViewSet):
         current_date = start_date.date()
         revenue_map = {item['day'].date(): float(item['total']) for item in daily_revenue}
         
-        # French day names
-        day_names = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim']
-        
         while current_date <= end_date.date():
-            labels.append(day_names[current_date.weekday()])
+            labels.append(current_date.strftime('%d/%m'))
             data.append(revenue_map.get(current_date, 0))
             current_date += timedelta(days=1)
             
@@ -609,14 +608,14 @@ class DashboardViewSet(viewsets.ViewSet):
         Retourne la liste des clients professionnels ayant dépassé leur plafond de crédit.
         Utilisé pour les alertes du tableau de bord.
         """
-        from django.db.models import Sum, F, Q, Value, DecimalField, Subquery, OuterRef
+        from django.db.models import Sum, F, Q, Value, DecimalField, Subquery
         from django.db.models.functions import Coalesce
 
         # Sous-requête 1: Total facturé par client (factures VAL/PAY)
         billed_sub = Facture.objects.filter(
             client=OuterRef('pk'),
             status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE]
-        ).exclude(status='VAL', paiements__isnull=True).values('client').annotate(
+        ).exclude(~Q(id__in=Caisse.objects.values('facture_id')), status='VAL').values('client').annotate(
             s=Sum('total_ttc')
         ).values('s')[:1]
         
@@ -670,7 +669,7 @@ class DashboardViewSet(viewsets.ViewSet):
         # We calculate debt via annotation to avoid N+1 queries
         # Debt = Sum(Commandes.total WHERE status=CLOT) - Sum(Paiements.montant)
         
-        from django.db.models import Sum, F, DecimalField, OuterRef, Subquery, Value
+        from django.db.models import Sum, F, DecimalField, Subquery, Value
         from django.db.models.functions import Coalesce
         from ..models import CommandeProduit, PaiementFournisseur, Commande
 
@@ -888,3 +887,4 @@ class StatistiquesViewSet(viewsets.ViewSet):
             })
             
         return Response(results)
+
