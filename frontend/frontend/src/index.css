@@ -432,13 +432,17 @@ textarea:focus {
 
 /* --- Zenith POS Redesign Styles --- */
 
-/* Left Section Background (Slate & Glass) */
+/* Left Section Background */
 .pos-discovery {
-  background-color: #0f172a; /* Slate 900 */
+  background-color: var(--color-base-200);
+  position: relative;
+}
+
+.theme-midnight .pos-discovery {
+  background-color: #0f172a;
   background-image: 
     radial-gradient(at 0% 0%, rgba(34, 197, 94, 0.05) 0px, transparent 50%),
     radial-gradient(at 100% 0%, rgba(59, 130, 246, 0.03) 0px, transparent 50%);
-  position: relative;
 }
 
 .pos-discovery::before {
@@ -452,9 +456,16 @@ textarea:focus {
 
 /* Right Section Background (Checkout Sidebar) */
 .pos-checkout {
-  background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%); 
+  background: var(--color-base-100);
   position: relative;
+  box-shadow: -4px 0 20px rgba(0, 0, 0, 0.05);
+  border-left: 1px solid var(--color-base-300);
+}
+
+.theme-midnight .pos-checkout {
+  background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%);
   box-shadow: -10px 0 50px rgba(0, 0, 0, 0.3);
+  border-left: 1px solid rgba(255, 255, 255, 0.05);
 }
 
 .pos-checkout::before {
@@ -462,8 +473,11 @@ textarea:focus {
   position: absolute;
   inset: 0;
   background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.6' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
-  opacity: 0.02;
+  opacity: 0;
   pointer-events: none;
+}
+.theme-midnight .pos-checkout::before {
+  opacity: 0.02;
 }
 
 .glass-panel {
@@ -473,8 +487,15 @@ textarea:focus {
   border: 1px solid rgba(255, 255, 255, 0.03);
 }
 
-/* POS specific glass inputs to replace the 'White Boxes' */
+/* POS specific glass inputs — Light mode: clean card */
 .pos-glass-input-container {
+  background: var(--color-base-100) !important;
+  border: 1px solid var(--color-base-300) !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+/* POS specific glass inputs — Dark/Midnight mode: glass effect */
+.theme-midnight .pos-glass-input-container {
   background: rgba(255, 255, 255, 0.05) !important;
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
@@ -483,49 +504,49 @@ textarea:focus {
   color: #ffffff !important;
 }
 
-.pos-glass-input-container label {
+.theme-midnight .pos-glass-input-container label {
   color: rgba(255, 255, 255, 0.6) !important;
 }
 
-.pos-glass-input-container input, 
-.pos-glass-input-container select,
-.pos-glass-input-container .btn-ghost {
+.theme-midnight .pos-glass-input-container input, 
+.theme-midnight .pos-glass-input-container select,
+.theme-midnight .pos-glass-input-container .btn-ghost {
   background: rgba(255, 255, 255, 0.05) !important;
   border-color: rgba(255, 255, 255, 0.1) !important;
   color: #ffffff !important;
 }
 
-/* Fix visibility for dropdown results */
-.pos-glass-input-container .absolute,
-.pos-glass-input-container [class*="dropdown-content"] {
+/* Fix visibility for dropdown results in dark mode */
+.theme-midnight .pos-glass-input-container .absolute,
+.theme-midnight .pos-glass-input-container [class*="dropdown-content"] {
   background: #1e293b !important;
   border: 1px solid rgba(255, 255, 255, 0.1) !important;
   color: #ffffff !important;
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3) !important;
 }
 
-.pos-glass-input-container div[role="listbox"],
-.pos-glass-input-container div.max-h-96 {
+.theme-midnight .pos-glass-input-container div[role="listbox"],
+.theme-midnight .pos-glass-input-container div.max-h-96 {
   background: #1e293b !important;
   color: #ffffff !important;
 }
 
-.pos-glass-input-container option {
+.theme-midnight .pos-glass-input-container option {
   background-color: #1e293b !important;
   color: #ffffff !important;
 }
 
-.pos-glass-input-container div[role="option"] *,
-.pos-glass-input-container .group div {
+.theme-midnight .pos-glass-input-container div[role="option"] *,
+.theme-midnight .pos-glass-input-container .group div {
   color: #ffffff !important;
 }
 
-.pos-glass-input-container .text-base-content\/50,
-.pos-glass-input-container .text-base-content\/40 {
+.theme-midnight .pos-glass-input-container .text-base-content\/50,
+.theme-midnight .pos-glass-input-container .text-base-content\/40 {
   color: rgba(255, 255, 255, 0.4) !important;
 }
 
-.pos-glass-input-container .badge-ghost {
+.theme-midnight .pos-glass-input-container .badge-ghost {
   background: rgba(255, 255, 255, 0.05) !important;
   color: white !important;
 }

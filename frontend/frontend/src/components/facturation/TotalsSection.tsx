@@ -41,20 +41,20 @@ export default function TotalsSection({
     return (
       <div className="flex flex-col gap-3">
         {/* Subtotal & Discount row */}
-        <div className="flex justify-between items-end border-b border-white/5 pb-3">
+        <div className="flex justify-between items-end border-b border-base-300 pb-3">
           <div className="flex flex-col">
-            <span className="text-[10px] text-white/30 font-bold uppercase tracking-widest">{t('facturation:totals.subtotal')}</span>
-            <span className="text-sm font-bold text-white/70">{formatCurrency(Math.round(totalHT))}</span>
+            <span className="text-[10px] text-base-content/40 font-bold uppercase tracking-widest">{t('facturation:totals.subtotal')}</span>
+            <span className="text-sm font-bold text-base-content/70">{formatCurrency(Math.round(totalHT))}</span>
           </div>
           
           <div className="flex flex-col items-end">
-            <span className="text-[10px] text-white/30 font-bold uppercase tracking-widest">{t('facturation:totals.discount')}</span>
+            <span className="text-[10px] text-base-content/40 font-bold uppercase tracking-widest">{t('facturation:totals.discount')}</span>
             <div className="flex items-center gap-2">
-               <div className="flex items-center bg-white/5 border border-white/10 rounded overflow-hidden">
+               <div className="flex items-center bg-base-200 border border-base-300 rounded overflow-hidden">
                   <select 
                     value={remiseMode} 
                     onChange={(e) => setRemiseMode(e.target.value as any)}
-                    className="bg-transparent text-[10px] text-white/50 border-r border-white/10 px-1 outline-none"
+                    className="bg-transparent text-[10px] text-base-content/50 border-r border-base-300 px-1 outline-none"
                   >
                     <option value="montant">F</option>
                     <option value="taux">%</option>
@@ -63,10 +63,10 @@ export default function TotalsSection({
                     type="text" 
                     value={remiseGlobale}
                     onChange={(e) => setRemiseGlobale(e.target.value)}
-                    className="w-12 bg-transparent text-xs text-right font-bold text-white outline-none px-1"
+                    className="w-12 bg-transparent text-xs text-right font-bold text-base-content outline-none px-1"
                   />
                </div>
-               <span className="text-xs font-bold text-red-500/80">-{formatCurrency(Math.round(remiseMontant))}</span>
+               <span className="text-xs font-bold text-red-500">-{formatCurrency(Math.round(remiseMontant))}</span>
             </div>
           </div>
         </div>
@@ -79,26 +79,24 @@ export default function TotalsSection({
                 <span className="text-sm font-bold text-secondary">{formatCurrency(Math.round(partAssurance))}</span>
              </div>
              <div className="text-right">
-                <span className="text-[9px] text-white/20 uppercase font-bold">Total TTC</span>
-                <div className="text-[10px] text-white/40">{formatCurrency(Math.round(totalTTC))}</div>
+                <span className="text-[9px] text-base-content/30 uppercase font-bold">Total TTC</span>
+                <div className="text-[10px] text-base-content/50">{formatCurrency(Math.round(totalTTC))}</div>
              </div>
           </div>
         )}
 
         {/* Main Grand Total */}
         <div className="relative overflow-hidden group">
-          <div className="flex flex-col items-end p-4 rounded-xl bg-gradient-to-br from-white/5 to-transparent border border-white/10 shadow-2xl">
+          <div className="flex flex-col items-end p-4 rounded-xl bg-base-200/50 border border-base-300 shadow-sm">
              <span className="text-[11px] text-primary/60 font-black uppercase tracking-[0.2em] mb-1">
                 {tauxCouverture > 0 ? t('facturation:totals.part_patient') : t('facturation:totals.total_ttc')}
              </span>
              <div className="flex items-baseline gap-2">
-                <span className="text-5xl font-black text-white tracking-tighter">
+                <span className="text-5xl font-black text-base-content tracking-tighter">
                    {formatCurrency(Math.round(mainTotal))}
                 </span>
              </div>
           </div>
-          {/* Decorative shine effect */}
-          <div className="absolute top-0 -inset-full h-full w-1/2 z-5 block transform -skew-x-12 bg-gradient-to-r from-transparent via-white/5 to-transparent group-hover:animate-shine" />
         </div>
       </div>
     )
