@@ -215,6 +215,23 @@ export const useAnalyseMarges = () => {
     });
 };
 
+export interface MarginVarianceData {
+    period1: { label: string; stats: any };
+    period2: { label: string; stats: any };
+    variance_pct: number;
+    suspicious_products: any[];
+    insights: { fr: string; en: string }[];
+    labels: any;
+}
+
+export const useMarginVarianceAnalysis = (params?: any) => {
+    return useQuery<MarginVarianceData>({
+        queryKey: ['finance', 'margin-variance', params],
+        queryFn: () => financeService.getMarginVarianceAnalysis(params),
+        staleTime: 1000 * 60 * 5,
+    });
+};
+
 // Supplier Analysis Types
 export interface SupplierScoreDetail {
     valeur?: number;

@@ -11,7 +11,8 @@ import openpyxl
 from openpyxl.styles import Font, Alignment, Border, Side, PatternFill
 from django.http import HttpResponse
 from io import BytesIO
-from api.models import Facture, FactureProduit, Caisse
+from api.models import Facture, FactureProduit, FactureProduitAllocation, Caisse
+from django.db.models import OuterRef, Exists
 
 
 def _write_pharma_header(ws, PharmacySettings, title: str) -> None:
@@ -520,6 +521,326 @@ class RapportFinanceMixin:
         for cell in ws[header_row]: cell.font = Font(bold=True)
         for item in data: ws.append([item['numero_facture'], item['date'], item['client'], item['total_ttc'], item['remise_globale'], item['remise_lignes'], item['remise_fidelite'], item['total_remise'], f"{item['ratio_remise_pct']:.2f}%", item['vendeur']])
         response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'); response['Content-Disposition'] = 'attachment; filename="Details_Remises.xlsx"'; wb.save(response); return response
+
+
+    @action(detail=False, methods=['get'])
+    def rapport_detail_marges(self, request):
+        """
+        Rapport détaillé des marges par produit et par lot.
+        Inclut le coût exact (Lot) ou PMP (si non alloué).
+        """
+        db_s, df_s = request.query_params.get('date_debut'), request.query_params.get('date_fin')
+        if not db_s or not df_s:
+            return Response({"error": "Dates requises (date_debut, date_fin)"}, status=400)
+            
+        try:
+            date_debut = timezone.make_aware(datetime.combine(datetime.strptime(db_s, '%Y-%m-%d'), time.min))
+            date_fin = timezone.make_aware(datetime.combine(datetime.strptime(df_s, '%Y-%m-%d'), time.max))
+        except Exception:
+            return Response({"error": "Format de date invalide (YYYY-MM-DD)"}, status=400)
+
+        # Base query for invoices
+        factures = Facture.objects.filter(
+            date__range=(date_debut, date_fin),
+            status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE]
+        )
+
+        # Results list
+        results = []
+
+        # 1. Process Allocated Items (Lot by Lot)
+        allocations = FactureProduitAllocation.objects.filter(
+            facture_produit__facture__in=factures
+        ).select_related(
+            'facture_produit', 
+            'facture_produit__facture', 
+            'facture_produit__produit',
+            'stock_lot'
+        ).order_by('-facture_produit__facture__date')
+
+        for alloc in allocations:
+            item = alloc.facture_produit
+            f = item.facture
+            p = item.produit
+            
+            qty = float(alloc.quantity)
+            price = float(item.selling_price - item.discount)
+            cost = float(alloc.cost_price)
+            margin = (price - cost) * qty
+            
+            results.append({
+                'date': f.date.strftime('%d/%m/%Y'),
+                'facture': f.numero_facture or f'#{f.id}',
+                'produit': p.name,
+                'lot': alloc.stock_lot.lot if alloc.stock_lot else 'N/A',
+                'quantite': qty,
+                'prix_vente_net': round(price, 2),
+                'cout_achat': round(cost, 2),
+                'marge': round(margin, 2),
+                'taux_marge': round((price - cost) / price * 100, 1) if price > 0 else 0
+            })
+
+        # 2. Process Unallocated Items (Fallback to PMP)
+        unallocated = FactureProduit.objects.filter(
+            facture__in=factures
+        ).annotate(
+            has_alloc=Exists(FactureProduitAllocation.objects.filter(facture_produit=OuterRef('pk')))
+        ).filter(has_alloc=False).select_related('facture', 'produit')
+
+        for item in unallocated:
+            f = item.facture
+            p = item.produit
+            
+            qty = float(item.quantity)
+            price = float(item.selling_price - item.discount)
+            cost = float(p.pmp or 0)
+            margin = (price - cost) * qty
+            
+            results.append({
+                'date': f.date.strftime('%d/%m/%Y'),
+                'facture': f.numero_facture or f'#{f.id}',
+                'produit': p.name,
+                'lot': 'SANS LOT (PMP)',
+                'quantite': qty,
+                'prix_vente_net': round(price, 2),
+                'cout_achat': round(cost, 2),
+                'marge': round(margin, 2),
+                'taux_marge': round((price - cost) / price * 100, 1) if price > 0 else 0
+            })
+
+        results.sort(key=lambda x: x.get('date', ''), reverse=True)
+
+        return Response(results)
+
+
+    @action(detail=False, methods=['get'])
+    def rapport_dynamique(self, request):
+        """
+        Génère un rapport basé sur des paramètres dynamiques avec support des conditions complexes.
+        """
+        source = request.query_params.get('source', 'ventes')
+        db_s = request.query_params.get('date_debut')
+        df_s = request.query_params.get('date_fin')
+        vendeur_id = request.query_params.get('vendeur_id')
+        client_id = request.query_params.get('client_id')
+        fournisseur_id = request.query_params.get('fournisseur_id')
+        famille_id = request.query_params.get('famille_id')
+        requested_fields = request.query_params.get('fields', '').split(',')
+        conditions_raw = request.query_params.get('conditions', '[]')
+        
+        import json
+        try:
+            conditions = json.loads(conditions_raw)
+        except:
+            conditions = []
+
+        if not db_s or not df_s:
+            return Response({"error": "Dates requises"}, status=400)
+
+        try:
+            date_debut = timezone.make_aware(datetime.combine(datetime.strptime(db_s, '%Y-%m-%d'), time.min))
+            date_fin = timezone.make_aware(datetime.combine(datetime.strptime(df_s, '%Y-%m-%d'), time.max))
+        except Exception:
+            return Response({"error": "Format de date invalide"}, status=400)
+
+        results = []
+
+        def apply_dynamic_conditions(queryset, source_type):
+            """Applique les conditions personnalisées au QuerySet."""
+            field_map = {
+                'quantite': {
+                    'ventes': 'quantite',
+                    'achats': 'quantite_recue',
+                    'stock': 'quantity_remaining',
+                    'produits': 'stock' 
+                },
+                'total_ht': {
+                    'ventes': 'total_ht',
+                    'achats': 'total_ht',
+                    'stock': 'price_cost', 
+                    'produits': 'stock' 
+                },
+                'prix_vente': {
+                    'ventes': 'prix_unitaire_ttc',
+                    'produits': 'selling_price'
+                },
+                'cout_achat': {
+                    'ventes': 'cost_price', 
+                    'achats': 'prix_achat_ht',
+                    'stock': 'price_cost',
+                    'produits': 'pmp'
+                }
+            }
+
+            for cond in conditions:
+                f = cond.get('field')
+                op = cond.get('operator')
+                val = cond.get('value')
+                
+                if not f or not op or val is None: continue
+                
+                db_field = field_map.get(f, {}).get(source_type)
+                if not db_field: continue
+                
+                try:
+                    num_val = float(val)
+                except:
+                    continue
+
+                if op == 'gte': queryset = queryset.filter(**{f"{db_field}__gte": num_val})
+                elif op == 'lte': queryset = queryset.filter(**{f"{db_field}__lte": num_val})
+                elif op == 'gt': queryset = queryset.filter(**{f"{db_field}__gt": num_val})
+                elif op == 'lt': queryset = queryset.filter(**{f"{db_field}__lt": num_val})
+                elif op == 'eq': queryset = queryset.filter(**{f"{db_field}": num_val})
+            
+            return queryset
+
+        if source == 'ventes':
+            from api.models.billing import FactureProduit
+            
+            filters = {
+                'facture__date_facture__range': (date_debut, date_fin),
+                'facture__status': 'VAL'
+            }
+            if vendeur_id: filters['facture__created_by_id'] = vendeur_id
+            if client_id: filters['facture__client_id'] = client_id
+            if famille_id: filters['produit__famille_risque_id'] = famille_id
+
+            qs = FactureProduit.objects.filter(**filters)
+            qs = apply_dynamic_conditions(qs, 'ventes')
+            
+            items = qs.select_related(
+                'facture', 'facture__client', 'facture__created_by', 
+                'produit', 'produit__famille_risque', 'produit__rayon', 'produit__forme'
+            )
+            
+            for item in items:
+                row = {}
+                p = item.produit
+                f = item.facture
+                if 'date' in requested_fields: row['Date'] = f.date_facture.strftime('%d/%m/%Y')
+                if 'facture' in requested_fields: row['Facture'] = f.numero_facture
+                if 'client' in requested_fields: row['Client'] = f.client.name if f.client else 'Passage'
+                if 'vendeur' in requested_fields: row['Vendeur'] = f.created_by.username if f.created_by else 'N/A'
+                if 'produit' in requested_fields: row['Produit'] = p.name if p else item.produit_nom
+                if 'famille' in requested_fields: row['Famille'] = p.famille_risque.nom if p and p.famille_risque else 'N/A'
+                if 'quantite' in requested_fields: row['Quantité'] = item.quantite
+                if 'prix_vente' in requested_fields: row['Prix Vente'] = round(float(item.prix_unitaire_ttc), 2)
+                if 'total_ht' in requested_fields: row['Total HT'] = round(float(item.total_ht), 2)
+                if 'tva' in requested_fields: row['TVA (%)'] = float(p.tva) if p else 0
+                if 'rayon' in requested_fields: row['Rayon'] = p.rayon.name if p and p.rayon else 'N/A'
+                if 'cip' in requested_fields: row['Code CIP'] = p.cip1 if p else 'N/A'
+                if 'forme' in requested_fields: row['Forme'] = p.forme.nom if p and p.forme else 'N/A'
+                
+                if any(x in requested_fields for x in ['cout_achat', 'marge', 'pourcentage_marge']):
+                    from api.models.billing import FactureProduitAllocation
+                    allocs = FactureProduitAllocation.objects.filter(facture_produit=item)
+                    total_cost = sum(a.quantity * a.cost_price for a in allocs)
+                    if 'cout_achat' in requested_fields:
+                        row['Coût Achat'] = round(float(total_cost / item.quantite), 2) if item.quantite > 0 else 0
+                    if 'marge' in requested_fields:
+                        row['Marge Brute'] = round(float(item.total_ht - total_cost), 2)
+                    if 'pourcentage_marge' in requested_fields:
+                        margin = float(item.total_ht - total_cost)
+                        row['Marge (%)'] = round((margin / float(item.total_ht)) * 100, 2) if item.total_ht > 0 else 0
+                results.append(row)
+
+        elif source == 'achats':
+            from api.models.orders import CommandeProduit
+            filters = {
+                'commande__date_reception__range': (date_debut, date_fin),
+                'commande__status': 'RECU'
+            }
+            if fournisseur_id: filters['commande__fournisseur_id'] = fournisseur_id
+            if famille_id: filters['produit__famille_risque_id'] = famille_id
+
+            qs = CommandeProduit.objects.filter(**filters)
+            qs = apply_dynamic_conditions(qs, 'achats')
+
+            items = qs.select_related(
+                'commande', 'commande__fournisseur', 
+                'produit', 'produit__famille_risque', 'produit__rayon', 'produit__forme'
+            )
+            for cp in items:
+                row = {}
+                p = cp.produit
+                cmd = cp.commande
+                if 'date' in requested_fields: row['Réception'] = cmd.date_reception.strftime('%d/%m/%Y')
+                if 'facture' in requested_fields: row['Commande'] = cmd.numero_commande
+                if 'fournisseur' in requested_fields: row['Fournisseur'] = cmd.fournisseur.name if cmd.fournisseur else 'N/A'
+                if 'produit' in requested_fields: row['Produit'] = p.name if p else cp.produit_nom
+                if 'famille' in requested_fields: row['Famille'] = p.famille_risque.nom if p and p.famille_risque else 'N/A'
+                if 'quantite' in requested_fields: row['Quantité'] = cp.quantite_recue
+                if 'cout_achat' in requested_fields: row['P.U Achat'] = round(float(cp.prix_achat_ht), 2)
+                if 'total_ht' in requested_fields: row['Total HT'] = round(float(cp.total_ht), 2)
+                if 'tva' in requested_fields: row['TVA (%)'] = float(p.tva) if p else 0
+                if 'rayon' in requested_fields: row['Rayon'] = p.rayon.name if p and p.rayon else 'N/A'
+                if 'cip' in requested_fields: row['Code CIP'] = p.cip1 if p else 'N/A'
+                if 'forme' in requested_fields: row['Forme'] = p.forme.nom if p and p.forme else 'N/A'
+                results.append(row)
+
+        elif source == 'stock':
+            from api.models.stock import StockLot
+            filters = {
+                'date_reception__range': (date_debut, date_fin)
+            }
+            if fournisseur_id: filters['fournisseur_id'] = fournisseur_id
+            if famille_id: filters['produit__famille_risque_id'] = famille_id
+
+            qs = StockLot.objects.filter(**filters)
+            qs = apply_dynamic_conditions(qs, 'stock')
+
+            items = qs.select_related(
+                'produit', 'produit__famille_risque', 'produit__rayon', 'produit__forme', 'fournisseur'
+            )
+            for lot in items:
+                row = {}
+                p = lot.produit
+                if 'date' in requested_fields: row['Réception'] = lot.date_reception.strftime('%d/%m/%Y')
+                if 'produit' in requested_fields: row['Produit'] = p.name if p else lot.produit_nom
+                if 'famille' in requested_fields: row['Famille'] = p.famille_risque.nom if p and p.famille_risque else 'N/A'
+                if 'lot' in requested_fields: row['Lot'] = lot.lot
+                if 'quantite' in requested_fields: row['Stock Restant'] = lot.quantity_remaining
+                if 'cout_achat' in requested_fields: row['P.U Achat'] = round(float(lot.price_cost), 2)
+                if 'total_ht' in requested_fields: row['Valeur Stock'] = round(float(lot.price_cost * lot.quantity_remaining), 2)
+                if 'tva' in requested_fields: row['TVA (%)'] = float(p.tva) if p else 0
+                if 'rayon' in requested_fields: row['Rayon'] = p.rayon.name if p and p.rayon else 'N/A'
+                if 'cip' in requested_fields: row['Code CIP'] = p.cip1 if p else 'N/A'
+                if 'forme' in requested_fields: row['Forme'] = p.forme.nom if p and p.forme else 'N/A'
+                if 'fournisseur' in requested_fields: row['Fournisseur'] = lot.fournisseur.name if lot.fournisseur else 'N/A'
+                results.append(row)
+
+        elif source == 'produits':
+            from api.models.products import Produit
+            filters = {}
+            if famille_id: filters['famille_risque_id'] = famille_id
+
+            qs = Produit.objects.filter(**filters)
+            qs = apply_dynamic_conditions(qs, 'produits')
+
+            items = qs.select_related('famille_risque', 'rayon', 'forme', 'fournisseur')
+            for p in items:
+                row = {}
+                if 'produit' in requested_fields: row['Produit'] = p.name
+                if 'famille' in requested_fields: row['Famille'] = p.famille_risque.nom if p.famille_risque else 'N/A'
+                if 'prix_vente' in requested_fields: row['Prix Vente'] = round(float(p.selling_price), 2)
+                if 'cout_achat' in requested_fields: row['PMP'] = round(float(p.pmp), 2)
+                if 'quantite' in requested_fields: row['Stock Total'] = p.total_stock
+                if 'total_ht' in requested_fields: row['Valeur Totale'] = round(float(p.total_stock * p.pmp), 2)
+                if 'tva' in requested_fields: row['TVA (%)'] = float(p.tva)
+                if 'rayon' in requested_fields: row['Rayon'] = p.rayon.name if p.rayon else 'N/A'
+                if 'cip' in requested_fields: row['Code CIP'] = p.cip1
+                if 'forme' in requested_fields: row['Forme'] = p.forme.nom if p and p.forme else 'N/A'
+                if 'fournisseur' in requested_fields: row['Fournisseur'] = p.fournisseur.name if p.fournisseur else 'N/A'
+                if 'stock_minimum' in requested_fields: row['Stock Min'] = p.stock_minimum
+                if 'pourcentage_marge' in requested_fields: row['Marge (%)'] = round(float(p.pourcentage_marge), 2)
+                results.append(row)
+
+        if results:
+            first_key = list(results[0].keys())[0]
+            results.sort(key=lambda x: x.get(first_key, ''), reverse=True)
+
+        return Response(results)
 
 
     @action(detail=False, methods=['get'])
