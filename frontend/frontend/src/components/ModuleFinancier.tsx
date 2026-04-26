@@ -26,7 +26,8 @@ import {
   useRepartitionCA,
   useAnalyseCategories,
   useAnalyseMarges,
-  useAnalyseFournisseurs
+  useAnalyseFournisseurs,
+  useMarginVarianceAnalysis
 } from '../hooks/useFinanceStats';
 
 import { formatCurrency, formatNumber } from '../utils/formatters';
@@ -67,6 +68,9 @@ export default function ModuleFinancier() {
   const { data: categoryAnalysis, isLoading: loadingCategories } = useAnalyseCategories(categoryType, periode);
   const { data: marginAnalysis, isLoading: loadingMarginAnalysis } = useAnalyseMarges();
   const { data: supplierAnalysis, isLoading: loadingSupplierAnalysis } = useAnalyseFournisseurs();
+  const { data: varianceReport, isLoading: loadingVariance } = useMarginVarianceAnalysis();
+
+  const isEnglish = useTranslation().i18n.language.startsWith('en');
 
   // Prepare chart data for CA Evolution
   const caChartData = caEvolution?.labels.map((label, i) => ({
@@ -201,6 +205,101 @@ export default function ModuleFinancier() {
           </div>
         </div>
       )}
+
+      {/* Margin Variance Report (NEW) */}
+      <div className="card bg-base-100 shadow-xl border-t-4 border-primary overflow-hidden">
+        <div className="card-body p-0">
+          <div className="bg-primary/5 p-4 flex items-center justify-between">
+            <div>
+              <h2 className="text-xl font-bold flex items-center gap-2">
+                <span className="text-2xl">📊</span>
+                {isEnglish ? 'Margin Variance Report' : 'Rapport de Variation de Marge'}
+              </h2>
+              <p className="text-sm opacity-70">
+                {isEnglish ? 'Analysis of profit fluctuations and data integrity' : 'Analyse des fluctuations de profit et intégrité des données'}
+              </p>
+            </div>
+            {varianceReport && (
+              <div className={`px-4 py-2 rounded-lg font-bold text-lg ${varianceReport.variance_pct >= 0 ? 'bg-success/20 text-success' : 'bg-error/20 text-error'}`}>
+                {varianceReport.variance_pct >= 0 ? '+' : ''}{varianceReport.variance_pct}%
+              </div>
+            )}
+          </div>
+
+          {loadingVariance ? (
+            <div className="p-8 flex justify-center"><span className="loading loading-spinner loading-lg"></span></div>
+          ) : varianceReport && (
+            <div className="p-6 grid grid-cols-1 lg:grid-cols-2 gap-8">
+              {/* Left: Summary & Insights */}
+              <div className="space-y-6">
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="p-4 bg-base-200 rounded-xl">
+                    <p className="text-xs uppercase font-bold opacity-50 mb-1">{isEnglish ? 'Current Period' : 'Période Actuelle'}</p>
+                    <p className="text-2xl font-black">{varianceReport.period1.stats.margin_pct.toFixed(1)}%</p>
+                    <p className="text-xs opacity-70">{formatMoney(varianceReport.period1.stats.margin)} {isEnglish ? 'Profit' : 'Marge'}</p>
+                  </div>
+                  <div className="p-4 bg-base-200 rounded-xl">
+                    <p className="text-xs uppercase font-bold opacity-50 mb-1">{isEnglish ? 'Baseline' : 'Référence (Hier)'}</p>
+                    <p className="text-2xl font-black">{varianceReport.period2.stats.margin_pct.toFixed(1)}%</p>
+                    <p className="text-xs opacity-70">{formatMoney(varianceReport.period2.stats.margin)} {isEnglish ? 'Profit' : 'Marge'}</p>
+                  </div>
+                </div>
+
+                <div className="space-y-3">
+                  <h3 className="font-bold text-sm uppercase tracking-wider opacity-60">{isEnglish ? 'Key Insights' : 'Analyses Clés'}</h3>
+                  {varianceReport.insights.map((insight: any, idx: number) => (
+                    <div key={idx} className="alert alert-info shadow-sm bg-info/10 border-info/20 text-sm">
+                      <span>{isEnglish ? insight.en : insight.fr}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Right: Suspicious Products */}
+              <div className="bg-base-200/50 rounded-2xl p-4 border border-base-content/5">
+                <h3 className="font-bold text-sm uppercase tracking-wider opacity-60 mb-4 flex items-center gap-2">
+                  <span className="text-warning">🚩</span>
+                  {isEnglish ? 'Atypical Margins Detected' : 'Marges Atypiques Détectées'}
+                </h3>
+                
+                {varianceReport.suspicious_products.length > 0 ? (
+                  <div className="overflow-x-auto">
+                    <table className="table table-xs w-full">
+                      <thead>
+                        <tr className="opacity-50">
+                          <th>{isEnglish ? 'Product' : 'Produit'}</th>
+                          <th className="text-right">{isEnglish ? 'Margin' : 'Marge'}</th>
+                          <th className="text-right">{isEnglish ? 'Cost (PMP)' : 'Coût (PMP)'}</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {varianceReport.suspicious_products.map((p: any) => (
+                          <tr key={p.produit__id} className="hover:bg-base-content/5 transition-colors">
+                            <td className="font-medium max-w-[150px] truncate">{p.produit__name}</td>
+                            <td className={`text-right font-bold ${p.unit_margin_pct > 80 ? 'text-purple-500' : 'text-orange-500'}`}>
+                              {parseFloat(p.unit_margin_pct).toFixed(1)}%
+                            </td>
+                            <td className="text-right opacity-70">{formatMoney(p.produit__pmp)}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                    <p className="text-[10px] mt-4 italic opacity-50">
+                      {isEnglish 
+                        ? '* High margins (>80%) often indicate missing cost prices (PMP = 0).' 
+                        : '* Les marges élevées (>80%) indiquent souvent des prix d\'achat manquants (PMP = 0).'}
+                    </p>
+                  </div>
+                ) : (
+                  <div className="h-40 flex items-center justify-center text-sm opacity-40 italic">
+                    {isEnglish ? 'No abnormal margins detected today.' : 'Aucune marge anormale détectée aujourd\'hui.'}
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
 
       {/* Main Charts */}
       <div className="card bg-base-100 shadow-lg">

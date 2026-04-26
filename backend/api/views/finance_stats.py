@@ -7,7 +7,7 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 
-from django.db.models import Sum, Count, Avg, F, Q, DecimalField, BooleanField
+from django.db.models import Sum, Count, Avg, F, Q, DecimalField, BooleanField, Case, When, Value, Exists, OuterRef
 from django.db.models.functions import TruncMonth, Coalesce, ExtractYear, ExtractMonth
 from django.utils import timezone
 from datetime import datetime, timedelta
@@ -18,7 +18,7 @@ import statistics
 from django.utils.decorators import method_decorator
 from django.views.decorators.cache import cache_page
 
-from ..models import Facture, FactureProduit, FactureProduitAllocation, Produit, Rayon
+from ..models import Facture, FactureProduit, FactureProduitAllocation, Produit, Rayon, Caisse
 
 
 class FinanceStatsViewSet(viewsets.ViewSet):
@@ -41,22 +41,22 @@ class FinanceStatsViewSet(viewsets.ViewSet):
         start_date_n1 = start_date - relativedelta(years=1)
         
         # Current year data
-        ca_current = Facture.objects.annotate(num_p=Count('paiements')).filter(
+        ca_current = Facture.objects.filter(
             date__date__gte=start_date,
             date__date__lte=today,
             status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE]
-        ).exclude(status='VAL', num_p=0).annotate(
+        ).annotate(
             month=TruncMonth('date')
         ).values('month').annotate(
             total=Coalesce(Sum('total_ttc'), Decimal('0'))
         ).order_by('month')
         
         # N-1 data
-        ca_n1 = Facture.objects.annotate(num_p=Count('paiements')).filter(
+        ca_n1 = Facture.objects.filter(
             date__date__gte=start_date_n1,
             date__date__lt=start_date,
             status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE]
-        ).exclude(status='VAL', num_p=0).annotate(
+        ).annotate(
             month=TruncMonth('date')
         ).values('month').annotate(
             total=Coalesce(Sum('total_ttc'), Decimal('0'))
@@ -87,6 +87,9 @@ class FinanceStatsViewSet(viewsets.ViewSet):
             current = current + relativedelta(months=1)
         
         # Calculate year-over-year growth using Decimals for precision
+        total_current = sum(data)
+        total_n1 = sum(comparaison_n1)
+        
         total_current_dec = Decimal(str(total_current))
         total_n1_dec = Decimal(str(total_n1))
         croissance = 0
@@ -111,31 +114,53 @@ class FinanceStatsViewSet(viewsets.ViewSet):
         today = timezone.now().date()
         start_date = today - relativedelta(months=11)
         start_date = start_date.replace(day=1)
-        
-        # Aggregate margin data from allocations
-        allocations = FactureProduitAllocation.objects.annotate(
-            num_p=Count('facture_produit__facture__paiements')
-        ).filter(
-            facture_produit__facture__date__date__gte=start_date,
-            facture_produit__facture__status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE]
-        ).exclude(facture_produit__facture__status='VAL', num_p=0).annotate(
-            month=TruncMonth('facture_produit__facture__date')
-        ).values('month').annotate(
-            ca=Coalesce(Sum(F('quantity') * F('selling_price'), output_field=DecimalField()), Decimal('0')),
-            cout=Coalesce(Sum(F('quantity') * F('cost_price'), output_field=DecimalField()), Decimal('0')),
-            marge=Coalesce(Sum((F('selling_price') - F('cost_price')) * F('quantity'), output_field=DecimalField()), Decimal('0'))
-        ).order_by('month')
-        
-        # Build map
+        # Build map with robust margin calculation
+        # Note: We need to handle global discounts and unallocated items for each month
         margin_map = {}
-        for item in allocations:
-            key = item['month'].strftime('%Y-%m')
+        
+        current = start_date
+        while current <= today:
+            month_start = current
+            month_end = (current + relativedelta(months=1)) - timedelta(days=1)
+            key = current.strftime('%Y-%m')
+            
+            month_factures = Facture.objects.filter(
+                date__date__gte=month_start,
+                date__date__lte=month_end,
+                status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE]
+            )
+            
+            stats = month_factures.aggregate(
+                ca=Coalesce(Sum('total_ttc'), Decimal('0')),
+                remise_globale=Coalesce(Sum('remise'), Decimal('0'))
+            )
+            
+            # Margin from allocations
+            m_alloc = FactureProduitAllocation.objects.filter(
+                facture_produit__facture__in=month_factures
+            ).aggregate(
+                m=Coalesce(Sum((F('facture_produit__selling_price') - F('facture_produit__discount') - F('cost_price')) * F('quantity')), Decimal('0'))
+            )['m']
+            
+            # Margin from unallocated
+            m_unalloc = FactureProduit.objects.filter(
+                facture__in=month_factures
+            ).annotate(
+                has_alloc=Exists(FactureProduitAllocation.objects.filter(facture_produit=OuterRef('pk')))
+            ).filter(has_alloc=False).aggregate(
+                m=Coalesce(Sum((F('selling_price') - F('discount') - F('produit__pmp')) * F('quantity')), Decimal('0'))
+            )['m']
+            
+            total_ca = float(stats['ca'])
+            total_marge = float(m_alloc + m_unalloc - stats['remise_globale'])
+            
             margin_map[key] = {
-                'ca': float(item['ca']),
-                'cout': float(item['cout']),
-                'marge': float(item['marge']),
-                'taux': round(float((item['marge'] / item['ca']) * Decimal('100.0')), 1) if item['ca'] > 0 else 0
+                'ca': total_ca,
+                'marge': total_marge,
+                'taux': round((total_marge / total_ca) * 100, 1) if total_ca > 0 else 0
             }
+            
+            current = current + relativedelta(months=1)
         
         # Build response
         labels = []
@@ -324,11 +349,11 @@ class FinanceStatsViewSet(viewsets.ViewSet):
             panier_moyen_mois = float(monthly_stats['ca']) / monthly_stats['count']
         
         # --- Yearly KPIs ---
-        yearly_invoices = Facture.objects.annotate(num_p=Count('paiements')).filter(
+        yearly_invoices = Facture.objects.filter(
             date__date__gte=start_of_year,
             date__date__lte=today,
             status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE]
-        ).exclude(status='VAL', num_p=0)
+        )
         
         yearly_stats = yearly_invoices.aggregate(
             ca=Coalesce(Sum('total_ttc'), Decimal('0')),
@@ -339,20 +364,28 @@ class FinanceStatsViewSet(viewsets.ViewSet):
         if yearly_stats['count'] > 0:
             panier_moyen_annee = float(yearly_stats['ca']) / yearly_stats['count']
         
-        # --- Margin Rate (from allocations, current month) ---
-        monthly_allocations = FactureProduitAllocation.objects.annotate(
-            num_p=Count('facture_produit__facture__paiements')
-        ).filter(
-            facture_produit__facture__date__date__gte=start_of_month,
-            facture_produit__facture__status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE]
-        ).exclude(facture_produit__facture__status='VAL', num_p=0).aggregate(
-            ca=Coalesce(Sum(F('quantity') * F('selling_price'), output_field=DecimalField()), Decimal('0')),
-            marge=Coalesce(Sum((F('selling_price') - F('cost_price')) * F('quantity'), output_field=DecimalField()), Decimal('0'))
-        )
+        # --- Margin Rate (Improved: including unallocated and global discounts) ---
+        monthly_stats_remise = monthly_invoices.aggregate(r=Coalesce(Sum('remise'), Decimal('0')))['r']
+        
+        m_alloc_mois = FactureProduitAllocation.objects.filter(
+            facture_produit__facture__in=monthly_invoices
+        ).aggregate(
+            m=Coalesce(Sum((F('facture_produit__selling_price') - F('facture_produit__discount') - F('cost_price')) * F('quantity')), Decimal('0'))
+        )['m']
+        
+        m_unalloc_mois = FactureProduit.objects.filter(
+            facture__in=monthly_invoices
+        ).annotate(
+            has_alloc=Exists(FactureProduitAllocation.objects.filter(facture_produit=OuterRef('pk')))
+        ).filter(has_alloc=False).aggregate(
+            m=Coalesce(Sum((F('selling_price') - F('discount') - F('produit__pmp')) * F('quantity')), Decimal('0'))
+        )['m']
+        
+        total_marge_mois = m_alloc_mois + m_unalloc_mois - monthly_stats_remise
         
         taux_marge = 0
-        if monthly_allocations['ca'] > 0:
-            taux_marge = round((float(monthly_allocations['marge']) / float(monthly_allocations['ca'])) * 100, 1)
+        if monthly_stats['ca'] > 0:
+            taux_marge = round((float(total_marge_mois) / float(monthly_stats['ca'])) * 100, 1)
         
         # --- DSI (Days Stock Inventory) ---
         # DSI = (Stock Value / COGS per day)
@@ -361,16 +394,29 @@ class FinanceStatsViewSet(viewsets.ViewSet):
             total=Coalesce(Sum(F('stock') * F('pmp'), output_field=DecimalField()), Decimal('0'))
         )['total']
         
-        # Get last 30 days COGS
+        # Get last 30 days COGS (including unallocated)
         last_30_days = today - timedelta(days=30)
-        cogs_30d = FactureProduitAllocation.objects.annotate(
-            num_p=Count('facture_produit__facture__paiements')
-        ).filter(
-            facture_produit__facture__date__date__gte=last_30_days,
-            facture_produit__facture__status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE]
-        ).exclude(facture_produit__facture__status='VAL', num_p=0).aggregate(
+        factures_30d = Facture.objects.annotate(num_p=Count('paiements')).filter(
+            date__date__gte=last_30_days,
+            date__date__lte=today,
+            status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE]
+        ).exclude(status='VAL', num_p=0)
+        
+        cogs_alloc = FactureProduitAllocation.objects.filter(
+            facture_produit__facture__in=factures_30d
+        ).aggregate(
             total=Coalesce(Sum(F('quantity') * F('cost_price'), output_field=DecimalField()), Decimal('0'))
         )['total']
+        
+        cogs_unalloc = FactureProduit.objects.filter(
+            facture__in=factures_30d
+        ).annotate(
+            has_alloc=Exists(FactureProduitAllocation.objects.filter(facture_produit=OuterRef('pk')))
+        ).filter(has_alloc=False).aggregate(
+            total=Coalesce(Sum(F('quantity') * F('produit__pmp'), output_field=DecimalField()), Decimal('0'))
+        )['total']
+        
+        cogs_30d = cogs_alloc + cogs_unalloc
         
         dsi = 0
         if cogs_30d > 0:
@@ -381,11 +427,11 @@ class FinanceStatsViewSet(viewsets.ViewSet):
         prev_month_start = start_of_month - relativedelta(months=1)
         prev_month_end = start_of_month - timedelta(days=1)
         
-        prev_month_ca = Facture.objects.annotate(num_p=Count('paiements')).filter(
+        prev_month_ca = Facture.objects.filter(
             date__date__gte=prev_month_start,
             date__date__lte=prev_month_end,
             status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE]
-        ).exclude(status='VAL', num_p=0).aggregate(ca=Coalesce(Sum('total_ttc'), Decimal('0')))['ca']
+        ).aggregate(ca=Coalesce(Sum('total_ttc'), Decimal('0')))['ca']
         
         croissance_mensuelle = 0
         if prev_month_ca > 0:
@@ -1028,3 +1074,118 @@ class FinanceStatsViewSet(viewsets.ViewSet):
             'data': data
         })
 
+    @action(detail=False, methods=['get'])
+    def margin_variance_analysis(self, request):
+        """
+        Analyses why the margin changed between two periods.
+        Params: period1_start, period1_end, period2_start, period2_end
+        Default: Today vs Yesterday
+        """
+        today = timezone.now().date()
+        is_english = request.query_params.get('lang', 'fr') == 'en'
+        
+        # Period 1 (Current)
+        p1_start = request.query_params.get('p1_start', today.isoformat())
+        p1_end = request.query_params.get('p1_end', today.isoformat())
+        
+        # Period 2 (Baseline/Comparison)
+        yesterday = today - timedelta(days=1)
+        p2_start = request.query_params.get('p2_start', yesterday.isoformat())
+        p2_end = request.query_params.get('p2_end', yesterday.isoformat())
+        
+        def get_period_stats(start, end):
+            factures = Facture.objects.filter(
+                date__date__gte=start,
+                date__date__lte=end,
+                status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE]
+            )
+            
+            global_remise = factures.aggregate(s=Coalesce(Sum('remise'), Decimal('0')))['s']
+            total_ca = factures.aggregate(s=Coalesce(Sum('total_ttc'), Decimal('0')))['s']
+            
+            # Margin from allocations
+            m_alloc = FactureProduitAllocation.objects.filter(
+                facture_produit__facture__in=factures
+            ).aggregate(
+                m=Coalesce(Sum((F('facture_produit__selling_price') - F('facture_produit__discount') - F('cost_price')) * F('quantity')), Decimal('0'))
+            )['m']
+            
+            # Margin from unallocated
+            m_unalloc = FactureProduit.objects.filter(
+                facture__in=factures
+            ).annotate(
+                has_alloc=Exists(FactureProduitAllocation.objects.filter(facture_produit=OuterRef('pk')))
+            ).filter(has_alloc=False).aggregate(
+                m=Coalesce(Sum((F('selling_price') - F('discount') - F('produit__pmp')) * F('quantity')), Decimal('0'))
+            )['m']
+            
+            total_margin = m_alloc + m_unalloc - global_remise
+            margin_pct = (total_margin / total_ca * 100) if total_ca > 0 else 0
+            
+            # Top products in this period
+            products = FactureProduit.objects.filter(facture__in=factures).values(
+                'produit__id', 'produit__name'
+            ).annotate(
+                ca=Sum(F('quantity') * (F('selling_price') - F('discount'))),
+                qty=Sum('quantity')
+            ).order_by('-ca')[:50]
+            
+            return {
+                'ca': float(total_ca),
+                'margin': float(total_margin),
+                'margin_pct': float(margin_pct),
+                'products': {p['produit__id']: p for p in products}
+            }
+
+        stats1 = get_period_stats(p1_start, p1_end)
+        stats2 = get_period_stats(p2_start, p2_end)
+        
+        variance_pct = stats1['margin_pct'] - stats2['margin_pct']
+        
+        # --- Analysis of Abnormal Margins (Today's potential errors) ---
+        # Products with margin > 80% or < 5% are suspicious in a pharmacy context
+        suspicious_products = FactureProduit.objects.filter(
+            facture__date__date__gte=p1_start,
+            facture__date__date__lte=p1_end,
+            facture__status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE]
+        ).annotate(
+            unit_margin=F('selling_price') - F('discount') - Coalesce(F('produit__pmp'), Value(0, output_field=DecimalField())),
+            unit_margin_pct=Case(
+                When(selling_price__gt=0, then=(F('selling_price') - F('discount') - F('produit__pmp')) / F('selling_price') * 100),
+                default=Value(0, output_field=DecimalField())
+            )
+        ).filter(Q(unit_margin_pct__gt=80) | Q(unit_margin_pct__lt=5)).values(
+            'produit__id', 'produit__name', 'unit_margin_pct', 'selling_price', 'produit__pmp'
+        ).distinct()[:10]
+
+        # --- English & French Insights ---
+        insights = []
+        if variance_pct > 5:
+            insights.append({
+                'fr': f"Hausse significative de la marge (+{variance_pct:.1f}%). Vérifiez les produits à forte marge ou les erreurs de prix d'achat.",
+                'en': f"Significant margin increase (+{variance_pct:.1f}%). Check high-margin products or potential purchase cost errors."
+            })
+        elif variance_pct < -5:
+            insights.append({
+                'fr': f"Baisse importante de la marge ({variance_pct:.1f}%). Possible augmentation des coûts ou changement de mix produit.",
+                'en': f"Significant margin drop ({variance_pct:.1f}%). Possible cost increase or change in product mix."
+            })
+        
+        if suspicious_products.exists():
+            insights.append({
+                'fr': f"Détection de {len(suspicious_products)} produits avec des marges atypiques (>80% ou <5%). Cela peut fausser les résultats.",
+                'en': f"Detected {len(suspicious_products)} products with abnormal margins (>80% or <5%). This may skew the results."
+            })
+
+        return Response({
+            'period1': { 'label': 'Aujourd\'hui' if not is_english else 'Today', 'stats': stats1 },
+            'period2': { 'label': 'Hier' if not is_english else 'Yesterday', 'stats': stats2 },
+            'variance_pct': round(variance_pct, 2),
+            'suspicious_products': suspicious_products,
+            'insights': insights,
+            'labels': {
+                'ca': { 'fr': 'Chiffre d\'Affaires', 'en': 'Turnover' },
+                'margin': { 'fr': 'Marge Brute', 'en': 'Gross Margin' },
+                'margin_pct': { 'fr': 'Taux de Marge', 'en': 'Margin Rate' }
+            }
+        })

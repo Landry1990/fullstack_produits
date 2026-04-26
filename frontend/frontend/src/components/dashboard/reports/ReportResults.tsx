@@ -3,7 +3,9 @@ import { useTranslation } from 'react-i18next';
 import { 
     formatColumnHeader, 
     formatValue,
-    isNumericColumn
+    isNumericColumn,
+    isSummableColumn,
+    isPercentageColumn
 } from '../../../hooks/useCentreRapports';
 import type { QueryDefinition, PaginationData } from '../../../hooks/useCentreRapports';
 import { MonthlyReportView } from './MonthlyReportView';
@@ -134,6 +136,57 @@ export const ReportResults: React.FC<ReportResultsProps> = ({
                                     </tr>
                                 ))}
                             </tbody>
+                            {/* Generic Summary Footer for all Table Reports */}
+                            {results.length > 0 && (
+                                <tfoot className="bg-primary/5 border-t-2 border-primary/20">
+                                    <tr className="font-black text-primary uppercase">
+                                        {columns.map((col, idx) => {
+                                            if (idx === 0) return <td key={col} className="py-4 px-6 text-[10px] tracking-widest">{t('common:total', 'TOTAL / MOYENNE')}</td>;
+                                            
+                                            if (isSummableColumn(col)) {
+                                                const total = results.reduce((sum: number, r: any) => sum + (Number(r[col]) || 0), 0);
+                                                return <td key={col} className="py-4 px-4 text-right text-sm">{formatValue(col, total, t)}</td>;
+                                            }
+                                            
+                                            if (isPercentageColumn(col)) {
+                                                const total = results.reduce((sum: number, r: any) => sum + (Number(r[col]) || 0), 0);
+                                                const avg = results.length > 0 ? (total / results.length) : 0;
+                                                
+                                                // Intelligent Global Margin calculation for weighted average
+                                                if (col.toLowerCase().includes('marge') || col.toLowerCase().includes('ratio')) {
+                                                    const totalMarge = results.reduce((sum: number, r: any) => {
+                                                        // Look for common margin amount fields
+                                                        const m = r['marge'] || r['Marge'] || r['montant_marge'] || 0;
+                                                        return sum + Number(m);
+                                                    }, 0);
+                                                    const totalCA = results.reduce((sum: number, r: any) => {
+                                                        // Look for common revenue fields
+                                                        const ca = r['total_ht'] || r['Total HT'] || r['chiffre_affaires'] || r['prix_vente'] || r['Prix Vente'] || 0;
+                                                        return sum + Number(ca);
+                                                    }, 0);
+                                                    
+                                                    if (totalCA > 0) {
+                                                        const globalRate = (totalMarge / totalCA) * 100;
+                                                        return (
+                                                            <td key={col} className="py-4 px-4 text-right text-sm">
+                                                                <div className="flex flex-col">
+                                                                    <span title="Taux Global (Pondéré)">G: {globalRate.toFixed(1)} %</span>
+                                                                    <span className="text-[9px] opacity-50" title="Moyenne Arithmétique">M: {avg.toFixed(1)} %</span>
+                                                                </div>
+                                                            </td>
+                                                        );
+                                                    }
+                                                }
+                                                
+                                                return <td key={col} className="py-4 px-4 text-right text-sm">{avg.toFixed(1)} %</td>;
+                                            }
+                                            
+                                            return <td key={col} className="py-4 px-4"></td>;
+                                        })}
+                                        <td></td>
+                                    </tr>
+                                </tfoot>
+                            )}
                         </table>
                     </div>
                     {results.length > 100 && !pagination && (

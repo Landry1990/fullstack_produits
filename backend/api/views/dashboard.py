@@ -39,7 +39,7 @@ class DashboardViewSet(viewsets.ViewSet):
         facture_qs = Facture.objects.filter(
             date__date__in=[today, yesterday],
             status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE]
-        ).exclude(~Q(id__in=Caisse.objects.values('facture_id')), status='VAL')
+        )
         
         # Aggregate everything related to Facture in one pass for [today, yesterday]
         facture_metrics = facture_qs.aggregate(
@@ -132,8 +132,6 @@ class DashboardViewSet(viewsets.ViewSet):
             top_products = FactureProduit.objects.filter(
                 facture__date__date=today,
                 facture__status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE]
-            ).exclude(
-                facture__status='VAL', facture__paiements__isnull=True
             ).values('produit_id', 'produit__name').annotate(
                 qty=Sum('quantity'),
                 revenue=Sum(F('quantity') * (F('selling_price') - F('discount')))
@@ -148,7 +146,7 @@ class DashboardViewSet(viewsets.ViewSet):
             factures_today_qs = Facture.objects.filter(
                 date__date=today,
                 status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE]
-            ).exclude(~Q(id__in=Caisse.objects.values('facture_id')), status='VAL')
+            )
             
             total_global_remise = factures_today_qs.aggregate(s=Coalesce(Sum('remise'), Decimal('0')))['s']
 
@@ -261,7 +259,7 @@ class DashboardViewSet(viewsets.ViewSet):
         ca_stats = Facture.objects.filter(
             date__date__gte=start_of_month,
             status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE]
-        ).exclude(~Q(id__in=Caisse.objects.values('facture_id')), status='VAL').aggregate(
+        ).aggregate(
             ca_jour=Coalesce(Sum(Case(When(date__date=today, then=F('total_ttc')), default=Value(0, output_field=DecimalField()))), Decimal('0')),
             ca_sem=Coalesce(Sum(Case(When(date__date__gte=start_of_week, then=F('total_ttc')), default=Value(0, output_field=DecimalField()))), Decimal('0')),
             ca_mois=Coalesce(Sum(F('total_ttc')), Decimal('0'))
@@ -274,7 +272,7 @@ class DashboardViewSet(viewsets.ViewSet):
         factures_mois_qs = Facture.objects.filter(
             date__date__gte=start_of_month,
             status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE]
-        ).exclude(~Q(id__in=Caisse.objects.values('facture_id')), status='VAL')
+        )
 
         # Aggregate total global discounts
         remises_stats = factures_mois_qs.aggregate(
