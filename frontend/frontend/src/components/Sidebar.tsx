@@ -285,7 +285,7 @@ export default function Sidebar() {
 
         {/* ── NAV ── */}
         <nav className="flex-1 overflow-y-auto py-3 custom-scrollbar">
-          <ul className={`flex flex-col gap-0.5 ${isCollapsed ? 'px-2' : 'px-3'}`}>
+          <ul className={`flex flex-col gap-1.5 ${isCollapsed ? 'px-2' : 'px-3'}`}>
             {menuItems.map((item) => {
               const hasSubmenus = !!item.submenus;
               const isParentOfActive = item.submenus?.some(sub => location.pathname.startsWith(sub.path));
@@ -334,20 +334,20 @@ export default function Sidebar() {
                           <span className={`w-5 h-5 shrink-0 transition-colors ${isMenuOpen || isParentOfActive ? 'text-emerald-400' : ''}`}>
                             {item.icon}
                           </span>
-                          <span className="flex-1 text-left text-sm font-semibold tracking-tight truncate">{item.label}</span>
+                          <span className="flex-1 text-left text-[15px] font-semibold tracking-tight truncate">{item.label}</span>
                           <ChevronDown className={`w-3.5 h-3.5 shrink-0 transition-transform duration-200 ${isMenuOpen ? 'rotate-180' : ''}`} />
                         </button>
 
                         {/* Submenus with vertical connector */}
                         <div className={`overflow-hidden transition-all duration-250 ease-in-out ${isMenuOpen ? 'max-h-[600px] opacity-100 mt-0.5' : 'max-h-0 opacity-0'}`}>
-                          <ul className="relative ml-4 pl-3 border-l border-white/10 flex flex-col gap-0.5 py-1">
+                          <ul className="relative ml-4 pl-3 border-l border-white/10 flex flex-col gap-1 py-1">
                             {item.submenus?.map((sub) => (
                               <li key={sub.path}>
                                 <NavLink
                                   to={sub.path}
                                   onClick={closeSidebar}
                                   className={({ isActive }) =>
-                                    `flex items-center justify-between px-3 py-2 rounded-lg text-xs transition-all
+                                    `flex items-center justify-between px-3 py-2 rounded-lg text-[13px] transition-all
                                     ${isActive
                                       ? 'bg-emerald-500/20 text-emerald-300 font-bold'
                                       : 'text-white/45 hover:text-white/90 hover:bg-white/5 font-medium'
@@ -387,7 +387,7 @@ export default function Sidebar() {
                     }
                   >
                     <span className="w-5 h-5 shrink-0">{item.icon}</span>
-                    {!isCollapsed && <span className="text-sm font-semibold tracking-tight truncate">{item.label}</span>}
+                    {!isCollapsed && <span className="text-[15px] font-semibold tracking-tight truncate">{item.label}</span>}
                   </NavLink>
                 </li>
               );

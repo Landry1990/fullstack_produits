@@ -45,7 +45,7 @@ export default function ActionButtons({
                 onChange={(e) => setIsRetrocession?.(e.target.checked)}
                 className="checkbox checkbox-xs checkbox-warning" 
               />
-              <span className="text-[10px] uppercase font-bold text-white/40 group-hover:text-warning transition-colors">{t('facturation:actions.retrocession_mode')}</span>
+              <span className="text-[10px] uppercase font-bold text-base-content/40 group-hover:text-warning transition-colors">{t('facturation:actions.retrocession_mode')}</span>
            </label>
            <label className="flex items-center gap-2 cursor-pointer group">
               <input 
@@ -54,7 +54,7 @@ export default function ActionButtons({
                 onChange={(e) => setIsFactureA4?.(e.target.checked)}
                 className="checkbox checkbox-xs checkbox-info" 
               />
-              <span className="text-[10px] uppercase font-bold text-white/40 group-hover:text-info transition-colors">Format A4</span>
+              <span className="text-[10px] uppercase font-bold text-base-content/40 group-hover:text-info transition-colors">Format A4</span>
            </label>
         </div>
 
@@ -72,14 +72,14 @@ export default function ActionButtons({
            <button 
              onClick={onProforma} 
              disabled={!isValid || loading}
-             className="btn btn-sm bg-white/5 border-white/10 hover:bg-white/10 text-white text-[10px] font-bold uppercase tracking-wider"
+             className="btn btn-sm bg-base-200 border-base-300 hover:bg-base-300 text-base-content text-[10px] font-bold uppercase tracking-wider"
            >
              Proforma
            </button>
            <button 
              onClick={onSuspend} 
              disabled={!isValid || loading}
-             className="btn btn-sm bg-white/5 border-white/10 hover:bg-white/10 text-warning text-[10px] font-bold uppercase tracking-wider"
+             className="btn btn-sm bg-base-200 border-base-300 hover:bg-base-300 text-warning text-[10px] font-bold uppercase tracking-wider"
            >
              {t('facturation:actions.suspend_short')}
            </button>
@@ -101,7 +101,7 @@ export default function ActionButtons({
             )}
             <span className="text-xl font-black uppercase tracking-widest">{t('facturation:actions.pay')}</span>
           </div>
-          <kbd className="absolute right-4 kbd kbd-sm bg-black/20 border-white/10 text-white/60">F9</kbd>
+          <kbd className="absolute right-4 kbd kbd-sm bg-primary-focus border-none text-white/60">F9</kbd>
         </button>
 
         {/* Cancel Button */}

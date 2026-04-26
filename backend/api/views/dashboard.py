@@ -3,15 +3,13 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 
-from django.db.models import Sum, Count, Avg, F, Q, DecimalField, Value, ExpressionWrapper
-from django.db.models import Exists, OuterRef
-from ..models import Caisse
-from django.db.models.functions import TruncDay, TruncMonth, Coalesce
+from django.db.models import Sum, Count, Avg, F, Q, DecimalField, Value, ExpressionWrapper, Case, When, Exists, OuterRef
+from django.db.models.functions import TruncDay, TruncMonth, Coalesce, TruncDate
 from django.utils import timezone
 from datetime import datetime, timedelta
 from decimal import Decimal
 
-from ..models import Facture, Commande, Produit, Client, StockLot, Caisse, ObjectifCommercial
+from ..models import Facture, Commande, Produit, Client, StockLot, Caisse, ObjectifCommercial, FactureProduit, FactureProduitAllocation
 
 class DashboardViewSet(viewsets.ViewSet):
     """
@@ -36,9 +34,6 @@ class DashboardViewSet(viewsets.ViewSet):
             role = 'PHARMACIEN'
             
         # 1. Combined Global & User Metrics (Factures)
-        from django.db.models import Case, When, Value, DecimalField, Count, Sum
-        from django.db.models.functions import TruncDate
-        
         global_stats = {}
         
         facture_qs = Facture.objects.filter(
@@ -149,14 +144,34 @@ class DashboardViewSet(viewsets.ViewSet):
                 for p in top_products
             ]
 
-            # 6. Today's Margin
-            from ..models import FactureProduitAllocation
-            margin_today = FactureProduitAllocation.objects.filter(
-                facture_produit__facture__date__date=today,
-                facture_produit__facture__status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE]
-            ).exclude(~Q(facture_produit__facture_id__in=Caisse.objects.values('facture_id')), facture_produit__facture__status='VAL').aggregate(
-                total=Coalesce(Sum((F('selling_price') - F('cost_price')) * F('quantity')), Decimal('0'))
+            # 6. Today's Margin (Improved with unallocated products and discounts)
+            factures_today_qs = Facture.objects.filter(
+                date__date=today,
+                status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE]
+            ).exclude(~Q(id__in=Caisse.objects.values('facture_id')), status='VAL')
+            
+            total_global_remise = factures_today_qs.aggregate(s=Coalesce(Sum('remise'), Decimal('0')))['s']
+
+            # 6a. Margin from allocated products (FIFO/FEFO)
+            # Subtracting line-level discount from the base selling_price
+            margin_allocated = FactureProduitAllocation.objects.filter(
+                facture_produit__facture__in=factures_today_qs
+            ).aggregate(
+                total=Coalesce(Sum((F('facture_produit__selling_price') - F('facture_produit__discount') - F('cost_price')) * F('quantity')), Decimal('0'))
             )['total']
+
+            # 6b. Margin from unallocated products (fallback to PMP)
+            unallocated_margin = FactureProduit.objects.filter(
+                facture__in=factures_today_qs
+            ).annotate(
+                has_allocation=Exists(FactureProduitAllocation.objects.filter(facture_produit=OuterRef('pk')))
+            ).filter(
+                has_allocation=False
+            ).aggregate(
+                total=Coalesce(Sum((F('selling_price') - F('discount') - F('produit__pmp')) * F('quantity')), Decimal('0'))
+            )['total']
+
+            margin_today = margin_allocated + unallocated_margin - total_global_remise
 
             # 7. Dormant Stock (6 months defaults)
             dormant_threshold = today - timedelta(days=6 * 30)
@@ -255,19 +270,42 @@ class DashboardViewSet(viewsets.ViewSet):
         ca_sem = ca_stats['ca_sem']
         ca_mois = ca_stats['ca_mois']
 
-        # --- Marge (Grouped) ---
-        from ..models import FactureProduitAllocation
-        margin_stats = FactureProduitAllocation.objects.filter(
-            facture_produit__facture__date__date__gte=start_of_month,
-            facture_produit__facture__status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE]
-        ).exclude(~Q(facture_produit__facture_id__in=Caisse.objects.values('facture_id')), facture_produit__facture__status='VAL').aggregate(
-            margin_jour=Coalesce(Sum(Case(When(facture_produit__facture__date__date=today, then=(F('selling_price') - F('cost_price')) * F('quantity')), default=Value(0, output_field=DecimalField()))), Decimal('0')),
-            margin_sem=Coalesce(Sum(Case(When(facture_produit__facture__date__date__gte=start_of_week, then=(F('selling_price') - F('cost_price')) * F('quantity')), default=Value(0, output_field=DecimalField()))), Decimal('0')),
-            margin_mois=Coalesce(Sum((F('selling_price') - F('cost_price')) * F('quantity')), Decimal('0'))
+        # --- Marge (Grouped & Improved) ---
+        factures_mois_qs = Facture.objects.filter(
+            date__date__gte=start_of_month,
+            status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE]
+        ).exclude(~Q(id__in=Caisse.objects.values('facture_id')), status='VAL')
+
+        # Aggregate total global discounts
+        remises_stats = factures_mois_qs.aggregate(
+            remise_jour=Coalesce(Sum(Case(When(date__date=today, then=F('remise')), default=Value(0, output_field=DecimalField()))), Decimal('0')),
+            remise_sem=Coalesce(Sum(Case(When(date__date__gte=start_of_week, then=F('remise')), default=Value(0, output_field=DecimalField()))), Decimal('0')),
+            remise_mois=Coalesce(Sum(F('remise')), Decimal('0'))
         )
-        margin_jour = margin_stats['margin_jour']
-        margin_sem = margin_stats['margin_sem']
-        margin_mois = margin_stats['margin_mois']
+
+        # Margin from allocations
+        alloc_stats = FactureProduitAllocation.objects.filter(
+            facture_produit__facture__in=factures_mois_qs
+        ).aggregate(
+            margin_jour=Coalesce(Sum(Case(When(facture_produit__facture__date__date=today, then=(F('facture_produit__selling_price') - F('facture_produit__discount') - F('cost_price')) * F('quantity')), default=Value(0, output_field=DecimalField()))), Decimal('0')),
+            margin_sem=Coalesce(Sum(Case(When(facture_produit__facture__date__date__gte=start_of_week, then=(F('facture_produit__selling_price') - F('facture_produit__discount') - F('cost_price')) * F('quantity')), default=Value(0, output_field=DecimalField()))), Decimal('0')),
+            margin_mois=Coalesce(Sum((F('facture_produit__selling_price') - F('facture_produit__discount') - F('cost_price')) * F('quantity')), Decimal('0'))
+        )
+
+        # Margin from unallocated (fallback)
+        unalloc_stats = FactureProduit.objects.filter(
+            facture__in=factures_mois_qs
+        ).annotate(
+            has_allocation=Exists(FactureProduitAllocation.objects.filter(facture_produit=OuterRef('pk')))
+        ).filter(has_allocation=False).aggregate(
+            margin_jour=Coalesce(Sum(Case(When(facture__date__date=today, then=(F('selling_price') - F('discount') - F('produit__pmp')) * F('quantity')), default=Value(0, output_field=DecimalField()))), Decimal('0')),
+            margin_sem=Coalesce(Sum(Case(When(facture__date__date__gte=start_of_week, then=(F('selling_price') - F('discount') - F('produit__pmp')) * F('quantity')), default=Value(0, output_field=DecimalField()))), Decimal('0')),
+            margin_mois=Coalesce(Sum((F('selling_price') - F('discount') - F('produit__pmp')) * F('quantity')), Decimal('0'))
+        )
+
+        margin_jour = alloc_stats['margin_jour'] + unalloc_stats['margin_jour'] - remises_stats['remise_jour']
+        margin_sem = alloc_stats['margin_sem'] + unalloc_stats['margin_sem'] - remises_stats['remise_sem']
+        margin_mois = alloc_stats['margin_mois'] + unalloc_stats['margin_mois'] - remises_stats['remise_mois']
         
         # --- Objectifs (Full fetch) ---
         objectifs_data = ObjectifCommercial.get_objectifs_courants()
