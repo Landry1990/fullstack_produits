@@ -71,6 +71,11 @@ const financeService = {
         return response.data;
     },
 
+    getMarginVarianceAnalysis: async (params?: any): Promise<any> => {
+        const response = await api.get('finance-stats/margin_variance_analysis/', { params });
+        return response.data;
+    },
+
     // Supplier Payments
     getPaiements: async (fournisseurId?: number): Promise<any> => {
         const params = fournisseurId ? { fournisseur: fournisseurId } : {};

@@ -27,7 +27,16 @@ export default function CentreRapports() {
         supplierSearch,
         filteredSuppliers,
         showSupplierDropdown,
-        selectedSupplierName
+        selectedSupplierName,
+        userSearch,
+        filteredUsers,
+        showUserDropdown,
+        selectedUserName,
+        familleSearch,
+        filteredFamilles,
+        showFamilleDropdown,
+        selectedFamilleName,
+        presets
     } = state;
 
     const handleSelectQuery = (query: QueryDefinition) => {
@@ -108,7 +117,7 @@ export default function CentreRapports() {
                         {selectedQuery ? (
                             <>
                                 {/* Unified Header & Filters Card */}
-                                <div className="bg-base-100 rounded-2xl shadow-sm border border-base-300 flex flex-col overflow-hidden animate-in slide-in-from-top-4 duration-500">
+                                <div className="bg-base-100 rounded-2xl shadow-sm border border-base-300 flex flex-col animate-in slide-in-from-top-4 duration-500">
                                     <div className="p-4 sm:p-6 border-b border-base-200 flex flex-col gap-4 md:flex-row md:justify-between md:items-center md:gap-6">
                                         <div className="flex items-center gap-3 sm:gap-4 min-w-0">
                                             <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center text-primary border border-primary/20">
@@ -173,22 +182,30 @@ export default function CentreRapports() {
                                                 showDropdown: showClientDropdown,
                                                 selectedName: selectedClientName
                                             }}
-                                            clientActions={{
-                                                setQuery: actions.setClientSearch,
-                                                setShowDropdown: actions.setShowClientDropdown,
-                                                setSelectedName: actions.setSelectedClientName
-                                            }}
+                                            clientActions={actions.clientActions}
                                             supplierSearch={{
                                                 query: supplierSearch,
                                                 filtered: filteredSuppliers,
                                                 showDropdown: showSupplierDropdown,
                                                 selectedName: selectedSupplierName
                                             }}
-                                            supplierActions={{
-                                                setQuery: actions.setSupplierSearch,
-                                                setShowDropdown: actions.setShowSupplierDropdown,
-                                                setSelectedName: actions.setSelectedSupplierName
+                                            supplierActions={actions.supplierActions}
+                                            userSearch={{
+                                                query: userSearch,
+                                                filtered: filteredUsers,
+                                                showDropdown: showUserDropdown,
+                                                selectedName: selectedUserName
                                             }}
+                                            userActions={actions.userActions}
+                                            familleSearch={{
+                                                query: familleSearch,
+                                                filtered: filteredFamilles,
+                                                showDropdown: showFamilleDropdown,
+                                                selectedName: selectedFamilleName
+                                            }}
+                                            familleActions={actions.familleActions}
+                                            presets={actions.presets}
+                                            presetList={presets}
                                         />
                                     </div>
                                 </div>

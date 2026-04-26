@@ -3,465 +3,29 @@ import { useTranslation } from 'react-i18next';
 import { useSearchParams } from 'react-router-dom';
 import axios from '../config/axios';
 import { toast } from 'react-hot-toast';
-import { formatCurrency, formatNumber } from '../utils/formatters';
 import { usePharmacySettings } from './usePharmacySettings';
 import { exportToExcel } from '../utils/excelExport';
 
-// Types
-export type ParamType = 'month' | 'date' | 'datetime' | 'select' | 'number' | 'text' | 'client_id' | 'fournisseur_id' | 'checkbox';
+// Re-export types and constants from modular files
+export type { QueryDefinition, QueryParam, ParamType, PaginationData, Client, Supplier, User, Famille } from './reports/types';
+export * from './reports/utils';
+export { QUERIES } from './reports/queries';
 
-export interface QueryParam {
-    key: string;
-    label: string;
-    type: ParamType;
-    default?: string | number | boolean;
-    options?: { value: string; label: string }[];
-    required?: boolean;
-}
+import { QUERIES } from './reports/queries';
+import { 
+    formatColumnHeader, 
+    isSummableColumn, 
+    isPercentageColumn 
+} from './reports/utils';
+import type { 
+    QueryDefinition, 
+    PaginationData, 
+    Client, 
+    Supplier,
+    User,
+    Famille
+} from './reports/types';
 
-export interface QueryDefinition {
-    id: string;
-    name: string;
-    description?: string;
-    endpoint: string;
-    method?: 'GET' | 'POST';
-    params: QueryParam[];
-    resultType: 'table' | 'cards' | 'raw';
-}
-
-export interface Client {
-    id: number;
-    name: string;
-    phone?: string;
-}
-
-export interface Supplier {
-    id: number;
-    name: string;
-}
-
-export interface PaginationData {
-    count: number;
-    next: string | null;
-    previous: string | null;
-}
-
-// Constants extracted from component
-export const QUERIES: QueryDefinition[] = [
-    {
-        id: 'rapport_mensuel',
-        name: 'Rapport Mensuel',
-        description: 'CA, marges, créances pour un mois donné',
-        endpoint: '/api/rapports/rapport_mensuel/',
-        params: [
-            { key: 'mois', label: 'Mois', type: 'month', required: true }
-        ],
-        resultType: 'cards'
-    },
-    {
-        id: 'ca_periode',
-        name: 'CA par Période',
-        description: 'Chiffre d\'affaires sur une période',
-        endpoint: '/api/factures/caisse_par_tranche_horaire/',
-        params: [
-            { key: 'date_debut', label: 'Date début', type: 'datetime', required: true },
-            { key: 'date_fin', label: 'Date fin', type: 'datetime', required: true }
-        ],
-        resultType: 'cards'
-    },
-    {
-        id: 'alertes_stock',
-        name: 'Alertes Stock',
-        description: 'Stock < Rotation Moyenne OU Stock <= Seuil Minimum',
-        endpoint: '/api/produits/stock_alerts/',
-        params: [],
-        resultType: 'table'
-    },
-    {
-        id: 'produits_perimes',
-        name: 'Produits Périmés / Proches',
-        description: 'Produits périmés ou proches de la péremption',
-        endpoint: '/api/stock-lots/',
-        params: [
-            { key: 'expiring_within_days', label: 'Jours avant péremption', type: 'number', default: 90 }
-        ],
-        resultType: 'table'
-    },
-    {
-        id: 'creances',
-        name: 'Créances en Cours (Détail)',
-        description: 'Liste détaillée des factures non soldées',
-        endpoint: '/api/creances/',
-        params: [],
-        resultType: 'table'
-    },
-    {
-        id: 'creances_synthese',
-        name: 'Synthèse Créances par Client',
-        description: 'Total des dettes regroupées par client',
-        endpoint: '/api/creances/synthese_clients/',
-        params: [
-            { key: 'date_debut', label: 'Depuis', type: 'date' },
-            { key: 'date_fin', label: 'Jusqu\'à', type: 'date' }
-        ],
-        resultType: 'table'
-    },
-    {
-        id: 'historique_ventes',
-        name: 'Ventes par Tranche Horaire',
-        description: 'Produits vendus sur une période donnée',
-        endpoint: '/api/historique-ventes/ventes_par_tranche/',
-        params: [
-            { key: 'date_debut', label: 'Début', type: 'datetime', required: true },
-            { key: 'date_fin', label: 'Fin', type: 'datetime', required: true }
-        ],
-        resultType: 'table'
-    },
-    {
-        id: 'produits_non_vendus',
-        name: 'Produits Non Vendus',
-        description: 'Produits sans vente depuis X jours',
-        endpoint: '/api/produits/',
-        params: [
-            { key: 'jours_sans_vente', label: 'Jours sans vente', type: 'number', default: 90 }
-        ],
-        resultType: 'table'
-    },
-    {
-        id: 'stock_negatif',
-        name: 'Stock Négatif',
-        description: 'Produits avec stock négatif ou faible, triés par quantité',
-        endpoint: '/api/produits/',
-        params: [
-            { key: 'stock_lt', label: 'Stock inférieur à', type: 'number', default: 0 },
-            { key: 'ordering', label: 'Tri', type: 'text', default: 'stock' }
-        ],
-        resultType: 'table'
-    },
-    {
-        id: 'valeur_stock_journalier',
-        name: 'Valeur Stock Journalier',
-        description: 'Reconstitution historique de la valeur du stock, achats et ventes',
-        endpoint: '/api/rapports/valeur_stock_journalier/',
-        params: [
-            { key: 'date_debut', label: 'Date début', type: 'date', required: true },
-            { key: 'date_fin', label: 'Date fin', type: 'date', required: true }
-        ],
-        resultType: 'table'
-    },
-    {
-        id: 'produits_tva',
-        name: 'Produits avec TVA',
-        description: 'Liste des produits soumis à la TVA (> 0%)',
-        endpoint: '/api/produits/',
-        params: [
-            { key: 'tva_gt', label: 'TVA supérieure à (%)', type: 'number', default: 0 },
-            { key: 'ordering', label: 'Tri', type: 'text', default: '-tva' }
-        ],
-        resultType: 'table'
-    },
-    {
-        id: 'stocks_morts',
-        name: 'Stocks Dormants (Dead Stock)',
-        description: 'Produits à forte valeur (Argent qui dort) sans vente',
-        endpoint: '/api/rapports/stocks_morts/',
-        params: [
-            { key: 'min_value', label: 'Valeur Min (F)', type: 'number', default: 100000 },
-            { key: 'months', label: 'Mois sans vente', type: 'number', default: 6 }
-        ],
-        resultType: 'table'
-    },
-    {
-        id: 'alertes_annulations',
-        name: 'Alertes Annulations Suspectes',
-        description: 'Utilisateurs avec un taux d\'annulation élevé (> seuil)',
-        endpoint: '/api/statistiques/cancel_alerts/',
-        params: [
-            { key: 'threshold', label: 'Seuil annulations', type: 'number', default: 5 },
-            { key: 'days', label: 'Sur les derniers (jours)', type: 'number', default: 30 }
-        ],
-        resultType: 'table'
-    },
-    {
-        id: 'stats_vendeurs',
-        name: 'Stats par Vendeurs',
-        description: 'Classement des vendeurs par CA (hors caissiers)',
-        endpoint: '/api/rapports/stats_vendeurs/',
-        params: [
-            { key: 'date_debut', label: 'Début', type: 'datetime', required: true },
-            { key: 'date_fin', label: 'Fin', type: 'datetime', required: true }
-        ],
-        resultType: 'table'
-    },
-    {
-        id: 'produits_vendus_tva',
-        name: 'Produits Vendus (Soumis à TVA)',
-        description: 'Produits avec TVA > 0 vendus sur la période',
-        endpoint: '/api/rapports/rapport_tva_vendus/',
-        params: [
-            { key: 'date_debut', label: 'Début', type: 'date', required: true },
-            { key: 'date_fin', label: 'Fin', type: 'date', required: true }
-        ],
-        resultType: 'table'
-    },
-    {
-        id: 'meilleurs_clients',
-        name: 'Meilleurs Clients',
-        description: 'Classement clients par CA et nombre de ventes',
-        endpoint: '/api/rapports/meilleurs_clients/',
-        params: [
-            { key: 'date_debut', label: 'Début', type: 'date', required: true },
-            { key: 'date_fin', label: 'Fin', type: 'date', required: true }
-        ],
-        resultType: 'table'
-    },
-    {
-        id: 'recap_paiements_fournisseurs',
-        name: 'Récapitulatif Paiements Fournisseurs',
-        description: 'Somme des paiements par date et fournisseur',
-        endpoint: '/api/paiements-fournisseurs/recap_journalier/',
-        params: [
-            { key: 'date_debut', label: 'Début', type: 'date', required: true },
-            { key: 'date_fin', label: 'Fin', type: 'date', required: true }
-        ],
-        resultType: 'table'
-    },
-    {
-        id: 'produits_annules',
-        name: 'Produits Annulés',
-        description: 'Liste des produits issus de factures annulées avec quantités et lots',
-        endpoint: '/api/rapports/produits_annules/',
-        params: [
-            { key: 'date_debut', label: 'Début', type: 'date', required: false },
-            { key: 'date_fin', label: 'Fin', type: 'date', required: false }
-        ],
-        resultType: 'table'
-    },
-    {
-        id: 'balance_stock',
-        name: 'Balance des Stocks (Comptabilité)',
-        description: 'Stock Initial, Achats, Ventes et Final sur une période (Excel)',
-        endpoint: '/api/rapports/balance_stock_excel/',
-        params: [
-            { key: 'date_debut', label: 'Date début', type: 'date', required: true, default: new Date(new Date().getFullYear(), 0, 1).toISOString().split('T')[0] },
-            { key: 'date_fin', label: 'Date fin', type: 'date', required: true, default: new Date().toISOString().split('T')[0] },
-            { key: 'exclude_zero', label: 'Exclure stocks à zéro', type: 'checkbox', default: true }
-        ],
-        resultType: 'raw'
-    },
-    {
-        id: 'recap_valeur_stock_pdf',
-        name: 'Récapitulatif Valeur Stock (PDF)',
-        description: 'Valeur totale HT, TVA, TTC et répartition détaillée par taux (Format PDF)',
-        endpoint: '/api/rapports/valeur_stock_pdf/',
-        params: [
-            { 
-                key: 'valorisation', 
-                label: 'Type de valorisation', 
-                type: 'select', 
-                default: 'ACHAT',
-                options: [
-                    { value: 'ACHAT', label: "Prix d'Achat (PMP)" },
-                    { value: 'VENTE', label: "Prix de Vente" }
-                ]
-            },
-            { 
-                key: 'group_by', 
-                label: 'Grouper par', 
-                type: 'select', 
-                default: '',
-                options: [
-                    { value: '', label: "Aucun (Global)" },
-                    { value: 'rayon', label: "Rayon" },
-                    { value: 'forme', label: "Forme" },
-                    { value: 'groupe', label: "Groupe" }
-                ]
-            }
-        ],
-        resultType: 'raw'
-    },
-    {
-        id: 'rapport_ca_multi_annuel',
-        name: 'Comparatif CA Multi-Annuel',
-        description: 'CA TVA vs Exonéré par mois pour toutes les années disponibles',
-        endpoint: '/api/rapports/rapport_ca_multi_annuel/',
-        params: [],
-        resultType: 'table'
-    },
-    {
-        id: 'rapport_remises',
-        name: 'Suivi des Remises (Résumé)',
-        description: 'Résumé des remises par utilisateur (Global, Lignes, Fidélité)',
-        endpoint: '/api/rapports/rapport_remises/',
-        params: [
-            { key: 'date_debut', label: 'Début', type: 'date', required: true },
-            { key: 'date_fin', label: 'Fin', type: 'date', required: true }
-        ],
-        resultType: 'table'
-    },
-    {
-        id: 'rapport_remises_details',
-        name: 'Suivi des Remises (Détail)',
-        description: 'Liste détaillée des factures avec remises',
-        endpoint: '/api/rapports/rapport_remises_details/',
-        params: [
-            { key: 'date_debut', label: 'Début', type: 'date', required: true },
-            { key: 'date_fin', label: 'Fin', type: 'date', required: true }
-        ],
-        resultType: 'table'
-    },
-    {
-        id: 'top_selling_products',
-        name: 'Produits les plus vendus',
-        description: 'Classement des produits par quantité, CA et marge',
-        endpoint: '/api/rapports/top_selling_products/',
-        params: [
-            { key: 'date_debut', label: 'Début', type: 'date', required: true },
-            { key: 'date_fin', label: 'Fin', type: 'date', required: true },
-            { key: 'fournisseur_id', label: 'Fournisseur', type: 'fournisseur_id' }
-        ],
-        resultType: 'table'
-    }
-];
-
-export const COLUMN_LABELS: Record<string, string> = {
-    rang: '#',
-    client_id: 'ID',
-    client_name: 'Client',
-    client_type: 'Type',
-    nb_ventes: 'Nb Ventes',
-    chiffre_affaires: 'CA TTC',
-    panier_moyen: 'Panier Moy.',
-    name: 'Nom',
-    nom_produit: 'Produit',
-    cip: 'CIP',
-    total_montant: 'Montant Total',
-    stock: 'Stock',
-    rayon: 'Rayon',
-    fournisseur: 'Fournisseur',
-    mode_paiement: 'Mode Règl.',
-    reference: 'Référence',
-    valeur: 'Valeur',
-    pmp: 'PMP',
-    vendeur: 'Vendeur',
-    nbre_ventes: 'Nb Ventes',
-    total: 'Total',
-    status: 'Statut',
-    dernier_vente: 'Dernière Vente',
-    date_annulation: 'Date Annulation',
-    numero_facture: 'Facture',
-    quantite_annulee: 'Qté Annulée',
-    lot: 'Lot',
-    stock_actuel: 'Stock Actuel',
-    annule_par: 'Annulé Par',
-    motif: 'Motif',
-    source: 'Source',
-    remise_globale: 'Remise Glob.',
-    remise_lignes: 'Remise Lignes',
-    remise_fidelite: 'Fidélité',
-    total_remise: 'Total Remise',
-    ratio_remise_pct: '% / CA',
-    ratio_pct: '%',
-    numero: 'Facture',
-    date: 'Date',
-    client: 'Client',
-    ayant_droit_details: 'Bénéficiaire',
-    montant_paye: 'Déjà Réglé',
-    reste_a_payer: 'Solde Dû',
-    solde_du: 'Solde Dû',
-    total_facture: 'Total Facturé',
-    nb_factures: 'Nb Factures',
-    status_display: 'Statut',
-    qty: 'Qté',
-    catttc: 'CA TTC (F)',
-    marge: 'Marge Brute (F)',
-    taux_marge: 'Taux Marge (%)',
-    cip1: 'CIP1'
-};
-
-export const formatColumnHeader = (col: string, t?: any): string => {
-    if (COLUMN_LABELS[col]) return COLUMN_LABELS[col];
-    
-    // Pattern: 2024_ca_tva, 2024_ca_exo, 2024_total
-    const match = col.match(/^(\d{4})_(.*)$/);
-    if (match && t) {
-        const year = match[1];
-        const type = match[2];
-        let label = type;
-        if (type === 'ca_tva') label = t('reports:ca_tva', { defaultValue: 'CA TVA' });
-        else if (type === 'ca_exo') label = t('reports:ca_exo', { defaultValue: 'CA Exo' });
-        else if (type === 'total') label = t('common:total', { defaultValue: 'Total' });
-        return `${year} ${label}`;
-    }
-
-    return col.replace(/_/g, ' ');
-};
-
-export const isNumericColumn = (col: string): boolean => {
-    const c = col.toLowerCase();
-    return c.includes('montant') || 
-           c.includes('total') || 
-           c.includes('ca') || 
-           c.includes('price') || 
-           c.includes('cout') || 
-           c.includes('marge') || 
-           c.includes('chiffre_affaires') ||
-           c.includes('solde') ||
-           c.includes('quantite') ||
-           c.includes('nbre_ventes') ||
-           c.includes('nb_ventes') ||
-           c.includes('panier_moyen') ||
-           c.includes('remise') ||
-           c.includes('pct');
-};
-
-export const formatValue = (key: string, value: unknown, t?: any): string => {
-    if (value === null || value === undefined) return '-';
-    
-    if (key === 'Mois' && t) {
-        return t(`common:months.${value}`, { defaultValue: String(value) });
-    }
-
-    if (key === 'total_general' && t) {
-        return t('common:total_general', { defaultValue: 'TOTAL GÉNÉRAL' });
-    }
-
-    if (key === 'source' && t) {
-        return t(`reports.results.sources.${value}`, { defaultValue: String(value) });
-    }
-
-    if (key === 'status' && t) {
-        return t(`common.status.${String(value).toLowerCase()}`, { defaultValue: String(value) });
-    }
-
-    if (typeof value === 'number') {
-        if (key.includes('taux') || key.includes('percent')) {
-            return formatNumber(value, 1) + ' %';
-        }
-        if (key.includes('montant') || key.includes('total') || key.includes('ca') || key.includes('price') || key.includes('cout') || key.includes('marge')) {
-            return formatCurrency(value);
-        }
-        return formatNumber(value);
-    }
-    if (typeof value === 'object' && value !== null) {
-        const obj = value as Record<string, unknown>;
-        if (obj.name) return String(obj.name);
-        if (obj.nom) return String(obj.nom);
-        if (obj.numero_facture) return String(obj.numero_facture);
-        return JSON.stringify(value);
-    }
-    
-    if (typeof value === 'string' && /^\d{4}-\d{2}-\d{2}T/.test(value)) {
-        const date = new Date(value);
-        if (!isNaN(date.getTime())) {
-            return date.toLocaleDateString('fr-FR');
-        }
-    }
-    
-    return String(value);
-};
-
-// Hook Implementation
 export function useCentreRapports() {
     const { t, i18n } = useTranslation(['reports', 'common']);
     const [searchParams] = useSearchParams();
@@ -474,23 +38,34 @@ export function useCentreRapports() {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
-    // Client search states
     const [clients, setClients] = useState<Client[]>([]);
     const [clientSearch, setClientSearch] = useState('');
     const [filteredClients, setFilteredClients] = useState<Client[]>([]);
     const [showClientDropdown, setShowClientDropdown] = useState(false);
     const [selectedClientName, setSelectedClientName] = useState('');
 
-    // Supplier search states
     const [suppliers, setSuppliers] = useState<Supplier[]>([]);
     const [supplierSearch, setSupplierSearch] = useState('');
     const [filteredSuppliers, setFilteredSuppliers] = useState<Supplier[]>([]);
     const [showSupplierDropdown, setShowSupplierDropdown] = useState(false);
     const [selectedSupplierName, setSelectedSupplierName] = useState('');
 
+    const [users, setUsers] = useState<User[]>([]);
+    const [userSearch, setUserSearch] = useState('');
+    const [filteredUsers, setFilteredUsers] = useState<User[]>([]);
+    const [showUserDropdown, setShowUserDropdown] = useState(false);
+    const [selectedUserName, setSelectedUserName] = useState('');
+
+    const [familles, setFamilles] = useState<Famille[]>([]);
+    const [familleSearch, setFamilleSearch] = useState('');
+    const [filteredFamilles, setFilteredFamilles] = useState<Famille[]>([]);
+    const [showFamilleDropdown, setShowFamilleDropdown] = useState(false);
+    const [selectedFamilleName, setSelectedFamilleName] = useState('');
+
+    const [presets, setPresets] = useState<Record<string, any>[]>([]);
+
     const apiBaseUrl = useMemo(() => import.meta.env.VITE_API_BASE_URL ?? '', []);
 
-    // Helpers
     const getCurrentMonth = useCallback(() => {
         const now = new Date();
         return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
@@ -521,7 +96,6 @@ export function useCentreRapports() {
         }
     }, []);
 
-    // Load clients
     useEffect(() => {
         const loadClients = async () => {
             try {
@@ -545,9 +119,34 @@ export function useCentreRapports() {
             }
         };
         loadSuppliers();
+
+        const loadUsers = async () => {
+            try {
+                const endpoint = apiBaseUrl ? `${apiBaseUrl}/api/users/` : '/api/users/';
+                const { data } = await axios.get(endpoint);
+                setUsers(data.results || data);
+            } catch (err) {
+                console.error('Erreur chargement utilisateurs:', err);
+            }
+        };
+        loadUsers();
+
+        const loadFamilles = async () => {
+            try {
+                const endpoint = apiBaseUrl ? `${apiBaseUrl}/api/familles/` : '/api/familles/';
+                const { data } = await axios.get(endpoint);
+                setFamilles(data.results || data);
+            } catch (err) {
+                console.error('Erreur chargement familles:', err);
+            }
+        };
+        loadFamilles();
+        
+        // Load Presets from LocalStorage
+        const savedPresets = localStorage.getItem('report_presets');
+        if (savedPresets) setPresets(JSON.parse(savedPresets));
     }, [apiBaseUrl]);
 
-    // Filter suppliers
     useEffect(() => {
         if (supplierSearch.length > 0) {
             const filtered = suppliers.filter(s =>
@@ -561,7 +160,6 @@ export function useCentreRapports() {
         }
     }, [supplierSearch, suppliers]);
 
-    // Filter clients
     useEffect(() => {
         if (clientSearch.length > 0) {
             const filtered = clients.filter(c =>
@@ -575,6 +173,61 @@ export function useCentreRapports() {
             setShowClientDropdown(false);
         }
     }, [clientSearch, clients]);
+
+    useEffect(() => {
+        if (userSearch.length > 0) {
+            const filtered = users.filter(u =>
+                u.username.toLowerCase().includes(userSearch.toLowerCase())
+            );
+            setFilteredUsers(filtered.slice(0, 10));
+            setShowUserDropdown(true);
+        } else {
+            setFilteredUsers([]);
+            setShowUserDropdown(false);
+        }
+    }, [userSearch, users]);
+
+    useEffect(() => {
+        if (familleSearch.length > 0) {
+            const filtered = familles.filter(f =>
+                f.nom.toLowerCase().includes(familleSearch.toLowerCase())
+            );
+            setFilteredFamilles(filtered.slice(0, 10));
+            setShowFamilleDropdown(true);
+        } else {
+            setFilteredFamilles([]);
+            setShowFamilleDropdown(false);
+        }
+    }, [familleSearch, familles]);
+
+    const savePreset = useCallback((name: string) => {
+        if (!selectedQuery) return;
+        const newPreset = {
+            id: Date.now().toString(),
+            name,
+            queryId: selectedQuery.id,
+            params: { ...params }
+        };
+        const updated = [...presets, newPreset];
+        setPresets(updated);
+        localStorage.setItem('report_presets', JSON.stringify(updated));
+        toast.success('Configuration enregistrée !');
+    }, [selectedQuery, params, presets]);
+
+    const deletePreset = useCallback((id: string) => {
+        const updated = presets.filter(p => p.id !== id);
+        setPresets(updated);
+        localStorage.setItem('report_presets', JSON.stringify(updated));
+    }, [presets]);
+
+    const applyPreset = useCallback((preset: any) => {
+        const query = QUERIES.find(q => q.id === preset.queryId);
+        if (query) {
+            setSelectedQuery(query);
+            setParams(preset.params);
+            toast.success(`Chargement de : ${preset.name}`);
+        }
+    }, []);
 
     const handleSelectQuery = useCallback((query: QueryDefinition) => {
         setSelectedQuery(query);
@@ -617,7 +270,6 @@ export function useCentreRapports() {
 
             const config = urlOverride ? {} : { params };
             
-            // Special case for direct Excel downloads
             if (selectedQuery.id === 'balance_stock' && !urlOverride) {
                 const response = await axios.get(endpoint, {
                     params: { ...params, lang: i18n.language },
@@ -640,7 +292,6 @@ export function useCentreRapports() {
                 return;
             }
 
-            // Special case: Stock Valuation Premium Print (Frontend)
             if (selectedQuery.id === 'recap_valeur_stock_pdf' && !urlOverride) {
                 const valorisation = params.valorisation || 'ACHAT';
                 const groupBy = params.group_by || '';
@@ -678,7 +329,7 @@ export function useCentreRapports() {
         } finally {
             setLoading(false);
         }
-    }, [selectedQuery, params, apiBaseUrl, extractPath]);
+    }, [selectedQuery, params, apiBaseUrl, extractPath, i18n.language, t]);
 
     const handlePageChange = useCallback((url: string | null) => {
         if (url) executeQuery(url);
@@ -736,10 +387,8 @@ export function useCentreRapports() {
                     } else if (typeof val === 'object' && val !== null) {
                         obj[header] = (val as { name?: string }).name || JSON.stringify(val);
                     } else if (typeof val === 'number') {
-                        // Rounding for Excel export as requested
                         obj[header] = Math.round(val);
                     } else {
-                        // Translation for values in Excel if needed (like months)
                         if (col === 'Mois') {
                             obj[header] = t(`common:months.${val}`, { defaultValue: String(val) });
                         } else {
@@ -749,6 +398,38 @@ export function useCentreRapports() {
                 });
                 return obj;
             });
+
+            // Summary Footer Logic
+            const footerRow: Record<string, string | number | boolean> = {};
+            columns.forEach((col, idx) => {
+                const header = formatColumnHeader(col, t);
+                if (idx === 0) {
+                    footerRow[header] = 'TOTAL / MOYENNE';
+                } else if (isSummableColumn(col)) {
+                    const total = results.reduce((sum: number, r: any) => sum + (Number(r[col]) || 0), 0);
+                    footerRow[header] = Math.round(total);
+                } else if (isPercentageColumn(col)) {
+                    // Try to calculate Global Weighted Rate for Excel
+                    let finalVal: string | number = '';
+                    if (col.toLowerCase().includes('marge') || col.toLowerCase().includes('ratio')) {
+                        const totalMarge = results.reduce((sum: number, r: any) => sum + (Number(r['marge'] || r['Marge'] || r['montant_marge'] || 0)), 0);
+                        const totalCA = results.reduce((sum: number, r: any) => sum + (Number(r['total_ht'] || r['Total HT'] || r['chiffre_affaires'] || r['prix_vente'] || r['Prix Vente'] || 0)), 0);
+                        if (totalCA > 0) {
+                            finalVal = ((totalMarge / totalCA) * 100).toFixed(1) + ' % (Global)';
+                        }
+                    }
+                    
+                    if (!finalVal) {
+                        const total = results.reduce((sum: number, r: any) => sum + (Number(r[col]) || 0), 0);
+                        const avg = results.length > 0 ? (total / results.length) : 0;
+                        finalVal = avg.toFixed(1) + ' % (Moy)';
+                    }
+                    footerRow[header] = finalVal;
+                } else {
+                    footerRow[header] = '';
+                }
+            });
+            data.push(footerRow);
         } else if (typeof results === 'object' && results !== null && !Array.isArray(results)) {
             Object.entries(results).forEach(([key, value]) => {
                 const formattedKey = formatColumnHeader(key);
@@ -774,9 +455,8 @@ export function useCentreRapports() {
             title: selectedQuery.name,
         });
         toast.success(t('results.export_success', { filename }));
-    }, [results, selectedQuery, t, params, apiBaseUrl]);
+    }, [results, selectedQuery, t, params, apiBaseUrl, pharmacySettings]);
 
-    // Auto-select from URL
     useEffect(() => {
         const reportId = searchParams.get('report');
         if (reportId && !selectedQuery) {
@@ -802,20 +482,48 @@ export function useCentreRapports() {
             supplierSearch,
             filteredSuppliers,
             showSupplierDropdown,
-            selectedSupplierName
+            selectedSupplierName,
+            userSearch,
+            filteredUsers,
+            showUserDropdown,
+            selectedUserName,
+            familleSearch,
+            filteredFamilles,
+            showFamilleDropdown,
+            selectedFamilleName,
+            presets
         },
         actions: {
             handleSelectQuery,
+            setParams,
             executeQuery,
             handlePageChange,
             downloadExcel,
-            setParams,
-            setClientSearch,
-            setShowClientDropdown,
-            setSelectedClientName,
-            setSupplierSearch,
-            setShowSupplierDropdown,
-            setSelectedSupplierName,
+            clientActions: {
+                setQuery: setClientSearch,
+                setShowDropdown: setShowClientDropdown,
+                setSelectedName: setSelectedClientName
+            },
+            supplierActions: {
+                setQuery: setSupplierSearch,
+                setShowDropdown: setShowSupplierDropdown,
+                setSelectedName: setSelectedSupplierName
+            },
+            userActions: {
+                setQuery: setUserSearch,
+                setShowDropdown: setShowUserDropdown,
+                setSelectedName: setSelectedUserName
+            },
+            familleActions: {
+                setQuery: setFamilleSearch,
+                setShowDropdown: setShowFamilleDropdown,
+                setSelectedName: setSelectedFamilleName
+            },
+            presets: {
+                save: savePreset,
+                delete: deletePreset,
+                apply: applyPreset
+            },
             safeDate
         }
     };
