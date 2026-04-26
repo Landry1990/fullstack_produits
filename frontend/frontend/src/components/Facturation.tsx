@@ -213,17 +213,17 @@ export default function Facturation() {
         </div>
 
         {/* RIGHT : Panier */}
-        <aside className="w-full lg:w-[400px] xl:w-[440px] pos-checkout flex flex-col shadow-2xl z-10 border-t lg:border-t-0 lg:border-l border-white/5 overflow-hidden max-h-[55vh] lg:max-h-none">
+        <aside className="w-full lg:w-[400px] xl:w-[440px] pos-checkout flex flex-col z-10 border-t lg:border-t-0 overflow-hidden max-h-[55vh] lg:max-h-none">
 
           {/* Panier header */}
-          <div className="px-4 py-3 bg-white/5 border-b border-white/10 flex items-center justify-between shrink-0">
-            <h2 className="font-black text-sm text-white flex items-center gap-2 uppercase tracking-widest">
+          <div className="px-4 py-3 bg-base-200/50 border-b border-base-300 flex items-center justify-between shrink-0">
+            <h2 className="font-black text-sm text-base-content flex items-center gap-2 uppercase tracking-widest">
               <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
               </svg>
               {hook.t('facturation:cart.title')}
             </h2>
-            <span className={`text-xs font-black px-2 py-0.5 rounded-lg ${hook.lignesFacture.length > 0 ? 'bg-primary text-white' : 'bg-white/10 text-white/40'}`}>
+            <span className={`text-xs font-black px-2 py-0.5 rounded-lg ${hook.lignesFacture.length > 0 ? 'bg-primary text-white' : 'bg-base-200 text-base-content/40'}`}>
               {hook.lignesFacture.length}
             </span>
           </div>
@@ -250,7 +250,7 @@ export default function Facturation() {
           </div>
 
           {/* Totaux + actions */}
-          <div className="shrink-0 p-3 sm:p-4 border-t border-white/10 bg-black/20 backdrop-blur-md">
+          <div className="shrink-0 p-3 sm:p-4 border-t border-base-300 bg-base-200/50">
             <TotalsSection
               totalHT={hook.totals.totalHt}
               remiseGlobale={hook.ui.remiseGlobale}
