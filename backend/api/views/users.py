@@ -301,10 +301,14 @@ class UserViewSet(viewsets.ModelViewSet):
     @action(detail=False, methods=['post'], permission_classes=[IsAuthenticated])
     def logout(self, request):
         """
-        Record logout time for the current user.
+        Record logout time for the current user and revoke auth tokens.
         """
         from django.utils import timezone
         today = timezone.now().date()
+        
+        # Révocation explicite des tokens pour invalider immédiatement la session API.
+        # Idempotent: delete() retourne 0 si aucun token n'existe, sans erreur.
+        Token.objects.filter(user=request.user).delete()
         
         try:
             session = UserDailySession.objects.get(user=request.user, date=today)

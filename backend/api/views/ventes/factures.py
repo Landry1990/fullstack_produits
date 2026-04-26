@@ -26,7 +26,7 @@ from api.models import (
 )
 from api.services import SalesService
 from api.serializers import FactureSerializer, FacturePrintSerializer
-from api.serializers_optimized import FactureListSerializer, FactureDetailSerializer
+from api.serializers_optimized import FactureListSerializer, FactureDetailSerializer, FactureOmnisearchSerializer
 from api.serializer_mixins import OptimizedSerializerMixin
 from api.audit_helpers import log_audit
 from api.sudo_utils import validate_sudo_mode
@@ -130,9 +130,11 @@ class FactureViewSet(OptimizedSerializerMixin, viewsets.ModelViewSet):
             if not include_pending:
                 queryset = queryset.annotate(num_p=Count('paiements')).exclude(status=Facture.Status.VALIDEE, num_p=0)
 
-        # Add prefetch only for detail view where products/payments are shown
-        if self.action == 'retrieve':
-            queryset = queryset.prefetch_related('produits', 'paiements')
+        # Add prefetch only for detail view where products/payments are shown, OR omnisearch, OR printing
+        is_omnisearch = self.request.query_params.get('layout') == 'omnisearch'
+        is_printing = self.action in ['retrieve', 'imprimer', 'imprimer_proforma', 'generer_avoir']
+        if is_printing or is_omnisearch:
+            queryset = queryset.prefetch_related('produits__produit', 'paiements')
             
         return queryset
     serializer_class = FactureSerializer
@@ -149,6 +151,11 @@ class FactureViewSet(OptimizedSerializerMixin, viewsets.ModelViewSet):
     }
     search_fields = ['numero_facture', 'client__name', 'produits__produit__name']
     
+    def get_serializer_class(self):
+        if self.request.query_params.get('layout') == 'omnisearch':
+            return FactureOmnisearchSerializer
+        return super().get_serializer_class()
+
     # Serializers optimisés
     list_serializer_class = FactureListSerializer
     detail_serializer_class = FactureDetailSerializer
@@ -201,9 +208,24 @@ class FactureViewSet(OptimizedSerializerMixin, viewsets.ModelViewSet):
         """
         Action ATOMIQUE pour finaliser une vente complète via SalesService.
         """
-        data = request.data
+        import json
+        
+        # Determine if data came in as JSON or FormData
+        if 'multipart/form-data' in request.content_type:
+            # Reconstruct data from 'json_data' field if present, otherwise use request.data
+            json_str = request.data.get('json_data')
+            if json_str:
+                data = json.loads(json_str)
+            else:
+                # Fallback: maybe they just sent a flat multipart
+                data = request.data
+        else:
+            data = request.data
+            
         user = request.user
         centralized = data.get('centralized_cash_register', True)
+        
+        image_file = request.FILES.get('image_ordonnance')
         
         # Enforce Sudo for non-positive amounts
         # Robust total TTC extraction
@@ -245,7 +267,7 @@ class FactureViewSet(OptimizedSerializerMixin, viewsets.ModelViewSet):
             if 'validation_user' not in data and 'validation_user' in locals():
                  data['validation_user'] = validation_user
 
-            facture = SalesService.finalize_sale(user, data, centralized=centralized)
+            facture = SalesService.finalize_sale(user, data, centralized=centralized, image_file=image_file)
             
             # Log d'audit - Safe formatting for Decimal
             total_display = float(facture.total_ttc)
@@ -616,9 +638,9 @@ class FactureViewSet(OptimizedSerializerMixin, viewsets.ModelViewSet):
         if date_lte:
             base_qs = base_qs.filter(date__lte=date_lte)
 
-        # Base filters for related models
-        vendeur_qs = Facture.objects.filter(status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE]).annotate(num_paiements=Count('paiements')).exclude(status=Facture.Status.VALIDEE, num_paiements=0)
-        produit_qs = FactureProduit.objects.filter(facture__status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE]).annotate(num_paiements=Count('facture__paiements')).exclude(facture__status=Facture.Status.VALIDEE, num_paiements=0)
+        # Base filters for related models - Added select_related to avoid N+1 during aggregation/access
+        vendeur_qs = Facture.objects.filter(status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE]).annotate(num_paiements=Count('paiements')).exclude(status=Facture.Status.VALIDEE, num_paiements=0).select_related('created_by')
+        produit_qs = FactureProduit.objects.filter(facture__status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE]).annotate(num_paiements=Count('facture__paiements')).exclude(facture__status=Facture.Status.VALIDEE, num_paiements=0).select_related('produit')
 
         if date_gte:
             vendeur_qs = vendeur_qs.filter(date__gte=date_gte)

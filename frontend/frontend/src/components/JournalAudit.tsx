@@ -179,10 +179,10 @@ const JournalAudit: React.FC = () => {
     };
 
     return (
-        <div className="p-6 max-w-7xl mx-auto">
+        <div className="p-3 sm:p-6 max-w-7xl mx-auto">
           <div className="mb-6">
-            <h2 className="text-3xl font-bold text-base-content mb-2">📋 {t('title')}</h2>
-            <p className="text-base-content/80">{t('subtitle')}</p>
+            <h2 className="text-2xl sm:text-3xl font-bold text-base-content mb-2">📋 {t('title')}</h2>
+            <p className="text-sm sm:text-base text-base-content/80">{t('subtitle')}</p>
           </div>
           
           {error && (
@@ -220,17 +220,17 @@ const JournalAudit: React.FC = () => {
     
           {/* Filtres compacts */}
           <div className="bg-base-100 rounded-2xl shadow-sm border border-base-200 overflow-hidden mb-6">
-            <div className="p-4 bg-base-200/50 flex flex-wrap items-center justify-between gap-4 border-b border-base-200">
+            <div className="p-4 bg-base-200/50 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between border-b border-base-200">
                 <div className="flex items-center gap-2">
                     <span className="p-2 bg-primary/10 rounded-lg">🔍</span>
                     <h3 className="font-black text-sm uppercase tracking-wider opacity-70">{t('filters.title')}</h3>
                 </div>
-                <div className="flex items-center gap-2">
-                    <button onClick={() => setShowStats(!showStats)} className={`btn btn-sm ${showStats ? 'btn-primary' : 'btn-ghost'} rounded-lg font-bold`}>
+                <div className="flex flex-wrap items-stretch sm:items-center gap-2 w-full sm:w-auto">
+                    <button onClick={() => setShowStats(!showStats)} className={`btn btn-sm flex-1 sm:flex-none ${showStats ? 'btn-primary' : 'btn-ghost'} rounded-lg font-bold`}>
                         {showStats ? t('filters.hide_stats') : t('filters.show_stats')}
                     </button>
-                    <button onClick={handleExportCSV} className="btn btn-sm btn-success text-white rounded-lg font-bold">{t('filters.export')}</button>
-                    <button onClick={handleResetFilters} className="btn btn-sm btn-ghost rounded-lg opacity-50 hover:opacity-100">{t('filters.reset')}</button>
+                    <button onClick={handleExportCSV} className="btn btn-sm btn-success text-white rounded-lg font-bold flex-1 sm:flex-none">{t('filters.export')}</button>
+                    <button onClick={handleResetFilters} className="btn btn-sm btn-ghost rounded-lg opacity-50 hover:opacity-100 flex-1 sm:flex-none">{t('filters.reset')}</button>
                 </div>
             </div>
 
@@ -267,14 +267,14 @@ const JournalAudit: React.FC = () => {
             </div>
           </div>
             {/* View Toggle */}
-          <div className="flex justify-between items-center mb-4">
+          <div className="flex flex-col gap-3 sm:flex-row sm:justify-between sm:items-center mb-4">
               <div className="flex items-center gap-2">
                   <h3 className="font-black text-xs uppercase opacity-40">{t('view.flux')}</h3>
                   <div className="badge badge-ghost font-bold text-[10px]">{filteredLogs.length} {t('view.items')}</div>
               </div>
-              <div className="join bg-base-100 shadow-sm border border-base-200 p-0.5 rounded-xl">
-                  <button onClick={() => setViewMode('cards')} className={`join-item btn btn-xs px-4 rounded-lg font-bold ${viewMode === 'cards' ? 'btn-neutral' : 'btn-ghost opacity-40'}`}>{t('view.cards_btn')}</button>
-                    <button onClick={() => setViewMode('table')} className={`join-item btn btn-xs px-4 rounded-lg font-bold ${viewMode === 'table' ? 'btn-neutral' : 'btn-ghost opacity-40'}`}>{t('view.table_btn')}</button>
+              <div className="join bg-base-100 shadow-sm border border-base-200 p-0.5 rounded-xl w-full sm:w-auto justify-center">
+                  <button onClick={() => setViewMode('cards')} className={`join-item btn btn-xs px-4 rounded-lg font-bold flex-1 sm:flex-none ${viewMode === 'cards' ? 'btn-neutral' : 'btn-ghost opacity-40'}`}>{t('view.cards_btn')}</button>
+                    <button onClick={() => setViewMode('table')} className={`join-item btn btn-xs px-4 rounded-lg font-bold flex-1 sm:flex-none ${viewMode === 'table' ? 'btn-neutral' : 'btn-ghost opacity-40'}`}>{t('view.table_btn')}</button>
               </div>
           </div>
 
@@ -357,8 +357,8 @@ const JournalAudit: React.FC = () => {
               })}
             </div>
           ) : (
-            <div className="bg-base-100 rounded-3xl border border-base-200 shadow-sm overflow-hidden">
-              <table className="table w-full">
+            <div className="bg-base-100 rounded-3xl border border-base-200 shadow-sm overflow-x-auto">
+              <table className="table w-full min-w-[720px]">
                 <thead>
                   <tr className="bg-base-200/50">
                     <th className="font-black text-[10px] uppercase opacity-50 pl-6">{t('table.timestamp')}</th>

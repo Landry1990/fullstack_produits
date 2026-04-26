@@ -888,3 +888,96 @@ class StatistiquesViewSet(viewsets.ViewSet):
             
         return Response(results)
 
+    @action(detail=False, methods=['get'])
+    def stock_health(self, request):
+        """
+        Analyse experte de la santé du stock.
+        Calcul du capital dormant, des pertes sur ruptures et du score de santé global.
+        """
+        # 1. Capital Dormant (Produits sans ventes depuis 90 jours)
+        today = timezone.now().date()
+        dormant_days = 90
+        limit_date = today - timedelta(days=dormant_days)
+        
+        dormant_qs = Produit.objects.filter(stock__gt=0, is_active=True).filter(
+            Q(dernier_vente__lte=limit_date) | 
+            (Q(dernier_vente__isnull=True) & Q(dernier_achat__lte=limit_date)) |
+            (Q(dernier_vente__isnull=True) & Q(dernier_achat__isnull=True) & Q(created_at__date__lte=limit_date))
+        )
+        
+        dead_stock_value = dormant_qs.aggregate(
+            total=Coalesce(Sum(ExpressionWrapper(F('stock') * F('pmp'), output_field=DecimalField())), Decimal('0'))
+        )['total']
+        
+        dead_stock_count = dormant_qs.count()
+
+        # 2. Pertes Estimées sur Ruptures (Ventes manquées)
+        rupture_qs = Produit.objects.filter(stock__lte=0, rotation_moyenne__gt=0, is_active=True)
+        
+        lost_revenue_monthly = rupture_qs.aggregate(
+            total=Coalesce(Sum(ExpressionWrapper(F('rotation_moyenne') * F('selling_price'), output_field=DecimalField())), Decimal('0'))
+        )['total']
+        
+        lost_margin_monthly = rupture_qs.aggregate(
+            total=Coalesce(Sum(ExpressionWrapper(F('rotation_moyenne') * (F('selling_price') - F('pmp')), output_field=DecimalField())), Decimal('0'))
+        )['total']
+
+        # 3. Ruptures Imminentes (< 7 jours de stock)
+        critical_soon_qs = Produit.objects.filter(
+            is_active=True,
+            rotation_moyenne__gt=0,
+            stock__gt=0
+        ).annotate(
+            days_left=ExpressionWrapper(F('stock') * Value(30.0) / F('rotation_moyenne'), output_field=DecimalField())
+        ).filter(days_left__lt=7)
+        
+        critical_soon_count = critical_soon_qs.count()
+        critical_soon_value = critical_soon_qs.aggregate(
+            total=Coalesce(Sum(ExpressionWrapper(F('stock') * F('pmp'), output_field=DecimalField())), Decimal('0'))
+        )['total']
+
+        # 4. Score de Santé Global
+        total_active_count = Produit.objects.filter(is_active=True).count() or 1
+        rupture_total_count = Produit.objects.filter(is_active=True, stock__lte=0).count()
+        availability_rate = (1 - (float(rupture_total_count) / float(total_active_count))) * 100
+        
+        total_stock_value = Produit.objects.filter(is_active=True).aggregate(
+            total=Coalesce(Sum(ExpressionWrapper(F('stock') * F('pmp'), output_field=DecimalField())), Decimal('0'))
+        )['total'] or Decimal('1')
+        rotation_rate = (1 - (float(dead_stock_value) / float(total_stock_value))) * 100
+        
+        # --- Calcul de la santé du stock avec poids configurables ---
+        from api.models.settings import PharmacySettings
+        settings = PharmacySettings.objects.first()
+        
+        # Poids par défaut si non trouvés (sécurité)
+        avail_weight = Decimal(str(settings.availability_weight)) / Decimal('100.0') if settings else Decimal('0.6')
+        rot_weight = Decimal(str(settings.rotation_weight)) / Decimal('100.0') if settings else Decimal('0.4')
+
+        # Score final pondéré (converti en float pour le JSON)
+        health_score = (Decimal(str(availability_rate)) * avail_weight) + (Decimal(str(rotation_rate)) * rot_weight)
+        
+        return Response({
+            'health_score': round(float(health_score), 1),
+            'availability_rate': round(float(availability_rate), 1),
+            'rotation_rate': round(float(rotation_rate), 1),
+            'availability_weight': int(avail_weight * 100),
+            'rotation_weight': int(rot_weight * 100),
+            'dead_stock': {
+                'value': float(dead_stock_value),
+                'count': dead_stock_count,
+                'days_threshold': dormant_days
+            },
+            'missed_sales': {
+                'monthly_revenue': float(lost_revenue_monthly),
+                'monthly_margin': float(lost_margin_monthly),
+                'daily_revenue': float(lost_revenue_monthly) / 30.0
+            },
+            'critical_alerts': {
+                'soon_out_of_stock_count': critical_soon_count,
+                'soon_out_of_stock_value': float(critical_soon_value)
+            },
+            'total_stock_value': float(total_stock_value)
+        })
+
+

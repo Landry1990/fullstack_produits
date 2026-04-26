@@ -84,6 +84,31 @@ export default function Perimes() {
 
   const stockLotsEndpoint = apiBaseUrl ? `${apiBaseUrl}/api/stock-lots/` : '/api/stock-lots/'
 
+  const toLocalISODate = (date: Date) => {
+    const y = date.getFullYear()
+    const m = String(date.getMonth() + 1).padStart(2, '0')
+    const d = String(date.getDate()).padStart(2, '0')
+    return `${y}-${m}-${d}`
+  }
+
+  const getExpiryEndOfMonthISO = (dateString: string) => {
+    const [datePart] = dateString.split('T')
+    const [yStr, mStr] = datePart.split('-')
+    const y = Number(yStr)
+    const m = Number(mStr)
+    if (!y || !m) return null
+    const lastDay = new Date(y, m, 0).getDate()
+    return `${yStr}-${mStr}-${String(lastDay).padStart(2, '0')}`
+  }
+
+  const isExpiredByEndOfMonth = (dateString: string) => {
+    if (!dateString) return false
+    const expiryEom = getExpiryEndOfMonthISO(dateString)
+    if (!expiryEom) return false
+    const todayStr = toLocalISODate(new Date())
+    return expiryEom < todayStr
+  }
+
   useEffect(() => {
     fetchStats()
     fetchLots()
@@ -140,8 +165,8 @@ export default function Perimes() {
       const today = new Date()
       const thresholdDate = new Date()
       thresholdDate.setDate(today.getDate() + filterDays)
-      
-      const dateStr = thresholdDate.toISOString().split('T')[0]
+
+      const dateStr = toLocalISODate(thresholdDate)
       
       const response = await axios.get<StockLot[]>(stockLotsEndpoint, {
         params: {
@@ -154,8 +179,7 @@ export default function Perimes() {
       let fetchedLots: StockLot[] = Array.isArray(data) ? data : (data.results || [])
       
       if (showExpiredOnly) {
-         const todayStr = new Date().toISOString().split('T')[0]
-         fetchedLots = fetchedLots.filter(l => l.date_expiration && l.date_expiration < todayStr)
+         fetchedLots = fetchedLots.filter(l => !!l.date_expiration && isExpiredByEndOfMonth(l.date_expiration))
       }
       
       setLots(fetchedLots)
@@ -302,15 +326,14 @@ export default function Perimes() {
 
   const formatDate = (dateString: string) => {
     if (!dateString) return '-'
-    const date = new Date(dateString)
-    const month = (date.getMonth() + 1).toString().padStart(2, '0')
-    const year = date.getFullYear().toString().slice(-2)
-    return `${month}/${year}`
+    const [datePart] = dateString.split('T')
+    const [, m, y] = datePart.split('-')
+    if (!m || !y) return dateString
+    return `${m}/${y.slice(-2)}`
   }
 
   const isExpired = (dateString: string) => {
-    if (!dateString) return false
-    return new Date(dateString) < new Date()
+    return isExpiredByEndOfMonth(dateString)
   }
 
   // Calcul urgence pour couleur de la carte de prévision

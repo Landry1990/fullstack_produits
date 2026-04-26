@@ -86,12 +86,12 @@ class FinanceStatsViewSet(viewsets.ViewSet):
             comparaison_n1.append(n1_map.get(key, 0))
             current = current + relativedelta(months=1)
         
-        # Calculate year-over-year growth
-        total_current = sum(data)
-        total_n1 = sum(comparaison_n1)
+        # Calculate year-over-year growth using Decimals for precision
+        total_current_dec = Decimal(str(total_current))
+        total_n1_dec = Decimal(str(total_n1))
         croissance = 0
-        if total_n1 > 0:
-            croissance = round(((total_current - total_n1) / total_n1) * 100, 1)
+        if total_n1_dec > 0:
+            croissance = round(float(((total_current_dec - total_n1_dec) / total_n1_dec) * Decimal('100.0')), 1)
         
         return Response({
             'labels': labels,
@@ -134,7 +134,7 @@ class FinanceStatsViewSet(viewsets.ViewSet):
                 'ca': float(item['ca']),
                 'cout': float(item['cout']),
                 'marge': float(item['marge']),
-                'taux': round((float(item['marge']) / float(item['ca'])) * 100, 1) if item['ca'] > 0 else 0
+                'taux': round(float((item['marge'] / item['ca']) * Decimal('100.0')), 1) if item['ca'] > 0 else 0
             }
         
         # Build response

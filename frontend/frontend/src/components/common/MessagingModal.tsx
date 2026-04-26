@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Send, MessageSquare, Trash2, Edit2, Plus, Bell, Clock, CheckCheck, Check, Archive, Reply, Paperclip, X } from 'lucide-react';
+import { Send, MessageSquare, Trash2, Edit2, Plus, Bell, Clock, CheckCheck, Check, Archive, Reply, Paperclip, X, Shield } from 'lucide-react';
 import communicationService from '../../services/communicationService';
 import type { InternalMessage, MessageTemplate } from '../../services/communicationService';
 import userService from '../../services/userService';
@@ -19,7 +19,9 @@ interface MessagingModalProps {
 
 export default function MessagingModal({ isOpen, onClose, currentUser, onMessageRead }: MessagingModalProps) {
   const { t } = useTranslation(['messaging', 'common']);
-  const [activeTab, setActiveTab] = useState<'received' | 'sent' | 'archived' | 'templates' | 'new'>('received');
+  const [activeTab, setActiveTab] = useState<'received' | 'sent' | 'archived' | 'templates' | 'new' | 'supervision'>('received');
+  const [allMessages, setAllMessages] = useState<InternalMessage[]>([]);
+  const isAdmin = currentUser?.is_staff || currentUser?.is_superuser;
   const [messages, setMessages] = useState<InternalMessage[]>([]);
   const [templates, setTemplates] = useState<MessageTemplate[]>([]);
   const [users, setUsers] = useState<SimpleUser[]>([]);
@@ -37,11 +39,18 @@ export default function MessagingModal({ isOpen, onClose, currentUser, onMessage
 
   const loadData = async () => {
     try {
-      const [msgRes, tempRes, userRes] = await Promise.all([
+      const requests: Promise<any>[] = [
         communicationService.getMessages(),
         communicationService.getTemplates(),
         userService.getAll()
-      ]);
+      ];
+      // Admin: charger aussi tous les messages pour la supervision
+      if (isAdmin) {
+        requests.push(communicationService.getMessages({ all: 'true' }));
+      }
+      
+      const results = await Promise.all(requests);
+      const [msgRes, tempRes, userRes] = results;
       
       const msgs = Array.isArray(msgRes.data) ? msgRes.data : (msgRes.data.results || []);
       const temps = Array.isArray(tempRes.data) ? tempRes.data : (tempRes.data.results || []);
@@ -49,6 +58,11 @@ export default function MessagingModal({ isOpen, onClose, currentUser, onMessage
       setMessages(msgs);
       setTemplates(temps);
       setUsers(userRes.filter(u => u.id !== currentUser?.id));
+      
+      if (isAdmin && results[3]) {
+        const allMsgs = Array.isArray(results[3].data) ? results[3].data : (results[3].data.results || []);
+        setAllMessages(allMsgs);
+      }
     } catch (error) {
       console.error("Error loading messaging data", error);
       toast.error(t('common:error_loading'));
@@ -217,6 +231,16 @@ export default function MessagingModal({ isOpen, onClose, currentUser, onMessage
             <Edit2 size={18} />
             <span className="font-medium text-xs md:text-sm">{t('tabs.templates')}</span>
           </button>
+          {isAdmin && (
+            <button 
+              onClick={() => setActiveTab('supervision')}
+              className={`flex items-center gap-2 md:gap-3 px-3 md:px-4 py-2 md:py-3 rounded-xl transition-all whitespace-nowrap flex-1 md:flex-none ${activeTab === 'supervision' ? 'bg-warning text-warning-content shadow-md' : 'hover:bg-base-200'}`}
+            >
+              <Shield size={18} />
+              <span className="font-medium text-xs md:text-sm">Supervision</span>
+              <span className="badge badge-warning badge-xs ml-auto">{allMessages.length}</span>
+            </button>
+          )}
           
           <div className="hidden md:block mt-auto pt-4 border-t border-base-300">
             <button 
@@ -291,13 +315,13 @@ export default function MessagingModal({ isOpen, onClose, currentUser, onMessage
                       </div>
                       <p className="text-sm text-base-content/80 whitespace-pre-wrap">{m.content}</p>
                       
-                      {m.attachment && (
+                      {m.attachment_url && (
                         <div className="mt-3">
                           <div 
                             className="inline-flex items-center justify-center rounded-lg border bg-base-100 overflow-hidden cursor-zoom-in hover:opacity-90 max-w-xs"
-                            onClick={(e) => { e.stopPropagation(); setZoomImage(m.attachment as string); }}
+                            onClick={(e) => { e.stopPropagation(); setZoomImage(m.attachment_url as string); }}
                           >
-                           <img src={m.attachment} alt="Pièce jointe" className="max-h-32 object-contain hidden md:block" onError={(e) => e.currentTarget.style.display='none'} />
+                           <img src={m.attachment_url} alt="Pièce jointe" className="max-h-32 object-contain hidden md:block" onError={(e) => e.currentTarget.style.display='none'} />
                            <div className="p-2 px-3 text-xs md:hidden flex items-center gap-2 font-bold text-primary"><Paperclip size={14}/> Voir la pièce jointe</div>
                           </div>
                         </div>
@@ -386,13 +410,69 @@ export default function MessagingModal({ isOpen, onClose, currentUser, onMessage
                       </div>
                       <p className="text-sm text-base-content/80 whitespace-pre-wrap">{m.content}</p>
                       
-                      {m.attachment && (
+                      {m.attachment_url && (
                         <div className="mt-3">
                           <div 
                             className="inline-flex items-center justify-center rounded-lg border bg-base-100 overflow-hidden cursor-zoom-in hover:opacity-90 max-w-xs"
-                            onClick={(e) => { e.stopPropagation(); setZoomImage(m.attachment as string); }}
+                            onClick={(e) => { e.stopPropagation(); setZoomImage(m.attachment_url as string); }}
                           >
-                           <img src={m.attachment} alt="Pièce jointe" className="max-h-32 object-contain hidden md:block" onError={(e) => e.currentTarget.style.display='none'} />
+                           <img src={m.attachment_url} alt="Pièce jointe" className="max-h-32 object-contain hidden md:block" onError={(e) => e.currentTarget.style.display='none'} />
+                           <div className="p-2 px-3 text-xs md:hidden flex items-center gap-2 font-bold text-primary"><Paperclip size={14}/> Voir la pièce jointe</div>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+          )}
+
+          {activeTab === 'supervision' && isAdmin && (
+            <div className="space-y-4">
+              <h4 className="text-lg font-bold flex items-center gap-2 mb-6 sticky top-0 bg-base-100 z-10 pb-2">
+                <Shield className="w-5 h-5 text-warning" />
+                Supervision — Tous les messages
+                <span className="badge badge-warning badge-sm">{allMessages.length}</span>
+              </h4>
+              <div className="grid gap-3">
+                {allMessages.length === 0 ? (
+                  <div className="text-center py-10 text-base-content/40 italic">Aucun message dans le système</div>
+                ) : (
+                  allMessages.map((m: InternalMessage) => (
+                    <div 
+                      key={m.id} 
+                      className="p-4 rounded-2xl border bg-base-200/30 border-base-300"
+                    >
+                      {m.parent_content && (
+                        <div className="mb-3 p-2 bg-base-200/80 rounded border-l-2 border-primary/50 text-xs">
+                           <span className="font-bold opacity-70">En réponse à {m.parent_sender_name} :</span>
+                           <p className="opacity-60 truncate">{m.parent_content}</p>
+                        </div>
+                      )}
+                      <div className="flex justify-between items-start mb-2">
+                        <div className="flex items-center gap-2 min-w-0">
+                          <div className="w-8 h-8 rounded-full bg-warning/20 text-warning flex items-center justify-center font-bold text-xs uppercase shrink-0 shadow-inner">
+                            {m.sender_name.charAt(0)}
+                          </div>
+                          <div className="truncate flex flex-col items-start">
+                            <span className="font-bold text-sm truncate block leading-tight">{m.sender_name}</span>
+                            <span className="text-[10px] text-base-content/50">→ {m.recipient_name}</span>
+                          </div>
+                        </div>
+                        <span className="text-[10px] text-base-content/50 flex items-center gap-1 shrink-0">
+                          <Clock size={10} />
+                          {format(new Date(m.created_at), 'dd/MM HH:mm', { locale: fr })}
+                        </span>
+                      </div>
+                      <p className="text-sm text-base-content/80 whitespace-pre-wrap">{m.content}</p>
+                      {m.attachment_url && (
+                        <div className="mt-3">
+                          <div 
+                            className="inline-flex items-center justify-center rounded-lg border bg-base-100 overflow-hidden cursor-zoom-in hover:opacity-90 max-w-xs"
+                            onClick={() => setZoomImage(m.attachment_url as string)}
+                          >
+                           <img src={m.attachment_url} alt="Pièce jointe" className="max-h-32 object-contain hidden md:block" onError={(e) => e.currentTarget.style.display='none'} />
                            <div className="p-2 px-3 text-xs md:hidden flex items-center gap-2 font-bold text-primary"><Paperclip size={14}/> Voir la pièce jointe</div>
                           </div>
                         </div>

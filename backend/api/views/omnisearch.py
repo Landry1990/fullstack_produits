@@ -75,7 +75,10 @@ class GlobalSearchView(APIView):
             Q(numero_facture__icontains=query) |
             Q(fournisseur__name__icontains=query) |
             Q(fournisseur_nom__icontains=query)
-        ).select_related('fournisseur', 'closed_by').prefetch_related('produits__produit').annotate(
+        ).select_related('fournisseur', 'closed_by').prefetch_related(
+            'produits__produit',
+            'produits__stock_lot'  # Ajout pour éviter N+1 sur instance.stock_lot.all()
+        ).annotate(
             total_annotated=Coalesce(Subquery(total_items_subquery), Value(0, output_field=DecimalField())),
             montant_paye_annotated=Coalesce(Subquery(paid_items_subquery), Value(0, output_field=DecimalField())),
             items_count=Coalesce(Subquery(count_items_subquery), 0)

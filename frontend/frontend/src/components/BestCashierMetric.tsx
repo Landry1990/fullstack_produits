@@ -20,21 +20,24 @@ interface CashierPerformance {
 interface BestCashierMetricProps {
     month: string;
     year: string;
+    userId?: string;
 }
 
-const BestCashierMetric: React.FC<BestCashierMetricProps> = ({ month, year }) => {
+const BestCashierMetric: React.FC<BestCashierMetricProps> = ({ month, year, userId }) => {
     const { t } = useTranslation(['cash_closings', 'common']);
     const [performances, setPerformances] = useState<CashierPerformance[]>([]);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
         fetchPerformances();
-    }, [month, year]);
+    }, [month, year, userId]);
 
     const fetchPerformances = async () => {
         setLoading(true);
         try {
-            const response = await axios.get(`/api/clotures-caisse/performances_caissiers/?month=${month}&year=${year}`);
+            const params = new URLSearchParams({ month, year })
+            if (userId) params.append('user_id', userId)
+            const response = await axios.get(`/api/clotures-caisse/performances_caissiers/?${params.toString()}`);
             setPerformances(response.data);
         } catch (err) {
             console.error("Error fetching cashier performances:", err);

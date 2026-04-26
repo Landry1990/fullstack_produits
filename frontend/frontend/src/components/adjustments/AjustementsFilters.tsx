@@ -36,7 +36,7 @@ export const AjustementsFilters: React.FC<AjustementsFiltersProps> = ({
     const hasFilters = searchQuery || dateStart || dateEnd || filterReasonType;
 
     return (
-        <div className="flex flex-col lg:flex-row gap-6 p-6">
+        <div className="flex flex-col lg:flex-row gap-6 p-4 sm:p-6">
             <div className="flex-1 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                 {/* Search */}
                 <div className="space-y-1.5">
@@ -103,17 +103,17 @@ export const AjustementsFilters: React.FC<AjustementsFiltersProps> = ({
                 </div>
             </div>
 
-            <div className="flex flex-row lg:flex-col justify-end gap-2 shrink-0 border-t lg:border-t-0 lg:border-l border-base-200 pt-4 lg:pt-0 lg:pl-6">
+            <div className="flex flex-col lg:flex-col justify-stretch gap-2 shrink-0 w-full lg:w-auto border-t lg:border-t-0 lg:border-l border-base-200 pt-4 lg:pt-0 lg:pl-6">
                 <button 
                     onClick={onRefresh} 
-                    className={`btn btn-sm ${loading ? 'btn-disabled' : 'btn-primary'} gap-2 shadow-sm`}
+                    className={`btn btn-sm w-full sm:w-auto ${loading ? 'btn-disabled' : 'btn-primary'} gap-2 shadow-sm`}
                 >
                     {loading ? <span className="loading loading-spinner loading-xs"></span> : <RotateCcw className="w-4 h-4" />}
                     {t('ajustements.filters.refresh')}
                 </button>
                 <button 
                     onClick={onExport} 
-                    className="btn btn-sm btn-success gap-2 shadow-sm"
+                    className="btn btn-sm btn-success gap-2 shadow-sm w-full sm:w-auto"
                     disabled={loading}
                 >
                     <Search className="w-4 h-4" />
@@ -122,7 +122,7 @@ export const AjustementsFilters: React.FC<AjustementsFiltersProps> = ({
                 {hasFilters && (
                     <button 
                         onClick={onReset} 
-                        className="btn btn-sm btn-ghost text-error gap-2"
+                        className="btn btn-sm btn-ghost text-error gap-2 w-full sm:w-auto"
                     >
                         <RotateCcw className="w-4 h-4" />
                         {t('ajustements.filters.reset')}

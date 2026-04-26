@@ -214,19 +214,19 @@ export default function StockUGReport() {
   };
 
   return (
-    <div className="min-h-screen bg-base-200 p-4 lg:p-8">
+    <div className="min-h-screen bg-base-200 p-3 sm:p-4 lg:p-8">
       <Toaster position="top-right" />
       
       <div className="max-w-7xl mx-auto space-y-8">
         {/* Header */}
-        <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 sm:gap-6">
           <div>
             <div className="flex items-center gap-3 mb-2">
               <div className="w-12 h-12 rounded-2xl bg-indigo-500/100 flex items-center justify-center text-white shadow-lg shadow-indigo-500/20">
                 <PackageOpen className="w-7 h-7" />
               </div>
               <div>
-                <h1 className="text-3xl font-black tracking-tight text-base-content">
+                <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-base-content">
                   {t('stock:rapport_ug.title_part1')} <span className="text-indigo-500 italic">{t('stock:rapport_ug.title_part2')}</span>
                 </h1>
                 <p className="text-sm font-semibold text-base-content/60 uppercase tracking-widest mt-1">
@@ -236,10 +236,10 @@ export default function StockUGReport() {
             </div>
           </div>
           
-          <div className="flex gap-2">
+          <div className="grid grid-cols-2 sm:flex sm:flex-wrap gap-2 w-full md:w-auto">
             <button 
               onClick={handlePrint}
-              className="btn bg-base-100 hover:bg-base-200/50 border-base-200 text-base-content/90 shadow-sm"
+              className="btn bg-base-100 hover:bg-base-200/50 border-base-200 text-base-content/90 shadow-sm w-full"
               disabled={loading || !data?.fournisseurs.length}
             >
               <Printer className="w-4 h-4" />
@@ -247,7 +247,7 @@ export default function StockUGReport() {
             </button>
             <button 
               onClick={exportCSV}
-              className="btn bg-base-100 hover:bg-base-200/50 border-base-200 text-base-content/90 shadow-sm"
+              className="btn bg-base-100 hover:bg-base-200/50 border-base-200 text-base-content/90 shadow-sm w-full"
               disabled={loading || !data?.fournisseurs.length}
             >
               <Download className="w-4 h-4" />
@@ -255,7 +255,7 @@ export default function StockUGReport() {
             </button>
             <button 
               onClick={fetchData}
-              className="btn btn-primary shadow-sm"
+              className="btn btn-primary shadow-sm w-full col-span-2 sm:col-span-1 sm:w-auto"
               disabled={loading}
             >
               <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />

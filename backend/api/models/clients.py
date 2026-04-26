@@ -5,6 +5,7 @@ Client-related models: Fournisseur, Client, AyantDroit.
 from django.db import models
 from django.core.validators import RegexValidator, MinValueValidator, MaxValueValidator
 from django.utils import timezone
+from django.contrib.postgres.indexes import GinIndex
 from django.db.models.signals import pre_delete
 from django.dispatch import receiver
 from decimal import Decimal
@@ -169,6 +170,11 @@ class Client(models.Model):
         )
         
         return factures_with_debt['total_debt'] or Decimal('0.00')
+
+    class Meta:
+        indexes = [
+            GinIndex(fields=['name'], name='client_name_trgm_idx', opclasses=['gin_trgm_ops']),
+        ]
 
 
 class AyantDroit(models.Model):

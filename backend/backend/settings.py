@@ -196,6 +196,10 @@ USE_TZ = False  # Désactivé pour travailler avec l'heure locale du système
 STATIC_URL = 'static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 
+# Media files (Uploaded by users)
+MEDIA_URL = '/media/'
+MEDIA_ROOT = BASE_DIR / 'media'
+
 # Whitenoise configuration for static files
 STORAGES = {
     "default": {

@@ -161,13 +161,13 @@ export const ReportResults: React.FC<ReportResultsProps> = ({
             </div>
 
             {pagination && (
-                <div className="mt-6 p-4 bg-base-100 rounded-2xl border border-base-300 shadow-sm flex items-center justify-between">
-                    <div className="text-[10px] font-black uppercase tracking-[0.2em] text-base-content/40">
+                <div className="mt-6 p-4 bg-base-100 rounded-2xl border border-base-300 shadow-sm flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                    <div className="text-[10px] font-black uppercase tracking-[0.2em] text-base-content/40 text-center sm:text-left">
                         Total: <span className="text-base-content">{pagination.count}</span> éléments
                     </div>
-                    <div className="flex gap-2">
+                    <div className="flex gap-2 w-full sm:w-auto">
                         <button 
-                            className="btn btn-sm btn-outline rounded-xl font-bold uppercase tracking-widest text-[10px] gap-2"
+                            className="btn btn-sm btn-outline rounded-xl font-bold uppercase tracking-widest text-[10px] gap-2 flex-1 sm:flex-initial"
                             disabled={!pagination.previous || loading}
                             onClick={() => onPageChange(pagination.previous)}
                         >
@@ -175,7 +175,7 @@ export const ReportResults: React.FC<ReportResultsProps> = ({
                             {t('common:previous', 'Précédent')}
                         </button>
                         <button 
-                            className="btn btn-sm btn-outline rounded-xl font-bold uppercase tracking-widest text-[10px] gap-2"
+                            className="btn btn-sm btn-outline rounded-xl font-bold uppercase tracking-widest text-[10px] gap-2 flex-1 sm:flex-initial"
                             disabled={!pagination.next || loading}
                             onClick={() => onPageChange(pagination.next)}
                         >

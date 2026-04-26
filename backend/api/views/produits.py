@@ -1,6 +1,6 @@
 from rest_framework import viewsets, filters
 from rest_framework.permissions import IsAuthenticated
-from django.db.models import Count, OuterRef, Subquery, IntegerField, CharField, Q
+from django.db.models import Count, OuterRef, Subquery, IntegerField, CharField, Q, F
 from django.db.models.functions import Coalesce
 from ..models import Produit, Promis, CommandeProduit
 from ..serializers import ProduitSerializer
@@ -65,6 +65,18 @@ class ProduitViewSet(
             queryset = queryset.filter(is_active=True)
             
         # Filtrage manuel (ex: rapports, alertes)
+        has_reserve = self.request.query_params.get('has_reserve_storage')
+        if has_reserve is not None:
+            queryset = queryset.filter(has_reserve_storage=(has_reserve.lower() == 'true'))
+
+        needs_reappro = self.request.query_params.get('needs_reappro')
+        if needs_reappro is not None and needs_reappro.lower() == 'true':
+            queryset = queryset.filter(
+                has_reserve_storage=True,
+                stock__lte=F('min_rayon'),
+                stock_reserve__gt=0
+            )
+
         stock_lt = self.request.query_params.get('stock_lt')
         if stock_lt is not None:
             try: queryset = queryset.filter(stock__lt=float(stock_lt))

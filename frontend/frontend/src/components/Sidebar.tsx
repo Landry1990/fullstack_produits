@@ -5,11 +5,12 @@ import ZenithLogo from './ZenithLogo';
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useReapproStats } from '../hooks/useDashboard';
+import { LogOut, ChevronLeft, ChevronRight, ChevronDown, Menu, X } from 'lucide-react';
 
 
 export default function Sidebar() {
   const { t } = useTranslation(['sidebar', 'common']);
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
   const { isOpen, isCollapsed, toggleSidebar, closeSidebar, toggleCollapse } = useSidebar();
   const location = useLocation();
   const [openMenu, setOpenMenu] = useState<string | null>(null);
@@ -229,72 +230,89 @@ export default function Sidebar() {
     setOpenMenu(prev => prev === key ? null : key);
   }
 
+  const userInitials = user
+    ? `${user.first_name?.[0] ?? ''}${user.last_name?.[0] ?? ''}`.toUpperCase() || user.username?.[0]?.toUpperCase() || '?'
+    : '?';
+  const userFullName = user
+    ? `${user.first_name ?? ''} ${user.last_name ?? ''}`.trim() || user.username
+    : '';
+
   return (
     <>
+      {/* Mobile toggle button */}
       <button
         onClick={toggleSidebar}
-        className="fixed top-4 left-4 z-50 lg:hidden btn btn-circle btn-primary shadow-lg"
+        className="fixed top-3 left-3 z-50 lg:hidden w-9 h-9 rounded-xl bg-neutral text-white flex items-center justify-center shadow-lg"
         aria-label="Toggle menu"
       >
-        <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          {isOpen ? (
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-          ) : (
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-          )}
-        </svg>
+        {isOpen ? <X className="w-4 h-4" /> : <Menu className="w-4 h-4" />}
       </button>
 
-      <aside 
+      {/* Overlay mobile */}
+      {isOpen && (
+        <div
+          className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm lg:hidden"
+          onClick={closeSidebar}
+        />
+      )}
+
+      <aside
         className={`pharma-sidebar flex flex-col h-screen fixed lg:sticky top-0 z-50 transition-all duration-300 ease-in-out
-          ${isCollapsed ? 'w-[80px]' : 'w-72'}
+          ${isCollapsed ? 'w-[72px]' : 'w-[268px]'}
           ${isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
         `}
       >
-        <div className="pharma-sidebar-header p-4 md:p-5 flex items-center gap-3">
-          <ZenithLogo variant={1} size={isCollapsed ? 32 : 48} />
+        {/* ── HEADER ── */}
+        <div className={`flex items-center gap-3 px-4 py-5 border-b border-white/5 ${isCollapsed ? 'justify-center' : ''}`}>
+          <div className="shrink-0">
+            <ZenithLogo variant={1} size={isCollapsed ? 30 : 38} />
+          </div>
           {!isCollapsed && (
-            <div className="min-w-0">
-              <h1 className="text-xl md:text-2xl font-bold text-white truncate uppercase tracking-wider">Zenith</h1>
-              <p className="text-[10px] md:text-xs text-green-400 truncate">{t('app_subtitle')}</p>
+            <div className="min-w-0 flex-1">
+              <h1 className="text-base font-black text-white tracking-widest uppercase leading-none">Zenith</h1>
+              <p className="text-[9px] font-bold text-emerald-400/70 uppercase tracking-[0.2em] mt-0.5 truncate">{t('app_subtitle')}</p>
             </div>
           )}
+          {/* Collapse button desktop */}
+          <button
+            onClick={toggleCollapse}
+            className="hidden lg:flex shrink-0 w-6 h-6 rounded-lg bg-white/5 hover:bg-white/15 text-white/40 hover:text-white items-center justify-center transition-all"
+            title={isCollapsed ? 'Déplier' : 'Replier'}
+          >
+            {isCollapsed ? <ChevronRight className="w-3.5 h-3.5" /> : <ChevronLeft className="w-3.5 h-3.5" />}
+          </button>
         </div>
 
-        <button
-          onClick={toggleCollapse}
-          className="hidden lg:flex items-center justify-center mx-auto my-1 w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 text-white/70 hover:text-white transition-all duration-200"
-          title={isCollapsed ? 'Déplier le menu' : 'Replier le menu'}
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" className={`h-4 w-4 transition-transform duration-300 ${isCollapsed ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 19l-7-7 7-7m8 14l-7-7 7-7" />
-          </svg>
-        </button>
-        
-        <nav className="flex-1 overflow-y-auto py-2 custom-scrollbar">
-          <ul className={`menu w-full gap-1 ${isCollapsed ? 'px-1' : 'px-2'}`}>
+        {/* ── NAV ── */}
+        <nav className="flex-1 overflow-y-auto py-3 custom-scrollbar">
+          <ul className={`flex flex-col gap-0.5 ${isCollapsed ? 'px-2' : 'px-3'}`}>
             {menuItems.map((item) => {
               const hasSubmenus = !!item.submenus;
-              const isParentOfActive = item.submenus?.some(sub => location.pathname === sub.path);
-              const isOpen = openMenu === item.key;
+              const isParentOfActive = item.submenus?.some(sub => location.pathname.startsWith(sub.path));
+              const isMenuOpen = openMenu === item.key;
 
               if (hasSubmenus) {
                 return (
                   <li key={item.key}>
                     {isCollapsed ? (
-                      /* Mode replié : Dropdown */
                       <div className="dropdown dropdown-right w-full">
-                        <div tabIndex={0} role="button" 
-                          className={`pharma-menu-item flex items-center justify-center px-2 py-3 rounded-lg hover:text-white cursor-pointer ${isParentOfActive ? 'text-green-400' : 'text-white/70'}`}
+                        <div tabIndex={0} role="button"
+                          className={`flex items-center justify-center w-full h-10 rounded-xl cursor-pointer transition-all
+                            ${isParentOfActive ? 'bg-emerald-500/15 text-emerald-400' : 'text-white/50 hover:text-white hover:bg-white/5'}`}
+                          title={item.label}
                         >
-                          {item.icon}
+                          <span className="w-5 h-5">{item.icon}</span>
                         </div>
-                        <ul tabIndex={0} className="dropdown-content z-[100] menu p-2 shadow-xl bg-slate-800 rounded-box w-56 ml-1">
-                          <li className="menu-title text-green-400 text-xs font-semibold px-2 py-1">{item.label}</li>
+                        <ul tabIndex={0} className="dropdown-content z-[100] menu p-2 shadow-2xl bg-[#1a2235] border border-white/10 rounded-2xl w-52 ml-2">
+                          <li className="px-3 py-1.5">
+                            <span className="text-[10px] font-black text-emerald-400 uppercase tracking-widest">{item.label}</span>
+                          </li>
                           {item.submenus?.map((sub) => (
                             <li key={sub.path}>
                               <NavLink to={sub.path} onClick={closeSidebar}
-                                className={({ isActive }) => `rounded-lg text-sm ${isActive ? 'bg-green-500/10 text-green-400 font-medium' : 'text-white/80 hover:text-white hover:bg-white/10'}`}
+                                className={({ isActive }) =>
+                                  `rounded-xl text-xs py-2 px-3 transition-all ${isActive ? 'bg-emerald-500/15 text-emerald-300 font-bold' : 'text-white/60 hover:text-white hover:bg-white/5'}`
+                                }
                               >
                                 {sub.label}
                               </NavLink>
@@ -303,30 +321,42 @@ export default function Sidebar() {
                         </ul>
                       </div>
                     ) : (
-                      /* Mode déployé : Contrôlé */
                       <>
-                        <div 
-                          className={`pharma-menu-item flex items-center gap-4 px-5 py-4 rounded-xl cursor-pointer transition-all duration-300
-                            ${isOpen || isParentOfActive ? 'bg-green-500 text-white shadow-lg shadow-green-500/20 font-bold' : 'text-white/70 hover:text-white hover:bg-white/5'}
-                          `}
+                        {/* Parent button */}
+                        <button
                           onClick={() => toggleMenu(item.key)}
+                          className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl cursor-pointer transition-all duration-200 group
+                            ${isMenuOpen || isParentOfActive
+                              ? 'bg-emerald-500/15 text-emerald-300'
+                              : 'text-white/50 hover:text-white/90 hover:bg-white/5'
+                            }`}
                         >
-                          {item.icon}
-                          <span className="flex-1 font-bold tracking-wide">{item.label}</span>
-                          <svg xmlns="http://www.w3.org/2000/svg" className={`h-4 w-4 transition-transform duration-300 ${isOpen ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
-                          </svg>
-                        </div>
-                        <div className={`overflow-hidden transition-all duration-300 ease-in-out ${isOpen ? 'max-h-[500px] opacity-100' : 'max-h-0 opacity-0'}`}>
-                          <ul className="menu menu-sm pl-8 gap-1 mt-1">
+                          <span className={`w-5 h-5 shrink-0 transition-colors ${isMenuOpen || isParentOfActive ? 'text-emerald-400' : ''}`}>
+                            {item.icon}
+                          </span>
+                          <span className="flex-1 text-left text-sm font-semibold tracking-tight truncate">{item.label}</span>
+                          <ChevronDown className={`w-3.5 h-3.5 shrink-0 transition-transform duration-200 ${isMenuOpen ? 'rotate-180' : ''}`} />
+                        </button>
+
+                        {/* Submenus with vertical connector */}
+                        <div className={`overflow-hidden transition-all duration-250 ease-in-out ${isMenuOpen ? 'max-h-[600px] opacity-100 mt-0.5' : 'max-h-0 opacity-0'}`}>
+                          <ul className="relative ml-4 pl-3 border-l border-white/10 flex flex-col gap-0.5 py-1">
                             {item.submenus?.map((sub) => (
                               <li key={sub.path}>
-                                <NavLink to={sub.path} onClick={closeSidebar}
-                                  className={({ isActive }) => `rounded-lg text-sm md:text-base py-2 px-4 transition-all ${isActive ? 'bg-white/20 text-white font-black' : 'text-white/60 hover:text-white hover:bg-white/5'}`}
+                                <NavLink
+                                  to={sub.path}
+                                  onClick={closeSidebar}
+                                  className={({ isActive }) =>
+                                    `flex items-center justify-between px-3 py-2 rounded-lg text-xs transition-all
+                                    ${isActive
+                                      ? 'bg-emerald-500/20 text-emerald-300 font-bold'
+                                      : 'text-white/45 hover:text-white/90 hover:bg-white/5 font-medium'
+                                    }`
+                                  }
                                 >
-                                  {sub.label}
+                                  <span className="truncate">{sub.label}</span>
                                   {sub.key === 'inventaire_reappro' && reapproStats && reapproStats.product_count > 0 && (
-                                    <span className="ml-auto bg-red-500 text-white text-[10px] font-black px-1.5 py-0.5 rounded-full animate-pulse shadow-sm shadow-red-500/50">
+                                    <span className="ml-2 shrink-0 bg-red-500 text-white text-[9px] font-black px-1.5 py-0.5 rounded-full animate-pulse">
                                       {reapproStats.product_count}
                                     </span>
                                   )}
@@ -347,21 +377,53 @@ export default function Sidebar() {
                     to={item.path!}
                     end={item.path === '/app'}
                     onClick={closeSidebar}
-                    className={({ isActive }) => 
-                      `pharma-menu-item flex items-center ${isCollapsed ? 'justify-center px-2' : 'gap-4 px-5'} py-4 md:py-5 rounded-xl transition-all duration-300 ${
-                        isActive ? 'bg-green-500 text-white shadow-lg shadow-green-500/20 font-bold' : 'text-white/70 hover:text-white hover:bg-white/5 active:bg-green-500/10'
+                    title={isCollapsed ? item.label : undefined}
+                    className={({ isActive }) =>
+                      `flex items-center ${isCollapsed ? 'justify-center w-full h-10' : 'gap-3 px-3 py-2.5'} rounded-xl transition-all duration-200
+                      ${isActive
+                        ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-500/30 font-bold'
+                        : 'text-white/50 hover:text-white/90 hover:bg-white/5'
                       }`
                     }
-                    title={isCollapsed ? item.label : undefined}
                   >
-                    {item.icon}
-                    {!isCollapsed && item.label}
+                    <span className="w-5 h-5 shrink-0">{item.icon}</span>
+                    {!isCollapsed && <span className="text-sm font-semibold tracking-tight truncate">{item.label}</span>}
                   </NavLink>
                 </li>
               );
             })}
           </ul>
         </nav>
+
+        {/* ── FOOTER utilisateur ── */}
+        <div className={`border-t border-white/5 p-3 ${isCollapsed ? 'flex justify-center' : ''}`}>
+          {isCollapsed ? (
+            <button
+              onClick={logout}
+              className="w-9 h-9 rounded-xl bg-white/5 hover:bg-red-500/20 text-white/40 hover:text-red-400 flex items-center justify-center transition-all"
+              title="Déconnexion"
+            >
+              <LogOut className="w-4 h-4" />
+            </button>
+          ) : (
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 rounded-xl bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center shrink-0">
+                <span className="text-[11px] font-black text-emerald-400">{userInitials}</span>
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-xs font-bold text-white/80 truncate leading-tight">{userFullName}</p>
+                <p className="text-[10px] text-white/30 uppercase tracking-widest truncate">{user?.profile?.role ?? ''}</p>
+              </div>
+              <button
+                onClick={logout}
+                className="shrink-0 w-7 h-7 rounded-lg hover:bg-red-500/20 text-white/30 hover:text-red-400 flex items-center justify-center transition-all"
+                title="Déconnexion"
+              >
+                <LogOut className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          )}
+        </div>
       </aside>
     </>
   );

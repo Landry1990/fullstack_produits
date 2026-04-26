@@ -79,6 +79,16 @@ const venteService = {
     },
 
     finaliser: async (data: any): Promise<Facture> => {
+        // Handle images/files using FormData
+        if (data.image_ordonnance instanceof File) {
+            const formData = new FormData();
+            const { image_ordonnance, ...jsonData } = data;
+            formData.append('image_ordonnance', image_ordonnance);
+            formData.append('json_data', JSON.stringify(jsonData));
+            const response = await api.post<Facture>('factures/finaliser/', formData);
+            return response.data;
+        }
+
         const response = await api.post<Facture>('factures/finaliser/', data);
         return response.data;
     },

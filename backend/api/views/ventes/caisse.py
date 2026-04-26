@@ -489,7 +489,13 @@ class ClotureCaisseViewSet(viewsets.ReadOnlyModelViewSet):
         except (ValueError, TypeError):
             return Response({'detail': 'Paramètres mois ou année invalides.'}, status=status.HTTP_400_BAD_REQUEST)
 
-        performances = ClotureCaisse.objects.filter(date__month=month, date__year=year).values(
+        user_id = request.query_params.get('user_id')
+
+        qs = ClotureCaisse.objects.filter(date__month=month, date__year=year)
+        if user_id:
+            qs = qs.filter(user_id=user_id)
+
+        performances = qs.values(
             'user__id', 'user__username', 'user__first_name', 'user__last_name'
         ).annotate(
             total_ecart_absolu=Sum(Abs('ecart_caisse')), total_ecart_algebrique=Sum('ecart_caisse'),
@@ -497,19 +503,35 @@ class ClotureCaisseViewSet(viewsets.ReadOnlyModelViewSet):
             total_reel=Sum('montant_reel'), total_ventes=Sum('total_ventes')
         ).filter(user__isnull=False)
         
+        # Calcul du nombre max de clôtures pour la pondération
+        max_clotures = max((p['nombre_clotures'] for p in performances), default=1)
+
         results = []
         for p in performances:
             full_name = f"{p['user__first_name'] or ''} {p['user__last_name'] or ''}".strip() or p['user__username']
             total_abs = float(p['total_ecart_absolu'] or 0)
             total_alg = float(p['total_ecart_algebrique'] or 0)
             nombre = p['nombre_clotures']
+            moyenne_abs = round(total_abs / nombre if nombre > 0 else 0, 2)
+            moyenne_alg = round(total_alg / nombre if nombre > 0 else 0, 2)
+
+            # Score pondéré : pénalité pour les caissiers avec peu de clôtures
+            # Un caissier avec 1 clôture et 0 d'écart ne doit pas écraser quelqu'un
+            # qui a fait 25 clôtures avec un petit écart moyen.
+            # Formule : score = moyenne_abs * (1 + (max_clotures - nombre) / max_clotures * 0.5)
+            # → plus on a de clôtures, moins la pénalité est grande
+            penalite = (max_clotures - nombre) / max_clotures * 0.5 if max_clotures > 1 else 0
+            score = moyenne_abs * (1 + penalite)
+
             results.append({
                 'user_id': p['user__id'], 'username': p['user__username'], 'full_name': full_name,
-                'moyenne_ecart_absolu': round(total_abs / nombre if nombre > 0 else 0, 2),
-                'moyenne_ecart_algebrique': round(total_alg / nombre if nombre > 0 else 0, 2),
+                'moyenne_ecart_absolu': moyenne_abs,
+                'moyenne_ecart_algebrique': moyenne_alg,
                 'total_ecart_absolu': total_abs, 'total_ecart_algebrique': total_alg,
                 'nombre_clotures': nombre, 'total_theorique': float(p['total_theorique'] or 0),
                 'total_reel': float(p['total_reel'] or 0), 'total_ventes': float(p['total_ventes'] or 0),
+                'score': round(score, 2),
             })
-        results.sort(key=lambda x: x['moyenne_ecart_absolu'])
+        # Tri par score pondéré (plus petit = meilleur)
+        results.sort(key=lambda x: x['score'])
         return Response(results)

@@ -6,7 +6,8 @@ import { useAuth } from '../context/AuthContext';
 import { useTranslation } from 'react-i18next';
 import { Calendar, RefreshCw, Package, TrendingUp, ChevronLeft, ChevronRight, FileDown, Printer } from 'lucide-react';
 import { formatCurrency } from '../utils/formatters';
-import * as XLSX from 'xlsx';
+import { usePharmacySettings } from '../hooks/usePharmacySettings';
+import { exportToExcel } from '../utils/excelExport';
 
 interface DailyPurchase {
   date: string;
@@ -35,6 +36,7 @@ interface HistoriqueAchatsProps {
 const HistoriqueAchats = ({ forcedType }: HistoriqueAchatsProps) => {
   const { t, i18n } = useTranslation('orders');
   const { user } = useAuth();
+  const { settings: pharmacySettings } = usePharmacySettings();
   const [data, setData] = useState<any[]>([]);
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
   const [loading, setLoading] = useState(true);
@@ -171,26 +173,12 @@ const HistoriqueAchats = ({ forcedType }: HistoriqueAchatsProps) => {
             }));
         }
 
-        // Create Excel Workbook and Sheet
-        const ws = XLSX.utils.json_to_sheet(dataToExport);
-        
-        // Auto-adjust column widths
-        const colWidths = Object.keys(dataToExport[0] || {}).map(key => {
-            const headerLen = key.length;
-            const maxContentLen = dataToExport.reduce((max, row) => {
-                const val = String(row[key] || "");
-                return Math.max(max, val.length);
-            }, 0);
-            return { wch: Math.max(headerLen, maxContentLen) + 5 };
-        });
-        ws['!cols'] = colWidths;
-
-        const wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, ws, activeTab === 'summary' ? t('tabs.purchase_summary') : t('tabs.purchase_details'));
-
-        // Trigger Download
         const filename = `historique_achats_${activeTab}_${format(new Date(), 'yyyy-MM-dd')}.xlsx`;
-        XLSX.writeFile(wb, filename);
+        exportToExcel(dataToExport, pharmacySettings, {
+            sheetName: activeTab === 'summary' ? t('tabs.purchase_summary') : t('tabs.purchase_details'),
+            filename,
+            title: activeTab === 'summary' ? t('tabs.purchase_summary') : t('tabs.purchase_details'),
+        });
     } catch (error) {
         console.error('Error exporting history:', error);
     } finally {
@@ -211,94 +199,108 @@ const HistoriqueAchats = ({ forcedType }: HistoriqueAchatsProps) => {
 
   return (
     <>
-      <div className="h-full flex flex-col p-6 overflow-hidden">
-        <div className="max-w-4xl mx-auto w-full flex flex-col h-full overflow-hidden">
+      <div className="h-full flex flex-col p-3 sm:p-6 overflow-hidden">
+        <div className="w-full max-w-4xl mx-auto flex flex-col h-full min-h-0 overflow-hidden">
           {/* Header */}
-          <div className="flex items-center justify-between mb-5 shrink-0">
+          <div className="flex flex-col gap-3 mb-4 sm:mb-5 shrink-0">
             <div>
-              <h1 className="text-xl font-bold text-base-content flex items-center gap-2">
-                <Calendar className="w-5 h-5 text-primary" />
-                {t('history.title')}
-                <span className="text-primary text-sm md:text-xl ml-1">
+              <h1 className="text-lg sm:text-xl font-bold text-base-content flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-2">
+                <span className="inline-flex items-center gap-2">
+                  <Calendar className="w-5 h-5 text-primary" />
+                  {t('history.title')}
+                </span>
+                <span className="text-primary text-sm sm:text-xl sm:ml-1">
                   {forcedType === 'LOC' ? t('history.subtitle_local') : forcedType === 'DIR' ? t('history.subtitle_direct') : t('history.subtitle_daily')}
                 </span>
               </h1>
               <p className="text-[10px] text-base-content/50 mt-0.5 uppercase tracking-wider font-semibold">{totalCount} {t('history.results_found')}</p>
             </div>
 
-            <div className="tabs tabs-boxed bg-base-200/50 p-1 rounded-xl no-print">
-              <button 
-                  className={`tab tab-sm font-bold uppercase transition-all ${activeTab === 'summary' ? 'tab-active !bg-primary !text-primary-content shadow-lg' : 'text-base-content/50 hover:text-base-content'}`}
+            <div className="w-full max-w-full overflow-x-auto pb-1 -mx-1 px-1 sm:mx-0 sm:px-0">
+              <div className="tabs tabs-boxed bg-base-200/50 p-1 rounded-xl no-print w-max min-w-full sm:min-w-0 sm:w-auto">
+                <button
+                  className={`tab tab-sm font-bold uppercase transition-all whitespace-nowrap ${activeTab === 'summary' ? 'tab-active !bg-primary !text-primary-content shadow-lg' : 'text-base-content/50 hover:text-base-content'}`}
                   onClick={() => setActiveTab('summary')}
-              >
+                >
                   {t('tabs.purchase_summary')}
-              </button>
-              <button 
-                  className={`tab tab-sm font-bold uppercase transition-all ${activeTab === 'details' ? 'tab-active !bg-primary !text-primary-content shadow-lg' : 'text-base-content/50 hover:text-base-content'}`}
+                </button>
+                <button
+                  className={`tab tab-sm font-bold uppercase transition-all whitespace-nowrap ${activeTab === 'details' ? 'tab-active !bg-primary !text-primary-content shadow-lg' : 'text-base-content/50 hover:text-base-content'}`}
                   onClick={() => setActiveTab('details')}
-              >
+                >
                   {t('tabs.purchase_details')}
-              </button>
+                </button>
+              </div>
             </div>
           </div>
 
           {/* Filters Bar */}
-          <div className="flex items-center justify-between gap-4 mb-4 shrink-0 no-print">
-            <div className="flex-1 flex items-center gap-3">
-              <div className="relative flex-1 max-w-sm">
-                <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-base-content/30" />
-                <input 
-                  type="date" 
-                  className="input input-sm input-bordered w-full pl-10 pr-4 font-bold bg-base-100 focus:border-primary transition-all text-xs"
-                  value={dateDebut}
-                  onChange={(e) => setDateDebut(e.target.value)}
-                />
+          <div className="mb-4 shrink-0 no-print">
+            <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 w-full">
+                <div className="relative w-full">
+                  <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-base-content/30" />
+                  <input
+                    type="date"
+                    className="input input-sm input-bordered w-full pl-10 pr-4 font-bold bg-base-100 focus:border-primary transition-all text-xs"
+                    value={dateDebut}
+                    onChange={(e) => setDateDebut(e.target.value)}
+                  />
+                </div>
+                <div className="relative w-full">
+                  <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-base-content/30" />
+                  <input
+                    type="date"
+                    className="input input-sm input-bordered w-full pl-10 pr-4 font-bold bg-base-100 focus:border-primary transition-all text-xs"
+                    value={dateFin}
+                    onChange={(e) => setDateFin(e.target.value)}
+                  />
+                </div>
               </div>
-              <div className="text-base-content/30 font-bold text-xs">→</div>
-              <div className="relative flex-1 max-w-sm">
-                <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-base-content/30" />
-                <input 
-                  type="date" 
-                  className="input input-sm input-bordered w-full pl-10 pr-4 font-bold bg-base-100 focus:border-primary transition-all text-xs"
-                  value={dateFin}
-                  onChange={(e) => setDateFin(e.target.value)}
-                />
-              </div>
-              <select 
-                className="select select-sm select-bordered font-bold bg-base-100 focus:border-primary transition-all text-xs max-w-[200px]"
-                value={selectedSupplier}
-                onChange={(e) => setSelectedSupplier(e.target.value)}
-              >
-                <option value="">{t('history.all_providers')}</option>
-                {suppliers.map(s => (
-                  <option key={s.id} value={s.id}>{s.name}</option>
-                ))}
-              </select>
-              <div className="flex items-center gap-1">
-                <button 
-                  className="btn btn-sm btn-ghost btn-square hover:bg-base-200 transition-all text-primary tooltip tooltip-bottom"
-                  onClick={() => fetchHistory()}
-                  disabled={loading}
-                  data-tip={t('history.refresh')}
+
+              <div className="flex flex-col sm:flex-row gap-3 w-full lg:w-auto lg:min-w-[280px]">
+                <select
+                  className="select select-sm select-bordered font-bold bg-base-100 focus:border-primary transition-all text-xs w-full"
+                  value={selectedSupplier}
+                  onChange={(e) => setSelectedSupplier(e.target.value)}
                 >
-                  <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
-                </button>
-                <button 
-                  className="btn btn-sm btn-ghost btn-square hover:bg-base-200 transition-all text-success tooltip tooltip-bottom"
-                  onClick={handleExportExcel}
-                  disabled={loading}
-                  data-tip={t('history.export_excel')}
-                >
-                  <FileDown className="w-4 h-4" />
-                </button>
-                <button 
-                  className="btn btn-sm btn-ghost btn-square hover:bg-base-200 transition-all text-info tooltip tooltip-bottom"
-                  onClick={handlePrint}
-                  disabled={loading || data.length === 0}
-                  data-tip={t('history.print_pdf')}
-                >
-                  <Printer className="w-4 h-4" />
-                </button>
+                  <option value="">{t('history.all_providers')}</option>
+                  {suppliers.map((s) => (
+                    <option key={s.id} value={s.id}>
+                      {s.name}
+                    </option>
+                  ))}
+                </select>
+
+                <div className="flex items-center justify-stretch sm:justify-end gap-1 w-full sm:w-auto">
+                  <button
+                    className="btn btn-sm btn-ghost flex-1 sm:flex-initial sm:btn-square hover:bg-base-200 transition-all text-primary tooltip tooltip-bottom"
+                    onClick={() => fetchHistory()}
+                    disabled={loading}
+                    data-tip={t('history.refresh')}
+                    type="button"
+                  >
+                    <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+                  </button>
+                  <button
+                    className="btn btn-sm btn-ghost flex-1 sm:flex-initial sm:btn-square hover:bg-base-200 transition-all text-success tooltip tooltip-bottom"
+                    onClick={handleExportExcel}
+                    disabled={loading}
+                    data-tip={t('history.export_excel')}
+                    type="button"
+                  >
+                    <FileDown className="w-4 h-4" />
+                  </button>
+                  <button
+                    className="btn btn-sm btn-ghost flex-1 sm:flex-initial sm:btn-square hover:bg-base-200 transition-all text-info tooltip tooltip-bottom"
+                    onClick={handlePrint}
+                    disabled={loading || data.length === 0}
+                    data-tip={t('history.print_pdf')}
+                    type="button"
+                  >
+                    <Printer className="w-4 h-4" />
+                  </button>
+                </div>
               </div>
             </div>
           </div>

@@ -5,23 +5,6 @@ import { toast } from 'react-hot-toast';
 import type { Commande, CommandeProduit, Fournisseur, ProduitModel } from '../../types';
 import { formatCurrency } from '../../utils/formatters';
 
-// Helper function for Date format MM/YY
-function parseMMYYToDate(mmyy: string | null | undefined): string | null {
-    if (!mmyy) return null;
-    if (/^\d{4}-\d{2}-\d{2}$/.test(mmyy)) return mmyy; // Already ISO
-    
-    const parts = mmyy.split('/');
-    if (parts.length === 2 && parts[1].length === 2) {
-        const month = parseInt(parts[0], 10);
-        const year = parseInt('20' + parts[1], 10);
-        if (month >= 1 && month <= 12) {
-             const lastDay = new Date(year, month, 0).getDate();
-             return `${year}-${String(month).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`;
-        }
-    }
-    return null; 
-}
-
 interface TransferCommandeModalProps {
     isOpen: boolean;
     onClose: () => void;
@@ -147,22 +130,19 @@ export default function TransferCommandeModal({
                 : '/api/commande-produits/';
 
             for (const p of selectedProducts) {
-                const produitId = (p.produit && typeof p.produit === 'object') ? p.produit.id : p.produit;
-                const newPrice = transferCataloguePrices.get(produitId);
-                const priceToUse = newPrice !== undefined ? newPrice : parseFloat(String(p.price || 0));
-
                 const payload = {
                     commande: newCommande.id,
-                    produit: produitId,
-                    quantity: parseInt(String(p.quantity || 1)),
+                    produit: typeof p.produit === 'object' ? p.produit.id : p.produit,
+                    quantity: parseInt(String(p.quantity || 0)),
                     unites_gratuites: parseInt(String(p.unites_gratuites || 0)),
-                    price: priceToUse.toFixed(0),
-                    price_cost: priceToUse.toFixed(0),
+                    price: parseFloat(String(p.price || 0)).toFixed(0),
+                    price_cost: parseFloat(String(p.price || 0)).toFixed(0),
                     selling_price: parseFloat(String(p.selling_price || 0)).toFixed(0),
+                    prix_euro: p.prix_euro ? parseFloat(String(p.prix_euro)).toFixed(0) : null,
                     tva: parseFloat(String(p.tva || 0)).toFixed(0),
                     marge: parseFloat(String(p.marge || 1.3)).toFixed(4),
                     lot: p.lot || null,
-                    date_expiration: parseMMYYToDate(p.date_expiration), 
+                    date_expiration: p.date_expiration || null,
                 };
                 
                 await axios.post(commandeProduitsEndpoint, payload);

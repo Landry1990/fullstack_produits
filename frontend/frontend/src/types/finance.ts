@@ -283,8 +283,11 @@ export interface SaleCompletionParams {
     devisIdToValidate: number | null;
     tempOrdonnanceData: OrdonnanceData | null;
     validated_by_id?: number | null;
+    validated_by_id?: number | null;
     sudo_password?: string;
     poste_caisse_id?: number | null;
+    prescriptionImage?: File | null;
+    isFactureA4?: boolean;
 }
 
 export interface SaleCompletionResult {

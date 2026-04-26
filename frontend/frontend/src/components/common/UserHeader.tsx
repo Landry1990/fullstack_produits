@@ -80,7 +80,7 @@ export default function UserHeader() {
 
   return (
     <>
-      <header className="absolute top-0 right-0 z-40 flex items-center justify-end pointer-events-none">
+      <header className="absolute top-0 left-0 right-0 z-40 flex items-center justify-end pointer-events-none pl-12 lg:pl-0">
         <div className="flex items-center gap-4 bg-base-100/80 backdrop-blur-md p-1.5 rounded-xl shadow-lg border border-white/10 pointer-events-auto scale-90 origin-top-right translate-y-0 -translate-x-0">
           
           {/* Notifications / Messages Bell */}

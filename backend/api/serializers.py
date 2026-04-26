@@ -520,7 +520,9 @@ class CommandeProduitSerializer(serializers.ModelSerializer):
         # Retro-compatibilité pour l'affichage (si le lot n'est pas sur la ligne de commande mais dans StockLot)
         # Ceci corrige les anciennes commandes et compense le bug d'écrasement des lots par auto-save
         if not repr.get('lot') and instance.commande and instance.commande.status == 'CLOT':
-            lot = instance.stock_lot.first()  # relation related_name='stock_lot' du FK commande_produit sur StockLot
+            # Utilisation des objets pré-chargés pour éviter les requêtes N+1
+            lots = list(instance.stock_lot.all())
+            lot = lots[0] if lots else None
             if lot:
                 repr['lot'] = lot.lot
                 if lot.date_expiration:
@@ -1205,7 +1207,7 @@ class OrdonnancierSerializer(serializers.ModelSerializer):
         model = Ordonnancier
         fields = ['numero_ordre', 'date_delivrance', 'patient_nom', 'prescripteur_nom', 
                   'facture', 'facture_numero', 'lignes', 'enregistre_par', 
-                  'enregistre_par_nom', 'created_at']
+                  'enregistre_par_nom', 'image_ordonnance', 'created_at']
         read_only_fields = ['numero_ordre', 'created_at']
     
     def get_enregistre_par_nom(self, obj):
@@ -1221,7 +1223,7 @@ class OrdonnancierCreateSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = Ordonnancier
-        fields = ['patient_nom', 'prescripteur_nom', 'facture', 'lignes']
+        fields = ['patient_nom', 'prescripteur_nom', 'facture', 'lignes', 'image_ordonnance']
     
     def validate(self, data):
         print("=== DEBUG ORDONNANCE VALIDATION ===")
@@ -1427,11 +1429,17 @@ class InternalMessageSerializer(serializers.ModelSerializer):
     parent_content = serializers.CharField(source='parent.content', read_only=True)
     parent_sender_name = serializers.CharField(source='parent.sender.username', read_only=True)
     is_archived = serializers.SerializerMethodField()
+    attachment_url = serializers.SerializerMethodField()
     
     class Meta:
         model = InternalMessage
         fields = '__all__'
         read_only_fields = ['sender', 'created_at', 'read_by', 'archived_by']
+
+    def get_attachment_url(self, obj):
+        if obj.attachment:
+            return obj.attachment.url  # Retourne /media/... (chemin relatif)
+        return None
 
     def get_recipient_name(self, obj):
         return obj.recipient.username if obj.recipient else "Tous"

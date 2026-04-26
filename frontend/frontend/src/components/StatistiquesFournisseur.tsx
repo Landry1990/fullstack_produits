@@ -103,8 +103,8 @@ export default function StatistiquesFournisseur() {
   }, [stats]);
 
   return (
-    <div className="p-6 space-y-6 animate-fade-in">
-      <div className="flex flex-col md:flex-row justify-between items-center gap-4">
+    <div className="p-3 sm:p-6 space-y-4 sm:space-y-6 animate-fade-in">
+      <div className="flex flex-col gap-3 md:flex-row md:justify-between md:items-start">
         <div>
           <h1 className="text-2xl font-bold text-base-content">{t('title')}</h1>
           <p className="text-sm text-base-content/80">{t('subtitle')}</p>
@@ -112,27 +112,27 @@ export default function StatistiquesFournisseur() {
         
         {/* Date Filter only for Sales Tab currently */}
         {activeTab === 'ventes' && (
-            <div className="flex items-end gap-2 bg-base-100 p-2 rounded-lg shadow-sm border border-base-200">
-            <div className="form-control">
+            <div className="flex flex-col sm:flex-row sm:items-end gap-2 bg-base-100 p-2 sm:p-3 rounded-lg shadow-sm border border-base-200 w-full md:w-auto">
+            <div className="form-control w-full sm:w-40">
                 <label className="label py-1"><span className="label-text text-xs">{t('filters.from')}</span></label>
                 <input 
                 type="date" 
-                className="input input-bordered input-sm" 
+                className="input input-bordered input-sm w-full" 
                 value={dateDebut}
                 onChange={(e) => setDateDebut(e.target.value)}
                 />
             </div>
-            <div className="form-control">
+            <div className="form-control w-full sm:w-40">
                 <label className="label py-1"><span className="label-text text-xs">{t('filters.to')}</span></label>
                 <input 
                 type="date" 
-                className="input input-bordered input-sm" 
+                className="input input-bordered input-sm w-full" 
                 value={dateFin}
                 onChange={(e) => setDateFin(e.target.value)}
                 />
             </div>
             <button 
-                className="btn btn-primary btn-sm"
+                className="btn btn-primary btn-sm w-full sm:w-auto h-10"
                 onClick={fetchStats}
                 disabled={loading}
             >
@@ -143,11 +143,13 @@ export default function StatistiquesFournisseur() {
       </div>
 
       {/* Tabs Navigation */}
-      <div className="tabs tabs-boxed bg-base-100 p-1">
-        <a className={`tab ${activeTab === 'ventes' ? 'tab-active' : ''}`} onClick={() => setActiveTab('ventes')}>{t('tabs.sales')}</a>
-        <a className={`tab ${activeTab === 'performance' ? 'tab-active' : ''}`} onClick={() => setActiveTab('performance')}>{t('tabs.performance')}</a>
-        <a className={`tab ${activeTab === 'prix' ? 'tab-active' : ''}`} onClick={() => setActiveTab('prix')}>{t('tabs.price_comparison')}</a>
-        <a className={`tab ${activeTab === 'concentration' ? 'tab-active' : ''}`} onClick={() => setActiveTab('concentration')}>{t('tabs.concentration')}</a>
+      <div className="w-full max-w-full overflow-x-auto pb-1 -mx-1 px-1 sm:mx-0 sm:px-0">
+        <div className="tabs tabs-boxed bg-base-100 p-1 w-max min-w-full sm:min-w-0 sm:w-fit">
+        <a className={`tab whitespace-nowrap ${activeTab === 'ventes' ? 'tab-active' : ''}`} onClick={() => setActiveTab('ventes')}>{t('tabs.sales')}</a>
+        <a className={`tab whitespace-nowrap ${activeTab === 'performance' ? 'tab-active' : ''}`} onClick={() => setActiveTab('performance')}>{t('tabs.performance')}</a>
+        <a className={`tab whitespace-nowrap ${activeTab === 'prix' ? 'tab-active' : ''}`} onClick={() => setActiveTab('prix')}>{t('tabs.price_comparison')}</a>
+        <a className={`tab whitespace-nowrap ${activeTab === 'concentration' ? 'tab-active' : ''}`} onClick={() => setActiveTab('concentration')}>{t('tabs.concentration')}</a>
+        </div>
       </div>
 
       {/* TAB 1: VENTES (Existing Content) */}

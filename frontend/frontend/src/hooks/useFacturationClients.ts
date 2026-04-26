@@ -4,6 +4,7 @@ import clientService from '../services/clientService'
 import { toast } from 'react-hot-toast'
 import type { Client, AyantDroit } from '../types'
 import axios from 'axios'
+import { facturationClientCreateSchema } from '../schemas/clientSchema'
 
 export function useFacturationClients() {
     const { t } = useTranslation(['facturation', 'common'])
@@ -169,7 +170,21 @@ export function useFacturationClients() {
         e.preventDefault()
         setIsCreatingClient(true)
         try {
-            const createdClient = await clientService.create(newClientForm as Partial<Client>)
+            const validation = facturationClientCreateSchema.safeParse(newClientForm)
+
+            if (!validation.success) {
+                const messages = validation.error.issues.map((issue) => issue.message).join(' | ')
+                toast.error(messages || 'Le formulaire client contient des erreurs')
+                return
+            }
+
+            const payload: Partial<Client> = {
+                ...validation.data,
+                plafond: String(validation.data.plafond),
+                taux_couverture: String(validation.data.taux_couverture),
+                remise_automatique: String(validation.data.remise_automatique),
+            };
+            const createdClient = await clientService.create(payload)
 
             setClients(prev => [...prev, createdClient].sort((a, b) => a.name.localeCompare(b.name)))
             setSelectedClient(createdClient.id)

@@ -56,9 +56,9 @@ export const ReportFilters: React.FC<ReportFiltersProps> = ({
     };
 
     return (
-        <div className="flex flex-wrap gap-6 items-end">
+        <div className="flex flex-col sm:flex-row sm:flex-wrap gap-4 sm:gap-6 sm:items-end w-full">
             {selectedQuery.params.map(param => (
-                <div key={param.key} className="form-control min-w-[200px]">
+                <div key={param.key} className="form-control w-full sm:w-auto sm:min-w-[200px] min-w-0">
                     <label className="label py-1">
                         <span className="label-text text-[10px] font-bold uppercase tracking-widest text-base-content/50">
                             {t(`params.${param.key}`, { defaultValue: param.label })}

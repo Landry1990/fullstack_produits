@@ -21,7 +21,7 @@ export default function JournalAjustements() {
     } = useAjustementsData();
 
     return (
-        <div className="min-h-screen bg-base-200 p-4 lg:p-8">
+        <div className="min-h-screen bg-base-200 p-3 sm:p-4 lg:p-8">
             <Toaster position="top-right" />
             
             <div className="max-w-[1600px] mx-auto space-y-8">
@@ -75,7 +75,7 @@ export default function JournalAjustements() {
                 </div>
 
                 {/* Table Section */}
-                <div className="bg-base-100 rounded-[32px] shadow-sm border border-base-200 overflow-hidden flex flex-col min-h-[600px]">
+                <div className="bg-base-100 rounded-[32px] shadow-sm border border-base-200 overflow-hidden flex flex-col min-h-0 sm:min-h-[480px] lg:min-h-[600px]">
                     <AjustementsTable 
                         adjustments={adjustments}
                         loading={loading}

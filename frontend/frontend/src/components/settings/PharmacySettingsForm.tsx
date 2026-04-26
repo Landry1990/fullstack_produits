@@ -636,6 +636,23 @@ export default function PharmacySettingsForm() {
                   disabled={!formData.whatsapp_enabled}
                 />
               </div>
+
+              <div className="form-control">
+                <label className="label">
+                  <span className="label-text font-medium">{t('labels.pharmacist_whatsapp')}</span>
+                </label>
+                <input
+                  type="text"
+                  value={formData.pharmacist_whatsapp_number || ''}
+                  onChange={(e) => handleChange('pharmacist_whatsapp_number', e.target.value)}
+                  className="input input-bordered w-full font-mono text-sm"
+                  placeholder={t('placeholders.pharmacist_whatsapp')}
+                  disabled={!formData.whatsapp_enabled}
+                />
+                <label className="label">
+                  <span className="label-text-alt text-base-content/50">{t('hints.pharmacist_whatsapp')}</span>
+                </label>
+              </div>
             </div>
           </div>
 

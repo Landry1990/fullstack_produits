@@ -15,7 +15,7 @@ class RuptureFournisseurViewSet(viewsets.ModelViewSet):
     Gestion des ruptures fournisseurs.
     Permet de déclarer un produit indisponible chez le grossiste et de le marquer résolu.
     """
-    queryset = RuptureFournisseur.objects.all()
+    queryset = RuptureFournisseur.objects.select_related('produit', 'fournisseur', 'utilisateur').all()
     serializer_class = RuptureFournisseurSerializer
     permission_classes = [IsAuthenticated]
     filterset_fields = ['produit', 'est_resolu', 'fournisseur']

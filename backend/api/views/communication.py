@@ -119,12 +119,22 @@ class InternalMessageViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         user = self.request.user
-        # Voir ses messages reçus (individuels ou collectifs) ou envoyés
+        show_all = self.request.query_params.get('all', '').lower() == 'true'
+        
+        # Les administrateurs peuvent consulter toutes les conversations
+        if user.is_staff and show_all:
+            return InternalMessage.objects.all().select_related('sender', 'recipient').prefetch_related(
+                'read_by', 'archived_by', 'parent', 'parent__sender'
+            ).order_by('-created_at')
+        
+        # Utilisateurs normaux : voir ses messages reçus (individuels ou collectifs) ou envoyés
         return InternalMessage.objects.filter(
             models.Q(recipient=user) | 
             models.Q(recipient__isnull=True) |
             models.Q(sender=user)
-        ).distinct().order_by('-created_at').prefetch_related('read_by', 'archived_by', 'parent', 'parent__sender')
+        ).distinct().select_related('sender', 'recipient').prefetch_related(
+            'read_by', 'archived_by', 'parent', 'parent__sender'
+        ).order_by('-created_at')
 
     def perform_create(self, serializer):
         serializer.save(sender=self.request.user)

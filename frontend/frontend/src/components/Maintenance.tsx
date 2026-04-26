@@ -326,9 +326,7 @@ export default function Maintenance() {
     formData.append('password', restorePassword);
 
     try {
-      await axios.post('/api/maintenance/restore/', formData, {
-        headers: { 'Content-Type': 'multipart/form-data' }
-      });
+      await axios.post('/api/maintenance/restore/', formData);
       clearInterval(progressInterval);
       setRestoreProgress(100);
       setRestoreStep('Restauration terminée !');
@@ -377,9 +375,7 @@ export default function Maintenance() {
     const formData = new FormData();
     formData.append('file', codeRestoreFile);
     try {
-      await axios.post('/api/code-backup/restore/', formData, {
-        headers: { 'Content-Type': 'multipart/form-data' }
-      });
+      await axios.post('/api/code-backup/restore/', formData);
       toast.success(t('code_management.restore_success'));
       setCodeRestoreFile(null);
     } catch (err: any) {

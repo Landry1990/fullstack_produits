@@ -1,6 +1,6 @@
-﻿import React from 'react';
+import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { Calendar, History, CheckCircle2, AlertCircle, ChevronRight, Trash2, Package } from 'lucide-react';
+import { Calendar, History, CheckCircle2, AlertCircle, ChevronRight, Trash2, Package, MessageCircle } from 'lucide-react';
 import type { Inventaire } from '../../types';
 import { formatCurrency } from '../../utils/formatters';
 
@@ -12,7 +12,9 @@ interface InventaireListTableProps {
     onSelect: (id: number) => void;
     onEdit: (inventaire: Inventaire) => void;
     onDelete: (id: number) => void;
+    onShareWhatsApp?: (id: number) => void;
     deleting?: boolean;
+    sharingId?: number | null;
 }
 
 export const InventaireListTable: React.FC<InventaireListTableProps> = ({
@@ -21,9 +23,10 @@ export const InventaireListTable: React.FC<InventaireListTableProps> = ({
     selectedIds,
     onSelectAll,
     onSelect,
-    onEdit,
     onDelete,
-    deleting = false
+    onShareWhatsApp,
+    deleting = false,
+    sharingId = null
 }) => {
     const { t } = useTranslation(['stock', 'common']);
 
@@ -140,6 +143,16 @@ export const InventaireListTable: React.FC<InventaireListTableProps> = ({
                                     >
                                         <ChevronRight className="h-5 w-5" />
                                     </button>
+                                    {onShareWhatsApp && inv.status === 'VALIDEE' && (
+                                        <button 
+                                            className={`p-2 text-base-content/60 hover:text-[#25D366] hover:bg-[#25D366]/10 rounded-lg transition-all ${sharingId === inv.id ? 'loading' : ''}`}
+                                            onClick={(e) => { e.stopPropagation(); onShareWhatsApp(inv.id); }}
+                                            disabled={sharingId === inv.id}
+                                            title="Partager sur WhatsApp"
+                                        >
+                                            {sharingId !== inv.id && <MessageCircle className="h-4 w-4" />}
+                                        </button>
+                                    )}
                                     <button 
                                         className="p-2 text-base-content/60 hover:text-error hover:bg-error/10 rounded-lg transition-all" 
                                         onClick={() => onDelete(inv.id)} 

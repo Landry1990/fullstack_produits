@@ -3,8 +3,9 @@ import { useTranslation } from 'react-i18next';
 import { useSearchParams } from 'react-router-dom';
 import axios from '../config/axios';
 import { toast } from 'react-hot-toast';
-import * as XLSX from 'xlsx';
 import { formatCurrency, formatNumber } from '../utils/formatters';
+import { usePharmacySettings } from './usePharmacySettings';
+import { exportToExcel } from '../utils/excelExport';
 
 // Types
 export type ParamType = 'month' | 'date' | 'datetime' | 'select' | 'number' | 'text' | 'client_id' | 'fournisseur_id' | 'checkbox';
@@ -464,6 +465,7 @@ export const formatValue = (key: string, value: unknown, t?: any): string => {
 export function useCentreRapports() {
     const { t, i18n } = useTranslation(['reports', 'common']);
     const [searchParams] = useSearchParams();
+    const { settings: pharmacySettings } = usePharmacySettings();
 
     const [selectedQuery, setSelectedQuery] = useState<QueryDefinition | null>(null);
     const [params, setParams] = useState<Record<string, string | number | boolean>>({});
@@ -764,24 +766,13 @@ export function useCentreRapports() {
             return;
         }
 
-        const ws = XLSX.utils.json_to_sheet(data);
-
-        // Auto-adjust column widths
-        const colWidths = Object.keys(data[0] || {}).map(key => {
-            const headerLen = key.length;
-            const maxContentLen = data.reduce((max, row) => {
-                const val = String(row[key] || "");
-                return Math.max(max, val.length);
-            }, 0);
-            return { wch: Math.max(headerLen, maxContentLen) + 2 };
-        });
-        ws['!cols'] = colWidths;
-
-        const wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, ws, 'Rapport');
         const today = new Date().toISOString().slice(0, 10);
         const filename = `${selectedQuery.id}_${today}.xlsx`;
-        XLSX.writeFile(wb, filename);
+        exportToExcel(data, pharmacySettings, {
+            sheetName: 'Rapport',
+            filename,
+            title: selectedQuery.name,
+        });
         toast.success(t('results.export_success', { filename }));
     }, [results, selectedQuery, t, params, apiBaseUrl]);
 

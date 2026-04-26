@@ -127,6 +127,12 @@ class PharmacySettings(models.Model):
     whatsapp_access_token = models.TextField(blank=True, default="", help_text="Meta Access Token (Permanent)")
     whatsapp_phone_id = models.CharField(max_length=50, blank=True, default="", help_text="Phone Number ID")
     whatsapp_business_id = models.CharField(max_length=50, blank=True, default="", help_text="WhatsApp Business Account ID")
+    pharmacist_whatsapp_number = models.CharField(
+        max_length=50, 
+        blank=True, 
+        default="", 
+        help_text="Numéro WhatsApp de la pharmacienne titulaires (format international sans +)"
+    )
     
     # --- Paramètres de Sauvegarde ---
     backup_enabled = models.BooleanField(
@@ -142,6 +148,16 @@ class PharmacySettings(models.Model):
         blank=True, 
         default="", 
         help_text="Chemin secondaire (ex: E:\\Backups_Pharmacie) pour double sauvegarde"
+    )
+
+    # --- Paramètres Expert IA (Santé du Stock) ---
+    availability_weight = models.IntegerField(
+        default=60,
+        help_text="Poids de la disponibilité dans le score de santé global (0-100)"
+    )
+    rotation_weight = models.IntegerField(
+        default=40,
+        help_text="Poids de la rotation dans le score de santé global (0-100)"
     )
     
     class Meta:

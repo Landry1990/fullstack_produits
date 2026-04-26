@@ -294,4 +294,7 @@ class Produit(models.Model):
             models.Index(fields=['stock', 'stock_minimum']),
             # Index Postgres pour recherche textuelle rapide (GIN + Trigramme)
             GinIndex(fields=['name'], name='produit_name_trgm_idx', opclasses=['gin_trgm_ops']),
+            GinIndex(fields=['cip1'], name='produit_cip1_trgm_idx', opclasses=['gin_trgm_ops']),
+            GinIndex(fields=['cip2'], name='produit_cip2_trgm_idx', opclasses=['gin_trgm_ops']),
+            GinIndex(fields=['cip3'], name='produit_cip3_trgm_idx', opclasses=['gin_trgm_ops']),
         ]
