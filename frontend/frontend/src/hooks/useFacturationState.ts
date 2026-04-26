@@ -256,9 +256,11 @@ export function useFacturationState() {
       tempOrdonnanceData: ui.tempOrdonnanceData,
       validated_by_id: effectiveSudo?.validatorId || null,
       sudo_password: effectiveSudo?.password || undefined,
-      modificationInvoiceId: ui.modificationInvoiceId,
       modificationInvoiceStatus: ui.modificationInvoiceStatus || undefined,
-      poste_caisse_id: multiCaisse.selectedPosteCaisseId
+      poste_caisse_id: multiCaisse.selectedPosteCaisseId,
+      prescriptionImage: ui.prescriptionImage,
+      modificationInvoiceId: ui.modificationInvoiceId,
+      isFactureA4: isFactureA4
     }
     await completeSale(params)
   }

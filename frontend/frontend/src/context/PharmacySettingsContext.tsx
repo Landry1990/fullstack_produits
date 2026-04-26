@@ -24,11 +24,14 @@ export interface PharmacySettings {
   currency_symbol?: string;
   locale?: string;
   auto_logout_timeout?: number;
+  availability_weight?: number;
+  rotation_weight?: number;
   // WhatsApp Business API (Meta Cloud)
   whatsapp_enabled?: boolean;
   whatsapp_access_token?: string;
   whatsapp_phone_id?: string;
   whatsapp_business_id?: string;
+  pharmacist_whatsapp_number?: string;
 }
 
 const DEFAULT_SETTINGS: PharmacySettings = {
@@ -52,10 +55,13 @@ const DEFAULT_SETTINGS: PharmacySettings = {
   currency_symbol: 'FCFA',
   locale: 'fr-FR',
   auto_logout_timeout: 15,
+  availability_weight: 60,
+  rotation_weight: 40,
   whatsapp_enabled: false,
   whatsapp_access_token: '',
   whatsapp_phone_id: '',
-  whatsapp_business_id: ''
+  whatsapp_business_id: '',
+  pharmacist_whatsapp_number: ''
 };
 
 interface PharmacySettingsContextType {

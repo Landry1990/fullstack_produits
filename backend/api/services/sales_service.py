@@ -16,7 +16,7 @@ from .promotion_service import PromotionService
 class SalesService:
     @staticmethod
     @transaction.atomic
-    def finalize_sale(user, data, centralized=True):
+    def finalize_sale(user, data, centralized=True, image_file=None):
         """
         Atomic implementation of sale finalization.
         Creates Facture, FactureProduit, Promis, Ordonnancier, and handles validation.
@@ -126,6 +126,7 @@ class SalesService:
             ord_obj = Ordonnancier.objects.create(
                 patient_nom=ordonnance_data.get('patient_nom'),
                 prescripteur_nom=ordonnance_data.get('prescripteur_nom'),
+                image_ordonnance=image_file,
                 facture=facture,
                 enregistre_par=user
             )

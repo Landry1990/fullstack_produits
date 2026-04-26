@@ -11,6 +11,7 @@ export interface InternalMessage {
   read_by?: number[];
   is_archived?: boolean;
   attachment?: string | null;
+  attachment_url?: string | null;
   parent?: number | null;
   parent_content?: string;
   parent_sender_name?: string;
@@ -38,9 +39,7 @@ const communicationService = {
       formData.append('content', data.content);
       if (data.parent) formData.append('parent', data.parent.toString());
       formData.append('attachment', data.attachment);
-      return api.post('/internal-messages/', formData, {
-        headers: { 'Content-Type': 'multipart/form-data' },
-      });
+      return api.post('/internal-messages/', formData);
     }
     return api.post('/internal-messages/', data);
   },
@@ -54,6 +53,7 @@ const communicationService = {
   createTemplate: (data: Partial<MessageTemplate>) => api.post('/message-templates/', data),
   updateTemplate: (id: number, data: Partial<MessageTemplate>) => api.put(`/message-templates/${id}/`, data),
   deleteTemplate: (id: number) => api.delete(`/message-templates/${id}/`),
+  sendWhatsAppMessage: (number: string, text: string) => api.post('/whatsapp/send_manual/', { number, text }),
 };
 
 export default communicationService;

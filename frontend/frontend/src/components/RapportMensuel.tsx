@@ -180,9 +180,9 @@ export default function RapportMensuel() {
   };
 
   return (
-    <div className="p-6 space-y-6 animate-fade-in max-w-7xl mx-auto">
+    <div className="p-3 sm:p-6 space-y-6 animate-fade-in max-w-7xl mx-auto">
       {/* Header */}
-      <div className="bg-base-100 p-6 rounded-lg shadow-sm border border-base-200 space-y-4">
+      <div className="bg-base-100 p-4 sm:p-6 rounded-lg shadow-sm border border-base-200 space-y-4">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
           <div>
             <h1 className="text-3xl font-bold text-base-content">📊 {t('title')}</h1>

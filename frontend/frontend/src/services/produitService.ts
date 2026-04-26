@@ -152,9 +152,7 @@ const produitService = {
     importCsv: async (file: File): Promise<unknown> => {
         const formData = new FormData();
         formData.append('file', file);
-        const response = await api.post<unknown>('produits-import/import_csv/', formData, {
-            headers: { 'Content-Type': 'multipart/form-data' }
-        });
+        const response = await api.post<unknown>('produits-import/import_csv/', formData);
         return response.data;
     },
 

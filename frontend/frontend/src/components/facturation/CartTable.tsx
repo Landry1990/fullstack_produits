@@ -348,7 +348,7 @@ const CartRow = React.memo(({
   )
 })
 
-export default function CartTable({
+const CartTable = React.memo(({
   lignesFacture,
   updateQuantite,
   updatePrix,
@@ -362,7 +362,7 @@ export default function CartTable({
   onSelectLine,
   refreshTrigger,
   isSidebarStyle
-}: CartTableProps) {
+}: CartTableProps) => {
   const { user } = useAuth()
   const { t } = useTranslation(['facturation', 'common'])
 
@@ -449,4 +449,6 @@ export default function CartTable({
       </tbody>
     </table>
   )
-}
+})
+
+export default CartTable

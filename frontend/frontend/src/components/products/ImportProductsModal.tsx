@@ -44,9 +44,6 @@ export default function ImportProductsModal({ onClose, onSuccess }: ImportProduc
     try {
       const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || '/api'
       const response = await axios.post(`${apiBaseUrl}/import/products/`, formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
         onUploadProgress: (progressEvent) => {
           if (progressEvent.total) { // Check if total is defined
              const percent = Math.round((progressEvent.loaded * 100) / progressEvent.total)

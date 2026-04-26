@@ -15,6 +15,221 @@ interface ProductTabsContentProps {
   onMovementClick: (item: any) => void;
 }
 
+// Helper components - Defined first to avoid hoisting issues
+
+const PurchasesTabContent = ({ achats, t }: { achats: any[]; t: any }) => {
+    if (!achats || achats.length === 0) return <p className="text-center text-base-content/50 py-8">{t('products:detail.purchases.empty')}</p>;
+
+    return (
+        <div className="overflow-x-auto">
+            <table className="table">
+                <thead className="bg-base-200 sticky top-0 border-b border-base-300">
+                    <tr>
+                        <th className="text-[11px] font-black uppercase tracking-wider">{t('products:detail.purchases.date')}</th>
+                        <th className="text-[11px] font-black uppercase tracking-wider">{t('products:detail.purchases.provider')}</th>
+                        <th className="text-[11px] font-black uppercase tracking-wider text-right">{t('products:detail.purchases.qty')}</th>
+                        <th className="text-[11px] font-black uppercase tracking-wider text-right">{t('products:detail.purchases.price')}</th>
+                        <th className="text-[11px] font-black uppercase tracking-wider">{t('products:detail.purchases.lot')}</th>
+                        <th className="text-[11px] font-black uppercase tracking-wider">{t('products:detail.purchases.exp')}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {achats.map((achat) => (
+                        <tr key={achat.id} className="hover:bg-base-200/50 transition-colors border-b border-base-100">
+                            <td className="text-sm font-mono font-bold text-base-content/70">{new Date(achat.commande_date).toLocaleDateString('fr-FR')}</td>
+                            <td className="text-sm font-bold truncate max-w-[150px]" title={achat.fournisseur_name}>{achat.fournisseur_name}</td>
+                            <td className="text-right text-sm font-black">{achat.quantity}</td>
+                            <td className="text-right text-sm font-black text-blue-600">
+                                {formatCurrency(Math.round(Number(achat.price_cost)))}
+                            </td>
+                            <td>
+                                <span className="badge badge-outline badge-md font-mono font-bold">{achat.lot || '-'}</span>
+                            </td>
+                            <td className="text-sm font-bold text-base-content/60">
+                                {achat.date_expiration ? new Date(achat.date_expiration).toLocaleDateString('fr-FR') : '-'}
+                            </td>
+                        </tr>
+                    ))}
+                </tbody>
+            </table>
+        </div>
+    );
+};
+
+const LotsTabContent = ({ lots, t }: { lots: StockLot[]; t: any }) => {
+    if (!lots || lots.length === 0) return <p className="text-center text-base-content/50 py-8">{t('products:detail.lots.empty')}</p>;
+
+    return (
+        <div className="overflow-x-auto">
+            <table className="table">
+                <thead className="bg-base-200 sticky top-0 border-b border-base-300">
+                    <tr>
+                        <th className="text-[11px] font-black uppercase tracking-wider">{t('products:detail.lots.date_reception')}</th>
+                        <th className="text-[11px] font-black uppercase tracking-wider">{t('products:detail.lots.lot_number')}</th>
+                        <th className="text-[11px] font-black uppercase tracking-wider">{t('products:detail.lots.expiration')}</th>
+                        <th className="text-[11px] font-black uppercase tracking-wider">{t('products:detail.lots.provider')}</th>
+                        <th className="text-[11px] font-black uppercase tracking-wider text-right">{t('products:detail.purchases.price', { defaultValue: 'Prix' })}</th>
+                        <th className="text-[11px] font-black uppercase tracking-wider text-right">{t('products:detail.lots.initial_qty')}</th>
+                        <th className="text-[11px] font-black uppercase tracking-wider text-right">{t('products:detail.lots.remaining_qty')}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {lots.map((lot) => {
+                        const isExpired = lot.date_expiration ? new Date(lot.date_expiration) < new Date() : false;
+                        return (
+                            <tr key={lot.id} className="hover:bg-base-200/50 transition-colors border-b border-base-100">
+                                <td className="text-sm font-mono font-bold text-base-content/70">{new Date(lot.date_reception).toLocaleDateString('fr-FR')}</td>
+                                <td>
+                                    <span className="badge badge-outline badge-md font-mono font-black">{lot.lot || '-'}</span>
+                                </td>
+                                <td>
+                                    <span className={`text-sm font-black ${isExpired ? 'text-error' : 'text-base-content'}`}>
+                                        {lot.date_expiration ? new Date(lot.date_expiration).toLocaleDateString('fr-FR') : '-'}
+                                    </span>
+                                </td>
+                                <td className="text-sm font-bold truncate max-w-[120px]" title={lot.fournisseur_nom}>{lot.fournisseur_nom}</td>
+                                <td className="text-right text-sm font-black text-blue-600">
+                                    {formatCurrency(Math.round(Number(lot.price_cost || 0)))}
+                                </td>
+                                <td className="text-right text-sm font-bold">{lot.quantity_initial}</td>
+                                <td className="text-right font-black text-sm">
+                                    <span className={lot.quantity_remaining > 0 ? 'text-success' : 'text-base-content/30'}>
+                                        {lot.quantity_remaining}
+                                    </span>
+                                </td>
+                            </tr>
+                        );
+                    })}
+                </tbody>
+            </table>
+        </div>
+    );
+};
+
+const StatsTabContent = ({ monthlyStats, t }: { monthlyStats: any[]; t: any }) => {
+    if (!monthlyStats || monthlyStats.length === 0) return <p className="text-center text-base-content/50 py-4">{t('products:detail.stats.empty')}</p>;
+
+    let currentYear: number | null = null;
+    return (
+        <div className="overflow-x-auto max-h-80">
+            <table className="table w-full">
+                <thead className="bg-base-200 sticky top-0 border-b border-base-300">
+                    <tr>
+                    <th className="text-[11px] font-black uppercase whitespace-nowrap"></th>
+                    <th className="text-[11px] font-black uppercase whitespace-nowrap">{t('products:detail.stats.month')}</th>
+                    <th className="text-[11px] font-black uppercase text-right text-primary whitespace-nowrap">{t('products:detail.stats.qty_sold')}</th>
+                    <th className="text-[11px] font-black uppercase text-right text-warning whitespace-nowrap">{t('products:detail.stats.qty_ordered')}</th>
+                    <th className="text-[11px] font-black uppercase text-right text-info whitespace-nowrap">{t('products:detail.stats.nb_clients')}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {(monthlyStats || []).map((stat, index) => {
+                        const showYear = stat.year !== currentYear;
+                        currentYear = stat.year;
+                        return (
+                            <tr key={index} className={`border-b border-base-100 ${showYear ? 'border-t-2 border-base-300' : ''}`}>
+                                <td className="font-black text-sm text-base-content/60">
+                                    {showYear ? stat.year : ''}
+                                </td>
+                                <td className="text-sm font-bold">{stat.month_name}</td>
+                                <td className="text-right font-mono font-black text-sm text-primary">{stat.qte_v}</td>
+                                <td className="text-right font-mono font-bold text-sm text-warning">{stat.qte_c}</td>
+                                <td className="text-right font-mono font-bold text-sm text-info">{stat.nb_c}</td>
+                            </tr>
+                        );
+                    })}
+                </tbody>
+            </table>
+            <div className="mt-2 text-[10px] text-base-content/50 flex justify-around">
+                <span>{t('products:detail.stats.legend_sold')}</span>
+                <span>{t('products:detail.stats.legend_ordered')}</span>
+                <span>{t('products:detail.stats.legend_count')}</span>
+            </div>
+        </div>
+    );
+};
+
+const MovementsTabContent = ({ stockHistory, loadingHistory, onMovementClick, t }: { stockHistory: any[]; loadingHistory: boolean; onMovementClick: (item: any) => void; t: any }) => {
+    if (loadingHistory) return (
+        <div className="flex justify-center py-12">
+            <span className="loading loading-spinner loading-lg"></span>
+        </div>
+    );
+
+    if (!stockHistory || stockHistory.length === 0) return <p className="text-center text-base-content/50 py-8">{t('products:detail.movements.empty')}</p>;
+
+    return (
+        <div className="overflow-x-auto">
+            <table className="table">
+                <thead className="bg-base-200 sticky top-0 border-b border-base-300">
+                    <tr>
+                        <th className="text-[11px] font-black uppercase tracking-wider">{t('products:detail.movements.date')}</th>
+                        <th className="text-[11px] font-black uppercase tracking-wider">{t('products:detail.movements.type')}</th>
+                        <th className="text-[11px] font-black uppercase tracking-wider">{t('products:detail.movements.label')}</th>
+                        <th className="text-[11px] font-black uppercase tracking-wider">{t('products:detail.movements.operator')}</th>
+                        <th className="text-[11px] font-black uppercase tracking-wider text-right">{t('products:detail.movements.before')}</th>
+                        <th className="text-[11px] font-black uppercase tracking-wider text-right">{t('products:detail.movements.qty')}</th>
+                        <th className="text-[11px] font-black uppercase tracking-wider text-right">{t('products:detail.movements.after')}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {(stockHistory || []).map((item, index) => {
+                        const isPositive = item.type === 'AJUSTEMENT' 
+                            ? item.quantity > 0 
+                            : ['ENTREE', 'RETOUR', 'TRANSFORMATION_ENTREE'].includes(item.type);
+                        
+                        const cleanedLibelle = (item.libelle || '')
+                            .replace(/\s*\(FAC.*?\)/gi, '')
+                            .replace(/\s*-\s*Lot:.*?(?=\s*-\s*|$)/gi, '')
+                            .trim();
+
+                        return (
+                            <tr 
+                                key={index} 
+                                className={`hover:bg-base-200/50 transition-colors border-b border-base-100 ${(item.facture || item.commande) ? 'cursor-pointer' : ''}`}
+                                onClick={() => onMovementClick(item)}
+                            >
+                                <td className="whitespace-nowrap text-sm font-mono font-bold text-base-content/70">
+                                    {new Date(item.date).toLocaleDateString('fr-FR')}
+                                </td>
+                                <td>
+                                    <span className={`badge badge-md whitespace-nowrap font-black tracking-tight ${
+                                        item.type === 'AJUSTEMENT' 
+                                            ? 'badge-warning text-warning-content'
+                                            : isPositive ? 'badge-success text-white' : 'badge-error text-white'
+                                    }`}>
+                                        {t(`products:detail.movements.types.${item.type}`, { defaultValue: item.type })}
+                                    </span>
+                                </td>
+                                <td className="text-sm font-bold" title={item.libelle}>
+                                    <div className="flex items-center gap-1">
+                                        {(item.facture || item.commande) && (
+                                            <span className="text-primary" title={item.facture ? t('products:detail.movements.view_invoice') : t('products:detail.movements.view_order')}>🔍</span>
+                                        )}
+                                        {cleanedLibelle}
+                                        {item.commande_numero && (
+                                            <span className="badge badge-ghost badge-md font-mono font-black ml-auto">
+                                                {item.commande_numero}
+                                            </span>
+                                        )}
+                                    </div>
+                                </td>
+                                <td className="text-sm font-bold text-base-content/60">{item.user || item.user_nom || '-'}</td>
+                                <td className="text-right font-mono text-sm font-bold opacity-50">{item.stock_avant}</td>
+                                <td className={`text-right font-black text-sm ${isPositive ? 'text-success' : 'text-error'}`}>
+                                    {isPositive ? '+' : ''}{item.quantity}
+                                </td>
+                                <td className="text-right font-mono font-black text-sm">{item.stock_apres}</td>
+                            </tr>
+                        );
+                    })}
+                </tbody>
+            </table>
+        </div>
+    );
+};
+
+// Main Component
 export const ProductTabsContent: React.FC<ProductTabsContentProps> = ({
   selectedProduit,
   activeTab,
@@ -26,7 +241,7 @@ export const ProductTabsContent: React.FC<ProductTabsContentProps> = ({
   loadingHistory,
   onMovementClick
 }) => {
-  const { t, i18n } = useTranslation(['products', 'common']);
+  const { t } = useTranslation(['products', 'common']);
 
   return (
     <div className="flex flex-col h-full">
@@ -51,6 +266,7 @@ export const ProductTabsContent: React.FC<ProductTabsContentProps> = ({
           </a>
         ))}
       </div>
+    </div>
 
       {/* Contenu des onglets */}
       <div className="flex-1 overflow-auto p-4">
@@ -149,218 +365,4 @@ export const ProductTabsContent: React.FC<ProductTabsContentProps> = ({
       </div>
     </div>
   );
-};
-
-// Helper components to keep the main one cleaner
-
-const PurchasesTabContent = ({ achats, t }: { achats: any[]; t: any }) => {
-    if (!achats || achats.length === 0) return <p className="text-center text-base-content/50 py-8">{t('products:detail.purchases.empty')}</p>;
-
-    return (
-        <div className="overflow-x-auto">
-            <table className="table">
-                <thead className="bg-base-200 sticky top-0 border-b border-base-300">
-                    <tr>
-                        <th className="text-[11px] font-black uppercase tracking-wider">{t('products:detail.purchases.date')}</th>
-                        <th className="text-[11px] font-black uppercase tracking-wider">{t('products:detail.purchases.provider')}</th>
-                        <th className="text-[11px] font-black uppercase tracking-wider text-right">{t('products:detail.purchases.qty')}</th>
-                        <th className="text-[11px] font-black uppercase tracking-wider text-right">{t('products:detail.purchases.price')}</th>
-                        <th className="text-[11px] font-black uppercase tracking-wider">{t('products:detail.purchases.lot')}</th>
-                        <th className="text-[11px] font-black uppercase tracking-wider">{t('products:detail.purchases.exp')}</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {achats.map((achat) => (
-                        <tr key={achat.id} className="hover:bg-base-200/50 transition-colors border-b border-base-100">
-                            <td className="text-sm font-mono font-bold text-base-content/70">{new Date(achat.commande_date).toLocaleDateString('fr-FR')}</td>
-                            <td className="text-sm font-bold truncate max-w-[150px]" title={achat.fournisseur_name}>{achat.fournisseur_name}</td>
-                            <td className="text-right text-sm font-black">{achat.quantity}</td>
-                            <td className="text-right text-sm font-black text-blue-600">
-                                {formatCurrency(Math.round(Number(achat.price_cost)))}
-                            </td>
-                            <td>
-                                <span className="badge badge-outline badge-md font-mono font-bold">{achat.lot || '-'}</span>
-                            </td>
-                            <td className="text-sm font-bold text-base-content/60">
-                                {achat.date_expiration ? new Date(achat.date_expiration).toLocaleDateString('fr-FR') : '-'}
-                            </td>
-                        </tr>
-                    ))}
-                </tbody>
-            </table>
-        </div>
-    );
-};
-
-const LotsTabContent = ({ lots, t }: { lots: StockLot[]; t: any }) => {
-    if (!lots || lots.length === 0) return <p className="text-center text-base-content/50 py-8">{t('products:detail.lots.empty')}</p>;
-
-    return (
-        <div className="overflow-x-auto">
-            <table className="table">
-                <thead className="bg-base-200 sticky top-0 border-b border-base-300">
-                    <tr>
-                        <th className="text-[11px] font-black uppercase tracking-wider">{t('products:detail.lots.date_reception')}</th>
-                        <th className="text-[11px] font-black uppercase tracking-wider">{t('products:detail.lots.lot_number')}</th>
-                        <th className="text-[11px] font-black uppercase tracking-wider">{t('products:detail.lots.expiration')}</th>
-                        <th className="text-[11px] font-black uppercase tracking-wider">{t('products:detail.lots.provider')}</th>
-                        <th className="text-[11px] font-black uppercase tracking-wider text-right">{t('products:detail.purchases.price', { defaultValue: 'Prix' })}</th>
-                        <th className="text-[11px] font-black uppercase tracking-wider text-right">{t('products:detail.lots.initial_qty')}</th>
-                        <th className="text-[11px] font-black uppercase tracking-wider text-right">{t('products:detail.lots.remaining_qty')}</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {lots.map((lot) => {
-                        const isExpired = lot.date_expiration ? new Date(lot.date_expiration) < new Date() : false;
-                        return (
-                            <tr key={lot.id} className="hover:bg-base-200/50 transition-colors border-b border-base-100">
-                                <td className="text-sm font-mono font-bold text-base-content/70">{new Date(lot.date_reception).toLocaleDateString('fr-FR')}</td>
-                                <td>
-                                    <span className="badge badge-outline badge-md font-mono font-black">{lot.lot || '-'}</span>
-                                </td>
-                                <td>
-                                    <span className={`text-sm font-black ${isExpired ? 'text-error' : 'text-base-content'}`}>
-                                        {lot.date_expiration ? new Date(lot.date_expiration).toLocaleDateString('fr-FR') : '-'}
-                                    </span>
-                                </td>
-                                <td className="text-sm font-bold truncate max-w-[120px]" title={lot.fournisseur_nom}>{lot.fournisseur_nom}</td>
-                                <td className="text-right text-sm font-black text-blue-600">
-                                    {formatCurrency(Math.round(Number(lot.price_cost || 0)))}
-                                </td>
-                                <td className="text-right text-sm font-bold">{lot.quantity_initial}</td>
-                                <td className="text-right font-black text-sm">
-                                    <span className={lot.quantity_remaining > 0 ? 'text-success' : 'text-base-content/30'}>
-                                        {lot.quantity_remaining}
-                                    </span>
-                                </td>
-                            </tr>
-                        );
-                    })}
-                </tbody>
-            </table>
-        </div>
-    );
-};
-const StatsTabContent = ({ monthlyStats, t }: { monthlyStats: any[]; t: any }) => {
-    if (monthlyStats.length === 0) return <p className="text-center text-base-content/50 py-4">{t('products:detail.stats.empty')}</p>;
-
-    let currentYear: number | null = null;
-    return (
-        <div className="overflow-x-auto max-h-80">
-            <table className="table w-full">
-                <thead className="bg-base-200 sticky top-0 border-b border-base-300">
-                    <tr>
-                    <th className="text-[11px] font-black uppercase whitespace-nowrap"></th>
-                    <th className="text-[11px] font-black uppercase whitespace-nowrap">{t('products:detail.stats.month')}</th>
-                    <th className="text-[11px] font-black uppercase text-right text-primary whitespace-nowrap">{t('products:detail.stats.qty_sold')}</th>
-                    <th className="text-[11px] font-black uppercase text-right text-warning whitespace-nowrap">{t('products:detail.stats.qty_ordered')}</th>
-                    <th className="text-[11px] font-black uppercase text-right text-info whitespace-nowrap">{t('products:detail.stats.nb_clients')}</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {(monthlyStats || []).map((stat, index) => {
-                        const showYear = stat.year !== currentYear;
-                        currentYear = stat.year;
-                        return (
-                            <tr key={index} className={`border-b border-base-100 ${showYear ? 'border-t-2 border-base-300' : ''}`}>
-                                <td className="font-black text-sm text-base-content/60">
-                                    {showYear ? stat.year : ''}
-                                </td>
-                                <td className="text-sm font-bold">{stat.month_name}</td>
-                                <td className="text-right font-mono font-black text-sm text-primary">{stat.qte_v}</td>
-                                <td className="text-right font-mono font-bold text-sm text-warning">{stat.qte_c}</td>
-                                <td className="text-right font-mono font-bold text-sm text-info">{stat.nb_c}</td>
-                            </tr>
-                        );
-                    })}
-                </tbody>
-            </table>
-            <div className="mt-2 text-[10px] text-base-content/50 flex justify-around">
-                <span>{t('products:detail.stats.legend_sold')}</span>
-                <span>{t('products:detail.stats.legend_ordered')}</span>
-                <span>{t('products:detail.stats.legend_count')}</span>
-            </div>
-        </div>
-    );
-};
-
-const MovementsTabContent = ({ stockHistory, loadingHistory, onMovementClick, t }: { stockHistory: any[]; loadingHistory: boolean; onMovementClick: (item: any) => void; t: any }) => {
-    if (loadingHistory) return (
-        <div className="flex justify-center py-12">
-            <span className="loading loading-spinner loading-lg"></span>
-        </div>
-    );
-
-    if (!stockHistory || stockHistory.length === 0) return <p className="text-center text-base-content/50 py-8">{t('products:detail.movements.empty')}</p>;
-
-    return (
-        <div className="overflow-x-auto">
-            <table className="table">
-                <thead className="bg-base-200 sticky top-0 border-b border-base-300">
-                    <tr>
-                        <th className="text-[11px] font-black uppercase tracking-wider">{t('products:detail.movements.date')}</th>
-                        <th className="text-[11px] font-black uppercase tracking-wider">{t('products:detail.movements.type')}</th>
-                        <th className="text-[11px] font-black uppercase tracking-wider">{t('products:detail.movements.label')}</th>
-                        <th className="text-[11px] font-black uppercase tracking-wider">{t('products:detail.movements.operator')}</th>
-                        <th className="text-[11px] font-black uppercase tracking-wider text-right">{t('products:detail.movements.before')}</th>
-                        <th className="text-[11px] font-black uppercase tracking-wider text-right">{t('products:detail.movements.qty')}</th>
-                        <th className="text-[11px] font-black uppercase tracking-wider text-right">{t('products:detail.movements.after')}</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {(stockHistory || []).map((item, index) => {
-                        const isPositive = item.type === 'AJUSTEMENT' 
-                            ? item.quantity > 0 
-                            : ['ENTREE', 'RETOUR', 'TRANSFORMATION_ENTREE'].includes(item.type);
-                        
-                        // Cleanup libelle as requested (remove invoice numbers and lot info)
-                        const cleanedLibelle = (item.libelle || '')
-                            .replace(/\s*\(FAC.*?\)/gi, '')
-                            .replace(/\s*-\s*Lot:.*?(?=\s*-\s*|$)/gi, '')
-                            .trim();
-
-                        return (
-                            <tr 
-                                key={index} 
-                                className={`hover:bg-base-200/50 transition-colors border-b border-base-100 ${(item.facture || item.commande) ? 'cursor-pointer' : ''}`}
-                                onClick={() => onMovementClick(item)}
-                            >
-                                <td className="whitespace-nowrap text-sm font-mono font-bold text-base-content/70">
-                                    {new Date(item.date).toLocaleDateString('fr-FR')}
-                                </td>
-                                <td>
-                                    <span className={`badge badge-md whitespace-nowrap font-black tracking-tight ${
-                                        item.type === 'AJUSTEMENT' 
-                                            ? 'badge-warning text-warning-content'
-                                            : isPositive ? 'badge-success text-white' : 'badge-error text-white'
-                                    }`}>
-                                        {t(`products:detail.movements.types.${item.type}`, { defaultValue: item.type })}
-                                    </span>
-                                </td>
-                                <td className="text-sm font-bold" title={item.libelle}>
-                                    <div className="flex items-center gap-1">
-                                        {(item.facture || item.commande) && (
-                                            <span className="text-primary" title={item.facture ? t('products:detail.movements.view_invoice') : t('products:detail.movements.view_order')}>🔍</span>
-                                        )}
-                                        {cleanedLibelle}
-                                        {item.commande_numero && (
-                                            <span className="badge badge-ghost badge-md font-mono font-black ml-auto">
-                                                {item.commande_numero}
-                                            </span>
-                                        )}
-                                    </div>
-                                </td>
-                                <td className="text-sm font-bold text-base-content/60">{item.user || item.user_nom || '-'}</td>
-                                <td className="text-right font-mono text-sm font-bold opacity-50">{item.stock_avant}</td>
-                                <td className={`text-right font-black text-sm ${isPositive ? 'text-success' : 'text-error'}`}>
-                                    {isPositive ? '+' : ''}{item.quantity}
-                                </td>
-                                <td className="text-right font-mono font-black text-sm">{item.stock_apres}</td>
-                            </tr>
-                        );
-                    })}
-                </tbody>
-            </table>
-        </div>
-    );
 };

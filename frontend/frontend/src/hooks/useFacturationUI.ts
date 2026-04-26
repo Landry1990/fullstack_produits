@@ -8,6 +8,7 @@ export interface FacturationUIState {
     showTicketPreview: boolean
     showStockResolution: boolean
     showOrdonnanceModal: boolean
+    isScannerModalOpen: boolean
 
     // Data for Modals
     paymentModalData: {
@@ -65,6 +66,7 @@ export interface FacturationUIState {
     // Ordonnancier
     tempOrdonnanceData: OrdonnanceData | null
     pendingOrdonnanceFacture: Facture | null
+    prescriptionImage: File | null
 }
 
 export function useFacturationUI() {
@@ -131,6 +133,8 @@ export function useFacturationUI() {
     const [showOrdonnanceModal, setShowOrdonnanceModal] = useState(false)
     const [tempOrdonnanceData, setTempOrdonnanceData] = useState<OrdonnanceData | null>(null)
     const [pendingOrdonnanceFacture, setPendingOrdonnanceFacture] = useState<Facture | null>(null)
+    const [isScannerModalOpen, setIsScannerModalOpen] = useState(false)
+    const [prescriptionImage, setPrescriptionImage] = useState<File | null>(null)
 
     // Devis / Modification State
     const [devisIdToValidate, setDevisIdToValidate] = useState<number | null>(null)
@@ -157,6 +161,8 @@ export function useFacturationUI() {
         setPromisClientName('')
         setTempOrdonnanceData(null)
         setPendingOrdonnanceFacture(null)
+        setIsScannerModalOpen(false)
+        setPrescriptionImage(null)
         setDevisIdToValidate(null)
         setIsModificationMode(false)
         setModificationInvoiceId(null)
@@ -224,6 +230,8 @@ export function useFacturationUI() {
         showOrdonnanceModal, setShowOrdonnanceModal,
         tempOrdonnanceData, setTempOrdonnanceData,
         pendingOrdonnanceFacture, setPendingOrdonnanceFacture,
+        isScannerModalOpen, setIsScannerModalOpen,
+        prescriptionImage, setPrescriptionImage,
 
         devisIdToValidate, setDevisIdToValidate,
         isModificationMode, setIsModificationMode,

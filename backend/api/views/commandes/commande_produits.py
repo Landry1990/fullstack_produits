@@ -5,6 +5,8 @@ from rest_framework.permissions import IsAuthenticated
 from decimal import Decimal
 from django.db import transaction
 from django_filters.rest_framework import DjangoFilterBackend
+from datetime import date
+import calendar
 
 from ...models import Commande, CommandeProduit, StockLot, Produit
 from ...serializers import CommandeProduitSerializer
@@ -82,6 +84,44 @@ class CommandeProduitViewSet(viewsets.ModelViewSet):
             except:
                 return Decimal(str(default))
 
+        def parse_expiration(val):
+            if val is None:
+                return None
+            if isinstance(val, date):
+                y = val.year
+                m = val.month
+                last_day = calendar.monthrange(y, m)[1]
+                return date(y, m, last_day)
+
+            s = str(val).strip()
+            if not s:
+                return None
+
+            if '/' in s and len(s) <= 7:
+                parts = s.split('/')
+                if len(parts) != 2:
+                    return None
+                mm_str, yy_str = parts[0].strip(), parts[1].strip()
+                if not (mm_str.isdigit() and yy_str.isdigit()):
+                    return None
+                m = int(mm_str)
+                yy = int(yy_str)
+                if m < 1 or m > 12:
+                    return None
+                y = 2000 + yy if yy < 100 else yy
+                last_day = calendar.monthrange(y, m)[1]
+                return date(y, m, last_day)
+
+            if '-' in s:
+                parts = s.split('T')[0].split('-')
+                if len(parts) != 3:
+                    return None
+                y, m, d = (int(parts[0]), int(parts[1]), int(parts[2]))
+                last_day = calendar.monthrange(y, m)[1]
+                return date(y, m, last_day)
+
+            return None
+
         # Get product TVAs for fallback
         product_ids_in_payload = {p.get('produit') for p in produits_data if p.get('produit')}
         product_tva_map = {p.id: p.tva for p in Produit.objects.filter(id__in=product_ids_in_payload)}
@@ -108,7 +148,7 @@ class CommandeProduitViewSet(viewsets.ModelViewSet):
                 'prix_euro': to_decimal(p.get('prix_euro'), None) if p.get('prix_euro') else None,
                 'tva': to_decimal(p.get('tva') if p.get('tva') is not None else product_tva_map.get(produit_id, 19.25)),
                 'lot': lot,
-                'date_expiration': p.get('date_expiration') or None,
+                'date_expiration': parse_expiration(p.get('date_expiration')),
             }
 
             if item_id and item_id in existing_ids:

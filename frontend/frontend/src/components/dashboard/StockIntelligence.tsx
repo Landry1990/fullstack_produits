@@ -1,3 +1,4 @@
+import { useState, useEffect, useMemo } from 'react';
 import { 
   ShoppingBag, 
   Archive, 
@@ -7,6 +8,7 @@ import {
   CalendarDays
 } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
+import axios from 'axios';
 
 interface StockIntelligenceProps {
   stats: any;
@@ -34,6 +36,25 @@ export default function StockIntelligence({
   formatCurrencyLocal
 }: StockIntelligenceProps) {
   const navigate = useNavigate();
+  const apiBaseUrl = useMemo(() => {
+    const base = import.meta.env.VITE_API_BASE_URL ?? '';
+    return base ? String(base).replace(/\/$/, '') : '';
+  }, []);
+
+  const DORMANT_DAYS = 90;
+  const [dormantItems, setDormantItems] = useState<any[]>([]);
+  const [dormantTotal, setDormantTotal] = useState(0);
+
+  useEffect(() => {
+    axios.get(`${apiBaseUrl}/api/stock-analysis/unsold/`, {
+      params: { days: DORMANT_DAYS, page: 1, page_size: 50 }
+    }).then(res => {
+      const items = (res.data?.items ?? []) as any[];
+      const sorted = [...items].sort((a, b) => (b.stock ?? 0) - (a.stock ?? 0)).slice(0, 5);
+      setDormantItems(sorted);
+      setDormantTotal(res.data?.total_value ?? 0);
+    }).catch(() => {});
+  }, [apiBaseUrl]);
 
   return (
     <div className="space-y-6">
@@ -87,17 +108,17 @@ export default function StockIntelligence({
                   <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">{t('dashboard.charts.dormant_desc', { defaultValue: 'Rossignols (+6 mois)' })}</p>
                 </div>
               </div>
-              {stats?.dormant_stock && stats.dormant_stock.total_value > 0 && (
+              {dormantTotal > 0 && (
                 <div className="text-right">
-                  <span className="text-xs font-black text-slate-700 block">{formatCurrencyLocal(stats.dormant_stock.total_value)}</span>
+                  <span className="text-xs font-black text-slate-700 block">{formatCurrencyLocal(dormantTotal)}</span>
                   <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">{t('dashboard.charts.immobilized', { defaultValue: 'Bloqués' })}</span>
                 </div>
               )}
             </div>
 
             <div className="space-y-3 flex-grow overflow-y-auto pr-1 custom-scrollbar min-h-[240px] max-h-[350px]">
-              {stats?.dormant_stock && stats.dormant_stock.top_products.length > 0 ? (
-                stats.dormant_stock.top_products.map((p: any) => (
+              {dormantItems.length > 0 ? (
+                dormantItems.map((p: any) => (
                   <div key={p.id} className="flex items-center justify-between p-3 rounded-xl bg-base-200/30 border border-base-300/50 hover:border-slate-300 transition-all group">
                     <div className="flex items-center gap-3 min-w-0">
                       <span className="text-xs font-bold text-base-content truncate">{p.name}</span>
@@ -117,7 +138,7 @@ export default function StockIntelligence({
             </div>
             
             <div className="mt-4 pt-4 border-t border-base-200 shrink-0">
-              <Link to="/app/analyse-stock?tab=unsold&days=180" className="btn btn-sm btn-block btn-ghost hover:bg-slate-50 hover:text-slate-700 text-xs font-bold gap-2">
+              <Link to="/app/stock-analysis?tab=unsold&days=90" className="btn btn-sm btn-block btn-ghost hover:bg-slate-50 hover:text-slate-700 text-xs font-bold gap-2">
                 {t('dashboard.charts.see_all_dormant', { defaultValue: 'Voir la liste complète' })}
                 <ArrowRight className="w-3 h-3" />
               </Link>

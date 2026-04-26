@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { 
     ChevronLeft, ChevronRight, ClipboardList, Database, Plus, 
@@ -9,6 +9,10 @@ import { InventaireQuickStats } from '../InventaireQuickStats';
 import { InventaireListTable } from '../InventaireListTable';
 import { useInventaireList } from '../../../hooks/inventaire/useInventaireList';
 import { useInventaireEditor } from '../../../hooks/inventaire/useInventaireEditor';
+import communicationService from '../../../services/communicationService';
+import { toast } from 'react-hot-toast';
+import { usePharmacySettings } from '../../../hooks/usePharmacySettings';
+import { generateInventorySummaryText, openWhatsApp } from '../../../utils/whatsapp';
 
 interface InventaireListProps {
     listLogic: ReturnType<typeof useInventaireList>;
@@ -30,6 +34,7 @@ export const InventaireList: React.FC<InventaireListProps> = ({
     onOpenAudit
 }) => {
     const { t } = useTranslation(['stock', 'common']);
+    const { settings: pharmSettings } = usePharmacySettings();
     const {
         inventaires, loading, totalCount, currentPage,
         nextPage, prevPage, fetchInventaires, handleDelete,
@@ -41,6 +46,32 @@ export const InventaireList: React.FC<InventaireListProps> = ({
         selectedInventaireIds, toggleSelectInventaire, toggleSelectAllInventaires,
         deleting
     } = listLogic;
+
+    const [sharingId, setSharingId] = useState<number | null>(null);
+
+    const handleShareWhatsApp = async (id: number) => {
+        const inventaire = inventaires.find(inv => inv.id === id);
+        if (!inventaire) return;
+
+        if (!pharmSettings?.pharmacist_whatsapp_number) {
+            toast.error("Le numéro WhatsApp de la pharmacienne n'est pas configuré dans les paramètres.");
+            return;
+        }
+
+        setSharingId(id);
+        try {
+            const text = generateInventorySummaryText(inventaire, pharmSettings.pharmacy_name || 'Ma Pharmacie');
+            const success = openWhatsApp(pharmSettings.pharmacist_whatsapp_number, text);
+            
+            if (success) {
+                toast.success(t('inventaire.whatsapp_prepared', { defaultValue: 'Rapport préparé pour WhatsApp !' }), { icon: '📱' });
+            }
+        } catch (err: any) {
+            toast.error('Erreur lors de la préparation du partage');
+        } finally {
+            setSharingId(null);
+        }
+    };
 
     const isSaving = editorLogic.saving || deleting;
 
@@ -122,7 +153,9 @@ export const InventaireList: React.FC<InventaireListProps> = ({
                     onSelect={toggleSelectInventaire}
                     onEdit={onEdit}
                     onDelete={handleDelete}
+                    onShareWhatsApp={handleShareWhatsApp}
                     deleting={deleting}
+                    sharingId={sharingId}
                 />
                 
                 {/* Pagination Controls */}

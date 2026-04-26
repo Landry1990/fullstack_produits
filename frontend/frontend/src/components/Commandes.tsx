@@ -26,8 +26,11 @@ export default function Commandes({ forcedType }: CommandesProps) {
     if (location.state?.action === 'NEW_ORDER') {
       listProps.onOpenCreateView();
       navigate(location.pathname, { replace: true, state: {} });
+    } else if (location.state?.action === 'OPEN_SUGGESTIONS') {
+      state.setIsSuggestionModalOpen(true);
+      navigate(location.pathname, { replace: true, state: {} });
     }
-  }, [location.state, listProps, navigate, location.pathname]);
+  }, [location.state, listProps, navigate, location.pathname, state]);
   
   return (
     <div className="h-full flex flex-col overflow-hidden bg-base-100">

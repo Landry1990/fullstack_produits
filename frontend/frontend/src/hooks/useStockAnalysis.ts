@@ -49,7 +49,7 @@ export const useStockAnalysis = () => {
     const { tabParam, daysParam } = useMemo(() => {
         const queryParams = new URLSearchParams(location.search);
         return {
-            tabParam: queryParams.get('tab') as 'unsold' | 'overstock' | 'shortage' | null,
+            tabParam: queryParams.get('tab') as 'pilotage' | 'unsold' | 'overstock' | 'shortage' | null,
             daysParam: queryParams.get('days')
         };
     }, [location.search]);
@@ -59,8 +59,8 @@ export const useStockAnalysis = () => {
         return baseUrl ? String(baseUrl).replace(/\/$/, '') : '';
     }, []);
 
-    const [activeTab, setActiveTab] = useState<'unsold' | 'overstock' | 'shortage'>(
-        (tabParam && ['unsold', 'overstock', 'shortage'].includes(tabParam)) ? tabParam : 'unsold'
+    const [activeTab, setActiveTab] = useState<'pilotage' | 'unsold' | 'overstock' | 'shortage'>(
+        (tabParam && ['pilotage', 'unsold', 'overstock', 'shortage'].includes(tabParam)) ? tabParam : 'pilotage'
     );
     const [fournisseurs, setFournisseurs] = useState<Fournisseur[]>([]);
     const [selectedFournisseur, setSelectedFournisseur] = useState<string>('');
@@ -97,6 +97,11 @@ export const useStockAnalysis = () => {
 
     // Fetch analysis data
     const fetchData = useCallback(async () => {
+        if (activeTab === 'pilotage') {
+            setData(null);
+            setLoading(false);
+            return;
+        }
         setLoading(true);
         setError(null);
         try {

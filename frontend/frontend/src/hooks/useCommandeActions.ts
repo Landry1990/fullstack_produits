@@ -13,23 +13,6 @@ interface UseCommandeActionsProps {
     user: User | null;
 }
 
-// Helper function for Date format MM/YY
-function parseMMYYToDate(mmyy: string | null | undefined): string | null {
-    if (!mmyy) return null;
-    if (/^\d{4}-\d{2}-\d{2}$/.test(mmyy)) return mmyy; // Already ISO
-
-    const parts = mmyy.split('/');
-    if (parts.length === 2 && parts[1].length === 2) {
-        const month = parseInt(parts[0], 10);
-        const year = parseInt('20' + parts[1], 10);
-        if (month >= 1 && month <= 12) {
-            const lastDay = new Date(year, month, 0).getDate();
-            return `${year}-${String(month).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`;
-        }
-    }
-    return null;
-}
-
 export function useCommandeActions({
     fetchCommandes,
     setSelectedCommande,
@@ -109,7 +92,7 @@ export function useCommandeActions({
                     tva: p.tva !== undefined && p.tva !== null ? String(p.tva) : undefined,
                     marge: parseFloat(String(p.marge || 1.3)).toFixed(4),
                     lot: p.lot || null,
-                    date_expiration: parseMMYYToDate(p.date_expiration)
+                    date_expiration: p.date_expiration || null
                 };
             });
 

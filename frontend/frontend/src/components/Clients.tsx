@@ -26,6 +26,7 @@ import type { Client, AyantDroit } from '../types';
 import ClientDepositModal from './clients/ClientDepositModal';
 import clientService from '../services/clientService';
 import { formatCurrency, normalizeNumberInput } from '../utils/formatters';
+import { clientSchema } from '../schemas/clientSchema';
 
 // Components
 import LoyaltyConfigModal from './LoyaltyConfigModal';
@@ -174,11 +175,24 @@ export default function Clients() {
     e.preventDefault();
     setIsSubmitting(true);
     try {
+        // Validation avec Zod
+        const validation = clientSchema.safeParse(formData);
+        if (!validation.success) {
+            const errorMsg = validation.error.errors
+                .map(err => `${t(`clients:fields.${err.path[0]}`)}: ${err.message}`)
+                .join('\n');
+            toast.error(errorMsg, { duration: 5000 });
+            setIsSubmitting(false);
+            return;
+        }
+
+        const cleanData = validation.data;
+
         if (formMode === 'create') {
-            await clientService.create(formData);
+            await clientService.create(cleanData);
             toast.success(t('clients:messages.create_success'));
         } else if (formData.id) {
-            await clientService.update(formData.id, formData);
+            await clientService.update(formData.id, cleanData);
             toast.success(t('clients:messages.update_success'));
         }
         setIsFormModalOpen(false);

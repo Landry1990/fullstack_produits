@@ -503,8 +503,8 @@ export default function Produit() {
 
       {/* Main Content Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 min-h-[600px] max-w-[1800px] mx-auto w-full">
-        {/* Left Panel: List & Actions */}
-        <div className="lg:col-span-12 xl:col-span-7 bg-base-100 rounded-2xl shadow-sm border border-base-200 flex flex-col overflow-hidden">
+        {/* Left Panel: List & Actions - REDUCED WIDTH */}
+        <div className="lg:col-span-12 xl:col-span-5 bg-base-100 rounded-2xl shadow-sm border border-base-200 flex flex-col overflow-hidden">
           <ProductFilters 
             searchQuery={searchQuery} setSearchQuery={setSearchQuery} 
             filterRayon={filterRayon} setFilterRayon={setFilterRayon}
@@ -578,8 +578,8 @@ export default function Produit() {
           />
         </div>
 
-        {/* Right Panel: Details */}
-        <div className="lg:col-span-12 xl:col-span-5 bg-base-100 rounded-2xl shadow-sm border border-base-200 flex flex-col overflow-hidden">
+        {/* Right Panel: Details - INCREASED WIDTH */}
+        <div className="lg:col-span-12 xl:col-span-7 bg-base-100 rounded-2xl shadow-sm border border-base-200 flex flex-col overflow-hidden">
           <ProductDetailPanel 
             selectedProduit={selectedProduit} detailsLoading={detailsLoading} 
             activeTab={activeTab} setActiveTab={setActiveTab}

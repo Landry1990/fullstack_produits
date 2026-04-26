@@ -103,6 +103,13 @@ class Ordonnancier(models.Model):
         related_name='ordonnancier_entries'
     )
     
+    image_ordonnance = models.ImageField(
+        upload_to='ordonnances/%Y/%m/', 
+        null=True, 
+        blank=True,
+        help_text="Image scannée de l'ordonnance"
+    )
+    
     enregistre_par = models.ForeignKey(
         User, on_delete=models.SET_NULL, null=True, 
         related_name='ordonnancier_entries'

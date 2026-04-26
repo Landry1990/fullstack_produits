@@ -51,13 +51,13 @@ export const ProductDetailPanel: React.FC<ProductDetailPanelProps> = (props) => 
   return (
     <div className="md:col-span-2 bg-base-100 rounded-lg shadow flex flex-col overflow-hidden">
       <div className="flex flex-col h-full">
-        {/* Header produit */}
+        {/* Header produit - Bold & Spacious with vertical stacking for top elements */}
         <div className="p-6 border-b bg-base-200/50 shrink-0">
-          <div className="flex flex-col lg:flex-row justify-between items-start gap-6">
-            <div className="flex-1 min-w-0">
-              <div className="flex flex-wrap items-center gap-2 mb-2">
-                <span className="badge badge-info badge-md font-black uppercase tracking-tight">#{selectedProduit.id}</span>
-                <span className={`badge badge-lg font-black h-8 px-4 ${
+          <div className="flex flex-col gap-4">
+            <div className="flex flex-wrap items-center justify-between gap-4">
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="badge badge-info badge-lg font-black uppercase tracking-tight py-4 px-4">#{selectedProduit.id}</span>
+                <span className={`badge badge-lg font-black h-10 px-4 ${
                   (selectedProduit.stock ?? 0) <= 0 ? 'badge-error text-white' :
                   (selectedProduit.stock ?? 0) <= (selectedProduit.stock_alert ?? 0) ? 'badge-warning text-warning-content' :
                   'badge-success text-white'
@@ -68,56 +68,74 @@ export const ProductDetailPanel: React.FC<ProductDetailPanelProps> = (props) => 
                   )}
                 </span>
               </div>
-              <h2 className="text-2xl md:text-3xl xl:text-4xl font-black text-base-content uppercase tracking-tighter leading-tight break-words">{selectedProduit.name}</h2>
-              <p className="text-sm md:text-base text-base-content/60 font-mono font-bold mt-2 tracking-tight">
-                {t('products:detail.cip')}: {selectedProduit.cip1 || '-'} / {selectedProduit.cip2 || '-'} / {selectedProduit.cip3 || '-'}
-              </p>
-            </div>
-            <div className="flex flex-wrap gap-2 shrink-0">
-              <button 
-                className="btn btn-sm md:btn-md btn-ghost text-lg md:text-xl hover:bg-amber-100 hover:text-warning transition-colors" 
-                onClick={props.onOpenAdjustment}
-                title={t('products:actions.adjust_stock')}
-              >
-                📊
-              </button>
-              {selectedProduit.has_reserve_storage && (selectedProduit.stock_reserve ?? 0) > 0 && (
+              
+              <div className="flex flex-wrap gap-2 shrink-0">
                 <button 
-                  className={`btn btn-sm md:btn-md btn-ghost text-lg md:text-xl text-primary hover:bg-primary/10 ${transferLoading ? 'loading' : ''}`}
-                  onClick={() => props.onTransferToRayon(selectedProduit)}
-                  title={t('products:actions.refill_rayon')}
+                  className="btn btn-md btn-ghost text-xl hover:bg-amber-100 hover:text-warning transition-colors" 
+                  onClick={props.onOpenAdjustment}
+                  title={t('products:actions.adjust_stock')}
                 >
-                  📦
+                  📊
                 </button>
-              )}
-              <button 
-                className="btn btn-sm md:btn-md btn-ghost text-lg md:text-xl hover:bg-blue-100 hover:text-primary transition-colors" 
-                onClick={() => props.onOpenEdit(selectedProduit)}
-                title={t('products:actions.edit')}
-              >
-                ✏️
-              </button>
-              <button 
-                className="btn btn-sm md:btn-md btn-ghost text-lg md:text-xl hover:bg-secondary/10 hover:text-secondary transition-colors" 
-                onClick={() => props.onGenerateLabels(selectedProduit)}
-                title={t('products:actions.labels')}
-              >
-                🏷️
-              </button>
-              <button 
-                className="btn btn-sm md:btn-md btn-ghost text-lg md:text-xl hover:bg-red-100 hover:text-error transition-colors" 
-                onClick={() => props.onDelete(selectedProduit)}
-                title={t('products:actions.delete')}
-              >
-                🗑️
-              </button>
-              <button 
-                className={`btn btn-sm md:btn-md btn-ghost text-lg md:text-xl ${selectedProduit.is_active === false ? 'text-warning bg-warning/10' : 'text-base-content/40 hover:bg-warning/10 hover:text-warning'} transition-colors`}
-                onClick={() => props.onToggleActive(selectedProduit)}
-                title={selectedProduit.is_active === false ? t('products:actions.reactivate') : t('products:actions.deactivate')}
-              >
-                {selectedProduit.is_active === false ? '👁️' : '🙈'}
-              </button>
+                {selectedProduit.has_reserve_storage && (selectedProduit.stock_reserve ?? 0) > 0 && (
+                  <button 
+                    className={`btn btn-md btn-ghost text-xl text-primary hover:bg-primary/10 ${transferLoading ? 'loading' : ''}`}
+                    onClick={() => props.onTransferToRayon(selectedProduit)}
+                    title={t('products:actions.refill_rayon')}
+                  >
+                    📦
+                  </button>
+                )}
+                <button 
+                  className="btn btn-md btn-ghost text-xl hover:bg-blue-100 hover:text-primary transition-colors" 
+                  onClick={() => props.onOpenEdit(selectedProduit)}
+                  title={t('products:actions.edit')}
+                >
+                  ✏️
+                </button>
+                <button 
+                  className="btn btn-md btn-ghost text-xl hover:bg-red-100 hover:text-error transition-colors" 
+                  onClick={() => props.onDelete(selectedProduit)}
+                  title={t('products:actions.delete')}
+                >
+                  🗑️
+                </button>
+                <button 
+                  className="btn btn-md btn-ghost text-xl hover:bg-secondary/10 hover:text-secondary transition-colors" 
+                  onClick={() => props.onGenerateLabels(selectedProduit)}
+                  title={t('products:actions.labels')}
+                >
+                  🏷️
+                </button>
+                <button 
+                  className={`btn btn-md btn-ghost text-xl ${selectedProduit.is_active === false ? 'text-warning bg-warning/10' : 'text-base-content/40 hover:bg-warning/10 hover:text-warning'} transition-colors`}
+                  onClick={() => props.onToggleActive(selectedProduit)}
+                  title={selectedProduit.is_active === false ? t('products:actions.reactivate') : t('products:actions.deactivate')}
+                >
+                  {selectedProduit.is_active === false ? '👁️' : '🙈'}
+                </button>
+              </div>
+            </div>
+
+            <div className="min-w-0">
+              <h2 className="text-3xl md:text-4xl xl:text-5xl font-black text-base-content uppercase tracking-tighter leading-none break-words mb-3">
+                {selectedProduit.name}
+              </h2>
+              <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
+                <p className="text-base text-base-content/60 font-mono font-bold tracking-tight">
+                  CIP: <span className="text-base-content">{selectedProduit.cip1 || '-'}</span>
+                </p>
+                {selectedProduit.cip2 && (
+                  <p className="text-base text-base-content/60 font-mono font-bold tracking-tight">
+                    • <span className="text-base-content">{selectedProduit.cip2}</span>
+                  </p>
+                )}
+                {selectedProduit.cip3 && (
+                  <p className="text-base text-base-content/60 font-mono font-bold tracking-tight">
+                    • <span className="text-base-content">{selectedProduit.cip3}</span>
+                  </p>
+                )}
+              </div>
             </div>
           </div>
         </div>

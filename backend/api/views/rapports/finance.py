@@ -13,6 +13,24 @@ from django.http import HttpResponse
 from io import BytesIO
 from api.models import Facture, FactureProduit, Caisse
 
+
+def _write_pharma_header(ws, PharmacySettings, title: str) -> None:
+    """Écrit un en-tête pharmacie (nom, adresse, téléphone, date d'édition, titre) dans la feuille Excel."""
+    from django.utils import timezone as tz
+    try:
+        pharmacy = PharmacySettings.objects.get(pk=1)
+        pharma_name = pharmacy.pharmacy_name or "ZENITH"
+        pharma_address = f"{pharmacy.address} - {pharmacy.city}".strip(" -") if (pharmacy.address or pharmacy.city) else ""
+        pharma_phone = f"Tél : {pharmacy.phone}" if pharmacy.phone else ""
+    except Exception:
+        pharma_name, pharma_address, pharma_phone = "ZENITH", "", ""
+
+    now_str = tz.localtime(tz.now()).strftime("%d/%m/%Y à %H:%M")
+    for line in [pharma_name, pharma_address, pharma_phone, f"Édité le : {now_str}", "", title]:
+        ws.append([line])
+    ws.append([])  # ligne vide avant le tableau
+
+
 class RapportFinanceMixin:
     """
     Rapports financiers, comptables et analyse de TVA.
@@ -493,9 +511,13 @@ class RapportFinanceMixin:
 
     @action(detail=False, methods=['get'])
     def rapport_remises_details_excel(self, request):
+        from api.models import PharmacySettings
         data = self.rapport_remises_details(request).data
         wb = openpyxl.Workbook(); ws = wb.active; ws.title = "Détails Remises"
+        _write_pharma_header(ws, PharmacySettings, "Détail des Remises par Facture")
         ws.append(["Facture", "Date", "Client", "Total TTC", "Remise Globale", "Remise Lignes", "Remise Fidélité", "Total Remise", "% / CA", "Vendeur"])
+        header_row = ws.max_row
+        for cell in ws[header_row]: cell.font = Font(bold=True)
         for item in data: ws.append([item['numero_facture'], item['date'], item['client'], item['total_ttc'], item['remise_globale'], item['remise_lignes'], item['remise_fidelite'], item['total_remise'], f"{item['ratio_remise_pct']:.2f}%", item['vendeur']])
         response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'); response['Content-Disposition'] = 'attachment; filename="Details_Remises.xlsx"'; wb.save(response); return response
 
@@ -530,8 +552,12 @@ class RapportFinanceMixin:
 
     @action(detail=False, methods=['get'])
     def rapport_remises_excel(self, request):
+        from api.models import PharmacySettings
         data = self.rapport_remises(request).data
         wb = openpyxl.Workbook(); ws = wb.active; ws.title = "Remises"
+        _write_pharma_header(ws, PharmacySettings, "Rapport des Remises par Utilisateur")
         ws.append(["Utilisateur", "Nb Factures", "CA TTC", "Remise Globale", "Remise Lignes", "Remise Fidélité", "Total Remise", "% / CA"])
+        header_row = ws.max_row
+        for cell in ws[header_row]: cell.font = Font(bold=True)
         for item in data: ws.append([item['full_name'], item['nb_factures'], item['ca_ttc'], item['remise_globale'], item['remise_lignes'], item['remise_fidelite'], item['total_remise'], f"{item['ratio_remise_pct']:.2f}%"])
         response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'); response['Content-Disposition'] = 'attachment; filename="Remises.xlsx"'; wb.save(response); return response

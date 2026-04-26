@@ -35,7 +35,8 @@
         "coeff_direct": "Coefficient Commande Directe",
         "whatsapp_phone_id": "Phone Number ID",
         "whatsapp_token": "Access Token (Permanent)",
-        "whatsapp_account_id": "WhatsApp Business Account ID"
+        "whatsapp_account_id": "WhatsApp Business Account ID",
+        "pharmacist_whatsapp": "Numéro WhatsApp Titulaire"
     },
     "placeholders": {
         "pharmacy_name": "Ex: Pharmacie du Zénith",
@@ -54,7 +55,8 @@
         "coeff_direct": "1.35",
         "whatsapp_phone_id": "ID numérique de 15 chiffres",
         "whatsapp_token": "EAAG...",
-        "whatsapp_account_id": "ID du compte business"
+        "whatsapp_account_id": "ID du compte business",
+        "pharmacist_whatsapp": "Numéro format international (ex: 2376XXXXXXXX)"
     },
     "hints": {
         "pharmacy_name": "Le nom officiel tel qu'il apparaîtra sur les factures et tickets.",
@@ -68,7 +70,8 @@
         "auto_logout": "Durée d'inactivité avant déconnexion automatique (0 pour désactiver).",
         "coeff_direct": "Coefficient multiplicateur appliqué aux commandes étrangères.",
         "coeff_formula": "Prix Vente = Prix Achat * Coefficient",
-        "whatsapp_help": "Nécessite un compte Meta Developer et l'API WhatsApp Business configurée."
+        "whatsapp_help": "Nécessite un compte Meta Developer et l'API WhatsApp Business configurée.",
+        "pharmacist_whatsapp": "Le numéro qui recevra les rapports stratégiques et d'inventaire (ne pas mettre de + devant)."
     },
     "status": {
         "enabled": "Activé",

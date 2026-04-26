@@ -764,7 +764,7 @@ export default function Login() {
               <p>{t('subtitle')}</p>
             </div>
 
-            <div style={{ position: 'relative', zIndex: 1 }}>
+            <div style={{ position: 'relative', zIndex: isOpen ? 200 : 1 }}>
               <span className="zl-greeting">{greeting}</span>
               <h2 className="zl-card-title">{t('title')}</h2>
               <p className="zl-card-subtitle">Identifiez-vous pour accéder à votre espace pro</p>
@@ -781,7 +781,7 @@ export default function Login() {
                 {/* USERNAME FIELD */}
                 <div className="zl-field">
                   <label className="zl-field-label">{t('username')}</label>
-                  <div className="zl-input-container" ref={dropdownRef}>
+                  <div className="zl-input-container" ref={dropdownRef} style={{ position: 'relative', zIndex: isOpen ? 200 : 1 }}>
                     <div className="zl-input-icon">
                       <User size={18} />
                     </div>
@@ -789,7 +789,7 @@ export default function Login() {
                       <>
                         <button
                           type="button"
-                          onClick={() => setIsOpen(!isOpen)}
+                          onClick={() => { setIsOpen(prev => { if (!prev) setSearchTerm(''); return !prev; }); }}
                           onFocus={() => setFocusedField('username')}
                           onBlur={() => setFocusedField(null)}
                           className={`zl-input-base zl-dropdown-btn ${isOpen ? 'is-active' : ''}`}

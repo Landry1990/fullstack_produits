@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useEffect, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'react-hot-toast';
 import { useDebounce } from 'use-debounce';
@@ -8,13 +8,12 @@ import { useSudo } from './useSudo';
 import avoirService from '../services/avoirService';
 import fournisseurService from '../services/fournisseurService';
 import produitService from '../services/produitService';
-
-export type ViewMode = 'LIST' | 'CREATE' | 'EDIT' | 'DETAILS';
+import { useAvoirsStore, type ViewMode } from '../stores/useAvoirsStore';
 
 export interface UseAvoirsDataReturn {
     // Navigation State
     viewMode: ViewMode;
-    setViewMode: React.Dispatch<React.SetStateAction<ViewMode>>;
+    setViewMode: (value: ViewMode) => void;
 
     // Data State
     avoirs: Avoir[];
@@ -24,7 +23,7 @@ export interface UseAvoirsDataReturn {
 
     // Search State (List View)
     listSearchQuery: string;
-    setListSearchQuery: React.Dispatch<React.SetStateAction<string>>;
+    setListSearchQuery: (value: string) => void;
 
     // Sudo State
     sudoState: SudoState;
@@ -35,21 +34,21 @@ export interface UseAvoirsDataReturn {
     // Form State (Create/Edit View)
     editingAvoirId: number | null;
     selectedFournisseurId: string;
-    setSelectedFournisseurId: React.Dispatch<React.SetStateAction<string>>;
+    setSelectedFournisseurId: (value: string) => void;
     typeAvoir: string;
-    setTypeAvoir: React.Dispatch<React.SetStateAction<string>>;
+    setTypeAvoir: (value: string) => void;
     observations: string;
-    setObservations: React.Dispatch<React.SetStateAction<string>>;
+    setObservations: (value: string) => void;
     lignes: LigneAvoir[];
     setLignes: React.Dispatch<React.SetStateAction<LigneAvoir[]>>;
 
     // Fournisseur Search State
     fournisseurSearch: string;
-    setFournisseurSearch: React.Dispatch<React.SetStateAction<string>>;
+    setFournisseurSearch: (value: string) => void;
     filteredFournisseurs: Fournisseur[];
     isSearchingFournisseur: boolean;
     showFournisseurList: boolean;
-    setShowFournisseurList: React.Dispatch<React.SetStateAction<boolean>>;
+    setShowFournisseurList: (value: boolean) => void;
     selectFournisseur: (f: Fournisseur) => void;
 
     // Actions
@@ -88,44 +87,56 @@ export interface UseAvoirsDataReturn {
 
 export function useAvoirsData(): UseAvoirsDataReturn {
     const { t } = useTranslation(['stock', 'common']);
-    // Navigation
-    const [viewMode, setViewMode] = useState<ViewMode>('LIST');
     const location = useLocation();
 
-    // Basic State
-    const [avoirs, setAvoirs] = useState<Avoir[]>([]);
-    const [loading, setLoading] = useState<boolean>(true);
-    const [selectedAvoir, setSelectedAvoir] = useState<Avoir | null>(null);
-
-    // Search List
-    const [listSearchQuery, setListSearchQuery] = useState('');
+    const viewMode = useAvoirsStore((s) => s.viewMode);
+    const setViewMode = useAvoirsStore((s) => s.setViewMode);
+    const avoirs = useAvoirsStore((s) => s.avoirs);
+    const setAvoirs = useAvoirsStore((s) => s.setAvoirs);
+    const loading = useAvoirsStore((s) => s.loading);
+    const setLoading = useAvoirsStore((s) => s.setLoading);
+    const selectedAvoir = useAvoirsStore((s) => s.selectedAvoir);
+    const setSelectedAvoir = useAvoirsStore((s) => s.setSelectedAvoir);
+    const listSearchQuery = useAvoirsStore((s) => s.listSearchQuery);
+    const setListSearchQuery = useAvoirsStore((s) => s.setListSearchQuery);
     const [debouncedListSearch] = useDebounce(listSearchQuery, 500);
 
-    // Form State
-    const [editingAvoirId, setEditingAvoirId] = useState<number | null>(null);
-    const [selectedFournisseurId, setSelectedFournisseurId] = useState<string>('');
-    const [typeAvoir, setTypeAvoir] = useState<string>('PERIME');
-    const [observations, setObservations] = useState<string>('');
-    const [lignes, setLignes] = useState<LigneAvoir[]>([]);
+    const editingAvoirId = useAvoirsStore((s) => s.editingAvoirId);
+    const setEditingAvoirId = useAvoirsStore((s) => s.setEditingAvoirId);
+    const selectedFournisseurId = useAvoirsStore((s) => s.selectedFournisseurId);
+    const setSelectedFournisseurId = useAvoirsStore((s) => s.setSelectedFournisseurId);
+    const typeAvoir = useAvoirsStore((s) => s.typeAvoir);
+    const setTypeAvoir = useAvoirsStore((s) => s.setTypeAvoir);
+    const observations = useAvoirsStore((s) => s.observations);
+    const setObservations = useAvoirsStore((s) => s.setObservations);
+    const lignes = useAvoirsStore((s) => s.lignes);
+    const setLignes = useAvoirsStore((s) => s.setLignes);
 
-    // Fournisseur Search State
-    const [fournisseurSearch, setFournisseurSearch] = useState('');
+    const fournisseurSearch = useAvoirsStore((s) => s.fournisseurSearch);
+    const setFournisseurSearch = useAvoirsStore((s) => s.setFournisseurSearch);
     const [debouncedFournisseurSearch] = useDebounce(fournisseurSearch, 300);
-    const [filteredFournisseurs, setFilteredFournisseurs] = useState<Fournisseur[]>([]);
-    const [isSearchingFournisseur, setIsSearchingFournisseur] = useState(false);
-    const [showFournisseurList, setShowFournisseurList] = useState(false);
+    const filteredFournisseurs = useAvoirsStore((s) => s.filteredFournisseurs);
+    const setFilteredFournisseurs = useAvoirsStore((s) => s.setFilteredFournisseurs);
+    const isSearchingFournisseur = useAvoirsStore((s) => s.isSearchingFournisseur);
+    const setIsSearchingFournisseur = useAvoirsStore((s) => s.setIsSearchingFournisseur);
+    const showFournisseurList = useAvoirsStore((s) => s.showFournisseurList);
+    const setShowFournisseurList = useAvoirsStore((s) => s.setShowFournisseurList);
 
-    // Lot Modal State
-    const [lotModal, setLotModal] = useState<{ open: boolean; lineIndex: number | null; produitId: number | null }>({ open: false, lineIndex: null, produitId: null });
-    const [availableLots, setAvailableLots] = useState<StockLot[]>([]);
-    const [loadingLots, setLoadingLots] = useState(false);
+    const lotModal = useAvoirsStore((s) => s.lotModal);
+    const setLotModal = useAvoirsStore((s) => s.setLotModal);
+    const availableLots = useAvoirsStore((s) => s.availableLots);
+    const setAvailableLots = useAvoirsStore((s) => s.setAvailableLots);
+    const loadingLots = useAvoirsStore((s) => s.loadingLots);
+    const setLoadingLots = useAvoirsStore((s) => s.setLoadingLots);
 
     // Sudo State
     const { sudoState, requireSudo, closeSudo } = useSudo();
-    const [savingValidation, setSavingValidation] = useState(false);
-
-    const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
-    const [bulkLoading, setBulkLoading] = useState(false);
+    const savingValidation = useAvoirsStore((s) => s.savingValidation);
+    const setSavingValidation = useAvoirsStore((s) => s.setSavingValidation);
+    const selectedIds = useAvoirsStore((s) => s.selectedIds);
+    const setSelectedIds = useAvoirsStore((s) => s.setSelectedIds);
+    const bulkLoading = useAvoirsStore((s) => s.bulkLoading);
+    const setBulkLoading = useAvoirsStore((s) => s.setBulkLoading);
 
     // --- Fetch Avoirs ---
     const fetchAvoirs = useCallback(async (search = '') => {

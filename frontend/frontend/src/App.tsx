@@ -1,3 +1,4 @@
+import { Suspense } from 'react'
 import { createBrowserRouter, RouterProvider, Navigate, Outlet } from 'react-router-dom'
 import PrintPage from './components/printing/PrintPage'
 import Layout from './components/Layout'
@@ -552,7 +553,6 @@ const router = createBrowserRouter([
 ])
 
 
-import { Suspense } from 'react'
 import ErrorBoundary from './components/ErrorBoundary'
 
 export default function App() {

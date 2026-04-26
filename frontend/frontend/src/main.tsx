@@ -1,7 +1,6 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import './index.css'
-import './config/axios' // Axios interceptors pour gérer 401 automatiquement
 
 // Fonts Local (Offline Support)
 import "@fontsource/inter/300.css";

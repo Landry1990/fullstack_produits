@@ -65,6 +65,33 @@ export default function CommandeProductTable({
     const { t } = useTranslation(['orders', 'common']);
     const [searchQuery, setSearchQuery] = useState('');
     const [expandedRow, setExpandedRow] = useState<number | null>(null);
+
+    const normalizeExpiryMMYY = (raw: string) => {
+        const cleaned = String(raw ?? '').replace(/\s/g, '').replace(/[^0-9/]/g, '');
+        if (cleaned === '') return '';
+
+        const digits = cleaned.replace(/\//g, '').slice(0, 4);
+        if (digits.length <= 2) {
+            return digits;
+        }
+
+        const mm = digits.slice(0, 2);
+        const yy = digits.slice(2);
+        return `${mm}/${yy}`;
+    };
+
+    const finalizeExpiryMMYY = (raw: string) => {
+        const normalized = normalizeExpiryMMYY(raw);
+        const match = normalized.match(/^(\d{1,2})(?:\/(\d{0,2}))?$/);
+        if (!match) return '';
+        const mmRaw = match[1] || '';
+        const yyRaw = match[2] || '';
+        if (mmRaw.length === 0) return '';
+        const mmNum = Number(mmRaw);
+        if (!Number.isFinite(mmNum) || mmNum < 1 || mmNum > 12) return '';
+        if (yyRaw.length !== 2) return `${String(mmNum).padStart(2, '0')}${yyRaw ? `/${yyRaw}` : ''}`;
+        return `${String(mmNum).padStart(2, '0')}/${yyRaw}`;
+    };
     
     // Deletion Modal State
     const [productToDelete, setProductToDelete] = useState<number | null>(null);
@@ -446,7 +473,13 @@ export default function CommandeProductTable({
                             data-row={index}
                             data-field="date_expiration"
                             value={p.date_expiration || ''}
-                            onChange={(e) => updateCommandeProduitField(index, 'date_expiration', e.target.value)}
+                            onChange={(e) => {
+                                updateCommandeProduitField(index, 'date_expiration', normalizeExpiryMMYY(e.target.value));
+                            }}
+                            onBlur={(e) => {
+                                const finalized = finalizeExpiryMMYY(e.target.value);
+                                updateCommandeProduitField(index, 'date_expiration', finalized);
+                            }}
                             onKeyDown={(e) => handleTableFieldKeyDown(e, index, (commandeType === 'DIR' ? 8 : 7))}
                             onFocus={handleSelectAll}
                             className={`input input-ghost h-7 min-h-7 px-1 text-[10px] w-full focus:bg-base-100 ${!fieldsConfig[7].editable ? 'bg-base-200 cursor-not-allowed' : ''} ${p.date_expiration && !/^(0[1-9]|1[0-2])\/\d{2}$/.test(p.date_expiration) ? 'input-error text-error' : ''}`}

@@ -5,8 +5,8 @@
   --font-sans: "Inter", "Roboto", "Segoe UI", sans-serif;
   --font-heading: "Inter", "Roboto", sans-serif;
 
-  /* Pharmacy Green (Croix verte) */
-  --color-primary: #22c55e;
+  /* Pharmacy Green (Croix verte) — plus profond pour meilleur contraste */
+  --color-primary: #16a34a;
   --color-primary-content: #ffffff;
 
   /* Medical Blue */
@@ -21,10 +21,10 @@
   --color-neutral: #1e293b;
   --color-neutral-content: #ffffff;
 
-  /* Base Colors */
+  /* Base Colors — légère teinte verte médicale */
   --color-base-100: #ffffff;
-  --color-base-200: #f8fafc;
-  --color-base-300: #e2e8f0;
+  --color-base-200: #f7faf8;
+  --color-base-300: #dde8e1;
   --color-base-content: #0f172a;
 
   --radius-box: 1rem; /* Plus arrondi pour l'aspect premium */
@@ -36,6 +36,18 @@
   --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
   --shadow-premium: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
 }
+
+/* === GLOBAL ANIMATIONS === */
+@keyframes fade-in-up {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes scale-in {
+  from { opacity: 0; transform: scale(0.97); }
+  to   { opacity: 1; transform: scale(1); }
+}
+.animate-fade-in-up  { animation: fade-in-up  0.22s ease-out both; }
+.animate-scale-in    { animation: scale-in    0.18s ease-out both; }
 
 /* Midnight Theme Overrides */
 .theme-midnight {
@@ -274,66 +286,112 @@ select {
   backdrop-filter: blur(8px);
 }
 
-/* Global Table Zebra Striping Override */
-.table tbody tr:nth-child(even) {
-  --tw-bg-opacity: 1;
-  background-color: var(--color-base-200);
-}
-
-.table tbody tr:nth-child(odd) {
-  --tw-bg-opacity: 1;
-  background-color: var(--color-base-100);
-}
+/* === TABLES === */
+.table tbody tr:nth-child(even) { background-color: var(--color-base-200); }
+.table tbody tr:nth-child(odd)  { background-color: var(--color-base-100); }
 
 .table tbody tr {
-    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-    border-bottom: 1px solid color-mix(in srgb, var(--color-base-300), transparent 50%);
+  transition: background 0.15s ease;
+  border-bottom: 1px solid color-mix(in srgb, var(--color-base-300), transparent 40%);
 }
 
 .table tbody tr:hover {
-    background-color: color-mix(in srgb, var(--color-primary), transparent 95%) !important;
-    transform: translateX(2px);
+  background-color: color-mix(in srgb, var(--color-primary), transparent 93%) !important;
 }
 
-/* Premium Sticky Headers with Glassmorphism */
 .table thead {
   position: sticky;
   top: 0;
-  z-index: 30;
+  z-index: 20;
 }
 
 .table thead th {
-  background: color-mix(in srgb, var(--color-base-100), transparent 5%) !important;
+  background: var(--color-base-100) !important;
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
   border-bottom: 2px solid var(--color-base-300) !important;
   font-weight: 800;
+  font-size: 0.7rem;
   text-transform: uppercase;
-  letter-spacing: 0.05em;
-  color: color-mix(in srgb, var(--color-base-content), transparent 30%);
+  letter-spacing: 0.07em;
+  color: color-mix(in srgb, var(--color-base-content), transparent 40%);
 }
 
 [data-theme] .table thead th {
-  background: color-mix(in srgb, var(--color-base-100), transparent 10%) !important;
+  background: var(--color-base-100) !important;
 }
 
-/* Badge Refinement (Luxury Look) */
+/* === BADGES === */
 .badge {
   border-radius: 6px;
   font-weight: 700;
   letter-spacing: -0.01em;
-  padding-left: 0.6em;
-  padding-right: 0.6em;
+  padding-left: 0.55em;
+  padding-right: 0.55em;
 }
-
-.badge-outline {
-  border-width: 1.5px;
-}
-
+.badge-outline  { border-width: 1.5px; }
 .badge-pharma {
   background: color-mix(in srgb, var(--color-primary), transparent 90%);
   color: var(--color-primary);
-  border: 1px solid color-mix(in srgb, var(--color-primary), transparent 80%);
+  border: 1px solid color-mix(in srgb, var(--color-primary), transparent 75%);
+}
+
+/* === BOUTONS PREMIUM === */
+.btn {
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.btn:active { transform: scale(0.97); }
+
+.btn-secondary {
+  background: linear-gradient(135deg, var(--color-secondary) 0%, color-mix(in srgb, var(--color-secondary), #000 12%) 100%);
+  border: none;
+  box-shadow: 0 4px 12px color-mix(in srgb, var(--color-secondary), transparent 80%);
+}
+.btn-secondary:hover {
+  box-shadow: 0 6px 16px color-mix(in srgb, var(--color-secondary), transparent 70%);
+  transform: translateY(-1px);
+}
+
+.btn-error {
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+  border: none;
+  box-shadow: 0 4px 12px rgba(239,68,68,0.25);
+}
+.btn-error:hover {
+  box-shadow: 0 6px 16px rgba(239,68,68,0.35);
+  transform: translateY(-1px);
+}
+
+.btn-warning {
+  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+  border: none;
+  color: #fff;
+  box-shadow: 0 4px 12px rgba(245,158,11,0.25);
+}
+.btn-warning:hover {
+  box-shadow: 0 6px 16px rgba(245,158,11,0.35);
+  transform: translateY(-1px);
+}
+
+/* === CARDS GLOBALES === */
+.card {
+  border: 1px solid var(--color-base-300);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.04), 0 1px 2px rgba(0,0,0,0.03);
+  transition: box-shadow 0.2s ease, transform 0.2s ease;
+}
+.card:hover {
+  box-shadow: 0 4px 12px rgba(0,0,0,0.07);
+}
+
+/* === INPUTS — FOCUS RING VISIBLE === */
+.input:focus,
+.select:focus,
+textarea:focus {
+  outline: none !important;
+  border-color: var(--color-primary) !important;
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-primary), transparent 80%) !important;
 }
 
 /* Scrollbar Refinement */
@@ -356,18 +414,20 @@ select {
   background: color-mix(in srgb, var(--color-base-content), transparent 60%);
 }
 
-/* Custom Modal Center Fix */
+/* === MODALES === */
 .modal {
   align-items: center !important;
   justify-content: center !important;
-  backdrop-filter: blur(4px);
-  -webkit-backdrop-filter: blur(4px);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  background: rgba(0,0,0,0.35);
 }
 
 .modal-box {
-  border-radius: 1.5rem;
-  box-shadow: var(--shadow-premium);
-  border: 1px solid color-mix(in srgb, var(--color-base-300), transparent 20%);
+  border-radius: 1.25rem;
+  box-shadow: 0 25px 50px rgba(0,0,0,0.15);
+  border: 1px solid color-mix(in srgb, var(--color-base-300), transparent 30%);
+  animation: scale-in 0.18s ease-out both;
 }
 
 /* --- Zenith POS Redesign Styles --- */
@@ -477,3 +537,63 @@ select {
   background: rgba(255, 255, 255, 0.05);
   border-radius: 10px;
 }
+/* --- Expert Dashboard Sharpening --- */
+
+@keyframes float {
+  0% { transform: translateY(0px); }
+  50% { transform: translateY(-10px); }
+  100% { transform: translateY(0px); }
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+@keyframes border-glow {
+  0%, 100% { border-color: rgba(34, 197, 94, 0.1); }
+  50% { border-color: rgba(34, 197, 94, 0.4); }
+}
+
+.animate-float {
+  animation: float 6s ease-in-out infinite;
+}
+
+.expert-card {
+  transition: all 0.5s cubic-bezier(0.23, 1, 0.32, 1);
+  position: relative;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  transform: translateZ(0); /* Create stacking context */
+}
+
+.expert-card::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at var(--mouse-x, 50%) var(--mouse-y, 50%), rgba(255,255,255,0.12) 0%, transparent 70%);
+  opacity: 0;
+  transition: opacity 0.5s;
+  pointer-events: none;
+  z-index: 5; /* Should be above background but below text if text has higher z */
+}
+
+.expert-card:hover::after {
+  opacity: 1;
+}
+
+/* Ensure content is above the glow */
+.expert-card .relative, 
+.expert-card .absolute:not(.inset-0) {
+    z-index: 10;
+}
+
+.expert-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 20px 40px rgba(0,0,0,0.08);
+}
+
+.stagger-1 { animation-delay: 100ms; }
+.stagger-2 { animation-delay: 200ms; }
+.stagger-3 { animation-delay: 300ms; }
+.stagger-4 { animation-delay: 400ms; }

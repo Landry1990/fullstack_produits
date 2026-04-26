@@ -1,9 +1,9 @@
 import { createContext, useState, useContext, useEffect, useCallback, type ReactNode } from 'react';
-import axios from 'axios';
 import type { User } from '../types';
 import { safeStorage } from '../utils/storage';
-import { LAST_ACTIVITY_KEY } from '../hooks/useAutoLogout';
-import { resetExpiredFlag } from '../config/axios';
+import api, { setAuthToken, clearAuthSession, resetSessionExpiredFlag } from '../services/api';
+
+export const LAST_ACTIVITY_KEY = 'lastActivityTime';
 
 // Définition du type pour le contexte d'authentification
 // Ce sont les données et fonctions qui seront accessibles partout dans l'application via useAuth()
@@ -79,8 +79,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           role: 'VENDEUR' // Default
         }
       });
-      // On configure axios pour inclure ce token dans toutes les futures requêtes HTTP
-      axios.defaults.headers.common['Authorization'] = `Token ${token}`;
+      // On configure le client API canonique pour inclure ce token
+      setAuthToken(token);
     }
     // On indique que le chargement initial est terminé
     setLoading(false);
@@ -104,7 +104,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     
     // Reset activity timer and session flags
     safeStorage.setItem(LAST_ACTIVITY_KEY, Date.now().toString(), 'local');
-    resetExpiredFlag();
+    resetSessionExpiredFlag();
 
     // 1. On sauvegarde tout dans le stockage sécurisé
     safeStorage.setItem('authToken', userData.token || '');
@@ -132,7 +132,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setUser(userData);
     
     // 3. On configure le header Authorization pour les requêtes API
-    axios.defaults.headers.common['Authorization'] = `Token ${userData.token || ''}`;
+    setAuthToken(userData.token || '');
   }, []);
 
   // Fonction de déconnexion
@@ -140,20 +140,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     // 1. On tente d'informer le serveur de la déconnexion pour le suivi
     try {
       const workstation = localStorage.getItem('zenith_workstation');
-      await axios.post('/api/auth/logout/', { workstation });
+      await api.post('auth/logout/', { workstation });
     } catch (err) {
       console.warn('Erreur lors de l\'enregistrement de la déconnexion au serveur:', err);
     }
 
     // 2. On nettoie le stockage
-    safeStorage.clear('session');
-    safeStorage.removeItem(LAST_ACTIVITY_KEY, 'local');
+    clearAuthSession();
     
     // 3. On remet l'utilisateur à null
     setUser(null);
-    
-    // 4. On retire le header Authorization d'axios
-    delete axios.defaults.headers.common['Authorization'];
   }, []);
 
   return (

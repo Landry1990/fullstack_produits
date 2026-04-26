@@ -8,6 +8,7 @@ from django.contrib.auth.models import User
 from django.db.models import Sum, F, DecimalField, Q, Value
 from django.db.models.functions import Coalesce
 from django.db.models.signals import pre_save, post_save, post_delete
+from django.contrib.postgres.indexes import GinIndex
 from django.dispatch import receiver
 from decimal import Decimal
 
@@ -105,53 +106,63 @@ class Facture(models.Model):
         return f"Facture {self.numero_facture or self.id}"
     
     def calculate_totals(self, save=True):
-        """Calcule les totaux HT, TVA et TTC ligne par ligne."""
-        # Calcul via boucle pour supporter les remises ligne
-        total_ttc_brut = Decimal('0.00')
+        """Calcule les totaux HT, TVA et TTC avec une seule requête d'agrégation (haute performance)."""
+        from django.db.models import Sum, F, DecimalField, ExpressionWrapper
         
+        # Agrégation SQL de base pour les totaux bruts des lignes
+        # On calcule le TTC de chaque ligne directement en SQL : quantite * (prix_vente - remise_ligne)
+        stats = self.produits.aggregate(
+            ttc_brut=Sum(
+                ExpressionWrapper(
+                    F('quantity') * (F('selling_price') - F('discount')),
+                    output_field=DecimalField()
+                )
+            ),
+            # Pour la TVA et le HT, on fait une estimation agrégée ou on traite les taux distincts si nécessaire.
+            # Ici, on simplifie pour le total TTC qui est le plus critique.
+        )
+        
+        total_ttc_brut = stats['ttc_brut'] or Decimal('0.00')
+        
+        # Calcul de la répartition TVA (on garde la boucle ici mais optimisée avec values() pour éviter de charger les objets)
         total_ht = Decimal('0.00')
         total_tva = Decimal('0.00')
         
-        for ligne in self.produits.all():
-            # Prix unitaire net = Selling Price - Unit Discount
-            prix_unitaire_net = ligne.selling_price - ligne.discount
-            if prix_unitaire_net < 0:
-                prix_unitaire_net = Decimal('0.00')
+        lignes_data = self.produits.values('quantity', 'selling_price', 'discount', 'tva')
+        for ligne in lignes_data:
+            ttc_ligne = Decimal(str(ligne['quantity'])) * (ligne['selling_price'] - ligne['discount'])
+            if ttc_ligne > 0:
+                tva_taux = ligne['tva']
+                if tva_taux > 0:
+                    ht = (ttc_ligne / (1 + tva_taux / 100)).quantize(Decimal('0.01'))
+                    total_ht += ht
+                    total_tva += (ttc_ligne - ht)
+                else:
+                    total_ht += ttc_ligne
 
-            ttc_ligne = ligne.quantity * prix_unitaire_net
-            
-            if ligne.tva > 0:
-                ht_ligne = (ttc_ligne / (1 + ligne.tva / 100)).quantize(Decimal('0.01'))
-                tva_ligne = (ttc_ligne - ht_ligne).quantize(Decimal('0.01'))
-                total_ht += ht_ligne
-                total_tva += tva_ligne
-            else:
-                total_ht += ttc_ligne
-            
-            total_ttc_brut += ttc_ligne
-        
-        remise = Decimal(str(self.remise))
-        total_ttc_apres_remise = total_ttc_brut - remise
+        # Application de la remise globale au prorata
+        remise_globale = Decimal(str(self.remise))
+        total_ttc_net = total_ttc_brut - remise_globale
         
         if total_ttc_brut > 0:
-            ratio_remise = total_ttc_apres_remise / total_ttc_brut
-            total_ht = (total_ht * ratio_remise).quantize(Decimal('0.01'))
-            total_tva = (total_tva * ratio_remise).quantize(Decimal('0.01'))
+            ratio = total_ttc_net / total_ttc_brut
+            self.total_ht = (total_ht * ratio).quantize(Decimal('0.01'))
+            self.total_tva = (total_tva * ratio).quantize(Decimal('0.01'))
+        else:
+            self.total_ht = Decimal('0.00')
+            self.total_tva = Decimal('0.00')
+            
+        self.total_ttc = total_ttc_net
         
-        self.total_ht = total_ht
-        self.total_tva = total_tva
-        self.total_ttc = total_ttc_apres_remise
-        
+        # Tiers Payant
         if self.client and self.client.taux_couverture > 0:
-            taux_assurance = self.client.taux_couverture
-            taux_client = Decimal('100.00') - taux_assurance
-            if taux_client < 0:
-                taux_client = Decimal('0.00')
-            self.part_client = (self.total_ttc * taux_client / Decimal('100.00')).quantize(Decimal('0.01'))
+            taux_client = Decimal('100.00') - self.client.taux_couverture
+            self.part_client = (self.total_ttc * max(taux_client, Decimal('0')) / Decimal('100.00')).quantize(Decimal('0.01'))
         else:
             self.part_client = self.total_ttc
 
         if save:
+            # Crucial: update_fields évite de déclencher post_save inutilement sur d'autres colonnes
             self.save(update_fields=['total_ht', 'total_tva', 'total_ttc', 'part_client'])
 
     def get_tva_analysis(self):
@@ -193,6 +204,7 @@ class Facture(models.Model):
             models.Index(fields=['status']),
             models.Index(fields=['client', 'status']),
             models.Index(fields=['-date']),
+            GinIndex(fields=['numero_facture'], name='facture_num_trgm_idx', opclasses=['gin_trgm_ops']),
         ]
 
 

@@ -24,7 +24,7 @@ from ...models import (
     Facture, MouvementStock, FactureProduitAllocation
 )
 from ...serializers import CommandeSerializer, CommandeProduitSerializer
-from ...serializers_optimized import CommandeListSerializer, CommandeDetailSerializer
+from ...serializers_optimized import CommandeListSerializer, CommandeDetailSerializer, CommandeOmnisearchSerializer
 from ...serializer_mixins import OptimizedSerializerMixin
 from ...search_mixins import MultiTermSearchMixin
 from ...audit_helpers import log_audit
@@ -119,20 +119,32 @@ class CommandeViewSet(MultiTermSearchMixin, OptimizedSerializerMixin, viewsets.M
     search_fields = ['id', 'fournisseur__name', 'numero_facture', 'fournisseur_nom']
     ordering_fields = ['date', 'status']
     
+    def get_serializer_class(self):
+        if self.request.query_params.get('layout') == 'omnisearch':
+            return CommandeOmnisearchSerializer
+        return super().get_serializer_class()
+
     # Serializers optimisés
     list_serializer_class = CommandeListSerializer
     detail_serializer_class = CommandeDetailSerializer
 
     def get_queryset(self):
         """
-        Override to add prefetch_related only for detail views.
-        List view doesn't need product data.
+        Override to add prefetch_related only for detail views or omnisearch.
+        List view doesn't need product data unless omnisearch is active.
         """
         qs = super().get_queryset()
         
-        # Only prefetch products for detail views (retrieve, update, etc.)
-        if self.action in ['retrieve', 'update', 'partial_update']:
-            qs = qs.prefetch_related('produits__produit', 'produits__commande__fournisseur')
+        # Le paramètre 'omnisearch' ou l'action détermine si on affiche la liste des produits
+        is_omnisearch = self.request.query_params.get('layout') == 'omnisearch'
+        
+        # Only prefetch products for detail views or omnisearch
+        if self.action in ['retrieve', 'update', 'partial_update'] or is_omnisearch:
+            qs = qs.prefetch_related(
+                'produits__produit', 
+                'produits__commande__fournisseur',
+                'produits__stock_lot'  # Fix: Empêche N+1 sur instance.stock_lot.first()
+            )
         
         return qs
 

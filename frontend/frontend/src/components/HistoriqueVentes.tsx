@@ -108,11 +108,11 @@ const HistoriqueVentes = () => {
   const totalPages = Math.ceil(totalItems / pageSize);
 
   return (
-    <div className="min-h-screen bg-base-200 p-6 space-y-6 font-sans">
+    <div className="min-h-screen bg-base-200 p-3 sm:p-6 space-y-4 sm:space-y-6 font-sans">
       
       {/* Header Section */}
-      <div className="bg-base-100 rounded-2xl shadow-sm border border-base-300 flex flex-col p-6 sticky-header">
-        <div className="flex justify-between items-start mb-6">
+      <div className="bg-base-100 rounded-2xl shadow-sm border border-base-300 flex flex-col p-4 sm:p-6 sticky-header">
+        <div className="flex flex-col gap-4 sm:flex-row sm:justify-between sm:items-start mb-4 sm:mb-6">
             <div>
                 <h1 className="text-2xl font-bold text-base-content tracking-tight">
                     {t('title')}
@@ -122,7 +122,7 @@ const HistoriqueVentes = () => {
                 </p>
             </div>
             <button 
-                className={`btn btn-outline btn-success gap-2 ${exporting ? 'loading' : ''}`}
+                className={`btn btn-outline btn-success gap-2 w-full sm:w-auto ${exporting ? 'loading' : ''}`}
                 onClick={handleExportExcel}
                 disabled={exporting || data.length === 0}
             >
@@ -135,37 +135,37 @@ const HistoriqueVentes = () => {
             </button>
         </div>
 
-        <div className="flex flex-wrap items-end gap-4 bg-base-200/50 p-4 rounded-xl border border-base-200">
-            <div className="form-control">
+        <div className="flex flex-col sm:flex-row sm:flex-wrap sm:items-end gap-3 sm:gap-4 bg-base-200/50 p-3 sm:p-4 rounded-xl border border-base-200">
+            <div className="form-control w-full sm:min-w-[200px] sm:flex-1">
                 <label className="label py-1">
                     <span className="label-text text-xs font-semibold uppercase opacity-60">{t('start_date')}</span>
                 </label>
                 <input 
                     type="date" 
-                    className="input input-bordered input-sm h-10" 
+                    className="input input-bordered input-sm h-10 w-full" 
                     value={dateDebut}
                     onChange={(e) => { setDateDebut(e.target.value); setCurrentPage(1); }}
                 />
             </div>
-            <div className="form-control">
+            <div className="form-control w-full sm:min-w-[200px] sm:flex-1">
                 <label className="label py-1">
                     <span className="label-text text-xs font-semibold uppercase opacity-60">{t('end_date')}</span>
                 </label>
                 <input 
                     type="date" 
-                    className="input input-bordered input-sm h-10" 
+                    className="input input-bordered input-sm h-10 w-full" 
                     value={dateFin}
                     onChange={(e) => { setDateFin(e.target.value); setCurrentPage(1); }}
                 />
             </div>
-            <button className="btn btn-primary btn-sm h-10 px-6" onClick={() => { setCurrentPage(1); fetchHistory(); }}>
+            <button className="btn btn-primary btn-sm h-10 px-6 w-full sm:w-auto" onClick={() => { setCurrentPage(1); fetchHistory(); }}>
                 {t('common:refresh')}
             </button>
         </div>
       </div>
 
       {/* Main Content: Table */}
-      <div className="bg-base-100 rounded-2xl shadow-sm border border-base-300 overflow-hidden flex flex-col h-[calc(100vh-28rem)] min-h-[450px]">
+      <div className="bg-base-100 rounded-2xl shadow-sm border border-base-300 overflow-hidden flex flex-col h-auto min-h-[450px] lg:h-[calc(100vh-28rem)]">
         {loading ? (
             <div className="flex flex-col items-center justify-center p-20 gap-4">
                 <span className="loading loading-spinner loading-lg text-primary"></span>
@@ -255,12 +255,12 @@ const HistoriqueVentes = () => {
                 </div>
 
                 {/* Pagination Controls */}
-                <div className="p-6 border-t border-base-200 flex flex-col sm:flex-row items-center justify-between bg-base-100 gap-4">
-                    <div className="text-sm font-medium text-base-content/60">
+                <div className="p-4 sm:p-6 border-t border-base-200 flex flex-col sm:flex-row items-stretch sm:items-center justify-between bg-base-100 gap-3 sm:gap-4">
+                    <div className="text-sm font-medium text-base-content/60 text-center sm:text-left">
                         {t('pagination.showing')} <span className="text-base-content font-bold">{data.length}</span> {t('pagination.days_of')} <span className="text-base-content font-bold">{totalItems}</span> {t('pagination.total')}
                     </div>
                     
-                    <div className="join shadow-sm">
+                    <div className="join shadow-sm w-full sm:w-auto">
                         <button 
                             className="join-item btn btn-sm btn-outline h-10 px-4"
                             onClick={() => setCurrentPage(p => Math.max(1, p - 1))}

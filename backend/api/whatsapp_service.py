@@ -205,3 +205,4 @@ class WhatsAppService:
                 
         return success, "Message envoyé" if success else "Échec de l'envoi"
 
+

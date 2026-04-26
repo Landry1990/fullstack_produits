@@ -23,4 +23,9 @@ export interface PharmacySettings {
     ticket_paper_width?: number
     currency_symbol?: string
     locale?: string
+    whatsapp_enabled?: boolean
+    whatsapp_access_token?: string
+    whatsapp_phone_id?: string
+    whatsapp_business_id?: string
+    pharmacist_whatsapp_number?: string
 }

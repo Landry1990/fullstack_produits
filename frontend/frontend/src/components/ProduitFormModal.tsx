@@ -6,6 +6,7 @@ import type { ProduitForm, ProduitModel, Rayon, Fournisseur, Forme, Groupe } fro
 import { useTVA } from '../hooks/useTVA';
 import PremiumModal from './common/PremiumModal';
 import { normalizeNumberInput } from '../utils/formatters';
+import { productSchema } from '../schemas/productSchema';
 
 interface ProduitFormModalProps {
   open: boolean;
@@ -134,13 +135,21 @@ export default function ProduitFormModal({
         message_alerte: form.message_alerte?.trim() || null,
       };
 
-      if (!payload.name || !payload.selling_price || !payload.cost_price || payload.stock == null) {
-        setError(t('products:form.validation.required_fields'));
+      const validation = productSchema.safeParse(payload);
+      
+      if (!validation.success) {
+        const errorMsg = validation.error.errors
+          .map(err => `${err.path.join('.')}: ${err.message}`)
+          .join(' | ');
+        setError(errorMsg);
         setLoading(false);
         return;
       }
 
-      const { data } = await axios.post<ProduitModel>(produitsEndpoint, payload);
+      // Use the validated and coerced data
+      const cleanPayload = validation.data;
+
+      const { data } = await axios.post<ProduitModel>(produitsEndpoint, cleanPayload);
       onCreated(data); // Callback to parent
       onClose(); // Close modal on success
     } catch (err: unknown) {

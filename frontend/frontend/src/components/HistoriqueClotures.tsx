@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useCallback } from 'react'
 import axios from 'axios'
 import { toast } from 'react-hot-toast'
 import { fr } from 'date-fns/locale'
@@ -51,9 +51,15 @@ export default function HistoriqueClotures() {
   const [users, setUsers] = useState<any[]>([])
   const [selectedUser, setSelectedUser] = useState<string>('')
   
-  // Filtres
-  const [dateDebut, setDateDebut] = useState<Date | null>(null)
-  const [dateFin, setDateFin] = useState<Date | null>(null)
+  // Filtres — par défaut : mois en cours
+  const [dateDebut, setDateDebut] = useState<Date | null>(() => {
+    const now = new Date()
+    return new Date(now.getFullYear(), now.getMonth(), 1)
+  })
+  const [dateFin, setDateFin] = useState<Date | null>(() => {
+    const now = new Date()
+    return new Date(now.getFullYear(), now.getMonth() + 1, 0)
+  })
   
   // Pagination
   const [currentPage, setCurrentPage] = useState(1)
@@ -111,11 +117,11 @@ export default function HistoriqueClotures() {
     return `${year}-${month}-${day}`
   }
 
-  const fetchClotures = async () => {
+  const fetchClotures = useCallback(async (page = currentPage) => {
     setLoading(true)
     try {
       const params: Record<string, any> = {
-        page: currentPage,
+        page,
         page_size: pageSize
       }
       
@@ -136,24 +142,31 @@ export default function HistoriqueClotures() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [pageSize, dateDebut, dateFin, selectedUser, selectedPosteCaisse, apiBaseUrl, t])
 
+  // Re-fetch quand les filtres changent — reset page à 1
   useEffect(() => {
-    fetchClotures()
-  }, [currentPage, selectedUser, selectedPosteCaisse, dateDebut, dateFin]) // Re-fetch quand les filtres changent
+    setCurrentPage(1)
+    fetchClotures(1)
+  }, [dateDebut, dateFin, selectedUser, selectedPosteCaisse, fetchClotures])
+
+  // Re-fetch quand on change de page (pagination)
+  useEffect(() => {
+    fetchClotures(currentPage)
+  }, [currentPage])
 
   const handleSearch = () => {
     setCurrentPage(1)
-    fetchClotures()
+    fetchClotures(1)
   }
 
   const resetFilters = () => {
-    setDateDebut(null)
-    setDateFin(null)
+    const now = new Date()
+    setDateDebut(new Date(now.getFullYear(), now.getMonth(), 1))
+    setDateFin(new Date(now.getFullYear(), now.getMonth() + 1, 0))
     setSelectedUser('')
     setSelectedPosteCaisse('')
     setCurrentPage(1)
-    setTimeout(() => handleSearch(), 0)
   }
 
   const totalPages = Math.ceil(totalItems / pageSize)
@@ -246,7 +259,10 @@ export default function HistoriqueClotures() {
               </label>
               <DatePicker
                 selected={dateDebut}
-                onChange={(date: Date | null) => setDateDebut(date)}
+                onChange={(date: Date | null) => {
+                  const now = new Date()
+                  setDateDebut(date ?? new Date(now.getFullYear(), now.getMonth(), 1))
+                }}
                 dateFormat="dd/MM/yyyy"
                 placeholderText={t('filters.select_placeholder')}
                 locale="fr"
@@ -261,7 +277,10 @@ export default function HistoriqueClotures() {
               </label>
               <DatePicker
                 selected={dateFin}
-                onChange={(date: Date | null) => setDateFin(date)}
+                onChange={(date: Date | null) => {
+                  const now = new Date()
+                  setDateFin(date ?? new Date(now.getFullYear(), now.getMonth() + 1, 0))
+                }}
                 dateFormat="dd/MM/yyyy"
                 placeholderText={t('filters.select_placeholder')}
                 locale="fr"
@@ -341,18 +360,25 @@ export default function HistoriqueClotures() {
       </div>
 
       {/* Best Cashier Ranking Section */}
-      <div className="px-6 pt-6">
+      <div className="px-3 sm:px-6 pt-4 sm:pt-6">
         <div className="bg-base-100 rounded-2xl shadow-sm border border-base-300 overflow-hidden">
-          <div className="p-4 border-b border-base-200 flex justify-between items-center bg-base-100/50">
+          <div className="p-4 border-b border-base-200 flex flex-col gap-3 sm:flex-row sm:justify-between sm:items-center bg-base-100/50">
             <h2 className="font-black text-sm uppercase tracking-widest text-base-content/60 flex items-center gap-2">
               <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className="text-primary"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></svg>
               {t('performance.title')}
             </h2>
-            <div className="flex gap-2 items-center">
+            <div className="flex flex-wrap gap-2 items-center justify-end w-full sm:w-auto">
               <select 
                 className="select select-bordered select-xs h-8 font-bold"
                 value={metricMonth}
-                onChange={(e) => setMetricMonth(e.target.value)}
+                onChange={(e) => {
+                  const m = e.target.value
+                  setMetricMonth(m)
+                  const y = parseInt(metricYear)
+                  const mo = parseInt(m) - 1
+                  setDateDebut(new Date(y, mo, 1))
+                  setDateFin(new Date(y, mo + 1, 0))
+                }}
               >
                 <option value="01">{t('performance.months.01')}</option>
                 <option value="02">{t('performance.months.02')}</option>
@@ -370,7 +396,13 @@ export default function HistoriqueClotures() {
               <select 
                 className="select select-bordered select-xs h-8 font-bold"
                 value={metricYear}
-                onChange={(e) => setMetricYear(e.target.value)}
+                onChange={(e) => {
+                  const y = e.target.value
+                  setMetricYear(y)
+                  const mo = parseInt(metricMonth) - 1
+                  setDateDebut(new Date(parseInt(y), mo, 1))
+                  setDateFin(new Date(parseInt(y), mo + 1, 0))
+                }}
               >
                 {[2024, 2025, 2026, 2027].map(y => (
                     <option key={y} value={y.toString()}>{y}</option>
@@ -386,7 +418,7 @@ export default function HistoriqueClotures() {
           </div>
           {showMetric && (
             <div className="p-6 bg-base-200/30">
-              <BestCashierMetric month={metricMonth} year={metricYear} />
+              <BestCashierMetric month={metricMonth} year={metricYear} userId={selectedUser || undefined} />
             </div>
           )}
         </div>
@@ -436,7 +468,7 @@ export default function HistoriqueClotures() {
       )}
 
       {/* Table Section */}
-      <div className="flex-1 px-6 pb-6 overflow-hidden flex flex-col">
+      <div className="flex-1 px-3 sm:px-6 pb-4 sm:pb-6 overflow-hidden flex flex-col">
         <div className="bg-base-100 border border-base-200 rounded-xl shadow-sm flex-1 flex flex-col overflow-hidden">
           <div className="overflow-x-auto flex-1">
             <table className="table table-sm w-full">

@@ -44,13 +44,15 @@ export default function Omnisearch() {
   const [fournisseurs, setFournisseurs] = useState<Fournisseur[]>([]);
   const [loading, setLoading] = useState(false);
 
-  // Toggle au clavier (Ctrl+K ou Cmd+K)
+  // Toggle au clavier (Ctrl+K ou Cmd+K) + fermeture par Escape
   useEffect(() => {
     const down = (e: KeyboardEvent) => {
-      // Utilisation de e.code pour ignorer la casse et Caps Lock
       if (e.code === 'KeyK' && (e.metaKey || e.ctrlKey)) {
         e.preventDefault();
         setOpen((open) => !open);
+      }
+      if (e.key === 'Escape') {
+        setOpen(false);
       }
     };
 
@@ -207,6 +209,7 @@ export default function Omnisearch() {
             className="flex flex-col h-full w-full"
             value={activeValue}
             onValueChange={setActiveValue}
+            onKeyDown={(e) => { if (e.key === 'Escape') { e.preventDefault(); setOpen(false); } }}
         >
           <div className="flex items-center border-b border-base-200 px-6 bg-base-100/50 backdrop-blur-sm">
             <Search className="w-6 h-6 text-primary mr-4 opacity-50" />

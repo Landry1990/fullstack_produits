@@ -1,5 +1,5 @@
 import { useEffect, useRef, useCallback } from 'react';
-import { useAuth } from '../context/AuthContext';
+import { useAuth, LAST_ACTIVITY_KEY } from '../context/AuthContext';
 import { usePharmacySettings } from './usePharmacySettings';
 import { safeStorage } from '../utils/storage';
 
@@ -11,7 +11,6 @@ const EVENTS = [
     'pointerdown'
 ];
 
-export const LAST_ACTIVITY_KEY = 'lastActivityTime';
 const CHECK_INTERVAL = 30000; // 30 seconds
 
 export function useAutoLogout() {

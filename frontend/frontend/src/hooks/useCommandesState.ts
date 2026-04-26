@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type FormEvent, useRef, useCallback } from 'react';
+import { useEffect, useMemo, type FormEvent, useRef, useCallback } from 'react';
 import { toast } from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import { useConfirm } from './useConfirm';
@@ -16,6 +16,7 @@ import api from '../services/api';
 import { useProductSearch } from './useProductSearch';
 import { usePharmacySettings } from './usePharmacySettings';
 import { useFormes } from './useProduits';
+import { useCommandesStore } from '../stores/useCommandesStore';
 
 function formatDateToMMYY(isoDate: string | null | undefined): string {
     if (!isoDate) return '';
@@ -32,11 +33,14 @@ export function useCommandesState(forcedType?: 'LOC' | 'DIR') {
   const { user } = useAuth();
   const navigate = useNavigate(); 
   const location = useLocation(); 
-  const [selectedCommande, setSelectedCommande] = useState<Commande | null>(null)
+  const selectedCommande = useCommandesStore((s) => s.selectedCommande);
+  const setSelectedCommande = useCommandesStore((s) => s.setSelectedCommande);
 
   const { settings: pharmacySettings } = usePharmacySettings();
-  const [activeTab, setActiveTab] = useState<'LOC' | 'DIR'>(forcedType || 'LOC'); 
-  const [commandeType, setCommandeType] = useState<'LOC' | 'DIR'>(forcedType || 'LOC'); 
+  const activeTab = useCommandesStore((s) => s.activeTab);
+  const setActiveTab = useCommandesStore((s) => s.setActiveTab);
+  const commandeType = useCommandesStore((s) => s.commandeType);
+  const setCommandeType = useCommandesStore((s) => s.setCommandeType);
 
   useEffect(() => {
     if (forcedType) {
@@ -45,7 +49,8 @@ export function useCommandesState(forcedType?: 'LOC' | 'DIR') {
     }
   }, [forcedType]);
   
-  const [viewMode, setViewMode] = useState<'LIST' | 'CREATE' | 'DETAILS' | 'EDIT'>('LIST');
+  const viewMode = useCommandesStore((s) => s.viewMode);
+  const setViewMode = useCommandesStore((s) => s.setViewMode);
 
   useEffect(() => {
     const openDetailsId = location.state?.openDetailsId;
@@ -66,13 +71,18 @@ export function useCommandesState(forcedType?: 'LOC' | 'DIR') {
     }
   }, [location.state, navigate, location.pathname, t]);
 
-  const [tauxChange, setTauxChange] = useState<string>('655.957');
-  const [fraisCoefficient, setFraisCoefficient] = useState<string>('1.35');
+  const tauxChange = useCommandesStore((s) => s.tauxChange);
+  const setTauxChange = useCommandesStore((s) => s.setTauxChange);
+  const fraisCoefficient = useCommandesStore((s) => s.fraisCoefficient);
+  const setFraisCoefficient = useCommandesStore((s) => s.setFraisCoefficient);
 
-  const [newCommandeFournisseurId, setNewCommandeFournisseurId] = useState<string>('')
+  const newCommandeFournisseurId = useCommandesStore((s) => s.newCommandeFournisseurId);
+  const setNewCommandeFournisseurId = useCommandesStore((s) => s.setNewCommandeFournisseurId);
 
-  const [page, setPage] = useState(1)
-  const [filterStatus, setFilterStatus] = useState<string>('ALL');
+  const page = useCommandesStore((s) => s.page);
+  const setPage = useCommandesStore((s) => s.setPage);
+  const filterStatus = useCommandesStore((s) => s.filterStatus);
+  const setFilterStatus = useCommandesStore((s) => s.setFilterStatus);
 
   const apiBaseUrl = import.meta.env.VITE_API_BASE_URL ?? '';
   const produitsEndpoint = `${apiBaseUrl}/api/produits/for_import/`;
@@ -95,9 +105,12 @@ export function useCommandesState(forcedType?: 'LOC' | 'DIR') {
   const totalPages = Math.ceil(totalCount / 50) || 1;
   const error = loadError ? (loadError as Error).message : null;
 
-  const [numeroFacture, setNumeroFacture] = useState('');
-  const [commandeProduits, setCommandeProduits] = useState<CommandeProduit[]>([]);
-  const [commandeSortBy, setCommandeSortBy] = useState<'chrono' | 'stock' | 'name' | 'qty'>('chrono');
+  const numeroFacture = useCommandesStore((s) => s.numeroFacture);
+  const setNumeroFacture = useCommandesStore((s) => s.setNumeroFacture);
+  const commandeProduits = useCommandesStore((s) => s.commandeProduits);
+  const setCommandeProduits = useCommandesStore((s) => s.setCommandeProduits);
+  const commandeSortBy = useCommandesStore((s) => s.commandeSortBy);
+  const setCommandeSortBy = useCommandesStore((s) => s.setCommandeSortBy);
 
   const { 
     produits: produitsList, 
@@ -109,21 +122,32 @@ export function useCommandesState(forcedType?: 'LOC' | 'DIR') {
   const fournisseurSelectRef = useRef<HTMLSelectElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null); 
 
-  const [selectedRows, setSelectedRows] = useState<Set<number>>(new Set());
-  const [focusedField, setFocusedField] = useState<{row: number, field: number} | null>(null);
+  const selectedRows = useCommandesStore((s) => s.selectedRows);
+  const setSelectedRows = useCommandesStore((s) => s.setSelectedRows);
+  const focusedField = useCommandesStore((s) => s.focusedField);
+  const setFocusedField = useCommandesStore((s) => s.setFocusedField);
 
-  const [sortKey, setSortKey] = useState<'numero' | 'date' | 'fournisseur' | 'status'>('date');
-  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
-  const [showPrintLabelsModal, setShowPrintLabelsModal] = useState(false);
+  const sortKey = useCommandesStore((s) => s.sortKey);
+  const setSortKey = useCommandesStore((s) => s.setSortKey);
+  const sortOrder = useCommandesStore((s) => s.sortOrder);
+  const setSortOrder = useCommandesStore((s) => s.setSortOrder);
+  const showPrintLabelsModal = useCommandesStore((s) => s.showPrintLabelsModal);
+  const setShowPrintLabelsModal = useCommandesStore((s) => s.setShowPrintLabelsModal);
 
-  const [isImporting, setIsImporting] = useState(false);
-  const [isCreateProduitModalOpen, setIsCreateProduitModalOpen] = useState(false);
+  const isImporting = useCommandesStore((s) => s.isImporting);
+  const setIsImporting = useCommandesStore((s) => s.setIsImporting);
+  const isCreateProduitModalOpen = useCommandesStore((s) => s.isCreateProduitModalOpen);
+  const setIsCreateProduitModalOpen = useCommandesStore((s) => s.setIsCreateProduitModalOpen);
 
-  const [isSuggestionModalOpen, setIsSuggestionModalOpen] = useState(false);
-  const [isTransferModalOpen, setIsTransferModalOpen] = useState(false);
+  const isSuggestionModalOpen = useCommandesStore((s) => s.isSuggestionModalOpen);
+  const setIsSuggestionModalOpen = useCommandesStore((s) => s.setIsSuggestionModalOpen);
+  const isTransferModalOpen = useCommandesStore((s) => s.isTransferModalOpen);
+  const setIsTransferModalOpen = useCommandesStore((s) => s.setIsTransferModalOpen);
 
-  const [selectedOrderIds, setSelectedOrderIds] = useState<Set<number>>(new Set());
-  const [isMergeModalOpen, setIsMergeModalOpen] = useState(false);
+  const selectedOrderIds = useCommandesStore((s) => s.selectedOrderIds);
+  const setSelectedOrderIds = useCommandesStore((s) => s.setSelectedOrderIds);
+  const isMergeModalOpen = useCommandesStore((s) => s.isMergeModalOpen);
+  const setIsMergeModalOpen = useCommandesStore((s) => s.setIsMergeModalOpen);
 
   const filteredProduits = useMemo(() => {
     if (!searchProduitQuery) return [];
@@ -153,7 +177,8 @@ export function useCommandesState(forcedType?: 'LOC' | 'DIR') {
   });
 
   const { sudoState, requireSudo, closeSudo } = useSudo();
-  const [saving, setSaving] = useState(false);
+  const saving = useCommandesStore((s) => s.saving);
+  const setSaving = useCommandesStore((s) => s.setSaving);
 
   useEffect(() => {
       setSelectedRows(new Set());

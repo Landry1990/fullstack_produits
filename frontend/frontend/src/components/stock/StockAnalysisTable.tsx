@@ -169,10 +169,10 @@ export const StockAnalysisTable: React.FC<StockAnalysisTableProps> = ({
                                 {activeTab === 'unsold' ? (
                                     <>
                                         <td className="font-mono text-xs text-base-content/60">
-                                            {item.dernier_achat ? new Date(item.dernier_achat).toLocaleDateString('fr-FR') : '-'}
+                                            {item.dernier_achat ? new Date(item.dernier_achat).toLocaleDateString(i18n.language) : '-'}
                                         </td>
                                         <td className="font-mono text-xs text-base-content/60">
-                                            {item.derniere_vente ? new Date(item.derniere_vente).toLocaleDateString('fr-FR') : <span className="text-error font-black italic">{t('stock:analyse.messages.never_sold')}</span>}
+                                            {item.derniere_vente ? new Date(item.derniere_vente).toLocaleDateString(i18n.language) : <span className="text-error font-black italic">{t('stock:analyse.messages.never_sold')}</span>}
                                         </td>
                                         <td className="text-center">
                                             <div className="badge border-none bg-warning/20 text-warning font-black italic">

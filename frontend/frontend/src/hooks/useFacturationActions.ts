@@ -19,8 +19,8 @@ export interface UseFacturationActionsProps {
     setError: (error: string | null) => void;
     t: (key: string, options?: any) => string;
     productSearch: any;
-    searchInputRef: React.RefObject<HTMLInputElement>;
-    paymentInputRef: React.RefObject<HTMLInputElement>;
+    searchInputRef: React.RefObject<HTMLInputElement | null>;
+    paymentInputRef: React.RefObject<HTMLInputElement | null>;
     pendingPrintFacture: Facture | null;
     setPendingPrintFacture: (f: Facture | null) => void;
     setShowClientNameModal: (show: boolean) => void;

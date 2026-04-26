@@ -73,18 +73,36 @@ class StockAdjustmentViewSet(MultiTermSearchMixin, viewsets.ReadOnlyModelViewSet
             )
         )
 
+        from ...models import PharmacySettings
+        from django.utils import timezone as tz
+
         wb = Workbook()
         sheet = wb.active
         sheet.title = "Ajustements Stock"
 
-        # En-tête
+        # En-tête pharmacie
+        try:
+            pharmacy = PharmacySettings.objects.get(pk=1)
+            pharma_name = pharmacy.pharmacy_name or "ZENITH"
+            pharma_address = f"{pharmacy.address} - {pharmacy.city}".strip(" -") if pharmacy.address or pharmacy.city else ""
+            pharma_phone = f"Tél : {pharmacy.phone}" if pharmacy.phone else ""
+        except PharmacySettings.DoesNotExist:
+            pharma_name, pharma_address, pharma_phone = "ZENITH", "", ""
+
+        now_str = tz.localtime(tz.now()).strftime("%d/%m/%Y à %H:%M")
+        for line in [pharma_name, pharma_address, pharma_phone, f"Édité le : {now_str}", "", "Journal des Ajustements de Stock"]:
+            sheet.append([line])
+        sheet.append([])  # ligne vide avant le tableau
+
+        # Ligne d'en-tête du tableau
         columns = [
             "Date", "Produit", "CIP", "Type", "Lot", "Qté Change", "Valorisation", "Utilisateur"
         ]
         sheet.append(columns)
-        
+        header_row = sheet.max_row
+
         # Style en-tête
-        for cell in sheet[1]:
+        for cell in sheet[header_row]:
             cell.font = Font(bold=True)
             cell.alignment = Alignment(horizontal='center')
 

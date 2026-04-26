@@ -21,7 +21,7 @@ interface ProductSearchSectionProps {
   onCsvImport?: (file: File) => void
 }
 
-export default function ProductSearchSection({
+const ProductSearchSection = React.memo(({
   searchQuery,
   setSearchQuery,
   searchLoading,
@@ -32,7 +32,7 @@ export default function ProductSearchSection({
   placeholder,
   onQuantityShortcut,
   onCsvImport
-}: ProductSearchSectionProps) {
+}: ProductSearchSectionProps) => {
   const { t } = useTranslation(['facturation', 'common'])
   const [searchMode, setSearchMode] = useState<'products' | 'packs'>('products')
   const [packResults, setPackResults] = useState<any[]>([])
@@ -284,4 +284,6 @@ export default function ProductSearchSection({
       )}
     </div>
   )
-}
+})
+
+export default ProductSearchSection

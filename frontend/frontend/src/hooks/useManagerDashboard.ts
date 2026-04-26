@@ -3,8 +3,9 @@ import { useTranslation } from 'react-i18next';
 import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'react-hot-toast';
 import axios from '../config/axios';
-import * as XLSX from 'xlsx';
 import { useManagerStats, useCurrentObjectifs } from './useDashboard';
+import { usePharmacySettings } from './usePharmacySettings';
+import { exportToExcel } from '../utils/excelExport';
 
 export interface EditingObjectif {
     periode: string;
@@ -26,6 +27,7 @@ export const useManagerDashboard = () => {
 
     const { data: stats, isLoading: statsLoading, refetch: refetchStats } = useManagerStats();
     const { data: currentObj } = useCurrentObjectifs();
+    const { settings: pharmacySettings } = usePharmacySettings();
 
     const handleExport = useCallback(async (type: 'csv' | 'pdf' | 'dead_stock') => {
         setExporting(true);
@@ -63,24 +65,12 @@ export const useManagerDashboard = () => {
                         'Fournisseur': item.fournisseur || '-'
                     }));
 
-                    const ws = XLSX.utils.json_to_sheet(excelData);
-
-                    // Auto-adjust column widths
-                    const colWidths = Object.keys(excelData[0] || {}).map(key => {
-                        const headerLen = key.length;
-                        const maxContentLen = excelData.reduce((max, row) => {
-                            const val = String(row[key as keyof typeof row] || "");
-                            return Math.max(max, val.length);
-                        }, 0);
-                        return { wch: Math.max(headerLen, maxContentLen) + 2 };
-                    });
-                    ws['!cols'] = colWidths;
-
-                    const wb = XLSX.utils.book_new();
-                    XLSX.utils.book_append_sheet(wb, ws, 'Stocks Morts');
-
                     const filename = `stocks_morts_${now.toISOString().split('T')[0]}.xlsx`;
-                    XLSX.writeFile(wb, filename);
+                    exportToExcel(excelData, pharmacySettings, {
+                        sheetName: 'Stocks Morts',
+                        filename,
+                        title: 'Rapport Stocks Morts',
+                    });
                     toast.success(t('common:export_success', 'Export réussi'));
                 } else {
                     toast(t('manager_dashboard.no_dead_stock', 'Aucun stock mort trouvé.'));

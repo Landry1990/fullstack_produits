@@ -2,13 +2,13 @@ import { useState, useEffect } from 'react';
 import { toast } from 'react-hot-toast';
 import { 
   LayoutDashboard, 
-  CalendarDays, 
   RefreshCw,
   TrendingUp,
   Package,
   Wallet,
   AlertTriangle,
-  Plus
+  Plus,
+  MessageCircle
 } from 'lucide-react';
 import { 
   useDashboardStats, 
@@ -31,13 +31,17 @@ import PerformanceOverview from './dashboard/PerformanceOverview';
 import StockIntelligence from './dashboard/StockIntelligence';
 import FinancialSummary from './dashboard/FinancialSummary';
 import { Link } from 'react-router-dom';
+import { usePharmacySettings } from '../hooks/usePharmacySettings';
+import { generateDashboardFlashText, openWhatsApp } from '../utils/whatsapp';
 
 
 export default function Dashboard() {
   const { t } = useTranslation(['dashboard', 'common']);
   const { getServerDate } = useAuth();
+  const { settings: pharmSettings } = usePharmacySettings();
   const [expirationMonths, setExpirationMonths] = useState(1); 
   const [activeTab, setActiveTab] = useState<'overview' | 'stock' | 'finance'>('overview');
+  const [sendingReport, setSendingReport] = useState(false);
 
 
   // Onglet Overview : toujours chargé
@@ -74,6 +78,27 @@ export default function Dashboard() {
       // Add refetch for reapproStats if needed, but it has short staleTime
     ]);
     toast.success(t('refresh_success'), { icon: '🔄' });
+  };
+  
+  const handleSendWhatsAppReport = async () => {
+    if (!pharmSettings?.pharmacist_whatsapp_number) {
+        toast.error("Le numéro WhatsApp de la pharmacienne n'est pas configuré dans les paramètres.");
+        return;
+    }
+
+    setSendingReport(true);
+    try {
+        const text = generateDashboardFlashText(stats, pharmSettings.pharmacy_name || 'Ma Pharmacie');
+        const success = openWhatsApp(pharmSettings.pharmacist_whatsapp_number, text);
+        
+        if (success) {
+            toast.success(t('alerts.whatsapp_report_success', { defaultValue: 'Rapport préparé pour WhatsApp !' }), { icon: '📱' });
+        }
+    } catch (err: any) {
+        toast.error('Erreur lors de la préparation du rapport');
+    } finally {
+        setSendingReport(false);
+    }
   };
 
   useEffect(() => {
@@ -120,114 +145,114 @@ export default function Dashboard() {
     );
   }
 
+  const tabConfig = [
+    { key: 'overview', label: t('tabs.overview', { defaultValue: 'Performance' }), icon: TrendingUp, color: 'text-emerald-600', activeBg: 'bg-emerald-500' },
+    { key: 'stock',    label: t('tabs.stock',    { defaultValue: 'Stock' }),        icon: Package,    color: 'text-amber-600',   activeBg: 'bg-amber-500'   },
+    { key: 'finance',  label: t('tabs.finance',  { defaultValue: 'Finance' }),      icon: Wallet,     color: 'text-indigo-600',  activeBg: 'bg-indigo-500'  },
+  ] as const;
+
   return (
-    <div className="min-h-screen bg-base-200 p-6 space-y-6 font-sans">
-      {/* Header */}
-      <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">
-        <div className="flex items-center gap-3">
-          <div className="p-2.5 bg-primary/10 text-primary rounded-xl shadow-sm border border-primary/20">
-            <LayoutDashboard className="w-6 h-6" />
+    <div className="min-h-screen bg-base-200/60 font-sans">
+
+      {/* ── HEADER ─────────────────────────────────────────── */}
+      <div className="sticky top-0 z-30 bg-base-100/95 backdrop-blur-md border-b border-base-200 px-4 sm:px-6 py-3">
+        <div className="flex items-center justify-between gap-3">
+
+          {/* Left: title + date */}
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="p-2 bg-primary/10 text-primary rounded-xl shrink-0">
+              <LayoutDashboard className="w-5 h-5" />
+            </div>
+            <div className="min-w-0">
+              <h1 className="text-base font-black text-base-content tracking-tight leading-none truncate">{t('title')}</h1>
+              <p className="text-[10px] font-bold text-base-content/40 uppercase tracking-widest mt-0.5 hidden sm:block">
+                {getServerDate().toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })}
+              </p>
+            </div>
           </div>
-          <div>
-            <h1 className="text-2xl font-black text-base-content tracking-tight">{t('title')}</h1>
-            <p className="text-[10px] font-bold text-base-content/40 uppercase tracking-widest mt-0.5">{t('subtitle')}</p>
+
+          {/* Right: actions */}
+          <div className="flex items-center gap-2 shrink-0">
+            <Link to="/app/facturation" className="btn btn-sm btn-primary gap-1.5 rounded-xl text-xs font-black">
+              <Plus className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">{t('actions.new_invoice')}</span>
+              <span className="sm:hidden">Vente</span>
+            </Link>
+            <button
+              className="btn btn-sm btn-ghost btn-circle text-base-content/50 hover:text-primary"
+              onClick={handleRefreshAll}
+              disabled={loading}
+              title={t('common:actions.refresh')}
+            >
+              {loading ? <span className="loading loading-spinner loading-xs" /> : <RefreshCw className="w-4 h-4" />}
+            </button>
+            <button
+              className={`btn btn-sm btn-ghost btn-circle ${sendingReport ? 'loading' : 'text-[#25D366] hover:bg-[#25D366]/10'}`}
+              onClick={handleSendWhatsAppReport}
+              disabled={sendingReport}
+              title="Rapport Flash WhatsApp"
+            >
+              {!sendingReport && <MessageCircle className="w-4 h-4" />}
+            </button>
           </div>
         </div>
 
-        <div className="flex flex-wrap items-center gap-3">
-            {/* Quick Actions - Always visible */}
-            <div className="flex items-center gap-2 bg-base-100 p-1.5 rounded-xl shadow-sm border border-base-300">
-                <Link to="/app/facturation" className="btn btn-sm btn-primary text-[10px] font-black uppercase tracking-widest gap-2 rounded-lg">
-                    <Plus className="w-3.5 h-3.5" />
-                    {t('actions.new_invoice')}
-                </Link>
-                <Link to="/app/produits" className="btn btn-sm btn-ghost hover:bg-base-200 text-[10px] font-black uppercase tracking-widest gap-2 rounded-lg">
-                    <Package className="w-3.5 h-3.5" />
-                    {t('actions.manage_products')}
-                </Link>
-            </div>
-
-            <div className="flex items-center gap-3 bg-base-100 px-4 py-2 rounded-xl shadow-sm border border-base-300 h-10">
-                <CalendarDays className="w-4 h-4 text-primary" />
-                <span className="text-xs font-black uppercase tracking-widest text-base-content/60">
-                    {getServerDate().toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' })}
-                </span>
-                <div className="divider divider-horizontal mx-0"></div>
-                <button 
-                    className={`btn btn-xs btn-ghost btn-circle ${statsLoading || chartLoading ? 'loading' : 'hover:bg-primary/10 hover:text-primary'}`}
-                    onClick={handleRefreshAll}
-                    title={t('refresh_tooltip')}
-                >
-                    {!(statsLoading || chartLoading) && <RefreshCw className="w-3.5 h-3.5" />}
-                </button>
-            </div>
+        {/* ── TABS ── */}
+        <div className="flex gap-1 mt-3 -mb-px">
+          {tabConfig.map(({ key, label, icon: Icon, activeBg }) => (
+            <button
+              key={key}
+              onClick={() => setActiveTab(key as typeof activeTab)}
+              className={`flex items-center gap-2 px-4 py-2 rounded-t-xl text-[11px] font-black uppercase tracking-widest transition-all border-b-2 ${
+                activeTab === key
+                  ? `${activeBg} text-white border-transparent shadow-sm`
+                  : 'bg-base-200/50 text-base-content/40 border-transparent hover:text-base-content hover:bg-base-200'
+              }`}
+            >
+              <Icon className="w-3.5 h-3.5" />
+              <span className="hidden xs:inline sm:inline">{label}</span>
+            </button>
+          ))}
         </div>
       </div>
 
-      {/* Tabs Navigation */}
-      <div className="flex flex-col space-y-4">
-        <div className="tabs tabs-boxed bg-base-100 p-1 rounded-2xl border border-base-300 w-fit">
-            <button 
-                className={`tab tab-lg px-6 h-12 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${activeTab === 'overview' ? 'tab-active bg-primary text-primary-content shadow-md' : 'text-base-content/50 hover:text-primary'}`}
-                onClick={() => setActiveTab('overview')}
-            >
-                <TrendingUp className={`w-4 h-4 mr-2 ${activeTab === 'overview' ? 'opacity-100' : 'opacity-40'}`} />
-                {t('tabs.overview', { defaultValue: 'Performance' })}
-            </button>
-            <button 
-                className={`tab tab-lg px-6 h-12 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${activeTab === 'stock' ? 'tab-active bg-primary text-primary-content shadow-md' : 'text-base-content/50 hover:text-primary'}`}
-                onClick={() => setActiveTab('stock')}
-            >
-                <Package className={`w-4 h-4 mr-2 ${activeTab === 'stock' ? 'opacity-100' : 'opacity-40'}`} />
-                {t('tabs.stock', { defaultValue: 'Stock & Intelligence' })}
-            </button>
-            <button 
-                className={`tab tab-lg px-6 h-12 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${activeTab === 'finance' ? 'tab-active bg-primary text-primary-content shadow-md' : 'text-base-content/50 hover:text-primary'}`}
-                onClick={() => setActiveTab('finance')}
-            >
-                <Wallet className={`w-4 h-4 mr-2 ${activeTab === 'finance' ? 'opacity-100' : 'opacity-40'}`} />
-                {t('tabs.finance', { defaultValue: 'Finance' })}
-            </button>
-        </div>
-
-        {/* Tab Content */}
-        <div className="transition-all duration-300 animate-in fade-in slide-in-from-bottom-4">
-            {activeTab === 'overview' && (
-                <PerformanceOverview 
-                    stats={stats}
-                    revenueChart={revenueChart}
-                    hourlyTraffic={hourlyTraffic}
-                    reapproStats={reapproStats}
-                    t={t}
-                    formatCurrencyLocal={formatCurrencyLocal}
-                />
-            )}
-            {activeTab === 'stock' && (
-                <StockIntelligence 
-                    stats={stats}
-                    lowStockItems={lowStockItems}
-                    expiringLots={expiringLots}
-                    promisDisponibles={promisDisponibles}
-                    expirationMonths={expirationMonths}
-                    setExpirationMonths={setExpirationMonths}
-                    getServerDate={getServerDate}
-                    reapproStats={reapproStats}
-                    t={t}
-                    formatCurrencyLocal={formatCurrencyLocal}
-                />
-            )}
-            {activeTab === 'finance' && (
-                <FinancialSummary 
-                    stats={stats}
-                    ugStats={ugStats}
-                    supplierDebts={supplierDebts}
-                    isRefetchingSupplierDebts={isRefetchingSupplierDebts}
-                    refetchSupplierDebts={refetchSupplierDebts}
-                    t={t}
-                    formatCurrencyLocal={formatCurrencyLocal}
-                />
-            )}
-        </div>
+      {/* ── TAB CONTENT ────────────────────────────────────── */}
+      <div className="p-4 sm:p-6 animate-in fade-in slide-in-from-bottom-2 duration-200">
+        {activeTab === 'overview' && (
+          <PerformanceOverview
+            stats={stats}
+            revenueChart={revenueChart}
+            hourlyTraffic={hourlyTraffic}
+            reapproStats={reapproStats}
+            t={t}
+            formatCurrencyLocal={formatCurrencyLocal}
+          />
+        )}
+        {activeTab === 'stock' && (
+          <StockIntelligence
+            stats={stats}
+            lowStockItems={lowStockItems}
+            expiringLots={expiringLots}
+            promisDisponibles={promisDisponibles}
+            expirationMonths={expirationMonths}
+            setExpirationMonths={setExpirationMonths}
+            getServerDate={getServerDate}
+            reapproStats={reapproStats}
+            t={t}
+            formatCurrencyLocal={formatCurrencyLocal}
+          />
+        )}
+        {activeTab === 'finance' && (
+          <FinancialSummary
+            stats={stats}
+            ugStats={ugStats}
+            supplierDebts={supplierDebts}
+            isRefetchingSupplierDebts={isRefetchingSupplierDebts}
+            refetchSupplierDebts={refetchSupplierDebts}
+            t={t}
+            formatCurrencyLocal={formatCurrencyLocal}
+          />
+        )}
       </div>
     </div>
   );
