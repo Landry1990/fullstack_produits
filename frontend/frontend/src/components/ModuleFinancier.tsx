@@ -232,7 +232,7 @@ export default function ModuleFinancier() {
             <div className="p-6 grid grid-cols-1 lg:grid-cols-2 gap-8">
               {/* Left: Summary & Insights */}
               <div className="space-y-6">
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="p-4 bg-base-200 rounded-xl">
                     <p className="text-xs uppercase font-bold opacity-50 mb-1">{isEnglish ? 'Current Period' : 'Période Actuelle'}</p>
                     <p className="text-2xl font-black">{varianceReport.period1.stats.margin_pct.toFixed(1)}%</p>

@@ -643,7 +643,7 @@ export default function HistoriqueClotures() {
               </div>
 
               {/* Stats principales */}
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="bg-base-100 p-4 rounded-xl border border-base-200">
                   <div className="text-xs uppercase font-bold text-base-content/50 mb-1">{t('modal.theoretical_label')}</div>
                   <div className="text-2xl font-bold">{formatMoney(selectedCloture.montant_theorique)}</div>
@@ -665,7 +665,7 @@ export default function HistoriqueClotures() {
               {/* Flux financiers */}
               <div className="space-y-3">
                 <h4 className="font-bold uppercase tracking-wider text-xs text-base-content/50 border-b border-base-200 pb-2">{t('modal.flows_summary')}</h4>
-                <div className="grid grid-cols-3 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                   <div className="bg-base-100 border border-base-200 p-3 rounded-lg text-center">
                     <div className="text-xs opacity-60">{t('modal.ventes')}</div>
                     <div className="font-bold">{formatMoney(selectedCloture.total_ventes)}</div>
@@ -685,7 +685,7 @@ export default function HistoriqueClotures() {
               {selectedCloture.details_paiement && Object.keys(selectedCloture.details_paiement).length > 0 && (
                 <div className="space-y-3">
                   <h4 className="font-bold uppercase tracking-wider text-xs text-base-content/50 border-b border-base-200 pb-2">{t('modal.mode_details')}</h4>
-                  <div className="grid grid-cols-2 gap-2">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                     {Object.entries(selectedCloture.details_paiement).map(([mode, montant]) => (
                       <div key={mode} className="flex justify-between p-2 bg-base-50 rounded text-sm">
                         <span className="flex items-center gap-2">

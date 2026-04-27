@@ -133,7 +133,7 @@ export default function Facturation() {
       <div className="flex-1 flex flex-col lg:flex-row overflow-hidden min-h-0">
 
         {/* LEFT : Recherche & Client */}
-        <div className="flex-1 flex flex-col overflow-y-auto pos-discovery p-3 sm:p-4 lg:p-5 gap-4 min-h-0">
+        <div className="shrink-0 lg:flex-1 flex flex-col overflow-y-auto pos-discovery p-3 sm:p-4 lg:p-5 gap-4 min-h-0">
 
           <div className="w-full flex flex-col gap-4 shrink-0">
             {/* Client */}
@@ -200,7 +200,7 @@ export default function Facturation() {
                 <p className="text-xs font-black text-base-content uppercase tracking-widest mb-1">Prêt pour la vente</p>
                 <p className="text-[10px] text-base-content/50">Scannez ou recherchez un article</p>
               </div>
-              <div className="grid grid-cols-2 gap-2 w-full">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 w-full">
                 {[['F9','Valider'],['ENTRÉE','Recherche'],['ESC','Annuler'],['F8','En attente']].map(([k,v]) => (
                   <div key={k} className="bg-base-200/60 rounded-xl p-2 flex flex-col items-center gap-1">
                     <kbd className="kbd kbd-xs font-sans text-[9px]">{k}</kbd>
@@ -213,7 +213,7 @@ export default function Facturation() {
         </div>
 
         {/* RIGHT : Panier */}
-        <aside className="w-full lg:w-[400px] xl:w-[440px] pos-checkout flex flex-col z-10 border-t lg:border-t-0 overflow-hidden max-h-[55vh] lg:max-h-none">
+        <aside className="w-full lg:w-[400px] xl:w-[440px] pos-checkout flex flex-col z-10 border-t lg:border-t-0 overflow-y-auto lg:overflow-hidden flex-1 lg:flex-none min-h-[55vh] sm:min-h-[60vh] lg:min-h-0 lg:max-h-none">
 
           {/* Panier header */}
           <div className="px-4 py-3 bg-base-200/50 border-b border-base-300 flex items-center justify-between shrink-0">

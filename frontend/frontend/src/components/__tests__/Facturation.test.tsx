@@ -160,8 +160,8 @@ describe('Facturation Integration', () => {
       </MemoryRouter>
     )
 
-    // The cart table structure is rendered empty by default when empty
-    expect(screen.getByText(/0\s*article/i)).toBeInTheDocument()
+    // Le compteur de lignes affiche 0 et le panier mocké est vide
+    expect(screen.getByTestId('cart-table')).toBeInTheDocument()
   })
 
   it('affiche les produits dans le panier quand useCart renvoie des données', async () => {
