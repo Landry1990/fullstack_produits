@@ -95,6 +95,7 @@ describe('CartTable', () => {
     renderWithContext(<CartTable {...defaultProps} lignesFacture={[mockLigneFacture]} />)
     const inputs = screen.getAllByRole('textbox')
     fireEvent.change(inputs[0], { target: { value: '5' } })
+    fireEvent.blur(inputs[0])
     expect(mockUpdateQuantite).toHaveBeenCalledWith(1, 5)
   })
 

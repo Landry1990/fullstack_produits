@@ -197,7 +197,7 @@ export default function ProduitFormModal({
               />
             </label>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <label className="form-control w-full">
                 <div className="label"><span className="label-text font-semibold">{t('products:form.initial_stock')}</span></div>
                 <input
@@ -238,7 +238,7 @@ export default function ProduitFormModal({
               </label>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <label className="form-control w-full">
                 <div className="label"><span className="label-text font-semibold">{t('products:form.cip1')}</span></div>
                 <input 
@@ -261,7 +261,7 @@ export default function ProduitFormModal({
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <label className="form-control w-full">
                 <div className="label"><span className="label-text font-semibold">{t('products:form.provider')}</span></div>
                 <select 
@@ -282,7 +282,7 @@ export default function ProduitFormModal({
               </label>
             </div>
 
-            <div className="grid grid-cols-3 gap-2">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
               <label className="form-control w-full">
                 <div className="label"><span className="label-text text-xs font-semibold">{t('products:form.alert')}</span></div>
                 <input 
@@ -318,7 +318,7 @@ export default function ProduitFormModal({
               </label>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <label className="form-control w-full">
                 <div className="label"><span className="label-text font-semibold text-xs">{t('products:form.forme')}</span></div>
                 <select 
@@ -361,7 +361,7 @@ export default function ProduitFormModal({
 
           <div className="space-y-4">
             <h4 className="text-sm font-bold uppercase tracking-wider text-base-content/50 border-b pb-2">{t('products:form.price_margin')}</h4>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <label className="form-control w-full">
                 <div className="label"><span className="label-text font-semibold">{t('products:form.cost_price')}</span></div>
                 <div className="join w-full">
@@ -392,7 +392,7 @@ export default function ProduitFormModal({
               </label>
             </div>
 
-            <div className="grid grid-cols-3 gap-2">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
               <label className="form-control w-full">
                 <div className="label"><span className="label-text text-xs font-semibold text-primary">{t('products:form.tva')}</span></div>
                 <select

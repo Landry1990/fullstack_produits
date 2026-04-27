@@ -137,7 +137,7 @@ const CartRow = React.memo(({
              </span>
              <button 
                onClick={(e) => { e.stopPropagation(); removeLigne(ligne.produit.id); }}
-               className="opacity-0 group-hover:opacity-100 p-0.5 text-base-content/20 hover:text-error transition-all"
+               className="p-1 text-base-content/30 hover:text-error lg:opacity-0 lg:group-hover:opacity-100 transition-all min-w-[32px] min-h-[32px] flex items-center justify-center"
              >
                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" /></svg>
              </button>
@@ -154,6 +154,7 @@ const CartRow = React.memo(({
                  else quantityInputsRef.current.delete(ligne.produit.id)
                }}
                type="text"
+               inputMode="numeric"
                value={localQty}
                onChange={(e) => handleQtyChange(e.target.value)}
                onBlur={handleQtySubmit}
@@ -164,12 +165,13 @@ const CartRow = React.memo(({
                    onReturnFocus()
                  }
                }}
-               className="w-12 h-6 bg-transparent px-1 text-xs text-center font-bold text-base-content focus:bg-base-200 focus:outline-none"
+               className="w-12 h-8 bg-transparent px-1 text-xs text-center font-bold text-base-content focus:bg-base-200 focus:outline-none"
              />
-             <div className="flex items-center h-6 px-1.5 bg-base-200/30 border-l border-base-300 text-[10px] font-bold text-base-content/50">
+             <div className="flex items-center h-8 px-1.5 bg-base-200/30 border-l border-base-300 text-[10px] font-bold text-base-content/50">
                 <span className="mr-1">×</span>
                 <input
                    type="text"
+                   inputMode="decimal"
                    value={localPrice}
                    onChange={(e) => setLocalPrice(e.target.value.replace(/[^0-9.]/g, ''))}
                    onBlur={handlePriceSubmit}
@@ -181,15 +183,16 @@ const CartRow = React.memo(({
                      }
                    }}
                    disabled={!canModifyPrice}
-                   className={`w-14 bg-transparent text-left font-bold border-none focus:outline-none focus:text-base-content ${!canModifyPrice ? 'opacity-70 cursor-not-allowed text-base-content/50' : 'text-base-content/80'}`}
+                   className={`w-16 bg-transparent text-left font-bold border-none focus:outline-none focus:text-base-content ${!canModifyPrice ? 'opacity-70 cursor-not-allowed text-base-content/50' : 'text-base-content/80'}`}
                    title={!canModifyPrice ? t('facturation:messages.price_modification_forbidden') : t('facturation:cart.edit_price')}
                 />
              </div>
              {/* Champ de Remise */}
-             <div className="flex items-center h-6 px-1.5 bg-warning/5 border-l border-warning/20 text-[10px] w-12 focus-within:bg-warning/10">
+             <div className="flex items-center h-8 px-1.5 bg-warning/5 border-l border-warning/20 text-[10px] w-14 focus-within:bg-warning/10">
                 <span className="text-warning/70 font-black mr-0.5">-</span>
                 <input
                    type="text"
+                   inputMode="decimal"
                    value={localRemise}
                    onChange={(e) => setLocalRemise(e.target.value.replace(/[^0-9.]/g, ''))}
                    onBlur={handleRemiseSubmit}
@@ -210,7 +213,7 @@ const CartRow = React.memo(({
            {/* Bouton Lot FEFO condensé */}
            <button
              onClick={(e) => { e.stopPropagation(); onOpenLotModal(ligne.produit, ligne.lotId || null); }}
-             className={`flex items-center justify-center gap-1.5 h-6 px-2 rounded text-[11px] font-bold uppercase transition-colors shrink
+             className={`flex items-center justify-center gap-1.5 h-8 px-2 rounded text-[11px] font-bold uppercase transition-colors shrink min-w-[44px]
                ${ligne.lotId ? 'bg-primary/20 text-primary border border-primary/30' : 'bg-base-200/50 text-base-content/40 border border-base-300 hover:bg-base-200'}`}
              title={ligne.lotId ? `Lot : ${ligne.lotText}` : "Géré en Auto FEFO"}
            >

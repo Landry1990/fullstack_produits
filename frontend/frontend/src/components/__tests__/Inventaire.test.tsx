@@ -65,6 +65,12 @@ vi.mock('../../hooks/inventaire/useInventaireMerge', () => ({
 vi.mock('../../hooks/useConfirm', () => ({ useConfirm: () => (async () => true) }));
 vi.mock('../../hooks/useSudo', () => ({ useSudo: () => ({ sudoState: { is_validated: true }, requireSudo: () => {}, closeSudo: () => {} }) }));
 vi.mock('../../context/AuthContext', () => ({ useAuth: () => ({ user: { id: 1, role: 'PHARMACIEN' } }) }));
+vi.mock('../../context/PharmacySettingsContext', () => ({
+    usePharmacySettings: () => ({
+        settings: { pharmacy_name: 'Test', currency_symbol: 'F', locale: 'fr-FR' },
+        loading: false, error: null, updateSettings: vi.fn(), refetch: vi.fn()
+    })
+}));
 
 describe('Inventaire.test.tsx', () => {
     let queryClient: QueryClient;
