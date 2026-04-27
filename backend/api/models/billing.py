@@ -11,6 +11,8 @@ from django.db.models.signals import pre_save, post_save, post_delete
 from django.contrib.postgres.indexes import GinIndex
 from django.dispatch import receiver
 from decimal import Decimal
+from typing import TYPE_CHECKING
+from typing_extensions import Self
 
 
 class PosteCaisse(models.Model):
@@ -101,6 +103,12 @@ class Facture(models.Model):
         related_name='factures_cancelled',
         help_text="Utilisateur qui a annulé la facture"
     )
+
+    if TYPE_CHECKING:
+        paiements: models.Manager['Caisse']
+        produits: models.Manager['FactureProduit']
+
+    def get_status_display(self) -> str: ...
 
     def __str__(self):
         return f"Facture {self.numero_facture or self.id}"
@@ -252,6 +260,7 @@ class FactureProduit(models.Model):
 
 class FactureProduitAllocation(models.Model):
     """Traçabilité: enregistre quelle part d'une vente provient de quel lot."""
+    id: int
     facture_produit = models.ForeignKey(
         'FactureProduit', on_delete=models.CASCADE, related_name='allocations'
     )
@@ -296,6 +305,7 @@ class RelevePaiement(models.Model):
 
 class Caisse(models.Model):
     """Model representing payments."""
+    id: int
     MODES_PAIEMENT = [
         ('especes', 'Espèces'),
         ('cheque', 'Chèque'),
@@ -337,6 +347,9 @@ class Caisse(models.Model):
         max_digits=10, decimal_places=2, null=True, blank=True, 
         help_text="Part prise en charge par l'assurance"
     )
+    
+    def get_mode_paiement_display(self) -> str: ...
+    def get_statut_display(self) -> str: ...
     
     def __str__(self):
         return f"Paiement {self.id} - {self.montant} F - {self.get_mode_paiement_display()}"
@@ -462,6 +475,7 @@ class CouponMonnaie(models.Model):
 
 class Promis(models.Model):
     """Model representing a product promised to a client."""
+    id: int
     class Status(models.TextChoices):
         EN_ATTENTE = 'ATT', 'En attente'
         DELIVRE = 'DEL', 'Délivré'
@@ -485,6 +499,8 @@ class Promis(models.Model):
     date_livraison = models.DateTimeField(null=True, blank=True, help_text="Date de livraison effective")
     notes = models.TextField(blank=True)
     created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
+    
+    def get_status_display(self) -> str: ...
 
     class Meta:
         ordering = ['-date_promis']

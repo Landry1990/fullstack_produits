@@ -1,7 +1,8 @@
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework import status
-from django.db.models import Sum, DecimalField, Count, F, Q
+from django.db.models import Sum, DecimalField, Count, F, Q, Value
+from django.db.models.functions import TruncMonth, Coalesce
 from django.utils import timezone
 from datetime import datetime, timedelta
 from decimal import Decimal
@@ -30,28 +31,45 @@ class RapportSalesMixin:
                 date_fin += timedelta(minutes=1)
         except: return Response({'error': 'Date invalide'}, status=400)
 
-        factures = Facture.objects.filter(status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE], date__gte=date_debut, date__lt=date_fin).select_related('created_by')
-        stats = {}
-        for f in factures:
-            vid = f.created_by.id if f.created_by else 0
-            if vid not in stats:
-                stats[vid] = {
-                    'vendeur_id': vid,
-                    'vendeur': (f.created_by.get_full_name() or f.created_by.username) if vid else 'Non Attribuées',
-                    'nbre_ventes': 0,
-                    'chiffre_affaires': Decimal('0.00')
-                }
-            stats[vid]['nbre_ventes'] += 1; stats[vid]['chiffre_affaires'] += f.total_ttc
-        
-        results = sorted(stats.values(), key=lambda x: x['chiffre_affaires'], reverse=True)
-        if results:
-            total_v = sum(r['nbre_ventes'] for r in results)
-            total_ca = sum(r['chiffre_affaires'] for r in results)
+        # ── 1 seule requête GROUP BY created_by ────────────────────────────
+        from django.contrib.auth import get_user_model
+        User = get_user_model()
+        user_map = {u.id: (u.get_full_name() or u.username) for u in User.objects.all()}
+
+        rows = (
+            Facture.objects
+            .filter(
+                status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE],
+                date__gte=date_debut,
+                date__lt=date_fin,
+            )
+            .values('created_by_id')
+            .annotate(
+                nbre_ventes=Count('id'),
+                chiffre_affaires=Coalesce(Sum('total_ttc'), Value(0, output_field=DecimalField())),
+            )
+            .order_by('-chiffre_affaires')
+        )
+
+        results = []
+        total_v, total_ca = 0, Decimal('0.00')
+        for row in rows:
+            vid = row['created_by_id'] or 0
+            nom = user_map.get(vid, 'Non Attribuées')
+            ca  = row['chiffre_affaires']
             results.append({
-                'vendeur_id': None,
-                'vendeur': 'TOTAL',
-                'nbre_ventes': total_v,
-                'chiffre_affaires': total_ca
+                'vendeur_id':       vid,
+                'vendeur':          nom,
+                'nbre_ventes':      row['nbre_ventes'],
+                'chiffre_affaires': float(ca),
+            })
+            total_v  += row['nbre_ventes']
+            total_ca += ca
+
+        if results:
+            results.append({
+                'vendeur_id': None, 'vendeur': 'TOTAL',
+                'nbre_ventes': total_v, 'chiffre_affaires': float(total_ca),
             })
         return Response(results)
 
@@ -65,17 +83,35 @@ class RapportSalesMixin:
             if date_fin.hour == 0 and date_fin.minute == 0: date_fin += timedelta(days=1)
         except: return Response({'error': 'Date invalide'}, status=400)
 
-        factures = Facture.objects.filter(date__range=(date_debut, date_fin), status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE], client__isnull=False).select_related('client')
-        stats = {}
-        for f in factures:
-            cid = f.client.id
-            if cid not in stats: stats[cid] = {'client_id': cid, 'client_name': f.client.name, 'client_type': f.client.client_type, 'nb_ventes': 0, 'chiffre_affaires': Decimal('0.00')}
-            stats[cid]['nb_ventes'] += 1; stats[cid]['chiffre_affaires'] += f.total_ttc
+        # ── 1 seule requête GROUP BY client ─────────────────────────────────
+        rows = (
+            Facture.objects
+            .filter(
+                date__range=(date_debut, date_fin),
+                status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE],
+                client__isnull=False,
+            )
+            .values('client_id', 'client__name', 'client__client_type')
+            .annotate(
+                nb_ventes=Count('id'),
+                chiffre_affaires=Coalesce(Sum('total_ttc'), Value(0, output_field=DecimalField())),
+            )
+            .order_by('-chiffre_affaires')
+        )
 
-        results = sorted(stats.values(), key=lambda x: x['chiffre_affaires'], reverse=True)
-        for i, r in enumerate(results, 1):
-            r['rang'], r['panier_moyen'] = i, float(r['chiffre_affaires'] / r['nb_ventes']) if r['nb_ventes'] > 0 else 0
-            r['chiffre_affaires'] = float(r['chiffre_affaires'])
+        results = []
+        for i, row in enumerate(rows, 1):
+            ca = float(row['chiffre_affaires'])
+            nv = row['nb_ventes']
+            results.append({
+                'rang':             i,
+                'client_id':        row['client_id'],
+                'client_name':      row['client__name'],
+                'client_type':      row['client__client_type'],
+                'nb_ventes':        nv,
+                'chiffre_affaires': ca,
+                'panier_moyen':     round(ca / nv, 2) if nv > 0 else 0,
+            })
 
         if fmt == 'csv':
             response = HttpResponse(content_type='text/csv')
@@ -119,17 +155,26 @@ class RapportSalesMixin:
             date_fin = (date_debut + timedelta(days=32)).replace(day=1)
         except: return Response({'error': 'Format mois invalide'}, status=400)
         
-        factures = Facture.objects.filter(status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE], date__gte=date_debut, date__lt=date_fin).select_related('created_by')
-        stats = {}
-        for f in factures:
-            vid = f.created_by.id if f.created_by else 0
-            if vid not in stats: stats[vid] = {'vendeur_id': vid, 'vendeur': (f.created_by.get_full_name() or f.created_by.username) if vid else 'Non Attribuées', 'nbre_ventes': 0, 'chiffre_affaires': Decimal('0.00')}
-            stats[vid]['nbre_ventes'] += 1; stats[vid]['chiffre_affaires'] += f.total_ttc
-        
-        results = sorted(stats.values(), key=lambda x: x['chiffre_affaires'], reverse=True)
-        for i, r in enumerate(results, 1):
-            r['rang'], r['panier_moyen'] = i, round(float(r['chiffre_affaires']) / r['nbre_ventes'], 2) if r['nbre_ventes'] > 0 else 0
-            r['chiffre_affaires'] = float(r['chiffre_affaires'])
+        from django.contrib.auth import get_user_model
+        User = get_user_model()
+        user_map = {u.id: (u.get_full_name() or u.username) for u in User.objects.all()}
+
+        rows = (
+            Facture.objects
+            .filter(status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE], date__gte=date_debut, date__lt=date_fin)
+            .values('created_by_id')
+            .annotate(nbre_ventes=Count('id'), chiffre_affaires=Coalesce(Sum('total_ttc'), Value(0, output_field=DecimalField())))
+            .order_by('-chiffre_affaires')
+        )
+
+        results = []
+        for i, row in enumerate(rows, 1):
+            vid = row['created_by_id'] or 0
+            ca  = float(row['chiffre_affaires'])
+            nv  = row['nbre_ventes']
+            results.append({'rang': i, 'vendeur_id': vid, 'vendeur': user_map.get(vid, 'Non Attribuées'),
+                            'nbre_ventes': nv, 'chiffre_affaires': ca,
+                            'panier_moyen': round(ca / nv, 2) if nv > 0 else 0})
         return Response({'data': results, 'periode': {'debut': date_debut.strftime('%Y-%m-%d'), 'fin': date_fin.strftime('%Y-%m-%d'), 'type': periode}})
 
     @action(detail=False, methods=['get'])
@@ -138,21 +183,69 @@ class RapportSalesMixin:
         if not vid_param: return Response({'error': 'vendeur_id requis'}, status=400)
         from django.contrib.auth import get_user_model
         User, now = get_user_model(), timezone.now()
-        v_list = User.objects.filter(id__in=Facture.objects.filter(date__gte=now-timedelta(days=365), created_by__isnull=False).values_list('created_by', flat=True).distinct()) if vid_param == 'all' else [User.objects.get(id=int(vid_param))]
-        
+
+        # Fenêtre temporelle : 12 mois glissants
+        start = timezone.make_aware(datetime((now - timedelta(days=365)).year,
+                                             (now - timedelta(days=365)).month, 1))
+
+        # Sélectionner les vendeurs ciblés
+        if vid_param == 'all':
+            v_list = list(User.objects.filter(
+                id__in=Facture.objects.filter(
+                    date__gte=now - timedelta(days=365),
+                    created_by__isnull=False
+                ).values_list('created_by', flat=True).distinct()
+            ))
+        else:
+            try:
+                v_list = [User.objects.get(id=int(vid_param))]
+            except User.DoesNotExist:
+                return Response({'error': 'Vendeur introuvable'}, status=404)
+
+        vendeur_ids = [v.id for v in v_list]
+
+        # ── 1 seule requête GROUP BY (created_by, mois) ──────────────────────
+        rows = (
+            Facture.objects
+            .filter(
+                status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE],
+                date__gte=start,
+                created_by_id__in=vendeur_ids,
+            )
+            .annotate(mois=TruncMonth('date'))
+            .values('created_by_id', 'mois')
+            .annotate(ca=Coalesce(Sum('total_ttc'), Value(0, output_field=DecimalField())))
+            .order_by('created_by_id', 'mois')
+        )
+
+        # Indexer par (vendeur_id, 'YYYY-MM') pour lookup O(1)
+        ca_map: dict[tuple, float] = {}
+        for row in rows:
+            key = (row['created_by_id'], row['mois'].strftime('%Y-%m'))
+            ca_map[key] = float(row['ca'])
+
+        # Construire les 12 labels mois
         m_labels = []
         for i in range(11, -1, -1):
             d = now - timedelta(days=i * 30)
-            m_labels.append({'key': d.strftime('%Y-%m'), 'label': date_format(d, "M Y"), 'start': timezone.make_aware(datetime(d.year, d.month, 1))})
+            m_labels.append({
+                'key': d.strftime('%Y-%m'),
+                'label': date_format(d, "M Y"),
+            })
 
+        # Assembler la réponse sans aucune requête supplémentaire
         res = []
         for v in v_list:
-            hist = []
-            for m in m_labels:
-                df = (m['start'] + timedelta(days=32)).replace(day=1)
-                ca = Facture.objects.filter(status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE], date__gte=m['start'], date__lt=df, created_by=v).aggregate(ca=Sum('total_ttc'))['ca'] or 0
-                hist.append({'mois': m['key'], 'label': m['label'], 'chiffre_affaires': float(ca)})
+            hist = [
+                {
+                    'mois': m['key'],
+                    'label': m['label'],
+                    'chiffre_affaires': ca_map.get((v.id, m['key']), 0.0),
+                }
+                for m in m_labels
+            ]
             res.append({'vendeur': v.get_full_name() or v.username, 'vendeur_id': v.id, 'data': hist})
+
         return Response(res)
 
     @action(detail=False, methods=['get'])

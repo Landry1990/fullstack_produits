@@ -14,7 +14,8 @@ export { QUERIES } from './reports/queries';
 import { QUERIES } from './reports/queries';
 import { 
     formatColumnHeader, 
-    isSummableColumn, 
+    isSummableColumn,
+    isAverageColumn,
     isPercentageColumn 
 } from './reports/utils';
 import type { 
@@ -254,7 +255,7 @@ export function useCentreRapports() {
         setParams(defaultParams);
     }, [getCurrentMonth, getCurrentDateTime, getTodayDate]);
 
-    const executeQuery = useCallback(async (urlOverride?: string) => {
+    const executeQuery = useCallback(async (urlOverride?: string, extraParams?: Record<string, any>) => {
         if (!selectedQuery) return;
 
         setLoading(true);
@@ -268,7 +269,8 @@ export function useCentreRapports() {
                     : selectedQuery.endpoint;
             }
 
-            const config = urlOverride ? {} : { params };
+            const mergedParams = extraParams ? { ...params, ...extraParams } : params;
+            const config = urlOverride ? {} : { params: mergedParams };
             
             if (selectedQuery.id === 'balance_stock' && !urlOverride) {
                 const response = await axios.get(endpoint, {
@@ -405,20 +407,22 @@ export function useCentreRapports() {
                 const header = formatColumnHeader(col, t);
                 if (idx === 0) {
                     footerRow[header] = 'TOTAL / MOYENNE';
+                } else if (isAverageColumn(col)) {
+                    const total = results.reduce((sum: number, r: any) => sum + (Number(r[col]) || 0), 0);
+                    const avg = results.length > 0 ? total / results.length : 0;
+                    footerRow[header] = `${Math.round(avg)} (Moy)`;
                 } else if (isSummableColumn(col)) {
                     const total = results.reduce((sum: number, r: any) => sum + (Number(r[col]) || 0), 0);
                     footerRow[header] = Math.round(total);
                 } else if (isPercentageColumn(col)) {
-                    // Try to calculate Global Weighted Rate for Excel
                     let finalVal: string | number = '';
-                    if (col.toLowerCase().includes('marge') || col.toLowerCase().includes('ratio')) {
-                        const totalMarge = results.reduce((sum: number, r: any) => sum + (Number(r['marge'] || r['Marge'] || r['montant_marge'] || 0)), 0);
-                        const totalCA = results.reduce((sum: number, r: any) => sum + (Number(r['total_ht'] || r['Total HT'] || r['chiffre_affaires'] || r['prix_vente'] || r['Prix Vente'] || 0)), 0);
-                        if (totalCA > 0) {
-                            finalVal = ((totalMarge / totalCA) * 100).toFixed(1) + ' % (Global)';
+                    if (col === 'taux_marge') {
+                        const totalMtVente = results.reduce((sum: number, r: any) => sum + (Number(r['mt_vente']) || 0), 0);
+                        const totalMarge   = results.reduce((sum: number, r: any) => sum + (Number(r['marge']) || 0), 0);
+                        if (totalMtVente > 0) {
+                            finalVal = ((totalMarge / totalMtVente) * 100).toFixed(1) + ' % (Global)';
                         }
                     }
-                    
                     if (!finalVal) {
                         const total = results.reduce((sum: number, r: any) => sum + (Number(r[col]) || 0), 0);
                         const avg = results.length > 0 ? (total / results.length) : 0;

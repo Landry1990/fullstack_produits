@@ -134,6 +134,23 @@ export default function CentreRapports() {
                                         </div>
 
                                         <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto shrink-0 print:hidden">
+                                            {/* Toggle vue par produit — uniquement pour detail_marges_lots */}
+                                            {selectedQuery.id === 'detail_marges_lots' && (
+                                                <div className="flex bg-base-200 p-1 rounded-xl border border-base-300 w-full sm:w-auto">
+                                                    <button
+                                                        onClick={() => actions.setParams({ ...params, grouper_par: '' })}
+                                                        className={`btn btn-sm h-10 rounded-lg flex-1 font-bold uppercase tracking-wider text-[10px] transition-all ${!params.grouper_par ? 'btn-primary shadow' : 'btn-ghost text-base-content/50'}`}
+                                                    >
+                                                        Par lot
+                                                    </button>
+                                                    <button
+                                                        onClick={() => actions.setParams({ ...params, grouper_par: 'produit' })}
+                                                        className={`btn btn-sm h-10 rounded-lg flex-1 font-bold uppercase tracking-wider text-[10px] transition-all ${params.grouper_par === 'produit' ? 'btn-error shadow' : 'btn-ghost text-base-content/50'}`}
+                                                    >
+                                                        ⚠ Par produit
+                                                    </button>
+                                                </div>
+                                            )}
                                             <button
                                                 onClick={() => actions.executeQuery()}
                                                 disabled={loading}
@@ -236,6 +253,12 @@ export default function CentreRapports() {
                                             pagination={pagination}
                                             loading={loading}
                                             onPageChange={actions.handlePageChange}
+                                            currentParams={params}
+                                            onFilterChange={(key, value) => {
+                                                const extra: Record<string, any> = { [key]: value || undefined, page: undefined };
+                                                actions.setParams({ ...params, ...extra });
+                                                actions.executeQuery(undefined, extra);
+                                            }}
                                         />
                                     )}
                                 </div>

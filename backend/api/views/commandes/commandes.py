@@ -648,28 +648,40 @@ class CommandeViewSet(MultiTermSearchMixin, OptimizedSerializerMixin, viewsets.M
             return Response({'error': 'La commande source doit être EN_PREPARATION'}, status=status.HTTP_400_BAD_REQUEST)
 
         # Fusion des lignes
-        source_lines = source_commande.produits.all()
+        source_lines = list(source_commande.produits.all())
         target_lines_map = {line.produit_id: line for line in target_commande.produits.all()}
-        
+
         lines_moved = 0
         lines_merged = 0
-        
+        targets_to_update = []   # lignes cible dont les qtés ont été modifiées
+        sources_to_move   = []   # lignes source à déplacer vers la cible
+
         for source_line in source_lines:
             if source_line.produit_id in target_lines_map:
                 # Le produit existe déjà dans la cible : on additionne les quantités
                 target_line = target_lines_map[source_line.produit_id]
                 target_line.quantity += source_line.quantity
                 target_line.unites_gratuites += source_line.unites_gratuites
-                target_line.save()
+                targets_to_update.append(target_line)
                 lines_merged += 1
             else:
                 # Le produit n'existe pas : on déplace la ligne
                 source_line.commande = target_commande
-                source_line.save()
+                sources_to_move.append(source_line)
                 lines_moved += 1
-        
-        # Supprimer la commande source (les lignes restantes ont été déplacées ou ne sont plus nécessaires)
-        # S'il reste des lignes (cas fusionné), on doit les supprimer avant de supprimer la commande
+
+        from ...models import CommandeProduit
+        # ── Bulk writes (2 requêtes max au lieu de N) ──────────────────────
+        if targets_to_update:
+            CommandeProduit.objects.bulk_update(
+                targets_to_update, ['quantity', 'unites_gratuites'], batch_size=100
+            )
+        if sources_to_move:
+            CommandeProduit.objects.bulk_update(
+                sources_to_move, ['commande'], batch_size=100
+            )
+
+        # Supprimer les lignes fusionnées restées dans la source, puis la commande
         source_commande.produits.all().delete()
         source_commande.delete()
         

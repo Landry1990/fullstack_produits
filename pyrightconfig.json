@@ -16,5 +16,7 @@
             ]
         }
     ],
-    "useLibraryCodeForTypes": true
+    "useLibraryCodeForTypes": true,
+    "djangoSettings": "backend.settings",
+    "typeCheckingMode": "basic"
 }

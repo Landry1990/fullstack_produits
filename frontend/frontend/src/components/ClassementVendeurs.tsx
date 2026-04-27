@@ -8,6 +8,7 @@ import {
   Line,
   BarChart,
   Bar,
+  Cell,
   XAxis,
   YAxis,
   CartesianGrid,
@@ -306,7 +307,7 @@ export default function ClassementVendeurs() {
                 <Tooltip formatter={(value: number) => formatMoney(value, t('common:currency'))} />
                 <Bar dataKey="chiffre_affaires" name={t('sellers:ranking.revenue')} radius={[0, 4, 4, 0]}>
                   {ranking.data.slice(0, 5).map((_, index) => (
-                    <Bar key={index} dataKey="chiffre_affaires" fill={COLORS[index % COLORS.length]} />
+                    <Cell key={index} fill={COLORS[index % COLORS.length]} />
                   ))}
                 </Bar>
               </BarChart>

@@ -1,4 +1,4 @@
-﻿import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { X, Calendar, User, CreditCard, Smartphone, CheckCircle2 } from 'lucide-react';
 import type { Facture } from '../../../types';
@@ -257,38 +257,40 @@ export const ProductDetailsModal: React.FC<ProductDetailsModalProps> = ({
                 {/* Footer Totals */}
                 <div className="bg-base-200/50 border-t border-base-200 p-6">
                     <div className="flex justify-end">
-                        <div className="w-80 space-y-2">
-                             <div className="grid grid-cols-[1fr,auto] items-baseline text-sm text-base-content/80 px-2">
-                                <span>{t('fields.subtotal_ht')}</span>
-                                <span className="font-mono font-bold text-base-content">{formatCurrency(totals.totalHt)}</span>
+                    <div className="flex flex-wrap items-center justify-end gap-8 text-sm">
+                        <div className="flex flex-col items-end border-r border-base-300 pr-8 last:border-0 last:pr-0">
+                            <span className="text-[10px] uppercase font-black tracking-widest text-base-content/40 mb-1">{t('fields.subtotal_ht')}</span>
+                            <span className="font-mono font-bold text-base-content">{formatCurrency(totals.totalHt)}</span>
+                        </div>
+                        <div className="flex flex-col items-end border-r border-base-300 pr-8 last:border-0 last:pr-0">
+                            <span className="text-[10px] uppercase font-black tracking-widest text-base-content/40 mb-1">{t('fields.vat')}</span>
+                            <span className="font-mono font-bold text-base-content">{formatCurrency(totals.totalTva)}</span>
+                        </div>
+                        {totals.remise > 0 && (
+                            <div className="flex flex-col items-end border-r border-base-300 pr-8 last:border-0 last:pr-0">
+                                <span className="text-[10px] uppercase font-black tracking-widest text-orange-500 mb-1">{t('table.discount')}</span>
+                                <span className="font-mono font-bold text-orange-600">-{formatCurrency(totals.remise)}</span>
                             </div>
-                             <div className="grid grid-cols-[1fr,auto] items-baseline text-sm text-base-content/80 px-2">
-                                <span>{t('fields.vat')}</span>
-                                <span className="font-mono font-bold text-base-content">{formatCurrency(totals.totalTva)}</span>
-                            </div>
-                            {totals.remise > 0 && (
-                                 <div className="grid grid-cols-[1fr,auto] items-baseline text-sm text-orange-600 font-medium bg-orange-50 px-2 py-1.5 rounded-md border border-orange-100">
-                                    <span>{t('table.discount')}</span>
-                                    <span className="font-mono font-bold">-{formatCurrency(totals.remise)}</span>
-                                </div>
-                            )}
-                             <div className="grid grid-cols-[1fr,auto] items-baseline font-bold text-base-content border-t border-base-200 pt-2 mt-2 px-2">
-                                <span className="uppercase tracking-tight text-[10px] text-base-content/60">{t('fields.total_ttc')}</span>
-                                <span className="font-mono text-lg text-blue-600 tracking-tight">
-                                    {formatCurrency(totals.totalTtc)}
+                        )}
+                        <div className="flex flex-col items-end bg-blue-50 px-4 py-2 rounded-xl border border-blue-100 shadow-sm">
+                            <span className="text-[10px] uppercase font-black tracking-widest text-blue-500 mb-1">{t('fields.total_ttc')}</span>
+                            <span className="font-mono text-xl text-blue-600 font-black tracking-tight">
+                                {formatCurrency(totals.totalTtc)}
+                            </span>
+                        </div>
+                    </div>
+
+                    {/* Part Client (Tiers Payant) - Resté en dessous car c'est une alerte importante */}
+                    <div className="flex justify-end mt-4">
+                        {Math.abs(totals.partClient - totals.totalTtc) > 1 && (
+                            <div className="flex items-center gap-4 text-white bg-blue-600 py-2.5 px-5 rounded-xl shadow-lg animate-in slide-in-from-bottom-1 duration-500">
+                                <span className="uppercase text-[10px] font-black tracking-widest opacity-80 border-r border-white/20 pr-4">À payer client</span>
+                                <span className="font-mono text-2xl font-black tracking-tight">
+                                    {formatCurrency(totals.partClient)}
                                 </span>
                             </div>
-                            
-                            {/* Part Client (Tiers Payant) */}
-                             {Math.abs(totals.partClient - totals.totalTtc) > 1 && (
-                                <div className="grid grid-cols-[1fr,auto] items-center text-white bg-blue-600 py-2 px-3 rounded-lg shadow-sm mt-2 animate-in slide-in-from-bottom-1 duration-500">
-                                    <span className="uppercase text-[10px] font-black tracking-widest opacity-80">À payer client</span>
-                                    <span className="font-mono text-xl font-black tracking-tight">
-                                        {formatCurrency(totals.partClient)}
-                                    </span>
-                                </div>
-                            )}
-                        </div>
+                        )}
+                    </div>
                     </div>
                 </div>
             </div>

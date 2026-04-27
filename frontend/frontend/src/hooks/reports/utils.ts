@@ -97,14 +97,20 @@ export const isSummableColumn = (col: string): boolean => {
     return c.includes('montant') || 
            c.includes('total') || 
            c.includes('ca') || 
-           c.includes('marge') || 
            c.includes('chiffre_affaires') ||
            c.includes('solde') ||
            c.includes('quantite') ||
            c.includes('qty') ||
            c.includes('nbre_ventes') ||
            c.includes('nb_ventes') ||
-           c.includes('remise');
+           c.includes('remise') ||
+           c === 'mt_vente' ||
+           c === 'mt_achat';
+};
+
+export const isAverageColumn = (col: string): boolean => {
+    const c = col.toLowerCase();
+    return c === 'marge' || c === 'marge_nette' || c === 'marge_brute';
 };
 
 export const isPercentageColumn = (col: string): boolean => {
