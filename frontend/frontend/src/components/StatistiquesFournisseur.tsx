@@ -172,19 +172,22 @@ export default function StatistiquesFournisseur() {
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                 <div className="card bg-base-100 shadow-sm border border-base-200">
                 <div className="card-body p-4">
+                    <p className="text-sm font-medium text-base-content/70">{t('sales_tab.cards.total_ca')}</p>
                     <h3 className="text-2xl font-bold text-emerald-600">{formatCurrency(Math.round(totaux.ca_ttc), i18n.language === 'fr' ? 'fr-FR' : 'en-GB', t('common:currency'))}</h3>
                 </div>
                 </div>
                 <div className="card bg-base-100 shadow-sm border border-base-200">
                 <div className="card-body p-4">
+                    <p className="text-sm font-medium text-base-content/70">{t('sales_tab.cards.purchase_cost')}</p>
                     <h3 className="text-2xl font-bold text-blue-600">{formatCurrency(Math.round(totaux.cout_achat), i18n.language === 'fr' ? 'fr-FR' : 'en-GB', t('common:currency'))}</h3>
                 </div>
                 </div>
                 <div className="card bg-base-100 shadow-sm border border-base-200">
                 <div className="card-body p-4">
+                    <p className="text-sm font-medium text-base-content/70">{t('sales_tab.cards.gross_margin')}</p>
                     <h3 className="text-2xl font-bold text-amber-600">{formatCurrency(Math.round(totaux.marge_brute), i18n.language === 'fr' ? 'fr-FR' : 'en-GB', t('common:currency'))}</h3>
                     <p className="text-xs text-base-content/60">
-                    {totaux.ca_ttc > 0 ? ((totaux.marge_brute / totaux.ca_ttc) * 100).toFixed(1) : 0}% {t('sales_tab.cards.margin_percentage')}
+                    {totaux.ca_ttc > 0 ? ((totaux.marge_brute / totaux.ca_ttc) * 100).toFixed(1) : 0} {t('sales_tab.cards.margin_percentage')}
                     </p>
                 </div>
                 </div>

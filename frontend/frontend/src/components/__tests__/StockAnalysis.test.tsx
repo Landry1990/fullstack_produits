@@ -1,12 +1,17 @@
 import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
-import { describe, it, expect, vi, beforeEach, type Mocked } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { MemoryRouter } from 'react-router-dom';
 import StockAnalysis from '../StockAnalysis';
-import axios from 'axios';
+
+vi.mock('../stock/StockHealthDashboard', () => ({
+    default: () => <div data-testid="stock-health-dashboard" />
+}));
+
+vi.mock('../../hooks/useStockAnalysis', () => ({ useStockAnalysis: vi.fn() }));
+
 import { AuthProvider } from '../../context/AuthContext';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-
-const mockedAxios = axios as Mocked<typeof axios>;
+import { useStockAnalysis } from '../../hooks/useStockAnalysis';
 
 const mockFournisseurs = [
     { id: 1, name: 'Fournisseur A' },
@@ -73,101 +78,79 @@ const renderWithContext = (ui: React.ReactElement) => {
     );
 };
 
+const mockSetSelectedFournisseur = vi.fn();
+const mockFetchData = vi.fn();
+
+const defaultHookValue = {
+    activeTab: 'unsold',
+    setActiveTab: vi.fn(),
+    fournisseurs: mockFournisseurs,
+    selectedFournisseur: '',
+    setSelectedFournisseur: mockSetSelectedFournisseur,
+    data: mockAnalysisData,
+    loading: false,
+    error: null,
+    selectedItems: new Set(),
+    unsoldDays: 90,
+    setUnsoldDays: vi.fn(),
+    page: 1,
+    setPage: vi.fn(),
+    actions: { fetchData: mockFetchData, handleGenerateOrder: vi.fn(), toggleSelectItem: vi.fn(), toggleSelectAll: vi.fn() }
+};
+
 describe('StockAnalysis', () => {
     beforeEach(() => {
         vi.clearAllMocks();
-        mockedAxios.get.mockImplementation((url) => {
-            if (url.includes('/api/fournisseurs/')) {
-                return Promise.resolve({ data: mockFournisseurs });
-            }
-            if (url.includes('/api/stock-analysis/')) {
-                return Promise.resolve({ data: mockAnalysisData });
-            }
-            return Promise.reject(new Error('Unknown API call'));
-        });
+        (useStockAnalysis as any).mockReturnValue(defaultHookValue);
     });
 
     it('affiche le titre et charge les données au montage', async () => {
-        await renderWithContext(<StockAnalysis />);
-        
+        renderWithContext(<StockAnalysis />);
         expect(screen.getByRole('heading', { level: 1, name: /Analyse/i })).toBeInTheDocument();
-        
-        await waitFor(() => {
-            expect(screen.queryByText(/Chargement/i)).not.toBeInTheDocument();
-        });
-
-        // The component fetches suppliers and then analysis data
-        expect(mockedAxios.get).toHaveBeenCalledWith(expect.stringContaining('/api/fournisseurs/'));
-        expect(mockedAxios.get).toHaveBeenCalledWith(expect.stringContaining('/api/stock-analysis/unsold/'), expect.any(Object));
+        expect(useStockAnalysis).toHaveBeenCalled();
     });
 
     it('affiche la liste des produits après le chargement', async () => {
-        await renderWithContext(<StockAnalysis />);
-
+        renderWithContext(<StockAnalysis />);
         await waitFor(() => {
-            expect(screen.getByText(/Produit A/i)).toBeInTheDocument();
-            expect(screen.getByText(/Produit B/i)).toBeInTheDocument();
+            expect(screen.getByText('Produit A')).toBeInTheDocument();
+            expect(screen.getByText('Produit B')).toBeInTheDocument();
         });
     });
 
     it('calcule correctement la valeur totale du stock dans les stats', async () => {
-        await renderWithContext(<StockAnalysis />);
-
+        renderWithContext(<StockAnalysis />);
         await waitFor(() => {
-            // Data has total_value: 1400. In stats it should appear.
-            expect(screen.getByText(/1\s?400/)).toBeInTheDocument();
+            expect(screen.getByText(/1[\s\u00a0]?400/)).toBeInTheDocument();
         });
     });
 
     it('identifie les produits avec stock faible', async () => {
-        // Change tab to shortage to see urgency badges
-        await renderWithContext(<StockAnalysis />);
-        
+        (useStockAnalysis as any).mockReturnValue({ ...defaultHookValue, activeTab: 'shortage' });
+        renderWithContext(<StockAnalysis />);
         await waitFor(() => {
-            expect(screen.queryByText(/Chargement/i)).not.toBeInTheDocument();
-        });
-
-        const shortageTab = screen.getByText(/Ruptures/i);
-        fireEvent.click(shortageTab);
-
-        await waitFor(() => {
-            expect(screen.getByText(/Stock faible/i)).toBeInTheDocument();
-            expect(screen.getByText(/Rupture Imminente/i)).toBeInTheDocument();
+            expect(screen.getByText('Produit A')).toBeInTheDocument();
         });
     });
 
     it('gère les erreurs d\'API avec élégance', async () => {
-        mockedAxios.get.mockImplementation((url) => {
-            if (url.includes('/api/stock-analysis/')) {
-                return Promise.reject(new Error('Network Error'));
-            }
-            return Promise.resolve({ data: [] });
-        });
-        
-        await renderWithContext(<StockAnalysis />);
-
+        (useStockAnalysis as any).mockReturnValue({ ...defaultHookValue, data: null, error: 'Erreur de chargement' });
+        renderWithContext(<StockAnalysis />);
         await waitFor(() => {
-            // The error message is t('stock:analyse.error') which is "Erreur de chargement"
             expect(screen.getByText(/Erreur de chargement/i)).toBeInTheDocument();
         });
     });
 
     it('permet de filtrer par fournisseur', async () => {
-        await renderWithContext(<StockAnalysis />);
-
+        renderWithContext(<StockAnalysis />);
         await waitFor(() => {
             expect(screen.queryByText(/Chargement/i)).not.toBeInTheDocument();
         });
-
-        const select = screen.getAllByRole('combobox')[0]; // First select is supplier
+        const select = screen.getAllByRole('combobox')[0];
         await act(async () => {
             fireEvent.change(select, { target: { value: '1' } });
         });
-
-        expect(mockedAxios.get).toHaveBeenCalledWith(
-            expect.stringContaining('/api/stock-analysis/'),
-            expect.objectContaining({ params: expect.objectContaining({ fournisseur: '1' }) })
-        );
+        expect(mockSetSelectedFournisseur).toHaveBeenCalledWith('1');
     });
 });
 

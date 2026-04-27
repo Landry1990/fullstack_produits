@@ -37,6 +37,14 @@ vi.mock('../../hooks/useFinanceStats', () => ({
   useAnalyseFournisseurs: vi.fn(),
   useComparaisonPrix: vi.fn(),
   useRepartitionAchats: vi.fn(),
+  useMarginVarianceAnalysis: vi.fn(),
+}));
+
+vi.mock('../../context/PharmacySettingsContext', () => ({
+    usePharmacySettings: () => ({
+        settings: { pharmacy_name: 'Test', currency_symbol: 'F', locale: 'fr-FR' },
+        loading: false, error: null, updateSettings: vi.fn(), refetch: vi.fn()
+    })
 }));
 
 vi.mock('../../context/AuthContext', () => ({
@@ -75,6 +83,7 @@ describe('ModuleFinancier Component', () => {
     (useFinanceStats.useAnalyseFournisseurs as any).mockReturnValue({ data: { results: [], count: 0 }, isLoading: false });
     (useFinanceStats.useComparaisonPrix as any).mockReturnValue({ data: [], isLoading: false });
     (useFinanceStats.useRepartitionAchats as any).mockReturnValue({ data: [], isLoading: false });
+    (useFinanceStats.useMarginVarianceAnalysis as any).mockReturnValue({ data: null, isLoading: false });
   });
 
   it('renders correctly and displays KPI cards', async () => {
