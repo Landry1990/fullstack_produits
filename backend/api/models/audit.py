@@ -69,6 +69,7 @@ class MouvementCaisse(models.Model):
         ('SORTIE', 'Sortie'),
     ]
     
+    id = models.AutoField(primary_key=True)
     type = models.CharField(max_length=10, choices=TYPE_CHOICES)
     montant = models.DecimalField(max_digits=12, decimal_places=2)
     motif = models.CharField(max_length=200, help_text="Ex: Électricité, Carburant, etc.")

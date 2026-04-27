@@ -1,5 +1,6 @@
-from decimal import Decimal
+from decimal import Decimal, InvalidOperation, ROUND_HALF_UP
 from django.db import transaction, models
+from django.db.utils import DataError
 from django.db.models import F, Sum, Q, Value, DecimalField
 from django.utils import timezone
 from django.core.cache import cache
@@ -25,16 +26,41 @@ class SalesService:
         client_id = data.get('client')
         client_name_override = data.get('client_name_override')
         ayant_droit_id = data.get('ayant_droit')
-        remise_montant = Decimal(str(data.get('remise', '0')))
-        produits_data = data.get('produits', [])
+        try:
+            remise_montant = Decimal(str(data.get('remise', '0') or '0'))
+        except (InvalidOperation, ValueError):
+            remise_montant = Decimal('0')
+        produits_data = data.get('produits') or []
         paiements_data = data.get('paiements', [])
         loyalty_data = data.get('loyalty', {})
         ordonnance_data = data.get('ordonnance')
         coupon_numero = data.get('coupon_numero')
         validation_user = data.get('validation_user') or user
 
-        if not produits_data:
+        if not isinstance(produits_data, list) or not produits_data:
             raise ValueError("La liste des produits ne peut pas être vide.")
+
+        # Validate each product entry before touching the DB
+        valid_product_ids = set(
+            Produit.objects.filter(
+                id__in=[p.get('produit') for p in produits_data if p.get('produit')]
+            ).values_list('id', flat=True)
+        )
+        for p in produits_data:
+            pid = p.get('produit')
+            if not pid or pid not in valid_product_ids:
+                raise ValueError(f"Produit introuvable (id={pid}).")
+            try:
+                price = Decimal(str(p.get('selling_price', '0')))
+                # Guard against values exceeding DecimalField(max_digits=12, decimal_places=2)
+                if abs(price) >= Decimal('10000000000'):
+                    raise ValueError(f"Prix de vente hors limites pour le produit id={pid}.")
+            except (InvalidOperation, ValueError) as exc:
+                raise ValueError(f"Prix de vente invalide pour le produit id={pid}: {exc}") from exc
+            try:
+                qty = int(p.get('quantity', 0))
+            except (TypeError, ValueError):
+                raise ValueError(f"Quantité invalide pour le produit id={pid}.")
 
         # 2. Handle Existing Facture or Create New
         existing_id = data.get('existing_id')
@@ -76,19 +102,22 @@ class SalesService:
             )
 
         # 3. Add products (Optimized: bulk_create)
-        facture_produits_to_create = [
-            FactureProduit(
-                facture=facture,
-                produit_id=p.get('produit'),
-                quantity=int(p.get('quantity', 0)),
-                selling_price=Decimal(str(p.get('selling_price', '0'))),
-                discount=Decimal(str(p.get('discount', '0'))),
-                tva=Decimal(str(p.get('tva', '0'))),
-                stock_lot_id=p.get('lot_id')
-            ) for p in produits_data
-        ]
-        if facture_produits_to_create:
-            FactureProduit.objects.bulk_create(facture_produits_to_create)
+        try:
+            facture_produits_to_create = [
+                FactureProduit(
+                    facture=facture,
+                    produit_id=p.get('produit'),
+                    quantity=int(p.get('quantity', 0)),
+                    selling_price=Decimal(str(p.get('selling_price', '0'))).quantize(Decimal('0.01'), rounding=ROUND_HALF_UP),
+                    discount=Decimal(str(p.get('discount', '0'))).quantize(Decimal('0.01'), rounding=ROUND_HALF_UP),
+                    tva=Decimal(str(p.get('tva', '0'))).quantize(Decimal('0.01'), rounding=ROUND_HALF_UP),
+                    stock_lot_id=p.get('lot_id')
+                ) for p in produits_data
+            ]
+            if facture_produits_to_create:
+                FactureProduit.objects.bulk_create(facture_produits_to_create)
+        except DataError as e:
+            raise ValueError(f"Valeur numérique hors limites dans les produits : {e}") from e
 
         # Recalculate totals before validation
         facture.calculate_totals(save=True)

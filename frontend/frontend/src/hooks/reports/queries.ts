@@ -282,7 +282,8 @@ export const QUERIES: QueryDefinition[] = [
         endpoint: '/api/rapports/rapport_detail_marges/',
         params: [
             { key: 'date_debut', label: 'Début', type: 'date', required: true },
-            { key: 'date_fin', label: 'Fin', type: 'date', required: true }
+            { key: 'date_fin', label: 'Fin', type: 'date', required: true },
+            { key: 'page_size', label: 'Lignes par page', type: 'text', default: '50' }
         ],
         resultType: 'table'
     },
@@ -336,6 +337,53 @@ export const QUERIES: QueryDefinition[] = [
                     { value: 'fournisseur', label: 'Fournisseur' }
                 ],
                 default: 'date,produit,quantite,total_ht'
+            },
+            {
+                key: 'group_by',
+                label: 'Grouper par',
+                type: 'select',
+                options: [
+                    { value: '',           label: '— Aucun groupement —' },
+                    { value: 'Produit',    label: 'Produit' },
+                    { value: 'Famille',    label: 'Famille' },
+                    { value: 'Rayon',      label: 'Rayon' },
+                    { value: 'Forme',      label: 'Forme' },
+                    { value: 'Fournisseur',label: 'Fournisseur' },
+                    { value: 'Client',     label: 'Client' },
+                    { value: 'Vendeur',    label: 'Vendeur' },
+                    { value: 'TVA (%)',    label: 'Taux TVA' },
+                    { value: 'Code CIP',   label: 'Code CIP' }
+                ],
+                default: ''
+            },
+            {
+                key: 'sort_by',
+                label: 'Trier par',
+                type: 'select',
+                options: [
+                    { value: '',             label: '— Défaut —' },
+                    { value: 'Total HT',     label: 'Total HT' },
+                    { value: 'Marge Brute',  label: 'Marge Brute' },
+                    { value: 'Marge (%)',    label: 'Marge (%)' },
+                    { value: 'Quantité',     label: 'Quantité' },
+                    { value: 'Prix Vente',   label: 'Prix Vente' },
+                    { value: 'Coût Achat',   label: 'Coût Achat' },
+                    { value: 'P.U Achat',    label: 'P.U Achat' },
+                    { value: 'Produit',      label: 'Produit (A→Z)' },
+                    { value: 'Date',         label: 'Date' },
+                    { value: 'Réception',    label: 'Date Réception' }
+                ],
+                default: ''
+            },
+            {
+                key: 'sort_order',
+                label: 'Ordre de tri',
+                type: 'select',
+                options: [
+                    { value: 'desc', label: 'Décroissant (↓)' },
+                    { value: 'asc',  label: 'Croissant (↑)' }
+                ],
+                default: 'desc'
             }
         ],
         resultType: 'table'

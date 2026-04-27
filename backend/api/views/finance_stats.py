@@ -15,8 +15,7 @@ from dateutil.relativedelta import relativedelta
 from decimal import Decimal
 import statistics
 
-from django.utils.decorators import method_decorator
-from django.views.decorators.cache import cache_page
+from django.core.cache import cache
 
 from ..models import Facture, FactureProduit, FactureProduitAllocation, Produit, Rayon, Caisse
 
@@ -323,11 +322,15 @@ class FinanceStatsViewSet(viewsets.ViewSet):
         })
 
     @action(detail=False, methods=['get'])
-    @method_decorator(cache_page(60*15))  # Cache 15 min
     def kpis(self, request):
         """
         Retourne les indicateurs clés de performance.
         """
+        cache_key = f'finance_kpis_{timezone.now().strftime("%Y-%m-%d-%H")}'
+        cached = cache.get(cache_key)
+        if cached is not None:
+            return Response(cached)
+
         today = timezone.now().date()
         start_of_month = today.replace(day=1)
         start_of_year = today.replace(month=1, day=1)
@@ -437,7 +440,7 @@ class FinanceStatsViewSet(viewsets.ViewSet):
         if prev_month_ca > 0:
             croissance_mensuelle = round(((float(monthly_stats['ca']) - float(prev_month_ca)) / float(prev_month_ca)) * 100, 1)
         
-        return Response({
+        data = {
             'panier_moyen': {
                 'mois': round(panier_moyen_mois, 0),
                 'annee': round(panier_moyen_annee, 0)
@@ -450,10 +453,11 @@ class FinanceStatsViewSet(viewsets.ViewSet):
             'nb_ventes_annee': yearly_stats['count'],
             'stock_value': float(stock_value),
             'croissance_mensuelle': croissance_mensuelle
-        })
+        }
+        cache.set(cache_key, data, 60 * 15)
+        return Response(data)
 
     @action(detail=False, methods=['get'])
-    @method_decorator(cache_page(60*15))  # Cache 15 min
     def top_products(self, request):
         """
         Top 10 produits par CA ou marge.
@@ -615,7 +619,6 @@ class FinanceStatsViewSet(viewsets.ViewSet):
         })
 
     @action(detail=False, methods=['get'])
-    @method_decorator(cache_page(60*60))  # Cache 1 heure
     def analyse_categories(self, request):
         """
         Analyse CA et marge par catégorie (rayon, groupe, forme).
@@ -687,7 +690,6 @@ class FinanceStatsViewSet(viewsets.ViewSet):
         })
 
     @action(detail=False, methods=['get'])
-    @method_decorator(cache_page(60*60))  # Cache 1 heure
     def evolution_categories(self, request):
         """
         Évolution mensuelle du CA par catégorie sur 12 mois.
@@ -777,7 +779,6 @@ class FinanceStatsViewSet(viewsets.ViewSet):
         })
 
     @action(detail=False, methods=['get'])
-    @method_decorator(cache_page(60*60*4))  # Cache 4 heures
     def analyse_marges(self, request):
         """
         Analyse avancée des marges et recommandations.
@@ -879,7 +880,6 @@ class FinanceStatsViewSet(viewsets.ViewSet):
         })
 
     @action(detail=False, methods=['get'])
-    @method_decorator(cache_page(60*60*4))  # Cache 4 heures
     def analyse_fournisseurs(self, request):
         """
         Analyse comparative des fournisseurs (Score 0-100).
@@ -970,7 +970,6 @@ class FinanceStatsViewSet(viewsets.ViewSet):
         return Response(result)
 
     @action(detail=False, methods=['get'])
-    @method_decorator(cache_page(60*60*4))  # Cache 4h
     def comparaison_prix_achat(self, request):
         """
         Trouve les produits achetés chez plusieurs fournisseurs et compare les prix.
@@ -1035,7 +1034,6 @@ class FinanceStatsViewSet(viewsets.ViewSet):
         return Response(results)
 
     @action(detail=False, methods=['get'])
-    @method_decorator(cache_page(60*60*4))  # Cache 4h
     def repartition_achats(self, request):
         """
         Répartition du volume d'achat par fournisseur (Concentration).

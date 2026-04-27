@@ -395,35 +395,7 @@ export default function Sidebar() {
           </ul>
         </nav>
 
-        {/* ── FOOTER utilisateur ── */}
-        <div className={`border-t border-white/5 p-3 ${isCollapsed ? 'flex justify-center' : ''}`}>
-          {isCollapsed ? (
-            <button
-              onClick={logout}
-              className="w-9 h-9 rounded-xl bg-white/5 hover:bg-red-500/20 text-white/40 hover:text-red-400 flex items-center justify-center transition-all"
-              title="Déconnexion"
-            >
-              <LogOut className="w-4 h-4" />
-            </button>
-          ) : (
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-xl bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center shrink-0">
-                <span className="text-[11px] font-black text-emerald-400">{userInitials}</span>
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-xs font-bold text-white/80 truncate leading-tight">{userFullName}</p>
-                <p className="text-[10px] text-white/30 uppercase tracking-widest truncate">{user?.profile?.role ?? ''}</p>
-              </div>
-              <button
-                onClick={logout}
-                className="shrink-0 w-7 h-7 rounded-lg hover:bg-red-500/20 text-white/30 hover:text-red-400 flex items-center justify-center transition-all"
-                title="Déconnexion"
-              >
-                <LogOut className="w-3.5 h-3.5" />
-              </button>
-            </div>
-          )}
-        </div>
+        {/* FOOTER utilisateur retiré car présent ailleurs */}
       </aside>
     </>
   );

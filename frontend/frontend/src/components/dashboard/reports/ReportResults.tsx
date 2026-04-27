@@ -1,15 +1,16 @@
-import React from 'react';
+import React, { useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { 
     formatColumnHeader, 
     formatValue,
     isNumericColumn,
     isSummableColumn,
+    isAverageColumn,
     isPercentageColumn
 } from '../../../hooks/useCentreRapports';
 import type { QueryDefinition, PaginationData } from '../../../hooks/useCentreRapports';
 import { MonthlyReportView } from './MonthlyReportView';
-import { ChevronLeft, ChevronRight, Inbox, Eye, Download } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Inbox, Eye, Download, AlertTriangle } from 'lucide-react';
 
 interface ReportResultsProps {
     selectedQuery: QueryDefinition;
@@ -17,6 +18,8 @@ interface ReportResultsProps {
     pagination: PaginationData | null;
     loading: boolean;
     onPageChange: (url: string | null) => void;
+    onFilterChange?: (key: string, value: string) => void;
+    currentParams?: Record<string, any>;
 }
 
 export const ReportResults: React.FC<ReportResultsProps> = ({
@@ -24,9 +27,20 @@ export const ReportResults: React.FC<ReportResultsProps> = ({
     results,
     pagination,
     loading,
-    onPageChange
+    onPageChange,
+    onFilterChange,
+    currentParams = {}
 }) => {
     const { t } = useTranslation(['reports', 'common']);
+    const tableContainerRef = useRef<HTMLDivElement>(null);
+    const margeFilter = (currentParams['filtre_marge'] as string) || 'all';
+
+    const setMargeFilter = (f: 'all' | 'negative' | 'low') => {
+        onFilterChange?.('filtre_marge', f === 'all' ? '' : f);
+        tableContainerRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
+        const scrollable = tableContainerRef.current?.closest('.overflow-y-auto');
+        if (scrollable) scrollable.scrollTo({ top: 0, behavior: 'smooth' });
+    };
 
     if (!results) {
         return (
@@ -98,10 +112,37 @@ export const ReportResults: React.FC<ReportResultsProps> = ({
                 );
             }
 
+            const isMargesReport = selectedQuery.id === 'detail_marges_lots';
+
+            const filteredResults = results;
+
             const columns = Object.keys(results[0]).filter(k => !k.startsWith('_') && k !== 'id');
 
             return (
-                <div className="bg-base-100 rounded-3xl border border-base-300 shadow-sm overflow-hidden animate-in fade-in duration-500">
+                <div ref={tableContainerRef} className="bg-base-100 rounded-3xl border border-base-300 shadow-sm overflow-hidden animate-in fade-in duration-500">
+                    {/* Filtre marge — visible uniquement pour detail_marges_lots */}
+                    {isMargesReport && (
+                        <div className="flex items-center gap-2 px-6 py-3 border-b border-base-200 bg-base-50">
+                            <AlertTriangle className="w-3.5 h-3.5 text-warning shrink-0" />
+                            <span className="text-[10px] font-black uppercase tracking-widest text-base-content/40 mr-2">Filtre marge :</span>
+                            {(['all', 'negative', 'low'] as const).map(f => (
+                                <button
+                                    key={f}
+                                    onClick={() => setMargeFilter(f)}
+                                    className={`btn btn-xs rounded-full font-bold uppercase tracking-wider transition-all ${
+                                        margeFilter === f
+                                            ? f === 'negative' ? 'btn-error' : f === 'low' ? 'btn-warning' : 'btn-primary'
+                                            : 'btn-ghost border border-base-300'
+                                    }`}
+                                >
+                                    {f === 'all' ? 'Toutes' : f === 'negative' ? '⚠ Négatives' : '< 25%'}
+                                </button>
+                            ))}
+                            <span className="ml-auto text-[10px] text-base-content/40 font-bold">
+                                {filteredResults.length} / {results.length} lignes
+                            </span>
+                        </div>
+                    )}
                     <div className="overflow-x-auto">
                         <table className="w-full border-separate border-spacing-0">
                             <thead>
@@ -118,14 +159,27 @@ export const ReportResults: React.FC<ReportResultsProps> = ({
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-base-100">
-                                {results.slice(0, 100).map((row, idx) => (
-                                    <tr key={idx} className="hover:bg-primary/5 transition-all group">
+                                {(isMargesReport ? filteredResults : filteredResults.slice(0, 100)).map((row: any, idx: number) => (
+                                    <tr key={idx} className={`hover:bg-primary/5 transition-all group ${
+                                        isMargesReport && Number(row['taux_marge'] ?? 0) < 0 ? 'bg-error/5' :
+                                        isMargesReport && Number(row['taux_marge'] ?? 0) < 25 ? 'bg-warning/5' : ''
+                                    }`}>
                                         {columns.map((col, subIdx) => (
                                             <td 
                                                 key={col} 
-                                                className={`py-4 px-4 text-sm font-medium text-base-content/80 ${subIdx === 0 ? 'pl-6 font-bold' : ''} ${isNumericColumn(col) ? 'text-right' : 'text-left'}`}
+                                                className={`py-4 px-4 text-sm font-medium text-base-content/80 ${subIdx === 0 ? 'pl-6 font-bold' : ''} ${isNumericColumn(col) ? 'text-right' : 'text-left'} ${
+                                                    col === 'taux_marge' && Number(row[col]) < 0 ? 'text-error font-black' :
+                                                    col === 'taux_marge' && Number(row[col]) < 25 ? 'text-warning font-bold' :
+                                                    col === 'marge' && Number(row[col]) < 0 ? 'text-error font-black' :
+                                                    col === 'statut' && row[col] === 'PERTE' ? 'text-error font-black' :
+                                                    col === 'statut' && row[col] === 'FAIBLE' ? 'text-warning font-bold' :
+                                                    col === 'statut' && row[col] === 'OK' ? 'text-success font-bold' : ''
+                                                }`}
                                             >
-                                                {formatValue(col, row[col], t)}
+                                                {col === 'statut' && row[col] === 'PERTE' ? '🔴 PERTE' :
+                                                 col === 'statut' && row[col] === 'FAIBLE' ? '🟡 FAIBLE' :
+                                                 col === 'statut' && row[col] === 'OK' ? '🟢 OK' :
+                                                 formatValue(col, row[col], t)}
                                             </td>
                                         ))}
                                         <td className="pr-4">
@@ -137,47 +191,47 @@ export const ReportResults: React.FC<ReportResultsProps> = ({
                                 ))}
                             </tbody>
                             {/* Generic Summary Footer for all Table Reports */}
-                            {results.length > 0 && (
+                            {filteredResults.length > 0 && (
                                 <tfoot className="bg-primary/5 border-t-2 border-primary/20">
                                     <tr className="font-black text-primary uppercase">
                                         {columns.map((col, idx) => {
                                             if (idx === 0) return <td key={col} className="py-4 px-6 text-[10px] tracking-widest">{t('common:total', 'TOTAL / MOYENNE')}</td>;
                                             
+                                            if (isAverageColumn(col)) {
+                                                const total = filteredResults.reduce((sum: number, r: any) => sum + (Number(r[col]) || 0), 0);
+                                                const avg = filteredResults.length > 0 ? total / filteredResults.length : 0;
+                                                return (
+                                                    <td key={col} className="py-4 px-4 text-right text-sm">
+                                                        <div className="flex flex-col">
+                                                            <span>{formatValue(col, avg, t)}</span>
+                                                            <span className="text-[9px] opacity-40 uppercase tracking-wider">moyenne</span>
+                                                        </div>
+                                                    </td>
+                                                );
+                                            }
+
                                             if (isSummableColumn(col)) {
-                                                const total = results.reduce((sum: number, r: any) => sum + (Number(r[col]) || 0), 0);
+                                                const total = filteredResults.reduce((sum: number, r: any) => sum + (Number(r[col]) || 0), 0);
                                                 return <td key={col} className="py-4 px-4 text-right text-sm">{formatValue(col, total, t)}</td>;
                                             }
                                             
                                             if (isPercentageColumn(col)) {
-                                                const total = results.reduce((sum: number, r: any) => sum + (Number(r[col]) || 0), 0);
-                                                const avg = results.length > 0 ? (total / results.length) : 0;
-                                                
-                                                // Intelligent Global Margin calculation for weighted average
-                                                if (col.toLowerCase().includes('marge') || col.toLowerCase().includes('ratio')) {
-                                                    const totalMarge = results.reduce((sum: number, r: any) => {
-                                                        // Look for common margin amount fields
-                                                        const m = r['marge'] || r['Marge'] || r['montant_marge'] || 0;
-                                                        return sum + Number(m);
-                                                    }, 0);
-                                                    const totalCA = results.reduce((sum: number, r: any) => {
-                                                        // Look for common revenue fields
-                                                        const ca = r['total_ht'] || r['Total HT'] || r['chiffre_affaires'] || r['prix_vente'] || r['Prix Vente'] || 0;
-                                                        return sum + Number(ca);
-                                                    }, 0);
-                                                    
-                                                    if (totalCA > 0) {
-                                                        const globalRate = (totalMarge / totalCA) * 100;
-                                                        return (
-                                                            <td key={col} className="py-4 px-4 text-right text-sm">
-                                                                <div className="flex flex-col">
-                                                                    <span title="Taux Global (Pondéré)">G: {globalRate.toFixed(1)} %</span>
-                                                                    <span className="text-[9px] opacity-50" title="Moyenne Arithmétique">M: {avg.toFixed(1)} %</span>
-                                                                </div>
-                                                            </td>
-                                                        );
-                                                    }
+                                                // Pour taux_marge : calculer le taux global à partir de mt_vente et marge agrégés
+                                                if (col === 'taux_marge') {
+                                                    const totalMtVente = filteredResults.reduce((sum: number, r: any) => sum + (Number(r['mt_vente']) || 0), 0);
+                                                    const totalMarge   = filteredResults.reduce((sum: number, r: any) => sum + (Number(r['marge']) || 0), 0);
+                                                    const tauxGlobal   = totalMtVente > 0 ? (totalMarge / totalMtVente) * 100 : 0;
+                                                    return (
+                                                        <td key={col} className="py-4 px-4 text-right text-sm">
+                                                            <div className="flex flex-col">
+                                                                <span>{tauxGlobal.toFixed(1)} %</span>
+                                                                <span className="text-[9px] opacity-40 uppercase tracking-wider">global</span>
+                                                            </div>
+                                                        </td>
+                                                    );
                                                 }
-                                                
+                                                const total = filteredResults.reduce((sum: number, r: any) => sum + (Number(r[col]) || 0), 0);
+                                                const avg = filteredResults.length > 0 ? (total / filteredResults.length) : 0;
                                                 return <td key={col} className="py-4 px-4 text-right text-sm">{avg.toFixed(1)} %</td>;
                                             }
                                             
@@ -189,7 +243,7 @@ export const ReportResults: React.FC<ReportResultsProps> = ({
                             )}
                         </table>
                     </div>
-                    {results.length > 100 && !pagination && (
+                    {!isMargesReport && filteredResults.length > 100 && !pagination && (
                         <div className="p-4 bg-base-50 text-center text-[10px] font-black uppercase text-base-content/30 tracking-[0.2em] border-t border-base-200">
                             {t('results.limited_display', 'Affichage limité aux 100 premiers résultats sur {{total}}', { total: results.length })}
                         </div>

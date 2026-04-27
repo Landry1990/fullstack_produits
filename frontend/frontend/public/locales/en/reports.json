@@ -196,5 +196,24 @@
         "no_payments": "No payments"
     },
     "ca_tva": "TVA Revenue",
-    "ca_exo": "Exempt Revenue"
+    "ca_exo": "Exempt Revenue",
+    "dynamic_constructor": {
+        "conditions_title": "Smart Filters",
+        "add_condition": "Add condition",
+        "reset_conditions": "Reset",
+        "field_placeholder": "Field...",
+        "select_columns": "Choose columns",
+        "table_composition": "Table Composition",
+        "check_all": "Select All",
+        "fields": {
+            "quantite": "Quantity / Stock",
+            "total_ht": "Total (Excl. Tax)",
+            "prix_vente": "Selling Price",
+            "cout_achat": "Purchase Cost / PMP",
+            "pourcentage_marge": "Margin (%)",
+            "tva": "VAT (%)",
+            "cip": "CIP Code",
+            "stock_minimum": "Min Stock"
+        }
+    }
 }
