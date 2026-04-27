@@ -118,7 +118,7 @@ export const ProductDetailPanel: React.FC<ProductDetailPanelProps> = (props) => 
             </div>
 
             <div className="min-w-0">
-              <h2 className="text-3xl md:text-4xl xl:text-5xl font-black text-base-content uppercase tracking-tighter leading-none break-words mb-3">
+              <h2 className="text-xl md:text-2xl xl:text-3xl font-black text-base-content uppercase tracking-tighter leading-none break-words mb-3">
                 {selectedProduit.name}
               </h2>
               <div className="flex flex-wrap items-center gap-x-4 gap-y-1">

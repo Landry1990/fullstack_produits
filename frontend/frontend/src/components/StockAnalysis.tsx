@@ -1,7 +1,8 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 import { Toaster } from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
-import { PackageSearch, ShoppingBag, X, ChevronLeft, ChevronRight } from 'lucide-react';
+import { PackageSearch, ShoppingBag, X, ChevronLeft, ChevronRight, TrendingUp } from 'lucide-react';
+import { formatCurrency } from '../utils/formatters';
 import { useStockAnalysis } from '../hooks/useStockAnalysis';
 import { StockAnalysisFilters } from './stock/StockAnalysisFilters';
 import { StockAnalysisTable } from './stock/StockAnalysisTable';
@@ -64,6 +65,37 @@ const StockAnalysis = () => {
                         loading={loading}
                     />
                 </div>
+
+                {/* Summary Stats Bar */}
+                {!loading && data && activeTab !== 'pilotage' && (
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 animate-in fade-in slide-in-from-top-4 duration-500">
+                        <div className="bg-base-100 p-6 rounded-[24px] border border-base-200 shadow-sm flex items-center gap-4">
+                            <div className="w-12 h-12 rounded-2xl bg-primary/10 text-primary flex items-center justify-center">
+                                <PackageSearch className="w-6 h-6" />
+                            </div>
+                            <div>
+                                <p className="text-[10px] font-black text-base-content/30 uppercase tracking-widest">{t('stock:analyse.total_items', 'Articles Détectés')}</p>
+                                <p className="text-2xl font-black text-base-content">{data.total_items}</p>
+                            </div>
+                        </div>
+                        
+                        <div className="bg-base-100 p-6 rounded-[24px] border border-base-200 shadow-sm flex items-center gap-4">
+                            <div className="w-12 h-12 rounded-2xl bg-error/10 text-error flex items-center justify-center">
+                                <TrendingUp className="w-6 h-6" />
+                            </div>
+                            <div>
+                                <p className="text-[10px] font-black text-base-content/30 uppercase tracking-widest">
+                                    {activeTab === 'unsold' ? t('stock:analyse.unsold_value', 'Valeur des Invendus') : 
+                                     activeTab === 'overstock' ? t('stock:analyse.excess_value', 'Valeur des Excédents') : 
+                                     t('stock:analyse.total_value', 'Valeur Totale')}
+                                </p>
+                                <p className="text-2xl font-black text-error">
+                                    {formatCurrency(Math.round(data.total_value))}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                )}
 
                 {/* Main Content Area */}
                 <div className="space-y-8 animate-in fade-in duration-500">

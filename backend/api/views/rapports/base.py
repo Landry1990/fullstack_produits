@@ -177,7 +177,7 @@ class RapportBaseMixin:
             fid = c.fournisseur.id
             if fid not in achats_stats:
                 achats_stats[fid] = {'fournisseur_id': fid, 'fournisseur_nom': c.fournisseur.name, 'montant_total': Decimal('0.00'), 'nb_commandes': 0, 'nb_avoirs': 0, 'montant_avoirs': Decimal('0.00')}
-            achats_stats[fid]['montant_total'] += sum(cp.quantity * cp.price for cp in c.produits.all())
+            achats_stats[fid]['montant_total'] += sum(cp.quantity * cp.price for cp in c.produits.all())  # type: ignore[attr-defined]
             achats_stats[fid]['nb_commandes'] += 1
             
         for a in Avoir.objects.filter(date__gte=date_debut.date(), date__lt=date_fin.date(), status='VALIDEE'):
@@ -221,3 +221,39 @@ class RapportBaseMixin:
         total_e = sum(m.montant for m in mvts if m.type == 'ENTREE')
         total_s = sum(m.montant for m in mvts if m.type == 'SORTIE')
         return {'total_entrees': total_e, 'total_sorties': total_s, 'solde': total_e - total_s, 'liste': [{'id': m.id, 'date': m.date, 'type': m.type, 'montant': m.montant, 'motif': m.motif, 'user': m.user.get_full_name() if m.user else 'Inconnu'} for m in mvts]}
+
+    def _get_rapport_data(self, date_debut, date_fin, mois_str):
+        """
+        Méthode principale de calcul (Orchestration).
+        """
+        factures = self._get_factures_periode(date_debut, date_fin)
+        ca_stats = self._calculate_ca_stats(factures)
+        marge = self._calculate_margin(factures)
+        encaissements = self._calculate_encaissements(date_debut, date_fin, factures)
+        creances = self._calculate_creances()
+        ca_par_tva = self._calculate_ca_par_tva(factures)
+        achats = self._calculate_achats_fournisseurs(date_debut, date_fin)
+        clients_pro = self._calculate_clients_pro(factures)
+        ug = self._calculate_unites_gratuites(date_debut, date_fin)
+        mouvements = self._calculate_mouvements_caisse(date_debut, date_fin)
+
+        if ca_stats['ca_ttc'] > 0:
+            ug['pct_du_ca'] = round((ug['valeur_totale'] / ca_stats['ca_ttc'] * 100), 2)
+
+        return {
+            'mois': mois_str,
+            'periode': {'debut': date_debut.isoformat(), 'fin': date_fin.isoformat()},
+            'ca': ca_stats, 'marge': marge,
+            'encaissements': encaissements['encaissements'],
+            'recouvrements_total': encaissements['recouvrements_total'],
+            'ventes_credit': encaissements['ventes_credit'],
+            'coupons_total': encaissements['coupons_total'],
+            'creances_a_percevoir': creances['total'],
+            'creances': {'total': creances['total'], 'nb_factures': creances['nb_factures']},
+            'depots_total': encaissements['depots_total'],
+            'ca_par_tva': ca_par_tva,
+            'achats_par_fournisseur': achats,
+            'clients_professionnels': clients_pro,
+            'unites_gratuites': ug,
+            'mouvements_caisse': mouvements
+        }

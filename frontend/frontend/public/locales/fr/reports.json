@@ -211,5 +211,24 @@
         "no_payments": "Aucun encaissement"
     },
     "ca_tva": "CA TVA",
-    "ca_exo": "CA Exonéré"
+    "ca_exo": "CA Exonéré",
+    "dynamic_constructor": {
+        "conditions_title": "Filtres intelligents",
+        "add_condition": "Ajouter une condition",
+        "reset_conditions": "Réinitialiser",
+        "field_placeholder": "Champ...",
+        "select_columns": "Choisir les colonnes",
+        "table_composition": "Composition du tableau",
+        "check_all": "Tout cocher",
+        "fields": {
+            "quantite": "Quantité / Stock",
+            "total_ht": "Total HT / Valeur",
+            "prix_vente": "Prix Vente",
+            "cout_achat": "Coût Achat / PMP",
+            "pourcentage_marge": "Marge (%)",
+            "tva": "TVA (%)",
+            "cip": "Code CIP",
+            "stock_minimum": "Stock Min"
+        }
+    }
 }

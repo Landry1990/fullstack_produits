@@ -226,28 +226,42 @@ class FactureViewSet(OptimizedSerializerMixin, viewsets.ModelViewSet):
         centralized = data.get('centralized_cash_register', True)
         
         image_file = request.FILES.get('image_ordonnance')
-        
+
+        # --- Early data validation (before Sudo check) ---
+        produits_data = data.get('produits')
+        if not isinstance(produits_data, list) or not produits_data:
+            return Response({'detail': "La liste des produits ne peut pas être vide."}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Validate selling_price format and compute quick sum
+        try:
+            temp_sum = Decimal('0')
+            for p in produits_data:
+                q = Decimal(str(p.get('quantity', 0)))
+                pr = Decimal(str(p.get('selling_price', 0)))
+                rem = Decimal(str(p.get('discount', 0)))
+                temp_sum += (q * pr) - rem
+        except (InvalidOperation, ValueError, TypeError):
+            return Response({'detail': "Données de produit invalides (prix ou quantité non numérique)."}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            remise_globale = Decimal(str(data.get('remise', 0) or 0))
+        except (InvalidOperation, ValueError):
+            remise_globale = Decimal('0')
+
+        if remise_globale > temp_sum:
+            return Response({'detail': f"La remise globale ({remise_globale} F) ne peut pas être supérieure au total des produits ({temp_sum} F)."}, status=status.HTTP_400_BAD_REQUEST)
+
         # Enforce Sudo for non-positive amounts
         # Robust total TTC extraction
-        totals_obj = data.get('totals', {})
+        totals_obj = data.get('totals') if isinstance(data.get('totals'), dict) else {}
         try:
             total_ttc = Decimal(str(totals_obj.get('totalTtc', 0)))
         except (ValueError, InvalidOperation):
             total_ttc = Decimal('0')
-            
-        # If total is 0 but we have products, try a quick sum to avoid false positives due to missing frontend 'totals'
-        if total_ttc <= 0 and data.get('produits'):
-            try:
-                temp_sum = Decimal('0')
-                for p in data.get('produits', []):
-                    q = Decimal(str(p.get('quantity', 0)))
-                    pr = Decimal(str(p.get('selling_price', 0)))
-                    rem = Decimal(str(p.get('discount', 0)))
-                    temp_sum += (q * pr) - rem
-                remise_globale = Decimal(str(data.get('remise', 0)))
-                total_ttc = temp_sum - remise_globale
-            except Exception:
-                pass
+
+        # If total is 0 but we have products, use the quick sum already computed
+        if total_ttc <= 0 and produits_data:
+            total_ttc = temp_sum - remise_globale
 
         if total_ttc <= 0:
             validation_user, error_res = validate_sudo_mode(request)
@@ -510,7 +524,7 @@ class FactureViewSet(OptimizedSerializerMixin, viewsets.ModelViewSet):
             client_data = ClientSerializer(facture.client).data
         
         produits_data = []
-        for item in facture.produits.all():
+        for item in facture.produits.select_related('produit').all():
             produit_info = {
                 'id': item.produit.id,
                 'name': item.produit.name,

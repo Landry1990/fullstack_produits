@@ -72,37 +72,44 @@ class CaisseViewSet(viewsets.ModelViewSet):
         return queryset
 
     
+    def create(self, request, *args, **kwargs):
+        try:
+            montant = Decimal(str(request.data.get('montant', 0)))
+        except (InvalidOperation, TypeError, ValueError):
+            montant = Decimal('0')
+        if montant < Decimal('0'):
+            return Response({'detail': "Le montant d'un paiement ne peut pas être négatif."}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Cap montant at remaining balance before serializer validation
+        facture_id = request.data.get('facture')
+        mode = request.data.get('mode_paiement', '')
+        if facture_id and mode not in ('en_compte', 'recouvrement'):
+            from ...models import Facture as FactureModel
+            try:
+                facture_obj = FactureModel.objects.get(pk=facture_id)
+                deja_paye = Caisse.objects.filter(
+                    facture=facture_obj, statut__in=['completee', 'en_attente']
+                ).exclude(
+                    mode_paiement__in=['en_compte', 'recouvrement']
+                ).aggregate(Sum('montant'))['montant__sum'] or Decimal('0')
+                part = facture_obj.part_client
+                montant_du = part if (part is not None and part >= Decimal('0')) else facture_obj.total_ttc
+                reste = max(Decimal('0'), montant_du - deja_paye)
+                if montant > reste:
+                    # Make request.data mutable and cap the amount
+                    data = request.data.copy()
+                    data['montant'] = str(reste)
+                    request._full_data = data
+            except FactureModel.DoesNotExist:
+                pass
+
+        return super().create(request, *args, **kwargs)
+
     def perform_create(self, serializer):
         # Validate Sudo mode if credentials provided
         validation_user, error_res = validate_sudo_mode(self.request)
         if error_res:
-            # We don't return here as validate_sudo_mode might return error_res 
-            # only if sudo was REQUIRED but failed. 
-            # In CaisseViewSet, sudo is usually optional unless specific 
-            # conditions are met (handled in validate_sudo_mode).
             pass
-
-        facture = serializer.validated_data.get('facture')
-        mode = serializer.validated_data.get('mode_paiement')
-        
-        if facture and mode != 'en_compte' and mode != 'recouvrement':
-            montant_saisi = serializer.validated_data.get('montant')
-            deja_paye = Caisse.objects.filter(
-                facture=facture, statut='completee'
-            ).exclude(
-                mode_paiement__in=['en_compte', 'recouvrement']
-            ).aggregate(Sum('montant'))['montant__sum'] or Decimal('0')
-            
-            montant_du = facture.part_client if (facture.part_client is not None and facture.part_client >= 0) else facture.total_ttc
-            
-            if montant_du >= 0:
-                reste = max(Decimal('0'), montant_du - deja_paye)
-                if montant_saisi > reste:
-                    serializer.validated_data['montant'] = reste
-            else:
-                reste = min(Decimal('0'), montant_du - deja_paye)
-                if montant_saisi < reste:
-                    serializer.validated_data['montant'] = reste
 
         # Note: We always use self.request.user as the 'owner' of the payment (the person at the station),
         # even if a supervisor (validation_user) authorized the action.
