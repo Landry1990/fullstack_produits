@@ -32,7 +32,7 @@ from .clients import Fournisseur, Client, AyantDroit
 from .depot import DepotClient
 
 # Orders
-from .orders import Commande, CommandeProduit, Avoir, LigneAvoir
+from .orders import Commande, CommandeProduit, Avoir, LigneAvoir, OrderSchedule
 from .paiements import PaiementFournisseur
 
 # Billing
@@ -79,7 +79,7 @@ __all__ = [
     # Clients
     'Fournisseur', 'Client', 'AyantDroit', 'DepotClient',
     # Orders
-    'Commande', 'CommandeProduit', 'Avoir', 'LigneAvoir', 'PaiementFournisseur',
+    'Commande', 'CommandeProduit', 'Avoir', 'LigneAvoir', 'PaiementFournisseur', 'OrderSchedule',
     # Billing
     'Facture', 'FactureProduit', 'FactureProduitAllocation',
     'Caisse', 'RelevePaiement', 'ClotureCaisse', 'CouponMonnaie', 'Promis', 'PosteCaisse',

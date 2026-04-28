@@ -66,9 +66,9 @@ const StockHealthDashboard: React.FC = () => {
                 {/* Health Score Card */}
                 <div 
                     onMouseMove={handleMouseMove}
-                    className="lg:col-span-4 expert-card stagger-1 bg-base-100 p-8 rounded-[40px] border border-base-200 shadow-sm flex flex-col items-center justify-center text-center relative overflow-hidden group"
+                    className="lg:col-span-4 expert-card stagger-1 bg-base-100 p-8 rounded-[40px] border border-base-200 shadow-sm flex flex-col items-center justify-center text-center relative group !overflow-visible [&::after]:rounded-[40px] z-10 hover:z-[100]"
                 >
-                    <div className={`absolute inset-0 opacity-5 ${getScoreBg(data.health_score)} transition-colors duration-500`}></div>
+                    <div className={`absolute inset-0 rounded-[40px] opacity-5 ${getScoreBg(data.health_score)} transition-colors duration-500`}></div>
                     
                     {/* Settings Trigger */}
                     <div className="absolute top-6 right-6 flex gap-2">
@@ -115,8 +115,29 @@ const StockHealthDashboard: React.FC = () => {
                         <h3 className="text-xl font-black text-base-content tracking-tighter">
                             {t('stock:analyse.dashboard.health_score')}
                         </h3>
-                        <div className="tooltip tooltip-bottom" data-tip={t('stock:analyse.dashboard.health_score_tooltip', { avail: data.availability_weight, rot: data.rotation_weight })}>
-                            <Info className="w-4 h-4 text-base-content/20 cursor-help" />
+                        <div className="dropdown dropdown-hover dropdown-end dropdown-bottom">
+                            <label tabIndex={0} className="cursor-help">
+                                <Info className="w-4 h-4 text-base-content/40 hover:text-base-content transition-colors" />
+                            </label>
+                            <div tabIndex={0} className="dropdown-content z-[100] card card-compact w-72 p-2 shadow-xl bg-base-100 border border-base-200 text-left mt-2">
+                                <div className="card-body">
+                                    <h4 className="font-bold text-sm text-base-content mb-1">Interprétation du Score</h4>
+                                    <ul className="text-xs space-y-2">
+                                        <li className="flex items-start gap-2">
+                                            <span className="text-emerald-500 font-bold w-12 shrink-0">&ge; 80%</span> 
+                                            <span className="text-base-content/80"><strong>Sain</strong> : Stock optimal, peu de ruptures, rotation fluide.</span>
+                                        </li>
+                                        <li className="flex items-start gap-2">
+                                            <span className="text-amber-500 font-bold w-12 shrink-0">50-79%</span> 
+                                            <span className="text-base-content/80"><strong>Moyen</strong> : Attention à l'accumulation de stock dormant ou aux ruptures à venir.</span>
+                                        </li>
+                                        <li className="flex items-start gap-2">
+                                            <span className="text-rose-500 font-bold w-12 shrink-0">&lt; 50%</span> 
+                                            <span className="text-base-content/80"><strong>Critique</strong> : Fort dysfonctionnement. Trop de liquidités immobilisées ou trop de ventes manquées.</span>
+                                        </li>
+                                    </ul>
+                                </div>
+                            </div>
                         </div>
                     </div>
                     <p className="relative text-sm text-base-content/40 font-medium mt-1">
@@ -129,7 +150,7 @@ const StockHealthDashboard: React.FC = () => {
                     {/* Lost Revenue Card */}
                     <div 
                         onMouseMove={handleMouseMove}
-                        className="expert-card stagger-2 bg-base-100 p-8 rounded-[40px] border border-red-100 shadow-sm relative overflow-hidden group hover:shadow-xl hover:shadow-red-500/5 transition-all duration-500"
+                        className="expert-card stagger-2 bg-base-100 p-8 rounded-[40px] border border-red-100 shadow-sm relative group hover:shadow-xl hover:shadow-red-500/5 transition-all duration-500 !overflow-visible [&::after]:rounded-[40px] z-10 hover:z-[100]"
                     >
                         <div className="absolute top-0 right-0 p-8 opacity-5 group-hover:opacity-10 transition-opacity animate-float">
                             <TrendingDown className="w-24 h-24 text-red-600" />
@@ -141,8 +162,16 @@ const StockHealthDashboard: React.FC = () => {
                             <div className="text-xs font-black uppercase tracking-[0.2em] text-red-600/50">
                                 {t('stock:analyse.dashboard.missed_sales')}
                             </div>
-                            <div className="tooltip tooltip-left" data-tip={t('stock:analyse.dashboard.missed_sales_tooltip')}>
-                                <Info className="w-3.5 h-3.5 text-red-600/30 cursor-help" />
+                            <div className="dropdown dropdown-hover dropdown-end dropdown-bottom">
+                                <label tabIndex={0} className="cursor-help">
+                                    <Info className="w-3.5 h-3.5 text-red-600/50 hover:text-red-600 transition-colors" />
+                                </label>
+                                <div tabIndex={0} className="dropdown-content z-[100] card card-compact w-72 p-2 shadow-xl bg-base-100 border border-red-100 text-left mt-2">
+                                    <div className="card-body">
+                                        <h4 className="font-bold text-sm text-red-600 mb-1">Ventes Manquées</h4>
+                                        <p className="text-xs text-base-content/80 whitespace-normal leading-relaxed">Estimation de la perte de chiffre d'affaires sur les 30 derniers jours à cause des ruptures de stock sur des produits habituellement très demandés.</p>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                         <div className="text-3xl font-black text-red-600 tracking-tighter mb-2">
@@ -174,7 +203,7 @@ const StockHealthDashboard: React.FC = () => {
                     {/* Dead Capital Card */}
                     <div 
                         onMouseMove={handleMouseMove}
-                        className="expert-card stagger-3 bg-base-100 p-8 rounded-[40px] border border-amber-100 shadow-sm relative overflow-hidden group hover:shadow-xl hover:shadow-amber-500/5 transition-all duration-500"
+                        className="expert-card stagger-3 bg-base-100 p-8 rounded-[40px] border border-amber-100 shadow-sm relative group hover:shadow-xl hover:shadow-amber-500/5 transition-all duration-500 !overflow-visible [&::after]:rounded-[40px] z-10 hover:z-[100]"
                     >
                         <div className="absolute top-0 right-0 p-8 opacity-5 group-hover:opacity-10 transition-opacity animate-float">
                             <Clock className="w-24 h-24 text-amber-600" />
@@ -186,8 +215,16 @@ const StockHealthDashboard: React.FC = () => {
                             <div className="text-xs font-black uppercase tracking-[0.2em] text-amber-600/50">
                                 {t('stock:analyse.dashboard.dead_stock')}
                             </div>
-                            <div className="tooltip tooltip-left" data-tip={t('stock:analyse.dashboard.dead_stock_tooltip')}>
-                                <Info className="w-3.5 h-3.5 text-amber-600/30 cursor-help" />
+                            <div className="dropdown dropdown-hover dropdown-end dropdown-bottom">
+                                <label tabIndex={0} className="cursor-help">
+                                    <Info className="w-3.5 h-3.5 text-amber-600/50 hover:text-amber-600 transition-colors" />
+                                </label>
+                                <div tabIndex={0} className="dropdown-content z-[100] card card-compact w-72 p-2 shadow-xl bg-base-100 border border-amber-100 text-left mt-2">
+                                    <div className="card-body">
+                                        <h4 className="font-bold text-sm text-amber-600 mb-1">Stock Dormant</h4>
+                                        <p className="text-xs text-base-content/80 whitespace-normal leading-relaxed">Valeur d'achat totale des produits qui n'ont fait l'objet d'aucune vente depuis plus de {data.dead_stock.days_threshold} jours. C'est de l'argent immobilisé qui bloque votre trésorerie.</p>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                         <div className="text-3xl font-black text-amber-600 tracking-tighter mb-2">
@@ -221,7 +258,7 @@ const StockHealthDashboard: React.FC = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                 <div 
                     onMouseMove={handleMouseMove}
-                    className="expert-card stagger-4 bg-base-100 p-6 rounded-[24px] border border-base-200 shadow-sm flex items-center gap-4 group hover:border-emerald-500/30 transition-all"
+                    className="expert-card stagger-4 bg-base-100 p-6 rounded-[24px] border border-base-200 shadow-sm flex items-center gap-4 group hover:border-emerald-500/30 transition-all !overflow-visible [&::after]:rounded-[24px] z-10 hover:z-[100]"
                 >
                     <div className="w-12 h-12 bg-emerald-50 rounded-2xl flex items-center justify-center text-emerald-600 group-hover:scale-110 transition-transform">
                         <CheckCircle2 className="w-6 h-6" />
@@ -231,8 +268,16 @@ const StockHealthDashboard: React.FC = () => {
                             <div className="text-[10px] font-black uppercase text-base-content/30 tracking-widest">
                                 {t('stock:analyse.dashboard.availability')}
                             </div>
-                            <div className="tooltip tooltip-top" data-tip={t('stock:analyse.dashboard.availability_tooltip')}>
-                                <Info className="w-3 h-3 text-base-content/20" />
+                            <div className="dropdown dropdown-hover dropdown-top dropdown-start">
+                                <label tabIndex={0} className="cursor-help">
+                                    <Info className="w-3 h-3 text-base-content/20 hover:text-base-content transition-colors" />
+                                </label>
+                                <div tabIndex={0} className="dropdown-content z-[100] card card-compact w-56 p-2 shadow-xl bg-base-100 border border-base-200 text-left mb-2">
+                                    <div className="card-body">
+                                        <h4 className="font-bold text-sm text-base-content mb-1">Disponibilité</h4>
+                                        <p className="text-xs text-base-content/80 whitespace-normal">Pourcentage de vos produits en catalogue qui sont actuellement en stock (quantité &gt; 0).</p>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                         <div className="text-lg font-black text-base-content">
@@ -243,7 +288,7 @@ const StockHealthDashboard: React.FC = () => {
 
                 <div 
                     onMouseMove={handleMouseMove}
-                    className="expert-card stagger-4 bg-base-100 p-6 rounded-[24px] border border-base-200 shadow-sm flex items-center gap-4 group hover:border-indigo-500/30 transition-all"
+                    className="expert-card stagger-4 bg-base-100 p-6 rounded-[24px] border border-base-200 shadow-sm flex items-center gap-4 group hover:border-indigo-500/30 transition-all !overflow-visible [&::after]:rounded-[24px] z-10 hover:z-[100]"
                 >
                     <div className="w-12 h-12 bg-indigo-50 rounded-2xl flex items-center justify-center text-indigo-600 group-hover:scale-110 transition-transform">
                         <Activity className="w-6 h-6" />
@@ -253,8 +298,16 @@ const StockHealthDashboard: React.FC = () => {
                             <div className="text-[10px] font-black uppercase text-base-content/30 tracking-widest">
                                 {t('stock:analyse.dashboard.rotation')}
                             </div>
-                            <div className="tooltip tooltip-top" data-tip={t('stock:analyse.dashboard.rotation_tooltip')}>
-                                <Info className="w-3 h-3 text-base-content/20" />
+                            <div className="dropdown dropdown-hover dropdown-top dropdown-start">
+                                <label tabIndex={0} className="cursor-help">
+                                    <Info className="w-3 h-3 text-base-content/20 hover:text-base-content transition-colors" />
+                                </label>
+                                <div tabIndex={0} className="dropdown-content z-[100] card card-compact w-56 p-2 shadow-xl bg-base-100 border border-base-200 text-left mb-2">
+                                    <div className="card-body">
+                                        <h4 className="font-bold text-sm text-base-content mb-1">Rotation</h4>
+                                        <p className="text-xs text-base-content/80 whitespace-normal">Part de vos produits qui ont généré au moins une vente récemment, indiquant la fluidité de votre stock.</p>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                         <div className="text-lg font-black text-base-content">
@@ -265,7 +318,7 @@ const StockHealthDashboard: React.FC = () => {
 
                 <div 
                     onMouseMove={handleMouseMove}
-                    className="expert-card stagger-4 bg-base-100 p-6 rounded-[24px] border border-base-200 shadow-sm flex items-center gap-4 group hover:border-rose-500/30 transition-all"
+                    className="expert-card stagger-4 bg-base-100 p-6 rounded-[24px] border border-base-200 shadow-sm flex items-center gap-4 group hover:border-rose-500/30 transition-all !overflow-visible [&::after]:rounded-[24px] z-10 hover:z-[100]"
                 >
                     <div className="w-12 h-12 bg-rose-50 rounded-2xl flex items-center justify-center text-rose-600 group-hover:scale-110 transition-transform">
                         <AlertCircle className="w-6 h-6" />
@@ -275,8 +328,16 @@ const StockHealthDashboard: React.FC = () => {
                             <div className="text-[10px] font-black uppercase text-base-content/30 tracking-widest">
                                 {t('stock:analyse.dashboard.imminent_shortages')}
                             </div>
-                            <div className="tooltip tooltip-top" data-tip={t('stock:analyse.dashboard.imminent_shortages_tooltip')}>
-                                <Info className="w-3 h-3 text-base-content/20" />
+                            <div className="dropdown dropdown-hover dropdown-top dropdown-start">
+                                <label tabIndex={0} className="cursor-help">
+                                    <Info className="w-3 h-3 text-base-content/20 hover:text-base-content transition-colors" />
+                                </label>
+                                <div tabIndex={0} className="dropdown-content z-[100] card card-compact w-56 p-2 shadow-xl bg-base-100 border border-base-200 text-left mb-2">
+                                    <div className="card-body">
+                                        <h4 className="font-bold text-sm text-base-content mb-1">Ruptures Imminentes</h4>
+                                        <p className="text-xs text-base-content/80 whitespace-normal">Nombre de produits dont le niveau de stock a atteint ou est en dessous du seuil minimum défini.</p>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                         <div className="text-lg font-black text-base-content">
@@ -287,7 +348,7 @@ const StockHealthDashboard: React.FC = () => {
 
                 <div 
                     onMouseMove={handleMouseMove}
-                    className="expert-card stagger-4 bg-base-100 p-6 rounded-[24px] border border-base-200 shadow-sm flex items-center gap-4 group hover:border-emerald-500/30 transition-all"
+                    className="expert-card stagger-4 bg-base-100 p-6 rounded-[24px] border border-base-200 shadow-sm flex items-center gap-4 group hover:border-emerald-500/30 transition-all !overflow-visible [&::after]:rounded-[24px] z-10 hover:z-[100]"
                 >
                     <div className="w-12 h-12 bg-emerald-50 rounded-2xl flex items-center justify-center text-emerald-600 group-hover:scale-110 transition-transform">
                         <DollarSign className="w-6 h-6" />
@@ -297,8 +358,16 @@ const StockHealthDashboard: React.FC = () => {
                             <div className="text-[10px] font-black uppercase text-base-content/30 tracking-widest">
                                 {t('stock:analyse.dashboard.total_stock_value')}
                             </div>
-                            <div className="tooltip tooltip-top" data-tip={t('stock:analyse.dashboard.total_stock_value_tooltip')}>
-                                <Info className="w-3 h-3 text-base-content/20" />
+                            <div className="dropdown dropdown-hover dropdown-top dropdown-end">
+                                <label tabIndex={0} className="cursor-help">
+                                    <Info className="w-3 h-3 text-base-content/20 hover:text-base-content transition-colors" />
+                                </label>
+                                <div tabIndex={0} className="dropdown-content z-[100] card card-compact w-56 p-2 shadow-xl bg-base-100 border border-base-200 text-left mb-2">
+                                    <div className="card-body">
+                                        <h4 className="font-bold text-sm text-base-content mb-1">Valeur Totale</h4>
+                                        <p className="text-xs text-base-content/80 whitespace-normal">Valeur totale d'achat de l'ensemble de votre stock physique disponible.</p>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                         <div className="text-lg font-black text-base-content">

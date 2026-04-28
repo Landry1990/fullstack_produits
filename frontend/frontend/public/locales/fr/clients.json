@@ -112,5 +112,42 @@
         "pts": "pts",
         "percent": "%",
         "per_unit": "/ unité"
+    },
+    "bmi": {
+        "title": "Outils Cliniques",
+        "subtitle": "Calculateurs de santé selon les normes de l'OMS",
+        "tab_adult": "IMC Adulte",
+        "tab_child": "Poids Enfant",
+        "weight": "Poids (kg)",
+        "height": "Taille (cm)",
+        "age": "Âge",
+        "age_unit_months": "Mois",
+        "age_unit_years": "Ans",
+        "weight_placeholder": "Ex: 75",
+        "height_placeholder": "Ex: 175",
+        "age_placeholder": "Ex: 4",
+        "unit_kg": "kg",
+        "info_text": "L'IMC est un indicateur de la corpulence d'une personne. Il est calculé en divisant le poids (kg) par le carré de la taille (m²).",
+        "child_info_text": "Estimation du poids idéal d'un enfant en fonction de son âge selon les formules pédiatriques standards (APLS).",
+        "your_bmi": "Votre IMC",
+        "estimated_weight": "Poids Estimé",
+        "empty_state": "Saisissez les données pour voir le résultat",
+        "oms_classification": "Classification de l'OMS",
+        "categories": {
+            "underweight": "Insuffisance pondérale (Maigreur)",
+            "normal": "Corpulence normale",
+            "overweight": "Surpoids",
+            "obesity_1": "Obésité modérée (Classe I)",
+            "obesity_2": "Obésité sévère (Classe II)",
+            "obesity_3": "Obésité morbide (Classe III)"
+        },
+        "descriptions": {
+            "underweight": "Votre poids est inférieur à la normale. Un suivi nutritionnel peut être recommandé.",
+            "normal": "Votre poids est idéal par rapport à votre taille. Continuez à maintenir une alimentation équilibrée.",
+            "overweight": "Vous êtes en léger surpoids. Une activité physique régulière et une attention à votre régime alimentaire sont conseillées.",
+            "obesity_1": "Votre IMC indique une obésité modérée. Il est conseillé de consulter un professionnel de santé.",
+            "obesity_2": "Votre IMC indique une obésité sévère. Un suivi médical est fortement recommandé.",
+            "obesity_3": "Votre IMC indique une obésité morbide ou massive. Une prise en charge médicale urgente est nécessaire."
+        }
     }
 }

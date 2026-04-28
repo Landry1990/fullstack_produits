@@ -53,7 +53,7 @@ def generer_suggestions_commande(request):
     # ── Enrichir avec indicateurs Promis & Rupture Fournisseur ──
     if suggestions:
         from django.db.models import Sum, Q
-        from api.models import Promis, RuptureFournisseur
+        from ...models import Promis, RuptureFournisseur
         
         produit_ids = [s['produit_id'] for s in suggestions]
         
@@ -98,19 +98,30 @@ def calculer_reapprovisionnement_simple(periode, fournisseur_id=None, budget_max
     produits = Produit.objects.all()
     fournisseur_obj = None
     if fournisseur_id:
-        from api.models import Fournisseur, StockLot
+        from ...models import Fournisseur, StockLot
         fournisseur_obj = Fournisseur.objects.filter(id=fournisseur_id).first()
         lots_produit_ids = set(StockLot.objects.filter(fournisseur_id=fournisseur_id).values_list('produit_id', flat=True))
         produits = produits.filter(
             Q(fournisseur_id=fournisseur_id) | Q(id__in=lots_produit_ids)
         )
-        
     produits = produits.annotate(
         ventes_periode=Sum('factureproduit__quantity', filter=Q(
             factureproduit__facture__date__gte=date_debut,
             factureproduit__facture__status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE]
         ))
     )
+    
+    if fournisseur_id:
+        from django.db.models import OuterRef, Subquery
+        from ...models import StockLot
+        last_price_subquery = StockLot.objects.filter(
+            produit=OuterRef('pk'),
+            fournisseur_id=fournisseur_id
+        ).order_by('-date_reception').values('price_cost')[:1]
+        
+        produits = produits.annotate(
+            last_supplier_price=Subquery(last_price_subquery)
+        )
     
     suggestions = []
     
@@ -124,7 +135,8 @@ def calculer_reapprovisionnement_simple(periode, fournisseur_id=None, budget_max
         qte_a_commander = int(ventes)
         
         # Calculer le montant HT
-        prix_achat = float(produit.cost_price or 0)
+        # Prioriser le prix du fournisseur spécifique si disponible
+        prix_achat = float(getattr(produit, 'last_supplier_price', None) or produit.cost_price or 0)
         montant_ht = prix_achat * qte_a_commander
         
         # Calculer la raison
@@ -213,7 +225,7 @@ def calculer_optimisation_intelligente(periode, fournisseur_id=None, budget_max=
     produits = Produit.objects.all()
     fournisseur_obj = None
     if fournisseur_id:
-        from api.models import Fournisseur, StockLot
+        from ...models import Fournisseur, StockLot
         from django.db.models import Q
         fournisseur_obj = Fournisseur.objects.filter(id=fournisseur_id).first()
         lots_produit_ids = set(StockLot.objects.filter(fournisseur_id=fournisseur_id).values_list('produit_id', flat=True))
@@ -231,6 +243,18 @@ def calculer_optimisation_intelligente(periode, fournisseur_id=None, budget_max=
             factureproduit__facture__status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE]
         ))
     )
+
+    if fournisseur_id:
+        from django.db.models import OuterRef, Subquery
+        from ...models import StockLot
+        last_price_subquery = StockLot.objects.filter(
+            produit=OuterRef('pk'),
+            fournisseur_id=fournisseur_id
+        ).order_by('-date_reception').values('price_cost')[:1]
+        
+        produits = produits.annotate(
+            last_supplier_price=Subquery(last_price_subquery)
+        )
     
     suggestions = []
     
@@ -356,7 +380,8 @@ def calculer_optimisation_intelligente(periode, fournisseur_id=None, budget_max=
                 raison += "ALERTE STOCK."
         
         # Calculer montant HT
-        prix_achat = float(produit.cost_price or 0)
+        # Prioriser le prix du fournisseur spécifique si disponible
+        prix_achat = float(getattr(produit, 'last_supplier_price', None) or produit.cost_price or 0)
         qte_finale_finale = max(qte_finale, 0)
         montant_ht = prix_achat * qte_finale_finale
         
@@ -463,7 +488,7 @@ def calculer_ventes_tranche_horaire(date_debut, date_fin, fournisseur_id=None):
     # Filtrer par fournisseur si demandé
     fournisseur_obj = None
     if fournisseur_id:
-        from api.models import Fournisseur, StockLot
+        from ...models import Fournisseur, StockLot
         fournisseur_obj = Fournisseur.objects.filter(id=fournisseur_id).first()
         lots_produit_ids = set(StockLot.objects.filter(fournisseur_id=fournisseur_id).values_list('produit_id', flat=True))
         qs = qs.filter(
@@ -477,7 +502,21 @@ def calculer_ventes_tranche_horaire(date_debut, date_fin, fournisseur_id=None):
     
     # Récupérer les objets Produit en une seule requête
     produit_ids = [v['produit_id'] for v in ventes]
-    produits_map = {p.id: p for p in Produit.objects.filter(id__in=produit_ids).select_related('fournisseur')}
+    produits_qs = Produit.objects.filter(id__in=produit_ids).select_related('fournisseur')
+    
+    if fournisseur_id:
+        from django.db.models import OuterRef, Subquery
+        from ...models import StockLot
+        last_price_subquery = StockLot.objects.filter(
+            produit=OuterRef('pk'),
+            fournisseur_id=fournisseur_id
+        ).order_by('-date_reception').values('price_cost')[:1]
+        
+        produits_qs = produits_qs.annotate(
+            last_supplier_price=Subquery(last_price_subquery)
+        )
+        
+    produits_map = {p.id: p for p in produits_qs}
     
     suggestions = []
     
@@ -491,7 +530,8 @@ def calculer_ventes_tranche_horaire(date_debut, date_fin, fournisseur_id=None):
             continue
         
         stock_actuel = produit.stock or 0
-        prix_achat = float(produit.cost_price or 0)
+        # Prioriser le prix du fournisseur spécifique si disponible
+        prix_achat = float(getattr(produit, 'last_supplier_price', None) or produit.cost_price or 0)
         montant_ht = prix_achat * qte_vendue
         
         raison = f"Vendu: {qte_vendue} unités ({dt_debut.strftime('%d/%m %H:%M')} → {dt_fin.strftime('%d/%m %H:%M')})"
@@ -522,6 +562,112 @@ def calculer_ventes_tranche_horaire(date_debut, date_fin, fournisseur_id=None):
             'exclusive_fournisseur_nom': produit.fournisseur.name if (produit.is_supplier_exclusive and produit.fournisseur) else None,
             'raison': raison
         })
+    
+    total_ht = sum(item['montant_ht'] for item in suggestions)
+    return suggestions, round(total_ht, 2)
+
+
+def calculer_reapprovisionnement_cumulatif(fournisseur_id, periode_fallback=30, budget_max=None):
+    """
+    Mode cumulatif : compte les ventes depuis la dernière commande auto-générée.
+    Si aucune commande auto existante, utilise la période de fallback.
+    
+    Ex: Lundi 14h génération → Mercredi 14h compte les ventes de Lundi 14h01 à Mercredi 14h
+    """
+    from ...models import Commande
+    from django.db.models import Sum, Q, OuterRef, Subquery
+    from ...models import StockLot as StockLotModel, Fournisseur
+    
+    # Trouver la dernière commande auto-générée pour ce fournisseur
+    last_auto_order = Commande.objects.filter(
+        fournisseur_id=fournisseur_id,
+        source=Commande.Source.AUTO_SCHEDULE,
+        status__in=[Commande.Status.EN_PREPARATION, Commande.Status.EN_ATTENTE, Commande.Status.CLOTUREE]
+    ).order_by('-date').first()
+    
+    if last_auto_order:
+        # On commence 1 minute après la dernière commande pour ne pas compter 2x
+        date_debut = last_auto_order.date + timedelta(minutes=1)
+        mode_info = f"depuis dernière cmd ({last_auto_order.date.strftime('%d/%m %H:%M')})"
+    else:
+        # Fallback : première exécution, on utilise la période standard
+        date_debut = timezone.now() - timedelta(days=periode_fallback)
+        mode_info = f"période initiale ({periode_fallback}j)"
+    
+    date_fin = timezone.now()
+    
+    # Filtrer les produits du fournisseur
+    fournisseur_obj = Fournisseur.objects.filter(id=fournisseur_id).first()
+    
+    lots_produit_ids = set(StockLotModel.objects.filter(
+        fournisseur_id=fournisseur_id
+    ).values_list('produit_id', flat=True))
+    
+    produits = Produit.objects.filter(
+        Q(fournisseur_id=fournisseur_id) | Q(id__in=lots_produit_ids)
+    )
+    
+    # Annoter avec les ventes depuis la date de début
+    produits = produits.annotate(
+        ventes_periode=Sum('factureproduit__quantity', filter=Q(
+            factureproduit__facture__date__gte=date_debut,
+            factureproduit__facture__date__lte=date_fin,
+            factureproduit__facture__status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE]
+        ))
+    )
+    
+    # Prix du fournisseur
+    last_price_subquery = StockLotModel.objects.filter(
+        produit=OuterRef('pk'),
+        fournisseur_id=fournisseur_id
+    ).order_by('-date_reception').values('price_cost')[:1]
+    
+    produits = produits.annotate(
+        last_supplier_price=Subquery(last_price_subquery)
+    )
+    
+    suggestions = []
+    
+    for produit in produits:
+        ventes = produit.ventes_periode or 0
+        if ventes <= 0:
+            continue
+        
+        stock_actuel = produit.stock or 0
+        qte_a_commander = int(ventes)
+        
+        prix_achat = float(getattr(produit, 'last_supplier_price', None) or produit.cost_price or 0)
+        montant_ht = prix_achat * qte_a_commander
+        
+        raison = f"Vendu: {int(ventes)}u ({mode_info})"
+        if stock_actuel <= 0:
+            raison += " (RUPTURE)"
+        
+        suggestions.append({
+            'produit_id': produit.id,
+            'produit_nom': produit.name,
+            'produit_ref': produit.cip1 or '',
+            'fournisseur_id': fournisseur_obj.id if fournisseur_obj else (produit.fournisseur.id if produit.fournisseur else None),
+            'fournisseur_nom': fournisseur_obj.name if fournisseur_obj else (produit.fournisseur.name if produit.fournisseur else 'N/A'),
+            'stock_actuel': int(stock_actuel),
+            'ventes_periode': int(ventes),
+            'quantite_suggeree': qte_a_commander,
+            'prix_achat': prix_achat,
+            'montant_ht': montant_ht,
+            'prix_vente': float(produit.selling_price or 0),
+            'tva': str(produit.tva or '0'),
+            'taux_marge': str(produit.taux_marge or '1.3'),
+            'rotation': 'N/A',
+            'tendance': 'N/A',
+            'urgence': 'urgent' if stock_actuel <= 0 else 'normal',
+            'couverture_jours': 0,
+            'is_supplier_exclusive': produit.is_supplier_exclusive,
+            'exclusive_fournisseur_nom': produit.fournisseur.name if (produit.is_supplier_exclusive and produit.fournisseur) else None,
+            'raison': raison
+        })
+    
+    # Trier par montant décroissant
+    suggestions.sort(key=lambda x: x['montant_ht'], reverse=True)
     
     total_ht = sum(item['montant_ht'] for item in suggestions)
     return suggestions, round(total_ht, 2)

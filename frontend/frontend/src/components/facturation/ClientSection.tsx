@@ -37,6 +37,7 @@ interface ClientSectionProps {
   ayantDroitSociete: string
   setAyantDroitSociete: (v: string) => void
   inputRef?: React.Ref<HTMLInputElement>
+  onApplyReward?: () => void
 }
 
 export default function ClientSection({
@@ -65,7 +66,8 @@ export default function ClientSection({
   setAyantDroitMatricule,
   ayantDroitSociete,
   setAyantDroitSociete,
-  inputRef
+  inputRef,
+  onApplyReward
 }: ClientSectionProps) {
   const { t } = useTranslation(['facturation', 'common'])
   
@@ -262,7 +264,7 @@ export default function ClientSection({
           )}
 
           {/* Points de Fidélité */}
-          {selectedClient && selectedClientData && selectedClientData.is_loyalty_member && (
+          {selectedClient && selectedClientData && selectedClientData.client_type === 'PARTICULIER' && selectedClientData.is_loyalty_member && (
             <div className="mt-2 px-3 py-1.5 bg-secondary/10 rounded-lg flex justify-between items-center animate-in fade-in slide-in-from-top-1 duration-200">
               <span className="text-[10px] font-bold text-secondary uppercase tracking-wider">{t('facturation:client.label')} Fidélité</span>
               <span className="text-sm font-bold text-secondary">{t('facturation:client.points_balance', { points: selectedClientData.points_fidelite || 0 })}</span>
@@ -281,9 +283,22 @@ export default function ClientSection({
                 </span>
                 <span className="badge badge-accent badge-sm font-bold">-{selectedClientData.pending_discount}%</span>
               </div>
-              <div className="text-[10px] text-accent-content/70 italic">
+              <div className="text-[10px] text-accent-content/70 italic mb-1">
                 {t('facturation:client.pending_reward', { discount: selectedClientData.pending_discount })}
               </div>
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onApplyReward?.();
+                }}
+                className="btn btn-xs btn-accent w-full gap-1 font-bold rounded-lg shadow-sm hover:scale-[1.02] active:scale-95 transition-all"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-3 h-3">
+                  <path fillRule="evenodd" d="M10 18a8 8 0 1 0 0-16 8 8 0 0 0 0 16Zm3.857-9.809a.75.75 0 0 0-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 1 0-1.06 1.061l2.5 2.5a.75.75 0 0 0 1.137-.089l4-5.5Z" clipRule="evenodd" />
+                </svg>
+                {t('facturation:client.apply_reward_button', { defaultValue: 'Appliquer' })}
+              </button>
             </div>
           )}
         </div>

@@ -17,6 +17,8 @@ class ProduitFilter(filters.FilterSet):
     stock_lte = filters.NumberFilter(field_name='stock', lookup_expr='lte')
     stock_gt = filters.NumberFilter(field_name='stock', lookup_expr='gt')
     stock_gte = filters.NumberFilter(field_name='stock', lookup_expr='gte')
+    
+    rotation_moyenne = filters.NumberFilter(field_name='rotation_moyenne')
 
     # Filtre spécifique pour les Rossignols (Stock dormant)
     dormant_months = filters.NumberFilter(method='filter_dormant_stock')
@@ -41,7 +43,7 @@ class ProduitFilter(filters.FilterSet):
     class Meta:
         model = Produit
         # On garde les filtres simples par ID et on ajoute les nouveaux
-        fields = ['rayon', 'fournisseur', 'rayon_name', 'min_price', 'stock_lt', 'stock_lte', 'stock_gt', 'stock_gte']
+        fields = ['rayon', 'fournisseur', 'rayon_name', 'min_price', 'stock_lt', 'stock_lte', 'stock_gt', 'stock_gte', 'rotation_moyenne']
 
 
 class AuditLogFilter(filters.FilterSet):

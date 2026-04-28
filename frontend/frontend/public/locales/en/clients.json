@@ -104,5 +104,42 @@
         "pts": "pts",
         "percent": "%",
         "per_unit": "/ unit"
+    },
+    "bmi": {
+        "title": "Clinical Tools",
+        "subtitle": "Health calculators according to WHO standards",
+        "tab_adult": "Adult BMI",
+        "tab_child": "Child Weight",
+        "weight": "Weight (kg)",
+        "height": "Height (cm)",
+        "age": "Age",
+        "age_unit_months": "Months",
+        "age_unit_years": "Years",
+        "weight_placeholder": "E.g.: 75",
+        "height_placeholder": "E.g.: 175",
+        "age_placeholder": "E.g.: 4",
+        "unit_kg": "kg",
+        "info_text": "BMI is an indicator of body fatness. It is calculated by dividing weight (kg) by the square of height (m²).",
+        "child_info_text": "Estimated ideal weight for a child based on age using standard pediatric formulas (APLS).",
+        "your_bmi": "Your BMI",
+        "estimated_weight": "Estimated Weight",
+        "empty_state": "Enter data to see the result",
+        "oms_classification": "WHO Classification",
+        "categories": {
+            "underweight": "Underweight",
+            "normal": "Normal weight",
+            "overweight": "Overweight",
+            "obesity_1": "Moderate Obesity (Class I)",
+            "obesity_2": "Severe Obesity (Class II)",
+            "obesity_3": "Morbid Obesity (Class III)"
+        },
+        "descriptions": {
+            "underweight": "Your weight is below normal. Nutritional monitoring may be recommended.",
+            "normal": "Your weight is ideal for your height. Continue to maintain a balanced diet.",
+            "overweight": "You are slightly overweight. Regular physical activity and attention to your diet are advised.",
+            "obesity_1": "Your BMI indicates moderate obesity. It is advisable to consult a health professional.",
+            "obesity_2": "Your BMI indicates severe obesity. Medical follow-up is strongly recommended.",
+            "obesity_3": "Your BMI indicates morbid or massive obesity. Urgent medical management is necessary."
+        }
     }
 }

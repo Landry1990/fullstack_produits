@@ -4,8 +4,12 @@ import {
   AlertTriangle,
   RefreshCw,
   ArrowRight,
-  ShoppingBag
+  ShoppingBag,
+  Clock,
+  CalendarX2,
+  CheckCircle2
 } from 'lucide-react';
+import type { Echeance } from '../../hooks/useDashboard';
 import { 
   PieChart, 
   Pie, 
@@ -21,6 +25,7 @@ interface FinancialSummaryProps {
   supplierDebts: any;
   isRefetchingSupplierDebts: boolean;
   refetchSupplierDebts: () => void;
+  echeances: Echeance[];
   t: any;
   formatCurrencyLocal: (val: number) => string;
 }
@@ -31,6 +36,7 @@ export default function FinancialSummary({
   supplierDebts,
   isRefetchingSupplierDebts,
   refetchSupplierDebts,
+  echeances,
   t,
   formatCurrencyLocal
 }: FinancialSummaryProps) {
@@ -183,6 +189,89 @@ export default function FinancialSummary({
           </div>
         </div>
       </div>
+
+      {/* Echéances Widget */}
+      {echeances.length > 0 && (
+        <div className="card bg-base-100 shadow-sm border border-base-300 rounded-2xl overflow-hidden">
+          <div className="card-body p-6">
+            <div className="flex items-center justify-between mb-5">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-orange-100 text-orange-600 rounded-xl">
+                  <CalendarX2 className="w-5 h-5" />
+                </div>
+                <div>
+                  <h2 className="text-sm font-black text-base-content tracking-tight uppercase">Échéances Fournisseurs</h2>
+                  <p className="text-[10px] font-bold text-base-content/30 uppercase tracking-widest">Paiements à venir & en retard</p>
+                </div>
+              </div>
+              <div className="flex gap-2">
+                {echeances.filter(e => e.status === 'EN RETARD').length > 0 && (
+                  <div className="bg-red-50 text-red-700 px-3 py-1 rounded-xl font-black text-xs border border-red-100 animate-pulse">
+                    {echeances.filter(e => e.status === 'EN RETARD').length} en retard
+                  </div>
+                )}
+                {echeances.filter(e => e.status === "AUJOURD'HUI").length > 0 && (
+                  <div className="bg-orange-50 text-orange-700 px-3 py-1 rounded-xl font-black text-xs border border-orange-100">
+                    {echeances.filter(e => e.status === "AUJOURD'HUI").length} aujourd'hui
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr>
+                    <th className="bg-base-200/80 text-xs font-semibold uppercase tracking-wider text-base-content/60 py-3 pl-4 rounded-l-2xl text-left">Fournisseur</th>
+                    <th className="bg-base-200/80 text-xs font-semibold uppercase tracking-wider text-base-content/60 py-3 text-left">Facture</th>
+                    <th className="bg-base-200/80 text-xs font-semibold uppercase tracking-wider text-base-content/60 py-3 text-right">Montant dû</th>
+                    <th className="bg-base-200/80 text-xs font-semibold uppercase tracking-wider text-base-content/60 py-3 text-center">Échéance</th>
+                    <th className="bg-base-200/80 text-xs font-semibold uppercase tracking-wider text-base-content/60 py-3 pr-4 rounded-r-2xl text-center">Statut</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-base-100">
+                  {echeances.slice(0, 10).map((e, i) => {
+                    const isRetard = e.status === 'EN RETARD';
+                    const isAujourdhui = e.status === "AUJOURD'HUI";
+                    return (
+                      <tr key={i} className={`transition-all group ${
+                        isRetard ? 'hover:bg-red-50/50' : isAujourdhui ? 'hover:bg-orange-50/50' : 'hover:bg-base-200/30'
+                      }`}>
+                        <td className="py-3 pl-4 font-bold text-sm text-base-content">{e.fournisseur_nom}</td>
+                        <td className="py-3 text-xs font-mono text-base-content/60">{e.numero_facture}</td>
+                        <td className="py-3 text-right font-mono font-black text-sm text-base-content">
+                          {formatCurrencyLocal(e.montant_du)}
+                        </td>
+                        <td className="py-3 text-center text-xs font-bold text-base-content/70">
+                          {new Date(e.date_echeance).toLocaleDateString('fr-FR')}
+                        </td>
+                        <td className="py-3 pr-4 text-center">
+                          {isRetard ? (
+                            <span className="inline-flex items-center gap-1 bg-red-100 text-red-700 px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider border border-red-200">
+                              <Clock className="w-3 h-3" />
+                              {Math.abs(e.jours_restants)}j de retard
+                            </span>
+                          ) : isAujourdhui ? (
+                            <span className="inline-flex items-center gap-1 bg-orange-100 text-orange-700 px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider border border-orange-200 animate-pulse">
+                              <AlertTriangle className="w-3 h-3" />
+                              Aujourd'hui
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center gap-1 bg-emerald-50 text-emerald-700 px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider border border-emerald-100">
+                              <CheckCircle2 className="w-3 h-3" />
+                              {e.jours_restants}j restants
+                            </span>
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Bottom Row: Payment Mix */}
       <div className="card bg-base-100 shadow-sm border border-base-300 rounded-2xl overflow-hidden w-full">

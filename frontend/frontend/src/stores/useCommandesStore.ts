@@ -25,6 +25,7 @@ interface CommandesStoreState {
   isImporting: boolean;
   isCreateProduitModalOpen: boolean;
   isSuggestionModalOpen: boolean;
+  isSchedulingModalOpen: boolean;
   isTransferModalOpen: boolean;
   selectedOrderIds: Set<number>;
   isMergeModalOpen: boolean;
@@ -52,6 +53,7 @@ interface CommandesStoreActions {
   setIsImporting: (value: boolean) => void;
   setIsCreateProduitModalOpen: (value: boolean) => void;
   setIsSuggestionModalOpen: (value: boolean) => void;
+  setIsSchedulingModalOpen: (value: boolean) => void;
   setIsTransferModalOpen: (value: boolean) => void;
   setSelectedOrderIds: (updater: Set<number> | ((prev: Set<number>) => Set<number>)) => void;
   setIsMergeModalOpen: (value: boolean) => void;
@@ -82,6 +84,7 @@ const createInitialState = (): CommandesStoreState => ({
   isImporting: false,
   isCreateProduitModalOpen: false,
   isSuggestionModalOpen: false,
+  isSchedulingModalOpen: false,
   isTransferModalOpen: false,
   selectedOrderIds: new Set<number>(),
   isMergeModalOpen: false,
@@ -119,6 +122,7 @@ export const useCommandesStore = create<CommandesStore>((set) => ({
   setIsImporting: (value) => set({ isImporting: value }),
   setIsCreateProduitModalOpen: (value) => set({ isCreateProduitModalOpen: value }),
   setIsSuggestionModalOpen: (value) => set({ isSuggestionModalOpen: value }),
+  setIsSchedulingModalOpen: (value) => set({ isSchedulingModalOpen: value }),
   setIsTransferModalOpen: (value) => set({ isTransferModalOpen: value }),
   setSelectedOrderIds: (updater) =>
     set((state) => ({

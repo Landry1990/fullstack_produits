@@ -5,7 +5,8 @@ import {
   Medal, 
   ArrowRight,
   Package,
-  CalendarDays
+  CalendarDays,
+  TrendingUp
 } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
@@ -45,6 +46,9 @@ export default function StockIntelligence({
   const [dormantItems, setDormantItems] = useState<any[]>([]);
   const [dormantTotal, setDormantTotal] = useState(0);
 
+  const [overstockItems, setOverstockItems] = useState<any[]>([]);
+  const [overstockTotal, setOverstockTotal] = useState(0);
+
   useEffect(() => {
     axios.get(`${apiBaseUrl}/api/stock-analysis/unsold/`, {
       params: { days: DORMANT_DAYS, page: 1, page_size: 50 }
@@ -53,6 +57,17 @@ export default function StockIntelligence({
       const sorted = [...items].sort((a, b) => (b.stock ?? 0) - (a.stock ?? 0)).slice(0, 5);
       setDormantItems(sorted);
       setDormantTotal(res.data?.total_value ?? 0);
+    }).catch(() => {});
+  }, [apiBaseUrl]);
+
+  useEffect(() => {
+    axios.get(`${apiBaseUrl}/api/stock-analysis/overstock/`, {
+      params: { page: 1, page_size: 50 }
+    }).then(res => {
+      const items = (res.data?.items ?? []) as any[];
+      const sorted = [...items].sort((a, b) => (b.excess_value ?? 0) - (a.excess_value ?? 0)).slice(0, 5);
+      setOverstockItems(sorted);
+      setOverstockTotal(res.data?.total_value ?? 0);
     }).catch(() => {});
   }, [apiBaseUrl]);
 
@@ -189,6 +204,69 @@ export default function StockIntelligence({
             <div className="mt-4 pt-4 border-t border-base-200 shrink-0">
               <Link to="/app/stock-analysis?tab=unsold&days=90" className="btn btn-sm btn-block btn-ghost hover:bg-slate-50 hover:text-slate-700 text-xs font-bold gap-2">
                 {t('dashboard.charts.see_all_dormant', { defaultValue: 'Voir la liste complète' })}
+                <ArrowRight className="w-3 h-3" />
+              </Link>
+            </div>
+          </div>
+        </div>
+
+        {/* Surstock (Excédents) */}
+        <div className="card bg-base-100 shadow-sm border border-orange-200 rounded-2xl overflow-hidden h-full flex flex-col">
+          <div className="card-body p-6 flex flex-col h-full">
+            <div className="flex items-center justify-between mb-6 shrink-0">
+              <div
+                className="flex items-center gap-3 cursor-pointer hover:opacity-80 transition-opacity"
+                onClick={() => navigate('/app/stock-analysis?tab=overstock')}
+              >
+                <div className="p-2 bg-orange-100 text-orange-600 rounded-xl">
+                  <TrendingUp className="w-5 h-5" />
+                </div>
+                <div>
+                  <h2 className="text-xs font-black text-base-content tracking-tight uppercase">Surstock</h2>
+                  <p className="text-[10px] font-bold text-base-content/30 uppercase tracking-widest">Produits en excédent</p>
+                </div>
+              </div>
+              {overstockTotal > 0 && (
+                <div className="text-right">
+                  <span className="text-xs font-black text-orange-700 block">{formatCurrencyLocal(overstockTotal)}</span>
+                  <span className="text-[9px] font-bold text-orange-400 uppercase tracking-wider">Capital bloqué</span>
+                </div>
+              )}
+            </div>
+
+            <div className="space-y-3 flex-grow overflow-y-auto pr-1 custom-scrollbar h-[350px]">
+              {overstockItems.length > 0 ? (
+                overstockItems.map((p: any, i: number) => (
+                  <div key={p.id} className="flex items-center justify-between p-3 rounded-xl bg-orange-50/60 border border-orange-100 hover:border-orange-300 transition-all group">
+                    <div className="flex items-center gap-3 min-w-0">
+                      <span className="text-xs font-black text-orange-500 bg-orange-100 w-6 h-6 flex items-center justify-center rounded-lg border border-orange-200 shrink-0">{i + 1}</span>
+                      <div className="min-w-0">
+                        <span className="text-xs font-bold text-base-content truncate block">{p.name}</span>
+                        <span className="text-[9px] font-bold text-orange-500/70 uppercase tracking-widest">
+                          {p.excess_qty != null ? `+${p.excess_qty} unités en excès` : `Stock: ${p.stock}u`}
+                        </span>
+                      </div>
+                    </div>
+                    <div className="flex flex-col items-end shrink-0 ml-2">
+                      <span className="text-[10px] font-black text-orange-700">{formatCurrencyLocal(p.excess_value ?? p.value ?? 0)}</span>
+                      <span className="text-[9px] font-bold text-base-content/30">excédent</span>
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <div className="flex flex-col items-center justify-center py-12 opacity-20 text-center h-full">
+                  <TrendingUp className="w-12 h-12 mb-2" />
+                  <span className="text-[10px] font-black uppercase tracking-widest">Aucun surstock détecté</span>
+                </div>
+              )}
+            </div>
+
+            <div className="mt-4 pt-4 border-t border-orange-100 shrink-0">
+              <Link
+                to="/app/stock-analysis?tab=overstock"
+                className="btn btn-sm btn-block btn-ghost hover:bg-orange-50 hover:text-orange-700 text-xs font-bold gap-2 border border-orange-100"
+              >
+                Voir tous les surstocks
                 <ArrowRight className="w-3 h-3" />
               </Link>
             </div>

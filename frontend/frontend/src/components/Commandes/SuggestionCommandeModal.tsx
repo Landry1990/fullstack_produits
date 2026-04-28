@@ -178,11 +178,12 @@ export default function SuggestionCommandeModal({
         )}
         
         {stepSuggestion === 1 ? (
-            <button 
-                className="btn btn-primary px-8 shadow-lg shadow-primary/20"
-                onClick={fetchSuggestions}
-                disabled={loadingSuggestions}
-            >
+            <div className="flex gap-2">
+                <button 
+                    className="btn btn-primary px-8 shadow-lg shadow-primary/20"
+                    onClick={fetchSuggestions}
+                    disabled={loadingSuggestions}
+                >
                 {loadingSuggestions ? (
                     <span className="loading loading-spinner loading-xs"></span>
                 ) : (
@@ -192,6 +193,7 @@ export default function SuggestionCommandeModal({
                     </>
                 )}
             </button>
+            </div>
         ) : (
             <div className="flex gap-3">
                 <button 
@@ -214,12 +216,12 @@ export default function SuggestionCommandeModal({
         title={t('orders:suggestion_modal.title')}
         subtitle={stepSuggestion === 1 ? t('orders:suggestion_modal.subtitle_config') : t('orders:suggestion_modal.subtitle_results', { count: suggestions.length })}
         icon={<Brain className="w-6 h-6 text-primary" />}
-        maxWidth="max-w-6xl"
+        maxWidth="max-w-4xl"
         footer={footer}
     >
-        <div className="p-6 bg-slate-50/50 min-h-[400px]">
+        <div className="p-0 flex flex-col bg-base-100 min-h-[520px] h-[520px]">
             {stepSuggestion === 1 ? (
-                <div className="max-w-3xl mx-auto space-y-6">
+                <div className="max-w-3xl mx-auto space-y-6 p-6 overflow-auto flex-1">
                     {/* Mode Selection */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <label 
@@ -448,7 +450,7 @@ export default function SuggestionCommandeModal({
                 </div>
             ) : (
                 /* STEP 2 : RÉSULTATS */
-                <div className="flex flex-col h-full gap-4 max-h-[600px]">
+                <div className="flex flex-col h-full gap-4 p-4 overflow-hidden">
                     <div className="flex items-center justify-between gap-4 p-4 bg-base-100 rounded-2xl border border-gray-100 shadow-sm">
                         <div className="flex items-center gap-3">
                             <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary">
