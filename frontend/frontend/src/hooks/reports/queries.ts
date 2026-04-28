@@ -76,9 +76,11 @@ export const QUERIES: QueryDefinition[] = [
         description: 'Produits sans vente depuis X jours',
         endpoint: '/api/produits/',
         params: [
-            { key: 'jours_sans_vente', label: 'Jours sans vente', type: 'number', default: 90 }
+            { key: 'stock_gt', label: 'Stock supérieur à', type: 'number', default: 0 },
+            { key: 'rotation_moyenne', label: 'Rotation moyenne (=)', type: 'number', default: 0 }
         ],
-        resultType: 'table'
+        resultType: 'table',
+        columns: ['name', 'cip', 'stock', 'rotation_moyenne', 'dernier_vente', 'pmp', 'selling_price']
     },
     {
         id: 'stock_negatif',
@@ -89,7 +91,8 @@ export const QUERIES: QueryDefinition[] = [
             { key: 'stock_lt', label: 'Stock inférieur à', type: 'number', default: 0 },
             { key: 'ordering', label: 'Tri', type: 'text', default: 'stock' }
         ],
-        resultType: 'table'
+        resultType: 'table',
+        columns: ['name', 'cip', 'stock', 'selling_price', 'pmp']
     },
     {
         id: 'valeur_stock_journalier',

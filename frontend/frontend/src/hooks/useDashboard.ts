@@ -275,6 +275,34 @@ export const useCurrentObjectifs = () => {
     });
 };
 
+export interface Echeance {
+    fournisseur_id: number;
+    fournisseur_nom: string;
+    type_reglement: 'FACTURE' | 'RELEVE';
+    commande_id: number | null;
+    numero_facture: string;
+    montant_du: number;
+    date_echeance: string;
+    jours_restants: number;
+    status: 'EN RETARD' | "AUJOURD'HUI" | 'À VENIR';
+}
+
+const echeancierEndpoint = apiBaseUrl
+    ? `${String(apiBaseUrl).replace(/\/$/, '')}/api/fournisseurs/echeancier/`
+    : '/api/fournisseurs/echeancier/';
+
+export const useEcheances = (enabled: boolean = true) => {
+    return useQuery<Echeance[]>({
+        queryKey: ['dashboard', 'echeances'],
+        queryFn: async () => {
+            const response = await axios.get<Echeance[]>(echeancierEndpoint);
+            return response.data;
+        },
+        enabled,
+        staleTime: 1000 * 60 * 5, // 5 minutes
+    });
+};
+
 export const useReapproStats = (enabled: boolean = true) => {
     return useQuery({
         queryKey: ['dashboard', 'reappro_stats'],

@@ -1,6 +1,4 @@
 import type { ProduitModel } from './catalog';
-// Actually Fournisseur was at line 20 in types.ts. I should put it in crm or vendor.
-// Let's check my plan. Plan said procurement. Let's put it in procurement.
 
 export interface Fournisseur {
     id: number
@@ -12,6 +10,7 @@ export interface Fournisseur {
     is_active?: boolean
     type_reglement?: 'FACTURE' | 'RELEVE'
     delai_paiement_jours?: number
+    periode_releve_jours?: number
 }
 
 export interface AchatProduit {
@@ -114,4 +113,32 @@ export interface Avoir {
     updated_at: string
     total_ht: string
     produits: LigneAvoir[]
+}
+
+export interface OrderSchedule {
+    id?: number;
+    fournisseur: number;
+    active_days: number[];
+    frequency_weeks: number;
+    start_date: string;
+    time: string;
+    is_active: boolean;
+    has_alert_sound: boolean;
+    has_teletransmission: boolean;
+    teletransmission_mode: 'IMMEDIATE' | 'BATCH';
+    needs_financial_reception: boolean;
+    print_copies: number;
+    delivery_time: string | null;
+    auto_reception_delay: number;
+    notify_sms: boolean;
+    notify_whatsapp: boolean;
+    special_code: string;
+    comment: string;
+    min_amount: number;
+    min_items: number;
+    condition_logic: 'AND' | 'OR';
+    execution_mode: 'SIMPLE' | 'OPTIMISE' | 'CUMULATIF';
+    analysis_period_days: number;
+    last_run?: string;
+    created_at?: string;
 }

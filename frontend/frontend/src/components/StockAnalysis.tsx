@@ -1,7 +1,7 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 import { Toaster } from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
-import { PackageSearch, ShoppingBag, X, ChevronLeft, ChevronRight, TrendingUp } from 'lucide-react';
+import { PackageSearch, ShoppingBag, X, ChevronLeft, ChevronRight, TrendingUp, HelpCircle } from 'lucide-react';
 import { formatCurrency } from '../utils/formatters';
 import { useStockAnalysis } from '../hooks/useStockAnalysis';
 import { StockAnalysisFilters } from './stock/StockAnalysisFilters';
@@ -102,7 +102,7 @@ const StockAnalysis = () => {
                     {activeTab === 'pilotage' ? (
                         <StockHealthDashboard />
                     ) : (
-                        <div className="bg-base-100 rounded-[32px] shadow-sm border border-base-200 overflow-hidden flex flex-col min-h-0 sm:min-h-[480px] lg:min-h-[600px] relative">
+                        <div className="bg-base-100 rounded-[32px] shadow-sm border border-base-200 overflow-hidden flex flex-col min-h-0 sm:min-h-[480px] lg:min-h-[600px]">
                             {error && (
                                 <div className="m-6 alert alert-error shadow-sm rounded-2xl">
                                     <X className="w-5 h-5" />
@@ -151,8 +151,8 @@ const StockAnalysis = () => {
                             )}
 
                             {/* Floating Action Bar for Selection */}
-                            {activeTab === 'shortage' && selectedItems.size > 0 && (
-                                <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-10 w-full max-w-md px-4 animate-in fade-in slide-in-from-bottom-4 duration-300">
+                            {(activeTab === 'shortage' || activeTab === 'overstock') && selectedItems.size > 0 && (
+                                <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 w-full max-w-md px-4 animate-in fade-in slide-in-from-bottom-4 duration-300">
                                     <div className="bg-primary text-primary-content p-4 rounded-[24px] shadow-2xl flex items-center justify-between border border-white/10 backdrop-blur-md">
                                         <div className="flex items-center gap-3 ml-2">
                                             <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center font-black">
@@ -163,6 +163,14 @@ const StockAnalysis = () => {
                                             </span>
                                         </div>
                                         <div className="flex items-center gap-2">
+                                            <div
+                                                className="tooltip tooltip-top tooltip-accent before:max-w-[260px] before:text-left before:text-[11px] before:leading-relaxed before:font-normal before:normal-case before:tracking-normal"
+                                                data-tip={activeTab === 'shortage'
+                                                    ? "Qté suggérée = ARRONDI_SUP(vente_moy/jour × 30j) − stock actuel\n\nSi ventes inconnues : stock_minimum − stock actuel\n\nObjectif : couvrir 30 jours de stock."
+                                                    : "En surstock, les quantités affichées sont à titre indicatif.\n\nFormule : ARRONDI_SUP(vente_moy/jour × 30j) − stock actuel\n\nVérifiez avant de valider la commande."}
+                                            >
+                                                <HelpCircle className="w-4 h-4 text-primary-content/50 hover:text-primary-content cursor-help transition-colors" />
+                                            </div>
                                             <button
                                                 className="btn btn-sm btn-accent gap-2 rounded-xl px-4 h-10 font-black border-none"
                                                 onClick={actions.handleGenerateOrder}

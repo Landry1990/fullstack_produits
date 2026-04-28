@@ -116,7 +116,10 @@ export const ReportResults: React.FC<ReportResultsProps> = ({
 
             const filteredResults = results;
 
-            const columns = Object.keys(results[0]).filter(k => !k.startsWith('_') && k !== 'id');
+            const rawColumns = Object.keys(results[0]).filter(k => !k.startsWith('_') && k !== 'id');
+            const columns = selectedQuery.columns 
+                ? selectedQuery.columns.filter(col => rawColumns.includes(col))
+                : rawColumns;
 
             return (
                 <div ref={tableContainerRef} className="bg-base-100 rounded-3xl border border-base-300 shadow-sm overflow-hidden animate-in fade-in duration-500">

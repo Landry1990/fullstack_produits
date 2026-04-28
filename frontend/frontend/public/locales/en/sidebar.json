@@ -33,6 +33,8 @@
         "finance": "Finance & Payments"
     },
     "clients": "Clients",
+    "clients_consultation": "Consultation",
+    "clients_imc": "Clinical Tools",
     "creances": "Debts",
     "stock": {
         "title": "Stock",

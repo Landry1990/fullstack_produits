@@ -13,7 +13,7 @@ from .views import (
     AuditLogViewSet, LoyaltySettingViewSet, UserViewSet, CustomAuthToken,
     CategoriesListView, CategoriesDetailView, PromisViewSet,
     PromotionViewSet, TVAViewSet, UserDailySessionViewSet,
-    DepotClientViewSet, PosteCaisseViewSet
+    DepotClientViewSet, PosteCaisseViewSet, OrderScheduleViewSet
 )
 from .views.formes import FormeViewSet
 from .views.paiements import PaiementFournisseurViewSet
@@ -45,6 +45,7 @@ router.register(r'fournisseurs', FournisseurViewSet, basename='fournisseur')
 router.register(r'clients', ClientViewSet, basename='client')
 router.register(r'ayants-droit', AyantDroitViewSet, basename='ayantdroit')
 router.register(r'commandes', CommandeViewSet, basename='commande')
+router.register(r'order-schedules', OrderScheduleViewSet, basename='orderschedule')
 router.register(r'commande-produits', CommandeProduitViewSet, basename='commandeproduit')
 router.register(r'factures', FactureViewSet, basename='facture')
 router.register(r'facture-produits', FactureProduitViewSet, basename='factureproduit')

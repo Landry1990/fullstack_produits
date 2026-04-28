@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import axios from 'axios';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'react-hot-toast';
@@ -74,6 +75,7 @@ export default function Clients() {
   const [isLoyaltyConfigOpen, setIsLoyaltyConfigOpen] = useState(false);
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
   const [isDepositModalOpen, setIsDepositModalOpen] = useState(false);
+  const [loyaltyThreshold, setLoyaltyThreshold] = useState<number>(0);
 
   // Purchase History State
   const [purchaseHistory, setPurchaseHistory] = useState<any | null>(null);
@@ -114,7 +116,24 @@ export default function Clients() {
 
   useEffect(() => {
     fetchClients();
+    fetchLoyaltyThreshold();
   }, [showInactive, currentPage, debouncedSearch]);
+
+  const fetchLoyaltyThreshold = async () => {
+    try {
+      const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || '';
+      const res = await axios.get(`${apiBaseUrl}/api/loyalty-settings/`);
+      let data = res.data;
+      if (data && data.results) data = data.results[0];
+      else if (Array.isArray(data)) data = data[0];
+      
+      if (data && data.auto_reward_threshold) {
+        setLoyaltyThreshold(data.auto_reward_threshold);
+      }
+    } catch (err) {
+      console.error("Error fetching loyalty threshold", err);
+    }
+  };
 
   // Handle incoming redirect from Omnisearch
   useEffect(() => {
@@ -441,12 +460,28 @@ export default function Clients() {
                         <h3 className="text-[10px] font-black uppercase tracking-widest text-base-content/40">{t('clients:sections.programs')}</h3>
                      </div>
                      <div className="p-6 grid grid-cols-2 gap-4">
-                        <div className="p-4 bg-secondary/5 border border-secondary/10 rounded-2xl flex flex-col gap-1">
-                           <span className="text-[9px] font-black uppercase tracking-widest text-secondary/40">{t('clients:history.loyalty')}</span>
-                           <div className="text-xl font-black text-secondary">
-                              {selectedClient.points_fidelite ?? 0} {t('clients:units.pts')}
+                        {selectedClient.client_type === 'PARTICULIER' && (
+                           <div className="p-4 bg-secondary/5 border border-secondary/10 rounded-2xl flex flex-col gap-1 relative group overflow-hidden">
+                              <span className="text-[9px] font-black uppercase tracking-widest text-secondary/40">{t('clients:history.loyalty')}</span>
+                              <div className="flex justify-between items-end">
+                                 <div className="text-xl font-black text-secondary">
+                                    {selectedClient.points_fidelite ?? 0} {t('clients:units.pts')}
+                                 </div>
+                                 {loyaltyThreshold > 0 && (
+                                   <div className="radial-progress text-secondary/20 group-hover:text-secondary transition-colors" style={{ "--value": Math.min(100, ((selectedClient.points_fidelite ?? 0) / loyaltyThreshold) * 100), "--size": "2.5rem", "--thickness": "3px" } as any}>
+                                      <span className="text-[10px] font-black text-secondary">
+                                         {Math.min(100, Math.round(((selectedClient.points_fidelite ?? 0) / loyaltyThreshold) * 100))}%
+                                      </span>
+                                   </div>
+                                 )}
+                              </div>
+                              {loyaltyThreshold > 0 && (selectedClient.points_fidelite ?? 0) >= loyaltyThreshold && (
+                                <div className="absolute top-0 right-0 p-1">
+                                  <div className="w-2 h-2 bg-accent rounded-full animate-ping"></div>
+                                </div>
+                              )}
                            </div>
-                        </div>
+                        )}
                         {selectedClient.client_type === 'PARTICULIER' && (
                           <>
                             {selectedClient.is_deposit_enabled ? (

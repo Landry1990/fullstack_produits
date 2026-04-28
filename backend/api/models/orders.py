@@ -8,6 +8,12 @@ from django.contrib.auth.models import User
 from django.db.models import Sum, F, DecimalField
 from decimal import Decimal
 from datetime import date
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from django.db.models import QuerySet
+    from django.db.models.fields.related_descriptors import RelatedManager
+    from .paiements import PaiementFournisseur
 
 
 class Commande(models.Model):
@@ -20,6 +26,10 @@ class Commande(models.Model):
     class Type(models.TextChoices):
         LOCALE = 'LOC', 'Locale'
         DIRECTE = 'DIR', 'Directe'
+    
+    class Source(models.TextChoices):
+        MANUEL = 'MANUEL', 'Manuel'
+        AUTO_SCHEDULE = 'AUTO', 'Planification auto'
 
     id = models.AutoField(primary_key=True)
     type = models.CharField(
@@ -44,6 +54,19 @@ class Commande(models.Model):
     )
     status = models.CharField(max_length=10, choices=Status.choices, default=Status.EN_PREPARATION)
     
+    # Source de création (pour suivre les commandes auto-générées)
+    source = models.CharField(
+        max_length=10, 
+        choices=Source.choices, 
+        default=Source.MANUEL,
+        help_text="Origine de la commande (manuelle ou auto-générée)"
+    )
+    
+    # Reverse relations (declared for type checkers; populated by Django ORM)
+    produits: "RelatedManager[CommandeProduit]"
+    paiements: "RelatedManager[PaiementFournisseur]"
+    paiements_multiples: "RelatedManager[PaiementFournisseur]"
+
     # Tracking
     closed_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='commandes_cloturees')
 
@@ -164,6 +187,9 @@ class Avoir(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     
+    if TYPE_CHECKING:
+        produits: "QuerySet[LigneAvoir]"
+
     class Meta:
         ordering = ['-date', '-created_at']
         verbose_name = 'Avoir fournisseur'
@@ -243,3 +269,59 @@ class LigneAvoir(models.Model):
     @property
     def produit_cip(self):
         return self.produit.cip1 if self.produit else ''
+
+
+class OrderSchedule(models.Model):
+    """Configuration for automated order generation."""
+    class ConditionLogic(models.TextChoices):
+        AND = 'AND', 'ET'
+        OR = 'OR', 'OU'
+
+    class TeletransmissionMode(models.TextChoices):
+        IMMEDIATE = 'IMMEDIATE', 'Immédiate'
+        BATCH = 'BATCH', 'Par lots'
+
+    class ExecutionMode(models.TextChoices):
+        SIMPLE = 'SIMPLE', 'Remplacement des ventes (Simple)'
+        OPTIMISE = 'OPTIMISE', 'Analyse prédictive (Intelligent)'
+        CUMULATIF = 'CUMULATIF', 'Cumulatif depuis dernière commande'
+
+    id = models.AutoField(primary_key=True)
+    fournisseur = models.ForeignKey('Fournisseur', on_delete=models.CASCADE, related_name='schedules')
+    
+    # Scheduling
+    active_days = models.JSONField(default=list, help_text="List of active days [0-6]")
+    frequency_weeks = models.IntegerField(default=1)
+    start_date = models.DateField(default=date.today)
+    time = models.TimeField(default="12:00")
+    is_active = models.BooleanField(default=True)
+    
+    # Options
+    has_alert_sound = models.BooleanField(default=True)
+    has_teletransmission = models.BooleanField(default=False)
+    teletransmission_mode = models.CharField(max_length=20, choices=TeletransmissionMode.choices, default=TeletransmissionMode.IMMEDIATE)
+    needs_financial_reception = models.BooleanField(default=True)
+    print_copies = models.IntegerField(default=1)
+    
+    # Delivery
+    delivery_time = models.TimeField(null=True, blank=True)
+    auto_reception_delay = models.IntegerField(default=0, help_text="Minutes before auto-reception")
+    notify_sms = models.BooleanField(default=False)
+    notify_whatsapp = models.BooleanField(default=False)
+    
+    # Logic
+    special_code = models.CharField(max_length=50, blank=True)
+    min_amount = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    min_items = models.IntegerField(default=0)
+    condition_logic = models.CharField(max_length=3, choices=ConditionLogic.choices, default=ConditionLogic.AND)
+    
+    # Automation Logic
+    execution_mode = models.CharField(max_length=10, choices=ExecutionMode.choices, default=ExecutionMode.OPTIMISE)
+    analysis_period_days = models.IntegerField(default=30)
+    comment = models.TextField(blank=True)
+    last_run = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"Schedule {self.id} - {self.fournisseur.name}"

@@ -3,6 +3,7 @@ from .commande_produits import CommandeProduitViewSet
 from .avoirs import AvoirViewSet, LigneAvoirViewSet
 from .promis import PromisViewSet
 from .suggestions import generer_suggestions_commande
+from .schedules import OrderScheduleViewSet
 
 __all__ = [
     'CommandeViewSet',
@@ -11,4 +12,5 @@ __all__ = [
     'LigneAvoirViewSet',
     'PromisViewSet',
     'generer_suggestions_commande',
+    'OrderScheduleViewSet',
 ]

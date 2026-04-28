@@ -39,7 +39,11 @@ class Fournisseur(models.Model):
     )
     delai_paiement_jours = models.IntegerField(
         default=0,
-        help_text="Délai de paiement accordé en jours (ex: 10, 15). 0 = au comptant."
+        help_text="Délai de paiement accordé en jours après fin de tranche/facture (ex: 10, 15). 0 = au comptant."
+    )
+    periode_releve_jours = models.IntegerField(
+        default=10,
+        help_text="Durée en jours d'une tranche de relevé (ex: 10 = du 1-10, 11-20, 21-31). Utilisé uniquement si type_reglement=RELEVE."
     )
 
     def __str__(self):
