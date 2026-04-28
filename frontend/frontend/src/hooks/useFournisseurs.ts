@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo, type FormEvent, useRef, KeyboardEvent } from 'react';
+import { useEffect, useState, useMemo, type FormEvent, useRef, type KeyboardEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useLocation } from 'react-router-dom';
 import axios from 'axios';
@@ -35,6 +35,7 @@ export const emptyForm: Omit<Fournisseur, 'id'> = {
   email: '',
   type_reglement: 'FACTURE',
   delai_paiement_jours: 0,
+  periode_releve_jours: 10,
 };
 
 export function useFournisseurs() {

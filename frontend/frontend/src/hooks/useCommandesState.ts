@@ -52,6 +52,9 @@ export function useCommandesState(forcedType?: 'LOC' | 'DIR') {
   const viewMode = useCommandesStore((s) => s.viewMode);
   const setViewMode = useCommandesStore((s) => s.setViewMode);
 
+  const isSchedulingModalOpen = useCommandesStore((s) => s.isSchedulingModalOpen);
+  const setIsSchedulingModalOpen = useCommandesStore((s) => s.setIsSchedulingModalOpen);
+
   useEffect(() => {
     const openDetailsId = location.state?.openDetailsId;
     if (openDetailsId) {
@@ -102,7 +105,8 @@ export function useCommandesState(forcedType?: 'LOC' | 'DIR') {
 
   const commandes = useMemo(() => commandesData?.results || [], [commandesData]);
   const totalCount = commandesData?.count || 0;
-  const totalPages = Math.ceil(totalCount / 50) || 1;
+  const pageSize = commandesData?.results?.length || 20;
+  const totalPages = Math.ceil(totalCount / pageSize) || 1;
   const error = loadError ? (loadError as Error).message : null;
 
   const numeroFacture = useCommandesStore((s) => s.numeroFacture);
@@ -517,6 +521,16 @@ export function useCommandesState(forcedType?: 'LOC' | 'DIR') {
           }
         }
         setCommandeProduits(newLines);
+
+        // Pré-sélectionner le fournisseur du premier produit qui en a un
+        const firstWithFournisseur = newLines.find(
+          l => l.produit && typeof l.produit === 'object' && (l.produit as any).fournisseur
+        );
+        if (firstWithFournisseur) {
+          const fId = (firstWithFournisseur.produit as any).fournisseur;
+          setNewCommandeFournisseurId(String(fId));
+        }
+
         toast.success(t('orders:messages.products_added_from_alerts', { count: newLines.length }), { icon: '📦' });
       };
       
@@ -1255,6 +1269,7 @@ export function useCommandesState(forcedType?: 'LOC' | 'DIR') {
       sudoState, closeSudo,
       isTransferModalOpen, setIsTransferModalOpen,
       isMergeModalOpen, setIsMergeModalOpen,
+      isSchedulingModalOpen, setIsSchedulingModalOpen,
       t
     },
     listProps: {

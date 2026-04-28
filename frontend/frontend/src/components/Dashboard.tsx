@@ -19,7 +19,8 @@ import {
   useReapproStats,
   useLowStock,
   usePromisDisponibles,
-  useUgStats
+  useUgStats,
+  useEcheances
 } from '../hooks/useDashboard';
 
 import { useTranslation } from 'react-i18next';
@@ -60,6 +61,7 @@ export default function Dashboard() {
   const isFinanceTab = activeTab === 'finance';
   const { data: ugStats } = useUgStats(isFinanceTab);
   const { data: supplierDebts, refetch: refetchSupplierDebts, isRefetching: isRefetchingSupplierDebts } = useSupplierDebts(isFinanceTab);
+  const { data: echeances = [] } = useEcheances(isFinanceTab);
 
   const currentLocale = t('common:locale', { defaultValue: 'fr-FR' });
   const currencySymbol = t('common:currency_symbol', { defaultValue: 'F' });
@@ -116,6 +118,16 @@ export default function Dashboard() {
       );
     }
   }, [expiringLots.length]);
+
+  useEffect(() => {
+    const retards = echeances.filter(e => e.status === 'EN RETARD');
+    if (retards.length > 0) {
+      toast.error(
+        `${retards.length} échéance${retards.length > 1 ? 's' : ''} fournisseur${retards.length > 1 ? 's' : ''} en retard !`,
+        { duration: 6000, id: 'echeances-retard-dashboard', icon: '💳' }
+      );
+    }
+  }, [echeances.length]);
 
   useEffect(() => {
     if (promisDisponibles.length > 0) {
@@ -249,6 +261,7 @@ export default function Dashboard() {
             supplierDebts={supplierDebts}
             isRefetchingSupplierDebts={isRefetchingSupplierDebts}
             refetchSupplierDebts={refetchSupplierDebts}
+            echeances={echeances}
             t={t}
             formatCurrencyLocal={formatCurrencyLocal}
           />

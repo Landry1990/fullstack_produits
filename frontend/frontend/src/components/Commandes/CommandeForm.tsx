@@ -187,7 +187,6 @@ export default function CommandeForm({
                       className="select select-bordered w-full select-sm bg-base-50 h-9"
                       value={newCommandeFournisseurId}
                       onChange={(e) => setNewCommandeFournisseurId(e.target.value)}
-                      required
                     >
                       <option value="" disabled>{t('orders:form.provider_placeholder')}</option>
                       {fournisseurs.map(f => <option key={f.id} value={f.id}>{f.name}</option>)}

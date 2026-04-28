@@ -21,6 +21,7 @@ export const useCommandes = (filters: CommandesFilters) => {
             status: filters.status
         }),
         placeholderData: (previousData) => previousData,
+        staleTime: 1000 * 60 * 2, // 2 min — évite un refetch à chaque navigation
     });
 };
 

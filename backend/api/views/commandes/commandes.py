@@ -21,7 +21,7 @@ from reportlab.graphics.barcode import code128
 
 from ...models import (
     Commande, CommandeProduit, Produit, StockLot, StockAdjustment, AuditLog,
-    Facture, MouvementStock, FactureProduitAllocation
+    Facture, MouvementStock, FactureProduitAllocation, PaiementFournisseur
 )
 from ...serializers import CommandeSerializer, CommandeProduitSerializer
 from ...serializers_optimized import CommandeListSerializer, CommandeDetailSerializer, CommandeOmnisearchSerializer
@@ -95,20 +95,40 @@ class CommandeViewSet(MultiTermSearchMixin, OptimizedSerializerMixin, viewsets.M
     - Detail view: Complete serializer with all products
     """
     from django.db.models.functions import Coalesce
-    from django.db.models import Value
+    from django.db.models import Value, OuterRef, Subquery
 
-    # Base queryset - optimized for LIST (no prefetch of products)
+    # Base queryset — each aggregate uses an isolated Subquery to avoid the
+    # cartesian product that occurs when annotating across multiple FK relations
+    # (produits × paiements) in a single .annotate() call.
     queryset = Commande.objects.select_related('fournisseur', 'closed_by') \
         .annotate(
             total_annotated=Coalesce(
-                Sum(F('produits__quantity') * F('produits__price')), 
+                Subquery(
+                    CommandeProduit.objects.filter(commande=OuterRef('pk'))
+                    .values('commande')
+                    .annotate(s=Sum(F('quantity') * F('price'), output_field=DecimalField()))
+                    .values('s')[:1]
+                ),
                 Value(0, output_field=DecimalField())
             ),
             montant_paye_annotated=Coalesce(
-                Sum('paiements__montant'), 
+                Subquery(
+                    PaiementFournisseur.objects.filter(commande=OuterRef('pk'))
+                    .values('commande')
+                    .annotate(s=Sum('montant', output_field=DecimalField()))
+                    .values('s')[:1]
+                ),
                 Value(0, output_field=DecimalField())
             ),
-            items_count=Count('produits', distinct=True)
+            items_count=Coalesce(
+                Subquery(
+                    CommandeProduit.objects.filter(commande=OuterRef('pk'))
+                    .values('commande')
+                    .annotate(c=Count('id'))
+                    .values('c')[:1]
+                ),
+                Value(0)
+            ),
         ).order_by('-date')
         
     serializer_class = CommandeSerializer

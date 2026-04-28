@@ -265,6 +265,17 @@ export function useFacturationState() {
     await completeSale(params)
   }
 
+  const applyLoyaltyReward = useCallback(() => {
+    if (!clientsHook.selectedClient || clientsHook.useManualClient) return
+    const client = clientsHook.clients.find(c => c.id === clientsHook.selectedClient)
+    if (client?.pending_discount && Number(client.pending_discount) > 0) {
+      ui.setRemiseGlobale(client.pending_discount)
+      ui.setRemiseMode('taux')
+      setUsePendingDiscount(true)
+      toast.success(t('facturation:messages.reward_applied', { discount: client.pending_discount }))
+    }
+  }, [clientsHook.selectedClient, clientsHook.clients, clientsHook.useManualClient, ui, t])
+
   // --- Payment Preparation ---
   const handlePaymentClick = async () => {
     setLoading(true)
@@ -583,6 +594,7 @@ export function useFacturationState() {
     searchInputRef,
     clientSearchRef,
     quantityInputsRef,
-    paymentInputRef
+    paymentInputRef,
+    applyLoyaltyReward
   }
 }

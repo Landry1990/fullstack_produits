@@ -16,6 +16,7 @@ const Commandes = lazy(() => import('./components/Commandes'));
 const Ventes = lazy(() => import('./components/Ventes'));
 const Fournisseurs = lazy(() => import('./components/Fournisseurs'));
 const Clients = lazy(() => import('./components/Clients'));
+const BMICalculator = lazy(() => import('./components/clinical/BMICalculator'));
 const Facturation = lazy(() => import('./components/Facturation'));
 const CaisseCentralisee = lazy(() => import('./components/CaisseCentralisee'));
 const Inventaire = lazy(() => import('./components/Inventaire'));
@@ -113,6 +114,7 @@ export const router = createBrowserRouter([
           // ── Tiers ──
           { path: 'fournisseurs', ...perm('fournisseurs', Fournisseurs) },
           { path: 'clients', ...perm('clients', Clients) },
+          { path: 'outils/imc', ...perm('clients', BMICalculator) },
           { path: 'creances', ...perm('creances', Creances) },
           { path: 'statistiques-fournisseurs', ...perm('statistiques_fournisseurs', StatistiquesFournisseur) },
 

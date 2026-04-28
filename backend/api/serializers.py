@@ -13,7 +13,7 @@ from .models import (
     Groupe, SmsLog, SmsTemplate, PaiementFournisseur, ConfigurationOption,
     Promotion, PromotionPackItem, ObjectifCommercial, ConfigurationObjectifs, TVA,
     WhatsAppLog, RuptureFournisseur, DepotClient, InternalMessage, MessageTemplate,
-    ReapproSession, PosteCaisse
+    ReapproSession, PosteCaisse, OrderSchedule
 )
 from .services import PromotionService
 from .pdf_utils import number_to_french
@@ -623,6 +623,35 @@ class CommandeSerializer(serializers.ModelSerializer):
         if fournisseur:
             validated_data['fournisseur_nom'] = fournisseur.name
         return super().update(instance, validated_data)
+
+class OrderScheduleSerializer(serializers.ModelSerializer):
+    fournisseur_name = serializers.CharField(source='fournisseur.name', read_only=True)
+    
+    class Meta:
+        model = OrderSchedule
+        fields = '__all__'
+    
+    def validate(self, data):
+        """Empêcher 2 plannings actifs pour le même fournisseur."""
+        is_active = data.get('is_active', True)
+        fournisseur = data.get('fournisseur')
+        
+        # En création ou si on active un planning existant
+        if is_active and fournisseur:
+            existing_active = OrderSchedule.objects.filter(
+                fournisseur=fournisseur,
+                is_active=True
+            )
+            # Exclure l'instance actuelle en cas de mise à jour
+            if self.instance:
+                existing_active = existing_active.exclude(pk=self.instance.pk)
+            
+            if existing_active.exists():
+                raise serializers.ValidationError({
+                    'fournisseur': f"Un planning actif existe déjà pour ce fournisseur. Désactivez-le d'abord."
+                })
+        
+        return data
 
 class FactureProduitSerializer(serializers.ModelSerializer):
     produit_nom = serializers.SerializerMethodField()

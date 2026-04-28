@@ -5,7 +5,7 @@ from .groupes import GroupeViewSet
 from .clients import ClientViewSet, AyantDroitViewSet, DepotClientViewSet
 from .commandes import (
     CommandeViewSet, CommandeProduitViewSet, AvoirViewSet, LigneAvoirViewSet, 
-    PromisViewSet, generer_suggestions_commande
+    PromisViewSet, generer_suggestions_commande, OrderScheduleViewSet
 )
 from .ventes import (
     FactureViewSet, FactureProduitViewSet, CaisseViewSet, ClotureCaisseViewSet,
@@ -46,7 +46,7 @@ __all__ = [
     'ClientViewSet', 'AyantDroitViewSet', 'DepotClientViewSet',
     'PaiementFournisseurViewSet',
     'CommandeViewSet', 'CommandeProduitViewSet', 'AvoirViewSet', 'LigneAvoirViewSet',
-    'PromisViewSet', 'generer_suggestions_commande',
+    'PromisViewSet', 'generer_suggestions_commande', 'OrderScheduleViewSet',
     'FactureViewSet', 'FactureProduitViewSet', 'CaisseViewSet', 'ClotureCaisseViewSet',
     'CreanceViewSet', 'MouvementCaisseViewSet', 'PosteCaisseViewSet',
     'StockLotViewSet', 'InventaireViewSet', 'LigneInventaireViewSet', 'StockAdjustmentViewSet',

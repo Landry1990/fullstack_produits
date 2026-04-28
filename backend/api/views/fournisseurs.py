@@ -145,86 +145,149 @@ class FournisseurViewSet(viewsets.ModelViewSet):
     @action(detail=False, methods=['get'])
     def echeancier(self, request):
         """
-        Retourne la liste des échéances de paiement fournisseurs (par facture ou par relevé).
+        Retourne les échéances de paiement fournisseurs.
+
+        Mode RELEVE :
+          - Les commandes clôturées sont regroupées en tranches de `periode_releve_jours`
+            jours démarrant le 1er du mois (ex: 10j → 1-10, 11-20, 21-fin).
+          - Date d'échéance = dernier jour de la tranche + delai_paiement_jours.
+          - Les paiements sont imputés tranche par tranche (du plus ancien au plus récent).
+          - Seules les tranches avec un solde impayé > 0 sont retournées.
+
+        Mode FACTURE :
+          - Une échéance par commande clôturée non entièrement payée.
+          - Date d'échéance = date_cloture + delai_paiement_jours.
+          - Les paiements sont imputés commande par commande (du plus ancien au plus récent).
         """
         from decimal import Decimal
-        fournisseurs = self.get_queryset()
-        echeances = []
+        import calendar
+
+        def _statut(jours):
+            if jours < 0:
+                return "EN RETARD"
+            if jours == 0:
+                return "AUJOURD'HUI"
+            return "À VENIR"
+
+        def _tranches_releve(annee, mois, periode_jours):
+            """
+            Génère les tranches (date_debut, date_fin) pour un mois donné
+            selon la périodicité du relevé (départ le 1er du mois).
+            """
+            _, dernier_jour = calendar.monthrange(annee, mois)
+            tranches = []
+            debut = 1
+            while debut <= dernier_jour:
+                fin = min(debut + periode_jours - 1, dernier_jour)
+                tranches.append((
+                    date(annee, mois, debut),
+                    date(annee, mois, fin),
+                ))
+                debut = fin + 1
+            return tranches
+
         today = date.today()
+        fournisseurs = self.get_queryset().filter(is_active=True)
+        echeances = []
 
         for f in fournisseurs:
-            total_paye = PaiementFournisseur.objects.filter(fournisseur=f).aggregate(
-                total=Sum('montant', output_field=DecimalField())
-            )['total'] or Decimal('0.00')
-
-            commandes = Commande.objects.filter(
-                fournisseur=f, status=Commande.Status.CLOTUREE
-            ).annotate(
-                total_value=Coalesce(
-                    Sum(F('produits__quantity') * F('produits__price'), output_field=DecimalField()), 
-                    Decimal('0.00')
+            # Toutes les commandes clôturées, triées chronologiquement
+            commandes_qs = (
+                Commande.objects
+                .filter(fournisseur=f, status=Commande.Status.CLOTUREE)
+                .annotate(
+                    total_value=Coalesce(
+                        Subquery(
+                            CommandeProduit.objects
+                            .filter(commande=OuterRef('pk'))
+                            .values('commande')
+                            .annotate(s=Sum(F('quantity') * F('price'), output_field=DecimalField()))
+                            .values('s')[:1]
+                        ),
+                        Value(Decimal('0.00'), output_field=DecimalField())
+                    )
                 )
-            ).order_by('date_cloture')
-
-            total_du = sum(c.total_value for c in commandes)
-            solde = total_du - total_paye
-
-            if solde <= 0:
+                .order_by('date_cloture')
+            )
+            commandes = list(commandes_qs)
+            if not commandes:
                 continue
 
+            # Total payé à ce fournisseur (tous paiements confondus)
+            total_paye = PaiementFournisseur.objects.filter(fournisseur=f).aggregate(
+                t=Coalesce(Sum('montant', output_field=DecimalField()), Value(Decimal('0.00'), output_field=DecimalField()))
+            )['t']
+
             if f.type_reglement == 'RELEVE':
-                paye_cumul = Decimal('0.00')
-                oldest_unpaid_cmd = None
-                
+                periode = max(f.periode_releve_jours, 1)
+
+                # Grouper les commandes par tranche calendaire
+                tranches_map: dict[tuple, Decimal] = {}
+                mois_concernes: set[tuple] = set()
                 for c in commandes:
-                    paye_cumul += c.total_value
-                    if paye_cumul > total_paye:
-                        oldest_unpaid_cmd = c
-                        break
-                
-                if oldest_unpaid_cmd:
-                    base_date = oldest_unpaid_cmd.date_cloture.date() if oldest_unpaid_cmd.date_cloture else today
-                    echeance_date = base_date + timedelta(days=f.delai_paiement_jours)
+                    cmd_date = c.date_cloture.date() if c.date_cloture else today
+                    mois_concernes.add((cmd_date.year, cmd_date.month))
+
+                # Construire toutes les tranches pour les mois concernés
+                all_tranches: list[tuple] = []
+                for (annee, mois) in sorted(mois_concernes):
+                    all_tranches.extend(_tranches_releve(annee, mois, periode))
+
+                # Additionner le montant des commandes dans chaque tranche
+                for tranche in all_tranches:
+                    tranches_map[tranche] = Decimal('0.00')
+                for c in commandes:
+                    cmd_date = c.date_cloture.date() if c.date_cloture else today
+                    for tranche in all_tranches:
+                        if tranche[0] <= cmd_date <= tranche[1]:
+                            tranches_map[tranche] += c.total_value
+                            break
+
+                # Imputer les paiements tranche par tranche (chronologique)
+                reste_paye = total_paye
+                for tranche in sorted(all_tranches):
+                    montant_tranche = tranches_map.get(tranche, Decimal('0.00'))
+                    if montant_tranche <= Decimal('0.00'):
+                        continue
+                    if reste_paye >= montant_tranche:
+                        reste_paye -= montant_tranche
+                        continue
+                    montant_du = montant_tranche - reste_paye
+                    reste_paye = Decimal('0.00')
+
+                    date_fin_tranche = tranche[1]
+                    echeance_date = date_fin_tranche + timedelta(days=f.delai_paiement_jours)
                     jours_restants = (echeance_date - today).days
-                    if jours_restants < 0:
-                        status = "EN RETARD"
-                    elif jours_restants == 0:
-                        status = "AUJOURD'HUI"
-                    else:
-                        status = "À VENIR"
-                        
+                    label = f"Relevé {tranche[0].strftime('%d/%m')}→{tranche[1].strftime('%d/%m/%Y')}"
+
                     echeances.append({
                         'fournisseur_id': f.id,
                         'fournisseur_nom': f.name,
                         'type_reglement': 'RELEVE',
                         'commande_id': None,
-                        'numero_facture': 'Relevé Global',
-                        'montant_du': float(solde),
+                        'numero_facture': label,
+                        'montant_du': float(montant_du),
                         'date_echeance': echeance_date.isoformat(),
                         'jours_restants': jours_restants,
-                        'status': status
+                        'status': _statut(jours_restants),
+                        'periode_jours': periode,
+                        'date_fin_tranche': date_fin_tranche.isoformat(),
                     })
+
             else:
-                reste_a_repartir = total_paye
-                
+                # Mode FACTURE : une échéance par commande
+                reste_paye = total_paye
                 for c in commandes:
                     cmd_total = c.total_value
-                    if reste_a_repartir >= cmd_total:
-                        reste_a_repartir -= cmd_total
-                        continue 
-                    
-                    cmd_due = cmd_total - reste_a_repartir
-                    reste_a_repartir = Decimal('0.00') 
-                    
+                    if reste_paye >= cmd_total:
+                        reste_paye -= cmd_total
+                        continue
+                    cmd_due = cmd_total - reste_paye
+                    reste_paye = Decimal('0.00')
+
                     base_date = c.date_cloture.date() if c.date_cloture else today
                     echeance_date = base_date + timedelta(days=f.delai_paiement_jours)
                     jours_restants = (echeance_date - today).days
-                    if jours_restants < 0:
-                        status = "EN RETARD"
-                    elif jours_restants == 0:
-                        status = "AUJOURD'HUI"
-                    else:
-                        status = "À VENIR"
 
                     echeances.append({
                         'fournisseur_id': f.id,
@@ -235,7 +298,7 @@ class FournisseurViewSet(viewsets.ModelViewSet):
                         'montant_du': float(cmd_due),
                         'date_echeance': echeance_date.isoformat(),
                         'jours_restants': jours_restants,
-                        'status': status
+                        'status': _statut(jours_restants),
                     })
 
         echeances.sort(key=lambda x: x['jours_restants'])

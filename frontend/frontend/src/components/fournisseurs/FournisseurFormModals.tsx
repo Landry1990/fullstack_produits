@@ -114,6 +114,27 @@ export default function FournisseurFormModals({ hook }: Props) {
                 />
               </div>
             </div>
+
+            {newFournisseur.type_reglement === 'RELEVE' && (
+              <div className="p-4 bg-orange-50 border border-orange-200 rounded-xl">
+                <label className="block text-xs font-bold uppercase tracking-wider text-orange-600 mb-2">
+                  Durée de la tranche de relevé (jours)
+                </label>
+                <input
+                  type="number"
+                  min="1"
+                  max="31"
+                  placeholder="Ex: 10 → tranches du 1-10, 11-20, 21-31"
+                  value={newFournisseur.periode_releve_jours ?? 10}
+                  onChange={e => state.setNewFournisseur(f => ({...f, periode_releve_jours: parseInt(e.target.value) || 10}))}
+                  className="input input-bordered w-full h-12 rounded-xl focus:border-orange-400 focus:ring-2 focus:ring-orange-200 transition-all"
+                  disabled={isSubmitting}
+                />
+                <p className="text-[11px] text-orange-500/80 mt-1">
+                  Le relevé commence le 1er du mois. Ex: 10 jours → tranche 1→10, 11→20, 21→fin du mois.
+                </p>
+              </div>
+            )}
           </div>
 
           <div className="space-y-4">
@@ -250,6 +271,26 @@ export default function FournisseurFormModals({ hook }: Props) {
                   />
                 </div>
               </div>
+
+              {editingFournisseur.type_reglement === 'RELEVE' && (
+                <div className="p-4 bg-orange-50 border border-orange-200 rounded-xl">
+                  <label className="block text-xs font-bold uppercase tracking-wider text-orange-600 mb-2">
+                    Durée de la tranche de relevé (jours)
+                  </label>
+                  <input
+                    type="number"
+                    min="1"
+                    max="31"
+                    placeholder="Ex: 10 → tranches du 1-10, 11-20, 21-31"
+                    value={editingFournisseur.periode_releve_jours ?? 10}
+                    onChange={e => state.setEditingFournisseur(f => f ? {...f, periode_releve_jours: parseInt(e.target.value) || 10} : null)}
+                    className="input input-bordered w-full h-12 rounded-xl focus:border-orange-400 focus:ring-2 focus:ring-orange-200 transition-all"
+                  />
+                  <p className="text-[11px] text-orange-500/80 mt-1">
+                    Le relevé commence le 1er du mois. Ex: 10 jours → tranche 1→10, 11→20, 21→fin du mois.
+                  </p>
+                </div>
+              )}
             </div>
 
             <div className="space-y-4">

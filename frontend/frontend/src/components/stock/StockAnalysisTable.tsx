@@ -94,7 +94,7 @@ export const StockAnalysisTable: React.FC<StockAnalysisTableProps> = ({
             <table className="table w-full">
                 <thead>
                     <tr className="bg-base-200/50 border-b border-base-200">
-                        {activeTab === 'shortage' && (
+                        {(activeTab === 'shortage' || activeTab === 'overstock') && (
                             <th className="w-12 text-center">
                                 <input
                                     type="checkbox"
@@ -144,7 +144,7 @@ export const StockAnalysisTable: React.FC<StockAnalysisTableProps> = ({
                                 key={item.id} 
                                 className={`hover:bg-base-200/30 transition-colors group ${isSelected ? 'bg-primary/5' : ''}`}
                             >
-                                {activeTab === 'shortage' && (
+                                {(activeTab === 'shortage' || activeTab === 'overstock') && (
                                     <td className="text-center">
                                         <input
                                             type="checkbox"

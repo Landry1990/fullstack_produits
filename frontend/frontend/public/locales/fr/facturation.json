@@ -96,7 +96,8 @@
         "insufficient_deposit_warning": "Attention : Le montant de la vente dépasse le solde du dépôt du client ({{solde}} F).",
         "deposit_reminder": "Rappel : Ce client dispose d'un dépôt de {{solde}} F.",
         "points_balance": "{{points}} pts",
-        "pending_reward": "Remise de {{discount}}% acquise !"
+        "pending_reward": "Remise de {{discount}}% acquise !",
+        "apply_reward_button": "Appliquer la remise"
     },
     "payment": {
         "modal_title": "Paiement",
@@ -157,7 +158,8 @@
         "pack_empty": "Ce pack ne contient aucun article.",
         "adding_pack": "Ajout des articles du pack...",
         "pack_items_error": "Certains articles du pack n'ont pas pu être récupérés.",
-        "reward_reminder": "Fidélité : Ce client a une remise de {{discount}}% disponible pour cette vente."
+        "reward_reminder": "Fidélité : Ce client a une remise de {{discount}}% disponible pour cette vente.",
+        "reward_applied": "Remise de {{discount}}% appliquée avec succès !"
     },
     "modification_mode": {
         "title": "Mode Modification de Facture",

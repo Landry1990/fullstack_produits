@@ -37,7 +37,10 @@ def _write_pharma_header(ws, PharmacySettings, title: str) -> None:
     except Exception:
         pharma_name, pharma_address, pharma_phone = "ZENITH", "", ""
 
-    now_str = tz.localtime(tz.now()).strftime("%d/%m/%Y à %H:%M")
+    now_time = tz.now()
+    if tz.is_aware(now_time):
+        now_time = tz.localtime(now_time)
+    now_str = now_time.strftime("%d/%m/%Y à %H:%M")
     for line in [pharma_name, pharma_address, pharma_phone, f"Édité le : {now_str}", "", title]:
         ws.append([line])
     ws.append([])

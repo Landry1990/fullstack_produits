@@ -96,7 +96,8 @@
         "insufficient_deposit_warning": "Warning: Sale amount exceeds client's deposit balance ({{solde}} F).",
         "deposit_reminder": "Reminder: This client has a deposit of {{solde}} F.",
         "points_balance": "{{points}} pts",
-        "pending_reward": "Earned {{discount}}% discount!"
+        "pending_reward": "Earned {{discount}}% discount!",
+        "apply_reward_button": "Apply discount"
     },
     "payment": {
         "modal_title": "Payment",
@@ -157,7 +158,8 @@
         "pack_empty": "This pack contains no items.",
         "adding_pack": "Adding pack items...",
         "pack_items_error": "Failed to retrieve some items from the pack.",
-        "reward_reminder": "Loyalty: This client has a {{discount}}% discount available for this sale."
+        "reward_reminder": "Loyalty: This client has a {{discount}}% discount available for this sale.",
+        "reward_applied": "{{discount}}% discount applied successfully!"
     },
     "modification_mode": {
         "title": "Invoice Modification Mode",

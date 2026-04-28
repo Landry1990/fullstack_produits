@@ -50,7 +50,8 @@ i18n
             'supplier_stats',
             'labels',
             'config',
-            'help'
+            'help',
+            'clinical'
         ],
         defaultNS: 'common',
         interpolation: {

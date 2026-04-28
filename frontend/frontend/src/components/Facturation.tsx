@@ -168,6 +168,7 @@ export default function Facturation() {
                 ayantDroitSociete={hook.clientsHook.ayantDroitSociete}
                 setAyantDroitSociete={hook.clientsHook.setAyantDroitSociete}
                 onEnter={() => hook.searchInputRef.current?.focus()}
+                onApplyReward={hook.applyLoyaltyReward}
               />
             </div>
 

@@ -29,6 +29,7 @@ export interface QueryDefinition {
     method?: 'GET' | 'POST';
     params: QueryParam[];
     resultType: 'table' | 'cards' | 'raw';
+    columns?: string[];
 }
 
 export interface Client {
