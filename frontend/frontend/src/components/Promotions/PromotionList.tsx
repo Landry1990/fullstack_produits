@@ -1,11 +1,11 @@
 ﻿import React, { useState, useEffect } from 'react';
+import api from '../../services/api';
 import { useTranslation } from 'react-i18next';
 import type { Promotion } from '../../types/Promotion';
 import { DiscountType } from '../../types/Promotion';
 import { format } from 'date-fns';
 import PromotionForm from './PromotionForm';
 
-import { safeStorage } from '../../utils/storage';
 
 const PromotionList: React.FC = () => {
     const { t } = useTranslation(['promotions', 'common']);
@@ -18,17 +18,8 @@ const PromotionList: React.FC = () => {
 
     const fetchPromotions = async () => {
         try {
-            const token = safeStorage.getItem('authToken');
-            const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || '';
-            const response = await fetch(`${apiBaseUrl}/api/promotions/`, {
-                headers: {
-                    'Authorization': `Token ${token}`,
-                    'Content-Type': 'application/json'
-                }
-            });
-            if (!response.ok) throw new Error(t('promotions:fetch_error'));
-            const data = await response.json();
-            // Handle pagination (Django Rest Framework default)
+            const response = await api.get('promotions/');
+            const data = response.data;
             setPromotions(Array.isArray(data) ? data : data.results || []);
         } catch (err) {
             setError(t('promotions:error_loading'));
@@ -56,20 +47,8 @@ const PromotionList: React.FC = () => {
 
     const handleDelete = async (id: number) => {
         if (!window.confirm(t('promotions:delete_confirm'))) return;
-        
         try {
-            const token = safeStorage.getItem('authToken');
-            const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || '';
-            const response = await fetch(`${apiBaseUrl}/api/promotions/${id}/`, {
-                method: 'DELETE',
-                headers: {
-                    'Authorization': `Token ${token}`
-                }
-            });
-            if (!response.ok) {
-                const text = await response.text();
-                throw new Error(t('promotions:delete_error', { message: text }));
-            }
+            await api.delete(`promotions/${id}/`);
             setPromotions(promotions.filter(p => p.id !== id));
         } catch (error: any) {
             console.error("Delete failed", error);

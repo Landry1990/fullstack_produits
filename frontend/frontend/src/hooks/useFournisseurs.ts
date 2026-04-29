@@ -1,7 +1,7 @@
-import { useEffect, useState, useMemo, type FormEvent, useRef, type KeyboardEvent } from 'react';
+import { useEffect, useState, useMemo, useCallback, type FormEvent, useRef, type KeyboardEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useLocation } from 'react-router-dom';
-import axios from 'axios';
+import api from '../services/api';
 import { useConfirm } from './useConfirm';
 import { useAuth } from '../context/AuthContext';
 import { toast } from 'react-hot-toast';
@@ -100,15 +100,6 @@ export function useFournisseurs() {
     }
   }, [fournisseurs, selectedFournisseur]);
 
-  const apiBaseUrl = useMemo(
-    () => (import.meta.env.VITE_API_BASE_URL ?? ''),
-    []
-  );
-  
-  const fournisseursEndpoint = apiBaseUrl
-    ? `${String(apiBaseUrl).replace(/\/$/, '')}/api/fournisseurs/` 
-    : '/api/fournisseurs/';
-
   const totalPages = Math.max(1, Math.ceil(totalCount / itemsPerPage));
 
   const filteredCatalogue = useMemo(() => {
@@ -120,20 +111,28 @@ export function useFournisseurs() {
     );
   }, [catalogue, catalogueSearch]);
 
-  async function fetchCatalogue(fournisseurId: number) {
+  const catalogueControllerRef = useRef<AbortController | null>(null);
+
+  const fetchCatalogue = useCallback(async (fournisseurId: number) => {
+    catalogueControllerRef.current?.abort();
+    const controller = new AbortController();
+    catalogueControllerRef.current = controller;
+
     setCatalogueLoading(true);
     try {
-      const response = await axios.get<CatalogueResponse>(
-        `${fournisseursEndpoint}${fournisseurId}/catalogue/`
+      const response = await api.get<CatalogueResponse>(
+        `fournisseurs/${fournisseurId}/catalogue/`,
+        { signal: controller.signal }
       );
       setCatalogue(response.data.produits || []);
-    } catch (err) {
+    } catch (err: any) {
+      if (err?.code === 'ERR_CANCELED') return;
       console.error('Erreur lors du chargement du catalogue:', err);
       setCatalogue([]);
     } finally {
       setCatalogueLoading(false);
     }
-  }
+  }, []);
 
   useEffect(() => {
     if (selectedFournisseur) {
@@ -142,17 +141,25 @@ export function useFournisseurs() {
     } else {
       setCatalogue([]);
     }
-  }, [selectedFournisseur?.id]);
+    return () => catalogueControllerRef.current?.abort();
+  }, [selectedFournisseur?.id, fetchCatalogue]);
 
-  async function fetchFournisseurs() {
+  const fournisseursControllerRef = useRef<AbortController | null>(null);
+
+  const fetchFournisseurs = useCallback(async () => {
+    fournisseursControllerRef.current?.abort();
+    const controller = new AbortController();
+    fournisseursControllerRef.current = controller;
+
     setError(null);
     try {
-      const response = await axios.get(fournisseursEndpoint, {
+      const response = await api.get('fournisseurs/', {
         params: { 
           include_inactive: showInactive,
           page: currentPage,
           search: debouncedSearch
-        }
+        },
+        signal: controller.signal,
       });
       const data: any = response.data;
       if (data && typeof data === 'object' && 'results' in data) {
@@ -166,18 +173,19 @@ export function useFournisseurs() {
          setTotalCount(0);
       }
     } catch (err: unknown) {
-      if (axios.isCancel(err)) return;
-      if (axios.isAxiosError(err)) {
-        setError(err.response?.data?.message ?? err.message ?? 'Erreur réseau');
+      if ((err as any)?.code === 'ERR_CANCELED') return;
+      if ((err as any)?.response) {
+        setError((err as any).response?.data?.message ?? (err as any).message ?? 'Erreur réseau');
       } else {
         setError(t('providers:messages.load_error') || 'Erreur inconnue lors du chargement des fournisseurs');
       }
     }
-  }
+  }, [showInactive, currentPage, debouncedSearch, t]);
 
   useEffect(() => {
     fetchFournisseurs();
-  }, [fournisseursEndpoint, showInactive, currentPage, debouncedSearch]);
+    return () => fournisseursControllerRef.current?.abort();
+  }, [fetchFournisseurs]);
 
   useEffect(() => {
     if (selectedFournisseur && !fournisseurs.some(f => f.id === selectedFournisseur.id)) {
@@ -273,14 +281,14 @@ export function useFournisseurs() {
     setError(null);
     setIsSubmitting(true);
     try {
-      const { data: addedFournisseur } = await axios.post<Fournisseur>(fournisseursEndpoint, newFournisseur);
+      const { data: addedFournisseur } = await api.post<Fournisseur>('fournisseurs/', newFournisseur);
       setFournisseurs(prev => [addedFournisseur, ...prev].sort((a, b) => a.name.localeCompare(b.name)));
       setSelectedFournisseur(addedFournisseur);
       setNewFournisseur(emptyForm);
       closeAddModal();
     } catch (err: unknown) {
-      if (axios.isAxiosError(err)) {
-        const detail = err.response?.data ?? err.message;
+      if ((err as any)?.response) {
+        const detail = (err as any).response?.data ?? (err as any).message;
         setError(typeof detail === 'string' ? detail : formatBackendErrors(detail));
       } else {
         setError(t('providers:messages.save_error') || "Erreur inconnue lors de l'ajout du fournisseur");
@@ -295,16 +303,16 @@ export function useFournisseurs() {
     e.preventDefault();
     if (!editingFournisseur) return;
     try {
-      const { data: updatedFournisseur } = await axios.patch<Fournisseur>(
-        `${fournisseursEndpoint}${editingFournisseur.id}/`,
+      const { data: updatedFournisseur } = await api.patch<Fournisseur>(
+        `fournisseurs/${editingFournisseur.id}/`,
         editingFournisseur
       );
       setFournisseurs(prev => prev.map(f => (f.id === updatedFournisseur.id ? updatedFournisseur : f)));
       setSelectedFournisseur(updatedFournisseur);
       closeEditModal();
     } catch (err: unknown) {
-      if (axios.isAxiosError(err)) {
-        const detail = err.response?.data ?? err.message;
+      if ((err as any)?.response) {
+        const detail = (err as any).response?.data ?? (err as any).message;
         setError(typeof detail === 'string' ? detail : formatBackendErrors(detail));
       } else {
         setError(t('providers:messages.save_error') || "Erreur inconnue lors de la modification du fournisseur");
@@ -315,16 +323,17 @@ export function useFournisseurs() {
 
   const executeDeleteFournisseur = async (id: number) => {
     try {
-      await axios.delete(`${fournisseursEndpoint}${id}/`);
+      await api.delete(`fournisseurs/${id}/`);
       setFournisseurs(prev => prev.filter(f => f.id !== id));
       setSelectedFournisseur(null);
       toast.success(t('providers:messages.delete_success'));
     } catch (err: unknown) {
-      if (axios.isAxiosError(err)) {
-        if (err.response?.status === 500 || (err.response?.data?.detail && String(err.response.data.detail).includes('protected'))) {
+      const axiosErr = err as any;
+      if (axiosErr?.response) {
+        if (axiosErr.response?.status === 500 || (axiosErr.response?.data?.detail && String(axiosErr.response.data.detail).includes('protected'))) {
              toast.error(t('providers:messages.delete_protected'));
         } else {
-             const msg = err.response?.data?.message ?? err.message ?? t('common:network_error');
+             const msg = axiosErr.response?.data?.message ?? axiosErr.message ?? t('common:network_error');
              toast.error(`${t('common:error')}: ${msg}`);
         }
       } else {
@@ -336,7 +345,7 @@ export function useFournisseurs() {
 
   const executeBulkDeleteFournisseurs = async () => {
     try {
-      await axios.post(`${fournisseursEndpoint}bulk_delete/`, { ids: selectedIds });
+      await api.post('fournisseurs/bulk_delete/', { ids: selectedIds });
       setFournisseurs(prev => prev.filter(f => !selectedIds.includes(f.id!)));
       setSelectedIds([]);
       if (selectedFournisseur && selectedIds.includes(selectedFournisseur.id!)) {
@@ -416,7 +425,7 @@ export function useFournisseurs() {
   async function handleToggleActive() {
     if (!selectedFournisseur) return;
     try {
-      const response = await axios.post(`${fournisseursEndpoint}${selectedFournisseur.id}/toggle_active/`);
+      const response = await api.post(`fournisseurs/${selectedFournisseur.id}/toggle_active/`);
       const isActive = response.data.is_active;
       toast.success(isActive ? t('providers:messages.reactivated') : t('providers:messages.hidden'));
       setSelectedFournisseur(prev => prev ? ({ ...prev, is_active: isActive }) : null);

@@ -1,5 +1,5 @@
 ﻿import { useState, useEffect, useMemo } from 'react'
-import axios from 'axios'
+import api from '../services/api'
 import { toast } from 'react-hot-toast'
 import { useTranslation } from 'react-i18next'
 import { formatNumber as utilsFormatNumber } from '../utils/formatters'
@@ -63,15 +63,13 @@ export default function AnalyseABC() {
   // Tab active
   const [activeTab, setActiveTab] = useState<'A' | 'B' | 'C'>('A')
   
-  const apiBaseUrl = useMemo(() => import.meta.env.VITE_API_BASE_URL ?? '', [])
-
   // Charger les options de filtres
   useEffect(() => {
     const fetchOptions = async () => {
       try {
         const [rayonsRes, fournisseursRes] = await Promise.all([
-          axios.get(`${apiBaseUrl}/api/rayons/`),
-          axios.get(`${apiBaseUrl}/api/fournisseurs/`)
+          api.get('rayons/'),
+          api.get('fournisseurs/')
         ])
         setRayons(rayonsRes.data.results || rayonsRes.data || [])
         setFournisseurs(fournisseursRes.data.results || fournisseursRes.data || [])
@@ -80,7 +78,7 @@ export default function AnalyseABC() {
       }
     }
     fetchOptions()
-  }, [apiBaseUrl])
+  }, [])
 
   // Charger les données ABC
   useEffect(() => {
@@ -92,7 +90,7 @@ export default function AnalyseABC() {
         if (rayonId) params.append('rayon_id', rayonId)
         if (fournisseurId) params.append('fournisseur_id', fournisseurId)
         
-        const response = await axios.get(`${apiBaseUrl}/api/produits/analyse_abc/?${params}`)
+        const response = await api.get(`produits/analyse_abc/?${params}`)
         setData(response.data)
       } catch (err: any) {
         setError(err.response?.data?.detail || t('stock:abc.error_loading'))
@@ -102,7 +100,7 @@ export default function AnalyseABC() {
       }
     }
     fetchData()
-  }, [apiBaseUrl, periode, rayonId, fournisseurId])
+  }, [periode, rayonId, fournisseurId])
 
   const produitsFiltrés = useMemo(() => {
     if (!data) return []

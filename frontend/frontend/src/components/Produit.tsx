@@ -2,7 +2,7 @@
 import React, { useState, useMemo, useEffect } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import axios from '../config/axios'
+import api from '../services/api'
 import { toast } from 'react-hot-toast'
 import { useConfirm } from '../hooks/useConfirm';
 import { useAuth } from '../context/AuthContext';
@@ -154,9 +154,6 @@ export default function Produit() {
   const [actionLoading, setActionLoading] = useState(false);
 
   // Constants
-  const apiBaseUrl = useMemo(() => (import.meta.env.VITE_API_BASE_URL ?? ''), [])
-  const produitsEndpoint = apiBaseUrl ? `${apiBaseUrl}/api/produits/` : '/api/produits/'
-
   // -- FORMS --
   const [editForm, setEditForm] = useState<any>({
     name: '', stock: '', cost_price: '', selling_price: '', cip1: '', cip2: '', cip3: '',
@@ -198,7 +195,7 @@ export default function Produit() {
 
     setTransferLoading(true);
     try {
-      await axios.post(`${produitsEndpoint}${produit.id}/transfer_to_shelf/`, { quantity: qty });
+      await api.post(`produits/${produit.id}/transfer_to_shelf/`, { quantity: qty });
       toast.success(t('products:messages.transfer_success', { count: qty }));
       refetchProduits();
     } catch (err: any) {
@@ -211,7 +208,7 @@ export default function Produit() {
       try {
         setLoadingFacture(true);
         setShowSalesModal(true);
-        const response = await axios.get(`/api/factures/${item.facture}/`);
+        const response = await api.get(`factures/${item.facture}/`);
         setSelectedFacture(response.data);
       } catch (error) {
         toast.error(t('products:messages.facture_load_error'));
@@ -252,7 +249,7 @@ export default function Produit() {
 
   const handleToggleActive = async (produit: ProduitModel) => {
     try {
-      const response = await axios.post(`${produitsEndpoint}${produit.id}/toggle_active/`)
+      const response = await api.post(`produits/${produit.id}/toggle_active/`)
       const isActive = response.data.is_active
       toast.success(isActive ? t('products:messages.status_reactivated') : t('products:messages.status_hidden'))
       setSelectedProduit(prev => prev ? ({ ...prev, is_active: isActive }) : null)
@@ -382,7 +379,7 @@ export default function Produit() {
     let successCount = 0
     try {
       for (const id of selectedProductIds) {
-        try { await axios.delete(`${produitsEndpoint}${id}/`); successCount++; } catch {}
+        try { await api.delete(`produits/${id}/`); successCount++; } catch {}
       }
       if (successCount > 0) { refetchProduits(); setSelectedProductIds([]); toast.success(`${successCount} ${t('products:messages.delete_success')}`); }
     } finally { setActionLoading(false) }
@@ -394,7 +391,7 @@ export default function Produit() {
     const quantity = parseInt(qtyStr, 10)
     if (isNaN(quantity) || quantity <= 0) { toast.error(t('products:messages.invalid_quantity')); return; }
     try {
-      const resp = await axios.post(`${produitsEndpoint}generate_labels/`, { products: [{ id: produit.id, quantity }] }, { responseType: 'blob' })
+      const resp = await api.post('produits/generate_labels/', { products: [{ id: produit.id, quantity }] }, { responseType: 'blob' })
       const url = window.URL.createObjectURL(new Blob([resp.data]));
       const link = document.createElement('a'); link.href = url; link.setAttribute('download', `etiquettes_${produit.name}.pdf`);
       document.body.appendChild(link); link.click(); link.remove();
@@ -621,7 +618,7 @@ export default function Produit() {
       />
       <ProduitCreateModal 
         open={isCreateModalOpen} onClose={() => setIsCreateModalOpen(false)} onCreated={() => { refetchProduits(); setIsCreateModalOpen(false); }}
-        produitsEndpoint={produitsEndpoint} rayons={rayons} fournisseurs={fournisseurs} formes={formes} groupes={groupes as any}
+        produitsEndpoint={'produits/'} rayons={rayons} fournisseurs={fournisseurs} formes={formes} groupes={groupes as any}
       />
       {isImportModalOpen && (
         <ImportProductsModal 

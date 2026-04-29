@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { FormEvent } from 'react';
-import axios from '../config/axios';
+import api from '../services/api';
 import type { ProduitForm, ProduitModel, Rayon, Fournisseur, Forme, Groupe } from '../types';
 import { useTVA } from '../hooks/useTVA';
 import PremiumModal from './common/PremiumModal';
@@ -149,11 +149,11 @@ export default function ProduitFormModal({
       // Use the validated and coerced data
       const cleanPayload = validation.data;
 
-      const { data } = await axios.post<ProduitModel>(produitsEndpoint, cleanPayload);
+      const { data } = await api.post<ProduitModel>(produitsEndpoint, cleanPayload);
       onCreated(data); // Callback to parent
       onClose(); // Close modal on success
     } catch (err: unknown) {
-      if (axios.isAxiosError(err)) {
+      if ((err as any).response) {
         const detail = err.response?.data ?? err.message;
         setError(typeof detail === 'string' ? detail : formatBackendErrors(detail));
       } else {

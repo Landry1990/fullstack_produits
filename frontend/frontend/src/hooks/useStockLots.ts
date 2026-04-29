@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import axios from 'axios'
+import api from '../services/api'
 import type { StockLot } from '../types'
 
 export function useStockLots(produitId: number | null) {
@@ -13,24 +13,20 @@ export function useStockLots(produitId: number | null) {
             return
         }
 
+        const controller = new AbortController()
+
         const fetchLots = async () => {
             setLoading(true)
             setError(null)
             try {
-                const apiBaseUrl = import.meta.env.VITE_API_BASE_URL
-                const endpoint = apiBaseUrl ? `${apiBaseUrl}/api/stock-lots/` : '/api/stock-lots/'
-
-                // Fetch valid lots with remaining quantity
-                const response = await axios.get(endpoint, {
-                    params: {
-                        produit: produitId,
-                        include_empty: 'false'
-                    }
+                const response = await api.get('stock-lots/', {
+                    params: { produit: produitId, include_empty: 'false' },
+                    signal: controller.signal,
                 })
-
                 const data = Array.isArray(response.data) ? response.data : (response.data.results || [])
                 setLots(data)
-            } catch (err) {
+            } catch (err: any) {
+                if (err?.code === 'ERR_CANCELED') return
                 console.error('Error fetching stock lots:', err)
                 setError('Impossible de charger les lots du produit')
             } finally {
@@ -39,6 +35,7 @@ export function useStockLots(produitId: number | null) {
         }
 
         fetchLots()
+        return () => controller.abort()
     }, [produitId])
 
     return { lots, loading, error }

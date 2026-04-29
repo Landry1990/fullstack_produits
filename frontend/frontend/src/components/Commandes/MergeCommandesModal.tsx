@@ -1,6 +1,6 @@
 ﻿import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import axios from 'axios';
+import api from '../../services/api';
 import { toast } from 'react-hot-toast';
 import type { Commande, Fournisseur } from '../../types';
 import { formatCurrency } from '../../utils/formatters';
@@ -11,7 +11,6 @@ interface MergeCommandesModalProps {
     selectedOrderIds: Set<number>;
     fournisseurs: Fournisseur[];
     commandesEndpoint: string;
-    apiBaseUrl: string;
     onMergeSuccess: (mergedCount: number, targetOrderId: number) => void;
 }
 
@@ -42,7 +41,7 @@ export default function MergeCommandesModal({
             // Charger les détails complets de chaque commande sélectionnée
             const orderIds = Array.from(selectedOrderIds);
             const detailsPromises = orderIds.map(id => 
-                axios.get<Commande>(`${commandesEndpoint}${id}/`)
+                api.get<Commande>(`${commandesEndpoint}${id}/`)
             );
             const responses = await Promise.all(detailsPromises);
             setMergeOrdersDetails(responses.map(r => r.data));
@@ -70,7 +69,7 @@ export default function MergeCommandesModal({
         try {
             // Utiliser l'action backend 'merge' pour chaque commande source
             for (const sourceOrderId of orderIdsToMerge) {
-                await axios.post(`${commandesEndpoint}${mergeTargetOrderId}/merge/`, {
+                await api.post(`${commandesEndpoint}${mergeTargetOrderId}/merge/`, {
                     source_commande_id: sourceOrderId
                 });
             }

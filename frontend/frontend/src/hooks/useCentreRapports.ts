@@ -1,7 +1,7 @@
-import { useState, useCallback, useEffect, useMemo } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSearchParams } from 'react-router-dom';
-import axios from '../config/axios';
+import api from '../services/api';
 import { toast } from 'react-hot-toast';
 import { usePharmacySettings } from './usePharmacySettings';
 import { exportToExcel } from '../utils/excelExport';
@@ -65,8 +65,6 @@ export function useCentreRapports() {
 
     const [presets, setPresets] = useState<Record<string, any>[]>([]);
 
-    const apiBaseUrl = useMemo(() => import.meta.env.VITE_API_BASE_URL ?? '', []);
-
     const getCurrentMonth = useCallback(() => {
         const now = new Date();
         return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
@@ -98,47 +96,46 @@ export function useCentreRapports() {
     }, []);
 
     useEffect(() => {
+        const controller = new AbortController();
+        const signal = controller.signal;
+
         const loadClients = async () => {
             try {
-                const endpoint = apiBaseUrl ? `${apiBaseUrl}/api/clients/` : '/api/clients/';
-                const { data } = await axios.get(endpoint);
+                const { data } = await api.get('clients/', { signal });
                 const clientList = data.results || data;
                 setClients(clientList);
-            } catch (err) {
-                console.error('Erreur chargement clients:', err);
+            } catch (err: any) {
+                if (err?.name !== 'CanceledError') console.error('Erreur chargement clients:', err);
             }
         };
         loadClients();
 
         const loadSuppliers = async () => {
             try {
-                const endpoint = apiBaseUrl ? `${apiBaseUrl}/api/rapports/suppliers_with_stock/` : '/api/rapports/suppliers_with_stock/';
-                const { data } = await axios.get(endpoint);
+                const { data } = await api.get('rapports/suppliers_with_stock/', { signal });
                 setSuppliers(data);
-            } catch (err) {
-                console.error('Erreur chargement fournisseurs:', err);
+            } catch (err: any) {
+                if (err?.name !== 'CanceledError') console.error('Erreur chargement fournisseurs:', err);
             }
         };
         loadSuppliers();
 
         const loadUsers = async () => {
             try {
-                const endpoint = apiBaseUrl ? `${apiBaseUrl}/api/users/` : '/api/users/';
-                const { data } = await axios.get(endpoint);
+                const { data } = await api.get('users/', { signal });
                 setUsers(data.results || data);
-            } catch (err) {
-                console.error('Erreur chargement utilisateurs:', err);
+            } catch (err: any) {
+                if (err?.name !== 'CanceledError') console.error('Erreur chargement utilisateurs:', err);
             }
         };
         loadUsers();
 
         const loadFamilles = async () => {
             try {
-                const endpoint = apiBaseUrl ? `${apiBaseUrl}/api/familles/` : '/api/familles/';
-                const { data } = await axios.get(endpoint);
+                const { data } = await api.get('familles/', { signal });
                 setFamilles(data.results || data);
-            } catch (err) {
-                console.error('Erreur chargement familles:', err);
+            } catch (err: any) {
+                if (err?.name !== 'CanceledError') console.error('Erreur chargement familles:', err);
             }
         };
         loadFamilles();
@@ -146,7 +143,9 @@ export function useCentreRapports() {
         // Load Presets from LocalStorage
         const savedPresets = localStorage.getItem('report_presets');
         if (savedPresets) setPresets(JSON.parse(savedPresets));
-    }, [apiBaseUrl]);
+
+        return () => controller.abort();
+    }, []);
 
     useEffect(() => {
         if (supplierSearch.length > 0) {
@@ -262,18 +261,13 @@ export function useCentreRapports() {
         setError(null);
 
         try {
-            let endpoint = urlOverride;
-            if (!endpoint) {
-                endpoint = apiBaseUrl
-                    ? `${apiBaseUrl.replace(/\/$/, '')}${selectedQuery.endpoint}`
-                    : selectedQuery.endpoint;
-            }
+            const relPath = (p: string) => p.replace(/^\/api\//, '');
+            const endpoint = urlOverride ? urlOverride : relPath(selectedQuery.endpoint);
 
             const mergedParams = extraParams ? { ...params, ...extraParams } : params;
-            const config = urlOverride ? {} : { params: mergedParams };
             
             if (selectedQuery.id === 'balance_stock' && !urlOverride) {
-                const response = await axios.get(endpoint, {
+                const response = await api.get(endpoint, {
                     params: { ...params, lang: i18n.language },
                     responseType: 'blob'
                 });
@@ -304,7 +298,9 @@ export function useCentreRapports() {
                 return;
             }
 
-            const response = await axios.get(endpoint, config);
+            const response = urlOverride
+                ? await api.get(urlOverride)
+                : await api.get(endpoint, { params: mergedParams });
 
             let data = response.data;
             if (data.results && Array.isArray(data.results)) {
@@ -320,18 +316,14 @@ export function useCentreRapports() {
             }
 
             if (!urlOverride) toast.success(`Requête "${selectedQuery.name}" exécutée`);
-        } catch (err) {
+        } catch (err: any) {
             console.error('Erreur requête:', err);
-            if (axios.isAxiosError(err)) {
-                setError(err.response?.data?.detail || err.message);
-            } else {
-                setError('Erreur lors de l\'exécution de la requête');
-            }
+            setError(err.response?.data?.detail || err.message || 'Erreur lors de l\'exécution de la requête');
             toast.error('Erreur lors de l\'exécution');
         } finally {
             setLoading(false);
         }
-    }, [selectedQuery, params, apiBaseUrl, extractPath, i18n.language, t]);
+    }, [selectedQuery, params, extractPath, i18n.language, t]);
 
     const handlePageChange = useCallback((url: string | null) => {
         if (url) executeQuery(url);
@@ -349,12 +341,8 @@ export function useCentreRapports() {
             const action = isDetails ? 'rapport_remises_details_excel' : 'rapport_remises_excel';
             const filename = isDetails ? `Details_Remises_${date_debut}.xlsx` : `Rapport_Remises_${date_debut}.xlsx`;
             
-            const endpoint = apiBaseUrl
-                ? `${apiBaseUrl.replace(/\/$/, '')}/api/rapports/${action}/`
-                : `/api/rapports/${action}/`;
-            
             try {
-                const response = await axios.get(endpoint, {
+                const response = await api.get(`rapports/${action}/`, {
                     params: { date_debut, date_fin },
                     responseType: 'blob'
                 });
@@ -459,7 +447,7 @@ export function useCentreRapports() {
             title: selectedQuery.name,
         });
         toast.success(t('results.export_success', { filename }));
-    }, [results, selectedQuery, t, params, apiBaseUrl, pharmacySettings]);
+    }, [results, selectedQuery, t, params, pharmacySettings]);
 
     useEffect(() => {
         const reportId = searchParams.get('report');

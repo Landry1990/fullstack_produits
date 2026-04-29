@@ -22,14 +22,7 @@ export default function Creances() {
     const data = useCreancesData();
     const { settings: pharmacySettings } = usePharmacySettings();
     
-    const apiBaseUrl = useMemo(() => {
-        const baseUrl = import.meta.env.VITE_API_BASE_URL ?? '';
-        return baseUrl ? String(baseUrl).replace(/\/$/, '') : '';
-    }, []);
-    const creancesEndpoint = apiBaseUrl ? `${apiBaseUrl}/api/creances/` : '/api/creances/';
-
     const actions = useCreanceActions({
-        creancesEndpoint,
         refresh: data.refresh,
         selectedIds: data.selectedIds,
         setSelectedIds: data.setSelectedIds,

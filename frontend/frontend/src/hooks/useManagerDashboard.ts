@@ -2,7 +2,7 @@ import { useState, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'react-hot-toast';
-import axios from '../config/axios';
+import api from '../services/api';
 import { useManagerStats, useCurrentObjectifs } from './useDashboard';
 import { usePharmacySettings } from './usePharmacySettings';
 import { exportToExcel } from '../utils/excelExport';
@@ -32,25 +32,19 @@ export const useManagerDashboard = () => {
     const handleExport = useCallback(async (type: 'csv' | 'pdf' | 'dead_stock') => {
         setExporting(true);
         try {
-            const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || '';
-            const rapportsEndpoint = apiBaseUrl
-                ? `${String(apiBaseUrl).replace(/\/$/, '')}/api/rapports/`
-                : '/api/rapports/';
-
             let url = '';
             const now = new Date();
             const firstDay = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
             const lastDay = now.toISOString();
 
             if (type === 'csv') {
-                url = `${rapportsEndpoint}export_comptable_csv/?date_debut=${firstDay}&date_fin=${lastDay}`;
+                url = `rapports/export_comptable_csv/?date_debut=${firstDay}&date_fin=${lastDay}`;
             } else if (type === 'pdf') {
                 const month = String(now.getMonth() + 1).padStart(2, '0');
                 const year = now.getFullYear();
-                url = `${rapportsEndpoint}rapport_mensuel_pdf/?mois=${year}-${month}`;
+                url = `rapports/rapport_mensuel_pdf/?mois=${year}-${month}`;
             } else if (type === 'dead_stock') {
-                const dsUrl = `${rapportsEndpoint}stocks_morts/?min_value=100000&months=6`;
-                const response = await axios.get(dsUrl);
+                const response = await api.get('rapports/stocks_morts/', { params: { min_value: 100000, months: 6 } });
                 const data = response.data;
 
                 if (Array.isArray(data) && data.length > 0) {
@@ -78,7 +72,7 @@ export const useManagerDashboard = () => {
                 return;
             }
 
-            const response = await axios.get(url, { responseType: 'blob' });
+            const response = await api.get(url, { responseType: 'blob' });
             const blob = new Blob([response.data], { type: response.headers['content-type'] });
             const downloadUrl = window.URL.createObjectURL(blob);
             const link = document.createElement('a');
@@ -102,12 +96,7 @@ export const useManagerDashboard = () => {
 
     const handleSaveObjectif = async () => {
         try {
-            const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || '';
-            const endpoint = apiBaseUrl
-                ? `${String(apiBaseUrl).replace(/\/$/, '')}/api/objectifs-commerciaux/`
-                : '/api/objectifs-commerciaux/';
-
-            await axios.post(endpoint, editingObjectif);
+            await api.post('objectifs-commerciaux/', editingObjectif);
             toast.success(t('manager_dashboard.messages.save_success'));
             setIsModalOpen(false);
             queryClient.invalidateQueries({ queryKey: ['objectifs'] });

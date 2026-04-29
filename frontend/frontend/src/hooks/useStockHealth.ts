@@ -1,5 +1,5 @@
-import { useState, useEffect, useCallback } from 'react';
-import axios from 'axios';
+import { useState, useEffect, useCallback, useRef } from 'react';
+import api from '../services/api';
 
 export interface StockHealthData {
     health_score: number;
@@ -28,24 +28,29 @@ export const useStockHealth = () => {
     const [data, setData] = useState<StockHealthData | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
-
-    const apiBaseUrl = import.meta.env.VITE_API_BASE_URL ?? '';
+    const controllerRef = useRef<AbortController | null>(null);
 
     const fetchHealth = useCallback(async () => {
+        controllerRef.current?.abort();
+        const controller = new AbortController();
+        controllerRef.current = controller;
+
         setLoading(true);
         setError(null);
         try {
-            const response = await axios.get(`${apiBaseUrl.replace(/\/$/, '')}/api/statistiques/stock_health/`);
+            const response = await api.get('statistiques/stock_health/', { signal: controller.signal });
             setData(response.data);
         } catch (err: any) {
+            if (err?.code === 'ERR_CANCELED') return;
             setError(err.message || 'Error fetching stock health data');
         } finally {
             setLoading(false);
         }
-    }, [apiBaseUrl]);
+    }, []);
 
     useEffect(() => {
         fetchHealth();
+        return () => controllerRef.current?.abort();
     }, [fetchHealth]);
 
     return { data, loading, error, refresh: fetchHealth };

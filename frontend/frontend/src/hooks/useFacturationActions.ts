@@ -1,12 +1,12 @@
 import { useCallback } from 'react';
-import axios from 'axios';
+import api from '../services/api';
 import { toast } from 'react-hot-toast';
 import { safeStorage } from '../utils/storage';
 import type { Facture, LigneFacture } from '../types';
 import type { OrdonnanceData } from '../components/OrdonnanceModal';
 
 export interface UseFacturationActionsProps {
-    apiBaseUrl: string;
+    apiBaseUrl?: string;
     cart: {
         lignesFacture: LigneFacture[];
         setLignesFacture: (lignes: LigneFacture[]) => void;
@@ -29,7 +29,6 @@ export interface UseFacturationActionsProps {
 }
 
 export function useFacturationActions({
-    apiBaseUrl,
     cart,
     clientsHook,
     ui,
@@ -52,9 +51,6 @@ export function useFacturationActions({
         if (cart.lignesFacture.length === 0) return
         setLoading(true)
         try {
-            const facturesEndpoint = apiBaseUrl ? `${apiBaseUrl}/api/factures/` : '/api/factures/'
-            const factureProduitsEndpoint = apiBaseUrl ? `${apiBaseUrl}/api/facture-produits/` : '/api/facture-produits/'
-
             const facturePayload = {
                 client: clientsHook.useManualClient ? null : clientsHook.selectedClient,
                 client_name_override: clientsHook.useManualClient ? clientsHook.manualClientName : null,
@@ -64,7 +60,7 @@ export function useFacturationActions({
                 ayant_droit: clientsHook.selectedAyantDroit,
                 part_client: (clientsHook.selectedClient && clientsHook.clients.find((c: any) => c.id === clientsHook.selectedClient)?.client_type === 'PROFESSIONNEL' && totals.tauxCouverture > 0) ? totals.partPatient : null
             }
-            const { data: createdFacture } = await axios.post(facturesEndpoint, facturePayload)
+            const { data: createdFacture } = await api.post('factures/', facturePayload)
 
             const produitsPayload = cart.lignesFacture.map((ligne: any) => {
                 const prixUnitaire = Number(ligne.prix_unitaire)
@@ -82,7 +78,7 @@ export function useFacturationActions({
                 }
             })
 
-            await Promise.all(produitsPayload.map((payload: any) => axios.post(factureProduitsEndpoint, payload)))
+            await Promise.all(produitsPayload.map((payload: any) => api.post('facture-produits/', payload)))
 
             try {
                 window.open(`/app/print-invoice/${createdFacture.id}`, '_blank')
@@ -101,7 +97,7 @@ export function useFacturationActions({
         } finally {
             setLoading(false)
         }
-    }, [cart.lignesFacture, apiBaseUrl, clientsHook, totals, ui, setLoading])
+    }, [cart.lignesFacture, clientsHook, totals, ui, setLoading])
 
     const handleBonDeLivraison = useCallback(async () => {
         if (cart.lignesFacture.length === 0) {
@@ -115,9 +111,6 @@ export function useFacturationActions({
 
         setLoading(true)
         try {
-            const facturesEndpoint = apiBaseUrl ? `${apiBaseUrl}/api/factures/` : '/api/factures/'
-            const factureProduitsEndpoint = apiBaseUrl ? `${apiBaseUrl}/api/facture-produits/` : '/api/facture-produits/'
-
             const facturePayload = {
                 client: clientsHook.selectedClient || null,
                 client_name_override: clientsHook.manualClientName || null,
@@ -127,9 +120,7 @@ export function useFacturationActions({
                 notes: "Généré via Bon de Livraison"
             }
 
-            const res = await axios.post(facturesEndpoint, facturePayload, {
-                headers: { Authorization: `Token ${safeStorage.getItem('authToken')}` }
-            })
+            const res = await api.post('factures/', facturePayload)
             const createdFacture = res.data
 
             const produitsPayload = cart.lignesFacture.map((ligne: any) => {
@@ -152,9 +143,7 @@ export function useFacturationActions({
             })
 
             for (const payload of produitsPayload) {
-                await axios.post(factureProduitsEndpoint, payload, {
-                    headers: { Authorization: `Token ${safeStorage.getItem('authToken')}` }
-                })
+                await api.post('facture-produits/', payload)
             }
 
             window.open(`/app/print-invoice/${createdFacture.id}?type=BL`, '_blank')
@@ -169,7 +158,7 @@ export function useFacturationActions({
         } finally {
             setLoading(false)
         }
-    }, [cart.lignesFacture, apiBaseUrl, clientsHook, ui, setLoading])
+    }, [cart.lignesFacture, clientsHook, ui, setLoading])
 
     const handleImprimerFacture = useCallback(async (facture: Facture) => {
         if (!facture) {
@@ -188,7 +177,7 @@ export function useFacturationActions({
     const handleConfirmPrintClientName = useCallback(async (clientNameInput: string) => {
         if (!pendingPrintFacture) return;
         try {
-            await axios.patch(`${apiBaseUrl}/api/factures/${pendingPrintFacture.id}/`,
+            await api.patch(`factures/${pendingPrintFacture.id}/`,
                 { client_name_override: clientNameInput }
             );
             let url = `/app/print-invoice/${pendingPrintFacture.id}`;
@@ -203,7 +192,7 @@ export function useFacturationActions({
             setPendingPrintFacture(null);
             setTimeout(() => searchInputRef.current?.focus(), 100);
         }
-    }, [pendingPrintFacture, apiBaseUrl, setShowClientNameModal, setPendingPrintFacture, searchInputRef])
+    }, [pendingPrintFacture, setShowClientNameModal, setPendingPrintFacture, searchInputRef])
 
     const ouvrirModalPaiement = useCallback((facture?: Facture) => {
         if (facture) {
@@ -239,20 +228,18 @@ export function useFacturationActions({
 
         setLoading(true)
         try {
-            const facturesEndpoint = apiBaseUrl ? `${apiBaseUrl}/api/factures/` : '/api/factures/'
-            const response = await axios.post(`${facturesEndpoint}${facture.id}/send_whatsapp/`, { phone: phone })
+            const response = await api.post(`factures/${facture.id}/send_whatsapp/`, { phone: phone })
             toast.success(response.data.detail || 'Ticket envoyé par WhatsApp !')
         } catch (err: any) {
             toast.error(err.response?.data?.detail || "Erreur lors de l'envoi WhatsApp")
         } finally {
             setLoading(false)
         }
-    }, [ui.ticketCaisse, apiBaseUrl, t, setLoading])
+    }, [ui.ticketCaisse, t, setLoading])
 
     const handleOrdonnanceSave = useCallback(async (data: OrdonnanceData) => {
         setLoading(true);
         try {
-            const endpoint = apiBaseUrl ? `${apiBaseUrl}/api/ordonnancier/` : '/api/ordonnancier/';
             const lignesForBackend = data.lignes.map((ligne: any) => ({
                 produit: ligne.produit_id,
                 produit_nom: ligne.produit_nom,
@@ -265,7 +252,7 @@ export function useFacturationActions({
                 facture: ui.pendingOrdonnanceFacture?.id || null,
                 lignes: lignesForBackend
             };
-            await axios.post(endpoint, payload);
+            await api.post('ordonnancier/', payload);
             toast.success(t('prescriptions:messages.save_success'));
             ui.setShowOrdonnanceModal(false);
             ui.setPendingOrdonnanceFacture(null);
@@ -274,7 +261,7 @@ export function useFacturationActions({
         } finally {
             setLoading(false);
         }
-    }, [apiBaseUrl, ui, t, setLoading])
+    }, [ui, t, setLoading])
 
     const handleQuantityShortcut = useCallback((qty: number) => {
         if (cart.lignesFacture.length > 0) {

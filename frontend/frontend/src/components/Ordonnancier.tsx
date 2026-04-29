@@ -1,5 +1,5 @@
 ﻿import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import api from '../services/api';
 import { toast } from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import type { Ordonnancier } from '../types';
@@ -21,8 +21,6 @@ const OrdonnancierPage: React.FC = () => {
     const [filterSurveillance, setFilterSurveillance] = useState('NONE');
     
     // Force URL absolue
-    const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || '';
-
     useEffect(() => {
         fetchOrdonnancier();
         fetchStats();
@@ -47,7 +45,7 @@ const OrdonnancierPage: React.FC = () => {
             if (searchProduit) params.append('produit', searchProduit);
             if (filterSurveillance !== 'NONE') params.append('surveillance', filterSurveillance);
             
-            const response = await axios.get(`${apiBaseUrl}/api/ordonnancier/?${params.toString()}`);
+            const response = await api.get(`ordonnancier/?${params.toString()}`);
             const data = response.data.results || response.data;
             setOrdonnancier(Array.isArray(data) ? data : []);
         } catch (error: any) {
@@ -60,7 +58,7 @@ const OrdonnancierPage: React.FC = () => {
     
     const fetchStats = async () => {
         try {
-            const response = await axios.get(`${apiBaseUrl}/api/ordonnancier/stats/`);
+            const response = await api.get('ordonnancier/stats/');
             setStats(response.data);
         } catch (error) {
             console.error('Erreur chargement stats:', error);
@@ -74,7 +72,8 @@ const OrdonnancierPage: React.FC = () => {
         if (searchPatient) params.append('patient', searchPatient);
         if (searchPrescripteur) params.append('prescripteur', searchPrescripteur);
         
-        window.open(`${apiBaseUrl}/api/ordonnancier/export_pdf/?${params.toString()}`, '_blank');
+        const baseUrl = (import.meta.env.VITE_API_BASE_URL || '').replace(/\/$/, '');
+        window.open(`${baseUrl}/api/ordonnancier/export_pdf/?${params.toString()}`, '_blank');
     };
 
     return (

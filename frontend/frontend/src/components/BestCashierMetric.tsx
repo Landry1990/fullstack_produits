@@ -1,5 +1,5 @@
 ﻿import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import api from '../services/api';
 import { useTranslation } from 'react-i18next';
 import { formatCurrency } from '../utils/formatters';
 
@@ -37,7 +37,7 @@ const BestCashierMetric: React.FC<BestCashierMetricProps> = ({ month, year, user
         try {
             const params = new URLSearchParams({ month, year })
             if (userId) params.append('user_id', userId)
-            const response = await axios.get(`/api/clotures-caisse/performances_caissiers/?${params.toString()}`);
+            const response = await api.get(`clotures-caisse/performances_caissiers/?${params.toString()}`);
             setPerformances(response.data);
         } catch (err) {
             console.error("Error fetching cashier performances:", err);

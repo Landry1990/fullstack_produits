@@ -87,10 +87,9 @@ export function useCommandesState(forcedType?: 'LOC' | 'DIR') {
   const filterStatus = useCommandesStore((s) => s.filterStatus);
   const setFilterStatus = useCommandesStore((s) => s.setFilterStatus);
 
-  const apiBaseUrl = import.meta.env.VITE_API_BASE_URL ?? '';
-  const produitsEndpoint = `${apiBaseUrl}/api/produits/for_import/`;
-  const commandesEndpoint = `${apiBaseUrl}/api/commandes/`;
-  const fournisseursEndpoint = `${apiBaseUrl}/api/fournisseurs/`;
+  const produitsEndpoint = 'produits/for_import/';
+  const commandesEndpoint = 'commandes/';
+  const fournisseursEndpoint = 'fournisseurs/';
 
   const { 
     data: commandesData, 
@@ -1374,7 +1373,6 @@ export function useCommandesState(forcedType?: 'LOC' | 'DIR') {
       commandeProduits,
       selectedRows,
       newCommandeFournisseurId,
-      apiBaseUrl,
       commandesEndpoint,
       fournisseursEndpoint,
       handleTransferSuccess,

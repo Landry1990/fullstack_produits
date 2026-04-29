@@ -1,8 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Search, Calendar, Filter, User, Trash2, RefreshCw } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import axios from 'axios';
-import { safeStorage } from '../../utils/storage';
+import api from '../../services/api';
 
 interface InventaireFiltersProps {
     filters: {
@@ -36,11 +35,7 @@ export const InventaireFilters: React.FC<InventaireFiltersProps> = ({ filters, o
     useEffect(() => {
         const fetchUsers = async () => {
             try {
-                const token = safeStorage.getItem('authToken');
-                const apiBaseUrl = import.meta.env.VITE_API_BASE_URL ?? '/api';
-                const response = await axios.get(`${String(apiBaseUrl).replace(/\/$/, '')}/users/`, {
-                    headers: { Authorization: `Token ${token}` }
-                });
+                const response = await api.get('users/');
                 setUsers(Array.isArray(response.data) ? response.data : response.data.results || []);
             } catch (error) {
                 console.error("Failed to load users for filter", error);

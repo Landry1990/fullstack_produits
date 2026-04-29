@@ -1,7 +1,7 @@
 ﻿import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import axios from 'axios';
+import api from '../services/api';
 import { toast } from 'react-hot-toast';
 import { Search, Globe, DollarSign, Cloud, ShoppingCart, CheckCircle, XCircle, Trash2 } from 'lucide-react';
 import { formatCurrency, normalizeNumberInput, formatNumber } from '../utils/formatters';
@@ -226,7 +226,7 @@ function SimulateurClient() {
                  params.page_size = 20; // Limit default view
              }
              
-             const response = await axios.get('/api/produits/', { params });
+             const response = await api.get('produits/', { params });
              return response.data.results || response.data;
         },
         // Always enabled now
@@ -399,7 +399,7 @@ export default function Vitrine() {
   const { data: publicCount = 0 } = useQuery({
     queryKey: ['vitrine-stats-count'],
     queryFn: async () => {
-      const response = await axios.get('/api/produits/', { params: { is_public: 'true', page_size: 1 } });
+      const response = await api.get('produits/', { params: { is_public: 'true', page_size: 1 } });
       return response.data.count || 0;
     }
   });
@@ -409,7 +409,7 @@ export default function Vitrine() {
     queryFn: async () => {
       const params: any = { search: debouncedSearch };
       if (showPublicOnly) params.is_public = 'true';
-      const response = await axios.get('/api/produits/', { params });
+      const response = await api.get('produits/', { params });
       return response.data.results || response.data;
     },
     enabled: activeTab === 'gestion' // Ne charger que si on est sur l'onglet gestion
@@ -417,7 +417,7 @@ export default function Vitrine() {
 
   const toggleVisibility = useMutation({
     mutationFn: async (id: number) => {
-      await axios.post(`/api/produits/${id}/toggle_public/`);
+      await api.post(`produits/${id}/toggle_public/`);
     },
     onMutate: async (id) => {
         // Cancel outgoing refetches
@@ -451,7 +451,7 @@ export default function Vitrine() {
 
   const updatePrice = useMutation({
     mutationFn: async ({ id, price }: { id: number, price: number | null }) => {
-      await axios.patch(`/api/produits/${id}/`, { public_price: price });
+      await api.patch(`produits/${id}/`, { public_price: price });
     },
     onSuccess: () => {
         queryClient.invalidateQueries({ queryKey: ['vitrine-products'] });
@@ -462,7 +462,7 @@ export default function Vitrine() {
 
   const bulkToggle = useMutation({
     mutationFn: async ({ ids, target_status }: { ids: number[], target_status: boolean }) => {
-      await axios.post(`/api/produits/bulk_toggle_public/`, { ids, target_status });
+      await api.post('produits/bulk_toggle_public/', { ids, target_status });
     },
     onSuccess: (_, variables) => {
         queryClient.invalidateQueries({ queryKey: ['vitrine-products'] });

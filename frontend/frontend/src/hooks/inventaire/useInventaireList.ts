@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import axios from 'axios';
+import { useState, useEffect, useCallback, useRef } from 'react';
+import api from '../../services/api';
 import { toast } from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import type { Inventaire } from '../../types';
@@ -9,8 +9,6 @@ import type { Inventaire } from '../../types';
 
 export const useInventaireList = () => {
     const { t } = useTranslation();
-    const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || '/api';
-    const inventairesEndpoint = `${String(apiBaseUrl).replace(/\/$/, '')}/inventaires/`;
 
     const [inventaires, setInventaires] = useState<Inventaire[]>([]);
     const [loading, setLoading] = useState(true);
@@ -28,22 +26,28 @@ export const useInventaireList = () => {
 
     const [selectedInventaireIds, setSelectedInventaireIds] = useState<Set<number>>(new Set());
 
-    const fetchInventaires = async (url?: string) => {
+    const controllerRef = useRef<AbortController | null>(null);
+
+    const fetchInventaires = useCallback(async (pageUrl?: string) => {
+        controllerRef.current?.abort();
+        const controller = new AbortController();
+        controllerRef.current = controller;
+
         setLoading(true);
         try {
-            let fetchUrl = url || inventairesEndpoint;
-            if (!url) {
-                const params = new URLSearchParams();
-                if (filterStartDate) params.append('date__gte', filterStartDate);
-                if (filterEndDate) params.append('date__lte', filterEndDate);
-                if (filterSearchTerm) params.append('search', filterSearchTerm);
-                if (filterStatus) params.append('status', filterStatus);
-                if (filterCreator) params.append('created_by', filterCreator);
-                const p = params.toString();
-                if (p) fetchUrl += `?${p}`;
+            let response;
+            if (pageUrl) {
+                response = await api.get(pageUrl, { signal: controller.signal });
+            } else {
+                const params: Record<string, string> = {};
+                if (filterStartDate) params['date__gte'] = filterStartDate;
+                if (filterEndDate) params['date__lte'] = filterEndDate;
+                if (filterSearchTerm) params['search'] = filterSearchTerm;
+                if (filterStatus) params['status'] = filterStatus;
+                if (filterCreator) params['created_by'] = filterCreator;
+                response = await api.get('inventaires/', { params, signal: controller.signal });
             }
 
-            const response = await axios.get(fetchUrl);
             const data = response.data;
             if (data && data.results) {
                 setInventaires(data.results);
@@ -51,15 +55,15 @@ export const useInventaireList = () => {
                 setNextPage(data.next);
                 setPrevPage(data.previous);
 
-                if (url && data.previous) {
+                if (pageUrl && data.previous) {
                     try {
-                        const urlObj = new URL(url);
+                        const urlObj = new URL(pageUrl);
                         const pageParam = urlObj.searchParams.get('page');
                         setCurrentPage(pageParam ? parseInt(pageParam) : 1);
                     } catch (e) {
                         setCurrentPage(1);
                     }
-                } else if (!url) {
+                } else if (!pageUrl) {
                     setCurrentPage(1);
                 }
             } else if (Array.isArray(data)) {
@@ -72,21 +76,22 @@ export const useInventaireList = () => {
                 setInventaires([]);
                 setTotalCount(0);
             }
-        } catch (error) {
+        } catch (error: any) {
+            if (error?.code === 'ERR_CANCELED') return;
             console.error(error);
             toast.error(t('common:messages.error_loading', { defaultValue: 'Erreur lors du chargement' }));
         } finally {
             setLoading(false);
         }
-    };
+    }, [filterStartDate, filterEndDate, filterSearchTerm, filterStatus, filterCreator, t]);
 
     // Auto-fetch when filters change (debounced)
     useEffect(() => {
         const timeoutId = setTimeout(() => {
             fetchInventaires();
         }, 500);
-        return () => clearTimeout(timeoutId);
-    }, [filterStartDate, filterEndDate, filterSearchTerm, filterStatus, filterCreator]);
+        return () => { clearTimeout(timeoutId); controllerRef.current?.abort(); };
+    }, [fetchInventaires]);
 
     const toggleSelectInventaire = (id: number) => {
         const newSet = new Set(selectedInventaireIds);
@@ -112,7 +117,7 @@ export const useInventaireList = () => {
         if (deleting) return;
         setDeleting(true);
         try {
-            await axios.delete(`${inventairesEndpoint}${id}/`);
+            await api.delete(`inventaires/${id}/`);
             toast.success(t('common:messages.deleted'));
             fetchInventaires();
         } catch (error) {
@@ -142,7 +147,6 @@ export const useInventaireList = () => {
         // Selection
         selectedInventaireIds, setSelectedInventaireIds,
         toggleSelectInventaire, toggleSelectAllInventaires,
-        inventairesEndpoint
     };
 };
 

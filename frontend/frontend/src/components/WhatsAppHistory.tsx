@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import api from '../services/api';
 import { useTranslation } from 'react-i18next';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
@@ -31,11 +31,10 @@ const WhatsAppHistory: React.FC = () => {
     const fetchLogs = async () => {
         setLoading(true);
         try {
-            const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || '';
             const params: any = {};
             if (filterType !== 'ALL') params.type = filterType;
             
-            const response = await axios.get(`${apiBaseUrl}/api/whatsapp-logs/`, { params });
+            const response = await api.get('whatsapp-logs/', { params });
             setLogs(Array.isArray(response.data) ? response.data : response.data.results || []);
         } catch (error) {
             console.error('Erreur lors du chargement de l\'historique WhatsApp:', error);

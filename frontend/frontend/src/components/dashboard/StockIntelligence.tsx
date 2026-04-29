@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect } from 'react';
 import { 
   ShoppingBag, 
   Archive, 
@@ -9,7 +9,7 @@ import {
   TrendingUp
 } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import api from '../../services/api';
 
 interface StockIntelligenceProps {
   stats: any;
@@ -37,10 +37,6 @@ export default function StockIntelligence({
   formatCurrencyLocal
 }: StockIntelligenceProps) {
   const navigate = useNavigate();
-  const apiBaseUrl = useMemo(() => {
-    const base = import.meta.env.VITE_API_BASE_URL ?? '';
-    return base ? String(base).replace(/\/$/, '') : '';
-  }, []);
 
   const DORMANT_DAYS = 90;
   const [dormantItems, setDormantItems] = useState<any[]>([]);
@@ -50,7 +46,7 @@ export default function StockIntelligence({
   const [overstockTotal, setOverstockTotal] = useState(0);
 
   useEffect(() => {
-    axios.get(`${apiBaseUrl}/api/stock-analysis/unsold/`, {
+    api.get('stock-analysis/unsold/', {
       params: { days: DORMANT_DAYS, page: 1, page_size: 50 }
     }).then(res => {
       const items = (res.data?.items ?? []) as any[];
@@ -58,10 +54,10 @@ export default function StockIntelligence({
       setDormantItems(sorted);
       setDormantTotal(res.data?.total_value ?? 0);
     }).catch(() => {});
-  }, [apiBaseUrl]);
+  }, []);
 
   useEffect(() => {
-    axios.get(`${apiBaseUrl}/api/stock-analysis/overstock/`, {
+    api.get('stock-analysis/overstock/', {
       params: { page: 1, page_size: 50 }
     }).then(res => {
       const items = (res.data?.items ?? []) as any[];
@@ -69,7 +65,7 @@ export default function StockIntelligence({
       setOverstockItems(sorted);
       setOverstockTotal(res.data?.total_value ?? 0);
     }).catch(() => {});
-  }, [apiBaseUrl]);
+  }, []);
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6 auto-rows-fr">

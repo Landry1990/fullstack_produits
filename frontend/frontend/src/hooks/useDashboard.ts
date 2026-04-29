@@ -1,24 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
-import axios from '../config/axios';
+import api from '../services/api';
 import type { StockLot } from '../types';
-
-const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || '';
-
-const dashboardEndpoint = apiBaseUrl
-    ? `${String(apiBaseUrl).replace(/\/$/, '')}/api/dashboard/`
-    : '/api/dashboard/';
-const stockLotsEndpoint = apiBaseUrl
-    ? `${String(apiBaseUrl).replace(/\/$/, '')}/api/stock-lots/`
-    : '/api/stock-lots/';
-const ugStatsEndpoint = apiBaseUrl
-    ? `${String(apiBaseUrl).replace(/\/$/, '')}/api/stats-ug/par_fournisseur/`
-    : '/api/stats-ug/par_fournisseur/';
-const promisEndpoint = apiBaseUrl
-    ? `${String(apiBaseUrl).replace(/\/$/, '')}/api/promis/disponibles/`
-    : '/api/promis/disponibles/';
-const reapproEndpoint = apiBaseUrl
-    ? `${String(apiBaseUrl).replace(/\/$/, '')}/api/produits/reappro_summary/`
-    : '/api/produits/reappro_summary/';
 
 interface DashboardStats {
     role?: 'PHARMACIEN' | 'VENDEUR' | 'CAISSIER';
@@ -72,7 +54,7 @@ export const useDashboardStats = () => {
     return useQuery<DashboardStats>({
         queryKey: ['dashboard', 'stats'],
         queryFn: async () => {
-            const response = await axios.get<DashboardStats>(`${dashboardEndpoint}stats/`);
+            const response = await api.get<DashboardStats>('dashboard/stats/');
             return response.data;
         },
         staleTime: 1000 * 60, // 1 minute
@@ -85,7 +67,7 @@ export const useRevenueChart = () => {
     return useQuery<RevenueChartData>({
         queryKey: ['dashboard', 'revenueChart'],
         queryFn: async () => {
-            const response = await axios.get<RevenueChartData>(`${dashboardEndpoint}revenue_chart/`);
+            const response = await api.get<RevenueChartData>('dashboard/revenue_chart/');
             return response.data;
         },
         staleTime: 1000 * 60 * 5, // 5 minutes
@@ -98,7 +80,7 @@ export const useLowStock = (enabled: boolean = true) => {
     return useQuery<LowStockItem[]>({
         queryKey: ['dashboard', 'lowStock'],
         queryFn: async () => {
-            const response = await axios.get<LowStockItem[]>(`${dashboardEndpoint}low_stock/`);
+            const response = await api.get<LowStockItem[]>('dashboard/low_stock/');
             return response.data;
         },
         enabled,
@@ -113,7 +95,7 @@ export const useUgStats = (enabled: boolean = true) => {
         queryKey: ['dashboard', 'ugStats'],
         queryFn: async () => {
             try {
-                const response = await axios.get(ugStatsEndpoint);
+                const response = await api.get('stats-ug/par_fournisseur/');
                 return response.data;
             } catch (err) {
                 console.warn('Failed to fetch UG stats', err);
@@ -130,7 +112,7 @@ export const usePromisDisponibles = (enabled: boolean = true) => {
         queryKey: ['dashboard', 'promis'],
         queryFn: async () => {
             try {
-                const response = await axios.get<{ promis_disponibles: PromisItem[] }>(promisEndpoint);
+                const response = await api.get<{ promis_disponibles: PromisItem[] }>('promis/disponibles/');
                 return response.data.promis_disponibles;
             } catch (err) {
                 console.warn('Failed to fetch promis', err);
@@ -157,7 +139,7 @@ export const useExpiringLots = (months: number, enabled: boolean = true) => {
                 ordering: 'date_expiration'
             });
 
-            const response = await axios.get(`${stockLotsEndpoint}?${params}`);
+            const response = await api.get('stock-lots/', { params: Object.fromEntries(params) });
             const lots: StockLot[] = Array.isArray(response.data) ? response.data : (response.data.results || []);
 
             // Client-side filtering as per original logic, though backend filtering is preferred
@@ -186,7 +168,7 @@ export const useHourlyTraffic = () => {
     return useQuery({
         queryKey: ['dashboard', 'hourlyTraffic'],
         queryFn: async () => {
-            const response = await axios.get<HourlyTrafficData[]>(`${dashboardEndpoint}hourly_traffic/`);
+            const response = await api.get<HourlyTrafficData[]>('dashboard/hourly_traffic/');
             return response.data;
         },
         staleTime: 1000 * 60 * 5, // 5 minutes
@@ -196,10 +178,10 @@ export const useHourlyTraffic = () => {
 };
 
 export const useSupplierDebts = (enabled: boolean = true) => {
-    return useQuery({
+    return useQuery<SupplierDebtsResponse>({
         queryKey: ['dashboard', 'supplierDebts'],
         queryFn: async () => {
-            const response = await axios.get(`${dashboardEndpoint}supplier_debts/`);
+            const response = await api.get<SupplierDebtsResponse>('dashboard/supplier_debts/');
             return response.data;
         },
         enabled,
@@ -225,7 +207,7 @@ export const useManagerStats = () => {
     return useQuery({
         queryKey: ['dashboard', 'managerStats'],
         queryFn: async () => {
-            const response = await axios.get<ManagerStats>(`${dashboardEndpoint}manager_stats/`);
+            const response = await api.get<ManagerStats>('dashboard/manager_stats/');
             return response.data;
         },
         staleTime: 1000 * 60, // 1 minute
@@ -245,15 +227,11 @@ export interface ObjectifCommercial {
     created_by_name: string;
 }
 
-const objectifsEndpoint = apiBaseUrl
-    ? `${String(apiBaseUrl).replace(/\/$/, '')}/api/objectifs-commerciaux/`
-    : '/api/objectifs-commerciaux/';
-
 export const useObjectifs = () => {
     return useQuery({
         queryKey: ['objectifs'],
         queryFn: async () => {
-            const response = await axios.get<ObjectifCommercial[]>(objectifsEndpoint);
+            const response = await api.get<ObjectifCommercial[]>('objectifs-commerciaux/');
             return response.data;
         }
     });
@@ -263,17 +241,47 @@ export const useCurrentObjectifs = () => {
     return useQuery({
         queryKey: ['objectifs', 'courants'],
         queryFn: async () => {
-            const response = await axios.get<{
+            const response = await api.get<{
                 jour: ObjectifCommercial | null;
                 semaine: ObjectifCommercial | null;
                 mois: ObjectifCommercial | null;
-            }>(`${objectifsEndpoint}courants/`);
+            }>('objectifs-commerciaux/courants/');
             return response.data;
         },
         staleTime: 1000 * 60,
         refetchInterval: 1000 * 60 * 5, // Auto-update every 5 minutes
     });
 };
+
+export interface SupplierDebtItem {
+    id: number | string;
+    type: 'FACTURE' | 'RELEVE';
+    label: string;
+    amount: number;
+    due_date: string;
+    is_overdue: boolean;
+    days_overdue: number | null;
+    days_remaining: number | null;
+    order_ids?: number[];
+}
+
+export interface SupplierDebt {
+    id: number;
+    name: string;
+    phone: string;
+    type_reglement: 'FACTURE' | 'RELEVE';
+    delai_paiement_jours: number;
+    periode_releve_jours: number;
+    debt_total: number;
+    items: SupplierDebtItem[];
+    overdue_count: number;
+    overdue_amount: number;
+}
+
+export interface SupplierDebtsResponse {
+    total_debt: number;
+    suppliers: SupplierDebt[];
+}
 
 export interface Echeance {
     fournisseur_id: number;
@@ -287,15 +295,11 @@ export interface Echeance {
     status: 'EN RETARD' | "AUJOURD'HUI" | 'À VENIR';
 }
 
-const echeancierEndpoint = apiBaseUrl
-    ? `${String(apiBaseUrl).replace(/\/$/, '')}/api/fournisseurs/echeancier/`
-    : '/api/fournisseurs/echeancier/';
-
 export const useEcheances = (enabled: boolean = true) => {
     return useQuery<Echeance[]>({
         queryKey: ['dashboard', 'echeances'],
         queryFn: async () => {
-            const response = await axios.get<Echeance[]>(echeancierEndpoint);
+            const response = await api.get<Echeance[]>('fournisseurs/echeancier/');
             return response.data;
         },
         enabled,
@@ -307,7 +311,7 @@ export const useReapproStats = (enabled: boolean = true) => {
     return useQuery({
         queryKey: ['dashboard', 'reappro_stats'],
         queryFn: async () => {
-            const response = await axios.get<{ product_count: number; total_units_suggested: number }>(reapproEndpoint);
+            const response = await api.get<{ product_count: number; total_units_suggested: number }>('produits/reappro_summary/');
             return response.data;
         },
         enabled,

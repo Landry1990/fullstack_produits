@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import axios from 'axios'
+import api from '../../services/api'
 import { toast } from 'react-hot-toast'
 import { formatPrice } from '../../utils/formatters'
 import type { Fournisseur, ProduitModel, CommandeProduit } from '../../types'
@@ -32,8 +32,6 @@ export default function SuggestionCommandeModal({
   produitsList 
 }: SuggestionCommandeModalProps) {
   const { t } = useTranslation(['orders', 'common'])
-  const apiBaseUrl = import.meta.env.VITE_API_BASE_URL ?? ''
-  
   // Internal State
   // Smart defaults for datetime: 24h ago → now
   const now = new Date();
@@ -74,7 +72,7 @@ export default function SuggestionCommandeModal({
               payload.budget_max = suggestionParams.budgetMax ? Number(suggestionParams.budgetMax) : null;
           }
           
-          const response = await axios.post(`${apiBaseUrl ? apiBaseUrl.replace(/\/$/, '') : ''}/api/generer-suggestions/`, payload);
+          const response = await api.post('generer-suggestions/', payload);
           setSuggestions(response.data.suggestions || []);
           setTotalHt(response.data.total_ht || 0); // Capture total HT
           

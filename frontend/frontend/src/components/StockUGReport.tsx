@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { PackageOpen, Calendar, Download, RefreshCw, Banknote, Printer } from 'lucide-react';
-import axios from 'axios';
+import api from '../services/api';
 import { format } from 'date-fns';
 import { useTranslation } from 'react-i18next';
 import toast, { Toaster } from 'react-hot-toast';
@@ -60,21 +60,14 @@ export default function StockUGReport() {
     setExpandedSupplierIds(newSet);
   };
 
-  const apiBaseUrl = React.useMemo(() => (import.meta as any).env.VITE_API_BASE_URL ?? '', []);
-
   const fetchData = async () => {
     try {
       setLoading(true);
-      const token = localStorage.getItem('access_token');
-      
       const params = new URLSearchParams();
       if (dateDebut) params.append('date_debut', dateDebut);
       if (dateFin) params.append('date_fin', dateFin);
       
-      const response = await axios.get(
-        `${apiBaseUrl}/api/stock-lots/rapport_ug/?${params.toString()}`,
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
+      const response = await api.get(`stock-lots/rapport_ug/?${params.toString()}`);
       
       setData(response.data);
     } catch (error) {

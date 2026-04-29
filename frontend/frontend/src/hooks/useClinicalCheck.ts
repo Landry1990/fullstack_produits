@@ -1,10 +1,8 @@
 
 import { useState, useEffect, useCallback } from 'react'
-import axios from 'axios'
+import api from '../services/api'
 import type { ClinicalAlert } from '../components/clinical/ClinicalAlerts'
 import type { LigneFacture } from '../types'
-
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL
 
 export function useClinicalCheck(lignesFacture: LigneFacture[]) {
     const [alerts, setAlerts] = useState<ClinicalAlert[]>([])
@@ -21,7 +19,7 @@ export function useClinicalCheck(lignesFacture: LigneFacture[]) {
 
         try {
             setLoading(true)
-            const response = await axios.post(`${API_BASE_URL}/api/clinical/check/`, {
+            const response = await api.post('clinical/check/', {
                 produits: productIds
             })
             setAlerts(response.data.alerts || [])

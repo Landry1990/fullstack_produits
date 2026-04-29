@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react'
-import axios from 'axios'
+import api from '../services/api'
 import { toast } from 'react-hot-toast'
 import { safeStorage } from '../utils/storage'
 import type { ProduitModel, Facture, LigneFacture } from '../types'
@@ -22,10 +22,9 @@ export interface UseDevisLoaderOptions {
         setModificationInvoiceStatus: (v: string | null) => void
         setOriginalTotalTtc: (v: number) => void
     }
-    apiBaseUrl: string
 }
 
-export function useDevisLoader({ clientsHook, cart, ui, apiBaseUrl }: UseDevisLoaderOptions) {
+export function useDevisLoader({ clientsHook, cart, ui }: UseDevisLoaderOptions) {
     const hasLoadedDevisRef = useRef(false)
 
     useEffect(() => {
@@ -47,9 +46,6 @@ export function useDevisLoader({ clientsHook, cart, ui, apiBaseUrl }: UseDevisLo
                 }
 
                 if (devis.produits && devis.produits.length > 0) {
-                    const apiBase = import.meta.env.VITE_API_BASE_URL ?? ''
-                    const produitsEndpoint = apiBase ? `${apiBase}/api/produits/` : '/api/produits/'
-
                     const lignes: LigneFacture[] = await Promise.all(devis.produits.map(async (p: any) => {
                         let produitData: ProduitModel
                         if (typeof p.produit === 'object' && p.produit.stock !== undefined) {
@@ -57,7 +53,7 @@ export function useDevisLoader({ clientsHook, cart, ui, apiBaseUrl }: UseDevisLo
                         } else {
                             const produitId = typeof p.produit === 'object' ? p.produit.id : p.produit
                             try {
-                                const { data: fullProduct } = await axios.get<ProduitModel>(`${produitsEndpoint}${produitId}/`)
+                                const { data: fullProduct } = await api.get<ProduitModel>(`produits/${produitId}/`)
                                 produitData = fullProduct
                             } catch {
                                 produitData = { id: produitId, name: p.produit_nom || `Produit #${produitId}`, stock: 0, is_deleted: true } as ProduitModel

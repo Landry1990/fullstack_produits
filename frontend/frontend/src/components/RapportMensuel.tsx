@@ -1,5 +1,5 @@
-import { useState, useMemo, useCallback } from 'react';
-import axios from 'axios';
+import { useState, useCallback } from 'react';
+import api from '../services/api';
 import { toast } from 'react-hot-toast';
 import { formatCurrency } from '../utils/formatters';
 import { useTranslation } from 'react-i18next';
@@ -144,8 +144,6 @@ export default function RapportMensuel() {
   
   const { settings } = usePharmacySettings();
 
-  const apiBaseUrl = useMemo(() => (import.meta.env.VITE_API_BASE_URL ?? '').replace(/\/$/, ''), []);
-
   const applyPreset = useCallback((preset: RangePreset) => {
     if (preset !== 'custom') {
       const { debut, fin } = getPresetDates(preset);
@@ -160,12 +158,12 @@ export default function RapportMensuel() {
     try {
       let response;
       if (filterMode === 'month') {
-        response = await axios.get(`${apiBaseUrl}/api/rapports/rapport_mensuel/`, {
+        response = await api.get('rapports/rapport_mensuel/', {
           params: { mois }
         });
         setPeriodeLabel(mois);
       } else {
-        response = await axios.get(`${apiBaseUrl}/api/rapports/rapport_par_dates/`, {
+        response = await api.get('rapports/rapport_par_dates/', {
           params: { date_debut: dateDebut, date_fin: dateFin }
         });
         setPeriodeLabel(`${dateDebut} → ${dateFin}`);

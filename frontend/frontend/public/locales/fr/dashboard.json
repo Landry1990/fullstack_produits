@@ -78,10 +78,26 @@
     "debts": {
         "supplier_debts_title": "Dettes Fournisseurs",
         "supplier_debts_desc": "Factures dues aux fournisseurs",
+        "supplier_debts_by_due": "Dettes par fournisseur & échéances",
         "supplier": "Fournisseur",
         "debt": "Dette",
         "action": "Action",
-        "no_supplier_debts": "Aucune dette fournisseur"
+        "no_supplier_debts": "Aucune dette fournisseur",
+        "view_detail": "Voir le détail",
+        "overdue_one": "échu",
+        "overdue_many": "échus",
+        "days_remaining": "j restants",
+        "days_overdue": "j de retard",
+        "due_date": "Échéance",
+        "statement": "RELEVÉ",
+        "invoice": "FACTURE",
+        "echeances_title": "Échéances Fournisseurs",
+        "echeances_subtitle": "Paiements à venir & en retard",
+        "overdue_status": "en retard",
+        "today_status": "aujourd'hui",
+        "today_badge": "Aujourd'hui",
+        "amount_due": "Montant dû",
+        "status": "Statut"
     },
     "actions": {
         "title": "Actions Rapides",
