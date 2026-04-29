@@ -1,5 +1,5 @@
-import { useState, useEffect, useMemo, useCallback } from 'react';
-import axios from 'axios';
+import { useState, useEffect, useCallback, useRef } from 'react';
+import api from '../services/api';
 import { toast } from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import type { StockAdjustment, PaginatedResponse, StockAdjustmentStats } from '../types';
@@ -25,15 +25,13 @@ export const useAjustementsData = () => {
         negative_sum: 0
     });
 
-    const apiBaseUrl = useMemo(() => {
-        const baseUrl = import.meta.env.VITE_API_BASE_URL ?? '';
-        return baseUrl ? String(baseUrl).replace(/\/$/, '') : '';
-    }, []);
-    const adjustmentsEndpoint = useMemo(() =>
-        apiBaseUrl ? `${apiBaseUrl}/api/stock-adjustments/` : '/api/stock-adjustments/'
-        , [apiBaseUrl]);
+    const controllerRef = useRef<AbortController | null>(null);
 
     const fetchAdjustments = useCallback(async (page = 1) => {
+        controllerRef.current?.abort();
+        const controller = new AbortController();
+        controllerRef.current = controller;
+
         setLoading(true);
         try {
             const params: Record<string, string | number> = {
@@ -47,7 +45,7 @@ export const useAjustementsData = () => {
             if (dateEnd) params.created_at__lte = dateEnd + 'T23:59:59';
 
             // 1. Fetch List
-            const response = await axios.get<PaginatedResponse<StockAdjustment> | StockAdjustment[]>(adjustmentsEndpoint, { params });
+            const response = await api.get<PaginatedResponse<StockAdjustment> | StockAdjustment[]>('stock-adjustments/', { params, signal: controller.signal });
 
             if (response.data && 'results' in response.data && Array.isArray(response.data.results)) {
                 setAdjustments(response.data.results);
@@ -66,24 +64,25 @@ export const useAjustementsData = () => {
             delete statsParams.page;
             delete statsParams.page_size;
 
-            const statsResponse = await axios.get<StockAdjustmentStats>(`${adjustmentsEndpoint}stats/`, { params: statsParams });
+            const statsResponse = await api.get<StockAdjustmentStats>('stock-adjustments/stats/', { params: statsParams, signal: controller.signal });
             if (statsResponse.data) {
                 setStats(statsResponse.data);
             }
 
-        } catch (err) {
+        } catch (err: any) {
+            if (err?.code === 'ERR_CANCELED') return;
             toast.error(t('common:messages.error_loading'));
             console.error(err);
         } finally {
             setLoading(false);
         }
-    }, [adjustmentsEndpoint, searchQuery, filterReasonType, dateStart, dateEnd]);
+    }, [searchQuery, filterReasonType, dateStart, dateEnd]);
 
     useEffect(() => {
         const timer = setTimeout(() => {
             fetchAdjustments(1);
         }, 500);
-        return () => clearTimeout(timer);
+        return () => { clearTimeout(timer); controllerRef.current?.abort(); };
     }, [fetchAdjustments]);
 
     const handleExportExcel = useCallback(async () => {
@@ -94,7 +93,7 @@ export const useAjustementsData = () => {
             if (dateStart) params.created_at__gte = dateStart;
             if (dateEnd) params.created_at__lte = dateEnd + 'T23:59:59';
 
-            const response = await axios.get(`${adjustmentsEndpoint}export_excel/`, {
+            const response = await api.get('stock-adjustments/export_excel/', {
                 params,
                 responseType: 'blob'
             });
@@ -114,7 +113,7 @@ export const useAjustementsData = () => {
             toast.error(t('common:messages.export_error'));
             console.error(err);
         }
-    }, [adjustmentsEndpoint, searchQuery, filterReasonType, dateStart, dateEnd]);
+    }, [searchQuery, filterReasonType, dateStart, dateEnd]);
 
     return {
         adjustments,

@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useMemo } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import { useNavigate } from 'react-router-dom'
-import axios from 'axios'
+import api from '../services/api'
 import { toast } from 'react-hot-toast'
 import { useAuth } from '../context/AuthContext'
 import { usePharmacySettings } from '../hooks/usePharmacySettings'
@@ -56,26 +56,20 @@ export default function CaisseCentralisee() {
   const [selectedPosteCaisseId, setSelectedPosteCaisseId] = useState<string>('all')
   const [isMultiCaisse, setIsMultiCaisse] = useState(false)
 
-  const apiBaseUrl = useMemo(() => (import.meta.env.VITE_API_BASE_URL ?? ''), [])
-
   // Fonction pour récupérer les factures en attente
   const fetchFacturesEnAttente = useCallback(async () => {
     try {
-      const facturesEndpoint = apiBaseUrl ? `${apiBaseUrl}/api/factures/` : '/api/factures/'
-      // Build query string
-      let query = `?status__in=BROU,VAL&include_pending=true`
-      if (selectedPosteCaisseId !== 'all') {
-          query += `&poste_caisse=${selectedPosteCaisseId}`
-      }
+      const params: Record<string, any> = { status__in: 'BROU,VAL', include_pending: true }
+      if (selectedPosteCaisseId !== 'all') params.poste_caisse = selectedPosteCaisseId
 
-      const response = await axios.get(`${facturesEndpoint}${query}`)
+      const response = await api.get('factures/', { params })
       const facturesList = response.data.results || response.data || []
       
       // Fetch full details for each invoice to get products
       const facturesWithDetails = await Promise.all(
         facturesList.map(async (facture: Facture) => {
           try {
-            const detailResponse = await axios.get(`${facturesEndpoint}${facture.id}/`)
+            const detailResponse = await api.get(`factures/${facture.id}/`)
             // Preserve session_ticket_number from list response (assigned by backend)
             return { 
               ...detailResponse.data, 
@@ -92,20 +86,18 @@ export default function CaisseCentralisee() {
     } catch (err) {
       console.error('Erreur lors du chargement des factures en attente:', err)
     }
-  }, [apiBaseUrl])
+  }, [])
 
 
   // Fonction pour récupérer les coupons (actifs + récemment utilisés)
   const fetchCoupons = useCallback(async () => {
     try {
-      const endpoint = apiBaseUrl ? `${apiBaseUrl}/api/coupons/` : '/api/coupons/'
-      // Récupérer tous les coupons récents (triés par date de création décroissante)
-      const response = await axios.get(`${endpoint}?ordering=-date_creation&page_size=50`)
+      const response = await api.get('coupons/', { params: { ordering: '-date_creation', page_size: 50 } })
       setCoupons(response.data.results || response.data || [])
     } catch (err) {
       console.error('Erreur lors du chargement des coupons:', err)
     }
-  }, [apiBaseUrl])
+  }, [])
 
   // Rafraîchissement automatique
   useEffect(() => {
@@ -127,14 +119,13 @@ export default function CaisseCentralisee() {
 
       setLoading(true)
     try {
-      const endpoint = apiBaseUrl ? `${apiBaseUrl}/api/coupons/` : '/api/coupons/'
       const payload = {
         montant: Number(nouveauCouponMontant),
         notes: nouveauCouponNotes,
         facture_origine: selectedFacture?.id || null
       }
       
-      const { data } = await axios.post<CouponMonnaie>(endpoint, payload)
+      const { data } = await api.post<CouponMonnaie>('coupons/', payload)
       toast.success(t('messages.coupon_generated', { numero: data.numero }))
       
       setCoupons([data, ...coupons])
@@ -157,12 +148,9 @@ export default function CaisseCentralisee() {
   useEffect(() => {
     const initPage = async () => {
       try {
-        const settingsEndpoint = apiBaseUrl ? `${apiBaseUrl}/api/invoice-settings/` : '/api/invoice-settings/'
-        const postesEndpoint = apiBaseUrl ? `${apiBaseUrl}/api/postes-caisses/` : '/api/postes-caisses/'
-        
         const [settingsRes, postesRes] = await Promise.all([
-          axios.get(settingsEndpoint),
-          axios.get(postesEndpoint)
+          api.get('invoice-settings/'),
+          api.get('postes-caisses/')
         ])
         
         setIsMultiCaisse(settingsRes.data?.is_multi_caisse ?? false)
@@ -172,7 +160,7 @@ export default function CaisseCentralisee() {
       }
     }
     initPage()
-  }, [apiBaseUrl])
+  }, [])
 
   // Appliquer un coupon à UNE vente spécifique
   const handleAppliquerCouponAFacture = (coupon: CouponMonnaie, facture: Facture) => {
@@ -215,8 +203,7 @@ export default function CaisseCentralisee() {
   // Utiliser réellement le coupon (appelé après encaissement réussi)
   const utiliserCouponApresEncaissement = async (couponId: number, factureId: number) => {
     try {
-      const endpoint = apiBaseUrl ? `${apiBaseUrl}/api/coupons/${couponId}/utiliser/` : `/api/coupons/${couponId}/utiliser/`
-      await axios.post(endpoint, { facture_id: factureId })
+      await api.post(`coupons/${couponId}/utiliser/`, { facture_id: factureId })
       fetchCoupons()
     } catch (err: any) {
       console.error('Erreur utilisation coupon:', err)
@@ -229,8 +216,7 @@ export default function CaisseCentralisee() {
     if (!searchCouponNumero) return
 
     try {
-      const endpoint = apiBaseUrl ? `${apiBaseUrl}/api/coupons/` : '/api/coupons/'
-      const response = await axios.get(`${endpoint}?search=${searchCouponNumero}`)
+      const response = await api.get('coupons/', { params: { search: searchCouponNumero } })
       const results = response.data.results || response.data || []
       
       if (results.length > 0) {
@@ -354,14 +340,10 @@ export default function CaisseCentralisee() {
     setLoading(true)
 
     try {
-      const facturesEndpoint = apiBaseUrl ? `${apiBaseUrl}/api/factures/` : '/api/factures/'
-      const caisseEndpoint = apiBaseUrl ? `${apiBaseUrl}/api/caisse/` : '/api/caisse/'
-
       // 1. Valider la facture si elle n'est pas déjà validée
       let factureValidee = selectedFacture
       if (selectedFacture.status !== 'VAL' && selectedFacture.status !== 'VALIDEE') {
-        const validerEndpoint = `${facturesEndpoint}${selectedFacture.id}/valider/`
-        const { data } = await axios.post<Facture>(validerEndpoint, {})
+        const { data } = await api.post<Facture>(`factures/${selectedFacture.id}/valider/`, {})
         factureValidee = data
       }
 
@@ -386,7 +368,7 @@ export default function CaisseCentralisee() {
           reference: `COUPON-${couponUtilise.numero}`,
           statut: 'completee',
         }
-        await axios.post(caisseEndpoint, couponPayload)
+        await api.post('caisse/', couponPayload)
         // Le coupon est déjà déduit de montantAEncaisser dans le frontend
       }
 
@@ -410,16 +392,15 @@ export default function CaisseCentralisee() {
           paiementPayload.part_assurance = 0
         }
 
-        await axios.post(caisseEndpoint, paiementPayload)
+        await api.post('caisse/', paiementPayload)
         resteAEnregistrer -= montantReel;
       }
 
       // 3. Mettre à jour le statut à PAYEE
-      const factureUpdateEndpoint = `${facturesEndpoint}${factureValidee.id}/`
-      await axios.patch(factureUpdateEndpoint, { status: 'PAY' })
+      await api.patch(`factures/${factureValidee.id}/`, { status: 'PAY' })
 
       // 4. Récupérer la facture finale
-      const { data: factureFinale } = await axios.get<Facture>(factureUpdateEndpoint)
+      const { data: factureFinale } = await api.get<Facture>(`factures/${factureValidee.id}/`)
 
       // 5. Créer le ticket de caisse (calculer le rendu sur la base du montant encaissé, pas du total)
       const rendu = montantTotal - montantAEncaisser
@@ -488,8 +469,7 @@ export default function CaisseCentralisee() {
 
     setLoading(true)
     try {
-      const facturesEndpoint = apiBaseUrl ? `${apiBaseUrl}/api/factures/` : '/api/factures/'
-      const response = await axios.post(`${facturesEndpoint}${facture.id}/send_whatsapp/`, {
+      const response = await api.post(`factures/${facture.id}/send_whatsapp/`, {
         phone: phone
       })
       toast.success(response.data.detail || 'Ticket envoyé par WhatsApp !')
@@ -508,9 +488,7 @@ export default function CaisseCentralisee() {
     if (!window.confirm(t('confirm_cancel_invoice', { numero: facture.numero_facture }))) return
 
     try {
-      const facturesEndpoint = apiBaseUrl ? `${apiBaseUrl}/api/factures/` : '/api/factures/'
-      // Utiliser l'endpoint d'annulation
-      await axios.post(`${facturesEndpoint}${facture.id}/annuler/`, { motif: 'Annulation depuis Caisse Centrale' })
+      await api.post(`factures/${facture.id}/annuler/`, { motif: 'Annulation depuis Caisse Centrale' })
       toast.success(t('messages.cancel_invoice_success'))
       fetchFacturesEnAttente()
     } catch (err) {
@@ -525,11 +503,8 @@ export default function CaisseCentralisee() {
 
     try {
       setLoading(true)
-      const facturesEndpoint = apiBaseUrl ? `${apiBaseUrl}/api/factures/` : '/api/factures/'
-      const produitsEndpoint = apiBaseUrl ? `${apiBaseUrl}/api/produits/` : '/api/produits/'
-      
       // 1. Fetch the FULL invoice detail (list endpoint doesn't include products)
-      const { data: fullFacture } = await axios.get<Facture>(`${facturesEndpoint}${facture.id}/`)
+      const { data: fullFacture } = await api.get<Facture>(`factures/${facture.id}/`)
       
       if (!fullFacture.produits || fullFacture.produits.length === 0) {
         toast.error(t('messages.empty_invoice_error'))
@@ -540,7 +515,7 @@ export default function CaisseCentralisee() {
       // 2. Fetch complete product details for all products
       const productPromises = fullFacture.produits.map(async (p: any) => {
         try {
-          const response = await axios.get(`${produitsEndpoint}${p.produit}/`)
+          const response = await api.get(`produits/${p.produit}/`)
           return {
             id: response.data.id,
             name: response.data.name,
@@ -567,7 +542,7 @@ export default function CaisseCentralisee() {
       const cartItems = await Promise.all(productPromises)
 
       // 3. Cancel the invoice after fetching all data
-      await axios.post(`${facturesEndpoint}${facture.id}/annuler/`, { motif: 'Modification (Reload)' })
+      await api.post(`factures/${facture.id}/annuler/`, { motif: 'Modification (Reload)' })
 
       // 4. Navigate to Facturation with complete state
       navigate('/app/facturation', { 
@@ -591,8 +566,6 @@ export default function CaisseCentralisee() {
   const handleUpdateProductQuantity = async (factureId: number, produitId: number, newQty: number) => {
     try {
       setLoading(true)
-      const facturesEndpoint = apiBaseUrl ? `${apiBaseUrl}/api/factures/` : '/api/factures/'
-      
       const facture = facturesEnAttente.find(f => f.id === factureId)
       if (!facture) return
       
@@ -603,7 +576,7 @@ export default function CaisseCentralisee() {
         return p
       })
       
-      const response = await axios.post(`${facturesEndpoint}${factureId}/modifier/`, {
+      const response = await api.post(`factures/${factureId}/modifier/`, {
         produits: updatedProducts,
         remise: facture.remise,
         client: facture.client,
@@ -626,8 +599,6 @@ export default function CaisseCentralisee() {
   const handleRemoveProduct = async (factureId: number, produitId: number) => {
     try {
       setLoading(true)
-      const facturesEndpoint = apiBaseUrl ? `${apiBaseUrl}/api/factures/` : '/api/factures/'
-      
       const facture = facturesEnAttente.find(f => f.id === factureId)
       if (!facture) return
       
@@ -641,7 +612,7 @@ export default function CaisseCentralisee() {
         return
       }
       
-      const response = await axios.post(`${facturesEndpoint}${factureId}/modifier/`, {
+      const response = await api.post(`factures/${factureId}/modifier/`, {
         produits: updatedProducts,
         remise: facture.remise,
         client: facture.client,

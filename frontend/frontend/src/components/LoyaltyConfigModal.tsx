@@ -1,5 +1,5 @@
 ﻿import { useState, useEffect } from 'react'
-import axios from 'axios'
+import api from '../services/api'
 import { toast } from 'react-hot-toast'
 import { useTranslation } from 'react-i18next'
 import PremiumModal from './common/PremiumModal'
@@ -22,8 +22,6 @@ export default function LoyaltyConfigModal({ isOpen, onClose }: Props) {
     const [settings, setSettings] = useState<LoyaltySetting | null>(null)
     const [loading, setLoading] = useState(false)
     const [saving, setSaving] = useState(false)
-    const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || ''
-
     useEffect(() => {
         if (isOpen) {
             fetchSettings()
@@ -34,9 +32,7 @@ export default function LoyaltyConfigModal({ isOpen, onClose }: Props) {
         console.log("LoyaltyConfigModal: Fetching settings...")
         setLoading(true)
         try {
-            const url = `${apiBaseUrl}/api/loyalty-settings/`
-            console.log("LoyaltyConfigModal: GET", url)
-            let res = await axios.get(url)
+            let res = await api.get('loyalty-settings/')
             console.log("LoyaltyConfigModal: Response", res.data)
             
             // Handle paginated, array, or single object response
@@ -85,10 +81,10 @@ export default function LoyaltyConfigModal({ isOpen, onClose }: Props) {
             // For singleton, use PUT to update existing or POST will handle it
             // Check if settings has an id
             if (settings.id) {
-                await axios.put(`${apiBaseUrl}/api/loyalty-settings/${settings.id}/`, settings)
+                await api.put(`loyalty-settings/${settings.id}/`, settings)
             } else {
                 // POST will use update_or_create in backend
-                await axios.post(`${apiBaseUrl}/api/loyalty-settings/`, settings)
+                await api.post('loyalty-settings/', settings)
             }
             onClose()
             toast.success(t('common:messages.saved'))

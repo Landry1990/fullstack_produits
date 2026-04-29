@@ -1,5 +1,5 @@
 ﻿import { useState, useRef, useEffect } from 'react';
-import axios from 'axios';
+import api from '../services/api';
 import { toast } from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import PremiumModal from './common/PremiumModal';
@@ -33,9 +33,6 @@ export default function PasswordConfirmModal({
     }
   }, [isOpen]);
 
-  const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || '';
-  const verifyEndpoint = `${apiBaseUrl.replace(/\/$/, '')}/api/verify-password/`;
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!password) return;
@@ -44,7 +41,7 @@ export default function PasswordConfirmModal({
     setError(null);
 
     try {
-      await axios.post(verifyEndpoint, { password });
+      await api.post('verify-password/', { password });
       onConfirm();
       onClose();
     } catch (err: any) {

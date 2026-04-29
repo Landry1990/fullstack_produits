@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import axios from 'axios';
+import api from '../services/api';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'react-hot-toast';
@@ -121,8 +121,7 @@ export default function Clients() {
 
   const fetchLoyaltyThreshold = async () => {
     try {
-      const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || '';
-      const res = await axios.get(`${apiBaseUrl}/api/loyalty-settings/`);
+      const res = await api.get('loyalty-settings/');
       let data = res.data;
       if (data && data.results) data = data.results[0];
       else if (Array.isArray(data)) data = data[0];
@@ -603,4 +602,4 @@ export default function Clients() {
       )}
     </div>
   );
-}
+}

@@ -46,10 +46,8 @@ export const InventaireEditor: React.FC<InventaireEditorProps> = ({
 
     const { generateEtatPDF, generateEcartsPDF } = useInventairePDF();
     
-    const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || '/api';
-    
     const searchLogic = useProductSearch(
-        `${String(apiBaseUrl).replace(/\/$/, '')}/lignes-inventaire/`,
+        'lignes-inventaire/',
         activeInventaire?.id,
         setLignes,
         lignes,

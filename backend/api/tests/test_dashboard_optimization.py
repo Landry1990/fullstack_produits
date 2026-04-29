@@ -45,12 +45,14 @@ class DashboardOptimizationTest(TestCase):
         # F1
         s1_data = next((s for s in suppliers if s['id'] == self.f1.id), None)
         self.assertIsNotNone(s1_data)
-        self.assertEqual(s1_data['debt'], 150.0)
+        self.assertEqual(s1_data['debt_total'], 150.0)
+        self.assertIn('items', s1_data)
+        self.assertIn('type_reglement', s1_data)
 
         # F2
         s2_data = next((s for s in suppliers if s['id'] == self.f2.id), None)
         self.assertIsNotNone(s2_data)
-        self.assertEqual(s2_data['debt'], 50.0)
+        self.assertEqual(s2_data['debt_total'], 50.0)
         
         self.assertEqual(data['total_debt'], 200.0)
 

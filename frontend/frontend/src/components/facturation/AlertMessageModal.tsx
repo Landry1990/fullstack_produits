@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import PremiumModal from '../common/PremiumModal';
-import axios from '../../config/axios';
+import api from '../../services/api';
 import { toast } from 'react-hot-toast';
 
 export type AlertTarget = {
@@ -31,8 +31,8 @@ export default function AlertMessageModal({ isOpen, onClose, target, onSuccess }
         if (!target) return;
         setLoading(true);
         try {
-            const endpoint = target.type === 'product' ? `/api/produits/${target.id}/` : `/api/clients/${target.id}/`;
-            await axios.patch(endpoint, { message_alerte: message.trim() || null });
+            const endpoint = target.type === 'product' ? `produits/${target.id}/` : `clients/${target.id}/`;
+            await api.patch(endpoint, { message_alerte: message.trim() || null });
             toast.success(`Message d'alerte mis à jour pour ${target.name}`);
             onSuccess({ ...target, currentMessage: message.trim() });
             onClose();

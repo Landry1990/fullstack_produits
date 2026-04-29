@@ -2,7 +2,7 @@ import React, { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { X, Calendar, User, CreditCard, Smartphone, CheckCircle2 } from 'lucide-react';
 import type { Facture } from '../../../types';
-import axios from 'axios';
+import api from '../../../services/api';
 import { useAuth } from '../../../context/AuthContext';
 import { toast } from 'react-hot-toast';
 import { formatCurrency } from '../../../utils/formatters';
@@ -29,9 +29,7 @@ export const ProductDetailsModal: React.FC<ProductDetailsModalProps> = ({
         
         setSendingReminder(lineId);
         try {
-            const response = await axios.post(`/api/facture-produits/${lineId}/envoi_rappel_renouvellement/`, {}, {
-                headers: { Authorization: `Token ${user.token}` }
-            });
+            const response = await api.post(`facture-produits/${lineId}/envoi_rappel_renouvellement/`, {});
             toast.success(response.data.detail || `Rappel envoyé pour ${productName}`);
         } catch (error: any) {
             console.error('Error sending renewal reminder:', error);

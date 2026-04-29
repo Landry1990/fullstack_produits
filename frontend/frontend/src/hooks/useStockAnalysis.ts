@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import axios from 'axios';
+import api from '../services/api';
 import { useTranslation } from 'react-i18next';
 
 export interface StockAnalysisItem {
@@ -54,10 +54,6 @@ export const useStockAnalysis = () => {
         };
     }, [location.search]);
 
-    const apiBaseUrl = useMemo(() => {
-        const baseUrl = import.meta.env.VITE_API_BASE_URL ?? '';
-        return baseUrl ? String(baseUrl).replace(/\/$/, '') : '';
-    }, []);
 
     const [activeTab, setActiveTab] = useState<'pilotage' | 'unsold' | 'overstock' | 'shortage'>(
         (tabParam && ['pilotage', 'unsold', 'overstock', 'shortage'].includes(tabParam)) ? tabParam : 'pilotage'
@@ -75,9 +71,9 @@ export const useStockAnalysis = () => {
     const pageSize = 50; // Fixed page size for now
 
     // Fetch suppliers
-    const fetchFournisseurs = useCallback(async () => {
+    const fetchFournisseurs = useCallback(async (signal?: AbortSignal) => {
         try {
-            const response = await axios.get(`${apiBaseUrl}/api/fournisseurs/`);
+            const response = await api.get('fournisseurs/', { signal });
             let suppliersData = [];
             if (Array.isArray(response.data)) {
                 suppliersData = response.data;
@@ -85,18 +81,21 @@ export const useStockAnalysis = () => {
                 suppliersData = response.data.results;
             }
             setFournisseurs(suppliersData);
-        } catch (err) {
+        } catch (err: any) {
+            if (err?.name === 'CanceledError') return;
             console.error('Erreur chargement fournisseurs:', err);
             setFournisseurs([]);
         }
-    }, [apiBaseUrl]);
+    }, []);
 
     useEffect(() => {
-        fetchFournisseurs();
-    }, []); // Only on mount
+        const controller = new AbortController();
+        fetchFournisseurs(controller.signal);
+        return () => controller.abort();
+    }, [fetchFournisseurs]); // Only on mount
 
     // Fetch analysis data
-    const fetchData = useCallback(async () => {
+    const fetchData = useCallback(async (signal?: AbortSignal) => {
         if (activeTab === 'pilotage') {
             setData(null);
             setLoading(false);
@@ -112,22 +111,25 @@ export const useStockAnalysis = () => {
             if (selectedFournisseur) params.fournisseur = selectedFournisseur;
             if (activeTab === 'unsold') params.days = unsoldDays;
 
-            const response = await axios.get<StockAnalysisResponse>(
-                `${apiBaseUrl}/api/stock-analysis/${activeTab}/`,
-                { params }
+            const response = await api.get<StockAnalysisResponse>(
+                `stock-analysis/${activeTab}/`,
+                { params, signal }
             );
             setData(response.data);
-        } catch (err: unknown) {
+        } catch (err: any) {
+            if (err?.name === 'CanceledError') return;
             console.error(err);
             setError(t('stock:analyse.error'));
         } finally {
             setLoading(false);
         }
-    }, [activeTab, selectedFournisseur, unsoldDays, page, apiBaseUrl, t]);
+    }, [activeTab, selectedFournisseur, unsoldDays, page, t]);
 
     useEffect(() => {
-        fetchData();
-    }, [fetchData]); // This is safe now because dependencies of fetchData are stable or correctly tracked
+        const controller = new AbortController();
+        fetchData(controller.signal);
+        return () => controller.abort();
+    }, [fetchData]);
 
     // Reset pagination when tab or filters change
     useEffect(() => {

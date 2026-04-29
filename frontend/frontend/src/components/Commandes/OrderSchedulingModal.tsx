@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import axios from 'axios'
+import api from '../../services/api'
 import { toast } from 'react-hot-toast'
 import { formatPrice } from '../../utils/formatters'
 import procurementService from '../../services/procurementService'
@@ -41,8 +41,6 @@ export default function OrderSchedulingModal({
 }: OrderSchedulingModalProps) {
 
     const [activeTab, setActiveTab] = useState<'plan' | 'gen'>('plan');
-    const apiBaseUrl = import.meta.env.VITE_API_BASE_URL ?? ''
-    
     // --- Schedule State ---
     const defaultSchedule: OrderSchedule = {
         fournisseur: 0,
@@ -240,7 +238,7 @@ export default function OrderSchedulingModal({
                 payload.budget_max = budgetVal && !isNaN(budgetVal) && budgetVal > 0 ? budgetVal : null;
             }
             
-            const response = await axios.post(`${apiBaseUrl ? apiBaseUrl.replace(/\/+$/, '') : ''}/api/generer-suggestions/`, payload);
+            const response = await api.post('generer-suggestions/', payload);
             setSuggestions(response.data.suggestions || []);
             setTotalHt(response.data.total_ht || 0);
             

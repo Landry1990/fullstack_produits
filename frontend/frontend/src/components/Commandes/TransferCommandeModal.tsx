@@ -1,6 +1,6 @@
 ﻿import React, { useState, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import axios from 'axios';
+import api from '../../services/api';
 import { toast } from 'react-hot-toast';
 import type { Commande, CommandeProduit, Fournisseur, ProduitModel } from '../../types';
 import { formatCurrency } from '../../utils/formatters';
@@ -12,7 +12,6 @@ interface TransferCommandeModalProps {
     fournisseurs: Fournisseur[];
     currentSupplierId: string;
     produitsList: ProduitModel[];
-    apiBaseUrl: string;
     commandesEndpoint: string;
     fournisseursEndpoint: string;
     onTransferSuccess: (transferredCount: number, supplierName: string, newCommandeId: number) => void;
@@ -25,7 +24,6 @@ export default function TransferCommandeModal({
     fournisseurs,
     currentSupplierId,
     produitsList,
-    apiBaseUrl,
     commandesEndpoint,
     fournisseursEndpoint,
     onTransferSuccess
@@ -53,7 +51,7 @@ export default function TransferCommandeModal({
         setLoadingCatalogue(true);
         try {
             const catalogueEndpoint = `${fournisseursEndpoint}${fournisseurId}/catalogue/`;
-            const response = await axios.get(catalogueEndpoint);
+            const response = await api.get(catalogueEndpoint);
             const produits = response.data?.produits || [];
 
             const priceMap = new Map<number, number>();
@@ -122,13 +120,9 @@ export default function TransferCommandeModal({
                 fournisseur: parseInt(transferTargetFournisseur, 10),
                 numero_facture: '',
             };
-            const { data: newCommande } = await axios.post<Commande>(commandesEndpoint, newCommandePayload);
+            const { data: newCommande } = await api.post<Commande>(commandesEndpoint, newCommandePayload);
 
             // 2. Ajouter les produits transférés
-            const commandeProduitsEndpoint = apiBaseUrl
-                ? `${String(apiBaseUrl).replace(/\/$/, '')}/api/commande-produits/`
-                : '/api/commande-produits/';
-
             for (const p of selectedProducts) {
                 const payload = {
                     commande: newCommande.id,
@@ -145,7 +139,7 @@ export default function TransferCommandeModal({
                     date_expiration: p.date_expiration || null,
                 };
                 
-                await axios.post(commandeProduitsEndpoint, payload);
+                await api.post('commande-produits/', payload);
             }
 
             const fournisseurName = fournisseurs.find(f => f.id === parseInt(transferTargetFournisseur))?.name || 'Inconnu';

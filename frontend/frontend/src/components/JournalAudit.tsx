@@ -1,6 +1,6 @@
 ﻿import React, { useState, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import axios from '../config/axios';
+import api from '../services/api';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { useAuditLogs, useAuditStats, useUsers } from '../hooks/useAudit';
@@ -37,8 +37,6 @@ const JournalAudit: React.FC = () => {
     const [expandedLog, setExpandedLog] = useState<number | null>(null);
     const [viewMode, setViewMode] = useState<'cards' | 'table'>('cards');
     const [showStats, setShowStats] = useState(true);
-
-    const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || '';
 
     // React Query Hooks
     const { 
@@ -79,21 +77,14 @@ const JournalAudit: React.FC = () => {
 
     const handleExportCSV = async () => {
         try {
-          let endpoint = apiBaseUrl 
-            ? `${apiBaseUrl}/api/audit-logs/export_csv/`
-            : `/api/audit-logs/export_csv/`;
-          
           const params = new URLSearchParams();
           if (actionFilter) params.append('action', actionFilter);
           if (userFilter) params.append('user', userFilter);
           if (dateFrom) params.append('date_from', dateFrom);
           if (dateTo) params.append('date_to', dateTo);
           
-          if (params.toString()) {
-            endpoint += `?${params.toString()}`;
-          }
-          
-          const response = await axios.get(endpoint, {
+          const endpoint = `audit-logs/export_csv/${params.toString() ? '?' + params.toString() : ''}`;
+          const response = await api.get(endpoint, {
             responseType: 'blob'
           });
           

@@ -3,7 +3,6 @@ import { useTranslation } from 'react-i18next'
 import clientService from '../services/clientService'
 import { toast } from 'react-hot-toast'
 import type { Client, AyantDroit } from '../types'
-import axios from 'axios'
 import { facturationClientCreateSchema } from '../schemas/clientSchema'
 
 export function useFacturationClients() {
@@ -206,14 +205,10 @@ export function useFacturationClients() {
             toast.success(`Client "${createdClient.name}" créé et sélectionné`)
         } catch (err) {
             console.error('Erreur création client:', err)
-            if (axios.isAxiosError(err)) {
-                const errorData = err.response?.data
-                if (typeof errorData === 'object' && errorData !== null) {
-                    const messages = Object.entries(errorData).map(([k, v]) => `${k}: ${v}`).join(', ')
-                    toast.error(`Erreur: ${messages}`)
-                } else {
-                    toast.error('Erreur lors de la création du client')
-                }
+            const errorData = (err as any)?.response?.data
+            if (errorData && typeof errorData === 'object') {
+                const messages = Object.entries(errorData).map(([k, v]) => `${k}: ${v}`).join(', ')
+                toast.error(`Erreur: ${messages}`)
             } else {
                 toast.error('Erreur lors de la création du client')
             }

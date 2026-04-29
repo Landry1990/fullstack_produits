@@ -1,5 +1,5 @@
 ﻿import React, { useState, useEffect, useMemo } from 'react';
-import axios from 'axios';
+import api from '../../services/api';
 import { 
   Sparkles, Pencil, Trash2, Plus, 
   Search, Package, LayoutGrid, Printer,
@@ -7,7 +7,6 @@ import {
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'react-hot-toast';
-import { safeStorage } from '../../utils/storage';
 import { useConfirm } from '../../hooks/useConfirm';
 import { formatCurrency, normalizeNumberInput } from '../../utils/formatters';
 import PremiumModal from './PremiumModal';
@@ -84,20 +83,13 @@ export default function CategoryManager({
   const [printTarget, setPrintTarget] = useState<{id: number, name: string} | null>(null);
   const [excludeZeroStock, setExcludeZeroStock] = useState(false);
 
-  const apiBaseUrl = useMemo(
-    () => (import.meta.env.VITE_API_BASE_URL ?? '').replace(/\/$/, ''),
-    []
-  );
 
   const getCategoryName = (cat: Category) => cat.name || cat.nom || '';
 
   const fetchCategories = async () => {
     try {
       setLoading(true);
-      const token = safeStorage.getItem('authToken');
-      const res = await axios.get(`${apiBaseUrl}${apiPath}`, {
-        headers: { Authorization: `Token ${token}` }
-      });
+      const res = await api.get(apiPath.replace(/^\/api\//, ''));
       const data = res.data.results || res.data;
       setCategories(Array.isArray(data) ? data : []);
     } catch (err) {
@@ -111,10 +103,7 @@ export default function CategoryManager({
   const fetchProducts = async (catId: number, page: number = 1) => {
     try {
       setProductsLoading(true);
-      const token = safeStorage.getItem('authToken');
-      const res = await axios.get(`${apiBaseUrl}/api/produits/?${type}=${catId}&page=${page}&page_size=${pageSize}`, {
-        headers: { Authorization: `Token ${token}` }
-      });
+      const res = await api.get(`produits/?${type}=${catId}&page=${page}&page_size=${pageSize}`);
       
       const data = res.data.results || res.data;
       setProducts(Array.isArray(data) ? data : []);
@@ -153,12 +142,8 @@ export default function CategoryManager({
   const handleExportExcel = async () => {
     if (!selectedCategory) return;
     try {
-      const token = safeStorage.getItem('authToken');
-      const url = `${apiBaseUrl}/api/produits/export_csv/?${type}=${selectedCategory.id}`;
-      
-      const response = await axios.get(url, { 
-        headers: { Authorization: `Token ${token}` },
-        responseType: 'blob' 
+      const response = await api.get(`produits/export_csv/?${type}=${selectedCategory.id}`, {
+        responseType: 'blob'
       });
       
       const blob = new Blob([response.data], { type: 'text/csv' });
@@ -183,8 +168,6 @@ export default function CategoryManager({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const token = safeStorage.getItem('authToken');
-    
     const payload: any = {};
     if (type === 'rayon') {
       payload.name = formData.name;
@@ -196,14 +179,10 @@ export default function CategoryManager({
 
     try {
       if (editingCategory) {
-        await axios.put(`${apiBaseUrl}${apiPath}${editingCategory.id}/`, payload, {
-          headers: { Authorization: `Token ${token}` }
-        });
+        await api.put(`${apiPath.replace(/^\/api\//, '')}${editingCategory.id}/`, payload);
         toast.success(t('stock:organisation.category_manager.success_save', { type: title }));
       } else {
-        await axios.post(`${apiBaseUrl}${apiPath}`, payload, {
-          headers: { Authorization: `Token ${token}` }
-        });
+        await api.post(apiPath.replace(/^\/api\//, ''), payload);
         toast.success(t('stock:organisation.category_manager.success_save', { type: title }));
       }
       setIsModalOpen(false);
@@ -222,10 +201,7 @@ export default function CategoryManager({
     if (!confirmed) return;
 
     try {
-      const token = safeStorage.getItem('authToken');
-      await axios.delete(`${apiBaseUrl}${apiPath}${id}/`, {
-        headers: { Authorization: `Token ${token}` }
-      });
+      await api.delete(`${apiPath.replace(/^\/api\//, '')}${id}/`);
       toast.success(t('stock:organisation.category_manager.success_delete', { type: "" }));
       if (selectedCategory?.id === id) setSelectedCategory(null);
       fetchCategories();
@@ -242,11 +218,12 @@ export default function CategoryManager({
 
   const handleConfirmPrint = () => {
     if (!printTarget) return;
+    const baseUrl = (import.meta.env.VITE_API_BASE_URL || '').replace(/\/$/, '');
     let url = "";
     if (printTarget.id === -1) {
-      url = `${apiBaseUrl}/api/rayons/imprimer_sans_rayon/?exclude_zero=${excludeZeroStock}`;
+      url = `${baseUrl}/api/rayons/imprimer_sans_rayon/?exclude_zero=${excludeZeroStock}`;
     } else {
-      url = `${apiBaseUrl}${apiPath}${printTarget.id}/imprimer_etat_stock/?exclude_zero=${excludeZeroStock}`;
+      url = `${baseUrl}${apiPath}${printTarget.id}/imprimer_etat_stock/?exclude_zero=${excludeZeroStock}`;
     }
     window.open(url, '_blank');
     setIsPrintModalOpen(false);
@@ -261,10 +238,7 @@ export default function CategoryManager({
 
     try {
       setIsSearching(true);
-      const token = safeStorage.getItem('authToken');
-      const res = await axios.get(`${apiBaseUrl}/api/produits/?search=${term}`, {
-        headers: { Authorization: `Token ${token}` }
-      });
+      const res = await api.get(`produits/?search=${term}`);
       setSearchResults(res.data.results || res.data);
     } catch (err) {
       console.error("Search error:", err);
@@ -276,13 +250,10 @@ export default function CategoryManager({
   const handleAddProduct = async (product: Product) => {
     if (!selectedCategory) return;
     try {
-      const token = safeStorage.getItem('authToken');
       const payload: any = {};
       payload[type] = selectedCategory.id;
 
-      await axios.patch(`${apiBaseUrl}/api/produits/${product.id}/`, payload, {
-        headers: { Authorization: `Token ${token}` }
-      });
+      await api.patch(`produits/${product.id}/`, payload);
       toast.success(t('stock:organisation.category_manager.product_added', { name: product.name, type }));
       fetchProducts(selectedCategory.id);
       // Remove from search results to avoid double add
@@ -300,13 +271,10 @@ export default function CategoryManager({
     if (!confirmed) return;
 
     try {
-      const token = safeStorage.getItem('authToken');
       const payload: any = {};
       payload[type] = null;
 
-      await axios.patch(`${apiBaseUrl}/api/produits/${product.id}/`, payload, {
-        headers: { Authorization: `Token ${token}` }
-      });
+      await api.patch(`produits/${product.id}/`, payload);
       toast.success(t('stock:organisation.category_manager.product_removed'));
       fetchProducts(selectedCategory!.id);
     } catch (err) {

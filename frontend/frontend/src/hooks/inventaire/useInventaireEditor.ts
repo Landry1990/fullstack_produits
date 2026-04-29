@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import axios from 'axios';
+import api from '../../services/api';
 import { toast } from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import type { Inventaire, LigneInventaire, InventoryStats, ProduitModel } from '../../types';
@@ -11,10 +11,6 @@ export const useInventaireEditor = (
     confirm: (options: { title?: string; message: string; variant?: 'success' | 'warning' | 'danger' | 'info'; confirmText?: string }) => Promise<boolean>
 ) => {
     const { t } = useTranslation(['stock', 'common']);
-
-    const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || '/api';
-    const inventairesEndpoint = `${String(apiBaseUrl).replace(/\/$/, '')}/inventaires/`;
-    const lignesEndpoint = `${String(apiBaseUrl).replace(/\/$/, '')}/lignes-inventaire/`;
 
     const [activeInventaire, setActiveInventaire] = useState<Inventaire | null>(null);
     const [lignes, setLignes] = useState<LigneInventaire[]>([]);
@@ -46,7 +42,7 @@ export const useInventaireEditor = (
         try {
             setSaving(true);
             // 1. Create the inventory header
-            const response = await axios.post(inventairesEndpoint, {
+            const response = await api.post('inventaires/', {
                 date: new Date().toISOString().split('T')[0],
                 description: t('inventaire.detail.placeholder_desc'),
                 status: 'EN_COURS',
@@ -62,15 +58,15 @@ export const useInventaireEditor = (
 
             // 3. Pre-populate if requested
             if (options.action === 'VERIFY') {
-                await axios.post(`${inventairesEndpoint}${newInv.id}/pre_populate/`, {
+                await api.post(`inventaires/${newInv.id}/pre_populate/`, {
                     rayon_id: options.rayonId,
                     groupe_id: options.groupeId,
                     forme_id: options.formeId
                 });
                 // Reload lines and stats
                 const [linesRes, statsRes] = await Promise.all([
-                    axios.get(`${inventairesEndpoint}${newInv.id}/lignes/`),
-                    axios.get(`${inventairesEndpoint}${newInv.id}/stats/`).catch(() => ({ data: null }))
+                    api.get(`inventaires/${newInv.id}/lignes/`),
+                    api.get(`inventaires/${newInv.id}/stats/`).catch(() => ({ data: null }))
                 ]);
 
                 setLignes(linesRes.data.map((l: LigneInventaire) => ({ ...l, isLocalOnly: false })));
@@ -95,7 +91,7 @@ export const useInventaireEditor = (
         setDescription(inv.description || '');
         setViewMode('EDIT');
         try {
-            const res = await axios.get(`${inventairesEndpoint}${inv.id}/lignes/`);
+            const res = await api.get(`inventaires/${inv.id}/lignes/`);
             const fetchedLignes = res.data.map((l: LigneInventaire) => ({
                 ...l,
                 isLocalOnly: false
@@ -111,7 +107,7 @@ export const useInventaireEditor = (
     const handleSaveHeader = async () => {
         if (!activeInventaire) return;
         try {
-            await axios.patch(`${inventairesEndpoint}${activeInventaire.id}/`, {
+            await api.patch(`inventaires/${activeInventaire.id}/`, {
                 date: dateInventaire,
                 description
             });
@@ -138,7 +134,7 @@ export const useInventaireEditor = (
         if (line?.isLocalOnly) return;
 
         try {
-            await axios.patch(`${lignesEndpoint}${lineId}/`, { quantite_physique: newQty });
+            await api.patch(`lignes-inventaire/${lineId}/`, { quantite_physique: newQty });
         } catch (err) {
             console.error("Erreur update quantite", err);
             // Optionally, revert pessimistic update on error by fetching again
@@ -157,7 +153,7 @@ export const useInventaireEditor = (
         try {
             const line = lignes.find(l => l.id === lineId);
             if (line && !line.isLocalOnly) {
-                await axios.delete(`${lignesEndpoint}${lineId}/`);
+                await api.delete(`lignes-inventaire/${lineId}/`);
             }
             setLignes(prev => prev.filter(l => l.id !== lineId));
         } catch (err) {
@@ -206,7 +202,7 @@ export const useInventaireEditor = (
 
             // 1. Suppression distante groupée
             if (remoteIds.length > 0 && activeInventaire) {
-                await axios.post(`${apiBaseUrl}/api/inventaires/${activeInventaire.id}/lignes/bulk-delete/`, {
+                await api.post(`inventaires/${activeInventaire.id}/lignes/bulk-delete/`, {
                     ids: remoteIds
                 });
             }
@@ -226,7 +222,7 @@ export const useInventaireEditor = (
 
     const fetchInventoryStats = async (id: number) => {
         try {
-            const res = await axios.get(`${inventairesEndpoint}${id}/stats/`);
+            const res = await api.get(`inventaires/${id}/stats/`);
             setInventoryStats(res.data);
         } catch (error) {
             console.error("Failed to fetch inventory stats", error);
@@ -238,7 +234,7 @@ export const useInventaireEditor = (
 
         try {
             setSaving(true);
-            await axios.post(`${inventairesEndpoint}${activeInventaire.id}/validate/`, creds);
+            await api.post(`inventaires/${activeInventaire.id}/validate/`, creds);
             toast.success(t('inventaire.validation.success'));
             setViewMode('LIST');
             fetchInventaires();
@@ -268,8 +264,8 @@ export const useInventaireEditor = (
                         lot_expiration: l.lot_expiration
                     }))
                 };
-                await axios.post(`${inventairesEndpoint}${activeInventaire.id}/lignes/bulk/`, payload);
-                const res = await axios.get(`${inventairesEndpoint}${activeInventaire.id}/lignes/`);
+                await api.post(`inventaires/${activeInventaire.id}/lignes/bulk/`, payload);
+                const res = await api.get(`inventaires/${activeInventaire.id}/lignes/`);
                 setLignes(res.data.map((l: LigneInventaire) => ({ ...l, isLocalOnly: false })));
             } catch (err) {
                 console.error("Auto-save before validate failed", err);
@@ -297,7 +293,7 @@ export const useInventaireEditor = (
         setSaving(true);
         try {
             // 1. Save Header
-            await axios.patch(`${inventairesEndpoint}${activeInventaire.id}/`, {
+            await api.patch(`inventaires/${activeInventaire.id}/`, {
                 date: dateInventaire,
                 description
             });
@@ -315,8 +311,8 @@ export const useInventaireEditor = (
                         lot_expiration: l.lot_expiration
                     }))
                 };
-                await axios.post(`${inventairesEndpoint}${activeInventaire.id}/lignes/bulk/`, payload);
-                const res = await axios.get(`${inventairesEndpoint}${activeInventaire.id}/lignes/`);
+                await api.post(`inventaires/${activeInventaire.id}/lignes/bulk/`, payload);
+                const res = await api.get(`inventaires/${activeInventaire.id}/lignes/`);
                 setLignes(res.data.map((l: LigneInventaire) => ({ ...l, isLocalOnly: false })));
                 await fetchInventoryStats(activeInventaire.id);
             }
@@ -338,8 +334,7 @@ export const useInventaireEditor = (
         // 1. Charger TOUS les produits pour le matching (optimisé)
         let allProducts: ProduitModel[] = [];
         try {
-            const apiBase = String(apiBaseUrl).replace(/\/$/, '');
-            const response = await axios.get(`${apiBase}/produits/for_import/`);
+            const response = await api.get('produits/for_import/');
             allProducts = Array.isArray(response.data) ? response.data : (response.data.results || []);
         } catch (err) {
             toast.error("Erreur lors du chargement des produits pour l'import");
@@ -440,12 +435,12 @@ export const useInventaireEditor = (
                     }))
                 };
 
-                await axios.post(`${inventairesEndpoint}${activeInventaire.id}/lignes/bulk/`, payload);
+                await api.post(`inventaires/${activeInventaire.id}/lignes/bulk/`, payload);
 
                 toast.success(`${importMap.size} produits importés (${productsFoundCount} lignes).`);
 
                 // Recharger les lignes et stats
-                const res = await axios.get(`${inventairesEndpoint}${activeInventaire.id}/lignes/`);
+                const res = await api.get(`inventaires/${activeInventaire.id}/lignes/`);
                 setLignes(res.data.map((l: LigneInventaire) => ({ ...l, isLocalOnly: false })));
                 await fetchInventoryStats(activeInventaire.id);
             } catch (error: unknown) {

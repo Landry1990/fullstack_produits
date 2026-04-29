@@ -1,5 +1,5 @@
 ﻿import { useState, useEffect, useMemo } from 'react';
-import axios from 'axios';
+import api from '../services/api';
 import { useTranslation } from 'react-i18next';
 import PremiumModal from './common/PremiumModal';
 import { formatCurrency } from '../utils/formatters';
@@ -62,8 +62,6 @@ export default function PointageReleveModal({ isOpen, onClose, fournisseurs, onR
     }
   }, [isOpen, initialFournisseurId]);
 
-  const apiBaseUrl = import.meta.env.VITE_API_BASE_URL ?? '';
-
   const dateRange = useMemo(() => {
     if (periodeType === 'CUSTOM') {
       return { start: customStart, end: customEnd };
@@ -121,7 +119,7 @@ export default function PointageReleveModal({ isOpen, onClose, fournisseurs, onR
     setLoading(true);
     setError(null);
     try {
-      const { data } = await axios.get(`${apiBaseUrl}/api/fournisseurs/${fId}/releve_factures/`, {
+      const { data } = await api.get(`fournisseurs/${fId}/releve_factures/`, {
         params: {
           start_date: start,
           end_date: end

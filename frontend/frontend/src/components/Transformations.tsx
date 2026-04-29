@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useRef, useMemo } from 'react';
-import axios from 'axios';
+import React, { useState, useEffect, useRef } from 'react';
+import api from '../services/api';
 import { toast } from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import { useConfirm } from '../hooks/useConfirm';
@@ -216,10 +216,6 @@ const Transformations: React.FC = () => {
   const [submitting, setSubmitting] = useState(false);
 
   // URL de base API dynamique
-  const apiBaseUrl = useMemo(() => {
-    const baseUrl = import.meta.env.VITE_API_BASE_URL ?? ''
-    return baseUrl ? `${String(baseUrl).replace(/\/$/, '')}/api` : '/api'
-  }, [])
 
   useEffect(() => {
     fetchData();
@@ -228,8 +224,8 @@ const Transformations: React.FC = () => {
   const fetchData = async () => {
     try {
       const [relationsRes, historiqueRes] = await Promise.all([
-        axios.get(`${apiBaseUrl}/relations-transformation/`),
-        axios.get(`${apiBaseUrl}/historique-transformation/`)
+        api.get('relations-transformation/'),
+        api.get('historique-transformation/')
       ]);
       
       const relationsData = Array.isArray(relationsRes.data) ? relationsRes.data : (relationsRes.data.results || []);
@@ -250,7 +246,7 @@ const Transformations: React.FC = () => {
     if (!selectedSource || !selectedDestination || !ratioValue) return;
 
     try {
-      await axios.post(`${apiBaseUrl}/relations-transformation/`, {
+      await api.post('relations-transformation/', {
         produit_source: selectedSource.id,
         produit_destination: selectedDestination.id,
         ratio: normalizeNumberInput(ratioValue)
@@ -293,7 +289,7 @@ const Transformations: React.FC = () => {
     })
     if (!confirmed) return;
     try {
-      await axios.delete(`${apiBaseUrl}/relations-transformation/${id}/`);
+      await api.delete(`relations-transformation/${id}/`);
       toast.success(t('transformations.messages.delete_success'));
       fetchData();
     } catch (error) {
@@ -317,7 +313,7 @@ const Transformations: React.FC = () => {
     
     setSubmitting(true);
     try {
-      const res = await axios.post(`${apiBaseUrl}/relations-transformation/${transformationData.relation.id}/transformer/`, {
+      const res = await api.post(`relations-transformation/${transformationData.relation.id}/transformer/`, {
         quantite: transformationData.quantite,
         notes: transformationData.notes
       });

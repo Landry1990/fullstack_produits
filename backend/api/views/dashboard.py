@@ -718,58 +718,151 @@ class DashboardViewSet(viewsets.ViewSet):
     @action(detail=False, methods=['get'])
     def supplier_debts(self, request):
         """
-        Returns processed debt data for suppliers.
-        Calculates solde_dette for each supplier and returns those with positive debt.
+        Returns detailed debt data for suppliers.
+        For FACTURE type: returns individual invoices with due date status.
+        For RELEVE type: returns grouped releves by period with due date status.
         """
         from ..models import Fournisseur
-        
-        # We calculate debt via annotation to avoid N+1 queries
-        # Debt = Sum(Commandes.total WHERE status=CLOT) - Sum(Paiements.montant)
-        
-        from django.db.models import Sum, F, DecimalField, Subquery, Value
+        from django.db.models import Sum, DecimalField
         from django.db.models.functions import Coalesce
         from ..models import CommandeProduit, PaiementFournisseur, Commande
+        from datetime import date, timedelta
+        from collections import defaultdict
+        from decimal import Decimal
 
-        # Subquery for Total Ordered (Commandes CLOTUREE)
-        # Sum of (quantity * price) for all lines in CLOT orders
-        ordered_sub = CommandeProduit.objects.filter(
-            commande__status='CLOT',
-            commande__fournisseur=OuterRef('pk')
-        ).values('commande__fournisseur').annotate(
-            total=Sum(F('quantity') * F('price'))
-        ).values('total')
+        today = date.today()
 
-        # Subquery for Total Paid
-        paid_sub = PaiementFournisseur.objects.filter(
-            fournisseur=OuterRef('pk')
-        ).values('fournisseur').annotate(
-            total=Sum('montant')
-        ).values('total')
+        # Get all suppliers with debt
+        suppliers_with_debt = []
+        for supplier in Fournisseur.objects.filter(is_active=True):
+            debt = supplier.solde_dette
+            if debt > 0:
+                suppliers_with_debt.append(supplier)
 
-        # Annotate suppliers with calculations
-        suppliers = Fournisseur.objects.annotate(
-            total_ordered_db=Coalesce(Subquery(ordered_sub, output_field=DecimalField()), Value(0, output_field=DecimalField())),
-            total_paid_db=Coalesce(Subquery(paid_sub, output_field=DecimalField()), Value(0, output_field=DecimalField()))
-        ).annotate(
-            debt_db=F('total_ordered_db') - F('total_paid_db')
-        ).filter(
-            debt_db__gt=0
-        ).order_by('-debt_db').values('id', 'name', 'debt_db', 'phone')
-        
         data = []
         total_debt_global = Decimal('0.00')
-        
-        for s in suppliers:
-            debt = s['debt_db']
-            total_debt_global += debt
-            
-            data.append({
-                'id': s['id'],
-                'name': s['name'],
-                'debt': float(debt),
-                'phone': s['phone']
-            })
-        
+
+        for supplier in suppliers_with_debt:
+            # Get all cloturee orders with remaining debt
+            orders = Commande.objects.filter(
+                fournisseur=supplier,
+                status=Commande.Status.CLOTUREE
+            ).prefetch_related('produits', 'paiements')
+
+            supplier_items = []
+
+            if supplier.type_reglement == 'FACTURE':
+                # Individual invoices
+                for order in orders:
+                    order_total = order.total
+                    order_paid = order.montant_paye
+                    remaining = order_total - order_paid
+
+                    if remaining > 0:
+                        # Calculate due date
+                        due_date = order.date_echeance
+                        if not due_date:
+                            # Fallback: use order closure date + payment delay
+                            base_date = order.date_cloture.date() if order.date_cloture else order.date.date()
+                            due_date = base_date + timedelta(days=supplier.delai_paiement_jours)
+
+                        is_overdue = due_date < today
+                        days_diff = (today - due_date).days
+
+                        supplier_items.append({
+                            'id': order.id,
+                            'type': 'FACTURE',
+                            'label': order.numero_facture or f'Cmd #{order.id}',
+                            'amount': float(remaining),
+                            'due_date': due_date.isoformat(),
+                            'is_overdue': is_overdue,
+                            'days_overdue': days_diff if is_overdue else None,
+                            'days_remaining': -days_diff if not is_overdue else None,
+                        })
+
+            else:  # RELEVE
+                # Group by releve periods
+                period_days = supplier.periode_releve_jours or 10
+                from typing import Dict, List, Any
+                periods: Dict[str, Dict[str, Any]] = {}
+
+                for order in orders:
+                    order_total = order.total
+                    order_paid = order.montant_paye
+                    remaining = order_total - order_paid
+
+                    if remaining > 0:
+                        # Determine period based on order date
+                        order_date = order.date.date()
+                        # Calculate period start (e.g., for 10-day periods: 1-10, 11-20, 21-31)
+                        day = order_date.day
+                        period_index = (day - 1) // period_days
+                        period_start = order_date.replace(day=period_index * period_days + 1)
+                        period_end = min(
+                            period_start + timedelta(days=period_days - 1),
+                            order_date.replace(day=1) + timedelta(days=32)
+                        )
+                        period_key = period_start.isoformat()
+
+                        if period_key not in periods:
+                            periods[period_key] = {'orders': [], 'total': Decimal('0.00')}
+                        periods[period_key]['orders'].append(order)
+                        periods[period_key]['total'] += remaining
+
+                # Create items for each period
+                for period_key in sorted(periods.keys(), reverse=True):
+                    period_data = periods[period_key]
+                    period_total: Decimal = period_data['total']
+                    period_orders: List[Any] = period_data['orders']
+
+                    if period_total > 0:
+                        period_start = date.fromisoformat(period_key)
+                        period_end = period_start + timedelta(days=period_days - 1)
+
+                        # Due date = period end + payment delay
+                        due_date = period_end + timedelta(days=supplier.delai_paiement_jours)
+
+                        is_overdue = due_date < today
+                        days_diff = (today - due_date).days
+
+                        # Get order IDs for this period
+                        order_ids = [o.id for o in period_data['orders']]
+
+                        supplier_items.append({
+                            'id': f'{supplier.id}_{period_key}',
+                            'type': 'RELEVE',
+                            'label': f'{period_start.day}-{min(period_end.day, 31)}/{period_start.month:02d}',
+                            'amount': float(period_total),
+                            'due_date': due_date.isoformat(),
+                            'is_overdue': is_overdue,
+                            'days_overdue': days_diff if is_overdue else None,
+                            'days_remaining': -days_diff if not is_overdue else None,
+                            'order_ids': order_ids,
+                        })
+
+            # Sort items: overdue first, then by due date
+            supplier_items.sort(key=lambda x: (not x['is_overdue'], x['due_date']))
+
+            if supplier_items:
+                debt = sum(item['amount'] for item in supplier_items)
+                total_debt_global += Decimal(str(debt))
+
+                data.append({
+                    'id': supplier.id,
+                    'name': supplier.name,
+                    'phone': supplier.phone,
+                    'type_reglement': supplier.type_reglement,
+                    'delai_paiement_jours': supplier.delai_paiement_jours,
+                    'periode_releve_jours': supplier.periode_releve_jours,
+                    'debt_total': float(debt),
+                    'items': supplier_items,
+                    'overdue_count': sum(1 for item in supplier_items if item['is_overdue']),
+                    'overdue_amount': sum(item['amount'] for item in supplier_items if item['is_overdue']),
+                })
+
+        # Sort by overdue amount (highest first), then by total debt
+        data.sort(key=lambda x: (-x['overdue_amount'], -x['debt_total']))
+
         return Response({
             'total_debt': float(total_debt_global),
             'suppliers': data

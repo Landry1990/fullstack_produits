@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import axios from 'axios';
+import api from '../services/api';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { useAuth } from '../context/AuthContext';
@@ -65,9 +65,7 @@ const HistoriqueAchats = ({ forcedType }: HistoriqueAchatsProps) => {
     const fetchSuppliers = async () => {
         if (!user?.token) return;
         try {
-            const response = await axios.get('/api/fournisseurs/', {
-                headers: { Authorization: `Token ${user.token}` }
-            });
+            const response = await api.get('fournisseurs/');
             const data = response.data;
             setSuppliers(Array.isArray(data) ? data : (data.results || []));
         } catch (error) {
@@ -91,11 +89,7 @@ const HistoriqueAchats = ({ forcedType }: HistoriqueAchatsProps) => {
 
       const endpoint = activeTab === 'summary' ? '/api/historique-achats/' : '/api/historique-achats/produits_details/';
       
-      const response = await axios.get(`${endpoint}?${params.toString()}`, {
-        headers: {
-          Authorization: `Token ${user.token}`
-        }
-      });
+      const response = await api.get(`${endpoint}?${params.toString()}`);
       
       if (response.data.results) {
         setData(response.data.results);
@@ -149,9 +143,7 @@ const HistoriqueAchats = ({ forcedType }: HistoriqueAchatsProps) => {
         
         const endpoint = activeTab === 'summary' ? '/api/historique-achats/' : '/api/historique-achats/produits_details/';
         
-        const response = await axios.get(`${endpoint}?${params.toString()}`, {
-            headers: { Authorization: `Token ${user.token}` }
-        });
+        const response = await api.get(`${endpoint}?${params.toString()}`);
         
         const exportData = response.data;
         if (!exportData || exportData.length === 0) return;

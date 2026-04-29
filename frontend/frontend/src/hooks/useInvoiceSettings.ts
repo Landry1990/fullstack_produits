@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import axios from '../config/axios';
+import api from '../services/api';
 import { toast } from 'react-hot-toast';
 
 export interface InvoiceSettings {
@@ -16,26 +16,24 @@ export function useInvoiceSettings() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
-    const apiBaseUrl = import.meta.env.VITE_API_BASE_URL ?? '';
-    const endpoint = apiBaseUrl ? `${apiBaseUrl}/api/invoice-settings/` : '/api/invoice-settings/';
-
-    const fetchSettings = useCallback(async () => {
+    const fetchSettings = useCallback(async (signal?: AbortSignal) => {
         try {
             setLoading(true);
-            const { data } = await axios.get<InvoiceSettings>(endpoint);
+            const { data } = await api.get<InvoiceSettings>('invoice-settings/', { signal });
             setSettings(data);
             setError(null);
-        } catch (err) {
+        } catch (err: any) {
+            if (err?.name === 'CanceledError') return;
             console.error('Error fetching invoice settings:', err);
             setError('Erreur lors du chargement des paramètres de facturation');
         } finally {
             setLoading(false);
         }
-    }, [endpoint]);
+    }, []);
 
     const updateSettings = useCallback(async (updates: Partial<InvoiceSettings>) => {
         try {
-            const { data } = await axios.put<InvoiceSettings>(endpoint, updates);
+            const { data } = await api.put<InvoiceSettings>('invoice-settings/', updates);
             setSettings(data);
             toast.success('Paramètres de facturation mis à jour');
             return data;
@@ -44,10 +42,12 @@ export function useInvoiceSettings() {
             toast.error('Erreur lors de la mise à jour des paramètres');
             throw err;
         }
-    }, [endpoint]);
+    }, []);
 
     useEffect(() => {
-        fetchSettings();
+        const controller = new AbortController();
+        fetchSettings(controller.signal);
+        return () => controller.abort();
     }, [fetchSettings]);
 
     return { settings, loading, error, updateSettings, refetch: fetchSettings };

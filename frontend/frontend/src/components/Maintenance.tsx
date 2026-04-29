@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import axios from 'axios';
+import api from '../services/api';
 import {
   Trash2, Download, Eye, ShieldAlert, AlertTriangle,
   CheckSquare, Square, Calendar, Loader2,
@@ -96,11 +96,11 @@ export default function Maintenance() {
 
   // Fetch available tables and pharmacy settings
   useEffect(() => {
-    axios.get('/api/maintenance/tables/')
+    api.get('maintenance/tables/')
       .then(res => setTables(res.data))
       .catch(() => toast.error(t('common:error_loading_data')));
 
-    axios.get('/api/pharmacy-settings/')
+    api.get('pharmacy-settings/')
       .then(res => setPharmacySettings(res.data))
       .catch(() => console.error('Error loading pharmacy settings'));
   }, []);
@@ -159,7 +159,7 @@ export default function Maintenance() {
     setLoading(true);
     setPurgeResults(null);
     try {
-      const res = await axios.post('/api/maintenance/preview/', {
+      const res = await api.post('maintenance/preview/', {
         tables: Array.from(selectedTables),
         date_from: dateFrom || null,
         date_to: dateTo || null,
@@ -179,7 +179,7 @@ export default function Maintenance() {
     }
     setExporting(true);
     try {
-      const res = await axios.post('/api/maintenance/export/', {
+      const res = await api.post('maintenance/export/', {
         tables: Array.from(selectedTables),
         date_from: dateFrom || null,
         date_to: dateTo || null,
@@ -208,7 +208,7 @@ export default function Maintenance() {
     }
     setPurging(true);
     try {
-      const res = await axios.post('/api/maintenance/purge/', {
+      const res = await api.post('maintenance/purge/', {
         tables: Array.from(selectedTables),
         date_from: dateFrom || null,
         date_to: dateTo || null,
@@ -253,7 +253,7 @@ export default function Maintenance() {
     });
 
     try {
-      const res = await axios.post('/api/maintenance/backup/');
+      const res = await api.post('maintenance/backup/');
       clearInterval(progressInterval);
       setBackupProgress(100);
       toast.success(t('toasts.backup_success'));
@@ -278,7 +278,7 @@ export default function Maintenance() {
     if (!pharmacySettings) return;
     setSavingSettings(true);
     try {
-      await axios.put('/api/pharmacy-settings/', {
+      await api.put('pharmacy-settings/', {
         backup_enabled: pharmacySettings.backup_enabled,
         backup_time: pharmacySettings.backup_time,
         secondary_backup_path: pharmacySettings.secondary_backup_path,
@@ -326,7 +326,7 @@ export default function Maintenance() {
     formData.append('password', restorePassword);
 
     try {
-      await axios.post('/api/maintenance/restore/', formData);
+      await api.post('maintenance/restore/', formData);
       clearInterval(progressInterval);
       setRestoreProgress(100);
       setRestoreStep('Restauration terminée !');
@@ -349,7 +349,7 @@ export default function Maintenance() {
   const handleCodeBackup = async () => {
     setCodeBackupLoading(true);
     try {
-      const res = await axios.get('/api/code-backup/backup/', { responseType: 'blob' });
+      const res = await api.get('code-backup/backup/', { responseType: 'blob' });
       const url = window.URL.createObjectURL(new Blob([res.data]));
       const link = document.createElement('a');
       link.href = url;
@@ -375,7 +375,7 @@ export default function Maintenance() {
     const formData = new FormData();
     formData.append('file', codeRestoreFile);
     try {
-      await axios.post('/api/code-backup/restore/', formData);
+      await api.post('code-backup/restore/', formData);
       toast.success(t('code_management.restore_success'));
       setCodeRestoreFile(null);
     } catch (err: any) {

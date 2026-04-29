@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import axios from 'axios';
+import { useState, useEffect, useCallback, useRef } from 'react';
+import api from '../../services/api';
 import { toast } from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
@@ -39,35 +39,38 @@ export interface AuditData {
 
 export const useInventaireAudit = () => {
     const { t } = useTranslation(['stock', 'common']);
-    const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || '/api';
-    const auditEndpoint = `${String(apiBaseUrl).replace(/\/$/, '')}/inventaires/audit_discrepancies/`;
 
     const [loading, setLoading] = useState(true);
     const [data, setData] = useState<AuditData | null>(null);
     const [startDate, setStartDate] = useState('');
     const [endDate, setEndDate] = useState('');
+    const controllerRef = useRef<AbortController | null>(null);
 
-    const fetchAudit = async () => {
+    const fetchAudit = useCallback(async () => {
+        controllerRef.current?.abort();
+        const controller = new AbortController();
+        controllerRef.current = controller;
         setLoading(true);
         try {
-            const params = new URLSearchParams();
-            if (startDate) params.append('start_date', startDate);
-            if (endDate) params.append('end_date', endDate);
+            const params: Record<string, string> = {};
+            if (startDate) params['start_date'] = startDate;
+            if (endDate) params['end_date'] = endDate;
 
-            const url = params.toString() ? `${auditEndpoint}?${params.toString()}` : auditEndpoint;
-            const response = await axios.get(url);
+            const response = await api.get('inventaires/audit_discrepancies/', { params, signal: controller.signal });
             setData(response.data);
-        } catch (error) {
+        } catch (error: any) {
+            if (error?.code === 'ERR_CANCELED') return;
             console.error("Erreur audit", error);
             toast.error(t('common:messages.error_loading'));
         } finally {
             setLoading(false);
         }
-    };
+    }, [startDate, endDate, t]);
 
     useEffect(() => {
         fetchAudit();
-    }, [startDate, endDate]);
+        return () => controllerRef.current?.abort();
+    }, [fetchAudit]);
 
     return {
         data,

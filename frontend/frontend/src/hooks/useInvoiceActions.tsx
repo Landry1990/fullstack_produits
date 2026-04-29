@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import api from '../services/api';
 import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
 import type { Facture, TicketCaisse, Client, FactureProduit } from '../types';
@@ -16,8 +16,6 @@ interface UseInvoiceActionsProps {
 export const useInvoiceActions = ({ setFacturesLocal }: UseInvoiceActionsProps) => {
     const { t } = useTranslation(['sales', 'common']);
     const navigate = useNavigate();
-    const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || '/api';
-
     // States for Modals
     const [selectedFacture, setSelectedFacture] = useState<Facture | null>(null);
     const [showProductDetailsModal, setShowProductDetailsModal] = useState(false);
@@ -38,10 +36,7 @@ export const useInvoiceActions = ({ setFacturesLocal }: UseInvoiceActionsProps) 
         if (!facture.produits || facture.produits.length === 0) {
             setDetailsLoading(true);
             try {
-                const token = safeStorage.getItem('authToken');
-                const response = await axios.get(`${apiBaseUrl}/factures/${facture.id}/`, {
-                    headers: { Authorization: `Token ${token}` }
-                });
+                const response = await api.get(`factures/${facture.id}/`);
                 setSelectedFacture(response.data);
             } catch (error) {
                 console.error("Erreur chargement détails", error);
@@ -89,11 +84,8 @@ export const useInvoiceActions = ({ setFacturesLocal }: UseInvoiceActionsProps) 
         if (!pendingPrintFacture) return;
 
         try {
-            const token = safeStorage.getItem('authToken');
-            // PATCH update
-            await axios.patch(`${apiBaseUrl}/factures/${pendingPrintFacture.id}/`,
-                { client_name_override: clientNameInput },
-                { headers: { Authorization: `Token ${token}` } }
+            await api.patch(`factures/${pendingPrintFacture.id}/`,
+                { client_name_override: clientNameInput }
             );
 
             // Mise à jour locale du state global (via prop)
@@ -129,12 +121,9 @@ export const useInvoiceActions = ({ setFacturesLocal }: UseInvoiceActionsProps) 
 
         // Charger détails si manquants
         if (!facture.produits || facture.produits.length === 0) {
-        const toastId = toast.loading(t('messages.loading_details', { defaultValue: 'Chargement...' }));
+            const toastId = toast.loading(t('messages.loading_details', { defaultValue: 'Chargement...' }));
             try {
-                const token = safeStorage.getItem('authToken');
-                const response = await axios.get(`${apiBaseUrl}/factures/${facture.id}/`, {
-                    headers: { Authorization: `Token ${token}` }
-                });
+                const response = await api.get(`factures/${facture.id}/`);
                 fullFacture = response.data;
                 toast.dismiss(toastId);
             } catch (error) {
@@ -198,19 +187,16 @@ export const useInvoiceActions = ({ setFacturesLocal }: UseInvoiceActionsProps) 
 
         // Si les produits ne sont pas complets, on charge le détail
         if (!facture.produits || facture.produits.length === 0) {
-        const toastId = toast.loading(t('messages.loading_details', { defaultValue: 'Chargement...' }));
+            const toastId = toast.loading(t('messages.loading_details', { defaultValue: 'Chargement...' }));
             try {
-                const token = safeStorage.getItem('authToken');
-                const response = await axios.get(`${apiBaseUrl}/factures/${facture.id}/`, {
-                    headers: { Authorization: `Token ${token}` }
-                });
+                const response = await api.get(`factures/${facture.id}/`);
                 fullFacture = response.data;
                 toast.dismiss(toastId);
             } catch (error) {
                 console.error("Erreur chargement détails pour modification", error);
                 toast.error("Impossible de charger le détail de la vente.");
                 toast.dismiss(toastId);
-                return; // Stop if failed
+                return;
             }
         }
 
@@ -227,19 +213,16 @@ export const useInvoiceActions = ({ setFacturesLocal }: UseInvoiceActionsProps) 
 
         // Si les produits ne sont pas complets, on charge le détail
         if (!facture.produits || facture.produits.length === 0) {
-        const toastId = toast.loading(t('messages.loading_details', { defaultValue: 'Chargement...' }));
+            const toastId = toast.loading(t('messages.loading_details', { defaultValue: 'Chargement...' }));
             try {
-                const token = safeStorage.getItem('authToken');
-                const response = await axios.get(`${apiBaseUrl}/factures/${facture.id}/`, {
-                    headers: { Authorization: `Token ${token}` }
-                });
+                const response = await api.get(`factures/${facture.id}/`);
                 fullFacture = response.data;
                 toast.dismiss(toastId);
             } catch (error) {
                 console.error("Erreur chargement détails pour duplication", error);
                 toast.error("Impossible de charger le détail de la vente à dupliquer.");
                 toast.dismiss(toastId);
-                return; // Stop if failed
+                return;
             }
         }
 
@@ -275,10 +258,7 @@ export const useInvoiceActions = ({ setFacturesLocal }: UseInvoiceActionsProps) 
     const handleGenerateAvoir = async (facture: Facture) => {
         const toastId = toast.loading(t('sales.messages.loading_details', { defaultValue: 'Génération de l\'avoir...' }));
         try {
-            const token = safeStorage.getItem('authToken');
-            const response = await axios.get(`${apiBaseUrl}/factures/${facture.id}/generer_avoir/`, {
-                headers: { Authorization: `Token ${token}` }
-            });
+            const response = await api.get(`factures/${facture.id}/generer_avoir/`);
             const avoirData = response.data;
             toast.dismiss(toastId);
 

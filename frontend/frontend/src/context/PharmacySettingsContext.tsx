@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from 'react';
-import axios from '../config/axios';
+import api from '../services/api';
 import { toast } from 'react-hot-toast';
 import { useAuth } from './AuthContext';
 
@@ -80,13 +80,10 @@ export const PharmacySettingsProvider = ({ children }: { children: ReactNode }) 
   const [error, setError] = useState<string | null>(null);
   const { syncTime, isAuthenticated } = useAuth();
 
-  const apiBaseUrl = import.meta.env.VITE_API_BASE_URL ?? '';
-  const endpoint = apiBaseUrl ? `${apiBaseUrl}/api/pharmacy-settings/` : '/api/pharmacy-settings/';
-
   const fetchSettings = useCallback(async () => {
     try {
       setLoading(true);
-      const { data } = await axios.get<PharmacySettings & { server_time: string }>(endpoint);
+      const { data } = await api.get<PharmacySettings & { server_time: string }>('pharmacy-settings/');
       if (data.server_time) syncTime(data.server_time);
       setSettings(data);
       setError(null);
@@ -97,11 +94,11 @@ export const PharmacySettingsProvider = ({ children }: { children: ReactNode }) 
     } finally {
       setLoading(false);
     }
-  }, [endpoint]);
+  }, [syncTime]);
 
   const updateSettings = useCallback(async (updates: Partial<PharmacySettings>) => {
     try {
-      const { data } = await axios.put<PharmacySettings>(endpoint, updates);
+      const { data } = await api.put<PharmacySettings>('pharmacy-settings/', updates);
       setSettings(data);
       toast.success('Paramètres sauvegardés');
       return data;
@@ -110,7 +107,7 @@ export const PharmacySettingsProvider = ({ children }: { children: ReactNode }) 
       toast.error('Erreur lors de la sauvegarde');
       throw err;
     }
-  }, [endpoint]);
+  }, []);
 
   useEffect(() => {
     if (isAuthenticated) {

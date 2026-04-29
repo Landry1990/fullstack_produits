@@ -96,8 +96,64 @@ describe('Dashboard Component', () => {
     const mockSupplierDebts = {
         total_debt: 250000,
         suppliers: [
-            { id: 1, name: 'Pharma Distrib', debt: 150000 },
-            { id: 2, name: 'MedSupply', debt: 100000 },
+            { 
+                id: 1, 
+                name: 'Pharma Distrib', 
+                phone: '0123456789',
+                type_reglement: 'FACTURE',
+                delai_paiement_jours: 10,
+                periode_releve_jours: 10,
+                debt_total: 150000,
+                items: [
+                    {
+                        id: 101,
+                        type: 'FACTURE',
+                        label: 'FACT-001',
+                        amount: 150000,
+                        due_date: '2024-03-15',
+                        is_overdue: true,
+                        days_overdue: 5,
+                        days_remaining: null
+                    }
+                ],
+                overdue_count: 1,
+                overdue_amount: 150000
+            },
+            { 
+                id: 2, 
+                name: 'MedSupply', 
+                phone: '0987654321',
+                type_reglement: 'RELEVE',
+                delai_paiement_jours: 15,
+                periode_releve_jours: 10,
+                debt_total: 100000,
+                items: [
+                    {
+                        id: '2_2024-03-01',
+                        type: 'RELEVE',
+                        label: '1-10/03',
+                        amount: 60000,
+                        due_date: '2024-03-25',
+                        is_overdue: false,
+                        days_overdue: null,
+                        days_remaining: 10,
+                        order_ids: [201, 202]
+                    },
+                    {
+                        id: '2_2024-03-11',
+                        type: 'RELEVE',
+                        label: '11-20/03',
+                        amount: 40000,
+                        due_date: '2024-04-05',
+                        is_overdue: false,
+                        days_overdue: null,
+                        days_remaining: 21,
+                        order_ids: [203]
+                    }
+                ],
+                overdue_count: 0,
+                overdue_amount: 0
+            },
         ]
     };
 

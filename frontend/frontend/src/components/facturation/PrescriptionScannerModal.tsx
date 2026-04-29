@@ -4,7 +4,7 @@ import PremiumModal from '../common/PremiumModal';
 import { prescriptionOcrService } from '../../services/prescriptionOcrService';
 import type { ScannedPrescription } from '../../services/prescriptionOcrService';
 import fuzzysort from 'fuzzysort';
-import axios from 'axios';
+import api from '../../services/api';
 import { toast } from 'react-hot-toast';
 import type { ProduitModel } from '../../types';
 
@@ -52,8 +52,7 @@ const PrescriptionScannerModal: React.FC<PrescriptionScannerModalProps> = ({
   const loadProducts = async () => {
     setLoadingProducts(true);
     try {
-      const baseUrl = import.meta.env.VITE_API_BASE_URL || '';
-      const response = await axios.get(`${baseUrl}/api/produits/?page_size=10000`);
+      const response = await api.get('produits/', { params: { page_size: 10000 } });
       const results = Array.isArray(response.data) ? response.data : response.data.results;
       setProducts(results || []);
     } catch (err) {

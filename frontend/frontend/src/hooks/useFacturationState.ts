@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react'
-import axios from 'axios'
+import api from '../services/api'
 import { toast } from 'react-hot-toast'
 import { useQueryClient } from '@tanstack/react-query'
 import type { ProduitModel, Facture } from '../types'
@@ -57,12 +57,6 @@ export function useFacturationState() {
   const paymentInputRef = useRef<HTMLInputElement>(null)
   const clientSearchRef = useRef<HTMLInputElement>(null)
 
-  // --- API Base URL ---
-  const apiBaseUrl = useMemo(() => {
-    const baseUrl = import.meta.env.VITE_API_BASE_URL ?? ''
-    return baseUrl ? String(baseUrl).replace(/\/$/, '') : ''
-  }, [])
-
   // --- Sudo ---
   const { sudoState, requireSudo, closeSudo } = useSudo()
   const [activeSudoCreds, setActiveSudoCreds] = useState<{ validatorId: number, password: string } | null>(null)
@@ -72,7 +66,6 @@ export function useFacturationState() {
 
   // --- Cart Hook ---
   const cart = useCart({
-    apiBaseUrl: import.meta.env.VITE_API_BASE_URL,
     onRequirePrescription: () => ui.setShowOrdonnanceModal(true),
     onAlert: (message, title, type, is_blocking, targetId) => ui.pushDisplayAlert({ message, title, type, is_blocking, targetId }),
     quantityInputsRef
@@ -109,7 +102,7 @@ export function useFacturationState() {
   // --- Import (CSV + Packs) ---
   const { addPackToFacture, handleCsvImport } = useFacturationImport({
     cart,
-    apiBaseUrl,
+    apiBaseUrl: '',
     t
   })
 
@@ -129,10 +122,10 @@ export function useFacturationState() {
   })
 
   // --- Multi-Caisse ---
-  const multiCaisse = useMultiCaisse({ apiBaseUrl })
+  const multiCaisse = useMultiCaisse({})
 
   // --- Devis Loader (on mount) ---
-  useDevisLoader({ clientsHook, cart, ui, apiBaseUrl })
+  useDevisLoader({ clientsHook, cart, ui })
 
   // --- Totals ---
   const totals = useMemo(() =>
@@ -144,7 +137,6 @@ export function useFacturationState() {
 
   // --- Actions ---
   const actions = useFacturationActions({
-    apiBaseUrl,
     cart,
     clientsHook,
     ui,
@@ -282,8 +274,7 @@ export function useFacturationState() {
     let freshLignes = cart.lignesFacture
     try {
       const productIds = cart.lignesFacture.map((l: any) => l.produit.id)
-      const refreshEndpoint = apiBaseUrl ? `${apiBaseUrl}/api/produits/bulk_refresh/` : '/api/produits/bulk_refresh/'
-      const { data: freshProductsData } = await axios.post<any[]>(refreshEndpoint, { ids: productIds })
+      const { data: freshProductsData } = await api.post<any[]>('produits/bulk_refresh/', { ids: productIds })
 
       const productMap = new Map(freshProductsData.map((p: any) => [p.id, p]))
       freshLignes = cart.lignesFacture.map((ligne: any) => {

@@ -1,5 +1,5 @@
-import { useState, useEffect, useMemo } from 'react'
-import axios from 'axios'
+import { useState, useEffect } from 'react'
+import api from '../services/api'
 import { toast } from 'react-hot-toast'
 import { useTranslation } from 'react-i18next'
 import { 
@@ -77,12 +77,6 @@ export default function Perimes() {
   const { sudoState, requireSudo, closeSudo } = useSudo()
   const [processing, setProcessing] = useState(false)
 
-  const apiBaseUrl = useMemo(() => {
-    const baseUrl = import.meta.env.VITE_API_BASE_URL ?? ''
-    return baseUrl ? String(baseUrl).replace(/\/$/, '') : ''
-  }, [])
-
-  const stockLotsEndpoint = apiBaseUrl ? `${apiBaseUrl}/api/stock-lots/` : '/api/stock-lots/'
 
   const toLocalISODate = (date: Date) => {
     const y = date.getFullYear()
@@ -126,7 +120,7 @@ export default function Perimes() {
   const fetchStats = async () => {
     setLoadingStats(true)
     try {
-      const response = await axios.get<PerimesStats>(`${stockLotsEndpoint}stats_perimes/`)
+      const response = await api.get<PerimesStats>('stock-lots/stats_perimes/')
       setStats(response.data)
     } catch (err) {
       console.error('Erreur chargement stats:', err)
@@ -139,7 +133,7 @@ export default function Perimes() {
   const fetchAdjustments = async () => {
     setLoadingAdjustments(true)
     try {
-      const response = await axios.get(`${apiBaseUrl}/api/stock-adjustments/`, {
+      const response = await api.get('stock-adjustments/', {
         params: {
           reason_type: 'PERIME',
           created_at__date__gte: dateDebut,
@@ -168,7 +162,7 @@ export default function Perimes() {
 
       const dateStr = toLocalISODate(thresholdDate)
       
-      const response = await axios.get<StockLot[]>(stockLotsEndpoint, {
+      const response = await api.get<StockLot[]>('stock-lots/', {
         params: {
           date_expiration_lte: dateStr,
           include_empty: 'false' // Hide depleted lots as they are redundant in the list view (available in History)
@@ -205,7 +199,7 @@ export default function Perimes() {
     requireSudo(async (validatorId, password) => {
       try {
         setProcessing(true)
-        await axios.post(`${stockLotsEndpoint}${lot.id}/sortir_perimes/`, {
+        await api.post(`stock-lots/${lot.id}/sortir_perimes/`, {
           quantity: qty,
           reason: t('stock:ajustements.filters.reasons.PERIME') + ' / ' + t('stock:ajustements.filters.reasons.AVARIE'),
           validated_by_id: validatorId,
@@ -232,7 +226,7 @@ export default function Perimes() {
       requireSudo(async (validatorId, password) => {
           try {
               setProcessing(true)
-              await axios.post(`${stockLotsEndpoint}bulk_sortir_perimes/`, {
+              await api.post('stock-lots/bulk_sortir_perimes/', {
                   lot_ids: selectedLotIds,
                   reason: t('stock:perimes.confirm.bulk_exit_title'),
                   validated_by_id: validatorId,
@@ -320,8 +314,8 @@ export default function Perimes() {
   }
 
   const handleExportExcel = () => {
-    const url = `${apiBaseUrl}/api/stock-adjustments/export_excel/?reason_type=PERIME&created_at__date__gte=${dateDebut}&created_at__date__lte=${dateFin}`
-    window.open(url, '_blank')
+    const baseUrl = (import.meta.env.VITE_API_BASE_URL || '').replace(/\/$/, '')
+    window.open(`${baseUrl}/api/stock-adjustments/export_excel/?reason_type=PERIME&created_at__date__gte=${dateDebut}&created_at__date__lte=${dateFin}`, '_blank')
   }
 
   const formatDate = (dateString: string) => {

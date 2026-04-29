@@ -9,7 +9,7 @@ import {
   CalendarX2,
   CheckCircle2
 } from 'lucide-react';
-import type { Echeance } from '../../hooks/useDashboard';
+import type { Echeance, SupplierDebtsResponse, SupplierDebt, SupplierDebtItem } from '../../hooks/useDashboard';
 import { 
   PieChart, 
   Pie, 
@@ -22,7 +22,7 @@ import { Link } from 'react-router-dom';
 interface FinancialSummaryProps {
   stats: any;
   ugStats: any;
-  supplierDebts: any;
+  supplierDebts: SupplierDebtsResponse | null | undefined;
   isRefetchingSupplierDebts: boolean;
   refetchSupplierDebts: () => void;
   echeances: Echeance[];
@@ -119,7 +119,7 @@ export default function FinancialSummary({
           <div className="hidden lg:block"></div>
         )}
 
-        {/* Supplier Debts Section */}
+        {/* Supplier Debts Section - Nouveau Design */}
         <div className="card bg-base-100 shadow-sm border border-base-300 rounded-2xl overflow-hidden h-full flex flex-col">
           <div className="card-body p-6 flex flex-col h-full">
             <div className="flex items-center justify-between mb-6 shrink-0">
@@ -129,7 +129,7 @@ export default function FinancialSummary({
                 </div>
                 <div>
                   <h2 className="text-sm font-black text-base-content tracking-tight uppercase">{t('debts.supplier_debts_title')}</h2>
-                  <p className="text-[10px] font-bold text-base-content/30 uppercase tracking-widest">{t('debts.supplier_debts_desc')}</p>
+                  <p className="text-[10px] font-bold text-base-content/30 uppercase tracking-widest">{t('debts.supplier_debts_by_due')}</p>
                 </div>
               </div>
                <div className="flex items-center gap-3">
@@ -147,43 +147,99 @@ export default function FinancialSummary({
                </div>
             </div>
             
-            <div className="flex-grow overflow-y-auto h-[300px] custom-scrollbar pr-1">
+            <div className="flex-grow overflow-y-auto h-[300px] custom-scrollbar pr-1 space-y-3">
               {supplierDebts?.suppliers && supplierDebts.suppliers.length > 0 ? (
-                  <table className="w-full">
-                      <thead>
-                          <tr>
-                              <th className="bg-base-200/80 text-xs font-semibold uppercase tracking-wider text-base-content/60 py-4 pl-6 rounded-l-2xl text-left">{t('debts.supplier')}</th>
-                              <th className="bg-base-200/80 text-xs font-semibold uppercase tracking-wider text-base-content/60 text-right py-4">{t('debts.debt')}</th>
-                              <th className="bg-base-200/80 text-xs font-semibold uppercase tracking-wider text-base-content/60 text-center py-4 pr-6 rounded-r-2xl">{t('debts.action')}</th>
-                          </tr>
-                      </thead>
-                      <tbody className="divide-y divide-base-100">
-                          {supplierDebts.suppliers.map((supplier: any) => (
-                              <tr key={supplier.id} className="hover:bg-red-50/50 transition-all group">
-                                  <td className="py-4 pl-6 font-bold text-sm text-base-content group-hover:text-red-700 transition-colors uppercase tracking-tight">{supplier.name}</td>
-                                   <td className="text-right py-4 font-mono font-bold text-sm text-red-600">
-                                       {formatCurrencyLocal(supplier.debt)}
-                                   </td>
-                                  <td className="text-center py-4 pr-6">
-                                      <Link 
-                                          to="/app/fournisseurs" 
-                                          state={{ selectedSupplierId: supplier.id, openFinance: true }}
-                                          className="btn btn-sm btn-ghost btn-circle text-base-content/20 group-hover:text-red-600 group-hover:bg-red-100 transition-all"
-                                      >
-                                          <ArrowRight className="w-5 h-5" />
-                                      </Link>
-                                  </td>
-                              </tr>
-                          ))}
-                      </tbody>
-                  </table>
-              ) : (
-                  <div className="flex flex-col items-center justify-center py-12 rounded-2xl bg-base-200/30 border-2 border-dashed border-base-200 h-full">
-                      <div className="p-4 bg-base-100 shadow-sm rounded-2xl mb-4">
-                        <ShoppingBag className="w-8 h-8 text-base-content/10" />
+                supplierDebts.suppliers.map((supplier: SupplierDebt) => (
+                  <div key={supplier.id} className="bg-base-50 rounded-xl border border-base-200 overflow-hidden">
+                    {/* Header du fournisseur */}
+                    <div className="flex items-center justify-between px-4 py-3 bg-base-200/50 border-b border-base-200">
+                      <div className="flex items-center gap-2">
+                        <span className="font-bold text-sm text-base-content uppercase tracking-tight">{supplier.name}</span>
+                        <span className={`badge badge-sm text-[9px] font-black uppercase tracking-wider ${
+                          supplier.type_reglement === 'RELEVE' 
+                            ? 'bg-blue-100 text-blue-700 border-blue-200' 
+                            : 'bg-amber-100 text-amber-700 border-amber-200'
+                        }`}>
+                          {supplier.type_reglement === 'RELEVE' ? t('debts.statement') : t('debts.invoice')}
+                        </span>
                       </div>
-                      <p className="text-[10px] font-black uppercase tracking-widest text-base-content/30">{t('debts.no_supplier_debts')}</p>
+                      <div className="flex items-center gap-2">
+                        {supplier.overdue_count > 0 && (
+                          <span className="bg-red-100 text-red-700 px-2 py-0.5 rounded-lg text-[10px] font-black border border-red-200">
+                            {supplier.overdue_count} {supplier.overdue_count > 1 ? t('debts.overdue_many') : t('debts.overdue_one')}
+                          </span>
+                        )}
+                        <span className="font-mono font-bold text-sm text-base-content">
+                          {formatCurrencyLocal(supplier.debt_total)}
+                        </span>
+                      </div>
+                    </div>
+                    
+                    {/* Liste des items (factures/relevés) */}
+                    <div className="divide-y divide-base-100">
+                      {supplier.items.map((item: SupplierDebtItem) => (
+                        <div 
+                          key={item.id} 
+                          className={`flex items-center justify-between px-4 py-2 hover:bg-base-100/50 transition-colors ${
+                            item.is_overdue ? 'bg-red-50/30' : 'bg-emerald-50/30'
+                          }`}
+                        >
+                          <div className="flex items-center gap-3">
+                            {/* Indicateur de statut */}
+                            <div className={`w-2 h-2 rounded-full ${
+                              item.is_overdue ? 'bg-red-500 animate-pulse' : 'bg-emerald-500'
+                            }`} />
+                            <div>
+                              <p className="text-xs font-bold text-base-content">{item.label}</p>
+                              <p className="text-[10px] text-base-content/50">
+                                {t('debts.due_date')}: {new Date(item.due_date).toLocaleDateString('fr-FR')}
+                              </p>
+                            </div>
+                          </div>
+                          <div className="text-right">
+                            <p className={`font-mono font-bold text-sm ${
+                              item.is_overdue ? 'text-red-600' : 'text-emerald-600'
+                            }`}>
+                              {formatCurrencyLocal(item.amount)}
+                            </p>
+                            {item.is_overdue ? (
+                              <p className="text-[9px] font-black text-red-600 uppercase tracking-wider">
+                                {item.days_overdue}{t('debts.days_overdue')}
+                              </p>
+                            ) : item.days_remaining !== null && item.days_remaining <= 7 ? (
+                              <p className="text-[9px] font-black text-orange-600 uppercase tracking-wider">
+                                {item.days_remaining}{t('debts.days_remaining')}
+                              </p>
+                            ) : item.days_remaining !== null ? (
+                              <p className="text-[9px] font-black text-emerald-600 uppercase tracking-wider">
+                                {item.days_remaining}{t('debts.days_remaining')}
+                              </p>
+                            ) : null}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                    
+                    {/* Action */}
+                    <div className="px-4 py-2 bg-base-100 border-t border-base-200">
+                      <Link 
+                        to="/app/fournisseurs" 
+                        state={{ selectedSupplierId: supplier.id, openFinance: true }}
+                        className="flex items-center justify-center gap-2 text-xs font-bold text-primary hover:text-primary-focus hover:bg-primary/5 py-1.5 rounded-lg transition-all"
+                      >
+                        {t('debts.view_detail')}
+                        <ArrowRight className="w-4 h-4" />
+                      </Link>
+                    </div>
                   </div>
+                ))
+              ) : (
+                <div className="flex flex-col items-center justify-center py-12 rounded-2xl bg-base-200/30 border-2 border-dashed border-base-200 h-full">
+                  <div className="p-4 bg-base-100 shadow-sm rounded-2xl mb-4">
+                    <ShoppingBag className="w-8 h-8 text-base-content/10" />
+                  </div>
+                  <p className="text-[10px] font-black uppercase tracking-widest text-base-content/30">{t('debts.no_supplier_debts')}</p>
+                </div>
               )}
             </div>
           </div>
@@ -200,19 +256,19 @@ export default function FinancialSummary({
                   <CalendarX2 className="w-5 h-5" />
                 </div>
                 <div>
-                  <h2 className="text-sm font-black text-base-content tracking-tight uppercase">Échéances Fournisseurs</h2>
-                  <p className="text-[10px] font-bold text-base-content/30 uppercase tracking-widest">Paiements à venir & en retard</p>
+                  <h2 className="text-sm font-black text-base-content tracking-tight uppercase">{t('debts.echeances_title')}</h2>
+                  <p className="text-[10px] font-bold text-base-content/30 uppercase tracking-widest">{t('debts.echeances_subtitle')}</p>
                 </div>
               </div>
               <div className="flex gap-2">
                 {echeances.filter(e => e.status === 'EN RETARD').length > 0 && (
                   <div className="bg-red-50 text-red-700 px-3 py-1 rounded-xl font-black text-xs border border-red-100 animate-pulse">
-                    {echeances.filter(e => e.status === 'EN RETARD').length} en retard
+                    {echeances.filter(e => e.status === 'EN RETARD').length} {t('debts.overdue_status')}
                   </div>
                 )}
                 {echeances.filter(e => e.status === "AUJOURD'HUI").length > 0 && (
                   <div className="bg-orange-50 text-orange-700 px-3 py-1 rounded-xl font-black text-xs border border-orange-100">
-                    {echeances.filter(e => e.status === "AUJOURD'HUI").length} aujourd'hui
+                    {echeances.filter(e => e.status === "AUJOURD'HUI").length} {t('debts.today_status')}
                   </div>
                 )}
               </div>
@@ -222,11 +278,11 @@ export default function FinancialSummary({
               <table className="w-full">
                 <thead>
                   <tr>
-                    <th className="bg-base-200/80 text-xs font-semibold uppercase tracking-wider text-base-content/60 py-3 pl-4 rounded-l-2xl text-left">Fournisseur</th>
-                    <th className="bg-base-200/80 text-xs font-semibold uppercase tracking-wider text-base-content/60 py-3 text-left">Facture</th>
-                    <th className="bg-base-200/80 text-xs font-semibold uppercase tracking-wider text-base-content/60 py-3 text-right">Montant dû</th>
-                    <th className="bg-base-200/80 text-xs font-semibold uppercase tracking-wider text-base-content/60 py-3 text-center">Échéance</th>
-                    <th className="bg-base-200/80 text-xs font-semibold uppercase tracking-wider text-base-content/60 py-3 pr-4 rounded-r-2xl text-center">Statut</th>
+                    <th className="bg-base-200/80 text-xs font-semibold uppercase tracking-wider text-base-content/60 py-3 pl-4 rounded-l-2xl text-left">{t('debts.supplier')}</th>
+                    <th className="bg-base-200/80 text-xs font-semibold uppercase tracking-wider text-base-content/60 py-3 text-left">{t('debts.invoice')}</th>
+                    <th className="bg-base-200/80 text-xs font-semibold uppercase tracking-wider text-base-content/60 py-3 text-right">{t('debts.amount_due')}</th>
+                    <th className="bg-base-200/80 text-xs font-semibold uppercase tracking-wider text-base-content/60 py-3 text-center">{t('debts.due_date')}</th>
+                    <th className="bg-base-200/80 text-xs font-semibold uppercase tracking-wider text-base-content/60 py-3 pr-4 rounded-r-2xl text-center">{t('debts.status')}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-base-100">
@@ -249,17 +305,17 @@ export default function FinancialSummary({
                           {isRetard ? (
                             <span className="inline-flex items-center gap-1 bg-red-100 text-red-700 px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider border border-red-200">
                               <Clock className="w-3 h-3" />
-                              {Math.abs(e.jours_restants)}j de retard
+                              {Math.abs(e.jours_restants)}{t('debts.days_overdue')}
                             </span>
                           ) : isAujourdhui ? (
                             <span className="inline-flex items-center gap-1 bg-orange-100 text-orange-700 px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider border border-orange-200 animate-pulse">
                               <AlertTriangle className="w-3 h-3" />
-                              Aujourd'hui
+                              {t('debts.today_badge')}
                             </span>
                           ) : (
                             <span className="inline-flex items-center gap-1 bg-emerald-50 text-emerald-700 px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider border border-emerald-100">
                               <CheckCircle2 className="w-3 h-3" />
-                              {e.jours_restants}j restants
+                              {e.jours_restants}{t('debts.days_remaining')}
                             </span>
                           )}
                         </td>

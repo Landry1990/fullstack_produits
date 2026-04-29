@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import axios from 'axios';
+import api from '../../services/api';
 import { toast } from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import type { ProduitModel, LigneInventaire, StockLot } from '../../types';
@@ -33,15 +33,17 @@ export const useProductSearch = (
             return;
         }
 
+        const controller = new AbortController();
+
         const fetchProducts = async () => {
             setLoadingSearch(true);
             try {
-                const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || '/api';
-                const response = await axios.get(`${String(apiBaseUrl).replace(/\/$/, '')}/produits/?search=${searchQuery}`);
+                const response = await api.get('produits/', { params: { search: searchQuery }, signal: controller.signal });
                 const productsList = Array.isArray(response.data) ? response.data : response.data.results;
                 setSearchResults(productsList || []);
                 setSelectedItemIndex(productsList?.length > 0 ? 0 : -1);
-            } catch (err) {
+            } catch (err: any) {
+                if (err?.code === 'ERR_CANCELED') return;
                 console.error("Erreur recherche produits", err);
                 toast.error(t('common:messages.error_loading', { defaultValue: 'Erreur recherche' }));
             } finally {
@@ -50,7 +52,7 @@ export const useProductSearch = (
         };
 
         const timeoutId = setTimeout(fetchProducts, 300);
-        return () => clearTimeout(timeoutId);
+        return () => { clearTimeout(timeoutId); controller.abort(); };
     }, [searchQuery, t]);
 
     const focusInput = () => {
@@ -93,9 +95,8 @@ export const useProductSearch = (
     const fetchAvailableLots = async (productId: number) => {
         setLoadingLots(true);
         try {
-            const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || '/api';
-            const filterParam = inventoryType === 'RESERVE' ? 'quantity_reserved_gt=0' : 'quantity_remaining_gt=0';
-            const res = await axios.get(`${String(apiBaseUrl).replace(/\/$/, '')}/stock-lots/?produit=${productId}&${filterParam}`);
+            const filterKey = inventoryType === 'RESERVE' ? 'quantity_reserved_gt' : 'quantity_remaining_gt';
+            const res = await api.get('stock-lots/', { params: { produit: productId, [filterKey]: 0 } });
             const lots = Array.isArray(res.data) ? res.data : res.data.results;
             setAvailableLots(lots || []);
             setSelectedLotIndex(lots?.length > 0 ? 0 : -1);

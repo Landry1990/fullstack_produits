@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import axios from 'axios';
+import api from '../../../services/api';
 import { toast } from 'react-hot-toast';
 import { X, Search } from 'lucide-react';
 import type { ProduitModel, Client } from '../../../types';
@@ -36,9 +36,6 @@ export const PromisFormModal: React.FC<PromisFormModalProps> = ({
     const [productSearch, setProductSearch] = useState('');
     const [saving, setSaving] = useState(false);
 
-    const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || '';
-    const promisEndpoint = `${apiBaseUrl}/api/promis/`;
-
     const resetForm = () => {
         setFormData({
             client: null,
@@ -71,7 +68,7 @@ export const PromisFormModal: React.FC<PromisFormModalProps> = ({
 
         setSaving(true);
         try {
-            await axios.post(promisEndpoint, {
+            await api.post('promis/', {
                 ...formData,
                 client: formData.client || null
             });

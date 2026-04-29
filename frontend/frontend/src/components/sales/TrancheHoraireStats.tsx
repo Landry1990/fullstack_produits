@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { Clock, Search } from 'lucide-react';
-import axios from 'axios';
-import { safeStorage } from '../../utils/storage';
+import api from '../../services/api';
 import { useTranslation } from 'react-i18next';
 
 
@@ -25,16 +24,12 @@ export const TrancheHoraireStats: React.FC<TrancheHoraireStatsProps> = ({ onVeri
         setLoading(true);
         setError(null);
         try {
-            const token = safeStorage.getItem('authToken');
-            const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || '/api';
-            
             // Format to YYYY-MM-DDTHH:MM
             const dateDebut = `${dateDebutStr}T${startTime}`;
             const dateFin = `${dateFinStr}T${endTime}`;
 
-            const response = await axios.get(`${apiBaseUrl}/factures/caisse_par_tranche_horaire/`, {
-                params: { date_debut: dateDebut, date_fin: dateFin },
-                headers: { Authorization: `Token ${token}` }
+            const response = await api.get('factures/caisse_par_tranche_horaire/', {
+                params: { date_debut: dateDebut, date_fin: dateFin }
             });
             onVerify?.(response.data);
         } catch (err: any) {

@@ -1,5 +1,5 @@
 import { useState, useCallback, useMemo, useEffect, useRef } from 'react'
-import axios from 'axios'
+import api from '../services/api'
 import { toast } from 'react-hot-toast'
 import type { ProduitModel, LigneFacture, StockLot } from '../types'
 import { normalizeNumberInput } from '../utils/formatters'
@@ -16,7 +16,7 @@ interface UseCartOptions {
     quantityInputsRef?: React.MutableRefObject<Map<number, HTMLInputElement>>
 }
 
-export function useCart({ apiBaseUrl = '', onRequirePrescription, onAlert, quantityInputsRef }: UseCartOptions = {}) {
+export function useCart({ onRequirePrescription, onAlert, quantityInputsRef }: UseCartOptions = {}) {
     const { user } = useAuth()
     
     // Logic keys (prefixed with user ID for multi-user safety)
@@ -58,8 +58,7 @@ export function useCart({ apiBaseUrl = '', onRequirePrescription, onAlert, quant
     const addProduit = useCallback(async (produit: ProduitModel, options?: { isRetrocession?: boolean; preventFocus?: boolean }) => {
         setLoading(true)
         try {
-            const produitsEndpoint = apiBaseUrl ? `${apiBaseUrl}/api/produits/` : '/api/produits/'
-            const { data: fullProduit } = await axios.get<ProduitModel>(`${produitsEndpoint}${produit.id}/`)
+            const { data: fullProduit } = await api.get<ProduitModel>(`produits/${produit.id}/`)
 
             setLignesFacture(prevLignes => {
                 // REDUNDANCY / INTERACTION CHECK
@@ -179,7 +178,7 @@ export function useCart({ apiBaseUrl = '', onRequirePrescription, onAlert, quant
         } finally {
             setLoading(false)
         }
-    }, [apiBaseUrl, onRequirePrescription, quantityInputsRef])
+    }, [onRequirePrescription, quantityInputsRef])
 
     const updateQuantite = useCallback((produitId: number, quantite: number, callback?: (err: string) => void) => {
         // Permettre les quantités négatives (retours) et positives (ventes)

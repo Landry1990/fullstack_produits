@@ -1,10 +1,9 @@
 ﻿import { useState, useEffect, useMemo } from 'react';
-import axios from 'axios';
+import api from '../../services/api';
 import { toast } from 'react-hot-toast';
 import { Search, Sparkles, AlertCircle, ArrowRight } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import PremiumModal from './PremiumModal';
-import { safeStorage } from '../../utils/storage';
 
 interface SmartOrganizerModalProps {
     isOpen: boolean;
@@ -35,8 +34,6 @@ export default function SmartOrganizerModal({ isOpen, onClose, targetCategory, o
     const [contains, setContains] = useState('');
     const [caseSensitive, setCaseSensitive] = useState(false);
 
-    const apiBaseUrl = (import.meta.env.VITE_API_BASE_URL ?? '').replace(/\/$/, '');
-
     useEffect(() => {
         if (isOpen) {
             fetchAllProducts();
@@ -46,10 +43,7 @@ export default function SmartOrganizerModal({ isOpen, onClose, targetCategory, o
     const fetchAllProducts = async () => {
         setLoading(true);
         try {
-            const token = safeStorage.getItem('authToken');
-            const res = await axios.get(`${apiBaseUrl}/api/produits/for_import/`, {
-                headers: { Authorization: `Token ${token}` }
-            });
+            const res = await api.get('produits/for_import/');
             setAllProducts(res.data);
         } catch (err) {
             console.error("Error fetching products for organizer:", err);
@@ -91,13 +85,10 @@ export default function SmartOrganizerModal({ isOpen, onClose, targetCategory, o
         
         setProcessing(true);
         try {
-            const token = safeStorage.getItem('authToken');
-            const res = await axios.post(`${apiBaseUrl}/api/produits/bulk-categorize/`, {
+            const res = await api.post('produits/bulk-categorize/', {
                 ids: filteredProducts.map(p => p.id),
                 category_type: targetCategory.type,
                 category_id: targetCategory.id
-            }, {
-                headers: { Authorization: `Token ${token}` }
             });
 
             toast.success(t('stock:organisation.smart_organizer.success_message', { count: res.data.updated_count, name: targetCategory.name }));

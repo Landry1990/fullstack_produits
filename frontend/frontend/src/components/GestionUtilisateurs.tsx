@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import axios from 'axios';
+import api from '../services/api';
 import { toast } from 'react-hot-toast';
 import { useAuth } from '../context/AuthContext';
 import { useConfirm } from '../hooks/useConfirm';
@@ -186,7 +186,7 @@ export default function GestionUtilisateurs() {
 
   const fetchUsers = async () => {
     try {
-      const response = await axios.get('/api/users/');
+      const response = await api.get('users/');
       const data: any = response.data;
       setUsers(Array.isArray(data) ? data : (data.results || []));
     } catch (error) {
@@ -370,7 +370,7 @@ export default function GestionUtilisateurs() {
 
   const executeDeleteUser = async (userId: number, username: string) => {
     try {
-      await axios.delete(`/api/users/${userId}/`);
+      await api.delete(`users/${userId}/`);
       toast.success(t('messages.deleted', { username }));
       fetchUsers();
     } catch (error: any) {
@@ -387,7 +387,7 @@ export default function GestionUtilisateurs() {
 
           if (confirmDeactivate) {
               try {
-                  await axios.patch(`/api/users/${userId}/`, { is_active: false });
+                  await api.patch(`users/${userId}/`, { is_active: false });
                   toast.success(t('messages.deactivated', { username }));
                   fetchUsers();
               } catch (err) {
@@ -470,10 +470,10 @@ export default function GestionUtilisateurs() {
       console.log('DEBUG: Payload sending:', payload);
 
       if (editingUser) {
-        await axios.patch(`/api/users/${editingUser.id}/`, payload);
+        await api.patch(`users/${editingUser.id}/`, payload);
         toast.success(t('messages.updated'));
       } else {
-        await axios.post('/api/users/', payload);
+        await api.post('users/', payload);
         toast.success(t('messages.created'));
       }
       

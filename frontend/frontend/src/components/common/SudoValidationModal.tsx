@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import axios from 'axios';
+import api from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
 import PremiumModal from './PremiumModal';
 
@@ -57,8 +57,7 @@ export default function SudoValidationModal({
     const fetchUsers = async () => {
         try {
             setLoadingUsers(true);
-            const apiBaseUrl = import.meta.env.VITE_API_BASE_URL ?? '';
-            const res = await axios.get(`${String(apiBaseUrl).replace(/\/$/, '')}/api/users/operators/`);
+            const res = await api.get('users/operators/');
             const userList = res.data.results || res.data;
             setUsers(userList);
 

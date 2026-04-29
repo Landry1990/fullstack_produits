@@ -1,13 +1,12 @@
-﻿import React, { useState } from 'react';
+import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { Promotion } from '../../types/Promotion';
 import { DiscountType, ApplicationMode } from '../../types/Promotion';
-import { safeStorage } from '../../utils/storage';
 import { useProductSearch } from '../../hooks/useProductSearch';
 import { useSearchNavigation } from '../../hooks/useSearchNavigation';
 import { useKeyboardNavigation } from '../../hooks/useKeyboardNavigation';
 import { Search, ShoppingBag, X, Plus, Minus, Calendar, Tag, Package, Trash2 } from 'lucide-react';
-import axios from 'axios';
+import api from '../../services/api';
 import { useEffect, useRef, useCallback } from 'react';
 
 interface PromotionFormProps {
@@ -116,16 +115,11 @@ const PromotionForm: React.FC<PromotionFormProps> = ({ onClose, onSave, initialD
             const hasPlaceholders = selectedProducts.some(p => p.name === t('promotions:form.products.loading_names'));
             if (!hasPlaceholders) return;
 
-            const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || '';
-            const token = safeStorage.getItem('authToken');
-
             try {
                 const updated = await Promise.all(selectedProducts.map(async (p) => {
                     if (p.name !== t('promotions:form.products.loading_names')) return p;
                     try {
-                        const { data } = await axios.get(`${apiBaseUrl}/api/produits/${p.id}/`, {
-                            headers: { 'Authorization': `Token ${token}` }
-                        });
+                        const { data } = await api.get(`produits/${p.id}/`);
                         return { ...p, name: data.name, selling_price: data.selling_price, stock: data.stock };
                     } catch (e) {
                         return { ...p, name: t('promotions:form.products.error_id', { id: p.id }) };
@@ -170,24 +164,11 @@ const PromotionForm: React.FC<PromotionFormProps> = ({ onClose, onSave, initialD
         }
 
         try {
-            const token = safeStorage.getItem('authToken');
-            const method = initialData ? 'PUT' : 'POST';
-            const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || '';
-            const url = initialData 
-                ? `${apiBaseUrl}/api/promotions/${initialData.id}/`
-                : `${apiBaseUrl}/api/promotions/`;
-
-            const response = await fetch(url, {
-                method,
-                headers: {
-                    'Authorization': `Token ${token}`,
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(payload)
-            });
-
-            if (!response.ok) throw new Error(t('promotions:form.save_error'));
-            
+            if (initialData) {
+                await api.put(`promotions/${initialData.id}/`, payload);
+            } else {
+                await api.post('promotions/', payload);
+            }
             onSave();
             onClose();
         } catch (error) {
