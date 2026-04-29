@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Package, AlertTriangle, History, Check, ShieldAlert, BadgeInfo, Search, Plus, ShoppingBag, Download, Filter } from 'lucide-react';
-import axios from '../../config/axios';
+import api from '../../services/api';
 import { useTranslation } from 'react-i18next';
 import { formatCurrency } from '../../utils/formatters';
 import { toast } from 'react-hot-toast';
@@ -87,7 +87,7 @@ export default function Ruptures() {
 
     setIsBulkAdding(true);
     try {
-      const res = await axios.post('/api/commandes/ajouter_produits_bulk/', {
+      const res = await api.post('commandes/ajouter_produits_bulk/', {
         produit_ids: ids,
         quantity: 1
       });
@@ -105,8 +105,8 @@ export default function Ruptures() {
     const loadFilters = async () => {
       try {
         const [resRayons, resFournisseurs] = await Promise.all([
-          axios.get('/api/rayons/'),
-          axios.get('/api/fournisseurs/')
+          api.get('rayons/'),
+          api.get('fournisseurs/')
         ]);
         setRayons(resRayons.data.results || resRayons.data || []);
         setFournisseurs(resFournisseurs.data.results || resFournisseurs.data || []);
@@ -120,11 +120,11 @@ export default function Ruptures() {
   const fetchPharmacieRuptures = async (page = 1) => {
     setPharmacieLoading(true);
     try {
-      let url = `/api/produits/?stock__lte=0&rotation_moyenne__gt=1&latest_supplier=true&page=${page}`;
+      let url = `produits/?stock__lte=0&rotation_moyenne__gt=1&latest_supplier=true&page=${page}`;
       if (selectedRayon) url += `&rayon=${selectedRayon}`;
       if (selectedFournisseur) url += `&fournisseur=${selectedFournisseur}`;
       
-      const res = await axios.get(url);
+      const res = await api.get(url);
       setPharmacieData(res.data.results || []);
       setPharmacieTotalPages(Math.ceil((res.data.count || 0) / 50));
     } catch (error) {
@@ -137,7 +137,7 @@ export default function Ruptures() {
   const fetchFournisseurRuptures = async () => {
     setFournisseurLoading(true);
     try {
-      const res = await axios.get(`/api/ruptures-fournisseurs/?est_resolu=false`);
+      const res = await api.get('ruptures-fournisseurs/?est_resolu=false');
       setFournisseurData(res.data.results || res.data || []);
     } catch (error) {
       toast.error(t('common:error_loading_data', 'Erreur de chargement'));
@@ -150,9 +150,9 @@ export default function Ruptures() {
     setStatsLoading(true);
     try {
       const url = statsDays === 'all' 
-        ? `/api/ruptures-fournisseurs/statistiques_frequence/`
-        : `/api/ruptures-fournisseurs/statistiques_frequence/?days=${statsDays}`;
-      const res = await axios.get(url);
+        ? `ruptures-fournisseurs/statistiques_frequence/`
+        : `ruptures-fournisseurs/statistiques_frequence/?days=${statsDays}`;
+      const res = await api.get(url);
       setStatsData(res.data || []);
     } catch (error) {
       toast.error(t('common:error_loading_data', 'Erreur de chargement'));
@@ -176,7 +176,7 @@ export default function Ruptures() {
     const search = async () => {
       setIsSearching(true);
       try {
-        const res = await axios.get(`/api/produits/?search=${searchQuery}`);
+        const res = await api.get(`produits/?search=${searchQuery}`);
         setSearchResults(res.data.results || []);
       } catch (e) {
         console.error(e);
@@ -190,7 +190,7 @@ export default function Ruptures() {
 
   const declarerRuptureFournisseur = async (produitId: number) => {
     try {
-      await axios.post('/api/ruptures-fournisseurs/', {
+      await api.post('ruptures-fournisseurs/', {
         produit: produitId,
         est_resolu: false
       });
@@ -209,7 +209,7 @@ export default function Ruptures() {
 
   const ajouterACommande = async (produitId: number) => {
     try {
-      const res = await axios.post('/api/commandes/ajouter_produit_auto/', {
+      const res = await api.post('commandes/ajouter_produit_auto/', {
         produit_id: produitId,
         quantity: 1
       });
@@ -222,10 +222,10 @@ export default function Ruptures() {
   const exportStats = async () => {
     try {
       const url = statsDays === 'all' 
-        ? `/api/ruptures-fournisseurs/export_frequence_csv/`
-        : `/api/ruptures-fournisseurs/export_frequence_csv/?days=${statsDays}`;
+        ? `ruptures-fournisseurs/export_frequence_csv/`
+        : `ruptures-fournisseurs/export_frequence_csv/?days=${statsDays}`;
       
-      const response = await axios.get(url, { responseType: 'blob' });
+      const response = await api.get(url, { responseType: 'blob' });
       const blob = new Blob([response.data], { type: 'text/csv' });
       const link = document.createElement('a');
       link.href = window.URL.createObjectURL(blob);
@@ -239,7 +239,7 @@ export default function Ruptures() {
 
   const marquerResolu = async (id: number) => {
     try {
-      await axios.post(`/api/ruptures-fournisseurs/${id}/resoudre/`);
+      await api.post(`ruptures-fournisseurs/${id}/resoudre/`);
       toast.success(t('ruptures.fournisseur.resolve_success', 'Résolu avec succès'));
       fetchFournisseurRuptures();
     } catch (error) {

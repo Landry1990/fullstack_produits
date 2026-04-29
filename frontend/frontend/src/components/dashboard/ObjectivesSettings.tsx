@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import axios from '../../config/axios';
+import api from '../../services/api';
 import { normalizeNumberInput } from '../../utils/formatters';
 import { X, Save, TrendingUp, Target, Hand } from 'lucide-react';
 import { toast } from 'react-hot-toast';
@@ -20,12 +20,12 @@ interface Props {
 }
 
 const fetchConfig = async (): Promise<ObjectivesConfig> => {
-    const response = await axios.get('/api/configuration-objectifs/1/');
+    const response = await api.get('configuration-objectifs/1/');
     return response.data;
 };
 
 const updateConfig = async (data: ObjectivesConfig): Promise<ObjectivesConfig> => {
-    const response = await axios.patch('/api/configuration-objectifs/1/', data);
+    const response = await api.patch('configuration-objectifs/1/', data);
     return response.data;
 };
 

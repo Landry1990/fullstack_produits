@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import axios from 'axios';
+import api from '../services/api';
 import { useTranslation } from 'react-i18next';
 
 type GroupByOption = 'FORME' | 'RAYON' | 'GROUPE';
@@ -18,8 +18,6 @@ export default function EtatsInventaire() {
   const [selectedEntity, setSelectedEntity] = useState<number | null>(null);
   const [loadingEntities, setLoadingEntities] = useState(false);
 
-  const apiBaseUrl = import.meta.env.VITE_API_BASE_URL ?? '';
-
   // Charger les entités en fonction du type de regroupement
   useEffect(() => {
     const fetchEntities = async () => {
@@ -35,7 +33,7 @@ export default function EtatsInventaire() {
           endpoint = '/api/groupes/';
         }
         
-        const response = await axios.get(`${String(apiBaseUrl).replace(/\/$/, '')}${endpoint}`);
+        const response = await api.get(endpoint.replace(/^\/api\//, ''));
         const data = response.data.results || response.data;
         
         // Normaliser les données (rayons utilisent 'name', formes/groupes utilisent 'nom')
@@ -54,7 +52,7 @@ export default function EtatsInventaire() {
     };
     
     fetchEntities();
-  }, [groupBy, apiBaseUrl]);
+  }, [groupBy]);
 
   const handlePrint = () => {
     let url = `/app/printing/0?type=INVENTAIRE&group_by=${groupBy}&stock_display=${stockDisplay}`;

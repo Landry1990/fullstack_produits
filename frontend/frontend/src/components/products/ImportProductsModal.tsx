@@ -1,7 +1,7 @@
 
 import { useState, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
-import axios from 'axios'
+import api from '../../services/api'
 import { toast } from 'react-hot-toast'
 
 interface ImportProductsModalProps {
@@ -42,8 +42,7 @@ export default function ImportProductsModal({ onClose, onSuccess }: ImportProduc
     setProgress(0)
 
     try {
-      const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || '/api'
-      const response = await axios.post(`${apiBaseUrl}/import/products/`, formData, {
+      const response = await api.post('import/products/', formData, {
         onUploadProgress: (progressEvent) => {
           if (progressEvent.total) { // Check if total is defined
              const percent = Math.round((progressEvent.loaded * 100) / progressEvent.total)

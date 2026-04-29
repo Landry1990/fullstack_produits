@@ -1,5 +1,5 @@
 ﻿import { useState, useEffect } from 'react';
-import axios from 'axios';
+import api from '../services/api';
 import { useTranslation } from 'react-i18next';
 import PremiumModal from './common/PremiumModal';
 import { formatCurrency } from '../utils/formatters';
@@ -32,8 +32,6 @@ export default function EcheancierFournisseursModal({ isOpen, onClose, onRegler,
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('TOUS');
 
-  const apiBaseUrl = import.meta.env.VITE_API_BASE_URL ?? '';
-
   useEffect(() => {
     if (isOpen) {
       fetchEcheances();
@@ -46,7 +44,7 @@ export default function EcheancierFournisseursModal({ isOpen, onClose, onRegler,
     setLoading(true);
     setError(null);
     try {
-      const { data } = await axios.get(`${apiBaseUrl}/api/fournisseurs/echeancier/`);
+      const { data } = await api.get('fournisseurs/echeancier/');
       setEcheances(data);
     } catch (err: any) {
       setError(err.response?.data?.message || err.message || 'Erreur de chargement');

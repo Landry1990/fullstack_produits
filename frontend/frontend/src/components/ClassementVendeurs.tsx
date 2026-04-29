@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import axios from 'axios';
+import api from '../services/api';
 import { toast } from 'react-hot-toast';
 import { formatCurrency } from '../utils/formatters';
 import {
@@ -17,7 +17,6 @@ import {
   ResponsiveContainer
 } from 'recharts';
 
-const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || '/api';
 
 interface VendeurRanking {
   vendeur_id: number;
@@ -77,7 +76,7 @@ export default function ClassementVendeurs() {
 
       setLoading(true);
       try {
-        const res = await axios.get<RankingResponse>(`${apiBaseUrl}/rapports/classement_vendeurs_mensuel/`, {
+        const res = await api.get<RankingResponse>('rapports/classement_vendeurs_mensuel/', {
           params: { mois, periode }
         });
         setRanking(res.data);
@@ -100,7 +99,7 @@ export default function ClassementVendeurs() {
   useEffect(() => {
     const fetchEvolution = async () => {
       try {
-        const res = await axios.get<EvolutionSeries[]>(`${apiBaseUrl}/rapports/evolution_vendeur/`, {
+        const res = await api.get<EvolutionSeries[]>('rapports/evolution_vendeur/', {
           params: { vendeur_id: 'all' }
         });
         setEvolutionData(res.data);

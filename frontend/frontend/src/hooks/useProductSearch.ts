@@ -1,6 +1,6 @@
 import { useState, useRef, useCallback } from 'react'
 import { useDebounce } from 'use-debounce'
-import axios from 'axios'
+import api from '../services/api'
 import { useQuery } from '@tanstack/react-query'
 import type { ProduitModel, PaginatedResponse } from '../types'
 
@@ -45,8 +45,6 @@ export function useProductSearch(options: UseProductSearchOptions = {}): UseProd
         minBarcodeLength = 7
     } = options
 
-    const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || ''
-
     const [searchQuery, setSearchQuery] = useState('')
     const [debouncedSearch] = useDebounce(searchQuery, debounceMs)
     const [wasBarcodeScanned, setWasBarcodeScanned] = useState(false)
@@ -88,26 +86,14 @@ export function useProductSearch(options: UseProductSearchOptions = {}): UseProd
 
     // Fetch function for React Query
     const fetchProducts = async (search: string, auto: boolean): Promise<ProduitModel[]> => {
-        // If autoLoad is false and search is empty/short, don't fetch (handled by enabled query option normally, but double check)
         if (!auto && (!search || search.length < minSearchLength)) {
             return []
         }
 
-        let endpoint = apiBaseUrl
-            ? `${apiBaseUrl}/api/produits/`
-            : '/api/produits/'
-
-        if (search) {
-            endpoint += `?search=${encodeURIComponent(search)}`
-        }
-
-        const response = await axios.get(endpoint)
+        const params = search ? { search } : undefined
+        const response = await api.get('produits/', { params })
         const produitsData = response.data as ProduitModel[] | PaginatedResponse<ProduitModel>
-        const results = Array.isArray(produitsData)
-            ? produitsData
-            : (produitsData.results || [])
-
-        return results
+        return Array.isArray(produitsData) ? produitsData : (produitsData.results || [])
     }
 
     // Determine if query should run

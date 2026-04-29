@@ -1,44 +1,33 @@
 import { useState, useCallback, useEffect } from 'react';
-import axios from 'axios';
+import api from '../services/api';
 import type { CaisseParTranche } from '../types';
-import { safeStorage } from '../utils/storage';
 
 export const useCashSession = () => {
     const [caisseSession, setCaisseSession] = useState<CaisseParTranche | null>(null);
-    const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || '/api';
 
     const fetchCaisseParTranche = useCallback(async () => {
         try {
-            const token = safeStorage.getItem('authToken');
-            if (!token) return;
-
             // Déterminer la tranche actuelle (Matin: 6h-14h, Après-midi: 14h-22h)
             // Note: Ceci est une récupération "informative", le backend calcule la vraie somme
             const now = new Date();
             const hour = now.getHours();
-            let dateDebutStr, dateFinStr;
             const todayStr = now.toISOString().split('T')[0];
 
-            if (hour >= 6 && hour < 14) {
-                dateDebutStr = `${todayStr}T06:00`;
-                dateFinStr = `${todayStr}T14:00`;
-            } else {
-                dateDebutStr = `${todayStr}T14:00`;
-                dateFinStr = `${todayStr}T22:00`; // Ou lendemain 06:00 selon règle métier
-            }
+            const dateDebutStr = (hour >= 6 && hour < 14)
+                ? `${todayStr}T06:00`
+                : `${todayStr}T14:00`;
+            const dateFinStr = (hour >= 6 && hour < 14)
+                ? `${todayStr}T14:00`
+                : `${todayStr}T22:00`; // Ou lendemain 06:00 selon règle métier
 
-            const response = await axios.get(`${apiBaseUrl}/factures/caisse_par_tranche_horaire/`, {
-                headers: { Authorization: `Token ${token}` },
-                params: {
-                    date_debut: dateDebutStr,
-                    date_fin: dateFinStr
-                }
+            const response = await api.get('factures/caisse_par_tranche_horaire/', {
+                params: { date_debut: dateDebutStr, date_fin: dateFinStr }
             });
             setCaisseSession(response.data);
         } catch (error) {
             console.error("Erreur chargement caisse session", error);
         }
-    }, [apiBaseUrl]);
+    }, []);
 
     useEffect(() => {
         fetchCaisseParTranche();

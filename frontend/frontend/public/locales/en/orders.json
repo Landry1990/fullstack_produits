@@ -263,7 +263,10 @@
         "mode_hourly_desc": "Order products sold during a specific date/time range",
         "hourly_range_label": "Sales time range",
         "date_from": "From",
-        "date_to": "To"
+        "date_to": "To",
+        "no_results_title": "Nothing to order",
+        "no_results_desc": "No sales were found in this time range for the selected criteria.",
+        "modify_params": "Modify parameters"
     }
 }
 

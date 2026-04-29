@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import axios from 'axios';
+import api from '../../../services/api';
 import { toast } from 'react-hot-toast';
 import { Send, Phone } from 'lucide-react';
 import type { Promis } from '../../../types';
@@ -22,8 +22,6 @@ export const SmsModal: React.FC<SmsModalProps> = ({
     const [message, setMessage] = useState('');
     const [sendingSms, setSendingSms] = useState(false);
 
-    const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || '';
-
     useEffect(() => {
         if (promis && isOpen) {
             setMessage(t('stock:promis.messages.sms_default_body', { 
@@ -42,7 +40,7 @@ export const SmsModal: React.FC<SmsModalProps> = ({
         
         setSendingSms(true);
         try {
-            await axios.post(`${apiBaseUrl}/api/sms/send/`, {
+            await api.post('sms/send/', {
                 recipient: promis.client_phone_display,
                 message: message,
                 context_type: 'PROMIS',

@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import axios from 'axios';
+import api from '../services/api';
 import { format } from 'date-fns';
 import { useAuth } from '../context/AuthContext';
 import { useTranslation } from 'react-i18next';
@@ -49,11 +49,7 @@ const HistoriqueVentes = () => {
       params.append('page', currentPage.toString());
       params.append('page_size', pageSize.toString());
 
-      const response = await axios.get(`/api/historique-ventes/?${params.toString()}`, {
-        headers: {
-          Authorization: `Token ${user.token}`
-        }
-      });
+      const response = await api.get(`historique-ventes/?${params.toString()}`);
       
       const { results, count, totals } = response.data;
       setData(results || []);
@@ -79,8 +75,7 @@ const HistoriqueVentes = () => {
       if (dateDebut) params.append('date_debut', dateDebut);
       if (dateFin) params.append('date_fin', dateFin);
 
-      const response = await axios.get(`/api/historique-ventes/exporter_excel/?${params.toString()}`, {
-        headers: { Authorization: `Token ${user.token}` },
+      const response = await api.get(`historique-ventes/exporter_excel/?${params.toString()}`, {
         responseType: 'blob'
       });
 

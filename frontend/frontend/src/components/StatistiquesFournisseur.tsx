@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
-import axios from 'axios';
+import api from '../services/api';
 import { formatCurrency } from '../utils/formatters';
 import {
   BarChart,
@@ -64,16 +64,12 @@ export default function StatistiquesFournisseur() {
   const { data: prixComparaison, isLoading: loadingPrix } = useComparaisonPrix();
   const { data: repartitionAchats, isLoading: loadingRepartition } = useRepartitionAchats();
 
-  const apiBaseUrl = useMemo(
-    () => (import.meta.env.VITE_API_BASE_URL ?? '').replace(/\/$/, ''),
-    [],
-  );
 
   const fetchStats = async () => {
     try {
       setLoading(true);
 
-      const response = await axios.get(`${apiBaseUrl}/api/statistiques/ca_par_fournisseur/`, {
+      const response = await api.get('statistiques/ca_par_fournisseur/', {
         params: {
           date_debut: dateDebut,
           date_fin: dateFin

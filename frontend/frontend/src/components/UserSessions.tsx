@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import api from '../services/api';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../context/AuthContext';
 import { format } from 'date-fns';
@@ -62,7 +62,7 @@ const UserSessions: React.FC = () => {
 
     const fetchOperators = async () => {
         try {
-            const response = await axios.get('/api/users/operators/');
+            const response = await api.get('users/operators/');
             setOperators(response.data);
         } catch (err) {
             console.error("Error fetching operators:", err);
@@ -81,7 +81,7 @@ const UserSessions: React.FC = () => {
             
             if (selectedUser) url += `&user=${selectedUser}`;
             
-            const response = await axios.get(url);
+            const response = await api.get(url);
             const sessionData = Array.isArray(response.data) ? response.data : response.data.results;
             setSessions(sessionData || []);
         } catch (err) {
@@ -94,7 +94,7 @@ const UserSessions: React.FC = () => {
     const fetchRecap = async () => {
         setLoading(true);
         try {
-            const response = await axios.get(`/api/user-sessions/recap_mensuel/?month=${recapMonth}&year=${recapYear}`);
+            const response = await api.get(`user-sessions/recap_mensuel/?month=${recapMonth}&year=${recapYear}`);
             setRecapData(response.data);
         } catch (err) {
             console.error("Error fetching recap:", err);
@@ -120,7 +120,7 @@ const UserSessions: React.FC = () => {
 
         setDisconnectingId(sessionId);
         try {
-            await axios.post(`/api/user-sessions/${sessionId}/force_logout/`);
+            await api.post(`user-sessions/${sessionId}/force_logout/`);
             toast.success(t('sessions.force_logout_success', { username }));
             fetchSessions();
         } catch (err) {

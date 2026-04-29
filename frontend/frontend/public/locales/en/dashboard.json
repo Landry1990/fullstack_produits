@@ -78,10 +78,26 @@
     "debts": {
         "supplier_debts_title": "Supplier Debts",
         "supplier_debts_desc": "Invoices due to suppliers",
+        "supplier_debts_by_due": "Supplier Debts & Due Dates",
         "supplier": "Supplier",
         "debt": "Debt",
         "action": "Action",
-        "no_supplier_debts": "No supplier debt"
+        "no_supplier_debts": "No supplier debt",
+        "view_detail": "View details",
+        "overdue_one": "overdue",
+        "overdue_many": "overdue",
+        "days_remaining": "d left",
+        "days_overdue": "d overdue",
+        "due_date": "Due",
+        "statement": "STATEMENT",
+        "invoice": "INVOICE",
+        "echeances_title": "Supplier Deadlines",
+        "echeances_subtitle": "Upcoming & overdue payments",
+        "overdue_status": "overdue",
+        "today_status": "today",
+        "today_badge": "Today",
+        "amount_due": "Amount Due",
+        "status": "Status"
     },
     "actions": {
         "title": "Quick Actions",

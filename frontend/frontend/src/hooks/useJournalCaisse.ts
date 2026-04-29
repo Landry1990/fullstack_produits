@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
-import axios from 'axios';
+import api from '../services/api';
 import { toast } from 'react-hot-toast';
 import type { CaisseTransaction, MouvementCaisse } from '../types';
 import { usePharmacySettings } from './usePharmacySettings';
@@ -89,13 +89,6 @@ export function useJournalCaisse() {
     });
   };
 
-  const apiBaseUrl = useMemo(() => {
-    const baseUrl = import.meta.env.VITE_API_BASE_URL ?? '';
-    return baseUrl ? String(baseUrl).replace(/\/$/, '') : '';
-  }, []);
-
-  const caisseEndpoint = apiBaseUrl ? `${apiBaseUrl}/api/caisse/` : '/api/caisse/';
-
   const isInitialMount = useRef(true);
   const hasLoadedOnce = useRef(false);
 
@@ -122,7 +115,7 @@ export function useJournalCaisse() {
     }
   }, [PAGE_SIZE]);
 
-  const fetchPageInit = useCallback(async () => {
+  const fetchPageInit = useCallback(async (signal?: AbortSignal) => {
     setLoading(true);
     setError(null);
     try {
@@ -134,31 +127,36 @@ export function useJournalCaisse() {
       if (dateDebut) params.date_debut = formatLocalISOString(dateDebut);
       if (dateFin) params.date_fin = formatLocalISOString(dateFin);
 
-      const response = await axios.get(`${caisseEndpoint}page_init/`, { params });
+      const response = await api.get('caisse/page_init/', { params, signal });
       const { transactions: txData, mouvements: mouvData, totals: totalsData, users: usersData } = response.data;
 
       processTransactionsData(txData);
       setMouvements(Array.isArray(mouvData) ? mouvData : (mouvData?.results || []));
       if (totalsData) setServerTotals(totalsData);
       if (usersData) setUsers(usersData);
-    } catch (err) {
+    } catch (err: any) {
+      if (err?.name === 'CanceledError') return;
       setError(t('table.loading_error') || 'Erreur lors du chargement des données');
       console.error('Erreur page_init caisse:', err);
     } finally {
       setLoading(false);
     }
-  }, [caisseEndpoint, selectedUser, dateDebut, dateFin, processTransactionsData, t]);
+  }, [selectedUser, dateDebut, dateFin, processTransactionsData, t]);
 
   useEffect(() => {
     if (!hasLoadedOnce.current) {
       hasLoadedOnce.current = true;
-      fetchPageInit();
+      const controller = new AbortController();
+      fetchPageInit(controller.signal);
+      return () => controller.abort();
     }
   }, [fetchPageInit]);
 
   useEffect(() => {
     if (isInitialMount.current) return;
-    fetchTransactions();
+    const controller = new AbortController();
+    fetchTransactions(controller.signal);
+    return () => controller.abort();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [page]);
 
@@ -168,7 +166,9 @@ export function useJournalCaisse() {
       return;
     }
     setPage(1);
-    fetchData();
+    const controller = new AbortController();
+    fetchPageInit(controller.signal);
+    return () => controller.abort();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedUser, dateDebut, dateFin]);
 
@@ -189,7 +189,7 @@ export function useJournalCaisse() {
 
   const handleUserShiftDetection = async (userId: string) => {
     try {
-      const response = await axios.get(`${caisseEndpoint}get_user_shift/`, {
+      const response = await api.get('caisse/get_user_shift/', {
         params: { user_id: userId }
       });
       const { start_date, end_date, has_activity } = response.data;
@@ -221,7 +221,7 @@ export function useJournalCaisse() {
     await fetchPageInit();
   };
 
-  const fetchTransactions = async () => {
+  const fetchTransactions = async (signal?: AbortSignal) => {
     try {
       const params = new URLSearchParams();
       params.append('page', page.toString());
@@ -230,9 +230,10 @@ export function useJournalCaisse() {
       if (dateDebut) params.append('date_debut', formatLocalISOString(dateDebut));
       if (dateFin) params.append('date_fin', formatLocalISOString(dateFin));
       
-      const response = await axios.get(caisseEndpoint, { params });
+      const response = await api.get('caisse/', { params, signal });
       processTransactionsData(response.data);
-    } catch (err) {
+    } catch (err: any) {
+      if (err?.name === 'CanceledError') return;
       console.error('Erreur:', err);
       throw err;
     }
@@ -550,7 +551,7 @@ export function useJournalCaisse() {
     
     setLoading(true);
     try {
-      const response = await axios.post(`${caisseEndpoint}cloturer/`, {
+      const response = await api.post('caisse/cloturer/', {
         montant_reel: normalizeNumberInput(actualAmount),
         date_debut: dateDebut ? formatLocalISOString(dateDebut) : null,
         date_fin: dateFin ? formatLocalISOString(dateFin) : null,

@@ -1,8 +1,7 @@
-import { useState, useEffect, useCallback, useMemo } from 'react'
-import axios from 'axios'
+import { useState, useEffect, useCallback } from 'react'
+import api from '../services/api'
 
 export interface UseMultiCaisseOptions {
-    apiBaseUrl: string
 }
 
 export interface UseMultiCaisseReturn {
@@ -17,7 +16,7 @@ export interface UseMultiCaisseReturn {
     multiCaisseLoading: boolean
 }
 
-export function useMultiCaisse({ apiBaseUrl }: UseMultiCaisseOptions): UseMultiCaisseReturn {
+export function useMultiCaisse(_options: UseMultiCaisseOptions = {}): UseMultiCaisseReturn {
     const [centralizedCashRegister, setCentralizedCashRegister] = useState<boolean>(true)
     const [isMultiCaisse, setIsMultiCaisse] = useState<boolean>(false)
     const [postesCaisses, setPostesCaisses] = useState<any[]>([])
@@ -30,15 +29,13 @@ export function useMultiCaisse({ apiBaseUrl }: UseMultiCaisseOptions): UseMultiC
 
     // Initial settings fetch
     useEffect(() => {
+        const controller = new AbortController()
         const fetchSettings = async () => {
             setMultiCaisseLoading(true)
             try {
-                const settingsEndpoint = apiBaseUrl ? `${apiBaseUrl}/api/invoice-settings/` : '/api/invoice-settings/'
-                const postesEndpoint = apiBaseUrl ? `${apiBaseUrl}/api/postes-caisses/active/` : '/api/postes-caisses/active/'
-
                 const [settingsRes, postesRes] = await Promise.all([
-                    axios.get(settingsEndpoint),
-                    axios.get(postesEndpoint).catch(() => ({ data: [] }))
+                    api.get('invoice-settings/', { signal: controller.signal }),
+                    api.get('postes-caisses/active/', { signal: controller.signal }).catch(() => ({ data: [] }))
                 ])
 
                 setCentralizedCashRegister(settingsRes.data?.centralized_cash_register ?? true)
@@ -52,27 +49,26 @@ export function useMultiCaisse({ apiBaseUrl }: UseMultiCaisseOptions): UseMultiC
                         setSelectedPosteCaisseId(postesList[0].id)
                     }
                 }
-            } catch (err) {
-                handleApiError(err, 'Erreur lors du chargement des paramètres.')
+            } catch (err: any) {
+                if (err?.name !== 'CanceledError') handleApiError(err, 'Erreur lors du chargement des paramètres.')
             } finally {
                 setMultiCaisseLoading(false)
             }
         }
         fetchSettings()
-    }, [apiBaseUrl, handleApiError])
+        return () => controller.abort()
+    }, [handleApiError])
 
     // Polling for multi-caisse updates
     useEffect(() => {
         const fetchMultiCaisseSettings = async () => {
             try {
-                const settingsUrl = `${apiBaseUrl}/api/invoice-settings/`
-                const { data } = await axios.get(settingsUrl)
+                const { data } = await api.get('invoice-settings/')
                 setIsMultiCaisse(data.is_multi_caisse)
                 setCentralizedCashRegister(data.centralized_cash_register)
 
                 if (data.is_multi_caisse && data.centralized_cash_register) {
-                    const postesUrl = `${apiBaseUrl}/api/postes-caisses/active/`
-                    const { data: postes } = await axios.get(postesUrl)
+                    const { data: postes } = await api.get('postes-caisses/active/')
                     setPostesCaisses(postes)
 
                     // Auto-select if only one is active and none selected
@@ -87,7 +83,7 @@ export function useMultiCaisse({ apiBaseUrl }: UseMultiCaisseOptions): UseMultiC
 
         const interval = setInterval(fetchMultiCaisseSettings, 30000) // Refresh every 30s
         return () => clearInterval(interval)
-    }, [apiBaseUrl, selectedPosteCaisseId])
+    }, [selectedPosteCaisseId])
 
     return {
         isMultiCaisse, setIsMultiCaisse,

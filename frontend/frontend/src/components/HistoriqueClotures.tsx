@@ -1,5 +1,5 @@
-import { useState, useEffect, useMemo, useCallback } from 'react'
-import axios from 'axios'
+import { useState, useEffect, useCallback } from 'react'
+import api from '../services/api'
 import { toast } from 'react-hot-toast'
 import { fr } from 'date-fns/locale'
 import 'react-datepicker/dist/react-datepicker.css'
@@ -83,19 +83,15 @@ export default function HistoriqueClotures() {
   const [metricYear, setMetricYear] = useState<string>(format(new Date(), 'yyyy'))
   const [showMetric, setShowMetric] = useState(false)
 
-  const apiBaseUrl = useMemo(() => {
-    const baseUrl = import.meta.env.VITE_API_BASE_URL ?? ''
-    return baseUrl ? String(baseUrl).replace(/\/$/, '') : ''
-  }, [])
 
   // Récupérer les données initiales (utilisateurs, réglages, postes)
   useEffect(() => {
     const initPage = async () => {
       try {
         const [usersRes, settingsRes, postesRes] = await Promise.all([
-          axios.get(`${apiBaseUrl}/api/caisse/page_init/`),
-          axios.get(`${apiBaseUrl}/api/invoice-settings/`),
-          axios.get(`${apiBaseUrl}/api/postes-caisses/`)
+          api.get('caisse/page_init/'),
+          api.get('invoice-settings/'),
+          api.get('postes-caisses/')
         ])
         
         setUsers(usersRes.data.users || [])
@@ -106,7 +102,7 @@ export default function HistoriqueClotures() {
       }
     }
     initPage()
-  }, [apiBaseUrl])
+  }, [])
 
   // Helper pour formater la date en YYYY-MM-DD
   const formatDateForApi = (date: Date): string => {
@@ -130,7 +126,7 @@ export default function HistoriqueClotures() {
       if (selectedUser) params.user = selectedUser
       if (selectedPosteCaisse) params.poste_caisse = selectedPosteCaisse
       
-      const response = await axios.get(`${apiBaseUrl}/api/clotures-caisse/`, { params })
+      const response = await api.get('clotures-caisse/', { params })
       
       const { results, count, totals } = response.data
       setClotures(results || [])
@@ -142,7 +138,7 @@ export default function HistoriqueClotures() {
     } finally {
       setLoading(false)
     }
-  }, [pageSize, dateDebut, dateFin, selectedUser, selectedPosteCaisse, apiBaseUrl, t])
+  }, [pageSize, dateDebut, dateFin, selectedUser, selectedPosteCaisse, t])
 
   // Re-fetch quand les filtres changent — reset page à 1
   useEffect(() => {

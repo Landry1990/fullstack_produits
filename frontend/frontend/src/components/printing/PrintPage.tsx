@@ -1,11 +1,10 @@
 
 import React, { useEffect, useState } from 'react';
 import { useParams, useSearchParams } from 'react-router-dom';
-import axios from 'axios';
+import api from '../../services/api';
 import InvoiceTemplate, { type InvoiceData, type PharmacySettings } from './InvoiceTemplate';
 import InventairePrintTemplate, { type InventairePrintData } from './InventairePrintTemplate';
 import StockValuationTemplate, { type StockValuationData } from './StockValuationTemplate';
-import { safeStorage } from '../../utils/storage';
 
 const PrintPage: React.FC = () => {
     const { id } = useParams<{ id: string }>();
@@ -13,8 +12,6 @@ const PrintPage: React.FC = () => {
     const [settings, setSettings] = useState<PharmacySettings | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
-
-    const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || '/api';
 
     const [searchParams] = useSearchParams();
     const clientNameOverride = searchParams.get('client_name');
@@ -37,20 +34,10 @@ const PrintPage: React.FC = () => {
             }, 10000);
 
             try {
-                const token = safeStorage.getItem('authToken');
-                if (!token) {
-                    setError("Authentification requise");
-                    setLoading(false);
-                    clearTimeout(safetyTimeout);
-                    return;
-                }
-
-                const config = { headers: { Authorization: `Token ${token}` } };
-                
                 // Fetch settings first (needed for both types)
                 const [invoiceSettingsRes, pharmacySettingsRes] = await Promise.all([
-                    axios.get(`${apiBaseUrl}/invoice-settings/`, config),
-                    axios.get(`${apiBaseUrl}/pharmacy-settings/`, config)
+                    api.get('invoice-settings/'),
+                    api.get('pharmacy-settings/')
                 ]);
 
                 const mergedSettings: PharmacySettings = {
@@ -67,27 +54,26 @@ const PrintPage: React.FC = () => {
                     const stockDisplay = searchParams.get('stock_display');
                     const filterId = searchParams.get('filter_id');
                     
-                    let url = `${apiBaseUrl}/produits/etat-inventaire/pdf/?format=json&group_by=${groupBy}&stock_display=${stockDisplay}`;
+                    let url = `produits/etat-inventaire/pdf/?format=json&group_by=${groupBy}&stock_display=${stockDisplay}`;
                     if (filterId) url += `&filter_id=${filterId}`;
                     
-                    const res = await axios.get(url, config);
+                    const res = await api.get(url);
                     setInventoryData({
                         ...res.data,
                         is_report: false
                     });
                 } else if (type === 'INVENTAIRE_REPORT') {
                     // Specific inventory results (discrepancy report)
-                    const res = await axios.get(`${apiBaseUrl}/inventaires/${id}/print_data/`, config);
+                    const res = await api.get(`inventaires/${id}/print_data/`);
                     setInventoryData(res.data);
                 } else if (type === 'STOCK_VALUATION') {
                     const valorisation = searchParams.get('valorisation') || 'ACHAT';
                     const groupBy = searchParams.get('group_by') || '';
-                    const res = await axios.get(`${apiBaseUrl}/rapports/valeur_stock_json/?valorisation=${valorisation}&group_by=${groupBy}`, config);
+                    const res = await api.get(`rapports/valeur_stock_json/?valorisation=${valorisation}&group_by=${groupBy}`);
                     setStockValuationData(res.data);
                 } else {
                     // Default to Invoice
-                    const endpoints = [`${apiBaseUrl}/factures/${id}/print_data/`];
-                    const invoiceRes = await axios.get(endpoints[0], config);
+                    const invoiceRes = await api.get(`factures/${id}/print_data/`);
                     
                     let data = invoiceRes.data;
                     const effectiveClientName = clientNameOverride || data.client_name_override;

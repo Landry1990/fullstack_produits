@@ -1,11 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import axios from '../config/axios';
-
-const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || '';
-
-const temporalAnalysisEndpoint = apiBaseUrl
-    ? `${String(apiBaseUrl).replace(/\/$/, '')}/api/temporal-analysis/`
-    : '/api/temporal-analysis/';
+import api from '../services/api';
 
 // ===== Types =====
 
@@ -71,8 +65,8 @@ export const usePeakHours = (days: number = 30) => {
     return useQuery({
         queryKey: ['temporalAnalysis', 'peakHours', days],
         queryFn: async () => {
-            const response = await axios.get<PeakHoursResponse>(
-                `${temporalAnalysisEndpoint}peak_hours/`,
+            const response = await api.get<PeakHoursResponse>(
+                'temporal-analysis/peak_hours/',
                 { params: { days } }
             );
             return response.data;
@@ -85,8 +79,8 @@ export const useDailyComparison = (weeks: number = 12) => {
     return useQuery({
         queryKey: ['temporalAnalysis', 'dailyComparison', weeks],
         queryFn: async () => {
-            const response = await axios.get<DailyComparisonResponse>(
-                `${temporalAnalysisEndpoint}daily_comparison/`,
+            const response = await api.get<DailyComparisonResponse>(
+                'temporal-analysis/daily_comparison/',
                 { params: { weeks } }
             );
             return response.data;
@@ -99,8 +93,8 @@ export const useSeasonality = (months: number = 12, topN: number = 20) => {
     return useQuery({
         queryKey: ['temporalAnalysis', 'seasonality', months, topN],
         queryFn: async () => {
-            const response = await axios.get<SeasonalityResponse>(
-                `${temporalAnalysisEndpoint}seasonality/`,
+            const response = await api.get<SeasonalityResponse>(
+                'temporal-analysis/seasonality/',
                 { params: { months, top_n: topN } }
             );
             return response.data;

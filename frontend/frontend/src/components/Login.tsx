@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import axios from 'axios';
+import api from '../services/api';
 import ZenithLogo from './ZenithLogo';
 import { User, Lock, ArrowRight, Loader2, AlertCircle, Monitor, ChevronDown, Shield, Eye, EyeOff } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
@@ -21,10 +21,7 @@ export default function Login() {
   useEffect(() => {
     const fetchUsers = async () => {
       try {
-        const url = import.meta.env.VITE_API_BASE_URL 
-          ? `${String(import.meta.env.VITE_API_BASE_URL).replace(/\/$/, '')}/api/users/login_options/`
-          : '/api/users/login_options/';
-        const response = await axios.get(url);
+        const response = await api.get('users/login_options/');
         if (Array.isArray(response.data)) {
           setUsers(response.data);
           // Wait for user manual selection
@@ -78,14 +75,10 @@ export default function Login() {
     setLoading(true);
 
     try {
-      const apiBaseUrl = import.meta.env.VITE_API_BASE_URL 
-        ? `${String(import.meta.env.VITE_API_BASE_URL).replace(/\/$/, '')}/api-token-auth/`
-        : '/api-token-auth/';
-
       // Persist the current workstation name
       localStorage.setItem('zenith_workstation', workstationName);
 
-      const response = await axios.post(apiBaseUrl, {
+      const response = await api.post('auth/token/', {
         username,
         password,
         workstation: workstationName
@@ -96,18 +89,15 @@ export default function Login() {
       navigate('/app');
     } catch (err) {
       console.error('Login error:', err);
-      if (axios.isAxiosError(err)) {
-        if (!err.response) {
-          setError(t('common:messages.server_unreachable'));
-        } else if (err.response.status === 400 || err.response.status === 401) {
-          setError(t('common:messages.login_invalid'));
-        } else if (err.response.status === 403) {
-           setError(t('common:messages.forbidden'));
-        } else if (err.response.status >= 500) {
-          setError(t('common:messages.server_error'));
-        } else {
-          setError(t('common:messages.error_generic'));
-        }
+      const e = err as any;
+      if (!e.response) {
+        setError(t('common:messages.server_unreachable'));
+      } else if (e.response.status === 400 || e.response.status === 401) {
+        setError(t('common:messages.login_invalid'));
+      } else if (e.response.status === 403) {
+        setError(t('common:messages.forbidden'));
+      } else if (e.response.status >= 500) {
+        setError(t('common:messages.server_error'));
       } else {
         setError(t('common:messages.error_generic'));
       }

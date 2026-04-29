@@ -158,7 +158,6 @@ export default function Commandes({ forcedType }: CommandesProps) {
           fournisseurs={modals.fournisseurs}
           currentSupplierId={modals.newCommandeFournisseurId}
           produitsList={modals.produitsList}
-          apiBaseUrl={modals.apiBaseUrl}
           commandesEndpoint={modals.commandesEndpoint}
           fournisseursEndpoint={modals.fournisseursEndpoint}
           onTransferSuccess={modals.handleTransferSuccess}
@@ -172,7 +171,6 @@ export default function Commandes({ forcedType }: CommandesProps) {
           selectedOrderIds={modals.selectedOrderIds}
           fournisseurs={modals.fournisseurs}
           commandesEndpoint={modals.commandesEndpoint}
-          apiBaseUrl={modals.apiBaseUrl}
           onMergeSuccess={modals.handleMergeSuccess}
         />
       )}

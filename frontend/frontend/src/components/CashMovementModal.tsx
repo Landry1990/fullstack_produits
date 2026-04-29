@@ -1,5 +1,5 @@
-﻿import { useState, useMemo } from 'react'
-import axios from 'axios'
+﻿import { useState } from 'react'
+import api from '../services/api'
 import { useTranslation } from 'react-i18next'
 import { normalizeNumberInput } from '../utils/formatters'
 import PremiumModal from './common/PremiumModal'
@@ -19,10 +19,6 @@ export default function CashMovementModal({ isOpen, onClose, onSuccess }: CashMo
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  const apiBaseUrl = useMemo(() => {
-    const baseUrl = import.meta.env.VITE_API_BASE_URL ?? ''
-    return baseUrl ? String(baseUrl).replace(/\/$/, '') : ''
-  }, [])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -38,7 +34,7 @@ export default function CashMovementModal({ isOpen, onClose, onSuccess }: CashMo
         throw new Error(t('movement_modal.reason_required'))
       }
 
-      await axios.post(`${apiBaseUrl}/api/mouvements-caisse/`, {
+      await api.post('mouvements-caisse/', {
         type,
         montant: normalizeNumberInput(montant),
         motif,

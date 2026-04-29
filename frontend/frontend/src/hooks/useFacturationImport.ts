@@ -1,5 +1,5 @@
 import { useCallback } from 'react'
-import axios from 'axios'
+import api from '../services/api'
 import { toast } from 'react-hot-toast'
 import type { ProduitModel } from '../types'
 
@@ -11,7 +11,7 @@ export interface UseFacturationImportOptions {
     t: (key: string, options?: any) => string
 }
 
-export function useFacturationImport({ cart, apiBaseUrl, t }: UseFacturationImportOptions) {
+export function useFacturationImport({ cart, t }: UseFacturationImportOptions) {
     // Pack Addition
     const addPackToFacture = useCallback(async (pack: any) => {
         if (!pack.pack_items || pack.pack_items.length === 0) {
@@ -20,12 +20,9 @@ export function useFacturationImport({ cart, apiBaseUrl, t }: UseFacturationImpo
         }
         const toastId = toast.loading(t('facturation:messages.adding_pack'))
         try {
-            const apiBase = apiBaseUrl
-            const endpoint = apiBase ? `${apiBase}/api/produits/` : '/api/produits/'
-
             const itemPromises = pack.pack_items.map(async (item: any) => {
                 try {
-                    const { data: product } = await axios.get<ProduitModel>(`${endpoint}${item.product}/`)
+                    const { data: product } = await api.get<ProduitModel>(`produits/${item.product}/`)
                     return { product, quantity: item.quantity }
                 } catch (e) {
                     return null
@@ -54,7 +51,7 @@ export function useFacturationImport({ cart, apiBaseUrl, t }: UseFacturationImpo
         } catch (e) {
             toast.error(t('facturation.messages.pack_error'), { id: toastId })
         }
-    }, [cart.bulkAddProduits, apiBaseUrl, t])
+    }, [cart.bulkAddProduits, t])
 
     // CSV Import
     const handleCsvImport = useCallback(async (file: File) => {
@@ -86,17 +83,14 @@ export function useFacturationImport({ cart, apiBaseUrl, t }: UseFacturationImpo
                 toast.error('Aucune donnée valide trouvée dans le CSV.', { id: toastId });
                 return;
             }
-            const apiBase = apiBaseUrl;
-            const endpoint = apiBase ? `${apiBase}/api/produits/bulk_search/` : '/api/produits/bulk_search/';
             let fetchedProducts: ProduitModel[] = [];
             try {
-                const res = await axios.post(endpoint, { identifiers: params.identifiers });
+                const res = await api.post('produits/bulk_search/', { identifiers: params.identifiers });
                 fetchedProducts = res.data;
             } catch (e) {
                 const productPromises = params.identifiers.map(async (ident) => {
                     try {
-                        const searchUrl = `${apiBase ? apiBase : ''}/api/produits/?search=${ident}`;
-                        const res = await axios.get(searchUrl);
+                        const res = await api.get('produits/', { params: { search: ident } });
                         const results = res.data.results || res.data;
                         if (results && results.length > 0) {
                             const match = results.find((p: any) => p.cip1 === ident || String(p.id) === ident) || results[0];
@@ -130,7 +124,7 @@ export function useFacturationImport({ cart, apiBaseUrl, t }: UseFacturationImpo
         } catch (err) {
             toast.error("Erreur lecture CSV.", { id: toastId });
         }
-    }, [cart.bulkAddProduits, apiBaseUrl])
+    }, [cart.bulkAddProduits])
 
     return {
         addPackToFacture,

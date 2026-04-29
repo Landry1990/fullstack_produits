@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import axios from 'axios';
+import { useState, useEffect, useRef } from 'react';
+import api from '../../services/api';
 import { toast } from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import type { Inventaire } from '../../types';
@@ -30,8 +30,7 @@ export const useInventaireMerge = ({
     const [selectedMergeSource, setSelectedMergeSource] = useState<number | null>(null);
     const [merging, setMerging] = useState(false);
 
-    const apiBaseUrl = import.meta.env.VITE_API_BASE_URL ?? '/api';
-    const inventairesEndpoint = `${String(apiBaseUrl).replace(/\/$/, '')}/inventaires/`;
+    const mergeControllerRef = useRef<AbortController | null>(null);
 
     const canMergeSelectedInventaires = () => {
         if (selectedInventaireIds.size < 2) return { canMerge: false, reason: t('inventaire.merge.need_two', { defaultValue: 'Sélectionnez au moins 2 inventaires.' }) };
@@ -48,13 +47,17 @@ export const useInventaireMerge = ({
 
     const fetchMergeCandidates = async () => {
         if (!activeInventaire) return;
+        mergeControllerRef.current?.abort();
+        const controller = new AbortController();
+        mergeControllerRef.current = controller;
         setLoadingMergeCandidates(true);
         try {
-            const res = await axios.get(`${inventairesEndpoint}?status=${activeInventaire.status}`);
+            const res = await api.get('inventaires/', { params: { status: activeInventaire.status }, signal: controller.signal });
             const candidates = (Array.isArray(res.data) ? res.data : res.data.results)
                 .filter((inv: Inventaire) => inv.id !== activeInventaire.id);
             setMergeCandidates(candidates);
-        } catch (err) {
+        } catch (err: any) {
+            if (err?.code === 'ERR_CANCELED') return;
             console.error("Erreur candidats fusion", err);
         } finally {
             setLoadingMergeCandidates(false);
@@ -65,6 +68,7 @@ export const useInventaireMerge = ({
         if (showMergeModal && viewMode !== 'LIST') {
             fetchMergeCandidates();
         }
+        return () => mergeControllerRef.current?.abort();
     }, [showMergeModal]);
 
     const handleMerge = async () => {
@@ -89,7 +93,7 @@ export const useInventaireMerge = ({
                 let successCount = 0;
 
                 for (const sourceId of sources) {
-                    await axios.post(`${inventairesEndpoint}${targetId}/merge/`, {
+                    await api.post(`inventaires/${targetId}/merge/`, {
                         source_inventaire_id: sourceId
                     });
                     successCount++;
@@ -100,7 +104,7 @@ export const useInventaireMerge = ({
                 fetchInventaires();
             } else {
                 // Detail Mode: Merge single external source into active inventory
-                await axios.post(`${inventairesEndpoint}${activeInventaire?.id}/merge/`, {
+                await api.post(`inventaires/${activeInventaire?.id}/merge/`, {
                     source_inventaire_id: selectedMergeSource
                 });
                 toast.success(t('inventaire.merge.success'));

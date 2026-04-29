@@ -4,9 +4,8 @@ import { formatCurrency } from '../../utils/formatters'
 import type { ProduitModel } from '../../types'
 import { useSearchNavigation } from '../../hooks/useSearchNavigation'
 import { Package, Pill } from 'lucide-react'
-import { safeStorage } from '../../utils/storage'
 import { toast } from 'react-hot-toast'
-import axios from 'axios'
+import api from '../../services/api'
 
 interface ProductSearchSectionProps {
   searchQuery: string
@@ -67,19 +66,11 @@ const ProductSearchSection = React.memo(({
       }
       setPackLoading(true)
       try {
-          const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || '';
-          const baseUrl = apiBaseUrl.replace(/\/$/, '');
-          const url = `${baseUrl}/api/promotions/`;
-          const token = safeStorage.getItem('authToken');
-          
-          const response = await axios.get(url, {
+          const response = await api.get('promotions/', {
               params: {
                   search: query,
                   discount_type: 'BUNDLE',
                   active: true
-              },
-              headers: {
-                  'Authorization': `Token ${token}`
               }
           });
           

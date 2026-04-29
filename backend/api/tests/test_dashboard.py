@@ -229,7 +229,7 @@ class DashboardSupplierDebtsTestCase(APITestCase):
         self.url = reverse('dashboard-supplier-debts')
 
     def test_supplier_debts_returns_debts(self):
-        """Vérifie le calcul des dettes fournisseurs."""
+        """Vérifie le calcul des dettes fournisseurs avec la nouvelle structure."""
         fournisseur = TestDataFactory.create_fournisseur(name='Fournisseur Endetté')
         produit = TestDataFactory.create_produit(fournisseur=fournisseur)
 
@@ -248,7 +248,24 @@ class DashboardSupplierDebtsTestCase(APITestCase):
         data = response.data
         self.assertGreater(data['total_debt'], 0)
         self.assertEqual(len(data['suppliers']), 1)
-        self.assertEqual(data['suppliers'][0]['name'], 'Fournisseur Endetté')
+        
+        supplier_data = data['suppliers'][0]
+        self.assertEqual(supplier_data['name'], 'Fournisseur Endetté')
+        self.assertEqual(supplier_data['debt_total'], 5000.0)
+        self.assertIn('type_reglement', supplier_data)
+        self.assertIn('items', supplier_data)
+        self.assertIn('overdue_count', supplier_data)
+        self.assertIn('overdue_amount', supplier_data)
+        
+        # Vérifier la structure des items
+        self.assertEqual(len(supplier_data['items']), 1)
+        item = supplier_data['items'][0]
+        self.assertIn('id', item)
+        self.assertIn('type', item)
+        self.assertIn('label', item)
+        self.assertIn('amount', item)
+        self.assertIn('due_date', item)
+        self.assertIn('is_overdue', item)
 
     def test_supplier_no_debt_when_fully_paid(self):
         """Vérifie qu'un fournisseur entièrement payé n'apparaît pas."""
