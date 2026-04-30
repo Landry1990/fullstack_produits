@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo, useCallback, useRef } from 'react'
 import api from '../services/api'
 import { toast } from 'react-hot-toast'
 import { useQueryClient } from '@tanstack/react-query'
-import type { ProduitModel, Facture } from '../types'
+import type { ProduitModel, Facture, LigneFacture, PaginatedResponse } from '../types'
 import { useProductSearch } from './useProductSearch'
 import { useCart } from './useCart'
 import { useAuth } from '../context/AuthContext'
@@ -187,24 +187,24 @@ export function useFacturationState() {
         ui.resetUIState()
 
         // Update product stock in React Query cache
-        cart.lignesFacture.forEach((ligne: any) => {
-          queryClient.setQueriesData({ queryKey: ['produits'] }, (oldData: any) => {
+        cart.lignesFacture.forEach((ligne: LigneFacture) => {
+          queryClient.setQueriesData({ queryKey: ['produits'] }, (oldData: PaginatedResponse<ProduitModel> | ProduitModel[] | undefined) => {
             if (!oldData) return oldData
-            if (oldData.results && Array.isArray(oldData.results)) {
+            if (!Array.isArray(oldData) && oldData.results && Array.isArray(oldData.results)) {
               return {
                 ...oldData,
-                results: oldData.results.map((p: any) =>
+                results: oldData.results.map((p: ProduitModel) =>
                   p.id === ligne.produit.id ? { ...p, stock: Math.max(0, (p.stock || 0) - ligne.quantite) } : p
                 )
               }
             } else if (Array.isArray(oldData)) {
-              return oldData.map((p: any) =>
+              return (oldData as ProduitModel[]).map((p: ProduitModel) =>
                 p.id === ligne.produit.id ? { ...p, stock: Math.max(0, (p.stock || 0) - ligne.quantite) } : p
               )
             }
             return oldData
           })
-          queryClient.setQueriesData({ queryKey: ['produit', ligne.produit.id] }, (oldData: any) => {
+          queryClient.setQueriesData({ queryKey: ['produit', ligne.produit.id] }, (oldData: ProduitModel | undefined) => {
             if (!oldData) return oldData
             return { ...oldData, stock: Math.max(0, (oldData.stock || 0) - ligne.quantite) }
           })
@@ -273,11 +273,11 @@ export function useFacturationState() {
     setLoading(true)
     let freshLignes = cart.lignesFacture
     try {
-      const productIds = cart.lignesFacture.map((l: any) => l.produit.id)
-      const { data: freshProductsData } = await api.post<any[]>('produits/bulk_refresh/', { ids: productIds })
+      const productIds = cart.lignesFacture.map((l: LigneFacture) => l.produit.id)
+      const { data: freshProductsData } = await api.post<ProduitModel[]>('produits/bulk_refresh/', { ids: productIds })
 
-      const productMap = new Map(freshProductsData.map((p: any) => [p.id, p]))
-      freshLignes = cart.lignesFacture.map((ligne: any) => {
+      const productMap = new Map(freshProductsData.map((p: ProduitModel) => [p.id, p]))
+      freshLignes = cart.lignesFacture.map((ligne: LigneFacture) => {
         const freshProduct = productMap.get(ligne.produit.id)
         if (freshProduct) {
           return {
@@ -297,10 +297,10 @@ export function useFacturationState() {
     cart.setLignesFacture(freshLignes)
     setLoading(false)
 
-    const problematicLines = freshLignes.filter((l: any) => !l.isPromis && l.quantite > (l.produit.stock ?? 0))
+    const problematicLines = freshLignes.filter((l: LigneFacture) => !l.isPromis && l.quantite > (l.produit.stock ?? 0))
 
     if (problematicLines.length > 0) {
-      const items = problematicLines.map((l: any) => ({ product: l.produit, quantity: l.quantite, stock: l.produit.stock ?? 0 }))
+      const items = problematicLines.map((l: LigneFacture) => ({ product: l.produit, quantity: l.quantite, stock: l.produit.stock ?? 0 }))
       ui.setStockResolutionItems(items)
 
       const initialActions: Record<number, 'promis' | 'force' | 'reduce'> = {}
@@ -338,7 +338,7 @@ export function useFacturationState() {
     }
   }
 
-  const handlePaymentClickWithSudo = (updatedLignes?: any[], sudoCredentials?: { validatorId: number, password: string }) => {
+  const handlePaymentClickWithSudo = (updatedLignes?: LigneFacture[], sudoCredentials?: { validatorId: number, password: string }) => {
     if (updatedLignes && updatedLignes.length > 0) {
       cart.setLignesFacture(updatedLignes)
     }
@@ -383,7 +383,7 @@ export function useFacturationState() {
   // --- Sorting ---
   const sortedLignes = useMemo(() => {
     if (sortBy === 'chrono') return cart.lignesFacture
-    return [...cart.lignesFacture].sort((a: any, b: any) => {
+    return [...cart.lignesFacture].sort((a: LigneFacture, b: LigneFacture) => {
       if (sortBy === 'name') return (a.produit.name || '').localeCompare(b.produit.name || '')
       if (sortBy === 'stock') return (b.produit.stock || 0) - (a.produit.stock || 0)
       if (sortBy === 'qty') return b.quantite - a.quantite

@@ -5,7 +5,7 @@ import api from '../services/api';
 import { useConfirm } from './useConfirm';
 import { useAuth } from '../context/AuthContext';
 import { toast } from 'react-hot-toast';
-import type { Fournisseur } from '../types';
+import type { Fournisseur, PaginatedResponse } from '../types';
 import { useSudo } from './useSudo';
 
 export interface CatalogueItem {
@@ -161,21 +161,22 @@ export function useFournisseurs() {
         },
         signal: controller.signal,
       });
-      const data: any = response.data;
-      if (data && typeof data === 'object' && 'results' in data) {
-         setFournisseurs(data.results);
-         setTotalCount(data.count || 0);
-      } else if (Array.isArray(data)) {
+      const data = response.data as PaginatedResponse<Fournisseur> | Fournisseur[];
+      if (Array.isArray(data)) {
          setFournisseurs(data);
          setTotalCount(data.length);
+      } else if ('results' in data) {
+         setFournisseurs(data.results);
+         setTotalCount(data.count || 0);
       } else {
          setFournisseurs([]);
          setTotalCount(0);
       }
     } catch (err: unknown) {
-      if ((err as any)?.code === 'ERR_CANCELED') return;
-      if ((err as any)?.response) {
-        setError((err as any).response?.data?.message ?? (err as any).message ?? 'Erreur réseau');
+      const axiosErr = err as { code?: string; response?: { data?: { message?: string } }; message?: string };
+      if (axiosErr?.code === 'ERR_CANCELED') return;
+      if (axiosErr?.response) {
+        setError(axiosErr.response?.data?.message ?? axiosErr.message ?? 'Erreur réseau');
       } else {
         setError(t('providers:messages.load_error') || 'Erreur inconnue lors du chargement des fournisseurs');
       }

@@ -2,6 +2,7 @@ import { lazy } from 'react';
 import { createBrowserRouter, Navigate } from 'react-router-dom';
 import { ProtectedRoute, AdminRoute, HomeRedirector } from './components/auth/RouteGuards';
 import { PermissionRoute } from './components/auth/PermissionRoute';
+import { setRouter } from './services/navigationService';
 
 // ── Eager-loaded (critical path) ──
 import Login from './components/Login';
@@ -55,6 +56,7 @@ const HelpTraining = lazy(() => import('./components/HelpTraining'));
 const GestionUtilisateurs = lazy(() => import('./components/GestionUtilisateurs'));
 const PharmacySettingsForm = lazy(() => import('./components/settings/PharmacySettingsForm'));
 const Maintenance = lazy(() => import('./components/Maintenance'));
+const Changelog = lazy(() => import('./components/Changelog'));
 
 // ── Helper to reduce boilerplate ──
 const perm = (permission: string | string[], Component: React.ComponentType<any>, props?: Record<string, any>) => ({
@@ -155,6 +157,7 @@ export const router = createBrowserRouter([
 
           // ── Aide ──
           { path: 'aide-formation', ...perm('aide_formation', HelpTraining) },
+          { path: 'changelog', element: <Changelog /> },
 
           // ── Admin only ──
           { path: 'utilisateurs', ...admin(GestionUtilisateurs) },
@@ -172,3 +175,5 @@ export const router = createBrowserRouter([
     ],
   },
 ]);
+
+setRouter(router);

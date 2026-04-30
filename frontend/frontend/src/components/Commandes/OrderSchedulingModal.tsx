@@ -412,7 +412,7 @@ export default function OrderSchedulingModal({
                                             </div>
                                         </div>
 
-                                        <div className="grid grid-cols-2 gap-3">
+                                        <div className="grid grid-cols-3 gap-3">
                                             <div className="space-y-1">
                                                 <label className="text-[10px] font-bold text-base-content/40 uppercase block">Toutes les</label>
                                                 <div className="join w-full">
@@ -421,8 +421,12 @@ export default function OrderSchedulingModal({
                                                 </div>
                                             </div>
                                             <div className="space-y-1">
-                                                <label className="text-[10px] font-bold text-base-content/40 uppercase block">À partir de</label>
+                                                <label className="text-[10px] font-bold text-base-content/40 uppercase block">Heure</label>
                                                 <input type="time" className="input input-bordered input-sm w-full font-bold rounded-lg" value={schedule.time} onChange={(e) => setSchedule({...schedule, time: e.target.value})}/>
+                                            </div>
+                                            <div className="space-y-1">
+                                                <label className="text-[10px] font-bold text-base-content/40 uppercase block">Début le</label>
+                                                <input type="date" className="input input-bordered input-sm w-full font-bold rounded-lg" value={schedule.start_date} onChange={(e) => setSchedule({...schedule, start_date: e.target.value})}/>
                                             </div>
                                         </div>
                                     </div>
@@ -496,6 +500,7 @@ export default function OrderSchedulingModal({
                                 </div>
 
                                 {/* Section 3: Safety Controls */}
+                                <div className="bg-white border border-base-200 rounded-3xl p-5 shadow-sm space-y-4">
                                     <div className="flex items-center justify-between mb-2">
                                         <div className="flex items-center gap-2">
                                             <div className="p-2 bg-amber-500/10 text-amber-500 rounded-xl">
@@ -526,6 +531,7 @@ export default function OrderSchedulingModal({
                                             <p className="text-[9px] text-base-content/30 mt-1">La commande sera créée quel que soit le montant.</p>
                                         </div>
                                     )}
+                                </div>
 
                                 {/* Section 4: Notifications */}
                                 <div className="bg-white border border-base-200 rounded-3xl p-5 shadow-sm space-y-4">

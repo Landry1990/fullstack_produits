@@ -2,8 +2,12 @@ import { useCallback } from 'react';
 import api from '../services/api';
 import { toast } from 'react-hot-toast';
 import { safeStorage } from '../utils/storage';
-import type { Facture, LigneFacture } from '../types';
+import type { Facture, LigneFacture, TotalsData, User, StockLot, Client } from '../types';
 import type { OrdonnanceData } from '../components/OrdonnanceModal';
+import type { useFacturationClients } from './useFacturationClients';
+import type { useFacturationUI } from './useFacturationUI';
+import type { usePendingSales } from './usePendingSales';
+import type { useProductSearch } from './useProductSearch';
 
 export interface UseFacturationActionsProps {
     apiBaseUrl?: string;
@@ -11,21 +15,21 @@ export interface UseFacturationActionsProps {
         lignesFacture: LigneFacture[];
         setLignesFacture: (lignes: LigneFacture[]) => void;
     };
-    clientsHook: any;
-    ui: any;
-    totals: any;
-    pendingSales: any;
+    clientsHook: ReturnType<typeof useFacturationClients>;
+    ui: ReturnType<typeof useFacturationUI>;
+    totals: TotalsData & { tauxCouverture: number; partPatient: number };
+    pendingSales: ReturnType<typeof usePendingSales>;
     setLoading: (loading: boolean) => void;
     setError: (error: string | null) => void;
-    t: (key: string, options?: any) => string;
-    productSearch: any;
+    t: (key: string, options?: Record<string, unknown>) => string;
+    productSearch: ReturnType<typeof useProductSearch>;
     searchInputRef: React.RefObject<HTMLInputElement | null>;
     paymentInputRef: React.RefObject<HTMLInputElement | null>;
     pendingPrintFacture: Facture | null;
     setPendingPrintFacture: (f: Facture | null) => void;
     setShowClientNameModal: (show: boolean) => void;
     secureUpdateQuantite: (produitId: number, qty: number) => void;
-    user: any;
+    user: User | null;
 }
 
 export function useFacturationActions({
@@ -58,11 +62,11 @@ export function useFacturationActions({
                 tva: '0',
                 status: 'PROF',
                 ayant_droit: clientsHook.selectedAyantDroit,
-                part_client: (clientsHook.selectedClient && clientsHook.clients.find((c: any) => c.id === clientsHook.selectedClient)?.client_type === 'PROFESSIONNEL' && totals.tauxCouverture > 0) ? totals.partPatient : null
+                part_client: (clientsHook.selectedClient && clientsHook.clients.find((c: Client) => c.id === clientsHook.selectedClient)?.client_type === 'PROFESSIONNEL' && totals.tauxCouverture > 0) ? totals.partPatient : null
             }
             const { data: createdFacture } = await api.post('factures/', facturePayload)
 
-            const produitsPayload = cart.lignesFacture.map((ligne: any) => {
+            const produitsPayload = cart.lignesFacture.map((ligne: LigneFacture) => {
                 const prixUnitaire = Number(ligne.prix_unitaire)
                 const remiseProduit = Number(ligne.remise_produit)
                 const prixNet = prixUnitaire * (1 - remiseProduit / 100)
@@ -78,7 +82,7 @@ export function useFacturationActions({
                 }
             })
 
-            await Promise.all(produitsPayload.map((payload: any) => api.post('facture-produits/', payload)))
+            await Promise.all(produitsPayload.map((payload) => api.post('facture-produits/', payload)))
 
             try {
                 window.open(`/app/print-invoice/${createdFacture.id}`, '_blank')
@@ -123,7 +127,7 @@ export function useFacturationActions({
             const res = await api.post('factures/', facturePayload)
             const createdFacture = res.data
 
-            const produitsPayload = cart.lignesFacture.map((ligne: any) => {
+            const produitsPayload = cart.lignesFacture.map((ligne: LigneFacture) => {
                 const prixUnitaire = Number(ligne.prix_unitaire)
                 const remiseProduit = Number(ligne.remise_produit) || 0
                 const prixNet = prixUnitaire * (1 - remiseProduit / 100)
@@ -240,7 +244,7 @@ export function useFacturationActions({
     const handleOrdonnanceSave = useCallback(async (data: OrdonnanceData) => {
         setLoading(true);
         try {
-            const lignesForBackend = data.lignes.map((ligne: any) => ({
+            const lignesForBackend = data.lignes.map((ligne) => ({
                 produit: ligne.produit_id,
                 produit_nom: ligne.produit_nom,
                 quantite: ligne.quantite,
@@ -273,15 +277,16 @@ export function useFacturationActions({
         }
     }, [cart.lignesFacture, secureUpdateQuantite])
 
-    const handleLotSelect = useCallback((lot: any | null) => {
-        if (!ui.lotModal.product) return
+    const handleLotSelect = useCallback((lot: StockLot | null) => {
+        const product = ui.lotModal.product;
+        if (!product) return
         cart.setLignesFacture(
-            cart.lignesFacture.map((l: any) => {
-                if (l.produit.id === ui.lotModal.product.id) {
+            cart.lignesFacture.map((l) => {
+                if (l.produit.id === product.id) {
                     return {
                         ...l,
                         lotId: lot?.id?.toString() || null,
-                        lotText: lot?.numero_lot || null,
+                        lotText: lot?.lot || null,
                         lotExpiration: lot?.date_expiration || null
                     }
                 }
@@ -297,7 +302,7 @@ export function useFacturationActions({
         clientsHook.setClientSearch('')
         clientsHook.setManualClientName('')
         clientsHook.setSelectedClient(null)
-        const clientsDivers = clientsHook.clients.find((c: any) => c.name.toLowerCase() === 'clients divers')
+        const clientsDivers = clientsHook.clients.find((c: Client) => c.name.toLowerCase() === 'clients divers')
         clientsHook.setSelectedClient(clientsDivers ? clientsDivers.id : null)
         clientsHook.setUseManualClient(false)
         clientsHook.setManualClientName('')
@@ -311,32 +316,15 @@ export function useFacturationActions({
         productSearch.setSearchQuery('')
         ui.setTempOrdonnanceData(null)
 
-        // Nettoyer explicitement le cache auto-save (clé dynamique)
         if (user?.id) {
             safeStorage.removeItem(`activeCartLignes_${user.id}`, 'local')
             safeStorage.removeItem(`activeSaleContext_${user.id}`, 'local')
         }
-
-        setTimeout(() => searchInputRef.current?.focus(), 50)
-    }, [cart, clientsHook, ui, productSearch, user, searchInputRef])
+    }, [cart, clientsHook, ui, productSearch, user])
 
     const _resetSale = useCallback(() => {
-        cart.setLignesFacture([])
-        const clientsDivers = clientsHook.clients.find((c: any) => c.name.toLowerCase() === 'clients divers')
-        clientsHook.setSelectedClient(clientsDivers ? clientsDivers.id : null)
-        clientsHook.setUseManualClient(false)
-        clientsHook.setManualClientName('')
-        ui.resetUIState()
-        clientsHook.setAyantDroitNom('')
-        clientsHook.setAyantDroitMatricule('')
-        clientsHook.setAyantDroitSociete('')
-        clientsHook.setSelectedAyantDroit(null)
-        clientsHook.setShowNewAyantDroit(false)
-        productSearch.setSearchQuery('')
-        setError(null)
-        ui.setTempOrdonnanceData(null)
-        searchInputRef.current?.focus()
-    }, [cart, clientsHook, ui, productSearch, setError, searchInputRef])
+        _resetSaleDataOnly()
+    }, [_resetSaleDataOnly])
 
     const mettreEnAttente = useCallback(() => {
         if (cart.lignesFacture.length === 0) {
@@ -348,7 +336,7 @@ export function useFacturationActions({
             return
         }
         const clientName = !clientsHook.useManualClient && clientsHook.selectedClient
-            ? clientsHook.clients.find((c: any) => c.id === clientsHook.selectedClient)?.name || ''
+            ? clientsHook.clients.find((c: Client) => c.id === clientsHook.selectedClient)?.name || ''
             : clientsHook.manualClientName
 
         const ayantDroitData = clientsHook.selectedAyantDroit || clientsHook.showNewAyantDroit || clientsHook.ayantDroitNom ? {
@@ -386,7 +374,7 @@ export function useFacturationActions({
     }, [cart.lignesFacture.length, ui, t, _resetSale])
 
     const restaurerVente = useCallback((id: number) => {
-        const vente = pendingSales.ventesEnAttente.find((v: any) => v.id === id)
+        const vente = pendingSales.ventesEnAttente.find((v) => v.id === id)
         if (!vente) return
         if (cart.lignesFacture.length > 0) {
             if (!window.confirm('Le panier actuel n\'est pas vide. Voulez-vous le remplacer par la vente en attente ?')) return

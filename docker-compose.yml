@@ -1,54 +1,46 @@
+version: '3.8'
+
 services:
-  # Base de données PostgreSQL
   db:
     image: postgres:15-alpine
     volumes:
       - postgres_data:/var/lib/postgresql/data
     environment:
-      - POSTGRES_DB=${DB_NAME:-fullstack_db}
-      - POSTGRES_USER=${DB_USER:-fullstack_user}
-      - POSTGRES_PASSWORD=${DB_PASSWORD:-fullstack_password}
-    healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -U ${DB_USER:-fullstack_user} -d ${DB_NAME:-fullstack_db}" ]
-      interval: 10s
-      timeout: 5s
-      retries: 5
+      - POSTGRES_DB=pharmacie
+      - POSTGRES_USER=pharmadmin
+      - POSTGRES_PASSWORD=securepassword # À changer en production
     restart: always
 
-  # Backend Django
   backend:
     build: ./backend
+    command: gunicorn backend.wsgi:application --bind 0.0.0.0:8000 --workers 3
     volumes:
-      - ./backend:/app # Montage pour le développement (hot-reload possible)
+      - ./backend:/app
       - static_volume:/app/staticfiles
       - media_volume:/app/media
     environment:
-      - DEBUG=${DJANGO_DEBUG:-False}
-      - DJANGO_SECRET_KEY=${DJANGO_SECRET_KEY}
-      - DJANGO_ALLOWED_HOSTS=${DJANGO_ALLOWED_HOSTS:-localhost,127.0.0.1,backend}
-      - DB_ENGINE=django.db.backends.postgresql
-      - DB_NAME=${DB_NAME:-fullstack_db}
-      - DB_USER=${DB_USER:-fullstack_user}
-      - DB_PASSWORD=${DB_PASSWORD:-fullstack_password}
-      - DB_HOST=db
-      - DB_PORT=5432
+      - DATABASE_URL=postgres://pharmadmin:securepassword@db:5432/pharmacie
+      - DJANGO_SETTINGS_MODULE=backend.settings
+      - DEBUG=False
     depends_on:
-      db:
-        condition: service_healthy
-    healthcheck:
-      test: [ "CMD", "curl", "-f", "http://localhost:8000/api/health/" ]
-      interval: 30s
-      timeout: 10s
-      retries: 3
+      - db
     restart: always
 
-  # Frontend (React servi par Nginx)
   frontend:
     build: ./frontend/frontend
     ports:
-      - "80:80" # Expose le frontend sur le port 80 de la machine hôte
+      - "80:80"
+    volumes:
+      - static_volume:/usr/share/nginx/html/static:ro
     depends_on:
       - backend
+    restart: always
+
+  watchtower:
+    image: containrrr/watchtower
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    command: --interval 300 --cleanup
     restart: always
 
 volumes:

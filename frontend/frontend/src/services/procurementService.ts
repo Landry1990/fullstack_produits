@@ -18,7 +18,7 @@ const procurementService = {
     },
 
     updateSchedule: async (id: number, schedule: OrderSchedule) => {
-        const response = await api.put(`order-schedules/${id}/`, schedule);
+        const response = await api.patch(`order-schedules/${id}/`, schedule);
         return response.data;
     },
 

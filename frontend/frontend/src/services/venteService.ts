@@ -1,5 +1,5 @@
 import api from './api';
-import type { Facture } from '../types';
+import type { Facture, PaginatedResponse, SaleCompletionParams } from '../types';
 
 export interface SalesStats {
     top_vendeur: {
@@ -50,8 +50,8 @@ const venteService = {
         return response.data;
     },
 
-    getFactures: async (params: SalesFilters): Promise<any> => {
-        const response = await api.get('factures/', { params });
+    getFactures: async (params: SalesFilters): Promise<PaginatedResponse<Facture> | Facture[]> => {
+        const response = await api.get<PaginatedResponse<Facture> | Facture[]>('factures/', { params });
         return response.data;
     },
 
@@ -73,12 +73,12 @@ const venteService = {
         await api.delete('factures/delete_brouillons/');
     },
 
-    bulkDelete: async (ids: number[]): Promise<any> => {
-        const response = await api.post('factures/bulk_delete/', { ids });
+    bulkDelete: async (ids: number[]): Promise<{ deleted: number }> => {
+        const response = await api.post<{ deleted: number }>('factures/bulk_delete/', { ids });
         return response.data;
     },
 
-    finaliser: async (data: any): Promise<Facture> => {
+    finaliser: async (data: SaleCompletionParams & { image_ordonnance?: File | null }): Promise<Facture> => {
         // Handle images/files using FormData
         if (data.image_ordonnance instanceof File) {
             const formData = new FormData();
@@ -93,8 +93,8 @@ const venteService = {
         return response.data;
     },
 
-    modifier: async (id: number, data: any): Promise<any> => {
-        const response = await api.post(`factures/${id}/modifier/`, data);
+    modifier: async (id: number, data: Partial<SaleCompletionParams>): Promise<Facture> => {
+        const response = await api.post<Facture>(`factures/${id}/modifier/`, data);
         return response.data;
     }
 };

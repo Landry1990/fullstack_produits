@@ -205,6 +205,85 @@ class StockLotViewSet(OptimizedSerializerMixin, viewsets.ModelViewSet):
         return Response({'status': f'{count} lots sortis du stock.', 'validated_by': validation_user.username})
 
     @action(detail=False, methods=['get'])
+    def alerts_expiration(self, request):
+        """
+        Retourne les alertes de péremption pour notification frontend.
+        Inclut les lots expirant dans les X prochains jours avec quantité > 0.
+        """
+        from django.utils import timezone
+        from datetime import timedelta
+
+        # Paramètres configurables
+        days_ahead = int(request.query_params.get('days', 30))
+        min_quantity = int(request.query_params.get('min_quantity', 1))
+        include_critical_only = request.query_params.get('critical_only', 'false').lower() == 'true'
+
+        today = timezone.now().date()
+        future_date = today + timedelta(days=days_ahead)
+        critical_date = today + timedelta(days=7)
+
+        # Requête de base : lots expirants avec stock restant
+        qs = StockLot.objects.filter(
+            date_expiration__gt=today,
+            date_expiration__lte=future_date,
+            quantity_remaining__gte=min_quantity
+        ).select_related('produit', 'fournisseur').order_by('date_expiration')
+
+        # Option : seulement les critiques (≤ 7 jours)
+        if include_critical_only:
+            qs = qs.filter(date_expiration__lte=critical_date)
+
+        alerts = []
+        for lot in qs:
+            days_until = (lot.date_expiration - today).days
+
+            # Déterminer le niveau d'urgence
+            if days_until <= 7:
+                level = 'critical'
+                level_display = 'CRITIQUE'
+            elif days_until <= 14:
+                level = 'warning'
+                level_display = 'URGENT'
+            elif days_until <= 30:
+                level = 'notice'
+                level_display = 'ATTENTION'
+            else:
+                level = 'info'
+                level_display = 'INFO'
+
+            alerts.append({
+                'id': lot.id,
+                'produit_id': lot.produit_id,
+                'produit_nom': lot.produit_nom or (lot.produit.name if lot.produit else 'Inconnu'),
+                'lot_numero': lot.lot,
+                'fournisseur_nom': lot.fournisseur_nom or (lot.fournisseur.name if lot.fournisseur else None),
+                'quantity_remaining': lot.quantity_remaining,
+                'date_expiration': lot.date_expiration.isoformat() if lot.date_expiration else None,
+                'days_until': days_until,
+                'level': level,
+                'level_display': level_display,
+                'prix_achat': float(lot.price_cost) if lot.price_cost else 0,
+                'prix_vente': float(lot.selling_price) if lot.selling_price else 0,
+                'valeur_stock': float(lot.price_cost * lot.quantity_remaining) if lot.price_cost else 0,
+            })
+
+        # Statistiques agrégées
+        stats = {
+            'total_alerts': len(alerts),
+            'critical_count': sum(1 for a in alerts if a['level'] == 'critical'),
+            'warning_count': sum(1 for a in alerts if a['level'] == 'warning'),
+            'notice_count': sum(1 for a in alerts if a['level'] == 'notice'),
+            'total_valeur': sum(a['valeur_stock'] for a in alerts),
+            'days_checked': days_ahead,
+        }
+
+        return Response({
+            'alerts': alerts,
+            'stats': stats,
+            'date_reference': today.isoformat(),
+        })
+
+    @action(detail=False, methods=['get'])
     def stats_perimes(self, request):
         """
         Statistiques des produits périmés et à risque d'expiration.

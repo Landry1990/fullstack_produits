@@ -1,0 +1,71 @@
+{
+  "page_title": "What's new?",
+  "page_subtitle": "History of updates and improvements to the application",
+  "filter_all": "All",
+  "filter_new": "✨ New features",
+  "filter_fix": "🐛 Bug fixes",
+  "filter_improve": "📈 Improvements",
+  "filter_perf": "⚡ Performance",
+  "badge_new": "✨ New",
+  "badge_fix": "🐛 Bug fix",
+  "badge_improve": "📈 Improvement",
+  "badge_perf": "⚡ Performance",
+  "footer": "Zenith PMS · All versions since Jan. 2026",
+  "no_results": "No entries for this filter.",
+  "versions": {
+    "2.8.0": {
+      "date": "April 30, 2026",
+      "title": "Purchase price history",
+      "items": [
+        "Purchase price evolution chart in the \"Purchases\" tab of each product",
+        "% variation indicator (up ▲ / down ▼ / stable →) between first and last purchase",
+        "Min (green) and max (red) reference lines on the chart",
+        "Supplier filter to compare price curves",
+        "\"What's new\" page — this changelog visible in the application",
+        "Pylance error \"Cannot access attribute replace for class Unbound\" in fournisseurs.py"
+      ]
+    },
+    "2.7.0": {
+      "date": "April 2026",
+      "title": "Supplier Dashboard & Expiration Alerts",
+      "items": [
+        "Supplier statistics dashboard: total debt, top 5, due dates, 6-month trend",
+        "Critical expiration alert popup on login (sound + persistent toast)",
+        "7 / 14 / 30 day filter on the expiration alerts dashboard widget",
+        "Expiration popup: chart disappeared when selecting a supplier"
+      ]
+    },
+    "2.6.0": {
+      "date": "March 2026",
+      "title": "Financial Module & Reports",
+      "items": [
+        "Margin variation report with detection of atypical margins",
+        "Temporal sales analysis (hourly / weekly heatmap)",
+        "Seller ranking with performance score",
+        "Interactive financial guide with explained KPI indicators",
+        "Reduced financial module loading time (4h cache)"
+      ]
+    },
+    "2.5.0": {
+      "date": "February 2026",
+      "title": "Advanced Stock Management",
+      "items": [
+        "Free Units (UG) report by supplier and period",
+        "Exportable inventory states (PDF / Excel)",
+        "Stock shortage tracking with automatic alerts",
+        "Shelf replenishment: counter badge in sidebar",
+        "Dormant stock calculation fixed for products without last movement date"
+      ]
+    },
+    "2.4.0": {
+      "date": "January 2026",
+      "title": "Orders & Suppliers",
+      "items": [
+        "Automatic order scheduler",
+        "Restocking suggestions based on sales over the last 30/60/90 days",
+        "Supplier catalogue with calculated margin per product",
+        "Free units not factored into effective cost"
+      ]
+    }
+  }
+}

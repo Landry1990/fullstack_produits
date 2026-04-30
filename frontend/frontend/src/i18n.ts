@@ -51,7 +51,8 @@ i18n
             'labels',
             'config',
             'help',
-            'clinical'
+            'clinical',
+            'changelog'
         ],
         defaultNS: 'common',
         interpolation: {
