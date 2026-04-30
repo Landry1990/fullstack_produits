@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import api from '../services/api'
+import type { PosteCaisse } from '../types'
 
 export interface UseMultiCaisseOptions {
 }
@@ -9,8 +10,8 @@ export interface UseMultiCaisseReturn {
     setIsMultiCaisse: (v: boolean) => void
     centralizedCashRegister: boolean
     setCentralizedCashRegister: (v: boolean) => void
-    postesCaisses: any[]
-    setPostesCaisses: (v: any[]) => void
+    postesCaisses: PosteCaisse[]
+    setPostesCaisses: (v: PosteCaisse[]) => void
     selectedPosteCaisseId: number | null
     setSelectedPosteCaisseId: (v: number | null) => void
     multiCaisseLoading: boolean
@@ -19,7 +20,7 @@ export interface UseMultiCaisseReturn {
 export function useMultiCaisse(_options: UseMultiCaisseOptions = {}): UseMultiCaisseReturn {
     const [centralizedCashRegister, setCentralizedCashRegister] = useState<boolean>(true)
     const [isMultiCaisse, setIsMultiCaisse] = useState<boolean>(false)
-    const [postesCaisses, setPostesCaisses] = useState<any[]>([])
+    const [postesCaisses, setPostesCaisses] = useState<PosteCaisse[]>([])
     const [selectedPosteCaisseId, setSelectedPosteCaisseId] = useState<number | null>(null)
     const [multiCaisseLoading, setMultiCaisseLoading] = useState(false)
 

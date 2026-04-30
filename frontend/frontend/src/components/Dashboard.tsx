@@ -31,6 +31,8 @@ import { useAuth } from '../context/AuthContext';
 import PerformanceOverview from './dashboard/PerformanceOverview';
 import StockIntelligence from './dashboard/StockIntelligence';
 import FinancialSummary from './dashboard/FinancialSummary';
+import ExpirationAlertsWidget from './dashboard/ExpirationAlertsWidget';
+import { ExpirationAlertToasts } from './ExpirationAlertToast';
 import { Link } from 'react-router-dom';
 import { usePharmacySettings } from '../hooks/usePharmacySettings';
 import { generateDashboardFlashText, openWhatsApp } from '../utils/whatsapp';
@@ -165,6 +167,8 @@ export default function Dashboard() {
 
   return (
     <div className="min-h-screen bg-base-200/60 font-sans">
+      {/* ── ALERTES PÉREMPTION TOAST (au chargement) ─────── */}
+      <ExpirationAlertToasts />
 
       {/* ── HEADER ─────────────────────────────────────────── */}
       <div className="sticky top-0 z-30 bg-base-100/95 backdrop-blur-md border-b border-base-200 px-4 sm:px-6 py-3">
@@ -241,18 +245,23 @@ export default function Dashboard() {
           />
         )}
         {activeTab === 'stock' && (
-          <StockIntelligence
-            stats={stats}
-            lowStockItems={lowStockItems}
-            expiringLots={expiringLots}
-            promisDisponibles={promisDisponibles}
-            expirationMonths={expirationMonths}
-            setExpirationMonths={setExpirationMonths}
-            getServerDate={getServerDate}
-            reapproStats={reapproStats}
-            t={t}
-            formatCurrencyLocal={formatCurrencyLocal}
-          />
+          <div className="space-y-6">
+            {/* Widget Alertes Péremption en haut de l'onglet Stock */}
+            <ExpirationAlertsWidget />
+
+            <StockIntelligence
+              stats={stats}
+              lowStockItems={lowStockItems}
+              expiringLots={expiringLots}
+              promisDisponibles={promisDisponibles}
+              expirationMonths={expirationMonths}
+              setExpirationMonths={setExpirationMonths}
+              getServerDate={getServerDate}
+              reapproStats={reapproStats}
+              t={t}
+              formatCurrencyLocal={formatCurrencyLocal}
+            />
+          </div>
         )}
         {activeTab === 'finance' && (
           <FinancialSummary

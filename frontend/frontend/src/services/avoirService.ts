@@ -1,10 +1,10 @@
 import api from './api';
-import type { Avoir, LigneAvoir } from '../types';
+import type { Avoir, LigneAvoir, PaginatedResponse } from '../types';
 
 const avoirService = {
     getAll: async (search: string = ''): Promise<Avoir[]> => {
         const url = search ? `avoirs/?search=${encodeURIComponent(search)}` : 'avoirs/';
-        const response = await api.get<any>(url);
+        const response = await api.get<Avoir[] | PaginatedResponse<Avoir>>(url);
         return Array.isArray(response.data) ? response.data : (response.data.results || []);
     },
 
@@ -32,7 +32,7 @@ const avoirService = {
     },
 
     // LigneAvoir specific
-    createLigne: async (data: any): Promise<LigneAvoir> => {
+    createLigne: async (data: Partial<LigneAvoir>): Promise<LigneAvoir> => {
         const response = await api.post<LigneAvoir>('ligne-avoirs/', data);
         return response.data;
     },

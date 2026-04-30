@@ -1,6 +1,32 @@
 import api from './api';
 import type { Commande, PaginatedResponse } from '../types';
 
+export interface SudoCredentials {
+    validated_by_id?: number;
+    sudo_password?: string;
+}
+
+export interface CommandeProduitPayload {
+    id?: number | null;
+    produit: number;
+    quantity: number;
+    unites_gratuites: number;
+    price: string;
+    price_cost: string;
+    selling_price: string;
+    prix_euro: string | null;
+    tva?: string;
+    marge: string;
+    lot?: number | string | null;
+    date_expiration?: string | null;
+}
+
+export interface SuggestionFilters {
+    fournisseur_id?: number;
+    rayon_id?: number;
+    days?: number;
+}
+
 export interface CommandeFilters {
     page?: number;
     type?: 'LOC' | 'DIR';
@@ -37,11 +63,11 @@ const commandeService = {
         return response.data;
     },
 
-    delete: async (id: number, sudoData: any = {}): Promise<void> => {
+    delete: async (id: number, sudoData: SudoCredentials = {}): Promise<void> => {
         await api.delete(`commandes/${id}/`, { data: sudoData });
     },
 
-    cloturer: async (id: number, sudoData: any = {}): Promise<{ message: string }> => {
+    cloturer: async (id: number, sudoData: SudoCredentials = {}): Promise<{ message: string }> => {
         const response = await api.post<{ message: string }>(`commandes/${id}/cloturer/`, sudoData);
         return response.data;
     },
@@ -51,17 +77,17 @@ const commandeService = {
         return response.data;
     },
 
-    annulerReception: async (id: number, sudoData: any = {}): Promise<any> => {
-        const response = await api.post(`commandes/${id}/annuler_reception/`, sudoData);
+    annulerReception: async (id: number, sudoData: SudoCredentials = {}): Promise<{ details?: string }> => {
+        const response = await api.post<{ details?: string }>(`commandes/${id}/annuler_reception/`, sudoData);
         return response.data;
     },
 
-    bulkDelete: async (ids: number[], sudoData: any = {}): Promise<void> => {
+    bulkDelete: async (ids: number[], sudoData: SudoCredentials = {}): Promise<void> => {
         await api.post('commandes/bulk_delete/', { ids, ...sudoData });
     },
 
-    bulkSyncProduits: async (commandeId: number, produits: any[]): Promise<any> => {
-        const response = await api.post('commande-produits/bulk_sync/', {
+    bulkSyncProduits: async (commandeId: number, produits: CommandeProduitPayload[]): Promise<{ synced: number }> => {
+        const response = await api.post<{ synced: number }>('commande-produits/bulk_sync/', {
             commande_id: commandeId,
             produits
         });
@@ -83,8 +109,8 @@ const commandeService = {
         return response.data;
     },
 
-    getSuggestions: async (filters: any = {}): Promise<any> => {
-        const response = await api.get('commandes/suggestions/', { params: filters });
+    getSuggestions: async (filters: SuggestionFilters = {}): Promise<Commande[]> => {
+        const response = await api.get<Commande[]>('commandes/suggestions/', { params: filters });
         return response.data;
     }
 };

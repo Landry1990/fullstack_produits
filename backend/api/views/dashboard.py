@@ -722,40 +722,81 @@ class DashboardViewSet(viewsets.ViewSet):
         For FACTURE type: returns individual invoices with due date status.
         For RELEVE type: returns grouped releves by period with due date status.
         """
-        from ..models import Fournisseur
-        from django.db.models import Sum, DecimalField
+        from ..models import Fournisseur, CommandeProduit, PaiementFournisseur, Commande
+        from django.db.models import Sum, F, DecimalField, OuterRef, Subquery, Value, ExpressionWrapper
         from django.db.models.functions import Coalesce
-        from ..models import CommandeProduit, PaiementFournisseur, Commande
         from datetime import date, timedelta
         from collections import defaultdict
         from decimal import Decimal
 
         today = date.today()
 
-        # Get all suppliers with debt
-        suppliers_with_debt = []
-        for supplier in Fournisseur.objects.filter(is_active=True):
-            debt = supplier.solde_dette
-            if debt > 0:
-                suppliers_with_debt.append(supplier)
+        # Optimize: Fetch all suppliers with annotated debt in ONE query
+        # Use simpler subqueries without extra values() if possible
+        commandes_total = CommandeProduit.objects.filter(
+            commande__fournisseur=OuterRef('pk'),
+            commande__status=Commande.Status.CLOTUREE
+        ).order_by().values('commande__fournisseur').annotate(
+            total=Sum(F('quantity') * F('price'), output_field=DecimalField())
+        ).values('total')
+        
+        paiements_total = PaiementFournisseur.objects.filter(
+            fournisseur=OuterRef('pk')
+        ).order_by().values('fournisseur').annotate(
+            total=Sum('montant', output_field=DecimalField())
+        ).values('total')
+
+        suppliers_qs = Fournisseur.objects.filter(is_active=True).annotate(
+            total_du_annotated=Coalesce(Subquery(commandes_total[:1]), Value(0, output_field=DecimalField())),
+            total_paye_annotated=Coalesce(Subquery(paiements_total[:1]), Value(0, output_field=DecimalField()))
+        ).annotate(
+            solde_dette_annotated=ExpressionWrapper(
+                F('total_du_annotated') - F('total_paye_annotated'),
+                output_field=DecimalField()
+            )
+        ).filter(solde_dette_annotated__gt=0)
 
         data = []
         total_debt_global = Decimal('0.00')
 
-        for supplier in suppliers_with_debt:
-            # Get all cloturee orders with remaining debt
-            orders = Commande.objects.filter(
-                fournisseur=supplier,
-                status=Commande.Status.CLOTUREE
-            ).prefetch_related('produits', 'paiements')
+        # Fetch all relevant orders for these suppliers in ONE go to avoid N+1 queries
+        # Use Subqueries to avoid Cartesian product duplication when joining produits and paiements
+        order_total_sub = CommandeProduit.objects.filter(
+            commande=OuterRef('pk')
+        ).values('commande').annotate(
+            total=Sum(F('quantity') * F('price'), output_field=DecimalField())
+        ).values('total')
+
+        order_paid_sub = PaiementFournisseur.objects.filter(
+            commande=OuterRef('pk')
+        ).values('commande').annotate(
+            total=Sum('montant', output_field=DecimalField())
+        ).values('total')
+
+        all_orders = Commande.objects.filter(
+            fournisseur__in=suppliers_qs,
+            status=Commande.Status.CLOTUREE
+        ).annotate(
+            total_annotated=Coalesce(Subquery(order_total_sub[:1]), Value(0, output_field=DecimalField())),
+            paid_annotated=Coalesce(Subquery(order_paid_sub[:1]), Value(0, output_field=DecimalField()))
+        ).order_by('date_cloture')
+        
+        # Group orders by supplier
+        orders_by_supplier = defaultdict(list)
+        for order in all_orders:
+            orders_by_supplier[order.fournisseur_id].append(order)
+
+        for supplier in suppliers_qs:
+            total_debt_global += supplier.solde_dette_annotated
+            orders = orders_by_supplier[supplier.id]
 
             supplier_items = []
 
             if supplier.type_reglement == 'FACTURE':
                 # Individual invoices
                 for order in orders:
-                    order_total = order.total
-                    order_paid = order.montant_paye
+                    order_total = order.total_annotated
+                    order_paid = order.paid_annotated
                     remaining = order_total - order_paid
 
                     if remaining > 0:
@@ -787,8 +828,8 @@ class DashboardViewSet(viewsets.ViewSet):
                 periods: Dict[str, Dict[str, Any]] = {}
 
                 for order in orders:
-                    order_total = order.total
-                    order_paid = order.montant_paye
+                    order_total = order.total_annotated
+                    order_paid = order.paid_annotated
                     remaining = order_total - order_paid
 
                     if remaining > 0:
@@ -844,8 +885,7 @@ class DashboardViewSet(viewsets.ViewSet):
             supplier_items.sort(key=lambda x: (not x['is_overdue'], x['due_date']))
 
             if supplier_items:
-                debt = sum(item['amount'] for item in supplier_items)
-                total_debt_global += Decimal(str(debt))
+                total_debt_global += supplier.solde_dette_annotated
 
                 data.append({
                     'id': supplier.id,
@@ -854,7 +894,7 @@ class DashboardViewSet(viewsets.ViewSet):
                     'type_reglement': supplier.type_reglement,
                     'delai_paiement_jours': supplier.delai_paiement_jours,
                     'periode_releve_jours': supplier.periode_releve_jours,
-                    'debt_total': float(debt),
+                    'debt_total': float(supplier.solde_dette_annotated),
                     'items': supplier_items,
                     'overdue_count': sum(1 for item in supplier_items if item['is_overdue']),
                     'overdue_amount': sum(item['amount'] for item in supplier_items if item['is_overdue']),

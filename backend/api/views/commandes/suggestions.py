@@ -95,7 +95,7 @@ def calculer_reapprovisionnement_simple(periode, fournisseur_id=None, budget_max
     from django.db.models import Sum, Q
     
     # Récupérer tous les produits
-    produits = Produit.objects.all()
+    produits = Produit.objects.select_related('fournisseur').all()
     fournisseur_obj = None
     if fournisseur_id:
         from ...models import Fournisseur, StockLot
@@ -222,7 +222,7 @@ def calculer_optimisation_intelligente(periode, fournisseur_id=None, budget_max=
     date_mi_periode = timezone.now() - timedelta(days=periode_analyse // 2)
     from django.db.models import Sum, Q
 
-    produits = Produit.objects.all()
+    produits = Produit.objects.select_related('fournisseur').all()
     fournisseur_obj = None
     if fournisseur_id:
         from ...models import Fournisseur, StockLot

@@ -1,0 +1,71 @@
+{
+  "page_title": "Quoi de neuf ?",
+  "page_subtitle": "Historique des mises à jour et améliorations de l'application",
+  "filter_all": "Tout",
+  "filter_new": "✨ Nouveautés",
+  "filter_fix": "🐛 Corrections",
+  "filter_improve": "📈 Améliorations",
+  "filter_perf": "⚡ Performances",
+  "badge_new": "✨ Nouveau",
+  "badge_fix": "🐛 Correction",
+  "badge_improve": "📈 Amélioration",
+  "badge_perf": "⚡ Performance",
+  "footer": "Zenith PMS · Toutes les versions depuis Jan. 2026",
+  "no_results": "Aucune entrée pour ce filtre.",
+  "versions": {
+    "2.8.0": {
+      "date": "30 Avril 2026",
+      "title": "Historique des prix d'achat",
+      "items": [
+        "Graphe d'évolution du prix d'achat dans l'onglet « Achats » de chaque produit",
+        "Indicateur de variation % (hausse ▲ / baisse ▼ / stable →) entre le premier et le dernier achat",
+        "Lignes de référence min (vert) et max (rouge) sur le graphe",
+        "Filtre par fournisseur pour comparer les courbes de prix",
+        "Page « Quoi de neuf » — ce changelog visible dans l'application",
+        "Erreur Pylance « Cannot access attribute replace for class Unbound » dans fournisseurs.py"
+      ]
+    },
+    "2.7.0": {
+      "date": "Avril 2026",
+      "title": "Dashboard Fournisseurs & Alertes Péremption",
+      "items": [
+        "Dashboard statistiques fournisseurs : dette totale, top 5, échéances, évolution 6 mois",
+        "Popup d'alerte péremption critique au login (son + toast persistant)",
+        "Filtre 7 / 14 / 30 jours sur le widget alertes péremption du dashboard",
+        "Popup périmés : la courbe disparaissait lors de la sélection d'un fournisseur"
+      ]
+    },
+    "2.6.0": {
+      "date": "Mars 2026",
+      "title": "Module Financier & Rapports",
+      "items": [
+        "Rapport de variation de marge avec détection des marges atypiques",
+        "Analyse temporelle des ventes (heatmap horaire / hebdomadaire)",
+        "Classement vendeurs avec score de performance",
+        "Guide financier interactif avec indicateurs KPI expliqués",
+        "Réduction du temps de chargement du module financier (cache 4h)"
+      ]
+    },
+    "2.5.0": {
+      "date": "Février 2026",
+      "title": "Gestion des Stocks avancée",
+      "items": [
+        "Rapport Unités Gratuites (UG) par fournisseur et par période",
+        "États inventaire exportables (PDF / Excel)",
+        "Suivi des ruptures avec alertes automatiques",
+        "Réappro rayon : badge compteur dans la sidebar",
+        "Calcul du stock dormant corrigé pour les produits sans date de dernier mouvement"
+      ]
+    },
+    "2.4.0": {
+      "date": "Janvier 2026",
+      "title": "Commandes & Fournisseurs",
+      "items": [
+        "Planificateur de commandes automatiques (scheduler)",
+        "Suggestions de réapprovisionnement basées sur les ventes des 30/60/90 derniers jours",
+        "Catalogue fournisseur avec marge calculée par produit",
+        "Unités gratuites non prises en compte dans le coût effectif"
+      ]
+    }
+  }
+}

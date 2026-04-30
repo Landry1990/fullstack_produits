@@ -174,5 +174,36 @@
             "amount": "Montant TTC"
         },
         "regler_btn": "Régler la sélection ({{amount}} F)"
+    },
+    "dashboard": {
+        "tabs": {
+            "overview": "Vue d'ensemble",
+            "management": "Liste & Gestion"
+        },
+        "kpis": {
+            "total_debt": "Dette Totale",
+            "overdue": "En Retard",
+            "due_today": "Dû Aujourd'hui",
+            "due_soon": "Dû Prochainement",
+            "active_providers": "{{count}} fournisseurs actifs",
+            "late_schedules": "{{count}} échéances dépassées",
+            "immediate_pay": "À régler immédiatement",
+            "upcoming": "Échéances à venir"
+        },
+        "charts": {
+            "evolution_title": "Évolution de la Dette",
+            "evolution_subtitle": "6 derniers mois",
+            "distribution_title": "Répartition par Fournisseur",
+            "distribution_subtitle": "Top 5 + Autres"
+        },
+        "deadlines": {
+            "title": "Échéancier Prioritaire",
+            "subtitle": "5 prochaines échéances critiques",
+            "view_all": "Voir tout l'échéancier",
+            "no_deadlines": "Aucune échéance prévue",
+            "days_late": "{{count}}j de retard",
+            "in_days": "Dans {{count}}j"
+        },
+        "loading": "Chargement des données financières..."
     }
 }

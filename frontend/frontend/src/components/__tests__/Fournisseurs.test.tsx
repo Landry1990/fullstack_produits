@@ -15,6 +15,22 @@ vi.mock('../../context/AuthContext', () => ({
   useAuth: () => ({ user: { id: 1, role: 'PHARMACIEN' } })
 }));
 
+vi.mock('../../hooks/useSupplierDashboard', () => ({
+  useSupplierDashboard: () => ({
+    stats: {
+      total_dette: 1000000,
+      nb_fournisseurs_actifs: 10,
+      stats_echeances: { en_retard: 50000, aujourdhui: 10000, a_venir: 940000, count_retard: 2 },
+      repartition_dette: [],
+      prochaines_echeances: [],
+      evolution_dette: []
+    },
+    loading: false,
+    error: null,
+    refresh: vi.fn()
+  })
+}));
+
 vi.mock('../../hooks/useConfirm', () => ({
   useConfirm: () => vi.fn().mockResolvedValue(true)
 }));
@@ -28,7 +44,19 @@ describe('Fournisseurs Component', () => {
     beforeEach(() => {
         vi.clearAllMocks();
         mockedAxios.get.mockImplementation((url: string) => {
-            if (url.includes('/fournisseurs/')) {
+            if (url.includes('fournisseurs/dashboard_stats')) {
+                return Promise.resolve({ data: { 
+                    total_dette: 1000000,
+                    nb_fournisseurs_actifs: 10,
+                    stats_echeances: {
+                        en_retard: 200000,
+                        count_retard: 5,
+                        aujourdhui: 50000,
+                        a_venir: 150000
+                    }
+                } });
+            }
+            if (url.includes('fournisseurs')) {
                 return Promise.resolve({ data: { results: mockFournisseurs, count: 2 } });
             }
             return Promise.resolve({ data: [] });
@@ -41,6 +69,9 @@ describe('Fournisseurs Component', () => {
                 <Fournisseurs />
             </MemoryRouter>
         );
+
+        // Switch to management tab
+        fireEvent.click(screen.getByText('Liste & Gestion'));
 
         expect(screen.getByPlaceholderText(/Rechercher par nom/i)).toBeInTheDocument();
         
@@ -56,6 +87,9 @@ describe('Fournisseurs Component', () => {
                 <Fournisseurs />
             </MemoryRouter>
         );
+
+        // Switch to management tab to see the list
+        fireEvent.click(screen.getByText('Liste & Gestion'));
 
         await waitFor(() => {
             expect(screen.getByText('Pharma Distrib')).toBeInTheDocument();
@@ -76,6 +110,9 @@ describe('Fournisseurs Component', () => {
                 <Fournisseurs />
             </MemoryRouter>
         );
+
+        // Switch to management tab
+        fireEvent.click(screen.getByText('Liste & Gestion'));
 
         const searchInput = screen.getByPlaceholderText(/Rechercher par nom/i);
         fireEvent.change(searchInput, { target: { value: 'Med' } });

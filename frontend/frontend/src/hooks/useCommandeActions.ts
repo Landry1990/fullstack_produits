@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { toast } from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import type { Commande, CommandeProduit, User } from '../types';
-import commandeService from '../services/commandeService';
+import commandeService, { type SudoCredentials } from '../services/commandeService';
 import { usePharmacySettings } from './usePharmacySettings';
 
 interface UseCommandeActionsProps {
@@ -110,7 +110,7 @@ export function useCommandeActions({
         }
     }
 
-    const handleDeleteCommande = async (commande: Commande, sudoCredentials?: any) => {
+    const handleDeleteCommande = async (commande: Commande, sudoCredentials?: SudoCredentials) => {
         if (executingAction) return;
         setExecutingAction(true);
         try {
@@ -126,7 +126,7 @@ export function useCommandeActions({
         }
     };
 
-    const handleCloturerCommande = async (commande: Commande, sudoCredentials?: any) => {
+    const handleCloturerCommande = async (commande: Commande, sudoCredentials?: SudoCredentials) => {
         if (executingAction) return;
         setExecutingAction(true);
         try {
@@ -160,7 +160,7 @@ export function useCommandeActions({
         }
     };
 
-    const handleAnnulerReception = async (commande: Commande, sudoCredentials?: any) => {
+    const handleAnnulerReception = async (commande: Commande, sudoCredentials?: SudoCredentials) => {
         if (executingAction) return;
         setExecutingAction(true);
         try {
@@ -518,7 +518,7 @@ export function useCommandeActions({
         }
     };
 
-    const handleBulkDelete = async (ids: number[], sudoCredentials?: any) => {
+    const handleBulkDelete = async (ids: number[], sudoCredentials?: SudoCredentials) => {
         if (executingAction || ids.length === 0) return;
         setExecutingAction(true);
         try {
