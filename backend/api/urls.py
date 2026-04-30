@@ -33,6 +33,7 @@ from .views.code_backup import CodeBackupViewSet
 from .views.stocks.ruptures import RuptureFournisseurViewSet
 from .views.omnisearch import GlobalSearchView
 from .views.stocks.reappro_history import ReapproSessionViewSet
+from .views.version import app_version
 
 # Create a router and register our viewsets with it.
 router = DefaultRouter()
@@ -112,5 +113,6 @@ urlpatterns = [
     path('generer-suggestions/', generer_suggestions_commande, name='generer-suggestions'),
     path('produits/etat-inventaire/pdf/', EtatInventairePDFView.as_view(), name='etat-inventaire-pdf'),
     path('omnisearch/', GlobalSearchView.as_view(), name='global-search'),
+    path('version/', app_version, name='app-version'),
     path('', include(router.urls)),
 ]

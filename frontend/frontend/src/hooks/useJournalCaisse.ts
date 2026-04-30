@@ -39,7 +39,7 @@ export function useJournalCaisse() {
     return endToday;
   });
 
-  const [users, setUsers] = useState<any[]>([]);
+  const [users, setUsers] = useState<{ id: number; username: string; full_name: string }[]>([]);
   const [selectedUser, setSelectedUser] = useState<string>('');
   
   const [page, setPage] = useState(1);
@@ -54,7 +54,7 @@ export function useJournalCaisse() {
     total_coupons: number,
     total_recouvrement: number,
     details: Record<string, number>,
-    mouvements_audit?: any[]
+    mouvements_audit?: Pick<MouvementCaisse, 'motif' | 'montant'>[]
   } | null>(null);
 
   const [detectedShift, setDetectedShift] = useState<{
@@ -103,15 +103,15 @@ export function useJournalCaisse() {
     return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}`;
   };
 
-  const processTransactionsData = useCallback((data: any) => {
-    if (data.results) {
-      setTransactions(data.results);
-      setTotalCount(data.count || 0);
-      setTotalPages(Math.ceil((data.count || 0) / PAGE_SIZE));
-    } else {
-      setTransactions(Array.isArray(data) ? data : []);
-      setTotalCount(Array.isArray(data) ? data.length : 0);
+  const processTransactionsData = useCallback((data: { results?: CaisseTransaction[]; count?: number } | CaisseTransaction[]) => {
+    if (Array.isArray(data)) {
+      setTransactions(data);
+      setTotalCount(data.length);
       setTotalPages(1);
+    } else {
+      setTransactions(data.results ?? []);
+      setTotalCount(data.count ?? 0);
+      setTotalPages(Math.ceil((data.count ?? 0) / PAGE_SIZE));
     }
   }, [PAGE_SIZE]);
 
@@ -119,7 +119,7 @@ export function useJournalCaisse() {
     setLoading(true);
     setError(null);
     try {
-      const params: any = { 
+      const params: Record<string, string> = { 
         page: '1',
         page_size: PAGE_SIZE.toString()
       };
@@ -293,18 +293,22 @@ export function useJournalCaisse() {
 
   }, [transactions, mouvements, searchQuery, filterMode, filterType, dateDebut, dateFin]);
 
+  type GroupedItem =
+    | (CaisseTransaction & { _kind: 'transaction'; isReleveGroup?: boolean; items?: CaisseTransaction[] })
+    | (MouvementCaisse & { _kind: 'mouvement'; date_paiement: string });
+
   const groupedItems = useMemo(() => {
-     const result: any[] = [];
+     const result: GroupedItem[] = [];
      const processedReleves = new Set<number>();
      
-     filteredItems.forEach((item: any) => {
+     filteredItems.forEach((item) => {
          if (item._kind === 'mouvement') {
              result.push(item);
          } else {
              const t = item as CaisseTransaction;
              if (t.releve_id) {
                  if (!processedReleves.has(t.releve_id)) {
-                     const releveItems = filteredItems.filter((rt: any) => rt._kind === 'transaction' && rt.releve_id === t.releve_id) as CaisseTransaction[];
+                     const releveItems = filteredItems.filter((rt) => rt._kind === 'transaction' && (rt as CaisseTransaction).releve_id === t.releve_id) as CaisseTransaction[];
                      const totalAmount = releveItems.reduce((sum, item) => sum + normalizeNumberInput(item.montant), 0);
                      
                      result.push({
@@ -320,7 +324,7 @@ export function useJournalCaisse() {
                      processedReleves.add(t.releve_id);
                  }
              } else {
-                 result.push(t);
+                 result.push({ ...t, _kind: 'transaction' as const });
              }
          }
      });
@@ -350,10 +354,10 @@ export function useJournalCaisse() {
 
     // Note: We used to use filteredItems, but for accurate CA stats we should look at all transactions 
     // of the period, while only adding physical ones to the 'total' (cash).
-    transactions.forEach((item: any) => {
+    transactions.forEach((item) => {
        if (item.statut !== 'completee') return;
        const montant = normalizeNumberInput(item.montant);
-       const isRecouvrement = item.mode_paiement === 'recouvrement' || item.is_creance_settlement || (item.reference && item.reference.includes('[RECOUV]'));
+       const isRecouvrement = (item.mode_paiement as string) === 'recouvrement' || item.is_creance_settlement || (item.reference && item.reference.includes('[RECOUV]'));
        
        if (isRecouvrement) {
            totaux.recouvrement += montant;
@@ -382,7 +386,7 @@ export function useJournalCaisse() {
        }
     });
 
-    mouvements.forEach((item: any) => {
+    mouvements.forEach((item) => {
        const montant = normalizeNumberInput(item.montant);
        if (item.type === 'ENTREE') {
            totaux.entrees += montant;

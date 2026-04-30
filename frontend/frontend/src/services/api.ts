@@ -1,6 +1,7 @@
 import axios from 'axios';
 import { toast } from 'react-hot-toast';
 import { safeStorage } from '../utils/storage';
+import * as navigationService from './navigationService';
 
 const rawBaseUrl = String(import.meta.env.VITE_API_BASE_URL ?? '').trim();
 const trimmedBaseUrl = rawBaseUrl.replace(/\/+$/, '');
@@ -48,9 +49,6 @@ api.interceptors.request.use(
     (config) => {
         const token = safeStorage.getItem('authToken');
         if (token) {
-            if (!config.headers) {
-                config.headers = {};
-            }
             config.headers.Authorization = `Token ${token}`;
         }
         return config;
@@ -81,9 +79,7 @@ api.interceptors.response.use(
 
             if (!onLoginPage) {
                 setTimeout(() => {
-                    if (window.location.pathname !== '/') {
-                        window.location.href = '/';
-                    }
+                    navigationService.navigate('/', { replace: true });
                 }, 300);
             }
         } else if (status === 403) {

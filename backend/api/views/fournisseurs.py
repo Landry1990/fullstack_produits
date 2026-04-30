@@ -364,6 +364,129 @@ class FournisseurViewSet(viewsets.ModelViewSet):
             'factures': factures
         })
 
+    @action(detail=False, methods=['get'])
+    def dashboard_stats(self, request):
+        """
+        Retourne des statistiques consolidées pour le tableau de bord fournisseurs.
+        """
+        from decimal import Decimal
+        from django.db.models import Count, Sum, F, DecimalField
+        from django.utils import timezone
+        import traceback
+        
+        try:
+            today = timezone.now().date()
+            
+            # 1. Statistiques Globales
+            fournisseurs = self.get_queryset()
+            total_dette = sum(((f.solde_dette_annotated or Decimal('0.00')) for f in fournisseurs), Decimal('0.00'))
+            
+            # 2. Répartition par fournisseur (Top 5)
+            repartition = []
+            fournisseurs_tries = sorted(fournisseurs, key=lambda x: x.solde_dette_annotated or Decimal('0.00'), reverse=True)
+            for f in fournisseurs_tries[:5]:
+                val = f.solde_dette_annotated or Decimal('0.00')
+                if val > 0:
+                    repartition.append({
+                        'name': f.name,
+                        'value': float(val)
+                    })
+            
+            # Ajouter "Autres" si nécessaire
+            if len(fournisseurs_tries) > 5:
+                autres_dette = sum(((f.solde_dette_annotated or Decimal('0.00')) for f in fournisseurs_tries[5:]), Decimal('0.00'))
+                if autres_dette > 0:
+                    repartition.append({
+                        'name': 'Autres',
+                        'value': float(autres_dette)
+                    })
+
+            # 3. Échéancier consolidé
+            echeances_resp = self.echeancier(request)
+            echeances_data = echeances_resp.data
+            
+            if not isinstance(echeances_data, list):
+                echeances_data = []
+            
+            stats_echeances = {
+                'en_retard': 0.0,
+                'aujourdhui': 0.0,
+                'a_venir': 0.0,
+                'count_retard': 0,
+            }
+            
+            prochaines_echeances = []
+            
+            for ech in echeances_data:
+                montant = ech['montant_du']
+                if ech['status'] == 'EN RETARD':
+                    stats_echeances['en_retard'] += montant
+                    stats_echeances['count_retard'] += 1
+                elif ech['status'] == "AUJOURD'HUI":
+                    stats_echeances['aujourdhui'] += montant
+                else:
+                    stats_echeances['a_venir'] += montant
+                
+                # Garder les 5 plus urgentes
+                if len(prochaines_echeances) < 5:
+                    prochaines_echeances.append(ech)
+
+            # 4. Évolution de la dette (6 derniers mois)
+            evolution = []
+            for i in range(5, -1, -1):
+                # Approximation des mois
+                # Premier jour du mois i mois en arrière
+                _first_of_today: date = today.replace(day=1)
+                _shifted: date = _first_of_today - timedelta(days=i * 31)
+                first_day: date = _shifted.replace(day=1)
+                # Dernier jour de ce mois
+                if first_day.month == 12:
+                    last_day = date(first_day.year, 12, 31)
+                else:
+                    last_day = date(first_day.year, first_day.month + 1, 1) - timedelta(days=1)
+                
+                # Dette à last_day = Commandes (clôturées avant last_day) - Paiements réels (avant last_day)
+                # On exclut les avoirs (mode AVOIR) qui représentent des crédits entrants, pas des paiements sortants
+                total_commandes = CommandeProduit.objects.filter(
+                    commande__status=Commande.Status.CLOTUREE,
+                    commande__date_cloture__date__lte=last_day
+                ).aggregate(
+                    total=Sum(F('quantity') * F('price_cost'), output_field=DecimalField())
+                )['total'] or Decimal('0.00')
+                
+                total_paiements = PaiementFournisseur.objects.filter(
+                    date_paiement__lte=last_day
+                ).exclude(
+                    mode_paiement='AVOIR'
+                ).aggregate(
+                    total=Sum('montant', output_field=DecimalField())
+                )['total'] or Decimal('0.00')
+
+                total_avoirs = PaiementFournisseur.objects.filter(
+                    date_paiement__lte=last_day,
+                    mode_paiement='AVOIR'
+                ).aggregate(
+                    total=Sum('montant', output_field=DecimalField())
+                )['total'] or Decimal('0.00')
+
+                dette_brute = total_commandes - total_paiements - total_avoirs
+                evolution.append({
+                    'month': last_day.strftime('%b %Y'),
+                    'dette': float(max(dette_brute, Decimal('0.00')))
+                })
+
+            return Response({
+                'total_dette': float(total_dette),
+                'nb_fournisseurs_actifs': fournisseurs.count(),
+                'stats_echeances': stats_echeances,
+                'repartition_dette': repartition,
+                'prochaines_echeances': prochaines_echeances,
+                'evolution_dette': evolution
+            })
+        except Exception as e:
+            print(traceback.format_exc())
+            return Response({'error': str(e), 'trace': traceback.format_exc()}, status=500)
+
     @action(detail=False, methods=['post'])
     def bulk_delete(self, request):
         """Supprime plusieurs fournisseurs par lot."""

@@ -56,14 +56,16 @@ class Fournisseur(models.Model):
         Somme des totaux des commandes CLOTUREE - Somme des paiements effectues.
         """
         from django.db.models import Sum, F, DecimalField
-        from .orders import Commande
+        from .orders import Commande, CommandeProduit
         from .paiements import PaiementFournisseur
         
-        # 1. Total des commandes clôturées
-        commandes = self.commande_set.filter(status=Commande.Status.CLOTUREE)
-        total_du = Decimal('0.00')
-        for cmd in commandes:
-            total_du += Decimal(str(cmd.total))
+        # 1. Total des commandes clôturées en une seule requête agrégée
+        total_du = CommandeProduit.objects.filter(
+            commande__fournisseur=self,
+            commande__status=Commande.Status.CLOTUREE
+        ).aggregate(
+            total=Sum(F('quantity') * F('price'), output_field=DecimalField())
+        )['total'] or Decimal('0.00')
             
         # 2. Total des paiements effectués
         total_paye = self.paiements_effectues.aggregate(

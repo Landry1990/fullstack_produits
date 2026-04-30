@@ -1,5 +1,15 @@
-import React from 'react';
+import React, { useState, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+  ReferenceLine,
+} from 'recharts';
 import type { ProduitModel, StockLot } from '../../types';
 import { formatCurrency } from '../../utils/formatters';
 
@@ -17,11 +27,122 @@ interface ProductTabsContentProps {
 
 // Helper components - Defined first to avoid hoisting issues
 
+const PriceEvolutionChart = ({ achats, t }: { achats: any[]; t: any }) => {
+    const [selectedFournisseur, setSelectedFournisseur] = useState<string>('all');
+
+    const fournisseurs = useMemo(() => {
+        const names = Array.from(new Set(achats.map((a) => a.fournisseur_name).filter(Boolean)));
+        return names as string[];
+    }, [achats]);
+
+    const chartData = useMemo(() => {
+        const filtered = selectedFournisseur === 'all'
+            ? achats
+            : achats.filter((a) => a.fournisseur_name === selectedFournisseur);
+        return [...filtered]
+            .sort((a, b) => new Date(a.commande_date).getTime() - new Date(b.commande_date).getTime())
+            .map((a) => ({
+                date: new Date(a.commande_date).toLocaleDateString('fr-FR', { month: 'short', year: '2-digit' }),
+                prix: Math.round(Number(a.price_cost)),
+                fournisseur: a.fournisseur_name,
+                fullDate: new Date(a.commande_date).toLocaleDateString('fr-FR'),
+            }));
+    }, [achats, selectedFournisseur]);
+
+    if (chartData.length === 0) return null;
+
+    const prices = chartData.map((d) => d.prix);
+    const minPrix = Math.min(...prices);
+    const maxPrix = Math.max(...prices);
+    const firstPrix = prices[0];
+    const lastPrix = prices[prices.length - 1];
+    const hasMultiplePoints = chartData.length > 1;
+    const variation = hasMultiplePoints && firstPrix > 0 ? ((lastPrix - firstPrix) / firstPrix) * 100 : 0;
+    const isHausse = variation > 0;
+    const isStable = Math.abs(variation) < 1;
+
+    return (
+        <div className="mb-4 bg-base-200/30 rounded-2xl border border-base-200 p-4">
+            <div className="flex flex-wrap items-center justify-between gap-3 mb-3">
+                <div className="flex items-center gap-2">
+                    <span className="text-base font-black uppercase tracking-wider text-base-content/70">
+                        📈 {t('products:detail.purchases.price_evolution', { defaultValue: 'Évolution Prix Achat' })}
+                    </span>
+                    {hasMultiplePoints && (
+                        <span className={`badge badge-md font-black ${
+                            isStable ? 'badge-ghost' : isHausse ? 'badge-error' : 'badge-success'
+                        }`}>
+                            {isStable ? '→' : isHausse ? '▲' : '▼'} {Math.abs(variation).toFixed(1)}%
+                        </span>
+                    )}
+                </div>
+                {fournisseurs.length > 1 && (
+                    <select
+                        className="select select-bordered select-xs font-bold"
+                        value={selectedFournisseur}
+                        onChange={(e) => setSelectedFournisseur(e.target.value)}
+                    >
+                        <option value="all">{t('products:detail.purchases.all_providers', { defaultValue: 'Tous les fournisseurs' })}</option>
+                        {fournisseurs.map((f) => (
+                            <option key={f} value={f}>{f}</option>
+                        ))}
+                    </select>
+                )}
+            </div>
+
+            <div className="flex gap-4 mb-3 text-xs">
+                <span className="font-bold text-base-content/50">
+                    Min : <span className="text-success font-black">{formatCurrency(minPrix)}</span>
+                </span>
+                <span className="font-bold text-base-content/50">
+                    Max : <span className="text-error font-black">{formatCurrency(maxPrix)}</span>
+                </span>
+                <span className="font-bold text-base-content/50">
+                    Dernier : <span className="text-blue-600 font-black">{formatCurrency(lastPrix)}</span>
+                </span>
+            </div>
+
+            <ResponsiveContainer width="100%" height={180}>
+                <LineChart data={chartData} margin={{ top: 5, right: 20, left: 10, bottom: 5 }}>
+                    <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
+                    <XAxis dataKey="date" fontSize={10} tick={{ fontWeight: 700 }} />
+                    <YAxis
+                        fontSize={10}
+                        tickFormatter={(v) => formatCurrency(v)}
+                        domain={['auto', 'auto']}
+                        width={70}
+                    />
+                    <Tooltip
+                        formatter={(value: number) => [formatCurrency(value), t('products:detail.purchases.price', { defaultValue: 'Prix achat' })]}
+                        labelFormatter={(label, payload) => {
+                            const item = payload?.[0]?.payload;
+                            return item ? `${item.fullDate}${item.fournisseur ? ` — ${item.fournisseur}` : ''}` : label;
+                        }}
+                        contentStyle={{ fontSize: 12, fontWeight: 700 }}
+                    />
+                    {hasMultiplePoints && <ReferenceLine y={minPrix} stroke="#10b981" strokeDasharray="4 2" strokeWidth={1} />}
+                    {hasMultiplePoints && minPrix !== maxPrix && <ReferenceLine y={maxPrix} stroke="#ef4444" strokeDasharray="4 2" strokeWidth={1} />}
+                    <Line
+                        type="monotone"
+                        dataKey="prix"
+                        stroke="#3b82f6"
+                        strokeWidth={2.5}
+                        dot={{ r: 4, fill: '#3b82f6', strokeWidth: 2, stroke: '#fff' }}
+                        activeDot={{ r: 6 }}
+                    />
+                </LineChart>
+            </ResponsiveContainer>
+        </div>
+    );
+};
+
 const PurchasesTabContent = ({ achats, t }: { achats: any[]; t: any }) => {
     if (!achats || achats.length === 0) return <p className="text-center text-base-content/50 py-8">{t('products:detail.purchases.empty')}</p>;
 
     return (
-        <div className="overflow-x-auto">
+        <div>
+            <PriceEvolutionChart achats={achats} t={t} />
+            <div className="overflow-x-auto">
             <table className="table">
                 <thead className="bg-base-200 sticky top-0 border-b border-base-300">
                     <tr>
@@ -52,6 +173,7 @@ const PurchasesTabContent = ({ achats, t }: { achats: any[]; t: any }) => {
                     ))}
                 </tbody>
             </table>
+            </div>
         </div>
     );
 };
