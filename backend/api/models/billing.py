@@ -66,6 +66,7 @@ class Facture(models.Model):
         choices=Status.choices,
         default=Status.BROUILLON,
     )
+    is_active = models.BooleanField(default=True)
     remise = models.DecimalField(max_digits=12, decimal_places=2, default=0.00)
     tva = models.DecimalField(max_digits=5, decimal_places=2, default=19.25)
     notes = models.TextField(blank=True, null=True)
@@ -499,6 +500,7 @@ class Promis(models.Model):
     date_livraison = models.DateTimeField(null=True, blank=True, help_text="Date de livraison effective")
     notes = models.TextField(blank=True)
     created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
+    is_active = models.BooleanField(default=True, help_text="Promis actif (non supprimé dans la corbeille)")
     
     def get_status_display(self) -> str: ...
 

@@ -101,6 +101,8 @@
         "imprimantes": "Printer Configuration"
     },
     "maintenance": "Maintenance",
+    "corbeille": "Recycle Bin",
+    "aide_formation": "Help and Training",
     "logout": "Logout",
     "app_subtitle": "Professional Management",
     "roles": {

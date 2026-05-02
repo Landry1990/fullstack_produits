@@ -61,6 +61,7 @@ class Commande(models.Model):
         default=Source.MANUEL,
         help_text="Origine de la commande (manuelle ou auto-générée)"
     )
+    is_active = models.BooleanField(default=True, help_text="Commande active (non supprimée dans la corbeille)")
     
     # Reverse relations (declared for type checkers; populated by Django ORM)
     produits: "RelatedManager[CommandeProduit]"
@@ -186,6 +187,7 @@ class Avoir(models.Model):
     validated_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name='avoirs_validated', blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    is_active = models.BooleanField(default=True, help_text="Avoir actif (non supprimé dans la corbeille)")
     
     if TYPE_CHECKING:
         produits: "QuerySet[LigneAvoir]"

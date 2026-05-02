@@ -106,33 +106,26 @@ class ProduitBulkMixin:
             return Response({'detail': 'Aucun ID fourni.'}, status=400)
             
         try:
-            produits = list(Produit.objects.filter(id__in=ids))
-            count = len(produits)
-            deleted_ids = []
-            soft_deleted_ids = []
-
-            for p in produits:
-                p_id = p.id
-                try:
-                    with transaction.atomic():
-                        p.delete()
-                    deleted_ids.append(p_id)
-                except ProtectedError:
-                    p = Produit.objects.get(id=p_id)
-                    p.is_active = False
+            produits = Produit.objects.filter(id__in=ids)
+            count = produits.count()
+            
+            with transaction.atomic():
+                produits.update(is_active=False)
+                
+                # Optional: suffix name for Corbeille
+                for p in produits:
                     suffix = " (Produit Supprimé)"
                     if suffix not in p.name:
                         p.name = f"{p.name}{suffix}"
-                    p.save(update_fields=['is_active', 'name'])
-                    soft_deleted_ids.append(p_id)
+                        p.save(update_fields=['name'])
 
             log_audit(
                 user=request.user,
                 action=AuditLog.Action.DELETE,
                 model_name='Produit',
                 object_id='BULK',
-                description=f"Suppression groupée de {count} produits ({len(deleted_ids)} physiques, {len(soft_deleted_ids)} logiques)",
-                details={'deleted_ids': deleted_ids, 'soft_deleted_ids': soft_deleted_ids},
+                description=f"Suppression groupée (mise en corbeille) de {count} produits",
+                details={'ids': ids},
                 request=request
             )
             
@@ -140,11 +133,11 @@ class ProduitBulkMixin:
             
             return Response({
                 'status': 'success',
-                'deleted_count': len(deleted_ids),
-                'soft_deleted_count': len(soft_deleted_ids),
-                'deleted_ids': deleted_ids,
-                'soft_deleted_ids': soft_deleted_ids,
-                'message': f'{len(deleted_ids)} supprimés, {len(soft_deleted_ids)} masqués avec succès.'
+                'deleted_count': count,
+                'soft_deleted_count': count,
+                'deleted_ids': [],
+                'soft_deleted_ids': ids,
+                'message': f'{count} produits mis en corbeille avec succès.'
             })
         except Exception as e:
             return Response({'error': str(e)}, status=500)

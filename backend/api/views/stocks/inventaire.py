@@ -56,7 +56,7 @@ class InventaireViewSet(MultiTermSearchMixin, viewsets.ModelViewSet):
         return InventaireSerializer
 
     def get_queryset(self):
-        queryset = super().get_queryset()
+        queryset = super().get_queryset().filter(is_active=True)
         
         if self.action == 'list':
             from django.db.models import Subquery, OuterRef
@@ -116,6 +116,10 @@ class InventaireViewSet(MultiTermSearchMixin, viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         serializer.save(created_by=self.request.user)
+
+    def perform_destroy(self, instance):
+        instance.is_active = False
+        instance.save(update_fields=['is_active'])
 
     @action(detail=True, methods=['post'])
     @transaction.atomic
