@@ -101,6 +101,7 @@
         "imprimantes": "Configuration Imprimantes"
     },
     "maintenance": "Entretien",
+    "corbeille": "Corbeille",
     "logout": "Déconnexion",
     "app_subtitle": "Gestion Professionnelle",
     "roles": {

@@ -22,7 +22,7 @@ class PromisViewSet(MultiTermSearchMixin, viewsets.ModelViewSet):
     """
     API endpoint for managing Promis (products promised to clients).
     """
-    queryset = Promis.objects.select_related('client', 'produit', 'facture', 'created_by').all()
+    queryset = Promis.objects.filter(is_active=True).select_related('client', 'produit', 'facture', 'created_by').all()
     serializer_class = PromisSerializer
     permission_classes = [IsAuthenticated]
     pagination_class = StandardResultsSetPagination
@@ -34,6 +34,10 @@ class PromisViewSet(MultiTermSearchMixin, viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         serializer.save(created_by=self.request.user)
+
+    def perform_destroy(self, instance):
+        instance.is_active = False
+        instance.save(update_fields=['is_active'])
 
     @action(detail=True, methods=['post'])
     @transaction.atomic

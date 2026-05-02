@@ -15,7 +15,6 @@ import {
   useRevenueChart, 
   useHourlyTraffic, 
   useExpiringLots,
-  useSupplierDebts,
   useReapproStats,
   useLowStock,
   usePromisDisponibles,
@@ -35,7 +34,7 @@ import ExpirationAlertsWidget from './dashboard/ExpirationAlertsWidget';
 import { ExpirationAlertToasts } from './ExpirationAlertToast';
 import { Link } from 'react-router-dom';
 import { usePharmacySettings } from '../hooks/usePharmacySettings';
-import { generateDashboardFlashText, openWhatsApp } from '../utils/whatsapp';
+import api from '../services/api';
 
 
 export default function Dashboard() {
@@ -62,7 +61,6 @@ export default function Dashboard() {
   // Onglet Finance : lazy-loaded uniquement quand l'onglet est actif
   const isFinanceTab = activeTab === 'finance';
   const { data: ugStats } = useUgStats(isFinanceTab);
-  const { data: supplierDebts, refetch: refetchSupplierDebts, isRefetching: isRefetchingSupplierDebts } = useSupplierDebts(isFinanceTab);
   const { data: echeances = [] } = useEcheances(isFinanceTab);
 
   const currentLocale = t('common:locale', { defaultValue: 'fr-FR' });
@@ -78,8 +76,6 @@ export default function Dashboard() {
       refetchChart(),
       refetchLowStock(),
       refetchExpiring(),
-      refetchSupplierDebts(),
-      // Add refetch for reapproStats if needed, but it has short staleTime
     ]);
     toast.success(t('refresh_success'), { icon: '🔄' });
   };
@@ -92,14 +88,12 @@ export default function Dashboard() {
 
     setSendingReport(true);
     try {
-        const text = generateDashboardFlashText(stats, pharmSettings.pharmacy_name || 'Ma Pharmacie');
-        const success = openWhatsApp(pharmSettings.pharmacist_whatsapp_number, text);
-        
-        if (success) {
-            toast.success(t('alerts.whatsapp_report_success', { defaultValue: 'Rapport préparé pour WhatsApp !' }), { icon: '📱' });
-        }
+        const numero = pharmSettings.pharmacist_whatsapp_number.replace('+', '');
+        await api.post('whatsapp/test/', { numero });
+        toast.success('Rapport envoyé sur WhatsApp !', { icon: '📱' });
     } catch (err: any) {
-        toast.error('Erreur lors de la préparation du rapport');
+        const msg = err?.response?.data?.message || 'Erreur envoi WhatsApp';
+        toast.error(msg);
     } finally {
         setSendingReport(false);
     }
@@ -267,9 +261,6 @@ export default function Dashboard() {
           <FinancialSummary
             stats={stats}
             ugStats={ugStats}
-            supplierDebts={supplierDebts}
-            isRefetchingSupplierDebts={isRefetchingSupplierDebts}
-            refetchSupplierDebts={refetchSupplierDebts}
             echeances={echeances}
             t={t}
             formatCurrencyLocal={formatCurrencyLocal}

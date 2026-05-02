@@ -58,8 +58,12 @@ class FournisseurViewSet(viewsets.ModelViewSet):
         return Response({
             'status': 'success',
             'is_active': fournisseur.is_active,
-            'message': f"Fournisseur {'réactivé' if fournisseur.is_active else 'masqué'}"
+            'message': f'Statut changé en {"actif" if fournisseur.is_active else "inactif"}.'
         })
+
+    def perform_destroy(self, instance):
+        instance.is_active = False
+        instance.save(update_fields=['is_active'])
 
     @action(detail=True, methods=['get'])
     def catalogue(self, request, pk=None):
@@ -499,7 +503,7 @@ class FournisseurViewSet(viewsets.ModelViewSet):
                 fournisseurs = Fournisseur.objects.filter(id__in=ids)
                 names = list(fournisseurs.values_list('name', flat=True))
                 count = fournisseurs.count()
-                fournisseurs.delete()
+                fournisseurs.update(is_active=False)
                 
                 log_audit(
                     user=request.user,

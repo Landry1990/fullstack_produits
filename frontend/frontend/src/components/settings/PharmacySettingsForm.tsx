@@ -11,6 +11,7 @@ export default function PharmacySettingsForm() {
   const { settings: invSettings, updateSettings: updateInvSettings } = useInvoiceSettings()
   const [formData, setFormData] = useState<Partial<PharmacySettings>>({})
   const [saving, setSaving] = useState(false)
+  const [testingWhatsapp, setTestingWhatsapp] = useState(false)
   const [newTvaRate, setNewTvaRate] = useState('')
   const [newTvaLabel, setNewTvaLabel] = useState('')
   const [addingTva, setAddingTva] = useState(false)
@@ -39,6 +40,25 @@ export default function PharmacySettingsForm() {
     setAddingTva(false);
   }
 
+
+  const handleTestWhatsapp = async () => {
+    const numero = formData.pharmacist_whatsapp_number
+    if (!numero) {
+      import('react-hot-toast').then(({ toast }) => toast.error('Renseignez le numéro WhatsApp titulaire d\'abord'))
+      return
+    }
+    setTestingWhatsapp(true)
+    try {
+      const { default: api } = await import('../../services/api')
+      const res = await api.post('whatsapp/test/', { numero: numero.replace('+', '') })
+      import('react-hot-toast').then(({ toast }) => toast.success('✅ ' + (res.data.message || 'Envoyé')))
+    } catch (err: any) {
+      const msg = err?.response?.data?.message || err?.response?.data?.error || 'Erreur inconnue'
+      import('react-hot-toast').then(({ toast }) => toast.error('❌ ' + msg, { duration: 8000 }))
+    } finally {
+      setTestingWhatsapp(false)
+    }
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -652,6 +672,25 @@ export default function PharmacySettingsForm() {
                 <label className="label">
                   <span className="label-text-alt text-base-content/50">{t('hints.pharmacist_whatsapp')}</span>
                 </label>
+              </div>
+
+              <div className="pt-2">
+                <button
+                  type="button"
+                  onClick={handleTestWhatsapp}
+                  disabled={testingWhatsapp || !formData.whatsapp_enabled}
+                  className="btn btn-outline btn-success btn-sm gap-2"
+                >
+                  {testingWhatsapp ? (
+                    <span className="loading loading-spinner loading-xs"></span>
+                  ) : (
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="currentColor" viewBox="0 0 24 24">
+                      <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/>
+                      <path d="M11.99 0C5.373 0 0 5.373 0 11.99c0 2.115.554 4.099 1.523 5.825L0 24l6.335-1.496A11.932 11.932 0 0011.99 24C18.607 24 24 18.627 24 11.99 24 5.373 18.607 0 11.99 0zm0 21.818a9.823 9.823 0 01-5.011-1.37l-.36-.214-3.724.879.936-3.617-.235-.372A9.808 9.808 0 012.182 11.99c0-5.41 4.398-9.808 9.808-9.808 5.41 0 9.808 4.398 9.808 9.808 0 5.41-4.398 9.828-9.808 9.828z"/>
+                    </svg>
+                  )}
+                  Envoyer message test
+                </button>
               </div>
             </div>
           </div>

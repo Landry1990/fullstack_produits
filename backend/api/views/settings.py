@@ -173,6 +173,49 @@ class PharmacySettingsView(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
+class WhatsAppTestView(APIView):
+    """Endpoint pour tester l'envoi d'un message WhatsApp."""
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        import requests as req_lib
+        from ..models import PharmacySettings
+        ps = PharmacySettings.objects.first()
+        phone_id = (ps.whatsapp_phone_id or '').strip() if ps else ''
+        token = (ps.whatsapp_access_token or '').strip() if ps else ''
+        recipient = request.data.get('numero', '')
+        if not recipient:
+            return Response({'error': 'Champ "numero" requis'}, status=status.HTTP_400_BAD_REQUEST)
+        clean_number = ''.join(filter(str.isdigit, recipient))
+        if not phone_id or not token:
+            return Response(
+                {'status': 'simulation', 'message': 'Credentials manquants en DB — Phone ID ou Token vide'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        url = f"https://graph.facebook.com/v25.0/{phone_id}/messages"
+        payload = {
+            "messaging_product": "whatsapp",
+            "to": clean_number,
+            "type": "template",
+            "template": {
+                "name": "hello_world",
+                "language": {"code": "en_US"}
+            }
+        }
+        headers = {"Authorization": f"Bearer {token}", "Content-Type": "application/json"}
+        try:
+            resp = req_lib.post(url, headers=headers, json=payload, timeout=10)
+            data = resp.json()
+            if resp.status_code == 200:
+                return Response({'status': 'ok', 'message': 'Message envoyé', 'detail': data})
+            return Response(
+                {'status': 'error', 'message': data.get('error', {}).get('message', 'Erreur Meta'), 'detail': data},
+                status=status.HTTP_502_BAD_GATEWAY
+            )
+        except Exception as e:
+            return Response({'status': 'error', 'message': str(e)}, status=status.HTTP_502_BAD_GATEWAY)
+
+
 class TVAViewSet(viewsets.ModelViewSet):
     """
     API endpoint for managing VAT rates.

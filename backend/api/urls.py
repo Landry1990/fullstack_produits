@@ -9,7 +9,7 @@ from .views import (
     InvoiceConfigurationView, ClotureCaisseViewSet, StockAdjustmentViewSet,
     generer_suggestions_commande, HistoriqueVentesViewSet, HistoriqueAchatsViewSet,
     StatsUGViewSet, StockAnalysisUnsoldView, StockAnalysisOverstockView, StockAnalysisShortageView,
-    PharmacySettingsView, ProductImportView, ConfigurationOptionViewSet,
+    PharmacySettingsView, ProductImportView, ConfigurationOptionViewSet, WhatsAppTestView,
     AuditLogViewSet, LoyaltySettingViewSet, UserViewSet, CustomAuthToken,
     CategoriesListView, CategoriesDetailView, PromisViewSet,
     PromotionViewSet, TVAViewSet, UserDailySessionViewSet,
@@ -34,6 +34,7 @@ from .views.stocks.ruptures import RuptureFournisseurViewSet
 from .views.omnisearch import GlobalSearchView
 from .views.stocks.reappro_history import ReapproSessionViewSet
 from .views.version import app_version
+from .views.corbeille import CorbeilleViewSet
 
 # Create a router and register our viewsets with it.
 router = DefaultRouter()
@@ -95,6 +96,7 @@ router.register(r'internal-messages', InternalMessageViewSet, basename='internal
 router.register(r'message-templates', MessageTemplateViewSet, basename='messagetemplate')
 router.register(r'reappro-sessions', ReapproSessionViewSet, basename='reapprosession')
 router.register(r'postes-caisses', PosteCaisseViewSet, basename='postecaisse')
+router.register(r'corbeille', CorbeilleViewSet, basename='corbeille')
 
 
 # The API URLs are now determined automatically by the router.
@@ -113,6 +115,7 @@ urlpatterns = [
     path('generer-suggestions/', generer_suggestions_commande, name='generer-suggestions'),
     path('produits/etat-inventaire/pdf/', EtatInventairePDFView.as_view(), name='etat-inventaire-pdf'),
     path('omnisearch/', GlobalSearchView.as_view(), name='global-search'),
+    path('whatsapp/test/', WhatsAppTestView.as_view(), name='whatsapp-test'),
     path('version/', app_version, name='app-version'),
     path('', include(router.urls)),
 ]
