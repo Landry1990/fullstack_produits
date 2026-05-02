@@ -1,15 +1,13 @@
 import { 
   PieChart as PieChartIcon,
   CreditCard,
-  AlertTriangle,
-  RefreshCw,
-  ArrowRight,
   ShoppingBag,
   Clock,
   CalendarX2,
-  CheckCircle2
+  CheckCircle2,
+  AlertTriangle
 } from 'lucide-react';
-import type { Echeance, SupplierDebtsResponse, SupplierDebt, SupplierDebtItem } from '../../hooks/useDashboard';
+import type { Echeance } from '../../hooks/useDashboard';
 import { 
   PieChart, 
   Pie, 
@@ -17,14 +15,10 @@ import {
   Tooltip, 
   ResponsiveContainer 
 } from 'recharts';
-import { Link } from 'react-router-dom';
 
 interface FinancialSummaryProps {
   stats: any;
   ugStats: any;
-  supplierDebts: SupplierDebtsResponse | null | undefined;
-  isRefetchingSupplierDebts: boolean;
-  refetchSupplierDebts: () => void;
   echeances: Echeance[];
   t: any;
   formatCurrencyLocal: (val: number) => string;
@@ -33,9 +27,6 @@ interface FinancialSummaryProps {
 export default function FinancialSummary({
   stats,
   ugStats,
-  supplierDebts,
-  isRefetchingSupplierDebts,
-  refetchSupplierDebts,
   echeances,
   t,
   formatCurrencyLocal
@@ -47,204 +38,72 @@ export default function FinancialSummary({
 
   return (
     <div className="space-y-6">
-      {/* Top Row: UG and Supplier Debts */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
-        {/* Section Unités Gratuites (UG) */}
-        {showUG ? (
-          <div className="card bg-base-100 shadow-sm border border-base-300 rounded-2xl overflow-hidden h-full">
-            <div className="card-body p-6">
-              <div className="flex items-center justify-between mb-6">
-                <div className="flex items-center gap-3">
-                  <div className="p-2 bg-purple-100 text-purple-600 rounded-xl">
-                    <ShoppingBag className="w-5 h-5" />
-                  </div>
-                  <div>
-                    <h2 className="text-sm font-black text-base-content tracking-tight uppercase">{t('ug.title')}</h2>
-                    <p className="text-[10px] font-bold text-base-content/30 uppercase tracking-widest">{t('ug.subtitle')}</p>
-                  </div>
-                </div>
-                <div className="badge bg-purple-100 text-purple-700 border-none font-black text-[10px] uppercase tracking-widest h-6 px-3">
-                  UG
-                </div>
-              </div>
-              
-              <div className="overflow-x-auto">
-                <table className="table table-sm w-full border-separate border-spacing-0">
-                  <thead>
-                    <tr>
-                      <th className="bg-base-200/80 text-xs font-semibold uppercase tracking-wider text-base-content/60 py-2 pl-4 rounded-l-2xl">{t('ug.provider')}</th>
-                      <th className="bg-base-200/80 text-xs font-semibold uppercase tracking-wider text-base-content/60 text-right py-2">{t('ug.acquired')}</th>
-                      <th className="bg-base-200/80 text-xs font-semibold uppercase tracking-wider text-base-content/60 text-right py-2">{t('ug.sold')}</th>
-                      <th className="bg-base-200/80 text-xs font-semibold uppercase tracking-wider text-base-content/60 text-right py-2 pr-4 rounded-r-2xl">{t('ug.remaining')}</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-base-100">
-                    {ugStats.results.map((stat: any, index: number) => (
-                      <tr key={index} className="hover:bg-base-200/30 transition-all group">
-                        <td className="py-2 pl-4 font-bold text-sm text-base-content group-hover:text-primary transition-colors">{stat.fournisseur_nom}</td>
-                        <td className="text-right py-2 font-mono font-bold text-sm text-purple-600">
-                          {formatCurrencyLocal(stat.valeur_acquise)}
-                        </td>
-                        <td className="text-right py-2 font-mono font-bold text-sm text-emerald-600">
-                          {formatCurrencyLocal(stat.valeur_vendue)}
-                        </td>
-                        <td className="text-right py-2 pr-4">
-                          <span className="bg-blue-50 text-blue-700 px-2 py-1 rounded-lg font-mono font-bold text-sm border border-blue-100 group-hover:bg-blue-100 transition-colors">
-                            {formatCurrencyLocal(stat.valeur_restante)}
-                          </span>
-                        </td>
-                      </tr>
-                    ))}
-                    {/* Total Row */}
-                    {ugStats.results.length > 0 && (
-                        <tr className="bg-base-200/20 font-bold border-t border-base-200">
-                          <td className="py-2 pl-4 uppercase tracking-wider text-[10px] text-base-content/40">{t('ug.total')}</td>
-                          <td className="text-right py-2 text-purple-700 font-mono text-sm pr-2">
-                            {formatCurrency(ugStats.results.reduce((sum: number, r: any) => sum + r.valeur_acquise, 0))}
-                          </td>
-                          <td className="text-right py-2 text-emerald-700 font-mono text-sm pr-2">
-                            {formatCurrency(ugStats.results.reduce((sum: number, r: any) => sum + r.valeur_vendue, 0))}
-                          </td>
-                          <td className="text-right py-2 text-blue-700 font-mono text-sm pr-4">
-                            {formatCurrency(ugStats.results.reduce((sum: number, r: any) => sum + r.valeur_restante, 0))}
-                          </td>
-                        </tr>
-                    )}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          </div>
-        ) : (
-          <div className="hidden lg:block"></div>
-        )}
-
-        {/* Supplier Debts Section - Nouveau Design */}
-        <div className="card bg-base-100 shadow-sm border border-base-300 rounded-2xl overflow-hidden h-full flex flex-col">
-          <div className="card-body p-6 flex flex-col h-full">
-            <div className="flex items-center justify-between mb-6 shrink-0">
+      {/* Section Unités Gratuites (UG) */}
+      {showUG && (
+        <div className="card bg-base-100 shadow-sm border border-base-300 rounded-2xl overflow-hidden">
+          <div className="card-body p-6">
+            <div className="flex items-center justify-between mb-6">
               <div className="flex items-center gap-3">
-                <div className="p-2 bg-red-100 text-red-600 rounded-xl">
-                  <AlertTriangle className="w-5 h-5" />
+                <div className="p-2 bg-purple-100 text-purple-600 rounded-xl">
+                  <ShoppingBag className="w-5 h-5" />
                 </div>
                 <div>
-                  <h2 className="text-sm font-black text-base-content tracking-tight uppercase">{t('debts.supplier_debts_title')}</h2>
-                  <p className="text-[10px] font-bold text-base-content/30 uppercase tracking-widest">{t('debts.supplier_debts_by_due')}</p>
+                  <h2 className="text-sm font-black text-base-content tracking-tight uppercase">{t('ug.title')}</h2>
+                  <p className="text-[10px] font-bold text-base-content/30 uppercase tracking-widest">{t('ug.subtitle')}</p>
                 </div>
               </div>
-               <div className="flex items-center gap-3">
-                    {supplierDebts && supplierDebts.total_debt > 0 && (
-                       <div className="bg-red-50 text-red-700 px-4 py-1.5 rounded-xl font-black text-xs border border-red-100 shadow-sm animate-pulse">
-                           {formatCurrencyLocal(supplierDebts.total_debt)}
-                       </div>
-                    )}
-                   <button 
-                      className={`btn btn-sm btn-circle btn-ghost ${isRefetchingSupplierDebts ? 'loading' : 'hover:bg-red-50 hover:text-red-600'}`}
-                      onClick={() => refetchSupplierDebts()}
-                   >
-                      {!isRefetchingSupplierDebts && <RefreshCw className="w-4 h-4" />}
-                   </button>
-               </div>
+              <div className="badge bg-purple-100 text-purple-700 border-none font-black text-[10px] uppercase tracking-widest h-6 px-3">
+                UG
+              </div>
             </div>
             
-            <div className="flex-grow overflow-y-auto h-[300px] custom-scrollbar pr-1 space-y-3">
-              {supplierDebts?.suppliers && supplierDebts.suppliers.length > 0 ? (
-                supplierDebts.suppliers.map((supplier: SupplierDebt) => (
-                  <div key={supplier.id} className="bg-base-50 rounded-xl border border-base-200 overflow-hidden">
-                    {/* Header du fournisseur */}
-                    <div className="flex items-center justify-between px-4 py-3 bg-base-200/50 border-b border-base-200">
-                      <div className="flex items-center gap-2">
-                        <span className="font-bold text-sm text-base-content uppercase tracking-tight">{supplier.name}</span>
-                        <span className={`badge badge-sm text-[9px] font-black uppercase tracking-wider ${
-                          supplier.type_reglement === 'RELEVE' 
-                            ? 'bg-blue-100 text-blue-700 border-blue-200' 
-                            : 'bg-amber-100 text-amber-700 border-amber-200'
-                        }`}>
-                          {supplier.type_reglement === 'RELEVE' ? t('debts.statement') : t('debts.invoice')}
+            <div className="overflow-x-auto">
+              <table className="table table-sm w-full border-separate border-spacing-0">
+                <thead>
+                  <tr>
+                    <th className="bg-base-200/80 text-xs font-semibold uppercase tracking-wider text-base-content/60 py-2 pl-4 rounded-l-2xl">{t('ug.provider')}</th>
+                    <th className="bg-base-200/80 text-xs font-semibold uppercase tracking-wider text-base-content/60 text-right py-2">{t('ug.acquired')}</th>
+                    <th className="bg-base-200/80 text-xs font-semibold uppercase tracking-wider text-base-content/60 text-right py-2">{t('ug.sold')}</th>
+                    <th className="bg-base-200/80 text-xs font-semibold uppercase tracking-wider text-base-content/60 text-right py-2 pr-4 rounded-r-2xl">{t('ug.remaining')}</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-base-100">
+                  {ugStats.results.map((stat: any, index: number) => (
+                    <tr key={index} className="hover:bg-base-200/30 transition-all group">
+                      <td className="py-2 pl-4 font-bold text-sm text-base-content group-hover:text-primary transition-colors">{stat.fournisseur_nom}</td>
+                      <td className="text-right py-2 font-mono font-bold text-sm text-purple-600">
+                        {formatCurrencyLocal(stat.valeur_acquise)}
+                      </td>
+                      <td className="text-right py-2 font-mono font-bold text-sm text-emerald-600">
+                        {formatCurrencyLocal(stat.valeur_vendue)}
+                      </td>
+                      <td className="text-right py-2 pr-4">
+                        <span className="bg-blue-50 text-blue-700 px-2 py-1 rounded-lg font-mono font-bold text-sm border border-blue-100 group-hover:bg-blue-100 transition-colors">
+                          {formatCurrencyLocal(stat.valeur_restante)}
                         </span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        {supplier.overdue_count > 0 && (
-                          <span className="bg-red-100 text-red-700 px-2 py-0.5 rounded-lg text-[10px] font-black border border-red-200">
-                            {supplier.overdue_count} {supplier.overdue_count > 1 ? t('debts.overdue_many') : t('debts.overdue_one')}
-                          </span>
-                        )}
-                        <span className="font-mono font-bold text-sm text-base-content">
-                          {formatCurrencyLocal(supplier.debt_total)}
-                        </span>
-                      </div>
-                    </div>
-                    
-                    {/* Liste des items (factures/relevés) */}
-                    <div className="divide-y divide-base-100">
-                      {supplier.items.map((item: SupplierDebtItem) => (
-                        <div 
-                          key={item.id} 
-                          className={`flex items-center justify-between px-4 py-2 hover:bg-base-100/50 transition-colors ${
-                            item.is_overdue ? 'bg-red-50/30' : 'bg-emerald-50/30'
-                          }`}
-                        >
-                          <div className="flex items-center gap-3">
-                            {/* Indicateur de statut */}
-                            <div className={`w-2 h-2 rounded-full ${
-                              item.is_overdue ? 'bg-red-500 animate-pulse' : 'bg-emerald-500'
-                            }`} />
-                            <div>
-                              <p className="text-xs font-bold text-base-content">{item.label}</p>
-                              <p className="text-[10px] text-base-content/50">
-                                {t('debts.due_date')}: {new Date(item.due_date).toLocaleDateString('fr-FR')}
-                              </p>
-                            </div>
-                          </div>
-                          <div className="text-right">
-                            <p className={`font-mono font-bold text-sm ${
-                              item.is_overdue ? 'text-red-600' : 'text-emerald-600'
-                            }`}>
-                              {formatCurrencyLocal(item.amount)}
-                            </p>
-                            {item.is_overdue ? (
-                              <p className="text-[9px] font-black text-red-600 uppercase tracking-wider">
-                                {item.days_overdue}{t('debts.days_overdue')}
-                              </p>
-                            ) : item.days_remaining !== null && item.days_remaining <= 7 ? (
-                              <p className="text-[9px] font-black text-orange-600 uppercase tracking-wider">
-                                {item.days_remaining}{t('debts.days_remaining')}
-                              </p>
-                            ) : item.days_remaining !== null ? (
-                              <p className="text-[9px] font-black text-emerald-600 uppercase tracking-wider">
-                                {item.days_remaining}{t('debts.days_remaining')}
-                              </p>
-                            ) : null}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                    
-                    {/* Action */}
-                    <div className="px-4 py-2 bg-base-100 border-t border-base-200">
-                      <Link 
-                        to="/app/fournisseurs" 
-                        state={{ selectedSupplierId: supplier.id, openFinance: true }}
-                        className="flex items-center justify-center gap-2 text-xs font-bold text-primary hover:text-primary-focus hover:bg-primary/5 py-1.5 rounded-lg transition-all"
-                      >
-                        {t('debts.view_detail')}
-                        <ArrowRight className="w-4 h-4" />
-                      </Link>
-                    </div>
-                  </div>
-                ))
-              ) : (
-                <div className="flex flex-col items-center justify-center py-12 rounded-2xl bg-base-200/30 border-2 border-dashed border-base-200 h-full">
-                  <div className="p-4 bg-base-100 shadow-sm rounded-2xl mb-4">
-                    <ShoppingBag className="w-8 h-8 text-base-content/10" />
-                  </div>
-                  <p className="text-[10px] font-black uppercase tracking-widest text-base-content/30">{t('debts.no_supplier_debts')}</p>
-                </div>
-              )}
+                      </td>
+                    </tr>
+                  ))}
+                  {ugStats.results.length > 0 && (
+                    <tr className="bg-base-200/20 font-bold border-t border-base-200">
+                      <td className="py-2 pl-4 uppercase tracking-wider text-[10px] text-base-content/40">{t('ug.total')}</td>
+                      <td className="text-right py-2 text-purple-700 font-mono text-sm pr-2">
+                        {formatCurrency(ugStats.results.reduce((sum: number, r: any) => sum + r.valeur_acquise, 0))}
+                      </td>
+                      <td className="text-right py-2 text-emerald-700 font-mono text-sm pr-2">
+                        {formatCurrency(ugStats.results.reduce((sum: number, r: any) => sum + r.valeur_vendue, 0))}
+                      </td>
+                      <td className="text-right py-2 text-blue-700 font-mono text-sm pr-4">
+                        {formatCurrency(ugStats.results.reduce((sum: number, r: any) => sum + r.valeur_restante, 0))}
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
             </div>
           </div>
         </div>
-      </div>
+      )}
 
       {/* Echéances Widget */}
       {echeances.length > 0 && (

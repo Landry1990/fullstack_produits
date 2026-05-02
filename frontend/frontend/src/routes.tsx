@@ -57,6 +57,7 @@ const GestionUtilisateurs = lazy(() => import('./components/GestionUtilisateurs'
 const PharmacySettingsForm = lazy(() => import('./components/settings/PharmacySettingsForm'));
 const Maintenance = lazy(() => import('./components/Maintenance'));
 const Changelog = lazy(() => import('./components/Changelog'));
+const Corbeille = lazy(() => import('./components/Corbeille'));
 
 // ── Helper to reduce boilerplate ──
 const perm = (permission: string | string[], Component: React.ComponentType<any>, props?: Record<string, any>) => ({
@@ -164,6 +165,7 @@ export const router = createBrowserRouter([
           { path: 'user-sessions', ...admin(UserSessions) },
           { path: 'journal-audit', ...admin(JournalAudit) },
           { path: 'maintenance', ...admin(Maintenance) },
+          { path: 'corbeille', ...admin(Corbeille) },
 
           // ── Paramètres ──
           { path: 'pharmacy-settings', ...perm('settings_pharmacie', PharmacySettingsForm) },

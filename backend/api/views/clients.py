@@ -83,8 +83,12 @@ class ClientViewSet(OptimizedSerializerMixin, viewsets.ModelViewSet):
         return Response({
             'status': 'success',
             'is_active': client.is_active,
-            'message': f"Client {'réactivé' if client.is_active else 'masqué'}"
+            'message': f'Le client est maintenant {"actif" if client.is_active else "inactif"}.'
         })
+
+    def perform_destroy(self, instance):
+        instance.is_active = False
+        instance.save(update_fields=['is_active'])
 
     @action(detail=True, methods=['get'])
     def purchase_history(self, request, pk=None):
@@ -177,7 +181,7 @@ class ClientViewSet(OptimizedSerializerMixin, viewsets.ModelViewSet):
             with transaction.atomic():
                 clients = Client.objects.filter(id__in=ids)
                 count = clients.count()
-                clients.delete()
+                clients.update(is_active=False)
                 
                 return Response({
                     'status': 'success',

@@ -98,7 +98,7 @@ class FactureViewSet(OptimizedSerializerMixin, viewsets.ModelViewSet):
     
     def get_queryset(self):
         # Base optimization for all views: select related foreign keys
-        queryset = Facture.objects.select_related('client', 'ayant_droit', 'created_by', 'validated_by').order_by('-date').distinct()
+        queryset = Facture.objects.select_related('client', 'ayant_droit', 'created_by', 'validated_by').filter(is_active=True).order_by('-date').distinct()
         
         # FIX BUG: Utilisation de Subquery pour éviter le produit cartésien (multiplication des montants par le nombre d'articles)
         from api.models import Caisse
@@ -360,6 +360,10 @@ class FactureViewSet(OptimizedSerializerMixin, viewsets.ModelViewSet):
         except ProtectedError:
             return Response({'detail': 'Impossible de supprimer cette facture car elle est liée à d\'autres éléments.'}, status=status.HTTP_400_BAD_REQUEST)
 
+    def perform_destroy(self, instance):
+        instance.is_active = False
+        instance.save(update_fields=['is_active'])
+
     @action(detail=True, methods=['post'])
     @transaction.atomic
     def valider(self, request, pk=None, facture=None):
@@ -585,15 +589,15 @@ class FactureViewSet(OptimizedSerializerMixin, viewsets.ModelViewSet):
             action=AuditLog.Action.INVOICE_DELETE,
             model_name='Facture',
             object_id='BULK',
-            description=f"Suppression de {count} facture(s)",
+            description=f"Mise en corbeille de {count} facture(s)",
             details={'ids': deleted_ids},
             request=request
         )
 
-        factures_to_delete.delete()
+        factures_to_delete.update(is_active=False)
         
         return Response({
-            'detail': f'{count} facture(s) supprimée(s).',
+            'detail': f'{count} facture(s) mise(s) en corbeille.',
             'deleted_ids': deleted_ids
         })
 
@@ -619,10 +623,10 @@ class FactureViewSet(OptimizedSerializerMixin, viewsets.ModelViewSet):
                 request=request
             )
             
-            brouillons.delete()
+            brouillons.update(is_active=False)
         
         return Response({
-            'detail': f'{count} facture(s) brouillon supprimée(s) avec succès.',
+            'detail': f'{count} facture(s) brouillon mise(s) en corbeille avec succès.',
             'count': count
         }, status=status.HTTP_200_OK)
 

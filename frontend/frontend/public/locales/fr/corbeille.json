@@ -1,0 +1,61 @@
+{
+  "title": "Corbeille",
+  "subtitle": "Éléments supprimés · Restaurez ou supprimez définitivement",
+  "tabs": {
+    "all": "Tout",
+    "produits": "Produits",
+    "clients": "Clients",
+    "fournisseurs": "Fournisseurs",
+    "commandes": "Commandes",
+    "avoirs": "Avoirs",
+    "promis": "Promis",
+    "inventaires": "Inventaires",
+    "factures": "Ventes"
+  },
+  "search": "Rechercher dans la corbeille...",
+  "empty_state": {
+    "title": "La corbeille est vide",
+    "subtitle": "Les éléments supprimés apparaîtront ici"
+  },
+  "table": {
+    "name": "Nom",
+    "type": "Type",
+    "details": "Détails",
+    "deleted_at": "Supprimé le",
+    "actions": "Actions"
+  },
+  "actions": {
+    "restore": "Restaurer",
+    "delete_permanently": "Supprimer",
+    "empty_trash": "Vider la corbeille",
+    "selected": "{{count}} sélectionné(s)"
+  },
+  "badges": {
+    "produit": "Produit",
+    "client": "Client",
+    "fournisseur": "Fournisseur",
+    "commande": "Commande",
+    "avoir": "Avoir",
+    "promis": "Promis",
+    "inventaire": "Inventaire",
+    "facture": "Vente"
+  },
+  "messages": {
+    "fetch_error": "Erreur lors du chargement de la corbeille",
+    "restore_success": "{{count}} élément(s) restauré(s) ✓",
+    "restore_error": "Erreur lors de la restauration",
+    "purge_success": "{{count}} élément(s) supprimé(s) définitivement",
+    "purge_error": "Erreur lors de la suppression",
+    "empty_error": "Erreur lors du vidage de la corbeille",
+    "purge_confirm_title": "⚠️ Suppression définitive",
+    "purge_confirm_body": "Supprimer définitivement {{count}} élément(s) ? Cette action est IRRÉVERSIBLE.",
+    "purge_confirm_btn": "Supprimer définitivement",
+    "empty_confirm_title": "🗑️ Vider la corbeille",
+    "empty_confirm_body": "Supprimer TOUS les {{count}} éléments de la corbeille ? Cette action est IRRÉVERSIBLE et concerne produits, clients et fournisseurs.",
+    "empty_confirm_btn": "Tout supprimer"
+  },
+  "footer": {
+    "total": "Total",
+    "warning": "Les suppressions définitives sont irréversibles"
+  }
+}

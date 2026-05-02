@@ -153,7 +153,7 @@ class CommandeViewSet(MultiTermSearchMixin, OptimizedSerializerMixin, viewsets.M
         Override to add prefetch_related only for detail views or omnisearch.
         List view doesn't need product data unless omnisearch is active.
         """
-        qs = super().get_queryset()
+        qs = super().get_queryset().filter(is_active=True)
         
         # Le paramètre 'omnisearch' ou l'action détermine si on affiche la liste des produits
         is_omnisearch = self.request.query_params.get('layout') == 'omnisearch'
@@ -354,9 +354,9 @@ class CommandeViewSet(MultiTermSearchMixin, OptimizedSerializerMixin, viewsets.M
         deleted_ids = list(deletable.values_list('id', flat=True))
         
         try:
-            # On laisse le cascade delete ou ProtectedError faire son travail
-            logger.info(f"Deleting {total_deletable} orders: {deleted_ids}")
-            deletable.delete()
+            # On passe en corbeille (soft delete)
+            logger.info(f"Soft deleting {total_deletable} orders: {deleted_ids}")
+            deletable.update(is_active=False)
         except ProtectedError as e:
             logger.error(f"ProtectedError during bulk delete: {str(e)}")
             # Extraire les objets qui empêchent la suppression (ex: FactureProduitAllocation)
@@ -398,7 +398,8 @@ class CommandeViewSet(MultiTermSearchMixin, OptimizedSerializerMixin, viewsets.M
 
     def perform_destroy(self, instance):
         try:
-            super().perform_destroy(instance)
+            instance.is_active = False
+            instance.save(update_fields=['is_active'])
         except Exception as e:
             from rest_framework.exceptions import ValidationError
             

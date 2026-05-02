@@ -32,6 +32,7 @@ class Inventaire(models.Model):
     validated_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='validated_inventaires')
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    is_active = models.BooleanField(default=True, help_text="Inventaire actif (non supprimé dans la corbeille)")
 
     def save(self, *args, **kwargs):
         if not self.reference:

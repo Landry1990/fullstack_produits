@@ -11,15 +11,16 @@ import {
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { 
-  BarChart, 
-  Bar, 
+  LineChart,
+  Line,
   AreaChart, 
   Area, 
   XAxis, 
   YAxis, 
   CartesianGrid, 
   Tooltip, 
-  ResponsiveContainer
+  ResponsiveContainer,
+  Legend
 } from 'recharts';
 import { Link } from 'react-router-dom';
 import { formatCurrency } from '../../utils/formatters';
@@ -45,7 +46,8 @@ export default function PerformanceOverview({
   
   const chartData = revenueChart && revenueChart.labels ? revenueChart.labels.map((label: string, index: number) => ({
     jour: label,
-    montant: revenueChart.data[index]
+    montant: revenueChart.data[index],
+    nb_ventes: revenueChart.nb_ventes?.[index] ?? 0,
   })) : [];
 
   const isVendeur = stats?.role === 'VENDEUR' || stats?.role === 'CAISSIER';
@@ -188,25 +190,48 @@ export default function PerformanceOverview({
           <div className="p-4 sm:p-5 h-64 sm:h-72">
             {revenueChart ? (
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={chartData} margin={{ top: 4, right: 4, left: 0, bottom: 0 }}>
+                <LineChart data={chartData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
                   <defs>
-                    <linearGradient id="barGradient" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor="#10b981" stopOpacity={0.85} />
-                      <stop offset="100%" stopColor="#059669" stopOpacity={0.55} />
+                    <linearGradient id="revenueGradient" x1="0" y1="0" x2="1" y2="0">
+                      <stop offset="0%" stopColor="#6366f1" />
+                      <stop offset="100%" stopColor="#10b981" />
                     </linearGradient>
                   </defs>
                   <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f3f4f6" />
-                  <XAxis dataKey="jour" tick={{ fontSize: 10, fontWeight: 700, fill: '#9ca3af' }} axisLine={false} tickLine={false} dy={8} />
-                  <YAxis tick={{ fontSize: 10, fontWeight: 700, fill: '#9ca3af' }} axisLine={false} tickLine={false} tickFormatter={(v) => formatCurrencyLocal(v)} width={80} />
+                  <XAxis dataKey="jour" tick={{ fontSize: 11, fontWeight: 800, fill: '#6b7280' }} axisLine={false} tickLine={false} dy={8} />
+                  <YAxis yAxisId="ca" tick={{ fontSize: 10, fontWeight: 700, fill: '#9ca3af' }} axisLine={false} tickLine={false} tickFormatter={(v) => formatCurrencyLocal(v)} width={80} />
+                  <YAxis yAxisId="ventes" orientation="right" tick={{ fontSize: 10, fontWeight: 700, fill: '#f59e0b' }} axisLine={false} tickLine={false} width={30} />
                   <Tooltip
-                    formatter={(v: number) => [formatCurrencyLocal(v), t('charts.amount')]}
+                    formatter={(v: number, name: string) => name === 'montant' ? [formatCurrencyLocal(v), 'CA'] : [v, 'Ventes']}
                     contentStyle={{ backgroundColor: '#fff', border: 'none', borderRadius: '12px', boxShadow: '0 10px 25px -5px rgba(0,0,0,.12)', padding: '10px 14px' }}
                     itemStyle={{ fontSize: 12, fontWeight: 700 }}
                     labelStyle={{ fontSize: 10, fontWeight: 900, color: '#9ca3af', marginBottom: 4 }}
-                    cursor={{ fill: 'rgba(16,185,129,.06)' }}
                   />
-                  <Bar dataKey="montant" fill="url(#barGradient)" radius={[6, 6, 0, 0]} animationDuration={1200} barSize={28} />
-                </BarChart>
+                  <Legend wrapperStyle={{ fontSize: 10, fontWeight: 800, textTransform: 'uppercase', paddingTop: 8 }} />
+                  <Line
+                    yAxisId="ca"
+                    type="monotone"
+                    dataKey="montant"
+                    name="CA"
+                    stroke="url(#revenueGradient)"
+                    strokeWidth={3}
+                    dot={{ r: 5, fill: '#6366f1', strokeWidth: 2, stroke: '#fff' }}
+                    activeDot={{ r: 7, fill: '#10b981', strokeWidth: 2, stroke: '#fff' }}
+                    animationDuration={1200}
+                  />
+                  <Line
+                    yAxisId="ventes"
+                    type="monotone"
+                    dataKey="nb_ventes"
+                    name="Ventes"
+                    stroke="#f59e0b"
+                    strokeWidth={2}
+                    strokeDasharray="5 3"
+                    dot={{ r: 4, fill: '#f59e0b', strokeWidth: 2, stroke: '#fff' }}
+                    activeDot={{ r: 6, fill: '#f59e0b' }}
+                    animationDuration={1200}
+                  />
+                </LineChart>
               </ResponsiveContainer>
             ) : (
               <div className="h-full flex items-center justify-center opacity-20">

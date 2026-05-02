@@ -18,7 +18,7 @@ logger = logging.getLogger(__name__)
 
 
 class AvoirViewSet(viewsets.ModelViewSet):
-    queryset = Avoir.objects.all().select_related('fournisseur', 'created_by').prefetch_related('produits__produit')
+    queryset = Avoir.objects.filter(is_active=True).select_related('fournisseur', 'created_by').prefetch_related('produits__produit')
     serializer_class = AvoirSerializer
     permission_classes = [IsAuthenticated]
     pagination_class = StandardResultsSetPagination
@@ -34,7 +34,8 @@ class AvoirViewSet(viewsets.ModelViewSet):
         if instance.status == 'VALIDEE':
             from rest_framework.exceptions import ValidationError
             raise ValidationError("Impossible de supprimer un avoir validé.")
-        super().perform_destroy(instance)
+        instance.is_active = False
+        instance.save(update_fields=['is_active'])
     
     @action(detail=True, methods=['post'])
     def valider(self, request, pk=None):
