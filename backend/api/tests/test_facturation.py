@@ -224,7 +224,8 @@ class DestroyFactureTests(APITestCase):
         response = self.client.delete(url)
 
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
-        self.assertFalse(Facture.objects.filter(pk=facture.pk).exists())
+        facture.refresh_from_db()
+        self.assertFalse(facture.is_active)
 
 
 class BulkDeleteTests(APITestCase):
@@ -245,8 +246,8 @@ class BulkDeleteTests(APITestCase):
         response = self.client.post(url, {'ids': [f1.id, f2.id, f3.id]}, format='json')
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.data['detail'], '3 facture(s) supprimée(s).')
-        self.assertEqual(Facture.objects.filter(id__in=[f1.id, f2.id, f3.id]).count(), 0)
+        self.assertEqual(response.data['detail'], '3 facture(s) mise(s) en corbeille.')
+        self.assertEqual(Facture.objects.filter(id__in=[f1.id, f2.id, f3.id], is_active=False).count(), 3)
 
     def test_bulk_delete_skips_validated(self):
         """Bulk delete refuses to delete validated invoices."""
@@ -257,9 +258,11 @@ class BulkDeleteTests(APITestCase):
         response = self.client.post(url, {'ids': [f_val.id, f_brou.id]}, format='json')
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        # Only brouillon deleted
-        self.assertTrue(Facture.objects.filter(pk=f_val.pk).exists())
-        self.assertFalse(Facture.objects.filter(pk=f_brou.pk).exists())
+        # Only brouillon deleted (soft delete)
+        f_val.refresh_from_db()
+        f_brou.refresh_from_db()
+        self.assertTrue(f_val.is_active)
+        self.assertFalse(f_brou.is_active)
 
     def test_bulk_delete_no_ids(self):
         """Bulk delete with empty ID list returns 400."""

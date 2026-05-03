@@ -191,7 +191,9 @@ const InventairePrintTemplate: React.FC<InventairePrintTemplateProps> = ({ setti
                                             <>
                                                 <td className="py-1.5 px-2 text-right font-bold text-slate-900 pr-4">{item.stock}</td>
                                                 <td className="py-1.5 px-2 text-right text-slate-500 pr-4">{formatNumber(item.selling_price)}</td>
-                                                <td className="py-1.5 px-2 border-l border-slate-200 bg-slate-50/20"></td>
+                                                <td className="py-1.5 px-2 border-l border-slate-200 bg-slate-50/20 text-center font-bold text-sm">
+                                                    {item.quantite_physique !== undefined ? item.quantite_physique : ''}
+                                                </td>
                                             </>
                                         )}
                                     </tr>

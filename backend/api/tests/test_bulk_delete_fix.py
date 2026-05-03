@@ -27,8 +27,10 @@ class BulkDeleteFixTestCase(APITestCase):
         response = self.client.post(url, data, format='json')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data['status'], 'success')
-        self.assertEqual(Commande.objects.filter(id=prep_cmd.id).count(), 0)
-        self.assertEqual(Commande.objects.filter(id=clot_cmd.id).count(), 1)
+        prep_cmd.refresh_from_db()
+        clot_cmd.refresh_from_db()
+        self.assertFalse(prep_cmd.is_active)
+        self.assertTrue(clot_cmd.is_active)
 
     def test_bulk_delete_fails_if_only_closed_orders(self):
         """Test that bulk delete returns 400 if only closed orders are selected."""

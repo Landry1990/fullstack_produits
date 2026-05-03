@@ -23,6 +23,7 @@ export const InventaireListTable: React.FC<InventaireListTableProps> = ({
     selectedIds,
     onSelectAll,
     onSelect,
+    onEdit,
     onDelete,
     onShareWhatsApp,
     deleting = false,

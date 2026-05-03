@@ -31,12 +31,21 @@ class StockInventoryTest(TestCase):
         # 1. Create Inventory
         url_create = reverse('inventaire-list')
         res_create = self.client.post(url_create, {'description': 'Test Inv', 'inventory_type': 'RAYON'})
+        print(f"DEBUG: CREATE RESPONSE DATA = {res_create.data}")
         self.assertEqual(res_create.status_code, status.HTTP_201_CREATED)
         inv_id = res_create.data['id']
         
+        # Vérification manuelle en base
+        from api.models import Inventaire
+        inv_check = Inventaire.objects.get(id=inv_id)
+        print(f"DEBUG: DB CHECK - is_active={inv_check.is_active}, status={inv_check.status}")
+        
         # 2. Pre-populate (for p1's category)
         url_pop = reverse('inventaire-pre-populate', args=[inv_id])
+        print(f"DEBUG: URL POP = {url_pop}")
         res_pop = self.client.post(url_pop, {'rayon_id': self.p1.rayon.id})
+        if res_pop.status_code != 200:
+            print(f"DEBUG: RESPONSE CONTENT = {res_pop.content}")
         self.assertEqual(res_pop.status_code, status.HTTP_200_OK)
         
         # Check that a line was created for p1

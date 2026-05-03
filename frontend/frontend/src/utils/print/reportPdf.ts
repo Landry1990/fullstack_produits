@@ -162,7 +162,7 @@ export async function generateMonthlyReportPdf(
   let currentY = kpiY + 30;
 
   // 1. TVA
-  const tvaTableBody = data.ca_par_tva.map(tva => [
+  const tvaTableBody: any[][] = data.ca_par_tva.map(tva => [
     `${tva.taux}%`,
     fmt(tva.ca_ht),
     fmt(tva.montant_tva),

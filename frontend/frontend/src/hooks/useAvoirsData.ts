@@ -332,7 +332,7 @@ export function useAvoirsData(): UseAvoirsDataReturn {
                     quantity: ligne.quantity,
                     price: ligne.price,
                     lot: ligne.lot,
-                    date_expiration: ligne.date_expiration || null
+                    date_expiration: ligne.date_expiration || undefined
                 });
             });
 

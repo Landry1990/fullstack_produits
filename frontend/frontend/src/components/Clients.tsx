@@ -25,6 +25,8 @@ import {
 
 import type { Client, AyantDroit } from '../types';
 import ClientDepositModal from './clients/ClientDepositModal';
+import ClientDeleteWarningModal from './clients/ClientDeleteWarningModal';
+import BulkDeleteWarningModal from './clients/BulkDeleteWarningModal';
 import clientService from '../services/clientService';
 import { formatCurrency, normalizeNumberInput } from '../utils/formatters';
 import { clientSchema } from '../schemas/clientSchema';
@@ -75,6 +77,31 @@ export default function Clients() {
   const [isLoyaltyConfigOpen, setIsLoyaltyConfigOpen] = useState(false);
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
   const [isDepositModalOpen, setIsDepositModalOpen] = useState(false);
+  const [isDeleteWarningOpen, setIsDeleteWarningOpen] = useState(false);
+  const [deleteWarningData, setDeleteWarningData] = useState<{
+    clientName: string;
+    invoiceCount: number;
+    totalDue: number;
+    invoices: Array<{
+      id: number;
+      numero: string;
+      date: string;
+      total_ttc: number;
+      paid: number;
+      remainder: number;
+    }>;
+  } | null>(null);
+  const [isBulkDeleteWarningOpen, setIsBulkDeleteWarningOpen] = useState(false);
+  const [bulkDeleteWarningData, setBulkDeleteWarningData] = useState<{
+    clientCount: number;
+    clientsWithUnpaid: Array<{
+      id: number;
+      name: string;
+      invoice_count: number;
+      total_due: number;
+    }>;
+    totalDue: number;
+  } | null>(null);
   const [loyaltyThreshold, setLoyaltyThreshold] = useState<number>(0);
 
   // Purchase History State
@@ -90,7 +117,7 @@ export default function Clients() {
     return () => clearTimeout(timer);
   }, [searchTerm]);
 
-  const fetchClients = async () => {
+  const fetchClients = async (skipCache: boolean = false) => {
     setLoading(true);
     try {
       const data = await clientService.getAll({
@@ -98,7 +125,7 @@ export default function Clients() {
         page: currentPage,
         // @ts-ignore - Backend supports include_inactive
         include_inactive: showInactive
-      });
+      }, skipCache);
       
       if (data && 'results' in data) {
         setClients(data.results);
@@ -211,10 +238,13 @@ export default function Clients() {
             toast.success(t('clients:messages.create_success'));
         } else if (formData.id) {
             await clientService.update(formData.id, cleanData);
-            toast.success(t('clients:messages.update_success'));
+            console.log('[Clients] Création/MAJ effectuée, rechargement dans 500ms...');
+            setTimeout(() => {
+                console.log('[Clients] Rechargement des clients sans cache...');
+                fetchClients(true);
+            }, 500);
         }
         setIsFormModalOpen(false);
-        fetchClients();
     } catch (err: any) {
         toast.error(err.response?.data?.message || t('clients:messages.error_save'));
     } finally {
@@ -224,14 +254,56 @@ export default function Clients() {
 
   const handleDelete = async () => {
     if (!selectedClient) return;
+
+    // Vérifier d'abord si le client a des factures impayées
+    try {
+      const checkResult = await clientService.checkUnpaidInvoices(selectedClient.id);
+
+      if (checkResult.has_unpaid) {
+        // Afficher le modal d'avertissement et empêcher la suppression
+        setDeleteWarningData({
+          clientName: selectedClient.name,
+          invoiceCount: checkResult.count,
+          totalDue: checkResult.total_due,
+          invoices: checkResult.invoices
+        });
+        setIsDeleteWarningOpen(true);
+        return;
+      }
+    } catch (err) {
+      console.error('[Clients] Erreur lors de la vérification des factures:', err);
+      // En cas d'erreur, on continue avec la confirmation standard
+    }
+
+    // Si pas de factures impayées, procéder à la confirmation
     if (window.confirm(t('clients:modals.delete_confirm', { name: selectedClient.name }))) {
+        const deletedId = selectedClient.id;
+        console.log('[Clients] Début suppression client ID:', deletedId);
+
         try {
-            await clientService.delete(selectedClient.id);
-            toast.success(t('clients:messages.delete_success'));
+            // Suppression immédiate de l'état local (optimistic update)
+            setClients(prev => prev.filter(c => c.id !== deletedId));
+            setTotalCount(prev => prev - 1);
             setSelectedClient(null);
-            fetchClients();
-        } catch (err) {
-            toast.error(t('clients:messages.error_delete'));
+            console.log('[Clients] Client retiré du state local');
+
+            console.log('[Clients] Appel API delete...');
+            await clientService.delete(deletedId);
+            console.log('[Clients] API delete réussi !');
+            toast.success(t('clients:messages.delete_success'));
+
+            // Re-fetch en arrière-plan pour synchroniser
+            setTimeout(() => {
+                console.log('[Clients] Re-fetch après suppression...');
+                fetchClients(true);
+            }, 500);
+        } catch (err: any) {
+            console.error('[Clients] Delete error:', err);
+            console.error('[Clients] Error response:', err.response?.data);
+            toast.error(err.response?.data?.detail || t('clients:messages.error_delete'));
+            // En cas d'erreur, re-fetch pour restaurer l'état correct
+            console.log('[Clients] Restauration du state...');
+            fetchClients(true);
         }
     }
   };
@@ -241,8 +313,12 @@ export default function Clients() {
     try {
         const res = await clientService.toggleActive(selectedClient.id);
         toast.success(res.is_active ? t('clients:messages.status_active') : t('clients:messages.status_inactive'));
-        fetchClients();
         setSelectedClient({...selectedClient, is_active: res.is_active});
+        console.log('[Clients] Toggle active effectué, rechargement dans 500ms...');
+        setTimeout(() => {
+            console.log('[Clients] Rechargement des clients sans cache...');
+            fetchClients(true);
+        }, 500);
     } catch (err) {
         toast.error(t('clients:messages.error_status'));
     }
@@ -250,15 +326,64 @@ export default function Clients() {
 
   const handleBulkDelete = async () => {
     if (selectedIds.length === 0) return;
-    if (window.confirm(t('clients:modals.bulk_delete_confirm', { count: selectedIds.length }))) {
+
+    // Vérifier d'abord si des clients ont des factures impayées
+    try {
+      const checkResult = await clientService.bulkCheckUnpaid(selectedIds);
+
+      if (checkResult.has_unpaid) {
+        // Afficher le modal d'avertissement et empêcher la suppression
+        setBulkDeleteWarningData({
+          clientCount: selectedIds.length,
+          clientsWithUnpaid: checkResult.clients,
+          totalDue: checkResult.total_due
+        });
+        setIsBulkDeleteWarningOpen(true);
+        return;
+      }
+    } catch (err) {
+      console.error('[Clients] Erreur lors de la vérification bulk des factures:', err);
+      // En cas d'erreur, on continue avec la confirmation standard
+    }
+
+    // Si pas de factures impayées, procéder à la confirmation
+    console.log('[Clients] Bulk delete - Affichage confirmation...');
+    const confirmed = window.confirm(t('clients:modals.bulk_delete_confirm', { count: selectedIds.length }));
+    console.log('[Clients] Bulk delete - Confirmation:', confirmed);
+
+    if (confirmed) {
+        console.log('[Clients] Bulk delete - IDs à supprimer:', selectedIds);
+
+        // Suppression immédiate de l'état local (optimistic update)
+        console.log('[Clients] Bulk delete - Optimistic update...');
+        setClients(prev => prev.filter(c => !selectedIds.includes(c.id)));
+        setTotalCount(prev => prev - selectedIds.length);
+        console.log('[Clients] Bulk delete - State local mis à jour');
+
         try {
-            await clientService.bulkDelete(selectedIds);
+            console.log('[Clients] Bulk delete - Appel API bulkDelete...');
+            const result = await clientService.bulkDelete(selectedIds);
+            console.log('[Clients] Bulk delete - API succès:', result);
             toast.success(t('clients:messages.bulk_delete_success', { count: selectedIds.length }));
             setSelectedIds([]);
-            fetchClients();
-        } catch (err) {
-            toast.error(t('clients:messages.error_bulk_delete'));
+            console.log('[Clients] Bulk delete - selectedIds vidé');
+
+            // Re-fetch en arrière-plan pour synchroniser
+            console.log('[Clients] Bulk delete - Re-fetch dans 500ms...');
+            setTimeout(() => {
+                console.log('[Clients] Bulk delete - Exécution re-fetch...');
+                fetchClients(true);
+            }, 500);
+        } catch (err: any) {
+            console.error('[Clients] Bulk delete - Erreur:', err);
+            console.error('[Clients] Bulk delete - Error response:', err.response?.data);
+            toast.error(err.response?.data?.detail || t('clients:messages.error_bulk_delete'));
+            // En cas d'erreur, re-fetch pour restaurer l'état correct
+            console.log('[Clients] Bulk delete - Restauration du state...');
+            fetchClients(true);
         }
+    } else {
+        console.log('[Clients] Bulk delete - Annulé par l\'utilisateur');
     }
   };
 
@@ -600,6 +725,23 @@ export default function Clients() {
           onSuccess={fetchClients}
         />
       )}
+
+      <ClientDeleteWarningModal
+        isOpen={isDeleteWarningOpen}
+        onClose={() => setIsDeleteWarningOpen(false)}
+        clientName={deleteWarningData?.clientName || ''}
+        invoiceCount={deleteWarningData?.invoiceCount || 0}
+        totalDue={deleteWarningData?.totalDue || 0}
+        invoices={deleteWarningData?.invoices || []}
+      />
+
+      <BulkDeleteWarningModal
+        isOpen={isBulkDeleteWarningOpen}
+        onClose={() => setIsBulkDeleteWarningOpen(false)}
+        clientCount={bulkDeleteWarningData?.clientCount || 0}
+        clientsWithUnpaid={bulkDeleteWarningData?.clientsWithUnpaid || []}
+        totalDue={bulkDeleteWarningData?.totalDue || 0}
+      />
     </div>
   );
 }

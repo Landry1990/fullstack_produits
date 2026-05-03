@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { formatPrice, formatCurrency, safeFormatNumber, normalizeNumberInput } from '../formatters';
+import { formatCurrency, safeFormatNumber, normalizeNumberInput } from '../formatters';
 
 describe('formatPrice / formatCurrency', () => {
     it('formate les entiers avec séparateur de milliers', () => {

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Search, Calendar, Filter, User, Trash2, RefreshCw } from 'lucide-react';
+import { Search, Calendar, Filter, User, Trash2, RefreshCw, ArrowUpDown } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import api from '../../services/api';
 
@@ -15,6 +15,8 @@ interface InventaireFiltersProps {
         setStatusFilter: (status: string) => void;
         creatorFilter: string;
         setCreatorFilter: (creator: string) => void;
+        ordering: string;
+        setOrdering: (order: string) => void;
     };
     onDeleteDrafts?: () => void;
     onRefresh: () => void;
@@ -27,7 +29,8 @@ export const InventaireFilters: React.FC<InventaireFiltersProps> = ({ filters, o
         endDate, setEndDate, 
         searchTerm, setSearchTerm,
         statusFilter, setStatusFilter,
-        creatorFilter, setCreatorFilter
+        creatorFilter, setCreatorFilter,
+        ordering, setOrdering
     } = filters;
 
     const [users, setUsers] = useState<any[]>([]);
@@ -116,6 +119,25 @@ export const InventaireFilters: React.FC<InventaireFiltersProps> = ({ filters, o
                                     {u.first_name} {u.last_name} ({u.username})
                                 </option>
                             ))}
+                        </select>
+                    </div>
+
+                    {/* Ordering Filter */}
+                    <div className="relative">
+                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <ArrowUpDown className="h-4 w-4 text-base-content/40" />
+                        </div>
+                        <select
+                            value={ordering}
+                            onChange={(e) => setOrdering(e.target.value)}
+                            className="select select-bordered w-full pl-10 select-sm"
+                        >
+                            <option value="-date">{t('inventaire.filters.sort_date_desc', 'Plus récent')}</option>
+                            <option value="date">{t('inventaire.filters.sort_date_asc', 'Plus ancien')}</option>
+                            <option value="-total_ecart_valeur">{t('inventaire.filters.sort_valeur_desc', 'Écart valeur (-)')}</option>
+                            <option value="total_ecart_valeur">{t('inventaire.filters.sort_valeur_asc', 'Écart valeur (+)')}</option>
+                            <option value="-total_ecart_quantite">{t('inventaire.filters.sort_qty_desc', 'Écart qté (-)')}</option>
+                            <option value="total_ecart_quantite">{t('inventaire.filters.sort_qty_asc', 'Écart qté (+)')}</option>
                         </select>
                     </div>
 

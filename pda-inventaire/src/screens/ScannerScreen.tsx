@@ -1,4 +1,23 @@
-import React, { useState, useEffect, useRef } from 'react';
+/**
+ * ScannerScreen - Écran de scan pour l'inventaire PDA
+ *
+ * NOUVELLES FONCTIONNALITÉS UX:
+ * - ♾️ Scan continu: Auto-sauvegarde après scan (sans bouton)
+ * - ⚡ Mode rapide: Incrémente +1 automatiquement
+ * - 🔊 Sons: Feedback audio (succès/erreur/warning)
+ * - 📳 Vibrations: Patterns différenciés
+ * - ✅ Feedback visuel: Dernier produit sauvegardé
+ *
+ * INSTALLATION REQUISE:
+ *   npm install expo-av
+ *
+ * ASSETS AUDIO REQUIS (dossier src/assets/):
+ *   - beep_success.wav  (court, ~100ms)
+ *   - beep_error.wav    (plus long, 2 beeps)
+ *   - beep_warning.wav  (moyen, 1 beep)
+ */
+
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
   View,
   Text,
@@ -11,6 +30,7 @@ import {
   ActivityIndicator,
   Keyboard,
 } from 'react-native';
+import { Audio } from 'expo-av'; // npm install expo-av
 import { 
   Inventaire, 
   LigneInventaire, 
@@ -65,10 +85,23 @@ export default function ScannerScreen({ inventaire, onBack }: ScannerScreenProps
   const [newLotNumber, setNewLotNumber] = useState('');
   const [newLotExpiration, setNewLotExpiration] = useState('');
 
+  // UX Modes
+  const [continuousScanMode, setContinuousScanMode] = useState(false); // Scan continu auto-save
+  const [rapidCountMode, setRapidCountMode] = useState(false); // Mode +1 rapide
+  const [lastSavedProduct, setLastSavedProduct] = useState<string | null>(null); // Feedback dernier produit
+
   // Charger les lignes (Serveur + Local)
   useEffect(() => {
     loadLignes();
   }, [offlineLignes.length]); // Recharger quand le local change
+
+  // Masquer le feedback du dernier produit après 3 secondes
+  useEffect(() => {
+    if (lastSavedProduct) {
+      const timer = setTimeout(() => setLastSavedProduct(null), 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [lastSavedProduct]);
 
   // Focus automatique sur le champ de scan
   useEffect(() => {
@@ -120,35 +153,110 @@ export default function ScannerScreen({ inventaire, onBack }: ScannerScreenProps
     }
   };
 
+  // Sons de feedback
+  const playSound = useCallback(async (type: 'success' | 'error' | 'warning') => {
+    try {
+      const soundFiles = {
+        success: require('../assets/beep_success.wav'),
+        error: require('../assets/beep_error.wav'),
+        warning: require('../assets/beep_warning.wav'),
+      };
+      const { sound } = await Audio.Sound.createAsync(soundFiles[type]);
+      await sound.playAsync();
+      // Libérer la mémoire après lecture
+      setTimeout(() => sound.unloadAsync(), 1000);
+    } catch (e) {
+      // Fallback: vibration si son échoue
+      if (type === 'success') Vibration.vibrate(50);
+      else if (type === 'error') Vibration.vibrate([0, 100, 50, 100]);
+      else Vibration.vibrate([0, 50, 50, 50]);
+    }
+  }, []);
+
+  // Scan continu: auto-save après scan
+  const handleContinuousSave = async (product: Produit) => {
+    try {
+      const qty = rapidCountMode ? 1 : parseInt(quantity || '1', 10);
+      
+      await saveOffline(
+        { id: product.id, name: product.name, cip1: product.cip1 || undefined },
+        qty,
+        inventaire
+      );
+
+      // Feedback
+      setLastSavedProduct(`${product.name} (Qté: ${qty})`);
+      await playSound('success');
+      Vibration.vibrate([0, 30, 30, 30]);
+
+      // Reset pour scan suivant
+      setScannedProduct(null);
+      setQuantity('1');
+      setScanInput('');
+      
+      // Focus retour sur scan après 200ms
+      setTimeout(() => scanInputRef.current?.focus(), 200);
+    } catch (error) {
+      await playSound('error');
+      Alert.alert('Erreur', 'Impossible de sauvegarder');
+    }
+  };
+
   // Handler scan
   const handleScanSubmit = async () => {
     const code = scanInput.trim();
     if (!code || searching) return;
 
     setSearching(true);
-    Vibration.vibrate(50);
+    Vibration.vibrate(30);
     Keyboard.dismiss();
 
     try {
-      // Recherche produit : Essayer API si online, sinon ??? (Il faudrait un cache produits local)
-      // Pour l'instant, supposons que la recherche produit requiert internet 
-      // OU que le user a scanné un code déjà connu ?
-      // TODO: Implémenter cache produits pour recherche offline
-      
       const product = await produitService.getByCip(code);
       if (product) {
+        // Mode scan continu: auto-save immédiat (sans gestion de lots)
+        if (continuousScanMode && !product.use_lot_management) {
+          await handleContinuousSave(product);
+          return;
+        }
+
+        // Mode rapide sans gestion de lots: auto-save +1
+        if (rapidCountMode && !product.use_lot_management) {
+          await saveOffline(
+            { id: product.id, name: product.name, cip1: product.cip1 || undefined },
+            1,
+            inventaire
+          );
+          setLastSavedProduct(`${product.name} (Qté: 1)`);
+          await playSound('success');
+          Vibration.vibrate([0, 30, 30, 30]);
+          setScannedProduct(null);
+          setQuantity('1');
+          setScanInput('');
+          setTimeout(() => scanInputRef.current?.focus(), 100);
+          return;
+        }
+
+        // Mode normal: afficher le produit
         setScannedProduct(product);
-        setQuantity(''); // Vide par défaut pour éviter les nouveaux lots fantômes
+        setQuantity(rapidCountMode ? '1' : ''); // 1 par défaut en mode rapide
         setScanInput('');
-        Vibration.vibrate(100);
-        setTimeout(() => quantityInputRef.current?.focus(), 100);
+        await playSound('success');
+        Vibration.vibrate(50);
+        
+        if (!rapidCountMode) {
+          setTimeout(() => quantityInputRef.current?.focus(), 100);
+        }
       } else {
+        await playSound('error');
+        Vibration.vibrate([0, 100, 50, 100]);
         Alert.alert('Produit non trouvé', `Code: ${code}`);
         setScanInput('');
         setTimeout(() => scanInputRef.current?.focus(), 300);
       }
     } catch (error) {
       console.error('Erreur recherche produit:', error);
+      await playSound('error');
       if (!isOnline) {
          Alert.alert('Hors connexion', 'La recherche de nouveaux produits nécessite internet pour l\'instant.');
       } else {
@@ -228,23 +336,29 @@ export default function ScannerScreen({ inventaire, onBack }: ScannerScreenProps
       }
 
       if (savedCount === 0) {
+        await playSound('warning');
         Alert.alert('Attention', 'Veuillez saisir au moins une quantité positive.');
         setLoading(false);
         return;
       }
 
+      // Success feedback
+      setLastSavedProduct(`${scannedProduct.name} (${savedCount} ligne(s))`);
+      await playSound('success');
+      
       // Reset UI
       setScannedProduct(null);
-      setQuantity('1'); // Reset pour le prochain scan
+      setQuantity(rapidCountMode ? '1' : '1');
       setLotQuantities({});
       setNewLotNumber('');
       setNewLotExpiration('');
       setScanInput('');
-      Vibration.vibrate([0, 50, 50, 50]);
-      setTimeout(() => scanInputRef.current?.focus(), 200);
+      Vibration.vibrate([0, 30, 30, 30, 30, 30]); // Pattern: succès long
+      setTimeout(() => scanInputRef.current?.focus(), rapidCountMode ? 100 : 200);
 
     } catch (error: any) {
       console.error('Erreur ajout ligne:', error);
+      await playSound('error');
       Alert.alert('Erreur', 'Impossible de sauvegarder localement');
     } finally {
       setLoading(false);
@@ -336,8 +450,20 @@ export default function ScannerScreen({ inventaire, onBack }: ScannerScreenProps
   // Toggle Keyboard
   const toggleKeyboard = () => {
     setIsKeyboardEnabled(prev => !prev);
-    // Force blur/focus to update visibility if currently focused
     Keyboard.dismiss();
+  };
+
+  // Toggle Modes
+  const toggleContinuousMode = () => {
+    setContinuousScanMode(prev => !prev);
+    // Feedback
+    Vibration.vibrate(50);
+  };
+
+  const toggleRapidMode = () => {
+    setRapidCountMode(prev => !prev);
+    // Feedback
+    Vibration.vibrate(50);
   };
 
   return (
@@ -345,7 +471,7 @@ export default function ScannerScreen({ inventaire, onBack }: ScannerScreenProps
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={onBack} style={styles.backBtn}>
-          <Text style={styles.backBtnText}>� Quitter</Text>
+          <Text style={styles.backBtnText}> Quitter</Text>
         </TouchableOpacity>
         
         <View style={styles.headerTitles}>
@@ -356,6 +482,23 @@ export default function ScannerScreen({ inventaire, onBack }: ScannerScreenProps
         </View>
         
         <View style={styles.headerRight}>
+          {/* Mode Scan Continu */}
+          <TouchableOpacity 
+            onPress={toggleContinuousMode} 
+            style={[styles.modeBtn, continuousScanMode && styles.modeBtnActive]}
+          >
+            <Text style={styles.modeBtnText}>{continuousScanMode ? '♾️' : '⊘'}</Text>
+          </TouchableOpacity>
+
+          {/* Mode Rapide (+1) */}
+          <TouchableOpacity 
+            onPress={toggleRapidMode} 
+            style={[styles.modeBtn, rapidCountMode && styles.modeBtnActive]}
+          >
+            <Text style={styles.modeBtnText}>{rapidCountMode ? '+1⚡' : '+1'}</Text>
+          </TouchableOpacity>
+
+          {/* Keyboard Toggle */}
            <TouchableOpacity onPress={toggleKeyboard} style={[styles.exportBtn, { marginRight: 8, backgroundColor: isKeyboardEnabled ? '#4f46e5' : '#2d2d44' }]}>
             <Text style={styles.exportBtnText}>{isKeyboardEnabled ? '⌨️' : '⌨️⃠'}</Text>
           </TouchableOpacity>
@@ -368,6 +511,21 @@ export default function ScannerScreen({ inventaire, onBack }: ScannerScreenProps
           </View>
         </View>
       </View>
+
+      {/* Feedback dernier produit sauvegardé */}
+      {lastSavedProduct && (
+        <View style={styles.savedFeedbackBanner}>
+          <Text style={styles.savedFeedbackText}>✅ {lastSavedProduct}</Text>
+        </View>
+      )}
+
+      {/* Légende des modes actifs */}
+      {(continuousScanMode || rapidCountMode) && (
+        <View style={styles.modesIndicator}>
+          {continuousScanMode && <Text style={styles.modeIndicatorText}>♾️ Scan continu</Text>}
+          {rapidCountMode && <Text style={styles.modeIndicatorText}>⚡ Mode +1 rapide</Text>}
+        </View>
+      )}
 
       {/* Bandeau de Synchronisation si lignes en attente */}
       {offlineCount > 0 && (
@@ -1023,5 +1181,56 @@ const styles = StyleSheet.create({
     marginBottom: 20,
     textAlign: 'center',
     fontWeight: '500',
+  },
+
+  // Boutons de mode
+  modeBtn: {
+    padding: 8,
+    backgroundColor: '#2d2d44',
+    borderRadius: 8,
+    marginRight: 6,
+    borderWidth: 1,
+    borderColor: '#4b4b6a',
+  },
+  modeBtnActive: {
+    backgroundColor: '#22c55e',
+    borderColor: '#22c55e',
+  },
+  modeBtnText: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#fff',
+  },
+
+  // Feedback sauvegarde
+  savedFeedbackBanner: {
+    backgroundColor: 'rgba(34, 197, 94, 0.2)',
+    padding: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: '#22c55e',
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  savedFeedbackText: {
+    color: '#22c55e',
+    fontWeight: 'bold',
+    fontSize: 14,
+  },
+
+  // Indicateur de modes actifs
+  modesIndicator: {
+    backgroundColor: '#1e1e35',
+    padding: 8,
+    flexDirection: 'row',
+    justifyContent: 'center',
+    gap: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#2d2d44',
+  },
+  modeIndicatorText: {
+    color: '#4f46e5',
+    fontSize: 12,
+    fontWeight: '600',
   },
 });

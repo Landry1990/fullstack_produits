@@ -9,6 +9,7 @@ import BestCashierMetric from './BestCashierMetric'
 import { format } from 'date-fns'
 import { formatCurrency, normalizeNumberInput } from '../utils/formatters'
 import { useTranslation } from 'react-i18next'
+import { usePharmacySettings } from '../hooks/usePharmacySettings'
 
 registerLocale('fr', fr)
 
@@ -42,6 +43,7 @@ interface ClotureCaisse {
 
 export default function HistoriqueClotures() {
   const { t } = useTranslation(['cash_closings', 'common'])
+  const { settings: pharmacySettings } = usePharmacySettings()
   const currentLocale = t('common:locale', { defaultValue: 'fr-FR' })
   const currencySymbol = t(['common:currency_symbol', 'currency_symbol'], 'F')
   const [clotures, setClotures] = useState<ClotureCaisse[]>([])
@@ -196,7 +198,8 @@ export default function HistoriqueClotures() {
         total_ventes: cloture.total_ventes,
         total_entrees: cloture.total_entrees,
         total_sorties: cloture.total_sorties,
-        details_paiement: cloture.details_paiement
+        details_paiement: cloture.details_paiement,
+        pharmacy_name: pharmacySettings.pharmacy_name
       });
       
       win.document.write(`

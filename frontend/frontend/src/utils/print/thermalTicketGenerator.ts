@@ -69,7 +69,7 @@ export const generateThermalTicket = (
         `;
     });
 
-    const isCard = data.mode_reglement?.toLowerCase().includes('carte') || data.mode_reglement?.toLowerCase().includes('om');
+
 
     const ticketHtml = `
         <!DOCTYPE html>

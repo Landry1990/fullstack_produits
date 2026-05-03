@@ -25,6 +25,7 @@ import {
 import { useTranslation } from 'react-i18next';
 import { formatCurrency } from '../utils/formatters';
 import { useAuth } from '../context/AuthContext';
+import { useLicence } from '../context/LicenceContext';
 
 // Sub-components
 import PerformanceOverview from './dashboard/PerformanceOverview';
@@ -40,6 +41,7 @@ import api from '../services/api';
 export default function Dashboard() {
   const { t } = useTranslation(['dashboard', 'common']);
   const { getServerDate } = useAuth();
+  const { licence, daysRemaining } = useLicence();
   const { settings: pharmSettings } = usePharmacySettings();
   const [expirationMonths, setExpirationMonths] = useState(1); 
   const [activeTab, setActiveTab] = useState<'overview' | 'stock' | 'finance'>('overview');
@@ -174,10 +176,23 @@ export default function Dashboard() {
               <LayoutDashboard className="w-5 h-5" />
             </div>
             <div className="min-w-0">
-              <h1 className="text-base font-black text-base-content tracking-tight leading-none truncate">{t('title')}</h1>
-              <p className="text-[10px] font-bold text-base-content/40 uppercase tracking-widest mt-0.5 hidden sm:block">
-                {getServerDate().toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })}
-              </p>
+              <h1 className="text-base font-black text-base-content tracking-tight leading-none truncate">
+                {licence?.pharmacie_nom || t('title')}
+              </h1>
+              <div className="flex items-center gap-2 mt-0.5">
+                <p className="text-[10px] font-bold text-base-content/40 uppercase tracking-widest hidden sm:block">
+                  {licence?.pharmacien_nom || getServerDate().toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })}
+                </p>
+                {daysRemaining !== null && (
+                  <div className={`px-1.5 py-0.5 rounded text-[9px] font-black uppercase tracking-tighter ${
+                    daysRemaining <= 7 ? 'bg-red-500/10 text-red-500' : 
+                    daysRemaining <= 30 ? 'bg-amber-500/10 text-amber-500' : 
+                    'bg-emerald-500/10 text-emerald-500'
+                  }`}>
+                    {daysRemaining} JOURS RESTANTS
+                  </div>
+                )}
+              </div>
             </div>
           </div>
 

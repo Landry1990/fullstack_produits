@@ -892,7 +892,6 @@ class DashboardViewSet(viewsets.ViewSet):
             supplier_items.sort(key=lambda x: (not x['is_overdue'], x['due_date']))
 
             if supplier_items:
-                total_debt_global += supplier.solde_dette_annotated
 
                 data.append({
                     'id': supplier.id,

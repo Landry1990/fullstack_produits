@@ -80,6 +80,18 @@ class LigneInventaire(models.Model):
                 name='unique_inventaire_lot'
             )
         ]
+        indexes = [
+            # Performance: recherche par inventaire (très fréquent)
+            models.Index(fields=['inventaire', 'id'], name='idx_ligneinv_inventaire_id'),
+            # Performance: recherche par produit (merge, doublons)
+            models.Index(fields=['produit', 'inventaire'], name='idx_ligneinv_produit_inv'),
+            # Performance: recherche par lot (validation, scan)
+            models.Index(fields=['stock_lot', 'inventaire'], name='idx_ligneinv_lot_inv'),
+            # Performance: stats par écart
+            models.Index(fields=['inventaire', 'ecart'], name='idx_ligneinv_inv_ecart'),
+            # Performance: contrainte unique + filtre
+            models.Index(fields=['inventaire', 'stock_lot'], name='idx_ligneinv_inv_lot'),
+        ]
     
     def save(self, *args, **kwargs):
         self.ecart = self.quantite_physique - self.stock_theorique

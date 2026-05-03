@@ -1,6 +1,6 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { Search, Database } from 'lucide-react';
+import { Search, Database, Plus, CheckCircle2 } from 'lucide-react';
 import { useProductSearch } from '../../../hooks/inventaire/useProductSearch';
 
 interface InventaireProductSearchProps {
@@ -21,7 +21,9 @@ export const InventaireProductSearch: React.FC<InventaireProductSearchProps> = (
         showLotModal, setShowLotModal,
         selectedProductForLot, setSelectedProductForLot,
         availableLots, loadingLots, selectedLotIndex,
-        handleLotSelection, handleLotModalKeyDown
+        lotQuantities, setLotQuantities,
+        handleLotSelection,
+        handleMultiLotConfirm
     } = searchLogic;
 
     if (isReadOnly) return null;
@@ -44,13 +46,14 @@ export const InventaireProductSearch: React.FC<InventaireProductSearchProps> = (
     }, [showLotModal]);
 
     React.useEffect(() => {
-        if (showLotModal && selectedLotIndex >= 0) {
-            const el = document.getElementById(`lot-option-${selectedLotIndex}`);
-            if (el) {
-                el.scrollIntoView({ block: 'nearest', behavior: 'instant' });
+        if (showLotModal && !loadingLots) {
+            const firstInput = document.getElementById('lot-input-0') || document.getElementById('lot-input-global');
+            if (firstInput) {
+                (firstInput as HTMLInputElement).focus();
+                (firstInput as HTMLInputElement).select();
             }
         }
-    }, [selectedLotIndex, showLotModal]);
+    }, [showLotModal, loadingLots]);
 
     const getItemProps = (index: number) => ({
         className: index === selectedItemIndex ? 'bg-primary text-primary-content shadow-lg shadow-primary/20 scale-[1.01]' : 'hover:bg-base-200'
@@ -142,113 +145,157 @@ export const InventaireProductSearch: React.FC<InventaireProductSearchProps> = (
                             </p>
                         </div>
                     </div>
-                
-                    <div 
-                        ref={lotModalRef}
-                        className="p-4 bg-base-200 max-h-[60vh] overflow-y-auto outline-none focus:ring-2 focus:ring-primary/20" 
-                        onKeyDown={handleLotModalKeyDown} 
-                        tabIndex={0}
-                    >
-                        {loadingLots ? (
-                            <div className="flex flex-col items-center justify-center py-12 gap-4">
-                                <span className="loading loading-spinner loading-lg text-primary"></span>
-                                <p className="text-sm text-base-content/60 font-medium animate-pulse">{t('inventaire.lot_modal.loading')}</p>
-                            </div>
-                        ) : availableLots.length === 0 ? (
-                            <div className="flex flex-col items-center justify-center py-12 gap-3 text-center px-6">
-                                <div className="w-16 h-16 rounded-full bg-base-100 flex items-center justify-center mb-2 shadow-sm border border-base-300">
-                                    <Database className="h-8 w-8 text-base-content/20" />
+                                        <div 
+                            ref={lotModalRef}
+                            className="p-4 bg-base-200 max-h-[60vh] overflow-y-auto outline-none focus:ring-2 focus:ring-primary/20" 
+                            onKeyDown={(e) => {
+                                if (e.key === 'Enter' && e.ctrlKey) {
+                                    handleMultiLotConfirm();
+                                }
+                            }}
+                            tabIndex={0}
+                        >
+                            {loadingLots ? (
+                                <div className="flex flex-col items-center justify-center py-12 gap-4">
+                                    <span className="loading loading-spinner loading-lg text-primary"></span>
+                                    <p className="text-sm text-base-content/60 font-medium animate-pulse">{t('inventaire.lot_modal.loading')}</p>
                                 </div>
-                                <h4 className="font-bold text-base-content text-lg">{t('inventaire.lot_modal.no_lots_title', 'Aucun lot disponible')}</h4>
-                                <p className="text-sm text-base-content/60 max-w-sm">
-                                    {t('inventaire.lot_modal.no_lots_desc', "Il n'y a actuellement aucun lot en stock pour ce produit. Vous pouvez soit créer un nouveau lot spécifiquement pour cet inventaire, soit inventorier le produit globalement.")}
-                                </p>
-                            </div>
-                        ) : (
-                            <div className="space-y-2">
-                                {availableLots.map((lot, idx) => (
-                                    <button
-                                        key={lot.id}
-                                        id={`lot-option-${idx}`}
-                                        onClick={() => handleLotSelection(lot.id)}
-                                        className={`w-full text-left p-4 rounded-xl transition-all border
-                                            ${idx === selectedLotIndex 
-                                                ? 'bg-primary text-primary-content border-primary shadow-lg scale-[1.02] z-10' 
-                                                : 'bg-base-100 hover:bg-base-50 border-base-300 hover:border-primary/30'}
-                                        `}
-                                    >
-                                        <div className="flex justify-between items-center">
-                                            <div>
-                                                <div className="font-bold font-mono text-lg">{lot.lot}</div>
-                                                <div className={`text-xs mt-1 ${idx === selectedLotIndex ? 'text-primary-content/70' : 'text-base-content/60'}`}>
-                                                    Exp: {lot.date_expiration ? new Date(lot.date_expiration).toLocaleDateString('fr-FR') : 'N/A'}
+                            ) : availableLots.length === 0 ? (
+                                <div className="flex flex-col items-center justify-center py-12 gap-3 text-center px-6">
+                                    <div className="w-16 h-16 rounded-full bg-base-100 flex items-center justify-center mb-2 shadow-sm border border-base-300">
+                                        <Database className="h-8 w-8 text-base-content/20" />
+                                    </div>
+                                    <h4 className="font-bold text-base-content text-lg">{t('inventaire.lot_modal.no_lots_title', 'Aucun lot disponible')}</h4>
+                                    <p className="text-sm text-base-content/60 max-w-sm">
+                                        {t('inventaire.lot_modal.no_lots_desc', "Il n'y a actuellement aucun lot en stock pour ce produit. Vous pouvez soit créer un nouveau lot spécifiquement pour cet inventaire, soit inventorier le produit globalement.")}
+                                    </p>
+                                </div>
+                            ) : (
+                                <div className="space-y-3">
+                                    {availableLots.map((lot, idx) => (
+                                        <div 
+                                            key={lot.id}
+                                            className={`flex items-center gap-4 p-4 rounded-xl border transition-all
+                                                ${idx === selectedLotIndex 
+                                                    ? 'bg-primary/5 border-primary shadow-sm' 
+                                                    : 'bg-base-100 border-base-300'}
+                                            `}
+                                        >
+                                            <div className="flex-1 min-w-0">
+                                                <div className="font-bold font-mono text-base text-base-content">{lot.lot}</div>
+                                                <div className="text-[10px] text-base-content/50 mt-0.5">
+                                                    Exp: {lot.date_expiration ? new Date(lot.date_expiration).toLocaleDateString('fr-FR') : 'N/A'} • {lot.quantity_remaining} u.
                                                 </div>
                                             </div>
-                                            <div className="text-right">
-                                                <div className="text-sm font-bold">
-                                                    {lot.quantity_remaining} {t('common:units_short', 'unités')}
-                                                </div>
+                                            
+                                            <div className="w-24">
+                                                <input 
+                                                    id={`lot-input-${idx}`}
+                                                    type="number"
+                                                    className="input input-bordered w-full h-10 text-center font-mono font-bold text-sm rounded-lg focus:border-primary focus:ring-2 focus:ring-primary/20"
+                                                    value={lotQuantities[lot.id.toString()] ?? ''}
+                                                    onChange={e => setLotQuantities(prev => ({ ...prev, [lot.id.toString()]: e.target.value }))}
+                                                    onFocus={() => setSelectedLotIndex(idx)}
+                                                    onKeyDown={e => {
+                                                        if (e.key === 'Enter') {
+                                                            e.preventDefault();
+                                                            const nextInput = document.getElementById(`lot-input-${idx + 1}`) || document.getElementById('lot-input-global');
+                                                            if (nextInput) (nextInput as HTMLInputElement).focus();
+                                                            else handleMultiLotConfirm();
+                                                        } else if (e.key === 'ArrowDown') {
+                                                            e.preventDefault();
+                                                            const nextInput = document.getElementById(`lot-input-${idx + 1}`) || document.getElementById('lot-input-global');
+                                                            if (nextInput) (nextInput as HTMLInputElement).focus();
+                                                        } else if (e.key === 'ArrowUp') {
+                                                            e.preventDefault();
+                                                            const prevInput = document.getElementById(`lot-input-${idx - 1}`);
+                                                            if (prevInput) (prevInput as HTMLInputElement).focus();
+                                                        }
+                                                    }}
+                                                    placeholder="0"
+                                                />
                                             </div>
                                         </div>
-                                    </button>
-                                ))}
+                                    ))}
+                                </div>
+                            )}
+                            
+                            {/* Options supplémentaires */}
+                            <div className="mt-6 pt-6 border-t border-base-300 space-y-3">
+                                 {/* GLOBAL */}
+                                 <div className={`flex items-center gap-4 p-4 rounded-xl border transition-all ${selectedLotIndex === availableLots.length ? 'bg-secondary/5 border-secondary shadow-sm' : 'bg-base-100 border-base-300'}`}>
+                                    <div className="flex-1">
+                                        <div className="font-bold text-sm">{t('inventaire.lot_modal.btn_global')}</div>
+                                        <div className="text-[10px] opacity-50">{t('inventaire.lot_modal.desc_global')}</div>
+                                    </div>
+                                    <div className="w-24">
+                                        <input 
+                                            id="lot-input-global"
+                                            type="number"
+                                            className="input input-bordered w-full h-10 text-center font-mono font-bold text-sm rounded-lg focus:border-secondary"
+                                            value={lotQuantities['GLOBAL'] ?? ''}
+                                            onChange={e => setLotQuantities(prev => ({ ...prev, ['GLOBAL']: e.target.value }))}
+                                            onFocus={() => setSelectedLotIndex(availableLots.length)}
+                                            onKeyDown={e => {
+                                                if (e.key === 'Enter') {
+                                                    e.preventDefault();
+                                                    handleMultiLotConfirm();
+                                                } else if (e.key === 'ArrowUp') {
+                                                    e.preventDefault();
+                                                    const prevInput = document.getElementById(`lot-input-${availableLots.length - 1}`);
+                                                    if (prevInput) (prevInput as HTMLInputElement).focus();
+                                                }
+                                            }}
+                                            placeholder="0"
+                                        />
+                                    </div>
+                                 </div>
+
+                                 {/* NEW LOT */}
+                                 <button
+                                    onClick={() => handleLotSelection('NEW')}
+                                    className="w-full flex items-center justify-between p-3 rounded-xl border border-dashed border-base-300 hover:border-primary hover:bg-primary/5 transition-all group"
+                                >
+                                    <div className="text-left">
+                                        <div className="font-bold text-sm group-hover:text-primary transition-colors">{t('inventaire.lot_modal.btn_new')}</div>
+                                        <div className="text-[10px] opacity-40">{t('inventaire.lot_modal.desc_new')}</div>
+                                    </div>
+                                    <Plus className="h-4 w-4 opacity-30 group-hover:opacity-100 group-hover:text-primary transition-all" />
+                                </button>
                             </div>
-                        )}
-                        
-                        {/* Options supplémentaires toujours visibles en bas */}
-                        <div className="mt-4 pt-4 border-t border-base-300 space-y-2">
-                             <button
-                                id={`lot-option-${availableLots.length}`}
-                                onClick={() => handleLotSelection('GLOBAL')}
-                                className={`w-full text-left p-4 rounded-xl transition-all border
-                                    ${availableLots.length === selectedLotIndex 
-                                        ? 'bg-secondary text-secondary-content border-secondary shadow-lg scale-[1.02] z-10' 
-                                        : 'bg-base-100 hover:bg-base-50 border-base-300 hover:border-secondary/30'}
-                                `}
+                        </div>
+                    
+                        <div className="p-4 border-t border-base-200 bg-base-50 flex justify-between gap-3">
+                            <button 
+                                className="btn btn-ghost rounded-xl flex-1" 
+                                onClick={() => {
+                                    setShowLotModal(false);
+                                    setSelectedProductForLot(null);
+                                    setLotQuantities({});
+                                    focusInput();
+                                }}
                             >
-                                <div className="font-bold">{t('inventaire.lot_modal.btn_global')}</div>
-                                <div className={`text-xs mt-1 ${availableLots.length === selectedLotIndex ? 'text-secondary-content/70' : 'text-base-content/60'}`}>
-                                   {t('inventaire.lot_modal.desc_global')}
-                                </div>
+                                {t('common:cancel')}
                             </button>
-                              <button
-                                id={`lot-option-${availableLots.length + 1}`}
-                                onClick={() => handleLotSelection('NEW')}
-                                className={`w-full text-left p-4 rounded-xl transition-all border
-                                    ${availableLots.length + 1 === selectedLotIndex 
-                                        ? 'bg-accent text-accent-content border-accent shadow-lg scale-[1.02] z-10' 
-                                        : 'bg-base-100 hover:bg-base-50 border-base-300 hover:border-accent/30'}
-                                `}
+                            <button 
+                                className="btn btn-primary rounded-xl flex-[2] shadow-lg shadow-primary/20 gap-2 font-bold"
+                                onClick={handleMultiLotConfirm}
+                                disabled={loadingLots}
                             >
-                                <div className="font-bold">{t('inventaire.lot_modal.btn_new')}</div>
-                                <div className={`text-xs mt-1 ${availableLots.length + 1 === selectedLotIndex ? 'text-accent-content/70' : 'text-base-content/60'}`}>
-                                    {t('inventaire.lot_modal.desc_new')}
-                                </div>
+                                <CheckCircle2 className="h-5 w-5" />
+                                {t('common:confirm')} (Ctrl+Enter)
                             </button>
                         </div>
                     </div>
-                
-                    <div className="p-4 border-t border-base-200 bg-base-50 flex justify-end">
-                        <button 
-                            className="btn btn-ghost rounded-xl" 
-                            onClick={() => {
-                                setShowLotModal(false);
-                                setSelectedProductForLot(null);
-                                focusInput();
-                            }}
-                        >
-                            {t('common:cancel')} (Esc)
-                        </button>
-                    </div>
-                </div>
-                <form method="dialog" className="modal-backdrop">
-                    <button onClick={() => {
-                        setShowLotModal(false);
-                        setSelectedProductForLot(null);
-                        focusInput();
-                    }}>{t('common:actions.close', 'close')}</button>
-                </form>
-            </dialog>
+                    <form method="dialog" className="modal-backdrop">
+                        <button onClick={() => {
+                            setShowLotModal(false);
+                            setSelectedProductForLot(null);
+                            setLotQuantities({});
+                            focusInput();
+                        }}>{t('common:actions.close', 'close')}</button>
+                    </form>
+                </dialog>
             )}
         </div>
     );
