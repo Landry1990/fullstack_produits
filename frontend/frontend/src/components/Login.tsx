@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { useLicence } from '../context/LicenceContext';
 import api from '../services/api';
 import ZenithLogo from './ZenithLogo';
-import { User, Lock, ArrowRight, Loader2, AlertCircle, Monitor, ChevronDown, Shield, Eye, EyeOff } from 'lucide-react';
+import { User, Lock, ArrowRight, Loader2, AlertCircle, Monitor, ChevronDown, Shield, Eye, EyeOff, RefreshCcw } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import './Login.css';
 
@@ -15,8 +16,10 @@ export default function Login() {
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const { login } = useAuth();
+  const { licence } = useLicence();
   const navigate = useNavigate();
   const [users, setUsers] = useState<{username: string, full_name: string}[]>([]);
+  const [showResetButton, setShowResetButton] = useState(false);
 
   useEffect(() => {
     const fetchUsers = async () => {
@@ -34,6 +37,17 @@ export default function Login() {
       }
     };
     fetchUsers();
+  }, []);
+
+  // Raccourci secret pour afficher le bouton de reset licence (Ctrl + Shift + Alt + L)
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.ctrlKey && e.shiftKey && e.altKey && e.key.toLowerCase() === 'l') {
+        setShowResetButton(prev => !prev);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
 
   // Workstation naming logic
@@ -106,6 +120,17 @@ export default function Login() {
     }
   };
 
+  const handleResetLicence = async () => {
+    if (window.confirm("Êtes-vous sûr de vouloir supprimer la licence actuelle ? Le système se verrouillera à nouveau.")) {
+      try {
+        await api.delete('/licence/');
+        window.location.reload();
+      } catch (err) {
+        console.error('Error resetting licence:', err);
+      }
+    }
+  };
+
   const currentTime = new Date();
   const hours = currentTime.getHours();
   const greeting = hours < 12 ? 'Bonjour' : hours < 18 ? 'Bon après-midi' : 'Bonsoir';
@@ -119,8 +144,8 @@ export default function Login() {
             <ZenithLogo variant={1} size={80} />
           </div>
           
-          <h1 className="zl-brand-title">Zenith</h1>
-          <p className="zl-brand-tagline">{t('subtitle')}</p>
+          <h1 className="zl-brand-title">{licence?.pharmacie_nom || 'Zenith'}</h1>
+          <p className="zl-brand-tagline">{licence?.pharmacien_nom || t('subtitle')}</p>
 
           <div className="zl-features-grid">
             <div className="zl-feature-item">
@@ -156,8 +181,8 @@ export default function Login() {
               <div className="zl-logo-mobile-pulsing">
                 <ZenithLogo variant={1} size={48} />
               </div>
-              <h1>Zenith</h1>
-              <p>{t('subtitle')}</p>
+               <h1>{licence?.pharmacie_nom || 'Zenith'}</h1>
+              <p>{licence?.pharmacien_nom || t('subtitle')}</p>
             </div>
 
             <div style={{ position: 'relative', zIndex: isOpen ? 200 : 1 }}>
@@ -225,7 +250,7 @@ export default function Login() {
                               />
                             </div>
                             
-                            <div style={{ overflowY: 'auto', flex: 1 }} className="custom-scrollbar">
+                            <div style={{ overflowY: 'auto', flex: 1, maxHeight: '280px' }} className="custom-scrollbar">
                             {users
                               .filter(u => 
                                 u.full_name.toLowerCase().includes(searchTerm.toLowerCase()) || 
@@ -346,6 +371,21 @@ export default function Login() {
                 }}>
                   © {new Date().getFullYear()} Zenith OS • Cryptographie AES-256
                 </div>
+
+                {/* Reset Licence Button (Caché par défaut) */}
+                {showResetButton && (
+                  <div style={{ marginTop: '2rem', textAlign: 'center', animation: 'zenFadeIn 0.3s ease' }}>
+                    <button
+                      type="button"
+                      onClick={handleResetLicence}
+                      className="zl-reset-licence-btn"
+                      title="Réinitialiser la licence"
+                    >
+                      <RefreshCcw size={12} />
+                      <span>Réinitialiser la licence (Mode Admin)</span>
+                    </button>
+                  </div>
+                )}
               </form>
             </div>
           </div>

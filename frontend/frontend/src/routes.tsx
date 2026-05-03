@@ -8,6 +8,7 @@ import { setRouter } from './services/navigationService';
 import Login from './components/Login';
 import Layout from './components/Layout';
 import PrintPage from './components/printing/PrintPage';
+import LicenceScreen from './components/LicenceScreen';
 
 // ── Lazy-loaded pages ──
 const Dashboard = lazy(() => import('./components/Dashboard'));
@@ -80,6 +81,7 @@ const admin = (Component: React.ComponentType<any>) => ({
 export const router = createBrowserRouter([
   { path: '/', element: <Login /> },
   { path: '/login', element: <Login /> },
+  { path: '/licence', element: <LicenceScreen /> },
   {
     path: '/app',
     element: <ProtectedRoute />,

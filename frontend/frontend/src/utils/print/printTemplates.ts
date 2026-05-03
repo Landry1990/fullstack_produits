@@ -23,6 +23,7 @@ interface ClotureData {
   user_name?: string;
   username?: string;
   observation?: string | null;
+  pharmacy_name?: string;
 }
 
 interface PromisData {
@@ -59,7 +60,8 @@ export function generateClotureTemplate(
   return `
     <div style="font-family: sans-serif; font-size: 11px; color: #000; line-height: 1.3;">
       <div style="text-align: center; border-bottom: 2px solid #000; padding-bottom: 15px; margin-bottom: 15px;">
-        <div style="font-weight: 900; font-size: 14px; text-transform: uppercase; letter-spacing: 1px;">Rapport de Clôture</div>
+        <div style="font-weight: 900; font-size: 16px; text-transform: uppercase;">${cloture.pharmacy_name || 'PHARMACIE'}</div>
+        <div style="font-weight: 700; font-size: 11px; text-transform: uppercase; letter-spacing: 1px; margin-top: 4px;">Rapport de Clôture</div>
         <div style="margin-top: 5px; font-weight: 700; opacity: 0.7;">ID: #${cloture.id}</div>
       </div>
       
@@ -255,12 +257,14 @@ export function generateInventaireTemplate(
       ecart: number;
     }>;
     total_ecart_valeur?: number;
+    pharmacy_name?: string;
   }
-): string {
+) : string {
   return `
     <div style="font-family: sans-serif; font-size: 10px; color: #000; line-height: 1.2;">
       <div style="text-align: center; border-bottom: 2px solid #000; padding-bottom: 12px; margin-bottom: 12px;">
-        <div style="font-weight: 900; font-size: 14px; text-transform: uppercase;">Inventaire Stock</div>
+        <div style="font-weight: 900; font-size: 16px; text-transform: uppercase;">${inventaire.pharmacy_name || 'PHARMACIE'}</div>
+        <div style="font-weight: 800; font-size: 12px; text-transform: uppercase; margin-top: 4px;">Inventaire Stock</div>
         <div style="font-weight: 700; color: #4b5563; font-size: 11px; margin-top: 3px;">RAPPORT #${inventaire.id}</div>
       </div>
 

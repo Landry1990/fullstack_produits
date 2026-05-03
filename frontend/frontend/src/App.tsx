@@ -3,8 +3,10 @@ import { RouterProvider } from 'react-router-dom'
 import { AuthProvider } from './context/AuthContext'
 import { ConfirmProvider } from './hooks/useConfirm'
 import { PharmacySettingsProvider } from './context/PharmacySettingsContext'
+import { LicenceProvider } from './context/LicenceContext'
 import { Toaster } from 'react-hot-toast'
 import ErrorBoundary from './components/ErrorBoundary'
+import { LicenceNotifications } from './components/LicenceNotifications'
 import { router } from './routes'
 
 /**
@@ -22,23 +24,26 @@ export default function App() {
   return (
     <ErrorBoundary>
       <AuthProvider>
-        <PharmacySettingsProvider>
-          <ConfirmProvider>
-            <Toaster position="top-right" />
-            <Suspense fallback={
-              <div className="h-screen flex items-center justify-center bg-base-100">
-                <div className="flex flex-col items-center gap-4">
-                  <span className="loading loading-spinner loading-lg text-primary"></span>
-                  <p className="text-[10px] font-black uppercase tracking-[0.2em] text-base-content/40 animate-pulse">
-                    Chargement du système...
-                  </p>
+        <LicenceProvider>
+          <PharmacySettingsProvider>
+            <ConfirmProvider>
+              <Toaster position="top-right" />
+              <LicenceNotifications />
+              <Suspense fallback={
+                <div className="h-screen flex items-center justify-center bg-base-100">
+                  <div className="flex flex-col items-center gap-4">
+                    <span className="loading loading-spinner loading-lg text-primary"></span>
+                    <p className="text-[10px] font-black uppercase tracking-[0.2em] text-base-content/40 animate-pulse">
+                      Chargement du système...
+                    </p>
+                  </div>
                 </div>
-              </div>
-            }>
-              <RouterProvider router={router} />
-            </Suspense>
-          </ConfirmProvider>
-        </PharmacySettingsProvider>
+              }>
+                <RouterProvider router={router} />
+              </Suspense>
+            </ConfirmProvider>
+          </PharmacySettingsProvider>
+        </LicenceProvider>
       </AuthProvider>
     </ErrorBoundary>
   )

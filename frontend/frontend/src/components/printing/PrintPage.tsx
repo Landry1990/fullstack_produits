@@ -2,12 +2,14 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useSearchParams } from 'react-router-dom';
 import api from '../../services/api';
+import { useLicence } from '../../context/LicenceContext';
 import InvoiceTemplate, { type InvoiceData, type PharmacySettings } from './InvoiceTemplate';
 import InventairePrintTemplate, { type InventairePrintData } from './InventairePrintTemplate';
 import StockValuationTemplate, { type StockValuationData } from './StockValuationTemplate';
 
 const PrintPage: React.FC = () => {
     const { id } = useParams<{ id: string }>();
+    const { licence } = useLicence();
     const [invoiceData, setInvoiceData] = useState<InvoiceData | null>(null);
     const [settings, setSettings] = useState<PharmacySettings | null>(null);
     const [loading, setLoading] = useState(true);
@@ -42,6 +44,7 @@ const PrintPage: React.FC = () => {
 
                 const mergedSettings: PharmacySettings = {
                     ...pharmacySettingsRes.data,
+                    pharmacy_name: licence?.pharmacie_nom || pharmacySettingsRes.data.pharmacy_name,
                     primary_color: invoiceSettingsRes.data.primary_color || pharmacySettingsRes.data.primary_color,
                     logo: pharmacySettingsRes.data.logo || invoiceSettingsRes.data.logo,
                 };
@@ -62,8 +65,8 @@ const PrintPage: React.FC = () => {
                         ...res.data,
                         is_report: false
                     });
-                } else if (type === 'INVENTAIRE_REPORT') {
-                    // Specific inventory results (discrepancy report)
+                } else if (type === 'INVENTAIRE_REPORT' || type === 'INVENTAIRE_TAKE') {
+                    // Specific inventory results (discrepancy report or take sheet)
                     const res = await api.get(`inventaires/${id}/print_data/`);
                     setInventoryData(res.data);
                 } else if (type === 'STOCK_VALUATION') {

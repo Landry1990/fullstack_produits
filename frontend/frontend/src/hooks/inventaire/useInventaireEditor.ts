@@ -6,7 +6,7 @@ import type { Inventaire, LigneInventaire, InventoryStats, ProduitModel } from '
 
 export const useInventaireEditor = (
     fetchInventaires: () => void,
-    setViewMode: (mode: 'LIST' | 'CREATE' | 'EDIT') => void,
+    setViewMode: (mode: 'LIST' | 'CREATE' | 'EDIT' | 'AUDIT') => void,
     requireSudo: (action: (validatorId: number, password?: string) => Promise<void>, options?: { title?: string; message?: string; permission?: string }) => void,
     confirm: (options: { title?: string; message: string; variant?: 'success' | 'warning' | 'danger' | 'info'; confirmText?: string }) => Promise<boolean>
 ) => {

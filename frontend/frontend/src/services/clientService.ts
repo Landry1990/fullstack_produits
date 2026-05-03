@@ -8,8 +8,19 @@ export interface ClientFilters {
 }
 
 const clientService = {
-    getAll: async (filters: ClientFilters = {}): Promise<any> => {
-        const response = await api.get('clients/', { params: filters });
+    getAll: async (filters: ClientFilters = {}, skipCache: boolean = false): Promise<any> => {
+        const params: any = { ...filters };
+        if (skipCache) {
+            params._t = Date.now(); // Timestamp pour éviter le cache
+        }
+        const response = await api.get('clients/', {
+            params,
+            headers: skipCache ? {
+                'Cache-Control': 'no-cache, no-store, must-revalidate',
+                'Pragma': 'no-cache',
+                'Expires': '0'
+            } : undefined
+        });
         return response.data;
     },
 
@@ -29,7 +40,10 @@ const clientService = {
     },
 
     delete: async (id: number): Promise<void> => {
-        await api.delete(`clients/${id}/`);
+        console.log('[ClientService] DELETE request to:', `clients/${id}/`);
+        const response = await api.delete(`clients/${id}/`);
+        console.log('[ClientService] DELETE response:', response.status);
+        return response.data;
     },
 
     getAyantsDroit: async (clientId: number): Promise<AyantDroit[]> => {
@@ -55,7 +69,42 @@ const clientService = {
     },
 
     bulkDelete: async (ids: number[]): Promise<void> => {
-        await api.post('clients/bulk_delete/', { ids });
+        console.log('[ClientService] bulkDelete - IDs:', ids);
+        const response = await api.post('clients/bulk_delete/', { ids });
+        console.log('[ClientService] bulkDelete - Response:', response.status, response.data);
+        return response.data;
+    },
+
+    checkUnpaidInvoices: async (id: number): Promise<{
+        has_unpaid: boolean;
+        count: number;
+        total_due: number;
+        invoices: Array<{
+            id: number;
+            numero: string;
+            date: string;
+            total_ttc: number;
+            paid: number;
+            remainder: number;
+        }>;
+    }> => {
+        const response = await api.get(`clients/${id}/check_unpaid_invoices/`);
+        return response.data;
+    },
+
+    bulkCheckUnpaid: async (ids: number[]): Promise<{
+        has_unpaid: boolean;
+        count: number;
+        total_due: number;
+        clients: Array<{
+            id: number;
+            name: string;
+            invoice_count: number;
+            total_due: number;
+        }>;
+    }> => {
+        const response = await api.post('clients/bulk_check_unpaid/', { ids });
+        return response.data;
     },
     
     getDepotHistory: async (id: number): Promise<any> => {

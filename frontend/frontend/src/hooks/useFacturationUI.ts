@@ -190,10 +190,10 @@ export function useFacturationUI() {
 
     // --- TOTALS CALCULATION ---
     const calculateTotals = useCallback((
-        cartStats: { sousTotal: number, totalTva: number, totalTTC: number },
+        cartStats: { sousTotal: number, totalTva: number, totalTTC: number, totalBuyHT?: number },
         selectedClient: Client | null | undefined
     ): TotalsData => {
-        return calculateFactureTotals(cartStats, selectedClient, remiseGlobale, remiseMode);
+        return calculateFactureTotals({ ...cartStats, totalBuyHT: cartStats.totalBuyHT ?? 0 }, selectedClient, remiseGlobale, remiseMode);
     }, [remiseGlobale, remiseMode])
 
     return {

@@ -2,6 +2,7 @@ import { createContext, useContext, useState, useEffect, useCallback, type React
 import api from '../services/api';
 import { toast } from 'react-hot-toast';
 import { useAuth } from './AuthContext';
+import { useLicence } from './LicenceContext';
 
 export interface PharmacySettings {
   id: number;
@@ -79,6 +80,7 @@ export const PharmacySettingsProvider = ({ children }: { children: ReactNode }) 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { syncTime, isAuthenticated } = useAuth();
+  const { licence } = useLicence();
 
   const fetchSettings = useCallback(async () => {
     try {
@@ -117,8 +119,20 @@ export const PharmacySettingsProvider = ({ children }: { children: ReactNode }) 
     }
   }, [fetchSettings, isAuthenticated]);
 
+  // On fusionne les paramètres avec le nom de la pharmacie provenant de la licence
+  const effectiveSettings = {
+    ...settings,
+    pharmacy_name: licence?.pharmacie_nom || settings.pharmacy_name
+  };
+
   return (
-    <PharmacySettingsContext.Provider value={{ settings, loading, error, updateSettings, refetch: fetchSettings }}>
+    <PharmacySettingsContext.Provider value={{ 
+      settings: effectiveSettings, 
+      loading, 
+      error, 
+      updateSettings, 
+      refetch: fetchSettings 
+    }}>
       {children}
     </PharmacySettingsContext.Provider>
   );

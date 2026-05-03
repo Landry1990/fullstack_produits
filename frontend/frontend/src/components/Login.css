@@ -256,11 +256,11 @@
 
 .zl-field-label {
   display: block;
-  font-size: 0.75rem;
+  font-size: 0.85rem;
   font-weight: 600;
   color: #94a3b8;
-  margin-bottom: 0.75rem;
-  margin-left: 0;
+  margin-bottom: 0.85rem;
+  margin-left: 0.25rem;
 }
 
 .zl-input-container {
@@ -291,9 +291,9 @@
   background: rgba(0, 0, 0, 0.3);
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 1.25rem;
-  padding: 1.1rem 1.25rem 1.1rem 3.5rem;
+  padding: 1.25rem 1.25rem 1.25rem 3.5rem;
   color: #fff;
-  font-size: 0.95rem;
+  font-size: 1.1rem;
   font-weight: 500;
   font-family: inherit;
   outline: none;
@@ -579,7 +579,22 @@
   }
 }
 
-/* Dark Scrollbar */
+/* Custom Scrollbar Styles */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 10px;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(16, 185, 129, 0.3);
+  border-radius: 10px;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(16, 185, 129, 0.5);
+}
+
 .zl-dropdown-overlay::-webkit-scrollbar {
   width: 5px;
 }
@@ -589,4 +604,35 @@
 .zl-dropdown-overlay::-webkit-scrollbar-thumb {
   background: rgba(255, 255, 255, 0.1);
   border-radius: 5px;
+}
+
+/* ─── Reset Licence Button ─── */
+.zl-reset-licence-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: none;
+  border: none;
+  color: #475569;
+  font-size: 0.7rem;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0.5rem 1rem;
+  border-radius: 0.5rem;
+  transition: all 0.2s ease;
+  opacity: 0.5;
+}
+
+.zl-reset-licence-btn:hover {
+  opacity: 1;
+  color: #94a3b8;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.zl-reset-licence-btn svg {
+  transition: transform 0.5s ease;
+}
+
+.zl-reset-licence-btn:hover svg {
+  transform: rotate(180deg);
 }

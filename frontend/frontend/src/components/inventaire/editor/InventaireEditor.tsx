@@ -31,6 +31,7 @@ export const InventaireEditor: React.FC<InventaireEditorProps> = ({
     const fileInputRef = React.useRef<HTMLInputElement>(null);
     
     const [activeTab, setActiveTab] = React.useState<'ENTRY' | 'ANALYSIS'>('ENTRY');
+    const [printGroupBy, setPrintGroupBy] = React.useState<'rayon' | 'forme' | 'groupe'>('rayon');
 
     const {
         lignes, setLignes,
@@ -120,14 +121,26 @@ export const InventaireEditor: React.FC<InventaireEditorProps> = ({
                       </button>
                   </div>
 
-                  <button 
-                    className="btn btn-primary rounded-xl px-6 gap-2 shadow-lg shadow-primary/20" 
-                    onClick={() => activeInventaire && generateEtatPDF(activeInventaire)}
-                    disabled={!activeInventaire?.id}
-                  >
-                    <Download className="h-5 w-5" />
-                    {t('inventaire.detail.print')}
-                  </button>
+                  <div className="flex items-center gap-1">
+                    <select 
+                      value={printGroupBy}
+                      onChange={(e) => setPrintGroupBy(e.target.value as any)}
+                      className="select select-bordered select-sm rounded-xl text-[10px] font-bold uppercase h-10"
+                      title={t('inventaire.detail.print_group_by', 'Regrouper par')}
+                    >
+                      <option value="rayon">{t('inventaire.detail.group_rayon', 'Par Rayon')}</option>
+                      <option value="forme">{t('inventaire.detail.group_forme', 'Par Forme')}</option>
+                      <option value="groupe">{t('inventaire.detail.group_groupe', 'Par Groupe')}</option>
+                    </select>
+                    <button 
+                      className="btn btn-primary rounded-xl px-4 gap-2 shadow-lg shadow-primary/20 h-10 min-h-0" 
+                      onClick={() => activeInventaire && generateEtatPDF(activeInventaire, printGroupBy)}
+                      disabled={!activeInventaire?.id}
+                    >
+                      <Download className="h-4 w-4" />
+                      <span className="hidden sm:inline">{t('inventaire.detail.print')}</span>
+                    </button>
+                  </div>
 
                   {!isReadOnly && activeInventaire && (
                     <div className="flex gap-2">
@@ -231,7 +244,7 @@ export const InventaireEditor: React.FC<InventaireEditorProps> = ({
                 inventoryStats && activeInventaire && (
                     <InventaireAnalysisTab 
                         inventoryStats={inventoryStats}
-                        handlePrintEcartsFrontend={() => activeInventaire && generateEcartsPDF(activeInventaire)}
+                        handlePrintEcartsFrontend={() => activeInventaire && generateEcartsPDF(activeInventaire, printGroupBy)}
                     />
                 )
             )}
