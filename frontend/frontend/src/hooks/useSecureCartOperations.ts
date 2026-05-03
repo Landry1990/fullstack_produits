@@ -1,5 +1,4 @@
 import { useCallback } from 'react'
-import { toast } from 'react-hot-toast'
 import type { LigneFacture } from '../types'
 
 export interface UseSecureCartOperationsOptions {

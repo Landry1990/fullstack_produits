@@ -16,6 +16,7 @@
     "@tanstack/react-query": "^5.90.20",
     "axios": "^1.13.4",
     "expo": "~54.0.32",
+    "expo-av": "~15.0.0",
     "expo-barcode-scanner": "^13.0.1",
     "expo-camera": "^17.0.10",
     "expo-file-system": "~19.0.21",

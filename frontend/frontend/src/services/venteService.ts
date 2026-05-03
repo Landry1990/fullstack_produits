@@ -78,7 +78,7 @@ const venteService = {
         return response.data;
     },
 
-    finaliser: async (data: SaleCompletionParams & { image_ordonnance?: File | null }): Promise<Facture> => {
+    finaliser: async (data: any): Promise<Facture> => {
         // Handle images/files using FormData
         if (data.image_ordonnance instanceof File) {
             const formData = new FormData();
@@ -93,8 +93,8 @@ const venteService = {
         return response.data;
     },
 
-    modifier: async (id: number, data: Partial<SaleCompletionParams>): Promise<Facture> => {
-        const response = await api.post<Facture>(`factures/${id}/modifier/`, data);
+    modifier: async (id: number, data: any): Promise<{ facture: Facture, difference: number }> => {
+        const response = await api.post<{ facture: Facture, difference: number }>(`factures/${id}/modifier/`, data);
         return response.data;
     }
 };

@@ -1,6 +1,7 @@
 import { NavLink, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useSidebar } from '../context/SidebarContext';
+import { useLicence } from '../context/LicenceContext';
 import ZenithLogo from './ZenithLogo';
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -11,6 +12,7 @@ import { LogOut, ChevronLeft, ChevronRight, ChevronDown, Menu, X } from 'lucide-
 export default function Sidebar() {
   const { t } = useTranslation(['sidebar', 'common']);
   const { user, logout } = useAuth();
+  const { licence } = useLicence();
   const { isOpen, isCollapsed, toggleSidebar, closeSidebar, toggleCollapse } = useSidebar();
   const location = useLocation();
   const [openMenu, setOpenMenu] = useState<string | null>(null);
@@ -289,8 +291,12 @@ export default function Sidebar() {
           </div>
           {!isCollapsed && (
             <div className="min-w-0 flex-1">
-              <h1 className="text-base font-black text-white tracking-widest uppercase leading-none">Zenith</h1>
-              <p className="text-[9px] font-bold text-emerald-400/70 uppercase tracking-[0.2em] mt-0.5 truncate">{t('app_subtitle')}</p>
+              <h1 className="text-base font-black text-white tracking-widest uppercase leading-none truncate">
+                {licence?.pharmacie_nom || 'Zenith'}
+              </h1>
+              <p className="text-[9px] font-bold text-emerald-400/70 uppercase tracking-[0.2em] mt-0.5 truncate">
+                {licence?.pharmacien_nom || t('app_subtitle')}
+              </p>
             </div>
           )}
           {/* Collapse button desktop */}

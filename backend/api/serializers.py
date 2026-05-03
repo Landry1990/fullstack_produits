@@ -49,6 +49,18 @@ class ConfigurationObjectifsSerializer(serializers.ModelSerializer):
         instance.save()
         return instance
 
+class PromotionSerializer(serializers.ModelSerializer):
+    """Serializer pour la gestion des promotions"""
+    products_count = serializers.IntegerField(source='products.count', read_only=True)
+    rayons_count = serializers.IntegerField(source='rayons.count', read_only=True)
+    discount_type_display = serializers.CharField(source='get_discount_type_display', read_only=True)
+    pack_items = PromotionPackItemSerializer(many=True, required=False)
+    
+    class Meta:
+        model = Promotion
+        fields = '__all__'
+        read_only_fields = ['is_active', 'created_at', 'updated_at']
+
     def create(self, validated_data):
         pack_items_data = validated_data.pop('pack_items', [])
         products = validated_data.pop('products', [])
@@ -98,9 +110,18 @@ class ProfileSerializer(serializers.ModelSerializer):
         ]
 
 class InvoiceSettingsSerializer(serializers.ModelSerializer):
+    company_name = serializers.SerializerMethodField()
+
     class Meta:
         model = InvoiceSettings
         fields = '__all__'
+
+    def get_company_name(self, obj):
+        from .utils_licence import valider_licence_systeme
+        valide, msg, payload = valider_licence_systeme()
+        if valide and payload and payload.get('pharmacie_nom'):
+            return payload.get('pharmacie_nom')
+        return obj.company_name
 
 class LoyaltySettingSerializer(serializers.ModelSerializer):
     class Meta:
@@ -110,9 +131,18 @@ class LoyaltySettingSerializer(serializers.ModelSerializer):
 
 
 class PharmacySettingsSerializer(serializers.ModelSerializer):
+    pharmacy_name = serializers.SerializerMethodField()
+
     class Meta:
         model = PharmacySettings
         fields = '__all__'
+
+    def get_pharmacy_name(self, obj):
+        from .utils_licence import valider_licence_systeme
+        valide, msg, payload = valider_licence_systeme()
+        if valide and payload and payload.get('pharmacie_nom'):
+            return payload.get('pharmacie_nom')
+        return obj.pharmacy_name
 
 class PosteCaisseSerializer(serializers.ModelSerializer):
     ouvert_par_name = serializers.CharField(source='ouvert_par.username', read_only=True)
@@ -232,6 +262,7 @@ class RayonSerializer(serializers.ModelSerializer):
     class Meta:
         model = Rayon
         fields = '__all__'
+        read_only_fields = ['is_active', 'created_at', 'updated_at']
 
 class FournisseurSerializer(serializers.ModelSerializer):
     solde_dette = serializers.SerializerMethodField()
@@ -239,6 +270,7 @@ class FournisseurSerializer(serializers.ModelSerializer):
     class Meta:
         model = Fournisseur
         fields = '__all__'
+        read_only_fields = ['is_active', 'created_at', 'updated_at']
 
     def get_solde_dette(self, obj):
         solde = getattr(obj, 'solde_dette_annotated', None)
@@ -274,7 +306,7 @@ class ClientSerializer(serializers.ModelSerializer):
     class Meta:
         model = Client
         fields = '__all__'
-        read_only_fields = ['solde_depot', 'points_fidelite', 'pending_discount']
+        read_only_fields = ['is_active', 'created_at', 'updated_at', 'solde_depot', 'points_fidelite', 'pending_discount']
 
     @transaction.atomic
     def create(self, validated_data):
@@ -578,7 +610,7 @@ class CommandeSerializer(serializers.ModelSerializer):
         model = Commande
         fields = '__all__'
         # Supprimé 'status' des champs en lecture seule pour permettre les transitions PREP <-> ATT
-        read_only_fields = ['date', 'closed_by']
+        read_only_fields = ['date', 'closed_by', 'is_active']
         extra_kwargs = {
             'fournisseur': {
                 'required': False,
@@ -1029,6 +1061,7 @@ class InventaireSerializer(serializers.ModelSerializer):
     class Meta:
         model = Inventaire
         fields = '__all__'
+        read_only_fields = ['is_active', 'created_at', 'updated_at', 'reference']
 
     def get_total_valeur_theorique(self, obj):
         return sum(

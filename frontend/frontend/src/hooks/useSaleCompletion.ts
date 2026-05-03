@@ -114,14 +114,14 @@ export function useSaleCompletion(options: UseSaleCompletionOptions = {}): UseSa
             };
         });
 
-        const result = await venteService.modifier(params.modificationInvoiceId!, {
+        const modResult = await venteService.modifier(params.modificationInvoiceId!, {
             produits: produitsPayload,
             remise: params.totals.remiseMontant.toString(),
             client: params.useManualClient ? null : params.selectedClient,
             client_name_override: params.useManualClient ? params.manualClientName : null,
         });
 
-        const difference = result.difference;
+        const difference = modResult.difference;
         if (difference > 0) {
             toast.success(t('messages.additional_payment', { amount: formatNumber(Math.round(difference)) }));
         } else if (difference < 0) {
@@ -131,7 +131,7 @@ export function useSaleCompletion(options: UseSaleCompletionOptions = {}): UseSa
             toast.success(t('messages.same_total'));
         }
 
-        return { success: true, facture: result.facture };
+        return { success: true, facture: modResult.facture };
     }, [t]);
 
     /**
@@ -444,7 +444,7 @@ export function useSaleCompletion(options: UseSaleCompletionOptions = {}): UseSa
                     ? Math.max(p.montant, resteAEnregistrer)
                     : Math.min(p.montant, resteAEnregistrer);
                 const payload = {
-                    facture: facture.id,
+                    facture_id: facture.id,
                     mode_paiement: p.mode,
                     montant: montantReel,
                     reference: reference || null,
@@ -475,7 +475,7 @@ export function useSaleCompletion(options: UseSaleCompletionOptions = {}): UseSa
                             quantite: l.promisQuantity,
                             client_phone: params.promisPhone || l.promisPhone || '',
                             client_name: params.promisClientName || '',
-                            client: facture.client || null,
+                            client: facture.client || undefined,
                         })
                     ));
 

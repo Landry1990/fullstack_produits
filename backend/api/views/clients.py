@@ -70,7 +70,8 @@ class ClientViewSet(OptimizedSerializerMixin, viewsets.ModelViewSet):
         qs = super().get_queryset()
         # Par défaut, ne montrer que les clients actifs SEULEMENT pour la liste
         # Pour le détail/update/actions, on veut pouvoir accéder même aux inactifs
-        if self.action == 'list' and not self.request.query_params.get('include_inactive'):
+        include_inactive = self.request.query_params.get('include_inactive', '').lower() in ['true', '1', 'yes']
+        if self.action == 'list' and not include_inactive:
             qs = qs.filter(is_active=True)
         return qs
 
@@ -87,8 +88,12 @@ class ClientViewSet(OptimizedSerializerMixin, viewsets.ModelViewSet):
         })
 
     def perform_destroy(self, instance):
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.info(f'[ClientViewSet] Soft deleting client {instance.id} - {instance.name}')
         instance.is_active = False
         instance.save(update_fields=['is_active'])
+        logger.info(f'[ClientViewSet] Client {instance.id} soft deleted successfully, is_active={instance.is_active}')
 
     @action(detail=True, methods=['get'])
     def purchase_history(self, request, pk=None):
@@ -185,7 +190,7 @@ class ClientViewSet(OptimizedSerializerMixin, viewsets.ModelViewSet):
                 
                 return Response({
                     'status': 'success',
-                    'message': f'{count} clients supprimés avec succès.'
+                    'message': f'{count} clients mis en corbeille avec succès.'
                 })
         except ProtectedError as e:
             return Response({
@@ -194,6 +199,120 @@ class ClientViewSet(OptimizedSerializerMixin, viewsets.ModelViewSet):
             }, status=400)
         except Exception as e:
             return Response({'error': str(e)}, status=500)
+
+    @action(detail=False, methods=['post'])
+    def bulk_check_unpaid(self, request):
+        """
+        Vérifie si plusieurs clients ont des factures non réglées.
+        Retourne la liste des clients avec factures impayées.
+        """
+        ids = request.data.get('ids', [])
+        if not ids:
+            return Response({'detail': 'Aucun ID fourni.'}, status=400)
+        
+        from ..models import Facture, Caisse
+        from django.db.models import Sum, Value, DecimalField
+        from django.db.models.functions import Coalesce
+        
+        clients_with_unpaid = []
+        total_unpaid_all = Decimal('0.00')
+        
+        clients = Client.objects.filter(id__in=ids)
+        
+        for client in clients:
+            factures = Facture.objects.filter(
+                client=client,
+                status__in=['VAL', 'PAY'],
+                is_active=True
+            )
+            
+            client_unpaid_count = 0
+            client_total_due = Decimal('0.00')
+            
+            for facture in factures:
+                paid = Caisse.objects.filter(
+                    facture=facture,
+                    statut='completee'
+                ).exclude(
+                    mode_paiement='en_compte'
+                ).aggregate(
+                    total=Coalesce(Sum('montant'), Value(0, output_field=DecimalField()))
+                )['total']
+                
+                remainder = facture.total_ttc - paid
+                
+                if remainder > 0:
+                    client_unpaid_count += 1
+                    client_total_due += remainder
+            
+            if client_unpaid_count > 0:
+                clients_with_unpaid.append({
+                    'id': client.id,
+                    'name': client.name,
+                    'invoice_count': client_unpaid_count,
+                    'total_due': float(client_total_due)
+                })
+                total_unpaid_all += client_total_due
+        
+        return Response({
+            'has_unpaid': len(clients_with_unpaid) > 0,
+            'count': len(clients_with_unpaid),
+            'total_due': float(total_unpaid_all),
+            'clients': clients_with_unpaid
+        })
+
+    @action(detail=True, methods=['get'])
+    def check_unpaid_invoices(self, request, pk=None):
+        """
+        Vérifie si le client a des factures non réglées ou partiellement réglées.
+        Retourne le nombre de factures et le montant total dû.
+        """
+        client = self.get_object()
+        
+        # Factures avec solde non nul (VAL ou PAY avec reste à payer)
+        from ..models import Facture, Caisse
+        from django.db.models import Sum, F, Value, DecimalField
+        from django.db.models.functions import Coalesce
+        
+        unpaid_invoices = []
+        total_due = Decimal('0.00')
+        
+        factures = Facture.objects.filter(
+            client=client,
+            status__in=['VAL', 'PAY'],
+            is_active=True
+        )
+        
+        for facture in factures:
+            # Calculer les paiements complétés (hors "en_compte")
+            paid = Caisse.objects.filter(
+                facture=facture,
+                statut='completee'
+            ).exclude(
+                mode_paiement='en_compte'
+            ).aggregate(
+                total=Coalesce(Sum('montant'), Value(0, output_field=DecimalField()))
+            )['total']
+            
+            remainder = facture.total_ttc - paid
+            
+            if remainder > 0:
+                unpaid_invoices.append({
+                    'id': facture.id,
+                    'numero': facture.numero_facture,
+                    'date': facture.date,
+                    'total_ttc': float(facture.total_ttc),
+                    'paid': float(paid),
+                    'remainder': float(remainder)
+                })
+                total_due += remainder
+        
+        return Response({
+            'has_unpaid': len(unpaid_invoices) > 0,
+            'count': len(unpaid_invoices),
+            'total_due': float(total_due),
+            'invoices': unpaid_invoices
+        })
 
 class AyantDroitViewSet(viewsets.ModelViewSet):
     """API endpoint for ayants droit."""

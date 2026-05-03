@@ -83,7 +83,11 @@ api.interceptors.response.use(
                 }, 300);
             }
         } else if (status === 403) {
-            if (!requestUrl.includes('verify-password')) {
+            if (error.response?.data?.code_erreur === 'LICENCE_INVALIDE') {
+                if (window.location.pathname !== '/licence') {
+                    navigationService.navigate('/licence', { replace: true });
+                }
+            } else if (!requestUrl.includes('verify-password')) {
                 toast.error('Accès refusé : permissions insuffisantes', { id: 'access-denied' });
             }
         } else if (status >= 500) {

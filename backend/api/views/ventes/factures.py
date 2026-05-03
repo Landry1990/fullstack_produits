@@ -597,6 +597,7 @@ class FactureViewSet(OptimizedSerializerMixin, viewsets.ModelViewSet):
         factures_to_delete.update(is_active=False)
         
         return Response({
+            'status': 'success',
             'detail': f'{count} facture(s) mise(s) en corbeille.',
             'deleted_ids': deleted_ids
         })
@@ -626,6 +627,7 @@ class FactureViewSet(OptimizedSerializerMixin, viewsets.ModelViewSet):
             brouillons.update(is_active=False)
         
         return Response({
+            'status': 'success',
             'detail': f'{count} facture(s) brouillon mise(s) en corbeille avec succès.',
             'count': count
         }, status=status.HTTP_200_OK)
@@ -656,8 +658,8 @@ class FactureViewSet(OptimizedSerializerMixin, viewsets.ModelViewSet):
         if date_lte:
             base_qs = base_qs.filter(date__lte=date_lte)
 
-        # Base filters for related models - Added select_related to avoid N+1 during aggregation/access
-        vendeur_qs = Facture.objects.filter(status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE]).annotate(num_paiements=Count('paiements')).exclude(status=Facture.Status.VALIDEE, num_paiements=0).select_related('created_by')
+        # Base filters for related models - use get_queryset() to inherit montant_regle annotation
+        vendeur_qs = self.get_queryset().filter(status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE]).annotate(num_paiements=Count('paiements')).exclude(status=Facture.Status.VALIDEE, num_paiements=0).select_related('created_by')
         produit_qs = FactureProduit.objects.filter(facture__status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE]).annotate(num_paiements=Count('facture__paiements')).exclude(facture__status=Facture.Status.VALIDEE, num_paiements=0).select_related('produit')
 
         if date_gte:
@@ -671,9 +673,10 @@ class FactureViewSet(OptimizedSerializerMixin, viewsets.ModelViewSet):
             vendeur_qs = vendeur_qs.filter(date__lte=date_lte)
             produit_qs = produit_qs.filter(facture__date__lte=date_lte)
 
-        # 1. Top Vendeur (Chiffre d'Affaires)
+        # 1. Top Vendeur (Chiffre d'Affaires encaissé - aligné avec les totaux globaux)
+        # L'annotation montant_regle provient déjà de get_queryset()
         top_vendeur = vendeur_qs.values('created_by__username', 'created_by__first_name', 'created_by__last_name').annotate(
-            total_vente=Sum('total_ttc'),
+            total_vente=Sum('montant_regle'),
             count=Count('id')
         ).order_by('-total_vente').first()
         
@@ -700,7 +703,7 @@ class FactureViewSet(OptimizedSerializerMixin, viewsets.ModelViewSet):
                 'quantity': top_produit['total_qty']
             }
 
-        # 3. Totaux globaux
+        # 3. Totaux globaux (utiliser les annotations déjà présentes dans get_queryset)
         totaux = base_qs.aggregate(
             total_ttc=Sum('total_ttc'),
             total_regle=Sum('montant_regle'),
@@ -710,9 +713,9 @@ class FactureViewSet(OptimizedSerializerMixin, viewsets.ModelViewSet):
         result = {
             'top_vendeur': vendeur_data,
             'top_produit': produit_data,
-            'total_ttc': str((totaux['total_ttc'] or 0)),
-            'total_regle': str((totaux['total_regle'] or 0)),
-            'total_en_compte': str((totaux['total_en_compte'] or 0)),
+            'total_ttc': str(totaux['total_ttc'] or 0),
+            'total_regle': str(totaux['total_regle'] or 0),
+            'total_en_compte': str(totaux['total_en_compte'] or 0),
         }
 
         return Response(result)
@@ -731,10 +734,16 @@ class FactureViewSet(OptimizedSerializerMixin, viewsets.ModelViewSet):
         style_center = ParagraphStyle('Center', parent=styles['Normal'], alignment=1)
         style_left = ParagraphStyle('Left', parent=styles['Normal'], alignment=0)
 
+        from api.utils_licence import valider_licence_systeme
+        valide, msg, payload = valider_licence_systeme()
+        company_name = settings.company_name
+        if valide and payload and payload.get('pharmacie_nom'):
+            company_name = payload.get('pharmacie_nom')
+
         company_address_fmt = settings.company_address.replace('\n', '<br/>')
         
         company_block = [
-            Paragraph(f"<b>{settings.company_name}</b>", style_company),
+            Paragraph(f"<b>{company_name}</b>", style_company),
             Paragraph(company_address_fmt, style_normal)
         ]
         
@@ -854,7 +863,7 @@ class FactureViewSet(OptimizedSerializerMixin, viewsets.ModelViewSet):
         story.append(totals_table)
         
         doc.build(story, onFirstPage=lambda c, d: header_footer_facture(c, d, {
-            'name': settings.company_name,
+            'name': company_name,
             'address': company_address_fmt.replace('<br/>', '\n'),
             'tel': 'N/A'
         }, {

@@ -53,7 +53,7 @@ describe('finance utilities', () => {
     });
 
     describe('calculateFactureTotals', () => {
-        const stats = { sousTotal: 10000, totalTva: 1800, totalTTC: 11800 };
+        const stats = { sousTotal: 10000, totalTva: 1800, totalTTC: 11800, totalBuyHT: 0 };
 
         it('should apply global discount amount', () => {
             const totals = calculateFactureTotals(stats, null, '1800', 'montant');

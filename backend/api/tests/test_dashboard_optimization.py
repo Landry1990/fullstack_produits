@@ -6,6 +6,16 @@ from api.models import Fournisseur, Commande, CommandeProduit, PaiementFournisse
 from django.contrib.auth.models import User
 from decimal import Decimal
 
+from django.conf import settings
+from django.test import override_settings
+
+@override_settings(
+    DEBUG=True,
+    SILKY_AUTHENTICATION=False, 
+    SILKY_AUTHORISATION=False, 
+    SILKY_INTERCEPT_PERCENT=0,
+    MIDDLEWARE=[mw for mw in settings.MIDDLEWARE if 'silk' not in mw]
+)
 class DashboardOptimizationTest(TestCase):
     def setUp(self):
         self.client = APIClient()
@@ -67,5 +77,11 @@ class DashboardOptimizationTest(TestCase):
         view = DashboardViewSet.as_view({'get': 'supplier_debts'})
         
         # (Authentication and other middlewares are mostly skipped, but a minimal overhead remains)
-        with self.assertNumQueries(2):
-             view(request)
+        from django.db import connection
+        start_count = len(connection.queries)
+        view(request)
+        end_count = len(connection.queries)
+        
+        # Filter out EXPLAIN queries and other potential overhead from profiling tools
+        real_queries = [q for q in connection.queries[start_count:end_count] if not q['sql'].strip().upper().startswith('EXPLAIN')]
+        self.assertEqual(len(real_queries), 2, f"Expected 2 real queries, got {len(real_queries)}. Queries: {[q['sql'][:100] for q in real_queries]}")

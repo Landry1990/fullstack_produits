@@ -1,5 +1,5 @@
 import i18next from 'i18next';
-import { formatDate, formatDateTime } from '../dateUtils';
+import { formatDateTime } from '../dateUtils';
 import { formatNumber } from '../formatters';
 
 /**

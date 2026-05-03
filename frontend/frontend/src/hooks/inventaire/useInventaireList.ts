@@ -23,6 +23,7 @@ export const useInventaireList = () => {
     const [filterSearchTerm, setFilterSearchTerm] = useState('');
     const [filterStatus, setFilterStatus] = useState('');
     const [filterCreator, setFilterCreator] = useState('');
+    const [filterOrdering, setFilterOrdering] = useState('-date');
 
     const [selectedInventaireIds, setSelectedInventaireIds] = useState<Set<number>>(new Set());
 
@@ -45,6 +46,7 @@ export const useInventaireList = () => {
                 if (filterSearchTerm) params['search'] = filterSearchTerm;
                 if (filterStatus) params['status'] = filterStatus;
                 if (filterCreator) params['created_by'] = filterCreator;
+                if (filterOrdering) params['ordering'] = filterOrdering;
                 response = await api.get('inventaires/', { params, signal: controller.signal });
             }
 
@@ -83,7 +85,7 @@ export const useInventaireList = () => {
         } finally {
             setLoading(false);
         }
-    }, [filterStartDate, filterEndDate, filterSearchTerm, filterStatus, filterCreator, t]);
+    }, [filterStartDate, filterEndDate, filterSearchTerm, filterStatus, filterCreator, filterOrdering, t]);
 
     // Auto-fetch when filters change (debounced)
     useEffect(() => {
@@ -144,6 +146,7 @@ export const useInventaireList = () => {
         filterSearchTerm, setFilterSearchTerm,
         filterStatus, setFilterStatus,
         filterCreator, setFilterCreator,
+        filterOrdering, setFilterOrdering,
         // Selection
         selectedInventaireIds, setSelectedInventaireIds,
         toggleSelectInventaire, toggleSelectAllInventaires,

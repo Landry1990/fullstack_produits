@@ -62,6 +62,7 @@ MIDDLEWARE = [
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'api.middleware.MemoryWatchdogMiddleware',    # Surveille la consommation mémoire
+    'api.middleware_licence.LicenceMiddleware',   # Vigile de la Licence système
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]

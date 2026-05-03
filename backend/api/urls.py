@@ -35,6 +35,7 @@ from .views.omnisearch import GlobalSearchView
 from .views.stocks.reappro_history import ReapproSessionViewSet
 from .views.version import app_version
 from .views.corbeille import CorbeilleViewSet
+from .views.licence import LicenceStatusView, LicenceNotificationsView
 
 # Create a router and register our viewsets with it.
 router = DefaultRouter()
@@ -117,5 +118,7 @@ urlpatterns = [
     path('omnisearch/', GlobalSearchView.as_view(), name='global-search'),
     path('whatsapp/test/', WhatsAppTestView.as_view(), name='whatsapp-test'),
     path('version/', app_version, name='app-version'),
+    path('licence/', LicenceStatusView.as_view(), name='licence-status'),
+    path('licence/notifications/', LicenceNotificationsView.as_view(), name='licence-notifications'),
     path('', include(router.urls)),
 ]

@@ -4,14 +4,14 @@ import type { Inventaire } from '../../types';
 
 export const useInventairePDF = () => {
 
-    const generateEtatPDF = (activeInventaire: Inventaire) => {
+    const generateEtatPDF = (activeInventaire: Inventaire, groupBy: string = 'rayon') => {
         if (!activeInventaire?.id) return;
-        window.open(`/app/printing/${activeInventaire.id}?type=INVENTAIRE_TAKE`, '_blank');
+        window.open(`/app/printing/${activeInventaire.id}?type=INVENTAIRE_TAKE&group_by=${groupBy}`, '_blank');
     };
 
-    const generateEcartsPDF = (activeInventaire: Inventaire) => {
+    const generateEcartsPDF = (activeInventaire: Inventaire, groupBy: string = 'rayon') => {
         if (!activeInventaire?.id) return;
-        window.open(`/app/printing/${activeInventaire.id}?type=INVENTAIRE_REPORT`, '_blank');
+        window.open(`/app/printing/${activeInventaire.id}?type=INVENTAIRE_REPORT&group_by=${groupBy}`, '_blank');
     };
 
     return {

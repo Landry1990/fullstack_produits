@@ -64,6 +64,9 @@ from .promotions import Promotion, PromotionPackItem
 from .objectif import ObjectifCommercial
 from .configuration_objectifs import ConfigurationObjectifs
 
+# Licence
+from .licence import Licence
+
 __all__ = [
     # Users
     'Profile',
@@ -97,4 +100,6 @@ __all__ = [
     'ObjectifCommercial', 'ConfigurationObjectifs',
     # Sessions
     'UserDailySession',
+    # Licence
+    'Licence',
 ]

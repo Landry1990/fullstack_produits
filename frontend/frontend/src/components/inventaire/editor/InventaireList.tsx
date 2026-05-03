@@ -43,6 +43,7 @@ export const InventaireList: React.FC<InventaireListProps> = ({
         filterSearchTerm, setFilterSearchTerm,
         filterStatus, setFilterStatus,
         filterCreator, setFilterCreator,
+        filterOrdering, setFilterOrdering,
         selectedInventaireIds, toggleSelectInventaire, toggleSelectAllInventaires,
         deleting
     } = listLogic;
@@ -133,7 +134,9 @@ export const InventaireList: React.FC<InventaireListProps> = ({
                             statusFilter: filterStatus,
                             setStatusFilter: setFilterStatus,
                             creatorFilter: filterCreator,
-                            setCreatorFilter: setFilterCreator
+                            setCreatorFilter: setFilterCreator,
+                            ordering: filterOrdering,
+                            setOrdering: setFilterOrdering
                         }}
                         onRefresh={() => fetchInventaires()}
                     />

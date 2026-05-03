@@ -8,10 +8,7 @@ import {
   Download, 
   Calendar, 
   User, 
-  Layers, 
-  PackageCheck,
   Search,
-  ChevronRight,
   Eye
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
