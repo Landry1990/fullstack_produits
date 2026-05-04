@@ -29,6 +29,7 @@ const BADGE_DOT_ICONS: Record<BadgeType, string> = {
 };
 
 const VERSIONS: VersionMeta[] = [
+  { version: '2.9.0', badge: 'new',     itemTypes: ['new', 'new', 'new', 'new', 'new', 'improve', 'improve', 'fix', 'fix', 'fix'] },
   { version: '2.8.0', badge: 'new',     itemTypes: ['new', 'new', 'new', 'new', 'new', 'fix'] },
   { version: '2.7.0', badge: 'new',     itemTypes: ['new', 'new', 'improve', 'fix'] },
   { version: '2.6.0', badge: 'improve', itemTypes: ['new', 'new', 'new', 'improve', 'perf'] },
@@ -40,7 +41,7 @@ export default function Changelog() {
   const { t } = useTranslation('changelog');
   const { data: versionInfo } = useAppVersion();
   const [filter, setFilter] = useState<string>('all');
-  const [expandedVersion, setExpandedVersion] = useState<string | null>('2.8.0');
+  const [expandedVersion, setExpandedVersion] = useState<string | null>('2.9.0');
 
   const FILTER_OPTIONS = [
     { value: 'all',     label: t('filter_all') },

@@ -1,5 +1,6 @@
 """
 Validation d'inventaire avec support des lots et gestion des stocks.
+Utilise Optimistic Locking (pas de select_for_update) pour 12 postes simultanés.
 """
 from typing import Dict, List, Optional, Tuple, Any
 from django.db import transaction
@@ -7,6 +8,7 @@ from django.utils import timezone
 from rest_framework.response import Response
 from rest_framework import status
 from django.db.models import Sum
+import time
 
 from api.models import (
     Inventaire, LigneInventaire, Produit, StockLot,
@@ -14,6 +16,7 @@ from api.models import (
 )
 from api.audit_helpers import log_audit
 from api.sudo_utils import validate_sudo_mode
+from api.optimistic_locking import ConcurrentModificationError
 
 
 def validate_inventaire(
@@ -57,12 +60,14 @@ def validate_inventaire(
     product_ids = {l.produit_id for l in lignes if l.produit_id}
     lot_ids = {l.stock_lot_id for l in lignes if l.stock_lot_id}
 
-    # TRÈS IMPORTANT: order_by('id') pour éviter les deadlocks
-    locked_products_list = list(Produit.objects.select_for_update().filter(id__in=product_ids).order_by('id'))
-    locked_products = {p.id: p for p in locked_products_list}
+    # OPTIMISTIC LOCKING: Récupérer sans verrou, vérifier versions avant sauvegarde
+    products_list = list(Produit.objects.filter(id__in=product_ids))
+    products_map = {p.id: p for p in products_list}
+    initial_product_versions = {p.id: p.version for p in products_list}
 
-    locked_lots_list = list(StockLot.objects.select_for_update().filter(id__in=lot_ids).order_by('id'))
-    locked_lots = {l.id: l for l in locked_lots_list}
+    lots_list = list(StockLot.objects.filter(id__in=lot_ids))
+    lots_map = {l.id: l for l in lots_list}
+    initial_lot_versions = {l.id: l.version for l in lots_list}
 
     # Collections pour les opérations batch
     lots_to_update: Dict[int, StockLot] = {}
@@ -73,11 +78,11 @@ def validate_inventaire(
 
     # Phase 2 : Traitement en mémoire
     for ligne in lignes:
-        produit = locked_products.get(ligne.produit_id)
+        produit = products_map.get(ligne.produit_id)
         if not produit:
             continue
 
-        target_lot = locked_lots.get(ligne.stock_lot_id)
+        target_lot = lots_map.get(ligne.stock_lot_id)
         if not target_lot:
             lot_number = f"LOT-INV-{inventaire.id}"
             target_lot, created = StockLot.objects.get_or_create(
@@ -145,24 +150,38 @@ def validate_inventaire(
     if lignes:
         LigneInventaire.objects.bulk_update(lignes, ['ecart', 'pmp_snapshot', 'stock_lot'])
 
-    # 3b. Mise à jour des lots
+    # 3b. Mise à jour des lots avec incrémentation de version
     if lots_to_update:
-        StockLot.objects.bulk_update(lots_to_update.values(), ['quantity_remaining', 'quantity_reserved'])
+        for lot in lots_to_update.values():
+            lot.version += 1
+        StockLot.objects.bulk_update(lots_to_update.values(), ['quantity_remaining', 'quantity_reserved', 'version'])
 
     # 3c. Création des ajustements de stock
     if adjustments_to_create:
         StockAdjustment.objects.bulk_create(adjustments_to_create)
 
-    # Phase 4 : Recalcul Groupé des Produits (Performance optimale)
+    # Phase 4 : Recalcul Groupé des Produits avec Optimistic Locking
+    # Vérifier qu'aucun produit n'a été modifié entre-temps
+    current_versions = {p.id: p.version for p in Produit.objects.filter(id__in=product_ids)}
+    version_conflicts = [
+        pid for pid in initial_product_versions
+        if initial_product_versions[pid] != current_versions.get(pid, 0)
+    ]
+    if version_conflicts:
+        return Response({
+            'detail': f'Conflit de concurrence détecté sur {len(version_conflicts)} produits.',
+            'error_code': 'CONCURRENT_MODIFICATION'
+        }, status=status.HTTP_409_CONFLICT)
+    
     # On active la gestion par lots si nécessaire
-    prods_needing_lot_flag = [p for p in locked_products_list if not p.use_lot_management]
+    prods_needing_lot_flag = [p for p in products_list if not p.use_lot_management]
     if prods_needing_lot_flag:
         for p in prods_needing_lot_flag:
             p.use_lot_management = True
         Produit.objects.bulk_update(prods_needing_lot_flag, ['use_lot_management'])
 
     # Recalcul massif des stocks consolidés (produit = somme des lots)
-    for prod in locked_products_list:
+    for prod in products_list:
         # On agrège les lots pour ce produit
         results = StockLot.objects.filter(produit=prod).aggregate(
             total_remaining=Sum('quantity_remaining'),
@@ -182,8 +201,10 @@ def validate_inventaire(
     if mouvements_to_create:
         MouvementStock.objects.bulk_create(mouvements_to_create)
 
-    # 5b. Sauvegarde massive des produits
-    Produit.objects.bulk_update(locked_products_list, ['stock', 'stock_reserve'])
+    # 5b. Sauvegarde massive des produits avec incrémentation de version
+    for prod in products_list:
+        prod.version += 1
+    Produit.objects.bulk_update(products_list, ['stock', 'stock_reserve', 'version'])
 
     inventaire.status = Inventaire.Status.VALIDEE
     inventaire.save()

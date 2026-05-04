@@ -193,7 +193,6 @@ export function useSaleCompletion(options: UseSaleCompletionOptions = {}): UseSa
                         const effectiveQty = ligne.quantite - (ligne.isPromis ? (ligne.promisQuantity || 0) : 0);
                         // On autorise la vente si stock suffisant OU si une validation Sudo est présente (Vente forcée)
                         if (effectiveQty > 0 && realProd.stock < effectiveQty && !params.sudo_password) {
-                            console.log(`[useSaleCompletion] Blocage stock: ${realProd.name} (Stock: ${realProd.stock}, Demandé: ${effectiveQty})`);
                             const errorMsg = `⚠️ STOCK INSUFFISANT EN TEMPS RÉEL !\nLe produit "${ligne.produit.name}" a été vendu sur un autre poste.\nStock actuel disponible : ${realProd.stock}\nQuantité demandée : ${effectiveQty}`;
                             setError(errorMsg);
                             onError?.(errorMsg);

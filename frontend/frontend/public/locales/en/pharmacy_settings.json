@@ -58,6 +58,7 @@
     },
     "hints": {
         "pharmacy_name": "The official name as it will appear on invoices and receipts.",
+        "pharmacy_name_from_licence": "The pharmacy name is defined by the activation licence. To change it, contact your system administrator.",
         "niu": "Mandatory tax identifier for tax filing.",
         "rccm": "Trade register registration number.",
         "receipt_header": "Use \\n to go to a new line.",

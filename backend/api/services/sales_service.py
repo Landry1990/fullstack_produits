@@ -4,6 +4,8 @@ from django.db.utils import DataError
 from django.db.models import F, Sum, Q, Value, DecimalField
 from django.utils import timezone
 from django.core.cache import cache
+import time
+import logging
 
 from ..models import (
     Facture, FactureProduit, FactureProduitAllocation, Caisse, 
@@ -11,7 +13,10 @@ from ..models import (
     LigneOrdonnancier, MouvementStock, get_next_ticket_session,
     CouponMonnaie, DepotClient
 )
+from ..optimistic_locking import ConcurrentModificationError
 from .promotion_service import PromotionService
+
+logger = logging.getLogger(__name__)
 
 
 class SalesService:
@@ -222,9 +227,13 @@ class SalesService:
         if facture.remise > facture.total_ht:
             raise ValueError(f"La remise globale ({facture.remise} F) ne peut pas être supérieure au total des produits ({facture.total_ht} F).")
 
-        # 2. Lock products and check stock
+        # 2. OPTIMISTIC LOCKING: Récupérer produits sans verrou
+        # Les versions seront vérifiées avant sauvegarde
         product_ids = [item.produit_id for item in items]
-        locked_products = {p.id: p for p in Produit.objects.select_for_update().filter(id__in=product_ids).order_by('id')}
+        products_map = {p.id: p for p in Produit.objects.filter(id__in=product_ids)}
+        
+        # Sauvegarder les versions pour vérification avant commit
+        initial_versions = {pid: p.version for pid, p in products_map.items()}
         
         # PLAFOND DE CRÉDIT check
         if facture.client:
@@ -248,7 +257,7 @@ class SalesService:
         can_sell_negative = validation_user.is_superuser or (hasattr(validation_user, 'profile') and validation_user.profile.can_sell_negative_stock)
         
         for pid, total_qty in requested_map.items():
-            produit = locked_products.get(pid)
+            produit = products_map.get(pid)
             if not produit: continue
             
             promis_qty = promis_map.get(pid, 0)
@@ -262,20 +271,25 @@ class SalesService:
                 if not can_return:
                     raise ValueError(f"Permission de retour refusée pour {produit.name}.")
 
-        # 3. Lot Allocation (FIFO/FEFO)
+        # 3. Lot Allocation (FIFO/FEFO) avec Optimistic Locking
         lot_ids_to_lock = [item.stock_lot_id for item in items if item.stock_lot_id]
-        locked_lots_dict = {l.id: l for l in StockLot.objects.select_for_update().filter(id__in=lot_ids_to_lock).order_by('id')} if lot_ids_to_lock else {}
+        lots_map = {l.id: l for l in StockLot.objects.filter(id__in=lot_ids_to_lock)} if lot_ids_to_lock else {}
         
-        # Prepare FIFO queues
+        # Sauvegarder versions des lots
+        initial_lot_versions = {lid: l.version for lid, l in lots_map.items()}
+        
+        # Prepare FIFO queues (sans verrou - vérification à la fin)
         fifo_prods = [item.produit_id for item in items if item.quantity > 0 and not item.stock_lot_id]
         fifo_lots_queue = {}
+        fifo_lots_versions = {}
         if fifo_prods:
-            fifo_lots = StockLot.objects.select_for_update().filter(
+            fifo_lots = StockLot.objects.filter(
                 produit_id__in=fifo_prods,
                 quantity_remaining__gt=0
             ).order_by(F('date_expiration').asc(nulls_last=True), 'date_reception')
             for lot in fifo_lots:
                 fifo_lots_queue.setdefault(lot.produit_id, []).append(lot)
+                fifo_lots_versions[lot.id] = lot.version
 
         allocations_to_create = []
         items_to_update = []
@@ -283,14 +297,16 @@ class SalesService:
         prods_to_sync_from_lots = set()
         manual_stock_decrements = {}
 
+        lots_to_check_versions = {}  # Pour vérifier versions avant sauvegarde
+        
         for item in items:
-            produit = locked_products.get(item.produit_id)
+            produit = products_map.get(item.produit_id)
             lots_updated = False
             
             if item.quantity > 0:
                 qty_to_alloc = item.quantity
                 if item.stock_lot_id:
-                    target_lot = locked_lots_dict.get(item.stock_lot_id) or StockLot.objects.select_for_update().get(id=item.stock_lot_id)
+                    target_lot = lots_map.get(item.stock_lot_id)
                     if target_lot.quantity_remaining < qty_to_alloc:
                         raise ValueError(f"Stock insuffisant dans le lot {target_lot.lot}.")
                     
@@ -302,6 +318,7 @@ class SalesService:
                     if target_lot.quantity_free_remaining > 0:
                         target_lot.quantity_free_remaining -= min(qty_to_alloc, target_lot.quantity_free_remaining)
                     lots_to_update_set.add(target_lot)
+                    lots_to_check_versions[target_lot.id] = initial_lot_versions.get(target_lot.id, 1)
                     item.lot = target_lot.lot[:20] 
                     item.date_expiration = target_lot.date_expiration
                     items_to_update.append(item)

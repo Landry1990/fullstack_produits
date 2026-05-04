@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { Calendar, History, CheckCircle2, AlertCircle, ChevronRight, Trash2, Package, MessageCircle } from 'lucide-react';
 import type { Inventaire } from '../../types';
 import { formatCurrency } from '../../utils/formatters';
+import { formatDate } from '../../utils/dateUtils';
 
 interface InventaireListTableProps {
     inventaires: Inventaire[];
@@ -101,7 +102,7 @@ export const InventaireListTable: React.FC<InventaireListTableProps> = ({
                                     </span>
                                     <span className="text-xs text-base-content/60 flex items-center gap-1.5 mt-0.5">
                                         <Calendar className="w-3 h-3" />
-                                        {new Date(inv.date).toLocaleDateString('fr-FR')}
+                                        {formatDate(inv.date)}
                                     </span>
                                 </div>
                             </td>

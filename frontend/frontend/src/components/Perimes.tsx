@@ -17,6 +17,7 @@ import {
 } from 'lucide-react'
 import type { StockLot } from '../types'
 import { formatCurrency } from '../utils/formatters'
+import { formatDate } from '../utils/dateUtils'
 import SudoValidationModal from './common/SudoValidationModal'
 import { useSudo } from '../hooks/useSudo'
 import { usePrint } from '../hooks/usePrint'
@@ -272,7 +273,7 @@ export default function Perimes() {
       <div style="font-family: Arial, sans-serif; color: #333;">
         <h3 style="text-align: center; border-bottom: 2px solid #333; padding-bottom: 10px;">${t('stock:perimes.history.title')}</h3>
         <p style="text-align: center; font-size: 0.9em; margin-bottom: 20px;">
-          ${t('common:period')}: ${new Date(dateDebut).toLocaleDateString('fr-FR')} ${t('common:to').toLowerCase()} ${new Date(dateFin).toLocaleDateString('fr-FR')}
+          ${t('common:period')}: ${formatDate(dateDebut)} ${t('common:to').toLowerCase()} ${formatDate(dateFin)}
         </p>
         
         <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px; font-size: 0.85em;">
@@ -288,7 +289,7 @@ export default function Perimes() {
           <tbody>
             ${adjustments.map(adj => `
               <tr>
-                <td style="border: 1px solid #ddd; padding: 8px;">${new Date(adj.created_at).toLocaleDateString('fr-FR')}</td>
+                <td style="border: 1px solid #ddd; padding: 8px;">${formatDate(adj.created_at)}</td>
                 <td style="border: 1px solid #ddd; padding: 8px;">${adj.produit_name}</td>
                 <td style="border: 1px solid #ddd; padding: 8px;">${adj.lot_number || '-'}</td>
                 <td style="border: 1px solid #ddd; padding: 8px; text-align: right;">${Math.abs(adj.quantity_change)}</td>
@@ -809,7 +810,7 @@ export default function Perimes() {
                             <tbody>
                                 {adjustments.map((adj) => (
                                     <tr key={adj.id} className="hover:bg-base-50/50 transition-colors">
-                                        <td className="text-xs">{new Date(adj.created_at).toLocaleDateString('fr-FR')}</td>
+                                        <td className="text-xs">{formatDate(adj.created_at)}</td>
                                         <td>
                                             <div className="font-bold text-xs">{adj.produit_name}</div>
                                             <div className="text-[10px] opacity-40 font-mono">{adj.produit_cip}</div>

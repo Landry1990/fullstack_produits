@@ -1,5 +1,6 @@
 import { AlertTriangle, X, FileText, DollarSign } from 'lucide-react';
 import { formatCurrency } from '../../utils/formatters';
+import { formatDate } from '../../utils/dateUtils';
 
 interface Invoice {
   id: number;
@@ -100,7 +101,7 @@ export default function ClientDeleteWarningModal({
                         Facture #{invoice.numero || invoice.id}
                       </p>
                       <p className="text-xs text-base-content/50">
-                        {new Date(invoice.date).toLocaleDateString('fr-FR')}
+                        {formatDate(invoice.date)}
                       </p>
                     </div>
                     <div className="text-right">

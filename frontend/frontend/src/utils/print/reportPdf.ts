@@ -1,6 +1,7 @@
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { formatCurrency, formatDateFr } from '../formatters';
+import { getLocale } from '../dateUtils';
 import type { PharmacySettings } from '../../context/PharmacySettingsContext';
 
 interface RapportData {
@@ -93,7 +94,7 @@ export async function generateMonthlyReportPdf(
   const doc = new jsPDF('p', 'mm', 'a4');
   const pageWidth = doc.internal.pageSize.getWidth();
   const margin = 15;
-  const currentLocale = 'fr-FR';
+  const currentLocale = getLocale();
   const currencySymbol = settings.currency_symbol || 'FCFA';
 
   const fmt = (val: number) => {

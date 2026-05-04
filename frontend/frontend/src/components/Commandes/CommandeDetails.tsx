@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { Commande, Fournisseur, ProduitModel } from '../../types';
 import { formatCurrency, normalizeNumberInput } from '../../utils/formatters';
+import { formatDate } from '../../utils/dateUtils';
 
 interface CommandeDetailsProps {
   commande: Commande;
@@ -160,7 +161,7 @@ const CommandeDetails: React.FC<CommandeDetailsProps> = ({
         </div>
         <div>
           <div className="text-xs text-base-content/60 uppercase">{t('orders:details.date')}</div>
-          <div className="font-bold">{new Date(selectedCommande.date).toLocaleDateString('fr-FR')}</div>
+          <div className="font-bold">{formatDate(selectedCommande.date)}</div>
         </div>
         <div>
           <div className="text-xs text-base-content/60 uppercase">{t('orders:details.status')}</div>

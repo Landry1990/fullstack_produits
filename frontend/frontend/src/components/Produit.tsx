@@ -40,7 +40,6 @@ import { StockAdjustmentModal } from './products/modals/StockAdjustmentModal';
 import ImportProductsModal from './products/ImportProductsModal';
 
 export default function Produit() {
-  console.log('[Produit] Rendering component...');
   const confirm = useConfirm()
   const navigate = useNavigate()
   const location = useLocation()
@@ -116,23 +115,13 @@ export default function Produit() {
     }
   }, [location.state, productsData]);
 
-  console.log('[Produit] useProduits hook state:', { 
-    productsCount: productsData?.results?.length, 
-    loading, 
-    loadError 
-  });
-
   const { data: rayons = [] } = useRayons();
   const { data: fournisseurs = [] } = useFournisseurs();
   const { data: formes = [] } = useFormes();
   const { data: groupes = [] } = useGroupes();
   const { tvaList, loading: loadingTVA } = useTVA();
 
-  console.log('[Produit] Metadata loaded:', { 
-    rayons: rayons.length, 
-    fournisseurs: fournisseurs.length, 
-    loadingTVA 
-  });
+
 
   const produits = useMemo(() => productsData?.results || [], [productsData]);
   const totalCount = productsData?.count || 0;

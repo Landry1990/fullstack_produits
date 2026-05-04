@@ -404,234 +404,234 @@ class CommandeViewSet(MultiTermSearchMixin, OptimizedSerializerMixin, viewsets.M
         instance.save(update_fields=['is_active'])
 
     @action(detail=True, methods=['post'])
-    @transaction.atomic
     def cloturer(self, request, pk=None):
         """
-        Clôture une commande, met à jour le stock et calcule le PMP.
-        Utilise select_for_update pour empêcher les modifications concurrentes (ventes) pendant le calcul.
+        Clôture une commande avec Optimistic Locking (sans select_for_update).
+        Met à jour le stock et calcule le PMP avec vérification de versions.
         """
-        commande = self.get_object()
-        business_logger.info(f"[COMMANDE] Cloture demandee #{commande.id} par {request.user.username}")
-        if commande.status == Commande.Status.CLOTUREE:
-            business_logger.warning(f"[COMMANDE] Cloture refusee #{commande.id} - deja cloturee")
-            return Response({'detail': 'Cette commande est déjà clôturée.'}, status=status.HTTP_400_BAD_REQUEST)
+        from ...optimistic_locking import ConcurrentModificationError
+        from django.db import transaction
+        import time
+        
+        max_retries = 3
+        expected_versions = {}
+        
+        for attempt in range(max_retries):
+            try:
+                with transaction.atomic():
+                    commande = self.get_object()
+                    
+                    if commande.status == Commande.Status.CLOTUREE:
+                        return Response({'detail': 'Cette commande est déjà clôturée.'}, status=status.HTTP_400_BAD_REQUEST)
 
-        # Validation Sudo
-        validation_user, error_res = validate_sudo_mode(request, permission_attr='can_close_commande')
-        if error_res:
-             return error_res
-        # -------------------------
+                    # Validation Sudo
+                    validation_user, error_res = validate_sudo_mode(request, permission_attr='can_close_commande')
+                    if error_res:
+                        return error_res
 
-        # Enregistrer l'utilisateur qui clôture
-        commande.closed_by = request.user
-        commande.date_cloture = timezone.now()
+                    # Enregistrer l'utilisateur qui clôture
+                    commande.closed_by = request.user
+                    commande.date_cloture = timezone.now()
 
-        # Prefetch tous les produits de la commande en une seule requête
-        items = commande.produits.select_related('produit', 'produit__fournisseur').all()
-        
-        if not items.exists():
-            return Response({'detail': 'Aucun produit dans cette commande.'}, status=status.HTTP_400_BAD_REQUEST)
-        
-        # VERROUILLAGE: On récupère les IDs des produits pour les verrouiller
-        product_ids = [item.produit_id for item in items]
-        
-        # On verrouille les produits pour empêcher toute modification de stock (ex: vente concomitante)
-        # TRÈS IMPORTANT: order_by('id') pour éviter les deadlocks en DB !
-        locked_products = list(Produit.objects.select_for_update().filter(id__in=product_ids).order_by('id'))
-        product_map = {p.id: p for p in locked_products}
-        
-        # Préparer les lots de stock à créer en batch
-        lots_to_create = []
-        produits_to_update = []
-        produits_dict = {}  # Pour éviter les doublons et suivre les mises à jour
-        
-        # Phase 1: Calculs en mémoire (pas de DB writes)
-        for item in items:
-            # Calcul des quantités
-            quantity_paid = item.quantity
-            quantity_free = item.unites_gratuites
-            total_qty = quantity_paid + quantity_free
-            
-            # Calcul du coût effectif (le coût payé réparti sur toutes les unités)
-            if total_qty > 0:
-                effective_cost = (quantity_paid * item.price_cost) / total_qty
-            else:
-                effective_cost = item.price_cost
-            
-            # Utiliser l'instance verrouillée du produit
-            produit = product_map.get(item.produit_id)
-            if not produit:
-                continue # Devrait pas arriver avec l'intégrité référentielle
-            
-            # 1. Préparer le lot de stock (si gestion par lots activée)
-            if produit.use_lot_management:
-                # Auto-générer le numéro de lot si non fourni
-                lot_number = item.lot
-                if not lot_number:
-                    lot_number = f"CMD{commande.id}-{item.id}"
-                    # Sauvegarder le lot généré dans l'item pour l'historique
-                    item.lot = lot_number
-                
-                lot = StockLot(
-                    produit=produit,
-                    commande_produit=item,
-                    fournisseur=commande.fournisseur if commande.fournisseur else produit.fournisseur,
-                    quantity_initial=total_qty,
-                    quantity_paid=quantity_paid,
-                    quantity_free=quantity_free,
-                    quantity_remaining=0 if produit.has_reserve_storage else total_qty,
-                    quantity_reserved=total_qty if produit.has_reserve_storage else 0,
-                    price_cost=effective_cost,
-                    selling_price=produit.selling_price,
-                    lot=lot_number,
-                    date_expiration=item.date_expiration,
-                    date_reception=commande.date_cloture
-                )
-                lots_to_create.append(lot)
-            
-            # 2. Calculer le nouveau PMP et stock
-            # Éviter de traiter le même produit plusieurs fois (si plusieurs lignes pour même produit)
-            if produit.id not in produits_dict:
-                old_stock = Decimal(produit.stock)
-                old_pmp = Decimal(produit.pmp)
-                qty_received = Decimal(total_qty)
-                cout_total = Decimal(quantity_paid) * Decimal(item.price_cost)
-                
-                new_total_qty = old_stock + qty_received
-                
-                if new_total_qty > 0:
-                    current_val = old_stock * old_pmp
-                    incoming_val = cout_total
-                    new_pmp = (current_val + incoming_val) / new_total_qty
-                    produit.pmp = new_pmp
-                
-                # Mettre à jour le stock (Rayon ou Réserve) avec précaution pour les valeurs nulles
-                res_stock = Decimal(produit.stock_reserve or 0)
-                if produit.has_reserve_storage:
-                    produit.stock_reserve = res_stock + qty_received
-                else:
-                    produit.stock = old_stock + qty_received
-                
-                # Ajouter au dictionnaire pour suivi local
-                produits_dict[produit.id] = produit
-                produits_to_update.append(produit)
-            else:
-                # Produit déjà traité dans cette boucle (autre ligne de commande), accumuler
-                existing_produit = produits_dict[produit.id]
-                
-                # On part des valeurs déjà modifiées en mémoire
-                current_stock = Decimal(existing_produit.stock)
-                current_pmp = Decimal(existing_produit.pmp)
-                
-                qty_received = Decimal(total_qty)
-                cout_total = Decimal(quantity_paid) * Decimal(item.price_cost)
-                
-                new_total_qty = current_stock + qty_received
-                
-                if new_total_qty > 0:
-                    current_val = current_stock * current_pmp
-                    incoming_val = cout_total
-                    new_pmp = (current_val + incoming_val) / new_total_qty
-                    existing_produit.pmp = new_pmp
-                
-                existing_produit.stock += Decimal(total_qty)
-        
-        # Phase 2: Écritures en base de données (bulk operations)
-        
-        # 2.1 Créer tous les lots en une seule requête
-        if lots_to_create:
-            StockLot.objects.bulk_create(lots_to_create, batch_size=100)
-            # Sauvegarder les numéros de lot auto-générés dans les items
-            items_with_lot = [item for item in items if item.lot]
-            if items_with_lot:
-                CommandeProduit.objects.bulk_update(items_with_lot, ['lot'], batch_size=100)
-        
-        # 2.2 Mettre à jour tous les produits en batch
-        if produits_to_update:
-            # Séparer les produits avec gestion de lots (update PMP only) 
-            # et sans gestion de lots (update stock + PMP)
-            produits_with_lots = [p for p in produits_to_update if p.use_lot_management]
-            produits_without_lots = [p for p in produits_to_update if not p.use_lot_management]
-            
-            if produits_with_lots:
-                Produit.objects.bulk_update(
-                    produits_with_lots, 
-                    ['pmp', 'stock', 'stock_reserve'], 
-                    batch_size=100
-                )
-            
-            if produits_without_lots:
-                Produit.objects.bulk_update(
-                    produits_without_lots, 
-                    ['stock', 'stock_reserve', 'pmp'], 
-                    batch_size=100
-                )
-        
-        # 2.3 Mettre à jour le statut et la date de clôture de la commande
-        commande.status = Commande.Status.CLOTUREE
-        commande.date = commande.date_cloture  # La commande est datée au jour de clôture
-        
-        # Renommer si c'est le réassort auto pour libérer le code
-        if commande.numero_facture == 'REASSORT_AUTO':
-            commande.numero_facture = f"REASSORT_{commande.date_cloture.strftime('%Y%m%d_%H%M')}_{commande.id}"
+                    # Prefetch tous les produits
+                    items = list(commande.produits.select_related('produit', 'produit__fournisseur').all())
+                    
+                    if not items:
+                        return Response({'detail': 'Aucun produit dans cette commande.'}, status=status.HTTP_400_BAD_REQUEST)
+                    
+                    # OPTIMISTIC LOCKING: Récupérer produits sans verrou
+                    product_ids = [item.produit_id for item in items]
+                    products = list(Produit.objects.filter(id__in=product_ids))
+                    product_map = {p.id: p for p in products}
+                    
+                    # Vérifier les versions si retry
+                    if expected_versions:
+                        conflicts = []
+                        for pid, expected in expected_versions.items():
+                            current = product_map.get(pid)
+                            if current and current.version != expected:
+                                conflicts.append(f"Produit {pid}: v{expected} -> v{current.version}")
+                        if conflicts:
+                            raise ConcurrentModificationError('CommandeCloture', commande.id, 0, attempt)
+                    
+                    # Sauvegarder versions pour vérification
+                    initial_versions = {p.id: p.version for p in products}
+                    
+                    # Préparer les lots de stock à créer en batch
+                    lots_to_create = []
+                    produits_to_update = []
+                    produits_dict = {}
+                    
+                    # Phase 1: Calculs en mémoire
+                    for item in items:
+                        quantity_paid = item.quantity
+                        quantity_free = item.unites_gratuites
+                        total_qty = quantity_paid + quantity_free
+                        
+                        if total_qty > 0:
+                            effective_cost = (quantity_paid * item.price_cost) / total_qty
+                        else:
+                            effective_cost = item.price_cost
+                        
+                        produit = product_map.get(item.produit_id)
+                        if not produit:
+                            continue
+                        
+                        # Préparer le lot de stock
+                        if produit.use_lot_management:
+                            lot_number = item.lot
+                            if not lot_number:
+                                lot_number = f"CMD{commande.id}-{item.id}"
+                                item.lot = lot_number
+                            
+                            lot = StockLot(
+                                produit=produit,
+                                commande_produit=item,
+                                fournisseur=commande.fournisseur if commande.fournisseur else produit.fournisseur,
+                                quantity_initial=total_qty,
+                                quantity_paid=quantity_paid,
+                                quantity_free=quantity_free,
+                                quantity_remaining=0 if produit.has_reserve_storage else total_qty,
+                                quantity_reserved=total_qty if produit.has_reserve_storage else 0,
+                                price_cost=effective_cost,
+                                selling_price=produit.selling_price,
+                                lot=lot_number,
+                                date_expiration=item.date_expiration,
+                                date_reception=commande.date_cloture
+                            )
+                            lots_to_create.append(lot)
+                        
+                        # Calculer le nouveau PMP et stock
+                        if produit.id not in produits_dict:
+                            old_stock = Decimal(produit.stock)
+                            old_pmp = Decimal(produit.pmp)
+                            qty_received = Decimal(total_qty)
+                            cout_total = Decimal(quantity_paid) * Decimal(item.price_cost)
+                            
+                            new_total_qty = old_stock + qty_received
+                            
+                            if new_total_qty > 0:
+                                current_val = old_stock * old_pmp
+                                incoming_val = cout_total
+                                new_pmp = (current_val + incoming_val) / new_total_qty
+                                produit.pmp = new_pmp
+                            
+                            res_stock = Decimal(produit.stock_reserve or 0)
+                            if produit.has_reserve_storage:
+                                produit.stock_reserve = res_stock + qty_received
+                            else:
+                                produit.stock = old_stock + qty_received
+                            
+                            produits_dict[produit.id] = produit
+                            produits_to_update.append(produit)
+                        else:
+                            existing_produit = produits_dict[produit.id]
+                            current_stock = Decimal(existing_produit.stock)
+                            current_pmp = Decimal(existing_produit.pmp)
+                            qty_received = Decimal(total_qty)
+                            cout_total = Decimal(quantity_paid) * Decimal(item.price_cost)
+                            
+                            new_total_qty = current_stock + qty_received
+                            
+                            if new_total_qty > 0:
+                                current_val = current_stock * current_pmp
+                                incoming_val = cout_total
+                                new_pmp = (current_val + incoming_val) / new_total_qty
+                                existing_produit.pmp = new_pmp
+                            
+                            existing_produit.stock += Decimal(total_qty)
+                    
+                    # Phase 2: Écritures en base avec optimistic locking
+                    
+                    # 2.1 Créer tous les lots
+                    if lots_to_create:
+                        StockLot.objects.bulk_create(lots_to_create, batch_size=100)
+                        items_with_lot = [item for item in items if item.lot]
+                        if items_with_lot:
+                            CommandeProduit.objects.bulk_update(items_with_lot, ['lot'], batch_size=100)
+                    
+                    # 2.2 Mettre à jour les produits avec incrémentation de version
+                    if produits_to_update:
+                        for p in produits_to_update:
+                            p.version += 1
+                        
+                        update_fields = ['pmp', 'stock', 'stock_reserve', 'version']
+                        Produit.objects.bulk_update(produits_to_update, update_fields, batch_size=100)
+                    
+                    # 2.3 Mettre à jour le statut de la commande
+                    commande.status = Commande.Status.CLOTUREE
+                    commande.date = commande.date_cloture
+                    
+                    if commande.numero_facture == 'REASSORT_AUTO':
+                        commande.numero_facture = f"REASSORT_{commande.date_cloture.strftime('%Y%m%d_%H%M')}_{commande.id}"
 
-        # Calcul de l'échéance si mode FACTURE
-        if commande.fournisseur and commande.fournisseur.type_reglement == 'FACTURE':
-            if commande.fournisseur.delai_paiement_jours > 0:
-                commande.date_echeance = commande.date_cloture.date() + timedelta(days=commande.fournisseur.delai_paiement_jours)
-            else:
-                commande.date_echeance = commande.date_cloture.date()
+                    # Calcul de l'échéance
+                    if commande.fournisseur and commande.fournisseur.type_reglement == 'FACTURE':
+                        if commande.fournisseur.delai_paiement_jours > 0:
+                            commande.date_echeance = commande.date_cloture.date() + timedelta(days=commande.fournisseur.delai_paiement_jours)
+                        else:
+                            commande.date_echeance = commande.date_cloture.date()
 
-        commande.save(update_fields=['status', 'date_cloture', 'date', 'date_echeance', 'numero_facture', 'closed_by'])
-        
-        # 2.4 Mettre à jour la date de dernier achat pour tous les produits
-        today = date.today()
-        # Important: utiliser l'ID du produit dans la liste product_ids
-        Produit.objects.filter(id__in=product_ids).update(dernier_achat=today)
+                    commande.save(update_fields=['status', 'date_cloture', 'date', 'date_echeance', 'numero_facture', 'closed_by'])
+                    
+                    # 2.4 Mettre à jour la date de dernier achat
+                    today = date.today()
+                    Produit.objects.filter(id__in=product_ids).update(dernier_achat=today)
 
-        # 2.5 Créer les mouvements de stock (historique) avec la date de clôture (aujourd'hui)
-        from ...models import MouvementStock
-        mouvements_to_create = []
-        for item in items:
-            produit = product_map.get(item.produit_id)
-            if not produit:
+                    # 2.5 Créer les mouvements de stock
+                    from ...models import MouvementStock
+                    mouvements_to_create = []
+                    for item in items:
+                        produit = product_map.get(item.produit_id)
+                        if not produit:
+                            continue
+                        total_qty = item.quantity + item.unites_gratuites
+                        mouvements_to_create.append(MouvementStock(
+                            produit=produit,
+                            type_mouvement=MouvementStock.TypeMouvement.ENTREE,
+                            quantite=total_qty,
+                            stock_apres=produit.total_stock,
+                            user=request.user,
+                            commande=commande,
+                            description=f"Réception commande #{commande.id} - Lot: {item.lot or 'N/A'}"
+                        ))
+                    
+                    if mouvements_to_create:
+                        MouvementStock.objects.bulk_create(mouvements_to_create, batch_size=100)
+
+                    # 2.6 Invalider le cache
+                    cache.delete('dashboard_stats')
+
+                    # 2.7 Log d'audit
+                    for p in produits_to_update:
+                        log_audit(
+                            user=request.user,
+                            action=AuditLog.Action.UPDATE,
+                            model_name='Produit',
+                            object_id=str(p.id),
+                            description=f"Stock/PMP mis à jour via clôture commande #{commande.id}",
+                            details={'stock': str(p.stock), 'pmp': str(p.pmp)},
+                            request=request
+                        )
+
+                    business_logger.info(
+                        f"[COMMANDE] Cloture OK #{commande.id} | "
+                        f"produits={len(product_ids)} | lots={len(lots_to_create)} | user={request.user.username}"
+                    )
+                    return Response({'status': 'Commande clôturée avec optimistic locking.', 'versions_updated': len(produits_to_update)})
+                    
+            except ConcurrentModificationError:
+                if attempt == max_retries - 1:
+                    return Response({
+                        'detail': 'Conflit de concurrence détecté après plusieurs tentatives.',
+                        'error_code': 'CONCURRENT_MODIFICATION',
+                        'hint': 'Veuillez réessayer dans quelques secondes'
+                    }, status=status.HTTP_409_CONFLICT)
+                time.sleep(0.1 * (2 ** attempt))
+                expected_versions = initial_versions  # Retry avec versions attendues
                 continue
-            total_qty = item.quantity + item.unites_gratuites
-            mouvements_to_create.append(MouvementStock(
-                produit=produit,
-                type_mouvement=MouvementStock.TypeMouvement.ENTREE,
-                quantite=total_qty,
-                stock_apres=produit.total_stock,
-                user=request.user,
-                commande=commande,
-                description=f"Réception commande #{commande.id}{' (' + commande.numero_facture + ')' if commande.numero_facture else ''} - Lot: {item.lot or 'N/A'} - Fournisseur: {commande.fournisseur.name if commande.fournisseur else 'N/A'}"
-            ))
         
-        if mouvements_to_create:
-            MouvementStock.objects.bulk_create(mouvements_to_create, batch_size=100)
-
-        # 2.6 Invalider le cache du dashboard (car bulk_update ne déclenche pas les signaux)
-        cache.delete('dashboard_stats')
-
-        # 2.7 Log d'audit pour chaque produit (car bulk_update ne déclenche pas les signaux)
-        # On le fait de façon groupée ou individuelle selon le besoin de traçabilité fine
-        for p in produits_to_update:
-            log_audit(
-                user=request.user,
-                action=AuditLog.Action.UPDATE,
-                model_name='Produit',
-                object_id=str(p.id),
-                description=f"Stock/PMP mis à jour via clôture commande #{commande.id}",
-                details={'stock': str(p.stock), 'pmp': str(p.pmp)},
-                request=request
-            )
-
-        business_logger.info(
-            f"[COMMANDE] Cloture OK #{commande.id} | "
-            f"fournisseur={commande.fournisseur.name if commande.fournisseur else 'N/A'} | "
-            f"produits={len(product_ids)} | lots={len(lots_to_create)} | user={request.user.username}"
-        )
-        return Response({'status': 'Commande clôturée, stock mis à jour (UG incluses) et lots créés.'})
+        return Response({'detail': 'Erreur inattendue lors de la clôture.'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     @action(detail=True, methods=['post'])
     @transaction.atomic

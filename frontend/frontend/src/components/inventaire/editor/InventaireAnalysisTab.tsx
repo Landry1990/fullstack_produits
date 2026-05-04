@@ -1,19 +1,36 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Download, AlertTriangle, TrendingUp, PieChart } from 'lucide-react';
 import { formatPrice } from '../../../utils/formatters';
 import type { InventoryStats } from '../../../types';
+import api from '../../../services/api';
+import { toast } from 'react-hot-toast';
 
 interface InventaireAnalysisTabProps {
     inventoryStats: InventoryStats;
     handlePrintEcartsFrontend: () => void;
+    inventaireId?: number;
 }
 
 export const InventaireAnalysisTab: React.FC<InventaireAnalysisTabProps> = ({
     inventoryStats,
-    handlePrintEcartsFrontend
+    handlePrintEcartsFrontend,
+    inventaireId
 }) => {
     const { t } = useTranslation(['stock', 'common']);
+    const [sendingTelegram, setSendingTelegram] = useState(false);
+
+    const handleSendTelegram = async () => {
+        setSendingTelegram(true);
+        try {
+            await api.post('telegram/rapport-inventaire/', inventaireId ? { inventaire_id: inventaireId } : {});
+            toast.success('Rapport inventaire envoyé sur Telegram !', { icon: '📨' });
+        } catch (err: any) {
+            toast.error(err?.response?.data?.message || 'Erreur envoi Telegram');
+        } finally {
+            setSendingTelegram(false);
+        }
+    };
 
     const renderList = (title: string, data: any[], type: 'negative' | 'positive') => {
         const Icon = type === 'negative' ? AlertTriangle : TrendingUp;
@@ -80,13 +97,26 @@ export const InventaireAnalysisTab: React.FC<InventaireAnalysisTabProps> = ({
 
             {/* Print action at bottom */}
             {(inventoryStats?.top_pertes?.length > 0 || inventoryStats?.top_surplus?.length > 0) && (
-                <div className="flex justify-center">
+                <div className="flex justify-center gap-3">
                     <button 
                         className="btn btn-ghost hover:bg-base-300 rounded-xl gap-2 text-base-content/40 hover:text-primary transition-all px-8"
                         onClick={handlePrintEcartsFrontend}
                     >
                         <Download className="h-5 w-5" />
                         {t('inventaire.analysis.print_report')}
+                    </button>
+                    <button
+                        className={`btn rounded-xl gap-2 px-8 text-[#229ED9] border-[#229ED9]/30 hover:bg-[#229ED9]/10 hover:border-[#229ED9] transition-all ${sendingTelegram ? 'loading' : ''}`}
+                        onClick={handleSendTelegram}
+                        disabled={sendingTelegram}
+                        title="Envoyer le rapport d'inventaire sur Telegram"
+                    >
+                        {!sendingTelegram && (
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.894 8.221-1.97 9.28c-.145.658-.537.818-1.084.508l-3-2.21-1.447 1.394c-.16.16-.295.295-.605.295l.213-3.053 5.56-5.023c.242-.213-.054-.333-.373-.12L7.17 13.67l-2.93-.918c-.638-.196-.65-.638.136-.943l11.434-4.41c.53-.194.995.131.822.943z"/>
+                            </svg>
+                        )}
+                        Envoyer sur Telegram
                     </button>
                 </div>
             )}

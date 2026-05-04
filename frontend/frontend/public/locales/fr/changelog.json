@@ -13,6 +13,22 @@
   "footer": "Zenith PMS · Toutes les versions depuis Jan. 2026",
   "no_results": "Aucune entrée pour ce filtre.",
   "versions": {
+    "2.9.0": {
+      "date": "3 Mai 2026",
+      "title": "Système de Licences & Corbeille",
+      "items": [
+        "Système de gestion des licences : écran d'activation, validation en ligne et hors-ligne",
+        "Alertes d'expiration de licence (bannière persistante + notifications progressives)",
+        "Middleware backend de contrôle de licence avec blocage automatique à l'expiration",
+        "Générateur de licences pharmacie avec interface graphique (GUI)",
+        "Corbeille : restauration des éléments supprimés (factures, commandes, avoirs, promis)",
+        "Suppressions devenues réversibles grâce au soft-delete sur les entités principales",
+        "Refonte de la page Aide & Formation avec navigation améliorée",
+        "Correctif : classement vendeurs calculé sur le montant encaissé réel (et non le TTC brut)",
+        "Correctif : les commandes en corbeille n'apparaissent plus dans les listes actives",
+        "Correctif TypeScript : gestion correcte du type 'unknown' dans les blocs catch"
+      ]
+    },
     "2.8.0": {
       "date": "30 Avril 2026",
       "title": "Historique des prix d'achat",

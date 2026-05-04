@@ -1,9 +1,11 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { 
     ChevronLeft, Plus, FileText, CheckCircle2, History, 
     Download, Save, Upload
 } from 'lucide-react';
+import api from '../../../services/api';
+import { toast } from 'react-hot-toast';
 
 import type { Inventaire } from '../../../types';
 import { useInventaireEditor } from '../../../hooks/inventaire/useInventaireEditor';
@@ -32,6 +34,19 @@ export const InventaireEditor: React.FC<InventaireEditorProps> = ({
     
     const [activeTab, setActiveTab] = React.useState<'ENTRY' | 'ANALYSIS'>('ENTRY');
     const [printGroupBy, setPrintGroupBy] = React.useState<'rayon' | 'forme' | 'groupe'>('rayon');
+    const [sendingTelegram, setSendingTelegram] = useState(false);
+
+    const handleSendTelegram = async () => {
+        setSendingTelegram(true);
+        try {
+            await api.post('telegram/rapport-inventaire/', activeInventaire?.id ? { inventaire_id: activeInventaire.id } : {});
+            toast.success('Rapport inventaire envoyé sur Telegram !', { icon: '📨' });
+        } catch (err: any) {
+            toast.error(err?.response?.data?.message || 'Erreur envoi Telegram');
+        } finally {
+            setSendingTelegram(false);
+        }
+    };
 
     const {
         lignes, setLignes,
@@ -140,6 +155,18 @@ export const InventaireEditor: React.FC<InventaireEditorProps> = ({
                       <Download className="h-4 w-4" />
                       <span className="hidden sm:inline">{t('inventaire.detail.print')}</span>
                     </button>
+                    <button
+                      className={`btn rounded-xl h-10 min-h-0 px-3 gap-2 text-[#229ED9] border-[#229ED9]/30 hover:bg-[#229ED9]/10 hover:border-[#229ED9] transition-all ${sendingTelegram ? 'loading' : ''}`}
+                      onClick={handleSendTelegram}
+                      disabled={sendingTelegram || !activeInventaire?.id}
+                      title="Envoyer le rapport d'inventaire sur Telegram"
+                    >
+                      {!sendingTelegram && (
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 24 24" fill="currentColor">
+                          <path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.894 8.221-1.97 9.28c-.145.658-.537.818-1.084.508l-3-2.21-1.447 1.394c-.16.16-.295.295-.605.295l.213-3.053 5.56-5.023c.242-.213-.054-.333-.373-.12L7.17 13.67l-2.93-.918c-.638-.196-.65-.638.136-.943l11.434-4.41c.53-.194.995.131.822.943z"/>
+                        </svg>
+                      )}
+                    </button>
                   </div>
 
                   {!isReadOnly && activeInventaire && (
@@ -245,6 +272,7 @@ export const InventaireEditor: React.FC<InventaireEditorProps> = ({
                     <InventaireAnalysisTab 
                         inventoryStats={inventoryStats}
                         handlePrintEcartsFrontend={() => activeInventaire && generateEcartsPDF(activeInventaire, printGroupBy)}
+                        inventaireId={activeInventaire?.id}
                     />
                 )
             )}

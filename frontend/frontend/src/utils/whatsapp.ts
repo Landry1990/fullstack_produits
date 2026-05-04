@@ -1,5 +1,7 @@
+import { getLocale } from './dateUtils';
+
 export const generateInventorySummaryText = (inventory: any, pharmacyName: string): string => {
-  const date = new Date().toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
+  const date = new Date().toLocaleDateString(getLocale(), { day: 'numeric', month: 'long', year: 'numeric' });
   
   let text = `📦 *RAPPORT INVENTAIRE ${pharmacyName.toUpperCase()}*\n`;
   text += `📅 ${date}\n`;
@@ -25,7 +27,7 @@ export const generateInventorySummaryText = (inventory: any, pharmacyName: strin
 };
 
 export const generateDashboardFlashText = (stats: any, pharmacyName: string): string => {
-  const date = new Date().toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
+  const date = new Date().toLocaleDateString(getLocale(), { day: 'numeric', month: 'long', year: 'numeric' });
   
   let text = `📊 *RAPPORT FLASH ${pharmacyName.toUpperCase()}*\n`;
   text += `📅 ${date}\n\n`;

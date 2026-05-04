@@ -40,9 +40,7 @@ const clientService = {
     },
 
     delete: async (id: number): Promise<void> => {
-        console.log('[ClientService] DELETE request to:', `clients/${id}/`);
         const response = await api.delete(`clients/${id}/`);
-        console.log('[ClientService] DELETE response:', response.status);
         return response.data;
     },
 
@@ -69,9 +67,7 @@ const clientService = {
     },
 
     bulkDelete: async (ids: number[]): Promise<void> => {
-        console.log('[ClientService] bulkDelete - IDs:', ids);
         const response = await api.post('clients/bulk_delete/', { ids });
-        console.log('[ClientService] bulkDelete - Response:', response.status, response.data);
         return response.data;
     },
 

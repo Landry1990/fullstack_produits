@@ -1,5 +1,6 @@
 import * as XLSX from 'xlsx';
 import type { PharmacySettings } from '../context/PharmacySettingsContext';
+import { formatDate, formatTime } from './dateUtils';
 
 export interface ExcelExportOptions {
     sheetName?: string;
@@ -18,8 +19,8 @@ export function exportToExcel(
 ): void {
     const { sheetName = 'Export', filename, title } = options;
     const now = new Date();
-    const dateStr = now.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric' });
-    const timeStr = now.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+    const dateStr = formatDate(now.toISOString());
+    const timeStr = formatTime(now.toISOString());
 
     const wb = XLSX.utils.book_new();
 

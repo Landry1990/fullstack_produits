@@ -41,7 +41,7 @@ class SearchCache:
         return f"{prefix}:{param_hash}"
     
     @classmethod
-    def get_search_results(cls, search_query: str, filters: dict = None) -> Optional[list]:
+    def get_search_results(cls, search_query: str, filters: Optional[dict] = None) -> Optional[list]:
         """
         Récupère les résultats de recherche depuis le cache.
         
@@ -61,8 +61,8 @@ class SearchCache:
         return cache.get(cache_key)
     
     @classmethod
-    def set_search_results(cls, search_query: str, results: list, 
-                          filters: dict = None, ttl: int = None) -> None:
+    def set_search_results(cls, search_query: str, results: list,
+                          filters: Optional[dict] = None, ttl: Optional[int] = None) -> None:
         """
         Stocke les résultats de recherche dans le cache.
         
@@ -104,9 +104,9 @@ class SearchCache:
         return cache.get(cache_key)
     
     @classmethod
-    def set_product_list(cls, results: dict, page: int = 1, 
+    def set_product_list(cls, results: dict, page: int = 1,
                         page_size: int = 50, ordering: str = '-created_at',
-                        ttl: int = None) -> None:
+                        ttl: Optional[int] = None) -> None:
         """
         Stocke la liste paginée de produits dans le cache.
         
@@ -142,7 +142,7 @@ class SearchCache:
     
     @classmethod
     def set_product_detail(cls, product_id: int, product_data: dict, 
-                          ttl: int = None) -> None:
+                          ttl: Optional[int] = None) -> None:
         """
         Stocke les détails d'un produit dans le cache.
         
@@ -174,11 +174,12 @@ class SearchCache:
         """
         try:
             # Essayer d'utiliser la méthode delete_pattern de django-redis
-            cache.delete_pattern(f"{cls.PREFIX_PRODUCT_SEARCH}:*")
-            cache.delete_pattern(f"{cls.PREFIX_PRODUCT_LIST}:*")
-            cache.delete_pattern(f"{cls.PREFIX_PRODUCT_DETAIL}:*")
+            # Type: ignore[attr-defined] - delete_pattern n'existe que sur RedisCache
+            cache.delete_pattern(f"{cls.PREFIX_PRODUCT_SEARCH}:*")  # type: ignore[attr-defined]
+            cache.delete_pattern(f"{cls.PREFIX_PRODUCT_LIST}:*")  # type: ignore[attr-defined]
+            cache.delete_pattern(f"{cls.PREFIX_PRODUCT_DETAIL}:*")  # type: ignore[attr-defined]
             # Clear old styles if they exist
-            cache.delete_pattern("produit_search_*")
+            cache.delete_pattern("produit_search_*")  # type: ignore[attr-defined]
             cache.delete('produit_list')
         except AttributeError:
             # Si delete_pattern n'existe pas (LocMemCache), vider tout le cache
@@ -231,8 +232,8 @@ class CacheInvalidator:
         # Invalider aussi les listes de recherche qui pourraient contenir ce produit
         # Note: On pourrait être plus sélectif ici
         try:
-            cache.delete_pattern(f"{SearchCache.PREFIX_PRODUCT_SEARCH}:*")
-            cache.delete_pattern(f"{SearchCache.PREFIX_PRODUCT_LIST}:*")
+            cache.delete_pattern(f"{SearchCache.PREFIX_PRODUCT_SEARCH}:*")  # type: ignore[attr-defined]
+            cache.delete_pattern(f"{SearchCache.PREFIX_PRODUCT_LIST}:*")  # type: ignore[attr-defined]
         except AttributeError:
             # LocMemCache: pas de delete_pattern
             pass
@@ -249,3 +250,101 @@ class CacheInvalidator:
         # Invalider le produit associé
         if hasattr(instance, 'produit'):
             SearchCache.invalidate_product(instance.produit.id)
+
+
+class ClientDebtCache:
+    """
+    Gestionnaire de cache pour les calculs de dette client.
+    Optimise les performances des requêtes fréquentes sur les factures impayées.
+    TTL court (30-60s) pour garantir la cohérence des données financières.
+    """
+    
+    # TTL: 60 secondes pour la dette (données financières = fraîcheur importante)
+    DEBT_TTL = 60
+    # TTL: 30 secondes pour les listes de factures
+    INVOICE_LIST_TTL = 30
+    
+    PREFIX_CLIENT_DEBT = "client_debt"
+    PREFIX_CLIENT_UNPAID_COUNT = "client_unpaid_count"
+    PREFIX_CLIENT_INVOICES = "client_invoices"
+    
+    @classmethod
+    def get_client_debt(cls, client_id: int) -> Optional[dict]:
+        """
+        Récupère la dette calculée d'un client depuis le cache.
+        
+        Returns:
+            Dict avec 'total_debt', 'unpaid_count', 'invoices' ou None
+        """
+        cache_key = f"{cls.PREFIX_CLIENT_DEBT}:{client_id}"
+        return cache.get(cache_key)
+    
+    @classmethod
+    def set_client_debt(cls, client_id: int, debt_data: dict, ttl: Optional[int] = None) -> None:
+        """
+        Stocke la dette calculée d'un client dans le cache.
+        """
+        ttl = ttl or cls.DEBT_TTL
+        cache_key = f"{cls.PREFIX_CLIENT_DEBT}:{client_id}"
+        cache.set(cache_key, debt_data, ttl)
+    
+    @classmethod
+    def get_unpaid_invoices_count(cls, client_id: int) -> Optional[int]:
+        """
+        Récupère le nombre de factures impayées depuis le cache.
+        """
+        cache_key = f"{cls.PREFIX_CLIENT_UNPAID_COUNT}:{client_id}"
+        return cache.get(cache_key)
+    
+    @classmethod
+    def set_unpaid_invoices_count(cls, client_id: int, count: int, ttl: Optional[int] = None) -> None:
+        """
+        Stocke le nombre de factures impayées dans le cache.
+        """
+        ttl = ttl or cls.DEBT_TTL
+        cache_key = f"{cls.PREFIX_CLIENT_UNPAID_COUNT}:{client_id}"
+        cache.set(cache_key, count, ttl)
+    
+    @classmethod
+    def invalidate_client(cls, client_id: int) -> None:
+        """
+        Invalide tout le cache pour un client spécifique.
+        À appeler après ajout de paiement, création de facture, etc.
+        """
+        cache.delete(f"{cls.PREFIX_CLIENT_DEBT}:{client_id}")
+        cache.delete(f"{cls.PREFIX_CLIENT_UNPAID_COUNT}:{client_id}")
+        cache.delete(f"{cls.PREFIX_CLIENT_INVOICES}:{client_id}")
+    
+    @classmethod
+    def invalidate_all_clients(cls) -> None:
+        """
+        Invalide tout le cache des dettes clients.
+        """
+        try:
+            cache.delete_pattern(f"{cls.PREFIX_CLIENT_DEBT}:*")  # type: ignore[attr-defined]
+            cache.delete_pattern(f"{cls.PREFIX_CLIENT_UNPAID_COUNT}:*")  # type: ignore[attr-defined]
+            cache.delete_pattern(f"{cls.PREFIX_CLIENT_INVOICES}:*")  # type: ignore[attr-defined]
+        except AttributeError:
+            # LocMemCache: pas de delete_pattern
+            cache.clear()
+    
+    @classmethod
+    def get_cached_debt_or_compute(cls, client_id: int, compute_func) -> dict:
+        """
+        Pattern: Cache-Aside. Récupère du cache ou calcule et stocke.
+        
+        Args:
+            client_id: ID du client
+            compute_func: Fonction à appeler si pas en cache (doit retourner un dict)
+        
+        Returns:
+            Données de dette (depuis cache ou calculées)
+        """
+        cached = cls.get_client_debt(client_id)
+        if cached is not None:
+            return cached
+        
+        # Cache miss: calculer
+        result = compute_func()
+        cls.set_client_debt(client_id, result)
+        return result

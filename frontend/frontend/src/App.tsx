@@ -7,6 +7,8 @@ import { LicenceProvider } from './context/LicenceContext'
 import { Toaster } from 'react-hot-toast'
 import ErrorBoundary from './components/ErrorBoundary'
 import { LicenceNotifications } from './components/LicenceNotifications'
+import { ExpirationAlertToasts } from './components/ExpirationAlertToast'
+import { useAuth } from './context/AuthContext'
 import { router } from './routes'
 
 /**
@@ -20,6 +22,12 @@ import { router } from './routes'
  * 
  * Route definitions are now managed in src/routes.tsx for better maintainability.
  */
+function GlobalAlerts() {
+  const { isAuthenticated, loading } = useAuth();
+  if (loading || !isAuthenticated) return null;
+  return <ExpirationAlertToasts />;
+}
+
 export default function App() {
   return (
     <ErrorBoundary>
@@ -29,6 +37,7 @@ export default function App() {
             <ConfirmProvider>
               <Toaster position="top-right" />
               <LicenceNotifications />
+              <GlobalAlerts />
               <Suspense fallback={
                 <div className="h-screen flex items-center justify-center bg-base-100">
                   <div className="flex flex-col items-center gap-4">

@@ -134,6 +134,11 @@ class PharmacySettings(models.Model):
         help_text="Numéro WhatsApp de la pharmacienne titulaires (format international sans +)"
     )
     
+    # Telegram Bot
+    telegram_enabled = models.BooleanField(default=False)
+    telegram_bot_token = models.CharField(max_length=200, blank=True, default="", help_text="Token du bot Telegram (de @BotFather)")
+    telegram_chat_id = models.CharField(max_length=50, blank=True, default="", help_text="Chat ID de la pharmacienne (récupéré via /start sur le bot)")
+
     # --- Paramètres de Sauvegarde ---
     backup_enabled = models.BooleanField(
         default=True, 

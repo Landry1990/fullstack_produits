@@ -1,4 +1,5 @@
 import { formatCurrency, formatNumber } from '../../utils/formatters';
+import { formatDate } from '../../utils/dateUtils';
 
 export const COLUMN_LABELS: Record<string, string> = {
     rang: '#',
@@ -157,7 +158,7 @@ export const formatValue = (key: string, value: unknown, t?: any): string => {
     if (typeof value === 'string' && /^\d{4}-\d{2}-\d{2}T/.test(value)) {
         const date = new Date(value);
         if (!isNaN(date.getTime())) {
-            return date.toLocaleDateString('fr-FR');
+            return formatDate(date);
         }
     }
     

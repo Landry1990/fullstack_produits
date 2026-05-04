@@ -133,6 +133,12 @@ class StockLot(models.Model):
     date_reception = models.DateTimeField(help_text="Date de réception du lot (pour FIFO)")
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    
+    # Optimistic Locking - évite les verrous pessimistes (select_for_update)
+    version = models.IntegerField(
+        default=1,
+        help_text="Version pour optimistic locking (concurrency control)"
+    )
 
     class Meta:
         ordering = ['date_reception']

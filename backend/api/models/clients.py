@@ -137,6 +137,26 @@ class Client(models.Model):
         null=True, 
         help_text="Message d'alerte affiché lors de la sélection du client en caisse"
     )
+    
+    # === CHAMPS DENORMALISES (performance 12 postes) ===
+    solde_factures = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        default=0.00,
+        help_text="Solde total des factures impayées (denormalisé)",
+        verbose_name="Solde factures"
+    )
+    nombre_factures_impayees = models.IntegerField(
+        default=0,
+        help_text="Nombre de factures non réglées (denormalisé)",
+        verbose_name="Factures impayées"
+    )
+    derniere_mise_a_jour_solde = models.DateTimeField(
+        null=True,
+        blank=True,
+        help_text="Dernière mise à jour du solde",
+        verbose_name="Mise à jour solde"
+    )
     blocking_alerte = models.BooleanField(
         default=False, 
         help_text="Si coché, l'alerte bloque la facturation tant qu'elle n'est pas acquittée."
@@ -154,16 +174,42 @@ class Client(models.Model):
     @property
     def current_debt(self):
         """
-        Calcule la dette actuelle du client.
-        Somme des restes à payer sur les factures VALIDEE.
+        Retourne la dette actuelle du client.
+        Utilise le champ dénormalisé si frais (< 5 min), sinon calcule.
         """
+        from django.utils import timezone
+        from datetime import timedelta
+        
+        # Priorité 1: Champ dénormalisé si frais (< 5 minutes)
+        if self.derniere_mise_a_jour_solde and (
+            timezone.now() - self.derniere_mise_a_jour_solde < timedelta(minutes=5)
+        ):
+            return self.solde_factures or Decimal('0.00')
+        
+        # Priorité 2: Annotation si disponible (QuerySet optimisé)
         if hasattr(self, 'current_debt_annotated'):
             return self.current_debt_annotated or Decimal('0.00')
-
+        
+        # Fallback: Calcul complet (lent, éviter en production)
+        return self._compute_debt_from_factures()
+    
+    def _compute_debt_from_factures(self):
+        """
+        Calcule la dette depuis les factures (méthode complète mais lente).
+        À utiliser uniquement pour recalculer le solde dénormalisé.
+        """
         from django.db.models import Sum, F, Q, Value, DecimalField
         from django.db.models.functions import Coalesce
+        from decimal import Decimal
         
-        factures_with_debt = self.facture_set.filter(status__in=['VAL', 'PAY']).annotate(
+        # Importer ici pour éviter les imports circulaires
+        from .billing import Facture, Caisse
+        
+        factures_with_debt = Facture.objects.filter(
+            client=self,
+            status__in=['VAL', 'PAY'],
+            is_active=True
+        ).annotate(
             paid_amount=Coalesce(
                 Sum('paiements__montant', filter=Q(paiements__statut='completee') & ~Q(paiements__mode_paiement='en_compte')),
                 Value(0, output_field=DecimalField())
@@ -172,10 +218,34 @@ class Client(models.Model):
         ).filter(
             remainder__gt=0
         ).aggregate(
-            total_debt=Sum('remainder')
+            total_debt=Sum('remainder'),
+            count=models.Count('id')
         )
         
-        return factures_with_debt['total_debt'] or Decimal('0.00')
+        return {
+            'total': factures_with_debt['total_debt'] or Decimal('0.00'),
+            'count': factures_with_debt['count'] or 0
+        }
+    
+    def recalculate_solde(self, save=True):
+        """
+        Recalcule et met à jour le solde dénormalisé.
+        Appeler après création de facture ou paiement.
+        """
+        debt_info = self._compute_debt_from_factures()
+        
+        self.solde_factures = debt_info['total']
+        self.nombre_factures_impayees = debt_info['count']
+        self.derniere_mise_a_jour_solde = timezone.now()
+        
+        if save:
+            self.save(update_fields=[
+                'solde_factures', 
+                'nombre_factures_impayees', 
+                'derniere_mise_a_jour_solde'
+            ])
+        
+        return debt_info
 
     class Meta:
         indexes = [

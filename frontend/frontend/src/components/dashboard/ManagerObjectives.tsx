@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { RefreshCw, Target } from 'lucide-react';
 
 import { formatCurrency } from '../../utils/formatters';
+import { formatDate, getLocale } from '../../utils/dateUtils';
 
 interface ManagerObjectivesProps {
     currentObj: any;
@@ -12,10 +13,9 @@ interface ManagerObjectivesProps {
 
 export const ManagerObjectives: React.FC<ManagerObjectivesProps> = ({ currentObj, onEdit, onRefresh }) => {
     const { t } = useTranslation(['dashboard', 'common']);
-    const currentLocale = t('common:locale', { defaultValue: 'fr-FR' });
     const currencySymbol = t('common:currency_symbol', { defaultValue: 'F' });
 
-    const formatCurrencyLocal = (amount: number) => formatCurrency(amount, currentLocale, currencySymbol);
+    const formatCurrencyLocal = (amount: number) => formatCurrency(amount, getLocale(), currencySymbol);
 
     const objectiveTypes = [
         { label: t('manager_dashboard.periods.daily', 'Journalier'), code: 'JOUR', color: 'text-primary' },
@@ -52,7 +52,7 @@ export const ManagerObjectives: React.FC<ManagerObjectivesProps> = ({ currentObj
                                 {obj && obj.date_debut && (
                                     <div className="text-[10px] text-base-content/40 font-bold uppercase mt-0.5">
                                         {t('manager_dashboard.since_date', { 
-                                            date: new Date(obj.date_debut).toLocaleDateString('fr-FR') 
+                                            date: formatDate(obj.date_debut) 
                                         })}
                                     </div>
                                 )}

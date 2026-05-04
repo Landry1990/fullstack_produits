@@ -5,11 +5,8 @@ import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
 import type { Facture, TicketCaisse, Client, FactureProduit } from '../types';
 import { safeStorage } from '../utils/storage';
-// import { renderToStaticMarkup } from 'react-dom/server';
-// import { TicketTemplate } from '../components/printing/TicketTemplate';
 
 interface UseInvoiceActionsProps {
-    refreshFactures: () => void; // To refresh list after actions
     setFacturesLocal?: React.Dispatch<React.SetStateAction<Facture[]>>; // For optimistic updates
 }
 

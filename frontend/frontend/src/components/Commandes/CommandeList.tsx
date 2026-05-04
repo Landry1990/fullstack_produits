@@ -2,6 +2,7 @@
 import { Eye, Trash2, Printer, GitMerge } from 'lucide-react';
 import type { Commande, Fournisseur } from '../../types';
 import { formatCurrency } from '../../utils/formatters';
+import { formatDate } from '../../utils/dateUtils';
 
 import SelectionHeader from '../ui/SelectionHeader';
 
@@ -304,7 +305,7 @@ export default function CommandeList({
                 </td>
                 <td>
                     <span className="text-sm font-semibold text-base-content/80">
-                        {new Date(commande.date).toLocaleDateString('fr-FR')}
+                        {formatDate(commande.date)}
                     </span>
                 </td>
                 <td>

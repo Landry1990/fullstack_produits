@@ -8,6 +8,7 @@ import {
   AlertTriangle
 } from 'lucide-react';
 import type { Echeance } from '../../hooks/useDashboard';
+import { formatDate } from '../../utils/dateUtils';
 import { 
   PieChart, 
   Pie, 
@@ -158,7 +159,7 @@ export default function FinancialSummary({
                           {formatCurrencyLocal(e.montant_du)}
                         </td>
                         <td className="py-3 text-center text-xs font-bold text-base-content/70">
-                          {new Date(e.date_echeance).toLocaleDateString('fr-FR')}
+                          {formatDate(e.date_echeance)}
                         </td>
                         <td className="py-3 pr-4 text-center">
                           {isRetard ? (

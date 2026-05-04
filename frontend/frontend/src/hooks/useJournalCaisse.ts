@@ -6,6 +6,7 @@ import { usePharmacySettings } from './usePharmacySettings';
 import { useAuth } from '../context/AuthContext';
 import { useTranslation } from 'react-i18next';
 import { formatCurrency, normalizeNumberInput } from '../utils/formatters';
+import { formatDate, formatDateTime } from '../utils/dateUtils';
 
 export function useJournalCaisse() {
   const { t } = useTranslation(['cash_journal', 'common']);
@@ -454,7 +455,7 @@ export function useJournalCaisse() {
             <div style="font-size: 0.8em; margin-bottom: 10px;">
                 <div style="display: flex; justify-content: space-between;">
                     <span>${t('print.print_date')}:</span>
-                    <span>${new Date().toLocaleDateString('fr-FR')} ${new Date().toLocaleTimeString('fr-FR')}</span>
+                    <span>${formatDateTime(new Date().toISOString())}</span>
                 </div>
                 <div style="display: flex; justify-content: space-between;">
                     <span>${t('print.operator')}:</span>
@@ -535,7 +536,7 @@ export function useJournalCaisse() {
             </div>
             
             <div style="text-align: center; font-size: 0.6em; margin-top: 15px; font-style: italic; opacity: 0.5;">
-                ${t('print.footer', { date: new Date().toLocaleDateString('fr-FR') })}
+                ${t('print.footer', { date: formatDate(new Date().toISOString()) })}
             </div>
         </div>
       `;

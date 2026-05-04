@@ -13,6 +13,7 @@ from ..serializers import ClientSerializer, AyantDroitSerializer, DepotClientSer
 from ..serializers_optimized import ClientListSerializer, ClientDetailSerializer
 from ..serializer_mixins import OptimizedSerializerMixin
 from ..pagination import StandardResultsSetPagination
+from ..cache_utils import ClientDebtCache
 
 class ClientViewSet(OptimizedSerializerMixin, viewsets.ModelViewSet):
     """
@@ -261,15 +262,11 @@ class ClientViewSet(OptimizedSerializerMixin, viewsets.ModelViewSet):
             'clients': clients_with_unpaid
         })
 
-    @action(detail=True, methods=['get'])
-    def check_unpaid_invoices(self, request, pk=None):
+    def _compute_unpaid_invoices(self, client):
         """
-        Vérifie si le client a des factures non réglées ou partiellement réglées.
-        Retourne le nombre de factures et le montant total dû.
+        Calcule les factures impayées d'un client (sans cache).
+        Cette méthode est appelée uniquement en cas de cache miss.
         """
-        client = self.get_object()
-        
-        # Factures avec solde non nul (VAL ou PAY avec reste à payer)
         from ..models import Facture, Caisse
         from django.db.models import Sum, F, Value, DecimalField
         from django.db.models.functions import Coalesce
@@ -300,19 +297,42 @@ class ClientViewSet(OptimizedSerializerMixin, viewsets.ModelViewSet):
                 unpaid_invoices.append({
                     'id': facture.id,
                     'numero': facture.numero_facture,
-                    'date': facture.date,
+                    'date': facture.date.isoformat() if facture.date else None,
                     'total_ttc': float(facture.total_ttc),
                     'paid': float(paid),
                     'remainder': float(remainder)
                 })
                 total_due += remainder
         
-        return Response({
+        return {
             'has_unpaid': len(unpaid_invoices) > 0,
             'count': len(unpaid_invoices),
             'total_due': float(total_due),
             'invoices': unpaid_invoices
-        })
+        }
+
+    @action(detail=True, methods=['get'])
+    def check_unpaid_invoices(self, request, pk=None):
+        """
+        Vérifie si le client a des factures non réglées ou partiellement réglées.
+        Retourne le nombre de factures et le montant total dû.
+        
+        Optimisé avec cache Redis (TTL 60s) pour les requêtes répétées.
+        """
+        client = self.get_object()
+        
+        # Pattern Cache-Aside: vérifier le cache d'abord
+        cached = ClientDebtCache.get_client_debt(client.id)
+        if cached is not None:
+            return Response(cached)
+        
+        # Cache miss: calculer le résultat
+        result = self._compute_unpaid_invoices(client)
+        
+        # Stocker en cache pour les prochaines requêtes
+        ClientDebtCache.set_client_debt(client.id, result)
+        
+        return Response(result)
 
 class AyantDroitViewSet(viewsets.ModelViewSet):
     """API endpoint for ayants droit."""
