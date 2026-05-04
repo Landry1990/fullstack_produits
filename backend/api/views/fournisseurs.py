@@ -488,7 +488,6 @@ class FournisseurViewSet(viewsets.ModelViewSet):
                 'evolution_dette': evolution
             })
         except Exception as e:
-            print(traceback.format_exc())
             return Response({'error': str(e), 'trace': traceback.format_exc()}, status=500)
 
     @action(detail=False, methods=['post'])

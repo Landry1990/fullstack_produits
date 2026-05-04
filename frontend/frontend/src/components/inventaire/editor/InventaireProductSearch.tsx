@@ -2,6 +2,7 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { Search, Database, Plus, CheckCircle2 } from 'lucide-react';
 import { useProductSearch } from '../../../hooks/inventaire/useProductSearch';
+import { formatDate } from '../../../utils/dateUtils';
 
 interface InventaireProductSearchProps {
     searchLogic: ReturnType<typeof useProductSearch>;
@@ -184,7 +185,7 @@ export const InventaireProductSearch: React.FC<InventaireProductSearchProps> = (
                                             <div className="flex-1 min-w-0">
                                                 <div className="font-bold font-mono text-base text-base-content">{lot.lot}</div>
                                                 <div className="text-[10px] text-base-content/50 mt-0.5">
-                                                    Exp: {lot.date_expiration ? new Date(lot.date_expiration).toLocaleDateString('fr-FR') : 'N/A'} • {lot.quantity_remaining} u.
+                                                    Exp: {formatDate(lot.date_expiration) !== '-' ? formatDate(lot.date_expiration) : 'N/A'} • {lot.quantity_remaining} u.
                                                 </div>
                                             </div>
                                             

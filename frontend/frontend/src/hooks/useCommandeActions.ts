@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import type { Commande, CommandeProduit, User } from '../types';
 import commandeService, { type SudoCredentials } from '../services/commandeService';
 import { usePharmacySettings } from './usePharmacySettings';
+import { formatDate as formatDateUtil, formatDateTime, getLocale } from '../utils/dateUtils';
 
 interface UseCommandeActionsProps {
     fetchCommandes: () => Promise<void>;
@@ -189,25 +190,15 @@ export function useCommandeActions({
             // But since I already created the template, I'll use a trick: 
             // I'll define the HTML structure matching the template here for the print window.
             
-            const now = new Date().toLocaleString('fr-FR', {
-                day: '2-digit', month: '2-digit', year: 'numeric',
-                hour: '2-digit', minute: '2-digit'
-            });
+            const now = formatDateTime(new Date().toISOString());
 
             const formatDate = (dateStr: string) => {
-                try {
-                    return new Date(dateStr).toLocaleDateString('fr-FR', {
-                        day: '2-digit', month: '2-digit', year: 'numeric',
-                        hour: '2-digit', minute: '2-digit'
-                    });
-                } catch (e) {
-                    return dateStr;
-                }
+                try { return formatDateUtil(dateStr); } catch { return dateStr; }
             };
 
             const formatM = (val: number | string) => {
                 const n = typeof val === 'string' ? parseFloat(val) : val;
-                return (n || 0).toLocaleString('fr-FR');
+                return (n || 0).toLocaleString(getLocale());
             };
 
             const produits = commande.produits || [];
@@ -233,7 +224,7 @@ export function useCommandeActions({
                 // Formule: stAnt + qtyTotal = currentStock
                 const stAnt = currentStock - qtyTotal;
 
-                const lotInfo = p.lot ? `<div style="font-size: 9px; color: #666; font-family: monospace;">LOT: ${p.lot} | EXP: ${p.date_expiration ? new Date(p.date_expiration).toLocaleDateString('fr-FR') : '-'}</div>` : '';
+                const lotInfo = p.lot ? `<div style="font-size: 9px; color: #666; font-family: monospace;">LOT: ${p.lot} | EXP: ${formatDateUtil(p.date_expiration)}</div>` : ''
                 const tvaLabel = p.tva ? `<span style="font-size: 8px; color: #64748b; margin-left: 4px;">(${p.tva}%)</span>` : '';
                 
                 return `

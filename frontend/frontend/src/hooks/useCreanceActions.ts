@@ -4,6 +4,8 @@ import { useTranslation } from 'react-i18next';
 import type { Creance } from '../types';
 import { useSudo } from './useSudo';
 import creanceService from '../services/creanceService';
+import { usePharmacySettings } from './usePharmacySettings';
+import { generateRelevePdf } from '../utils/print/relevePdf';
 
 interface UseCreanceActionsProps {
     refresh: () => void;
@@ -20,6 +22,7 @@ export const useCreanceActions = ({
 }: UseCreanceActionsProps) => {
     const { t } = useTranslation(['creances', 'common']);
     const { sudoState, requireSudo, closeSudo } = useSudo();
+    const { settings: pharmacySettings } = usePharmacySettings();
 
     // Modal states
     const [selectedCreance, setSelectedCreance] = useState<Creance | null>(null);
@@ -164,57 +167,37 @@ export const useCreanceActions = ({
         requireSudo(performBulkPayment);
     };
 
-    const handleImprimerReleve = useCallback(async (selectedClient: string, _dateDebut: string, _dateFin: string) => {
+    const handleImprimerReleve = useCallback(async (selectedClient: string, dateDebut: string, dateFin: string) => {
         if (!selectedClient) {
             toast.error(t('creances:toasts.select_client_error'));
             return;
         }
 
+        const loadingToast = toast.loading('Génération du relevé...');
         try {
-            const templateNode = document.getElementById('hidden-releve-template');
-            if (!templateNode) {
-                toast.error("Erreur de préparation du relevé.");
-                return;
-            }
+            const releveData = await creanceService.getReleve({
+                client_id: selectedClient,
+                ...(dateDebut ? { date_debut: dateDebut } : {}),
+                ...(dateFin ? { date_fin: dateFin } : {}),
+            });
 
-            // Get all stylesheets to ensure Tailwind classes are properly applied
-            const styleTags = Array.from(document.querySelectorAll('style, link[rel="stylesheet"]'))
-                .map(node => node.outerHTML)
-                .join('\n');
+            const doc = generateRelevePdf({
+                client: releveData.client,
+                creances: releveData.creances,
+                totaux: releveData.totaux,
+                periode: releveData.periode,
+                settings: pharmacySettings,
+            });
 
-            const win = window.open('', '', 'height=800,width=800');
-            if (win) {
-                win.document.write(`<!DOCTYPE html>
-<html>
-<head>
-  <title>Relevé de Compte</title>
-  ${styleTags}
-  <style>
-    @media print {
-      @page { margin: 10mm; size: A4 portrait; }
-      body { margin: 0; background: white !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-    }
-    body { background: white; margin: 0; display: flex; justify-content: center; padding: 20px; }
-  </style>
-</head>
-<body class="bg-white text-black print:p-0">
-  ${templateNode.innerHTML}
-</body>
-</html>`);
-                win.document.close();
-                win.focus();
-                
-                // Wait for styles and fonts to fully load
-                setTimeout(() => {
-                    win.print();
-                    win.close();
-                }, 500);
-            }
+            const clientSlug = releveData.client?.name
+                ? releveData.client.name.toLowerCase().replace(/\s+/g, '_')
+                : selectedClient;
+            doc.save(`releve_${clientSlug}_${new Date().toISOString().slice(0, 10)}.pdf`);
+            toast.success('Relevé généré avec succès.', { id: loadingToast });
         } catch (err) {
-            console.error('Erreur impression relevé:', err);
-            toast.error(t('creances:toasts.error_print_statement'));
+            toast.error(t('creances:toasts.error_print_statement'), { id: loadingToast });
         }
-    }, [t]);
+    }, [t, pharmacySettings]);
 
     return {
         selectedCreance,

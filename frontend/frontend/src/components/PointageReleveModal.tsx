@@ -3,6 +3,7 @@ import api from '../services/api';
 import { useTranslation } from 'react-i18next';
 import PremiumModal from './common/PremiumModal';
 import { formatCurrency } from '../utils/formatters';
+import { getLocale } from '../utils/dateUtils';
 
 interface FactureReleve {
   id: number;
@@ -195,7 +196,7 @@ export default function PointageReleveModal({ isOpen, onClose, fournisseurs, onR
                   <label className="block text-[10px] font-bold uppercase text-base-content/40 mb-1">{t('providers:pointage_modal.month_label')}</label>
                   <select className="select select-sm select-bordered w-full md:w-32" value={month} onChange={e => setMonth(Number(e.target.value))} disabled={periodeType === 'CUSTOM'}>
                     {Array.from({length: 12}, (_, i) => i + 1).map(m => (
-                      <option key={m} value={m}>{new Date(0, m - 1).toLocaleString(t('common:locale', { defaultValue: 'fr-FR' }), { month: 'long' })}</option>
+                      <option key={m} value={m}>{new Date(0, m - 1).toLocaleString(getLocale(), { month: 'long' })}</option>
                     ))}
                   </select>
                 </div>
@@ -228,11 +229,11 @@ export default function PointageReleveModal({ isOpen, onClose, fournisseurs, onR
               <>
                 <div>
                   <label className="block text-[10px] font-bold uppercase text-base-content/40 mb-1">{t('providers:pointage_modal.start_label')}</label>
-                  <input type="date" className="input input-sm input-bordered" value={customStart} onChange={e => setCustomStart(e.target.value)} />
+                  <input type="date" lang={getLocale()} className="input input-sm input-bordered" value={customStart} onChange={e => setCustomStart(e.target.value)} />
                 </div>
                 <div>
                   <label className="block text-[10px] font-bold uppercase text-base-content/40 mb-1">{t('providers:pointage_modal.end_label')}</label>
-                  <input type="date" className="input input-sm input-bordered" value={customEnd} onChange={e => setCustomEnd(e.target.value)} />
+                  <input type="date" lang={getLocale()} className="input input-sm input-bordered" value={customEnd} onChange={e => setCustomEnd(e.target.value)} />
                 </div>
               </>
             )}
@@ -325,7 +326,7 @@ export default function PointageReleveModal({ isOpen, onClose, fournisseurs, onR
                           </td>
                           <td>
                             <div className={`font-medium ${isPointed ? 'text-emerald-700' : 'text-base-content/80'}`}>
-                              {new Date(f.date_cloture).toLocaleDateString('fr-FR', { weekday: 'short', day: '2-digit', month: 'short', year: 'numeric' })}
+                              {new Date(f.date_cloture).toLocaleDateString(getLocale(), { weekday: 'short', day: '2-digit', month: 'short', year: 'numeric' })}
                             </div>
                           </td>
                           <td>

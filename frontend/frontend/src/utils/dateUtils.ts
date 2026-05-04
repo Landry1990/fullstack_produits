@@ -7,7 +7,7 @@ import i18n from '../i18n';
 /**
  * Détermine la locale à utiliser selon la langue courante
  */
-const getLocale = () => {
+export const getLocale = () => {
     const lng = i18n.language;
     if (lng === 'en') return 'en-US'; // mm/dd/yyyy (US style as requested by user)
     return 'fr-FR'; // dd/mm/yyyy
@@ -36,7 +36,7 @@ export function formatDate(date: string | Date | null | undefined): string {
     try {
         const d = typeof date === 'string' ? new Date(date) : date;
         if (isNaN(d.getTime())) return '-';
-        return d.toLocaleDateString('fr-FR', DATE_OPTIONS);
+        return d.toLocaleDateString(getLocale(), DATE_OPTIONS);
     } catch {
         return '-';
     }
@@ -57,12 +57,6 @@ export function formatDateTime(date: string | Date | null | undefined): string {
 }
 
 /**
- * Alias pour la compatibilité (ou si on veut forcer le français, mais ici on suit la langue courante)
- */
-export const formatDateFr = formatDate;
-export const formatDateTimeFr = formatDateTime;
-
-/**
  * Formate une date en format long locale
  */
 export function formatDateLong(date: string | Date | null | undefined): string {
@@ -70,7 +64,7 @@ export function formatDateLong(date: string | Date | null | undefined): string {
     try {
         const d = typeof date === 'string' ? new Date(date) : date;
         if (isNaN(d.getTime())) return '-';
-        return d.toLocaleDateString('fr-FR', {
+        return d.toLocaleDateString(getLocale(), {
             weekday: 'long',
             day: 'numeric',
             month: 'long',
@@ -89,7 +83,7 @@ export function formatDateShort(date: string | Date | null | undefined): string 
     try {
         const d = typeof date === 'string' ? new Date(date) : date;
         if (isNaN(d.getTime())) return '-';
-        return d.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' });
+        return d.toLocaleDateString(getLocale(), { day: 'numeric', month: 'short' });
     } catch {
         return '-';
     }
@@ -122,7 +116,7 @@ export function formatTime(date: string | Date | null | undefined): string {
     try {
         const d = typeof date === 'string' ? new Date(date) : date;
         if (isNaN(d.getTime())) return '-';
-        return d.toLocaleTimeString('fr-FR', {
+        return d.toLocaleTimeString(getLocale(), {
             hour: '2-digit',
             minute: '2-digit'
         });

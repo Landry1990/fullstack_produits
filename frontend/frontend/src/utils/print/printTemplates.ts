@@ -5,6 +5,7 @@
  */
 
 import { formatMoney, formatDateFr, getModeLabel } from './printHelpers';
+import { formatDate, formatDateTime } from '../dateUtils';
 
 // ============== TYPES ==============
 
@@ -186,7 +187,7 @@ export function generatePromisTemplate(
 
       <div style="text-align: center; border-top: 2px dashed #000; padding-top: 15px; font-weight: 700; font-size: 10px;">
         Présentez ce bon pour récupérer votre commande.<br/>
-        <span style="font-size: 8px; font-weight: 400; font-style: italic; display: block; margin-top: 5px;">Document généré le ${new Date().toLocaleDateString('fr-FR')}</span>
+        <span style="font-size: 8px; font-weight: 400; font-style: italic; display: block; margin-top: 5px;">Document généré le ${formatDate(new Date().toISOString())}</span>
       </div>
     </div>
   `;
@@ -206,7 +207,7 @@ export function generateStockRayonTemplate(
       </div>
 
       <div style="display: flex; justify-content: space-between; margin-bottom: 10px; font-size: 8px; color: #6b7280; font-weight: 700;">
-        <span>Imprimé le ${new Date().toLocaleString('fr-FR')}</span>
+        <span>Imprimé le ${formatDateTime(new Date().toISOString())}</span>
         <span>${data.products.length} Articles</span>
       </div>
 

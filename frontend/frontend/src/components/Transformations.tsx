@@ -11,6 +11,7 @@ import {
   ChevronRight, Trash2, Plus 
 } from 'lucide-react';
 import { normalizeNumberInput, formatNumber } from '../utils/formatters';
+import { formatDate, formatDateTime } from '../utils/dateUtils';
 
 // Interfaces
 interface RelationTransformation {
@@ -455,8 +456,8 @@ const Transformations: React.FC = () => {
                       {historique.map(hist => (
                         <tr key={hist.id} className="hover:bg-base-200/30 transition-colors group">
                           <td className="pl-6 py-4">
-                             <div className="font-bold text-xs">{new Date(hist.date_transformation).toLocaleDateString('fr-FR')}</div>
-                             <div className="text-[10px] opacity-40 font-mono uppercase tracking-tighter">{new Date(hist.date_transformation).toLocaleTimeString('fr-FR')}</div>
+                             <div className="font-bold text-xs">{formatDate(hist.date_transformation)}</div>
+                             <div className="text-[10px] opacity-40 font-mono uppercase tracking-tighter">{formatDateTime(hist.date_transformation).split(' ').slice(1).join(' ')}</div>
                           </td>
                           <td className="font-black text-xs text-primary/70">{hist.user_nom}</td>
                           <td className="max-w-xs">

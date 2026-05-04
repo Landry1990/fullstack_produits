@@ -14,7 +14,6 @@ export function ExpirationAlertToasts() {
   const { data, isSuccess } = useExpirationAlerts({
     days: 14,
     enabled: true,
-    showToasts: false,
   });
 
   useEffect(() => {
@@ -132,70 +131,3 @@ export function ExpirationAlertToasts() {
   return null;
 }
 
-/**
- * Hook simple pour afficher les alertes manuellement
- */
-export function useShowExpirationAlerts() {
-  const { data, isSuccess, refetch } = useExpirationAlerts({
-    days: 14,
-    enabled: false, // Ne pas charger automatiquement
-    showToasts: false,
-  });
-
-  const showAlerts = () => {
-    if (!isSuccess || !data) {
-      refetch().then((result) => {
-        if (result.data) {
-          showAlertToasts(result.data.alerts, result.data.stats);
-        }
-      });
-      return;
-    }
-    showAlertToasts(data.alerts, data.stats);
-  };
-
-  return { showAlerts, data, stats: data?.stats };
-}
-
-function showAlertToasts(alerts: ExpirationAlert[], stats: { total_valeur: number }) {
-  const critical = alerts.filter((a) => a.level === 'critical');
-  const warning = alerts.filter((a) => a.level === 'warning');
-  const others = alerts.filter((a) => a.level === 'notice' || a.level === 'info');
-
-  if (critical.length > 0) {
-    toast.error(
-      `🚨 ${critical.length} produit(s) critique(s) - expirent dans ≤ 7 jours`,
-      {
-        duration: 8000,
-        id: 'expiration-critical-manual',
-        style: { border: '2px solid #dc2626', background: '#fef2f2', fontWeight: 'bold' },
-      }
-    );
-  }
-
-  if (warning.length > 0) {
-    toast(
-      `⚠️ ${warning.length} produit(s) urgent(s) - expirent dans 8-14 jours`,
-      {
-        duration: 6000,
-        id: 'expiration-warning-manual',
-        icon: '⚠️',
-        style: { border: '1px solid #f97316', background: '#fff7ed' },
-      }
-    );
-  }
-
-  if (others.length > 0) {
-    toast(
-      `📦 ${others.length} produit(s) en surveillance`,
-      { duration: 4000, id: 'expiration-others-manual' }
-    );
-  }
-
-  if (alerts.length > 0) {
-    toast.success(
-      `Valeur totale à risque: ${stats.total_valeur.toFixed(2)} F`,
-      { duration: 5000, id: 'expiration-value-manual' }
-    );
-  }
-}

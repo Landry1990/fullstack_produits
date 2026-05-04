@@ -5,6 +5,7 @@ import { format } from 'date-fns';
 import { useTranslation } from 'react-i18next';
 import toast, { Toaster } from 'react-hot-toast';
 import { formatCurrency, formatNumber } from '../utils/formatters';
+import { getLocale } from '../utils/dateUtils';
 
 interface UGDetail {
   lot_id: number;
@@ -329,7 +330,8 @@ export default function StockUGReport() {
               <div className="flex items-center gap-2 bg-base-100 px-3 py-1.5 rounded-xl border border-base-200 focus-within:ring-2 focus-within:ring-indigo-100 focus-within:border-indigo-300 transition-all shadow-sm w-full sm:w-auto">
                 <Calendar className="w-4 h-4 text-base-content/40" />
                 <input 
-                  type="date" 
+                  type="date"
+                  lang={getLocale()}
                   className="bg-transparent border-none outline-none text-sm text-base-content/90 w-full"
                   value={dateDebut}
                   onChange={e => setDateDebut(e.target.value)}
@@ -340,7 +342,8 @@ export default function StockUGReport() {
               <div className="flex items-center gap-2 bg-base-100 px-3 py-1.5 rounded-xl border border-base-200 focus-within:ring-2 focus-within:ring-indigo-100 focus-within:border-indigo-300 transition-all shadow-sm w-full sm:w-auto">
                 <Calendar className="w-4 h-4 text-base-content/40" />
                 <input 
-                  type="date" 
+                  type="date"
+                  lang={getLocale()}
                   className="bg-transparent border-none outline-none text-sm text-base-content/90 w-full"
                   value={dateFin}
                   onChange={e => setDateFin(e.target.value)}

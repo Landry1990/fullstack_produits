@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import api from '../services/api';
 import { formatCurrency } from '../utils/formatters';
+import { getLocale } from '../utils/dateUtils';
 import {
   BarChart,
   Bar,
@@ -112,7 +113,8 @@ export default function StatistiquesFournisseur() {
             <div className="form-control w-full sm:w-40">
                 <label className="label py-1"><span className="label-text text-xs">{t('filters.from')}</span></label>
                 <input 
-                type="date" 
+                type="date"
+                lang={getLocale()}
                 className="input input-bordered input-sm w-full" 
                 value={dateDebut}
                 onChange={(e) => setDateDebut(e.target.value)}
@@ -121,7 +123,8 @@ export default function StatistiquesFournisseur() {
             <div className="form-control w-full sm:w-40">
                 <label className="label py-1"><span className="label-text text-xs">{t('filters.to')}</span></label>
                 <input 
-                type="date" 
+                type="date"
+                lang={getLocale()}
                 className="input input-bordered input-sm w-full" 
                 value={dateFin}
                 onChange={(e) => setDateFin(e.target.value)}

@@ -3,10 +3,10 @@ import api from '../services/api';
 import { toast } from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import type { Ordonnancier } from '../types';
+import { formatDate, formatDateTime } from '../utils/dateUtils';
 
 const OrdonnancierPage: React.FC = () => {
     const { t } = useTranslation(['prescriptions', 'common']);
-    const currentLocale = t('common:locale', { defaultValue: 'fr-FR' });
     
     const [ordonnancier, setOrdonnancier] = useState<Ordonnancier[]>([]);
     const [stats, setStats] = useState<any>(null);
@@ -222,9 +222,9 @@ const OrdonnancierPage: React.FC = () => {
                                             </div>
                                         </td>
                                         <td>
-                                            {new Date(entry.date_delivrance).toLocaleDateString('fr-FR')}
+                                            {formatDate(entry.date_delivrance)}
                                             <div className="text-xs opacity-50">
-                                                {new Date(entry.date_delivrance).toLocaleTimeString('fr-FR', {hour: '2-digit', minute:'2-digit'})}
+                                                {formatDateTime(entry.date_delivrance).split(' ').slice(1).join(' ')}
                                             </div>
                                         </td>
                                         <td className="font-medium">{entry.patient_nom}</td>

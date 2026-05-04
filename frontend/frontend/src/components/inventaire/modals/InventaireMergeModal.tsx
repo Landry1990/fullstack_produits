@@ -1,6 +1,7 @@
 import { useTranslation } from 'react-i18next';
 import { ArrowUpDown, Database, AlertCircle } from 'lucide-react';
 import type { Inventaire } from '../../../types';
+import { formatDate } from '../../../utils/dateUtils';
 
 interface InventaireMergeModalProps {
     showMergeModal: boolean;
@@ -79,7 +80,7 @@ export function InventaireMergeModal({
                                     const inv = inventaires.find(i => i.id === id);
                                     return (
                                         <option key={id} value={id}>
-                                            Inventaire #{id} - {inv?.description || (inv?.date && new Date(inv.date).toLocaleDateString('fr-FR')) || 'Sans description'}
+                                            Inventaire #{id} - {inv?.description || (inv?.date && formatDate(inv.date)) || 'Sans description'}
                                         </option>
                                     );
                                 })}
@@ -97,7 +98,7 @@ export function InventaireMergeModal({
                                 ) : (
                                     mergeCandidates.map(c => (
                                         <option key={c.id} value={c.id}>
-                                            Inventaire #{c.id} - {c.description || new Date(c.date).toLocaleDateString('fr-FR')}
+                                            Inventaire #{c.id} - {c.description || formatDate(c.date)}
                                         </option>
                                     ))
                                 )}

@@ -3,6 +3,7 @@ import { Package, AlertTriangle, History, Check, ShieldAlert, BadgeInfo, Search,
 import api from '../../services/api';
 import { useTranslation } from 'react-i18next';
 import { formatCurrency } from '../../utils/formatters';
+import { formatDate } from '../../utils/dateUtils';
 import { toast } from 'react-hot-toast';
 import SkeletonTable from '../ui/SkeletonTable';
 
@@ -381,7 +382,7 @@ export default function Ruptures() {
                               </td>
                               <td className="text-sm whitespace-nowrap font-medium text-base-content/70">{p.fournisseur_name || p.latest_fournisseur_name || '-'}</td>
                               <td className="text-xs text-base-content/60 whitespace-nowrap font-bold">
-                                {p.dernier_achat ? new Date(p.dernier_achat).toLocaleDateString('fr-FR') : '-'}
+                                {formatDate(p.dernier_achat)}
                               </td>
                               <td className="font-mono text-xs whitespace-nowrap font-bold">{formatCurrency(p.cost_price)}</td>
                               <td className="text-center">
@@ -559,7 +560,7 @@ export default function Ruptures() {
                                     </td>
                                     <td className="text-sm font-bold opacity-70">{r.fournisseur_nom || '-'}</td>
                                     <td className="text-sm font-mono opacity-50">
-                                        {new Date(r.date_debut).toLocaleDateString('fr-FR')}
+                                        {formatDate(r.date_debut)}
                                     </td>
                                     <td className="text-right">
                                         <div className="flex gap-2 justify-end items-center">

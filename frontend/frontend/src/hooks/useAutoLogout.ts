@@ -80,7 +80,6 @@ export function useAutoLogout() {
 
         const handleVisibilityChange = () => {
             if (document.visibilityState === 'visible') {
-                console.log('[AutoLogout] Application revenue au premier plan, vérification de la session...');
                 checkAndLogout();
             }
         };

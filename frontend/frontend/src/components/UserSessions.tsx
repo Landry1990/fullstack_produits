@@ -8,6 +8,7 @@ import {
     LogOut, Monitor 
 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
+import { getLocale } from '../utils/dateUtils';
 
 interface UserSession {
     id: number;
@@ -186,7 +187,7 @@ const UserSessions: React.FC = () => {
                                 </label>
                                 <input 
                                     type="date"
-                                    lang="fr-FR" 
+                                    lang={getLocale()} 
                                     className="input input-bordered input-sm focus:input-primary h-10 w-full md:w-44" 
                                     value={startDate}
                                     onChange={(e) => {

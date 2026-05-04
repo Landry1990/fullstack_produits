@@ -467,8 +467,6 @@ export default function GestionUtilisateurs() {
         payload.is_superuser = formData.is_superuser;
       }
 
-      console.log('DEBUG: Payload sending:', payload);
-
       if (editingUser) {
         await api.patch(`users/${editingUser.id}/`, payload);
         toast.success(t('messages.updated'));

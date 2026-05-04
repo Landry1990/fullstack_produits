@@ -48,7 +48,6 @@ export default function ExpirationAlertsWidget({ className = '' }: ExpirationAle
   const { data, isLoading, error } = useExpirationAlerts({
     days: daysFilter,
     enabled: true,
-    showToasts: false,
   });
 
   const currentLocale = t('common:locale', { defaultValue: 'fr-FR' });

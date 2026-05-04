@@ -9,6 +9,12 @@
   </head>
   <body>
     <div id="root"></div>
+    <script>
+      (function() {
+        var lng = localStorage.getItem('i18nextLng') || 'fr';
+        document.documentElement.lang = lng.startsWith('en') ? 'en-US' : 'fr-FR';
+      })();
+    </script>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

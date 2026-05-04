@@ -66,4 +66,12 @@ i18n
         load: 'languageOnly' // Avoid fr-FR if we only have fr
     });
 
+const syncHtmlLang = (lng: string) => {
+    const locale = lng === 'en' ? 'en-US' : 'fr-FR';
+    document.documentElement.lang = locale;
+};
+
+i18n.on('initialized', () => syncHtmlLang(i18n.language));
+i18n.on('languageChanged', (lng) => syncHtmlLang(lng));
+
 export default i18n;

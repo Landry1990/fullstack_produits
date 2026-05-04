@@ -150,6 +150,12 @@ class Produit(models.Model):
     created_at = models.DateTimeField(default=timezone.now)
     updated_at = models.DateTimeField(auto_now=True)
     
+    # Optimistic Locking - évite les verrous pessimistes (select_for_update)
+    version = models.IntegerField(
+        default=1,
+        help_text="Version pour optimistic locking (concurrency control)"
+    )
+    
     # Données Cliniques
     code_atc = models.CharField(
         max_length=20, blank=True, null=True, 

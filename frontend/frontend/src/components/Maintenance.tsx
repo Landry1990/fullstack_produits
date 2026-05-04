@@ -8,6 +8,7 @@ import {
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import { formatNumber } from '../utils/formatters';
+import { getLocale } from '../utils/dateUtils';
 
 interface PurgeTable {
   key: string;
@@ -513,6 +514,7 @@ export default function Maintenance() {
                 <label className="label"><span className="label-text text-xs">{t('date_from')}</span></label>
                 <input
                   type="date"
+                  lang={getLocale()}
                   className="input input-bordered input-sm"
                   value={dateFrom}
                   onChange={e => { setDateFrom(e.target.value); setPreview(null); setPurgeResults(null); }}
@@ -522,6 +524,7 @@ export default function Maintenance() {
                 <label className="label"><span className="label-text text-xs">{t('date_to')}</span></label>
                 <input
                   type="date"
+                  lang={getLocale()}
                   className="input input-bordered input-sm"
                   value={dateTo}
                   onChange={e => { setDateTo(e.target.value); setPreview(null); setPurgeResults(null); }}
@@ -631,7 +634,8 @@ export default function Maintenance() {
                       <span className="label-text text-xs">{t('scheduled_time')}</span>
                     </label>
                     <input 
-                      type="time" 
+                      type="time"
+                      lang={getLocale()}
                       className="input input-bordered input-sm w-full" 
                       value={pharmacySettings?.backup_time?.substring(0, 5) || "02:00"}
                       onChange={e => setPharmacySettings({...pharmacySettings, backup_time: e.target.value})}

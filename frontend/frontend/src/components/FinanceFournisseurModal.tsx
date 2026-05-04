@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { formatCurrency, normalizeNumberInput } from '../utils/formatters';
+import { formatDate } from '../utils/dateUtils';
 import type { Fournisseur } from '../types';
 import { useFinanceFournisseurs } from '../hooks/useFinanceFournisseurs';
 import PremiumModal from './common/PremiumModal';
@@ -208,7 +209,7 @@ export default function FinanceFournisseurModal({ isOpen, onClose, fournisseur, 
                                     {paiements.map((paiement) => (
                                         <tr key={paiement.id} className="hover:bg-base-100 transition-colors border-b border-slate-100">
                                             <td className="font-mono text-sm">
-                                                {new Date(paiement.date_paiement).toLocaleDateString('fr-FR')}
+                                                {formatDate(paiement.date_paiement)}
                                             </td>
                                             <td>
                                                 <span className={`badge badge-sm font-semibold capitalize ${

@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { getLocale } from '../../utils/dateUtils';
 import { useTranslation } from 'react-i18next';
 import type { Promotion } from '../../types/Promotion';
 import { DiscountType, ApplicationMode } from '../../types/Promotion';
@@ -220,13 +221,13 @@ const PromotionForm: React.FC<PromotionFormProps> = ({ onClose, onSave, initialD
                                         <label className="block text-sm font-semibold text-base-content/90 mb-1 flex items-center gap-2 text-primary">
                                             <Calendar size={14} /> {t('promotions:form.start_date')}
                                         </label>
-                                        <input type="date" className="input input-bordered w-full" value={startDate} onChange={e => setStartDate(e.target.value)} required />
+                                        <input type="date" lang={getLocale()} className="input input-bordered w-full" value={startDate} onChange={e => setStartDate(e.target.value)} required />
                                     </div>
                                     <div>
                                         <label className="block text-sm font-semibold text-base-content/90 mb-1 flex items-center gap-2 text-error">
                                             <Calendar size={14} /> {t('promotions:form.end_date')}
                                         </label>
-                                        <input type="date" className="input input-bordered w-full" value={endDate} onChange={e => setEndDate(e.target.value)} />
+                                        <input type="date" lang={getLocale()} className="input input-bordered w-full" value={endDate} onChange={e => setEndDate(e.target.value)} />
                                     </div>
                                 </div>
                             </div>

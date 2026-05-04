@@ -12,6 +12,7 @@ import {
 } from 'recharts';
 import type { ProduitModel, StockLot } from '../../types';
 import { formatCurrency } from '../../utils/formatters';
+import { formatDate } from '../../utils/dateUtils';
 
 interface ProductTabsContentProps {
   selectedProduit: ProduitModel;
@@ -42,10 +43,10 @@ const PriceEvolutionChart = ({ achats, t }: { achats: any[]; t: any }) => {
         return [...filtered]
             .sort((a, b) => new Date(a.commande_date).getTime() - new Date(b.commande_date).getTime())
             .map((a) => ({
-                date: new Date(a.commande_date).toLocaleDateString('fr-FR', { month: 'short', year: '2-digit' }),
+                date: new Date(a.commande_date).toLocaleDateString(undefined, { month: 'short', year: '2-digit' }),
                 prix: Math.round(Number(a.price_cost)),
                 fournisseur: a.fournisseur_name,
-                fullDate: new Date(a.commande_date).toLocaleDateString('fr-FR'),
+                fullDate: formatDate(a.commande_date),
             }));
     }, [achats, selectedFournisseur]);
 
@@ -157,7 +158,7 @@ const PurchasesTabContent = ({ achats, t }: { achats: any[]; t: any }) => {
                 <tbody>
                     {achats.map((achat) => (
                         <tr key={achat.id} className="hover:bg-base-200/50 transition-colors border-b border-base-100">
-                            <td className="text-sm font-mono font-bold text-base-content/70">{new Date(achat.commande_date).toLocaleDateString('fr-FR')}</td>
+                            <td className="text-sm font-mono font-bold text-base-content/70">{formatDate(achat.commande_date)}</td>
                             <td className="text-sm font-bold truncate max-w-[150px]" title={achat.fournisseur_name}>{achat.fournisseur_name}</td>
                             <td className="text-right text-sm font-black">{achat.quantity}</td>
                             <td className="text-right text-sm font-black text-blue-600">
@@ -167,7 +168,7 @@ const PurchasesTabContent = ({ achats, t }: { achats: any[]; t: any }) => {
                                 <span className="badge badge-outline badge-md font-mono font-bold">{achat.lot || '-'}</span>
                             </td>
                             <td className="text-sm font-bold text-base-content/60">
-                                {achat.date_expiration ? new Date(achat.date_expiration).toLocaleDateString('fr-FR') : '-'}
+                                {formatDate(achat.date_expiration)}
                             </td>
                         </tr>
                     ))}
@@ -200,13 +201,13 @@ const LotsTabContent = ({ lots, t }: { lots: StockLot[]; t: any }) => {
                         const isExpired = lot.date_expiration ? new Date(lot.date_expiration) < new Date() : false;
                         return (
                             <tr key={lot.id} className="hover:bg-base-200/50 transition-colors border-b border-base-100">
-                                <td className="text-sm font-mono font-bold text-base-content/70">{new Date(lot.date_reception).toLocaleDateString('fr-FR')}</td>
+                                <td className="text-sm font-mono font-bold text-base-content/70">{formatDate(lot.date_reception)}</td>
                                 <td>
                                     <span className="badge badge-outline badge-md font-mono font-black">{lot.lot || '-'}</span>
                                 </td>
                                 <td>
                                     <span className={`text-sm font-black ${isExpired ? 'text-error' : 'text-base-content'}`}>
-                                        {lot.date_expiration ? new Date(lot.date_expiration).toLocaleDateString('fr-FR') : '-'}
+                                        {formatDate(lot.date_expiration)}
                                     </span>
                                 </td>
                                 <td className="text-sm font-bold truncate max-w-[120px]" title={lot.fournisseur_nom}>{lot.fournisseur_nom}</td>
@@ -312,7 +313,7 @@ const MovementsTabContent = ({ stockHistory, loadingHistory, onMovementClick, t 
                                 onClick={() => onMovementClick(item)}
                             >
                                 <td className="whitespace-nowrap text-sm font-mono font-bold text-base-content/70">
-                                    {new Date(item.date).toLocaleDateString('fr-FR')}
+                                    {formatDate(item.date)}
                                 </td>
                                 <td>
                                     <span className={`badge badge-md whitespace-nowrap font-black tracking-tight ${
@@ -425,11 +426,11 @@ export const ProductTabsContent: React.FC<ProductTabsContentProps> = ({
                 </tr>
                 <tr className="border-b border-base-200">
                    <td className="font-bold text-sm text-base-content/40 uppercase tracking-wider py-4">{t('products:detail.general.last_purchase')}</td>
-                  <td className="font-mono font-bold text-sm py-4">{selectedProduit.dernier_achat ? new Date(selectedProduit.dernier_achat).toLocaleDateString('fr-FR') : '-'}</td>
+                  <td className="font-mono font-bold text-sm py-4">{formatDate(selectedProduit.dernier_achat)}</td>
                 </tr>
                 <tr className="border-b border-base-200">
                    <td className="font-bold text-sm text-base-content/40 uppercase tracking-wider py-4">{t('products:detail.general.last_sale')}</td>
-                  <td className="font-mono font-bold text-sm py-4">{selectedProduit.dernier_vente ? new Date(selectedProduit.dernier_vente).toLocaleDateString('fr-FR') : '-'}</td>
+                  <td className="font-mono font-bold text-sm py-4">{formatDate(selectedProduit.dernier_vente)}</td>
                 </tr>
                 <tr className="border-b border-base-200">
                    <td className="font-bold text-sm text-base-content/40 uppercase tracking-wider py-4">{t('products:detail.general.lot_management')}</td>

@@ -1,5 +1,5 @@
 import { formatCurrency, formatNumber } from '../formatters';
-import { formatDate as formatLocaleDate } from '../dateUtils';
+import { formatDate as formatLocaleDate, getLocale } from '../dateUtils';
 
 // Interfaces based on InvoiceData and PharmacySettings
 export interface ThermalTicketData {
@@ -73,7 +73,7 @@ export const generateThermalTicket = (
 
     const ticketHtml = `
         <!DOCTYPE html>
-        <html lang="fr">
+        <html lang="${getLocale()}">
         <head>
             <meta charset="UTF-8">
             <title>Ticket ${data.numero_facture || data.id}</title>

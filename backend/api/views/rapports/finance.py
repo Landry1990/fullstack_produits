@@ -643,9 +643,6 @@ class RapportFinanceMixin:
         try:
             return self._rapport_dynamique(request)
         except Exception as e:
-            import traceback
-            print(f"CRITICAL ERROR in rapport_dynamique: {e}")
-            print(traceback.format_exc())
             return Response({"error": f"Erreur interne: {e}"}, status=500)
 
     def _rapport_dynamique(self, request):
