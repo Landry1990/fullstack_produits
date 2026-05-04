@@ -238,9 +238,7 @@ export default function Clients() {
             toast.success(t('clients:messages.create_success'));
         } else if (formData.id) {
             await clientService.update(formData.id, cleanData);
-            console.log('[Clients] Création/MAJ effectuée, rechargement dans 500ms...');
             setTimeout(() => {
-                console.log('[Clients] Rechargement des clients sans cache...');
                 fetchClients(true);
             }, 500);
         }
@@ -278,31 +276,17 @@ export default function Clients() {
     // Si pas de factures impayées, procéder à la confirmation
     if (window.confirm(t('clients:modals.delete_confirm', { name: selectedClient.name }))) {
         const deletedId = selectedClient.id;
-        console.log('[Clients] Début suppression client ID:', deletedId);
 
         try {
-            // Suppression immédiate de l'état local (optimistic update)
             setClients(prev => prev.filter(c => c.id !== deletedId));
             setTotalCount(prev => prev - 1);
             setSelectedClient(null);
-            console.log('[Clients] Client retiré du state local');
-
-            console.log('[Clients] Appel API delete...');
             await clientService.delete(deletedId);
-            console.log('[Clients] API delete réussi !');
             toast.success(t('clients:messages.delete_success'));
-
-            // Re-fetch en arrière-plan pour synchroniser
-            setTimeout(() => {
-                console.log('[Clients] Re-fetch après suppression...');
-                fetchClients(true);
-            }, 500);
+            setTimeout(() => fetchClients(true), 500);
         } catch (err: any) {
             console.error('[Clients] Delete error:', err);
-            console.error('[Clients] Error response:', err.response?.data);
             toast.error(err.response?.data?.detail || t('clients:messages.error_delete'));
-            // En cas d'erreur, re-fetch pour restaurer l'état correct
-            console.log('[Clients] Restauration du state...');
             fetchClients(true);
         }
     }
@@ -314,11 +298,7 @@ export default function Clients() {
         const res = await clientService.toggleActive(selectedClient.id);
         toast.success(res.is_active ? t('clients:messages.status_active') : t('clients:messages.status_inactive'));
         setSelectedClient({...selectedClient, is_active: res.is_active});
-        console.log('[Clients] Toggle active effectué, rechargement dans 500ms...');
-        setTimeout(() => {
-            console.log('[Clients] Rechargement des clients sans cache...');
-            fetchClients(true);
-        }, 500);
+        setTimeout(() => fetchClients(true), 500);
     } catch (err) {
         toast.error(t('clients:messages.error_status'));
     }
@@ -346,44 +326,22 @@ export default function Clients() {
       // En cas d'erreur, on continue avec la confirmation standard
     }
 
-    // Si pas de factures impayées, procéder à la confirmation
-    console.log('[Clients] Bulk delete - Affichage confirmation...');
     const confirmed = window.confirm(t('clients:modals.bulk_delete_confirm', { count: selectedIds.length }));
-    console.log('[Clients] Bulk delete - Confirmation:', confirmed);
 
     if (confirmed) {
-        console.log('[Clients] Bulk delete - IDs à supprimer:', selectedIds);
-
-        // Suppression immédiate de l'état local (optimistic update)
-        console.log('[Clients] Bulk delete - Optimistic update...');
         setClients(prev => prev.filter(c => !selectedIds.includes(c.id)));
         setTotalCount(prev => prev - selectedIds.length);
-        console.log('[Clients] Bulk delete - State local mis à jour');
 
         try {
-            console.log('[Clients] Bulk delete - Appel API bulkDelete...');
-            const result = await clientService.bulkDelete(selectedIds);
-            console.log('[Clients] Bulk delete - API succès:', result);
+            await clientService.bulkDelete(selectedIds);
             toast.success(t('clients:messages.bulk_delete_success', { count: selectedIds.length }));
             setSelectedIds([]);
-            console.log('[Clients] Bulk delete - selectedIds vidé');
-
-            // Re-fetch en arrière-plan pour synchroniser
-            console.log('[Clients] Bulk delete - Re-fetch dans 500ms...');
-            setTimeout(() => {
-                console.log('[Clients] Bulk delete - Exécution re-fetch...');
-                fetchClients(true);
-            }, 500);
+            setTimeout(() => fetchClients(true), 500);
         } catch (err: any) {
-            console.error('[Clients] Bulk delete - Erreur:', err);
-            console.error('[Clients] Bulk delete - Error response:', err.response?.data);
+            console.error('[Clients] Bulk delete error:', err);
             toast.error(err.response?.data?.detail || t('clients:messages.error_bulk_delete'));
-            // En cas d'erreur, re-fetch pour restaurer l'état correct
-            console.log('[Clients] Bulk delete - Restauration du state...');
             fetchClients(true);
         }
-    } else {
-        console.log('[Clients] Bulk delete - Annulé par l\'utilisateur');
     }
   };
 

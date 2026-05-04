@@ -27,6 +27,7 @@ from ...serializers import CreanceSerializer
 from ...audit_helpers import log_audit
 from ...sudo_utils import validate_sudo_mode
 from ...pagination import StandardResultsSetPagination
+from ...cache_utils import ClientDebtCache
 
 logger = logging.getLogger(__name__)
 
@@ -244,28 +245,18 @@ class CreanceViewSet(viewsets.ReadOnlyModelViewSet):
         return response
 
     @action(detail=True, methods=['post'])
-    @transaction.atomic
     def ajouter_paiement(self, request, pk=None):
-        # 1. VERROUILLAGE: On récupère la facture avec select_for_update() 
-        # pour empêcher les modifications concurrentes (double paiement)
-        try:
-            facture = Facture.objects.select_for_update().get(pk=pk)
-        except Facture.DoesNotExist:
-            return Response({'detail': 'Facture introuvable.'}, status=status.HTTP_404_NOT_FOUND)
-            
-        if not facture.paiements.filter(mode_paiement='en_compte').exists():
-            return Response({'detail': 'Cette facture n\'est pas une créance.'}, status=status.HTTP_400_BAD_REQUEST)
+        """
+        Ajoute un paiement avec Optimistic Locking (pas de select_for_update).
+        Gère les conflits de concurrence avec retry automatique.
+        """
+        from ...optimistic_locking import optimistic_update_response, ConcurrentModificationError
         
-        validation_user, error_response = validate_sudo_mode(request, permission_attr='can_cash_out')
-        if error_response:
-            return error_response
-
+        # Validation des données
         mode_paiement = request.data.get('mode_paiement')
         montant = request.data.get('montant')
         reference_base = request.data.get('reference', '')
-        
-        reference = f"{reference_base} [{mode_paiement.upper()}] [RECOUV]".strip()
-        mode_paiement = 'recouvrement'
+        expected_version = request.data.get('expected_version') or request.data.get('version', 1)
         
         if not mode_paiement or not montant:
             return Response({'detail': 'Les champs mode_paiement et montant sont requis.'}, status=status.HTTP_400_BAD_REQUEST)
@@ -275,20 +266,80 @@ class CreanceViewSet(viewsets.ReadOnlyModelViewSet):
         except (ValueError, TypeError):
             return Response({'detail': 'Le montant doit être un nombre valide.'}, status=status.HTTP_400_BAD_REQUEST)
         
-        montant_paye = facture.paiements.filter(statut='completee').exclude(mode_paiement='en_compte').aggregate(total=Sum('montant'))['total'] or Decimal('0.00')
-        reste_a_payer = facture.total_ttc - montant_paye
+        # Vérification mode SUDO
+        validation_user, error_response = validate_sudo_mode(request, permission_attr='can_cash_out')
+        if error_response:
+            return error_response
         
-        if montant > reste_a_payer:
-            return Response({'detail': f'Le montant ({montant}) dépasse le reste à payer ({reste_a_payer}).', 'reste_a_payer': str(reste_a_payer)}, status=status.HTTP_400_BAD_REQUEST)
+        reference = f"{reference_base} [{mode_paiement.upper()}] [RECOUV]".strip()
+        mode_paiement = 'recouvrement'
         
-        paiement = Caisse.objects.create(facture=facture, mode_paiement=mode_paiement, montant=montant, reference=reference, statut='completee', user=validation_user)
+        def process_payment_update(facture):
+            """Fonction de mise à jour appelée avec optimistic locking"""
+            # Vérifications métier
+            if not facture.paiements.filter(mode_paiement='en_compte').exists():
+                raise ValueError("Cette facture n'est pas une créance.")
+            
+            montant_paye = facture.paiements.filter(
+                statut='completee'
+            ).exclude(
+                mode_paiement='en_compte'
+            ).aggregate(total=Sum('montant'))['total'] or Decimal('0.00')
+            
+            reste_a_payer = facture.total_ttc - montant_paye
+            
+            if montant > reste_a_payer:
+                raise ValueError(f'Le montant ({montant}) dépasse le reste à payer ({reste_a_payer}).')
+            
+            # Créer le paiement
+            paiement = Caisse.objects.create(
+                facture=facture,
+                mode_paiement=mode_paiement,
+                montant=montant,
+                reference=reference,
+                statut='completee',
+                user=validation_user
+            )
+            
+            # Traiter le paiement
+            from ...services.payment_service import PaymentService
+            PaymentService.process_payment(paiement, is_created=True)
+            
+            # Stocker l'ID du paiement pour le retour
+            facture._paiement_id = paiement.id
         
-        from ...services.payment_service import PaymentService
-        PaymentService.process_payment(paiement, is_created=True)
-        
-        facture.refresh_from_db()
-        serializer = self.get_serializer(facture)
-        return Response({'detail': 'Paiement enregistré avec succès.', 'paiement_id': paiement.id, 'creance': serializer.data})
+        # Utiliser optimistic locking avec retry automatique
+        try:
+            facture, error = Facture.update_with_optimistic_lock(
+                pk=pk,
+                expected_version=expected_version,
+                update_func=process_payment_update,
+                max_retries=3
+            )
+            
+            if error:
+                return Response({
+                    'detail': 'Conflit de concurrence détecté. La facture a été modifiée par un autre processus.',
+                    'error_code': 'CONCURRENT_MODIFICATION',
+                    'expected_version': error.expected,
+                    'actual_version': error.actual,
+                    'hint': 'Rechargez la facture et réessayez'
+                }, status=status.HTTP_409_CONFLICT)
+            
+            # Succès - retourner les données
+            facture.refresh_from_db()
+            serializer = self.get_serializer(facture)
+            return Response({
+                'detail': 'Paiement enregistré avec succès.',
+                'paiement_id': getattr(facture, '_paiement_id', None),
+                'version': facture.version,
+                'creance': serializer.data
+            })
+            
+        except Facture.DoesNotExist:
+            return Response({'detail': 'Facture introuvable.'}, status=status.HTTP_404_NOT_FOUND)
+        except ValueError as e:
+            return Response({'detail': str(e)}, status=status.HTTP_400_BAD_REQUEST)
     
     @action(detail=False, methods=['get'])
     def releve(self, request):
@@ -451,23 +502,25 @@ class CreanceViewSet(viewsets.ReadOnlyModelViewSet):
             story.append(info_table)
             story.append(Spacer(1, 0.5*cm))
             
-            table_data = [['N° Facture', 'Date Facture', 'Bénéficiaire', 'Montant TTC', 'Réglé']]
-            paiements = releve.paiements_caisse.all().select_related('facture', 'facture__ayant_droit')
+            # Paiements du relevé
+            paiements = releve.paiements.filter(statut='completee').order_by('date_paiement')
             
-            if not paiements.exists():
-                story.append(Paragraph("<i>Aucun paiement trouvé.</i>", style_normal))
-            else:
+            if paiements.exists():
+                headers = ["Date", "Montant", "Mode", "Référence"]
+                table_data = [headers]
+                
                 for p in paiements:
                     try:
-                        f = p.facture
-                        if not f: continue
-                        ayant_droit = f.ayant_droit.nom if f.ayant_droit else "-"
+                        date_str = p.date_paiement.strftime('%d/%m/%Y') if p.date_paiement else '-'
+                        montant = f"{float(p.montant):,.0f} F"
+                        mode = p.get_mode_paiement_display() or '-'
+                        ref = p.reference_paiement or '-'
+                        
                         table_data.append([
-                            f.numero_facture or str(f.id),
-                            f.date.strftime('%d/%m/%Y') if f.date else "-",
-                            ayant_droit or "-",
-                            f"{float(f.total_ttc or 0):,.0f} F",
-                            f"{float(p.montant or 0):,.0f} F"
+                            date_str,
+                            montant,
+                            mode,
+                            ref
                         ])
                     except Exception as e:
                         logger.error(f"Erreur traitement paiement {p.id}: {str(e)}")
@@ -475,12 +528,12 @@ class CreanceViewSet(viewsets.ReadOnlyModelViewSet):
                 
                 if len(table_data) > 1:
                     story.append(Spacer(1, 0.5*cm))
-                    t = Table(table_data, colWidths=[3.5*cm, 2.5*cm, 4*cm, 2*cm, 2*cm])
+                    t = Table(table_data, colWidths=[3.5*cm, 2.5*cm, 4*cm, 4*cm])
                     t.setStyle(TableStyle([
                         ('BACKGROUND', (0, 0), (-1, 0), colors.whitesmoke),
                         ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
                         ('FONTSIZE', (0, 0), (-1, -1), 9),
-                        ('ALIGN', (3, 1), (4, -1), 'RIGHT'),
+                        ('ALIGN', (2, 1), (3, -1), 'RIGHT'),
                         ('GRID', (0, 0), (-1, -1), 0.5, colors.grey),
                         ('BOTTOMPADDING', (0, 0), (-1, -1), 6),
                     ]))

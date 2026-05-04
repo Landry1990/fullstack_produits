@@ -43,7 +43,6 @@ def log_audit(user, action, model_name, object_id, description, details=None, re
             details=details or {},
             ip_address=ip_address
         )
-    except Exception as e:
+    except Exception:
         # Le log d'audit ne doit JAMAIS bloquer l'opération principale
-        print(f"Erreur lors de la création du log d'audit: {e}")
         return None

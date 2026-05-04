@@ -40,9 +40,6 @@ const Ventes: React.FC = () => {
         modals,
         actions
     } = useInvoiceActions({ 
-        refreshFactures: () => {
-             refresh(); 
-        },
         setFacturesLocal: setFactures 
     });
 

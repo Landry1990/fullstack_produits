@@ -4,7 +4,7 @@ import { useParams, useSearchParams } from 'react-router-dom';
 import api from '../../services/api';
 import { useLicence } from '../../context/LicenceContext';
 import InvoiceTemplate, { type InvoiceData, type PharmacySettings } from './InvoiceTemplate';
-import InventairePrintTemplate, { type InventairePrintData } from './InventairePrintTemplate';
+import InventairePrintTemplate from './InventairePrintTemplate';
 import StockValuationTemplate, { type StockValuationData } from './StockValuationTemplate';
 
 const PrintPage: React.FC = () => {
@@ -24,7 +24,6 @@ const PrintPage: React.FC = () => {
 
     useEffect(() => {
         const fetchData = async () => {
-            console.log("PrintPage: fetchData called for ID:", id, "Type:", type);
             
             // Safety timeout to prevent infinite loading
             const safetyTimeout = setTimeout(() => {
@@ -105,7 +104,6 @@ const PrintPage: React.FC = () => {
     const handlePrint = async () => {
         if (isPrinting) return;
         setIsPrinting(true);
-        console.log("Print requested by user");
         
         // Small delay to let UI update and ensure browser is ready
         setTimeout(() => {

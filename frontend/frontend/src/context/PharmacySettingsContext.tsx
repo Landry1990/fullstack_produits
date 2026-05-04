@@ -33,6 +33,10 @@ export interface PharmacySettings {
   whatsapp_phone_id?: string;
   whatsapp_business_id?: string;
   pharmacist_whatsapp_number?: string;
+  // Telegram Bot
+  telegram_enabled?: boolean;
+  telegram_bot_token?: string;
+  telegram_chat_id?: string;
 }
 
 const DEFAULT_SETTINGS: PharmacySettings = {
@@ -62,7 +66,10 @@ const DEFAULT_SETTINGS: PharmacySettings = {
   whatsapp_access_token: '',
   whatsapp_phone_id: '',
   whatsapp_business_id: '',
-  pharmacist_whatsapp_number: ''
+  pharmacist_whatsapp_number: '',
+  telegram_enabled: false,
+  telegram_bot_token: '',
+  telegram_chat_id: '',
 };
 
 interface PharmacySettingsContextType {

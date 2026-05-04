@@ -56,7 +56,6 @@ export const StockResolutionHandler: React.FC<StockResolutionHandlerProps> = ({
     
 
     const handleConfirm = () => {
-        console.log("[StockResolutionHandler] Confirmation déclenchée avec actions:", resolutionActions);
         // Apply Resolution actions to the invoice lines
         const updatedLignes = lignesFacture.map(ligne => {
             const action = resolutionActions[ligne.produit.id]
@@ -108,10 +107,8 @@ export const StockResolutionHandler: React.FC<StockResolutionHandlerProps> = ({
         })
 
         if (hasForceSale) {
-            console.log("[StockResolutionHandler] Detection de vente forcée. Déclenchement Sudo...");
             onClose()
             requireSudo(async (validatorId, password) => {
-                console.log("[StockResolutionHandler] Sudo validé. Complétion de l'action.");
                 onComplete(updatedLignes, { validatorId, password })
             }, {
                 title: `Validation Vente Forcée / Stock Insuffisant`,

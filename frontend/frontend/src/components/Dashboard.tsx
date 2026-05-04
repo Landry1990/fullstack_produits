@@ -32,7 +32,6 @@ import PerformanceOverview from './dashboard/PerformanceOverview';
 import StockIntelligence from './dashboard/StockIntelligence';
 import FinancialSummary from './dashboard/FinancialSummary';
 import ExpirationAlertsWidget from './dashboard/ExpirationAlertsWidget';
-import { ExpirationAlertToasts } from './ExpirationAlertToast';
 import { Link } from 'react-router-dom';
 import { usePharmacySettings } from '../hooks/usePharmacySettings';
 import api from '../services/api';
@@ -46,6 +45,7 @@ export default function Dashboard() {
   const [expirationMonths, setExpirationMonths] = useState(1); 
   const [activeTab, setActiveTab] = useState<'overview' | 'stock' | 'finance'>('overview');
   const [sendingReport, setSendingReport] = useState(false);
+  const [sendingInventaire, setSendingInventaire] = useState(false);
 
 
   // Onglet Overview : toujours chargé
@@ -82,40 +82,44 @@ export default function Dashboard() {
     toast.success(t('refresh_success'), { icon: '🔄' });
   };
   
-  const handleSendWhatsAppReport = async () => {
-    if (!pharmSettings?.pharmacist_whatsapp_number) {
-        toast.error("Le numéro WhatsApp de la pharmacienne n'est pas configuré dans les paramètres.");
+  const handleSendTelegramInventaire = async () => {
+    if (!pharmSettings?.telegram_enabled) {
+        toast.error("Telegram non activé — configurez-le dans Paramètres > Telegram Bot.");
+        return;
+    }
+    setSendingInventaire(true);
+    try {
+        await api.post('telegram/rapport-inventaire/');
+        toast.success('Rapport Inventaire envoyé sur Telegram !', { icon: '📦' });
+    } catch (err: any) {
+        const msg = err?.response?.data?.message || 'Erreur envoi Telegram';
+        toast.error(msg);
+    } finally {
+        setSendingInventaire(false);
+    }
+  };
+
+  const handleSendTelegramReport = async () => {
+    if (!pharmSettings?.telegram_enabled) {
+        toast.error("Telegram non activé — configurez-le dans Paramètres > Telegram Bot.");
+        return;
+    }
+    if (!pharmSettings?.telegram_chat_id) {
+        toast.error("Chat ID Telegram non configuré dans les paramètres.");
         return;
     }
 
     setSendingReport(true);
     try {
-        const numero = pharmSettings.pharmacist_whatsapp_number.replace('+', '');
-        await api.post('whatsapp/test/', { numero });
-        toast.success('Rapport envoyé sur WhatsApp !', { icon: '📱' });
+        await api.post('telegram/rapport-flash/', { stats });
+        toast.success('Rapport Flash envoyé sur Telegram !', { icon: '�' });
     } catch (err: any) {
-        const msg = err?.response?.data?.message || 'Erreur envoi WhatsApp';
+        const msg = err?.response?.data?.message || 'Erreur envoi Telegram';
         toast.error(msg);
     } finally {
         setSendingReport(false);
     }
   };
-
-  useEffect(() => {
-    if (expiringLots.length === 0) return;
-    const today = getServerDate();
-    const criticalLots = expiringLots.filter(lot => {
-      if (!lot.date_expiration) return false;
-      const daysUntil = Math.floor((new Date(lot.date_expiration).getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
-      return daysUntil <= 7;
-    });
-    if (criticalLots.length > 0) {
-      toast.error(
-        t('alerts.critical_lots_toast', { count: criticalLots.length }),
-        { duration: 5000, id: 'critical-expiration-dashboard' }
-      );
-    }
-  }, [expiringLots.length]);
 
   useEffect(() => {
     const retards = echeances.filter(e => e.status === 'EN RETARD');
@@ -163,9 +167,6 @@ export default function Dashboard() {
 
   return (
     <div className="min-h-screen bg-base-200/60 font-sans">
-      {/* ── ALERTES PÉREMPTION TOAST (au chargement) ─────── */}
-      <ExpirationAlertToasts />
-
       {/* ── HEADER ─────────────────────────────────────────── */}
       <div className="sticky top-0 z-30 bg-base-100/95 backdrop-blur-md border-b border-base-200 px-4 sm:px-6 py-3">
         <div className="flex items-center justify-between gap-3">
@@ -212,12 +213,20 @@ export default function Dashboard() {
               {loading ? <span className="loading loading-spinner loading-xs" /> : <RefreshCw className="w-4 h-4" />}
             </button>
             <button
-              className={`btn btn-sm btn-ghost btn-circle ${sendingReport ? 'loading' : 'text-[#25D366] hover:bg-[#25D366]/10'}`}
-              onClick={handleSendWhatsAppReport}
+              className={`btn btn-sm btn-ghost btn-circle ${sendingReport ? 'loading' : 'text-[#229ED9] hover:bg-[#229ED9]/10'}`}
+              onClick={handleSendTelegramReport}
               disabled={sendingReport}
-              title="Rapport Flash WhatsApp"
+              title="Rapport Flash Telegram"
             >
               {!sendingReport && <MessageCircle className="w-4 h-4" />}
+            </button>
+            <button
+              className={`btn btn-sm btn-ghost btn-circle ${sendingInventaire ? 'loading' : 'text-[#229ED9] hover:bg-[#229ED9]/10'}`}
+              onClick={handleSendTelegramInventaire}
+              disabled={sendingInventaire}
+              title="Rapport Inventaire Telegram"
+            >
+              {!sendingInventaire && <Package className="w-4 h-4" />}
             </button>
           </div>
         </div>

@@ -206,12 +206,6 @@ class UserSerializer(serializers.ModelSerializer):
         return user
 
     def update(self, instance, validated_data):
-        # DEBUG LOG
-        print(f"DEBUG: Updating user {instance.id} ({instance.username})")
-        print(f"DEBUG: validated_data keys: {list(validated_data.keys())}")
-        if 'profile' in validated_data:
-            print(f"DEBUG: profile_data keys: {list(validated_data['profile'].keys())}")
-            
         profile_data = validated_data.pop('profile', {})
         password = validated_data.pop('password', None)
 
@@ -438,10 +432,7 @@ class ProduitSerializer(serializers.ModelSerializer):
                 return total_value if total_value is not None else Decimal('0.00')
             # Sinon, stock * prix d'achat
             return obj.stock * obj.cost_price if obj.stock is not None and obj.cost_price is not None else Decimal('0.00')
-        except Exception as e:
-            print(f"ERROR calculating value stock for product {obj.id}: {e}")
-            import traceback
-            traceback.print_exc()
+        except Exception:
             return Decimal('0.00')
 
     def get_stock_lots(self, obj):
@@ -450,10 +441,7 @@ class ProduitSerializer(serializers.ModelSerializer):
                 # Retourne les lots avec stock > 0, triés par date d'expiration
                 return StockLotSerializer(obj.stock_lots.filter(quantity_remaining__gt=0).order_by('date_expiration'), many=True).data
             return []
-        except Exception as e:
-            print(f"ERROR getting stock lots for product {obj.id}: {e}")
-            import traceback
-            traceback.print_exc()
+        except Exception:
             return []
 
     def get_next_expiring_date(self, obj):
@@ -485,10 +473,7 @@ class ProduitSerializer(serializers.ModelSerializer):
             if direct_date and min_lot_date:
                 return min(direct_date, min_lot_date)
             return direct_date or min_lot_date
-        except Exception as e:
-            print(f"ERROR getting next expiring date for product {obj.id}: {e}")
-            import traceback
-            traceback.print_exc()
+        except Exception:
             return None
 
     def get_active_promotion(self, obj):
@@ -516,10 +501,7 @@ class ProduitSerializer(serializers.ModelSerializer):
                     'get_quantity': promo.get_quantity
                 }
             return None
-        except Exception as e:
-            print(f"ERROR active promotion for product {obj.id}: {e}")
-            import traceback
-            traceback.print_exc()
+        except Exception:
             return None
 
 class CommandeProduitSerializer(serializers.ModelSerializer):
@@ -1288,8 +1270,6 @@ class OrdonnancierCreateSerializer(serializers.ModelSerializer):
         fields = ['patient_nom', 'prescripteur_nom', 'facture', 'lignes', 'image_ordonnance']
     
     def validate(self, data):
-        print("=== DEBUG ORDONNANCE VALIDATION ===")
-        print(f"Data received: {data}")
         return data
     
     def create(self, validated_data):

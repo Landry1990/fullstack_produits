@@ -12,6 +12,8 @@ export default function PharmacySettingsForm() {
   const [formData, setFormData] = useState<Partial<PharmacySettings>>({})
   const [saving, setSaving] = useState(false)
   const [testingWhatsapp, setTestingWhatsapp] = useState(false)
+  const [testingTelegram, setTestingTelegram] = useState(false)
+  const [gettingChatId, setGettingChatId] = useState(false)
   const [newTvaRate, setNewTvaRate] = useState('')
   const [newTvaLabel, setNewTvaLabel] = useState('')
   const [addingTva, setAddingTva] = useState(false)
@@ -40,6 +42,55 @@ export default function PharmacySettingsForm() {
     setAddingTva(false);
   }
 
+
+  const handleGetChatId = async () => {
+    const bot_token = formData.telegram_bot_token
+    if (!bot_token) {
+      import('react-hot-toast').then(({ toast }) => toast.error('Renseignez le Token Bot Telegram d\'abord'))
+      return
+    }
+    setGettingChatId(true)
+    try {
+      const { default: api } = await import('../../services/api')
+      const res = await api.post('telegram/get-chat-id/', { bot_token })
+      if (res.data.status === 'ok') {
+        handleChange('telegram_chat_id', res.data.chat_id)
+        import('react-hot-toast').then(({ toast }) => toast.success(`✅ Chat ID récupéré : ${res.data.chat_id} (${res.data.chat_name || 'inconnu'}). Sauvegardez les paramètres.`))
+      } else {
+        import('react-hot-toast').then(({ toast }) => toast.error('⚠️ ' + res.data.message, { duration: 8000 }))
+      }
+    } catch (err: any) {
+      const msg = err?.response?.data?.message || 'Erreur inconnue'
+      import('react-hot-toast').then(({ toast }) => toast.error('❌ ' + msg, { duration: 8000 }))
+    } finally {
+      setGettingChatId(false)
+    }
+  }
+
+  const handleTestTelegram = async () => {
+    if (!formData.telegram_bot_token) {
+      import('react-hot-toast').then(({ toast }) => toast.error('Renseignez le Token Bot Telegram d\'abord'))
+      return
+    }
+    if (!formData.telegram_chat_id) {
+      import('react-hot-toast').then(({ toast }) => toast.error('Chat ID manquant — utilisez le bouton « Récupérer mon Chat ID » d\'abord'))
+      return
+    }
+    setTestingTelegram(true)
+    try {
+      const { default: api } = await import('../../services/api')
+      const res = await api.post('telegram/test/', {
+        bot_token: formData.telegram_bot_token,
+        chat_id: formData.telegram_chat_id,
+      })
+      import('react-hot-toast').then(({ toast }) => toast.success('✅ ' + (res.data.message || 'Envoyé')))
+    } catch (err: any) {
+      const msg = err?.response?.data?.message || 'Erreur inconnue'
+      import('react-hot-toast').then(({ toast }) => toast.error('❌ ' + msg, { duration: 8000 }))
+    } finally {
+      setTestingTelegram(false)
+    }
+  }
 
   const handleTestWhatsapp = async () => {
     const numero = formData.pharmacist_whatsapp_number
@@ -129,20 +180,11 @@ export default function PharmacySettingsForm() {
               </h2>
             </div>
             <div className="p-6 space-y-4">
-              <div className="form-control">
-                <label className="label">
-                  <span className="label-text font-medium">{t('labels.pharmacy_name')}</span>
-                </label>
-                <input
-                  type="text"
-                  value={formData.pharmacy_name || ''}
-                  onChange={(e) => handleChange('pharmacy_name', e.target.value)}
-                  className="input input-bordered w-full"
-                  placeholder={t('placeholders.pharmacy_name')}
-                />
-                <label className="label">
-                  <span className="label-text-alt text-base-content/50">{t('hints.pharmacy_name')}</span>
-                </label>
+              <div className="flex items-start gap-3 px-4 py-3 rounded-lg bg-primary/5 border border-primary/20 text-sm text-base-content/70">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-primary shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <span>{t('hints.pharmacy_name_from_licence')}</span>
               </div>
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -690,6 +732,91 @@ export default function PharmacySettingsForm() {
                     </svg>
                   )}
                   Envoyer message test
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* Section: Telegram Bot */}
+          <div className="bg-base-100 rounded-xl shadow-sm border border-base-200 overflow-hidden">
+            <div className="bg-base-100 px-6 py-4 border-b border-base-200 flex items-center justify-between">
+              <h2 className="font-semibold text-lg flex items-center gap-2">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-[#229ED9]" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.894 8.221-1.97 9.28c-.145.658-.537.818-1.084.508l-3-2.21-1.447 1.394c-.16.16-.295.295-.605.295l.213-3.053 5.56-5.023c.242-.213-.054-.333-.373-.12L7.17 13.67l-2.93-.918c-.638-.196-.65-.638.136-.943l11.434-4.41c.53-.194.995.131.822.943z"/>
+                </svg>
+                Telegram Bot
+              </h2>
+              <div className="flex items-center gap-2">
+                <span className="text-sm font-medium">{formData.telegram_enabled ? 'Activé' : 'Désactivé'}</span>
+                <input
+                  type="checkbox"
+                  className="toggle toggle-info"
+                  checked={formData.telegram_enabled || false}
+                  onChange={(e) => handleChange('telegram_enabled', e.target.checked)}
+                />
+              </div>
+            </div>
+            <div className={`p-6 space-y-4 transition-all ${!formData.telegram_enabled ? 'opacity-50 pointer-events-none' : ''}`}>
+              <div className="alert alert-info py-2 text-sm">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" className="stroke-current shrink-0 w-4 h-4"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                <span>Créez un bot via <strong>@BotFather</strong> sur Telegram, copiez le token, envoyez <strong>/start</strong> au bot, puis cliquez « Récupérer mon Chat ID ».</span>
+              </div>
+
+              <div className="form-control">
+                <label className="label">
+                  <span className="label-text font-medium">Token Bot</span>
+                </label>
+                <input
+                  type="text"
+                  value={formData.telegram_bot_token || ''}
+                  onChange={(e) => handleChange('telegram_bot_token', e.target.value)}
+                  className="input input-bordered w-full font-mono text-sm"
+                  placeholder="123456789:ABCDefGhIJKlmNoPQRsTUVwxyZ"
+                />
+              </div>
+
+              <div className="form-control">
+                <label className="label">
+                  <span className="label-text font-medium">Chat ID</span>
+                </label>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={formData.telegram_chat_id || ''}
+                    onChange={(e) => handleChange('telegram_chat_id', e.target.value)}
+                    className="input input-bordered flex-1 font-mono text-sm"
+                    placeholder="Cliquez le bouton ci-dessous après /start"
+                  />
+                  <button
+                    type="button"
+                    onClick={handleGetChatId}
+                    disabled={gettingChatId || !formData.telegram_enabled}
+                    className="btn btn-outline btn-info btn-sm gap-1"
+                  >
+                    {gettingChatId ? <span className="loading loading-spinner loading-xs"></span> : '🔍'}
+                    Récupérer mon Chat ID
+                  </button>
+                </div>
+                <label className="label">
+                  <span className="label-text-alt text-base-content/50">Envoyez /start à votre bot Telegram puis cliquez ce bouton</span>
+                </label>
+              </div>
+
+              <div className="pt-2">
+                <button
+                  type="button"
+                  onClick={handleTestTelegram}
+                  disabled={testingTelegram || !formData.telegram_enabled}
+                  className="btn btn-outline btn-info btn-sm gap-2"
+                >
+                  {testingTelegram ? (
+                    <span className="loading loading-spinner loading-xs"></span>
+                  ) : (
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 24 24" fill="currentColor">
+                      <path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.894 8.221-1.97 9.28c-.145.658-.537.818-1.084.508l-3-2.21-1.447 1.394c-.16.16-.295.295-.605.295l.213-3.053 5.56-5.023c.242-.213-.054-.333-.373-.12L7.17 13.67l-2.93-.918c-.638-.196-.65-.638.136-.943l11.434-4.41c.53-.194.995.131.822.943z"/>
+                    </svg>
+                  )}
+                  Envoyer message test Telegram
                 </button>
               </div>
             </div>

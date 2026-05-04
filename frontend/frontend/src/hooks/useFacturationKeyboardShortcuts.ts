@@ -105,7 +105,6 @@ export function useFacturationKeyboardShortcuts({
         e.preventDefault()
         e.stopImmediatePropagation()
         if (lignesFacture.length > 0) {
-           console.log("[KeyboardShortcuts] F7 pressé : Mise en attente...");
            handleSuspendSale()
         }
         return
@@ -114,7 +113,6 @@ export function useFacturationKeyboardShortcuts({
       // F8: Rappeler les ventes en attente
       if (e.key === 'F8') {
         e.preventDefault()
-        console.log("[KeyboardShortcuts] F8 pressé : Rappel des ventes...");
         setShowPendingSales(!showPendingSales)
         return
       }
@@ -147,10 +145,7 @@ export function useFacturationKeyboardShortcuts({
         e.preventDefault()
         e.stopImmediatePropagation()
         if (lignesFacture.length > 0) {
-            console.log("[KeyboardShortcuts] Ctrl+S pressé : Mise en attente...");
             handleSuspendSale()
-        } else {
-            console.warn("[KeyboardShortcuts] Ctrl+S ignoré : Le panier est vide");
         }
         return
       }

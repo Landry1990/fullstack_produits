@@ -70,5 +70,5 @@ def log_delete(sender, instance, **kwargs):
             object_id=str(instance.pk),
             details={"info": "Deleted completely"}
         )
-    except Exception as e:
-        print(f"Error logging delete: {e}")
+    except Exception:
+        pass

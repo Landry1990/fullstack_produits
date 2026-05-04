@@ -307,6 +307,38 @@ export const useEcheances = (enabled: boolean = true) => {
     });
 };
 
+export interface VendeurRanking {
+    vendeur_id: number;
+    vendeur: string;
+    rang: number;
+    nbre_ventes: number;
+    chiffre_affaires: number;
+    panier_moyen: number;
+    evolution?: number | null;
+}
+
+export interface VendeursRankingResponse {
+    data: VendeurRanking[];
+    periode: { debut: string; fin: string; type: string };
+}
+
+export const useVendeursRanking = (mois: string, enabled: boolean = true) => {
+    return useQuery<VendeursRankingResponse>({
+        queryKey: ['dashboard', 'vendeursRanking', mois],
+        queryFn: async () => {
+            const response = await api.get<VendeursRankingResponse>(
+                'rapports/classement_vendeurs_mensuel/',
+                { params: { mois, periode: 'mois' } }
+            );
+            return response.data;
+        },
+        enabled,
+        staleTime: 1000 * 60 * 5,
+        refetchInterval: enabled ? 1000 * 60 * 5 : false,
+        refetchIntervalInBackground: false,
+    });
+};
+
 export const useReapproStats = (enabled: boolean = true) => {
     return useQuery({
         queryKey: ['dashboard', 'reappro_stats'],

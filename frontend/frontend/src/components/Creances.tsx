@@ -11,8 +11,6 @@ import { CreancePaiementModal } from './creances/modals/CreancePaiementModal';
 import { CreanceDetailsModal } from './creances/modals/CreanceDetailsModal';
 import { BulkPaiementModal } from './creances/modals/BulkPaiementModal';
 import SudoValidationModal from './common/SudoValidationModal';
-import { ReleveTemplate } from './printing/ReleveTemplate';
-import { usePharmacySettings } from '../hooks/usePharmacySettings';
 
 import { Wallet, DollarSign } from 'lucide-react';
 import { normalizeNumberInput, formatCurrency } from '../utils/formatters';
@@ -20,8 +18,6 @@ import { normalizeNumberInput, formatCurrency } from '../utils/formatters';
 export default function Creances() {
     const { t } = useTranslation(['creances', 'common']);
     const data = useCreancesData();
-    const { settings: pharmacySettings } = usePharmacySettings();
-    
     const actions = useCreanceActions({
         refresh: data.refresh,
         selectedIds: data.selectedIds,
@@ -187,18 +183,6 @@ export default function Creances() {
                 message={actions.modals.sudoState.message}
             />
 
-            <div id="hidden-releve-template" className="hidden">
-                {data.filters.selectedClient && (
-                    <ReleveTemplate 
-                        client={data.clients.find(c => c.id.toString() === data.filters.selectedClient) || null}
-                        creances={data.filteredCreances}
-                        settings={pharmacySettings}
-                        dateDebut={data.filters.dateDebut}
-                        dateFin={data.filters.dateFin}
-                        totals={data.totals}
-                    />
-                )}
-            </div>
         </div>
     );
 }

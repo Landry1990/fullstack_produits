@@ -6,6 +6,7 @@ import type { ProduitForm, ProduitModel, Rayon, Fournisseur, Forme, Groupe } fro
 import { useTVA } from '../hooks/useTVA';
 import PremiumModal from './common/PremiumModal';
 import { normalizeNumberInput } from '../utils/formatters';
+import { getLocale } from '../utils/dateUtils';
 import { productSchema } from '../schemas/productSchema';
 
 interface ProduitFormModalProps {
@@ -138,7 +139,7 @@ export default function ProduitFormModal({
       const validation = productSchema.safeParse(payload);
       
       if (!validation.success) {
-        const errorMsg = validation.error.errors
+        const errorMsg = validation.error.issues
           .map(err => `${err.path.join('.')}: ${err.message}`)
           .join(' | ');
         setError(errorMsg);
@@ -153,8 +154,9 @@ export default function ProduitFormModal({
       onCreated(data); // Callback to parent
       onClose(); // Close modal on success
     } catch (err: unknown) {
-      if ((err as any).response) {
-        const detail = err.response?.data ?? err.message;
+      const anyErr = err as any;
+      if (anyErr.response) {
+        const detail = anyErr.response?.data ?? anyErr.message;
         setError(typeof detail === 'string' ? detail : formatBackendErrors(detail));
       } else {
         setError(t('products:form.validation.unknown_error'));
@@ -425,7 +427,8 @@ export default function ProduitFormModal({
             <label className="form-control w-full">
               <div className="label"><span className="label-text font-semibold">{t('products:form.expiration_date')}</span></div>
               <input 
-                type="date" 
+                type="date"
+                lang={getLocale()}
                 className="input input-bordered w-full" 
                 value={form.expire_date}
                 onChange={(e) => setForm((p) => ({ ...p, expire_date: e.target.value }))} 

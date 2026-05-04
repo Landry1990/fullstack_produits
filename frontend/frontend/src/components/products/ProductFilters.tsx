@@ -15,7 +15,6 @@ interface ProductFiltersProps {
 }
 
 export const ProductFilters: React.FC<ProductFiltersProps> = (props) => {
-  console.log('[ProductFilters] Rendering with props:', props);
   const {
     searchQuery,
     setSearchQuery,

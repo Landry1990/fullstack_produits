@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { toast } from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import produitService from '../../services/produitService';
+import { formatDate } from '../../utils/dateUtils';
 import { 
   History, 
   ChevronLeft, 
@@ -16,7 +17,7 @@ import PremiumModal from '../common/PremiumModal';
 
 export default function ReapproHistory() {
   const { t } = useTranslation(['stock', 'common']);
-  const [history, setHistory] = useState<any[]>([]);
+  const [history, setHistory] = useState<any>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedSession, setSelectedSession] = useState<any | null>(null);
@@ -135,7 +136,7 @@ export default function ReapproHistory() {
                         </td>
                     </tr>
                 ) : (
-                    filteredHistory.map(session => (
+                    filteredHistory.map((session: any) => (
                         <tr key={session.id} className="hover:bg-base-200/30 transition-all border-b border-base-200/50 group">
                             <td>
                                 <span className="bg-purple-100 text-purple-700 px-3 py-1 rounded-lg text-[10px] font-black">
@@ -229,7 +230,7 @@ export default function ReapproHistory() {
                                 <td className="text-[10px]">
                                     <div className="flex flex-col">
                                         <span className="font-black text-base-content/60">{adj.lot_num}</span>
-                                        <span className="opacity-40">{adj.expiry ? new Date(adj.expiry).toLocaleDateString('fr-FR') : 'N/A'}</span>
+                                        <span className="opacity-40">{formatDate(adj.expiry) !== '-' ? formatDate(adj.expiry) : 'N/A'}</span>
                                     </div>
                                 </td>
                                 <td className="text-center font-black text-xs text-purple-600">+{adj.quantity_change}</td>

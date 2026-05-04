@@ -13,6 +13,22 @@
   "footer": "Zenith PMS · All versions since Jan. 2026",
   "no_results": "No entries for this filter.",
   "versions": {
+    "2.9.0": {
+      "date": "May 3, 2026",
+      "title": "Licence System & Recycle Bin",
+      "items": [
+        "Licence management system: activation screen, online and offline validation",
+        "Licence expiration alerts (persistent banner + progressive notifications)",
+        "Backend licence control middleware with automatic blocking on expiry",
+        "Pharmacy licence generator with graphical interface (GUI)",
+        "Recycle Bin: restore deleted items (invoices, orders, credit notes, promis)",
+        "Deletions are now reversible thanks to soft-delete on main entities",
+        "Help & Training page redesigned with improved navigation",
+        "Fix: seller ranking now calculated on actual collected amount (not gross TTC)",
+        "Fix: orders in recycle bin no longer appear in active lists",
+        "TypeScript fix: correct handling of 'unknown' type in catch blocks"
+      ]
+    },
     "2.8.0": {
       "date": "April 30, 2026",
       "title": "Purchase price history",

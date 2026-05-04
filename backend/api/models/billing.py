@@ -39,7 +39,14 @@ class PosteCaisse(models.Model):
 
 
 class Facture(models.Model):
-    """Model representing a sales invoice."""
+    """
+    Model representing a sales invoice.
+    
+    Optimistic Locking:
+    - Utilise le champ 'version' pour éviter les conflits concurrents
+    - La méthode update_with_optimistic_lock est disponible via OptimisticLockingMixin
+    - Appeler depuis optimistic_locking.py: Facture.update_with_optimistic_lock(...)
+    """
     class Status(models.TextChoices):
         BROUILLON = 'BROU', 'Brouillon'
         PROFORMA = 'PROF', 'Proforma'
@@ -86,6 +93,12 @@ class Facture(models.Model):
         User, on_delete=models.SET_NULL, null=True, blank=True, 
         related_name='factures_created', 
         help_text="Utilisateur qui a créé la facture"
+    )
+    
+    # Optimistic Locking - évite les verrous pessimistes (select_for_update)
+    version = models.IntegerField(
+        default=1,
+        help_text="Version pour optimistic locking (concurrency control)"
     )
     
     total_ht = models.DecimalField(max_digits=12, decimal_places=2, default=0.00)
@@ -207,6 +220,53 @@ class Facture(models.Model):
                 analysis[taux]['montant_tva'] = (analysis[taux]['montant_tva'] * ratio).quantize(Decimal('0.01'))
 
         return analysis
+
+    @classmethod
+    def update_with_optimistic_lock(cls, pk, expected_version, update_func, max_retries=3):
+        """
+        Mise à jour avec Optimistic Locking (sans select_for_update).
+        
+        Args:
+            pk: ID de la facture
+            expected_version: Version attendue
+            update_func: Fonction de mise à jour (reçoit l'instance)
+            max_retries: Nombre max de tentatives
+        
+        Returns:
+            Tuple (facture, None) ou (None, ConcurrentModificationError)
+        """
+        from django.db import transaction
+        from ..optimistic_locking import ConcurrentModificationError
+        import time
+        
+        for attempt in range(max_retries):
+            try:
+                with transaction.atomic():
+                    facture = cls.objects.get(pk=pk)
+                    
+                    if facture.version != expected_version:
+                        error = ConcurrentModificationError(
+                            'Facture', pk, expected_version, facture.version
+                        )
+                        if attempt == max_retries - 1:
+                            return None, error
+                        time.sleep(0.1 * (2 ** attempt))
+                        expected_version = cls.objects.get(pk=pk).version
+                        continue
+                    
+                    # Appliquer les modifications
+                    update_func(facture)
+                    
+                    # Incrémenter la version
+                    facture.version += 1
+                    facture.save(update_fields=['version'])
+                    
+                    return facture, None
+                    
+            except cls.DoesNotExist:
+                raise
+        
+        return None, ConcurrentModificationError('Facture', pk, expected_version, -1)
 
     class Meta:
         indexes = [

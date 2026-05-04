@@ -1,6 +1,7 @@
 import React from 'react';
 import type { Creance, Client, PharmacySettings } from '../../types';
 import { formatNumber } from '../../utils/formatters';
+import { formatDate } from '../../utils/dateUtils';
 
 interface ReleveTemplateProps {
     client: Client | null;
@@ -54,7 +55,7 @@ export const ReleveTemplate: React.FC<ReleveTemplateProps> = ({
                         Réf: REL-{client?.id ? `${client.id}-` : ''}{new Date().getFullYear()}{String(new Date().getMonth() + 1).padStart(2, '0')}{String(new Date().getDate()).padStart(2, '0')}
                     </div>
                     <div className="text-slate-400 font-bold text-[9px] uppercase tracking-widest text-right mt-1">
-                        Édité le {new Date().toLocaleDateString('fr-FR')}
+                        Édité le {formatDate(new Date().toISOString())}
                     </div>
                 </div>
             </div>

@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Clock, Search } from 'lucide-react';
 import api from '../../services/api';
 import { useTranslation } from 'react-i18next';
+import { getLocale } from '../../utils/dateUtils';
 
 
 interface TrancheHoraireStatsProps {
@@ -65,6 +66,7 @@ export const TrancheHoraireStats: React.FC<TrancheHoraireStatsProps> = ({ onVeri
                     </label>
                     <input 
                         type="time" 
+                        lang={getLocale()}
                         className="input input-bordered input-sm"
                         value={startTime}
                         onChange={(e) => setStartTime(e.target.value)}
@@ -76,6 +78,7 @@ export const TrancheHoraireStats: React.FC<TrancheHoraireStatsProps> = ({ onVeri
                     </label>
                     <input 
                         type="time" 
+                        lang={getLocale()}
                         className="input input-bordered input-sm"
                         value={endTime}
                         onChange={(e) => setEndTime(e.target.value)}

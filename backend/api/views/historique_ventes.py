@@ -2,7 +2,7 @@ from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
-from django.db.models import Sum, Count, Q, Avg
+from django.db.models import Sum, Count, Q, Avg, F as models_f, ExpressionWrapper, DecimalField
 from django.db.models.functions import TruncDate
 from django.utils import timezone
 from datetime import datetime
@@ -42,7 +42,8 @@ class HistoriqueVentesViewSet(viewsets.ViewSet):
             nb_ventes=Count('id'),
             ca_ht=Sum('total_ht'),
             ca_ttc=Sum('total_ttc'),
-            tva=Sum('total_tva')
+            tva=Sum('total_tva'),
+            total_remise=Sum('remise'),
         ).order_by('-jour')
         
         # Global totals for the period
@@ -50,7 +51,8 @@ class HistoriqueVentesViewSet(viewsets.ViewSet):
             total_ttc=Sum('total_ttc'),
             total_ht=Sum('total_ht'),
             total_tva=Sum('total_tva'),
-            total_ventes=Count('id')
+            total_ventes=Count('id'),
+            total_remise=Sum('remise'),
         )
         
         # Payment totals for the entire filtered period
@@ -104,7 +106,33 @@ class HistoriqueVentesViewSet(viewsets.ViewSet):
             
             # Calculate average basket
             panier_moyen = ca_ttc / nb_ventes if nb_ventes > 0 else 0
-            
+
+            # Remises du jour (somme des discounts sur les lignes + remise globale facture)
+            remises_lignes = FactureProduit.objects.filter(
+                facture__date__date=jour,
+                facture__status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE]
+            ).aggregate(total=Sum(ExpressionWrapper(models_f('discount') * models_f('quantity'), output_field=DecimalField())))
+            remise_globale = float(day['total_remise'] or 0)
+            remise = float(remises_lignes['total'] or 0) + remise_globale
+
+            # Marge brute : (prix_vente - coût) * quantite
+            # Coût = stock_lot.price_cost si dispo, sinon produit.pmp, sinon produit.cost_price
+            fps = FactureProduit.objects.filter(
+                facture__date__date=jour,
+                facture__status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE]
+            ).select_related('stock_lot', 'produit')
+            marge = 0.0
+            for fp in fps:
+                if fp.stock_lot_id:
+                    cout = float(fp.stock_lot.price_cost or 0)
+                elif fp.produit_id and fp.produit.pmp:
+                    cout = float(fp.produit.pmp)
+                elif fp.produit_id:
+                    cout = float(fp.produit.cost_price or 0)
+                else:
+                    cout = 0.0
+                marge += (float(fp.selling_price) - cout) * fp.quantity
+
             results.append({
                 'date': jour.strftime('%Y-%m-%d'),
                 'nb_ventes': nb_ventes,
@@ -112,7 +140,9 @@ class HistoriqueVentesViewSet(viewsets.ViewSet):
                 'ca_ht': float(day['ca_ht'] or 0),
                 'tva': float(day['tva'] or 0),
                 'ca_ttc': ca_ttc,
-                'total_paiements': sum(modes.values()), # For internal auditing if needed
+                'marge': round(marge, 2),
+                'remise': round(remise, 2),
+                'total_paiements': sum(modes.values()),
                 **modes
             })
         

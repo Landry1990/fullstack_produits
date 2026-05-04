@@ -29,11 +29,9 @@ export default function LoyaltyConfigModal({ isOpen, onClose }: Props) {
     }, [isOpen])
 
     const fetchSettings = async () => {
-        console.log("LoyaltyConfigModal: Fetching settings...")
         setLoading(true)
         try {
             let res = await api.get('loyalty-settings/')
-            console.log("LoyaltyConfigModal: Response", res.data)
             
             // Handle paginated, array, or single object response
             let data = res.data
@@ -44,10 +42,8 @@ export default function LoyaltyConfigModal({ isOpen, onClose }: Props) {
             }
             
             if (data && typeof data === 'object' && 'amount_per_point' in data) {
-                console.log("LoyaltyConfigModal: Setting data", data)
                 setSettings(data)
             } else {
-                console.warn("LoyaltyConfigModal: No data found, using defaults")
                 // Fallback default values if backend returns empty
                 setSettings({
                     id: 0,

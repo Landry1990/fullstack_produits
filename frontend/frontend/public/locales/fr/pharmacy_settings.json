@@ -60,6 +60,7 @@
     },
     "hints": {
         "pharmacy_name": "Le nom officiel tel qu'il apparaîtra sur les factures et tickets.",
+        "pharmacy_name_from_licence": "Le nom de la pharmacie est défini par la licence d'activation. Pour le modifier, contactez votre administrateur système.",
         "niu": "Identifiant fiscal obligatoire pour la liasse fiscale.",
         "rccm": "Numéro d'immatriculation au registre du commerce.",
         "receipt_header": "Utilisez \\n pour passer à la ligne.",
