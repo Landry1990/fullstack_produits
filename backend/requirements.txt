@@ -20,3 +20,8 @@ django-extensions
 sentry-sdk
 psutil
 concurrent-log-handler
+openpyxl
+pandas
+PyJWT
+cryptography
+argon2-cffi

@@ -3,7 +3,7 @@ services:
   db:
     image: postgres:15-alpine
     volumes:
-      - ${STACK_NAME}_postgres_data:/var/lib/postgresql/data
+      - postgres_data:/var/lib/postgresql/data
     environment:
       - POSTGRES_DB=${DB_NAME:-fullstack_db}
       - POSTGRES_USER=${DB_USER:-fullstack_user}
@@ -23,18 +23,25 @@ services:
       context: ./backend
       dockerfile: Dockerfile
     volumes:
-      - ${STACK_NAME}_static_volume:/app/staticfiles
-      - ${STACK_NAME}_media_volume:/app/media
+      - static_volume:/app/staticfiles
+      - media_volume:/app/media
     environment:
       - DJANGO_DEBUG=False
-      - DJANGO_SECRET_KEY=${DJANGO_SECRET_KEY}
-      - DJANGO_ALLOWED_HOSTS=${DJANGO_ALLOWED_HOSTS:-localhost,127.0.0.1,backend}
+      - DJANGO_SECRET_KEY=${DJANGO_SECRET_KEY:-}
+      - DJANGO_ALLOWED_HOSTS=${DJANGO_ALLOWED_HOSTS:-localhost,127.0.0.1,backend,frontend,*}
+      - CORS_ALLOWED_ORIGINS=${CORS_ALLOWED_ORIGINS:-http://localhost,http://frontend}
+      - CSRF_TRUSTED_ORIGINS=${CSRF_TRUSTED_ORIGINS:-http://localhost,http://frontend}
+      # Autoriser tous les origines CORS (uniquement pour réseau local)
+      - CORS_ALLOW_ALL=${CORS_ALLOW_ALL:-true}
+      # Choisir le fournisseur pour import auto (FOURNISSEUR1, FOURNISSEUR2, etc.)
+      - SUPPLIER_DATA=${SUPPLIER_DATA:-}
       - DB_ENGINE=django.db.backends.postgresql
       - DB_NAME=${DB_NAME:-fullstack_db}
       - DB_USER=${DB_USER:-fullstack_user}
       - DB_PASSWORD=${DB_PASSWORD:-fullstack_password}
       - DB_HOST=db
       - DB_PORT=5432
+      - REDIS_URL=${REDIS_URL:-redis://redis:6379/0}
     depends_on:
       db:
         condition: service_healthy
@@ -55,12 +62,33 @@ services:
     networks:
       - app-network
 
+  # Cache Redis
+  redis:
+    image: redis:7-alpine
+    restart: always
+    networks:
+      - app-network
+
+  # Tunnel ngrok pour accès externe
+  ngrok:
+    image: ngrok/ngrok:latest
+    restart: always
+    environment:
+      - NGROK_AUTHTOKEN=${NGROK_AUTHTOKEN}
+    command:
+      - "http"
+      - "frontend:80"
+    depends_on:
+      - frontend
+    networks:
+      - app-network
+
 networks:
   app-network:
     driver: bridge
 
 volumes:
-  # Note: Volumes are prefixed with stack name automatically by docker compose -p
   postgres_data:
   static_volume:
   media_volume:
+  redis_data:

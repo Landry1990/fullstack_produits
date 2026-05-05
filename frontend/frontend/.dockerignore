@@ -1,0 +1,8 @@
+node_modules
+dist
+.git
+*.md
+test_*.txt
+test_*.json
+scratch_*.py
+frontend_test_output.txt

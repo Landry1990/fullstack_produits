@@ -196,7 +196,7 @@ export const InventaireDataTab: React.FC<InventaireDataTabProps> = ({
                                     </div>
 
                                     <div className="col-span-1 text-right text-xs font-medium text-base-content/80">
-                                        {formatCurrency(normalizeNumberInput(l.pmp_snapshot || l.produit_cost_price || '0'), 2)}
+                                        {formatCurrency(normalizeNumberInput(String(l.pmp_snapshot || l.produit_cost_price || '0')))}
                                     </div>
 
                                     {/* Stock Théorique */}
