@@ -1,0 +1,24 @@
+my_env01
+.pytest_cache
+__pycache__
+*.pyc
+.git
+*.md
+backups
+logs
+scratch
+.coverage
+db.sqlite3
+.idea
+test_*.py
+test_*.json
+test_*.txt
+debug_*.py
+check_*.py
+diag_*.py
+inspect_*.py
+find_*.py
+fix_*.py
+trace_*.py
+output.txt
+donnees mysql

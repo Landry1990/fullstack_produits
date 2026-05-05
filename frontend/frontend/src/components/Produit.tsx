@@ -327,7 +327,7 @@ export default function Produit() {
         return {
           ...prev,
           stock: (prev.stock ?? 0) + (data.quantity_change ?? 0),
-          stock_reserve: (prev.stock_reserve ?? 0) + (data.reserve_change ?? 0)
+          stock_reserve: (prev.stock_reserve ?? 0) + ((data as any).reserve_change ?? 0)
         };
       });
       setIsAdjustmentModalOpen(false)

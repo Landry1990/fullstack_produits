@@ -223,15 +223,15 @@ export default function Clients() {
         // Validation avec Zod
         const validation = clientSchema.safeParse(formData);
         if (!validation.success) {
-            const errorMsg = validation.error.errors
-                .map(err => `${t(`clients:fields.${err.path[0]}`)}: ${err.message}`)
+            const errorMsg = (validation.error as any).errors
+                .map((err: any) => `${t(`clients:fields.${err.path[0]}`)}: ${err.message}`)
                 .join('\n');
             toast.error(errorMsg, { duration: 5000 });
             setIsSubmitting(false);
             return;
         }
 
-        const cleanData = validation.data;
+        const cleanData = validation.data as any;
 
         if (formMode === 'create') {
             await clientService.create(cleanData);

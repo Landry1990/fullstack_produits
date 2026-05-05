@@ -51,6 +51,16 @@
         "cancel": "Cancel",
         "delete": "Delete"
     },
+    "telegram": {
+        "send_success": "Report sent to Telegram!",
+        "send_error": "Telegram send error",
+        "not_enabled": "Telegram not enabled — configure it in Settings > Telegram Bot.",
+        "chat_id_missing": "Telegram Chat ID not configured in settings.",
+        "flash_report": "Telegram Flash Report",
+        "inventory_report": "Telegram Inventory Report",
+        "monthly_report": "Telegram Monthly Report",
+        "send_report": "Send summary to Telegram"
+    },
     "actions_title": "Actions",
     "sort": {
         "asc": "Ascending",

@@ -73,11 +73,11 @@ const UserSessions: React.FC = () => {
     const fetchSessions = async () => {
         setLoading(true);
         try {
-            let url = `/api/user-sessions/?ordering=-date,-first_login`;
+            let url = `user-sessions/?ordering=-date,-first_login`;
             if (startDate) url += `&date_after=${startDate}`;
             if (endDate) url += `&date_before=${endDate}`; 
             if (startDate === endDate) {
-                url = `/api/user-sessions/?date=${startDate}&ordering=-first_login`;
+                url = `user-sessions/?date=${startDate}&ordering=-first_login`;
             }
             
             if (selectedUser) url += `&user=${selectedUser}`;

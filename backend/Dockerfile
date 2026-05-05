@@ -16,7 +16,10 @@ COPY requirements.txt .
 
 # Installer les dépendances Python
 RUN pip install --no-cache-dir -r requirements.txt
-RUN pip install gunicorn
+RUN pip install gunicorn python-dotenv
+
+# Clé temporaire pour le build (sera remplacée au runtime)
+ENV DJANGO_SECRET_KEY=build-temp-key-not-for-production
 
 # Copier le reste du code de l'application
 COPY . .

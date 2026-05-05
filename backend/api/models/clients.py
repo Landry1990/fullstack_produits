@@ -191,7 +191,8 @@ class Client(models.Model):
             return self.current_debt_annotated or Decimal('0.00')
         
         # Fallback: Calcul complet (lent, éviter en production)
-        return self._compute_debt_from_factures()
+        debt_info = self._compute_debt_from_factures()
+        return debt_info['total'] if isinstance(debt_info, dict) else debt_info
     
     def _compute_debt_from_factures(self):
         """

@@ -169,7 +169,7 @@ export function usePromisData(): UsePromisDataReturn {
     const verifySudoAndCancel = async (id: number) => {
         try {
             const data = await promisService.annulerEtReintegrer(id);
-            toast.success(data.detail);
+            toast.success(data.message);
             fetchPromis();
         } catch (err) {
             toast.error(t('stock:promis.messages.cancel_error', 'Erreur lors de l\'annulation'));
@@ -193,7 +193,7 @@ export function usePromisData(): UsePromisDataReturn {
         setLoading(true);
         try {
             const data = await promisService.sendWhatsAppReminder(id);
-            toast.success(data.detail);
+            toast.success(data.message);
         } catch (err: unknown) {
             const error = err as { response?: { data?: { detail?: string } } };
             toast.error(error.response?.data?.detail || t('stock:promis.messages.whatsapp_error', "Erreur lors de l'envoi du rappel WhatsApp"));
@@ -235,7 +235,7 @@ export function usePromisData(): UsePromisDataReturn {
         setBulkLoading(true);
         try {
             const data = await promisService.bulkDelivrer(Array.from(selectedIds));
-            toast.success(data.detail);
+            toast.success(t('stock:promis.messages.bulk_delivery_success', { count: data.delivered, defaultValue: `${data.delivered} promis livrés` }));
             setSelectedIds(new Set());
             fetchPromis();
         } catch (err) {
@@ -262,7 +262,7 @@ export function usePromisData(): UsePromisDataReturn {
         setBulkLoading(true);
         try {
             const data = await promisService.bulkAnnuler(Array.from(selectedIds));
-            toast.success(data.detail);
+            toast.success(t('stock:promis.messages.bulk_cancel_success', { count: data.cancelled, defaultValue: `${data.cancelled} promis annulés` }));
             setSelectedIds(new Set());
             fetchPromis();
         } catch (err) {
