@@ -103,9 +103,9 @@ const HistoriqueVentes = () => {
     setSendingTelegram(row.date);
     try {
       await api.post('telegram/rapport-flash-date/', { date: row.date });
-      toast.success(`Rapport du ${row.date} envoyé sur Telegram !`, { icon: '📨' });
+      toast.success(t('common:telegram.send_success'), { icon: '📨' });
     } catch (err: any) {
-      const msg = err?.response?.data?.message || 'Erreur envoi Telegram';
+      const msg = err?.response?.data?.message || t('common:telegram.send_error');
       toast.error(msg);
     } finally {
       setSendingTelegram(null);
@@ -236,7 +236,7 @@ const HistoriqueVentes = () => {
                                         className={`btn btn-xs btn-ghost text-[#229ED9] hover:bg-[#229ED9]/10 ${sendingTelegram === row.date ? 'loading' : ''}`}
                                         onClick={() => handleSendTelegramFlash(row)}
                                         disabled={sendingTelegram !== null}
-                                        title={`Envoyer rapport du ${row.date} sur Telegram`}
+                                        title={t('common:telegram.send_report')}
                                       >
                                         {sendingTelegram !== row.date && (
                                           <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 24 24" fill="currentColor">

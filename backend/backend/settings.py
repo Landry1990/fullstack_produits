@@ -51,8 +51,7 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
-    'api.middleware.HealthCheckMiddleware',       # Répond à /api/health/ avant tout traitement
-    'api.middleware.CrashGuardMiddleware',        # Filet de sécurité : intercepte les exceptions fatales
+    'api.middleware.allow_private_ips.AllowPrivateIPsMiddleware',  # DOIT ÊTRE EN PREMIER - Autorise IPs privées réseau local
     'django.middleware.security.SecurityMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware',
     'silk.middleware.SilkyMiddleware',
@@ -61,7 +60,6 @@ MIDDLEWARE = [
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
-    'api.middleware.MemoryWatchdogMiddleware',    # Surveille la consommation mémoire
     'api.middleware_licence.LicenceMiddleware',   # Vigile de la Licence système
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
@@ -212,9 +210,22 @@ STORAGES = {
 }
 
 # CORS / CSRF configuration
-CORS_ALLOWED_ORIGINS = os.getenv('CORS_ALLOWED_ORIGINS', 'http://localhost:3000,http://127.0.0.1:3000,http://localhost:5173,http://192.168.1.192:3000,http://Odessa1988:3000').split(',')
+# Inclut les ports dev (3000, 5173) et production (80)
+# Option: CORS_ALLOW_ALL=true pour autoriser tous les origines (réseau local uniquement)
+CORS_ALLOW_ALL_ORIGINS = os.getenv('CORS_ALLOW_ALL', 'False').lower() == 'true'
+
+if not CORS_ALLOW_ALL_ORIGINS:
+    CORS_ALLOWED_ORIGINS = os.getenv(
+        'CORS_ALLOWED_ORIGINS', 
+        'http://localhost,http://localhost:3000,http://localhost:5173,http://127.0.0.1,http://127.0.0.1:3000,http://192.168.1.192,http://192.168.1.192:3000,http://Odessa1988'
+    ).split(',')
+
 CORS_ALLOW_CREDENTIALS = True
-CSRF_TRUSTED_ORIGINS = os.getenv('CSRF_TRUSTED_ORIGINS', 'http://localhost:3000,http://127.0.0.1:3000,http://192.168.1.192:3000,http://Odessa1988:3000').split(',')
+
+CSRF_TRUSTED_ORIGINS = os.getenv(
+    'CSRF_TRUSTED_ORIGINS', 
+    'http://localhost,http://localhost:3000,http://127.0.0.1,http://127.0.0.1:3000,http://192.168.1.192,http://192.168.1.192:3000,http://Odessa1988'
+).split(',')
 
 # Security cookies in production
 if not DEBUG:

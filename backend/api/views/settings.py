@@ -300,8 +300,9 @@ class TelegramTestView(APIView):
             return Response({'status': 'error', 'message': 'Chat ID manquant — démarrez une conversation avec votre bot et récupérez votre chat_id'}, status=status.HTTP_400_BAD_REQUEST)
 
         pharmacy_name = (ps.pharmacy_name if ps else '') or 'Zenith Pharma'
+        lang = ps.locale if ps else 'fr-FR'
         success, message = TelegramService.send_message(
-            text=f"✅ <b>Test {pharmacy_name}</b>\n\nLa connexion Telegram fonctionne correctement !",
+            text=f"✅ <b>{TelegramService.t('test_title', lang)} — {pharmacy_name}</b>\n\n{TelegramService.t('test_success', lang)}",
             bot_token=bot_token,
             chat_id=chat_id
         )
@@ -394,17 +395,18 @@ class TelegramRapportFlashView(APIView):
             arrow = "📈" if float(change) >= 0 else "📉"
             sign = "+" if float(change) >= 0 else ""
             pharmacy_name = (ps.pharmacy_name or 'Pharmacie').upper()
+            lang = ps.locale if ps else 'fr-FR'
             now = timezone.now()
             date_str = now.strftime("%d/%m/%Y à %H:%M")
 
             text = (
-                f"📊 <b>Rapport Flash — {pharmacy_name}</b>\n"
+                f"📊 <b>{TelegramService.t('flash_report_title', lang)} — {pharmacy_name}</b>\n"
                 f"<i>{date_str}</i>\n\n"
-                f"💰 <b>CA du jour :</b> {int(float(ca)):,} FCFA {arrow} {sign}{int(float(change))}%\n"
-                f"🧾 <b>Ventes :</b> {int(float(nb_ventes))}\n"
-                f"💳 <b>Créances :</b> {int(float(creances)):,} FCFA\n"
-                f"⚠️ <b>Ruptures :</b> {int(float(ruptures))} produit(s)\n\n"
-                f"<i>Généré par Zenith Pharma</i>"
+                f"💰 <b>{TelegramService.t('daily_ca', lang)} :</b> {int(float(ca)):,} FCFA {arrow} {sign}{int(float(change))}%\n"
+                f"🧾 <b>{TelegramService.t('orders', lang)} :</b> {int(float(nb_ventes))}\n"
+                f"💳 <b>{TelegramService.t('receivables', lang)} :</b> {int(float(creances)):,} FCFA\n"
+                f"⚠️ <b>{TelegramService.t('stock_outs', lang)} :</b> {int(float(ruptures))} {TelegramService.t('products', lang)}\n\n"
+                f"<i>{TelegramService.t('footer', lang)}</i>"
             )
 
             success, message = TelegramService.send_message(text)
@@ -491,18 +493,19 @@ class TelegramRapportFlashDateView(APIView):
             creances = float(en_compte_agg['total'] or 0)
 
             pharmacy_name = (ps.pharmacy_name or 'Pharmacie').upper()
+            lang = ps.locale if ps else 'fr-FR'
             date_affichee = jour.strftime('%d/%m/%Y')
             panier_moyen = ca / nb_ventes if nb_ventes > 0 else 0
 
             text = (
-                f"📊 <b>Rapport Flash — {pharmacy_name}</b>\n"
+                f"📊 <b>{TelegramService.t('flash_report_title', lang)} — {pharmacy_name}</b>\n"
                 f"<i>{date_affichee}</i>\n\n"
-                f"💰 <b>CA TTC :</b> {int(ca):,} FCFA\n"
-                f"🧾 <b>Ventes :</b> {nb_ventes} • panier moy. {int(panier_moyen):,} FCFA\n"
-                f"📈 <b>Marge brute :</b> {int(marge):,} FCFA ({taux_marge:.1f}%)\n"
-                f"🎁 <b>Remises :</b> {int(remise):,} FCFA\n"
-                f"💳 <b>En compte :</b> {int(creances):,} FCFA\n\n"
-                f"<i>Généré par Zenith Pharma</i>"
+                f"💰 <b>{TelegramService.t('sales_ttc', lang)} :</b> {int(ca):,} FCFA\n"
+                f"🧾 <b>{TelegramService.t('orders', lang)} :</b> {nb_ventes} • {TelegramService.t('avg_basket', lang)} {int(panier_moyen):,} FCFA\n"
+                f"📈 <b>{TelegramService.t('gross_margin', lang)} :</b> {int(marge):,} FCFA ({taux_marge:.1f}%)\n"
+                f"🎁 <b>{TelegramService.t('discounts', lang)} :</b> {int(remise):,} FCFA\n"
+                f"💳 <b>{TelegramService.t('on_account', lang)} :</b> {int(creances):,} FCFA\n\n"
+                f"<i>{TelegramService.t('footer', lang)}</i>"
             )
 
             success, message = TelegramService.send_message(text)
@@ -530,9 +533,9 @@ class TelegramRapportInventaireView(APIView):
                 return Response({'status': 'error', 'message': 'Telegram non activé dans les paramètres'}, status=status.HTTP_400_BAD_REQUEST)
 
             pharmacy_name = (ps.pharmacy_name or 'Pharmacie').upper()
+            lang = ps.locale if ps else 'fr-FR'
             now = timezone.now()
             date_str = now.strftime("%d/%m/%Y à %H:%M")
-
 
             # Inventaire ciblé : par id si fourni, sinon dernier validé
             inventaire_id = request.data.get('inventaire_id')
@@ -541,7 +544,7 @@ class TelegramRapportInventaireView(APIView):
             else:
                 last_inv = Inventaire.objects.filter(status='VALIDEE').order_by('-date').first()
 
-            ecart_text = "<i>Aucun inventaire trouvé</i>"
+            ecart_text = f"<i>{TelegramService.t('error_no_inventory', lang)}</i>"
             top_plus_text = ""
             top_moins_text = ""
 
@@ -570,18 +573,18 @@ class TelegramRapportInventaireView(APIView):
                 )
 
                 ecart_text = (
-                    f"📋 <b>Inventaire {inv_label}</b> ({statut_label})\n\n"
-                    f"� <b>Valeur théorique :</b> {int(valeur_theo):,} FCFA\n"
-                    f"🔍 <b>Valeur physique :</b> {int(valeur_phys):,} FCFA\n"
-                    f"💸 <b>Valeur écart :</b> {int(valeur_ecart):+,} FCFA\n\n"
-                    f"📊 Écart total : {total_ecart:+d} unités\n"
-                    f"✅ Excédents : {nb_ecarts_pos} lignes\n"
-                    f"❌ Manquants : {nb_ecarts_neg} lignes"
+                    f"📋 <b>{TelegramService.t('inventory_report_title', lang)} {inv_label}</b> ({statut_label})\n\n"
+                    f"🔘 <b>{TelegramService.t('theoretical_value', lang)} :</b> {int(valeur_theo):,} FCFA\n"
+                    f"🔍 <b>{TelegramService.t('physical_value', lang)} :</b> {int(valeur_phys):,} FCFA\n"
+                    f"💸 <b>{TelegramService.t('diff_value', lang)} :</b> {int(valeur_ecart):+,} FCFA\n\n"
+                    f"📊 {TelegramService.t('total_diff', lang)} : {total_ecart:+d} {TelegramService.t('units', lang)}\n"
+                    f"✅ {TelegramService.t('surplus', lang)} : {nb_ecarts_pos} lignes\n"
+                    f"❌ {TelegramService.t('shortage', lang)} : {nb_ecarts_neg} lignes"
                 )
 
                 top_plus = sorted([l for l in lignes if l.ecart > 0], key=lambda x: float(x.ecart) * float(x.pmp_snapshot or 0), reverse=True)[:5]
                 if top_plus:
-                    top_plus_text = "\n\n📈 <b>Top excédents :</b>\n"
+                    top_plus_text = f"\n\n📈 <b>{TelegramService.t('top_surplus', lang)} :</b>\n"
                     for l in top_plus:
                         nom = (l.produit.name if l.produit else l.produit_nom) or '?'
                         valeur = int(float(l.ecart) * float(l.pmp_snapshot or 0))
@@ -589,22 +592,23 @@ class TelegramRapportInventaireView(APIView):
 
                 top_moins = sorted([l for l in lignes if l.ecart < 0], key=lambda x: float(x.ecart) * float(x.pmp_snapshot or 0))[:5]
                 if top_moins:
-                    top_moins_text = "\n📉 <b>Top manquants :</b>\n"
+                    top_moins_text = f"\n📉 <b>{TelegramService.t('top_shortage', lang)} :</b>\n"
                     for l in top_moins:
                         nom = (l.produit.name if l.produit else l.produit_nom) or '?'
                         valeur = int(float(l.ecart) * float(l.pmp_snapshot or 0))
                         top_moins_text += f"  • {nom[:25]} : {l.ecart} uté ({valeur:,} F)\n"
 
             text = (
-                f"🏪 <b>Rapport Inventaire — {pharmacy_name}</b>\n"
+                f"🏪 <b>{TelegramService.t('inventory_report_title', lang)} — {pharmacy_name}</b>\n"
                 f"<i>{date_str}</i>\n\n"
                 f"{ecart_text}"
                 f"{top_plus_text}"
                 f"{top_moins_text}\n"
-                f"\n<i>Généré par Zenith Pharma</i>"
+                f"\n<i>{TelegramService.t('footer', lang)}</i>"
             )
 
             success, message = TelegramService.send_message(text)
+
             if success:
                 return Response({'status': 'ok', 'message': message})
             return Response({'status': 'error', 'message': message}, status=status.HTTP_502_BAD_GATEWAY)
@@ -628,6 +632,7 @@ class TelegramRapportMensuelView(APIView):
                 return Response({'status': 'error', 'message': 'Telegram non activé dans les paramètres'}, status=status.HTTP_400_BAD_REQUEST)
 
             pharmacy_name = (ps.pharmacy_name or 'Pharmacie').upper()
+            lang = ps.locale if ps else 'fr-FR'
             now = timezone.now()
             date_str = now.strftime("%d/%m/%Y à %H:%M")
 
@@ -659,35 +664,35 @@ class TelegramRapportMensuelView(APIView):
             mvts_s = int(float(mvts.get('total_sorties', 0)))
 
             text = (
-                f"📊 <b>Rapport d'Activité — {pharmacy_name}</b>\n"
-                f"<i>Période : {periode_label}</i>\n"
-                f"<i>Généré le {date_str}</i>\n\n"
-                f"💰 <b>CA TTC :</b> {ca_ttc:,} FCFA\n"
-                f"📋 <b>CA HT :</b> {ca_ht:,} FCFA\n"
-                f"🧾 <b>Ventes :</b> {nb_ventes} • panier moy. {panier_moyen:,} F\n"
-                f"📈 <b>Marge brute :</b> {marge_brute:,} FCFA ({marge_pct:.1f}%)\n"
-                f"🎁 <b>Remises :</b> {remises:,} FCFA\n\n"
-                f"💵 <b>Encaissements :</b> {encaiss_total:,} FCFA\n"
-                f"💳 <b>En compte :</b> {creances:,} FCFA\n\n"
+                f"📊 <b>{TelegramService.t('report_title', lang)} — {pharmacy_name}</b>\n"
+                f"<i>{TelegramService.t('period', lang)} : {periode_label}</i>\n"
+                f"<i>{TelegramService.t('generated_on', lang)} {date_str}</i>\n\n"
+                f"💰 <b>{TelegramService.t('sales_ttc', lang)} :</b> {ca_ttc:,} FCFA\n"
+                f"📋 <b>{TelegramService.t('sales_ht', lang)} :</b> {ca_ht:,} FCFA\n"
+                f"🧾 <b>{TelegramService.t('orders', lang)} :</b> {nb_ventes} • {TelegramService.t('avg_basket', lang)} {panier_moyen:,} F\n"
+                f"📈 <b>{TelegramService.t('gross_margin', lang)} :</b> {marge_brute:,} FCFA ({marge_pct:.1f}%)\n"
+                f"🎁 <b>{TelegramService.t('discounts', lang)} :</b> {remises:,} FCFA\n\n"
+                f"💵 <b>{TelegramService.t('collections', lang)} :</b> {encaiss_total:,} FCFA\n"
+                f"💳 <b>{TelegramService.t('on_account', lang)} :</b> {creances:,} FCFA\n\n"
             )
 
             if mvts_e > 0 or mvts_s > 0:
                 text += (
-                    f"🏦 <b>Mouvements caisse :</b>\n"
-                    f"  ↗️ Entrées : {mvts_e:,} F\n"
-                    f"  ↘️ Sorties : {mvts_s:,} F\n"
-                    f"  📊 Solde : {mvts_e - mvts_s:+,} F\n\n"
+                    f"🏦 <b>{TelegramService.t('cash_movements', lang)} :</b>\n"
+                    f"  ↗️ {TelegramService.t('inflow', lang)} : {mvts_e:,} F\n"
+                    f"  ↘️ {TelegramService.t('outflow', lang)} : {mvts_s:,} F\n"
+                    f"  📊 {TelegramService.t('balance', lang)} : {mvts_e - mvts_s:+,} F\n\n"
                 )
 
             if achats:
-                text += "🏪 <b>Top Fournisseurs :</b>\n"
+                text += f"🏪 <b>{TelegramService.t('top_suppliers', lang)} :</b>\n"
                 for f in achats[:3]:
                     nom = str(f.get('fournisseur_nom', '?'))[:20]
                     montant = int(float(f.get('montant_total', 0)))
                     text += f"  • {nom} : {montant:,} F\n"
                 text += "\n"
 
-            text += f"<i>Généré par Zenith Pharma</i>"
+            text += f"<i>{TelegramService.t('footer', lang)}</i>"
 
             success, message = TelegramService.send_message(text)
             if success:

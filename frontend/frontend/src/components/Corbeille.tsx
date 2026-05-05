@@ -29,7 +29,7 @@ interface CorbeilleData {
 
 type TabKey = 'all' | 'produits' | 'clients' | 'fournisseurs' | 'commandes' | 'avoirs' | 'promis' | 'inventaires' | 'factures';
 
-const TAB_CONFIG_KEYS = [
+const TAB_CONFIG_KEYS: { key: TabKey; labelKey: string; icon: React.ReactNode; color: string }[] = [
   { key: 'all', labelKey: 'tabs.all', icon: <Trash2 className="w-4 h-4" />, color: 'text-base-content' },
   { key: 'produits', labelKey: 'tabs.produits', icon: <Package className="w-4 h-4" />, color: 'text-blue-500' },
   { key: 'clients', labelKey: 'tabs.clients', icon: <Users className="w-4 h-4" />, color: 'text-emerald-500' },

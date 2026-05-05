@@ -343,7 +343,7 @@ export default function SimplePrintLabelsModal({
         label: t(`fields.${f.key}`),
         enabled: savedField ? savedField.enabled : (f.key !== 'orderNumber' && f.key !== 'invoiceNumber')
       }
-    })
+    }) as LabelField[]
   })
 
   // Update labels if language changes

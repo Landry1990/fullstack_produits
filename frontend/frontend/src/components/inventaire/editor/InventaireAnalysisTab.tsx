@@ -24,9 +24,9 @@ export const InventaireAnalysisTab: React.FC<InventaireAnalysisTabProps> = ({
         setSendingTelegram(true);
         try {
             await api.post('telegram/rapport-inventaire/', inventaireId ? { inventaire_id: inventaireId } : {});
-            toast.success('Rapport inventaire envoyé sur Telegram !', { icon: '📨' });
+            toast.success(t('common:telegram.send_success'), { icon: '📨' });
         } catch (err: any) {
-            toast.error(err?.response?.data?.message || 'Erreur envoi Telegram');
+            toast.error(err?.response?.data?.message || t('common:telegram.send_error'));
         } finally {
             setSendingTelegram(false);
         }
@@ -109,7 +109,7 @@ export const InventaireAnalysisTab: React.FC<InventaireAnalysisTabProps> = ({
                         className={`btn rounded-xl gap-2 px-8 text-[#229ED9] border-[#229ED9]/30 hover:bg-[#229ED9]/10 hover:border-[#229ED9] transition-all ${sendingTelegram ? 'loading' : ''}`}
                         onClick={handleSendTelegram}
                         disabled={sendingTelegram}
-                        title="Envoyer le rapport d'inventaire sur Telegram"
+                        title={t('common:telegram.inventory_report')}
                     >
                         {!sendingTelegram && (
                             <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 24 24" fill="currentColor">

@@ -57,7 +57,7 @@ export default function MessagingModal({ isOpen, onClose, currentUser, onMessage
       
       setMessages(msgs);
       setTemplates(temps);
-      setUsers(userRes.filter(u => u.id !== currentUser?.id));
+      setUsers(userRes.filter((u: SimpleUser) => u.id !== currentUser?.id));
       
       if (isAdmin && results[3]) {
         const allMsgs = Array.isArray(results[3].data) ? results[3].data : (results[3].data.results || []);

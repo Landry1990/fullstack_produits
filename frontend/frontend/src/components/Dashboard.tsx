@@ -84,15 +84,15 @@ export default function Dashboard() {
   
   const handleSendTelegramInventaire = async () => {
     if (!pharmSettings?.telegram_enabled) {
-        toast.error("Telegram non activé — configurez-le dans Paramètres > Telegram Bot.");
+        toast.error(t('common:telegram.not_enabled'));
         return;
     }
     setSendingInventaire(true);
     try {
         await api.post('telegram/rapport-inventaire/');
-        toast.success('Rapport Inventaire envoyé sur Telegram !', { icon: '📦' });
+        toast.success(t('common:telegram.send_success'), { icon: '📦' });
     } catch (err: any) {
-        const msg = err?.response?.data?.message || 'Erreur envoi Telegram';
+        const msg = err?.response?.data?.message || t('common:telegram.send_error');
         toast.error(msg);
     } finally {
         setSendingInventaire(false);
@@ -101,20 +101,20 @@ export default function Dashboard() {
 
   const handleSendTelegramReport = async () => {
     if (!pharmSettings?.telegram_enabled) {
-        toast.error("Telegram non activé — configurez-le dans Paramètres > Telegram Bot.");
+        toast.error(t('common:telegram.not_enabled'));
         return;
     }
     if (!pharmSettings?.telegram_chat_id) {
-        toast.error("Chat ID Telegram non configuré dans les paramètres.");
+        toast.error(t('common:telegram.chat_id_missing'));
         return;
     }
 
     setSendingReport(true);
     try {
         await api.post('telegram/rapport-flash/', { stats });
-        toast.success('Rapport Flash envoyé sur Telegram !', { icon: '�' });
+        toast.success(t('common:telegram.send_success'), { icon: '📊' });
     } catch (err: any) {
-        const msg = err?.response?.data?.message || 'Erreur envoi Telegram';
+        const msg = err?.response?.data?.message || t('common:telegram.send_error');
         toast.error(msg);
     } finally {
         setSendingReport(false);
@@ -216,7 +216,7 @@ export default function Dashboard() {
               className={`btn btn-sm btn-ghost btn-circle ${sendingReport ? 'loading' : 'text-[#229ED9] hover:bg-[#229ED9]/10'}`}
               onClick={handleSendTelegramReport}
               disabled={sendingReport}
-              title="Rapport Flash Telegram"
+              title={t('common:telegram.flash_report')}
             >
               {!sendingReport && <MessageCircle className="w-4 h-4" />}
             </button>
@@ -224,7 +224,7 @@ export default function Dashboard() {
               className={`btn btn-sm btn-ghost btn-circle ${sendingInventaire ? 'loading' : 'text-[#229ED9] hover:bg-[#229ED9]/10'}`}
               onClick={handleSendTelegramInventaire}
               disabled={sendingInventaire}
-              title="Rapport Inventaire Telegram"
+              title={t('common:telegram.inventory_report')}
             >
               {!sendingInventaire && <Package className="w-4 h-4" />}
             </button>

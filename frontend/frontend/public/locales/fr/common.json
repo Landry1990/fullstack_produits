@@ -50,8 +50,18 @@
     "stock": "Stock",
     "actions": {
         "confirm": "Confirmer",
-        "cancel": "Annuler",
-        "delete": "Supprimer"
+        "search": "Chercher",
+        "close": "Fermer"
+    },
+    "telegram": {
+        "send_success": "Rapport envoyé sur Telegram !",
+        "send_error": "Erreur envoi Telegram",
+        "not_enabled": "Telegram non activé — configurez-le dans Paramètres > Telegram Bot.",
+        "chat_id_missing": "Chat ID Telegram non configuré dans les paramètres.",
+        "flash_report": "Rapport Flash Telegram",
+        "inventory_report": "Rapport Inventaire Telegram",
+        "monthly_report": "Rapport Mensuel Telegram",
+        "send_report": "Envoyer le résumé sur Telegram"
     },
     "actions_title": "Actions",
     "sort": {
