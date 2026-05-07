@@ -62,7 +62,8 @@ const InventairePrintTemplate: React.FC<InventairePrintTemplateProps> = ({ setti
                 {`
                 @media print {
                     @page {
-                        margin-bottom: 20mm;
+                        size: A4;
+                        margin: 15mm 10mm 20mm 10mm;
                     }
                     .page-footer {
                         position: fixed;
@@ -77,6 +78,25 @@ const InventairePrintTemplate: React.FC<InventairePrintTemplateProps> = ({ setti
                     }
                     .page-number:after {
                         content: "Page " counter(page);
+                    }
+                    /* Répéter l'en-tête de tableau sur chaque page */
+                    thead {
+                        display: table-header-group;
+                    }
+                    tfoot {
+                        display: table-footer-group;
+                    }
+                    /* Éviter coupure dans une ligne */
+                    tr {
+                        page-break-inside: avoid;
+                    }
+                    /* Saut de page entre groupes si le groupe est trop grand */
+                    .group-block {
+                        page-break-inside: auto;
+                    }
+                    /* Garder le titre de groupe avec ses premières lignes */
+                    .group-title {
+                        page-break-after: avoid;
                     }
                 }
                 `}
@@ -131,9 +151,9 @@ const InventairePrintTemplate: React.FC<InventairePrintTemplateProps> = ({ setti
 
             {/* Main Content Area */}
             <div className="space-y-8">
-                {sortedGroups.map(groupName => (
-                    <div key={groupName} className="break-inside-avoid">
-                        <h2 className="text-sm font-black text-slate-900 uppercase tracking-wider mb-2 border-l-4 border-primary pl-3 bg-slate-50 py-1.5 flex justify-between items-center">
+                {sortedGroups.map((groupName, groupIdx) => (
+                    <div key={groupName} className="group-block" style={{ pageBreakBefore: groupIdx > 0 ? 'auto' : 'avoid' }}>
+                        <h2 className="group-title text-sm font-black text-slate-900 uppercase tracking-wider mb-2 border-l-4 border-primary pl-3 bg-slate-50 py-1.5 flex justify-between items-center">
                             <span>{groupName}</span>
                             <span className="text-[10px] font-bold text-slate-400 normal-case pr-4">
                                 {data.groups[groupName].filter(i => !i.is_lot_line).length} produits

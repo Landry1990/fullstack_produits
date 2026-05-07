@@ -179,7 +179,7 @@ export default function Facturation() {
                 setSearchQuery={hook.productSearch.setSearchQuery}
                 searchLoading={hook.productSearch.loading}
                 filteredProduits={hook.productSearch.produits}
-                addProduitToFacture={(p) => hook.cart.addProduit(p, { isRetrocession: hook.isRetrocession })}
+                addProduitToFacture={(p) => hook.cart.addProduit(p, { isRetrocession: hook.isRetrocession, markupPercentage: (hook as any).currentMarkup })}
                 addPackToFacture={hook.addPackToFacture}
                 searchInputRef={hook.searchInputRef}
                 placeholder={hook.t('facturation:search.placeholder')}
@@ -323,6 +323,7 @@ export default function Facturation() {
           useManualClient={hook.clientsHook.useManualClient}
           paymentInputRef={hook.paymentInputRef}
           isMultiCaisse={hook.isMultiCaisse}
+          centralizedCashRegister={hook.centralizedCashRegister}
           postesCaissesActive={hook.postesCaisses}
           selectedPosteCaisseId={hook.selectedPosteCaisseId}
           setSelectedPosteCaisseId={hook.setSelectedPosteCaisseId}

@@ -602,6 +602,12 @@ export default function Clients() {
                              </div>
                           </div>
                         )}
+                        {selectedClient.client_type === 'PROFESSIONNEL' && selectedClient.majoration_pro_pourcentage && parseFloat(selectedClient.majoration_pro_pourcentage) > 0 && (
+                           <div className="col-span-2 p-4 bg-error/5 border border-error/10 rounded-2xl flex flex-col gap-1">
+                              <span className="text-[9px] font-black uppercase tracking-widest text-error/40">{t('clients:finance.majoration_pro')}</span>
+                              <div className="text-xl font-black text-error">+{selectedClient.majoration_pro_pourcentage}{t('clients:units.percent')}</div>
+                           </div>
+                        )}
                      </div>
                   </div>
 

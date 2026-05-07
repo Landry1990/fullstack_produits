@@ -25,14 +25,16 @@ const PrintPage: React.FC = () => {
     useEffect(() => {
         const fetchData = async () => {
             
-            // Safety timeout to prevent infinite loading
+            // Safety timeout — plus long pour les états d'inventaire volumineux
+            const isInventaire = type === 'INVENTAIRE';
+            const timeoutMs = isInventaire ? 60000 : 15000;
             const safetyTimeout = setTimeout(() => {
                 if (loading) {
                     console.error("PrintPage: Fetch timed out");
-                    setError("Délai d'attente dépassé pour le chargement du document.");
+                    setError("Délai d'attente dépassé pour le chargement du document. Le catalogue est peut-être trop volumineux, veuillez utiliser un filtre (rayon/forme/groupe).");
                     setLoading(false);
                 }
-            }, 10000);
+            }, timeoutMs);
 
             try {
                 // Fetch settings first (needed for both types)

@@ -54,6 +54,27 @@ timeout 120 python manage.py migrate --noinput || {
     # Ne pas bloquer le démarrage — le serveur peut fonctionner avec des migrations en attente
 }
 
+# ── 2b. Charger la fixture produits si la base est vide ──
+echo ""
+echo "🌱 Vérification seed produits..."
+python -c "
+import os, django
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'backend.settings')
+django.setup()
+from api.models import Produit
+count = Produit.objects.count()
+print(f'  Produits en base: {count}')
+exit(0 if count == 0 else 1)
+" 2>/dev/null && {
+    FIXTURE=/app/fixtures/produits_seed.json
+    if [ -f \"\$FIXTURE\" ]; then
+        echo "📦 Base vide — chargement de la fixture produits..."
+        python manage.py loaddata \"\$FIXTURE\" && echo "✓ Fixture chargée" || echo "⚠️  Échec du chargement fixture"
+    else
+        echo "  Aucune fixture trouvée ($FIXTURE) — base restera vide"
+    fi
+} || echo "  ✓ Produits existants — fixture ignorée"
+
 # ── 3. Vérification d'intégrité ──
 echo ""
 echo "🔍 Vérification d'intégrité..."

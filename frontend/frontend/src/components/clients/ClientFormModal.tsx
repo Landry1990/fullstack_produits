@@ -283,6 +283,15 @@ export default function ClientFormModal({
                                 onChange={e => setData({...data, taux_couverture: e.target.value})} 
                               />
                             </div>
+                            <div className="form-control">
+                              <label className="label py-1"><span className="label-text text-[9px] font-black text-base-content/40 uppercase">{t('clients:finance.majoration_pro')} (%)</span></label>
+                              <input 
+                                type="number" 
+                                className="input input-bordered input-md rounded-xl font-black text-warning bg-base-100 h-10" 
+                                value={data.majoration_pro_pourcentage || '0'} 
+                                onChange={e => setData({...data, majoration_pro_pourcentage: e.target.value})} 
+                              />
+                            </div>
                         </>
                     )}
                 </div>

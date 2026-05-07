@@ -1,6 +1,7 @@
 import jwt
 import hashlib
 import subprocess
+import os
 from datetime import datetime, timedelta
 from django.utils import timezone
 from api.models.licence import Licence
@@ -60,14 +61,34 @@ def should_send_alert(days_remaining, alert_threshold=7):
     return days_remaining <= alert_threshold
 
 def get_hardware_id():
-    """Génère une empreinte unique du PC (Carte Mère + CPU) sous Windows."""
+    """Génère une empreinte unique du PC (Carte Mère + CPU). Supporte Windows et Linux (Docker)."""
     try:
-        board = subprocess.check_output("wmic baseboard get serialnumber", shell=True).decode().split('\n')[1].strip()
-        cpu = subprocess.check_output("wmic cpu get processorid", shell=True).decode().split('\n')[1].strip()
-        raw_id = f"{board}-{cpu}"
+        # Tentative pour Windows (via shell mais silencieux si erreur)
+        if os.name == 'nt':
+            board = subprocess.check_output("wmic baseboard get serialnumber", shell=True, stderr=subprocess.DEVNULL).decode().split('\n')[1].strip()
+            cpu = subprocess.check_output("wmic cpu get processorid", shell=True, stderr=subprocess.DEVNULL).decode().split('\n')[1].strip()
+            raw_id = f"{board}-{cpu}"
+        else:
+            # Tentative pour Linux (Docker)
+            # machine-id est standard sur la plupart des distros Linux
+            machine_id = ""
+            if os.path.exists('/etc/machine-id'):
+                with open('/etc/machine-id', 'r') as f:
+                    machine_id = f.read().strip()
+            elif os.path.exists('/var/lib/dbus/machine-id'):
+                with open('/var/lib/dbus/machine-id', 'r') as f:
+                    machine_id = f.read().strip()
+            
+            # Si on ne trouve rien, on utilise le hostname (moins stable mais évite UNKNOWN)
+            if not machine_id:
+                import socket
+                machine_id = socket.gethostname()
+                
+            raw_id = f"LINUX-{machine_id}"
+
         return hashlib.sha256(raw_id.encode()).hexdigest()[:16].upper()
     except Exception:
-        return "UNKNOWN"
+        return "DOCKER-HOST-ID"
 
 def valider_licence_systeme():
     """Vérifie la licence stockée en base de données."""

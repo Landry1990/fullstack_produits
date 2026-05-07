@@ -52,7 +52,7 @@ export const InventaireEditor: React.FC<InventaireEditorProps> = ({
         lignes, setLignes,
         dateInventaire, setDateInventaire,
         description, setDescription,
-        saving, isReadOnly,
+        saving, autoSaving, isReadOnly,
         selectedLines, toggleSelectAll, toggleSelectLine,
         handleSaveHeader, handleManualSave,
         handleUpdateQuantity, handleDeleteLine, handleBulkDelete,
@@ -108,6 +108,12 @@ export const InventaireEditor: React.FC<InventaireEditorProps> = ({
                             <span className="badge badge-warning rounded-full text-[10px] font-bold uppercase tracking-wider gap-1 px-3 border-none">
                                 <History className="h-3 w-3" />
                                 {t('common:status.draft', { defaultValue: 'Brouillon' })}
+                            </span>
+                        )}
+                        {autoSaving && (
+                            <span className="badge badge-ghost rounded-full text-[10px] font-bold uppercase tracking-wider gap-1 px-3 border-none animate-pulse">
+                                <span className="loading loading-spinner loading-xs"></span>
+                                {t('common:auto_saving', { defaultValue: 'Sauvegarde auto...' })}
                             </span>
                         )}
                         {activeInventaire?.inventory_type && (

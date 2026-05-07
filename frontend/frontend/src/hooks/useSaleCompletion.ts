@@ -25,7 +25,6 @@ import venteService from '../services/venteService';
 import caisseService from '../services/caisseService';
 import promisService from '../services/promisService';
 import ordonnancierService from '../services/ordonnancierService';
-import { generateThermalTicket, type ThermalTicketData, type ThermalPharmacySettings } from '../utils/print/thermalTicketGenerator';
 
 // Local types and helpers removed (moved to types.ts / utils)
 
@@ -325,28 +324,6 @@ export function useSaleCompletion(options: UseSaleCompletionOptions = {}): UseSa
 
                 if (params.isFactureA4) {
                     window.open(`/app/print-invoice/${finalFacture.id}`, '_blank');
-                } else {
-                    // Mappage minimal pour le générateur rapide
-                    const thermalData: ThermalTicketData = {
-                        id: finalFacture.id,
-                        numero_facture: finalFacture.numero_facture || String(finalFacture.id),
-                        date: new Date().toISOString(),
-                        client_name_override: clientNameForTicket,
-                        vendeur_nom: finalFacture.validated_by_name || finalFacture.created_by_name || '',
-                        mode_reglement: paiementsList.length > 1 ? 'Mixte' : (paiementsList[0]?.mode || 'ESPÈCES'),
-                        total_ht: Number(finalFacture.total_ht) || 0,
-                        total_tva: Number(finalFacture.total_tva) || 0,
-                        total_ttc: Number(finalFacture.total_ttc) || 0,
-                        remise: Number(finalFacture.remise) || 0,
-                        produits: params.lignesFacture.map(l => ({
-                            produit_nom: l.produit.name,
-                            quantity: l.quantite,
-                            selling_price: Number(l.prix_unitaire),
-                            discount: Number(l.remise_produit) || 0,
-                            tva: Number(l.produit.tva) || 0
-                        }))
-                    };
-                    generateThermalTicket(thermalData, pharmacySettings as unknown as ThermalPharmacySettings, rendu, totalVerse);
                 }
 
                 const ticketCaisse: TicketCaisse = {

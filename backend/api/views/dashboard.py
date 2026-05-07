@@ -60,7 +60,8 @@ class DashboardViewSet(viewsets.ViewSet):
         facture_qs = Facture.objects.filter(
             date__date__in=[today, yesterday],
             status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE]
-        )
+        ).annotate(num_p=Count('paiements')).exclude(status=Facture.Status.VALIDEE, num_p=0)
+        
         
         # Aggregate everything related to Facture in one pass for [today, yesterday]
         facture_metrics = facture_qs.aggregate(
@@ -153,7 +154,7 @@ class DashboardViewSet(viewsets.ViewSet):
             top_products = FactureProduit.objects.filter(
                 facture__date__date=today,
                 facture__status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE]
-            ).values('produit_id', 'produit__name').annotate(
+            ).exclude(facture__status=Facture.Status.VALIDEE, facture__paiements__isnull=True).distinct().values('produit_id', 'produit__name').annotate(
                 qty=Sum('quantity'),
                 revenue=Sum(F('quantity') * (F('selling_price') - F('discount')))
             ).order_by('-qty')[:5]
@@ -167,7 +168,7 @@ class DashboardViewSet(viewsets.ViewSet):
             factures_today_qs = Facture.objects.filter(
                 date__date=today,
                 status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE]
-            )
+            ).annotate(num_p=Count('paiements')).exclude(status=Facture.Status.VALIDEE, num_p=0)
             
             total_global_remise = factures_today_qs.aggregate(s=Coalesce(Sum('remise'), Decimal('0')))['s']
 

@@ -42,7 +42,7 @@ export default function ImportProductsModal({ onClose, onSuccess }: ImportProduc
     setProgress(0)
 
     try {
-      const response = await api.post('import/products/', formData, {
+      const response = await api.post('products/import/', formData, {
         onUploadProgress: (progressEvent) => {
           if (progressEvent.total) { // Check if total is defined
              const percent = Math.round((progressEvent.loaded * 100) / progressEvent.total)

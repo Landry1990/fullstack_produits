@@ -108,6 +108,15 @@ class Client(models.Model):
         help_text="Pourcentage de remise automatique (0-100%) appliqué à chaque vente",
         verbose_name="Remise automatique (%)"
     )
+
+    majoration_pro_pourcentage = models.DecimalField(
+        max_digits=5,
+        decimal_places=2,
+        default=0.00,
+        validators=[MinValueValidator(0), MaxValueValidator(100)],
+        help_text="Pourcentage de majoration des prix pour les clients professionnels (compensation délais longs)",
+        verbose_name="Majoration Pro (%)"
+    )
     
     points_fidelite = models.IntegerField(default=0)
     pending_discount = models.DecimalField(
