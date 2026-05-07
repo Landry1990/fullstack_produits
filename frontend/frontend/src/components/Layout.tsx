@@ -1,4 +1,5 @@
 import { Outlet } from 'react-router-dom'
+import { Suspense } from 'react'
 import Sidebar from './Sidebar'
 import UserHeader from './common/UserHeader'
 import Omnisearch from './common/Omnisearch'
@@ -18,7 +19,9 @@ function LayoutContent() {
         <main className={`flex-1 overflow-x-hidden overflow-y-auto h-screen ${isZenithMode ? 'p-0' : 'px-3 py-3 sm:px-4 sm:py-4 lg:px-6 lg:py-6'} transition-all duration-300 relative`}>
         <div className={`max-w-full h-full relative ${!isZenithMode ? 'pt-12 sm:pt-14' : ''}`}>
           {!isZenithMode && <UserHeader />}
-          <Outlet />
+          <Suspense fallback={<div className="flex items-center justify-center h-full"><span className="loading loading-spinner loading-lg text-primary"></span></div>}>
+            <Outlet />
+          </Suspense>
         </div>
       </main>
     </div>

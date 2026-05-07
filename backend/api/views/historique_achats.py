@@ -27,8 +27,8 @@ class HistoriqueAchatsViewSet(viewsets.ViewSet):
         fournisseur_id = request.query_params.get('fournisseur_id')
         commande_type = request.query_params.get('type')
 
-        # Filter only completed/closed orders
-        queryset = Commande.objects.filter(status=Commande.Status.CLOTUREE)
+        # Filter only completed/closed orders (non supprimées)
+        queryset = Commande.objects.filter(status=Commande.Status.CLOTUREE, is_active=True)
 
         # Date filtering
         if date_debut:
@@ -51,18 +51,18 @@ class HistoriqueAchatsViewSet(viewsets.ViewSet):
             jour=TruncDate('date')
         ).values('jour').annotate(
             nb_commandes=Count('id', distinct=True),
-            total_achat=Sum(
-                F('produits__quantity') * F('produits__price'),
+            total_achat=Coalesce(Sum(
+                F('produits__quantity') * F('produits__price_cost'),
                 output_field=DecimalField()
-            )
+            ), Value(0, output_field=DecimalField()))
         ).order_by('-jour')
 
         # Global Totals Aggregation
         global_totals = queryset.aggregate(
-            total_achat_global=Sum(
-                F('produits__quantity') * F('produits__price'),
+            total_achat_global=Coalesce(Sum(
+                F('produits__quantity') * F('produits__price_cost'),
                 output_field=DecimalField()
-            ),
+            ), Value(0, output_field=DecimalField())),
             nb_commandes_global=Count('id', distinct=True)
         )
 
@@ -103,8 +103,8 @@ class HistoriqueAchatsViewSet(viewsets.ViewSet):
         fournisseur_id = request.query_params.get('fournisseur_id')
         commande_type = request.query_params.get('type')
 
-        # Filter only completed/closed orders
-        queryset = CommandeProduit.objects.filter(commande__status=Commande.Status.CLOTUREE)
+        # Filter only completed/closed orders (non supprimées)
+        queryset = CommandeProduit.objects.filter(commande__status=Commande.Status.CLOTUREE, commande__is_active=True)
 
         # Date filtering (on the parent Commande)
         if date_debut:
@@ -127,13 +127,13 @@ class HistoriqueAchatsViewSet(viewsets.ViewSet):
             'produit__cip1'
         ).annotate(
             total_quantite=Sum('quantity'),
-            total_achat=Sum(F('quantity') * F('price'), output_field=DecimalField()),
+            total_achat=Coalesce(Sum(F('quantity') * F('price_cost'), output_field=DecimalField()), Value(0, output_field=DecimalField())),
             nb_commandes=Count('commande_id', distinct=True)
         ).order_by('-total_achat')
 
         # Global Totals Aggregation
         global_totals = queryset.aggregate(
-            total_achat_global=Sum(F('quantity') * F('price'), output_field=DecimalField()),
+            total_achat_global=Coalesce(Sum(F('quantity') * F('price_cost'), output_field=DecimalField()), Value(0, output_field=DecimalField())),
             total_produits_global=Count('produit_id', distinct=True)
         )
 

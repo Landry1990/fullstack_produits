@@ -78,13 +78,16 @@ const admin = (Component: React.ComponentType<any>) => ({
 });
 
 // ── Router ──
+import RouteErrorBoundary from './components/RouteErrorBoundary';
+
 export const router = createBrowserRouter([
-  { path: '/', element: <Login /> },
-  { path: '/login', element: <Login /> },
-  { path: '/licence', element: <LicenceScreen /> },
+  { path: '/', element: <Login />, errorElement: <RouteErrorBoundary /> },
+  { path: '/login', element: <Login />, errorElement: <RouteErrorBoundary /> },
+  { path: '/licence', element: <LicenceScreen />, errorElement: <RouteErrorBoundary /> },
   {
     path: '/app',
     element: <ProtectedRoute />,
+    errorElement: <RouteErrorBoundary />,
     children: [
       { path: 'print-invoice/:id', element: <PrintPage /> },
       { path: 'printing/:id', element: <PrintPage /> },

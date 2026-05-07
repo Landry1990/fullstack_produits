@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import api from '../../services/api';
 import { toast } from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
@@ -15,6 +15,7 @@ export const useInventaireEditor = (
     const [activeInventaire, setActiveInventaire] = useState<Inventaire | null>(null);
     const [lignes, setLignes] = useState<LigneInventaire[]>([]);
     const [saving, setSaving] = useState(false);
+    const [autoSaving, setAutoSaving] = useState(false);
     const [importing, setImporting] = useState(false);
     const [inventoryStats, setInventoryStats] = useState<InventoryStats | null>(null);
 
@@ -460,12 +461,51 @@ export const useInventaireEditor = (
         reader.readAsText(file);
     };
 
+    const autoSaveInvRef = useRef({ activeInventaire, lignes, saving });
+    useEffect(() => {
+        autoSaveInvRef.current = { activeInventaire, lignes, saving };
+    });
+
+    useEffect(() => {
+        const interval = setInterval(async () => {
+            const { activeInventaire: inv, lignes: currentLignes, saving: isSaving } = autoSaveInvRef.current;
+            if (!inv || isSaving) return;
+            if (inv.status === 'VALIDEE') return;
+
+            const linesToSync = currentLignes.filter(l => l.isLocalOnly);
+            if (linesToSync.length === 0) return;
+
+            setAutoSaving(true);
+            try {
+                const payload = {
+                    lignes: linesToSync.map(l => ({
+                        produit: typeof l.produit === 'object' ? l.produit.id : l.produit,
+                        stock_lot: l.stock_lot,
+                        quantite_physique: l.quantite_physique,
+                        lot_numero: l.lot_numero,
+                        lot_expiration: l.lot_expiration
+                    }))
+                };
+                await api.post(`inventaires/${inv.id}/lignes/bulk/`, payload);
+                const res = await api.get(`inventaires/${inv.id}/lignes/`);
+                setLignes(res.data.map((l: LigneInventaire) => ({ ...l, isLocalOnly: false })));
+            } catch (err) {
+                console.error("Inventaire auto-save error:", err);
+            } finally {
+                setAutoSaving(false);
+            }
+        }, 30000);
+
+        return () => clearInterval(interval);
+    }, []);
+
     return {
         activeInventaire, setActiveInventaire,
         lignes, setLignes,
         dateInventaire, setDateInventaire,
         description, setDescription,
         saving, setSaving,
+        autoSaving,
         isReadOnly, importing,
         selectedLines, setSelectedLines,
         handleCreate, handleEdit, handleCreateWithOptions,

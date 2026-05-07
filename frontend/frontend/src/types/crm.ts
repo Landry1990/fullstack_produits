@@ -17,6 +17,7 @@ export interface Client {
     plafond?: string
     taux_couverture?: string
     remise_automatique?: string
+    majoration_pro_pourcentage?: string
     ayants_droit?: AyantDroit[]
     current_debt?: string
     solde_depot?: string
