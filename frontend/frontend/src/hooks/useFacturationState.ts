@@ -88,10 +88,10 @@ export function useFacturationState() {
 
   const handleBarcodeMatch = useCallback((product: ProduitModel) => {
     if (addProductRef.current) {
-      addProductRef.current(product, { isRetrocession, preventFocus: true })
+      addProductRef.current(product, { isRetrocession, preventFocus: true, markupPercentage: currentMarkup })
       toast.success(t('facturation:messages.scan_added', { name: product.name }), { duration: 1500 })
     }
-  }, [isRetrocession, t])
+  }, [isRetrocession, t, currentMarkup])
 
   const productSearch = useProductSearch({
     minSearchLength: 2,
@@ -109,6 +109,22 @@ export function useFacturationState() {
   // --- Clients ---
   const clientsHook = useFacturationClients()
   const pendingSales = usePendingSales()
+
+  const currentMarkup = useMemo(() => {
+    if (!clientsHook.selectedClient || clientsHook.useManualClient) return 0
+    const client = clientsHook.clients.find(c => c.id === clientsHook.selectedClient)
+    if (client?.client_type === 'PROFESSIONNEL') {
+      return Number(client.majoration_pro_pourcentage || 0)
+    }
+    return 0
+  }, [clientsHook.selectedClient, clientsHook.clients, clientsHook.useManualClient])
+
+  // Apply markup when client changes
+  useEffect(() => {
+    if (cart.lignesFacture.length > 0) {
+      cart.applyMarkupToCart(currentMarkup)
+    }
+  }, [currentMarkup, cart.applyMarkupToCart])
 
   // --- Session Persistence (auto-save / restore) ---
   useFacturationSession({
@@ -510,6 +526,7 @@ export function useFacturationState() {
     isFactureA4, setIsFactureA4,
     sortBy, setSortBy,
     isMultiCaisse: multiCaisse.isMultiCaisse, setIsMultiCaisse: multiCaisse.setIsMultiCaisse,
+    centralizedCashRegister: multiCaisse.centralizedCashRegister,
     postesCaisses: multiCaisse.postesCaisses, setPostesCaisses: multiCaisse.setPostesCaisses,
     selectedPosteCaisseId: multiCaisse.selectedPosteCaisseId, setSelectedPosteCaisseId: multiCaisse.setSelectedPosteCaisseId,
     lignesFacture: cart.lignesFacture,
@@ -581,6 +598,7 @@ export function useFacturationState() {
     keyboardNav,
     pharmacySettings,
 
+    currentMarkup,
     // Refs
     searchInputRef,
     clientSearchRef,

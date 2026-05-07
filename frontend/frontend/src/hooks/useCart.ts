@@ -55,7 +55,7 @@ export function useCart({ onRequirePrescription, onAlert, quantityInputsRef }: U
         }
     }, [lignesFacture, cartStorageKey])
 
-    const addProduit = useCallback(async (produit: ProduitModel, options?: { isRetrocession?: boolean; preventFocus?: boolean }) => {
+    const addProduit = useCallback(async (produit: ProduitModel, options?: { isRetrocession?: boolean; preventFocus?: boolean; markupPercentage?: number }) => {
         setLoading(true)
         try {
             const { data: fullProduit } = await api.get<ProduitModel>(`produits/${produit.id}/`)
@@ -109,7 +109,12 @@ export function useCart({ onRequirePrescription, onAlert, quantityInputsRef }: U
                         basePrice = price.toString()
                     }
 
-                    const prixUnitaire = normalizeNumberInput(basePrice, { min: 0 })
+                    let basePriceValue = Number(basePrice)
+                    if (options?.markupPercentage && options.markupPercentage > 0) {
+                        basePriceValue = basePriceValue * (1 + options.markupPercentage / 100)
+                    }
+
+                    const prixUnitaire = normalizeNumberInput(basePriceValue, { min: 0 })
                     const nouvelleLigne: LigneFacture = {
                         produit: fullProduit,
                         quantite: 1,
@@ -307,10 +312,25 @@ export function useCart({ onRequirePrescription, onAlert, quantityInputsRef }: U
         })
     }, [])
 
+    const applyMarkupToCart = useCallback((percentage: number) => {
+        setLignesFacture(prevLignes => prevLignes.map(ligne => {
+            const basePrice = Number(ligne.produit.selling_price || 0)
+            const markedUpPrice = basePrice * (1 + percentage / 100)
+            const finalPrice = normalizeNumberInput(markedUpPrice, { min: 0 }).toString()
+            
+            return {
+                ...ligne,
+                prix_unitaire: finalPrice,
+                total_ligne: calculateLineTotal(ligne.quantite, finalPrice, ligne.remise_produit)
+            }
+        }))
+    }, [])
+
     return {
         lignesFacture,
         setLignesFacture,
         addProduit,
+        applyMarkupToCart,
         bulkAddProduits,
         updateQuantite,
         updatePrix,

@@ -87,7 +87,7 @@ const HistoriqueAchats = ({ forcedType }: HistoriqueAchatsProps) => {
       if (selectedSupplier) params.append('fournisseur_id', selectedSupplier);
       if (forcedType) params.append('type', forcedType);
 
-      const endpoint = activeTab === 'summary' ? '/api/historique-achats/' : '/api/historique-achats/produits_details/';
+      const endpoint = activeTab === 'summary' ? 'historique-achats/' : 'historique-achats/produits_details/';
       
       const response = await api.get(`${endpoint}?${params.toString()}`);
       
@@ -114,7 +114,7 @@ const HistoriqueAchats = ({ forcedType }: HistoriqueAchatsProps) => {
       setPage(1);
       fetchHistory(1);
     }
-  }, [dateDebut, dateFin, selectedSupplier, user, activeTab]);
+  }, [dateDebut, dateFin, selectedSupplier, user, activeTab, forcedType]);
 
   const handlePageChange = (newPage: number) => {
     setPage(newPage);
@@ -141,7 +141,7 @@ const HistoriqueAchats = ({ forcedType }: HistoriqueAchatsProps) => {
         if (selectedSupplier) params.append('fournisseur_id', selectedSupplier);
         if (forcedType) params.append('type', forcedType);
         
-        const endpoint = activeTab === 'summary' ? '/api/historique-achats/' : '/api/historique-achats/produits_details/';
+        const endpoint = activeTab === 'summary' ? 'historique-achats/' : 'historique-achats/produits_details/';
         
         const response = await api.get(`${endpoint}?${params.toString()}`);
         

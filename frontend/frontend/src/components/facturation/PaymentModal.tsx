@@ -38,6 +38,7 @@ type PaymentModalProps = {
     paymentInputRef: React.RefObject<HTMLInputElement | null>
     clientSoldeDepot?: string | number
     isMultiCaisse?: boolean
+    centralizedCashRegister?: boolean
     postesCaissesActive?: any[]
     selectedPosteCaisseId?: number | null
     setSelectedPosteCaisseId?: (id: number | null) => void
@@ -63,6 +64,7 @@ export default function PaymentModal({
     paymentInputRef,
     clientSoldeDepot,
     isMultiCaisse,
+    centralizedCashRegister,
     postesCaissesActive,
     selectedPosteCaisseId,
     setSelectedPosteCaisseId
@@ -138,7 +140,7 @@ export default function PaymentModal({
                 })()}
 
                 {/* Multi-Caisse Selection */}
-                {isMultiCaisse && isNewSale && postesCaissesActive && postesCaissesActive.length > 0 && (
+                {isMultiCaisse && !centralizedCashRegister && isNewSale && postesCaissesActive && postesCaissesActive.length > 0 && (
                     <div className="bg-primary/5 border border-primary/20 rounded-xl p-4 mt-2 mb-4">
                         <label className="label py-0 mb-2">
                             <span className="label-text-alt uppercase font-bold text-primary flex items-center gap-1">
@@ -385,7 +387,7 @@ export default function PaymentModal({
                     <button 
                         ref={submitBtnRef}
                         type="submit" 
-                        disabled={loading || (isNewSale && rendu < -1 && !selectedClient) || (isMultiCaisse && isNewSale && !selectedPosteCaisseId)}
+                        disabled={loading || (isNewSale && rendu < -1 && !selectedClient) || (isMultiCaisse && !centralizedCashRegister && isNewSale && !selectedPosteCaisseId)}
                         className={`btn btn-primary w-full gap-2 ${loading ? 'loading' : ''}`}
                     >
                         {loading ? t('facturation:payment.status.processing') : isNewSale ? t('facturation:payment.validate_sale') : t('facturation:payment.register_payment')}

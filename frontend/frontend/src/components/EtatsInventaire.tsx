@@ -3,7 +3,7 @@ import api from '../services/api';
 import { useTranslation } from 'react-i18next';
 
 type GroupByOption = 'FORME' | 'RAYON' | 'GROUPE';
-type StockDisplayOption = 'MACHINE' | 'ZERO';
+type StockDisplayOption = 'MACHINE' | 'ZERO' | 'NON_ZERO';
 
 interface EntityOption {
   id: number;
@@ -71,6 +71,7 @@ export default function EtatsInventaire() {
   const stockOptions = [
     { value: 'MACHINE', label: t('stock:etats_inventaire.stock_options.machine') },
     { value: 'ZERO', label: t('stock:etats_inventaire.stock_options.zero') },
+    { value: 'NON_ZERO', label: t('stock:etats_inventaire.stock_options.non_zero', { defaultValue: 'Stocks non nuls (> 0)' }) },
   ];
 
   const getEntityLabel = () => {

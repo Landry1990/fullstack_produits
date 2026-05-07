@@ -118,7 +118,8 @@ export function useCommandesState(forcedType?: 'LOC' | 'DIR') {
   const { 
     produits: produitsList, 
     searchQuery: searchProduitQuery,
-    setSearchQuery: setSearchProduitQuery
+    setSearchQuery: setSearchProduitQuery,
+    refetch: refetchProduits
   } = useProductSearch({ minSearchLength: 2, debounceMs: 200 })
   
   const searchInputRef = useRef<HTMLInputElement>(null);
@@ -219,10 +220,13 @@ export function useCommandesState(forcedType?: 'LOC' | 'DIR') {
 
       if (confirmed) {
           requireSudo(
-              (validatorId, password) => handleCloturerCommande(selectedCommande, { 
-                  validated_by_id: validatorId, 
-                  sudo_password: password 
-              }),
+              async (validatorId, password) => {
+                  await handleCloturerCommande(selectedCommande, { 
+                      validated_by_id: validatorId, 
+                      sudo_password: password 
+                  });
+                  refetchProduits();
+              },
               { 
                   permission: 'can_close_commande',
                   title: t('orders:messages.confirm_sudo_title'),
@@ -378,46 +382,59 @@ export function useCommandesState(forcedType?: 'LOC' | 'DIR') {
     navigate('/app/avoirs', { state: { createFromCommande: avoirData } });
   }
 
+  const autoSaveStateRef = useRef({
+    commandeProduits,
+    newCommandeFournisseurId,
+    numeroFacture,
+    commandeType,
+    tauxChange,
+    fraisCoefficient,
+    selectedCommande,
+    viewMode,
+    isImporting,
+  });
+
   useEffect(() => {
-    if (isImporting) return;
-    
-    if (viewMode === 'CREATE' || viewMode === 'EDIT') {
-        const timer = setTimeout(async () => {
-             if (commandeProduits.length > 0 && newCommandeFournisseurId) {
-                 setSaving(true);
-                 try {
-                     const cleanCommande: Partial<Commande> = {
-                        fournisseur: newCommandeFournisseurId ? normalizeNumberInput(newCommandeFournisseurId) : undefined,
-                        numero_facture: numeroFacture,
-                        type: commandeType,
-                        taux_change: commandeType === 'DIR' ? tauxChange : undefined,
-                        frais_coefficient: commandeType === 'DIR' ? fraisCoefficient : undefined,
-                     };
-                     
-                     const mode = (viewMode === 'CREATE' ? 'CREATE' : 'EDIT') as 'CREATE' | 'EDIT';
-                     
-                     await handleSaveCommande(cleanCommande, commandeProduits, mode, selectedCommande, true);
-                 } catch (err) {
-                     console.error("Auto-save error:", err);
-                 } finally {
-                     setSaving(false);
-                 }
-             }
-        }, 60000); 
-        return () => clearTimeout(timer);
-    }
-  }, [
-      commandeProduits, 
-      viewMode, 
-      newCommandeFournisseurId, 
-      numeroFacture, 
-      commandeType, 
-      tauxChange, 
-      fraisCoefficient, 
+    autoSaveStateRef.current = {
+      commandeProduits,
+      newCommandeFournisseurId,
+      numeroFacture,
+      commandeType,
+      tauxChange,
+      fraisCoefficient,
       selectedCommande,
-      handleSaveCommande,
-      isImporting
-  ]);
+      viewMode,
+      isImporting,
+    };
+  });
+
+  useEffect(() => {
+    const interval = setInterval(async () => {
+      const s = autoSaveStateRef.current;
+      if (s.isImporting) return;
+      if (s.viewMode !== 'CREATE' && s.viewMode !== 'EDIT') return;
+      if (s.commandeProduits.length === 0 || !s.newCommandeFournisseurId) return;
+
+      setSaving(true);
+      try {
+        const cleanCommande: Partial<Commande> = {
+          fournisseur: normalizeNumberInput(s.newCommandeFournisseurId),
+          numero_facture: s.numeroFacture,
+          type: s.commandeType,
+          taux_change: s.commandeType === 'DIR' ? s.tauxChange : undefined,
+          frais_coefficient: s.commandeType === 'DIR' ? s.fraisCoefficient : undefined,
+        };
+        const mode = (s.viewMode === 'CREATE' ? 'CREATE' : 'EDIT') as 'CREATE' | 'EDIT';
+        await handleSaveCommande(cleanCommande, s.commandeProduits, mode, s.selectedCommande, true);
+      } catch (err) {
+        console.error("Auto-save error:", err);
+      } finally {
+        setSaving(false);
+      }
+    }, 30000);
+
+    return () => clearInterval(interval);
+  }, [handleSaveCommande]);
 
   const lastRecalcRef = useRef<{ taux: string; coeff: string }>({ taux: '', coeff: '' });
   const recalcTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -750,9 +767,10 @@ export function useCommandesState(forcedType?: 'LOC' | 'DIR') {
       
       setTimeout(() => {
          const quantityInput = document.querySelector(`input[data-row="${newRowIndex}"][data-field="${fieldsConfig[0].name}"]`) as HTMLInputElement;
+         quantityInput?.scrollIntoView({ behavior: 'smooth', block: 'center' });
          quantityInput?.focus();
          quantityInput?.select();
-      }, 50);
+      }, 100);
     }
     setSearchProduitQuery('');
   }
@@ -1301,8 +1319,8 @@ export function useCommandesState(forcedType?: 'LOC' | 'DIR') {
       executingAction,
       onBack: handleBackToList,
       onEdit: openEditView,
-      onMettreEnAttente: viewMode === 'EDIT' ? onMettreEnAttente : undefined,
-      onCloture: viewMode === 'EDIT' ? onCloture : undefined,
+      onMettreEnAttente: (viewMode === 'EDIT' || viewMode === 'DETAILS') ? onMettreEnAttente : undefined,
+      onCloture: (viewMode === 'EDIT' || viewMode === 'DETAILS') ? onCloture : undefined,
       onDelete,
       onImprimer,
       onAnnulerReception,
@@ -1357,8 +1375,8 @@ export function useCommandesState(forcedType?: 'LOC' | 'DIR') {
       onCreateAvoir: handleCreateAvoirFromCommande,
       commandeSortBy,
       onSortProduits: handleSortProduits,
-      onCloture: viewMode === 'EDIT' ? onCloture : undefined,
-      onMettreEnAttente: viewMode === 'EDIT' ? onMettreEnAttente : undefined,
+      onCloture: (viewMode === 'EDIT' || viewMode === 'DETAILS') ? onCloture : undefined,
+      onMettreEnAttente: (viewMode === 'EDIT' || viewMode === 'DETAILS') ? onMettreEnAttente : undefined,
       executingAction,
     },
     modals: {

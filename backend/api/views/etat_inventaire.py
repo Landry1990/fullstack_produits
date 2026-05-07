@@ -19,6 +19,7 @@ from reportlab.platypus import (
 )
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 
+from django.db.models import Prefetch
 from ..models import Produit, Rayon, Forme, Groupe, StockLot
 
 
@@ -29,7 +30,7 @@ class EtatInventairePDFView(APIView):
     GET /api/produits/etat-inventaire/pdf/
     Paramètres:
         - group_by: FORME | RAYON | GROUPE (requis)
-        - stock_display: MACHINE | ZERO (défaut: MACHINE)
+        - stock_display: MACHINE | ZERO | NON_ZERO (défaut: MACHINE)
     
     Colonnes: ID | CIP1 | Libellé | Stock | Prix Vente | Qté Physique
     Si multi-lots: une ligne par lot avec le numéro de lot
@@ -47,12 +48,22 @@ class EtatInventairePDFView(APIView):
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-        # Récupérer tous les produits actifs avec leurs lots
-        produits = Produit.objects.filter(is_active=True).select_related(
+        # Filtrer selon l'option d'affichage
+        base_filter = {'is_active': True}
+        if stock_display == 'NON_ZERO':
+            base_filter['stock__gt'] = 0
+
+        # Récupérer tous les produits actifs avec leurs lots (Prefetch filtré évite N+1)
+        active_lots_prefetch = Prefetch(
+            'stock_lots',
+            queryset=StockLot.objects.filter(quantity_remaining__gt=0).order_by('date_expiration'),
+            to_attr='active_lots'
+        )
+        produits = Produit.objects.filter(**base_filter).select_related(
             'rayon', 'forme', 'groupe'
         ).only(
             'id', 'cip1', 'name', 'stock', 'selling_price', 'rayon', 'forme', 'groupe'
-        ).prefetch_related('stock_lots').order_by('name')
+        ).prefetch_related(active_lots_prefetch).order_by('name')
         
         # Filtrer par entité spécifique si filter_id est fourni
         filter_name = None
@@ -88,8 +99,8 @@ class EtatInventairePDFView(APIView):
             if key not in grouped_data:
                 grouped_data[key] = []
             
-            # Récupérer les lots actifs (avec stock restant > 0)
-            lots = list(produit.stock_lots.filter(quantity_remaining__gt=0).order_by('date_expiration'))
+            # Utiliser les lots préchargés (pas de requête supplémentaire)
+            lots = produit.active_lots
             
             if len(lots) > 1:
                 # Multi-lots: une ligne par lot
@@ -99,7 +110,7 @@ class EtatInventairePDFView(APIView):
                         'cip1': produit.cip1 or '-',
                         'name': produit.name,
                         'lot_numero': lot.lot or '-',
-                        'stock': float(lot.quantity_remaining) if stock_display == 'MACHINE' else 0,
+                        'stock': float(lot.quantity_remaining) if stock_display in ('MACHINE', 'NON_ZERO') else 0,
                         'selling_price': float(produit.selling_price) if produit.selling_price else 0,
                         'is_lot_line': True,
                     })
@@ -110,7 +121,7 @@ class EtatInventairePDFView(APIView):
                     'cip1': produit.cip1 or '-',
                     'name': produit.name,
                     'lot_numero': lots[0].lot if lots else '-',
-                    'stock': float(produit.stock) if stock_display == 'MACHINE' else 0,
+                    'stock': float(produit.stock) if stock_display in ('MACHINE', 'NON_ZERO') else 0,
                     'selling_price': float(produit.selling_price) if produit.selling_price else 0,
                     'is_lot_line': False,
                 })
@@ -124,7 +135,7 @@ class EtatInventairePDFView(APIView):
                 'title': f"ÉTAT D'INVENTAIRE PAR {group_by}",
                 'filter_name': filter_name,
                 'group_label': group_by,
-                'stock_label': 'Stock Machine' if stock_display == 'MACHINE' else 'Stock à Zéro',
+                'stock_label': 'Stock Machine' if stock_display == 'MACHINE' else ('Stocks Non Nuls' if stock_display == 'NON_ZERO' else 'Stock à Zéro'),
                 'date': datetime.now().isoformat(),
                 'groups': {g: grouped_data[g] for g in sorted_groups}
             })
@@ -178,7 +189,7 @@ class EtatInventairePDFView(APIView):
 
         # En-tête
         group_label = {'FORME': 'FORME', 'RAYON': 'RAYON', 'GROUPE': 'GROUPE'}[group_by]
-        stock_label = 'Stock Machine' if stock_display == 'MACHINE' else 'Stock à Zéro'
+        stock_label = 'Stock Machine' if stock_display == 'MACHINE' else ('Stocks Non Nuls' if stock_display == 'NON_ZERO' else 'Stock à Zéro')
         date_str = datetime.now().strftime('%d/%m/%Y à %H:%M')
         
         # Titre avec filtre si applicable
