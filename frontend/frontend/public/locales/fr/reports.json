@@ -116,6 +116,10 @@
         "recap_valeur_stock_pdf": {
             "name": "Récapitulatif Valeur Stock (PDF)",
             "description": "Valeur totale HT, TVA, TTC et répartition détaillée par taux (Format PDF)"
+        },
+        "export_sage": {
+            "name": "Export Comptable Sage i7",
+            "description": "Génère un fichier CSV compatible avec Sage 100/i7 (Journaux VT, CA, BQ)"
         }
     },
     "stock_valuation": {

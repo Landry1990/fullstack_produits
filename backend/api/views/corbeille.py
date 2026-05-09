@@ -16,6 +16,7 @@ from rest_framework import status
 from django.db import transaction
 from django.db.models import ProtectedError
 
+from django.contrib.auth.models import User
 from ..models import Produit, Client, Fournisseur, Commande, Avoir, Promis, Inventaire, Facture
 from ..cache_utils import SearchCache
 from ..audit_helpers import log_audit
@@ -31,6 +32,7 @@ MODEL_MAP = {
     'promis': Promis,
     'inventaire': Inventaire,
     'facture': Facture,
+    'user': User,
 }
 
 
@@ -56,6 +58,7 @@ class CorbeilleViewSet(ViewSet):
             'promis': [],
             'inventaires': [],
             'factures': [],
+            'users': [],
         }
 
         # Produits inactifs
@@ -167,6 +170,20 @@ class CorbeilleViewSet(ViewSet):
                 'deleted_at': f.date.isoformat() if f.date else None,
             })
 
+        # Utilisateurs inactifs
+        for u in User.objects.filter(is_active=False).order_by('-date_joined')[:100]:
+            items['users'].append({
+                'id': u.id,
+                'name': u.username,
+                'type': 'user',
+                'details': {
+                    'email': u.email,
+                    'first_name': u.first_name,
+                    'last_name': u.last_name,
+                },
+                'deleted_at': u.date_joined.isoformat() if u.date_joined else None,
+            })
+
         total = sum(len(v) for v in items.values())
         return Response({
             'total': total,
@@ -234,7 +251,19 @@ class CorbeilleViewSet(ViewSet):
         try:
             with transaction.atomic():
                 qs = Model.objects.filter(id__in=ids, is_active=False)
-                names = list(qs.values_list('name', flat=True))
+                if model_key == 'user':
+                    names = list(qs.values_list('username', flat=True))
+                elif model_key == 'facture':
+                    names = list(qs.values_list('numero_facture', flat=True))
+                elif model_key == 'inventaire':
+                    names = list(qs.values_list('reference', flat=True))
+                elif model_key in ['commande', 'avoir']:
+                    names = list(qs.values_list('numero_facture', flat=True)) # or similar
+                elif model_key == 'promis':
+                    names = list(qs.values_list('id', flat=True)) # Promis has no direct simple name
+                else:
+                    names = list(qs.values_list('name', flat=True)) if hasattr(Model, 'name') else [str(i) for i in ids]
+                
                 count = qs.count()
                 qs.delete()
 

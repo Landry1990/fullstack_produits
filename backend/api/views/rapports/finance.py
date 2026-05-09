@@ -897,3 +897,78 @@ class RapportFinanceMixin:
                     pass
 
         return Response(results)
+
+    @action(detail=False, methods=['get'])
+    def export_sage_i7(self, request):
+        """
+        Export comptable au format Sage Sari i7 (Sage 100).
+        Génère un fichier CSV (délimiteur ;) avec Journal, Date, CompteG, CompteT, Libellé, Débit, Crédit.
+        Comptes par défaut (OHADA/Cameroun) :
+        - Ventes : 701100
+        - TVA Collectée : 443100
+        - Clients : 411100
+        - Caisse : 571100
+        - Banque : 521100
+        """
+        db_str = request.query_params.get('date_debut')
+        df_str = request.query_params.get('date_fin')
+        try:
+            # On attend des dates au format YYYY-MM-DD
+            date_debut = timezone.make_aware(datetime.combine(datetime.strptime(db_str, '%Y-%m-%d').date(), time.min))
+            date_fin   = timezone.make_aware(datetime.combine(datetime.strptime(df_str, '%Y-%m-%d').date(), time.max))
+        except (ValueError, AttributeError, TypeError):
+            return Response({'error': 'Dates invalides (format requis: YYYY-MM-DD)'}, status=status.HTTP_400_BAD_REQUEST)
+
+        response = HttpResponse(content_type='text/csv')
+        response['Content-Disposition'] = 'attachment; filename="export_sage_i7.csv"'
+        
+        # Encodage UTF-8 avec BOM pour une ouverture directe dans Excel sans soucis d'accents
+        response.write('\ufeff'.encode('utf8'))
+        writer = csv.writer(response, delimiter=';')
+        
+        # 1. Écritures de Ventes (Journal VT)
+        factures = Facture.objects.filter(
+            date__range=(date_debut, date_fin),
+            status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE]
+        ).select_related('client').order_by('date')
+
+        for f in factures:
+            date_sage = f.date.strftime('%d%m%y')
+            num_fact = f.numero_facture or f"F{f.id}"
+            libelle = f"Facture {num_fact}"
+            if f.client:
+                libelle += f" - {f.client.name}"
+            
+            # Débit Client (411100) - Total TTC
+            writer.writerow(['VT', date_sage, '411100', f.client.id if f.client else '', libelle, str(f.total_ttc).replace('.', ','), '0'])
+            
+            # Crédit Ventes (701100) - Total HT
+            writer.writerow(['VT', date_sage, '701100', '', libelle, '0', str(f.total_ht).replace('.', ',')])
+            
+            # Crédit TVA (443100) si applicable
+            if f.total_tva > 0:
+                writer.writerow(['VT', date_sage, '443100', '', libelle, '0', str(f.total_tva).replace('.', ',')])
+
+        # 2. Écritures de Règlements (Journal CA / BQ)
+        paiements = Caisse.objects.filter(
+            date_paiement__range=(date_debut, date_fin),
+            statut='completee'
+        ).select_related('facture', 'facture__client').order_by('date_paiement')
+
+        for p in paiements:
+            date_sage = p.date_paiement.strftime('%d%m%y')
+            # Mapping journal et compte de trésorerie
+            is_cash = p.mode_paiement == 'especes'
+            journal = 'CA' if is_cash else 'BQ'
+            compte_t = '571100' if is_cash else '521100'
+            
+            num_fact = p.facture.numero_facture or p.facture.id
+            libelle = f"Regl {p.get_mode_paiement_display()} Fact {num_fact}"
+            
+            # Débit Trésorerie (Caisse ou Banque)
+            writer.writerow([journal, date_sage, compte_t, '', libelle, str(p.montant).replace('.', ','), '0'])
+            
+            # Crédit Client (411100)
+            writer.writerow([journal, date_sage, '411100', p.facture.client.id if p.facture.client else '', libelle, '0', str(p.montant).replace('.', ',')])
+
+        return response

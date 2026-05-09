@@ -39,6 +39,8 @@ export interface UseCreancesDataReturn {
     refresh: () => void;
     selectedIds: number[];
     setSelectedIds: (ids: number[] | ((prev: number[]) => number[])) => void;
+    updateLocalCreance: (id: number, data: any) => void;
+    updateLocalSynthese: (clientId: number, data: any) => void;
 }
 
 export const useCreancesData = (): UseCreancesDataReturn => {
@@ -259,7 +261,7 @@ export const useCreancesData = (): UseCreancesDataReturn => {
             sortConfig
         },
         setFilters: {
-            setSelectedClient: (id) => {
+            setSelectedClient: (id: string) => {
                 setSelectedClient(id);
                 setSelectedIds([]);
             },
@@ -276,6 +278,12 @@ export const useCreancesData = (): UseCreancesDataReturn => {
         totals,
         refresh: fetchCreances,
         selectedIds,
-        setSelectedIds
+        setSelectedIds,
+        updateLocalCreance: (id: number, data: any) => {
+            setCreances(prev => prev.map(c => c.id === id ? { ...c, ...data } : c));
+        },
+        updateLocalSynthese: (clientId: number, data: any) => {
+            setSynthese(prev => prev.map(s => s.id === clientId ? { ...s, ...data } : s));
+        }
     };
 };

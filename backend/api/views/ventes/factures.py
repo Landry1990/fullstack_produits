@@ -755,8 +755,13 @@ class FactureViewSet(OptimizedSerializerMixin, viewsets.ModelViewSet):
         Date: {invoice_date}<br/>
         Client: {client_name}
         """
-        if facture.client and facture.client.phone:
-            invoice_details_text += f"<br/>Tel: {facture.client.phone}"
+        if facture.client:
+            if facture.client.phone:
+                invoice_details_text += f"<br/>Tel: {facture.client.phone}"
+            if getattr(facture.client, 'niu', None):
+                invoice_details_text += f"<br/>NIU: {facture.client.niu}"
+            if getattr(facture.client, 'registre_commerce', None):
+                invoice_details_text += f"<br/>RC: {facture.client.registre_commerce}"
             
         doc_title = "FACTURE"
         if is_proforma:

@@ -47,6 +47,7 @@ class Profile(models.Model):
         ('PHARMACIEN', 'Pharmacien'),
         ('VENDEUR', 'Vendeur'),
         ('CAISSIER', 'Caissier'),
+        ('COMPTABLE', 'Comptable'),
     ]
     role = models.CharField(max_length=20, choices=ROLE_CHOICES, default='VENDEUR')
 

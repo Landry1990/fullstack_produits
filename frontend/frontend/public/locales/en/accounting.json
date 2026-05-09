@@ -1,0 +1,83 @@
+{
+    "title": "Accounting Management",
+    "subtitle": "Real-time financial steering of your pharmacy",
+    "ohada": "OHADA",
+    "tabs": {
+        "dashboard": "Dashboard",
+        "grand_livre": "General Ledger",
+        "achats": "Purchases Journal",
+        "balance": "Trial Balance",
+        "bilan": "Balance Sheet",
+        "resultat": "Income Statement",
+        "charges": "Expenses",
+        "plan": "Chart of Accounts"
+    },
+    "exercice": {
+      "closed": "CLOSED"
+    },
+    "dashboard": {
+      "products": "Products (Sales)",
+      "expenses": "Expenses (Charges)",
+      "net_result": "Net Result",
+      "profit": "PROFIT",
+      "loss": "LOSS",
+      "last_month": "last month",
+      "method_note": "Calculated using the Products - Charges method",
+      "ready_title": "Ready for your closing?",
+      "ready_subtitle": "Generate missing entries for past invoices in one click.",
+      "init_button": "Initialize History",
+      "init_loading": "Initializing...",
+      "action_required": "ACTION REQUIRED"
+    },
+    "ledger": {
+        "title": "General Journal",
+        "search_placeholder": "Search for a document...",
+        "cols": {
+            "date": "Date",
+            "journal": "Journal",
+            "ref": "Reference",
+            "label": "Label",
+            "debit": "Debit",
+            "credit": "Credit"
+        }
+    },
+    "balance": {
+        "cols": {
+            "account": "Account",
+            "label": "Name",
+            "debit_mov": "Debit Movements",
+            "credit_mov": "Credit Movements",
+            "debit_sol": "Debit Balance",
+            "credit_sol": "Credit Balance"
+        }
+    },
+    "bilan": {
+        "actif": "ASSETS (What you own)",
+        "passif": "LIABILITIES (What you owe)",
+        "equilibrium": "Asset/Liability Equilibrium",
+        "difference": "Difference",
+        "note": "Note: The balance sheet should normally be balanced (Assets = Liabilities + Result)."
+    },
+    "resultat": {
+        "products": "7. PRODUCTS (REVENUE)",
+        "charges": "6. EXPENSES (CHARGES)",
+        "no_charges": "No expenses recorded"
+    },
+    "charges": {
+        "form_title": "Enter a cash expense",
+        "type": "Expense Type",
+        "select": "-- Select --",
+        "date": "Date",
+        "label": "Description / Purpose",
+        "label_placeholder": "Ex: Electricity bill, staff salary...",
+        "amount": "Amount",
+        "submit": "Save Expense",
+        "saving": "Saving..."
+    },
+    "achats": {
+      "title": "Purchases Journal (AC)",
+      "subtitle": "Track purchase entries generated during order reception",
+      "no_data": "No purchases recorded for this period."
+    },
+    "loading_msg": "Analyzing accounts in progress..."
+}

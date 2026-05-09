@@ -52,7 +52,7 @@ export function useFacturationState() {
 
   // --- Refs ---
   const quantityInputsRef = useRef<Map<number, HTMLInputElement>>(new Map())
-  const addProductRef = useRef<((product: ProduitModel, options?: { isRetrocession?: boolean; preventFocus?: boolean }) => void) | null>(null)
+  const addProductRef = useRef<((product: ProduitModel, options?: { isRetrocession?: boolean; preventFocus?: boolean; markupPercentage?: number }) => void) | null>(null)
   const searchInputRef = useRef<HTMLInputElement>(null)
   const paymentInputRef = useRef<HTMLInputElement>(null)
   const clientSearchRef = useRef<HTMLInputElement>(null)
@@ -83,6 +83,19 @@ export function useFacturationState() {
   // --- Clinical Check ---
   const { alerts: clinicalAlerts } = useClinicalCheck(cart.lignesFacture)
 
+  // --- Clients ---
+  const clientsHook = useFacturationClients()
+  const pendingSales = usePendingSales()
+
+  const currentMarkup = useMemo(() => {
+    if (!clientsHook.selectedClient || clientsHook.useManualClient) return 0
+    const client = clientsHook.clients.find(c => c.id === clientsHook.selectedClient)
+    if (client?.client_type === 'PROFESSIONNEL') {
+      return Number(client.majoration_pro_pourcentage || 0)
+    }
+    return 0
+  }, [clientsHook.selectedClient, clientsHook.clients, clientsHook.useManualClient])
+
   // --- Barcode scanning ---
   addProductRef.current = cart.addProduit
 
@@ -105,19 +118,6 @@ export function useFacturationState() {
     apiBaseUrl: '',
     t
   })
-
-  // --- Clients ---
-  const clientsHook = useFacturationClients()
-  const pendingSales = usePendingSales()
-
-  const currentMarkup = useMemo(() => {
-    if (!clientsHook.selectedClient || clientsHook.useManualClient) return 0
-    const client = clientsHook.clients.find(c => c.id === clientsHook.selectedClient)
-    if (client?.client_type === 'PROFESSIONNEL') {
-      return Number(client.majoration_pro_pourcentage || 0)
-    }
-    return 0
-  }, [clientsHook.selectedClient, clientsHook.clients, clientsHook.useManualClient])
 
   // Apply markup when client changes
   useEffect(() => {

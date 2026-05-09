@@ -390,5 +390,16 @@ export const QUERIES: QueryDefinition[] = [
             }
         ],
         resultType: 'table'
+    },
+    {
+        id: 'export_sage',
+        name: 'Export Comptable Sage i7',
+        description: 'Génère un fichier CSV compatible avec Sage 100/i7 (Journaux VT, CA, BQ)',
+        endpoint: '/api/rapports/export_sage_i7/',
+        params: [
+            { key: 'date_debut', label: 'Début', type: 'date', required: true, default: new Date().toISOString().split('T')[0] },
+            { key: 'date_fin', label: 'Fin', type: 'date', required: true, default: new Date().toISOString().split('T')[0] }
+        ],
+        resultType: 'raw'
     }
 ];
