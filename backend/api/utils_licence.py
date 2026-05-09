@@ -90,8 +90,17 @@ def get_hardware_id():
     except Exception:
         return "DOCKER-HOST-ID"
 
+from django.core.cache import cache
+
 def valider_licence_systeme():
     """Vérifie la licence stockée en base de données."""
+    # 1. Vérification du cache pour éviter la surcharge sur chaque requête API
+    cache_key = "system_licence_validation"
+    cached_result = cache.get(cache_key)
+    
+    if cached_result is not None:
+        return cached_result['est_valide'], cached_result['message'], cached_result['payload']
+
     licence_obj = Licence.objects.last()
     if not licence_obj:
         return False, "Aucune licence installée.", None
@@ -101,7 +110,13 @@ def valider_licence_systeme():
         payload = jwt.decode(licence_obj.cle, CLE_PUBLIQUE, algorithms=["RS256"])
         
         # 2. Anti-Clonage (Empreinte Matérielle)
-        hw_id = get_hardware_id()
+        # Optimisation: Mettre en cache l'ID matériel (il ne change jamais)
+        hw_cache_key = "system_hardware_id"
+        hw_id = cache.get(hw_cache_key)
+        if not hw_id:
+            hw_id = get_hardware_id()
+            cache.set(hw_cache_key, hw_id, timeout=86400) # Cache 24h
+            
         if payload.get('hardware_id') != "ANY" and payload.get('hardware_id') != hw_id:
             return False, "Matériel non reconnu (Clonage détecté).", None
             
@@ -110,9 +125,14 @@ def valider_licence_systeme():
         if maintenant < licence_obj.derniere_verification:
             return False, "L'horloge système a été reculée (Fraude !).", None
             
-        # Mise à jour de la dernière date connue
-        licence_obj.derniere_verification = maintenant
-        licence_obj.save(update_fields=['derniere_verification'])
+        # Mise à jour de la dernière date connue (limitée à une fois par heure pour éviter les row locks continus)
+        if (maintenant - licence_obj.derniere_verification).total_seconds() > 3600:
+            licence_obj.derniere_verification = maintenant
+            licence_obj.save(update_fields=['derniere_verification'])
+        
+        # Mettre en cache pour 5 minutes pour éviter de refaire tout ça à chaque requête
+        result_dict = {'est_valide': True, 'message': "Licence valide.", 'payload': payload}
+        cache.set(cache_key, result_dict, timeout=300)
         
         return True, "Licence valide.", payload
         

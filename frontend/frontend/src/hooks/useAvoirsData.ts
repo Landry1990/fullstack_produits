@@ -355,7 +355,7 @@ export function useAvoirsData(): UseAvoirsDataReturn {
             setLoading(true);
             await avoirService.delete(avoir.id);
             toast.success(t('avoirs.toasts.delete_success'));
-            fetchAvoirs();
+            setAvoirs(avoirs.filter(a => a.id !== avoir.id));
             if (viewMode === 'DETAILS') setViewMode('LIST');
         } catch (err: unknown) {
             const error = err as { response?: { data?: { error?: string } }; message?: string };
@@ -368,13 +368,12 @@ export function useAvoirsData(): UseAvoirsDataReturn {
     const handleValidate = async (avoir: Avoir) => {
         requireSudo(async (validatorId, password) => {
             try {
-                setSavingValidation(true);
-                await avoirService.valider(avoir.id, {
+                const updated = await avoirService.valider(avoir.id, {
                     validated_by_id: validatorId,
                     password: password
                 });
                 toast.success(t('avoirs.toasts.validate_success'));
-                fetchAvoirs();
+                setAvoirs(avoirs.map(a => a.id === avoir.id ? updated : a));
                 if (viewMode === 'DETAILS') setViewMode('LIST');
             } catch (err: unknown) {
                 const error = err as { response?: { data?: { error?: string } }; message?: string };
@@ -565,10 +564,11 @@ export function useAvoirsData(): UseAvoirsDataReturn {
 
         setBulkLoading(true);
         try {
-            await Promise.all(Array.from(selectedIds).map(id => avoirService.delete(id)));
+            const idsToDelete = Array.from(selectedIds);
+            await Promise.all(idsToDelete.map(id => avoirService.delete(id)));
             toast.success(t('avoirs.toasts.bulk_delete_success', { count }));
+            setAvoirs(avoirs.filter(a => !selectedIds.has(a.id)));
             setSelectedIds(new Set());
-            fetchAvoirs();
         } catch (err) {
             toast.error(t('avoirs.toasts.bulk_delete_error'));
         } finally {

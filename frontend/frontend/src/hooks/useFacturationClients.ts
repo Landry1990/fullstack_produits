@@ -26,9 +26,10 @@ export function useFacturationClients() {
         email: '',
         address: '',
         client_type: 'PARTICULIER' as 'PARTICULIER' | 'PROFESSIONNEL',
-        plafond: '0',
+        plafond: '-1',
         taux_couverture: '0',
         remise_automatique: '0',
+        majoration_pro_pourcentage: '0',
         is_loyalty_member: true
     })
 
@@ -179,9 +180,13 @@ export function useFacturationClients() {
 
             const payload: Partial<Client> = {
                 ...validation.data,
+                address: validation.data.address ?? undefined,
+                phone: validation.data.phone ?? undefined,
+                email: validation.data.email ?? undefined,
                 plafond: String(validation.data.plafond),
                 taux_couverture: String(validation.data.taux_couverture),
                 remise_automatique: String(validation.data.remise_automatique),
+                majoration_pro_pourcentage: String(validation.data.majoration_pro_pourcentage),
             };
             const createdClient = await clientService.create(payload)
 
@@ -196,9 +201,10 @@ export function useFacturationClients() {
                 email: '',
                 address: '',
                 client_type: 'PARTICULIER',
-                plafond: '0',
+                plafond: '-1',
                 taux_couverture: '0',
                 remise_automatique: '0',
+                majoration_pro_pourcentage: '0',
                 is_loyalty_member: true
             })
 

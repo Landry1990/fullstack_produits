@@ -13,12 +13,18 @@ interface UseCreanceActionsProps {
     setSelectedIds: (ids: number[]) => void;
     filteredCreances: Creance[];
     creancesEndpoint?: string;
+    updateLocalCreance?: (id: number, data: any) => void;
+    updateLocalSynthese?: (clientId: number, data: any) => void;
 }
 
 export const useCreanceActions = ({
     refresh,
     selectedIds,
-    setSelectedIds
+    setSelectedIds,
+    filteredCreances,
+    creancesEndpoint,
+    updateLocalCreance,
+    updateLocalSynthese
 }: UseCreanceActionsProps) => {
     const { t } = useTranslation(['creances', 'common']);
     const { sudoState, requireSudo, closeSudo } = useSudo();
@@ -119,7 +125,14 @@ export const useCreanceActions = ({
             const paiementId = data.paiement_id;
 
             setIsPaiementModalOpen(false);
-            refresh();
+            
+            // Instant update if possible
+            if (updateLocalCreance && data.creance) {
+                updateLocalCreance(selectedCreance.id, data.creance);
+            } else {
+                refresh();
+            }
+
             toast.success(t('creances:toasts.payment_success'));
 
             if (window.confirm(t('creances:toasts.confirm_print_receipt'))) {
@@ -130,7 +143,7 @@ export const useCreanceActions = ({
             toast.error(error.response?.data?.detail || t('common:messages.error_saving'));
             console.error('Erreur:', err);
         }
-    }, [selectedCreance, montantPaiement, modePaiement, referencePaiement, refresh, handlePrintDirectReceipt]);
+    }, [selectedCreance, montantPaiement, modePaiement, referencePaiement, refresh, handlePrintDirectReceipt, updateLocalCreance]);
 
     const handleAjouterPaiement = () => {
         requireSudo(performAjouterPaiement);

@@ -288,6 +288,28 @@ export function useCentreRapports() {
                 return;
             }
 
+            if (selectedQuery.id === 'export_sage' && !urlOverride) {
+                const response = await api.get(endpoint, {
+                    params: mergedParams,
+                    responseType: 'blob'
+                });
+                
+                const url = window.URL.createObjectURL(new Blob([response.data], { type: 'text/csv' }));
+                const link = document.createElement('a');
+                link.href = url;
+                const filename = `Export_Sage_i7_${params.date_debut}_${params.date_fin}.csv`;
+                
+                link.setAttribute('download', filename);
+                document.body.appendChild(link);
+                link.click();
+                link.remove();
+                
+                toast.success(t('results.export_success', { filename }));
+                setResults({ status: 'success', filename });
+                setLoading(false);
+                return;
+            }
+
             if (selectedQuery.id === 'recap_valeur_stock_pdf' && !urlOverride) {
                 const valorisation = params.valorisation || 'ACHAT';
                 const groupBy = params.group_by || '';

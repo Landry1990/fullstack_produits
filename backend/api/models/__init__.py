@@ -41,6 +41,11 @@ from .billing import (
     Caisse, RelevePaiement, ClotureCaisse, CouponMonnaie, Promis, PosteCaisse
 )
 
+# Comptabilité
+from .comptabilite import (
+    CompteComptable, JournalComptable, EcritureComptable, LigneEcriture, ExerciceComptable
+)
+
 # Inventory
 from .inventory import (
     Inventaire, LigneInventaire, 
@@ -102,4 +107,6 @@ __all__ = [
     'UserDailySession',
     # Licence
     'Licence',
+    # Comptabilité
+    'CompteComptable', 'JournalComptable', 'EcritureComptable', 'LigneEcriture', 'ExerciceComptable',
 ]

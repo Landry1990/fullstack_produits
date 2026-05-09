@@ -116,6 +116,18 @@ const MENU_HIERARCHY = [
       { key: 'settings_pharmacie', labelKey: 'sidebar:parametres.pharmacie' },
       { key: 'settings_whatsapp', labelKey: 'sidebar:parametres.whatsapp' }
     ]
+  },
+  {
+    key: 'compta',
+    labelKey: 'sidebar:compta.title',
+    submenus: [
+      { key: 'compta_dashboard', labelKey: 'sidebar:compta.dashboard' },
+      { key: 'compta_grand_livre', labelKey: 'sidebar:compta.grand_livre' },
+      { key: 'compta_balance', labelKey: 'sidebar:compta.balance' },
+      { key: 'compta_resultat', labelKey: 'sidebar:compta.resultat' },
+      { key: 'compta_charges', labelKey: 'sidebar:compta.charges' },
+      { key: 'compta_plan', labelKey: 'sidebar:compta.plan' }
+    ]
   }
 ];
 
@@ -132,6 +144,7 @@ const getAllMenuKeys = () => {
 
 const ROLES = [
   { value: 'PHARMACIEN', labelKey: 'roles.pharmacist' },
+  { value: 'COMPTABLE', labelKey: 'roles.accountant' },
   { value: 'CAISSIER', labelKey: 'roles.cashier' },
   { value: 'VENDEUR', labelKey: 'roles.seller' }
 ];
@@ -253,6 +266,26 @@ export default function GestionUtilisateurs() {
       updates.can_modify_invoice = false;
       updates.max_discount_rate = 0;
       updates.allowed_menus = ['facturation', 'caisse', 'produits', 'vitrine', 'clients', 'inventaire_organisation'];
+    } else if (role === 'COMPTABLE') {
+      updates.is_superuser = false;
+      updates.can_cash_out = false;
+      updates.can_do_returns = false;
+      updates.can_sell_negative_stock = false;
+      updates.can_delete_product = false;
+      updates.can_adjust_stock = false;
+      updates.can_delete_fournisseur = false;
+      updates.can_delete_commande = false;
+      updates.can_close_commande = false;
+      updates.can_generate_coupon = false;
+      updates.can_cancel_invoice = false;
+      updates.can_cancel_promis = false;
+      updates.can_manage_perimes = false;
+      updates.can_manage_avoirs = false;
+      updates.can_validate_zero_amount = false;
+      updates.can_modify_price = false;
+      updates.can_modify_invoice = false;
+      updates.max_discount_rate = 0;
+      updates.allowed_menus = ['compta', 'compta_dashboard', 'compta_grand_livre', 'compta_balance', 'compta_resultat', 'compta_charges', 'compta_plan'];
     }
 
     setFormData(prev => ({ ...prev, ...updates }));
@@ -370,33 +403,12 @@ export default function GestionUtilisateurs() {
 
   const executeDeleteUser = async (userId: number, username: string) => {
     try {
-      await api.delete(`users/${userId}/`);
-      toast.success(t('messages.deleted', { username }));
+      await api.patch(`users/${userId}/`, { is_active: false });
+      toast.success(t('messages.deactivated', { username, defaultValue: `${username} a été désactivé (corbeille).` }));
       fetchUsers();
     } catch (error: any) {
-      console.error('Error deleting user:', error);
-      
-      // Fallback to deactivation if protected resource
-      if (error.response?.data?.error_code === 'protected_resource') {
-          const confirmDeactivate = await confirm({
-              title: t('messages.protected_title', 'Élément protégé'),
-              message: t('messages.protected_message', 'Cet utilisateur possède des archives (factures, etc.) et ne peut être supprimé. Souhaitez-vous désactiver son compte à la place ?'),
-              variant: 'warning',
-              confirmText: t('messages.deactivate_btn', 'Désactiver')
-          });
-
-          if (confirmDeactivate) {
-              try {
-                  await api.patch(`users/${userId}/`, { is_active: false });
-                  toast.success(t('messages.deactivated', { username }));
-                  fetchUsers();
-              } catch (err) {
-                  toast.error(t('messages.deactivate_error'));
-              }
-          }
-      } else {
-          toast.error(t('messages.delete_error'));
-      }
+      console.error('Error deleting/deactivating user:', error);
+      toast.error(t('messages.deactivate_error', { defaultValue: 'Erreur lors de la mise à la corbeille.' }));
     }
   };
 
@@ -410,10 +422,10 @@ export default function GestionUtilisateurs() {
 
   const handleDeleteUser = async (userId: number, username: string) => {
     const confirmed = await confirm({
-      title: t('messages.delete_confirm_title'),
-      message: t('messages.delete_confirm', { username }),
+      title: t('messages.deactivate_confirm_title', { defaultValue: 'Mettre à la corbeille ?' }),
+      message: t('messages.deactivate_confirm', { username, defaultValue: `Voulez-vous désactiver l'utilisateur ${username} et le placer dans la corbeille ?` }),
       variant: 'danger',
-      confirmText: t('messages.delete_btn')
+      confirmText: t('messages.deactivate_btn', { defaultValue: 'Désactiver' })
     });
     
     if (confirmed) {
@@ -468,15 +480,20 @@ export default function GestionUtilisateurs() {
       }
 
       if (editingUser) {
-        await api.patch(`users/${editingUser.id}/`, payload);
+        const updatedUser = { ...editingUser, ...payload, profile: { ...editingUser.profile, ...payload.profile } };
+        // We set the whole object from the response if possible, but for now we update local state
+        setUsers(prev => prev.map(u => u.id === editingUser.id ? ({} as any) : u)); // Placeholder to force refresh if needed, but better below
+        const { data: finalUser } = await api.patch(`users/${editingUser.id}/`, payload);
+        setUsers(prev => prev.map(u => u.id === finalUser.id ? finalUser : u));
         toast.success(t('messages.updated'));
       } else {
-        await api.post('users/', payload);
+        const { data: newUser } = await api.post('users/', payload);
+        setUsers(prev => [...prev, newUser].sort((a, b) => a.username.localeCompare(b.username)));
         toast.success(t('messages.created'));
       }
       
       setModalOpen(false);
-      fetchUsers();
+      // fetchUsers(); // Supprimé pour l'instantanéité
     } catch (error: any) {
       console.error('Error saving user:', error.response?.data || error);
       const backendError = error.response?.data ? JSON.stringify(error.response.data) : '';
@@ -532,12 +549,15 @@ export default function GestionUtilisateurs() {
                 </td>
                 <td>
                   <div className="flex flex-col gap-1">
-                    <span className={`badge ${
+                    <span className={`badge font-bold uppercase tracking-widest text-[9px] ${
                       user.is_superuser ? 'badge-primary' : 
+                      user.profile?.role === 'COMPTABLE' ? 'badge-accent text-white' :
                       user.profile?.role === 'CAISSIER' ? 'badge-secondary' : 'badge-ghost'
                     }`}>
                       {user.is_superuser 
                         ? t('badges.pharmacist') 
+                        : user.profile?.role === 'COMPTABLE'
+                            ? t('roles.accountant', 'COMPTABLE')
                         : user.profile?.role === 'CAISSIER' 
                             ? t('roles.cashier') 
                             : t('roles.seller')}
@@ -581,7 +601,8 @@ export default function GestionUtilisateurs() {
                       className="btn btn-ghost btn-sm text-error"
                       onClick={() => handleDeleteUser(user.id, user.username)}
                     >
-                      {t('actions.delete')}
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                      {t('actions.deactivate', 'Corbeille')}
                     </button>
                   )}
                 </td>

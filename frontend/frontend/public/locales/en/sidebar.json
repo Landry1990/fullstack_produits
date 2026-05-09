@@ -92,6 +92,15 @@
         "analyse_temporelle": "Time Analysis",
         "guide": "Financial Guide 📖"
     },
+    "compta": {
+        "title": "Accounting 📒",
+        "dashboard": "Dashboard",
+        "grand_livre": "General Ledger",
+        "balance": "Trial Balance",
+        "resultat": "Income Statement",
+        "charges": "Expense Entry",
+        "plan": "Chart of Accounts"
+    },
     "parametres": {
         "title": "Settings",
         "facture": "Invoice Settings",

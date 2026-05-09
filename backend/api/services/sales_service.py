@@ -402,10 +402,12 @@ class SalesService:
 
         # 5. Loyalty Management
         if facture.client and facture.client.client_type != 'PROFESSIONNEL' and facture.client.is_loyalty_member:
-            loyalty_conf = LoyaltySetting.objects.first()
-            if loyalty_conf:
-                client = facture.client
-                client._skip_audit = True
+            # Exclure explicitement 'CLIENTS DIVERS' de l'accumulation de points
+            if facture.client.name.strip().upper() != 'CLIENTS DIVERS':
+                loyalty_conf = LoyaltySetting.objects.first()
+                if loyalty_conf:
+                    client = facture.client
+                    client._skip_audit = True
                 save_client = False
                 if str(data.get('use_pending_discount', False)).lower() == 'true' and client.pending_discount > 0:
                     client.pending_discount = 0

@@ -203,6 +203,11 @@ class CreanceViewSet(viewsets.ReadOnlyModelViewSet):
         ayant_droit = facture.ayant_droit.nom if hasattr(facture, 'ayant_droit') and facture.ayant_droit else None
         
         info_data = [[Paragraph("<b>Client :</b>", style_normal), Paragraph(client_name, style_normal)]]
+        if facture.client:
+            if getattr(facture.client, 'niu', None):
+                info_data.append([Paragraph("<b>NIU :</b>", style_normal), Paragraph(facture.client.niu, style_normal)])
+            if getattr(facture.client, 'registre_commerce', None):
+                info_data.append([Paragraph("<b>RC :</b>", style_normal), Paragraph(facture.client.registre_commerce, style_normal)])
         if ayant_droit:
             info_data.append([Paragraph("<b>Bénéficiaire :</b>", style_normal), Paragraph(ayant_droit, style_normal)])
         info_data.extend([
@@ -380,7 +385,15 @@ class CreanceViewSet(viewsets.ReadOnlyModelViewSet):
              return Response({'detail': 'Client non trouvé'}, status=status.HTTP_404_NOT_FOUND)
 
         return Response({
-            'client': {'id': client.id, 'name': client.name, 'address': client.address, 'phone': client.phone, 'email': client.email},
+            'client': {
+                'id': client.id, 
+                'name': client.name, 
+                'address': client.address, 
+                'phone': client.phone, 
+                'email': client.email,
+                'niu': getattr(client, 'niu', ''),
+                'registre_commerce': getattr(client, 'registre_commerce', '')
+            },
             'periode': {'date_debut': request.query_params.get('date_debut'), 'date_fin': request.query_params.get('date_fin')},
             'creances': creances_data,
             'totaux': {'total_factures': str(total_factures), 'total_paye': str(total_paye), 'total_reste': str(total_reste)}
@@ -494,9 +507,17 @@ class CreanceViewSet(viewsets.ReadOnlyModelViewSet):
             
             info_data = [
                 [Paragraph("<b>Client :</b>", style_normal), Paragraph(client_name, style_normal)],
+            ]
+            if releve.client:
+                if getattr(releve.client, 'niu', None):
+                    info_data.append([Paragraph("<b>NIU :</b>", style_normal), Paragraph(releve.client.niu, style_normal)])
+                if getattr(releve.client, 'registre_commerce', None):
+                    info_data.append([Paragraph("<b>RC :</b>", style_normal), Paragraph(releve.client.registre_commerce, style_normal)])
+            
+            info_data.extend([
                 [Paragraph("<b>Référence :</b>", style_normal), Paragraph(releve.reference or f"REL-{releve.id}", style_normal)],
                 [Paragraph("<b>Date :</b>", style_normal), Paragraph(date_releve, style_normal)],
-            ]
+            ])
             info_table = Table(info_data, colWidths=[5*cm, 9*cm])
             info_table.setStyle(TableStyle([('VALIGN', (0,0), (-1,-1), 'TOP'), ('BOTTOMPADDING', (0,0), (-1,-1), 4)]))
             story.append(info_table)

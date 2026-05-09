@@ -48,6 +48,7 @@ const emptyForm: Partial<Client> = {
   plafond: '0',
   taux_couverture: '0',
   remise_automatique: '0',
+  majoration_pro_pourcentage: '0',
   ayants_droit: [],
   is_active: true,
   is_deposit_enabled: false
@@ -234,13 +235,16 @@ export default function Clients() {
         const cleanData = validation.data as any;
 
         if (formMode === 'create') {
-            await clientService.create(cleanData);
+            const created = await clientService.create(cleanData);
+            setClients(prev => [created, ...prev]);
             toast.success(t('clients:messages.create_success'));
         } else if (formData.id) {
-            await clientService.update(formData.id, cleanData);
-            setTimeout(() => {
-                fetchClients(true);
-            }, 500);
+            const updated = await clientService.update(formData.id, cleanData);
+            setClients(prev => prev.map(c => c.id === updated.id ? updated : c));
+            if (selectedClient?.id === updated.id) {
+                setSelectedClient(updated);
+            }
+            toast.success(t('clients:messages.update_success'));
         }
         setIsFormModalOpen(false);
     } catch (err: any) {
