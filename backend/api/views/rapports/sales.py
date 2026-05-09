@@ -43,6 +43,8 @@ class RapportSalesMixin:
                 date__gte=date_debut,
                 date__lt=date_fin,
             )
+            .exclude(produits__allocations__stock_lot__is_divers=True)
+            .distinct()
             .values('created_by_id')
             .annotate(
                 nbre_ventes=Count('id'),
@@ -91,6 +93,8 @@ class RapportSalesMixin:
                 status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE],
                 client__isnull=False,
             )
+            .exclude(produits__allocations__stock_lot__is_divers=True)
+            .distinct()
             .values('client_id', 'client__name', 'client__client_type')
             .annotate(
                 nb_ventes=Count('id'),
@@ -162,6 +166,8 @@ class RapportSalesMixin:
         rows = (
             Facture.objects
             .filter(status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE], date__gte=date_debut, date__lt=date_fin)
+            .exclude(produits__allocations__stock_lot__is_divers=True)
+            .distinct()
             .values('created_by_id')
             .annotate(nbre_ventes=Count('id'), chiffre_affaires=Coalesce(Sum('total_ttc'), Value(0, output_field=DecimalField())))
             .order_by('-chiffre_affaires')
@@ -212,6 +218,8 @@ class RapportSalesMixin:
                 date__gte=start,
                 created_by_id__in=vendeur_ids,
             )
+            .exclude(produits__allocations__stock_lot__is_divers=True)
+            .distinct()
             .annotate(mois=TruncMonth('date'))
             .values('created_by_id', 'mois')
             .annotate(ca=Coalesce(Sum('total_ttc'), Value(0, output_field=DecimalField())))

@@ -131,6 +131,7 @@ class StockLot(models.Model):
     )
     date_expiration = models.DateField(blank=True, null=True)
     date_reception = models.DateTimeField(help_text="Date de réception du lot (pour FIFO)")
+    is_divers = models.BooleanField(default=False, db_index=True, help_text="Lot provenant d'une commande diverse")
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     

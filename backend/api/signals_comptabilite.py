@@ -12,6 +12,9 @@ from decimal import Decimal
 @receiver(post_save, sender=PaiementFournisseur)
 def generer_ecriture_paiement_fournisseur(sender, instance, created, **kwargs):
     """Génère les écritures de règlement fournisseur (Débit 401, Crédit 571/521)."""
+    if getattr(instance.fournisseur, 'is_divers', False):
+        return
+        
     with transaction.atomic():
         # Déterminer le journal et le compte de trésorerie
         is_cash = instance.mode_paiement == 'ESP'
@@ -57,6 +60,10 @@ def generer_ecriture_paiement_fournisseur(sender, instance, created, **kwargs):
 @receiver(post_save, sender=Facture)
 def generer_ecriture_vente(sender, instance, created, **kwargs):
     """Génère les écritures de vente automatiquement (Journal VT)."""
+    # Exclure les factures contenant des produits divers
+    if instance.produits.filter(allocations__stock_lot__is_divers=True).exists():
+        return
+
     if instance.status in [Facture.Status.VALIDEE, Facture.Status.PAYEE] and instance.is_active:
         with transaction.atomic():
             journal, _ = JournalComptable.objects.get_or_create(code='VT', defaults={'nom': 'Ventes'})
@@ -102,6 +109,9 @@ def generer_ecriture_vente(sender, instance, created, **kwargs):
 @receiver(post_save, sender=Caisse)
 def generer_ecriture_paiement(sender, instance, created, **kwargs):
     """Génère les écritures de règlement (Journal CA ou BQ)."""
+    if instance.facture and instance.facture.produits.filter(allocations__stock_lot__is_divers=True).exists():
+        return
+
     if instance.statut == 'completee':
         with transaction.atomic():
             is_cash = instance.mode_paiement == 'especes'
@@ -143,6 +153,9 @@ def generer_ecriture_paiement(sender, instance, created, **kwargs):
 @receiver(post_save, sender=Commande)
 def generer_ecriture_achat(sender, instance, created, **kwargs):
     """Génère les écritures d'achat lors de la réception de commande (Journal AC)."""
+    if getattr(instance, 'type', '') == 'DIV' or (instance.fournisseur and getattr(instance.fournisseur, 'is_divers', False)):
+        return
+
     # Utilisation du statut correct 'CLOT' (Clôturée)
     if instance.status == 'CLOT' and instance.is_active:
         with transaction.atomic():

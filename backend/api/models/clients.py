@@ -26,6 +26,10 @@ class Fournisseur(models.Model):
         default=True, 
         help_text="Fournisseur actif (visible dans les recherches)"
     )
+    is_divers = models.BooleanField(
+        default=False,
+        help_text="Fournisseur utilisé pour les achats divers (produits sans lien avec le stock normal)"
+    )
     
     TYPE_REGLEMENT_CHOICES = [
         ('FACTURE', 'À la facture'),
@@ -48,6 +52,22 @@ class Fournisseur(models.Model):
 
     def __str__(self):
         return self.name
+
+    def save(self, *args, **kwargs):
+        is_new = self.pk is None
+        old_instance = None
+        if not is_new:
+            try:
+                old_instance = Fournisseur.objects.get(pk=self.pk)
+            except Fournisseur.DoesNotExist:
+                pass
+        
+        super().save(*args, **kwargs)
+        
+        # Si le statut is_divers a changé ou si c'est un nouveau fournisseur divers
+        if (old_instance and old_instance.is_divers != self.is_divers) or (is_new and self.is_divers):
+            from .stock import StockLot
+            StockLot.objects.filter(fournisseur=self).update(is_divers=self.is_divers)
 
     @property
     def solde_dette(self):

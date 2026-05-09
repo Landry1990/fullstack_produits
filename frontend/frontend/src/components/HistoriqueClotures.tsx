@@ -28,10 +28,10 @@ interface ClotureCaisse {
   montant_reel: string
   montant_theorique: string
   ecart_caisse: string
-  total_ventes: string
-  total_entrees: string
-  total_sorties: string
-  details_paiement: Record<string, number>
+  total_ventes: string | number
+  total_entrees: string | number
+  total_sorties: string | number
+  details_paiement: Record<string, any>
   date_debut: string | null
   date_fin: string | null
   user: number | null
@@ -665,9 +665,12 @@ export default function HistoriqueClotures() {
               <div className="space-y-3">
                 <h4 className="font-bold uppercase tracking-wider text-xs text-base-content/50 border-b border-base-200 pb-2">{t('modal.flows_summary')}</h4>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                  <div className="bg-base-100 border border-base-200 p-3 rounded-lg text-center">
-                    <div className="text-xs opacity-60">{t('modal.ventes')}</div>
-                    <div className="font-bold">{formatMoney(selectedCloture.total_ventes)}</div>
+                  <div className="bg-base-100 border border-base-200 p-3 rounded-lg text-center flex flex-col justify-center relative">
+                    <div className="text-xs opacity-60 font-bold">{t('modal.ventes')} : {formatMoney(selectedCloture.total_ventes)}</div>
+                    <div className="text-[10px] mt-1 text-base-content/60">Pharmacie: {formatMoney(selectedCloture.details_paiement?.__meta__?.total_ca_pharmacie ?? selectedCloture.total_ventes)}</div>
+                    {(selectedCloture.details_paiement?.__meta__?.total_ca_divers ?? 0) > 0 && (
+                      <div className="text-[10px] text-base-content/60">Diverses: {formatMoney(selectedCloture.details_paiement?.__meta__?.total_ca_divers)}</div>
+                    )}
                   </div>
                   <div className="bg-success/5 border border-success/20 p-3 rounded-lg text-center">
                     <div className="text-xs opacity-60 text-success uppercase">{t('modal.entries')}</div>
@@ -685,7 +688,7 @@ export default function HistoriqueClotures() {
                 <div className="space-y-3">
                   <h4 className="font-bold uppercase tracking-wider text-xs text-base-content/50 border-b border-base-200 pb-2">{t('modal.mode_details')}</h4>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                    {Object.entries(selectedCloture.details_paiement).map(([mode, montant]) => (
+                    {Object.entries(selectedCloture.details_paiement).filter(([mode]) => mode !== '__meta__').map(([mode, montant]) => (
                       <div key={mode} className="flex justify-between p-2 bg-base-50 rounded text-sm">
                         <span className="flex items-center gap-2">
                           {mode === 'especes' && '💵'}

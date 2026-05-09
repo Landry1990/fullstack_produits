@@ -15,7 +15,7 @@ import TransferCommandeModal from './Commandes/TransferCommandeModal';
 import MergeCommandesModal from './Commandes/MergeCommandesModal';
 
 interface CommandesProps {
-    forcedType?: 'LOC' | 'DIR';
+    forcedType?: 'LOC' | 'DIR' | 'DIV';
 }
 
 export default function Commandes({ forcedType }: CommandesProps) {
@@ -40,7 +40,7 @@ export default function Commandes({ forcedType }: CommandesProps) {
     <div className="h-full flex flex-col overflow-hidden bg-base-100">
       <div className="flex flex-col items-center pt-4 mb-4 shrink-0">
           <h1 className="text-xl md:text-2xl font-bold text-center mb-4">
-              {state.activeTab === 'DIR' ? state.t('orders:title_direct') : state.t('orders:title_local')}
+              {state.activeTab === 'DIV' ? 'Commandes Divers' : state.activeTab === 'DIR' ? state.t('orders:title_direct') : state.t('orders:title_local')}
           </h1>
           
           {!forcedType && (
@@ -83,7 +83,7 @@ export default function Commandes({ forcedType }: CommandesProps) {
         </div>
       )}
 
-      {state.isSuggestionModalOpen && (
+      {!forcedType && state.isSuggestionModalOpen && (
         <ScheduledOrdersListModal 
           isOpen={state.isSuggestionModalOpen}
           onClose={() => state.setIsSuggestionModalOpen(false)}
@@ -100,7 +100,7 @@ export default function Commandes({ forcedType }: CommandesProps) {
         />
       )}
 
-      {state.isSchedulingModalOpen && (
+      {!forcedType && state.isSchedulingModalOpen && (
         <OrderSchedulingModal
            isOpen={state.isSchedulingModalOpen}
            onClose={() => {
@@ -150,7 +150,7 @@ export default function Commandes({ forcedType }: CommandesProps) {
         message={state.sudoState.message || ""}
       />
 
-      {state.isTransferModalOpen && (
+      {!forcedType && state.isTransferModalOpen && (
         <TransferCommandeModal
           isOpen={state.isTransferModalOpen}
           onClose={() => state.setIsTransferModalOpen(false)}
@@ -164,7 +164,7 @@ export default function Commandes({ forcedType }: CommandesProps) {
         />
       )}
 
-      {state.isMergeModalOpen && (
+      {!forcedType && state.isMergeModalOpen && (
         <MergeCommandesModal
           isOpen={state.isMergeModalOpen}
           onClose={() => state.setIsMergeModalOpen(false)}

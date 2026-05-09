@@ -497,7 +497,8 @@ class CommandeViewSet(MultiTermSearchMixin, OptimizedSerializerMixin, viewsets.M
                                 selling_price=produit.selling_price,
                                 lot=lot_number,
                                 date_expiration=item.date_expiration,
-                                date_reception=commande.date_cloture
+                                date_reception=commande.date_cloture,
+                                is_divers=(commande.type == 'DIV' or (commande.fournisseur and commande.fournisseur.is_divers))
                             )
                             lots_to_create.append(lot)
                         

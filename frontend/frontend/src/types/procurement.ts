@@ -11,6 +11,7 @@ export interface Fournisseur {
     type_reglement?: 'FACTURE' | 'RELEVE'
     delai_paiement_jours?: number
     periode_releve_jours?: number
+    is_divers?: boolean
 }
 
 export interface AchatProduit {
@@ -51,7 +52,7 @@ export interface Commande {
     status_display: string
     total: string
     produits: CommandeProduit[]
-    type?: 'LOC' | 'DIR'
+    type?: 'LOC' | 'DIR' | 'DIV'
     taux_change?: string
     frais_coefficient?: string
     montant_paye?: string

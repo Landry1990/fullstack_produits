@@ -168,30 +168,35 @@ class DashboardViewSet(viewsets.ViewSet):
             factures_today_qs = Facture.objects.filter(
                 date__date=today,
                 status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE]
-            ).annotate(num_p=Count('paiements')).exclude(status=Facture.Status.VALIDEE, num_p=0)
+            ).exclude(produits__allocations__stock_lot__is_divers=True).distinct().annotate(num_p=Count('paiements')).exclude(status=Facture.Status.VALIDEE, num_p=0)
             
             total_global_remise = factures_today_qs.aggregate(s=Coalesce(Sum('remise'), Decimal('0')))['s']
 
             # 6a. Margin from allocated products (FIFO/FEFO)
-            # Subtracting line-level discount from the base selling_price
+            # Using HT calculation like monthly report: cost_price * quantity
             margin_allocated = FactureProduitAllocation.objects.filter(
                 facture_produit__facture__in=factures_today_qs
             ).aggregate(
-                total=Coalesce(Sum((F('facture_produit__selling_price') - F('facture_produit__discount') - F('cost_price')) * F('quantity')), Decimal('0'))
+                total=Coalesce(Sum(F('cost_price') * F('quantity'), output_field=DecimalField()), Decimal('0'))
             )['total']
 
-            # 6b. Margin from unallocated products (fallback to PMP)
-            unallocated_margin = FactureProduit.objects.filter(
+            # 6b. Cost from unallocated products (fallback to PMP)
+            unallocated_cost = FactureProduit.objects.filter(
                 facture__in=factures_today_qs
             ).annotate(
                 has_allocation=Exists(FactureProduitAllocation.objects.filter(facture_produit=OuterRef('pk')))
             ).filter(
                 has_allocation=False
             ).aggregate(
-                total=Coalesce(Sum((F('selling_price') - F('discount') - F('produit__pmp')) * F('quantity')), Decimal('0'))
+                total=Coalesce(Sum(F('produit__pmp') * F('quantity'), output_field=DecimalField()), Decimal('0'))
             )['total']
 
-            margin_today = margin_allocated + unallocated_margin - total_global_remise
+            # Calculate margin like monthly report: CA_HT - cost_achat
+            ca_ht_today = factures_today_qs.aggregate(
+                total=Coalesce(Sum('total_ht'), Decimal('0'))
+            )['total']
+
+            margin_today = ca_ht_today - (margin_allocated + unallocated_cost)
 
             # 7. Dormant Stock (6 months defaults)
             dormant_threshold = today - timedelta(days=6 * 30)

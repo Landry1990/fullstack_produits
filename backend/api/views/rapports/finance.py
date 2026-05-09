@@ -187,6 +187,7 @@ class RapportFinanceMixin:
         annees = [
             d.year for d in Facture.objects
             .filter(status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE])
+            .exclude(produits__allocations__stock_lot__is_divers=True)
             .dates('date', 'year', order='DESC')
         ]
         if not annees:
@@ -247,6 +248,7 @@ class RapportFinanceMixin:
                 facture__status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE],
                 tva__gt=0,
             )
+            .exclude(facture__produits__allocations__stock_lot__is_divers=True)
             .values('produit__name', 'produit__cip1', 'tva')
             .annotate(
                 total_qty=Sum('quantity'),
@@ -296,6 +298,7 @@ class RapportFinanceMixin:
             Facture.objects
             .filter(date__range=(date_debut, date_fin),
                     status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE])
+            .exclude(produits__allocations__stock_lot__is_divers=True)
             .select_related('client', 'created_by')
             .prefetch_related('paiements')
         )
@@ -334,6 +337,7 @@ class RapportFinanceMixin:
             Facture.objects
             .filter(status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE],
                     date__gte=date_debut, date__lte=date_fin)
+            .exclude(produits__allocations__stock_lot__is_divers=True)
             .select_related('validated_by')
         )
         stats = (
@@ -388,6 +392,7 @@ class RapportFinanceMixin:
             Facture.objects
             .filter(status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE],
                     date__gte=date_debut, date__lte=date_fin)
+            .exclude(produits__allocations__stock_lot__is_divers=True)
             .select_related('client', 'validated_by')
             .prefetch_related('produits')
         )
@@ -490,7 +495,7 @@ class RapportFinanceMixin:
         factures = Facture.objects.filter(
             date__range=(date_debut, date_fin),
             status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE],
-        )
+        ).exclude(produits__allocations__stock_lot__is_divers=True)
         results = []
 
         # 1. Lignes allouées (lot connu)
@@ -930,7 +935,7 @@ class RapportFinanceMixin:
         factures = Facture.objects.filter(
             date__range=(date_debut, date_fin),
             status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE]
-        ).select_related('client').order_by('date')
+        ).exclude(produits__allocations__stock_lot__is_divers=True).select_related('client').order_by('date')
 
         for f in factures:
             date_sage = f.date.strftime('%d%m%y')

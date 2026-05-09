@@ -280,7 +280,7 @@ class StockLotListSerializer(serializers.ModelSerializer):
         fields = [
             'id', 'produit', 'produit_nom', 'fournisseur_nom',
             'lot', 'date_expiration', 'quantity_remaining', 'quantity_initial',
-            'price_cost', 'selling_price', 'date_reception'
+            'price_cost', 'selling_price', 'date_reception', 'is_divers'
         ]
 
 
