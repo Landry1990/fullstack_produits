@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import api from '../../services/api';
 import { 
   Sparkles, Pencil, Trash2, Plus, 
@@ -179,14 +179,20 @@ export default function CategoryManager({
 
     try {
       if (editingCategory) {
-        await api.put(`${apiPath.replace(/^\/api\//, '')}${editingCategory.id}/`, payload);
+        const { data: updatedCat } = await api.put(`${apiPath.replace(/^\/api\//, '')}${editingCategory.id}/`, payload);
+        setCategories(prev => prev.map(c => c.id === updatedCat.id ? updatedCat : c));
+        if (selectedCategory?.id === updatedCat.id) setSelectedCategory(updatedCat);
         toast.success(t('stock:organisation.category_manager.success_save', { type: title }));
       } else {
-        await api.post(apiPath.replace(/^\/api\//, ''), payload);
+        const { data: newCat } = await api.post(apiPath.replace(/^\/api\//, ''), payload);
+        setCategories(prev => [...prev, newCat].sort((a, b) => {
+            const nameA = a.name || a.nom || '';
+            const nameB = b.name || b.nom || '';
+            return nameA.localeCompare(nameB);
+        }));
         toast.success(t('stock:organisation.category_manager.success_save', { type: title }));
       }
       setIsModalOpen(false);
-      fetchCategories();
     } catch (err) {
       toast.error(t('common:messages.error_saving'));
     }
@@ -253,11 +259,15 @@ export default function CategoryManager({
       const payload: any = {};
       payload[type] = selectedCategory.id;
 
-      await api.patch(`produits/${product.id}/`, payload);
+      const { data: updatedProduct } = await api.patch(`produits/${product.id}/`, payload);
       toast.success(t('stock:organisation.category_manager.product_added', { name: product.name, type }));
-      fetchProducts(selectedCategory.id);
+      
+      // Update local products list
+      setProducts(prev => [...prev, updatedProduct].sort((a, b) => a.name.localeCompare(b.name)));
+      setTotalCount(prev => prev + 1);
+      
       // Remove from search results to avoid double add
-      setSearchResults(searchResults.filter(p => p.id !== product.id));
+      setSearchResults(prev => prev.filter(p => p.id !== product.id));
     } catch (err) {
       toast.error(t('common:messages.error_update'));
     }
@@ -276,7 +286,8 @@ export default function CategoryManager({
 
       await api.patch(`produits/${product.id}/`, payload);
       toast.success(t('stock:organisation.category_manager.product_removed'));
-      fetchProducts(selectedCategory!.id);
+      setProducts(prev => prev.filter(p => p.id !== product.id));
+      setTotalCount(prev => Math.max(0, prev - 1));
     } catch (err) {
       toast.error(t('common:messages.error_deleting'));
     }

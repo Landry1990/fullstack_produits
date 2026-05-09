@@ -59,6 +59,7 @@ const PharmacySettingsForm = lazy(() => import('./components/settings/PharmacySe
 const Maintenance = lazy(() => import('./components/Maintenance'));
 const Changelog = lazy(() => import('./components/Changelog'));
 const Corbeille = lazy(() => import('./components/Corbeille'));
+const Comptabilite = lazy(() => import('./components/compta/Comptabilite'));
 
 // ── Helper to reduce boilerplate ──
 const perm = (permission: string | string[], Component: React.ComponentType<any>, props?: Record<string, any>) => ({
@@ -157,6 +158,12 @@ export const router = createBrowserRouter([
           { path: 'classement-vendeurs', ...perm('statistiques_vendeurs', ClassementVendeurs) },
           { path: 'analyse-temporelle', ...perm('statistiques_temporelle', AnalyseTemporelle) },
           { path: 'guide-financier', ...perm('statistiques_guide', GuideFinancier) },
+          { path: 'compta/dashboard', ...perm('compta_dashboard', Comptabilite, { defaultTab: 'dashboard' }) },
+          { path: 'compta/grand-livre', ...perm('compta_grand_livre', Comptabilite, { defaultTab: 'grand-livre' }) },
+          { path: 'compta/balance', ...perm('compta_balance', Comptabilite, { defaultTab: 'balance' }) },
+          { path: 'compta/resultat', ...perm('compta_resultat', Comptabilite, { defaultTab: 'resultat' }) },
+          { path: 'compta/charges', ...perm('compta_charges', Comptabilite, { defaultTab: 'charges' }) },
+          { path: 'compta/plan-comptable', ...perm('compta_plan', Comptabilite, { defaultTab: 'plan' }) },
 
           // ── Communication ──
           { path: 'whatsapp-history', ...perm('settings_whatsapp', WhatsAppHistory) },

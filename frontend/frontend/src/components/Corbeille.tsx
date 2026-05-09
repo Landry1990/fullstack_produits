@@ -8,7 +8,7 @@ import { Trash2, RotateCcw, AlertTriangle, Package, Users, Truck, Search, X, Sho
 interface TrashedItem {
   id: number;
   name: string;
-  type: 'produit' | 'client' | 'fournisseur' | 'commande' | 'avoir' | 'promis' | 'inventaire' | 'facture';
+  type: 'produit' | 'client' | 'fournisseur' | 'commande' | 'avoir' | 'promis' | 'inventaire' | 'facture' | 'user';
   details: Record<string, any>;
   deleted_at: string | null;
 }
@@ -24,10 +24,11 @@ interface CorbeilleData {
     promis: TrashedItem[];
     inventaires: TrashedItem[];
     factures: TrashedItem[];
+    users: TrashedItem[];
   };
 }
 
-type TabKey = 'all' | 'produits' | 'clients' | 'fournisseurs' | 'commandes' | 'avoirs' | 'promis' | 'inventaires' | 'factures';
+type TabKey = 'all' | 'produits' | 'clients' | 'fournisseurs' | 'commandes' | 'avoirs' | 'promis' | 'inventaires' | 'factures' | 'users';
 
 const TAB_CONFIG_KEYS: { key: TabKey; labelKey: string; icon: React.ReactNode; color: string }[] = [
   { key: 'all', labelKey: 'tabs.all', icon: <Trash2 className="w-4 h-4" />, color: 'text-base-content' },
@@ -39,6 +40,7 @@ const TAB_CONFIG_KEYS: { key: TabKey; labelKey: string; icon: React.ReactNode; c
   { key: 'promis', labelKey: 'tabs.promis', icon: <Clock className="w-4 h-4" />, color: 'text-purple-500' },
   { key: 'inventaires', labelKey: 'tabs.inventaires', icon: <ClipboardList className="w-4 h-4" />, color: 'text-teal-500' },
   { key: 'factures', labelKey: 'tabs.factures', icon: <Receipt className="w-4 h-4" />, color: 'text-orange-500' },
+  { key: 'users', labelKey: 'tabs.users', icon: <Users className="w-4 h-4" />, color: 'text-slate-500' },
 ];
 
 export default function Corbeille() {
@@ -78,6 +80,7 @@ export default function Corbeille() {
     if (activeTab === 'all' || activeTab === 'promis') items.push(...(data.items.promis || []));
     if (activeTab === 'all' || activeTab === 'inventaires') items.push(...(data.items.inventaires || []));
     if (activeTab === 'all' || activeTab === 'factures') items.push(...(data.items.factures || []));
+    if (activeTab === 'all' || activeTab === 'users') items.push(...(data.items.users || []));
     return items;
   }, [data, activeTab]);
 
@@ -198,6 +201,7 @@ export default function Corbeille() {
       case 'promis': return <Clock className="w-4 h-4 text-purple-500" />;
       case 'inventaire': return <ClipboardList className="w-4 h-4 text-teal-500" />;
       case 'facture': return <Receipt className="w-4 h-4 text-orange-500" />;
+      case 'user': return <Users className="w-4 h-4 text-slate-500" />;
       default: return <Trash2 className="w-4 h-4" />;
     }
   };
@@ -212,11 +216,12 @@ export default function Corbeille() {
       promis: { bg: 'bg-purple-500/10', text: 'text-purple-600', labelKey: 'badges.promis' },
       inventaire: { bg: 'bg-teal-500/10', text: 'text-teal-600', labelKey: 'badges.inventaire' },
       facture: { bg: 'bg-orange-500/10', text: 'text-orange-600', labelKey: 'badges.facture' },
+      user: { bg: 'bg-slate-500/10', text: 'text-slate-600', labelKey: 'badges.user' },
     };
     const c = config[type] || { bg: 'bg-base-200', text: 'text-base-content', labelKey: type };
     return (
       <span className={`px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider ${c.bg} ${c.text}`}>
-        {t(c.labelKey, type)}
+        {t(c.labelKey, { defaultValue: type })}
       </span>
     );
   };
@@ -249,6 +254,8 @@ export default function Corbeille() {
         return `Type: ${d.type || 'Inconnu'} · Statut: ${d.status || 'Inconnu'}`;
       case 'facture':
         return `Client: ${d.client || 'Inconnu'} · Statut: ${d.status || 'Inconnu'}${d.total !== undefined ? ` · Total: ${d.total.toLocaleString('fr-FR')} FCFA` : ''}`;
+      case 'user':
+        return `${d.first_name || ''} ${d.last_name || ''} ${d.email ? `(${d.email})` : ''}`.trim();
       default:
         return '';
     }

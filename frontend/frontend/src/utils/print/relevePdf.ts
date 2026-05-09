@@ -18,6 +18,8 @@ interface ReleveClient {
     address?: string;
     phone?: string;
     email?: string;
+    niu?: string;
+    registre_commerce?: string;
 }
 
 interface RelevePdfData {
@@ -128,7 +130,9 @@ export function generateRelevePdf(data: RelevePdfData): jsPDF {
     doc.setFontSize(8);
     doc.setTextColor(80, 80, 80);
     if (data.client.address) { doc.text(data.client.address, margin + 4, cy); cy += 4; }
-    if (data.client.phone) { doc.text(`Tél : ${data.client.phone}`, margin + 4, cy); }
+    if (data.client.phone) { doc.text(`Tél : ${data.client.phone}`, margin + 4, cy); cy += 4; }
+    if (data.client.niu) { doc.text(`NIU : ${data.client.niu}`, margin + 4, cy); cy += 4; }
+    if (data.client.registre_commerce) { doc.text(`RC : ${data.client.registre_commerce}`, margin + 4, cy); }
 
     // Encadré Période
     const col2X = margin + colW + 6;

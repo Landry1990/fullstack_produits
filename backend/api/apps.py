@@ -8,6 +8,7 @@ class ApiConfig(AppConfig):
     def ready(self):
         import api.signals
         import api.signals_depot
+        import api.signals_comptabilite
         import api.cache_invalidation
         
         # Start the integrated background task runner for automated orders

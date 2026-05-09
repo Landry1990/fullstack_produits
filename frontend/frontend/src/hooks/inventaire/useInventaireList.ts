@@ -121,7 +121,9 @@ export const useInventaireList = () => {
         try {
             await api.delete(`inventaires/${id}/`);
             toast.success(t('common:messages.deleted'));
-            fetchInventaires();
+            setInventaires(prev => prev.filter(inv => inv.id !== id));
+            setTotalCount(prev => Math.max(0, prev - 1));
+            // fetchInventaires(); // Optionnel si on veut vraiment re-synchroniser tout, mais filtrer localement suffit pour l'instantanéité
         } catch (error) {
             console.error(error);
             toast.error(t('common:messages.error_deleting'));

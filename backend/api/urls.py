@@ -16,6 +16,9 @@ from .views import (
     PromotionViewSet, TVAViewSet, UserDailySessionViewSet,
     DepotClientViewSet, PosteCaisseViewSet, OrderScheduleViewSet
 )
+from .views.comptabilite import (
+    CompteComptableViewSet, JournalComptableViewSet, EcritureComptableViewSet, ExerciceComptableViewSet
+)
 from .views.formes import FormeViewSet
 from .views.paiements import PaiementFournisseurViewSet
 from .views.coupons import CouponMonnaieViewSet
@@ -99,6 +102,12 @@ router.register(r'message-templates', MessageTemplateViewSet, basename='messaget
 router.register(r'reappro-sessions', ReapproSessionViewSet, basename='reapprosession')
 router.register(r'postes-caisses', PosteCaisseViewSet, basename='postecaisse')
 router.register(r'corbeille', CorbeilleViewSet, basename='corbeille')
+
+# Comptabilité
+router.register(r'compta/comptes', CompteComptableViewSet, basename='compta-compte')
+router.register(r'compta/journaux', JournalComptableViewSet, basename='compta-journal')
+router.register(r'compta/exercices', ExerciceComptableViewSet, basename='compta-exercice')
+router.register(r'compta/ecritures', EcritureComptableViewSet, basename='compta-ecriture')
 
 
 # The API URLs are now determined automatically by the router.

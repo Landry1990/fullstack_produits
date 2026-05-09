@@ -13,7 +13,8 @@ from .models import (
     Groupe, SmsLog, SmsTemplate, PaiementFournisseur, ConfigurationOption,
     Promotion, PromotionPackItem, ObjectifCommercial, ConfigurationObjectifs, TVA,
     WhatsAppLog, RuptureFournisseur, DepotClient, InternalMessage, MessageTemplate,
-    ReapproSession, PosteCaisse, OrderSchedule
+    ReapproSession, PosteCaisse, OrderSchedule,
+    CompteComptable, JournalComptable, EcritureComptable, LigneEcriture, ExerciceComptable
 )
 from .services import PromotionService
 from .pdf_utils import number_to_french
@@ -314,6 +315,11 @@ class ClientSerializer(serializers.ModelSerializer):
     def update(self, instance, validated_data):
         ayants_droit_data = validated_data.pop('ayants_droit', None)
         
+        # Si on désactive la fidélité, on remet les points à zéro
+        new_is_loyalty = validated_data.get('is_loyalty_member', instance.is_loyalty_member)
+        if instance.is_loyalty_member and not new_is_loyalty:
+            instance.points_fidelite = 0
+
         # Mise à jour des champs du client
         for attr, value in validated_data.items():
             setattr(instance, attr, value)
@@ -1342,7 +1348,15 @@ class FacturePrintSerializer(serializers.ModelSerializer):
         paiements = obj.paiements.all()
         if not paiements:
             return "Non réglé"
-        modes = set(p.get_mode_paiement_display() for p in paiements)
+        modes = set()
+        for p in paiements:
+            display = p.get_mode_paiement_display()
+            if display:
+                modes.add(str(display))
+            elif p.mode_paiement:
+                modes.add(str(p.mode_paiement))
+            else:
+                modes.add("Inconnu")
         return ", ".join(modes)
 
     def get_tva_analysis(self, obj):
@@ -1531,3 +1545,59 @@ class ReapproSessionSerializer(serializers.ModelSerializer):
     class Meta:
         model = ReapproSession
         fields = ['id', 'user', 'user_name', 'total_products', 'total_units', 'created_at', 'notes', 'adjustments']
+
+class CompteComptableSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CompteComptable
+        fields = '__all__'
+
+class JournalComptableSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = JournalComptable
+        fields = '__all__'
+
+class ExerciceComptableSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ExerciceComptable
+        fields = '__all__'
+
+class LigneEcritureSerializer(serializers.ModelSerializer):
+    compte_numero = serializers.CharField(source='compte.numero', read_only=True)
+    compte_libelle = serializers.CharField(source='compte.libelle', read_only=True)
+    
+    class Meta:
+        model = LigneEcriture
+        fields = ['id', 'compte', 'compte_numero', 'compte_libelle', 'libelle_ligne', 'debit', 'credit']
+
+class EcritureComptableSerializer(serializers.ModelSerializer):
+    lignes = LigneEcritureSerializer(many=True)
+    journal_code = serializers.CharField(source='journal.code', read_only=True)
+    
+    class Meta:
+        model = EcritureComptable
+        fields = [
+            'id', 'date', 'exercice', 'journal', 'journal_code', 
+            'reference', 'libelle', 'created_at', 'lignes', 
+            'total_debit', 'total_credit'
+        ]
+
+    def validate(self, data):
+        lignes = data.get('lignes', [])
+        if not lignes:
+            raise serializers.ValidationError("Une écriture doit avoir au moins une ligne.")
+        
+        total_debit = sum(Decimal(str(l.get('debit', 0))) for l in lignes)
+        total_credit = sum(Decimal(str(l.get('credit', 0))) for l in lignes)
+        
+        if total_debit != total_credit:
+            raise serializers.ValidationError(
+                f"L'écriture n'est pas équilibrée (Débit: {total_debit}, Crédit: {total_credit})"
+            )
+        return data
+
+    def create(self, validated_data):
+        lignes_data = validated_data.pop('lignes')
+        ecriture = EcritureComptable.objects.create(**validated_data)
+        for ligne_data in lignes_data:
+            LigneEcriture.objects.create(ecriture=ecriture, **ligne_data)
+        return ecriture

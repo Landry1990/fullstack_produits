@@ -127,6 +127,21 @@ export default function Sidebar() {
         { path: '/app/guide-financier', label: t('statistiques.guide', 'Guide Financier 📖'), key: 'statistiques_guide' }
       ]
     },
+    { 
+      label: t('compta.title', 'Comptabilité 📒'), 
+      key: 'compta', 
+      icon: (
+        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" /></svg>
+      ),
+      submenus: [
+        { path: '/app/compta/dashboard', label: t('compta.dashboard', 'Tableau de bord'), key: 'compta_dashboard' },
+        { path: '/app/compta/grand-livre', label: t('compta.grand_livre', 'Grand Livre'), key: 'compta_grand_livre' },
+        { path: '/app/compta/balance', label: t('compta.balance', 'Balance'), key: 'compta_balance' },
+        { path: '/app/compta/resultat', label: t('compta.resultat', 'Compte de Résultat'), key: 'compta_resultat' },
+        { path: '/app/compta/charges', label: t('compta.charges', 'Saisie des Charges'), key: 'compta_charges' },
+        { path: '/app/compta/plan-comptable', label: t('compta.plan', 'Plan Comptable'), key: 'compta_plan' },
+      ]
+    },
     {
       label: t('parametres.title'),
       key: 'settings',

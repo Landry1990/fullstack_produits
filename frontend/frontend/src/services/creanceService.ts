@@ -35,12 +35,12 @@ const creanceService = {
         return response.data;
     },
 
-    ajouterPaiement: async (id: number, payload: AjouterPaiementPayload): Promise<{ detail: string; paiement_id: number }> => {
+    ajouterPaiement: async (id: number, payload: AjouterPaiementPayload): Promise<{ detail: string; paiement_id: number; creance?: any }> => {
         const response = await api.post(`creances/${id}/ajouter_paiement/`, payload);
         return response.data;
     },
 
-    bulkPaiement: async (payload: BulkPaiementPayload): Promise<{ detail: string; releve_id: number }> => {
+    bulkPaiement: async (payload: BulkPaiementPayload): Promise<{ detail: string; releve_id: number; creances?: any[] }> => {
         const response = await api.post('creances/bulk_paiement/', payload);
         return response.data;
     },

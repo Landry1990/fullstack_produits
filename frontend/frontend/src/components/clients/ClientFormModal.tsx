@@ -168,6 +168,37 @@ export default function ClientFormModal({
                     placeholder="Quartier, Rue, Porte..."
                     />
                 </div>
+
+                {data.client_type === 'PROFESSIONNEL' && (
+                  <>
+                    <div className="form-control">
+                        <label className="label py-1">
+                        <span className="label-text text-[9px] uppercase font-black tracking-widest text-base-content/40 flex items-center gap-1.5">
+                            <ShieldCheck className="w-3 h-3" /> NIU
+                        </span>
+                        </label>
+                        <input 
+                        className="input input-bordered input-md rounded-xl font-black bg-base-100 border-base-300 focus:border-primary shadow-sm" 
+                        value={(data as any).niu || ''} 
+                        onChange={e => setData({...data, niu: e.target.value})} 
+                        placeholder="N° Identifiant Unique"
+                        />
+                    </div>
+                    <div className="form-control">
+                        <label className="label py-1">
+                        <span className="label-text text-[9px] uppercase font-black tracking-widest text-base-content/40 flex items-center gap-1.5">
+                            <ShieldCheck className="w-3 h-3" /> Registre Commerce
+                        </span>
+                        </label>
+                        <input 
+                        className="input input-bordered input-md rounded-xl font-black bg-base-100 border-base-300 focus:border-primary shadow-sm" 
+                        value={(data as any).registre_commerce || ''} 
+                        onChange={e => setData({...data, registre_commerce: e.target.value})} 
+                        placeholder="RCCM..."
+                        />
+                    </div>
+                  </>
+                )}
             </div>
 
             {/* Status & Fidelity Grid - Compact Switches */}

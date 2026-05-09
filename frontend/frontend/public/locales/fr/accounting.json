@@ -1,0 +1,84 @@
+{
+    "title": "Gestion Comptable",
+    "subtitle": "Pilotage financier en temps réel de votre pharmacie",
+    "ohada": "OHADA",
+    "tabs": {
+        "dashboard": "Tableau de bord",
+        "grand_livre": "Grand Livre",
+        "achats": "Journal Achats",
+        "balance": "Balance",
+        "bilan": "Bilan",
+        "resultat": "Compte de Résultat",
+        "charges": "Charges",
+        "plan": "Plan Comptable"
+    },
+    "exercice": {
+        "closed": "CLÔTURÉ"
+    },
+    "dashboard": {
+        "title": "Tableau de Bord",
+        "products": "Produits (Ventes)",
+        "expenses": "Charges (Dépenses)",
+        "net_result": "Résultat Net",
+        "profit": "BÉNÉFICE",
+        "loss": "DÉFICIT",
+        "last_month": "mois dernier",
+        "method_note": "Calculé selon la méthode Produits - Charges",
+        "ready_title": "Prêt pour votre clôture ?",
+        "ready_subtitle": "Générez les écritures manquantes pour vos factures passées en un clic.",
+        "init_button": "Initialiser l'historique",
+        "init_loading": "Traitement...",
+        "action_required": "ACTION REQUISE"
+    },
+    "ledger": {
+        "title": "Journal Général",
+        "search_placeholder": "Rechercher une pièce...",
+        "cols": {
+            "date": "Date",
+            "journal": "Journal",
+            "ref": "Référence",
+            "label": "Libellé",
+            "debit": "Débit",
+            "credit": "Crédit"
+        }
+    },
+    "balance": {
+        "cols": {
+            "account": "Compte",
+            "label": "Intitulé",
+            "debit_mov": "Mouvements Débit",
+            "credit_mov": "Mouvements Crédit",
+            "debit_sol": "Solde Débiteur",
+            "credit_sol": "Solde Créditeur"
+        }
+    },
+    "bilan": {
+        "actif": "ACTIF (Ce que vous possédez)",
+        "passif": "PASSIF (Ce que vous devez)",
+        "equilibrium": "Équilibre Actif/Passif",
+        "difference": "Différence",
+        "note": "Note : Le bilan doit normalement être équilibré (Actif = Passif + Résultat)."
+    },
+    "resultat": {
+        "products": "7. PRODUITS (RECETTES)",
+        "charges": "6. CHARGES (DÉPENSES)",
+        "no_charges": "Aucune charge enregistrée"
+    },
+    "charges": {
+        "form_title": "Saisir une charge de caisse",
+        "type": "Type de charge",
+        "select": "-- Sélectionner --",
+        "date": "Date",
+        "label": "Désignation / Motif",
+        "label_placeholder": "Ex: Facture ENEO, Salaire stagiaire...",
+        "amount": "Montant",
+        "submit": "Enregistrer la charge",
+        "saving": "Enregistrement..."
+    },
+    "achats": {
+      "title": "Journal des Achats (AC)",
+      "subtitle": "Suivi des écritures d'achat générées lors de la réception des commandes",
+      "no_data": "Aucun achat enregistré pour cette période."
+    },
+    "loading_msg": "Analyse des comptes en cours..."
+}
