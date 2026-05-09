@@ -128,18 +128,24 @@ export default function Sidebar() {
       ]
     },
     { 
-      label: t('compta.title', 'Comptabilité 📒'), 
+      path: '/app/compta/dashboard',
+      label: t('compta.title', 'Comptabilité'), 
       key: 'compta', 
       icon: (
         <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" /></svg>
+      )
+    },
+    {
+      label: t('divers.title', 'Gestion Divers'),
+      key: 'divers',
+      icon: (
+        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+        </svg>
       ),
       submenus: [
-        { path: '/app/compta/dashboard', label: t('compta.dashboard', 'Tableau de bord'), key: 'compta_dashboard' },
-        { path: '/app/compta/grand-livre', label: t('compta.grand_livre', 'Grand Livre'), key: 'compta_grand_livre' },
-        { path: '/app/compta/balance', label: t('compta.balance', 'Balance'), key: 'compta_balance' },
-        { path: '/app/compta/resultat', label: t('compta.resultat', 'Compte de Résultat'), key: 'compta_resultat' },
-        { path: '/app/compta/charges', label: t('compta.charges', 'Saisie des Charges'), key: 'compta_charges' },
-        { path: '/app/compta/plan-comptable', label: t('compta.plan', 'Plan Comptable'), key: 'compta_plan' },
+        { path: '/app/divers/ca', label: t('divers.ca', 'CA Divers'), key: 'divers_ca' },
+        { path: '/app/divers/commandes', label: t('divers.commandes', 'Commandes Divers'), key: 'divers_commandes' }
       ]
     },
     {
@@ -160,6 +166,46 @@ export default function Sidebar() {
     { path: '/app/changelog', label: t('changelog', 'Quoi de neuf ?'), key: 'changelog', icon: (
       <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
     )},
+    {
+      path: '/app/utilisateurs',
+      label: t('utilisateurs'),
+      key: 'utilisateurs',
+      icon: (
+        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" /></svg>
+      )
+    },
+    {
+      path: '/app/user-sessions',
+      label: t('user_sessions_sidebar'),
+      key: 'user_sessions',
+      icon: (
+        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+      )
+    },
+    {
+      path: '/app/journal-audit',
+      label: t('audit'),
+      key: 'audit',
+      icon: (
+        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+      )
+    },
+    {
+      path: '/app/maintenance',
+      label: t('maintenance'),
+      key: 'maintenance',
+      icon: (
+        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+      )
+    },
+    {
+      path: '/app/corbeille',
+      label: t('corbeille', 'Corbeille'),
+      key: 'corbeille',
+      icon: (
+        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+      )
+    }
   ];
 
   // Logic to calculate menuItems based on authentication
@@ -202,48 +248,7 @@ export default function Sidebar() {
     return hasExplicitParent || hasLegacyCategory || allowed.includes(item.key) ? item : null;
   }).filter(Boolean) as typeof allMenuItems;
 
-  if (user?.is_superuser) {
-    menuItems.push({
-      path: '/app/utilisateurs',
-      label: t('utilisateurs'),
-      key: 'utilisateurs',
-      icon: (
-        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" /></svg>
-      )
-    });
-    menuItems.push({
-      path: '/app/user-sessions',
-      label: t('user_sessions_sidebar'),
-      key: 'user_sessions',
-      icon: (
-        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-      )
-    });
-    menuItems.push({
-      path: '/app/journal-audit',
-      label: t('audit'),
-      key: 'audit',
-      icon: (
-        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
-      )
-    });
-    menuItems.push({
-      path: '/app/maintenance',
-      label: t('maintenance'),
-      key: 'maintenance',
-      icon: (
-        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
-      )
-    });
-    menuItems.push({
-      path: '/app/corbeille',
-      label: t('corbeille', 'Corbeille'),
-      key: 'corbeille',
-      icon: (
-        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
-      )
-    });
-  }
+
 
   // Effect to automatically handle expansion and collapsing
   useEffect(() => {

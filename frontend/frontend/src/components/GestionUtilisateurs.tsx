@@ -128,7 +128,22 @@ const MENU_HIERARCHY = [
       { key: 'compta_charges', labelKey: 'sidebar:compta.charges' },
       { key: 'compta_plan', labelKey: 'sidebar:compta.plan' }
     ]
-  }
+  },
+  {
+    key: 'divers',
+    labelKey: 'sidebar:divers.title',
+    submenus: [
+      { key: 'divers_ca', labelKey: 'sidebar:divers.ca' },
+      { key: 'divers_commandes', labelKey: 'sidebar:divers.commandes' }
+    ]
+  },
+  { key: 'aide_formation', labelKey: 'sidebar:aide_formation' },
+  { key: 'changelog', labelKey: 'sidebar:changelog' },
+  { key: 'utilisateurs', labelKey: 'sidebar:utilisateurs' },
+  { key: 'user_sessions', labelKey: 'sidebar:user_sessions_sidebar' },
+  { key: 'audit', labelKey: 'sidebar:audit' },
+  { key: 'maintenance', labelKey: 'sidebar:maintenance' },
+  { key: 'corbeille', labelKey: 'sidebar:corbeille' }
 ];
 
 const getAllMenuKeys = () => {

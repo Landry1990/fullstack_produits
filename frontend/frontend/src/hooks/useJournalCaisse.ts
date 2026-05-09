@@ -73,7 +73,9 @@ export function useJournalCaisse() {
     total_recouvrement: number,
     total_entrees: number,
     total_sorties: number,
-    details: Record<string, number>,
+    total_ca_pharmacie?: number,
+    total_ca_divers?: number,
+    details: Record<string, number | Record<string, any>>,
     user?: string
   } | null>(null);
   const [actualAmount, setActualAmount] = useState<string>('');
@@ -409,6 +411,8 @@ export function useJournalCaisse() {
           end_date: dateFin ? formatLocalISOString(dateFin) : null,
           total_theorique: currentTotals.total_theorique ?? currentTotals.total,
           total_ventes: currentTotals.total_ventes ?? currentTotals.ventes,
+          total_ca_pharmacie: currentTotals.total_ca_pharmacie,
+          total_ca_divers: currentTotals.total_ca_divers,
           total_recouvrement: currentTotals.total_recouvrement ?? currentTotals.recouvrement,
           total_entrees: currentTotals.total_entrees ?? currentTotals.entrees,
           total_sorties: currentTotals.total_sorties ?? currentTotals.sorties,
@@ -472,9 +476,24 @@ export function useJournalCaisse() {
             <div style="margin-bottom: 10px; background: #f9f9f9; padding: 5px; border: 1px solid #eee;">
                 <div style="font-weight: bold; margin-bottom: 3px; border-bottom: 1px solid black; font-size: 0.85em;">${t('print.activity_title')}</div>
                 <div style="display: flex; justify-content: space-between; font-size: 0.85em;">
+                    <span>Ventes Pharmacie</span>
+                    <span>${formatCurrencyLocal(data.total_ca_pharmacie ?? (data.details_paiement?.__meta__?.total_ca_pharmacie) ?? data.total_ventes)}</span>
+                </div>
+                ${(data.total_ca_divers ?? data.details_paiement?.__meta__?.total_ca_divers) > 0 ? `
+                <div style="display: flex; justify-content: space-between; font-size: 0.85em;">
+                    <span>Ventes Diverses</span>
+                    <span>${formatCurrencyLocal(data.total_ca_divers ?? data.details_paiement?.__meta__?.total_ca_divers)}</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; font-size: 0.85em; margin-top: 3px; padding-top: 2px; border-top: 1px dashed #ccc;">
+                    <span style="font-weight: bold;">Total Ventes</span>
+                    <span style="font-weight: bold;">${formatCurrencyLocal(data.total_ventes)}</span>
+                </div>
+                ` : `
+                <div style="display: flex; justify-content: space-between; font-size: 0.85em;">
                     <span>${t('print.net_sales')}</span>
                     <span>${formatCurrencyLocal(data.total_ventes)}</span>
                 </div>
+                `}
                 <div style="display: flex; justify-content: space-between; font-size: 0.85em;">
                     <span>${t('print.misc_entries')}</span>
                     <span>${formatCurrencyLocal(data.total_entrees)}</span>

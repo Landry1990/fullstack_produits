@@ -27,7 +27,7 @@ function formatDateToMMYY(isoDate: string | null | undefined): string {
     return '';
 }
 
-export function useCommandesState(forcedType?: 'LOC' | 'DIR') {
+export function useCommandesState(forcedType?: 'LOC' | 'DIR' | 'DIV') {
   const confirm = useConfirm()
   const { t } = useTranslation(['orders', 'common', 'products']);
   const { user } = useAuth();
@@ -1197,7 +1197,7 @@ export function useCommandesState(forcedType?: 'LOC' | 'DIR') {
     setSelectedRows(new Set());
   }, [produitsList]);
 
-  function openCreateView(type: 'LOC' | 'DIR' = activeTab) {
+  function openCreateView(type: 'LOC' | 'DIR' | 'DIV' = activeTab) {
     setNewCommandeFournisseurId(fournisseurs.length > 0 ? String(fournisseurs[0].id) : '')
     setNumeroFacture('')
     setCommandeProduits([])

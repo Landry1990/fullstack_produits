@@ -1,4 +1,4 @@
-﻿import React from 'react';
+import React from 'react';
 import PremiumModal from '../common/PremiumModal';
 import type { useFournisseurs } from '../../hooks/useFournisseurs';
 
@@ -79,6 +79,23 @@ export default function FournisseurFormModals({ hook }: Props) {
                 required 
                 disabled={isSubmitting}
               />
+            </div>
+            
+            <div className="flex items-center gap-3 p-4 bg-gray-50 border border-gray-100 rounded-xl">
+              <input
+                type="checkbox"
+                id="is_divers_add"
+                checked={newFournisseur.is_divers || false}
+                onChange={e => state.setNewFournisseur(f => ({...f, is_divers: e.target.checked}))}
+                className="checkbox checkbox-primary checkbox-sm"
+                disabled={isSubmitting}
+              />
+              <div className="flex flex-col">
+                <label htmlFor="is_divers_add" className="text-sm font-semibold text-gray-700 cursor-pointer">
+                  Fournisseur Divers
+                </label>
+                <span className="text-[11px] text-gray-500">Utilisé pour la gestion des achats divers (produits hors catalogue principal).</span>
+              </div>
             </div>
           </div>
 
@@ -238,6 +255,22 @@ export default function FournisseurFormModals({ hook }: Props) {
                   className="input input-bordered w-full h-12 rounded-xl focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all" 
                   required 
                 />
+              </div>
+
+              <div className="flex items-center gap-3 p-4 bg-gray-50 border border-gray-100 rounded-xl">
+                <input
+                  type="checkbox"
+                  id="is_divers_edit"
+                  checked={editingFournisseur.is_divers || false}
+                  onChange={e => state.setEditingFournisseur(f => f ? {...f, is_divers: e.target.checked} : null)}
+                  className="checkbox checkbox-primary checkbox-sm"
+                />
+                <div className="flex flex-col">
+                  <label htmlFor="is_divers_edit" className="text-sm font-semibold text-gray-700 cursor-pointer">
+                    Fournisseur Divers
+                  </label>
+                  <span className="text-[11px] text-gray-500">Utilisé pour la gestion des achats divers (produits hors catalogue principal).</span>
+                </div>
               </div>
             </div>
 

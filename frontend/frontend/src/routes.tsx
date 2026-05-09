@@ -1,65 +1,116 @@
-import { lazy } from 'react';
+import { lazy, type ComponentType } from 'react';
 import { createBrowserRouter, Navigate } from 'react-router-dom';
 import { ProtectedRoute, AdminRoute, HomeRedirector } from './components/auth/RouteGuards';
 import { PermissionRoute } from './components/auth/PermissionRoute';
 import { setRouter } from './services/navigationService';
 
-// ── Eager-loaded (critical path) ──
+// ── Lazy loading robuste avec timeout et retry ──
+const MAX_RETRIES = 3;
+const LOAD_TIMEOUT = 10000; // 10 secondes
+
+function lazyWithRetry<T extends ComponentType<any>>(
+  factory: () => Promise<{ default: T }>,
+  retries = MAX_RETRIES
+): React.LazyExoticComponent<T> {
+  return lazy(() => 
+    new Promise((resolve, reject) => {
+      const timeoutId = setTimeout(() => {
+        reject(new Error('Timeout: Le chargement du module a pris trop de temps'));
+      }, LOAD_TIMEOUT);
+
+      factory()
+        .then((module) => {
+          clearTimeout(timeoutId);
+          resolve(module);
+        })
+        .catch((error) => {
+          clearTimeout(timeoutId);
+          if (retries > 0) {
+            console.warn(`Retry loading component, ${retries} attempts left`);
+            // Retry with delay
+            setTimeout(() => {
+              resolve(lazyWithRetry(factory, retries - 1) as any);
+            }, 1000);
+          } else {
+            reject(error);
+          }
+        });
+    })
+  );
+}
+
+// Prefetch helper - charge en arrière-plan au survol
+export function prefetchRoute(factory: () => Promise<any>) {
+  if ('requestIdleCallback' in window) {
+    requestIdleCallback(() => {
+      factory().catch(() => {}); // Silencieux si erreur
+    }, { timeout: 2000 });
+  } else {
+    setTimeout(() => {
+      factory().catch(() => {});
+    }, 100);
+  }
+}
+
+// ── Eager-loaded (critical path - toujours chargees) ──
 import Login from './components/Login';
 import Layout from './components/Layout';
 import PrintPage from './components/printing/PrintPage';
 import LicenceScreen from './components/LicenceScreen';
 
-// ── Lazy-loaded pages ──
-const Dashboard = lazy(() => import('./components/Dashboard'));
-const DashboardManager = lazy(() => import('./components/DashboardManager'));
-const Produit = lazy(() => import('./components/Produit'));
-const Commandes = lazy(() => import('./components/Commandes'));
-const Ventes = lazy(() => import('./components/Ventes'));
-const Fournisseurs = lazy(() => import('./components/Fournisseurs'));
-const Clients = lazy(() => import('./components/Clients'));
-const BMICalculator = lazy(() => import('./components/clinical/BMICalculator'));
-const Facturation = lazy(() => import('./components/Facturation'));
-const CaisseCentralisee = lazy(() => import('./components/CaisseCentralisee'));
-const Inventaire = lazy(() => import('./components/Inventaire'));
-const EtatsInventaire = lazy(() => import('./components/EtatsInventaire'));
-const Organisation = lazy(() => import('./components/Organisation'));
-const Vitrine = lazy(() => import('./components/Vitrine'));
-const StatistiquesFournisseur = lazy(() => import('./components/StatistiquesFournisseur'));
-const JournalCaisse = lazy(() => import('./components/JournalCaisse'));
-const Perimes = lazy(() => import('./components/Perimes'));
-const Creances = lazy(() => import('./components/Creances'));
-const Avoirs = lazy(() => import('./components/Avoirs'));
-const RapportMensuel = lazy(() => import('./components/RapportMensuel'));
-const Transformations = lazy(() => import('./components/Transformations'));
-const ReapproRayon = lazy(() => import('./components/stock/ReapproRayon'));
-const ReapproHistory = lazy(() => import('./components/stock/ReapproHistory'));
-const Ruptures = lazy(() => import('./components/stock/Ruptures'));
-const JournalAudit = lazy(() => import('./components/JournalAudit'));
-const JournalAjustements = lazy(() => import('./components/JournalAjustements'));
-const Promis = lazy(() => import('./components/Promis'));
-const StockAnalysis = lazy(() => import('./components/StockAnalysis'));
-const HistoriqueClotures = lazy(() => import('./components/HistoriqueClotures'));
-const HistoriqueVentes = lazy(() => import('./components/HistoriqueVentes'));
-const HistoriqueAchats = lazy(() => import('./components/HistoriqueAchats'));
-const WhatsAppHistory = lazy(() => import('./components/WhatsAppHistory'));
-const OrdonnancierPage = lazy(() => import('./components/Ordonnancier'));
-const CentreRapports = lazy(() => import('./components/CentreRapports'));
-const AnalyseABC = lazy(() => import('./components/AnalyseABC'));
-const PromotionList = lazy(() => import('./components/Promotions/PromotionList'));
-const ModuleFinancier = lazy(() => import('./components/ModuleFinancier'));
-const ClassementVendeurs = lazy(() => import('./components/ClassementVendeurs'));
-const AnalyseTemporelle = lazy(() => import('./components/AnalyseTemporelle'));
-const StockUGReport = lazy(() => import('./components/StockUGReport'));
-const UserSessions = lazy(() => import('./components/UserSessions'));
-const GuideFinancier = lazy(() => import('./components/GuideFinancier'));
-const HelpTraining = lazy(() => import('./components/HelpTraining'));
-const GestionUtilisateurs = lazy(() => import('./components/GestionUtilisateurs'));
-const PharmacySettingsForm = lazy(() => import('./components/settings/PharmacySettingsForm'));
-const Maintenance = lazy(() => import('./components/Maintenance'));
-const Changelog = lazy(() => import('./components/Changelog'));
-const Corbeille = lazy(() => import('./components/Corbeille'));
-const Comptabilite = lazy(() => import('./components/compta/Comptabilite'));
+// Routes principales - eager loaded pour performance
+import Dashboard from './components/Dashboard';
+import DashboardManager from './components/DashboardManager';
+import Produit from './components/Produit';
+import Ventes from './components/Ventes';
+import Facturation from './components/Facturation';
+import Commandes from './components/Commandes';
+
+// ── Lazy-loaded pages (routes secondaires) ──
+const Fournisseurs = lazyWithRetry(() => import('./components/Fournisseurs'));
+const Clients = lazyWithRetry(() => import('./components/Clients'));
+const BMICalculator = lazyWithRetry(() => import('./components/clinical/BMICalculator'));
+const CaisseCentralisee = lazyWithRetry(() => import('./components/CaisseCentralisee'));
+const Inventaire = lazyWithRetry(() => import('./components/Inventaire'));
+const EtatsInventaire = lazyWithRetry(() => import('./components/EtatsInventaire'));
+const Organisation = lazyWithRetry(() => import('./components/Organisation'));
+const Vitrine = lazyWithRetry(() => import('./components/Vitrine'));
+const StatistiquesFournisseur = lazyWithRetry(() => import('./components/StatistiquesFournisseur'));
+const JournalCaisse = lazyWithRetry(() => import('./components/JournalCaisse'));
+const Perimes = lazyWithRetry(() => import('./components/Perimes'));
+const Creances = lazyWithRetry(() => import('./components/Creances'));
+const Avoirs = lazyWithRetry(() => import('./components/Avoirs'));
+const RapportMensuel = lazyWithRetry(() => import('./components/RapportMensuel'));
+const Transformations = lazyWithRetry(() => import('./components/Transformations'));
+const ReapproRayon = lazyWithRetry(() => import('./components/stock/ReapproRayon'));
+const ReapproHistory = lazyWithRetry(() => import('./components/stock/ReapproHistory'));
+const Ruptures = lazyWithRetry(() => import('./components/stock/Ruptures'));
+const JournalAudit = lazyWithRetry(() => import('./components/JournalAudit'));
+const JournalAjustements = lazyWithRetry(() => import('./components/JournalAjustements'));
+const Promis = lazyWithRetry(() => import('./components/Promis'));
+const StockAnalysis = lazyWithRetry(() => import('./components/StockAnalysis'));
+const HistoriqueClotures = lazyWithRetry(() => import('./components/HistoriqueClotures'));
+const HistoriqueVentes = lazyWithRetry(() => import('./components/HistoriqueVentes'));
+const HistoriqueAchats = lazyWithRetry(() => import('./components/HistoriqueAchats'));
+const WhatsAppHistory = lazyWithRetry(() => import('./components/WhatsAppHistory'));
+const OrdonnancierPage = lazyWithRetry(() => import('./components/Ordonnancier'));
+const CentreRapports = lazyWithRetry(() => import('./components/CentreRapports'));
+const AnalyseABC = lazyWithRetry(() => import('./components/AnalyseABC'));
+const PromotionList = lazyWithRetry(() => import('./components/Promotions/PromotionList'));
+const ModuleFinancier = lazyWithRetry(() => import('./components/ModuleFinancier'));
+const GestionDivers = lazyWithRetry(() => import('./components/divers/GestionDivers'));
+const ClassementVendeurs = lazyWithRetry(() => import('./components/ClassementVendeurs'));
+const AnalyseTemporelle = lazyWithRetry(() => import('./components/AnalyseTemporelle'));
+const StockUGReport = lazyWithRetry(() => import('./components/StockUGReport'));
+const UserSessions = lazyWithRetry(() => import('./components/UserSessions'));
+const GuideFinancier = lazyWithRetry(() => import('./components/GuideFinancier'));
+const HelpTraining = lazyWithRetry(() => import('./components/HelpTraining'));
+const GestionUtilisateurs = lazyWithRetry(() => import('./components/GestionUtilisateurs'));
+const PharmacySettingsForm = lazyWithRetry(() => import('./components/settings/PharmacySettingsForm'));
+const Maintenance = lazyWithRetry(() => import('./components/Maintenance'));
+const Changelog = lazyWithRetry(() => import('./components/Changelog'));
+const Corbeille = lazyWithRetry(() => import('./components/Corbeille'));
+const Comptabilite = lazyWithRetry(() => import('./components/compta/Comptabilite'));
 
 // ── Helper to reduce boilerplate ──
 const perm = (permission: string | string[], Component: React.ComponentType<any>, props?: Record<string, any>) => ({
@@ -164,6 +215,10 @@ export const router = createBrowserRouter([
           { path: 'compta/resultat', ...perm('compta_resultat', Comptabilite, { defaultTab: 'resultat' }) },
           { path: 'compta/charges', ...perm('compta_charges', Comptabilite, { defaultTab: 'charges' }) },
           { path: 'compta/plan-comptable', ...perm('compta_plan', Comptabilite, { defaultTab: 'plan' }) },
+
+          // ── Gestion Divers ──
+          { path: 'divers/ca', ...perm('divers_ca', GestionDivers, { defaultTab: 'ca' }) },
+          { path: 'divers/commandes', ...perm('divers_commandes', GestionDivers, { defaultTab: 'commandes' }) },
 
           // ── Communication ──
           { path: 'whatsapp-history', ...perm('settings_whatsapp', WhatsAppHistory) },

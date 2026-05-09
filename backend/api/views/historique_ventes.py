@@ -27,7 +27,7 @@ class HistoriqueVentesViewSet(viewsets.ViewSet):
         # Base queryset: only validated or paid invoices (exclude cancelled, brouillon, and proforma)
         factures = Facture.objects.filter(
             status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE]
-        )
+        ).exclude(produits__allocations__stock_lot__is_divers=True).distinct()
         
         # Apply date filters
         if date_debut:
@@ -267,7 +267,7 @@ class HistoriqueVentesViewSet(viewsets.ViewSet):
         
         factures = Facture.objects.filter(
             status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE]
-        )
+        ).exclude(produits__allocations__stock_lot__is_divers=True).distinct()
         if date_debut:
             factures = factures.filter(date__date__gte=date_debut)
         if date_fin:

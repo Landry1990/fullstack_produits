@@ -13,6 +13,8 @@ class RapportBaseMixin:
             status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE],
             date__gte=date_debut,
             date__lt=date_fin
+        ).exclude(
+            produits__allocations__stock_lot__is_divers=True
         ).prefetch_related('produits', 'produits__produit', 'paiements')
 
     def _calculate_ca_stats(self, factures):
@@ -127,6 +129,8 @@ class RapportBaseMixin:
     def _calculate_creances(self):
         stats = Facture.objects.filter(
             status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE]
+        ).exclude(
+            produits__allocations__stock_lot__is_divers=True
         ).annotate(
             paid_amount=Coalesce(
                 Sum('paiements__montant', filter=Q(paiements__statut='completee') & ~Q(paiements__mode_paiement='en_compte')),
@@ -172,7 +176,7 @@ class RapportBaseMixin:
     def _calculate_achats_fournisseurs(self, date_debut, date_fin):
         from api.models import Commande, Avoir
         achats_stats = {}
-        for c in Commande.objects.filter(date__gte=date_debut, date__lt=date_fin, status='CLOT').prefetch_related('produits'):
+        for c in Commande.objects.filter(date__gte=date_debut, date__lt=date_fin, status='CLOT').exclude(type='DIV').prefetch_related('produits'):
             if not c.fournisseur: continue
             fid = c.fournisseur.id
             if fid not in achats_stats:
@@ -206,7 +210,7 @@ class RapportBaseMixin:
         return {'ca_total': ca_total, 'montant_paye': paid_total, 'reste_a_payer': ca_total - paid_total, 'taux_recouvrement_pct': round(paid_total/ca_total*100, 2) if ca_total > 0 else 0, 'nb_factures': sum(b['nb_factures'] for b in billing_stats), 'top_clients': results[:10]}
 
     def _calculate_unites_gratuites(self, date_debut, date_fin):
-        ugs = CommandeProduit.objects.filter(commande__date__gte=date_debut, commande__date__lt=date_fin, commande__status='CLOT', unites_gratuites__gt=0).select_related('produit')
+        ugs = CommandeProduit.objects.filter(commande__date__gte=date_debut, commande__date__lt=date_fin, commande__status='CLOT', unites_gratuites__gt=0).exclude(commande__type='DIV').select_related('produit')
         total_val = sum(cp.unites_gratuites * cp.produit.selling_price for cp in ugs)
         ug_map = {}
         for cp in ugs:

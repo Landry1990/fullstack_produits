@@ -2,7 +2,7 @@ import { create } from 'zustand';
 import type { Commande, CommandeProduit } from '../types';
 
 type ViewMode = 'LIST' | 'CREATE' | 'DETAILS' | 'EDIT';
-type CommandeType = 'LOC' | 'DIR';
+type CommandeType = 'LOC' | 'DIR' | 'DIV';
 
 interface CommandesStoreState {
   selectedCommande: Commande | null;

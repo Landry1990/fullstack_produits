@@ -107,5 +107,11 @@
     "roles": {
         "pharmacist": "Administrateur",
         "user": "Utilisateur"
-    }
+    },
+    "divers": {
+        "title": "Gestion Divers",
+        "ca": "CA Divers",
+        "commandes": "Commandes Divers"
+    },
+    "changelog": "Quoi de neuf ?"
 }

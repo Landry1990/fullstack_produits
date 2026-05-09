@@ -16,9 +16,11 @@ interface ClotureData {
   montant_theorique: string | number;
   ecart_caisse: string | number;
   total_ventes: string | number;
+  total_ca_pharmacie?: string | number;
+  total_ca_divers?: string | number;
   total_entrees: string | number;
   total_sorties: string | number;
-  details_paiement: Record<string, number>;
+  details_paiement: Record<string, any>;
   date_debut?: string | null;
   date_fin?: string | null;
   user_name?: string;
@@ -100,10 +102,25 @@ export function generateClotureTemplate(
       </div>
 
       <div style="border-top: 1px solid #000; border-bottom: 1px solid #000; padding: 10px 0; margin-bottom: 15px; display: flex; flex-direction: column; gap: 4px;">
+        <div style="display: flex; justify-content: space-between; font-size: 10px;">
+           <span style="font-weight: 600;">Ventes Pharmacie:</span>
+           <span style="font-weight: 700;">${formatMoney(cloture.total_ca_pharmacie ?? (cloture.details_paiement?.__meta__?.total_ca_pharmacie) ?? cloture.total_ventes)} F</span>
+        </div>
+        ${(cloture.total_ca_divers ?? cloture.details_paiement?.__meta__?.total_ca_divers) > 0 ? `
+        <div style="display: flex; justify-content: space-between; font-size: 10px;">
+           <span style="font-weight: 600;">Ventes Diverses:</span>
+           <span style="font-weight: 700;">${formatMoney(cloture.total_ca_divers ?? cloture.details_paiement?.__meta__?.total_ca_divers)} F</span>
+        </div>
+        <div style="display: flex; justify-content: space-between; margin-top: 2px; padding-top: 2px; border-top: 1px dashed #ccc;">
+           <span style="font-weight: 600;">Total Ventes:</span>
+           <span style="font-weight: 800;">${formatMoney(cloture.total_ventes)} F</span>
+        </div>
+        ` : `
         <div style="display: flex; justify-content: space-between;">
            <span style="font-weight: 600;">Total Ventes:</span>
            <span style="font-weight: 800;">${formatMoney(cloture.total_ventes)} F</span>
         </div>
+        `}
         <div style="display: flex; justify-content: space-between; font-size: 10px;">
            <span style="color: #059669;">+ Entrées:</span>
            <span style="font-weight: 700;">${formatMoney(cloture.total_entrees)} F</span>

@@ -6,7 +6,7 @@ import api from '../services/api';
 // Types
 interface CommandesFilters {
     page: number;
-    type?: 'LOC' | 'DIR';
+    type?: 'LOC' | 'DIR' | 'DIV';
     status?: string;
 }
 
