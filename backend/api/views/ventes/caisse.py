@@ -3,7 +3,7 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from django.db import transaction
-from django.db.models import Sum, Q, Value, DecimalField, Count
+from django.db.models import Sum, Q, Value, DecimalField, Count, F
 from django.db.models.functions import Coalesce, Abs
 from django_filters.rest_framework import DjangoFilterBackend
 from django.utils import timezone
@@ -120,6 +120,98 @@ class CaisseViewSet(viewsets.ModelViewSet):
             from ...services.payment_service import PaymentService
             PaymentService.process_payment(instance, is_created=True)
 
+    @action(detail=False, methods=['get'])
+    def ventes_diverses(self, request):
+        """
+        Liste paginée des produits divers vendus par période, avec total CA global.
+        """
+        from datetime import datetime, timedelta
+        from ...models import FactureProduitAllocation
+        
+        date_debut = request.query_params.get('date_debut')
+        date_fin = request.query_params.get('date_fin')
+        
+        # Validation des dates
+        if date_debut and date_fin:
+            try:
+                d_debut = datetime.strptime(date_debut, '%Y-%m-%d').date()
+                d_fin = datetime.strptime(date_fin, '%Y-%m-%d').date()
+                
+                if d_debut > d_fin:
+                    return Response(
+                        {'detail': 'La date de début doit être antérieure à la date de fin'},
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
+                
+                # Limite de plage temporelle (max 1 an)
+                if (d_fin - d_debut).days > 365:
+                    return Response(
+                        {'detail': 'La plage de dates ne peut excéder 1 an'},
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
+            except ValueError:
+                return Response(
+                    {'detail': 'Format de date invalide. Utiliser YYYY-MM-DD'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+        
+        queryset = FactureProduitAllocation.objects.filter(
+            stock_lot__is_divers=True,
+            facture_produit__facture__status__in=['VAL', 'PAY']
+        ).select_related(
+            'facture_produit__produit', 
+            'facture_produit__facture',
+            'stock_lot'
+        ).order_by('-created_at')
+        
+        if date_debut:
+            queryset = queryset.filter(created_at__date__gte=date_debut)
+        if date_fin:
+            queryset = queryset.filter(created_at__date__lte=date_fin)
+        
+        # Agrégation DB pour le total CA (pas de boucle Python)
+        from django.db.models import ExpressionWrapper
+        total_ca = queryset.aggregate(
+            ca=Sum(ExpressionWrapper(F('quantity') * F('selling_price'), output_field=DecimalField()))
+        )['ca'] or Decimal('0.00')
+        
+        # Pagination avec DRF (headers + metadata)
+        from ...pagination import StandardResultsSetPagination
+        paginator = StandardResultsSetPagination()
+        paginator.page_size = int(request.query_params.get('page_size', 50))
+        
+        page_qs = paginator.paginate_queryset(queryset, request, view=self)
+        
+        # Si pas de pagination demandée ou erreur, prendre tout le queryset
+        if page_qs is None:
+            page_qs = queryset[:paginator.page_size]
+        
+        data = []
+        for alloc in page_qs:
+            data.append({
+                'id': alloc.id,
+                'date': alloc.created_at,
+                'produit_name': (
+                    alloc.facture_produit.produit.name 
+                    if alloc.facture_produit.produit 
+                    else alloc.facture_produit.produit_nom or 'Produit supprimé'
+                ),
+                'facture_numero': alloc.facture_produit.facture.numero_facture if alloc.facture_produit.facture else 'N/A',
+                'quantity': alloc.quantity,
+                'selling_price': float(alloc.selling_price),
+                'total': float(alloc.quantity * alloc.selling_price),
+                'lot': alloc.stock_lot.lot if alloc.stock_lot else 'N/A'
+            })
+        
+        # Structure plate compatible avec le frontend (VentesDiversesResponse)
+        return Response({
+            'count': paginator.page.paginator.count if paginator.page else 0,
+            'total_ca': float(total_ca),
+            'next': paginator.get_next_link(),
+            'previous': paginator.get_previous_link(),
+            'results': data
+        })
+
     @action(detail=False, methods=['get'], url_path='get_totals')
     def get_totals(self, request):
         date_debut = request.query_params.get('date_debut')
@@ -217,6 +309,18 @@ class CaisseViewSet(viewsets.ModelViewSet):
         # les ventes espèces ET les recouvrements espèces.
         total_theorique = total_ventes_especes + total_recouv_especes + total_entrees - total_sorties
         
+        # Calcul du CA Divers
+        from ...models import FactureProduitAllocation
+        facture_ids = paiements_sales.values('facture_id')
+        allocations_diverses = FactureProduitAllocation.objects.filter(
+            facture_produit__facture_id__in=facture_ids,
+            stock_lot__is_divers=True
+        )
+        total_ca_divers = allocations_diverses.aggregate(
+            ca_div=Sum(F('quantity') * F('selling_price'), output_field=DecimalField())
+        )['ca_div'] or Decimal('0.00')
+        total_ca_pharmacie = total_ventes - total_ca_divers
+        
         mouvements_list = []
         for m in mouvements.select_related('user'):
             mouvements_list.append({
@@ -232,6 +336,8 @@ class CaisseViewSet(viewsets.ModelViewSet):
             'end_date': end_date,
             'total_theorique': total_theorique,
             'total_ventes': total_ventes,
+            'total_ca_pharmacie': total_ca_pharmacie,
+            'total_ca_divers': total_ca_divers,
             'total_recouvrement': total_recouvrement,
             'total_recouv_especes': total_recouv_especes,
             'total_entrees': total_entrees,
@@ -273,7 +379,15 @@ class CaisseViewSet(viewsets.ModelViewSet):
         totals_response = self.get_totals(request)
 
         users_qs = AuthUser.objects.filter(is_active=True).order_by('first_name', 'last_name')
-        users_data = [{'id': u.id, 'username': u.username, 'first_name': u.first_name, 'last_name': u.last_name} for u in users_qs]
+        from typing import Any
+        users_data: list[dict[str, Any]] = []
+        for u in users_qs:
+            users_data.append({
+                'id': u.pk,  # type: ignore[attr-defined]
+                'username': u.username,  # type: ignore[attr-defined]
+                'first_name': u.first_name,  # type: ignore[attr-defined]
+                'last_name': u.last_name  # type: ignore[attr-defined]
+            })
 
         return Response({
             'transactions': transactions_response.data,
@@ -301,11 +415,19 @@ class CaisseViewSet(viewsets.ModelViewSet):
         
         first_dates, last_dates = [], []
         if txs.exists():
-            first_dates.append(txs.first().date_paiement)
-            last_dates.append(txs.last().date_paiement)
+            first_tx = txs.first()
+            last_tx = txs.last()
+            if first_tx is not None:
+                first_dates.append(first_tx.date_paiement)  # type: ignore[attr-defined]
+            if last_tx is not None:
+                last_dates.append(last_tx.date_paiement)  # type: ignore[attr-defined]
         if mvs.exists():
-            first_dates.append(mvs.first().date)
-            last_dates.append(mvs.last().date)
+            first_mv = mvs.first()
+            last_mv = mvs.last()
+            if first_mv is not None:
+                first_dates.append(first_mv.date)  # type: ignore[attr-defined]
+            if last_mv is not None:
+                last_dates.append(last_mv.date)  # type: ignore[attr-defined]
             
         if not first_dates:
             return Response({'user_id': user_id, 'start_date': None, 'end_date': None, 'has_activity': False})
@@ -407,6 +529,18 @@ class CaisseViewSet(viewsets.ModelViewSet):
         total_sorties = mouvements.filter(type='SORTIE').aggregate(Sum('montant'))['montant__sum'] or Decimal('0.00')
         total_ventes_especes = paiements_sales.filter(mode_paiement='especes').aggregate(Sum('montant'))['montant__sum'] or Decimal('0.00')
 
+        # Calcul du CA Divers
+        from ...models import FactureProduitAllocation
+        facture_ids = paiements_sales.values('facture_id')
+        allocations_diverses = FactureProduitAllocation.objects.filter(
+            facture_produit__facture_id__in=facture_ids,
+            stock_lot__is_divers=True
+        )
+        total_ca_divers = allocations_diverses.aggregate(
+            ca_div=Sum(F('quantity') * F('selling_price'), output_field=DecimalField())
+        )['ca_div'] or Decimal('0.00')
+        total_ca_pharmacie = total_ventes - total_ca_divers
+
         if total_ventes == 0 and total_entrees == 0 and total_sorties == 0:
              return Response({'detail': 'Impossible de clôturer : aucun mouvement détecté depuis la dernière clôture.'}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -415,18 +549,22 @@ class CaisseViewSet(viewsets.ModelViewSet):
         total_theorique = total_ventes_especes + recouv_especes + total_entrees - total_sorties
         ecart = montant_reel - total_theorique
         
-        details['__meta__'] = {
+        # type: ignore[index] - details is a mixed dict[str, Any] for API response
+        details['__meta__'] = {  # type: ignore[index]
             'total_ventes': float(total_ventes), 
             'total_ventes_especes': float(total_ventes_especes),
             'total_recouvrement_especes': float(recouv_especes),
             'total_entrees': float(total_entrees), 
-            'total_sorties': float(total_sorties)
+            'total_sorties': float(total_sorties),
+            'total_ca_divers': float(total_ca_divers),
+            'total_ca_pharmacie': float(total_ca_pharmacie)
         }
         
         mouvements_list = []
         for m in mouvements.select_related('user'):
             mouvements_list.append({'type': m.type, 'montant': float(m.montant), 'motif': m.motif, 'user_nom': m.user.get_full_name() or m.user.username if m.user else "Inconnu", 'date': m.date.isoformat()})
-        details['mouvements_audit'] = mouvements_list
+        # type: ignore[index] - details is a mixed dict[str, Any] for API response
+        details['mouvements_audit'] = mouvements_list  # type: ignore[index]
         
         cloture = ClotureCaisse.objects.create(
             montant_reel=montant_reel, montant_theorique=total_theorique, ecart_caisse=ecart,
@@ -436,13 +574,13 @@ class CaisseViewSet(viewsets.ModelViewSet):
             poste_caisse_id=poste_caisse_id
         )
         
-        log_audit(user=request.user, action=AuditLog.Action.CLOTURE_CAISSE, model_name='ClotureCaisse', object_id=cloture.id,
+        log_audit(user=request.user, action=AuditLog.Action.CLOTURE_CAISSE, model_name='ClotureCaisse', object_id=cloture.pk,  # type: ignore[attr-defined]
             description=f"Clôture de caisse: Théorique={total_theorique:.0f}F, Réel={montant_reel:.0f}F, Écart={ecart:+.0f}F",
             details={'theorique': float(total_theorique), 'reel': float(montant_reel), 'ecart': float(ecart), 'ventes': float(total_ventes), 'entrees': float(total_entrees), 'sorties': float(total_sorties)},
             request=request
         )
         
-        return Response({'status': 'success', 'cloture_id': cloture.id, 'montant_reel': float(montant_reel), 'montant_theorique': float(total_theorique), 'ecart': float(ecart), 'total_ventes': float(total_ventes), 'total_entrees': float(total_entrees), 'total_sorties': float(total_sorties), 'details': details})
+        return Response({'status': 'success', 'cloture_id': cloture.pk, 'montant_reel': float(montant_reel), 'montant_theorique': float(total_theorique), 'ecart': float(ecart), 'total_ventes': float(total_ventes), 'total_entrees': float(total_entrees), 'total_sorties': float(total_sorties), 'details': details})  # type: ignore[attr-defined]
 
 
 class ClotureCaisseViewSet(viewsets.ReadOnlyModelViewSet):
@@ -452,10 +590,12 @@ class ClotureCaisseViewSet(viewsets.ReadOnlyModelViewSet):
     
     def get_queryset(self):
         queryset = ClotureCaisse.objects.select_related('user').order_by('-date')
-        date_debut = self.request.query_params.get('date_debut')
-        date_fin = self.request.query_params.get('date_fin')
-        user_id = self.request.query_params.get('user') or self.request.query_params.get('user_id')
-        poste_caisse_id = self.request.query_params.get('poste_caisse')
+        # DRF Request type - ignore Pyright not recognizing DRF's Request
+        drf_request = self.request  # type: ignore[attr-defined]
+        date_debut = drf_request.query_params.get('date_debut')  # type: ignore[attr-defined]
+        date_fin = drf_request.query_params.get('date_fin')  # type: ignore[attr-defined]
+        user_id = drf_request.query_params.get('user') or drf_request.query_params.get('user_id')  # type: ignore[attr-defined]
+        poste_caisse_id = drf_request.query_params.get('poste_caisse')  # type: ignore[attr-defined]
         
         if date_debut:
             queryset = queryset.filter(date__date__gte=date_debut)

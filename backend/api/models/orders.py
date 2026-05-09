@@ -26,6 +26,7 @@ class Commande(models.Model):
     class Type(models.TextChoices):
         LOCALE = 'LOC', 'Locale'
         DIRECTE = 'DIR', 'Directe'
+        DIVERS = 'DIV', 'Divers'
     
     class Source(models.TextChoices):
         MANUEL = 'MANUEL', 'Manuel'
@@ -36,7 +37,7 @@ class Commande(models.Model):
         max_length=3,
         choices=Type.choices,
         default=Type.LOCALE,
-        help_text="Type de commande (Locale ou Directe)"
+        help_text="Type de commande (Locale, Directe ou Divers)"
     )
     taux_change = models.DecimalField(max_digits=10, decimal_places=3, default=655.957)
     frais_coefficient = models.DecimalField(max_digits=5, decimal_places=2, default=1.00)

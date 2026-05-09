@@ -43,7 +43,8 @@ from .billing import (
 
 # Comptabilité
 from .comptabilite import (
-    CompteComptable, JournalComptable, EcritureComptable, LigneEcriture, ExerciceComptable
+    CompteComptable, JournalComptable, EcritureComptable, LigneEcriture, ExerciceComptable,
+    Lettrage
 )
 
 # Inventory
@@ -108,5 +109,5 @@ __all__ = [
     # Licence
     'Licence',
     # Comptabilité
-    'CompteComptable', 'JournalComptable', 'EcritureComptable', 'LigneEcriture', 'ExerciceComptable',
+    'CompteComptable', 'JournalComptable', 'EcritureComptable', 'LigneEcriture', 'ExerciceComptable', 'Lettrage',
 ]

@@ -34,47 +34,98 @@ class EcritureComptableViewSet(viewsets.ModelViewSet):
 
     @action(detail=False, methods=['get'])
     def balance(self, request):
-        """Génère la balance des comptes sur une période."""
+        """
+        Génère la balance des comptes sur une période (OHADA complète).
+        Structure: Solde ouverture | Mouvements période | Solde clôture
+        """
         date_debut = request.query_params.get('date_debut')
         date_fin = request.query_params.get('date_fin')
         
-        # 1. Calculer les mouvements par compte
-        filters = Q()
-        if date_debut: filters &= Q(ecriture__date__gte=date_debut)
-        if date_fin: filters &= Q(ecriture__date__lte=date_fin)
+        # 1. Calculer les soldes d'ouverture (cumul avant date_debut)
+        solde_ouverture = {}
+        if date_debut:
+            ouverture_filters = Q(ecriture__date__lt=date_debut)
+            ouverture_qs = LigneEcriture.objects.filter(ouverture_filters).values('compte__numero').annotate(
+                debit_ouv=Sum('debit'),
+                credit_ouv=Sum('credit')
+            )
+            for item in ouverture_qs:
+                solde_ouverture[item['compte__numero']] = {
+                    'debit': item['debit_ouv'] or Decimal('0.00'),
+                    'credit': item['credit_ouv'] or Decimal('0.00')
+                }
         
-        mouvements = LigneEcriture.objects.filter(filters).values('compte__numero').annotate(
+        # 2. Calculer les mouvements de la période
+        mouvements_filters = Q()
+        if date_debut: mouvements_filters &= Q(ecriture__date__gte=date_debut)
+        if date_fin: mouvements_filters &= Q(ecriture__date__lte=date_fin)
+        
+        mouvements_qs = LigneEcriture.objects.filter(mouvements_filters).values('compte__numero').annotate(
             total_debit=Sum('debit'),
             total_credit=Sum('credit')
         )
-        mouvements_dict = {m['compte__numero']: m for m in mouvements}
+        mouvements_dict = {m['compte__numero']: m for m in mouvements_qs}
         
-        # 2. Fusionner avec tous les comptes actifs
+        # 3. Construire la balance complète OHADA
         comptes = CompteComptable.objects.filter(is_active=True)
         results = []
+        total_ouv_debit = total_ouv_credit = Decimal('0.00')
+        total_mvt_debit = total_mvt_credit = Decimal('0.00')
+        total_clo_debit = total_clo_credit = Decimal('0.00')
+        
         for c in comptes:
-            mov = mouvements_dict.get(c.numero, {})
-            debit = mov.get('total_debit') or Decimal('0.00')
-            credit = mov.get('total_credit') or Decimal('0.00')
+            # Solde d'ouverture
+            ouv = solde_ouverture.get(c.numero, {'debit': Decimal('0.00'), 'credit': Decimal('0.00')})
+            ouv_solde = ouv['debit'] - ouv['credit']
+            ouv_debit = ouv_solde if ouv_solde > 0 else Decimal('0.00')
+            ouv_credit = abs(ouv_solde) if ouv_solde < 0 else Decimal('0.00')
             
-            solde_debit = Decimal('0.00')
-            solde_credit = Decimal('0.00')
-            if debit > credit:
-                solde_debit = debit - credit
-            else:
-                solde_credit = credit - debit
-                
+            # Mouvements période
+            mov = mouvements_dict.get(c.numero, {})
+            mvt_debit = mov.get('total_debit') or Decimal('0.00')
+            mvt_credit = mov.get('total_credit') or Decimal('0.00')
+            
+            # Solde de clôture (ouverture + mouvements)
+            solde_cloture = (ouv['debit'] + mvt_debit) - (ouv['credit'] + mvt_credit)
+            clo_debit = solde_cloture if solde_cloture > 0 else Decimal('0.00')
+            clo_credit = abs(solde_cloture) if solde_cloture < 0 else Decimal('0.00')
+            
+            # Totaux
+            total_ouv_debit += ouv_debit
+            total_ouv_credit += ouv_credit
+            total_mvt_debit += mvt_debit
+            total_mvt_credit += mvt_credit
+            total_clo_debit += clo_debit
+            total_clo_credit += clo_credit
+            
             results.append({
                 'numero': c.numero,
                 'libelle': c.libelle,
                 'type': c.type,
-                'debit': debit,
-                'credit': credit,
-                'solde_debit': solde_debit,
-                'solde_credit': solde_credit
+                'ouverture_debit': ouv_debit,
+                'ouverture_credit': ouv_credit,
+                'mouvement_debit': mvt_debit,
+                'mouvement_credit': mvt_credit,
+                'cloture_debit': clo_debit,
+                'cloture_credit': clo_credit
             })
             
-        return Response(results)
+        return Response({
+            'comptes': results,
+            'totaux': {
+                'ouverture_debit': total_ouv_debit,
+                'ouverture_credit': total_ouv_credit,
+                'mouvement_debit': total_mvt_debit,
+                'mouvement_credit': total_mvt_credit,
+                'cloture_debit': total_clo_debit,
+                'cloture_credit': total_clo_credit
+            },
+            'equilibre': {
+                'ouverture': total_ouv_debit == total_ouv_credit,
+                'mouvements': total_mvt_debit == total_mvt_credit,
+                'cloture': total_clo_debit == total_clo_credit
+            }
+        })
 
     @action(detail=False, methods=['get'])
     def compte_resultat(self, request):
@@ -227,3 +278,139 @@ class EcritureComptableViewSet(viewsets.ModelViewSet):
             count += 1
             
         return Response({'status': 'success', 'entries_processed': count})
+
+    @action(detail=False, methods=['get'], url_path='grand_livre_tiers')
+    def grand_livre_tiers(self, request):
+        """
+        Grand livre auxiliaire des comptes tiers (411 Clients, 401 Fournisseurs).
+        Retourne le détail des mouvements avec lettrage.
+        """
+        compte_numero = request.query_params.get('compte')
+        date_debut = request.query_params.get('date_debut')
+        date_fin = request.query_params.get('date_fin')
+        
+        filters = Q(compte__numero__startswith='4')  # Comptes tiers seulement
+        
+        if compte_numero:
+            filters &= Q(compte__numero=compte_numero)
+        if date_debut:
+            filters &= Q(ecriture__date__gte=date_debut)
+        if date_fin:
+            filters &= Q(ecriture__date__lte=date_fin)
+        
+        lignes = LigneEcriture.objects.filter(filters).select_related(
+            'ecriture', 'ecriture__journal', 'compte'
+        ).prefetch_related('lettrages').order_by('ecriture__date', 'ecriture__numero_piece')
+        
+        # Calculer le solde progressif
+        solde = Decimal('0.00')
+        results = []
+        
+        for ligne in lignes:
+            solde += (ligne.debit - ligne.credit)
+            
+            # Déterminer si lettre (check si lié à un lettrage équilibré)
+            lettrage_info = None
+            lettrages = list(ligne.lettrages.all())  # type: ignore[attr-defined]
+            if lettrages:
+                lett = lettrages[0]  # Prendre le premier lettrage
+                lettrage_info = {
+                    'code': lett.code,
+                    'date': lett.date_lettrage,
+                    'est_equilibre': lett.est_equilibre
+                }
+            
+            results.append({
+                'date': ligne.ecriture.date,
+                'numero_piece': ligne.ecriture.numero_piece,
+                'reference': ligne.ecriture.reference,
+                'libelle': ligne.libelle_ligne or ligne.ecriture.libelle,
+                'debit': ligne.debit,
+                'credit': ligne.credit,
+                'solde_progressif': solde,
+                'lettrage': lettrage_info,
+                'compte': ligne.compte.numero,
+                'compte_libelle': ligne.compte.libelle,
+                'journal': ligne.ecriture.journal.code
+            })
+        
+        # Résumé par compte
+        comptes_summary = {}
+        for ligne in lignes:
+            num = ligne.compte.numero
+            if num not in comptes_summary:
+                comptes_summary[num] = {
+                    'libelle': ligne.compte.libelle,
+                    'total_debit': Decimal('0.00'),
+                    'total_credit': Decimal('0.00')
+                }
+            comptes_summary[num]['total_debit'] += ligne.debit
+            comptes_summary[num]['total_credit'] += ligne.credit
+        
+        # Calculer les soldes
+        for num in comptes_summary:
+            s = comptes_summary[num]
+            s['solde'] = s['total_debit'] - s['total_credit']
+        
+        return Response({
+            'lignes': results,
+            'comptes': comptes_summary,
+            'date_debut': date_debut,
+            'date_fin': date_fin
+        })
+
+    @action(detail=False, methods=['post'], url_path='creer_lettrage')
+    def creer_lettrage(self, request):
+        """
+        Créer un lettrage entre plusieurs lignes d'écriture.
+        Les lignes doivent appartenir au même compte tiers et avoir un solde = 0.
+        """
+        from ..models import Lettrage
+        
+        ligne_ids = request.data.get('ligne_ids', [])
+        compte_id = request.data.get('compte_id')
+        commentaire = request.data.get('commentaire', '')
+        
+        if not ligne_ids or len(ligne_ids) < 2:
+            return Response(
+                {'error': 'Au moins 2 lignes sont nécessaires pour un lettrage'},
+                status=400
+            )
+        
+        try:
+            compte = CompteComptable.objects.get(id=compte_id, numero__startswith='4')
+        except CompteComptable.DoesNotExist:
+            return Response({'error': 'Compte tiers invalide'}, status=400)
+        
+        # Vérifier que toutes les lignes existent et appartiennent au même compte
+        lignes = LigneEcriture.objects.filter(id__in=ligne_ids, compte=compte)
+        if lignes.count() != len(ligne_ids):
+            return Response(
+                {'error': 'Certaines lignes sont introuvables ou ne correspondent pas au compte'},
+                status=400
+            )
+        
+        # Calculer le solde
+        total_debit = sum(l.debit for l in lignes)
+        total_credit = sum(l.credit for l in lignes)
+        
+        # Créer le lettrage
+        lettrage = Lettrage.objects.create(
+            compte_tiers=compte,
+            montant_total=total_debit - total_credit,
+            est_equilibre=(total_debit == total_credit),
+            commentaire=commentaire,
+            created_by=request.user if request.user.is_authenticated else None
+        )
+        
+        # Associer les lignes
+        lettrage.lignes.set(lignes)
+        lettrage.save()
+        
+        return Response({
+            'id': lettrage.pk,  # type: ignore[attr-defined]
+            'code': lettrage.code,
+            'est_equilibre': lettrage.est_equilibre,
+            'montant_total': lettrage.montant_total,
+            'lignes_count': len(ligne_ids)
+        })

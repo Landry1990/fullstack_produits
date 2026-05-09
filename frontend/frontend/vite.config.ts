@@ -31,15 +31,38 @@ export default defineConfig({
     rollupOptions: {
       output: {
         manualChunks: {
-          'vendor-react': ['react', 'react-dom', 'react-router-dom'],
-          'vendor-utils': ['axios', 'react-hot-toast'],
-          'vendor-query': ['@tanstack/react-query']
-        }
+          // Core - toujours necessaire
+          'vendor-core': ['react', 'react-dom'],
+          'vendor-router': ['react-router-dom'],
+          // Data & API
+          'vendor-query': ['@tanstack/react-query'],
+          'vendor-http': ['axios'],
+          // UI & utils
+          'vendor-ui': ['react-hot-toast', 'lucide-react'],
+          'vendor-dates': ['date-fns'],
+          'vendor-i18n': ['react-i18next', 'i18next'],
+          // Features groupes (eviter trop de petits chunks)
+          'feature-inventory': ['./src/components/Inventaire', './src/components/EtatsInventaire', './src/components/Organisation'],
+          'feature-reports': ['./src/components/RapportMensuel', './src/components/CentreRapports', './src/components/AnalyseABC'],
+          'feature-history': ['./src/components/HistoriqueVentes', './src/components/HistoriqueAchats', './src/components/HistoriqueClotures']
+        },
+        // Eviter les noms de chunks avec hash pour le debug
+        entryFileNames: 'assets/[name]-[hash].js',
+        chunkFileNames: 'assets/[name]-[hash].js',
+        assetFileNames: 'assets/[name]-[hash][extname]'
       }
     },
     // Optimisation du bundle
     target: 'esnext',
-    minify: 'esbuild'
+    minify: 'esbuild',
+    // Optimiser le chargement
+    modulePreload: {
+      polyfill: true
+    },
+    // Reduire la taille des chunks
+    chunkSizeWarningLimit: 500,
+    // Source maps pour debug en production si necessaire
+    sourcemap: false
   },
 
   server: {

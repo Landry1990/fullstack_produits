@@ -15,7 +15,7 @@ from reportlab.lib.pagesizes import A4
 from reportlab.lib import colors
 from reportlab.lib.units import cm, mm
 from reportlab.lib.enums import TA_RIGHT, TA_CENTER, TA_LEFT
-from api.models import Produit, CommandeProduit, Facture, FactureProduit, MouvementStock
+from api.models import Produit, CommandeProduit, Facture, FactureProduit, MouvementStock, StockLot
 
 class RapportInventoryMixin:
     """
@@ -300,3 +300,67 @@ class RapportInventoryMixin:
         response['Content-Disposition'] = f'attachment; filename="{filename}"'
         response.write(buffer.getvalue())
         return response
+
+    def _get_valeur_stock_divers_data(self, valorisation='ACHAT'):
+        """
+        Méthode interne pour calculer les agrégats de valeur de stock pour les lots divers uniquement.
+        """
+        is_pmp = valorisation == 'ACHAT'
+        lots_divers = StockLot.objects.filter(is_divers=True, quantity_remaining__gt=0).select_related('produit', 'produit__rayon')
+        
+        tva_map = {}
+        rayon_map = {}
+        total_ttc_global = Decimal('0')
+        total_ht_global = Decimal('0')
+        total_tva_global = Decimal('0')
+        
+        for lot in lots_divers:
+            qty = Decimal(str(lot.quantity_remaining))
+            price_ttc = (lot.price_cost if is_pmp else lot.produit.selling_price) or Decimal('0')
+            tva_rate = lot.produit.tva or Decimal('0')
+            
+            ttc_line = qty * price_ttc
+            if tva_rate > 0:
+                ht_line = (ttc_line / (1 + tva_rate / Decimal('100'))).quantize(Decimal('0.01'))
+                tva_line = ttc_line - ht_line
+            else:
+                ht_line = ttc_line
+                tva_line = Decimal('0')
+                
+            total_ttc_global += ttc_line
+            total_ht_global += ht_line
+            total_tva_global += tva_line
+            
+            # Groupement par TVA
+            rate_key = str(float(tva_rate))
+            if rate_key not in tva_map:
+                tva_map[rate_key] = {'rate': float(tva_rate), 'ht': Decimal('0'), 'tva': Decimal('0'), 'ttc': Decimal('0')}
+            tva_map[rate_key]['ht'] += ht_line
+            tva_map[rate_key]['tva'] += tva_line
+            tva_map[rate_key]['ttc'] += ttc_line
+            
+            # Groupement par rayon
+            rayon_name = lot.produit.rayon.name if lot.produit.rayon else "Non classé"
+            if rayon_name not in rayon_map:
+                rayon_map[rayon_name] = {'name': rayon_name, 'ht': Decimal('0'), 'tva': Decimal('0'), 'ttc': Decimal('0')}
+            rayon_map[rayon_name]['ht'] += ht_line
+            rayon_map[rayon_name]['tva'] += tva_line
+            rayon_map[rayon_name]['ttc'] += ttc_line
+        
+        return {
+            'is_pmp': is_pmp,
+            'type_valorisation': 'PMP' if is_pmp else 'VENTE',
+            'total_ht': total_ht_global,
+            'total_tva': total_tva_global,
+            'total_ttc': total_ttc_global,
+            'tva_breakdown': sorted(tva_map.values(), key=lambda x: x['rate']),
+            'rayon_breakdown': sorted(rayon_map.values(), key=lambda x: x['ttc'], reverse=True),
+            'date': timezone.now()
+        }
+
+    @action(detail=False, methods=['get'])
+    def valeur_stock_divers_json(self, request):
+        """Retourne les données de valorisation des lots divers au format JSON."""
+        valorisation = request.query_params.get('valorisation', 'ACHAT')
+        data = self._get_valeur_stock_divers_data(valorisation)
+        return Response(data)
