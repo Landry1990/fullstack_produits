@@ -89,7 +89,7 @@ const ProductAutocomplete: React.FC<ProductAutocompleteProps> = ({
           {icon} {label}
         </label>
         <div className="flex items-center gap-3 bg-gradient-to-r from-primary/5 to-primary/10 border-2 border-primary/30 rounded-xl px-4 py-3 transition-all">
-          <div className="w-9 h-9 rounded-lg bg-primary/20 flex items-center justify-center text-primary font-black text-sm">
+          <div className="size-9 rounded-lg bg-primary/20 flex items-center justify-center text-primary font-black text-sm">
             {selected.name.charAt(0).toUpperCase()}
           </div>
           <div className="flex-1 min-w-0">
@@ -165,7 +165,7 @@ const ProductAutocomplete: React.FC<ProductAutocompleteProps> = ({
                   style={itemProps.style}
                   onClick={() => handleSelect(p)}
                 >
-                  <div className="w-8 h-8 rounded-lg bg-base-200 group-hover:bg-primary/10 flex items-center justify-center text-base-content/60 group-hover:text-primary font-bold text-xs transition-colors"
+                  <div className="size-8 rounded-lg bg-base-200 group-hover:bg-primary/10 flex items-center justify-center text-base-content/60 group-hover:text-primary font-bold text-xs transition-colors"
                     style={itemProps.style.backgroundColor ? { backgroundColor: 'rgba(255,255,255,0.2)' } : {}}
                   >
                     {p.name.charAt(0).toUpperCase()}
@@ -390,7 +390,7 @@ const Transformations: React.FC = () => {
                   <div key={relation.id} className="group relative bg-base-100 border border-base-200 rounded-2xl p-5 hover:border-primary/30 transition-all hover:shadow-xl hover:shadow-primary/5 flex flex-col">
                     <div className="flex items-center justify-between mb-5">
                        <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 rounded-xl bg-primary/5 flex items-center justify-center text-primary font-black shadow-inner">
+                          <div className="size-10 rounded-xl bg-primary/5 flex items-center justify-center text-primary font-black shadow-inner">
                              {relation.produit_source_nom.charAt(0).toUpperCase()}
                           </div>
                           <div className="max-w-[120px]">
@@ -524,7 +524,7 @@ const Transformations: React.FC = () => {
           <div className="flex items-center justify-center py-1">
             <div className="flex items-center gap-2 text-base-200">
               <div className="h-px w-12 bg-base-300"></div>
-              <div className="w-8 h-8 rounded-full bg-primary/5 flex items-center justify-center">
+              <div className="size-8 rounded-full bg-primary/5 flex items-center justify-center">
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-primary opacity-50" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 14l-7 7m0 0l-7-7m7 7V3" />
                 </svg>
@@ -652,7 +652,7 @@ const Transformations: React.FC = () => {
 
               {/* Arrow */}
               <div className="flex flex-col items-center justify-center gap-2 px-1 pt-6">
-                <div className="w-10 h-10 rounded-full bg-base-200 flex items-center justify-center shadow-inner">
+                <div className="size-10 rounded-full bg-base-200 flex items-center justify-center shadow-inner">
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-base-content/20" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M17 8l4 4m0 0l-4 4m4-4H3" />
                   </svg>

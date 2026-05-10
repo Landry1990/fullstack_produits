@@ -81,7 +81,7 @@ export const SalesTable: React.FC<SalesTableProps> = ({
     if (loading) {
          return (
              <div className="flex flex-col items-center justify-center py-20 text-base-content/40 animate-in fade-in duration-500">
-                <div className="w-16 h-16 border-4 border-blue-100 border-t-blue-600 rounded-full animate-spin mb-4"></div>
+                <div className="size-16 border-4 border-blue-100 border-t-blue-600 rounded-full animate-spin mb-4"></div>
                 <p className="font-medium animate-pulse">{t('common:loading')}</p>
             </div>
          );
@@ -105,38 +105,38 @@ export const SalesTable: React.FC<SalesTableProps> = ({
                     <li className="menu-title text-xs opacity-50 px-4 py-2 uppercase tracking-widest">{t('common:single_selection', { defaultValue: 'Sélection' })}</li>
                     <li>
                         <a onClick={() => onView(selectedFacture)} className="gap-3 py-3">
-                            <Eye className="w-4 h-4 text-secondary" />
+                            <Eye className="size-4 text-secondary" />
                             {t('common:details')}
                         </a>
                     </li>
                     <li>
                         <a onClick={() => onPrint(selectedFacture)} className="gap-3 py-3">
-                            <Printer className="w-4 h-4 text-primary" />
+                            <Printer className="size-4 text-primary" />
                             Format A4
                         </a>
                     </li>
                     <li>
                         <a onClick={() => onPrintTicket(selectedFacture)} className="gap-3 py-3">
-                            <Receipt className="w-4 h-4 text-primary" />
+                            <Receipt className="size-4 text-primary" />
                             Ticket Caisse
                         </a>
                     </li>
                     <li>
                         <a onClick={() => onPrintBL(selectedFacture)} className="gap-3 py-3">
-                            <Truck className="w-4 h-4 text-primary" />
+                            <Truck className="size-4 text-primary" />
                             Bon de livraison
                         </a>
                     </li>
                     <li>
                         <a onClick={() => onDuplicate(selectedFacture)} className="gap-3 py-3">
-                            <Copy className="w-4 h-4 text-info" />
+                            <Copy className="size-4 text-info" />
                             {t('common:duplicate', { defaultValue: 'Dupliquer' })}
                         </a>
                     </li>
                     {(selectedFacture.status === 'VALIDEE' || selectedFacture.status === 'PAY' || selectedFacture.status === 'VAL' || selectedFacture.status === 'PAYEE') && (
                         <li>
                             <a onClick={() => onGenerateAvoir(selectedFacture)} className="gap-3 py-3">
-                                <FileDigit className="w-4 h-4 text-primary" />
+                                <FileDigit className="size-4 text-primary" />
                                 Générer un avoir
                             </a>
                         </li>
@@ -144,7 +144,7 @@ export const SalesTable: React.FC<SalesTableProps> = ({
                     {selectedFacture.status !== 'ANN' && selectedFacture.status !== 'BROU' && (
                         <li>
                             <a onClick={() => onRefund(selectedFacture)} className="gap-3 py-3">
-                                <RotateCcw className="w-4 h-4 text-warning" />
+                                <RotateCcw className="size-4 text-warning" />
                                 {t('common:refund', { defaultValue: "Modifier/Retour" })}
                             </a>
                         </li>
@@ -152,7 +152,7 @@ export const SalesTable: React.FC<SalesTableProps> = ({
                     <div className="divider my-0"></div>
                     <li>
                         <a onClick={() => onDelete(selectedFacture.id)} className="gap-3 py-3 text-error hover:bg-error/10 font-bold">
-                            <Trash2 className="w-4 h-4" />
+                            <Trash2 className="size-4" />
                             {t('common:delete')}
                         </a>
                     </li>
@@ -164,7 +164,7 @@ export const SalesTable: React.FC<SalesTableProps> = ({
                 <li className="menu-title text-xs opacity-50 px-4 py-2 uppercase tracking-widest">{t('common:bulk_actions')}</li>
                 <li>
                     <a onClick={handleBulkDelete} className="gap-3 py-3 text-error hover:bg-error/10 font-bold">
-                        <Trash2 className="w-4 h-4" />
+                        <Trash2 className="size-4" />
                         {t('sales:confirm_bulk_delete', { count: selectedIds.length })}
                     </a>
                 </li>
@@ -231,11 +231,11 @@ export const SalesTable: React.FC<SalesTableProps> = ({
                                     </span>
                                     <span className="text-xs text-base-content/60 flex flex-nowrap items-center gap-x-3 gap-y-1 mt-0.5 whitespace-nowrap">
                                         <span className="flex items-center gap-1.5 shrink-0">
-                                            <Calendar className="w-3 h-3" />
+                                            <Calendar className="size-3" />
                                             {formatDate(facture.date)}
                                         </span>
                                         <span className="flex items-center gap-1.5 text-primary/70 font-medium shrink-0">
-                                            <Clock className="w-3 h-3" />
+                                            <Clock className="size-3" />
                                             {formatTime(facture.date)}
                                         </span>
                                     </span>
@@ -243,8 +243,8 @@ export const SalesTable: React.FC<SalesTableProps> = ({
                             </td>
                             <td className="px-6 py-4">
                                 <div className="flex items-center gap-2">
-                                    <div className={`w-8 h-8 rounded-full flex items-center justify-center ${facture.ayant_droit_details ? 'bg-info/10 text-info' : 'bg-primary/10 text-primary'}`}>
-                                        <User className="w-4 h-4" />
+                                    <div className={`size-8 rounded-full flex items-center justify-center ${facture.ayant_droit_details ? 'bg-info/10 text-info' : 'bg-primary/10 text-primary'}`}>
+                                        <User className="size-4" />
                                     </div>
                                     <div className="flex flex-col">
                                         <div className="font-medium text-base-content whitespace-nowrap">

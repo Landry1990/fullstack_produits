@@ -118,8 +118,8 @@ const BMICalculator: React.FC = () => {
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8">
         <div className="flex items-center gap-4">
-          <div className="w-10 h-10 md:w-12 md:h-12 rounded-xl md:rounded-2xl bg-emerald-500/20 flex items-center justify-center text-emerald-500 shadow-lg shadow-emerald-500/10">
-            <Calculator className="w-5 h-5 md:w-6 md:h-6" />
+          <div className="size-10 md:w-12 md:h-12 rounded-xl md:rounded-2xl bg-emerald-500/20 flex items-center justify-center text-emerald-500 shadow-lg shadow-emerald-500/10">
+            <Calculator className="size-5 md:w-6 md:h-6" />
           </div>
           <div>
             <h2 className="text-xl md:text-2xl font-black text-slate-900 dark:text-white tracking-tight">{t('bmi.title')}</h2>
@@ -133,14 +133,14 @@ const BMICalculator: React.FC = () => {
             onClick={() => setActiveTab('adult')}
             className={`flex items-center gap-2 px-4 py-2 rounded-lg md:rounded-xl text-xs md:text-sm font-bold transition-all ${activeTab === 'adult' ? 'bg-white dark:bg-slate-800 text-emerald-500 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
           >
-            <User className="w-4 h-4" />
+            <User className="size-4" />
             {t('bmi.tab_adult')}
           </button>
           <button
             onClick={() => setActiveTab('child')}
             className={`flex items-center gap-2 px-4 py-2 rounded-lg md:rounded-xl text-xs md:text-sm font-bold transition-all ${activeTab === 'child' ? 'bg-white dark:bg-slate-800 text-emerald-500 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
           >
-            <Baby className="w-4 h-4" />
+            <Baby className="size-4" />
             {t('bmi.tab_child')}
           </button>
         </div>
@@ -155,7 +155,7 @@ const BMICalculator: React.FC = () => {
                 <span className="text-[10px] md:text-xs font-black text-base-content/50 uppercase tracking-widest mb-2 block">{t('bmi.weight')}</span>
                 <div className="relative group">
                   <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-base-content/30 group-focus-within:text-primary transition-colors">
-                    <Scale className="w-4 h-4 md:w-5 md:h-5" />
+                    <Scale className="size-4 md:w-5 md:h-5" />
                   </div>
                   <input
                     type="number"
@@ -172,7 +172,7 @@ const BMICalculator: React.FC = () => {
                 <span className="text-[10px] md:text-xs font-black text-base-content/50 uppercase tracking-widest mb-2 block">{t('bmi.height')}</span>
                 <div className="relative group">
                   <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-base-content/30 group-focus-within:text-primary transition-colors">
-                    <Ruler className="w-4 h-4 md:w-5 md:h-5" />
+                    <Ruler className="size-4 md:w-5 md:h-5" />
                   </div>
                   <input
                     type="number"
@@ -214,7 +214,7 @@ const BMICalculator: React.FC = () => {
           )}
 
           <div className="p-3 md:p-4 bg-base-200 border border-base-300 rounded-xl md:rounded-2xl flex gap-3">
-            <Info className="w-4 h-4 md:w-5 md:h-5 text-primary shrink-0 mt-0.5" />
+            <Info className="size-4 md:w-5 md:h-5 text-primary shrink-0 mt-0.5" />
             <p className="text-[10px] md:text-xs text-base-content/60 leading-relaxed">
               {activeTab === 'adult' ? t('bmi.info_text') : t('bmi.child_info_text')}
             </p>
@@ -248,7 +248,7 @@ const BMICalculator: React.FC = () => {
               </div>
             ) : (
               <div className="flex-1 bg-base-100 border border-dashed border-base-300 rounded-2xl md:rounded-3xl p-8 flex flex-col items-center justify-center text-center">
-                <Activity className="w-10 h-10 md:w-12 md:h-12 text-base-content/10 mb-4" />
+                <Activity className="size-10 md:w-12 md:h-12 text-base-content/10 mb-4" />
                 <p className="text-xs md:text-sm text-base-content/30 font-medium px-4">{t('bmi.empty_state')}</p>
               </div>
             )
@@ -268,7 +268,7 @@ const BMICalculator: React.FC = () => {
               </div>
             ) : (
               <div className="flex-1 bg-base-100 border border-dashed border-base-300 rounded-2xl md:rounded-3xl p-8 flex flex-col items-center justify-center text-center">
-                <Baby className="w-10 h-10 md:w-12 md:h-12 text-base-content/10 mb-4" />
+                <Baby className="size-10 md:w-12 md:h-12 text-base-content/10 mb-4" />
                 <p className="text-xs md:text-sm text-base-content/30 font-medium px-4">{t('bmi.empty_state')}</p>
               </div>
             )
@@ -282,7 +282,7 @@ const BMICalculator: React.FC = () => {
                 {bmiRanges.map((range, idx) => (
                   <div key={idx} className="flex items-center justify-between p-2 md:p-2.5 rounded-lg md:rounded-xl hover:bg-base-200 transition-colors">
                     <div className="flex items-center gap-2 md:gap-3">
-                      <div className={`w-1.5 h-1.5 md:w-2 md:h-2 rounded-full ${range.color}`}></div>
+                      <div className={`size-1.5 md:w-2 md:h-2 rounded-full ${range.color}`}></div>
                       <span className="text-[10px] md:text-xs font-semibold text-base-content/70">{range.text}</span>
                     </div>
                     <span className="text-[9px] md:text-[10px] font-black text-base-content/40 tabular-nums">{range.label}</span>

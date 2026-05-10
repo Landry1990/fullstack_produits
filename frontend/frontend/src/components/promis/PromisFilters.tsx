@@ -27,7 +27,7 @@ export const PromisFilters: React.FC<PromisFiltersProps> = ({
             <div className="flex flex-col md:flex-row gap-4 justify-between items-center">
                 <div className="flex flex-1 gap-4 items-center w-full md:w-auto">
                     <div className="relative flex-1 max-w-md">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-base-content/40" />
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-base-content/40" />
                         <input
                             type="text"
                             placeholder={t('common:search')}
@@ -38,7 +38,7 @@ export const PromisFilters: React.FC<PromisFiltersProps> = ({
                     </div>
                     
                     <div className="flex items-center gap-2">
-                        <Filter className="w-4 h-4 text-base-content/40" />
+                        <Filter className="size-4 text-base-content/40" />
                         <select
                             className="select select-bordered bg-base-200/50 focus:bg-base-100 min-w-[140px]"
                             value={filterStatus}
@@ -64,7 +64,7 @@ export const PromisFilters: React.FC<PromisFiltersProps> = ({
                         className="btn btn-primary gap-2 text-white shadow-sm hover:shadow-md transition-all"
                         onClick={onNew}
                     >
-                        <Plus className="w-4 h-4" />
+                        <Plus className="size-4" />
                         <span className="hidden sm:inline">{t('stock:promis.new_btn')}</span>
                         <span className="sm:hidden">{t('common:add')}</span>
                     </button>

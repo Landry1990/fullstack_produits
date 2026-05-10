@@ -415,6 +415,7 @@ export default function SimplePrintLabelsModal({
     if (!commande?.produits) return []
 
     const result: LabelData[] = []
+    const produitsMap = new Map(produitsList.map(p => [p.id, p]))
 
     // Si des produits sont sélectionnés (checkbox), ne générer que pour ceux-là
     const produits = selectedRows && selectedRows.size > 0
@@ -427,7 +428,7 @@ export default function SimplePrintLabelsModal({
       const produitId = isObj ? produitObj!.id : (item.produit as number)
 
       // Resolve product data
-      const resolved = produitObj || produitsList.find(p => p.id === produitId)
+      const resolved = produitObj || produitsMap.get(produitId)
 
       const productName =
         (item as any).produit_nom ||
@@ -966,7 +967,7 @@ ${labelsHTML}
         {/* ── No data warning ── */}
         {labelsData.length === 0 && (
           <div className="alert alert-warning rounded-xl">
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" className="stroke-current shrink-0 w-5 h-5">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" className="stroke-current shrink-0 size-5">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
             </svg>
             <div className="text-sm">

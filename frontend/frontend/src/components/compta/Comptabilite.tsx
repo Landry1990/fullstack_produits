@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAccounting } from '../../hooks/useAccounting';
 import { 
     LayoutDashboard, 
@@ -12,14 +12,30 @@ import {
     ArrowDownRight,
     Search,
     Calendar,
-    Settings
+    Settings,
+    FileText,
+    Download
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { fr, enUS } from 'date-fns/locale';
 import { useTranslation } from 'react-i18next';
+import { 
+    BarChart, 
+    Bar, 
+    XAxis, 
+    YAxis, 
+    CartesianGrid, 
+    Tooltip, 
+    ResponsiveContainer, 
+    Cell,
+    PieChart,
+    Pie
+} from 'recharts';
+import Pagination from '../ui/Pagination';
 
-const formatFCFA = (amount: number) => new Intl.NumberFormat('fr-FR', { maximumFractionDigits: 0 }).format(amount) + ' F';
-const formatAmount = (amount: number) => new Intl.NumberFormat('fr-FR', { maximumFractionDigits: 0 }).format(amount);
+const amountFormatter = new Intl.NumberFormat('fr-FR', { maximumFractionDigits: 0 });
+const formatFCFA = (amount: number) => amountFormatter.format(amount) + ' F';
+const formatAmount = (amount: number) => amountFormatter.format(amount);
 
 interface ComptabiliteProps {
     defaultTab?: string;
@@ -33,6 +49,13 @@ export default function Comptabilite({ defaultTab = 'dashboard' }: ComptabiliteP
         resultat, 
         bilan,
         ecritures, 
+        ecrituresCount,
+        ecrituresPage,
+        setEcrituresPage,
+        ecrituresSearch,
+        setEcrituresSearch,
+        ecrituresJournal,
+        setEcrituresJournal,
         comptes, 
         journaux,
         exercices,
@@ -45,17 +68,26 @@ export default function Comptabilite({ defaultTab = 'dashboard' }: ComptabiliteP
         actions 
     } = useAccounting();
 
+    useEffect(() => {
+        if (activeTab === 'achats') {
+            setEcrituresJournal('AC');
+        } else if (activeTab === 'grand-livre') {
+            setEcrituresJournal('');
+        }
+        setEcrituresPage(1);
+    }, [activeTab, setEcrituresJournal, setEcrituresPage]);
+
     const currentLocale = i18n.language === 'en' ? enUS : fr;
 
     const tabs = [
-        { id: 'dashboard', label: t('tabs.dashboard'), icon: <LayoutDashboard className="w-4 h-4" /> },
-        { id: 'grand-livre', label: t('tabs.grand_livre'), icon: <BookOpen className="w-4 h-4" /> },
-        { id: 'achats', label: t('tabs.achats'), icon: <Search className="w-4 h-4" /> },
-        { id: 'balance', label: t('tabs.balance'), icon: <Scale className="w-4 h-4" /> },
-        { id: 'bilan', label: t('tabs.bilan'), icon: <TrendingUp className="w-4 h-4" /> },
-        { id: 'resultat', label: t('tabs.resultat'), icon: <ArrowUpRight className="w-4 h-4" /> },
-        { id: 'charges', label: t('tabs.charges'), icon: <PlusCircle className="w-4 h-4" /> },
-        { id: 'plan', label: t('tabs.plan'), icon: <Settings className="w-4 h-4" /> },
+        { id: 'dashboard', label: t('tabs.dashboard'), icon: <LayoutDashboard className="size-4" /> },
+        { id: 'grand-livre', label: t('tabs.grand_livre'), icon: <BookOpen className="size-4" /> },
+        { id: 'achats', label: t('tabs.achats'), icon: <Search className="size-4" /> },
+        { id: 'balance', label: t('tabs.balance'), icon: <Scale className="size-4" /> },
+        { id: 'bilan', label: t('tabs.bilan'), icon: <TrendingUp className="size-4" /> },
+        { id: 'resultat', label: t('tabs.resultat'), icon: <ArrowUpRight className="size-4" /> },
+        { id: 'charges', label: t('tabs.charges'), icon: <PlusCircle className="size-4" /> },
+        { id: 'plan', label: t('tabs.plan'), icon: <Settings className="size-4" /> },
     ];
 
     const handleExerciceChange = (exId: string) => {
@@ -76,7 +108,7 @@ export default function Comptabilite({ defaultTab = 'dashboard' }: ComptabiliteP
                     <h1 className="text-4xl md:text-6xl font-black tracking-tighter flex items-center gap-4 leading-none">
                         {t('title')}
                         {isFetching && (
-                            <RefreshCcw className="w-6 h-6 text-primary animate-spin opacity-20" />
+                            <RefreshCcw className="size-6 text-primary animate-spin opacity-20" />
                         )}
                     </h1>
                     <p className="text-base-content/40 mt-3 font-bold text-lg max-w-xl leading-relaxed">{t('subtitle')}</p>
@@ -85,7 +117,7 @@ export default function Comptabilite({ defaultTab = 'dashboard' }: ComptabiliteP
                 <div className="flex flex-wrap items-center gap-4 bg-base-100/50 backdrop-blur-md p-3 rounded-[2rem] border border-white/10 shadow-2xl">
                     {/* Exercice Selector */}
                     <div className="flex items-center gap-4 px-4 py-2 bg-base-100 rounded-2xl border border-base-300 shadow-inner">
-                        <Calendar className="w-5 h-5 text-primary" />
+                        <Calendar className="size-5 text-primary" />
                         <select 
                             className="bg-transparent border-none focus:ring-0 text-sm font-black uppercase tracking-wider text-base-content cursor-pointer select select-ghost select-sm"
                             value={currentExercice?.id || ''}
@@ -144,15 +176,35 @@ export default function Comptabilite({ defaultTab = 'dashboard' }: ComptabiliteP
             {/* Content Area */}
             {isLoading ? (
                 <div className="flex flex-col items-center justify-center py-20 animate-pulse">
-                    <RefreshCcw className="w-12 h-12 text-primary animate-spin mb-4" />
+                    <RefreshCcw className="size-12 text-primary animate-spin mb-4" />
                     <p className="font-black uppercase tracking-widest text-primary/40">{t('loading_msg')}</p>
                 </div>
             ) : (
                 <div className="space-y-6">
                     {activeTab === 'dashboard' && <DashboardTab resultat={resultat} actions={actions} t={t} />}
-                    {activeTab === 'grand-livre' && <GrandLivreTab ecritures={ecritures} locale={currentLocale} t={t} />}
-                    {activeTab === 'achats' && <AchatsTab ecritures={ecritures} locale={currentLocale} t={t} />}
-                    {activeTab === 'balance' && <BalanceTab balance={balance} t={t} />}
+                    {activeTab === 'grand-livre' && (
+                        <GrandLivreTab 
+                            ecritures={ecritures} 
+                            count={ecrituresCount}
+                            page={ecrituresPage}
+                            setPage={setEcrituresPage}
+                            search={ecrituresSearch}
+                            setSearch={setEcrituresSearch}
+                            locale={currentLocale} 
+                            t={t} 
+                        />
+                    )}
+                    {activeTab === 'achats' && (
+                        <AchatsTab 
+                            ecritures={ecritures} 
+                            count={ecrituresCount}
+                            page={ecrituresPage}
+                            setPage={setEcrituresPage}
+                            locale={currentLocale} 
+                            t={t} 
+                        />
+                    )}
+                    {activeTab === 'balance' && <BalanceTab balance={balance?.comptes || []} t={t} />}
                     {activeTab === 'bilan' && <BilanTab bilan={bilan} t={t} />}
                     {activeTab === 'resultat' && <ResultatTab resultat={resultat} t={t} />}
                     {activeTab === 'plan' && <PlanTab comptes={comptes} />}
@@ -169,40 +221,77 @@ function DashboardTab({ resultat, actions, t }: any) {
     
 
     return (
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 animate-fade-in">
+        <div className="grid grid-cols-1 md:grid-cols-4 lg:grid-cols-6 gap-6 animate-fade-in">
             {/* KPI Summary Cards */}
-            <div className="bg-base-100 p-6 rounded-3xl border border-base-300 shadow-sm relative overflow-hidden group">
-                <div className="absolute top-0 right-0 w-24 h-24 bg-primary/5 blur-3xl -mr-8 -mt-8"></div>
-                <p className="text-base-content/40 font-black text-[10px] uppercase tracking-widest mb-2">Ventes Nettes (701)</p>
-                <h3 className="text-2xl font-black text-primary">{formatFCFA(resultat?.total_produits || 0)}</h3>
+            <div className="md:col-span-2 bg-base-100 p-6 rounded-3xl border border-base-300 shadow-sm relative overflow-hidden group">
+                <div className="absolute top-0 right-0 size-24 bg-primary/5 blur-3xl -mr-8 -mt-8"></div>
+                <p className="text-base-content/40 font-black text-[10px] uppercase tracking-widest mb-2">{t('dashboard.revenue')} (701)</p>
+                <h3 className="text-3xl font-black text-primary">{formatFCFA(resultat?.total_produits || 0)}</h3>
                 <div className="mt-4 flex items-center gap-2 text-[10px] font-black text-primary/40 uppercase">
-                    <ArrowUpRight className="w-4 h-4" />
+                    <ArrowUpRight className="size-4" />
                     Chiffre d'affaires
                 </div>
             </div>
 
-            <div className="bg-base-100 p-6 rounded-3xl border border-base-300 shadow-sm relative overflow-hidden group">
-                <div className="absolute top-0 right-0 w-24 h-24 bg-warning/5 blur-3xl -mr-8 -mt-8"></div>
+            <div className="md:col-span-2 bg-base-100 p-6 rounded-3xl border border-base-300 shadow-sm relative overflow-hidden group">
+                <div className="absolute top-0 right-0 size-24 bg-warning/5 blur-3xl -mr-8 -mt-8"></div>
                 <p className="text-base-content/40 font-black text-[10px] uppercase tracking-widest mb-2">Valeur Stock (311)</p>
-                <h3 className="text-2xl font-black text-warning">{formatFCFA(resultat?.valeur_stock || 0)}</h3>
+                <h3 className="text-3xl font-black text-warning">{formatFCFA(resultat?.valeur_stock || 0)}</h3>
                 <div className="mt-4 flex items-center gap-2 text-[10px] font-black text-warning/40 uppercase">
-                    <BookOpen className="w-4 h-4" />
+                    <BookOpen className="size-4" />
                     Variation d'inventaire
                 </div>
             </div>
 
-            <div className="bg-base-100 p-6 rounded-3xl border border-base-300 shadow-sm relative overflow-hidden group">
-                <div className="absolute top-0 right-0 w-24 h-24 bg-error/5 blur-3xl -mr-8 -mt-8"></div>
+            <div className="md:col-span-2 bg-base-100 p-6 rounded-3xl border border-base-300 shadow-sm relative overflow-hidden group">
+                <div className="absolute top-0 right-0 size-24 bg-error/5 blur-3xl -mr-8 -mt-8"></div>
                 <p className="text-base-content/40 font-black text-[10px] uppercase tracking-widest mb-2">{t('dashboard.expenses')} (Achats +)</p>
-                <h3 className="text-2xl font-black text-error">{formatFCFA(resultat?.total_charges || 0)}</h3>
+                <h3 className="text-3xl font-black text-error">{formatFCFA(resultat?.total_charges || 0)}</h3>
                 <div className="mt-4 flex items-center gap-2 text-[10px] font-black text-error/40 uppercase">
-                    <ArrowDownRight className="w-4 h-4" />
+                    <ArrowDownRight className="size-4" />
                     Dépenses
                 </div>
             </div>
 
-            <div className={`p-6 rounded-3xl border border-base-300 shadow-sm relative overflow-hidden flex flex-col justify-between
+            {/* Performance Chart Card */}
+            <div className="md:col-span-4 bg-base-100 p-6 rounded-3xl border border-base-300 shadow-sm flex flex-col gap-4">
+                <div className="flex items-center justify-between">
+                    <div>
+                        <h4 className="font-black text-sm uppercase tracking-tighter text-primary">Performance Financière</h4>
+                        <p className="text-[10px] font-bold text-base-content/30 uppercase tracking-widest">Comparaison Produits vs Charges</p>
+                    </div>
+                </div>
+                <div className="h-48 w-full mt-2">
+                    <ResponsiveContainer width="100%" height="100%">
+                        <BarChart data={[
+                            { name: 'Produits', value: resultat?.total_produits || 0, fill: '#16a34a' },
+                            { name: 'Charges', value: resultat?.total_charges || 0, fill: '#ef4444' }
+                        ]}>
+                            <CartesianGrid strokeDasharray="3 3" vertical={false} strokeOpacity={0.1} />
+                            <XAxis 
+                                dataKey="name" 
+                                axisLine={false} 
+                                tickLine={false} 
+                                tick={{fontSize: 10, fontWeight: 900}} 
+                            />
+                            <YAxis hide />
+                            <Tooltip 
+                                contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)' }}
+                                cursor={{fill: 'transparent'}}
+                                formatter={(value: number) => [formatFCFA(value), '']}
+                            />
+                            <Bar dataKey="value" radius={[10, 10, 10, 10]} barSize={40}>
+                                <Cell fill="#16a34a" />
+                                <Cell fill="#ef4444" />
+                            </Bar>
+                        </BarChart>
+                    </ResponsiveContainer>
+                </div>
+            </div>
+
+            <div className={`md:col-span-2 p-6 rounded-3xl border border-base-300 shadow-sm relative overflow-hidden flex flex-col justify-between
                 ${resultat?.resultat_net >= 0 ? 'bg-primary/5' : 'bg-error/5'}`}>
+                <div className="absolute top-0 right-0 size-32 bg-white/10 blur-2xl -mr-10 -mt-10"></div>
                 <div>
                     <p className="text-base-content/40 font-black text-[10px] uppercase tracking-widest mb-2">{t('dashboard.net_result')}</p>
                     <h3 className={`text-3xl font-black ${resultat?.resultat_net >= 0 ? 'text-primary' : 'text-error'}`}>
@@ -218,7 +307,7 @@ function DashboardTab({ resultat, actions, t }: any) {
             </div>
 
             {/* Closure Banner */}
-            <div className="md:col-span-4 bg-primary p-6 md:p-10 rounded-[2.5rem] flex flex-col md:flex-row items-center justify-between gap-6 md:gap-8 shadow-xl shadow-primary/20 relative overflow-hidden text-center md:text-left">
+            <div className="md:col-span-6 bg-primary p-6 md:p-10 rounded-[2.5rem] flex flex-col md:flex-row items-center justify-between gap-6 md:gap-8 shadow-xl shadow-primary/20 relative overflow-hidden text-center md:text-left">
                 <div className="absolute inset-0 opacity-10 pointer-events-none">
                     <div className="grid grid-cols-6 gap-2 h-full transform -skew-x-12">
                         {Array.from({ length: 6 }).map((_, i) => <div key={i} className="border-r border-white"></div>)}
@@ -234,7 +323,7 @@ function DashboardTab({ resultat, actions, t }: any) {
                     onClick={() => actions.initializeHistory.mutate()}
                     className="btn btn-lg w-full md:w-auto bg-white text-primary border-none px-6 md:px-10 py-4 rounded-2xl font-black text-[10px] md:text-xs uppercase tracking-widest hover:scale-105 transition-all shadow-2xl active:scale-95"
                 >
-                    <RefreshCcw className={`w-4 h-4 mr-2 ${actions.initializeHistory.isPending ? 'animate-spin' : ''}`} />
+                    <RefreshCcw className={`size-4 mr-2 ${actions.initializeHistory.isPending ? 'animate-spin' : ''}`} />
                     {actions.initializeHistory.isPending ? t('dashboard.init_loading') : t('dashboard.init_button')}
                 </button>
             </div>
@@ -242,13 +331,9 @@ function DashboardTab({ resultat, actions, t }: any) {
     );
 }
 
-function AchatsTab({ ecritures, locale, t }: any) {
-    const achEcritures = ecritures?.filter((e: any) => e.journal_code === 'AC') || [];
-    const [currentPage, setCurrentPage] = useState(1);
+function AchatsTab({ ecritures, count, page, setPage, locale, t }: any) {
     const itemsPerPage = 50;
-
-    const totalPages = Math.ceil(achEcritures.length / itemsPerPage);
-    const paginated = achEcritures.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+    const totalPages = Math.ceil(count / itemsPerPage);
 
     return (
         <div className="card bg-base-100 rounded-3xl border border-base-300 overflow-hidden shadow-sm animate-fade-in">
@@ -268,7 +353,7 @@ function AchatsTab({ ecritures, locale, t }: any) {
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-base-100 font-bold">
-                        {paginated.map((e: any) => (
+                        {ecritures.map((e: any) => (
                             <React.Fragment key={e.id}>
                                 <tr className="group hover:bg-base-50 transition-colors">
                                     <td className="px-6 py-4 text-sm font-bold text-base-content/80">{format(new Date(e.date), 'dd MMM yyyy', { locale })}</td>
@@ -279,7 +364,7 @@ function AchatsTab({ ecritures, locale, t }: any) {
                                 </tr>
                             </React.Fragment>
                         ))}
-                        {paginated.length === 0 && (
+                        {ecritures.length === 0 && (
                             <tr>
                                 <td colSpan={5} className="py-20 text-center text-base-content/30 italic font-bold">
                                     {t('achats.no_data')}
@@ -291,60 +376,38 @@ function AchatsTab({ ecritures, locale, t }: any) {
             </div>
 
             {/* Pagination Controls */}
-            {totalPages > 1 && (
-                <div className="p-4 border-t border-base-300 flex justify-between items-center bg-base-50">
-                    <span className="text-xs font-bold text-base-content/50">
-                        Page {currentPage} sur {totalPages} ({achEcritures.length} achats)
-                    </span>
-                    <div className="join">
-                        <button 
-                            className="join-item btn btn-sm" 
-                            disabled={currentPage === 1}
-                            onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-                        >«</button>
-                        <button className="join-item btn btn-sm bg-base-100 font-mono">Page {currentPage}</button>
-                        <button 
-                            className="join-item btn btn-sm" 
-                            disabled={currentPage === totalPages}
-                            onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-                        >»</button>
-                    </div>
-                </div>
-            )}
+            <Pagination 
+                currentPage={page}
+                totalPages={totalPages}
+                totalItems={count}
+                onPrev={() => setPage((p: number) => Math.max(1, p - 1))}
+                onNext={() => setPage((p: number) => Math.min(totalPages, p + 1))}
+                hasNext={page < totalPages}
+                label={t('ledger.items_label', { defaultValue: 'achats' })}
+            />
         </div>
     );
 }
 
-function GrandLivreTab({ ecritures, locale, t }: any) {
-    const [search, setSearch] = useState('');
-    const [currentPage, setCurrentPage] = useState(1);
+function GrandLivreTab({ ecritures, count, page, setPage, search, setSearch, locale, t }: any) {
     const itemsPerPage = 50;
-
-    const filtered = ecritures?.filter((e: any) => 
-        e.libelle.toLowerCase().includes(search.toLowerCase()) || 
-        e.reference.toLowerCase().includes(search.toLowerCase())
-    ) || [];
-
-    const totalPages = Math.ceil(filtered.length / itemsPerPage);
-    const paginated = filtered.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
-
-    // Reset page when searching
-    React.useEffect(() => {
-        setCurrentPage(1);
-    }, [search]);
+    const totalPages = Math.ceil(count / itemsPerPage);
 
     return (
         <div className="card bg-base-100 rounded-3xl border border-base-300 overflow-hidden shadow-sm">
             <div className="p-6 border-b border-base-300 flex items-center justify-between bg-base-100">
                 <h3 className="font-black text-xl uppercase tracking-tighter text-primary">{t('ledger.title')}</h3>
                 <div className="relative">
-                    <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-base-content/30" />
+                    <Search className="size-4 absolute left-3 top-1/2 -translate-y-1/2 text-base-content/30" />
                     <input 
                         type="text" 
                         placeholder={t('ledger.search_placeholder')}
                         className="input input-bordered bg-base-200 border-base-300 rounded-xl pl-10 pr-4 py-2 text-xs font-bold focus:ring-primary w-64"
                         value={search}
-                        onChange={(e) => setSearch(e.target.value)}
+                        onChange={(e) => {
+                            setSearch(e.target.value);
+                            setPage(1);
+                        }}
                     />
                 </div>
             </div>
@@ -361,7 +424,7 @@ function GrandLivreTab({ ecritures, locale, t }: any) {
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-base-100 font-bold">
-                        {paginated.map((e: any) => (
+                        {ecritures.map((e: any) => (
                             <React.Fragment key={e.id}>
                                 <tr className="group hover:bg-base-50 transition-colors">
                                     <td className="px-6 py-4 text-sm font-bold text-base-content/80">{format(new Date(e.date), 'dd MMM yyyy', { locale })}</td>
@@ -371,7 +434,7 @@ function GrandLivreTab({ ecritures, locale, t }: any) {
                                     <td className="px-6 py-4 text-right text-primary font-black text-sm">{e.total_debit > 0 ? formatAmount(e.total_debit) : '-'}</td>
                                     <td className="px-6 py-4 text-right text-error font-black text-sm">{e.total_credit > 0 ? formatAmount(e.total_credit) : '-'}</td>
                                 </tr>
-                                {e.lignes.map((l: any) => (
+                                {e.lignes?.map((l: any) => (
                                     <tr key={l.id} className="text-[11px] text-base-content/40 hover:text-base-content transition-colors bg-base-50/30">
                                         <td colSpan={3}></td>
                                         <td className="px-6 py-1.5 pl-10 border-l-2 border-primary/10 italic">
@@ -383,7 +446,7 @@ function GrandLivreTab({ ecritures, locale, t }: any) {
                                 ))}
                             </React.Fragment>
                         ))}
-                        {paginated.length === 0 && (
+                        {ecritures.length === 0 && (
                             <tr>
                                 <td colSpan={6} className="py-10 text-center text-base-content/40 italic font-bold">
                                     Aucune écriture trouvée
@@ -395,26 +458,15 @@ function GrandLivreTab({ ecritures, locale, t }: any) {
             </div>
             
             {/* Pagination Controls */}
-            {totalPages > 1 && (
-                <div className="p-4 border-t border-base-300 flex justify-between items-center bg-base-50">
-                    <span className="text-xs font-bold text-base-content/50">
-                        Page {currentPage} sur {totalPages} ({filtered.length} écritures)
-                    </span>
-                    <div className="join">
-                        <button 
-                            className="join-item btn btn-sm" 
-                            disabled={currentPage === 1}
-                            onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-                        >«</button>
-                        <button className="join-item btn btn-sm bg-base-100 font-mono">Page {currentPage}</button>
-                        <button 
-                            className="join-item btn btn-sm" 
-                            disabled={currentPage === totalPages}
-                            onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-                        >»</button>
-                    </div>
-                </div>
-            )}
+            <Pagination 
+                currentPage={page}
+                totalPages={totalPages}
+                totalItems={count}
+                onPrev={() => setPage((p: number) => Math.max(1, p - 1))}
+                onNext={() => setPage((p: number) => Math.min(totalPages, p + 1))}
+                hasNext={page < totalPages}
+                label={t('ledger.items_label', { defaultValue: 'écritures' })}
+            />
         </div>
     );
 }
@@ -439,10 +491,10 @@ function BalanceTab({ balance, t }: any) {
                         <tr key={b.numero} className="hover:bg-primary/5 transition-colors">
                             <td className="px-6 py-4 font-mono text-primary font-black">{b.numero}</td>
                             <td className="px-6 py-4 text-sm uppercase tracking-tighter">{b.libelle}</td>
-                            <td className="px-6 py-4 text-right text-base-content/60 font-bold text-sm">{formatAmount(b.debit)}</td>
-                            <td className="px-6 py-4 text-right text-base-content/60 font-bold text-sm">{formatAmount(b.credit)}</td>
-                            <td className="px-6 py-4 text-right text-primary font-black text-sm">{b.solde_debit > 0 ? formatAmount(b.solde_debit) : '-'}</td>
-                            <td className="px-6 py-4 text-right text-error font-black text-sm">{b.solde_credit > 0 ? formatAmount(b.solde_credit) : '-'}</td>
+                            <td className="px-6 py-4 text-right text-base-content/60 font-bold text-sm">{formatAmount(b.mouvement_debit || 0)}</td>
+                            <td className="px-6 py-4 text-right text-base-content/60 font-bold text-sm">{formatAmount(b.mouvement_credit || 0)}</td>
+                            <td className="px-6 py-4 text-right text-primary font-black text-sm">{b.cloture_debit > 0 ? formatAmount(b.cloture_debit) : '-'}</td>
+                            <td className="px-6 py-4 text-right text-error font-black text-sm">{b.cloture_credit > 0 ? formatAmount(b.cloture_credit) : '-'}</td>
                         </tr>
                     ))}
                 </tbody>
@@ -522,8 +574,8 @@ function PlanTab({ comptes }: any) {
                         <h4 className="font-black text-xs text-base-content/70 uppercase tracking-tight">{c.libelle}</h4>
                         <p className="text-2xl font-black text-base-content font-mono">{c.numero}</p>
                     </div>
-                    <div className="w-10 h-10 rounded-full bg-base-200 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all">
-                        <ChevronRight className="w-4 h-4 text-primary" />
+                    <div className="size-10 rounded-full bg-base-200 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all">
+                        <ChevronRight className="size-4 text-primary" />
                     </div>
                 </div>
             ))}

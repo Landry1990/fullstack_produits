@@ -191,12 +191,12 @@ class DashboardViewSet(viewsets.ViewSet):
                 total=Coalesce(Sum(F('produit__pmp') * F('quantity'), output_field=DecimalField()), Decimal('0'))
             )['total']
 
-            # Calculate margin like monthly report: CA_HT - cost_achat
-            ca_ht_today = factures_today_qs.aggregate(
-                total=Coalesce(Sum('total_ht'), Decimal('0'))
+            # Calculate margin based on TTC for consistency
+            ca_ttc_today = factures_today_qs.aggregate(
+                total=Coalesce(Sum('total_ttc'), Decimal('0'))
             )['total']
-
-            margin_today = ca_ht_today - (margin_allocated + unallocated_cost)
+ 
+            margin_today = ca_ttc_today - (margin_allocated + unallocated_cost)
 
             # 7. Dormant Stock (6 months defaults)
             dormant_threshold = today - timedelta(days=6 * 30)
@@ -308,29 +308,37 @@ class DashboardViewSet(viewsets.ViewSet):
             remise_mois=Coalesce(Sum(F('remise')), Decimal('0'))
         )
 
-        # Margin from allocations
-        alloc_stats = FactureProduitAllocation.objects.filter(
-            facture_produit__facture__in=factures_mois_qs
-        ).aggregate(
-            margin_jour=Coalesce(Sum(Case(When(facture_produit__facture__date__date=today, then=(F('facture_produit__selling_price') - F('facture_produit__discount') - F('cost_price')) * F('quantity')), default=Value(0, output_field=DecimalField()))), Decimal('0')),
-            margin_sem=Coalesce(Sum(Case(When(facture_produit__facture__date__date__gte=start_of_week, then=(F('facture_produit__selling_price') - F('facture_produit__discount') - F('cost_price')) * F('quantity')), default=Value(0, output_field=DecimalField()))), Decimal('0')),
-            margin_mois=Coalesce(Sum((F('facture_produit__selling_price') - F('facture_produit__discount') - F('cost_price')) * F('quantity')), Decimal('0'))
+        # 1. Somme du CA TTC sur les périodes
+        ca_ttc_stats = factures_mois_qs.aggregate(
+            ttc_jour=Coalesce(Sum(Case(When(date__date=today, then=F('total_ttc')), default=Value(0, output_field=DecimalField()))), Decimal('0')),
+            ttc_sem=Coalesce(Sum(Case(When(date__date__gte=start_of_week, then=F('total_ttc')), default=Value(0, output_field=DecimalField()))), Decimal('0')),
+            ttc_mois=Coalesce(Sum(F('total_ttc')), Decimal('0'))
         )
 
-        # Margin from unallocated (fallback)
-        unalloc_stats = FactureProduit.objects.filter(
+        # 2. Somme des Coûts (Allocations + Unallocated fallback)
+        # Coûts depuis les allocations
+        cost_alloc_stats = FactureProduitAllocation.objects.filter(
+            facture_produit__facture__in=factures_mois_qs
+        ).aggregate(
+            cost_jour=Coalesce(Sum(Case(When(facture_produit__facture__date__date=today, then=F('cost_price') * F('quantity')), default=Value(0, output_field=DecimalField()))), Decimal('0')),
+            cost_sem=Coalesce(Sum(Case(When(facture_produit__facture__date__date__gte=start_of_week, then=F('cost_price') * F('quantity')), default=Value(0, output_field=DecimalField()))), Decimal('0')),
+            cost_mois=Coalesce(Sum(F('cost_price') * F('quantity')), Decimal('0'))
+        )
+
+        # Coûts depuis les lignes non allouées
+        cost_unalloc_stats = FactureProduit.objects.filter(
             facture__in=factures_mois_qs
         ).annotate(
             has_allocation=Exists(FactureProduitAllocation.objects.filter(facture_produit=OuterRef('pk')))
         ).filter(has_allocation=False).aggregate(
-            margin_jour=Coalesce(Sum(Case(When(facture__date__date=today, then=(F('selling_price') - F('discount') - F('produit__pmp')) * F('quantity')), default=Value(0, output_field=DecimalField()))), Decimal('0')),
-            margin_sem=Coalesce(Sum(Case(When(facture__date__date__gte=start_of_week, then=(F('selling_price') - F('discount') - F('produit__pmp')) * F('quantity')), default=Value(0, output_field=DecimalField()))), Decimal('0')),
-            margin_mois=Coalesce(Sum((F('selling_price') - F('discount') - F('produit__pmp')) * F('quantity')), Decimal('0'))
+            cost_jour=Coalesce(Sum(Case(When(facture__date__date=today, then=F('produit__pmp') * F('quantity')), default=Value(0, output_field=DecimalField()))), Decimal('0')),
+            cost_sem=Coalesce(Sum(Case(When(facture__date__date__gte=start_of_week, then=F('produit__pmp') * F('quantity')), default=Value(0, output_field=DecimalField()))), Decimal('0')),
+            cost_mois=Coalesce(Sum(F('produit__pmp') * F('quantity')), Decimal('0'))
         )
 
-        margin_jour = alloc_stats['margin_jour'] + unalloc_stats['margin_jour'] - remises_stats['remise_jour']
-        margin_sem = alloc_stats['margin_sem'] + unalloc_stats['margin_sem'] - remises_stats['remise_sem']
-        margin_mois = alloc_stats['margin_mois'] + unalloc_stats['margin_mois'] - remises_stats['remise_mois']
+        margin_jour = ca_ttc_stats['ttc_jour'] - (cost_alloc_stats['cost_jour'] + cost_unalloc_stats['cost_jour'])
+        margin_sem = ca_ttc_stats['ttc_sem'] - (cost_alloc_stats['cost_sem'] + cost_unalloc_stats['cost_sem'])
+        margin_mois = ca_ttc_stats['ttc_mois'] - (cost_alloc_stats['cost_mois'] + cost_unalloc_stats['cost_mois'])
         
         # --- Objectifs (Full fetch) ---
         objectifs_data = ObjectifCommercial.get_objectifs_courants()

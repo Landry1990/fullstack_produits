@@ -48,7 +48,7 @@ function GestionVitrine({ products, isLoading, searchTerm, setSearchTerm, showPu
              {/* Filters */}
             <div className="flex flex-col lg:flex-row gap-4 items-stretch lg:items-center bg-base-100 p-4 rounded-lg shadow">
                 <div className="relative flex-1">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-base-content/40" />
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-5 text-base-content/40" />
                     <input 
                         type="text" 
                         placeholder={t('gestion.search_placeholder')}
@@ -74,7 +74,7 @@ function GestionVitrine({ products, isLoading, searchTerm, setSearchTerm, showPu
             {selectedIds.length > 0 && (
                 <div className="alert bg-base-100 shadow-lg border-l-4 border-primary flex flex-col sm:flex-row justify-between items-center gap-4 animate-in slide-in-from-top-2">
                     <div className="flex items-center gap-2">
-                        <CheckCircle className="w-5 h-5 text-primary" />
+                        <CheckCircle className="size-5 text-primary" />
                         <span className="font-semibold">{t('gestion.selected_count', { count: selectedIds.length })}</span>
                     </div>
                     <div className="flex gap-2">
@@ -162,7 +162,7 @@ function GestionVitrine({ products, isLoading, searchTerm, setSearchTerm, showPu
                                 <td>
                                     <div className="join">
                                         <span className="join-item btn btn-sm btn-ghost no-animation">
-                                            <DollarSign className="w-4 h-4" />
+                                            <DollarSign className="size-4" />
                                         </span>
                                         <input 
                                             type="number" 
@@ -267,7 +267,7 @@ function SimulateurClient() {
             <div className="lg:col-span-2 space-y-4 order-1 lg:order-none">
                 <div className="card bg-base-100 shadow-lg p-4 lg:p-6">
                     <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
-                        <Search className="w-6 h-6 text-primary" />
+                        <Search className="size-6 text-primary" />
                         {t('simulateur.search_title')}
                     </h2>
                     <input 
@@ -299,9 +299,9 @@ function SimulateurClient() {
                                                     <div className="text-sm opacity-60">{p.cip1}</div>
                                                     {/* Statut Stock dans les résultats */}
                                                     {p.stock > 0 ? (
-                                                        <span className="badge badge-success badge-sm text-white gap-1"><CheckCircle className="w-3 h-3"/>{t('simulateur.available')}</span>
+                                                        <span className="badge badge-success badge-sm text-white gap-1"><CheckCircle className="size-3"/>{t('simulateur.available')}</span>
                                                     ) : (
-                                                        <span className="badge badge-error badge-sm text-white gap-1"><XCircle className="w-3 h-3"/>{t('simulateur.out_of_stock')}</span>
+                                                        <span className="badge badge-error badge-sm text-white gap-1"><XCircle className="size-3"/>{t('simulateur.out_of_stock')}</span>
                                                     )}
                                                 </div>
                                             </div>
@@ -325,7 +325,7 @@ function SimulateurClient() {
                             <span>{t('simulateur.my_list')}</span>
                             <div className="indicator">
                                 <span className="indicator-item badge badge-secondary">{cart.length}</span> 
-                                <ShoppingCart className="w-6 h-6" />
+                                <ShoppingCart className="size-6" />
                             </div>
                         </h2>
                         
@@ -334,7 +334,7 @@ function SimulateurClient() {
                         <div className="space-y-4 overflow-y-auto max-h-[300px] lg:max-h-[500px]">
                             {cart.length === 0 ? (
                                 <div className="text-center text-base-content/40 py-10">
-                                    <ShoppingCart className="w-16 h-16 mx-auto mb-2 opacity-20" />
+                                    <ShoppingCart className="size-16 mx-auto mb-2 opacity-20" />
                                     {t('simulateur.empty_list')}
                                 </div>
                             ) : (
@@ -346,11 +346,11 @@ function SimulateurClient() {
                                                 {/* Logique de disponibilité simplifiée pour le client */}
                                                 {item.stock > 0 ? (
                                                     <span className="badge badge-success gap-1 text-white text-xs">
-                                                        <CheckCircle className="w-2 h-2" /> {t('simulateur.available_full')}
+                                                        <CheckCircle className="size-2" /> {t('simulateur.available_full')}
                                                     </span>
                                                 ) : (
                                                     <span className="badge badge-error gap-1 text-white text-xs">
-                                                        <XCircle className="w-2 h-2" /> {t('simulateur.out_of_stock')}
+                                                        <XCircle className="size-2" /> {t('simulateur.out_of_stock')}
                                                     </span>
                                                 )}
                                                 
@@ -363,7 +363,7 @@ function SimulateurClient() {
                                             onClick={() => removeFromCart(item.id)}
                                             className="btn btn-ghost btn-sm text-error opacity-100 lg:opacity-0 lg:group-hover:opacity-100 transition-opacity"
                                         >
-                                            <Trash2 className="w-4 h-4" />
+                                            <Trash2 className="size-4" />
                                         </button>
                                     </div>
                                 ))
@@ -477,7 +477,7 @@ export default function Vitrine() {
       <div className="flex flex-col lg:flex-row gap-4 lg:items-center justify-between">
         <div>
           <h1 className="text-2xl lg:text-3xl font-bold flex items-center gap-2">
-            <Globe className="w-6 h-6 lg:w-8 lg:h-8 text-blue-500" />
+            <Globe className="size-6 lg:w-8 lg:h-8 text-blue-500" />
             {t('title')}
           </h1>
           <p className="text-sm lg:text-base text-base-content/60 mt-1">{t('subtitle')}</p>
@@ -486,7 +486,7 @@ export default function Vitrine() {
         <div className="flex flex-col sm:flex-row items-stretch lg:items-center gap-4 lg:gap-6">
              <div className="bg-base-100 shadow rounded-lg p-3 flex items-center gap-3 border border-base-200">
                 <div className="p-2 bg-primary/10 rounded-full text-primary">
-                  <Cloud className="w-5 h-5" />
+                  <Cloud className="size-5" />
                 </div>
                 <div>
                   <div className="text-xs text-base-content/60 font-medium uppercase tracking-wider">{t('online_count')}</div>

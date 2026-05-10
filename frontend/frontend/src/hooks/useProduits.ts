@@ -205,8 +205,12 @@ export const useAdjustStock = () => {
 };
 
 export const useRecalculateRotation = () => {
+    const queryClient = useQueryClient();
     return useMutation({
         mutationFn: () => produitService.recalculateRotation(),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['produits'] });
+        }
     });
 };
 

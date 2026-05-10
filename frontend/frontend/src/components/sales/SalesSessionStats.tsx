@@ -20,7 +20,7 @@ export const SalesSessionStats: React.FC<SalesSessionStatsProps> = ({ session })
             <div className="relative z-10">
                 <div className="flex justify-between items-start mb-4">
                     <div className="flex items-center gap-2 text-primary-content/90 bg-white/10 px-3 py-1 rounded-full text-xs font-medium backdrop-blur-sm">
-                        <TrendingUp className="w-3 h-3" />
+                        <TrendingUp className="size-3" />
                          {t('stats.session_total', { defaultValue: "Caisse Session" })}
                     </div>
                 </div>
@@ -34,7 +34,7 @@ export const SalesSessionStats: React.FC<SalesSessionStatsProps> = ({ session })
 
                 <div className="flex flex-col gap-1 text-xs text-primary-content/80">
                    <div className="flex items-center gap-1.5 opacity-90">
-                        <Clock className="w-3 h-3" />
+                        <Clock className="size-3" />
                         Tranche: {session.tranche}
                    </div>
                    <div className="opacity-90">

@@ -1,4 +1,4 @@
-﻿import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import api from '../services/api'
 import { toast } from 'react-hot-toast'
 import { useTranslation } from 'react-i18next'
@@ -144,22 +144,15 @@ export default function AnalyseABC() {
     // Construire le TSV
     const tsv = [headers.join('\t'), ...rows.map(r => r.join('\t'))].join('\n')
     
-    // Méthode fallback avec textarea pour compatibilité
-    const textarea = document.createElement('textarea')
-    textarea.value = tsv
-    textarea.style.position = 'fixed'
-    textarea.style.left = '-9999px'
-    document.body.appendChild(textarea)
-    textarea.select()
-    
-    try {
-      document.execCommand('copy')
-      toast.success(t('stock:abc.messages.copy_success', { count: produitsFiltrés.length }))
-    } catch (err) {
-      toast.error(t('stock:abc.messages.copy_error'))
-    } finally {
-      document.body.removeChild(textarea)
-    }
+    // Modern clipboard API
+    navigator.clipboard.writeText(tsv)
+      .then(() => {
+        toast.success(t('stock:abc.messages.copy_success', { count: produitsFiltrés.length }))
+      })
+      .catch((err) => {
+        console.error('Failed to copy:', err)
+        toast.error(t('stock:abc.messages.copy_error'))
+      })
   }
 
   if (loading) {

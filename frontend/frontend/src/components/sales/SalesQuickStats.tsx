@@ -70,7 +70,7 @@ export const SalesQuickStats: React.FC<SalesQuickStatsProps> = ({ stats, onClose
             <div className="bg-gradient-to-br from-primary/10 to-primary/5 p-4 rounded-xl border border-primary/20 flex items-center justify-between">
                 <div>
                     <div className="text-xs font-bold text-primary uppercase tracking-wider mb-1 flex items-center gap-1">
-                        <UserCheck className="w-3 h-3" /> {t('sales:stats.best_seller')}
+                        <UserCheck className="size-3" /> {t('sales:stats.best_seller')}
                     </div>
                     {stats.top_vendeur ? (
                         <div>
@@ -89,7 +89,7 @@ export const SalesQuickStats: React.FC<SalesQuickStatsProps> = ({ stats, onClose
             <div className="bg-gradient-to-br from-secondary/10 to-secondary/5 p-4 rounded-xl border border-secondary/20 flex items-center justify-between">
                  <div>
                     <div className="text-xs font-bold text-secondary uppercase tracking-wider mb-1 flex items-center gap-1">
-                        <TrendingUp className="w-3 h-3" /> {t('sales:stats.best_product')}
+                        <TrendingUp className="size-3" /> {t('sales:stats.best_product')}
                     </div>
                     {stats.top_produit ? (
                         <div>

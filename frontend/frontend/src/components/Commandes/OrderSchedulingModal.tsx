@@ -300,7 +300,7 @@ export default function OrderSchedulingModal({
             onClose={onClose}
             title="Service de Ravitaillement Automatique"
             subtitle={activeTab === 'plan' ? "Configurez l'intelligence de votre stock" : "Générez un aperçu immédiat de la commande"}
-            icon={<Zap className="w-6 h-6 text-primary fill-primary/20" />}
+            icon={<Zap className="size-6 text-primary fill-primary/20" />}
             maxWidth="max-w-4xl"
             footer={
                 <div className="flex justify-between items-center w-full">
@@ -308,22 +308,22 @@ export default function OrderSchedulingModal({
                     <div className="flex gap-2">
                         {activeTab === 'gen' && stepGen === 2 && (
                             <button className="btn btn-ghost" onClick={() => setStepGen(1)}>
-                                <ChevronLeft className="w-4 h-4 mr-2" />
+                                <ChevronLeft className="size-4 mr-2" />
                                 Paramètres
                             </button>
                         )}
                         {activeTab === 'plan' ? (
                             <button className="btn btn-primary px-10 rounded-xl" onClick={handleSave} disabled={saving}>
-                                {saving ? <span className="loading loading-spinner loading-xs"></span> : <><Check className="w-4 h-4 mr-2" />Enregistrer le service</>}
+                                {saving ? <span className="loading loading-spinner loading-xs"></span> : <><Check className="size-4 mr-2" />Enregistrer le service</>}
                             </button>
                         ) : (
                             stepGen === 1 ? (
                                 <button className="btn btn-primary px-10 rounded-xl" onClick={fetchSuggestions} disabled={loadingSuggestions}>
-                                    {loadingSuggestions ? <span className="loading loading-spinner loading-xs"></span> : <><Search className="w-4 h-4 mr-2" />Lancer l'analyse</>}
+                                    {loadingSuggestions ? <span className="loading loading-spinner loading-xs"></span> : <><Search className="size-4 mr-2" />Lancer l'analyse</>}
                                 </button>
                             ) : (
                                 <button className="btn btn-primary px-10 rounded-xl" onClick={handleApply} disabled={selectedSuggestions.size === 0}>
-                                    <ShoppingCart className="w-4 h-4 mr-2" />
+                                    <ShoppingCart className="size-4 mr-2" />
                                     Créer la commande ({selectedSuggestions.size})
                                 </button>
                             )
@@ -353,7 +353,7 @@ export default function OrderSchedulingModal({
                             <div className="flex flex-col items-end">
                                 <span className="text-[10px] font-bold text-base-content/40 uppercase">Mode Service</span>
                                 <div className="flex items-center gap-2">
-                                    <div className={`w-2 h-2 rounded-full ${schedule.is_active ? 'bg-success animate-pulse' : 'bg-base-300'}`}></div>
+                                    <div className={`size-2 rounded-full ${schedule.is_active ? 'bg-success animate-pulse' : 'bg-base-300'}`}></div>
                                     <span className="text-xs font-black text-base-content">{schedule.is_active ? 'ACTIF' : 'PAUSE'}</span>
                                 </div>
                             </div>
@@ -371,10 +371,10 @@ export default function OrderSchedulingModal({
                 <div className="px-4 pt-4">
                     <div className="tabs tabs-boxed bg-base-200/50 p-1 rounded-2xl w-fit">
                         <button className={`tab tab-sm font-bold rounded-xl px-8 h-9 transition-all ${activeTab === 'plan' ? 'tab-active bg-white shadow-sm text-primary' : 'text-base-content/50 hover:text-primary'}`} onClick={() => setActiveTab('plan')}>
-                            <Calendar className="w-3.5 h-3.5 mr-2" /> Configuration
+                            <Calendar className="size-3.5 mr-2" /> Configuration
                         </button>
                         <button className={`tab tab-sm font-bold rounded-xl px-8 h-9 transition-all ${activeTab === 'gen' ? 'tab-active bg-white shadow-sm text-primary' : 'text-base-content/50 hover:text-primary'}`} onClick={() => setActiveTab('gen')}>
-                            <Search className="w-3.5 h-3.5 mr-2" /> Aperçu Immédiat
+                            <Search className="size-3.5 mr-2" /> Aperçu Immédiat
                         </button>
                     </div>
                 </div>
@@ -387,7 +387,7 @@ export default function OrderSchedulingModal({
                                 <div className="bg-white border border-base-200 rounded-3xl p-5 shadow-sm space-y-4">
                                     <div className="flex items-center gap-2 mb-2">
                                         <div className="p-2 bg-primary/10 text-primary rounded-xl">
-                                            <Clock className="w-4 h-4" />
+                                            <Clock className="size-4" />
                                         </div>
                                         <h3 className="text-sm font-black text-base-content uppercase tracking-tight">Fréquence & Timing</h3>
                                     </div>
@@ -400,7 +400,7 @@ export default function OrderSchedulingModal({
                                                     <button
                                                         key={d.value}
                                                         onClick={() => toggleDay(d.value)}
-                                                        className={`w-9 h-9 rounded-full text-xs font-black transition-all flex items-center justify-center border-2 
+                                                        className={`size-9 rounded-full text-xs font-black transition-all flex items-center justify-center border-2 
                                                             ${schedule.active_days.includes(d.value) 
                                                                 ? 'bg-primary border-primary text-white shadow-md shadow-primary/20 scale-110' 
                                                                 : 'bg-base-100 border-base-200 text-base-content/40 hover:border-primary/30'}`}
@@ -436,7 +436,7 @@ export default function OrderSchedulingModal({
                                 <div className="bg-white border border-base-200 rounded-3xl p-5 shadow-sm space-y-4">
                                     <div className="flex items-center gap-2 mb-2">
                                         <div className="p-2 bg-blue-500/10 text-blue-500 rounded-xl">
-                                            <Zap className="w-4 h-4" />
+                                            <Zap className="size-4" />
                                         </div>
                                         <h3 className="text-sm font-black text-base-content uppercase tracking-tight">Intelligence de Calcul</h3>
                                     </div>
@@ -469,7 +469,7 @@ export default function OrderSchedulingModal({
                                         {/* Période d'analyse visible pour tous les modes */}
                                         <div className={`p-3 rounded-2xl border flex items-center justify-between ${schedule.execution_mode === 'OPTIMISE' ? 'bg-blue-50/50 border-blue-100' : schedule.execution_mode === 'CUMULATIF' ? 'bg-green-50/50 border-green-100' : 'bg-slate-50 border-slate-200'}`}>
                                             <div className="flex items-center gap-2">
-                                                <Info className={`w-3.5 h-3.5 ${schedule.execution_mode === 'OPTIMISE' ? 'text-blue-500' : schedule.execution_mode === 'CUMULATIF' ? 'text-green-500' : 'text-slate-500'}`} />
+                                                <Info className={`size-3.5 ${schedule.execution_mode === 'OPTIMISE' ? 'text-blue-500' : schedule.execution_mode === 'CUMULATIF' ? 'text-green-500' : 'text-slate-500'}`} />
                                                 <span className={`text-[10px] font-bold ${schedule.execution_mode === 'OPTIMISE' ? 'text-blue-700' : schedule.execution_mode === 'CUMULATIF' ? 'text-green-700' : 'text-slate-700'}`}>
                                                     {schedule.execution_mode === 'OPTIMISE' ? "Période d'analyse" : schedule.execution_mode === 'CUMULATIF' ? "Période initiale" : "Période de comptage"}
                                                 </span>
@@ -504,7 +504,7 @@ export default function OrderSchedulingModal({
                                     <div className="flex items-center justify-between mb-2">
                                         <div className="flex items-center gap-2">
                                             <div className="p-2 bg-amber-500/10 text-amber-500 rounded-xl">
-                                                <ShieldCheck className="w-4 h-4" />
+                                                <ShieldCheck className="size-4" />
                                             </div>
                                             <h3 className="text-sm font-black text-base-content uppercase tracking-tight">Filtre de Sécurité</h3>
                                         </div>
@@ -537,7 +537,7 @@ export default function OrderSchedulingModal({
                                 <div className="bg-white border border-base-200 rounded-3xl p-5 shadow-sm space-y-4">
                                     <div className="flex items-center gap-2 mb-2">
                                         <div className="p-2 bg-indigo-500/10 text-indigo-500 rounded-xl">
-                                            <Bell className="w-4 h-4" />
+                                            <Bell className="size-4" />
                                         </div>
                                         <h3 className="text-sm font-black text-base-content uppercase tracking-tight">Canaux de Notification</h3>
                                     </div>
@@ -547,14 +547,14 @@ export default function OrderSchedulingModal({
                                             className={`flex items-center gap-3 p-3 rounded-2xl border-2 transition-all ${schedule.notify_whatsapp ? 'border-success bg-success/5' : 'border-base-100 bg-base-50'}`}
                                             onClick={() => setSchedule({...schedule, notify_whatsapp: !schedule.notify_whatsapp})}
                                         >
-                                            <div className={`w-3 h-3 rounded-full ${schedule.notify_whatsapp ? 'bg-success' : 'bg-base-300'}`}></div>
+                                            <div className={`size-3 rounded-full ${schedule.notify_whatsapp ? 'bg-success' : 'bg-base-300'}`}></div>
                                             <span className="text-[11px] font-black text-base-content">WhatsApp</span>
                                         </button>
                                         <button 
                                             className={`flex items-center gap-3 p-3 rounded-2xl border-2 transition-all ${schedule.notify_sms ? 'border-primary bg-primary/5' : 'border-base-100 bg-base-50'}`}
                                             onClick={() => setSchedule({...schedule, notify_sms: !schedule.notify_sms})}
                                         >
-                                            <div className={`w-3 h-3 rounded-full ${schedule.notify_sms ? 'bg-primary' : 'bg-base-300'}`}></div>
+                                            <div className={`size-3 rounded-full ${schedule.notify_sms ? 'bg-primary' : 'bg-base-300'}`}></div>
                                             <span className="text-[11px] font-black text-base-content">SMS Direct</span>
                                         </button>
                                     </div>
@@ -564,7 +564,7 @@ export default function OrderSchedulingModal({
 
                             <div className="mt-2 bg-white border border-base-200 rounded-3xl p-4 shadow-sm">
                                 <div className="flex items-center gap-2 mb-2 px-1">
-                                    <MessageSquare className="w-3.5 h-3.5 text-base-content/40" />
+                                    <MessageSquare className="size-3.5 text-base-content/40" />
                                     <label className="text-[10px] font-black uppercase text-base-content/40 tracking-widest">Notes de Service</label>
                                 </div>
                                 <textarea className="textarea textarea-bordered w-full h-16 rounded-2xl resize-none text-sm font-medium border-base-100 focus:border-primary" placeholder="Consignes particulières pour ce ravitaillement automatique..." value={schedule.comment} onChange={(e) => setSchedule({...schedule, comment: e.target.value})}></textarea>
@@ -578,7 +578,7 @@ export default function OrderSchedulingModal({
                                     <div className="grid grid-cols-3 gap-3">
                                         <label className={`p-3 cursor-pointer rounded-2xl border-2 transition-all flex flex-col items-center text-center gap-2 ${suggestionParams.mode === 'simple' ? 'border-primary bg-primary/5' : 'border-base-200 bg-base-100 hover:border-primary/20'}`}>
                                             <input type="radio" className="hidden" checked={suggestionParams.mode === 'simple'} onChange={() => setSuggestionParams({...suggestionParams, mode: 'simple'})}/>
-                                            <div className={`p-2 rounded-xl ${suggestionParams.mode === 'simple' ? 'bg-primary text-white' : 'bg-base-200 text-base-content/40'}`}><ShieldCheck className="w-4 h-4" /></div>
+                                            <div className={`p-2 rounded-xl ${suggestionParams.mode === 'simple' ? 'bg-primary text-white' : 'bg-base-200 text-base-content/40'}`}><ShieldCheck className="size-4" /></div>
                                             <div className="space-y-0.5">
                                                 <span className="text-xs font-black block">REMPLACEMENT</span>
                                                 <p className="text-[9px] font-bold opacity-60">Simple & Sûr</p>
@@ -586,7 +586,7 @@ export default function OrderSchedulingModal({
                                         </label>
                                         <label className={`p-3 cursor-pointer rounded-2xl border-2 transition-all flex flex-col items-center text-center gap-2 ${suggestionParams.mode === 'optimise' ? 'border-primary bg-primary/5' : 'border-base-200 bg-base-100 hover:border-primary/20'}`}>
                                             <input type="radio" className="hidden" checked={suggestionParams.mode === 'optimise'} onChange={() => setSuggestionParams({...suggestionParams, mode: 'optimise'})}/>
-                                            <div className={`p-2 rounded-xl ${suggestionParams.mode === 'optimise' ? 'bg-primary text-white' : 'bg-base-200 text-base-content/40'}`}><Zap className="w-4 h-4" /></div>
+                                            <div className={`p-2 rounded-xl ${suggestionParams.mode === 'optimise' ? 'bg-primary text-white' : 'bg-base-200 text-base-content/40'}`}><Zap className="size-4" /></div>
                                             <div className="space-y-0.5">
                                                 <span className="text-xs font-black block">PRÉDICTIF</span>
                                                 <p className="text-[9px] font-bold opacity-60">Tendances & IA</p>
@@ -594,7 +594,7 @@ export default function OrderSchedulingModal({
                                         </label>
                                         <label className={`p-3 cursor-pointer rounded-2xl border-2 transition-all flex flex-col items-center text-center gap-2 ${suggestionParams.mode === 'ventes_horaire' ? 'border-primary bg-primary/5' : 'border-base-200 bg-base-100 hover:border-primary/20'}`}>
                                             <input type="radio" className="hidden" checked={suggestionParams.mode === 'ventes_horaire'} onChange={() => setSuggestionParams({...suggestionParams, mode: 'ventes_horaire'})}/>
-                                            <div className={`p-2 rounded-xl ${suggestionParams.mode === 'ventes_horaire' ? 'bg-primary text-white' : 'bg-base-200 text-base-content/40'}`}><Clock className="w-4 h-4" /></div>
+                                            <div className={`p-2 rounded-xl ${suggestionParams.mode === 'ventes_horaire' ? 'bg-primary text-white' : 'bg-base-200 text-base-content/40'}`}><Clock className="size-4" /></div>
                                             <div className="space-y-0.5">
                                                 <span className="text-xs font-black block">TEMPOREL</span>
                                                 <p className="text-[9px] font-bold opacity-60">Ventes horaires</p>
@@ -604,7 +604,7 @@ export default function OrderSchedulingModal({
                                     
                                     <div className="bg-slate-50 border border-base-200 p-5 rounded-3xl space-y-4">
                                         <div className="flex items-center gap-2 mb-2">
-                                            <Settings2 className="w-4 h-4 text-primary" />
+                                            <Settings2 className="size-4 text-primary" />
                                             <h4 className="text-[10px] font-black uppercase text-base-content/60 tracking-widest">Paramètres d'analyse</h4>
                                         </div>
                                         {suggestionParams.mode === 'ventes_horaire' ? (
@@ -643,7 +643,7 @@ export default function OrderSchedulingModal({
                                     <div className="flex justify-between items-center bg-slate-900 text-white p-5 rounded-3xl shadow-xl shadow-slate-900/10">
                                         <div className="flex items-center gap-4">
                                             <div className="p-3 bg-white/10 rounded-2xl">
-                                                <ShoppingCart className="w-6 h-6 text-primary" />
+                                                <ShoppingCart className="size-6 text-primary" />
                                             </div>
                                             <div>
                                                 <div className="text-[10px] opacity-50 uppercase font-black tracking-widest">Total Estimé de la commande</div>

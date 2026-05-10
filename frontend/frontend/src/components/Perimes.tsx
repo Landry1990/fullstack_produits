@@ -20,7 +20,7 @@ import { formatCurrency } from '../utils/formatters'
 import { formatDate } from '../utils/dateUtils'
 import SudoValidationModal from './common/SudoValidationModal'
 import { useSudo } from '../hooks/useSudo'
-import { usePrint } from '../hooks/usePrint'
+import usePrint from '../hooks/usePrint'
 import type { StockAdjustment } from '../types'
 
 // Types pour les statistiques
@@ -344,7 +344,7 @@ export default function Perimes() {
       <div className="flex items-center justify-between px-6 py-4 border-b border-base-200 bg-base-100 sticky top-0 z-30 opacity-100 shrink-0">
         <div className="flex items-center gap-4">
           <div className="p-2.5 bg-error/10 text-error rounded-xl shadow-inner">
-            <AlertTriangle className="w-6 h-6" />
+            <AlertTriangle className="size-6" />
           </div>
           <div>
             <h1 className="text-xl font-bold tracking-tight text-base-content">{t('perimes.title')}</h1>
@@ -357,21 +357,21 @@ export default function Perimes() {
               className={`tab tab-sm gap-2 h-8 rounded-lg transition-all duration-200 ${activeTab === 'dashboard' ? 'tab-active bg-primary text-primary-content shadow-md' : 'hover:bg-base-300'}`}
               onClick={() => setActiveTab('dashboard')}
             >
-              <BarChart2 className="w-3.5 h-3.5" />
+              <BarChart2 className="size-3.5" />
               <span className="font-semibold">{t('perimes.tabs.dashboard')}</span>
             </button>
             <button 
               className={`tab tab-sm gap-2 h-8 rounded-lg transition-all duration-200 ${activeTab === 'list' ? 'tab-active bg-primary text-primary-content shadow-md' : 'hover:bg-base-300'}`}
               onClick={() => setActiveTab('list')}
             >
-              <List className="w-3.5 h-3.5" />
+              <List className="size-3.5" />
               <span className="font-semibold">{t('perimes.tabs.list')}</span>
             </button>
             <button 
               className={`tab tab-sm gap-2 h-8 rounded-lg transition-all duration-200 ${activeTab === 'history' ? 'tab-active bg-primary text-primary-content shadow-md' : 'hover:bg-base-300'}`}
               onClick={() => setActiveTab('history')}
             >
-              <History className="w-3.5 h-3.5" />
+              <History className="size-3.5" />
               <span className="font-semibold">{t('perimes.tabs.history')}</span>
             </button>
           </div>
@@ -380,7 +380,7 @@ export default function Perimes() {
             className="btn btn-sm btn-ghost gap-2 h-9 px-3 rounded-lg hover:bg-base-300" 
             disabled={loading || loadingStats}
           >
-            {(loading || loadingStats) ? <RefreshCw className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}
+            {(loading || loadingStats) ? <RefreshCw className="size-4 animate-spin" /> : <RefreshCw className="size-4" />}
             <span className="font-semibold">{t('common:refresh')}</span>
           </button>
         </div>
@@ -415,7 +415,7 @@ export default function Perimes() {
                   <div className="card bg-gradient-to-br from-error/10 to-error/5 border border-error/30 shadow-sm">
                     <div className="card-body p-5">
                       <div className="flex items-center gap-3">
-                        <div className="w-12 h-12 rounded-full bg-error/20 flex items-center justify-center text-2xl">
+                        <div className="size-12 rounded-full bg-error/20 flex items-center justify-center text-2xl">
                           💸
                         </div>
                         <div>
@@ -431,7 +431,7 @@ export default function Perimes() {
                   <div className="card bg-gradient-to-br from-warning/10 to-warning/5 border border-warning/30 shadow-sm">
                     <div className="card-body p-5">
                       <div className="flex items-center gap-3">
-                        <div className="w-12 h-12 rounded-full bg-warning/20 flex items-center justify-center text-2xl">
+                        <div className="size-12 rounded-full bg-warning/20 flex items-center justify-center text-2xl">
                           📉
                         </div>
                         <div>
@@ -447,7 +447,7 @@ export default function Perimes() {
                   <div className="card bg-gradient-to-br from-info/10 to-info/5 border border-info/30 shadow-sm">
                     <div className="card-body p-5">
                       <div className="flex items-center gap-3">
-                        <div className="w-12 h-12 rounded-full bg-info/20 flex items-center justify-center text-2xl">
+                        <div className="size-12 rounded-full bg-info/20 flex items-center justify-center text-2xl">
                           📊
                         </div>
                         <div>
@@ -568,7 +568,7 @@ export default function Perimes() {
                         <div className="flex items-center gap-2 animate-in fade-in slide-in-from-left-2 duration-200">
                           <div className="dropdown dropdown-bottom">
                             <div tabIndex={0} role="button" className="btn btn-sm btn-primary gap-2 h-9">
-                              <MoreVertical className="w-4 h-4" />
+                              <MoreVertical className="size-4" />
                               {t('common:actions_title')}
                               <span className="badge badge-sm bg-primary-focus border-none text-white">{selectedLotIds.length}</span>
                             </div>
@@ -578,7 +578,7 @@ export default function Perimes() {
                               </li>
                               <li>
                                 <a onClick={handleBulkSortir} className="flex items-center gap-3 py-3 hover:bg-error/10 text-error font-medium">
-                                  <Trash2 className="w-4 h-4" /> {t('perimes.table.exit_btn')}
+                                  <Trash2 className="size-4" /> {t('perimes.table.exit_btn')}
                                 </a>
                               </li>
                             </ul>
@@ -587,7 +587,7 @@ export default function Perimes() {
                             onClick={() => setSelectedLotIds([])}
                             className="btn btn-sm btn-ghost gap-2 text-base-content/60 hover:text-base-content h-9"
                           >
-                            <X className="w-4 h-4" />
+                            <X className="size-4" />
                             {t('common:cancel')}
                           </button>
                         </div>
@@ -595,7 +595,7 @@ export default function Perimes() {
                         <>
                            <div className="flex items-center gap-2 animate-in fade-in duration-300">
                               <div className="p-2 bg-error/10 text-error rounded-lg">
-                                <AlertTriangle className="w-5 h-5" />
+                                <AlertTriangle className="size-5" />
                               </div>
                               <h2 className="font-bold text-lg tracking-tight">{t('perimes.risk_lots')}</h2>
                               <span className="bg-base-200 text-base-content/60 px-2.5 py-0.5 rounded-full text-[10px] font-black">{lots.length}</span>
@@ -642,7 +642,7 @@ export default function Perimes() {
                 </div>
               ) : lots.length === 0 ? (
                 <div className="flex flex-col items-center justify-center h-64 text-base-content/20 gap-4">
-                  <PieChart className="w-16 h-16 opacity-10" />
+                  <PieChart className="size-16 opacity-10" />
                   <p className="text-sm font-bold uppercase tracking-widest">{t('perimes.no_result')}</p>
                 </div>
               ) : (
@@ -687,7 +687,7 @@ export default function Perimes() {
                         </td>
                         <td className="py-2.5 px-4 text-center">
                           <div className={`badge badge-sm font-black px-2 py-2 gap-1.5 ${lot.date_expiration && isExpired(lot.date_expiration) ? 'bg-error/10 text-error border-none' : 'bg-warning/10 text-warning border-none'}`}>
-                            <Calendar className="w-3 h-3" />
+                            <Calendar className="size-3" />
                             {formatDate(lot.date_expiration || '')}
                           </div>
                         </td>
@@ -709,12 +709,12 @@ export default function Perimes() {
                                 onClick={() => handleSortirStock(lot)}
                                 disabled={processing}
                             >
-                                <Trash2 className="w-3.5 h-3.5 mr-1" />
+                                <Trash2 className="size-3.5 mr-1" />
                                 {t('perimes.table.exit_btn')}
                             </button>
                           ) : (
                             <span className="text-[10px] font-black text-base-content/20 uppercase tracking-widest flex items-center justify-center gap-1">
-                                <Check className="w-3 h-3" />
+                                <Check className="size-3" />
                                 {t('perimes.table.sorti')}
                             </span>
                           )}

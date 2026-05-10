@@ -60,16 +60,12 @@ export function validateClientCreditLimit(params: SaleCompletionParams, client: 
 
     // 1. Validation ayant droit (UNIQUEMENT pour les professionnels)
     if (client.client_type === 'PROFESSIONNEL') {
-        if (!useManualClient) {
-            if (showNewAyantDroit || ayantsDroitList.length === 0) {
-                if (!ayantDroitNom || !ayantDroitMatricule) {
-                    return "Pour un client professionnel, veuillez renseigner le nom et le matricule de l'ayant droit";
-                }
-            }
-        } else {
-            if (!selectedAyantDroit) {
-                return 'Pour un client professionnel, veuillez sélectionner un ayant droit ou en créer un nouveau';
-            }
+        if (!useManualClient && (showNewAyantDroit || ayantsDroitList.length === 0) && (!ayantDroitNom || !ayantDroitMatricule)) {
+            return "Pour un client professionnel, veuillez renseigner le nom et le matricule de l'ayant droit";
+        }
+        
+        if (useManualClient && !selectedAyantDroit) {
+            return 'Pour un client professionnel, veuillez sélectionner un ayant droit ou en créer un nouveau';
         }
     }
 

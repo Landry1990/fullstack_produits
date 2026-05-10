@@ -50,7 +50,7 @@ export default function StockIntelligence({
       params: { days: DORMANT_DAYS, page: 1, page_size: 50 }
     }).then(res => {
       const items = (res.data?.items ?? []) as any[];
-      const sorted = [...items].sort((a, b) => (b.stock ?? 0) - (a.stock ?? 0)).slice(0, 5);
+      const sorted = items.toSorted((a, b) => (b.stock ?? 0) - (a.stock ?? 0)).slice(0, 5);
       setDormantItems(sorted);
       setDormantTotal(res.data?.total_value ?? 0);
     }).catch(() => {});
@@ -61,7 +61,7 @@ export default function StockIntelligence({
       params: { page: 1, page_size: 50 }
     }).then(res => {
       const items = (res.data?.items ?? []) as any[];
-      const sorted = [...items].sort((a, b) => (b.excess_value ?? 0) - (a.excess_value ?? 0)).slice(0, 5);
+      const sorted = items.toSorted((a, b) => (b.excess_value ?? 0) - (a.excess_value ?? 0)).slice(0, 5);
       setOverstockItems(sorted);
       setOverstockTotal(res.data?.total_value ?? 0);
     }).catch(() => {});
@@ -78,7 +78,7 @@ export default function StockIntelligence({
                 onClick={() => navigate('/app/perimes')}
               >
                 <div className="p-2 bg-red-100 text-red-600 rounded-xl">
-                  <CalendarDays className="w-5 h-5" />
+                  <CalendarDays className="size-5" />
                 </div>
                 <div>
                   <h2 className="text-xs font-black text-base-content tracking-tight uppercase">{t('alerts.expiry_title')}</h2>
@@ -104,7 +104,7 @@ export default function StockIntelligence({
             <div className="space-y-2 flex-grow overflow-y-auto pr-1 custom-scrollbar h-[350px]">
               {expiringLots.length === 0 ? (
                 <div className="text-[10px] font-black uppercase tracking-widest text-base-content/30 text-center py-6 border-2 border-dashed border-base-200 rounded-xl h-full flex items-center justify-center">
-                  <CalendarDays className="w-8 h-8 mb-2 opacity-20" />
+                  <CalendarDays className="size-8 mb-2 opacity-20" />
                   {t('alerts.no_expiry_alerts')}
                 </div>
               ) : (
@@ -128,7 +128,7 @@ export default function StockIntelligence({
                   return (
                     <div key={lot.id} className={`flex items-center justify-between p-3 rounded-xl border transition-all hover:scale-[1.02] ${urgencyStyle}`}>
                       <div className="flex items-center gap-3 flex-1 min-w-0">
-                        <div className={`w-1.5 h-1.5 rounded-full shrink-0 ${dotStyle} ${daysUntilExpiry <= 7 ? 'animate-ping' : ''}`}></div>
+                        <div className={`size-1.5 rounded-full shrink-0 ${dotStyle} ${daysUntilExpiry <= 7 ? 'animate-ping' : ''}`}></div>
                         <div className="flex-1 min-w-0">
                           <span className="text-xs font-black block truncate">{lot.produit_nom}</span>
                           <div className="flex items-center gap-2 mt-0.5">
@@ -161,7 +161,7 @@ export default function StockIntelligence({
             <div className="flex items-center justify-between mb-6 shrink-0">
               <div className="flex items-center gap-3">
                 <div className="p-2 bg-slate-100 text-slate-600 rounded-xl">
-                  <Archive className="w-5 h-5" />
+                  <Archive className="size-5" />
                 </div>
                 <div>
                   <h2 className="text-sm font-black text-base-content tracking-tight uppercase">{t('dashboard.charts.dormant_stock', { defaultValue: 'Stock Dormant' })}</h2>
@@ -191,7 +191,7 @@ export default function StockIntelligence({
                 ))
               ) : (
                 <div className="flex flex-col items-center justify-center py-12 opacity-20 text-center h-full">
-                  <Archive className="w-12 h-12 mb-2" />
+                  <Archive className="size-12 mb-2" />
                   <span className="text-[10px] font-black uppercase tracking-widest">{t('dashboard.charts.no_dormant', { defaultValue: 'Aucun rossignol' })}</span>
                 </div>
               )}
@@ -200,7 +200,7 @@ export default function StockIntelligence({
             <div className="mt-4 pt-4 border-t border-base-200 shrink-0">
               <Link to="/app/stock-analysis?tab=unsold&days=90" className="btn btn-sm btn-block btn-ghost hover:bg-slate-50 hover:text-slate-700 text-xs font-bold gap-2">
                 {t('dashboard.charts.see_all_dormant', { defaultValue: 'Voir la liste complète' })}
-                <ArrowRight className="w-3 h-3" />
+                <ArrowRight className="size-3" />
               </Link>
             </div>
           </div>
@@ -215,7 +215,7 @@ export default function StockIntelligence({
                 onClick={() => navigate('/app/stock-analysis?tab=overstock')}
               >
                 <div className="p-2 bg-orange-100 text-orange-600 rounded-xl">
-                  <TrendingUp className="w-5 h-5" />
+                  <TrendingUp className="size-5" />
                 </div>
                 <div>
                   <h2 className="text-xs font-black text-base-content tracking-tight uppercase">Surstock</h2>
@@ -235,7 +235,7 @@ export default function StockIntelligence({
                 overstockItems.map((p: any, i: number) => (
                   <div key={p.id} className="flex items-center justify-between p-3 rounded-xl bg-orange-50/60 border border-orange-100 hover:border-orange-300 transition-all group">
                     <div className="flex items-center gap-3 min-w-0">
-                      <span className="text-xs font-black text-orange-500 bg-orange-100 w-6 h-6 flex items-center justify-center rounded-lg border border-orange-200 shrink-0">{i + 1}</span>
+                      <span className="text-xs font-black text-orange-500 bg-orange-100 size-6 flex items-center justify-center rounded-lg border border-orange-200 shrink-0">{i + 1}</span>
                       <div className="min-w-0">
                         <span className="text-xs font-bold text-base-content truncate block">{p.name}</span>
                         <span className="text-[9px] font-bold text-orange-500/70 uppercase tracking-widest">
@@ -251,7 +251,7 @@ export default function StockIntelligence({
                 ))
               ) : (
                 <div className="flex flex-col items-center justify-center py-12 opacity-20 text-center h-full">
-                  <TrendingUp className="w-12 h-12 mb-2" />
+                  <TrendingUp className="size-12 mb-2" />
                   <span className="text-[10px] font-black uppercase tracking-widest">Aucun surstock détecté</span>
                 </div>
               )}
@@ -263,7 +263,7 @@ export default function StockIntelligence({
                 className="btn btn-sm btn-block btn-ghost hover:bg-orange-50 hover:text-orange-700 text-xs font-bold gap-2 border border-orange-100"
               >
                 Voir tous les surstocks
-                <ArrowRight className="w-3 h-3" />
+                <ArrowRight className="size-3" />
               </Link>
             </div>
           </div>
@@ -278,7 +278,7 @@ export default function StockIntelligence({
                 onClick={() => navigate('/app/promis')}
               >
                 <div className="flex items-center gap-2">
-                  <ShoppingBag className="w-5 h-5 text-emerald-600" />
+                  <ShoppingBag className="size-5 text-emerald-600" />
                   <h2 className="text-sm font-black text-emerald-800 tracking-tight uppercase">{t('alerts.promis_title')}</h2>
                 </div>
                 <span className="bg-emerald-600 text-white px-2 py-0.5 rounded-lg text-[10px] font-black">{promisDisponibles.length}</span>
@@ -319,18 +319,18 @@ export default function StockIntelligence({
               >
                 <div className="flex items-center gap-2">
                   <div className="p-2 bg-blue-100 text-blue-600 rounded-lg">
-                    <Package className="w-5 h-5" />
+                    <Package className="size-5" />
                   </div>
                   <h2 className="text-sm font-black text-blue-800 tracking-tight uppercase">Réappro Rayon</h2>
                 </div>
-                <span className="bg-blue-600 text-white px-2.5 py-1 rounded-lg text-xs font-black animate-bounce">
+                <span className="bg-blue-600 text-white px-2.5 py-1 rounded-lg text-xs font-black animate-pulse">
                   {reapproStats.product_count}
                 </span>
               </div>
               
               <div className="flex-grow flex flex-col items-center justify-center p-4 text-center h-[350px]">
-                <div className="w-20 h-20 bg-blue-100/50 rounded-full flex items-center justify-center mb-4 border-4 border-white shadow-inner">
-                  <Package className="w-10 h-10 text-blue-500" />
+                <div className="size-20 bg-blue-100/50 rounded-full flex items-center justify-center mb-4 border-4 border-white shadow-inner">
+                  <Package className="size-10 text-blue-500" />
                 </div>
                 <p className="text-sm font-bold text-blue-900 leading-tight">
                   {reapproStats.product_count} produits en attente de transfert
@@ -350,7 +350,7 @@ export default function StockIntelligence({
               <div className="mt-4 shrink-0">
                 <Link to="/app/reappro-rayon" className="btn btn-sm btn-block btn-primary bg-blue-600 hover:bg-blue-700 border-none font-black text-[10px] uppercase tracking-widest gap-2">
                   Aller au menu réappro
-                  <ArrowRight className="w-3.5 h-3.5" />
+                  <ArrowRight className="size-3.5" />
                 </Link>
               </div>
             </div>
@@ -366,7 +366,7 @@ export default function StockIntelligence({
                 onClick={() => navigate('/app/ruptures')}
               >
                 <div className="p-2 bg-amber-100 text-amber-600 rounded-xl">
-                  <Package className="w-5 h-5" />
+                  <Package className="size-5" />
                 </div>
                 <div>
                   <h2 className="text-xs font-black text-base-content tracking-tight uppercase">{t('alerts.stock_title')}</h2>
@@ -380,14 +380,14 @@ export default function StockIntelligence({
             <div className="space-y-3 flex-grow overflow-y-auto pr-1 custom-scrollbar h-[350px]">
               {lowStockItems.length === 0 ? (
                 <div className="text-[10px] font-black uppercase tracking-widest text-base-content/30 text-center py-6 border-2 border-dashed border-base-200 rounded-xl h-full flex items-center justify-center">
-                  <ShoppingBag className="w-8 h-8 mb-2 opacity-20" />
+                  <ShoppingBag className="size-8 mb-2 opacity-20" />
                   {t('alerts.no_stock_alerts')}
                 </div>
               ) : (
                 lowStockItems.slice(0, 10).map((item, i) => (
                   <div key={i} className={`flex items-center justify-between p-3 rounded-xl border transition-all ${item.stock <= 0 ? 'bg-red-50 border-red-100 shadow-sm' : 'bg-amber-50 border-amber-100'}`}>
                     <div className="flex items-center gap-3 min-w-0">
-                      <div className={`w-1.5 h-1.5 rounded-full ${item.stock <= 0 ? 'bg-red-500 animate-pulse' : 'bg-amber-500'}`}></div>
+                      <div className={`size-1.5 rounded-full ${item.stock <= 0 ? 'bg-red-500 animate-pulse' : 'bg-amber-500'}`}></div>
                       <div className="flex flex-col min-w-0">
                           <span className="text-xs font-black text-base-content truncate">{item.name}</span>
                           {item.status && item.status !== 'Rupture' && item.status !== t('alerts.rupture') && (
@@ -448,7 +448,7 @@ export default function StockIntelligence({
           <div className="card-body p-6 flex flex-col h-full">
             <div className="flex items-center gap-3 mb-6 shrink-0">
               <div className="p-2 bg-amber-100 text-amber-600 rounded-xl">
-                <Medal className="w-5 h-5" />
+                <Medal className="size-5" />
               </div>
               <div>
                 <h2 className="text-sm font-black text-base-content tracking-tight uppercase">{t('dashboard.charts.top_products', { defaultValue: 'Top Produits' })}</h2>
@@ -460,7 +460,7 @@ export default function StockIntelligence({
                 stats.top_products.map((p: any, i: number) => (
                   <div key={p.id} className="flex items-center justify-between p-3 rounded-xl bg-base-200/30 border border-base-300/50 hover:border-amber-200 transition-all group">
                     <div className="flex items-center gap-3 min-w-0">
-                      <span className="text-xs font-black text-amber-600 bg-amber-50 w-6 h-6 flex items-center justify-center rounded-lg border border-amber-100">{i + 1}</span>
+                      <span className="text-xs font-black text-amber-600 bg-amber-50 size-6 flex items-center justify-center rounded-lg border border-amber-100">{i + 1}</span>
                       <span className="text-xs font-bold text-base-content truncate">{p.name}</span>
                     </div>
                     <div className="flex flex-col items-end">
@@ -471,7 +471,7 @@ export default function StockIntelligence({
                 ))
               ) : (
                 <div className="flex flex-col items-center justify-center py-12 opacity-20 text-center h-full">
-                  <ShoppingBag className="w-12 h-12 mb-2" />
+                  <ShoppingBag className="size-12 mb-2" />
                   <span className="text-[10px] font-black uppercase tracking-widest">{t('dashboard.charts.no_sales', { defaultValue: 'Aucune vente enregistrée' })}</span>
                 </div>
               )}

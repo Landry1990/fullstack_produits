@@ -42,7 +42,7 @@ export default function SupplierDashboard({ onViewAllDeadlines }: SupplierDashbo
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center h-64 gap-4">
-        <RefreshCw className="w-8 h-8 text-primary animate-spin" />
+        <RefreshCw className="size-8 text-primary animate-spin" />
         <p className="text-sm font-bold text-base-content/40 uppercase tracking-widest animate-pulse">{t('providers:dashboard.loading')}</p>
       </div>
     );
@@ -51,7 +51,7 @@ export default function SupplierDashboard({ onViewAllDeadlines }: SupplierDashbo
   if (error || !stats) {
     return (
       <div className="alert alert-error shadow-lg rounded-2xl">
-        <AlertCircle className="w-6 h-6" />
+        <AlertCircle className="size-6" />
         <span>{error || t('providers:messages.load_error')}</span>
         <button className="btn btn-sm btn-ghost" onClick={refresh}>{t('common:retry')}</button>
       </div>
@@ -108,8 +108,8 @@ export default function SupplierDashboard({ onViewAllDeadlines }: SupplierDashbo
                 <p className="text-[10px] font-black uppercase tracking-widest text-base-content/40 leading-tight">
                   {card.title}
                 </p>
-                <div className={`w-10 h-10 rounded-2xl flex items-center justify-center shrink-0 ${card.alert ? 'animate-pulse' : ''}`} style={{ background: card.accent + '15', color: card.accent }}>
-                  <card.icon className="w-5 h-5" />
+                <div className={`size-10 rounded-2xl flex items-center justify-center shrink-0 ${card.alert ? 'animate-pulse' : ''}`} style={{ background: card.accent + '15', color: card.accent }}>
+                  <card.icon className="size-5" />
                 </div>
               </div>
 
@@ -136,7 +136,7 @@ export default function SupplierDashboard({ onViewAllDeadlines }: SupplierDashbo
           <div className="flex items-center justify-between px-6 py-5 border-b border-base-100 bg-slate-50/50">
             <div className="flex items-center gap-3">
               <div className="p-2.5 bg-primary/10 text-primary rounded-2xl">
-                <TrendingUp className="w-5 h-5" />
+                <TrendingUp className="size-5" />
               </div>
               <div>
                 <h2 className="text-sm font-black text-base-content tracking-tight uppercase">{t('providers:dashboard.charts.evolution_title')}</h2>
@@ -144,7 +144,7 @@ export default function SupplierDashboard({ onViewAllDeadlines }: SupplierDashbo
               </div>
             </div>
             <button onClick={refresh} className="btn btn-ghost btn-circle btn-xs opacity-40 hover:opacity-100 transition-opacity">
-               <RefreshCw className="w-3 h-3" />
+               <RefreshCw className="size-3" />
             </button>
           </div>
           
@@ -195,7 +195,7 @@ export default function SupplierDashboard({ onViewAllDeadlines }: SupplierDashbo
         <div className="bg-base-100 border border-base-200 rounded-3xl shadow-sm overflow-hidden flex flex-col">
           <div className="flex items-center gap-3 px-6 py-5 border-b border-base-100 bg-slate-50/50">
             <div className="p-2.5 bg-amber-100 text-amber-600 rounded-2xl">
-              <PieChartIcon className="w-5 h-5" />
+              <PieChartIcon className="size-5" />
             </div>
             <div>
               <h2 className="text-sm font-black text-base-content tracking-tight uppercase">{t('providers:dashboard.charts.distribution_title')}</h2>
@@ -233,7 +233,7 @@ export default function SupplierDashboard({ onViewAllDeadlines }: SupplierDashbo
               {stats.repartition_dette.map((item, i) => (
                 <div key={i} className="flex items-center justify-between group">
                   <div className="flex items-center gap-2">
-                    <div className="w-2 h-2 rounded-full" style={{ background: COLORS[i % COLORS.length] }} />
+                    <div className="size-2 rounded-full" style={{ background: COLORS[i % COLORS.length] }} />
                     <span className="text-[11px] font-bold text-base-content/70 truncate max-w-[120px]">{item.name}</span>
                   </div>
                   <span className="text-[11px] font-black text-base-content">{formatCurrency(item.value)}</span>
@@ -250,7 +250,7 @@ export default function SupplierDashboard({ onViewAllDeadlines }: SupplierDashbo
         <div className="flex items-center justify-between px-6 py-5 border-b border-base-100 bg-slate-50/50">
           <div className="flex items-center gap-3">
             <div className="p-2.5 bg-emerald-100 text-emerald-600 rounded-2xl">
-              <Calendar className="w-5 h-5" />
+              <Calendar className="size-5" />
             </div>
             <div>
               <h2 className="text-sm font-black text-base-content tracking-tight uppercase">{t('providers:dashboard.deadlines.title')}</h2>
@@ -261,7 +261,7 @@ export default function SupplierDashboard({ onViewAllDeadlines }: SupplierDashbo
             onClick={onViewAllDeadlines}
             className="btn btn-ghost btn-sm text-[10px] font-black uppercase tracking-widest"
           >
-            {t('providers:dashboard.deadlines.view_all')} <ChevronRight className="w-3 h-3 ml-1" />
+            {t('providers:dashboard.deadlines.view_all')} <ChevronRight className="size-3 ml-1" />
           </button>
         </div>
 
@@ -314,7 +314,7 @@ export default function SupplierDashboard({ onViewAllDeadlines }: SupplierDashbo
                   </td>
                   <td className="pr-6 text-right">
                     <button className="btn btn-ghost btn-sm btn-circle opacity-0 group-hover:opacity-100 transition-opacity">
-                      <ArrowUpRight className="w-4 h-4" />
+                      <ArrowUpRight className="size-4" />
                     </button>
                   </td>
                 </tr>

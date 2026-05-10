@@ -11,18 +11,21 @@ export default function DisplayAlertModal({ alerts, onAcknowledge }: DisplayAler
     const { t } = useTranslation(['common']);
     const currentAlert = alerts[0];
 
+    const onAcknowledgeRef = React.useRef(onAcknowledge);
+    useEffect(() => { onAcknowledgeRef.current = onAcknowledge; });
+
     // Handle Enter to dismiss when open
     useEffect(() => {
         if (!currentAlert) return;
         const handleKeyDown = (e: KeyboardEvent) => {
             if (e.key === 'Enter') {
                 e.preventDefault();
-                onAcknowledge();
+                onAcknowledgeRef.current();
             }
         };
         window.addEventListener('keydown', handleKeyDown);
         return () => window.removeEventListener('keydown', handleKeyDown);
-    }, [currentAlert, onAcknowledge]);
+    }, [currentAlert]);
 
     if (!currentAlert) return null;
 
@@ -37,7 +40,7 @@ export default function DisplayAlertModal({ alerts, onAcknowledge }: DisplayAler
                     ? `🚨 ALERTE CRITIQUE : ${currentAlert.title}` 
                     : (currentAlert.type === 'product' ? `⚠️ Alerte Produit : ${currentAlert.title}` : `⚠️ Alerte Client : ${currentAlert.title}`)
             }
-            icon={isBlocking ? <span className="text-error text-3xl animate-bounce">🚨</span> : <span className="text-warning text-2xl">⚠️</span>}
+            icon={isBlocking ? <span className="text-error text-3xl animate-pulse">🚨</span> : <span className="text-warning text-2xl">⚠️</span>}
             gradientFrom={isBlocking ? "error/40" : "error/20"}
             gradientTo={isBlocking ? "error/30" : "warning/10"}
         >

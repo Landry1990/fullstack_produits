@@ -104,9 +104,7 @@ export const useSaveCommande = () => {
             return { commande: updatedCommande, isAutoSave, mode };
         },
         onSuccess: (result) => {
-            if (!result.isAutoSave) {
-                queryClient.invalidateQueries({ queryKey: ['commandes'] });
-            }
+            queryClient.invalidateQueries({ queryKey: ['commandes'] });
             queryClient.setQueryData(['commande', result.commande.id], result.commande);
         },
     });
@@ -144,9 +142,7 @@ export const useUpdateCommandeStatus = () => {
 
     return useMutation({
         mutationFn: async ({ commandeId, status }: { commandeId: number; status: string }) => {
-            await commandeService.update(commandeId, { status });
-            const updated = await commandeService.getById(commandeId);
-            return updated;
+            return await commandeService.update(commandeId, { status });
         },
         onSuccess: (updated) => {
             queryClient.invalidateQueries({ queryKey: ['commandes'] });
@@ -172,12 +168,16 @@ export const useAnnulerReception = () => {
 };
 
 export const useImprimerReception = () => {
+    const queryClient = useQueryClient();
     return useMutation({
         mutationFn: async (commandeId: number) => {
             const blob = await commandeService.imprimerReception(commandeId);
             return { blob, commandeId };
         },
         onSuccess: (result) => {
+            queryClient.invalidateQueries({ queryKey: ['commandes'] });
+            queryClient.invalidateQueries({ queryKey: ['commande', result.commandeId] });
+            
             const url = window.URL.createObjectURL(new Blob([result.blob]));
             const link = document.createElement('a');
             link.href = url;

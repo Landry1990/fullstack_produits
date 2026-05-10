@@ -151,7 +151,7 @@ export const InventaireFilters: React.FC<InventaireFiltersProps> = ({ filters, o
                             className="btn btn-ghost btn-sm text-error hover:bg-error/10"
                             title={t('inventaire.filters.delete_drafts', { defaultValue: 'Supprimer les brouillons' })}
                         >
-                            <Trash2 className="w-5 h-5" />
+                            <Trash2 className="size-5" />
                         </button>
                     )}
 
@@ -160,7 +160,7 @@ export const InventaireFilters: React.FC<InventaireFiltersProps> = ({ filters, o
                         className="btn btn-ghost btn-sm text-base-content/60"
                         title={t('common:refresh', { defaultValue: 'Actualiser' })}
                     >
-                        <RefreshCw className="w-5 h-5" />
+                        <RefreshCw className="size-5" />
                     </button>
                 </div>
             </div>

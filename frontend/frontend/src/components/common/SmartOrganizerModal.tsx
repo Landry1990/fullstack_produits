@@ -108,13 +108,13 @@ export default function SmartOrganizerModal({ isOpen, onClose, targetCategory, o
             onClose={onClose}
             title={t('stock:organisation.smart_organizer.title')}
             subtitle={t('stock:organisation.smart_organizer.subtitle', { name: targetCategory.name })}
-            icon={<Sparkles className="w-6 h-6 text-primary" />}
+            icon={<Sparkles className="size-6 text-primary" />}
             maxWidth="max-w-2xl"
         >
             <div className="p-6 space-y-6">
                 <div className="bg-primary/5 rounded-2xl p-4 border border-primary/10">
                     <p className="text-sm text-primary font-medium flex items-center gap-2">
-                        <AlertCircle className="w-4 h-4" />
+                        <AlertCircle className="size-4" />
                         {t('stock:organisation.smart_organizer.help_text')}
                     </p>
                 </div>
@@ -196,7 +196,7 @@ export default function SmartOrganizerModal({ isOpen, onClose, targetCategory, o
                         </div>
                     ) : (
                         <div className="flex flex-col items-center justify-center p-12 text-base-content/40 gap-2">
-                            <Search className="w-8 h-8 opacity-20" />
+                            <Search className="size-8 opacity-20" />
                             <p className="text-sm italic">{t('stock:organisation.smart_organizer.no_results')}</p>
                         </div>
                     )}
@@ -214,7 +214,7 @@ export default function SmartOrganizerModal({ isOpen, onClose, targetCategory, o
                         {processing ? t('stock:organisation.smart_organizer.processing') : (
                             <>
                                 {t('stock:organisation.smart_organizer.apply_btn', { name: targetCategory.name })}
-                                <ArrowRight className="w-4 h-4 ml-1" />
+                                <ArrowRight className="size-4 ml-1" />
                             </>
                         )}
                     </button>

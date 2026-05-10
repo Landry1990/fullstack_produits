@@ -43,14 +43,14 @@ const UserSessions: React.FC = () => {
     const [disconnectingId, setDisconnectingId] = useState<number | null>(null);
     
     // Daily filters
-    const [startDate, setStartDate] = useState(format(getServerDate(), 'yyyy-MM-dd'));
-    const [endDate, setEndDate] = useState(format(getServerDate(), 'yyyy-MM-dd'));
+    const [startDate, setStartDate] = useState(() => format(getServerDate(), 'yyyy-MM-dd'));
+    const [endDate, setEndDate] = useState(() => format(getServerDate(), 'yyyy-MM-dd'));
     const [selectedUser, setSelectedUser] = useState<string>('');
     const [operators, setOperators] = useState<{id: number, username: string}[]>([]);
 
     // Monthly recap filters
-    const [recapMonth, setRecapMonth] = useState<string>(format(getServerDate(), 'MM'));
-    const [recapYear, setRecapYear] = useState<string>(format(getServerDate(), 'yyyy'));
+    const [recapMonth, setRecapMonth] = useState<string>(() => format(getServerDate(), 'MM'));
+    const [recapYear, setRecapYear] = useState<string>(() => format(getServerDate(), 'yyyy'));
 
     useEffect(() => {
         fetchOperators();
@@ -294,7 +294,7 @@ const UserSessions: React.FC = () => {
                                             <td className="py-4 px-6">
                                                 <div className="flex items-center gap-4">
                                                     <div className="avatar placeholder">
-                                                        <div className="bg-primary/10 text-primary rounded-xl w-10 h-10 flex items-center justify-center font-bold border border-primary/20">
+                                                        <div className="bg-primary/10 text-primary rounded-xl size-10 flex items-center justify-center font-bold border border-primary/20">
                                                             <span>{session.username.charAt(0).toUpperCase()}</span>
                                                         </div>
                                                     </div>
@@ -307,7 +307,7 @@ const UserSessions: React.FC = () => {
                                             <td className="py-4 px-6 text-base-content/70 font-medium">{formatDate(session.date)}</td>
                                             <td className="py-4 px-6">
                                                 <div className="flex items-center gap-2">
-                                                    <div className="w-8 h-8 rounded-lg bg-base-content/5 flex items-center justify-center text-base-content/40">
+                                                    <div className="size-8 rounded-lg bg-base-content/5 flex items-center justify-center text-base-content/40">
                                                         <Monitor size={14} />
                                                     </div>
                                                     <span className="text-sm font-medium text-base-content/60">
@@ -324,19 +324,19 @@ const UserSessions: React.FC = () => {
                                                 <div className="flex items-center justify-end gap-2">
                                                     {session.last_logout ? (
                                                         <div className="badge badge-success badge-sm gap-1 py-3 px-3">
-                                                            <div className="w-1.5 h-1.5 rounded-full bg-success-content opacity-50"></div>
+                                                            <div className="size-1.5 rounded-full bg-success-content opacity-50"></div>
                                                             {t('sessions.closed')}
                                                         </div>
                                                     ) : (
                                                         <>
                                                             {format(getServerDate(), 'yyyy-MM-dd') === session.date ? (
                                                                 <div className="badge badge-info badge-sm gap-1 py-3 px-4 animate-pulse">
-                                                                    <div className="w-1.5 h-1.5 rounded-full bg-info-content"></div>
+                                                                    <div className="size-1.5 rounded-full bg-info-content"></div>
                                                                     {t('sessions.ongoing')}
                                                                 </div>
                                                             ) : (
                                                                 <div className="badge badge-ghost badge-sm gap-1 py-3 px-4 opacity-50 border border-base-content/20">
-                                                                    <div className="w-1.5 h-1.5 rounded-full bg-base-content opacity-30"></div>
+                                                                    <div className="size-1.5 rounded-full bg-base-content opacity-30"></div>
                                                                     {t('sessions.not_closed')}
                                                                 </div>
                                                             )}
@@ -389,7 +389,7 @@ const UserSessions: React.FC = () => {
                                             <td className="py-5 px-6">
                                                 <div className="flex items-center gap-4">
                                                     <div className="avatar placeholder">
-                                                        <div className="bg-secondary/10 text-secondary rounded-xl w-12 h-12 flex items-center justify-center font-bold border border-secondary/20">
+                                                        <div className="bg-secondary/10 text-secondary rounded-xl size-12 flex items-center justify-center font-bold border border-secondary/20">
                                                             <span>{stat.username.charAt(0).toUpperCase()}</span>
                                                         </div>
                                                     </div>

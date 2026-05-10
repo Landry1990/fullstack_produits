@@ -69,9 +69,9 @@ class EcritureComptable(models.Model):
     Une écriture (pièce) comptable regroupant plusieurs lignes.
     """
     date = models.DateField(default=timezone.now)
-    exercice = models.ForeignKey(ExerciceComptable, on_delete=models.PROTECT, related_name='ecritures')
+    exercice = models.ForeignKey(ExerciceComptable, on_delete=models.PROTECT, related_name='ecritures', null=True, blank=True)
     journal = models.ForeignKey(JournalComptable, on_delete=models.PROTECT, related_name='ecritures')
-    numero_piece = models.CharField(max_length=30, unique=True, blank=True, 
+    numero_piece = models.CharField(max_length=30, unique=True, blank=True, null=True,
                                     help_text="Numéro folioté OHADA (EX2026-VT-00001)")
     reference = models.CharField(max_length=100, help_text="N° de facture ou référence pièce")
     libelle = models.CharField(max_length=255)
@@ -91,11 +91,13 @@ class EcritureComptable(models.Model):
 
     def save(self, *args, **kwargs):
         # Validation OHADA: Exercice obligatoire et non cloturé
-        if not self.exercice:
+        if not self.exercice_id:
             raise ValidationError("Une écriture doit obligatoirement appartenir à un exercice comptable.")
         
-        if self.exercice.est_cloture:
-            raise ValidationError(f"L'exercice {self.exercice.nom} est cloturé. Aucune écriture n'est possible.")
+        # Charger l'exercice si pas encore fait (sécurité)
+        exercice = self.exercice
+        if exercice.est_cloture:
+            raise ValidationError(f"L'exercice {exercice.nom} est cloturé. Aucune écriture n'est possible.")
         
         # Génération du numéro de pièce (foliotage OHADA)
         if not self.numero_piece:
@@ -108,14 +110,30 @@ class EcritureComptable(models.Model):
         exercice_nom = self.exercice.nom.replace(' ', '').replace('.', '')[:6]  # EX2026
         journal_code = self.journal.code  # VT, AC, CA, BQ...
         
-        # Compter les écritures existantes pour ce journal et exercice
-        count = EcritureComptable.objects.filter(
+        # Trouver le numéro de séquence le plus élevé pour ce journal et exercice
+        prefix = f"{exercice_nom}-{journal_code}-"
+        last_piece = EcritureComptable.objects.filter(
             exercice=self.exercice,
-            journal=self.journal
-        ).count()
+            journal=self.journal,
+            numero_piece__startswith=prefix
+        ).order_by('-numero_piece').first()
         
-        sequence = str(count + 1).zfill(5)  # 00001, 00002...
-        return f"{exercice_nom}-{journal_code}-{sequence}"
+        if last_piece:
+            try:
+                # Extraire la séquence numérique (ex: 00015 -> 15)
+                last_seq = int(last_piece.numero_piece.split('-')[-1])
+                next_seq = last_seq + 1
+            except (ValueError, IndexError):
+                # Fallback sur le count si le format est bizarre
+                next_seq = EcritureComptable.objects.filter(
+                    exercice=self.exercice,
+                    journal=self.journal
+                ).count() + 1
+        else:
+            next_seq = 1
+        
+        sequence = str(next_seq).zfill(5)  # 00001, 00002...
+        return f"{prefix}{sequence}"
     
     def clean(self):
         super().clean()

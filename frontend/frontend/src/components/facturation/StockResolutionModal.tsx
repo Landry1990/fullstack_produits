@@ -37,17 +37,7 @@ export default function StockResolutionModal({
 }: StockResolutionModalProps) {
   const { t } = useTranslation(['facturation', 'common'])
 
-  // --- Local States for Inputs ---
-  const [localClientName, setLocalClientName] = useState(promisClientName)
-  const [localPhone, setLocalPhone] = useState(promisPhone)
 
-  // Sync local states when modal opens
-  useEffect(() => {
-    if (isOpen) {
-      setLocalClientName(promisClientName)
-      setLocalPhone(promisPhone)
-    }
-  }, [isOpen, promisClientName, promisPhone])
 
   // --- Memoized Data ---
   const conflicts = useMemo(() => stockResolutionItems.map(item => ({
@@ -78,10 +68,8 @@ export default function StockResolutionModal({
   }, [conflicts, setResolutionActions])
 
   const handleConfirm = useCallback(() => {
-    setPromisClientName(localClientName)
-    setPromisPhone(localPhone)
     onConfirm()
-  }, [localClientName, localPhone, setPromisClientName, setPromisPhone, onConfirm])
+  }, [onConfirm])
 
   if (!isOpen) return null
 
@@ -97,7 +85,7 @@ export default function StockResolutionModal({
             <div className="text-xs text-base-content/50 italic px-4">
                 {hasForce && (
                     <span className="flex items-center gap-1.5 text-warning font-bold">
-                        <ShieldAlert className="w-3.5 h-3.5" />
+                        <ShieldAlert className="size-3.5" />
                         {t('stock_resolution.force_warning')}
                     </span>
                 )}
@@ -124,19 +112,19 @@ export default function StockResolutionModal({
                     onClick={() => handleBulkAction('reduce')}
                     className="btn btn-xs btn-outline btn-warning gap-1"
                 >
-                    <ArrowDown className="w-3 h-3" /> {t('stock_resolution.reduce_all')}
+                    <ArrowDown className="size-3" /> {t('stock_resolution.reduce_all')}
                 </button>
                 <button 
                     onClick={() => handleBulkAction('promis')}
                     className="btn btn-xs btn-warning gap-1"
                 >
-                    <History className="w-3 h-3" /> {t('stock_resolution.promis_all')}
+                    <History className="size-3" /> {t('stock_resolution.promis_all')}
                 </button>
                 <button 
                     onClick={() => handleBulkAction('force')}
                     className="btn btn-xs btn-error gap-1 shadow-sm"
                 >
-                    <Zap className="w-3 h-3" /> {t('stock_resolution.force_all')}
+                    <Zap className="size-3" /> {t('stock_resolution.force_all')}
                 </button>
             </div>
         </div>
@@ -162,8 +150,8 @@ export default function StockResolutionModal({
                   <tr key={item.id} className="hover:bg-base-200/20 transition-colors">
                     <td>
                         <div className="flex items-center gap-3">
-                            <div className="w-8 h-8 rounded-lg bg-base-200 flex items-center justify-center">
-                                <Package className="w-4 h-4 opacity-30" />
+                            <div className="size-8 rounded-lg bg-base-200 flex items-center justify-center">
+                                <Package className="size-4 opacity-30" />
                             </div>
                             <div className="flex flex-col">
                                 <span className="font-bold text-sm">{item.nom}</span>
@@ -187,7 +175,7 @@ export default function StockResolutionModal({
                                 }`}
                                 title={t('stock_resolution.reduce')}
                             >
-                                <ArrowDown className="w-3 h-3" /> {t('stock_resolution.reduce')}
+                                <ArrowDown className="size-3" /> {t('stock_resolution.reduce')}
                             </button>
                             <button 
                                 onClick={() => handleSetAction(item.id, 'promis')}
@@ -195,7 +183,7 @@ export default function StockResolutionModal({
                                     currentAction === 'promis' ? 'bg-info text-info-content shadow-md font-bold' : 'btn-ghost opacity-40'
                                 }`}
                             >
-                                <History className="w-3 h-3" /> {t('stock_resolution.promised')}
+                                <History className="size-3" /> {t('stock_resolution.promised')}
                             </button>
                             <button 
                                 onClick={() => handleSetAction(item.id, 'force')}
@@ -203,7 +191,7 @@ export default function StockResolutionModal({
                                     currentAction === 'force' ? 'bg-error text-error-content shadow-md font-bold' : 'btn-ghost opacity-40'
                                 }`}
                             >
-                                <Zap className="w-3 h-3" /> {t('stock_resolution.force')}
+                                <Zap className="size-3" /> {t('stock_resolution.force')}
                             </button>
                         </div>
                     </td>
@@ -217,7 +205,7 @@ export default function StockResolutionModal({
         {hasPromis && (
             <div className="p-6 bg-info/5 rounded-2xl border border-info/10 shadow-inner space-y-4">
                 <div className="flex items-center gap-2 text-info mb-1">
-                    <History className="w-4 h-4" />
+                    <History className="size-4" />
                     <h4 className="text-xs font-black uppercase tracking-widest">{t('promis:details')}</h4>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -228,8 +216,8 @@ export default function StockResolutionModal({
                         <input 
                             type="text" 
                             className="input input-bordered focus:input-info rounded-xl bg-base-100" 
-                            value={localClientName}
-                            onChange={(e) => setLocalClientName(e.target.value)}
+                            value={promisClientName}
+                            onChange={(e) => setPromisClientName(e.target.value)}
                             placeholder={t('client.manual_placeholder')}
                         />
                     </div>
@@ -240,8 +228,8 @@ export default function StockResolutionModal({
                         <input 
                             type="text" 
                             className="input input-bordered focus:input-info rounded-xl bg-base-100" 
-                            value={localPhone}
-                            onChange={(e) => setLocalPhone(e.target.value)}
+                            value={promisPhone}
+                            onChange={(e) => setPromisPhone(e.target.value)}
                             placeholder={t('stock_resolution.phone_number_placeholder')}
                         />
                     </div>

@@ -107,7 +107,7 @@ export const ReportFilters: React.FC<ReportFiltersProps> = ({
             {/* Presets Toolbar */}
             <div className="flex flex-wrap items-center gap-3 border-b border-base-200 pb-4">
                 <div className="flex items-center gap-2 text-xs font-black uppercase tracking-widest text-base-content/40">
-                    <History className="w-3 h-3" />
+                    <History className="size-3" />
                     Mes Configurations :
                 </div>
                 {presetList.filter(p => p.queryId === selectedQuery.id).map(preset => (
@@ -122,7 +122,7 @@ export const ReportFilters: React.FC<ReportFiltersProps> = ({
                             onClick={() => presets.delete(preset.id)}
                             className="btn btn-xs btn-circle btn-ghost opacity-0 group-hover:opacity-100 text-error transition-all"
                         >
-                            <Trash2 className="w-3 h-3" />
+                            <Trash2 className="size-3" />
                         </button>
                     </div>
                 ))}
@@ -133,7 +133,7 @@ export const ReportFilters: React.FC<ReportFiltersProps> = ({
                     }}
                     className="btn btn-xs btn-primary btn-outline rounded-full gap-2"
                 >
-                    <Save className="w-3 h-3" />
+                    <Save className="size-3" />
                     Sauvegarder
                 </button>
             </div>
@@ -240,7 +240,7 @@ export const ReportFilters: React.FC<ReportFiltersProps> = ({
                         {param.type === 'client_id' && (
                             <div className="relative group">
                                 <div className="absolute left-3 top-1/2 -translate-y-1/2 text-base-content/30 group-focus-within:text-primary transition-colors">
-                                    <Search className="w-4 h-4" />
+                                    <Search className="size-4" />
                                 </div>
                                 <input
                                     type="text"
@@ -268,8 +268,8 @@ export const ReportFilters: React.FC<ReportFiltersProps> = ({
                                                         clientActions.setShowDropdown(false);
                                                     }}
                                                 >
-                                                    <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary">
-                                                        <User className="w-4 h-4" />
+                                                    <div className="size-8 rounded-full bg-primary/10 flex items-center justify-center text-primary">
+                                                        <User className="size-4" />
                                                     </div>
                                                     <div className="flex-1">
                                                         <div className="font-bold text-sm">{client.name}</div>
@@ -286,7 +286,7 @@ export const ReportFilters: React.FC<ReportFiltersProps> = ({
                         {param.type === 'fournisseur_id' && (
                             <div className="relative group">
                                 <div className="absolute left-3 top-1/2 -translate-y-1/2 text-base-content/30 group-focus-within:text-primary transition-colors">
-                                    <Search className="w-4 h-4" />
+                                    <Search className="size-4" />
                                 </div>
                                 <input
                                     type="text"
@@ -314,8 +314,8 @@ export const ReportFilters: React.FC<ReportFiltersProps> = ({
                                                         supplierActions.setShowDropdown(false);
                                                     }}
                                                 >
-                                                    <div className="w-8 h-8 rounded-full bg-success/10 flex items-center justify-center text-success">
-                                                        <Truck className="w-4 h-4" />
+                                                    <div className="size-8 rounded-full bg-success/10 flex items-center justify-center text-success">
+                                                        <Truck className="size-4" />
                                                     </div>
                                                     <div className="flex-1">
                                                         <div className="font-bold text-sm">{supplier.name}</div>
@@ -331,7 +331,7 @@ export const ReportFilters: React.FC<ReportFiltersProps> = ({
                         {param.type === 'vendeur_id' && (
                             <div className="relative group">
                                 <div className="absolute left-3 top-1/2 -translate-y-1/2 text-base-content/30 group-focus-within:text-primary transition-colors">
-                                    <Search className="w-4 h-4" />
+                                    <Search className="size-4" />
                                 </div>
                                 <input
                                     type="text"
@@ -359,8 +359,8 @@ export const ReportFilters: React.FC<ReportFiltersProps> = ({
                                                         userActions.setShowDropdown(false);
                                                     }}
                                                 >
-                                                    <div className="w-8 h-8 rounded-full bg-info/10 flex items-center justify-center text-info">
-                                                        <Users className="w-4 h-4" />
+                                                    <div className="size-8 rounded-full bg-info/10 flex items-center justify-center text-info">
+                                                        <Users className="size-4" />
                                                     </div>
                                                     <div className="flex-1">
                                                         <div className="font-bold text-sm">{user.username}</div>
@@ -376,7 +376,7 @@ export const ReportFilters: React.FC<ReportFiltersProps> = ({
                         {param.type === 'famille_id' && (
                             <div className="relative group">
                                 <div className="absolute left-3 top-1/2 -translate-y-1/2 text-base-content/30 group-focus-within:text-primary transition-colors">
-                                    <Search className="w-4 h-4" />
+                                    <Search className="size-4" />
                                 </div>
                                 <input
                                     type="text"
@@ -404,8 +404,8 @@ export const ReportFilters: React.FC<ReportFiltersProps> = ({
                                                         familleActions.setShowDropdown(false);
                                                     }}
                                                 >
-                                                    <div className="w-8 h-8 rounded-full bg-warning/10 flex items-center justify-center text-warning">
-                                                        <Tag className="w-4 h-4" />
+                                                    <div className="size-8 rounded-full bg-warning/10 flex items-center justify-center text-warning">
+                                                        <Tag className="size-4" />
                                                     </div>
                                                     <div className="flex-1">
                                                         <div className="font-bold text-sm">{famille.nom}</div>
@@ -443,12 +443,13 @@ export const ReportFilters: React.FC<ReportFiltersProps> = ({
                                 </span>
                             </div>
                         )}
-                        {param.type === 'fields_selector' && param.options && (
+
+                        {param.type === 'fields_selector' && param.options && (
                             <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center">
                                 {/* Condition Builder */}
                                 <div className="dropdown dropdown-bottom dropdown-start">
                                     <label tabIndex={0} className="btn btn-outline btn-sm rounded-xl gap-2 h-12 px-6 border-base-300 hover:bg-base-200 hover:border-base-content/20 text-base-content/70">
-                                        <Filter className="w-4 h-4 text-primary" />
+                                        <Filter className="size-4 text-primary" />
                                         <span>{t('dynamic_constructor.conditions_title')}</span>
                                         {currentConditions.length > 0 && (
                                             <div className="badge badge-secondary badge-sm ml-1">{currentConditions.length}</div>
@@ -457,7 +458,7 @@ export const ReportFilters: React.FC<ReportFiltersProps> = ({
                                     <div tabIndex={0} className="dropdown-content z-[100] p-6 shadow-2xl bg-base-100 rounded-3xl border border-base-300 w-[320px] sm:w-[580px] mt-2 animate-in slide-in-from-top-2 duration-300">
                                         <div className="flex items-center justify-between mb-6">
                                             <div className="text-xs font-black uppercase tracking-widest text-base-content/40 flex items-center gap-2">
-                                                <Filter className="w-3 h-3" />
+                                                <Filter className="size-3" />
                                                 {t('dynamic_constructor.conditions_title')}
                                             </div>
                                             
@@ -554,7 +555,7 @@ export const ReportFilters: React.FC<ReportFiltersProps> = ({
                                                                 setParam('conditions', JSON.stringify(newConds));
                                                             }}
                                                         >
-                                                            <X className="w-4 h-4" />
+                                                            <X className="size-4" />
                                                         </button>
                                                     </div>
                                                 );
@@ -568,7 +569,7 @@ export const ReportFilters: React.FC<ReportFiltersProps> = ({
                                                 setParam('conditions', JSON.stringify(newConds));
                                             }}
                                         >
-                                            <Plus className="w-4 h-4" />
+                                            <Plus className="size-4" />
                                             {t('dynamic_constructor.add_condition')}
                                         </button>
                                     </div>
@@ -577,7 +578,7 @@ export const ReportFilters: React.FC<ReportFiltersProps> = ({
                                 {/* Fields Selector Dropdown */}
                                 <div className="dropdown dropdown-bottom dropdown-end">
                                     <label tabIndex={0} className="btn btn-outline btn-sm rounded-xl gap-2 h-12 px-6 border-base-300 hover:bg-base-200 hover:border-base-content/20 text-base-content/70">
-                                        <LayoutPanelTop className="w-4 h-4" />
+                                        <LayoutPanelTop className="size-4" />
                                         <span>{t('dynamic_constructor.select_columns')}</span>
                                         <div className="badge badge-primary badge-sm ml-1">
                                             {(params[param.key] || '').split(',').filter(Boolean).length}
@@ -585,7 +586,7 @@ export const ReportFilters: React.FC<ReportFiltersProps> = ({
                                     </label>
                                     <div tabIndex={0} className="dropdown-content z-[100] p-4 shadow-2xl bg-base-100 rounded-2xl border border-base-300 w-[300px] sm:w-[450px] mt-2 animate-in slide-in-from-top-2 duration-300">
                                         <div className="text-xs font-black uppercase tracking-widest text-base-content/40 mb-4 flex items-center gap-2">
-                                            <LayoutPanelTop className="w-3 h-3" />
+                                            <LayoutPanelTop className="size-3" />
                                             {t('dynamic_constructor.table_composition')}
                                         </div>
                                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-[350px] overflow-y-auto custom-scrollbar pr-2">

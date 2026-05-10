@@ -32,7 +32,7 @@ const PriceEvolutionChart = ({ achats, t }: { achats: any[]; t: any }) => {
     const [selectedFournisseur, setSelectedFournisseur] = useState<string>('all');
 
     const fournisseurs = useMemo(() => {
-        const names = Array.from(new Set(achats.map((a) => a.fournisseur_name).filter(Boolean)));
+        const names = Array.from(new Set(achats.flatMap((a) => a.fournisseur_name ? [a.fournisseur_name] : [])));
         return names as string[];
     }, [achats]);
 
@@ -466,7 +466,7 @@ export const ProductTabsContent: React.FC<ProductTabsContentProps> = ({
             </div>
             <div className="stat bg-base-200/30 rounded-2xl border border-base-200 p-6">
                <div className="stat-title text-sm font-bold uppercase tracking-wider text-base-content/40">{t('products:detail.price.margin_percent')}</div>
-              <div className="stat-value text-2xl font-black text-success">{Number(selectedProduit.pourcentage_marge || 0).toFixed(0)}%</div>
+              <div className="stat-value text-2xl font-black text-success">{Number(selectedProduit.pourcentage_marge || 0).toFixed(1)}%</div>
             </div>
             <div className="stat bg-base-200/30 rounded-2xl border border-base-200 p-6">
                <div className="stat-title text-sm font-bold uppercase tracking-wider text-base-content/40">{t('products:detail.price.margin_coeff')}</div>

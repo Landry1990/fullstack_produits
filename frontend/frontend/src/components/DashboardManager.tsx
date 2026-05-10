@@ -67,13 +67,13 @@ export default function DashboardManager() {
                                 className="btn btn-ghost btn-circle btn-md hover:bg-base-200"
                                 title={t('manager_dashboard.settings_tooltip')}
                             >
-                                <Settings className="w-5 h-5 text-base-content/70" />
+                                <Settings className="size-5 text-base-content/70" />
                             </button>
                             <button 
                                 onClick={() => actions.openObjectiveModal()}
                                 className="btn btn-primary btn-md rounded-xl shadow-sm gap-2"
                             >
-                                <PlusCircle className="w-5 h-5" />
+                                <PlusCircle className="size-5" />
                                 <span className="font-bold hidden sm:inline">
                                     {t('manager_dashboard.set_objective', 'Fixer un Objectif')}
                                 </span>

@@ -1,9 +1,8 @@
 import { useTranslation } from 'react-i18next'
 
-interface ActionButtonsProps {
+interface BaseActionProps {
   onPayment: () => void
   onProforma: () => void
-  onBonDeLivraison: () => void
   onSuspend: () => void
   onCancel: () => void
   isValid: boolean
@@ -13,10 +12,110 @@ interface ActionButtonsProps {
   setIsFactureA4?: (v: boolean) => void
   onScanOrdonnance?: () => void
   loading?: boolean
+}
+
+interface ActionButtonsProps extends BaseActionProps {
+  onBonDeLivraison: () => void
   isSidebarStyle?: boolean
 }
 
-export default function ActionButtons({
+function SidebarActions({
+  onPayment,
+  onProforma,
+  onSuspend,
+  onCancel,
+  isValid,
+  isRetrocession = false,
+  setIsRetrocession,
+  isFactureA4 = false,
+  setIsFactureA4,
+  onScanOrdonnance,
+  loading = false,
+}: BaseActionProps) {
+  const { t } = useTranslation(['facturation', 'common'])
+
+  return (
+    <div className="flex flex-col gap-3">
+      {/* Modes Bar */}
+      <div className="flex items-center justify-between gap-2 px-1">
+          <label className="flex items-center gap-2 cursor-pointer group">
+            <input 
+              type="checkbox" 
+              checked={isRetrocession} 
+              onChange={(e) => setIsRetrocession?.(e.target.checked)}
+              className="checkbox checkbox-xs checkbox-warning" 
+            />
+            <span className="text-xs uppercase font-bold text-base-content/40 group-hover:text-warning transition-colors">{t('facturation:actions.retrocession_mode')}</span>
+          </label>
+          <label className="flex items-center gap-2 cursor-pointer group">
+            <input 
+              type="checkbox" 
+              checked={isFactureA4} 
+              onChange={(e) => setIsFactureA4?.(e.target.checked)}
+              className="checkbox checkbox-xs checkbox-info" 
+            />
+            <span className="text-xs uppercase font-bold text-base-content/40 group-hover:text-info transition-colors">Format A4</span>
+          </label>
+      </div>
+
+      {/* Scanner Action */}
+      <button 
+        onClick={onScanOrdonnance}
+        className="btn btn-sm bg-primary/10 border-primary/20 hover:bg-primary/20 text-primary text-xs font-bold uppercase tracking-wider w-full flex items-center gap-2"
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+        Scanner Ordonnance
+      </button>
+
+      {/* Action Grid (Secondary Actions) */}
+      <div className="grid grid-cols-2 gap-2">
+          <button 
+            onClick={onProforma} 
+            disabled={!isValid || loading}
+            className="btn btn-sm bg-base-200 border-base-300 hover:bg-base-300 text-base-content text-xs font-bold uppercase tracking-wider"
+          >
+            Proforma
+          </button>
+          <button 
+            onClick={onSuspend} 
+            disabled={!isValid || loading}
+            className="btn btn-sm bg-base-200 border-base-300 hover:bg-base-300 text-warning text-xs font-bold uppercase tracking-wider"
+          >
+            {t('facturation:actions.suspend_short')}
+          </button>
+      </div>
+
+      {/* Primary Payment Action */}
+      <button
+        onClick={onPayment}
+        disabled={!isValid || loading}
+        className="btn btn-lg btn-primary w-full shadow-2xl shadow-primary/20 group relative overflow-hidden"
+      >
+        <div className="flex items-center justify-center gap-3">
+          {loading ? (
+            <span className="loading loading-spinner"></span>
+          ) : (
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a1 1 0 11-2 0 1 1 0 012 0z" />
+            </svg>
+          )}
+          <span className="text-xl font-black uppercase tracking-widest">{t('facturation:actions.pay')}</span>
+        </div>
+        <kbd className="absolute right-4 kbd kbd-sm bg-primary-focus border-none text-white/60">F9</kbd>
+      </button>
+
+      {/* Cancel Button */}
+      <button 
+        onClick={onCancel}
+        className="btn btn-xs btn-ghost text-error/40 hover:text-error uppercase font-bold tracking-tighter"
+      >
+        {t('facturation:actions.cancel')} (Esc)
+      </button>
+    </div>
+  )
+}
+
+function FooterActions({
   onPayment,
   onProforma,
   onBonDeLivraison,
@@ -29,91 +128,8 @@ export default function ActionButtons({
   setIsFactureA4,
   onScanOrdonnance,
   loading = false,
-  isSidebarStyle
 }: ActionButtonsProps) {
   const { t } = useTranslation(['facturation', 'common'])
-
-  if (isSidebarStyle) {
-    return (
-      <div className="flex flex-col gap-3">
-        {/* Modes Bar */}
-        <div className="flex items-center justify-between gap-2 px-1">
-           <label className="flex items-center gap-2 cursor-pointer group">
-              <input 
-                type="checkbox" 
-                checked={isRetrocession} 
-                onChange={(e) => setIsRetrocession?.(e.target.checked)}
-                className="checkbox checkbox-xs checkbox-warning" 
-              />
-              <span className="text-[10px] uppercase font-bold text-base-content/40 group-hover:text-warning transition-colors">{t('facturation:actions.retrocession_mode')}</span>
-           </label>
-           <label className="flex items-center gap-2 cursor-pointer group">
-              <input 
-                type="checkbox" 
-                checked={isFactureA4} 
-                onChange={(e) => setIsFactureA4?.(e.target.checked)}
-                className="checkbox checkbox-xs checkbox-info" 
-              />
-              <span className="text-[10px] uppercase font-bold text-base-content/40 group-hover:text-info transition-colors">Format A4</span>
-           </label>
-        </div>
-
-        {/* Scanner Action */}
-        <button 
-          onClick={onScanOrdonnance}
-          className="btn btn-sm bg-primary/10 border-primary/20 hover:bg-primary/20 text-primary text-[10px] font-bold uppercase tracking-wider w-full flex items-center gap-2"
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
-          Scanner Ordonnance
-        </button>
-
-        {/* Action Grid (Secondary Actions) */}
-        <div className="grid grid-cols-2 gap-2">
-           <button 
-             onClick={onProforma} 
-             disabled={!isValid || loading}
-             className="btn btn-sm bg-base-200 border-base-300 hover:bg-base-300 text-base-content text-[10px] font-bold uppercase tracking-wider"
-           >
-             Proforma
-           </button>
-           <button 
-             onClick={onSuspend} 
-             disabled={!isValid || loading}
-             className="btn btn-sm bg-base-200 border-base-300 hover:bg-base-300 text-warning text-[10px] font-bold uppercase tracking-wider"
-           >
-             {t('facturation:actions.suspend_short')}
-           </button>
-        </div>
-
-        {/* Primary Payment Action */}
-        <button
-          onClick={onPayment}
-          disabled={!isValid || loading}
-          className="btn btn-lg btn-primary w-full shadow-2xl shadow-primary/20 group relative overflow-hidden"
-        >
-          <div className="flex items-center justify-center gap-3">
-            {loading ? (
-              <span className="loading loading-spinner"></span>
-            ) : (
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a1 1 0 11-2 0 1 1 0 012 0z" />
-              </svg>
-            )}
-            <span className="text-xl font-black uppercase tracking-widest">{t('facturation:actions.pay')}</span>
-          </div>
-          <kbd className="absolute right-4 kbd kbd-sm bg-primary-focus border-none text-white/60">F9</kbd>
-        </button>
-
-        {/* Cancel Button */}
-        <button 
-          onClick={onCancel}
-          className="btn btn-xs btn-ghost text-error/40 hover:text-error uppercase font-bold tracking-tighter"
-        >
-          {t('facturation:actions.cancel')} (Esc)
-        </button>
-      </div>
-    )
-  }
 
   return (
     <div className="bg-base-100 border-t border-base-200 p-2 sm:p-4 shadow-sm shrink-0">
@@ -127,7 +143,7 @@ export default function ActionButtons({
           </label>
           <ul tabIndex={0} className="dropdown-content z-[100] menu p-2 shadow-2xl bg-base-100 border border-base-200 rounded-box w-64 mb-2">
             {/* MODES SECTION */}
-            <li className="menu-title text-[10px] uppercase opacity-50 px-2 mt-1">Modes</li>
+            <li className="menu-title text-xs uppercase opacity-50 px-2 mt-1">Modes</li>
             <li>
                 <label className="flex items-center justify-between cursor-pointer py-2 active:bg-base-200">
                     <span className="text-xs font-medium uppercase">{t('facturation:actions.retrocession_mode')}</span>
@@ -154,7 +170,7 @@ export default function ActionButtons({
             <div className="divider my-1 opacity-50"></div>
 
             {/* DOCUMENTS SECTION */}
-            <li className="menu-title text-[10px] uppercase opacity-50 px-2">Documents</li>
+            <li className="menu-title text-xs uppercase opacity-50 px-2">Documents</li>
             <li>
               <button onClick={onScanOrdonnance} className="py-2.5 text-primary">
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
@@ -177,7 +193,7 @@ export default function ActionButtons({
             <div className="divider my-1 opacity-50"></div>
 
             {/* SALES MANAGEMENT */}
-            <li className="menu-title text-[10px] uppercase opacity-50 px-2">Gestion Vente</li>
+            <li className="menu-title text-xs uppercase opacity-50 px-2">Gestion Vente</li>
             <li>
               <button 
                 onClick={onSuspend} 
@@ -214,7 +230,7 @@ export default function ActionButtons({
           className="btn btn-sm sm:btn-md btn-primary flex-1 max-w-md gap-2 shadow-lg shadow-primary/20 hover:shadow-primary/40 transition-all active:scale-95"
           title={t('facturation:actions.pay_tooltip')}
         >
-          {loading ? <span className="loading loading-spinner w-4 h-4 sm:w-5 sm:h-5"></span> : (
+          {loading ? <span className="loading loading-spinner size-4 sm:w-5 sm:h-5"></span> : (
             <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 sm:h-5 sm:w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a1 1 0 11-2 0 1 1 0 012 0z" /></svg>
           )}
           <span className="font-bold text-xs sm:text-lg uppercase tracking-wider">{t('facturation:actions.pay')}</span>
@@ -223,4 +239,17 @@ export default function ActionButtons({
       </div>
     </div>
   )
+}
+
+/**
+ * ActionButtons Component
+ * 
+ * Refactored to separate Sidebar and Footer logic into distinct sub-components
+ * to avoid prop-flag stacking and improve maintainability.
+ */
+export default function ActionButtons(props: ActionButtonsProps) {
+  if (props.isSidebarStyle) {
+    return <SidebarActions {...props} />
+  }
+  return <FooterActions {...props} />
 }

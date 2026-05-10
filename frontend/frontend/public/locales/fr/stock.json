@@ -151,7 +151,8 @@
         "tabs": {
             "rayons": "Rayons",
             "formes": "Formes",
-            "groupes": "Groupes"
+            "groupes": "Groupes",
+            "motifs": "Motifs d'ajustement"
         },
         "category_manager": {
             "name_label": "Nom du {{type}}",
@@ -187,7 +188,21 @@
             "exclude_zero_stock": "Exclure les produits en rupture de stock",
             "print_btn": "Lancer l'impression",
             "print_no_rayon_title": "Imprimer les produits sans rayon",
-            "no_rayon": "Sans Rayon"
+            "no_rayon": "Sans Rayon",
+            "order_label": "Ordre d'affichage"
+        },
+        "config_option_manager": {
+            "title": "Motifs d'ajustement",
+            "subtitle": "Gérez les motifs personnalisés pour les mouvements de stock",
+            "code_label": "Code (Unique)",
+            "code_placeholder": "EX: PERIME",
+            "label_label": "Libellé (Nom affiché)",
+            "label_placeholder": "Ex: Produit Périmé",
+            "value_label": "Valeur (Optionnelle)",
+            "value_placeholder": "Valeur technique associée...",
+            "active_label": "Motif actif",
+            "update_btn": "Mettre à jour",
+            "save_btn": "Enregistrer"
         },
         "smart_organizer": {
             "title": "Rangement Intelligent",

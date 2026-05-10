@@ -54,7 +54,10 @@ class PrescriptionOcrService {
     
     return {
       rawText: result.data.text,
-      lines: result.data.text ? result.data.text.split('\n').map(l => l.trim()).filter(Boolean) : [],
+      lines: result.data.text ? result.data.text.split('\n').flatMap(l => {
+        const trimmed = l.trim();
+        return trimmed ? [trimmed] : [];
+      }) : [],
       confidence: result.data.confidence || 0,
     };
   }

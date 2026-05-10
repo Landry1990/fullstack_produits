@@ -1143,10 +1143,10 @@ export function useCommandesState(forcedType?: 'LOC' | 'DIR' | 'DIV') {
   const statusOrder: Record<string, number> = { 'PREP': 1, 'ATT': 2, 'CLOT': 3 };
 
   const sortedCommandes = useMemo(() => {
-    let filtered = [...commandes];
+    let filtered = commandes;
     if (filterStatus !== 'ALL') filtered = filtered.filter(c => c.status === filterStatus);
     
-    const sorted = filtered.sort((a, b) => {
+    return filtered.toSorted((a, b) => {
       let valA, valB;
       if (sortKey === 'numero') { valA = a.numero_facture || a.id; valB = b.numero_facture || b.id; }
       else if (sortKey === 'date') { valA = a.date; valB = b.date; }
@@ -1161,7 +1161,6 @@ export function useCommandesState(forcedType?: 'LOC' | 'DIR' | 'DIV') {
       if (valA! > valB!) return sortOrder === 'asc' ? 1 : -1;
       return 0;
     });
-    return sorted;
   }, [commandes, sortKey, sortOrder, fournisseurs, filterStatus, statusOrder]);
 
   function handleProduitCreated(produit: ProduitModel) {
@@ -1173,7 +1172,7 @@ export function useCommandesState(forcedType?: 'LOC' | 'DIR' | 'DIV') {
   const handleSortProduits = useCallback((sortBy: 'chrono' | 'stock' | 'name' | 'qty') => {
     setCommandeSortBy(sortBy);
     setCommandeProduits(prev => {
-      const sorted = [...prev].sort((a, b) => {
+      const sorted = prev.toSorted((a: any, b: any) => {
         if (sortBy === 'chrono') return (a.id || 0) - (b.id || 0);
 
         const prodA = typeof a.produit === 'object' ? a.produit : produitsList.find(p => p.id === a.produit);

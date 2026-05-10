@@ -33,7 +33,7 @@ export const ReportSidebar: React.FC<ReportSidebarProps> = ({ selectedQuery, onS
                         className="md:hidden btn btn-ghost btn-sm btn-circle -mr-1"
                         aria-label={t('common:close', { defaultValue: 'Fermer' }) as string}
                     >
-                        <X className="w-4 h-4" />
+                        <X className="size-4" />
                     </button>
                 )}
             </div>
@@ -51,7 +51,7 @@ export const ReportSidebar: React.FC<ReportSidebarProps> = ({ selectedQuery, onS
                         <div className={`p-2 rounded-lg shrink-0 ${
                             selectedQuery?.id === query.id ? 'bg-primary text-white' : 'bg-base-200 text-base-content/40 group-hover:text-primary transition-colors'
                         }`}>
-                            <FileText className="w-4 h-4" />
+                            <FileText className="size-4" />
                         </div>
                         <div className="flex-1 min-w-0">
                             <div className={`font-bold text-sm truncate ${selectedQuery?.id === query.id ? 'text-primary' : 'text-base-content'}`}>
@@ -61,7 +61,7 @@ export const ReportSidebar: React.FC<ReportSidebarProps> = ({ selectedQuery, onS
                                 {t(`queries.${query.id}.description`, { defaultValue: query.description || '' })}
                             </div>
                         </div>
-                        <ChevronRight className={`w-4 h-4 mt-1 shrink-0 transition-transform ${selectedQuery?.id === query.id ? 'text-primary translate-x-1' : 'text-base-content/20 opacity-0 group-hover:opacity-100'}`} />
+                        <ChevronRight className={`size-4 mt-1 shrink-0 transition-transform ${selectedQuery?.id === query.id ? 'text-primary translate-x-1' : 'text-base-content/20 opacity-0 group-hover:opacity-100'}`} />
                     </button>
                 ))}
             </div>

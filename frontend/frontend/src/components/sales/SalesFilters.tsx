@@ -124,7 +124,7 @@ export const SalesFilters: React.FC<SalesFiltersProps> = ({ filters, onDeleteDra
                         className="btn btn-ghost btn-sm text-error hover:bg-error/10"
                         title={t('sales:actions.delete_drafts')}
                     >
-                        <Trash2 className="w-5 h-5" />
+                        <Trash2 className="size-5" />
                     </button>
 
                     <button
@@ -132,7 +132,7 @@ export const SalesFilters: React.FC<SalesFiltersProps> = ({ filters, onDeleteDra
                         className="btn btn-ghost btn-sm text-base-content/60"
                         title={t('common:refresh')}
                     >
-                        <RefreshCw className="w-5 h-5" />
+                        <RefreshCw className="size-5" />
                     </button>
                 </div>
             </div>

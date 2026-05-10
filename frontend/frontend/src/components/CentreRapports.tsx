@@ -90,7 +90,7 @@ export default function CentreRapports() {
                 {/* Mobile top bar (menu) */}
                 <div className="md:hidden border-b border-base-300 bg-base-100/90 backdrop-blur-sm px-3 py-2 flex items-center justify-between print:hidden z-10">
                     <div className="min-w-0">
-                        <div className="text-[10px] font-black uppercase tracking-widest text-base-content/40">
+                        <div className="text-xs font-black uppercase tracking-widest text-base-content/40">
                             {t('title', { defaultValue: 'Centre de Rapports' })}
                         </div>
                         <div className="text-xs font-bold text-base-content/70 truncate">
@@ -106,7 +106,7 @@ export default function CentreRapports() {
                         className="btn btn-ghost btn-sm btn-circle"
                         aria-label="Ouvrir le menu"
                     >
-                        <Menu className="w-5 h-5" />
+                        <Menu className="size-5" />
                     </button>
                 </div>
 
@@ -120,8 +120,8 @@ export default function CentreRapports() {
                                 <div className="bg-base-100 rounded-2xl shadow-sm border border-base-300 flex flex-col animate-in slide-in-from-top-4 duration-500">
                                     <div className="p-4 sm:p-6 border-b border-base-200 flex flex-col gap-4 md:flex-row md:justify-between md:items-center md:gap-6">
                                         <div className="flex items-center gap-3 sm:gap-4 min-w-0">
-                                            <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center text-primary border border-primary/20">
-                                                <LayoutPanelTop className="w-6 h-6" />
+                                            <div className="size-12 rounded-2xl bg-primary/10 flex items-center justify-center text-primary border border-primary/20">
+                                                <LayoutPanelTop className="size-6" />
                                             </div>
                                             <div>
                                                 <h1 className="text-2xl font-bold text-base-content tracking-tight uppercase">
@@ -139,13 +139,13 @@ export default function CentreRapports() {
                                                 <div className="flex bg-base-200 p-1 rounded-xl border border-base-300 w-full sm:w-auto">
                                                     <button
                                                         onClick={() => actions.setParams({ ...params, grouper_par: '' })}
-                                                        className={`btn btn-sm h-10 rounded-lg flex-1 font-bold uppercase tracking-wider text-[10px] transition-all ${!params.grouper_par ? 'btn-primary shadow' : 'btn-ghost text-base-content/50'}`}
+                                                        className={`btn btn-sm h-10 rounded-lg flex-1 font-bold uppercase tracking-wider text-xs transition-all ${!params.grouper_par ? 'btn-primary shadow' : 'btn-ghost text-base-content/50'}`}
                                                     >
                                                         Par lot
                                                     </button>
                                                     <button
                                                         onClick={() => actions.setParams({ ...params, grouper_par: 'produit' })}
-                                                        className={`btn btn-sm h-10 rounded-lg flex-1 font-bold uppercase tracking-wider text-[10px] transition-all ${params.grouper_par === 'produit' ? 'btn-error shadow' : 'btn-ghost text-base-content/50'}`}
+                                                        className={`btn btn-sm h-10 rounded-lg flex-1 font-bold uppercase tracking-wider text-xs transition-all ${params.grouper_par === 'produit' ? 'btn-error shadow' : 'btn-ghost text-base-content/50'}`}
                                                     >
                                                         ⚠ Par produit
                                                     </button>
@@ -159,7 +159,7 @@ export default function CentreRapports() {
                                                 {loading ? (
                                                     <span className="loading loading-spinner loading-xs"></span>
                                                 ) : (
-                                                    <Play className="w-4 h-4 fill-current group-hover:scale-110 transition-transform" />
+                                                    <Play className="size-4 fill-current group-hover:scale-110 transition-transform" />
                                                 )}
                                                 <span className="font-black uppercase tracking-widest text-xs">
                                                     {t('execute', 'Générer')}
@@ -172,7 +172,7 @@ export default function CentreRapports() {
                                                     onClick={() => window.print()}
                                                     title={t('common:print')}
                                                 >
-                                                    <Printer className="w-4 h-4" />
+                                                    <Printer className="size-4" />
                                                 </button>
                                                 <button 
                                                     className="btn btn-ghost btn-sm h-10 rounded-lg gap-2 text-base-content/60 hover:text-success transition-colors flex-1"
@@ -180,7 +180,7 @@ export default function CentreRapports() {
                                                     disabled={!results}
                                                     title="Exporter Excel"
                                                 >
-                                                    <Download className="w-4 h-4" />
+                                                    <Download className="size-4" />
                                                 </button>
                                             </div>
                                         </div>
@@ -265,8 +265,8 @@ export default function CentreRapports() {
                             </>
                         ) : (
                             <div className="h-[calc(100vh-100px)] flex flex-col items-center justify-center text-base-content/20 animate-in fade-in duration-1000">
-                                <div className="w-32 h-32 rounded-full bg-base-300/30 flex items-center justify-center mb-6 border border-base-300/50">
-                                    <LayoutPanelTop className="w-16 h-16 opacity-20" />
+                                <div className="size-32 rounded-full bg-base-300/30 flex items-center justify-center mb-6 border border-base-300/50">
+                                    <LayoutPanelTop className="size-16 opacity-20" />
                                 </div>
                                 <h2 className="text-2xl font-black uppercase tracking-[0.2em]">
                                     {t('title', 'Centre de Rapports')}
@@ -281,7 +281,7 @@ export default function CentreRapports() {
             </div>
 
             {/* Print Styles */}
-            <style dangerouslySetInnerHTML={{ __html: `
+            <style>{`
                 @media print {
                     .h-screen { height: auto !important; overflow: visible !important; }
                     .flex-1 { overflow: visible !important; }
@@ -290,7 +290,7 @@ export default function CentreRapports() {
                     .shadow-sm, .shadow-lg { shadow: none !important; }
                     .card, .rounded-2xl { border: 1px solid #eee !important; border-radius: 0 !important; }
                 }
-            `}} />
+            `}</style>
         </div>
     );
 }

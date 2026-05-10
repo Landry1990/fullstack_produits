@@ -59,17 +59,17 @@ interface StockDiversResponse {
 
 const GestionDivers: React.FC<{ defaultTab?: 'ca' | 'commandes' | 'stock' }> = ({ defaultTab = 'ca' }) => {
   const { t } = useTranslation();
-  const [activeTab, setActiveTab] = useState<'ca' | 'commandes' | 'stock'>(defaultTab);
+  const [activeTab, setActiveTab] = useState<'ca' | 'commandes' | 'stock'>(() => defaultTab);
   const [loading, setLoading] = useState(false);
   const [ventes, setVentes] = useState<VenteDivers[]>([]);
   const [totalCA, setTotalCA] = useState(0);
   const [totalCount, setTotalCount] = useState(0);
   const [page, setPage] = useState(1);
   const pageSize = 50;
-  const [dateRange, setDateRange] = useState({
+  const [dateRange, setDateRange] = useState(() => ({
     debut: format(new Date(), 'yyyy-MM-dd'),
     fin: format(new Date(), 'yyyy-MM-dd')
-  });
+  }));
   const [stockData, setStockData] = useState<StockDiversResponse | null>(null);
   const [stockLoading, setStockLoading] = useState(false);
   const [valorisation, setValorisation] = useState<'ACHAT' | 'VENTE'>('ACHAT');

@@ -94,8 +94,8 @@ export const AvoirsTable: React.FC<AvoirsTableProps> = ({
     if (avoirs.length === 0) {
         return (
             <div className="flex flex-col items-center justify-center p-12 text-base-content/60 gap-4">
-                <div className="w-16 h-16 rounded-full bg-base-200 flex items-center justify-center">
-                    <svg className="w-8 h-8 opacity-50" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <div className="size-16 rounded-full bg-base-200 flex items-center justify-center">
+                    <svg className="size-8 opacity-50" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
                     </svg>
                 </div>
@@ -122,24 +122,24 @@ export const AvoirsTable: React.FC<AvoirsTableProps> = ({
                     </li>
                     <li>
                         <a onClick={() => onView(avoir)} className="flex items-center gap-3 py-3 hover:bg-info/10 text-info font-medium">
-                            <Eye className="w-4 h-4" /> {t('common:view')}
+                            <Eye className="size-4" /> {t('common:view')}
                         </a>
                     </li>
                     {(avoir.status?.toUpperCase() === 'BROUILLON' || avoir.status?.toUpperCase() === 'BRO') && (
                         <>
                             <li>
                                 <a onClick={() => onEdit(avoir)} className="flex items-center gap-3 py-3 hover:bg-warning/10 text-warning font-medium">
-                                    <Edit className="w-4 h-4" /> {t('common:edit')}
+                                    <Edit className="size-4" /> {t('common:edit')}
                                 </a>
                             </li>
                             <li>
                                 <a onClick={() => onValidate(avoir)} className="flex items-center gap-3 py-3 hover:bg-success/10 text-success font-medium">
-                                    <CheckCircle2 className="w-4 h-4" /> {t('common:validate')}
+                                    <CheckCircle2 className="size-4" /> {t('common:validate')}
                                 </a>
                             </li>
                             <li>
                                 <a onClick={() => onDelete(avoir)} className="flex items-center gap-3 py-3 hover:bg-error/10 text-error font-medium">
-                                    <Trash2 className="w-4 h-4" /> {t('common:delete')}
+                                    <Trash2 className="size-4" /> {t('common:delete')}
                                 </a>
                             </li>
                         </>
@@ -154,13 +154,13 @@ export const AvoirsTable: React.FC<AvoirsTableProps> = ({
                 </li>
                 <li>
                     <a onClick={onBulkValidate} className={`flex items-center gap-3 py-3 hover:bg-success/10 text-success font-medium ${bulkLoading ? 'disabled' : ''}`}>
-                        {bulkLoading ? <span className="loading loading-spinner loading-xs" /> : <Check className="w-4 h-4" />}
+                        {bulkLoading ? <span className="loading loading-spinner loading-xs" /> : <Check className="size-4" />}
                         {t('common:validate_all')}
                     </a>
                 </li>
                 <li>
                     <a onClick={onBulkDelete} className={`flex items-center gap-3 py-3 hover:bg-error/10 text-error font-medium ${bulkLoading ? 'disabled' : ''}`}>
-                        {bulkLoading ? <span className="loading loading-spinner loading-xs" /> : <Trash2 className="w-4 h-4" />}
+                        {bulkLoading ? <span className="loading loading-spinner loading-xs" /> : <Trash2 className="size-4" />}
                         {t('common:delete_all')}
                     </a>
                 </li>
@@ -169,7 +169,7 @@ export const AvoirsTable: React.FC<AvoirsTableProps> = ({
     };
 
     return (
-        <div className="overflow-auto w-full h-full relative">
+        <div className="overflow-auto size-full relative">
             <table className="table table-zebra table-pin-rows w-full text-sm">
                 <thead>
                     <tr className="bg-base-200 text-base-content/70 border-b border-base-300">

@@ -33,7 +33,7 @@ export const StockAnalysisStats: React.FC<StockAnalysisStatsProps> = ({
         {
             label: t('stock:analyse.stats.supplier'),
             value: supplierName || t('stock:analyse.filters.all_suppliers'),
-            icon: <Info className="w-6 h-6" />,
+            icon: <Info className="size-6" />,
             color: 'primary',
             bg: 'bg-primary/10',
             text: 'text-primary',
@@ -42,7 +42,7 @@ export const StockAnalysisStats: React.FC<StockAnalysisStatsProps> = ({
         {
             label: t('stock:analyse.stats.item_count'),
             value: totalItems,
-            icon: <Package className="w-6 h-6" />,
+            icon: <Package className="size-6" />,
             color: 'warning',
             bg: 'bg-warning/10',
             text: 'text-warning',
@@ -51,7 +51,7 @@ export const StockAnalysisStats: React.FC<StockAnalysisStatsProps> = ({
         {
             label: getValueLabel(),
             value: `${formatCurrency(Math.round(totalValue))}`,
-            icon: <TrendingUp className="w-6 h-6" />,
+            icon: <TrendingUp className="size-6" />,
             color: 'error',
             bg: 'bg-error/10',
             text: 'text-error',
@@ -61,7 +61,7 @@ export const StockAnalysisStats: React.FC<StockAnalysisStatsProps> = ({
             label: t('stock:analyse.stats.critical_alerts'),
             value: criticalCount,
             subValue: `+ ${warningCount} ${t('stock:analyse.shortage.warnings')}`,
-            icon: <AlertTriangle className="w-6 h-6" />,
+            icon: <AlertTriangle className="size-6" />,
             color: 'error',
             bg: 'bg-error/10',
             text: 'text-error',

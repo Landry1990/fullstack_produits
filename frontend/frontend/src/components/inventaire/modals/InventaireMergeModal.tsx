@@ -36,7 +36,7 @@ export function InventaireMergeModal({
         <dialog className={`modal ${showMergeModal ? 'modal-open' : ''}`}>
              <div className="modal-box max-w-md rounded-2xl shadow-2xl border border-base-300 p-0 overflow-hidden bg-base-100">
                 <div className="p-6 border-b border-base-200 bg-base-50/50 flex items-center gap-4">
-                     <div className="w-12 h-12 rounded-xl bg-info/10 flex items-center justify-center">
+                     <div className="size-12 rounded-xl bg-info/10 flex items-center justify-center">
                         <ArrowUpDown className="h-6 w-6 text-info" />
                      </div>
                      <div>

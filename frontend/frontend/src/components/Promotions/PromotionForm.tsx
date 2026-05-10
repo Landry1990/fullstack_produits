@@ -322,7 +322,7 @@ const PromotionForm: React.FC<PromotionFormProps> = ({ onClose, onSave, initialD
                                                     onClick={() => addProduct(p)}
                                                 >
                                                     <div className="flex items-center gap-4">
-                                                        <div className="w-10 h-10 rounded-lg bg-base-200 flex items-center justify-center text-base-content/40 font-bold">
+                                                        <div className="size-10 rounded-lg bg-base-200 flex items-center justify-center text-base-content/40 font-bold">
                                                             {p.name.charAt(0)}
                                                         </div>
                                                         <div>

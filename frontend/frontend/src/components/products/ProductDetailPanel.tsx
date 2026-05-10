@@ -39,7 +39,7 @@ export const ProductDetailPanel: React.FC<ProductDetailPanelProps> = (props) => 
   if (!selectedProduit) {
     return (
       <div className="md:col-span-2 bg-base-100 rounded-lg shadow flex flex-col items-center justify-center text-base-content/30 p-10 text-center">
-        <div className="w-20 h-20 rounded-full bg-base-200/50 flex items-center justify-center mb-4">
+        <div className="size-20 rounded-full bg-base-200/50 flex items-center justify-center mb-4">
           <span className="text-3xl">📦</span>
         </div>
         <p className="font-bold text-base-content/40">{t('products:detail.none_selected')}</p>

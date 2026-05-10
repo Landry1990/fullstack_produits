@@ -18,6 +18,7 @@
     "dashboard": {
         "title": "Tableau de Bord",
         "products": "Produits (Ventes)",
+        "revenue": "Chiffre d'affaires",
         "expenses": "Charges (Dépenses)",
         "net_result": "Résultat Net",
         "profit": "BÉNÉFICE",
@@ -40,7 +41,8 @@
             "label": "Libellé",
             "debit": "Débit",
             "credit": "Crédit"
-        }
+        },
+        "items_label": "{{label}}"
     },
     "balance": {
         "cols": {

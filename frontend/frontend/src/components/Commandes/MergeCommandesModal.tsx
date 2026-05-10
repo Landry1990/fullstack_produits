@@ -1,4 +1,4 @@
-﻿import { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import api from '../../services/api';
 import { toast } from 'react-hot-toast';
@@ -104,9 +104,9 @@ export default function MergeCommandesModal({
                             {t('orders:merge_modal.title', { count: selectedOrderIds.size })}
                         </h3>
                         
-                        <p className="text-sm text-base-content/70 mb-4"
-                           dangerouslySetInnerHTML={{ __html: t('orders:merge_modal.description') }}
-                        />
+                        <p className="text-sm text-base-content/70 mb-4">
+                           {t('orders:merge_modal.description')}
+                        </p>
 
                         {/* Sélection du fournisseur final */}
                         <div className="form-control mb-4">

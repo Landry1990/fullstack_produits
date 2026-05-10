@@ -14,7 +14,7 @@ import { useClinicalCheck } from './useClinicalCheck'
 import { useSidebar } from '../context/SidebarContext'
 import { useTranslation } from 'react-i18next'
 import { useSudo } from './useSudo'
-import { useSaleCompletion } from './useSaleCompletion'
+import useSaleCompletion from './useSaleCompletion'
 import { useFacturationKeyboardShortcuts } from './useFacturationKeyboardShortcuts'
 import { useFacturationUI } from './useFacturationUI'
 import { useFacturationSession } from './useFacturationSession'
@@ -173,7 +173,7 @@ export function useFacturationState() {
 
   // --- Sale Completion ---
   const { completeSale, completeExistingInvoicePayment, loading: saleLoading } = useSaleCompletion({
-    onSuccess: (result) => {
+    onSuccess: (result: any) => {
       if (result.success && result.facture) {
         setSuccessInfo(result.facture)
         ui.setTicketCaisse(result.ticketCaisse || null)
@@ -231,7 +231,7 @@ export function useFacturationState() {
       }
     },
     onReset: actions._resetSaleDataOnly,
-    onError: (msg) => setError(msg)
+    onError: (msg: string) => setError(msg)
   })
 
   // --- Complete Sale Handler ---
@@ -399,7 +399,7 @@ export function useFacturationState() {
   // --- Sorting ---
   const sortedLignes = useMemo(() => {
     if (sortBy === 'chrono') return cart.lignesFacture
-    return [...cart.lignesFacture].sort((a: LigneFacture, b: LigneFacture) => {
+    return cart.lignesFacture.toSorted((a: LigneFacture, b: LigneFacture) => {
       if (sortBy === 'name') return (a.produit.name || '').localeCompare(b.produit.name || '')
       if (sortBy === 'stock') return (b.produit.stock || 0) - (a.produit.stock || 0)
       if (sortBy === 'qty') return b.quantite - a.quantite

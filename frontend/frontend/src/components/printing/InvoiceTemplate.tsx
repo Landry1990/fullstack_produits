@@ -264,7 +264,7 @@ const InvoiceTemplate: React.FC<InvoiceTemplateProps> = ({ settings, data, isBon
                               data.tva_analysis.map((line, idx) => (
                                   <tr key={idx} className="text-base-content/90">
                                       <td className="py-1 text-left font-bold uppercase">TVA-{idx+1}</td>
-                                      <td className="py-1 text-right font-medium">{formatNumber(Number(line.taux), 1)}%</td>
+                                      <td className="py-1 text-right font-medium">{formatNumber(Number(line.taux), 2)}%</td>
                                       <td className="py-1 text-right">{formatNumber(line.base_ht, 0)}</td>
                                       <td className="py-1 text-right font-bold text-base-content">{formatNumber(line.montant_tva, 0)}</td>
                                   </tr>
