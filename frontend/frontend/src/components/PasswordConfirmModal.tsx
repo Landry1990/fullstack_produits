@@ -29,7 +29,8 @@ export default function PasswordConfirmModal({
     if (isOpen) {
       setPassword('');
       setError(null);
-      setTimeout(() => inputRef.current?.focus(), 100);
+      const timeoutId = setTimeout(() => inputRef.current?.focus(), 100);
+      return () => clearTimeout(timeoutId);
     }
   }, [isOpen]);
 

@@ -379,10 +379,11 @@ export const ProductTabsContent: React.FC<ProductTabsContentProps> = ({
           { id: 'stats', label: t('products:detail.tabs.stats') },
           { id: 'mvmts', label: t('products:detail.tabs.movements') }
         ].map((tab) => (
-          <a 
+          <a
             key={tab.id}
-            role="tab" 
-            className={`tab font-black uppercase text-xs tracking-tight ${activeTab === tab.id ? 'tab-active' : ''}`} 
+            role="tab"
+            aria-selected={activeTab === tab.id}
+            className={`tab font-black uppercase text-xs tracking-tight ${activeTab === tab.id ? 'tab-active' : ''}`}
             onClick={() => setActiveTab(tab.id)}
           >
             {tab.label}
