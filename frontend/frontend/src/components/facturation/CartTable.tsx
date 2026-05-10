@@ -60,9 +60,9 @@ const CartRow = React.memo(({
   refreshTrigger,
   isSidebarStyle
 }: CartRowProps) => {
-  const [localQty, setLocalQty] = React.useState(ligne.quantite.toString())
-  const [localPrice, setLocalPrice] = React.useState(ligne.prix_unitaire)
-  const [localRemise, setLocalRemise] = React.useState(ligne.remise_produit)
+  const [localQty, setLocalQty] = React.useState(() => ligne.quantite.toString())
+  const [localPrice, setLocalPrice] = React.useState(() => ligne.prix_unitaire)
+  const [localRemise, setLocalRemise] = React.useState(() => ligne.remise_produit)
 
   // Sync local states when external state changes (shortcuts, barcode, etc.)
   React.useEffect(() => {

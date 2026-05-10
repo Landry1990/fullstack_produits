@@ -135,11 +135,11 @@ function LicenceToastContent({ notification, onDismiss }: LicenceToastContentPro
   const getIcon = () => {
     switch (notification.severity) {
       case 'CRITICAL':
-        return <XCircle className="w-6 h-6 mr-2" />;
+        return <XCircle className="size-6 mr-2" />;
       case 'WARNING':
-        return <AlertTriangle className="w-6 h-6 mr-2" />;
+        return <AlertTriangle className="size-6 mr-2" />;
       default:
-        return <Info className="w-6 h-6 mr-2" />;
+        return <Info className="size-6 mr-2" />;
     }
   };
 
@@ -166,7 +166,7 @@ function LicenceToastContent({ notification, onDismiss }: LicenceToastContentPro
         className="flex-shrink-0 p-1 hover:bg-white/20 rounded-full transition-colors"
         title="Ignorer cette alerte"
       >
-        <X className="w-5 h-5" />
+        <X className="size-5" />
       </button>
     </div>
   );

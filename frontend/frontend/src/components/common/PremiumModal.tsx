@@ -98,7 +98,7 @@ const PremiumModal: React.FC<PremiumModalProps> = ({
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3 min-w-0">
               {icon && (
-                <div className="w-10 h-10 rounded-xl bg-white/50 flex items-center justify-center shrink-0">
+                <div className="size-10 rounded-xl bg-white/50 flex items-center justify-center shrink-0">
                   {icon}
                 </div>
               )}

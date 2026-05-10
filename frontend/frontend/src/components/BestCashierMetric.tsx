@@ -91,7 +91,7 @@ const BestCashierMetric: React.FC<BestCashierMetricProps> = ({ month, year, user
 
                     <div className="flex items-center gap-5 mb-6 pt-2">
                         <div className="avatar placeholder">
-                            <div className="bg-white/30 text-white rounded-2xl w-20 h-20 flex items-center justify-center text-3xl font-black border-2 border-white/50 shadow-inner">
+                            <div className="bg-white/30 text-white rounded-2xl size-20 flex items-center justify-center text-3xl font-black border-2 border-white/50 shadow-inner">
                                 <span>{winner.username.charAt(0).toUpperCase()}</span>
                             </div>
                         </div>

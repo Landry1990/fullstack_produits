@@ -74,7 +74,7 @@ export const AvoirsForm: React.FC<AvoirsFormProps> = ({ data }) => {
                         onClick={handleBackToList}
                         className="btn btn-circle btn-ghost btn-sm"
                     >
-                        <ArrowLeft className="w-5 h-5" />
+                        <ArrowLeft className="size-5" />
                     </button>
                     <div>
                         <h1 className="text-xl font-bold">
@@ -90,7 +90,7 @@ export const AvoirsForm: React.FC<AvoirsFormProps> = ({ data }) => {
                         {t('stock:avoirs.form.cancel')}
                     </button>
                     <button type="submit" className="btn btn-primary flex-1 sm:flex-none" disabled={loading}>
-                        <Save className="w-4 h-4 mr-2" />
+                        <Save className="size-4 mr-2" />
                         {loading ? t('stock:avoirs.form.saving') : t('stock:avoirs.form.save_draft')}
                     </button>
                 </div>
@@ -109,7 +109,7 @@ export const AvoirsForm: React.FC<AvoirsFormProps> = ({ data }) => {
                                 {t('stock:avoirs.form.fournisseur')} <span className="text-error">*</span>
                             </label>
                             <div className="relative">
-                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-base-content/40" />
+                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-base-content/40" />
                                 <input
                                     type="text"
                                     className="input input-bordered w-full pl-9 focus:border-primary transition-colors"
@@ -193,7 +193,7 @@ export const AvoirsForm: React.FC<AvoirsFormProps> = ({ data }) => {
                         {/* Search Product Bar */}
                         <div className="p-4 border-b border-base-200 sticky top-0 bg-base-100 z-10 rounded-t-2xl">
                             <div className="relative">
-                                <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-base-content/40" />
+                                <Search className="absolute left-4 top-1/2 -translate-y-1/2 size-5 text-base-content/40" />
                                 <input
                                     ref={searchInputRef}
                                     type="text"
@@ -212,7 +212,7 @@ export const AvoirsForm: React.FC<AvoirsFormProps> = ({ data }) => {
                                             searchInputRef.current?.focus()
                                         }}
                                     >
-                                        <X className="w-4 h-4 text-base-content/60" />
+                                        <X className="size-4 text-base-content/60" />
                                     </button>
                                 )}
                             </div>
@@ -251,8 +251,8 @@ export const AvoirsForm: React.FC<AvoirsFormProps> = ({ data }) => {
                         <div className="flex-1 p-0 overflow-x-auto">
                             {lignes.length === 0 ? (
                                 <div className="flex flex-col items-center justify-center h-64 text-base-content/40 gap-4">
-                                    <div className="w-16 h-16 rounded-full bg-base-200/50 flex items-center justify-center">
-                                        <PlusCircle className="w-8 h-8" />
+                                    <div className="size-16 rounded-full bg-base-200/50 flex items-center justify-center">
+                                        <PlusCircle className="size-8" />
                                     </div>
                                     <p className="text-lg font-medium">{t('stock:avoirs.form.empty_lines')}</p>
                                 </div>
@@ -322,7 +322,7 @@ export const AvoirsForm: React.FC<AvoirsFormProps> = ({ data }) => {
                                                             onClick={() => removeLine(index)}
                                                             title={t('common:remove')}
                                                         >
-                                                            <Trash2 className="w-4 h-4" />
+                                                            <Trash2 className="size-4" />
                                                         </button>
                                                     </td>
                                                 </tr>

@@ -152,7 +152,7 @@ export default function Dashboard() {
     return (
       <div className="p-6">
         <div className="alert alert-error shadow-sm rounded-2xl border-none">
-          <AlertTriangle className="w-6 h-6" />
+          <AlertTriangle className="size-6" />
           <span className="font-bold text-sm tracking-tight">{error}</span>
         </div>
       </div>
@@ -174,7 +174,7 @@ export default function Dashboard() {
           {/* Left: title + date */}
           <div className="flex items-center gap-3 min-w-0">
             <div className="p-2 bg-primary/10 text-primary rounded-xl shrink-0">
-              <LayoutDashboard className="w-5 h-5" />
+              <LayoutDashboard className="size-5" />
             </div>
             <div className="min-w-0">
               <h1 className="text-base font-black text-base-content tracking-tight leading-none truncate">
@@ -200,7 +200,7 @@ export default function Dashboard() {
           {/* Right: actions */}
           <div className="flex items-center gap-2 shrink-0">
             <Link to="/app/facturation" className="btn btn-sm btn-primary gap-1.5 rounded-xl text-xs font-black">
-              <Plus className="w-3.5 h-3.5" />
+              <Plus className="size-3.5" />
               <span className="hidden sm:inline">{t('actions.new_invoice')}</span>
               <span className="sm:hidden">Vente</span>
             </Link>
@@ -210,7 +210,7 @@ export default function Dashboard() {
               disabled={loading}
               title={t('common:actions.refresh')}
             >
-              {loading ? <span className="loading loading-spinner loading-xs" /> : <RefreshCw className="w-4 h-4" />}
+              {loading ? <span className="loading loading-spinner loading-xs" /> : <RefreshCw className="size-4" />}
             </button>
             <button
               className={`btn btn-sm btn-ghost btn-circle ${sendingReport ? 'loading' : 'text-[#229ED9] hover:bg-[#229ED9]/10'}`}
@@ -218,7 +218,7 @@ export default function Dashboard() {
               disabled={sendingReport}
               title={t('common:telegram.flash_report')}
             >
-              {!sendingReport && <MessageCircle className="w-4 h-4" />}
+              {!sendingReport && <MessageCircle className="size-4" />}
             </button>
             <button
               className={`btn btn-sm btn-ghost btn-circle ${sendingInventaire ? 'loading' : 'text-[#229ED9] hover:bg-[#229ED9]/10'}`}
@@ -226,7 +226,7 @@ export default function Dashboard() {
               disabled={sendingInventaire}
               title={t('common:telegram.inventory_report')}
             >
-              {!sendingInventaire && <Package className="w-4 h-4" />}
+              {!sendingInventaire && <Package className="size-4" />}
             </button>
           </div>
         </div>
@@ -243,7 +243,7 @@ export default function Dashboard() {
                   : 'bg-base-200/50 text-base-content/40 border-transparent hover:text-base-content hover:bg-base-200'
               }`}
             >
-              <Icon className="w-3.5 h-3.5" />
+              <Icon className="size-3.5" />
               <span className="hidden xs:inline sm:inline">{label}</span>
             </button>
           ))}

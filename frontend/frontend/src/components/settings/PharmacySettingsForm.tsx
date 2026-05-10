@@ -479,7 +479,7 @@ export default function PharmacySettingsForm() {
             </div>
             <div className="p-6">
                 <div className="alert alert-info py-3 text-sm flex gap-3">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" className="stroke-current shrink-0 w-5 h-5"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" className="stroke-current shrink-0 size-5"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                     <div>
                         <p className="font-bold">Mode Multicaisse</p>
                         <p className="opacity-80">Si activé, le système demandera sur quel terminal physique envoyer la vente lors de la validation. Assurez-vous d'avoir configuré vos terminaux dans le menu "Utilisateurs &gt; Postes de Caisse".</p>
@@ -653,7 +653,7 @@ export default function PharmacySettingsForm() {
             </div>
             <div className={`p-6 space-y-4 transition-all ${!formData.whatsapp_enabled ? 'opacity-50 pointer-events-none' : ''}`}>
               <div className="alert alert-info py-2 text-sm">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" className="stroke-current shrink-0 w-4 h-4"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" className="stroke-current shrink-0 size-4"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                 <span>{t('hints.whatsapp_help')}</span>
               </div>
               
@@ -758,7 +758,7 @@ export default function PharmacySettingsForm() {
             </div>
             <div className={`p-6 space-y-4 transition-all ${!formData.telegram_enabled ? 'opacity-50 pointer-events-none' : ''}`}>
               <div className="alert alert-info py-2 text-sm">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" className="stroke-current shrink-0 w-4 h-4"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" className="stroke-current shrink-0 size-4"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                 <span>Créez un bot via <strong>@BotFather</strong> sur Telegram, copiez le token, envoyez <strong>/start</strong> au bot, puis cliquez « Récupérer mon Chat ID ».</span>
               </div>
 

@@ -156,7 +156,7 @@ export default function StatistiquesFournisseur() {
         <div className="space-y-6 animate-fade-in">
            {/* Info Box */}
             <div className="alert alert-info shadow-sm">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" className="stroke-current shrink-0 w-6 h-6">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" className="stroke-current shrink-0 size-6">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                 </svg>
                 <div>
@@ -433,7 +433,7 @@ export default function StatistiquesFournisseur() {
                                         {repartitionAchats?.data.map((entry, index) => (
                                             <tr key={entry.id}>
                                                 <td>
-                                                    <div className="w-4 h-4 rounded-full" style={{ backgroundColor: COLORS[index % COLORS.length] }}></div>
+                                                    <div className="size-4 rounded-full" style={{ backgroundColor: COLORS[index % COLORS.length] }}></div>
                                                 </td>
                                                 <td className="font-bold">{entry.nom}</td>
                                                 <td>{entry.pourcentage}%</td>

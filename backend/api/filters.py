@@ -1,5 +1,5 @@
 from django_filters import rest_framework as filters
-from .models import Produit, AuditLog
+from .models import Produit, AuditLog, EcritureComptable
 from django.db.models import Q
 from django.utils import timezone
 from datetime import timedelta
@@ -54,3 +54,21 @@ class AuditLogFilter(filters.FilterSet):
     class Meta:
         model = AuditLog
         fields = ['action', 'model_name', 'user', 'date_from', 'date_to']
+
+
+class EcritureComptableFilter(filters.FilterSet):
+    date_debut = filters.DateFilter(field_name='date', lookup_expr='gte')
+    date_fin = filters.DateFilter(field_name='date', lookup_expr='lte')
+    journal_code = filters.CharFilter(field_name='journal__code', lookup_expr='iexact')
+    search = filters.CharFilter(method='filter_search')
+
+    def filter_search(self, queryset, name, value):
+        return queryset.filter(
+            Q(libelle__icontains=value) | 
+            Q(reference__icontains=value) |
+            Q(numero_piece__icontains=value)
+        )
+
+    class Meta:
+        model = EcritureComptable
+        fields = ['exercice', 'journal', 'journal_code', 'date_debut', 'date_fin', 'search']

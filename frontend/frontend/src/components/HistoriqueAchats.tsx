@@ -198,7 +198,7 @@ const HistoriqueAchats = ({ forcedType }: HistoriqueAchatsProps) => {
             <div>
               <h1 className="text-lg sm:text-xl font-bold text-base-content flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-2">
                 <span className="inline-flex items-center gap-2">
-                  <Calendar className="w-5 h-5 text-primary" />
+                  <Calendar className="size-5 text-primary" />
                   {t('history.title')}
                 </span>
                 <span className="text-primary text-sm sm:text-xl sm:ml-1">
@@ -231,7 +231,7 @@ const HistoriqueAchats = ({ forcedType }: HistoriqueAchatsProps) => {
             <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 w-full">
                 <div className="relative w-full">
-                  <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-base-content/30" />
+                  <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-base-content/30" />
                   <input
                     type="date"
                     className="input input-sm input-bordered w-full pl-10 pr-4 font-bold bg-base-100 focus:border-primary transition-all text-xs"
@@ -240,7 +240,7 @@ const HistoriqueAchats = ({ forcedType }: HistoriqueAchatsProps) => {
                   />
                 </div>
                 <div className="relative w-full">
-                  <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-base-content/30" />
+                  <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-base-content/30" />
                   <input
                     type="date"
                     className="input input-sm input-bordered w-full pl-10 pr-4 font-bold bg-base-100 focus:border-primary transition-all text-xs"
@@ -272,7 +272,7 @@ const HistoriqueAchats = ({ forcedType }: HistoriqueAchatsProps) => {
                     data-tip={t('history.refresh')}
                     type="button"
                   >
-                    <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+                    <RefreshCw className={`size-4 ${loading ? 'animate-spin' : ''}`} />
                   </button>
                   <button
                     className="btn btn-sm btn-ghost flex-1 sm:flex-initial sm:btn-square hover:bg-base-200 transition-all text-success tooltip tooltip-bottom"
@@ -281,7 +281,7 @@ const HistoriqueAchats = ({ forcedType }: HistoriqueAchatsProps) => {
                     data-tip={t('history.export_excel')}
                     type="button"
                   >
-                    <FileDown className="w-4 h-4" />
+                    <FileDown className="size-4" />
                   </button>
                   <button
                     className="btn btn-sm btn-ghost flex-1 sm:flex-initial sm:btn-square hover:bg-base-200 transition-all text-info tooltip tooltip-bottom"
@@ -290,7 +290,7 @@ const HistoriqueAchats = ({ forcedType }: HistoriqueAchatsProps) => {
                     data-tip={t('history.print_pdf')}
                     type="button"
                   >
-                    <Printer className="w-4 h-4" />
+                    <Printer className="size-4" />
                   </button>
                 </div>
               </div>
@@ -314,8 +314,8 @@ const HistoriqueAchats = ({ forcedType }: HistoriqueAchatsProps) => {
           <div className="grid grid-cols-2 gap-4 mb-4 shrink-0">
             <div className="bg-gradient-to-br from-primary/5 to-primary/10 border border-primary/20 rounded-2xl px-5 py-3 flex items-center justify-between shadow-sm">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-primary/20 flex items-center justify-center">
-                  <Package className="w-5 h-5 text-primary" />
+                <div className="size-10 rounded-xl bg-primary/20 flex items-center justify-center">
+                  <Package className="size-5 text-primary" />
                 </div>
                 <div>
                   <p className="text-[10px] font-bold text-base-content/40 uppercase tracking-widest leading-none mb-1">
@@ -327,8 +327,8 @@ const HistoriqueAchats = ({ forcedType }: HistoriqueAchatsProps) => {
             </div>
             <div className="bg-gradient-to-br from-emerald-500/5 to-emerald-500/10 border border-emerald-500/20 rounded-2xl px-5 py-3 flex items-center justify-between shadow-sm">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-emerald-500/20 flex items-center justify-center">
-                  <TrendingUp className="w-5 h-5 text-emerald-600" />
+                <div className="size-10 rounded-xl bg-emerald-500/20 flex items-center justify-center">
+                  <TrendingUp className="size-5 text-emerald-600" />
                 </div>
                 <div>
                   <p className="text-[10px] font-bold text-base-content/40 uppercase tracking-widest leading-none mb-1">{t('history.columns.total_purchase')}</p>
@@ -380,7 +380,7 @@ const HistoriqueAchats = ({ forcedType }: HistoriqueAchatsProps) => {
                         <>
                           <td className="py-3 pl-8">
                             <div className="flex items-center gap-3">
-                              <div className={`w-1.5 h-1.5 rounded-full ${i === 0 ? 'bg-primary shadow-[0_0_8px_rgba(var(--p),0.5)]' : 'bg-base-content/10'}`} />
+                              <div className={`size-1.5 rounded-full ${i === 0 ? 'bg-primary shadow-[0_0_8px_rgba(var(--p),0.5)]' : 'bg-base-content/10'}`} />
                               <span className="text-sm font-bold text-base-content/70">
                                 {row.date ? format(new Date(row.date), 'dd MMMM yyyy', { locale: i18n.language.startsWith('fr') ? fr : undefined }) : '---'}
                               </span>
@@ -426,7 +426,7 @@ const HistoriqueAchats = ({ forcedType }: HistoriqueAchatsProps) => {
                     <tr>
                       <td colSpan={activeTab === 'summary' ? 3 : 5} className="text-center py-24 bg-base-100">
                         <div className="flex flex-col items-center gap-3 opacity-20">
-                          <Package className="w-12 h-12" />
+                          <Package className="size-12" />
                           <p className="text-sm font-bold uppercase tracking-widest">{t('history.no_data')}</p>
                         </div>
                       </td>
@@ -448,14 +448,14 @@ const HistoriqueAchats = ({ forcedType }: HistoriqueAchatsProps) => {
                     disabled={page === 1}
                     onClick={() => handlePageChange(page - 1)}
                   >
-                    <ChevronLeft className="w-4 h-4" />
+                    <ChevronLeft className="size-4" />
                   </button>
                   <button 
                     className="btn btn-xs rounded-xl bg-base-100 border-2 border-base-200 hover:border-primary/50 text-base-content transition-all active:scale-90" 
                     disabled={page === totalPages}
                     onClick={() => handlePageChange(page + 1)}
                   >
-                    <ChevronRight className="w-4 h-4" />
+                    <ChevronRight className="size-4" />
                   </button>
                 </div>
               </div>

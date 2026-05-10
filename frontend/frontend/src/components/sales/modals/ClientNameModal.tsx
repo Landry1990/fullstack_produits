@@ -45,7 +45,7 @@ export const ClientNameModal: React.FC<ClientNameModalProps> = ({
                 <div className="border-b border-gray-100 p-4 flex justify-between items-center bg-gray-50/50">
                     <div className="flex items-center gap-3">
                         <div className="bg-blue-100 p-2 rounded-lg">
-                            <Printer className="w-5 h-5 text-blue-600" />
+                            <Printer className="size-5 text-blue-600" />
                         </div>
                         <div>
                             <h3 className="font-semibold text-base-content">
@@ -57,7 +57,7 @@ export const ClientNameModal: React.FC<ClientNameModalProps> = ({
                         </div>
                     </div>
                     <button onClick={onClose} className="p-1 hover:bg-base-300 rounded-full transition-colors text-base-content/40 hover:text-base-content/80">
-                        <X className="w-5 h-5" />
+                        <X className="size-5" />
                     </button>
                 </div>
 
@@ -77,7 +77,7 @@ export const ClientNameModal: React.FC<ClientNameModalProps> = ({
                             />
                         </div>
                         <p className="mt-2 text-xs text-base-content/60 flex items-center gap-1">
-                            <span className="inline-block w-1 h-1 bg-gray-400 rounded-full"></span>
+                            <span className="inline-block size-1 bg-gray-400 rounded-full"></span>
                             {t('clients:sales_modal.print_hint')}
                         </p>
                     </div>
@@ -94,7 +94,7 @@ export const ClientNameModal: React.FC<ClientNameModalProps> = ({
                             type="submit"
                             className="px-6 py-2 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 focus:ring-4 focus:ring-blue-200 transition-all flex items-center gap-2 shadow-lg shadow-blue-600/20"
                         >
-                            <Printer className="w-4 h-4" />
+                            <Printer className="size-4" />
                             {t('common:print')}
                         </button>
                     </div>

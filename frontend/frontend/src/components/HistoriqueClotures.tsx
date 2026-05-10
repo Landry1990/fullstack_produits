@@ -81,8 +81,8 @@ export default function HistoriqueClotures() {
   // const { settings: pharmacySettings } = usePharmacySettings()
 
   // Metric month/year (default to now)
-  const [metricMonth, setMetricMonth] = useState<string>(format(new Date(), 'MM'))
-  const [metricYear, setMetricYear] = useState<string>(format(new Date(), 'yyyy'))
+  const [metricMonth, setMetricMonth] = useState<string>(() => format(new Date(), 'MM'))
+  const [metricYear, setMetricYear] = useState<string>(() => format(new Date(), 'yyyy'))
   const [showMetric, setShowMetric] = useState(false)
 
 
@@ -142,16 +142,10 @@ export default function HistoriqueClotures() {
     }
   }, [pageSize, dateDebut, dateFin, selectedUser, selectedPosteCaisse, t])
 
-  // Re-fetch quand les filtres changent — reset page à 1
-  useEffect(() => {
-    setCurrentPage(1)
-    fetchClotures(1)
-  }, [dateDebut, dateFin, selectedUser, selectedPosteCaisse, fetchClotures])
-
-  // Re-fetch quand on change de page (pagination)
+  // Fetch data whenever filters or page change
   useEffect(() => {
     fetchClotures(currentPage)
-  }, [currentPage])
+  }, [fetchClotures, currentPage, dateDebut, dateFin, selectedUser, selectedPosteCaisse])
 
   const handleSearch = () => {
     setCurrentPage(1)
@@ -242,7 +236,7 @@ export default function HistoriqueClotures() {
           <div>
             <h1 className="text-2xl font-bold text-base-content flex items-center gap-3">
               <div className="p-2 bg-primary/10 rounded-lg text-primary">
-                <Banknote className="w-6 h-6" />
+                <Banknote className="size-6" />
               </div>
               {t('title')}
             </h1>
@@ -261,6 +255,7 @@ export default function HistoriqueClotures() {
                 onChange={(date: Date | null) => {
                   const now = new Date()
                   setDateDebut(date ?? new Date(now.getFullYear(), now.getMonth(), 1))
+                  setCurrentPage(1)
                 }}
                 dateFormat="dd/MM/yyyy"
                 placeholderText={t('filters.select_placeholder')}
@@ -279,6 +274,7 @@ export default function HistoriqueClotures() {
                 onChange={(date: Date | null) => {
                   const now = new Date()
                   setDateFin(date ?? new Date(now.getFullYear(), now.getMonth() + 1, 0))
+                  setCurrentPage(1)
                 }}
                 dateFormat="dd/MM/yyyy"
                 placeholderText={t('filters.select_placeholder')}
@@ -295,7 +291,10 @@ export default function HistoriqueClotures() {
                 </label>
                 <select
                     value={selectedUser}
-                    onChange={(e) => setSelectedUser(e.target.value)}
+                    onChange={(e) => {
+                        setSelectedUser(e.target.value)
+                        setCurrentPage(1)
+                    }}
                     className="select select-bordered select-sm w-full bg-base-50 font-medium"
                 >
                     <option value="">👤 {t('filters.all_cashiers') || 'Tous les caissiers'}</option>
@@ -314,7 +313,10 @@ export default function HistoriqueClotures() {
                     </label>
                     <select
                         value={selectedPosteCaisse}
-                        onChange={(e) => setSelectedPosteCaisse(e.target.value)}
+                        onChange={(e) => {
+                            setSelectedPosteCaisse(e.target.value)
+                            setCurrentPage(1)
+                        }}
                         className="select select-bordered select-sm w-full bg-base-50 font-medium"
                     >
                         <option value="">🖥️ Tous les postes</option>
@@ -350,7 +352,7 @@ export default function HistoriqueClotures() {
                 className="btn btn-sm btn-outline btn-success gap-2"
                 disabled={loading || clotures.length === 0}
               >
-                <Download className="w-4 h-4" />
+                <Download className="size-4" />
                 Excel
               </button> */}
             </div>
@@ -433,7 +435,7 @@ export default function HistoriqueClotures() {
                   <p className="text-2xl font-bold mt-1">{formatMoney(globalTotals.montant_theorique)}</p>
                </div>
                <div className="p-3 bg-base-200/50 rounded-lg text-base-content">
-                 <Banknote className="w-6 h-6" />
+                 <Banknote className="size-6" />
                </div>
              </div>
           </div>
@@ -445,7 +447,7 @@ export default function HistoriqueClotures() {
                   <p className="text-2xl font-bold mt-1 text-primary">{formatMoney(globalTotals.montant_reel)}</p>
                </div>
                <div className="p-3 bg-primary/10 rounded-lg text-primary">
-                 <CheckCircle className="w-6 h-6" />
+                 <CheckCircle className="size-6" />
                </div>
              </div>
           </div>
@@ -459,7 +461,7 @@ export default function HistoriqueClotures() {
                   </p>
                </div>
                 <div className={`p-3 rounded-lg ${normalizeNumberInput(globalTotals.ecart_caisse) < 0 ? 'bg-error/10 text-error' : normalizeNumberInput(globalTotals.ecart_caisse) > 0 ? 'bg-success/10 text-success' : 'bg-base-200/50 text-base-content'}`}>
-                 <XCircle className="w-6 h-6" />
+                 <XCircle className="size-6" />
                </div>
              </div>
           </div>
@@ -494,7 +496,7 @@ export default function HistoriqueClotures() {
                   <tr>
                     <td colSpan={6} className="h-64 text-center text-base-content/50">
                       <div className="flex flex-col items-center justify-center gap-3">
-                        <Banknote className="w-12 h-12 opacity-20" />
+                        <Banknote className="size-12 opacity-20" />
                         <p className="text-lg">{t('table.no_cloture')}</p>
                         <p className="text-sm">{t('table.no_cloture_desc')}</p>
                       </div>
@@ -543,14 +545,14 @@ export default function HistoriqueClotures() {
                             className="btn btn-sm btn-ghost btn-square text-primary"
                             title={t('table.view_details')}
                           >
-                            <Eye className="w-5 h-5" />
+                            <Eye className="size-5" />
                           </button>
                           <button 
                             onClick={() => handlePrint(cloture)}
                             className="btn btn-sm btn-ghost btn-square text-base-content/70"
                             title={t('table.print')}
                           >
-                            <Printer className="w-5 h-5" />
+                            <Printer className="size-5" />
                           </button>
                         </div>
                       </td>
@@ -617,7 +619,7 @@ export default function HistoriqueClotures() {
           <div className="modal-box max-w-xl p-0 overflow-hidden">
             <div className="bg-primary p-6 text-primary-content">
               <h3 className="font-bold text-xl flex items-center gap-3">
-                <Banknote className="w-6 h-6" />
+                <Banknote className="size-6" />
                 {t('modal.title')}
               </h3>
               <p className="opacity-80 text-sm mt-1 pb-1">
@@ -716,7 +718,7 @@ export default function HistoriqueClotures() {
 
             <div className="modal-action border-t border-base-200 p-4 bg-base-50 m-0">
               <button onClick={() => handlePrint(selectedCloture)} className="btn btn-primary btn-outline gap-2 mr-auto">
-                <Printer className="w-5 h-5" />
+                <Printer className="size-5" />
                 {t('modal.print')}
               </button>
               <button 

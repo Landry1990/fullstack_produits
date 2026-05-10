@@ -31,16 +31,16 @@ interface CorbeilleData {
 type TabKey = 'all' | 'produits' | 'clients' | 'fournisseurs' | 'commandes' | 'avoirs' | 'promis' | 'inventaires' | 'factures' | 'users';
 
 const TAB_CONFIG_KEYS: { key: TabKey; labelKey: string; icon: React.ReactNode; color: string }[] = [
-  { key: 'all', labelKey: 'tabs.all', icon: <Trash2 className="w-4 h-4" />, color: 'text-base-content' },
-  { key: 'produits', labelKey: 'tabs.produits', icon: <Package className="w-4 h-4" />, color: 'text-blue-500' },
-  { key: 'clients', labelKey: 'tabs.clients', icon: <Users className="w-4 h-4" />, color: 'text-emerald-500' },
-  { key: 'fournisseurs', labelKey: 'tabs.fournisseurs', icon: <Truck className="w-4 h-4" />, color: 'text-amber-500' },
-  { key: 'commandes', labelKey: 'tabs.commandes', icon: <ShoppingCart className="w-4 h-4" />, color: 'text-indigo-500' },
-  { key: 'avoirs', labelKey: 'tabs.avoirs', icon: <CreditCard className="w-4 h-4" />, color: 'text-rose-500' },
-  { key: 'promis', labelKey: 'tabs.promis', icon: <Clock className="w-4 h-4" />, color: 'text-purple-500' },
-  { key: 'inventaires', labelKey: 'tabs.inventaires', icon: <ClipboardList className="w-4 h-4" />, color: 'text-teal-500' },
-  { key: 'factures', labelKey: 'tabs.factures', icon: <Receipt className="w-4 h-4" />, color: 'text-orange-500' },
-  { key: 'users', labelKey: 'tabs.users', icon: <Users className="w-4 h-4" />, color: 'text-slate-500' },
+  { key: 'all', labelKey: 'tabs.all', icon: <Trash2 className="size-4" />, color: 'text-base-content' },
+  { key: 'produits', labelKey: 'tabs.produits', icon: <Package className="size-4" />, color: 'text-blue-500' },
+  { key: 'clients', labelKey: 'tabs.clients', icon: <Users className="size-4" />, color: 'text-emerald-500' },
+  { key: 'fournisseurs', labelKey: 'tabs.fournisseurs', icon: <Truck className="size-4" />, color: 'text-amber-500' },
+  { key: 'commandes', labelKey: 'tabs.commandes', icon: <ShoppingCart className="size-4" />, color: 'text-indigo-500' },
+  { key: 'avoirs', labelKey: 'tabs.avoirs', icon: <CreditCard className="size-4" />, color: 'text-rose-500' },
+  { key: 'promis', labelKey: 'tabs.promis', icon: <Clock className="size-4" />, color: 'text-purple-500' },
+  { key: 'inventaires', labelKey: 'tabs.inventaires', icon: <ClipboardList className="size-4" />, color: 'text-teal-500' },
+  { key: 'factures', labelKey: 'tabs.factures', icon: <Receipt className="size-4" />, color: 'text-orange-500' },
+  { key: 'users', labelKey: 'tabs.users', icon: <Users className="size-4" />, color: 'text-slate-500' },
 ];
 
 export default function Corbeille() {
@@ -193,16 +193,16 @@ export default function Corbeille() {
 
   const getTypeIcon = (type: string) => {
     switch (type) {
-      case 'produit': return <Package className="w-4 h-4 text-blue-500" />;
-      case 'client': return <Users className="w-4 h-4 text-emerald-500" />;
-      case 'fournisseur': return <Truck className="w-4 h-4 text-amber-500" />;
-      case 'commande': return <ShoppingCart className="w-4 h-4 text-indigo-500" />;
-      case 'avoir': return <CreditCard className="w-4 h-4 text-rose-500" />;
-      case 'promis': return <Clock className="w-4 h-4 text-purple-500" />;
-      case 'inventaire': return <ClipboardList className="w-4 h-4 text-teal-500" />;
-      case 'facture': return <Receipt className="w-4 h-4 text-orange-500" />;
-      case 'user': return <Users className="w-4 h-4 text-slate-500" />;
-      default: return <Trash2 className="w-4 h-4" />;
+      case 'produit': return <Package className="size-4 text-blue-500" />;
+      case 'client': return <Users className="size-4 text-emerald-500" />;
+      case 'fournisseur': return <Truck className="size-4 text-amber-500" />;
+      case 'commande': return <ShoppingCart className="size-4 text-indigo-500" />;
+      case 'avoir': return <CreditCard className="size-4 text-rose-500" />;
+      case 'promis': return <Clock className="size-4 text-purple-500" />;
+      case 'inventaire': return <ClipboardList className="size-4 text-teal-500" />;
+      case 'facture': return <Receipt className="size-4 text-orange-500" />;
+      case 'user': return <Users className="size-4 text-slate-500" />;
+      default: return <Trash2 className="size-4" />;
     }
   };
 
@@ -266,8 +266,8 @@ export default function Corbeille() {
       {/* Header */}
       <div className="max-w-[1400px] mx-auto">
         <div className="flex items-center gap-3 mb-2">
-          <div className="w-12 h-12 bg-red-500/10 rounded-2xl flex items-center justify-center">
-            <Trash2 className="w-6 h-6 text-red-500" />
+          <div className="size-12 bg-red-500/10 rounded-2xl flex items-center justify-center">
+            <Trash2 className="size-6 text-red-500" />
           </div>
           <div>
             <h1 className="text-2xl md:text-3xl font-bold text-base-content tracking-tight">
@@ -285,7 +285,7 @@ export default function Corbeille() {
             >
               {loading
                 ? <span className="loading loading-spinner loading-xs" />
-                : <RotateCcw className="w-4 h-4" />}
+                : <RotateCcw className="size-4" />}
             </button>
             {(data?.total ?? 0) > 0 && (
               <button
@@ -293,7 +293,7 @@ export default function Corbeille() {
                 className="btn btn-sm btn-error text-white gap-1.5 rounded-xl"
                 disabled={actionLoading}
               >
-                <Trash2 className="w-3.5 h-3.5" />
+                <Trash2 className="size-3.5" />
                 {t('actions.empty_trash')}
               </button>
             )}
@@ -335,7 +335,7 @@ export default function Corbeille() {
         <div className="p-4 border-b border-base-200 flex flex-col sm:flex-row gap-3">
           {/* Search */}
           <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-base-content/30" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-base-content/30" />
             <input
               type="text"
               placeholder={t('search')}
@@ -345,7 +345,7 @@ export default function Corbeille() {
             />
             {searchQuery && (
               <button onClick={() => setSearchQuery('')} className="absolute right-3 top-1/2 -translate-y-1/2">
-                <X className="w-4 h-4 text-base-content/30 hover:text-base-content" />
+                <X className="size-4 text-base-content/30 hover:text-base-content" />
               </button>
             )}
           </div>
@@ -361,7 +361,7 @@ export default function Corbeille() {
                 className="btn btn-sm btn-success text-white gap-1 rounded-xl"
                 disabled={actionLoading}
               >
-                <RotateCcw className="w-3.5 h-3.5" />
+                <RotateCcw className="size-3.5" />
                 {t('actions.restore')}
               </button>
               <button
@@ -369,14 +369,14 @@ export default function Corbeille() {
                 className="btn btn-sm btn-error text-white gap-1 rounded-xl"
                 disabled={actionLoading}
               >
-                <Trash2 className="w-3.5 h-3.5" />
+                <Trash2 className="size-3.5" />
                 {t('actions.delete_permanently')}
               </button>
               <button
                 onClick={() => setSelectedIds([])}
                 className="btn btn-sm btn-ghost text-base-content/50 rounded-xl"
               >
-                <X className="w-3.5 h-3.5" />
+                <X className="size-3.5" />
               </button>
             </div>
           )}
@@ -392,8 +392,8 @@ export default function Corbeille() {
         {/* Empty State */}
         {!loading && filteredItems.length === 0 && (
           <div className="flex flex-col items-center justify-center py-20 text-base-content/40">
-            <div className="w-20 h-20 rounded-full bg-base-200/80 flex items-center justify-center mb-4">
-              <Trash2 className="w-8 h-8" />
+            <div className="size-20 rounded-full bg-base-200/80 flex items-center justify-center mb-4">
+              <Trash2 className="size-8" />
             </div>
             <p className="font-bold text-lg">{t('empty_state.title')}</p>
             <p className="text-sm mt-1">{t('empty_state.subtitle')}</p>
@@ -462,7 +462,7 @@ export default function Corbeille() {
                           title={t('actions.restore')}
                           disabled={actionLoading}
                         >
-                          <RotateCcw className="w-3.5 h-3.5" />
+                          <RotateCcw className="size-3.5" />
                           <span className="hidden sm:inline">{t('actions.restore')}</span>
                         </button>
                         <button
@@ -471,7 +471,7 @@ export default function Corbeille() {
                           title={t('actions.delete_permanently')}
                           disabled={actionLoading}
                         >
-                          <Trash2 className="w-3.5 h-3.5" />
+                          <Trash2 className="size-3.5" />
                           <span className="hidden sm:inline">{t('actions.delete_permanently')}</span>
                         </button>
                       </div>
@@ -491,7 +491,7 @@ export default function Corbeille() {
               <span className="text-red-500 font-black text-sm">{filteredItems.length}</span>
             </div>
             <div className="flex items-center gap-1 text-[10px] text-base-content/30">
-              <AlertTriangle className="w-3 h-3" />
+              <AlertTriangle className="size-3" />
               {t('footer.warning')}
             </div>
           </div>

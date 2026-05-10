@@ -57,7 +57,7 @@ export const InventaireAnalysisTab: React.FC<InventaireAnalysisTabProps> = ({
                         data.map((p, i) => (
                             <div key={i} className="group flex items-center justify-between p-4 border-b border-base-100 hover:bg-base-200/50 transition-colors last:border-0">
                                 <div className="flex items-center gap-4">
-                                    <div className={`w-8 h-8 rounded-lg bg-base-200 flex items-center justify-center text-xs font-bold text-base-content/40 group-hover:${bgColorClass} group-hover:${colorClass} transition-colors`}>
+                                    <div className={`size-8 rounded-lg bg-base-200 flex items-center justify-center text-xs font-bold text-base-content/40 group-hover:${bgColorClass} group-hover:${colorClass} transition-colors`}>
                                         {i + 1}
                                     </div>
                                     <div className="max-w-[150px] md:max-w-xs">

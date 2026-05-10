@@ -9,6 +9,8 @@ import { normalizeNumberInput } from '../utils/formatters';
 import { getLocale } from '../utils/dateUtils';
 import { productSchema } from '../schemas/productSchema';
 
+const EMPTY_ARRAY: any[] = [];
+
 interface ProduitFormModalProps {
   open: boolean;
   onClose: () => void;
@@ -29,10 +31,10 @@ export default function ProduitFormModal({
   produitsEndpoint,
   initialData,
   title,
-  rayons = [],
-  fournisseurs = [],
-  formes = [],
-  groupes = [],
+  rayons = EMPTY_ARRAY,
+  fournisseurs = EMPTY_ARRAY,
+  formes = EMPTY_ARRAY,
+  groupes = EMPTY_ARRAY,
 }: ProduitFormModalProps) {
   const { t } = useTranslation(['products', 'common']);
   const titleText = title || t('products:create_title');

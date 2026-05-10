@@ -45,7 +45,7 @@ export default function Creances() {
                         <div>
                             <div className="flex items-center gap-3">
                                 <div className="p-2 bg-primary/10 text-primary rounded-xl">
-                                    <Wallet className="w-6 h-6" />
+                                    <Wallet className="size-6" />
                                 </div>
                                 <div>
                                     <h1 className="text-2xl font-black text-base-content tracking-tight">
@@ -74,7 +74,7 @@ export default function Creances() {
                                     onClick={actions.actions.handleBulkPayment} 
                                     className="btn btn-primary btn-sm px-6 font-black uppercase tracking-widest text-[10px] shadow-lg shadow-primary/20"
                                 >
-                                    <DollarSign className="w-4 h-4 mr-2" />
+                                    <DollarSign className="size-4 mr-2" />
                                     {t('creances:pay_selection')}
                                 </button>
                             </div>

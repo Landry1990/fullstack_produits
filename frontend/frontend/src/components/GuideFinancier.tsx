@@ -22,7 +22,7 @@ const GuideFinancier: React.FC = () => {
         <div className="relative z-10">
           <div className="flex items-center gap-3 mb-4">
             <div className="bg-white/20 p-2 rounded-xl backdrop-blur-md">
-              <BookOpen className="w-6 h-6" />
+              <BookOpen className="size-6" />
             </div>
             <span className="text-sm font-bold uppercase tracking-widest opacity-80">Documentation</span>
           </div>
@@ -32,7 +32,7 @@ const GuideFinancier: React.FC = () => {
           </p>
         </div>
         <div className="absolute right-[-10%] top-[-20%] opacity-10">
-          <TrendingUp className="w-64 h-64" />
+          <TrendingUp className="size-64" />
         </div>
       </div>
 
@@ -45,31 +45,31 @@ const GuideFinancier: React.FC = () => {
               <nav className="space-y-1">
                 <a href="#vendeurs" className="flex items-center justify-between p-3 rounded-xl hover:bg-base-200 transition-colors group">
                   <div className="flex items-center gap-3">
-                    <Users className="w-4 h-4 text-primary" />
+                    <Users className="size-4 text-primary" />
                     <span className="text-sm font-bold">{t('guide.sections.seller_ranking.title')}</span>
                   </div>
-                  <ArrowRight className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-all -translate-x-2 group-hover:translate-x-0" />
+                  <ArrowRight className="size-3 opacity-0 group-hover:opacity-100 transition-all -translate-x-2 group-hover:translate-x-0" />
                 </a>
                 <a href="#fournisseurs" className="flex items-center justify-between p-3 rounded-xl hover:bg-base-200 transition-colors group">
                   <div className="flex items-center gap-3">
-                    <Package className="w-4 h-4 text-secondary" />
+                    <Package className="size-4 text-secondary" />
                     <span className="text-sm font-bold">{t('guide.sections.supplier_purchases.title')}</span>
                   </div>
-                  <ArrowRight className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-all -translate-x-2 group-hover:translate-x-0" />
+                  <ArrowRight className="size-3 opacity-0 group-hover:opacity-100 transition-all -translate-x-2 group-hover:translate-x-0" />
                 </a>
                 <a href="#scoring" className="flex items-center justify-between p-3 rounded-xl hover:bg-base-200 transition-colors group">
                   <div className="flex items-center gap-3">
-                    <ShieldCheck className="w-4 h-4 text-success" />
+                    <ShieldCheck className="size-4 text-success" />
                     <span className="text-sm font-bold">{t('guide.sections.scoring_performance.title')}</span>
                   </div>
-                  <ArrowRight className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-all -translate-x-2 group-hover:translate-x-0" />
+                  <ArrowRight className="size-3 opacity-0 group-hover:opacity-100 transition-all -translate-x-2 group-hover:translate-x-0" />
                 </a>
                 <a href="#opportunites" className="flex items-center justify-between p-3 rounded-xl hover:bg-base-200 transition-colors group">
                   <div className="flex items-center gap-3">
-                    <Lightbulb className="w-4 h-4 text-warning" />
+                    <Lightbulb className="size-4 text-warning" />
                     <span className="text-sm font-bold">{t('guide.sections.advanced_analysis.title')}</span>
                   </div>
-                  <ArrowRight className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-all -translate-x-2 group-hover:translate-x-0" />
+                  <ArrowRight className="size-3 opacity-0 group-hover:opacity-100 transition-all -translate-x-2 group-hover:translate-x-0" />
                 </a>
               </nav>
             </div>
@@ -82,8 +82,8 @@ const GuideFinancier: React.FC = () => {
           {/* Section 1: Classement Vendeurs */}
           <section id="vendeurs" className="scroll-mt-24">
             <div className="flex items-center gap-3 mb-6">
-              <div className="w-10 h-10 rounded-2xl bg-primary/10 flex items-center justify-center">
-                <Users className="w-5 h-5 text-primary" />
+              <div className="size-10 rounded-2xl bg-primary/10 flex items-center justify-center">
+                <Users className="size-5 text-primary" />
               </div>
               <h2 className="text-2xl font-black">{t('guide.sections.seller_ranking.title')}</h2>
             </div>
@@ -93,7 +93,7 @@ const GuideFinancier: React.FC = () => {
               </p>
               <div className="bg-base-200/50 rounded-2xl p-6 my-6 border border-base-300">
                 <h4 className="flex items-center gap-2 text-primary font-bold mb-3 uppercase tracking-tighter text-xs">
-                  <Info className="w-4 h-4" /> {t('guide.sections.seller_ranking.methodology')}
+                  <Info className="size-4" /> {t('guide.sections.seller_ranking.methodology')}
                 </h4>
                 <ul className="list-disc list-inside space-y-2 text-sm">
                   <li>{t('guide.sections.seller_ranking.methodology_desc')}</li>
@@ -108,8 +108,8 @@ const GuideFinancier: React.FC = () => {
           {/* Section 2: Achats Fournisseurs */}
           <section id="fournisseurs" className="scroll-mt-24">
             <div className="flex items-center gap-3 mb-6">
-              <div className="w-10 h-10 rounded-2xl bg-secondary/10 flex items-center justify-center">
-                <Package className="w-5 h-5 text-secondary" />
+              <div className="size-10 rounded-2xl bg-secondary/10 flex items-center justify-center">
+                <Package className="size-5 text-secondary" />
               </div>
               <h2 className="text-2xl font-black">{t('guide.sections.supplier_purchases.title')}</h2>
             </div>
@@ -119,7 +119,7 @@ const GuideFinancier: React.FC = () => {
               </p>
               <div className="bg-base-200/50 rounded-2xl p-6 my-6 border border-base-300">
                 <h4 className="flex items-center gap-2 text-secondary font-bold mb-3 uppercase tracking-tighter text-xs">
-                  <Info className="w-4 h-4" /> {t('guide.sections.supplier_purchases.methodology')}
+                  <Info className="size-4" /> {t('guide.sections.supplier_purchases.methodology')}
                 </h4>
                 <p className="text-sm mb-4">
                   {t('guide.sections.supplier_purchases.methodology_desc')}
@@ -135,8 +135,8 @@ const GuideFinancier: React.FC = () => {
           {/* Section 3: Scoring Performance */}
           <section id="scoring" className="scroll-mt-24">
             <div className="flex items-center gap-3 mb-6">
-              <div className="w-10 h-10 rounded-2xl bg-success/10 flex items-center justify-center">
-                <ShieldCheck className="w-5 h-5 text-success" />
+              <div className="size-10 rounded-2xl bg-success/10 flex items-center justify-center">
+                <ShieldCheck className="size-5 text-success" />
               </div>
               <h2 className="text-2xl font-black">{t('guide.sections.scoring_performance.title')}</h2>
             </div>
@@ -174,8 +174,8 @@ const GuideFinancier: React.FC = () => {
           {/* Section 4: Analyse Avancée */}
           <section id="opportunites" className="scroll-mt-24 pb-12">
             <div className="flex items-center gap-3 mb-6">
-              <div className="w-10 h-10 rounded-2xl bg-warning/10 flex items-center justify-center">
-                <Lightbulb className="w-5 h-5 text-warning" />
+              <div className="size-10 rounded-2xl bg-warning/10 flex items-center justify-center">
+                <Lightbulb className="size-5 text-warning" />
               </div>
               <h2 className="text-2xl font-black">{t('guide.sections.advanced_analysis.title')}</h2>
             </div>
@@ -184,7 +184,7 @@ const GuideFinancier: React.FC = () => {
               
               <div className="grid grid-cols-1 gap-4 mt-6">
                 <div className="alert alert-warning border shadow-sm">
-                  <AlertTriangle className="w-5 h-5" />
+                  <AlertTriangle className="size-5" />
                   <div>
                     <h4 className="font-bold">{t('guide.sections.advanced_analysis.low_margin')}</h4>
                     <p className="text-xs">{t('guide.sections.advanced_analysis.low_margin_desc')}</p>
@@ -192,7 +192,7 @@ const GuideFinancier: React.FC = () => {
                 </div>
 
                 <div className="alert border shadow-sm bg-base-100">
-                  <Lightbulb className="w-5 h-5 text-success" />
+                  <Lightbulb className="size-5 text-success" />
                   <div>
                     <h4 className="font-bold">{t('guide.sections.advanced_analysis.price_optimization')}</h4>
                     <p className="text-xs">{t('guide.sections.advanced_analysis.price_optimization_desc')}</p>
@@ -203,7 +203,7 @@ const GuideFinancier: React.FC = () => {
               {/* Note sur les tableaux vides */}
               <div className="bg-blue-50 border border-blue-100 rounded-2xl p-6 mt-8">
                 <h4 className="flex items-center gap-2 text-blue-700 font-bold mb-3 uppercase tracking-tighter text-xs">
-                  <Info className="w-4 h-4" /> {t('guide.sections.advanced_analysis.empty_table_title')}
+                  <Info className="size-4" /> {t('guide.sections.advanced_analysis.empty_table_title')}
                 </h4>
                 <p className="text-sm text-blue-800/80 mb-4">
                   {t('guide.sections.advanced_analysis.empty_table_desc')}

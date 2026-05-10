@@ -1,7 +1,8 @@
 import { useState } from 'react';
-import { LayoutGrid, Tablets, FolderTree } from 'lucide-react';
+import { LayoutGrid, Tablets, FolderTree, Settings } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import CategoryManager from './common/CategoryManager';
+import ConfigOptionManager from './common/ConfigOptionManager';
 
 interface OrganisationProps {
   defaultTab?: 'rayons' | 'formes' | 'groupes';
@@ -9,7 +10,7 @@ interface OrganisationProps {
 
 export default function Organisation({ defaultTab = 'rayons' }: OrganisationProps) {
   const { t } = useTranslation('stock');
-  const [activeTab, setActiveTab] = useState<'rayons' | 'formes' | 'groupes'>(defaultTab);
+  const [activeTab, setActiveTab] = useState<'rayons' | 'formes' | 'groupes' | 'motifs'>(defaultTab as any);
 
   const tabs = [
     { 
@@ -54,6 +55,19 @@ export default function Organisation({ defaultTab = 'rayons' }: OrganisationProp
         hasDescription: true
       }
     },
+    { 
+      id: 'motifs', 
+      label: t('organisation.tabs.motifs'), 
+      icon: <Settings size={18} />, 
+      color: 'warning',
+      config: {
+        type: 'STOCK_ADJ',
+        title: t('organisation.config_option_manager.title'),
+        subtitle: t('organisation.config_option_manager.subtitle'),
+        icon: <Settings size={20} />,
+        isConfigOption: true
+      }
+    },
   ];
 
   const currentTab = tabs.find(t => t.id === activeTab)!;
@@ -90,10 +104,19 @@ export default function Organisation({ defaultTab = 'rayons' }: OrganisationProp
 
       {/* Main Content (Style Ventes.tsx) */}
       <div className="max-w-full mx-auto">
-         <CategoryManager 
-           key={activeTab} // Force remount on tab change to reset states
-           {...currentTab.config}
-         />
+         {(currentTab.config as any).isConfigOption ? (
+            <ConfigOptionManager 
+               key={activeTab}
+               type={(currentTab.config as any).type}
+               title={(currentTab.config as any).title}
+               icon={(currentTab.config as any).icon}
+            />
+         ) : (
+            <CategoryManager 
+              key={activeTab} // Force remount on tab change to reset states
+              {...(currentTab.config as any)}
+            />
+         )}
       </div>
     </div>
   );

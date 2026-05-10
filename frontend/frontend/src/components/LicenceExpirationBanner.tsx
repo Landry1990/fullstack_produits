@@ -17,7 +17,7 @@ export default function LicenceExpirationBanner() {
                 ? 'bg-red-600 text-white shadow-[0_0_20px_rgba(220,38,38,0.5)]' 
                 : 'bg-amber-500 text-slate-900 shadow-[0_0_15px_rgba(245,158,11,0.3)]'}
         `}>
-            {isExpired ? <ShieldAlert className="w-5 h-5 animate-pulse" /> : <Clock className="w-5 h-5" />}
+            {isExpired ? <ShieldAlert className="size-5 animate-pulse" /> : <Clock className="size-5" />}
             
             <div className="flex items-center gap-1">
                 {isExpired ? (

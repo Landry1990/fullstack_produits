@@ -111,7 +111,7 @@ export default function Changelog() {
             return (
               <div key={entry.version} className="relative flex gap-4">
                 {/* Dot */}
-                <div className="hidden sm:flex shrink-0 w-9 h-9 rounded-full bg-base-100 border-2 border-base-300 items-center justify-center z-10 mt-1 text-sm">
+                <div className="hidden sm:flex shrink-0 size-9 rounded-full bg-base-100 border-2 border-base-300 items-center justify-center z-10 mt-1 text-sm">
                   {BADGE_DOT_ICONS[entry.badge]}
                 </div>
 

@@ -29,10 +29,10 @@ export const StockAnalysisFilters: React.FC<StockAnalysisFiltersProps> = ({
     const { t } = useTranslation(['stock', 'common']);
 
     const tabs = [
-        { id: 'pilotage', label: t('stock:analyse.tabs.pilotage'), icon: <Sparkles className="w-4 h-4" /> },
-        { id: 'unsold', label: t('stock:analyse.tabs.unsold'), icon: <Accessibility className="w-4 h-4" /> },
-        { id: 'overstock', label: t('stock:analyse.tabs.overstock'), icon: <TrendingUp className="w-4 h-4" /> },
-        { id: 'shortage', label: t('stock:analyse.tabs.shortage'), icon: <AlertTriangle className="w-4 h-4" /> }
+        { id: 'pilotage', label: t('stock:analyse.tabs.pilotage'), icon: <Sparkles className="size-4" /> },
+        { id: 'unsold', label: t('stock:analyse.tabs.unsold'), icon: <Accessibility className="size-4" /> },
+        { id: 'overstock', label: t('stock:analyse.tabs.overstock'), icon: <TrendingUp className="size-4" /> },
+        { id: 'shortage', label: t('stock:analyse.tabs.shortage'), icon: <AlertTriangle className="size-4" /> }
     ];
 
     return (
@@ -63,7 +63,7 @@ export const StockAnalysisFilters: React.FC<StockAnalysisFiltersProps> = ({
                         {/* Supplier Filter */}
                         <div className="space-y-1.5">
                             <label className="text-[10px] font-black uppercase tracking-widest text-base-content/40 flex items-center gap-1.5 ml-1">
-                                <User className="w-3 h-3" /> {t('stock:analyse.filters.supplier')}
+                                <User className="size-3" /> {t('stock:analyse.filters.supplier')}
                             </label>
                             <select 
                                 className="select select-sm select-bordered w-full font-bold focus:ring-2 focus:ring-primary/20 transition-all"
@@ -81,7 +81,7 @@ export const StockAnalysisFilters: React.FC<StockAnalysisFiltersProps> = ({
                         {activeTab === 'unsold' && (
                             <div className="space-y-1.5">
                                 <label className="text-[10px] font-black uppercase tracking-widest text-base-content/40 flex items-center gap-1.5 ml-1">
-                                    <Calendar className="w-3 h-3" /> {t('stock:analyse.filters.days_threshold')}
+                                    <Calendar className="size-3" /> {t('stock:analyse.filters.days_threshold')}
                                 </label>
                                 <select 
                                     className="select select-sm select-bordered w-full font-bold focus:ring-2 focus:ring-primary/20 transition-all"
@@ -104,7 +104,7 @@ export const StockAnalysisFilters: React.FC<StockAnalysisFiltersProps> = ({
                             onClick={onRefresh}
                             disabled={loading}
                         >
-                            {loading ? <span className="loading loading-spinner loading-xs"></span> : <RotateCcw className="w-4 h-4" />}
+                            {loading ? <span className="loading loading-spinner loading-xs"></span> : <RotateCcw className="size-4" />}
                             {t('stock:analyse.filters.refresh')}
                         </button>
                     </div>

@@ -28,7 +28,7 @@ export const MonthlyReportView: React.FC<MonthlyReportViewProps> = ({ data }) =>
             <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4">
                 <div className="bg-primary/5 border border-primary/10 rounded-2xl p-4 shadow-sm">
                     <div className="flex items-center gap-2 text-primary text-[10px] font-bold uppercase tracking-widest mb-1">
-                        <TrendingUp className="w-3 h-3" />
+                        <TrendingUp className="size-3" />
                         <span>{t('monthly_report.ca_ttc', 'CA TTC')}</span>
                     </div>
                     <div className="text-xl font-black text-primary">{formatMoney(data.ca?.ca_ttc)}</div>
@@ -36,7 +36,7 @@ export const MonthlyReportView: React.FC<MonthlyReportViewProps> = ({ data }) =>
                 
                 <div className="bg-success/5 border border-success/10 rounded-2xl p-4 shadow-sm">
                     <div className="flex items-center gap-2 text-success text-[10px] font-bold uppercase tracking-widest mb-1">
-                        <DollarSign className="w-3 h-3" />
+                        <DollarSign className="size-3" />
                         <span>{t('monthly_report.ca_ht', 'CA HT')}</span>
                     </div>
                     <div className="text-xl font-black text-success">{formatMoney(data.ca?.ca_ht)}</div>
@@ -44,7 +44,7 @@ export const MonthlyReportView: React.FC<MonthlyReportViewProps> = ({ data }) =>
 
                 <div className="bg-info/5 border border-info/10 rounded-2xl p-4 shadow-sm">
                     <div className="flex items-center gap-2 text-info text-[10px] font-bold uppercase tracking-widest mb-1">
-                        <Calculator className="w-3 h-3" />
+                        <Calculator className="size-3" />
                         <span>{t('monthly_report.margin', 'Marge')} ({data.marge?.marge_pct || 0}%)</span>
                     </div>
                     <div className="text-xl font-black text-info">{formatMoney(data.marge?.marge_brute)}</div>
@@ -52,7 +52,7 @@ export const MonthlyReportView: React.FC<MonthlyReportViewProps> = ({ data }) =>
 
                 <div className="bg-base-200/50 border border-base-300 rounded-2xl p-4 shadow-sm">
                     <div className="flex items-center gap-2 text-base-content/40 text-[10px] font-bold uppercase tracking-widest mb-1">
-                        <Package className="w-3 h-3" />
+                        <Package className="size-3" />
                         <span>{t('monthly_report.nb_sales', 'Nb Ventes')}</span>
                     </div>
                     <div className="text-xl font-black text-base-content">{data.ca?.nb_ventes || 0}</div>
@@ -60,7 +60,7 @@ export const MonthlyReportView: React.FC<MonthlyReportViewProps> = ({ data }) =>
 
                 <div className="bg-warning/5 border border-warning/10 rounded-2xl p-4 shadow-sm">
                     <div className="flex items-center gap-2 text-warning text-[10px] font-bold uppercase tracking-widest mb-1">
-                        <CreditCard className="w-3 h-3" />
+                        <CreditCard className="size-3" />
                         <span>{t('monthly_report.receivables', 'Créances')}</span>
                     </div>
                     <div className="text-xl font-black text-warning">{formatMoney(data.creances?.total)}</div>
@@ -73,7 +73,7 @@ export const MonthlyReportView: React.FC<MonthlyReportViewProps> = ({ data }) =>
                 <div className="bg-base-100 rounded-2xl shadow-sm border border-base-300 overflow-hidden flex flex-col">
                     <div className="p-4 border-b border-base-200 bg-base-50/50">
                         <h3 className="text-xs font-bold text-base-content uppercase tracking-widest flex items-center gap-2">
-                            <DollarSign className="w-4 h-4 text-primary" />
+                            <DollarSign className="size-4 text-primary" />
                             {t('monthly_report.payments', 'Encaissements')}
                         </h3>
                     </div>
@@ -96,7 +96,7 @@ export const MonthlyReportView: React.FC<MonthlyReportViewProps> = ({ data }) =>
                 <div className="bg-base-100 rounded-2xl shadow-sm border border-base-300 overflow-hidden flex flex-col">
                     <div className="p-4 border-b border-base-200 bg-base-50/50">
                         <h3 className="text-xs font-bold text-base-content uppercase tracking-widest flex items-center gap-2">
-                            <BarChart3 className="w-4 h-4 text-secondary" />
+                            <BarChart3 className="size-4 text-secondary" />
                             {t('monthly_report.tva_split', 'Répartition TVA')}
                         </h3>
                     </div>
@@ -115,21 +115,21 @@ export const MonthlyReportView: React.FC<MonthlyReportViewProps> = ({ data }) =>
                     <div className="bg-base-100 rounded-2xl shadow-sm border border-base-300 overflow-hidden flex flex-col">
                         <div className="p-4 border-b border-base-200 bg-base-50/50">
                             <h3 className="text-xs font-bold text-base-content uppercase tracking-widest flex items-center gap-2">
-                                <TrendingUp className="w-4 h-4 text-accent" />
+                                <TrendingUp className="size-4 text-accent" />
                                 {t('monthly_report.cash_movements', 'Mouvements Caisse')}
                             </h3>
                         </div>
                         <div className="p-4 space-y-3">
                             <div className="flex justify-between items-center p-2 rounded-xl bg-success/5 border border-success/10">
                                 <div className="flex items-center gap-2">
-                                    <ArrowUpRight className="w-4 h-4 text-success" />
+                                    <ArrowUpRight className="size-4 text-success" />
                                     <span className="text-xs font-bold text-success uppercase">{t('monthly_report.entries', 'Entrées')}</span>
                                 </div>
                                 <span className="text-sm font-black text-success">{formatMoney(data.mouvements_caisse.total_entrees)}</span>
                             </div>
                             <div className="flex justify-between items-center p-2 rounded-xl bg-error/5 border border-error/10">
                                 <div className="flex items-center gap-2">
-                                    <ArrowDownRight className="w-4 h-4 text-error" />
+                                    <ArrowDownRight className="size-4 text-error" />
                                     <span className="text-xs font-bold text-error uppercase">{t('monthly_report.exits', 'Sorties')}</span>
                                 </div>
                                 <span className="text-sm font-black text-error">{formatMoney(data.mouvements_caisse.total_sorties)}</span>
@@ -147,7 +147,7 @@ export const MonthlyReportView: React.FC<MonthlyReportViewProps> = ({ data }) =>
                     <div className="bg-base-100 rounded-2xl shadow-sm border border-base-300 overflow-hidden flex flex-col">
                         <div className="p-4 border-b border-base-200 bg-base-50/50">
                             <h3 className="text-xs font-bold text-base-content uppercase tracking-widest flex items-center gap-2">
-                                <Package className="w-4 h-4 text-primary" />
+                                <Package className="size-4 text-primary" />
                                 {t('monthly_report.top_suppliers', 'Top Fournisseurs')}
                             </h3>
                         </div>
@@ -167,7 +167,7 @@ export const MonthlyReportView: React.FC<MonthlyReportViewProps> = ({ data }) =>
                     <div className="bg-base-100 rounded-2xl shadow-sm border border-base-300 overflow-hidden flex flex-col">
                         <div className="p-4 border-b border-base-200 bg-base-50/50">
                             <h3 className="text-xs font-bold text-base-content uppercase tracking-widest flex items-center gap-2">
-                                <Users className="w-4 h-4 text-info" />
+                                <Users className="size-4 text-info" />
                                 {t('monthly_report.pro_clients', 'Clients Professionnels')}
                             </h3>
                         </div>
@@ -197,7 +197,7 @@ export const MonthlyReportView: React.FC<MonthlyReportViewProps> = ({ data }) =>
                     <div className="bg-base-100 rounded-2xl shadow-sm border border-base-300 overflow-hidden flex flex-col">
                         <div className="p-4 border-b border-base-200 bg-base-50/50">
                             <h3 className="text-xs font-bold text-base-content uppercase tracking-widest flex items-center gap-2">
-                                <Gift className="w-4 h-4 text-accent" />
+                                <Gift className="size-4 text-accent" />
                                 {t('monthly_report.free_units', 'Unités Gratuites')}
                             </h3>
                         </div>

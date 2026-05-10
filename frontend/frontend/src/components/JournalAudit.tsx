@@ -310,7 +310,7 @@ const JournalAudit: React.FC = () => {
                                 </div>
                                 <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-[11px]">
                                     <span className="flex items-center gap-1 font-bold opacity-60">
-                                        <div className="w-1.5 h-1.5 rounded-full bg-base-300"></div>
+                                        <div className="size-1.5 rounded-full bg-base-300"></div>
                                         {log.user_name || t('view.system_user')}
                                     </span>
                                     <span className="opacity-30 font-bold">{format(new Date(log.timestamp), 'dd MMMM yyyy', { locale: i18n.language === 'fr' ? fr : undefined })}</span>
@@ -375,7 +375,7 @@ const JournalAudit: React.FC = () => {
                         </td>
                         <td className="border-none">
                             <div className="flex items-center gap-2">
-                                <div className="w-6 h-6 rounded-full bg-base-300 flex items-center justify-center font-black text-[10px] uppercase">
+                                <div className="size-6 rounded-full bg-base-300 flex items-center justify-center font-black text-[10px] uppercase">
                                     {(log.user_name || t('view.system_user'))[0]}
                                 </div>
                                 <span className="font-bold text-xs uppercase opacity-80">{log.user_name || t('view.system_user')}</span>
@@ -400,7 +400,7 @@ const JournalAudit: React.FC = () => {
                                     <span className="badge badge-error text-white font-black text-[9px]">{t('table.sudo')}</span>
                                 </div>
                             ) : (
-                                <span className="w-1.5 h-1.5 rounded-full bg-success inline-block"></span>
+                                <span className="size-1.5 rounded-full bg-success inline-block"></span>
                             )}
                         </td>
                       </tr>

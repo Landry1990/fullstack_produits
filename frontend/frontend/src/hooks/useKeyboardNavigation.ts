@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from 'react'
+import { useState, useCallback, useEffect, useRef } from 'react'
 
 interface UseKeyboardNavigationProps {
     listLength: number
@@ -61,12 +61,19 @@ export const useKeyboardNavigation = ({
             e.preventDefault()
             onValidate?.()
         }
-    }, [enabled, listLength, selectedIndex, onIncrement, onDecrement, onDelete, onValidate])
+    }, [enabled, listLength, selectedIndex, onIncrement, onDecrement, onDelete, onValidate]);
+
+    // Use a ref to keep the latest handler version without re-subscribing to window
+    const handlerRef = useRef(handleKeyDown);
+    useEffect(() => {
+        handlerRef.current = handleKeyDown;
+    }, [handleKeyDown]);
 
     useEffect(() => {
-        window.addEventListener('keydown', handleKeyDown)
-        return () => window.removeEventListener('keydown', handleKeyDown)
-    }, [handleKeyDown])
+        const listener = (e: KeyboardEvent) => handlerRef.current(e);
+        window.addEventListener('keydown', listener);
+        return () => window.removeEventListener('keydown', listener);
+    }, []); // Empty deps: subscription stays put!
 
     return {
         selectedIndex,

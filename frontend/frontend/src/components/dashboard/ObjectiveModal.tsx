@@ -30,11 +30,11 @@ export const ObjectiveModal: React.FC<ObjectiveModalProps> = ({
                         onClick={onClose}
                         className="btn btn-sm btn-circle btn-ghost absolute right-4 top-4"
                     >
-                        <X className="w-4 h-4" />
+                        <X className="size-4" />
                     </button>
                     <div className="flex items-center gap-3">
                         <div className="p-2 bg-primary/10 rounded-lg text-primary">
-                            <Target className="w-6 h-6" />
+                            <Target className="size-6" />
                         </div>
                         <div>
                             <h3 className="font-bold text-xl text-base-content">
@@ -110,7 +110,7 @@ export const ObjectiveModal: React.FC<ObjectiveModalProps> = ({
                             onClick={onSave} 
                             className="btn btn-primary flex-1 rounded-xl font-bold uppercase text-xs gap-2"
                         >
-                            <Save className="w-4 h-4" />
+                            <Save className="size-4" />
                             {t('common:save')}
                         </button>
                     </div>

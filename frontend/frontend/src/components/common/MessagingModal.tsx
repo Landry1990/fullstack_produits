@@ -297,7 +297,7 @@ export default function MessagingModal({ isOpen, onClose, currentUser, onMessage
 
                       <div className="flex justify-between items-start mb-2">
                         <div className="flex items-center gap-2 min-w-0 pr-16">
-                          <div className={`w-8 h-8 rounded-full ${!m.is_read ? 'bg-primary text-primary-content' : 'bg-base-300 text-base-content'} flex items-center justify-center font-bold text-xs uppercase shrink-0 transition-colors shadow-inner`}>
+                          <div className={`size-8 rounded-full ${!m.is_read ? 'bg-primary text-primary-content' : 'bg-base-300 text-base-content'} flex items-center justify-center font-bold text-xs uppercase shrink-0 transition-colors shadow-inner`}>
                             {m.sender_name.charAt(0)}
                           </div>
                           <div className="truncate flex flex-col items-start">
@@ -393,7 +393,7 @@ export default function MessagingModal({ isOpen, onClose, currentUser, onMessage
 
                       <div className="flex justify-between items-start mb-2">
                         <div className="flex items-center gap-2 min-w-0 pr-16">
-                          <div className={`w-8 h-8 rounded-full bg-base-300 text-base-content flex items-center justify-center font-bold text-xs uppercase shrink-0 transition-colors shadow-inner`}>
+                          <div className={`size-8 rounded-full bg-base-300 text-base-content flex items-center justify-center font-bold text-xs uppercase shrink-0 transition-colors shadow-inner`}>
                             {m.sender_name.charAt(0)}
                           </div>
                           <div className="truncate flex flex-col items-start">
@@ -431,7 +431,7 @@ export default function MessagingModal({ isOpen, onClose, currentUser, onMessage
           {activeTab === 'supervision' && isAdmin && (
             <div className="space-y-4">
               <h4 className="text-lg font-bold flex items-center gap-2 mb-6 sticky top-0 bg-base-100 z-10 pb-2">
-                <Shield className="w-5 h-5 text-warning" />
+                <Shield className="size-5 text-warning" />
                 Supervision — Tous les messages
                 <span className="badge badge-warning badge-sm">{allMessages.length}</span>
               </h4>
@@ -452,7 +452,7 @@ export default function MessagingModal({ isOpen, onClose, currentUser, onMessage
                       )}
                       <div className="flex justify-between items-start mb-2">
                         <div className="flex items-center gap-2 min-w-0">
-                          <div className="w-8 h-8 rounded-full bg-warning/20 text-warning flex items-center justify-center font-bold text-xs uppercase shrink-0 shadow-inner">
+                          <div className="size-8 rounded-full bg-warning/20 text-warning flex items-center justify-center font-bold text-xs uppercase shrink-0 shadow-inner">
                             {m.sender_name.charAt(0)}
                           </div>
                           <div className="truncate flex flex-col items-start">
@@ -646,7 +646,7 @@ export default function MessagingModal({ isOpen, onClose, currentUser, onMessage
 
       {zoomImage && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-in fade-in duration-200" onClick={() => setZoomImage(null)}>
-          <div className="relative max-w-5xl max-h-[90vh] w-full h-full flex flex-col items-center justify-center" onClick={(e) => e.stopPropagation()}>
+          <div className="relative max-w-5xl max-h-[90vh] size-full flex flex-col items-center justify-center" onClick={(e) => e.stopPropagation()}>
             <button className="absolute top-2 right-2 text-white/70 hover:text-white bg-black/50 hover:bg-black/70 rounded-full transition-all p-2 z-10 shadow-lg" onClick={() => setZoomImage(null)}>
                <X size={24} />
             </button>

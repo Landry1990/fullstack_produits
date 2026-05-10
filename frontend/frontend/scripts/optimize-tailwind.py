@@ -54,7 +54,7 @@ def main():
     total_files = 0
     total_replacements = 0
     
-    print("🔍 Recherche des patterns w-N h-N à optimiser...\n")
+    print("Recherche des patterns w-N h-N a optimiser...\n")
     
     for filepath in sorted(src_dir.rglob('*')):
         if filepath.suffix not in EXTENSIONS:
@@ -66,14 +66,14 @@ def main():
             total_files += 1
             total_replacements += count
             rel_path = filepath.relative_to(src_dir.parent)
-            print(f"✅ {rel_path}: {count} remplacement(s)")
+            print(f"[OK] {rel_path}: {count} remplacement(s)")
             for line in modified[:3]:  # Afficher max 3 lignes
                 print(line)
             if len(modified) > 3:
                 print(f"  ... et {len(modified) - 3} autres lignes")
     
     print(f"\n{'='*60}")
-    print(f"📊 RÉSULTAT: {total_replacements} remplacements dans {total_files} fichiers")
+    print(f"RESULTAT: {total_replacements} remplacements dans {total_files} fichiers")
     print(f"{'='*60}")
 
 

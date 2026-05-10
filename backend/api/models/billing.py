@@ -10,7 +10,7 @@ from django.db.models.functions import Coalesce
 from django.db.models.signals import pre_save, post_save, post_delete
 from django.contrib.postgres.indexes import GinIndex
 from django.dispatch import receiver
-from decimal import Decimal
+from decimal import Decimal, ROUND_HALF_UP
 from typing import TYPE_CHECKING
 from typing_extensions import Self
 
@@ -156,7 +156,8 @@ class Facture(models.Model):
             if ttc_ligne > 0:
                 tva_taux = ligne['tva']
                 if tva_taux > 0:
-                    ht = (ttc_ligne / (1 + tva_taux / 100)).quantize(Decimal('0.01'))
+                    # Utilisation de l'arrondi à l'entier pour le HT en FCFA
+                    ht = (ttc_ligne / (1 + tva_taux / 100)).quantize(Decimal('1'), rounding=ROUND_HALF_UP)
                     total_ht += ht
                     total_tva += (ttc_ligne - ht)
                 else:
@@ -168,8 +169,10 @@ class Facture(models.Model):
         
         if total_ttc_brut > 0:
             ratio = total_ttc_net / total_ttc_brut
-            self.total_ht = (total_ht * ratio).quantize(Decimal('0.01'))
-            self.total_tva = (total_tva * ratio).quantize(Decimal('0.01'))
+            # Arrondi de la TVA à l'entier pour le FCFA
+            self.total_tva = (total_tva * ratio).quantize(Decimal('1'), rounding=ROUND_HALF_UP)
+            # Le HT est la différence pour garantir HT + TVA = TTC
+            self.total_ht = total_ttc_net - self.total_tva
         else:
             self.total_ht = Decimal('0.00')
             self.total_tva = Decimal('0.00')
@@ -200,7 +203,8 @@ class Facture(models.Model):
             total_ttc_ligne = pu_ttc_net * ligne.quantity
             
             if taux > 0:
-                ht_ligne = (total_ttc_ligne / (1 + taux / Decimal('100.00'))).quantize(Decimal('0.01'))
+                # Arrondi à l'entier pour le FCFA
+                ht_ligne = (total_ttc_ligne / (1 + taux / Decimal('100.00'))).quantize(Decimal('1'), rounding=ROUND_HALF_UP)
                 tva_ligne = total_ttc_ligne - ht_ligne
             else:
                 ht_ligne = total_ttc_ligne
@@ -216,8 +220,8 @@ class Facture(models.Model):
             ratio = total_ttc_net / total_ttc_brut
             
             for taux in analysis:
-                analysis[taux]['base_ht'] = (analysis[taux]['base_ht'] * ratio).quantize(Decimal('0.01'))
-                analysis[taux]['montant_tva'] = (analysis[taux]['montant_tva'] * ratio).quantize(Decimal('0.01'))
+                analysis[taux]['montant_tva'] = (analysis[taux]['montant_tva'] * ratio).quantize(Decimal('1'), rounding=ROUND_HALF_UP)
+                analysis[taux]['base_ht'] = (analysis[taux]['base_ht'] * ratio).quantize(Decimal('1'), rounding=ROUND_HALF_UP)
 
         return analysis
 
@@ -339,13 +343,23 @@ class FactureProduitAllocation(models.Model):
     
     @property
     def margin(self):
-        """Calcule la marge brute pour cette allocation"""
-        return (self.selling_price - self.cost_price) * self.quantity
+        """Calcule la marge brute HT pour cette allocation."""
+        item = self.facture_produit
+        tva = Decimal(str(item.tva or 0))
+        # Prix net TTC unitaire
+        pu_ttc = item.selling_price - item.discount
+        # Conversion HT
+        pu_ht = pu_ttc / (1 + tva / 100)
+        return (pu_ht - self.cost_price) * self.quantity
     
     @property
     def revenue(self):
-        """Calcule le CA pour cette allocation"""
-        return self.selling_price * self.quantity
+        """Calcule le CA HT pour cette allocation."""
+        item = self.facture_produit
+        tva = Decimal(str(item.tva or 0))
+        pu_ttc = item.selling_price - item.discount
+        pu_ht = pu_ttc / (1 + tva / 100)
+        return pu_ht * self.quantity
 
 
 class RelevePaiement(models.Model):

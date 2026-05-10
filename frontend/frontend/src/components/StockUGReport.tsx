@@ -216,8 +216,8 @@ export default function StockUGReport() {
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 sm:gap-6">
           <div>
             <div className="flex items-center gap-3 mb-2">
-              <div className="w-12 h-12 rounded-2xl bg-indigo-500/100 flex items-center justify-center text-white shadow-lg shadow-indigo-500/20">
-                <PackageOpen className="w-7 h-7" />
+              <div className="size-12 rounded-2xl bg-indigo-500/100 flex items-center justify-center text-white shadow-lg shadow-indigo-500/20">
+                <PackageOpen className="size-7" />
               </div>
               <div>
                 <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-base-content">
@@ -236,7 +236,7 @@ export default function StockUGReport() {
               className="btn bg-base-100 hover:bg-base-200/50 border-base-200 text-base-content/90 shadow-sm w-full"
               disabled={loading || !data?.fournisseurs.length}
             >
-              <Printer className="w-4 h-4" />
+              <Printer className="size-4" />
               {t('stock:rapport_ug.print')}
             </button>
             <button 
@@ -244,7 +244,7 @@ export default function StockUGReport() {
               className="btn bg-base-100 hover:bg-base-200/50 border-base-200 text-base-content/90 shadow-sm w-full"
               disabled={loading || !data?.fournisseurs.length}
             >
-              <Download className="w-4 h-4" />
+              <Download className="size-4" />
               {t('stock:rapport_ug.export')}
             </button>
             <button 
@@ -252,7 +252,7 @@ export default function StockUGReport() {
               className="btn btn-primary shadow-sm w-full col-span-2 sm:col-span-1 sm:w-auto"
               disabled={loading}
             >
-              <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+              <RefreshCw className={`size-4 ${loading ? 'animate-spin' : ''}`} />
               {t('stock:rapport_ug.refresh')}
             </button>
           </div>
@@ -262,8 +262,8 @@ export default function StockUGReport() {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <div className="bg-base-100 rounded-3xl p-6 shadow-sm border border-base-200 flex flex-col justify-center">
             <div className="flex items-center gap-4 mb-2">
-              <div className="w-12 h-12 rounded-xl bg-base-200 text-base-content/60 flex items-center justify-center">
-                 <PackageOpen className="w-6 h-6" />
+              <div className="size-12 rounded-xl bg-base-200 text-base-content/60 flex items-center justify-center">
+                 <PackageOpen className="size-6" />
               </div>
               <div>
                 <p className="text-xs font-bold text-base-content/40 tracking-wider uppercase">{t('stock:rapport_ug.stats.history_ug')}</p>
@@ -276,8 +276,8 @@ export default function StockUGReport() {
           
           <div className="bg-base-100 rounded-3xl p-6 shadow-sm border border-base-200 flex flex-col justify-center">
             <div className="flex items-center gap-4 mb-2">
-              <div className="w-12 h-12 rounded-xl bg-emerald-500/10 text-emerald-500 flex items-center justify-center">
-                 <PackageOpen className="w-6 h-6" />
+              <div className="size-12 rounded-xl bg-emerald-500/10 text-emerald-500 flex items-center justify-center">
+                 <PackageOpen className="size-6" />
               </div>
               <div>
                 <p className="text-xs font-bold text-base-content/40 tracking-wider uppercase">{t('stock:rapport_ug.stats.current_stock_ug')}</p>
@@ -290,8 +290,8 @@ export default function StockUGReport() {
           
           <div className="bg-base-100 rounded-3xl p-6 shadow-sm border border-base-200 flex flex-col justify-center">
             <div className="flex items-center gap-4 mb-2">
-              <div className="w-12 h-12 rounded-xl bg-base-200 text-base-content/60 flex items-center justify-center">
-                 <Banknote className="w-6 h-6" />
+              <div className="size-12 rounded-xl bg-base-200 text-base-content/60 flex items-center justify-center">
+                 <Banknote className="size-6" />
               </div>
               <div>
                 <p className="text-xs font-bold text-base-content/40 tracking-wider uppercase">{t('stock:rapport_ug.stats.estimated_value')}</p>
@@ -304,8 +304,8 @@ export default function StockUGReport() {
           
           <div className="bg-base-100 rounded-3xl p-6 shadow-sm border border-base-200 flex flex-col justify-center border-l-4 border-l-blue-500">
             <div className="flex items-center gap-4 mb-2">
-              <div className="w-12 h-12 rounded-xl bg-blue-500/10 text-blue-500 flex items-center justify-center">
-                 <Banknote className="w-6 h-6" />
+              <div className="size-12 rounded-xl bg-blue-500/10 text-blue-500 flex items-center justify-center">
+                 <Banknote className="size-6" />
               </div>
               <div>
                 <p className="text-xs font-bold text-blue-400 tracking-wider uppercase">{t('stock:rapport_ug.stats.latent_cash')}</p>
@@ -328,7 +328,7 @@ export default function StockUGReport() {
             
             <div className="flex items-center gap-3 w-full sm:w-auto">
               <div className="flex items-center gap-2 bg-base-100 px-3 py-1.5 rounded-xl border border-base-200 focus-within:ring-2 focus-within:ring-indigo-100 focus-within:border-indigo-300 transition-all shadow-sm w-full sm:w-auto">
-                <Calendar className="w-4 h-4 text-base-content/40" />
+                <Calendar className="size-4 text-base-content/40" />
                 <input 
                   type="date"
                   lang={getLocale()}
@@ -340,7 +340,7 @@ export default function StockUGReport() {
               </div>
               <span className="text-base-content/40 font-medium whitespace-nowrap">{t('stock:rapport_ug.filters.to')}</span>
               <div className="flex items-center gap-2 bg-base-100 px-3 py-1.5 rounded-xl border border-base-200 focus-within:ring-2 focus-within:ring-indigo-100 focus-within:border-indigo-300 transition-all shadow-sm w-full sm:w-auto">
-                <Calendar className="w-4 h-4 text-base-content/40" />
+                <Calendar className="size-4 text-base-content/40" />
                 <input 
                   type="date"
                   lang={getLocale()}
@@ -357,7 +357,7 @@ export default function StockUGReport() {
                   onClick={() => { setDateDebut(''); setDateFin(''); }}
                   title={t('stock:rapport_ug.filters.clear_dates')}
                 >
-                  <RefreshCw className="w-4 h-4" />
+                  <RefreshCw className="size-4" />
                 </button>
               )}
             </div>
@@ -388,7 +388,7 @@ export default function StockUGReport() {
                 ) : data?.fournisseurs.length === 0 ? (
                   <tr>
                     <td colSpan={5} className="px-6 py-12 text-center text-base-content/40">
-                      <PackageOpen className="w-12 h-12 mx-auto mb-3 opacity-20" />
+                      <PackageOpen className="size-12 mx-auto mb-3 opacity-20" />
                       <p className="font-medium text-base-content/60">{t('stock:rapport_ug.table.empty')}</p>
                     </td>
                   </tr>

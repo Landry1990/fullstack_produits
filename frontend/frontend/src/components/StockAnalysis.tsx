@@ -36,8 +36,8 @@ const StockAnalysis = () => {
                 <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
                     <div>
                         <div className="flex items-center gap-3 mb-2">
-                            <div className="w-12 h-12 rounded-2xl bg-primary flex items-center justify-center text-white shadow-lg shadow-primary/20">
-                                <PackageSearch className="w-7 h-7" />
+                            <div className="size-12 rounded-2xl bg-primary flex items-center justify-center text-white shadow-lg shadow-primary/20">
+                                <PackageSearch className="size-7" />
                             </div>
                             <div>
                                 <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-base-content">
@@ -70,8 +70,8 @@ const StockAnalysis = () => {
                 {!loading && data && activeTab !== 'pilotage' && (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 animate-in fade-in slide-in-from-top-4 duration-500">
                         <div className="bg-base-100 p-6 rounded-[24px] border border-base-200 shadow-sm flex items-center gap-4">
-                            <div className="w-12 h-12 rounded-2xl bg-primary/10 text-primary flex items-center justify-center">
-                                <PackageSearch className="w-6 h-6" />
+                            <div className="size-12 rounded-2xl bg-primary/10 text-primary flex items-center justify-center">
+                                <PackageSearch className="size-6" />
                             </div>
                             <div>
                                 <p className="text-[10px] font-black text-base-content/30 uppercase tracking-widest">{t('stock:analyse.total_items', 'Articles Détectés')}</p>
@@ -80,8 +80,8 @@ const StockAnalysis = () => {
                         </div>
                         
                         <div className="bg-base-100 p-6 rounded-[24px] border border-base-200 shadow-sm flex items-center gap-4">
-                            <div className="w-12 h-12 rounded-2xl bg-error/10 text-error flex items-center justify-center">
-                                <TrendingUp className="w-6 h-6" />
+                            <div className="size-12 rounded-2xl bg-error/10 text-error flex items-center justify-center">
+                                <TrendingUp className="size-6" />
                             </div>
                             <div>
                                 <p className="text-[10px] font-black text-base-content/30 uppercase tracking-widest">
@@ -105,7 +105,7 @@ const StockAnalysis = () => {
                         <div className="bg-base-100 rounded-[32px] shadow-sm border border-base-200 overflow-hidden flex flex-col min-h-0 sm:min-h-[480px] lg:min-h-[600px]">
                             {error && (
                                 <div className="m-6 alert alert-error shadow-sm rounded-2xl">
-                                    <X className="w-5 h-5" />
+                                    <X className="size-5" />
                                     <span className="font-bold">{error}</span>
                                 </div>
                             )}
@@ -132,7 +132,7 @@ const StockAnalysis = () => {
                                             onClick={() => setPage((p) => Math.max(1, p - 1))}
                                             disabled={page === 1}
                                         >
-                                            <ChevronLeft className="w-4 h-4" />
+                                            <ChevronLeft className="size-4" />
                                         </button>
                                         
                                         <button className="join-item btn btn-sm px-6 bg-base-100 border-base-200 text-base-content font-bold pointer-events-none">
@@ -144,7 +144,7 @@ const StockAnalysis = () => {
                                             onClick={() => setPage((p) => Math.min(data.total_pages || 1, p + 1))}
                                             disabled={page === data.total_pages}
                                         >
-                                            <ChevronRight className="w-4 h-4" />
+                                            <ChevronRight className="size-4" />
                                         </button>
                                     </div>
                                 </div>
@@ -155,7 +155,7 @@ const StockAnalysis = () => {
                                 <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 w-full max-w-md px-4 animate-in fade-in slide-in-from-bottom-4 duration-300">
                                     <div className="bg-primary text-primary-content p-4 rounded-[24px] shadow-2xl flex items-center justify-between border border-white/10 backdrop-blur-md">
                                         <div className="flex items-center gap-3 ml-2">
-                                            <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center font-black">
+                                            <div className="size-10 rounded-xl bg-white/20 flex items-center justify-center font-black">
                                                 {selectedItems.size}
                                             </div>
                                             <span className="font-bold text-sm uppercase tracking-tighter">
@@ -169,20 +169,20 @@ const StockAnalysis = () => {
                                                     ? "Qté suggérée = ARRONDI_SUP(vente_moy/jour × 30j) − stock actuel\n\nSi ventes inconnues : stock_minimum − stock actuel\n\nObjectif : couvrir 30 jours de stock."
                                                     : "En surstock, les quantités affichées sont à titre indicatif.\n\nFormule : ARRONDI_SUP(vente_moy/jour × 30j) − stock actuel\n\nVérifiez avant de valider la commande."}
                                             >
-                                                <HelpCircle className="w-4 h-4 text-primary-content/50 hover:text-primary-content cursor-help transition-colors" />
+                                                <HelpCircle className="size-4 text-primary-content/50 hover:text-primary-content cursor-help transition-colors" />
                                             </div>
                                             <button
                                                 className="btn btn-sm btn-accent gap-2 rounded-xl px-4 h-10 font-black border-none"
                                                 onClick={actions.handleGenerateOrder}
                                             >
-                                                <ShoppingBag className="w-4 h-4" />
+                                                <ShoppingBag className="size-4" />
                                                 {t('stock:analyse.shortage.generate_order')}
                                             </button>
                                             <button
                                                 className="btn btn-sm btn-ghost btn-circle text-primary-content/60 hover:text-white"
                                                 onClick={() => actions.toggleSelectAll()}
                                             >
-                                                <X className="w-5 h-5" />
+                                                <X className="size-5" />
                                             </button>
                                         </div>
                                     </div>

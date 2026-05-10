@@ -62,7 +62,7 @@ export default function PurchaseHistoryDrawer({
         <div className="p-6 border-b border-base-200 bg-base-50/80 backdrop-blur-md flex justify-between items-center shrink-0">
           <div className="flex items-center gap-3">
              <div className="p-2.5 bg-primary/10 text-primary rounded-2xl">
-               <HistoryIcon className="w-6 h-6" />
+               <HistoryIcon className="size-6" />
              </div>
              <div>
                <h3 className="text-xl font-black tracking-tight">{t('clients:sections.purchase_history')}</h3>
@@ -70,7 +70,7 @@ export default function PurchaseHistoryDrawer({
              </div>
           </div>
           <button onClick={onClose} className="btn btn-sm btn-circle btn-ghost transition-all hover:rotate-90">
-            <X className="w-5 h-5"/>
+            <X className="size-5"/>
           </button>
         </div>
 
@@ -87,13 +87,13 @@ export default function PurchaseHistoryDrawer({
                <div className="grid grid-cols-2 gap-4 animate-in fade-in slide-in-from-top-4 duration-300">
                    <div className="bg-primary/5 p-4 rounded-3xl border border-primary/10 flex flex-col gap-1">
                       <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-primary/40">
-                         <ShoppingBag className="w-3 h-3" /> {t('clients:history.total_visits')}
+                         <ShoppingBag className="size-3" /> {t('clients:history.total_visits')}
                       </div>
                       <div className="text-2xl font-black text-primary">{data.total_factures}</div>
                    </div>
                    <div className="bg-secondary/5 p-4 rounded-3xl border border-secondary/10 flex flex-col gap-1">
                       <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-secondary/40">
-                         <TrendingUp className="w-3 h-3" /> {t('clients:history.loyalty')}
+                         <TrendingUp className="size-3" /> {t('clients:history.loyalty')}
                       </div>
                       <div className="text-2xl font-black text-secondary">{Math.floor(data.total_factures * 1.5)} {t('clients:units.pts')}</div>
                    </div>
@@ -111,13 +111,13 @@ export default function PurchaseHistoryDrawer({
                          onClick={() => setExpandedInvoice(expandedInvoice === facture.id ? null : facture.id)}
                        >
                           <div className="flex items-center gap-4">
-                             <div className={`w-10 h-10 rounded-2xl flex items-center justify-center transition-colors ${expandedInvoice === facture.id ? 'bg-primary text-white shadow-lg shadow-primary/20' : 'bg-base-200 text-base-content/40 group-hover:bg-primary/10 group-hover:text-primary'}`}>
-                                <PackageCheck className="w-5 h-5" />
+                             <div className={`size-10 rounded-2xl flex items-center justify-center transition-colors ${expandedInvoice === facture.id ? 'bg-primary text-white shadow-lg shadow-primary/20' : 'bg-base-200 text-base-content/40 group-hover:bg-primary/10 group-hover:text-primary'}`}>
+                                <PackageCheck className="size-5" />
                              </div>
                              <div>
                                 <div className="text-sm font-black text-base-content">{t('clients:history.invoice_no', { no: facture.numero_facture })}</div>
                                 <div className="text-[10px] font-bold text-base-content/40 flex items-center gap-1">
-                                   <CalendarDays className="w-3 h-3" /> {formatDateFr(facture.date)}
+                                   <CalendarDays className="size-3" /> {formatDateFr(facture.date)}
                                 </div>
                              </div>
                           </div>
@@ -128,7 +128,7 @@ export default function PurchaseHistoryDrawer({
                                    {facture.status === 'VALIDEE' ? t('clients:history.status_validee') : facture.status}
                                 </div>
                              </div>
-                             <ChevronRight className={`w-4 h-4 text-base-content/20 transition-transform duration-300 ${expandedInvoice === facture.id ? 'rotate-90 text-primary' : ''}`} />
+                             <ChevronRight className={`size-4 text-base-content/20 transition-transform duration-300 ${expandedInvoice === facture.id ? 'rotate-90 text-primary' : ''}`} />
                           </div>
                        </div>
 
@@ -166,8 +166,8 @@ export default function PurchaseHistoryDrawer({
              </>
            ) : (
              <div className="flex flex-col items-center justify-center h-full gap-4 text-center opacity-40 grayscale py-12">
-                <div className="w-20 h-20 bg-base-200 rounded-full flex items-center justify-center">
-                  <ShoppingBag className="w-10 h-10" />
+                <div className="size-20 bg-base-200 rounded-full flex items-center justify-center">
+                  <ShoppingBag className="size-10" />
                 </div>
                 <div>
                    <h4 className="font-black text-lg">{t('clients:history.empty_title')}</h4>

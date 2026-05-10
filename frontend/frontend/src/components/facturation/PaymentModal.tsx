@@ -54,13 +54,13 @@ export default function PaymentModal({
     montantPaye,
     setMontantPaye,
     modePaiement,
-    setModePaiement: _setModePaiement,
+    setModePaiement: _setModePaiement, // Keeping it if parent requires it but it's not used here
     paiements,
     setPaiements,
     onCompleteSale,
     onRegisterPayment,
     selectedClient,
-    useManualClient: _useManualClient,
+    useManualClient: _useManualClient, // Keeping it if parent requires it but it's not used here
     paymentInputRef,
     clientSoldeDepot,
     isMultiCaisse,
@@ -179,7 +179,7 @@ export default function PaymentModal({
               {isNewSale && totals.tauxCouverture > 0 && totals.partAssurance > 0 ? (
                 <div className="space-y-4">
                   <div className="alert alert-info py-2">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" className="stroke-current shrink-0 w-5 h-5"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" className="stroke-current shrink-0 size-5"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                     <span className="text-sm">{t('facturation:payment.tiers_payant_active', { rate: totals.tauxCouverture })}</span>
                   </div>
                   

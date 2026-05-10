@@ -42,14 +42,14 @@ export const CreancesFilters: React.FC<CreancesFiltersProps> = ({
                     {/* Client Selector */}
                     <div className="space-y-2">
                         <label className="text-[10px] font-black uppercase tracking-widest text-base-content/40 flex items-center gap-2 ml-1">
-                            <Users className="w-3.5 h-3.5" /> {t('creances:filters.client_label')}
+                            <Users className="size-3.5" /> {t('creances:filters.client_label')}
                         </label>
                         {selectedClient ? (
                             <button 
                                 onClick={() => onClientChange('')}
                                 className="btn btn-sm btn-outline btn-block border-base-200 hover:bg-base-200 hover:text-base-content gap-2 rounded-xl transition-all font-bold text-xs"
                             >
-                                <RotateCcw className="w-3.5 h-3.5" />
+                                <RotateCcw className="size-3.5" />
                                 {t('creances:filters.back_to_list')}
                             </button>
                         ) : (
@@ -66,7 +66,7 @@ export const CreancesFilters: React.FC<CreancesFiltersProps> = ({
                                         </option>
                                     ))}
                                 </select>
-                                <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-base-content/30 group-focus-within:text-primary transition-colors" />
+                                <Search className="size-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-base-content/30 group-focus-within:text-primary transition-colors" />
                             </div>
                         )}
                     </div>
@@ -74,7 +74,7 @@ export const CreancesFilters: React.FC<CreancesFiltersProps> = ({
                     {/* Date Ranges */}
                     <div className="space-y-2">
                         <label className="text-[10px] font-black uppercase tracking-widest text-base-content/40 flex items-center gap-2 ml-1">
-                            <Calendar className="w-3.5 h-3.5" /> {t('creances:filters.start_date')}
+                            <Calendar className="size-3.5" /> {t('creances:filters.start_date')}
                         </label>
                         <input
                             type="date"
@@ -86,7 +86,7 @@ export const CreancesFilters: React.FC<CreancesFiltersProps> = ({
 
                     <div className="space-y-2">
                         <label className="text-[10px] font-black uppercase tracking-widest text-base-content/40 flex items-center gap-2 ml-1">
-                            <Calendar className="w-3.5 h-3.5" /> {t('creances:filters.end_date')}
+                            <Calendar className="size-3.5" /> {t('creances:filters.end_date')}
                         </label>
                         <input
                             type="date"
@@ -99,7 +99,7 @@ export const CreancesFilters: React.FC<CreancesFiltersProps> = ({
                     {/* Status Toggle */}
                     <div className="space-y-2">
                         <label className="text-[10px] font-black uppercase tracking-widest text-base-content/40 flex items-center gap-2 ml-1">
-                            <History className="w-3.5 h-3.5" /> {t('creances:history_toggle')}
+                            <History className="size-3.5" /> {t('creances:history_toggle')}
                         </label>
                         <div 
                             className={`flex items-center gap-1 p-1 bg-base-200/50 rounded-xl cursor-pointer transition-all h-10 ${showHistory ? 'ring-2 ring-primary/20' : ''}`}
@@ -121,7 +121,7 @@ export const CreancesFilters: React.FC<CreancesFiltersProps> = ({
                         onClick={onRefresh} 
                         className={`btn btn-sm h-10 px-6 rounded-xl ${loading ? 'btn-disabled' : 'btn-primary'} gap-2 shadow-md shadow-primary/10 transition-all hover:scale-105 active:scale-95 font-black uppercase tracking-widest text-[10px]`}
                     >
-                        {loading ? <span className="loading loading-spinner loading-xs"></span> : <Search className="w-4 h-4" />}
+                        {loading ? <span className="loading loading-spinner loading-xs"></span> : <Search className="size-4" />}
                         {t('creances:filters.search')}
                     </button>
                     {selectedClient && (
@@ -129,7 +129,7 @@ export const CreancesFilters: React.FC<CreancesFiltersProps> = ({
                             onClick={onPrintStatement} 
                             className="btn btn-sm h-10 px-6 rounded-xl btn-accent gap-2 shadow-md shadow-accent/10 transition-all hover:scale-105 active:scale-95 font-black uppercase tracking-widest text-[10px]"
                         >
-                            <Printer className="w-4 h-4" />
+                            <Printer className="size-4" />
                             {t('creances:print_statement')}
                         </button>
                     )}

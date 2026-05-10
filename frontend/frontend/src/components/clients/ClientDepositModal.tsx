@@ -84,7 +84,7 @@ export default function ClientDepositModal({ isOpen, onClose, client, onSuccess 
             onClose={onClose}
             title={`${t('clients:finance.manage_deposit')} - ${client.name}`}
             subtitle={`${t('clients:finance.solde_depot')}: ${formatCurrency(parseFloat(client.solde_depot || '0'))}`}
-            icon={<CreditCard className="w-5 h-5 text-primary" />}
+            icon={<CreditCard className="size-5 text-primary" />}
             maxWidth="max-w-3xl"
         >
             <div className="flex flex-col h-full">
@@ -95,7 +95,7 @@ export default function ClientDepositModal({ isOpen, onClose, client, onSuccess 
                         onClick={() => setActiveTab('transaction')}
                     >
                         <div className="flex items-center gap-2">
-                            <Plus className="w-4 h-4" />
+                            <Plus className="size-4" />
                             Transaction
                         </div>
                     </button>
@@ -104,7 +104,7 @@ export default function ClientDepositModal({ isOpen, onClose, client, onSuccess 
                         onClick={() => setActiveTab('history')}
                     >
                         <div className="flex items-center gap-2">
-                            <History className="w-4 h-4" />
+                            <History className="size-4" />
                             {t('common:history')}
                         </div>
                     </button>
@@ -119,14 +119,14 @@ export default function ClientDepositModal({ isOpen, onClose, client, onSuccess 
                                     className={`flex items-center justify-center gap-2 py-3 rounded-lg text-sm font-bold transition-all ${type === 'DEPOT' ? 'bg-base-100 shadow-sm text-primary' : 'text-base-content/40 hover:text-base-content/60'}`}
                                     onClick={() => setType('DEPOT')}
                                 >
-                                    <Plus className="w-4 h-4" /> {t('common:add_deposit')}
+                                    <Plus className="size-4" /> {t('common:add_deposit')}
                                 </button>
                                 <button
                                     type="button"
                                     className={`flex items-center justify-center gap-2 py-3 rounded-lg text-sm font-bold transition-all ${type === 'RETRAIT' ? 'bg-base-100 shadow-sm text-error' : 'text-base-content/40 hover:text-base-content/60'}`}
                                     onClick={() => setType('RETRAIT')}
                                 >
-                                    <Minus className="w-4 h-4" /> {t('common:make_withdrawal')}
+                                    <Minus className="size-4" /> {t('common:make_withdrawal')}
                                 </button>
                             </div>
 
@@ -142,7 +142,7 @@ export default function ClientDepositModal({ isOpen, onClose, client, onSuccess 
                                             placeholder="0"
                                             required
                                         />
-                                        <Banknote className="w-5 h-5 absolute left-3 top-3.5 text-base-content/30" />
+                                        <Banknote className="size-5 absolute left-3 top-3.5 text-base-content/30" />
                                     </div>
                                 </div>
 
@@ -205,7 +205,7 @@ export default function ClientDepositModal({ isOpen, onClose, client, onSuccess 
                                             {history.map((item) => (
                                                 <tr key={item.id} className="text-sm">
                                                     <td className="whitespace-nowrap flex items-center gap-2">
-                                                        <Calendar className="w-3.5 h-3.5 text-base-content/30" />
+                                                        <Calendar className="size-3.5 text-base-content/30" />
                                                         {formatDateFr(item.date)}
                                                     </td>
                                                     <td>
@@ -233,7 +233,7 @@ export default function ClientDepositModal({ isOpen, onClose, client, onSuccess 
                                 </div>
                             ) : (
                                 <div className="text-center py-12 text-base-content/40">
-                                    <History className="w-12 h-12 mx-auto mb-3 opacity-20" />
+                                    <History className="size-12 mx-auto mb-3 opacity-20" />
                                     <p>{t('common:no_results_found')}</p>
                                 </div>
                             )}

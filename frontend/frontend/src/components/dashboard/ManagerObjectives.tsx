@@ -27,7 +27,7 @@ export const ManagerObjectives: React.FC<ManagerObjectivesProps> = ({ currentObj
         <div className="bg-base-100 rounded-2xl shadow-sm border border-base-300 overflow-hidden flex flex-col">
             <div className="p-6 border-b border-base-200 flex justify-between items-center">
                 <h3 className="text-lg font-bold text-base-content flex items-center gap-2">
-                    <Target className="w-5 h-5 text-primary" /> 
+                    <Target className="size-5 text-primary" /> 
                     {t('manager_dashboard.active_objectives', 'Objectifs Actifs')}
                 </h3>
                 <button 
@@ -35,7 +35,7 @@ export const ManagerObjectives: React.FC<ManagerObjectivesProps> = ({ currentObj
                     className="btn btn-ghost btn-sm btn-circle"
                     title={t('common:refresh')}
                 >
-                    <RefreshCw className="w-4 h-4" />
+                    <RefreshCw className="size-4" />
                 </button>
             </div>
             

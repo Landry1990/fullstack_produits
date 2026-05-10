@@ -70,21 +70,21 @@ export const ManagerKPIs: React.FC<ManagerKPIsProps> = ({ kpis }) => {
             label: t('manager_dashboard.periods.today', "Aujourd'hui"), 
             key: 'jour', 
             color: 'bg-primary', 
-            icon: <Calendar className="w-5 h-5" />,
+            icon: <Calendar className="size-5" />,
             colorText: 'text-primary'
         },
         { 
             label: t('manager_dashboard.periods.week', 'Semaine'), 
             key: 'semaine', 
             color: 'bg-secondary', 
-            icon: <BarChart3 className="w-5 h-5" />,
+            icon: <BarChart3 className="size-5" />,
             colorText: 'text-secondary'
         },
         { 
             label: t('manager_dashboard.periods.month', 'Mois'), 
             key: 'mois', 
             color: 'bg-accent', 
-            icon: <TrendingUp className="w-5 h-5" />,
+            icon: <TrendingUp className="size-5" />,
             colorText: 'text-accent'
         }
     ];
@@ -129,7 +129,7 @@ export const ManagerKPIs: React.FC<ManagerKPIsProps> = ({ kpis }) => {
                 return (
                     <div key={item.key} className={`bg-base-100 rounded-2xl shadow-sm border ${isSuccess ? 'border-success/50 shadow-success/20 shadow-lg relative overflow-visible' : 'border-base-300 overflow-hidden'} transition-all duration-500`}>
                         {isSuccess && (
-                            <div className="absolute -top-3 -right-3 bg-success text-success-content rounded-full p-2 shadow-lg animate-bounce z-10">
+                            <div className="absolute -top-3 -right-3 bg-success text-success-content rounded-full p-2 shadow-lg animate-pulse z-10 scale-110">
                                 <Trophy size={20} />
                             </div>
                         )}

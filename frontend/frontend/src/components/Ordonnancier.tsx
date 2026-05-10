@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import api from '../services/api';
 import { toast } from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
@@ -79,7 +79,7 @@ const OrdonnancierPage: React.FC = () => {
     return (
         <div className="flex flex-col h-full gap-6 p-4 md:p-6 bg-base-100 overflow-y-auto w-full">
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-                <h1 className="text-2xl md:text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary to-secondary">
+                <h1 className="text-2xl md:text-3xl font-bold text-primary">
                     {t('title')}
                 </h1>
                 

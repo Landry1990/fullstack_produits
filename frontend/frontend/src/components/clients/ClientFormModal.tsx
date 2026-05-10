@@ -65,7 +65,7 @@ export default function ClientFormModal({
              <div className="relative">
                 <div className="absolute inset-0 bg-primary/20 blur-lg rounded-full"></div>
                 <div className="relative p-2.5 bg-gradient-to-br from-primary to-primary-focus text-white rounded-xl shadow-lg shadow-primary/20 text-sm">
-                    <User className="w-5 h-5" />
+                    <User className="size-5" />
                 </div>
              </div>
              <div>
@@ -84,7 +84,7 @@ export default function ClientFormModal({
             onClick={onClose} 
             className="btn btn-sm btn-circle btn-ghost hover:bg-error/10 hover:text-error transition-all"
           >
-            <X className="w-5 h-5"/>
+            <X className="size-5"/>
           </button>
         </div>
 
@@ -98,7 +98,7 @@ export default function ClientFormModal({
                 <div className="form-control">
                     <label className="label py-1">
                     <span className="label-text text-[9px] uppercase font-black tracking-widest text-base-content/40 flex items-center gap-1.5">
-                        <User className="w-3 h-3" /> {t('common:name')}*
+                        <User className="size-3" /> {t('common:name')}*
                     </span>
                     </label>
                     <input 
@@ -113,7 +113,7 @@ export default function ClientFormModal({
                 <div className="form-control text-sm">
                     <label className="label py-1">
                     <span className="label-text text-[9px] uppercase font-black tracking-widest text-base-content/40 flex items-center gap-1.5">
-                        <Phone className="w-3 h-3" /> {t('common:phone')}
+                        <Phone className="size-3" /> {t('common:phone')}
                     </span>
                     </label>
                     <input 
@@ -127,7 +127,7 @@ export default function ClientFormModal({
                 <div className="form-control">
                     <label className="label py-1">
                     <span className="label-text text-[9px] uppercase font-black tracking-widest text-base-content/40 flex items-center gap-1.5">
-                        <Mail className="w-3 h-3" /> {t('common:email')}
+                        <Mail className="size-3" /> {t('common:email')}
                     </span>
                     </label>
                     <input 
@@ -142,7 +142,7 @@ export default function ClientFormModal({
                 <div className="form-control">
                     <label className="label py-1">
                     <span className="label-text text-[9px] uppercase font-black tracking-widest text-base-content/40 flex items-center gap-1.5">
-                        <ShieldCheck className="w-3 h-3" /> {t('clients:fields.type')}
+                        <ShieldCheck className="size-3" /> {t('clients:fields.type')}
                     </span>
                     </label>
                     <select 
@@ -158,7 +158,7 @@ export default function ClientFormModal({
                 <div className="form-control md:col-span-2">
                     <label className="label py-1">
                     <span className="label-text text-[9px] uppercase font-black tracking-widest text-base-content/40 flex items-center gap-1.5">
-                        <MapPin className="w-3 h-3" /> {t('clients:fields.address')}
+                        <MapPin className="size-3" /> {t('clients:fields.address')}
                     </span>
                     </label>
                     <input 
@@ -174,7 +174,7 @@ export default function ClientFormModal({
                     <div className="form-control">
                         <label className="label py-1">
                         <span className="label-text text-[9px] uppercase font-black tracking-widest text-base-content/40 flex items-center gap-1.5">
-                            <ShieldCheck className="w-3 h-3" /> NIU
+                            <ShieldCheck className="size-3" /> NIU
                         </span>
                         </label>
                         <input 
@@ -187,7 +187,7 @@ export default function ClientFormModal({
                     <div className="form-control">
                         <label className="label py-1">
                         <span className="label-text text-[9px] uppercase font-black tracking-widest text-base-content/40 flex items-center gap-1.5">
-                            <ShieldCheck className="w-3 h-3" /> Registre Commerce
+                            <ShieldCheck className="size-3" /> Registre Commerce
                         </span>
                         </label>
                         <input 
@@ -206,7 +206,7 @@ export default function ClientFormModal({
                <div className="group bg-base-200/30 p-4 rounded-[1.25rem] border border-base-200/60 hover:border-primary/30 transition-all flex items-center justify-between">
                     <div className="flex items-center gap-3">
                         <div className={`p-2 rounded-xl transition-all ${data.is_active !== false ? 'bg-success/10 text-success' : 'bg-base-300 text-base-content/30'}`}>
-                           <Activity className="w-5 h-5" />
+                           <Activity className="size-5" />
                         </div>
                         <div>
                             <span className="block font-black text-xs">{t('common:is_active')}</span>
@@ -224,7 +224,7 @@ export default function ClientFormModal({
                <div className="group bg-base-200/30 p-4 rounded-[1.25rem] border border-base-200/60 hover:border-secondary/30 transition-all flex items-center justify-between">
                     <div className="flex items-center gap-3">
                         <div className={`p-2 rounded-xl transition-all ${data.is_loyalty_member ?? true ? 'bg-secondary/10 text-secondary' : 'bg-base-300 text-base-content/30'}`}>
-                           <Award className="w-5 h-5" />
+                           <Award className="size-5" />
                         </div>
                         <div>
                             <span className="block font-black text-xs">{t('clients:fields.loyalty_member')}</span>
@@ -234,7 +234,7 @@ export default function ClientFormModal({
                     <div className="flex items-center gap-4">
                         {data.is_loyalty_member !== false && (
                             <div className="flex items-center gap-2 px-4 py-2 bg-secondary/15 text-secondary rounded-2xl border border-secondary/30 shadow-sm animate-in fade-in zoom-in duration-300">
-                                <Award className="w-5 h-5" />
+                                <Award className="size-5" />
                                 <div className="flex flex-col">
                                     <span className="text-[10px] font-black uppercase leading-none opacity-70">Points</span>
                                     <span className="text-lg font-black leading-tight">
@@ -256,7 +256,7 @@ export default function ClientFormModal({
                  <div className="group bg-base-200/30 p-4 rounded-[1.25rem] border border-base-200/60 hover:border-primary/30 transition-all flex items-center justify-between">
                       <div className="flex items-center gap-3">
                           <div className={`p-2 rounded-xl transition-all ${data.is_deposit_enabled ? 'bg-primary/10 text-primary' : 'bg-base-300 text-base-content/30'}`}>
-                             <CreditCard className="w-5 h-5" />
+                             <CreditCard className="size-5" />
                           </div>
                           <div>
                               <span className="block font-black text-xs">{t('clients:fields.is_deposit_enabled')}</span>
@@ -277,7 +277,7 @@ export default function ClientFormModal({
             <div className="p-5 bg-base-200/20 rounded-[1.25rem] border border-base-200/50 space-y-4">
                 <div className="flex items-center gap-3">
                    <h4 className="text-[9px] font-black uppercase tracking-[0.2em] text-base-content/30 flex items-center gap-2">
-                     <span className="w-2 h-2 rounded-full bg-primary/30"></span>
+                     <span className="size-2 rounded-full bg-primary/30"></span>
                      {t('clients:sections.finance')}
                    </h4>
                    <div className="h-px flex-1 bg-base-300/50"></div>
@@ -333,7 +333,7 @@ export default function ClientFormModal({
                <div className="p-5 bg-base-200/20 rounded-[1.25rem] border border-base-200/50 space-y-4">
                   <div className="flex items-center gap-3">
                      <h4 className="text-[9px] font-black uppercase tracking-[0.2em] text-base-content/30 flex items-center gap-2">
-                       <span className="w-2 h-2 rounded-full bg-secondary/30"></span>
+                       <span className="size-2 rounded-full bg-secondary/30"></span>
                        {t('clients:beneficiaries.title')}
                      </h4>
                      <div className="h-px flex-1 bg-base-300/50"></div>
@@ -370,7 +370,7 @@ export default function ClientFormModal({
                         className="btn btn-primary btn-sm lg:col-span-1 rounded-lg h-9"
                         disabled={!tempAyantDroit.nom || !tempAyantDroit.matricule}
                     >
-                        <Plus className="w-4 h-4" />
+                        <Plus className="size-4" />
                     </button>
                   </div>
 
@@ -397,7 +397,7 @@ export default function ClientFormModal({
                                             onClick={() => handleRemoveAyantDroit(idx)}
                                             className="p-1.5 text-error/30 hover:text-error hover:bg-error/10 rounded-lg transition-all"
                                         >
-                                            <Trash2 className="w-3.5 h-3.5" />
+                                            <Trash2 className="size-3.5" />
                                         </button>
                                     </td>
                                 </tr>
@@ -426,7 +426,7 @@ export default function ClientFormModal({
             className={`btn btn-primary btn-md rounded-xl px-8 gap-2 shadow-lg shadow-primary/20 font-black tracking-widest text-[10px] uppercase ${isSubmitting ? 'loading' : ''}`}
             disabled={isSubmitting}
           >
-            {!isSubmitting && <Save className="w-4 h-4" />}
+            {!isSubmitting && <Save className="size-4" />}
             {isEdit ? t('common:save_changes') : t('common:add')}
           </button>
         </div>

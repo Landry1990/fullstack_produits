@@ -17,17 +17,17 @@ function EvolutionBadge({ value }: { value?: number | null }) {
     if (value === null || value === undefined) return <span className="text-base-content/30 text-xs">—</span>;
     if (value > 0) return (
         <span className="inline-flex items-center gap-0.5 text-emerald-500 font-black text-xs">
-            <TrendingUp className="w-3 h-3" />+{value}%
+            <TrendingUp className="size-3" />+{value}%
         </span>
     );
     if (value < 0) return (
         <span className="inline-flex items-center gap-0.5 text-rose-500 font-black text-xs">
-            <TrendingDown className="w-3 h-3" />{value}%
+            <TrendingDown className="size-3" />{value}%
         </span>
     );
     return (
         <span className="inline-flex items-center gap-0.5 text-base-content/40 font-bold text-xs">
-            <Minus className="w-3 h-3" />0%
+            <Minus className="size-3" />0%
         </span>
     );
 }
@@ -63,7 +63,7 @@ export default function VendeursWidget({ formatCurrencyLocal }: VendeursWidgetPr
             <div className="flex items-center justify-between gap-3 flex-wrap">
                 <div className="flex items-center gap-2">
                     <div className="p-2 bg-amber-500/10 rounded-xl">
-                        <Trophy className="w-4 h-4 text-amber-500" />
+                        <Trophy className="size-4 text-amber-500" />
                     </div>
                     <div>
                         <p className="text-xs font-black uppercase tracking-widest text-base-content/40">Classement</p>
@@ -88,7 +88,7 @@ export default function VendeursWidget({ formatCurrencyLocal }: VendeursWidgetPr
                         >Graph</button>
                     </div>
                     <Link to="/app/classement-vendeurs" className="btn btn-xs btn-ghost gap-1 text-primary">
-                        Voir tout <ArrowRight className="w-3 h-3" />
+                        Voir tout <ArrowRight className="size-3" />
                     </Link>
                 </div>
             </div>
@@ -99,7 +99,7 @@ export default function VendeursWidget({ formatCurrencyLocal }: VendeursWidgetPr
                 </div>
             ) : vendeurs.length === 0 ? (
                 <div className="flex flex-col items-center justify-center h-48 text-base-content/30 gap-2">
-                    <Users className="w-8 h-8" />
+                    <Users className="size-8" />
                     <p className="text-sm font-bold">Aucune donnée pour cette période</p>
                 </div>
             ) : view === 'ranking' ? (

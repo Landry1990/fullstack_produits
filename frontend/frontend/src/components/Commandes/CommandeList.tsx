@@ -198,20 +198,20 @@ export default function CommandeList({
                               <>
                                 <li>
                                   <a onClick={() => onViewDetails(commande)} className="flex items-center gap-3 py-3 hover:bg-info/10 text-info font-medium">
-                                    <Eye className="w-4 h-4" /> {t('orders:list.table.view_details')}
+                                    <Eye className="size-4" /> {t('orders:list.table.view_details')}
                                   </a>
                                 </li>
                                 {commande.status === 'ATT' && (
                                     <li>
                                         <a onClick={() => {/* Handle print if available */}} className="flex items-center gap-3 py-3 hover:bg-neutral/10 text-neutral font-medium">
-                                            <Printer className="w-4 h-4" /> {t('common:print', 'Imprimer')}
+                                            <Printer className="size-4" /> {t('common:print', 'Imprimer')}
                                         </a>
                                     </li>
                                 )}
                                 {commande.status === 'PREP' && (
                                      <li>
                                         <a onClick={onBulkDelete} className="flex items-center gap-3 py-3 hover:bg-error/10 text-error font-medium">
-                                            <Trash2 className="w-4 h-4" /> {t('common:actions.delete')}
+                                            <Trash2 className="size-4" /> {t('common:actions.delete')}
                                         </a>
                                      </li>
                                 )}
@@ -227,13 +227,13 @@ export default function CommandeList({
                           {canMerge && (
                             <li>
                                 <a onClick={onOpenMergeModal} className="flex items-center gap-3 py-3 hover:bg-info/10 text-info font-medium">
-                                    <GitMerge className="w-4 h-4" /> {t('orders:list.selection.merge')}
+                                    <GitMerge className="size-4" /> {t('orders:list.selection.merge')}
                                 </a>
                             </li>
                           )}
                           <li>
                             <a onClick={onBulkDelete} className="flex items-center gap-3 py-3 hover:bg-error/10 text-error font-medium">
-                              <Trash2 className="w-4 h-4" /> {t('orders:bulk_delete_btn')}
+                              <Trash2 className="size-4" /> {t('orders:bulk_delete_btn')}
                             </a>
                           </li>
                         </>
@@ -345,7 +345,7 @@ export default function CommandeList({
                             onClick={(e) => { e.stopPropagation(); onViewDetails(commande); }}
                             title={t('orders:list.table.view_details')}
                         >
-                            <Eye className="w-4 h-4" />
+                            <Eye className="size-4" />
                         </button>
                     </div>
                 </td>
@@ -355,7 +355,7 @@ export default function CommandeList({
                 <tr>
                     <td colSpan={9} className="text-center py-12 text-base-content/40 italic">
                         <div className="flex flex-col items-center gap-2">
-                            <div className="w-12 h-12 rounded-full bg-base-200 flex items-center justify-center not-italic">📦</div>
+                            <div className="size-12 rounded-full bg-base-200 flex items-center justify-center not-italic">📦</div>
                             {t('orders:list.table.empty')}
                         </div>
                     </td>

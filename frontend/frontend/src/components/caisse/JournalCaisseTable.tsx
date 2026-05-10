@@ -56,7 +56,7 @@ export default function JournalCaisseTable({ state }: Props) {
           </div>
         ) : filteredItems.length === 0 ? (
           <div className="flex flex-col items-center justify-center p-12 text-base-content/30 gap-3 text-center">
-            <div className="w-20 h-20 bg-base-200 rounded-full flex items-center justify-center text-4xl mb-2 opacity-50 shadow-inner">📂</div>
+            <div className="size-20 bg-base-200 rounded-full flex items-center justify-center text-4xl mb-2 opacity-50 shadow-inner">📂</div>
             <p className="text-lg font-bold italic">{t('table.no_transaction')}</p>
             <p className="text-xs opacity-60 max-w-xs">{t('table.no_transaction_desc') || "Aucune opération ne correspond à vos filtres actuels."}</p>
           </div>
@@ -129,7 +129,7 @@ export default function JournalCaisseTable({ state }: Props) {
                         <td className="font-mono text-xs whitespace-nowrap pl-6 py-4">{formatDate(mouv.date)}</td>
                         <td className="py-4">
                           <div className="flex items-center gap-3">
-                            <div className="w-8 h-8 rounded-xl bg-base-200 flex items-center justify-center text-xs font-bold text-base-content/50 border border-base-300">
+                            <div className="size-8 rounded-xl bg-base-200 flex items-center justify-center text-xs font-bold text-base-content/50 border border-base-300">
                               {(mouv.user_nom || 'U')[0]}
                             </div>
                             <div className="flex flex-col">
@@ -184,7 +184,7 @@ export default function JournalCaisseTable({ state }: Props) {
                         </td>
                         <td className="py-4">
                           <div className="flex items-center gap-3">
-                            <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-xs font-bold text-primary border border-primary/20">
+                            <div className="size-8 rounded-full bg-primary/10 flex items-center justify-center text-xs font-bold text-primary border border-primary/20">
                               {(transaction.user_details?.full_name || 'U')[0]}
                             </div>
                             <div className="flex flex-col">
@@ -200,7 +200,7 @@ export default function JournalCaisseTable({ state }: Props) {
                         <td className="py-4">
                           {transaction.facture_created_by_name ? (
                             <div className="flex items-center gap-2">
-                              <div className="w-6 h-6 rounded-full bg-base-200 flex items-center justify-center text-[10px] font-bold text-base-content/50">
+                              <div className="size-6 rounded-full bg-base-200 flex items-center justify-center text-[10px] font-bold text-base-content/50">
                                 {transaction.facture_created_by_name[0]}
                               </div>
                               <span className="text-sm border-b border-dashed border-base-content/20" title="Utilisateur ayant saisi la facture">

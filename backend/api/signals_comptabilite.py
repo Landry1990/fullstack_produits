@@ -64,6 +64,8 @@ def generer_ecriture_paiement_fournisseur(sender, instance, created, **kwargs):
         if not created_ecr:
             ecriture.date = instance.date_paiement
             ecriture.reference = ref
+            if not ecriture.exercice_id:
+                ecriture.exercice = get_exercice_courant()
             ecriture.save()
         
         # Nettoyage des anciennes lignes si mise à jour
@@ -109,6 +111,8 @@ def generer_ecriture_vente(sender, instance, created, **kwargs):
             if not created_ecr:
                 ecriture.date = instance.date.date()
                 ecriture.reference = instance.numero_facture or f"F{instance.id}"
+                if not ecriture.exercice_id:
+                    ecriture.exercice = get_exercice_courant()
                 ecriture.save()
             
             ecriture.lignes.all().delete()
@@ -159,6 +163,8 @@ def generer_ecriture_paiement(sender, instance, created, **kwargs):
             
             if not created_ecr:
                 ecriture.date = instance.date_paiement.date()
+                if not ecriture.exercice_id:
+                    ecriture.exercice = get_exercice_courant()
                 ecriture.save()
             
             ecriture.lignes.all().delete()
@@ -204,6 +210,8 @@ def generer_ecriture_achat(sender, instance, created, **kwargs):
             if not created_ecr:
                 ecriture.date = (instance.date_cloture or instance.date or timezone.now()).date()
                 ecriture.reference = instance.numero_facture or f"BC{instance.id}"
+                if not ecriture.exercice_id:
+                    ecriture.exercice = get_exercice_courant()
                 ecriture.save()
 
             ecriture.lignes.all().delete()

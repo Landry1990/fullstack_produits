@@ -166,7 +166,7 @@ export default function SuggestionCommandeModal({
     <div className="flex justify-between items-center w-full">
         {stepSuggestion === 2 ? (
             <button className="btn btn-ghost hover:bg-base-200" onClick={() => setStepSuggestion(1)}>
-                <ChevronLeft className="w-4 h-4 mr-2" />
+                <ChevronLeft className="size-4 mr-2" />
                 {t('orders:suggestion_modal.back_to_params')}
             </button>
         ) : (
@@ -186,7 +186,7 @@ export default function SuggestionCommandeModal({
                     <span className="loading loading-spinner loading-xs"></span>
                 ) : (
                     <>
-                        <Search className="w-4 h-4 mr-2" />
+                        <Search className="size-4 mr-2" />
                         {t('orders:suggestion_modal.launch_analysis')}
                     </>
                 )}
@@ -199,7 +199,7 @@ export default function SuggestionCommandeModal({
                     onClick={handleApply}
                     disabled={selectedSuggestions.size === 0}
                 >
-                    <ShoppingCart className="w-4 h-4 mr-2" />
+                    <ShoppingCart className="size-4 mr-2" />
                     {t('orders:suggestion_modal.create_order', { count: selectedSuggestions.size })}
                 </button>
             </div>
@@ -213,7 +213,7 @@ export default function SuggestionCommandeModal({
         onClose={onClose}
         title={t('orders:suggestion_modal.title')}
         subtitle={stepSuggestion === 1 ? t('orders:suggestion_modal.subtitle_config') : t('orders:suggestion_modal.subtitle_results', { count: suggestions.length })}
-        icon={<Brain className="w-6 h-6 text-primary" />}
+        icon={<Brain className="size-6 text-primary" />}
         maxWidth="max-w-4xl"
         footer={footer}
     >
@@ -238,7 +238,7 @@ export default function SuggestionCommandeModal({
                             />
                             <div className="flex items-center gap-3 mb-2">
                                 <div className={`p-2 rounded-lg ${suggestionParams.mode === 'simple' ? 'bg-primary text-white' : 'bg-base-200 text-base-content/60'}`}>
-                                    <Package className="w-5 h-5" />
+                                    <Package className="size-5" />
                                 </div>
                                 <span className="font-bold text-base-content">{t('orders:suggestion_modal.mode_simple_title')}</span>
                             </div>
@@ -247,8 +247,8 @@ export default function SuggestionCommandeModal({
                             </p>
                             {suggestionParams.mode === 'simple' && (
                                 <div className="absolute top-4 right-4 text-primary">
-                                    <div className="w-2 h-2 rounded-full bg-primary animate-ping absolute"></div>
-                                    <div className="w-2 h-2 rounded-full bg-primary relative"></div>
+                                    <div className="size-2 rounded-full bg-primary animate-ping absolute"></div>
+                                    <div className="size-2 rounded-full bg-primary relative"></div>
                                 </div>
                             )}
                         </label>
@@ -269,7 +269,7 @@ export default function SuggestionCommandeModal({
                             />
                             <div className="flex items-center gap-3 mb-2">
                                 <div className={`p-2 rounded-lg ${suggestionParams.mode === 'optimise' ? 'bg-primary text-white' : 'bg-base-200 text-base-content/60'}`}>
-                                    <Brain className="w-5 h-5" />
+                                    <Brain className="size-5" />
                                 </div>
                                 <span className="font-bold text-base-content">{t('orders:suggestion_modal.mode_smart_title')}</span>
                             </div>
@@ -278,8 +278,8 @@ export default function SuggestionCommandeModal({
                             </p>
                             {suggestionParams.mode === 'optimise' && (
                                 <div className="absolute top-4 right-4 text-primary">
-                                    <div className="w-2 h-2 rounded-full bg-primary animate-ping absolute"></div>
-                                    <div className="w-2 h-2 rounded-full bg-primary relative"></div>
+                                    <div className="size-2 rounded-full bg-primary animate-ping absolute"></div>
+                                    <div className="size-2 rounded-full bg-primary relative"></div>
                                 </div>
                             )}
                         </label>
@@ -301,7 +301,7 @@ export default function SuggestionCommandeModal({
                             onChange={() => setSuggestionParams(prev => ({ ...prev, mode: 'ventes_horaire' }))}
                         />
                         <div className={`p-2 rounded-lg shrink-0 ${suggestionParams.mode === 'ventes_horaire' ? 'bg-primary text-white' : 'bg-base-200 text-base-content/60'}`}>
-                            <Clock className="w-5 h-5" />
+                            <Clock className="size-5" />
                         </div>
                         <div>
                             <span className="font-bold text-base-content">{t('orders:suggestion_modal.mode_hourly_title')}</span>
@@ -309,8 +309,8 @@ export default function SuggestionCommandeModal({
                         </div>
                         {suggestionParams.mode === 'ventes_horaire' && (
                             <div className="absolute top-4 right-4 text-primary">
-                                <div className="w-2 h-2 rounded-full bg-primary animate-ping absolute"></div>
-                                <div className="w-2 h-2 rounded-full bg-primary relative"></div>
+                                <div className="size-2 rounded-full bg-primary animate-ping absolute"></div>
+                                <div className="size-2 rounded-full bg-primary relative"></div>
                             </div>
                         )}
                     </label>
@@ -320,7 +320,7 @@ export default function SuggestionCommandeModal({
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div className="space-y-2">
                                 <label className="text-xs font-bold text-base-content/40 uppercase tracking-wider flex items-center gap-2">
-                                    <Package className="w-3 h-3" />
+                                    <Package className="size-3" />
                                     {t('orders:suggestion_modal.supplier_label')}
                                 </label>
                                 <select 
@@ -338,10 +338,10 @@ export default function SuggestionCommandeModal({
                             {suggestionParams.mode !== 'ventes_horaire' && (
                                 <div className="space-y-2">
                                     <label className="text-xs font-bold text-base-content/40 uppercase tracking-wider flex items-center gap-2">
-                                        <DollarSign className="w-3 h-3" />
+                                        <DollarSign className="size-3" />
                                         {t('orders:suggestion_modal.budget_label')}
                                         <div className="tooltip" data-tip={t('orders:suggestion_modal.budget_tooltip')}>
-                                            <Info className="w-3 h-3 text-base-content/30" />
+                                            <Info className="size-3 text-base-content/30" />
                                         </div>
                                     </label>
                                     <div className="join w-full">
@@ -362,7 +362,7 @@ export default function SuggestionCommandeModal({
                         {suggestionParams.mode === 'ventes_horaire' ? (
                             <div className="space-y-3">
                                 <label className="text-xs font-bold text-base-content/40 uppercase tracking-wider flex items-center gap-2">
-                                    <Clock className="w-3 h-3" />
+                                    <Clock className="size-3" />
                                     {t('orders:suggestion_modal.hourly_range_label')}
                                 </label>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -411,7 +411,7 @@ export default function SuggestionCommandeModal({
                         ) : (
                             <div className="space-y-3">
                                 <label className="text-xs font-bold text-base-content/40 uppercase tracking-wider flex items-center gap-2">
-                                    <Calendar className="w-3 h-3" />
+                                    <Calendar className="size-3" />
                                     {t('orders:suggestion_modal.period_label')}
                                 </label>
                                 
@@ -451,8 +451,8 @@ export default function SuggestionCommandeModal({
                 <div className="flex flex-col h-full gap-4 p-4 overflow-hidden">
                     <div className="flex items-center justify-between gap-4 p-4 bg-base-100 rounded-2xl border border-gray-100 shadow-sm">
                         <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary">
-                                <Info className="w-5 h-5" />
+                            <div className="size-10 rounded-full bg-primary/10 flex items-center justify-center text-primary">
+                                <Info className="size-5" />
                             </div>
                             <div>
                                 <h4 className="font-bold text-base-content">{t('orders:suggestion_modal.analysis_done')}</h4>
@@ -461,7 +461,7 @@ export default function SuggestionCommandeModal({
                         </div>
                         <div className="bg-slate-900 text-white rounded-xl px-4 py-2 text-right">
                             <div className="text-[10px] uppercase font-bold text-base-content/40 flex items-center gap-1 justify-end">
-                                <DollarSign className="w-3 h-3" />
+                                <DollarSign className="size-3" />
                                 {t('orders:suggestion_modal.total_estimated')}
                             </div>
                             <div className="text-xl font-mono font-bold">{formatPrice(totalHt)} <span className="text-xs">{t('common:currency_symbol', 'F')}</span></div>
@@ -556,7 +556,7 @@ export default function SuggestionCommandeModal({
                                                         <div className="badge badge-ghost badge-xs text-base-content/40 uppercase font-bold text-[8px]">{t('orders:suggestion_modal.standard_badge')}</div>
                                                     )}
                                                     <div className="tooltip tooltip-left" data-tip={item.raison}>
-                                                        <ArrowUpRight className="w-4 h-4 text-base-content/30 group-hover:text-primary transition-colors" />
+                                                        <ArrowUpRight className="size-4 text-base-content/30 group-hover:text-primary transition-colors" />
                                                     </div>
                                                 </div>
                                             </td>
@@ -567,8 +567,8 @@ export default function SuggestionCommandeModal({
                         </div>
                     ) : (
                         <div className="flex-1 flex flex-col items-center justify-center bg-base-100 rounded-2xl border-2 border-dashed border-gray-100 p-12 text-center">
-                            <div className="w-16 h-16 bg-base-200/50 rounded-full flex items-center justify-center mb-4">
-                                <Search className="w-8 h-8 text-base-content/30" />
+                            <div className="size-16 bg-base-200/50 rounded-full flex items-center justify-center mb-4">
+                                <Search className="size-8 text-base-content/30" />
                             </div>
                             <h3 className="text-lg font-bold text-base-content">{t('orders:suggestion_modal.no_results_title')}</h3>
                             <p className="text-base-content/60 max-w-sm mx-auto">

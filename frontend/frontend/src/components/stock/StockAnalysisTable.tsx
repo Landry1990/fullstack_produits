@@ -28,19 +28,19 @@ export const StockAnalysisTable: React.FC<StockAnalysisTableProps> = ({
             case 'critical':
                 return (
                     <div className="badge border-none bg-error/20 text-error gap-1.5 font-black uppercase text-[10px] tracking-widest px-3 py-2">
-                        <AlertTriangle className="w-3 h-3" /> {t('stock:analyse.shortage.urgency.critical')}
+                        <AlertTriangle className="size-3" /> {t('stock:analyse.shortage.urgency.critical')}
                     </div>
                 );
             case 'warning':
                 return (
                     <div className="badge border-none bg-warning/20 text-warning gap-1.5 font-black uppercase text-[10px] tracking-widest px-3 py-2">
-                        <AlertTriangle className="w-3 h-3" /> {t('stock:analyse.shortage.urgency.warning')}
+                        <AlertTriangle className="size-3" /> {t('stock:analyse.shortage.urgency.warning')}
                     </div>
                 );
             case 'caution':
                 return (
                     <div className="badge border-none bg-info/20 text-info gap-1.5 font-black uppercase text-[10px] tracking-widest px-3 py-2">
-                        <AlertTriangle className="w-3 h-3" /> {t('stock:analyse.shortage.urgency.caution')}
+                        <AlertTriangle className="size-3" /> {t('stock:analyse.shortage.urgency.caution')}
                     </div>
                 );
             default:
@@ -62,10 +62,10 @@ export const StockAnalysisTable: React.FC<StockAnalysisTableProps> = ({
     if (items.length === 0) {
         const getEmptyIcon = () => {
             switch (activeTab) {
-                case 'unsold': return <Clock className="w-12 h-12 text-base-content/20" />;
-                case 'overstock': return <TrendingUp className="w-12 h-12 text-base-content/20" />; // Note: TrendingUp should be imported or use a fallback
-                case 'shortage': return <CheckCircle2 className="w-12 h-12 text-base-content/20" />;
-                default: return <Package className="w-12 h-12 text-base-content/20" />;
+                case 'unsold': return <Clock className="size-12 text-base-content/20" />;
+                case 'overstock': return <TrendingUp className="size-12 text-base-content/20" />; // Note: TrendingUp should be imported or use a fallback
+                case 'shortage': return <CheckCircle2 className="size-12 text-base-content/20" />;
+                default: return <Package className="size-12 text-base-content/20" />;
             }
         };
 
@@ -105,7 +105,7 @@ export const StockAnalysisTable: React.FC<StockAnalysisTableProps> = ({
                             </th>
                         )}
                         <th className="text-[10px] font-black uppercase tracking-widest text-base-content/40 px-6 py-4">
-                            <div className="flex items-center gap-1.5"><Package className="w-3 h-3" /> {t('stock:analyse.columns.product')}</div>
+                            <div className="flex items-center gap-1.5"><Package className="size-3" /> {t('stock:analyse.columns.product')}</div>
                         </th>
                         <th className="text-[10px] font-black uppercase tracking-widest text-base-content/40 text-center">
                             {t('stock:analyse.columns.current_stock')}

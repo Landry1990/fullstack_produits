@@ -227,15 +227,7 @@ export interface ObjectifCommercial {
     created_by_name: string;
 }
 
-export const useObjectifs = () => {
-    return useQuery({
-        queryKey: ['objectifs'],
-        queryFn: async () => {
-            const response = await api.get<ObjectifCommercial[]>('objectifs-commerciaux/');
-            return response.data;
-        }
-    });
-};
+
 
 export const useCurrentObjectifs = () => {
     return useQuery({

@@ -113,6 +113,10 @@ class ProduitViewSet(
         if for_inventory:
              queryset = queryset.filter(is_active=True).exclude(name__icontains="X -")
 
+        only_in_stock = self.request.query_params.get('only_in_stock', 'false').lower() == 'true'
+        if only_in_stock:
+             queryset = queryset.filter(stock__gt=0)
+
         if self.request.query_params.get('latest_supplier') == 'true':
             # Subquery to get the supplier name from the latest order containing this product
             latest_cp_subquery = CommandeProduit.objects.filter(

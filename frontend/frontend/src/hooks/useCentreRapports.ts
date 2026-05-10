@@ -141,7 +141,7 @@ export function useCentreRapports() {
         loadFamilles();
         
         // Load Presets from LocalStorage
-        const savedPresets = localStorage.getItem('report_presets');
+        const savedPresets = localStorage.getItem('report_presets:v1');
         if (savedPresets) setPresets(JSON.parse(savedPresets));
 
         return () => controller.abort();
@@ -210,14 +210,14 @@ export function useCentreRapports() {
         };
         const updated = [...presets, newPreset];
         setPresets(updated);
-        localStorage.setItem('report_presets', JSON.stringify(updated));
+        localStorage.setItem('report_presets:v1', JSON.stringify(updated));
         toast.success('Configuration enregistrée !');
     }, [selectedQuery, params, presets]);
 
     const deletePreset = useCallback((id: string) => {
         const updated = presets.filter(p => p.id !== id);
         setPresets(updated);
-        localStorage.setItem('report_presets', JSON.stringify(updated));
+        localStorage.setItem('report_presets:v1', JSON.stringify(updated));
     }, [presets]);
 
     const applyPreset = useCallback((preset: any) => {

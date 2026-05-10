@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import api from '../../services/api';
 import { toast } from 'react-hot-toast';
@@ -161,9 +161,9 @@ export default function TransferCommandeModal({
                     {t('orders:transfer_modal.title')}
                 </h3>
 
-                <p className="text-sm text-base-content/70 mb-4"
-                   dangerouslySetInnerHTML={{ __html: t('orders:transfer_modal.description') }}
-                />
+                <p className="text-sm text-base-content/70 mb-4">
+                   {t('orders:transfer_modal.description')}
+                </p>
 
                 {/* Sélection du fournisseur */}
                 <div className="form-control mb-4">

@@ -21,13 +21,13 @@ export default function JournalCaisseFilters({ state }: Props) {
       <div className="flex flex-col lg:flex-row gap-4 justify-between items-start lg:items-center">
         <div className="flex items-center gap-4">
           <div className="p-2.5 bg-primary/10 rounded-xl text-primary shrink-0">
-            <Banknote className="w-6 h-6" />
+            <Banknote className="size-6" />
           </div>
           <div>
             <h1 className="text-xl font-bold text-base-content tracking-tight">{t('title')}</h1>
             <div className="text-base-content/50 text-xs flex items-center gap-2 mt-0.5">
               <span>{t('subtitle')}</span>
-              <span className="w-1 h-1 rounded-full bg-base-300"></span>
+              <span className="size-1 rounded-full bg-base-300"></span>
               <span className="font-semibold text-primary/80">{t('operations_count', { count: totalCount })}</span>
             </div>
           </div>
@@ -43,7 +43,7 @@ export default function JournalCaisseFilters({ state }: Props) {
               onChange={(e) => setSearchQuery(e.target.value)}
               className="input input-sm input-bordered w-full pl-9 bg-base-200/50 border-base-300 focus:bg-base-100 transition-all text-sm"
             />
-            <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 opacity-50 text-base-content" />
+            <Search className="size-4 absolute left-3 top-1/2 -translate-y-1/2 opacity-50 text-base-content" />
           </div>
 
           {/* Mode filter */}
@@ -129,7 +129,7 @@ export default function JournalCaisseFilters({ state }: Props) {
               disabled={loading}
               title={t('refresh')}
             >
-              {loading ? <span className="loading loading-spinner loading-[10px]"></span> : <RefreshCw className="w-3.5 h-3.5 text-base-content/60" />}
+              {loading ? <span className="loading loading-spinner loading-[10px]"></span> : <RefreshCw className="size-3.5 text-base-content/60" />}
             </button>
           </div>
 
@@ -139,7 +139,7 @@ export default function JournalCaisseFilters({ state }: Props) {
               onClick={() => setIsMovementModalOpen(true)}
               className="btn btn-sm btn-outline border-base-300 btn-primary gap-2 flex-1 sm:flex-none shadow-sm"
             >
-              <Plus className="w-4 h-4" /> <span className="sm:inline">{t('new_operation')}</span>
+              <Plus className="size-4" /> <span className="sm:inline">{t('new_operation')}</span>
             </button>
             <button
               onClick={openClosingModal}
@@ -147,7 +147,7 @@ export default function JournalCaisseFilters({ state }: Props) {
               disabled={loading || !selectedUser}
               title={!selectedUser ? t('messages.no_cashier_selected') : t('close_register')}
             >
-              <Lock className="w-4 h-4" /> <span className="sm:inline">{t('close_register')}</span>
+              <Lock className="size-4" /> <span className="sm:inline">{t('close_register')}</span>
             </button>
           </div>
         </div>
@@ -166,13 +166,13 @@ export default function JournalCaisseFilters({ state }: Props) {
             className={`join-item btn btn-sm border-none font-medium px-6 flex items-center gap-1 ${filterType === 'entrees' ? 'bg-success text-white shadow-sm' : 'bg-transparent text-success/70 hover:text-success'}`}
             onClick={() => setFilterType('entrees')}
           >
-            <ArrowUpRight className="w-4 h-4" /> {t('filter.entries')}
+            <ArrowUpRight className="size-4" /> {t('filter.entries')}
           </button>
           <button
             className={`join-item btn btn-sm border-none font-medium px-6 flex items-center gap-1 ${filterType === 'sorties' ? 'bg-error text-white shadow-sm' : 'bg-transparent text-error/70 hover:text-error'}`}
             onClick={() => setFilterType('sorties')}
           >
-            <ArrowDownRight className="w-4 h-4" /> {t('filter.exits')}
+            <ArrowDownRight className="size-4" /> {t('filter.exits')}
           </button>
         </div>
       </div>

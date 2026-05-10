@@ -91,14 +91,14 @@ const StockValuationTemplate: React.FC<StockValuationTemplateProps> = ({ setting
             {/* Main Stats Banner */}
             <div className="grid grid-cols-1 gap-8 mb-12">
                 <div className="bg-slate-50 border-2 border-slate-100 rounded-3xl p-8 flex justify-between items-center relative overflow-hidden">
-                    <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full -mr-16 -mt-16"></div>
-                    <div className="absolute bottom-0 left-0 w-24 h-24 bg-primary/5 rounded-full -ml-12 -mb-12"></div>
+                    <div className="absolute top-0 right-0 size-32 bg-primary/5 rounded-full -mr-16 -mt-16"></div>
+                    <div className="absolute bottom-0 left-0 size-24 bg-primary/5 rounded-full -ml-12 -mb-12"></div>
                     
                     <div className="relative z-10">
                         <div className="text-[10px] uppercase font-black text-slate-400 tracking-[0.3em] mb-4">{t('stock_valuation.valuation_method')}</div>
                         <div className="flex items-center gap-4">
-                            <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center text-primary">
-                                <svg xmlns="http://www.w3.org/2000/svg" className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <div className="size-12 rounded-2xl bg-primary/10 flex items-center justify-center text-primary">
+                                <svg xmlns="http://www.w3.org/2000/svg" className="size-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
                                 </svg>
                             </div>
@@ -219,7 +219,7 @@ const StockValuationTemplate: React.FC<StockValuationTemplateProps> = ({ setting
                 <div className="flex gap-12 items-start text-slate-400">
                     <div className="flex-1 space-y-4">
                         <div className="flex items-center gap-3">
-                            <div className="w-1.5 h-1.5 rounded-full bg-primary"></div>
+                            <div className="size-1.5 rounded-full bg-primary"></div>
                             <span className="text-[10px] font-black uppercase tracking-widest text-slate-900">{t('stock_valuation.note_title')}</span>
                         </div>
                         <p className="text-[11px] leading-relaxed italic pr-12">

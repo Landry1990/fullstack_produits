@@ -25,21 +25,21 @@ export const AvoirsQuickStats: React.FC<AvoirsQuickStatsProps> = ({ avoirs }) =>
         {
             title: t('stock:avoirs.stats.total'),
             value: stats.total,
-            icon: <FileText className="w-5 h-5" />,
+            icon: <FileText className="size-5" />,
             colorClass: "text-primary",
             bgClass: "bg-primary/10",
         },
         {
             title: t('stock:avoirs.stats.valides'),
             value: stats.valides,
-            icon: <CheckCircle2 className="w-5 h-5" />,
+            icon: <CheckCircle2 className="size-5" />,
             colorClass: "text-success",
             bgClass: "bg-success/10",
         },
         {
             title: t('stock:avoirs.stats.brouillons'),
             value: stats.brouillons,
-            icon: <AlertCircle className="w-5 h-5" />,
+            icon: <AlertCircle className="size-5" />,
             colorClass: "text-warning",
             bgClass: "bg-warning/10",
         }
@@ -49,7 +49,7 @@ export const AvoirsQuickStats: React.FC<AvoirsQuickStatsProps> = ({ avoirs }) =>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {statItems.map((item, index) => (
                 <div key={index} className="bg-base-100 rounded-2xl shadow-sm border border-base-300 p-5 flex items-center gap-4 transition-all hover:shadow-md hover:border-base-content/20">
-                    <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${item.bgClass} ${item.colorClass}`}>
+                    <div className={`size-12 rounded-xl flex items-center justify-center ${item.bgClass} ${item.colorClass}`}>
                         {item.icon}
                     </div>
                     <div>

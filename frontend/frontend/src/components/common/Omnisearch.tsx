@@ -212,7 +212,7 @@ export default function Omnisearch() {
             onKeyDown={(e) => { if (e.key === 'Escape') { e.preventDefault(); setOpen(false); } }}
         >
           <div className="flex items-center border-b border-base-200 px-6 bg-base-100/50 backdrop-blur-sm">
-            <Search className="w-6 h-6 text-primary mr-4 opacity-50" />
+            <Search className="size-6 text-primary mr-4 opacity-50" />
             <Command.Input 
               value={search} 
               onValueChange={setSearch} 
@@ -241,19 +241,19 @@ export default function Omnisearch() {
                     {!search && (
                     <Command.Group heading={t('omnisearch.groups.actions', '⚡ Actions Rapides')} className="text-[10px] font-black text-base-content/30 pt-4 pb-1 px-3 uppercase tracking-[0.15em]">
                         <Command.Item onSelect={() => onSelectAction('NEW_SALE')} value="action-new-sale" className="flex items-center px-4 py-3.5 rounded-xl cursor-pointer hover:bg-base-200 text-base-content aria-selected:bg-primary/10 aria-selected:text-primary transition-all group">
-                        <Zap className="w-4 h-4 mr-3 text-warning group-aria-selected:scale-110 transition-transform" />
+                        <Zap className="size-4 mr-3 text-warning group-aria-selected:scale-110 transition-transform" />
                         <span className="font-bold">{t('omnisearch.actions.new_sale')}</span>
                         </Command.Item>
                         <Command.Item onSelect={() => onSelectAction('NEW_PRODUCT')} value="action-new-product" className="flex items-center px-4 py-3.5 rounded-xl cursor-pointer hover:bg-base-200 text-base-content aria-selected:bg-primary/10 aria-selected:text-primary transition-all group">
-                        <PlusCircle className="w-4 h-4 mr-3 text-info group-aria-selected:scale-110 transition-transform" />
+                        <PlusCircle className="size-4 mr-3 text-info group-aria-selected:scale-110 transition-transform" />
                         <span className="font-bold">{t('omnisearch.actions.new_product')}</span>
                         </Command.Item>
                         <Command.Item onSelect={() => onSelectAction('NEW_CLIENT')} value="action-new-client" className="flex items-center px-4 py-3.5 rounded-xl cursor-pointer hover:bg-base-200 text-base-content aria-selected:bg-primary/10 aria-selected:text-primary transition-all group">
-                        <PlusCircle className="w-4 h-4 mr-3 text-success group-aria-selected:scale-110 transition-transform" />
+                        <PlusCircle className="size-4 mr-3 text-success group-aria-selected:scale-110 transition-transform" />
                         <span className="font-bold">{t('omnisearch.actions.new_client')}</span>
                         </Command.Item>
                         <Command.Item onSelect={() => onSelectAction('NEW_ORDER')} value="action-new-order" className="flex items-center px-4 py-3.5 rounded-xl cursor-pointer hover:bg-base-200 text-base-content aria-selected:bg-primary/10 aria-selected:text-primary transition-all group">
-                        <ShoppingCart className="w-4 h-4 mr-3 text-secondary group-aria-selected:scale-110 transition-transform" />
+                        <ShoppingCart className="size-4 mr-3 text-secondary group-aria-selected:scale-110 transition-transform" />
                         <span className="font-bold">{t('omnisearch.actions.new_order')}</span>
                         </Command.Item>
                     </Command.Group>
@@ -262,27 +262,27 @@ export default function Omnisearch() {
                     {!search && (
                     <Command.Group heading={t('omnisearch.groups.navigation')} className="text-[10px] font-black text-base-content/30 pt-4 pb-1 px-3 uppercase tracking-[0.15em]">
                         <Command.Item onSelect={() => onSelectLink('/app/rapports-mensuels')} value="nav-rapport-mensuel" className="flex items-center px-4 py-3 rounded-xl cursor-pointer hover:bg-base-200 text-base-content aria-selected:bg-primary/5 aria-selected:text-primary transition-all opacity-80 aria-selected:opacity-100">
-                        <BarChart3 className="w-4 h-4 mr-3 text-emerald-500" />
+                        <BarChart3 className="size-4 mr-3 text-emerald-500" />
                         <span className="font-medium">{t('omnisearch.nav.monthly_report')}</span>
                         </Command.Item>
                         <Command.Item onSelect={() => onSelectLink('/app/facturation')} value="nav-facturation" className="flex items-center px-4 py-3 rounded-xl cursor-pointer hover:bg-base-200 text-base-content aria-selected:bg-primary/5 aria-selected:text-primary transition-all opacity-80 aria-selected:opacity-100">
-                        <WalletCards className="w-4 h-4 mr-3" />
+                        <WalletCards className="size-4 mr-3" />
                         <span className="font-medium">{t('omnisearch.nav.billing')}</span>
                         </Command.Item>
                         <Command.Item onSelect={() => onSelectLink('/app/ventes')} value="nav-ventes" className="flex items-center px-4 py-3 rounded-xl cursor-pointer hover:bg-base-200 text-base-content aria-selected:bg-primary/5 aria-selected:text-primary transition-all opacity-80 aria-selected:opacity-100">
-                        <FileText className="w-4 h-4 mr-3" />
+                        <FileText className="size-4 mr-3" />
                         <span className="font-medium">{t('omnisearch.nav.sales_list')}</span>
                         </Command.Item>
                         <Command.Item onSelect={() => onSelectLink('/app/journal-caisse')} value="nav-journal-caisse" className="flex items-center px-4 py-3 rounded-xl cursor-pointer hover:bg-base-200 text-base-content aria-selected:bg-primary/5 aria-selected:text-primary transition-all opacity-80 aria-selected:opacity-100">
-                        <ClipboardList className="w-4 h-4 mr-3" />
+                        <ClipboardList className="size-4 mr-3" />
                         <span className="font-medium">{t('omnisearch.nav.cash_journal')}</span>
                         </Command.Item>
                         <Command.Item onSelect={() => onSelectLink('/app/clients')} value="nav-clients" className="flex items-center px-4 py-3 rounded-xl cursor-pointer hover:bg-base-200 text-base-content aria-selected:bg-primary/5 aria-selected:text-primary transition-all opacity-80 aria-selected:opacity-100">
-                        <Users className="w-4 h-4 mr-3" />
+                        <Users className="size-4 mr-3" />
                         <span className="font-medium">{t('omnisearch.nav.clients')}</span>
                         </Command.Item>
                         <Command.Item onSelect={() => onSelectLink('/app/dashboard')} value="nav-dashboard" className="flex items-center px-4 py-3 rounded-xl cursor-pointer hover:bg-base-200 text-base-content aria-selected:bg-primary/5 aria-selected:text-primary transition-all opacity-80 aria-selected:opacity-100">
-                        <LayoutDashboard className="w-4 h-4 mr-3" />
+                        <LayoutDashboard className="size-4 mr-3" />
                         <span className="font-medium">{t('omnisearch.nav.dashboard')}</span>
                         </Command.Item>
                     </Command.Group>
@@ -297,8 +297,8 @@ export default function Omnisearch() {
                             onSelect={() => onSelectProduit(prod.id!)}
                             className="flex items-center px-4 py-3 rounded-xl cursor-pointer hover:bg-base-200 text-base-content aria-selected:bg-primary/10 aria-selected:text-primary transition-all group"
                         >
-                            <div className="w-8 h-8 rounded-lg bg-base-200 flex items-center justify-center mr-3 group-aria-selected:bg-primary/20 transition-colors">
-                                <PackageSearch className="w-4 h-4 text-base-content/40 group-aria-selected:text-primary" />
+                            <div className="size-8 rounded-lg bg-base-200 flex items-center justify-center mr-3 group-aria-selected:bg-primary/20 transition-colors">
+                                <PackageSearch className="size-4 text-base-content/40 group-aria-selected:text-primary" />
                             </div>
                             <div className="flex-1 flex flex-col items-start overflow-hidden">
                             <span className="font-bold truncate w-full group-aria-selected:text-primary" title={prod.name}>{prod.name}</span>
@@ -323,8 +323,8 @@ export default function Omnisearch() {
                             onSelect={() => onSelectClient(client.id!)}
                             className="flex items-center px-4 py-3 rounded-xl cursor-pointer hover:bg-base-200 text-base-content aria-selected:bg-primary/10 aria-selected:text-primary transition-all group"
                         >
-                            <div className="w-8 h-8 rounded-full bg-secondary/10 flex items-center justify-center mr-3 group-aria-selected:bg-secondary/20 transition-colors">
-                                <Users className="w-4 h-4 text-secondary" />
+                            <div className="size-8 rounded-full bg-secondary/10 flex items-center justify-center mr-3 group-aria-selected:bg-secondary/20 transition-colors">
+                                <Users className="size-4 text-secondary" />
                             </div>
                             <div className="flex-1 flex flex-col items-start">
                             <span className="font-bold group-aria-selected:text-secondary">{client.name}</span>
@@ -344,8 +344,8 @@ export default function Omnisearch() {
                             onSelect={() => onSelectFacture(f.id)}
                             className="flex items-center px-4 py-3 rounded-xl cursor-pointer hover:bg-base-200 text-base-content aria-selected:bg-primary/10 aria-selected:text-primary transition-all group"
                         >
-                            <div className="w-8 h-8 rounded-lg bg-base-200 flex items-center justify-center mr-3 group-aria-selected:bg-primary/20 transition-colors">
-                                <FileText className="w-4 h-4 text-primary" />
+                            <div className="size-8 rounded-lg bg-base-200 flex items-center justify-center mr-3 group-aria-selected:bg-primary/20 transition-colors">
+                                <FileText className="size-4 text-primary" />
                             </div>
                             <div className="flex-1 flex flex-col items-start overflow-hidden">
                             <span className="font-bold truncate w-full group-aria-selected:text-primary">{f.numero_facture}</span>
@@ -368,8 +368,8 @@ export default function Omnisearch() {
                             onSelect={() => onSelectCommande(o.id)}
                             className="flex items-center px-4 py-3 rounded-xl cursor-pointer hover:bg-base-200 text-base-content aria-selected:bg-primary/10 aria-selected:text-primary transition-all group"
                         >
-                            <div className="w-8 h-8 rounded-lg bg-base-200 flex items-center justify-center mr-3 group-aria-selected:bg-primary/20 transition-colors">
-                                <ShoppingCart className="w-4 h-4 text-warning" />
+                            <div className="size-8 rounded-lg bg-base-200 flex items-center justify-center mr-3 group-aria-selected:bg-primary/20 transition-colors">
+                                <ShoppingCart className="size-4 text-warning" />
                             </div>
                             <div className="flex-1 flex flex-col items-start overflow-hidden">
                             <span className="font-bold truncate w-full group-aria-selected:text-primary">{o.fournisseur_nom || 'Grossiste'}</span>
@@ -389,8 +389,8 @@ export default function Omnisearch() {
                             onSelect={() => onSelectFournisseur(s.id)}
                             className="flex items-center px-4 py-3 rounded-xl cursor-pointer hover:bg-base-200 text-base-content aria-selected:bg-primary/10 aria-selected:text-primary transition-all group"
                         >
-                            <div className="w-8 h-8 rounded-lg bg-base-200 flex items-center justify-center mr-3 group-aria-selected:bg-primary/20 transition-colors">
-                                <Store className="w-4 h-4 text-secondary" />
+                            <div className="size-8 rounded-lg bg-base-200 flex items-center justify-center mr-3 group-aria-selected:bg-primary/20 transition-colors">
+                                <Store className="size-4 text-secondary" />
                             </div>
                             <div className="flex-1 flex flex-col items-start overflow-hidden">
                             <span className="font-bold truncate w-full group-aria-selected:text-primary">{s.name}</span>
@@ -408,8 +408,8 @@ export default function Omnisearch() {
                 {selectedItem?.type === 'product' && selectedItem.data && (selectedItem.data as ProduitModel).name !== undefined ? (
                     <div className="p-8 space-y-8 h-full flex flex-col">
                         <div className="space-y-4">
-                            <div className="w-20 h-20 bg-primary/10 rounded-3xl flex items-center justify-center shadow-inner">
-                                <PackageSearch className="w-10 h-10 text-primary" />
+                            <div className="size-20 bg-primary/10 rounded-3xl flex items-center justify-center shadow-inner">
+                                <PackageSearch className="size-10 text-primary" />
                             </div>
                             <div>
                                 <h3 className="text-2xl font-black tracking-tighter text-base-content leading-tight">{(selectedItem.data as ProduitModel).name}</h3>
@@ -421,8 +421,8 @@ export default function Omnisearch() {
                         </div>
 
                         {(selectedItem.data as ProduitModel).message_alerte && (
-                            <div className="p-4 bg-error/10 border border-error/20 rounded-2xl flex gap-3 items-start animate-bounce-short">
-                                <AlertTriangle className="w-5 h-5 text-error shrink-0 mt-0.5" />
+                            <div className="p-4 bg-error/10 border border-error/20 rounded-2xl flex gap-3 items-start animate-pulse">
+                                <AlertTriangle className="size-5 text-error shrink-0 mt-0.5" />
                                 <div className="text-xs font-bold text-error leading-relaxed">
                                     {(selectedItem.data as ProduitModel).message_alerte}
                                 </div>
@@ -432,7 +432,7 @@ export default function Omnisearch() {
                         <div className="grid grid-cols-2 gap-4">
                             <div className="p-4 bg-base-100 border border-base-200 rounded-2xl space-y-1">
                                 <div className="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest text-base-content/40">
-                                    <Layers className="w-3 h-3" /> {t('omnisearch.preview.stock_rayon')}
+                                    <Layers className="size-3" /> {t('omnisearch.preview.stock_rayon')}
                                 </div>
                                 <div className={`text-2xl font-black ${((selectedItem.data as ProduitModel).stock || 0) <= ((selectedItem.data as ProduitModel).stock_alert || 0) ? 'text-error' : 'text-base-content'}`}>
                                     {(selectedItem.data as ProduitModel).stock || 0}
@@ -440,7 +440,7 @@ export default function Omnisearch() {
                             </div>
                             <div className="p-4 bg-base-100 border border-base-200 rounded-2xl space-y-1">
                                 <div className="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest text-base-content/40">
-                                    <Layers className="w-3 h-3 opacity-50" /> {t('omnisearch.preview.stock_reserve')}
+                                    <Layers className="size-3 opacity-50" /> {t('omnisearch.preview.stock_reserve')}
                                 </div>
                                 <div className="text-2xl font-black text-base-content/60">
                                     {(selectedItem.data as ProduitModel).stock_reserve || 0}
@@ -449,16 +449,16 @@ export default function Omnisearch() {
                             <div className="col-span-2 p-4 bg-base-100 border border-base-200 rounded-2xl flex justify-between items-center">
                                 <div className="space-y-1">
                                     <div className="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest text-base-content/40">
-                                        <Calendar className="w-3 h-3" /> {t('omnisearch.preview.expiry')}
+                                        <Calendar className="size-3" /> {t('omnisearch.preview.expiry')}
                                     </div>
                                     <div className="text-sm font-black italic">
                                         {(selectedItem.data as ProduitModel).next_expiring_date ? formatDate((selectedItem.data as ProduitModel).next_expiring_date as string) : t('omnisearch.preview.expiry_none')}
                                     </div>
                                 </div>
                                 {(selectedItem.data as ProduitModel).is_perissable && (
-                                    <div className="w-10 h-10 rounded-full bg-warning/10 flex items-center justify-center">
+                                    <div className="size-10 rounded-full bg-warning/10 flex items-center justify-center">
                                         <div className="tooltip tooltip-left" data-tip={t('omnisearch.preview.perishable')}>
-                                            <Info className="w-5 h-5 text-warning" />
+                                            <Info className="size-5 text-warning" />
                                         </div>
                                     </div>
                                 )}
@@ -466,7 +466,7 @@ export default function Omnisearch() {
                             
                             <div className="col-span-2 p-4 bg-secondary/5 border border-secondary/10 rounded-2xl space-y-1">
                                 <div className="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest text-secondary/40">
-                                    <TrendingIcon className="w-3 h-3" /> {t('omnisearch.preview.last_purchase')}
+                                    <TrendingIcon className="size-3" /> {t('omnisearch.preview.last_purchase')}
                                 </div>
                                 <div className="flex justify-between items-baseline">
                                     <div className="text-lg font-black text-secondary">
@@ -486,8 +486,8 @@ export default function Omnisearch() {
                 ) : selectedItem?.type === 'client' && selectedItem.data && (selectedItem.data as Client).name !== undefined ? (
                     <div className="p-8 space-y-8 h-full flex flex-col">
                         <div className="space-y-4">
-                            <div className="w-20 h-20 bg-secondary/10 rounded-full flex items-center justify-center shadow-inner">
-                                <Users className="w-10 h-10 text-secondary" />
+                            <div className="size-20 bg-secondary/10 rounded-full flex items-center justify-center shadow-inner">
+                                <Users className="size-10 text-secondary" />
                             </div>
                             <div>
                                 <h3 className="text-2xl font-black tracking-tighter text-base-content leading-tight">{(selectedItem.data as Client).name}</h3>
@@ -509,7 +509,7 @@ export default function Omnisearch() {
                                     <div className="text-3xl font-black text-secondary">{(selectedItem.data as Client).points_fidelite || 0}</div>
                                 </div>
                                 <div className="p-3 bg-secondary/10 text-secondary rounded-2xl">
-                                    <Zap className="w-6 h-6" />
+                                    <Zap className="size-6" />
                                 </div>
                             </div>
                             
@@ -521,7 +521,7 @@ export default function Omnisearch() {
                                     </div>
                                 </div>
                                 <div className="p-3 bg-primary/10 text-primary rounded-2xl">
-                                    <ShoppingBag className="w-6 h-6" />
+                                    <ShoppingBag className="size-6" />
                                 </div>
                             </div>
                         </div>
@@ -541,8 +541,8 @@ export default function Omnisearch() {
                 ) : selectedItem?.type === 'facture' && selectedItem.data ? (
                     <div className="p-8 space-y-8 h-full flex flex-col">
                         <div className="space-y-4">
-                            <div className="w-20 h-20 bg-primary/10 rounded-3xl flex items-center justify-center shadow-inner">
-                                <FileText className="w-10 h-10 text-primary" />
+                            <div className="size-20 bg-primary/10 rounded-3xl flex items-center justify-center shadow-inner">
+                                <FileText className="size-10 text-primary" />
                             </div>
                             <div>
                                 <h3 className="text-2xl font-black tracking-tighter text-base-content leading-tight">{(selectedItem.data as Facture).numero_facture}</h3>
@@ -558,7 +558,7 @@ export default function Omnisearch() {
                                         <div className="text-3xl font-black text-primary">{Number((selectedItem.data as Facture).total_ttc).toLocaleString()} F</div>
                                     </div>
                                     <div className="p-3 bg-primary/10 text-primary rounded-2xl">
-                                        <TrendingIcon className="w-6 h-6" />
+                                        <TrendingIcon className="size-6" />
                                     </div>
                                 </div>
                                 
@@ -600,8 +600,8 @@ export default function Omnisearch() {
                 ) : selectedItem?.type === 'commande' && selectedItem.data ? (
                     <div className="p-8 space-y-8 h-full flex flex-col">
                         <div className="space-y-4">
-                            <div className="w-20 h-20 bg-warning/10 rounded-3xl flex items-center justify-center shadow-inner">
-                                <ShoppingCart className="w-10 h-10 text-warning" />
+                            <div className="size-20 bg-warning/10 rounded-3xl flex items-center justify-center shadow-inner">
+                                <ShoppingCart className="size-10 text-warning" />
                             </div>
                             <div>
                                 <h3 className="text-2xl font-black tracking-tighter text-base-content leading-tight">{(selectedItem.data as Commande).fournisseur_nom || 'Grossiste'}</h3>
@@ -655,8 +655,8 @@ export default function Omnisearch() {
                 ) : selectedItem?.type === 'fournisseur' && selectedItem.data ? (
                     <div className="p-8 space-y-8 h-full flex flex-col">
                         <div className="space-y-4">
-                            <div className="w-20 h-20 bg-secondary/10 rounded-3xl flex items-center justify-center shadow-inner">
-                                <Truck className="w-10 h-10 text-secondary" />
+                            <div className="size-20 bg-secondary/10 rounded-3xl flex items-center justify-center shadow-inner">
+                                <Truck className="size-10 text-secondary" />
                             </div>
                             <div>
                                 <h3 className="text-2xl font-black tracking-tighter text-base-content leading-tight">{(selectedItem.data as Fournisseur).name}</h3>
@@ -680,8 +680,8 @@ export default function Omnisearch() {
                     </div>
                 ) : (
                     <div className="flex-1 flex flex-col items-center justify-center p-8 text-center opacity-20 grayscale scale-95 transition-all">
-                        <div className="w-24 h-24 rounded-full border-4 border-dashed border-base-content/30 flex items-center justify-center mb-4">
-                            <LayoutDashboard className="w-12 h-12" />
+                        <div className="size-24 rounded-full border-4 border-dashed border-base-content/30 flex items-center justify-center mb-4">
+                            <LayoutDashboard className="size-12" />
                         </div>
                         <h4 className="text-lg font-black tracking-tighter uppercase italic">{t('omnisearch.preview.title')}</h4>
                         <p className="text-xs font-bold max-w-xs mt-1 italic">{t('omnisearch.preview.subtitle')}</p>

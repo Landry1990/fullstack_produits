@@ -41,6 +41,13 @@ export interface LigneEcriture {
     credit: number;
 }
 
+export interface PaginatedResponse<T> {
+    count: number;
+    next: string | null;
+    previous: string | null;
+    results: T[];
+}
+
 export const useAccounting = () => {
     const queryClient = useQueryClient();
     const [dateRange, setDateRange] = useState({
@@ -48,6 +55,10 @@ export const useAccounting = () => {
         end: new Date().toISOString().split('T')[0]
     });
     const [currentExercice, setCurrentExercice] = useState<Exercice | null>(null);
+    const [ecrituresPage, setEcrituresPage] = useState(1);
+    const [ecrituresSearch, setEcrituresSearch] = useState('');
+    const [ecrituresJournal, setEcrituresJournal] = useState('');
+    const [ecrituresPageSize, setEcrituresPageSize] = useState(50);
 
     // Queries
     const { data: comptes, isLoading: loadingComptes } = useQuery<Compte[]>({
@@ -98,11 +109,18 @@ export const useAccounting = () => {
         placeholderData: (previousData) => previousData
     });
 
-    const { data: ecritures, isLoading: loadingEcritures, isFetching: fetchingEcritures } = useQuery<Ecriture[]>({
-        queryKey: ['accounting', 'ecritures', dateRange],
+    const { data: ecrituresData, isLoading: loadingEcritures, isFetching: fetchingEcritures } = useQuery<PaginatedResponse<Ecriture>>({
+        queryKey: ['accounting', 'ecritures', dateRange, ecrituresPage, ecrituresSearch, ecrituresJournal, ecrituresPageSize],
         queryFn: async () => (await api.get('compta/ecritures/', { 
-            params: { date_debut: dateRange.start, date_fin: dateRange.end } 
-        })).data.results || (await api.get('compta/ecritures/')).data,
+            params: { 
+                date_debut: dateRange.start, 
+                date_fin: dateRange.end,
+                page: ecrituresPage,
+                search: ecrituresSearch,
+                journal_code: ecrituresJournal,
+                page_size: ecrituresPageSize
+            } 
+        })).data,
         placeholderData: (previousData) => previousData
     });
 
@@ -140,7 +158,16 @@ export const useAccounting = () => {
         balance,
         resultat,
         bilan,
-        ecritures,
+        ecritures: ecrituresData?.results || [],
+        ecrituresCount: ecrituresData?.count || 0,
+        ecrituresPage,
+        setEcrituresPage,
+        ecrituresSearch,
+        setEcrituresSearch,
+        ecrituresJournal,
+        setEcrituresJournal,
+        ecrituresPageSize,
+        setEcrituresPageSize,
         exercices,
         currentExercice,
         setCurrentExercice,

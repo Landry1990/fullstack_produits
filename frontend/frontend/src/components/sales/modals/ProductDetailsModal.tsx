@@ -84,30 +84,30 @@ export const ProductDetailsModal: React.FC<ProductDetailsModalProps> = ({
                             <span className="flex items-center gap-1.5 shrink-0">
                                 <span className="font-mono font-medium text-base-content/90">#{facture.numero_facture || facture.id}</span>
                             </span>
-                            <span className="w-1 h-1 bg-gray-300 rounded-full hidden sm:block" />
+                            <span className="size-1 bg-gray-300 rounded-full hidden sm:block" />
                             <span className="flex items-center gap-1.5 shrink-0">
-                                <Calendar className="w-3.5 h-3.5" />
+                                <Calendar className="size-3.5" />
                                 {new Date(facture.date).toLocaleString()}
                             </span>
-                            <span className="w-1 h-1 bg-gray-300 rounded-full hidden sm:block" />
+                            <span className="size-1 bg-gray-300 rounded-full hidden sm:block" />
                             <span className="flex items-center gap-1.5 min-w-0">
-                                <User className="w-3.5 h-3.5 shrink-0" />
+                                <User className="size-3.5 shrink-0" />
                                 <span className="truncate max-w-[200px] sm:max-w-none font-medium text-base-content/90">
                                     {facture.client_name || facture.client_name_override || t('common:passerby_client')}
                                 </span>
                             </span>
-                            <span className="w-1 h-1 bg-gray-300 rounded-full hidden sm:block" />
+                            <span className="size-1 bg-gray-300 rounded-full hidden sm:block" />
                             <span className="flex items-center gap-1.5 shrink-0" title={t('table.operator')}>
-                                <User className="w-3.5 h-3.5 text-blue-500" />
+                                <User className="size-3.5 text-blue-500" />
                                 <span className="text-base-content/60 text-xs">{t('table.operator')} :</span>
                                 <span className="text-base-content/80 font-medium">{facture.created_by_name || '-'}</span>
                             </span>
                             {facture.paiements && facture.paiements.length > 0 && facture.paiements[0].user_details ? (
                                 <>
-                                    <span className="w-1 h-1 bg-gray-300 rounded-full hidden sm:block" />
+                                    <span className="size-1 bg-gray-300 rounded-full hidden sm:block" />
                                     <span className="flex items-center gap-1.5 shrink-0" title="Caissier">
-                                        <div className="w-3.5 h-3.5 rounded-full bg-green-100 flex items-center justify-center">
-                                            <User className="w-2.5 h-2.5 text-green-600" />
+                                        <div className="size-3.5 rounded-full bg-green-100 flex items-center justify-center">
+                                            <User className="size-2.5 text-green-600" />
                                         </div>
                                         <span className="text-base-content/60 text-xs">Caissier :</span>
                                         <span className="text-base-content/80 font-medium">{facture.paiements[0].user_details.full_name || facture.paiements[0].user_details.username}</span>
@@ -115,10 +115,10 @@ export const ProductDetailsModal: React.FC<ProductDetailsModalProps> = ({
                                 </>
                             ) : facture.validated_by_name && (
                                 <>
-                                    <span className="w-1 h-1 bg-gray-300 rounded-full hidden sm:block" />
+                                    <span className="size-1 bg-gray-300 rounded-full hidden sm:block" />
                                     <span className="flex items-center gap-1.5 shrink-0" title="Caissier">
-                                        <div className="w-3.5 h-3.5 rounded-full bg-green-100 flex items-center justify-center">
-                                            <User className="w-2.5 h-2.5 text-green-600" />
+                                        <div className="size-3.5 rounded-full bg-green-100 flex items-center justify-center">
+                                            <User className="size-2.5 text-green-600" />
                                         </div>
                                         <span className="text-base-content/60 text-xs">Caissier :</span>
                                         <span className="text-base-content/80 font-medium">{facture.validated_by_name}</span>
@@ -127,10 +127,10 @@ export const ProductDetailsModal: React.FC<ProductDetailsModalProps> = ({
                             )}
                             {facture.cancelled_by_name && (
                                 <>
-                                    <span className="w-1 h-1 bg-gray-300 rounded-full hidden sm:block" />
+                                    <span className="size-1 bg-gray-300 rounded-full hidden sm:block" />
                                     <span className="flex items-center gap-1.5 shrink-0" title="Annulé par">
-                                        <div className="w-3.5 h-3.5 rounded-full bg-red-100 flex items-center justify-center">
-                                            <User className="w-2.5 h-2.5 text-red-600" />
+                                        <div className="size-3.5 rounded-full bg-red-100 flex items-center justify-center">
+                                            <User className="size-2.5 text-red-600" />
                                         </div>
                                         <span className="text-base-content/80 font-medium">{facture.cancelled_by_name}</span>
                                     </span>
@@ -139,7 +139,7 @@ export const ProductDetailsModal: React.FC<ProductDetailsModalProps> = ({
                         </div>
                         {facture.paiements && facture.paiements.length > 0 && (
                             <div className="mt-2 flex items-center gap-2 text-xs text-base-content/60">
-                                <CreditCard className="w-3.5 h-3.5" />
+                                <CreditCard className="size-3.5" />
                                 <span>Règlements:</span>
                                 <div className="flex gap-2">
                                     {facture.paiements.map((p, idx) => (
@@ -155,7 +155,7 @@ export const ProductDetailsModal: React.FC<ProductDetailsModalProps> = ({
                         onClick={onClose}
                         className="p-2 hover:bg-base-200 rounded-full transition-colors text-base-content/40 hover:text-base-content/80"
                     >
-                        <X className="w-6 h-6" />
+                        <X className="size-6" />
                     </button>
                 </div>
 
@@ -193,7 +193,7 @@ export const ProductDetailsModal: React.FC<ProductDetailsModalProps> = ({
                                                     </div>
                                                     {prod.is_chronic && (
                                                         <span className="flex items-center gap-1 text-[10px] bg-indigo-50 text-indigo-600 px-1.5 py-0.5 rounded-full border border-indigo-100 font-bold animate-pulse">
-                                                            <CheckCircle2 className="w-2.5 h-2.5" />
+                                                            <CheckCircle2 className="size-2.5" />
                                                             CHRONIQUE
                                                         </span>
                                                     )}
@@ -239,7 +239,7 @@ export const ProductDetailsModal: React.FC<ProductDetailsModalProps> = ({
                                                         }`}
                                                         title="Envoyer un rappel de renouvellement WhatsApp"
                                                     >
-                                                        {sendingReminder !== prod.id && <Smartphone className="w-3 h-3" />}
+                                                        {sendingReminder !== prod.id && <Smartphone className="size-3" />}
                                                         Rappel
                                                     </button>
                                                 )}

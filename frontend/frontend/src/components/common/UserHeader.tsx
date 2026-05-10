@@ -91,7 +91,7 @@ export default function UserHeader() {
           >
             <Bell size={20} className="text-base-content/70" />
             {unreadCount > 0 && (
-              <span className="absolute -top-1 -right-1 bg-error text-error-content text-[10px] font-bold w-5 h-5 flex items-center justify-center rounded-full animate-pulse">
+              <span className="absolute -top-1 -right-1 bg-error text-error-content text-[10px] font-bold size-5 flex items-center justify-center rounded-full animate-pulse">
                 {unreadCount}
               </span>
             )}
@@ -108,7 +108,7 @@ export default function UserHeader() {
             }}
           >
             <button className="flex items-center gap-3 px-2 py-1 rounded-xl hover:bg-base-200 transition-all group">
-              <div className="w-10 h-10 rounded-full bg-primary text-white flex items-center justify-center font-bold text-lg shadow-inner ring-2 ring-white/20 overflow-hidden">
+              <div className="size-10 rounded-full bg-primary text-white flex items-center justify-center font-bold text-lg shadow-inner ring-2 ring-white/20 overflow-hidden">
                 {user.username.charAt(0).toUpperCase()}
               </div>
               <div className="hidden sm:block text-left mr-1">
@@ -128,7 +128,7 @@ export default function UserHeader() {
                 <div className="p-4 border-b border-white/5 bg-base-200/50">
                   <p className="text-xs font-semibold text-base-content/40 uppercase tracking-widest mb-2">Compte</p>
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full bg-primary/20 text-primary flex items-center justify-center">
+                    <div className="size-10 rounded-full bg-primary/20 text-primary flex items-center justify-center">
                       <UserIcon size={20} />
                     </div>
                     <div className="min-w-0">

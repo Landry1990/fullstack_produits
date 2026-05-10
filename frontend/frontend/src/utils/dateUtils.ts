@@ -90,7 +90,7 @@ export function formatDateShort(date: string | Date | null | undefined): string 
 }
 
 // Alias long
-export const formatDateLongFr = formatDateLong;
+// export const formatDateLongFr = formatDateLong; // Supprimé car doublon knip
 
 /**
  * Formate une date d'expiration au format mm/yy

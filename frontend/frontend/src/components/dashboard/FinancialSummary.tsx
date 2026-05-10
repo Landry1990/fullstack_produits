@@ -46,7 +46,7 @@ export default function FinancialSummary({
             <div className="flex items-center justify-between mb-6">
               <div className="flex items-center gap-3">
                 <div className="p-2 bg-purple-100 text-purple-600 rounded-xl">
-                  <ShoppingBag className="w-5 h-5" />
+                  <ShoppingBag className="size-5" />
                 </div>
                 <div>
                   <h2 className="text-sm font-black text-base-content tracking-tight uppercase">{t('ug.title')}</h2>
@@ -113,7 +113,7 @@ export default function FinancialSummary({
             <div className="flex items-center justify-between mb-5">
               <div className="flex items-center gap-3">
                 <div className="p-2 bg-orange-100 text-orange-600 rounded-xl">
-                  <CalendarX2 className="w-5 h-5" />
+                  <CalendarX2 className="size-5" />
                 </div>
                 <div>
                   <h2 className="text-sm font-black text-base-content tracking-tight uppercase">{t('debts.echeances_title')}</h2>
@@ -164,17 +164,17 @@ export default function FinancialSummary({
                         <td className="py-3 pr-4 text-center">
                           {isRetard ? (
                             <span className="inline-flex items-center gap-1 bg-red-100 text-red-700 px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider border border-red-200">
-                              <Clock className="w-3 h-3" />
+                              <Clock className="size-3" />
                               {Math.abs(e.jours_restants)}{t('debts.days_overdue')}
                             </span>
                           ) : isAujourdhui ? (
                             <span className="inline-flex items-center gap-1 bg-orange-100 text-orange-700 px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider border border-orange-200 animate-pulse">
-                              <AlertTriangle className="w-3 h-3" />
+                              <AlertTriangle className="size-3" />
                               {t('debts.today_badge')}
                             </span>
                           ) : (
                             <span className="inline-flex items-center gap-1 bg-emerald-50 text-emerald-700 px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider border border-emerald-100">
-                              <CheckCircle2 className="w-3 h-3" />
+                              <CheckCircle2 className="size-3" />
                               {e.jours_restants}{t('debts.days_remaining')}
                             </span>
                           )}
@@ -194,7 +194,7 @@ export default function FinancialSummary({
         <div className="card-body p-6 flex flex-col h-full">
           <div className="flex items-center gap-3 mb-6 shrink-0">
             <div className="p-2 bg-emerald-100 text-emerald-600 rounded-xl">
-              <PieChartIcon className="w-5 h-5" />
+              <PieChartIcon className="size-5" />
             </div>
             <div>
               <h2 className="text-sm font-black text-base-content tracking-tight uppercase">{t('dashboard.charts.payment_mix', { defaultValue: 'Qualité du CA' })}</h2>
@@ -227,7 +227,7 @@ export default function FinancialSummary({
               </ResponsiveContainer>
             ) : (
               <div className="flex flex-col items-center justify-center h-full opacity-20">
-                <CreditCard className="w-12 h-12 mb-2" />
+                <CreditCard className="size-12 mb-2" />
                 <span className="text-[10px] font-black uppercase tracking-widest">{t('dashboard.charts.no_data', { defaultValue: 'Aucun paiement aujourd\'hui' })}</span>
               </div>
             )}
@@ -241,7 +241,7 @@ export default function FinancialSummary({
                   <div key={item.label} className="flex items-center justify-between group p-2 bg-base-200/30 rounded-xl border border-base-300/50">
                     <div className="flex items-center gap-2">
                        <div 
-                        className="w-2.5 h-2.5 rounded-full shrink-0 shadow-sm" 
+                        className="size-2.5 rounded-full shrink-0 shadow-sm" 
                         style={{ backgroundColor: ['#10b981', '#6366f1', '#f59e0b', '#ec4899', '#8b5cf6', '#ef4444'][index % 6] }}
                       />
                       <span className="text-[10px] font-black text-base-content/60 uppercase tracking-wider group-hover:text-primary transition-colors">

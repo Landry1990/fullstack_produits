@@ -19,6 +19,7 @@ export interface ProduitFilters {
     dormant_months?: number;
     needs_reappro?: boolean;
     has_reserve_storage?: boolean;
+    only_in_stock?: boolean;
 }
 
 export interface ProduitsResponse {
@@ -48,6 +49,7 @@ const produitService = {
         if (filters.dormant_months) params.append('dormant_months', filters.dormant_months.toString());
         if (filters.needs_reappro) params.append('needs_reappro', 'true');
         if (filters.has_reserve_storage !== undefined) params.append('has_reserve_storage', filters.has_reserve_storage.toString());
+        if (filters.only_in_stock) params.append('only_in_stock', 'true');
 
         const response = await api.get<ProduitsResponse | ProduitModel[]>('produits/', { params });
 

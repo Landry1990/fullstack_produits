@@ -73,7 +73,7 @@ export interface UsePrintReturn {
  * openPrintPage('/app/print-invoice/123');
  * ```
  */
-export function usePrint(): UsePrintReturn {
+function usePrint(): UsePrintReturn {
   const { settings } = usePharmacySettings();
   const { t } = useTranslation('common');
   const printRef = useRef<HTMLDivElement>(null);

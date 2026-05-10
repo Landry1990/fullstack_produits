@@ -263,21 +263,21 @@ export default function Ruptures() {
             className={`tab px-6 transition-all ${activeTab === 'pharmacie' ? 'tab-active bg-primary text-white' : ''}`}
             onClick={() => setActiveTab('pharmacie')}
           >
-            <Package className="w-4 h-4 mr-2" />
+            <Package className="size-4 mr-2" />
             {t('ruptures.tabs.pharmacie', 'Ruptures Pharmacie')}
           </a>
           <a 
             className={`tab px-6 transition-all ${activeTab === 'fournisseur' ? 'tab-active bg-red-500 text-white' : ''}`}
             onClick={() => setActiveTab('fournisseur')}
           >
-            <ShieldAlert className="w-4 h-4 mr-2" />
+            <ShieldAlert className="size-4 mr-2" />
             {t('ruptures.tabs.fournisseur', 'Ruptures Grossistes')}
           </a>
           <a 
             className={`tab px-6 transition-all ${activeTab === 'stats' ? 'tab-active bg-neutral text-white' : ''}`}
             onClick={() => setActiveTab('stats')}
           >
-            <History className="w-4 h-4 mr-2" />
+            <History className="size-4 mr-2" />
             {t('ruptures.tabs.stats', 'Analyses & Stats')}
           </a>
         </div>
@@ -288,7 +288,7 @@ export default function Ruptures() {
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div className="card bg-base-100 shadow-sm border border-base-200 p-4 flex flex-row items-center gap-4">
               <div className="p-3 bg-primary/10 text-primary rounded-xl">
-                 <Filter className="w-6 h-6" />
+                 <Filter className="size-6" />
               </div>
               <div className="flex-1">
                 <p className="text-xs font-bold uppercase opacity-50 mb-1">{t('ruptures.pharmacie.filters.rayon', 'Filtrer par Rayon')}</p>
@@ -305,7 +305,7 @@ export default function Ruptures() {
 
             <div className="card bg-base-100 shadow-sm border border-base-200 p-4 flex flex-row items-center gap-4">
               <div className="p-3 bg-secondary/10 text-secondary rounded-xl">
-                 <ShoppingBag className="w-6 h-6" />
+                 <ShoppingBag className="size-6" />
               </div>
               <div className="flex-1">
                 <p className="text-xs font-bold uppercase opacity-50 mb-1">{t('ruptures.pharmacie.filters.fournisseur', 'Filtrer par Fournisseur')}</p>
@@ -324,8 +324,8 @@ export default function Ruptures() {
           <div className="card bg-base-100 shadow-sm border border-base-200 overflow-hidden">
             <div className="card-body p-0">
               <div className="flex items-center gap-2 p-4 text-emerald-700 bg-emerald-50 border-b border-emerald-100">
-                <BadgeInfo className="w-5 h-5 shrink-0" />
-                <p className="text-xs font-semibold" dangerouslySetInnerHTML={{ __html: t('ruptures.pharmacie.info', 'Affichage des produits à forte rotation (en rupture de stock)') }}></p>
+                <BadgeInfo className="size-5 shrink-0" />
+                <p className="text-xs font-semibold">{t('ruptures.pharmacie.info', 'Affichage des produits à forte rotation (en rupture de stock)')}</p>
               </div>
               
               <div className="overflow-x-auto">
@@ -372,7 +372,7 @@ export default function Ruptures() {
                               <td className="font-mono text-xs whitespace-nowrap opacity-70">{p.cip1 || '-'}</td>
                               <td className="font-black whitespace-nowrap">
                                 {p.name}
-                                {isHighRotation && <span className="ml-2 badge badge-error badge-xs font-bold pulse text-[8px]">URGENT</span>}
+                                {isHighRotation && <span className="ml-2 badge badge-error badge-xs font-bold pulse text-xs">URGENT</span>}
                               </td>
                               <td className="text-sm whitespace-nowrap font-medium">{p.rayon_name || '-'}</td>
                               <td className="text-center whitespace-nowrap">
@@ -392,7 +392,7 @@ export default function Ruptures() {
                                     className="btn btn-square btn-xs btn-error bg-red-500 border-none shadow-sm hover:scale-110" 
                                     title={t('ruptures.actions.signal_shortage', 'Signaler en rupture grossiste')}
                                   >
-                                    <ShieldAlert className="w-3.5 h-3.5 text-white" />
+                                    <ShieldAlert className="size-3.5 text-white" />
                                   </button>
                                 </div>
                               </td>
@@ -454,7 +454,7 @@ export default function Ruptures() {
                             onClick={() => generateBulkOrders('pharmacie')}
                             disabled={isBulkAdding}
                         >
-                            <ShoppingBag className="w-4 h-4" />
+                            <ShoppingBag className="size-4" />
                             {t('ruptures.actions.add_to_order', 'Ajouter aux commandes')}
                         </button>
                     </div>
@@ -472,7 +472,7 @@ export default function Ruptures() {
                         <h2 className="text-xl font-black mb-4 uppercase italic tracking-tighter">{t('ruptures.fournisseur.signaler', 'Signaler un Manque')}</h2>
                         <div className="form-control relative">
                             <div className="relative">
-                                <Search className="w-5 h-5 absolute left-3 top-1/2 -translate-y-1/2 text-base-content/40" />
+                                <Search className="size-5 absolute left-3 top-1/2 -translate-y-1/2 text-base-content/40" />
                                 <input 
                                     type="text" 
                                     placeholder={t('ruptures.fournisseur.search_placeholder', 'Rechercher un produit...')} 
@@ -493,9 +493,9 @@ export default function Ruptures() {
                                                 <a onClick={() => declarerRuptureFournisseur(p.id)} className="flex items-center justify-between py-4 px-4 hover:bg-base-200">
                                                     <div className="flex flex-col">
                                                         <span className="font-black text-sm">{p.name}</span>
-                                                        <span className="text-[10px] font-bold opacity-50 uppercase tracking-widest">{t('ruptures.fournisseur.stock', 'Stock')}: {p.stock} | {p.fournisseur_name || 'N/A'}</span>
+                                                        <span className="text-xs font-bold opacity-50 uppercase tracking-widest">{t('ruptures.fournisseur.stock', 'Stock')}: {p.stock} | {p.fournisseur_name || 'N/A'}</span>
                                                     </div>
-                                                    <Plus className="w-5 h-5 text-primary" />
+                                                    <Plus className="size-5 text-primary" />
                                                 </a>
                                             </li>
                                         ))
@@ -539,7 +539,7 @@ export default function Ruptures() {
                             ) : fournisseurData.length === 0 ? (
                                 <tr>
                                     <td colSpan={5} className="text-center py-20 text-base-content/30 italic">
-                                        <ShieldAlert className="w-16 h-16 mx-auto mb-4 opacity-10" />
+                                        <ShieldAlert className="size-16 mx-auto mb-4 opacity-10" />
                                         <p className="text-lg font-black uppercase tracking-tighter opacity-20">{t('ruptures.fournisseur.empty', 'Aucune rupture fournisseur active')}</p>
                                     </td>
                                 </tr>
@@ -556,7 +556,7 @@ export default function Ruptures() {
                                     </td>
                                     <td className="font-black text-red-600">
                                         {r.produit_nom}
-                                        {r.remarques && <p className="text-[10px] font-bold text-base-content/40 mt-1 uppercase tracking-wider">{r.remarques}</p>}
+                                        {r.remarques && <p className="text-xs font-bold text-base-content/40 mt-1 uppercase tracking-wider">{r.remarques}</p>}
                                     </td>
                                     <td className="text-sm font-bold opacity-70">{r.fournisseur_nom || '-'}</td>
                                     <td className="text-sm font-mono opacity-50">
@@ -569,7 +569,7 @@ export default function Ruptures() {
                                                 onClick={() => marquerResolu(r.id)}
                                                 title={t('ruptures.fournisseur.mark_resolved', 'Marquer comme résolu')}
                                             >
-                                                <Check className="w-4 h-4" /> 
+                                                <Check className="size-4" /> 
                                                 <span className="hidden md:inline font-black uppercase italic text-xs">{t('ruptures.fournisseur.resolve', 'Résolu')}</span>
                                             </button>
                                         </div>
@@ -606,7 +606,7 @@ export default function Ruptures() {
                                     onClick={() => generateBulkOrders('fournisseur')}
                                     disabled={isBulkAdding}
                                 >
-                                    <ShoppingBag className="w-4 h-4" />
+                                    <ShoppingBag className="size-4" />
                                     {t('ruptures.actions.add_to_order', 'Ajouter aux commandes')}
                                 </button>
                             </div>
@@ -621,12 +621,12 @@ export default function Ruptures() {
         <div className="space-y-4">
            <div className="card bg-neutral text-neutral-content p-6 shadow-xl border-none overflow-hidden relative">
               <div className="absolute right-0 top-0 p-8 opacity-10 pointer-events-none">
-                 <AlertTriangle className="w-32 h-32" />
+                 <AlertTriangle className="size-32" />
               </div>
               <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 relative z-10">
                 <div>
                   <h2 className="text-2xl font-black uppercase italic tracking-tighter flex items-center gap-2">
-                      <AlertTriangle className="w-6 h-6 text-amber-400" />
+                      <AlertTriangle className="size-6 text-amber-400" />
                       {t('ruptures.stats.title', 'Analyses de Fréquence')}
                   </h2>
                   <p className="opacity-70 text-sm font-medium mt-1">{t('ruptures.stats.subtitle', 'Top des produits les plus souvent absents')}</p>
@@ -649,7 +649,7 @@ export default function Ruptures() {
                           onClick={exportStats}
                           className="btn btn-sm join-item bg-neutral-content text-neutral border-none hover:bg-white gap-2"
                         >
-                          <Download className="w-4 h-4" />
+                          <Download className="size-4" />
                           <span className="font-black italic text-xs">EXPORTER CSV</span>
                         </button>
                     </div>
@@ -678,7 +678,7 @@ export default function Ruptures() {
                         statsData.map((stat, index) => (
                           <tr key={stat.produit_id} className="hover:bg-base-50 transition-colors border-b border-base-100 last:border-b-0 group">
                             <td className="text-center">
-                               <div className={`w-8 h-8 rounded-lg flex items-center justify-center mx-auto text-sm font-black ${index < 3 ? 'bg-amber-400 text-amber-900 shadow-md' : 'bg-base-200 opacity-50'}`}>
+                               <div className={`size-8 rounded-lg flex items-center justify-center mx-auto text-sm font-black ${index < 3 ? 'bg-amber-400 text-amber-900 shadow-md' : 'bg-base-200 opacity-50'}`}>
                                   {index + 1}
                                </div>
                             </td>

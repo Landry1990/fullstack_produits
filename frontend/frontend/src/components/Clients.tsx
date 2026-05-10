@@ -362,7 +362,7 @@ export default function Clients() {
                 actions={
                   <li>
                     <a onClick={handleBulkDelete} className="text-error hover:bg-error/10 font-bold">
-                      <Trash2 className="w-4 h-4" />
+                      <Trash2 className="size-4" />
                       {t('clients:actions.bulk_delete', { count: selectedIds.length })}
                     </a>
                   </li>
@@ -374,7 +374,7 @@ export default function Clients() {
              <div className="flex justify-between items-center h-10">
                <div className="flex items-center gap-2">
                  <div className="p-2 bg-primary/10 text-primary rounded-lg">
-                    <Users className="w-5 h-5" />
+                    <Users className="size-5" />
                  </div>
                  <h2 className="font-black text-lg tracking-tight">{t('clients:title')}</h2>
                </div>
@@ -391,7 +391,7 @@ export default function Clients() {
                     variant="ghost"
                  />
                  <button className="btn btn-sm btn-primary gap-2 h-9 px-4 rounded-xl shadow-lg shadow-primary/20" onClick={handleOpenCreate}>
-                   <UserPlus className="w-4 h-4" />
+                   <UserPlus className="size-4" />
                    <span className="font-bold">{t('clients:actions.create')}</span>
                  </button>
                </div>
@@ -399,7 +399,7 @@ export default function Clients() {
            )}
            
            <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-base-content/30" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-base-content/30" />
               <input 
                 className="input input-sm input-bordered w-full pl-10 h-10 rounded-xl bg-base-200/30 border-transparent focus:bg-base-100 transition-all font-bold"
                 placeholder={t('clients:filters.search_placeholder')}
@@ -432,10 +432,10 @@ export default function Clients() {
                              </span>
                           </div>
                           <div className="flex items-center justify-between gap-1.5 text-[10px] text-base-content/40 font-mono font-bold">
-                             <span className="flex items-center gap-1"><Phone className="w-3 h-3" /> {client.phone || '--'}</span>
+                             <span className="flex items-center gap-1"><Phone className="size-3" /> {client.phone || '--'}</span>
                              {client.client_type === 'PROFESSIONNEL' && (client as any).ayants_droit_count > 0 && (
                                <span className="flex items-center gap-0.5 bg-info/10 text-info px-1 rounded">
-                                 <Users className="w-2.5 h-2.5" />
+                                 <Users className="size-2.5" />
                                  {(client as any).ayants_droit_count}
                                </span>
                              )}
@@ -470,7 +470,7 @@ export default function Clients() {
                   >
                     <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7" /></svg>
                   </button>
-                  <div className="w-12 h-12 lg:w-14 lg:h-14 bg-primary/10 text-primary rounded-2xl flex items-center justify-center text-xl lg:text-2xl font-black italic shadow-inner shrink-0">
+                  <div className="size-12 lg:w-14 lg:h-14 bg-primary/10 text-primary rounded-2xl flex items-center justify-center text-xl lg:text-2xl font-black italic shadow-inner shrink-0">
                     {selectedClient.name.charAt(0)}
                   </div>
                   <div>
@@ -479,17 +479,17 @@ export default function Clients() {
                        {selectedClient.is_active === false && <span className="badge badge-warning text-[10px] font-black italic">{t('clients:status.inactive')}</span>}
                      </h2>
                      <p className="flex items-center gap-3 text-xs font-bold text-base-content/40 mt-0.5">
-                        <span className="flex items-center gap-1"><Phone className="w-3 h-3" /> {selectedClient.phone || '--'}</span>
-                        <span className="flex items-center gap-1"><Mail className="w-3 h-3" /> {selectedClient.email || '--'}</span>
+                        <span className="flex items-center gap-1"><Phone className="size-3" /> {selectedClient.phone || '--'}</span>
+                        <span className="flex items-center gap-1"><Mail className="size-3" /> {selectedClient.email || '--'}</span>
                      </p>
                   </div>
                </div>
                <div className="flex items-center gap-2">
                   <button className="btn btn-sm btn-ghost gap-2 h-10 px-4 rounded-xl text-secondary font-black hover:bg-secondary/10" onClick={() => handleOpenEdit(selectedClient)}>
-                    <Edit className="w-4 h-4" /> {t('common:edit')}
+                    <Edit className="size-4" /> {t('common:edit')}
                   </button>
                   <button className="btn btn-sm btn-ghost gap-2 h-10 px-4 rounded-xl text-error font-black hover:bg-error/10" onClick={handleDelete}>
-                    <Trash2 className="w-4 h-4" /> {t('common:delete')}
+                    <Trash2 className="size-4" /> {t('common:delete')}
                   </button>
                   <ActionIcon 
                     icon={isHistoryOpen ? HistoryIcon : ShoppingBag}
@@ -518,21 +518,21 @@ export default function Clients() {
                   {/* Info Card */}
                   <div className="card bg-base-100 border border-base-200 rounded-3xl shadow-sm overflow-hidden">
                      <div className="p-4 bg-base-50/50 border-b border-base-200 flex items-center gap-2">
-                        <div className="p-1.5 bg-primary/10 text-primary rounded-lg"><User className="w-4 h-4" /></div>
+                        <div className="p-1.5 bg-primary/10 text-primary rounded-lg"><User className="size-4" /></div>
                         <h3 className="text-[10px] font-black uppercase tracking-widest text-base-content/40">{t('clients:sections.contact')}</h3>
                      </div>
                      <div className="p-6 space-y-6">
                         <div className="flex flex-col gap-1.5">
                            <span className="text-[10px] font-black uppercase tracking-widest text-base-content/20">{t('clients:fields.address')}</span>
                            <div className="flex items-start gap-2.5 text-sm font-black">
-                              <MapPin className="w-4 h-4 text-primary mt-0.5" />
+                              <MapPin className="size-4 text-primary mt-0.5" />
                               <span className="leading-snug">{selectedClient.address || t('common:no_address')}</span>
                            </div>
                         </div>
                         <div className="flex flex-col gap-1.5">
                            <span className="text-[10px] font-black uppercase tracking-widest text-base-content/20">{t('clients:fields.type')}</span>
                            <div className="text-sm font-black flex items-center gap-2">
-                              <Activity className="w-4 h-4 text-secondary" />
+                              <Activity className="size-4 text-secondary" />
                               {selectedClient.client_type === 'PROFESSIONNEL' ? t('clients:types.professional') : t('clients:types.individual')}
                            </div>
                         </div>
@@ -542,7 +542,7 @@ export default function Clients() {
                   {/* Finance/Loyalty Card */}
                   <div className="card bg-base-100 border border-base-200 rounded-3xl shadow-sm overflow-hidden">
                      <div className="p-4 bg-base-50/50 border-b border-base-200 flex items-center gap-2">
-                        <div className="p-1.5 bg-secondary/10 text-secondary rounded-lg"><ShieldCheck className="w-4 h-4" /></div>
+                        <div className="p-1.5 bg-secondary/10 text-secondary rounded-lg"><ShieldCheck className="size-4" /></div>
                         <h3 className="text-[10px] font-black uppercase tracking-widest text-base-content/40">{t('clients:sections.programs')}</h3>
                      </div>
                      <div className="p-6 grid grid-cols-2 gap-4">
@@ -563,7 +563,7 @@ export default function Clients() {
                               </div>
                               {loyaltyThreshold > 0 && (selectedClient.points_fidelite ?? 0) >= loyaltyThreshold && (
                                 <div className="absolute top-0 right-0 p-1">
-                                  <div className="w-2 h-2 bg-accent rounded-full animate-ping"></div>
+                                  <div className="size-2 bg-accent rounded-full animate-ping"></div>
                                 </div>
                               )}
                            </div>
@@ -619,7 +619,7 @@ export default function Clients() {
                   {selectedClient.client_type === 'PROFESSIONNEL' && (
                     <div className="lg:col-span-2 card bg-base-100 border border-base-200 rounded-3xl shadow-sm overflow-hidden">
                        <div className="p-4 bg-base-50/50 border-b border-base-200 flex items-center gap-2">
-                          <Users className="w-4 h-4 text-info" />
+                          <Users className="size-4 text-info" />
                           <h3 className="text-[10px] font-black uppercase tracking-widest text-base-content/40">{t('clients:beneficiaries.title')}</h3>
                        </div>
                        <div className="overflow-x-auto">
@@ -653,7 +653,7 @@ export default function Clients() {
           </>
         ) : (
           <div className="flex-1 flex flex-col items-center justify-center gap-6 opacity-30 grayscale p-12 text-center">
-             <Users className="w-32 h-32 stroke-[1px]" />
+             <Users className="size-32 stroke-[1px]" />
              <div>
                 <h3 className="text-2xl font-black italic tracking-tighter">{t('clients:modals.select_client_empty')}</h3>
                 <p className="text-sm font-bold mt-2 max-w-sm mx-auto">{t('clients:modals.select_client_empty_desc')}</p>
