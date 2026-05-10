@@ -300,14 +300,14 @@ export default function JournalCaisseTable({ state }: Props) {
               <button
                 className="btn btn-sm px-4 bg-base-100 hover:bg-base-200 border-base-300 shadow-sm transition-all"
                 disabled={page === 1}
-                onClick={() => setPage(page - 1)}
+                onClick={() => setPage(prev => prev - 1)}
               >
                 {t('common:pagination.prev')}
               </button>
               <button
                 className="btn btn-sm px-4 bg-base-100 hover:bg-base-200 border-base-300 shadow-sm transition-all"
                 disabled={page >= totalPages}
-                onClick={() => setPage(page + 1)}
+                onClick={() => setPage(prev => prev + 1)}
               >
                 {t('common:pagination.next')}
               </button>

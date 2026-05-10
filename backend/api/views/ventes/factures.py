@@ -2,7 +2,7 @@ from rest_framework import viewsets, status, filters
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated, IsAdminUser
-from django.db import transaction
+from django.db import transaction, DatabaseError
 from django.db.models import Sum, Q, Value, DecimalField, Count, Subquery, OuterRef
 from django.db.models.functions import Coalesce
 from django_filters.rest_framework import DjangoFilterBackend
@@ -209,7 +209,7 @@ class FactureViewSet(OptimizedSerializerMixin, viewsets.ModelViewSet):
         Action ATOMIQUE pour finaliser une vente complète via SalesService.
         """
         import json
-        
+
         # Determine if data came in as JSON or FormData
         if 'multipart/form-data' in request.content_type:
             # Reconstruct data from 'json_data' field if present, otherwise use request.data
@@ -221,10 +221,10 @@ class FactureViewSet(OptimizedSerializerMixin, viewsets.ModelViewSet):
                 data = request.data
         else:
             data = request.data
-            
+
         user = request.user
         centralized = data.get('centralized_cash_register', True)
-        
+
         image_file = request.FILES.get('image_ordonnance')
 
         # --- Early data validation (before Sudo check) ---
@@ -263,26 +263,33 @@ class FactureViewSet(OptimizedSerializerMixin, viewsets.ModelViewSet):
         if total_ttc <= 0 and produits_data:
             total_ttc = temp_sum - remise_globale
 
+        validation_user = None
         if total_ttc <= 0:
-            validation_user, error_res = validate_sudo_mode(request)
-            if error_res:
-                return error_res
-                
-            # Allow if user is superuser OR has the specific permission
-            has_permission = getattr(validation_user.profile, 'can_validate_zero_amount', False) if hasattr(validation_user, 'profile') else False
-            
-            if validation_user == user and not user.is_superuser and not has_permission:
-                return Response({
-                    'detail': "Une vente à montant nul ou négatif nécessite la validation d'un tiers-validateur (Sudo)."
-                }, status=status.HTTP_403_FORBIDDEN)
+            try:
+                validation_user, error_res = validate_sudo_mode(request)
+                if error_res:
+                    return error_res
+
+                # Allow if user is superuser OR has the specific permission
+                has_permission = getattr(validation_user.profile, 'can_validate_zero_amount', False) if hasattr(validation_user, 'profile') else False
+
+                if validation_user == user and not user.is_superuser and not has_permission:
+                    return Response({
+                        'detail': "Une vente à montant nul ou négatif nécessite la validation d'un tiers-validateur (Sudo)."
+                    }, status=status.HTTP_403_FORBIDDEN)
+            except DatabaseError as e:
+                # Si une erreur DB survient pendant la validation Sudo, on rollback et retourne une erreur propre
+                transaction.set_rollback(True)
+                logger.error(f"[VENTE] Erreur DB lors de la validation Sudo: {str(e)}", exc_info=True)
+                return Response({'detail': "Erreur de base de données lors de la validation. Veuillez réessayer."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
         try:
             # Transfer validation user to data for SalesService
-            if 'validation_user' not in data and 'validation_user' in locals():
+            if validation_user and 'validation_user' not in data:
                  data['validation_user'] = validation_user
 
             facture = SalesService.finalize_sale(user, data, centralized=centralized, image_file=image_file)
-            
+
             # Log d'audit - Safe formatting for Decimal
             total_display = float(facture.total_ttc)
             log_audit(
@@ -301,6 +308,11 @@ class FactureViewSet(OptimizedSerializerMixin, viewsets.ModelViewSet):
 
             serializer = self.get_serializer(facture)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
+        except DatabaseError as e:
+            # Gestion explicite des erreurs de base de données
+            transaction.set_rollback(True)
+            logger.error(f"[VENTE] Erreur DB lors de la finalisation: {str(e)}", exc_info=True)
+            return Response({'detail': "Erreur de base de données. La transaction a été annulée."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         except ValueError as e:
             transaction.set_rollback(True)
             return Response({'detail': str(e)}, status=status.HTTP_400_BAD_REQUEST)

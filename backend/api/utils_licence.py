@@ -130,9 +130,10 @@ def valider_licence_systeme():
             licence_obj.derniere_verification = maintenant
             licence_obj.save(update_fields=['derniere_verification'])
         
-        # Mettre en cache pour 5 minutes pour éviter de refaire tout ça à chaque requête
+        # Mettre en cache pour 1 heure pour réduire la charge DB
+        # Le middleware vérifie le JWT localement entre les vérifications DB
         result_dict = {'est_valide': True, 'message': "Licence valide.", 'payload': payload}
-        cache.set(cache_key, result_dict, timeout=300)
+        cache.set(cache_key, result_dict, timeout=3600)  # 1 heure
         
         return True, "Licence valide.", payload
         

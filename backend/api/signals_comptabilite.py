@@ -5,8 +5,33 @@ from django.db import transaction
 from django.utils import timezone
 from .models import (
     Facture, Caisse, Commande, EcritureComptable, 
-    LigneEcriture, CompteComptable, JournalComptable, PaiementFournisseur
+    LigneEcriture, CompteComptable, JournalComptable, PaiementFournisseur,
+    ExerciceComptable
 )
+
+
+def get_exercice_courant():
+    """Récupère l'exercice comptable en cours, ou en crée un par défaut."""
+    today = timezone.now().date()
+    exercice = ExerciceComptable.objects.filter(
+        date_debut__lte=today,
+        date_fin__gte=today,
+        est_cloture=False
+    ).first()
+    
+    if not exercice:
+        # Créer un exercice par défaut pour l'année courante
+        year = today.year
+        exercice, _ = ExerciceComptable.objects.get_or_create(
+            nom=f"Exercice {year}",
+            defaults={
+                'date_debut': f"{year}-01-01",
+                'date_fin': f"{year}-12-31",
+                'est_cloture': False
+            }
+        )
+    
+    return exercice
 from decimal import Decimal
 
 @receiver(post_save, sender=PaiementFournisseur)
@@ -30,6 +55,7 @@ def generer_ecriture_paiement_fournisseur(sender, instance, created, **kwargs):
             defaults={
                 'reference': ref,
                 'journal': journal,
+                'exercice': get_exercice_courant(),
                 'date': instance.date_paiement,
                 'libelle': f"Règlement Fournisseur {instance.fournisseur.name} ({instance.get_mode_paiement_display()})"
             }
@@ -73,6 +99,7 @@ def generer_ecriture_vente(sender, instance, created, **kwargs):
                 defaults={
                     'date': instance.date.date(),
                     'journal': journal,
+                    'exercice': get_exercice_courant(),
                     'reference': instance.numero_facture or f"F{instance.id}",
                     'libelle': f"Vente Facture {instance.numero_facture or instance.id}"
                 }
@@ -124,6 +151,7 @@ def generer_ecriture_paiement(sender, instance, created, **kwargs):
                 defaults={
                     'date': instance.date_paiement.date(),
                     'journal': journal,
+                    'exercice': get_exercice_courant(),
                     'reference': instance.facture.numero_facture or f"F{instance.facture.id}",
                     'libelle': f"Règlement {instance.get_mode_paiement_display()} Fact {instance.facture.numero_facture or instance.facture.id}"
                 }
@@ -166,6 +194,7 @@ def generer_ecriture_achat(sender, instance, created, **kwargs):
                 defaults={
                     'date': (instance.date_cloture or instance.date or timezone.now()).date(),
                     'journal': journal,
+                    'exercice': get_exercice_courant(),
                     'reference': instance.numero_facture or f"BC{instance.id}",
                     'libelle': f"Achat Fournisseur {instance.fournisseur.name if instance.fournisseur else instance.fournisseur_nom}"
                 }
