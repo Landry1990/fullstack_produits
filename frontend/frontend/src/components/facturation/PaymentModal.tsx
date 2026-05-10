@@ -78,9 +78,10 @@ export default function PaymentModal({
     useEffect(() => {
         if (isOpen) {
             // Focus on input after modal renders
-            setTimeout(() => {
+            const timeoutId = setTimeout(() => {
                 paymentInputRef.current?.focus();
-            }, 150)
+            }, 150);
+            return () => clearTimeout(timeoutId);
         }
     }, [isOpen]);
 

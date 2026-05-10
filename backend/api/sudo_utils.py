@@ -1,7 +1,11 @@
 from rest_framework.response import Response
 from rest_framework import status
 from django.contrib.auth.models import User
+from django.db import transaction, DatabaseError
 from .audit_helpers import log_audit
+import logging
+
+logger = logging.getLogger(__name__)
 
 def validate_sudo_mode(request, permission_attr=None, data_source=None):
     """
@@ -29,10 +33,16 @@ def validate_sudo_mode(request, permission_attr=None, data_source=None):
         validation_user = request.user
     else:
         # Tentative de validation par un tiers
+        # IMPORTANT: On utilise une transaction séparée pour isoler les erreurs DB
+        # et éviter de corrompre la transaction principale
         try:
-            validator_user = User.objects.get(id=validated_by_id)
+            with transaction.atomic():
+                validator_user = User.objects.get(id=validated_by_id)
         except User.DoesNotExist:
             return None, Response({'detail': 'Utilisateur validateur introuvable.'}, status=status.HTTP_400_BAD_REQUEST)
+        except DatabaseError as e:
+            logger.error(f"[SUDO] Erreur DB lors de la récupération de l'utilisateur: {str(e)}", exc_info=True)
+            return None, Response({'detail': 'Erreur de base de données lors de la validation.'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
         if not sudo_password:
             return None, Response({'detail': 'Mot de passe requis pour la validation Sudo.'}, status=status.HTTP_400_BAD_REQUEST)
@@ -45,7 +55,14 @@ def validate_sudo_mode(request, permission_attr=None, data_source=None):
 
     # Vérification de la permission granulaire sur le validateur
     if permission_attr and not validation_user.is_superuser:
-        if not hasattr(validation_user, 'profile') or not getattr(validation_user.profile, permission_attr, False):
+        try:
+            with transaction.atomic():
+                has_permission = hasattr(validation_user, 'profile') and getattr(validation_user.profile, permission_attr, False)
+        except DatabaseError as e:
+            logger.error(f"[SUDO] Erreur DB lors de la vérification des permissions: {str(e)}", exc_info=True)
+            return None, Response({'detail': 'Erreur de base de données lors de la vérification des permissions.'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
+        if not has_permission:
             return None, Response({
                 'detail': f"L'utilisateur {validation_user.username} n'a pas la permission requise ({permission_attr})."
             }, status=status.HTTP_403_FORBIDDEN)
@@ -56,18 +73,23 @@ def validate_sudo_mode(request, permission_attr=None, data_source=None):
         if permission_attr:
             action_name = f"Privilège: {permission_attr}"
 
-        log_audit(
-            user=validation_user, # The person giving sudo rights 
-            action='SUDO_VAL', # The newly added Action
-            model_name='SudoMode',
-            object_id=request.user.username, # The user who requested it
-            description=f"Validation Sudo accordée à {request.user.username} - {action_name} - Route: {request.path}",
-            details={
-                'requested_by': request.user.username,
-                'permission': permission_attr,
-                'path': request.path
-            },
-            request=request
-        )
+        try:
+            with transaction.atomic():
+                log_audit(
+                    user=validation_user, # The person giving sudo rights 
+                    action='SUDO_VAL', # The newly added Action
+                    model_name='SudoMode',
+                    object_id=request.user.username, # The user who requested it
+                    description=f"Validation Sudo accordée à {request.user.username} - {action_name} - Route: {request.path}",
+                    details={
+                        'requested_by': request.user.username,
+                        'permission': permission_attr,
+                        'path': request.path
+                    },
+                    request=request
+                )
+        except DatabaseError as e:
+            # On log l'erreur mais on ne bloque pas la validation si l'audit échoue
+            logger.error(f"[SUDO] Erreur DB lors de l'enregistrement de l'audit: {str(e)}", exc_info=True)
 
     return validation_user, None

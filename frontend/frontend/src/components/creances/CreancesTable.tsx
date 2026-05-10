@@ -5,6 +5,16 @@ import { formatDate, formatTime } from '../../utils/dateUtils';
 import { Eye, DollarSign, ArrowUpRight, ChevronRight, Hash, Calendar, Users } from 'lucide-react';
 import type { Creance, Client } from '../../types';
 
+interface SortIconProps {
+    column: string;
+    sortConfig: { key: string, direction: 'asc' | 'desc' };
+}
+
+const SortIcon: React.FC<SortIconProps> = ({ column, sortConfig }) => {
+    if (sortConfig.key !== column) return null;
+    return <ArrowUpRight className={`w-3 h-3 transition-transform ${sortConfig.direction === 'desc' ? 'rotate-180' : ''}`} />;
+};
+
 interface CreancesTableProps {
     mode: 'clients' | 'invoices';
     groupedClients: { client: Client, total: number, paye: number, reste: number, count: number }[];
@@ -37,11 +47,6 @@ export const CreancesTable: React.FC<CreancesTableProps> = ({
     onSort
 }) => {
     const { t } = useTranslation(['creances', 'common']);
-
-    const SortIcon = ({ column }: { column: string }) => {
-        if (sortConfig.key !== column) return null;
-        return <ArrowUpRight className={`w-3 h-3 transition-transform ${sortConfig.direction === 'desc' ? 'rotate-180' : ''}`} />;
-    };
 
     if (loading) {
         return (
@@ -158,22 +163,22 @@ export const CreancesTable: React.FC<CreancesTableProps> = ({
                             </th>
                         )}
                         <th className="sticky top-0 z-30 bg-base-200 opacity-100 border-b border-base-300 text-[10px] font-black uppercase tracking-widest text-base-content/40 cursor-pointer hover:text-primary transition-colors p-4" onClick={() => onSort('date')}>
-                            <div className="flex items-center gap-2"><Calendar className="w-3.5 h-3.5" /> {t('creances:invoice_list.date')} <SortIcon column="date" /></div>
+                            <div className="flex items-center gap-2"><Calendar className="w-3.5 h-3.5" /> {t('creances:invoice_list.date')} <SortIcon column="date" sortConfig={sortConfig} /></div>
                         </th>
                         <th className="sticky top-0 z-30 bg-base-200 opacity-100 border-b border-base-300 text-[10px] font-black uppercase tracking-widest text-base-content/40 cursor-pointer hover:text-primary transition-colors p-4" onClick={() => onSort('numero_facture')}>
-                            <div className="flex items-center gap-2"><Hash className="w-3.5 h-3.5" /> {t('creances:invoice_list.invoice_number')} <SortIcon column="numero_facture" /></div>
+                            <div className="flex items-center gap-2"><Hash className="w-3.5 h-3.5" /> {t('creances:invoice_list.invoice_number')} <SortIcon column="numero_facture" sortConfig={sortConfig} /></div>
                         </th>
                         <th className="sticky top-0 z-30 bg-base-200 opacity-100 border-b border-base-300 text-[10px] font-black uppercase tracking-widest text-base-content/40 cursor-pointer hover:text-primary transition-colors p-4" onClick={() => onSort('ayant_droit')}>
-                            <div className="flex items-center gap-2"><Users className="w-3.5 h-3.5" /> {t('creances:invoice_list.beneficiary')} <SortIcon column="ayant_droit" /></div>
+                            <div className="flex items-center gap-2"><Users className="w-3.5 h-3.5" /> {t('creances:invoice_list.beneficiary')} <SortIcon column="ayant_droit" sortConfig={sortConfig} /></div>
                         </th>
                         <th className="sticky top-0 z-30 bg-base-200 opacity-100 border-b border-base-300 text-[10px] font-black uppercase tracking-widest text-base-content/40 text-right cursor-pointer hover:text-primary transition-colors p-4" onClick={() => onSort('total_ttc')}>
-                            <div className="flex items-center justify-end gap-2">{t('creances:invoice_list.total')} <SortIcon column="total_ttc" /></div>
+                            <div className="flex items-center justify-end gap-2">{t('creances:invoice_list.total')} <SortIcon column="total_ttc" sortConfig={sortConfig} /></div>
                         </th>
                         <th className="sticky top-0 z-30 bg-base-200 opacity-100 border-b border-base-300 text-[10px] font-black uppercase tracking-widest text-base-content/40 text-right cursor-pointer hover:text-primary transition-colors p-4" onClick={() => onSort('montant_paye')}>
-                            <div className="flex items-center justify-end gap-2">{t('creances:invoice_list.paid')} <SortIcon column="montant_paye" /></div>
+                            <div className="flex items-center justify-end gap-2">{t('creances:invoice_list.paid')} <SortIcon column="montant_paye" sortConfig={sortConfig} /></div>
                         </th>
                         <th className="sticky top-0 z-30 bg-base-200 opacity-100 border-b border-base-300 text-[10px] font-black uppercase tracking-widest text-base-content/40 text-right cursor-pointer hover:text-primary transition-colors p-4" onClick={() => onSort('reste_a_payer')}>
-                            <div className="flex items-center justify-end gap-2">{t('creances:invoice_list.remaining')} <SortIcon column="reste_a_payer" /></div>
+                            <div className="flex items-center justify-end gap-2">{t('creances:invoice_list.remaining')} <SortIcon column="reste_a_payer" sortConfig={sortConfig} /></div>
                         </th>
                         <th className="sticky top-0 z-30 bg-base-200 opacity-100 border-b border-base-300 text-[10px] font-black uppercase tracking-widest text-base-content/40 text-center p-4">{t('creances:invoice_list.status')}</th>
                         <th className="sticky top-0 z-30 bg-base-200 opacity-100 border-b border-base-300 text-[10px] font-black uppercase tracking-widest text-base-content/40 text-center p-4">{t('creances:invoice_list.actions')}</th>

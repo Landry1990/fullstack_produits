@@ -181,7 +181,7 @@ export default function MessagingModal({ isOpen, onClose, currentUser, onMessage
     }
   };
 
-  const useTemplate = (content: string) => {
+  const applyTemplate = (content: string) => {
     setMsgContent(content);
     setActiveTab('new');
   };
@@ -505,7 +505,7 @@ export default function MessagingModal({ isOpen, onClose, currentUser, onMessage
                     <p className="text-sm text-base-content/70 line-clamp-3 mb-4">{temp.content}</p>
                     <div className="flex gap-2">
                       <button 
-                        onClick={() => useTemplate(temp.content)}
+                        onClick={() => applyTemplate(temp.content)}
                         className="btn btn-xs btn-primary flex-1"
                       >
                         {t('new.send')}
