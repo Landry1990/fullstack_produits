@@ -33,14 +33,14 @@ export const RefundModal: React.FC<RefundModalProps> = ({
                 <div className="border-b border-gray-100 p-4 flex justify-between items-center bg-red-50/50">
                     <div className="flex items-center gap-3">
                         <div className="bg-red-100 p-2 rounded-lg">
-                            <AlertTriangle className="w-5 h-5 text-red-600" />
+                            <AlertTriangle className="size-5 text-red-600" />
                         </div>
                         <h3 className="font-bold text-base-content">
                             {t('refund_title')}
                         </h3>
                     </div>
                     <button onClick={onClose} className="p-1 hover:bg-base-300 rounded-full transition-colors text-base-content/40 hover:text-base-content/80">
-                        <X className="w-5 h-5" />
+                        <X className="size-5" />
                     </button>
                 </div>
 

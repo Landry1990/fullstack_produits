@@ -72,7 +72,7 @@ export const CreanceDetailsModal: React.FC<CreanceDetailsModalProps> = ({
                 {/* Paiements Table */}
                 <div className="space-y-3">
                     <h4 className="text-xs font-black uppercase tracking-widest text-primary flex items-center gap-2 px-1">
-                        <History className="w-3.5 h-3.5" /> {t('creances:details_modal.payment_list')}
+                        <History className="size-3.5" /> {t('creances:details_modal.payment_list')}
                     </h4>
                     
                     {paiements.length === 0 ? (
@@ -109,7 +109,7 @@ export const CreanceDetailsModal: React.FC<CreanceDetailsModalProps> = ({
                                                     className="btn btn-xs btn-circle btn-ghost hover:bg-primary/10 hover:text-primary transition-all shadow-sm"
                                                     title={t('creances:details_modal.print_receipt')}
                                                 >
-                                                    <Printer className="w-3.5 h-3.5" />
+                                                    <Printer className="size-3.5" />
                                                 </button>
                                             </td>
                                         </tr>
@@ -135,7 +135,7 @@ export const CreanceDetailsModal: React.FC<CreanceDetailsModalProps> = ({
                         onClick={() => onPrintReceipt(creance.id)} 
                         className="btn btn-accent px-8 font-black uppercase tracking-widest text-xs gap-2 shadow-lg shadow-accent/20"
                     >
-                        <Printer className="w-4 h-4" />
+                        <Printer className="size-4" />
                         {t('creances:details_modal.print_global_receipt')}
                     </button>
                 </div>

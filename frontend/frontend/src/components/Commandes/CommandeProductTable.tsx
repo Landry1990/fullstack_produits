@@ -295,7 +295,7 @@ export default function CommandeProductTable({
                                             className="tooltip tooltip-right z-50 inline-flex shrink-0" 
                                             data-tip={t('orders:product_table.exclusivity_tooltip', { provider: supplierName || t('orders:product_table.specific_provider') })}
                                         >
-                                            <span className="badge badge-success badge-xs font-bold text-white w-4 h-4 p-0 flex items-center justify-center text-[8px]">
+                                            <span className="badge badge-success badge-xs font-bold text-white size-4 p-0 flex items-center justify-center text-[8px]">
                                               E
                                             </span>
                                         </div>

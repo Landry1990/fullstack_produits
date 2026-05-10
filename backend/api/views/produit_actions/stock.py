@@ -151,9 +151,15 @@ class ProduitStockMixin:
         if new_quantity is None and new_reserve_quantity is None:
             return Response({'detail': 'new_quantity ou new_reserve_quantity est requis'}, status=status.HTTP_400_BAD_REQUEST)
         
+        from ...models import ConfigurationOption
         valid_reasons = [choice[0] for choice in StockAdjustment.ReasonType.choices]
-        if reason_type not in valid_reasons:
-            return Response({'detail': f'reason_type invalide. Choisir parmi: {valid_reasons}'}, status=status.HTTP_400_BAD_REQUEST)
+        custom_reasons = list(ConfigurationOption.objects.filter(
+            type=ConfigurationOption.Type.STOCK_ADJUSTMENT_REASON, 
+            is_active=True
+        ).values_list('code', flat=True))
+        
+        if reason_type not in valid_reasons and reason_type not in custom_reasons:
+            return Response({'detail': f'reason_type invalide. Choisir parmi les motifs standards ou personnaliss.'}, status=status.HTTP_400_BAD_REQUEST)
         
         try:
             if new_quantity is not None:

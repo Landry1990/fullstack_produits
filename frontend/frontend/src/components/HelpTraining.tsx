@@ -125,7 +125,7 @@ const HelpTraining = () => {
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="flex items-center gap-3">
             <div className="p-2.5 bg-primary/10 text-primary rounded-2xl">
-              <BookOpen className="w-6 h-6" />
+              <BookOpen className="size-6" />
             </div>
             <div>
               <h1 className="text-2xl font-black text-base-content tracking-tight">Formation</h1>
@@ -133,7 +133,7 @@ const HelpTraining = () => {
             </div>
           </div>
           <div className="relative w-full sm:w-72">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-base-content/30" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-base-content/30" />
             <input
               type="text"
               placeholder="Rechercher un tutoriel..."
@@ -162,7 +162,7 @@ const HelpTraining = () => {
                         : 'text-base-content/50 hover:bg-base-100/60 hover:text-base-content'
                     }`}
                   >
-                    <Icon className={`w-4 h-4 shrink-0 ${isActive ? cat.color : ''}`} />
+                    <Icon className={`size-4 shrink-0 ${isActive ? cat.color : ''}`} />
                     <span>{cat.label}</span>
                     <span className={`ml-auto text-[10px] font-black px-1.5 py-0.5 rounded-full ${isActive ? cat.bg + ' ' + cat.color : 'bg-base-200 text-base-content/30'}`}>
                       {cat.videos.length}
@@ -174,7 +174,7 @@ const HelpTraining = () => {
               {/* Raccourcis clavier */}
               <div className="mt-4 pt-4 border-t border-base-200">
                 <div className="flex items-center gap-2 px-2 mb-3">
-                  <Keyboard className="w-4 h-4 text-base-content/30" />
+                  <Keyboard className="size-4 text-base-content/30" />
                   <span className="text-[10px] font-black uppercase tracking-widest text-base-content/30">Raccourcis</span>
                 </div>
                 <div className="space-y-1.5">
@@ -195,9 +195,9 @@ const HelpTraining = () => {
             {/* Lecteur vidéo actif */}
             {activeVideo && (
               <div className="bg-base-100 rounded-2xl border border-base-200 shadow-sm overflow-hidden">
-                <div className="aspect-video w-full bg-black">
+                <div className="aspect-video w-full bg-gray-950">
                   <iframe
-                    className="w-full h-full"
+                    className="size-full"
                     src={`https://www.youtube.com/embed/${activeVideo.youtubeId}?autoplay=1`}
                     title={activeVideo.title}
                     allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
@@ -208,7 +208,7 @@ const HelpTraining = () => {
                   <div>
                     <h3 className="font-bold text-base-content">{activeVideo.title}</h3>
                     <div className="flex items-center gap-1 text-xs text-base-content/40 mt-0.5">
-                      <Clock className="w-3 h-3" />
+                      <Clock className="size-3" />
                       <span>{activeVideo.duration}</span>
                     </div>
                   </div>
@@ -224,7 +224,7 @@ const HelpTraining = () => {
               </p>
             ) : (
               <div className={`flex items-center gap-2 px-4 py-2.5 rounded-xl border text-sm font-bold ${currentCategory.bg} ${currentCategory.color}`}>
-                <currentCategory.icon className="w-4 h-4" />
+                <currentCategory.icon className="size-4" />
                 {currentCategory.label}
                 <span className="ml-auto text-xs opacity-60">{currentCategory.videos.length} vidéo{currentCategory.videos.length > 1 ? 's' : ''}</span>
               </div>
@@ -244,30 +244,30 @@ const HelpTraining = () => {
                       <img
                         src={`https://img.youtube.com/vi/${video.youtubeId}/mqdefault.jpg`}
                         alt={video.title}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                        className="size-full object-cover group-hover:scale-105 transition-transform duration-300"
                       />
                     ) : (
-                      <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-slate-800 to-slate-900">
+                      <div className="size-full flex items-center justify-center bg-gradient-to-br from-slate-800 to-slate-900">
                         <div className="text-center">
-                          <Play className="w-8 h-8 text-white/20 mx-auto mb-1" />
+                          <Play className="size-8 text-white/20 mx-auto mb-1" />
                           <span className="text-[10px] text-white/20 font-bold uppercase tracking-wider">Bientôt disponible</span>
                         </div>
                       </div>
                     )}
                     <div className="absolute inset-0 flex items-center justify-center bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center shadow-xl">
-                        <Play className="w-5 h-5 text-slate-900 ml-0.5" />
+                      <div className="size-12 bg-white rounded-full flex items-center justify-center shadow-xl">
+                        <Play className="size-5 text-slate-900 ml-0.5" />
                       </div>
                     </div>
                     <div className="absolute bottom-2 right-2 bg-black/70 text-white text-[10px] font-bold px-1.5 py-0.5 rounded flex items-center gap-1">
-                      <Clock className="w-2.5 h-2.5" />
+                      <Clock className="size-2.5" />
                       {video.duration}
                     </div>
                   </div>
                   {/* Info */}
                   <div className="p-3 flex items-center justify-between gap-2">
                     <p className="text-sm font-bold text-base-content leading-snug">{video.title}</p>
-                    <ChevronRight className="w-4 h-4 text-base-content/20 shrink-0 group-hover:text-primary group-hover:translate-x-0.5 transition-all" />
+                    <ChevronRight className="size-4 text-base-content/20 shrink-0 group-hover:text-primary group-hover:translate-x-0.5 transition-all" />
                   </div>
                 </button>
               ))}
@@ -275,7 +275,7 @@ const HelpTraining = () => {
 
             {allVideos.length === 0 && (
               <div className="flex flex-col items-center justify-center py-20 text-center opacity-40">
-                <Search className="w-10 h-10 mb-3" />
+                <Search className="size-10 mb-3" />
                 <p className="font-bold">Aucun tutoriel trouvé</p>
                 <p className="text-sm">Essayez un autre mot-clé</p>
               </div>

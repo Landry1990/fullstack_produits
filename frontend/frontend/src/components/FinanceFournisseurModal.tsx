@@ -111,7 +111,7 @@ export default function FinanceFournisseurModal({ isOpen, onClose, fournisseur, 
                 {/* Left Panel: New Payment Form */}
                 <div className="w-1/3 border-r bg-base-100 p-6 overflow-y-auto">
                     <h4 className="font-bold text-lg mb-6 flex items-center gap-2">
-                         <span className="w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center text-sm">{t('common:currency')}</span>
+                         <span className="size-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center text-sm">{t('common:currency')}</span>
                          {t('providers:finance.new_payment')}
                     </h4>
                     <form onSubmit={handleSubmit} className="space-y-4">

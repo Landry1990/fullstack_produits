@@ -1178,7 +1178,7 @@ class StockAdjustmentSerializer(serializers.ModelSerializer):
     username = serializers.CharField(source='user.username', read_only=True)
     produit_name = serializers.SerializerMethodField()
     produit_cip = serializers.CharField(source='produit.cip1', read_only=True)
-    reason_type_display = serializers.CharField(source='get_reason_type_display', read_only=True)
+    reason_type_display = serializers.SerializerMethodField()
     lot_number = serializers.CharField(source='stock_lot.lot', read_only=True, allow_null=True)
     valorisation = serializers.SerializerMethodField()
     
@@ -1196,6 +1196,21 @@ class StockAdjustmentSerializer(serializers.ModelSerializer):
         ]
         read_only_fields = ['id', 'user', 'created_at', 'quantity_change']
     
+    def get_reason_type_display(self, obj):
+        # Essayer d'abord les choix standards du modèle
+        standard_label = dict(obj.ReasonType.choices).get(obj.reason_type)
+        if standard_label:
+            return standard_label
+            
+        # Sinon chercher dans les options de configuration
+        from .models import ConfigurationOption
+        config_opt = ConfigurationOption.objects.filter(
+            type=ConfigurationOption.Type.STOCK_ADJUSTMENT_REASON,
+            code=obj.reason_type
+        ).first()
+        
+        return config_opt.label if config_opt else obj.reason_type
+
     def get_valorisation(self, obj):
         if obj.stock_lot:
             val = abs(obj.quantity_change) * (obj.stock_lot.price_cost or 0)
@@ -1572,6 +1587,11 @@ class LigneEcritureSerializer(serializers.ModelSerializer):
 class EcritureComptableSerializer(serializers.ModelSerializer):
     lignes = LigneEcritureSerializer(many=True)
     journal_code = serializers.CharField(source='journal.code', read_only=True)
+    exercice = serializers.PrimaryKeyRelatedField(
+        queryset=ExerciceComptable.objects.all(),
+        required=False,
+        allow_null=True
+    )
     
     class Meta:
         model = EcritureComptable
@@ -1593,6 +1613,26 @@ class EcritureComptableSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError(
                 f"L'écriture n'est pas équilibrée (Débit: {total_debit}, Crédit: {total_credit})"
             )
+            
+        # Assigner l'exercice automatiquement si manquant
+        if not data.get('exercice'):
+            date_ecriture = data.get('date') or timezone.now().date()
+            exercice = ExerciceComptable.objects.filter(
+                date_debut__lte=date_ecriture,
+                date_fin__gte=date_ecriture,
+                est_cloture=False
+            ).first()
+            
+            if not exercice:
+                # Essayer de prendre le dernier exercice ouvert
+                exercice = ExerciceComptable.objects.filter(est_cloture=False).first()
+            
+            if not exercice:
+                raise serializers.ValidationError(
+                    "Aucun exercice comptable ouvert n'a été trouvé. Veuillez en créer un dans les paramètres."
+                )
+            data['exercice'] = exercice
+            
         return data
 
     def create(self, validated_data):

@@ -1,7 +1,8 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { type ProduitModel, STOCK_ADJUSTMENT_REASONS } from '../../../types';
 import PremiumModal from '../../common/PremiumModal';
+import api from '../../../services/api';
 
 interface StockAdjustmentModalProps {
   isOpen: boolean;
@@ -21,7 +22,28 @@ export const StockAdjustmentModal: React.FC<StockAdjustmentModalProps> = ({
   setForm
 }) => {
   const { t } = useTranslation(['products', 'common']);
- 
+  const [dynamicReasons, setDynamicReasons] = useState<{value: string, label: string}[]>([]);
+
+  useEffect(() => {
+    const fetchReasons = async () => {
+      try {
+        const res = await api.get('configuration-options/?type=STOCK_ADJ&is_active=true');
+        const data = res.data.results || res.data;
+        if (Array.isArray(data)) {
+          const custom = data.map((opt: any) => ({
+            value: opt.code,
+            label: opt.label
+          }));
+          setDynamicReasons(custom);
+        }
+      } catch (err) {
+        console.error("Error fetching adjustment reasons:", err);
+      }
+    };
+    if (isOpen) fetchReasons();
+  }, [isOpen]);
+
+  const allReasons = [...STOCK_ADJUSTMENT_REASONS, ...dynamicReasons];
   return (
     <PremiumModal
       isOpen={isOpen}
@@ -100,7 +122,7 @@ export const StockAdjustmentModal: React.FC<StockAdjustmentModalProps> = ({
               onChange={(e) => setForm((prev: any) => ({ ...prev, reason_type: e.target.value }))}
               required
             >
-              {STOCK_ADJUSTMENT_REASONS.map(reason => (
+              {allReasons.map(reason => (
                 <option key={reason.value} value={reason.value}>
                   {t(`products:adjustment.reasons.${reason.value}`) || reason.label}
                 </option>

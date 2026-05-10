@@ -26,7 +26,7 @@ export const InventaireQuickStats: React.FC<InventaireQuickStatsProps> = ({ inve
             <div className="bg-gradient-to-br from-warning/10 to-warning/5 p-4 rounded-xl border border-warning/20 flex items-center justify-between">
                 <div>
                     <div className="text-xs font-bold text-warning uppercase tracking-wider mb-1 flex items-center gap-1">
-                        <ClipboardList className="w-3 h-3" /> {t('inventaire.stats.en_cours')}
+                        <ClipboardList className="size-3" /> {t('inventaire.stats.en_cours')}
                     </div>
                     <div>
                         <div className="text-lg font-bold text-base-content">{stats.en_cours_count}</div>
@@ -41,7 +41,7 @@ export const InventaireQuickStats: React.FC<InventaireQuickStatsProps> = ({ inve
             <div className="bg-gradient-to-br from-primary/10 to-primary/5 p-4 rounded-xl border border-primary/20 flex items-center justify-between">
                 <div>
                     <div className="text-xs font-bold text-primary uppercase tracking-wider mb-1 flex items-center gap-1">
-                        <PackageSearch className="w-3 h-3" /> {t('inventaire.stats.val_phys')}
+                        <PackageSearch className="size-3" /> {t('inventaire.stats.val_phys')}
                     </div>
                     <div>
                         <div className="text-lg font-mono font-bold text-base-content">
@@ -58,7 +58,7 @@ export const InventaireQuickStats: React.FC<InventaireQuickStatsProps> = ({ inve
             <div className="bg-gradient-to-br from-secondary/10 to-secondary/5 p-4 rounded-xl border border-secondary/20 flex items-center justify-between">
                  <div>
                     <div className="text-xs font-bold text-secondary uppercase tracking-wider mb-1 flex items-center gap-1">
-                        <TrendingDown className="w-3 h-3" /> {t('inventaire.stats.ecart_global')}
+                        <TrendingDown className="size-3" /> {t('inventaire.stats.ecart_global')}
                     </div>
                     <div>
                         <div className={`text-lg font-mono font-bold ${stats.ecart_total < 0 ? 'text-error' : stats.ecart_total > 0 ? 'text-success' : 'text-base-content'}`}>

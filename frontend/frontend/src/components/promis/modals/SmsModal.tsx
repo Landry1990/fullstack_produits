@@ -66,7 +66,7 @@ export const SmsModal: React.FC<SmsModalProps> = ({
                 <div className="form-control">
                     <label className="label font-medium text-sm text-base-content/70">
                         <span className="flex items-center gap-2">
-                            <Phone className="w-4 h-4" />
+                            <Phone className="size-4" />
                             {t('stock:promis.modal.sms_number')}
                         </span>
                     </label>
@@ -104,7 +104,7 @@ export const SmsModal: React.FC<SmsModalProps> = ({
                         className="btn btn-info text-white shadow-sm hover:shadow-md transition-all gap-2 px-6"
                         disabled={sendingSms}
                     >
-                        {sendingSms ? <span className="loading loading-spinner loading-sm"/> : <Send className="w-4 h-4" />}
+                        {sendingSms ? <span className="loading loading-spinner loading-sm"/> : <Send className="size-4" />}
                         {t('stock:promis.actions.sms_send')}
                     </button>
                 </div>

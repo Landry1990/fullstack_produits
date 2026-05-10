@@ -37,7 +37,7 @@ export default function FournisseursList({ hook }: Props) {
               <div className="flex items-center gap-2 animate-in fade-in slide-in-from-left-2 duration-200 w-full">
                 <div className="dropdown dropdown-bottom">
                   <div tabIndex={0} role="button" className="btn btn-sm btn-primary gap-2 h-9 rounded-xl">
-                    <MoreVertical className="w-4 h-4" />
+                    <MoreVertical className="size-4" />
                     {t('common:actions_title', { defaultValue: 'Actions' })}
                     <span className="badge badge-sm bg-primary-focus border-none text-white">{selectedIds.length}</span>
                   </div>
@@ -47,7 +47,7 @@ export default function FournisseursList({ hook }: Props) {
                     </li>
                     <li>
                       <a onClick={actions.handleBulkDelete} className="flex items-center gap-3 py-3 hover:bg-error/10 text-error font-medium">
-                        <Trash2 className="w-4 h-4" /> {t('common:actions.delete', { defaultValue: 'Supprimer' })}
+                        <Trash2 className="size-4" /> {t('common:actions.delete', { defaultValue: 'Supprimer' })}
                       </a>
                     </li>
                   </ul>
@@ -56,7 +56,7 @@ export default function FournisseursList({ hook }: Props) {
                   onClick={() => state.setSelectedIds([])}
                   className="btn btn-sm btn-ghost gap-2 text-base-content/60 hover:text-base-content h-9 rounded-xl ml-auto"
                 >
-                  <X className="w-4 h-4" />
+                  <X className="size-4" />
                   {t('common:actions.cancel', { defaultValue: 'Annuler' })}
                 </button>
               </div>
@@ -64,7 +64,7 @@ export default function FournisseursList({ hook }: Props) {
               <>
                 <div className="flex items-center gap-2 animate-in fade-in duration-300">
                   <div className="p-2 bg-primary/10 text-primary rounded-xl">
-                    <Truck className="w-5 h-5" />
+                    <Truck className="size-5" />
                   </div>
                   <div>
                     <h2 className="font-bold text-lg tracking-tight leading-none">{t('providers:title')}</h2>
@@ -77,13 +77,13 @@ export default function FournisseursList({ hook }: Props) {
                     onClick={() => state.setShowInactive(!showInactive)}
                     title={showInactive ? t('providers:hide_inactive') : t('providers:show_inactive')}
                   >
-                    {showInactive ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
+                    {showInactive ? <Eye className="size-4" /> : <EyeOff className="size-4" />}
                   </button>
                   <button className="btn btn-sm btn-ghost btn-square rounded-xl text-secondary/60 hover:text-secondary hover:bg-secondary/10" onClick={() => state.setIsEcheancierModalOpen(true)} title={t('providers:schedule_btn')}>
-                    <Calendar className="w-4 h-4" />
+                    <Calendar className="size-4" />
                   </button>
                   <button className="btn btn-sm btn-ghost btn-square rounded-xl text-neutral/60 hover:text-neutral hover:bg-neutral/10" onClick={() => state.setIsPointageModalOpen(true)} title={t('providers:pointage_btn')}>
-                    <CheckSquare className="w-4 h-4" />
+                    <CheckSquare className="size-4" />
                   </button>
                 </div>
               </>
@@ -93,7 +93,7 @@ export default function FournisseursList({ hook }: Props) {
           <div className="flex gap-2">
             <div className="relative group flex-1">
               <span className="absolute left-3 top-1/2 -translate-y-1/2 text-base-content/40 group-focus-within:text-primary transition-colors">
-                <Search className="w-4 h-4" />
+                <Search className="size-4" />
               </span>
               <input 
                 ref={searchInputRef}
@@ -110,7 +110,7 @@ export default function FournisseursList({ hook }: Props) {
             </div>
             {!selectedIds.length && (
               <button className="btn btn-primary btn-square btn-md h-10 w-10 shadow-sm rounded-xl" onClick={actions.openAddModal} title={t('providers:new_provider')}>
-                <UserPlus className="w-5 h-5" />
+                <UserPlus className="size-5" />
               </button>
             )}
           </div>
@@ -154,7 +154,7 @@ export default function FournisseursList({ hook }: Props) {
                 </div>
 
                 {/* Avatar */}
-                <div className={`w-10 h-10 rounded-xl flex items-center justify-center font-bold text-sm shrink-0 transition-all ${
+                <div className={`size-10 rounded-xl flex items-center justify-center font-bold text-sm shrink-0 transition-all ${
                   isSelected ? 'bg-primary text-primary-content shadow-lg shadow-primary/20 scale-105' : 'bg-base-200 text-base-content/60 group-hover:bg-base-300'
                 }`}>
                   {getInitials(fournisseur.name)}
@@ -170,7 +170,7 @@ export default function FournisseursList({ hook }: Props) {
                   <div className="flex items-center gap-2 mt-0.5">
                     {fournisseur.phone ? (
                        <div className="flex items-center gap-1 text-[10px] text-base-content/40 font-mono">
-                         <Phone className="w-3 h-3" />
+                         <Phone className="size-3" />
                          {fournisseur.phone}
                        </div>
                     ) : (
@@ -196,8 +196,8 @@ export default function FournisseursList({ hook }: Props) {
           })
         ) : (
           <div className="flex flex-col items-center justify-center h-full py-20 px-6 text-center animate-in fade-in zoom-in-95 duration-500">
-            <div className="w-20 h-20 rounded-full bg-base-200 flex items-center justify-center mb-6">
-              <Truck className="w-10 h-10 text-base-content/20" />
+            <div className="size-20 rounded-full bg-base-200 flex items-center justify-center mb-6">
+              <Truck className="size-10 text-base-content/20" />
             </div>
             <h3 className="text-lg font-bold text-base-content/70">{searchTerm ? t('providers:no_result') : t('providers:empty_list')}</h3>
             <p className="text-sm text-base-content/40 mt-1">{t('providers:search_hint', { defaultValue: 'Essayez de changer vos critères de recherche.' })}</p>
@@ -213,7 +213,7 @@ export default function FournisseursList({ hook }: Props) {
             disabled={currentPage <= 1}
             onClick={() => state.setCurrentPage((p: number) => p - 1)}
           >
-            <X className="w-3 h-3 rotate-45" /> {t('common:pagination.prev', { defaultValue: 'Préc.' })}
+            <X className="size-3 rotate-45" /> {t('common:pagination.prev', { defaultValue: 'Préc.' })}
           </button>
           
           <div className="flex gap-1">
@@ -226,7 +226,7 @@ export default function FournisseursList({ hook }: Props) {
               return (
                 <button
                   key={page}
-                  className={`w-6 h-6 rounded-lg text-[10px] font-bold transition-all ${
+                  className={`size-6 rounded-lg text-[10px] font-bold transition-all ${
                     currentPage === page 
                       ? 'bg-primary text-primary-content shadow-sm' 
                       : 'hover:bg-base-200 text-base-content/60'
@@ -242,7 +242,7 @@ export default function FournisseursList({ hook }: Props) {
             disabled={currentPage >= totalPages}
             onClick={() => state.setCurrentPage((p: number) => p + 1)}
           >
-             {t('common:pagination.next', { defaultValue: 'Suiv.' })} <X className="w-3 h-3 -rotate-45" />
+             {t('common:pagination.next', { defaultValue: 'Suiv.' })} <X className="size-3 -rotate-45" />
           </button>
         </div>
       )}

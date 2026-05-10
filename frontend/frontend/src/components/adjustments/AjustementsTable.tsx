@@ -38,7 +38,7 @@ export const AjustementsTable: React.FC<AjustementsTableProps> = ({
         return (
             <div className="flex flex-col items-center justify-center py-20 bg-base-100 rounded-2xl border border-dashed border-base-300">
                 <div className="p-4 bg-base-200 rounded-full mb-4">
-                    <ClipboardList className="w-8 h-8 text-base-content/20" />
+                    <ClipboardList className="size-8 text-base-content/20" />
                 </div>
                 <p className="text-base-content/50 font-medium">{t('ajustements.table.empty')}</p>
             </div>
@@ -52,21 +52,21 @@ export const AjustementsTable: React.FC<AjustementsTableProps> = ({
                     <thead>
                         <tr className="bg-base-200/50 border-b border-base-200">
                             <th className="text-[10px] font-black uppercase tracking-widest text-base-content/40 px-6">
-                                <div className="flex items-center gap-1.5"><Calendar className="w-3 h-3" /> {t('ajustements.table.date_header')}</div>
+                                <div className="flex items-center gap-1.5"><Calendar className="size-3" /> {t('ajustements.table.date_header')}</div>
                             </th>
                             <th className="text-[10px] font-black uppercase tracking-widest text-base-content/40">
-                                <div className="flex items-center gap-1.5"><Package className="w-3 h-3" /> {t('ajustements.table.product_header')}</div>
+                                <div className="flex items-center gap-1.5"><Package className="size-3" /> {t('ajustements.table.product_header')}</div>
                             </th>
                             <th className="text-[10px] font-black uppercase tracking-widest text-base-content/40">
-                                <div className="flex items-center gap-1.5"><Hash className="w-3 h-3" /> {t('ajustements.table.cip_header')}</div>
+                                <div className="flex items-center gap-1.5"><Hash className="size-3" /> {t('ajustements.table.cip_header')}</div>
                                 </th>
                             <th className="text-[10px] font-black uppercase tracking-widest text-base-content/40">
-                                <div className="flex items-center gap-1.5"><User className="w-3 h-3" /> {t('ajustements.table.user_header')}</div>
+                                <div className="flex items-center gap-1.5"><User className="size-3" /> {t('ajustements.table.user_header')}</div>
                             </th>
                             <th className="text-[10px] font-black uppercase tracking-widest text-base-content/40 text-right">{t('ajustements.table.before_header')}</th>
                             <th className="text-[10px] font-black uppercase tracking-widest text-base-content/40 text-right">{t('ajustements.table.after_header')}</th>
                             <th className="text-[10px] font-black uppercase tracking-widest text-base-content/40 text-center">
-                                <div className="flex items-center justify-center gap-1.5"><ArrowLeftRight className="w-3 h-3" /> {t('ajustements.table.diff_header')}</div>
+                                <div className="flex items-center justify-center gap-1.5"><ArrowLeftRight className="size-3" /> {t('ajustements.table.diff_header')}</div>
                             </th>
                             <th className="text-[10px] font-black uppercase tracking-widest text-base-content/40 px-6">{t('ajustements.table.reason_header')}</th>
                         </tr>
@@ -122,7 +122,7 @@ export const AjustementsTable: React.FC<AjustementsTableProps> = ({
                         disabled={currentPage <= 1}
                         onClick={() => onPageChange(currentPage - 1)}
                     >
-                        <ChevronLeft className="w-4 h-4" />
+                        <ChevronLeft className="size-4" />
                     </button>
                     <div className="px-4 text-sm font-black text-primary">
                         {currentPage}
@@ -132,7 +132,7 @@ export const AjustementsTable: React.FC<AjustementsTableProps> = ({
                         disabled={currentPage >= totalPages}
                         onClick={() => onPageChange(currentPage + 1)}
                     >
-                        <ChevronRight className="w-4 h-4" />
+                        <ChevronRight className="size-4" />
                     </button>
                 </div>
             </div>

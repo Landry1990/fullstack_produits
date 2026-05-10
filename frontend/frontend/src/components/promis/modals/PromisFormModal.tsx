@@ -111,7 +111,7 @@ export const PromisFormModal: React.FC<PromisFormModalProps> = ({
                         {t('stock:promis.modal.client_label')}
                     </label>
                     <div className="relative">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-base-content/40" />
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-base-content/40" />
                         <input
                             type="text"
                             className="input input-bordered w-full pl-9 focus:border-primary transition-colors"
@@ -131,7 +131,7 @@ export const PromisFormModal: React.FC<PromisFormModalProps> = ({
                                     setFormData(prev => ({ ...prev, client: null, client_name: '' }));
                                 }}
                             >
-                                <X className="w-3 h-3 text-base-content/60" />
+                                <X className="size-3 text-base-content/60" />
                             </button>
                         )}
                     </div>
@@ -175,7 +175,7 @@ export const PromisFormModal: React.FC<PromisFormModalProps> = ({
                         {t('stock:promis.modal.product_label')}
                     </label>
                     <div className="relative">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-base-content/40" />
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-base-content/40" />
                         <input
                             type="text"
                             className="input input-bordered w-full pl-9 focus:border-primary transition-colors"
@@ -195,7 +195,7 @@ export const PromisFormModal: React.FC<PromisFormModalProps> = ({
                                     setFormData(prev => ({ ...prev, produit: null }));
                                 }}
                             >
-                                <X className="w-3 h-3 text-base-content/60" />
+                                <X className="size-3 text-base-content/60" />
                             </button>
                         )}
                     </div>

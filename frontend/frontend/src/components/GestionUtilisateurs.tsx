@@ -632,7 +632,7 @@ export default function GestionUtilisateurs() {
           <div className="modal-box w-11/12 max-w-5xl p-0 overflow-hidden flex flex-col max-h-[90vh]">
             <div className="p-6 pb-2 border-b border-base-300 flex justify-between items-center bg-base-100 flex-none">
               <h3 className="font-bold text-xl flex items-center gap-2">
-                <div className="w-8 h-8 rounded-lg bg-primary/10 text-primary flex items-center justify-center">
+                <div className="size-8 rounded-lg bg-primary/10 text-primary flex items-center justify-center">
                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
                 </div>
                 {editingUser ? t('modal.edit_title') : t('modal.new_title')}
@@ -750,7 +750,7 @@ export default function GestionUtilisateurs() {
                 </div>
                 {formData.is_superuser && (
                   <div className="alert alert-info py-2 shadow-sm italic text-sm">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" className="stroke-current shrink-0 w-4 h-4"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" className="stroke-current shrink-0 size-4"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                     <span>{t('modal.admin_note')}</span>
                   </div>
                 )}

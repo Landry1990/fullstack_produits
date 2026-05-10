@@ -252,7 +252,7 @@ export const ProductEditModal: React.FC<ProductEditModalProps> = ({
            <div className="flex items-center justify-between mb-6">
               <div className="flex items-center gap-3">
                 <div className="p-2 bg-primary/10 rounded-lg">
-                  <Layers className="text-primary w-5 h-5" />
+                  <Layers className="text-primary size-5" />
                 </div>
                 <div>
                   <h4 className="text-sm font-black uppercase tracking-widest text-primary leading-none mb-1">{t('products:form.reserve_title')}</h4>

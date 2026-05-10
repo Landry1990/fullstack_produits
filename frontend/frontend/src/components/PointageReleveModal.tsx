@@ -1,4 +1,4 @@
-﻿import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import api from '../services/api';
 import { useTranslation } from 'react-i18next';
 import PremiumModal from './common/PremiumModal';
@@ -51,18 +51,6 @@ export default function PointageReleveModal({ isOpen, onClose, fournisseurs, onR
   // Pour le pointage visuel sans le stocker en DB (juste cocher en direct)
   const [pointedIds, setPointedIds] = useState<Set<number>>(new Set());
 
-  // Set initial fournisseur when modal opens if provided
-  useEffect(() => {
-    if (isOpen) {
-       if (initialFournisseurId) {
-          setSelectedFournisseurId(initialFournisseurId);
-       } else {
-          setSelectedFournisseurId('');
-       }
-       setPointedIds(new Set());
-    }
-  }, [isOpen, initialFournisseurId]);
-
   const dateRange = useMemo(() => {
     if (periodeType === 'CUSTOM') {
       return { start: customStart, end: customEnd };
@@ -97,24 +85,28 @@ export default function PointageReleveModal({ isOpen, onClose, fournisseurs, onR
     return { start: '', end: '' };
   }, [year, month, periodeType, customStart, customEnd]);
 
+  // Main effect to handle modal opening and data fetching
   useEffect(() => {
-    if (isOpen && selectedFournisseurId && dateRange.start && dateRange.end) {
+    if (!isOpen) return;
+
+    // If opening or provider changed, reset selection
+    setPointedIds(new Set());
+
+    // Handle initial provider if provided on open
+    if (initialFournisseurId && !selectedFournisseurId) {
+      setSelectedFournisseurId(initialFournisseurId);
+      return; // selectedFournisseurId update will trigger next run
+    }
+
+    if (selectedFournisseurId && dateRange.start && dateRange.end) {
       if (periodeType === 'CUSTOM' && (!customStart || !customEnd)) {
-        return; // Wait for full custom range
+        return;
       }
       fetchReleve(selectedFournisseurId, dateRange.start, dateRange.end);
-    } else if (isOpen && !selectedFournisseurId) {
+    } else if (!selectedFournisseurId) {
       setData(null);
-      setPointedIds(new Set());
     }
-  }, [isOpen, selectedFournisseurId, dateRange]);
-
-  // Réinitialiser les coches quand on ouvre avec un nouveau id
-  useEffect(() => {
-    if (isOpen) {
-      setPointedIds(new Set());
-    }
-  }, [isOpen, selectedFournisseurId]);
+  }, [isOpen, initialFournisseurId, selectedFournisseurId, dateRange, periodeType, customStart, customEnd]);
 
   async function fetchReleve(fId: number | string, start: string, end: string) {
     setLoading(true);

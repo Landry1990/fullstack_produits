@@ -56,10 +56,10 @@ const WhatsAppHistory: React.FC = () => {
 
     const getStatusIcon = (status: string) => {
         switch (status) {
-            case 'SENT': return <CheckCircle2 className="w-4 h-4 text-success" />;
-            case 'FAILED': return <XCircle className="w-4 h-4 text-error" />;
-            case 'READ': return <CheckCircle2 className="w-4 h-4 text-info fill-info/20" />;
-            default: return <Clock className="w-4 h-4 text-warning" />;
+            case 'SENT': return <CheckCircle2 className="size-4 text-success" />;
+            case 'FAILED': return <XCircle className="size-4 text-error" />;
+            case 'READ': return <CheckCircle2 className="size-4 text-info fill-info/20" />;
+            default: return <Clock className="size-4 text-warning" />;
         }
     };
 
@@ -78,7 +78,7 @@ const WhatsAppHistory: React.FC = () => {
                 <div>
                     <h1 className="text-2xl font-black text-base-content flex items-center gap-3">
                         <div className="p-2 bg-success/10 rounded-lg">
-                            <MessageCircle className="w-6 h-6 text-success" />
+                            <MessageCircle className="size-6 text-success" />
                         </div>
                         Historique WhatsApp
                     </h1>
@@ -91,14 +91,14 @@ const WhatsAppHistory: React.FC = () => {
                     className="btn btn-outline btn-sm gap-2 rounded-xl"
                     disabled={loading}
                 >
-                    <RefreshCcw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+                    <RefreshCcw className={`size-4 ${loading ? 'animate-spin' : ''}`} />
                     Actualiser
                 </button>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                 <div className="md:col-span-3 relative">
-                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-base-content/40" />
+                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 size-5 text-base-content/40" />
                     <input 
                         type="text" 
                         placeholder="Rechercher par numéro, nom ou message..." 
@@ -152,7 +152,7 @@ const WhatsAppHistory: React.FC = () => {
                                                 {format(new Date(log.created_at), 'dd/MM/yyyy HH:mm', { locale: fr })}
                                             </span>
                                             <span className="text-xs flex items-center gap-1 text-base-content/60">
-                                                <User className="w-3 h-3" /> {log.sent_by_name || 'Système'}
+                                                <User className="size-3" /> {log.sent_by_name || 'Système'}
                                             </span>
                                         </div>
                                     </td>
@@ -160,7 +160,7 @@ const WhatsAppHistory: React.FC = () => {
                                         <div className="flex flex-col gap-1">
                                             <span className="font-bold text-sm">{log.recipient_name || 'Inconnu'}</span>
                                             <span className="text-xs flex items-center gap-1 font-mono text-base-content/70">
-                                                <Phone className="w-3 h-3 text-success" /> {log.recipient_number}
+                                                <Phone className="size-3 text-success" /> {log.recipient_number}
                                             </span>
                                         </div>
                                     </td>
@@ -169,7 +169,7 @@ const WhatsAppHistory: React.FC = () => {
                                             <p className="text-sm line-clamp-2" title={log.message}>{log.message}</p>
                                             {log.facture_numero && (
                                                 <span className="badge badge-ghost badge-sm gap-1 mt-1 font-mono whitespace-nowrap">
-                                                    <FileText className="w-2 h-2" /> {log.facture_numero}
+                                                    <FileText className="size-2" /> {log.facture_numero}
                                                 </span>
                                             )}
                                         </div>

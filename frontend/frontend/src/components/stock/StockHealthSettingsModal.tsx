@@ -60,8 +60,8 @@ const StockHealthSettingsModal: React.FC<StockHealthSettingsModalProps> = ({ isO
                 {/* Header */}
                 <div className="bg-base-200/50 p-8 border-bottom border-base-200">
                     <div className="flex items-center gap-4 mb-2">
-                        <div className="w-12 h-12 bg-primary/10 rounded-2xl flex items-center justify-center text-primary">
-                            <Settings className="w-6 h-6 animate-spin-slow" />
+                        <div className="size-12 bg-primary/10 rounded-2xl flex items-center justify-center text-primary">
+                            <Settings className="size-6 animate-spin-slow" />
                         </div>
                         <div>
                             <h3 className="text-2xl font-black tracking-tighter">Configuration Expert IA</h3>
@@ -74,7 +74,7 @@ const StockHealthSettingsModal: React.FC<StockHealthSettingsModalProps> = ({ isO
                 <div className="p-8 space-y-8">
                     {/* Explanation Alert */}
                     <div className="bg-primary/5 p-4 rounded-2xl border border-primary/10 flex gap-4">
-                        <Info className="w-6 h-6 text-primary shrink-0" />
+                        <Info className="size-6 text-primary shrink-0" />
                         <p className="text-sm font-medium leading-relaxed">
                             Définissez l'importance de chaque critère. Par défaut (60/40), nous privilégions la 
                             disponibilité pour éviter de perdre des clients.
@@ -129,7 +129,7 @@ const StockHealthSettingsModal: React.FC<StockHealthSettingsModalProps> = ({ isO
                         className="btn btn-ghost rounded-2xl gap-2 font-bold"
                         disabled={saving}
                     >
-                        <RotateCcw className="w-4 h-4" />
+                        <RotateCcw className="size-4" />
                         Réinitialiser
                     </button>
                     <div className="flex gap-3">
@@ -145,7 +145,7 @@ const StockHealthSettingsModal: React.FC<StockHealthSettingsModalProps> = ({ isO
                                 <span className="loading loading-spinner loading-sm"></span>
                             ) : (
                                 <>
-                                    <Check className="w-5 h-5" />
+                                    <Check className="size-5" />
                                     Appliquer
                                 </>
                             )}

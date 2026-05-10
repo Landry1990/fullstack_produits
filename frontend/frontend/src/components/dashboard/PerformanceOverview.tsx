@@ -122,8 +122,8 @@ export default function PerformanceOverview({
                 <p className="text-[10px] font-black uppercase tracking-widest text-base-content/40 leading-tight">
                   {card.title}
                 </p>
-                <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0" style={{ background: card.accent + '20', color: card.accent }}>
-                  <Icon className="w-4.5 h-4.5" style={{ width: 18, height: 18 }} />
+                <div className="size-9 rounded-xl flex items-center justify-center shrink-0" style={{ background: card.accent + '20', color: card.accent }}>
+                  <Icon className="size-4.5" style={{ width: 18, height: 18 }} />
                 </div>
               </div>
 
@@ -135,7 +135,7 @@ export default function PerformanceOverview({
                 <span className={`inline-flex items-center gap-0.5 text-[10px] font-black px-1.5 py-0.5 rounded ${
                   card.isPositive ? 'bg-emerald-50 text-emerald-600' : 'bg-red-50 text-red-500'
                 }`}>
-                  {card.isPositive ? <ArrowUpRight className="w-2.5 h-2.5" /> : <ArrowDownRight className="w-2.5 h-2.5" />}
+                  {card.isPositive ? <ArrowUpRight className="size-2.5" /> : <ArrowDownRight className="size-2.5" />}
                   {card.sub}
                 </span>
               </div>
@@ -157,8 +157,8 @@ export default function PerformanceOverview({
           onClick={() => navigate('/app/reappro-rayon')}
         >
           <div className="flex items-center gap-3 sm:gap-4 min-w-0">
-            <div className="w-10 h-10 sm:w-12 sm:h-12 bg-white/20 rounded-xl flex items-center justify-center shrink-0 border border-white/30">
-              <Package className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
+            <div className="size-10 sm:w-12 sm:h-12 bg-white/20 rounded-xl flex items-center justify-center shrink-0 border border-white/30">
+              <Package className="size-5 sm:w-6 sm:h-6 text-white" />
             </div>
             <div className="text-white min-w-0">
               <h3 className="text-xs sm:text-sm font-black uppercase tracking-wide leading-tight">{t('reappro.alert_title', { defaultValue: 'Réapprovisionnement rayon nécessaire' })}</h3>
@@ -167,8 +167,8 @@ export default function PerformanceOverview({
               </p>
             </div>
           </div>
-          <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center shrink-0 group-hover:translate-x-1 transition-transform border border-white/20 ml-3">
-            <ArrowRight className="w-4 h-4 text-white" />
+          <div className="size-8 rounded-full bg-white/10 flex items-center justify-center shrink-0 group-hover:translate-x-1 transition-transform border border-white/20 ml-3">
+            <ArrowRight className="size-4 text-white" />
           </div>
         </div>
       )}
@@ -180,7 +180,7 @@ export default function PerformanceOverview({
         <div className="bg-base-100 border border-base-200 rounded-2xl shadow-sm overflow-hidden flex flex-col">
           <div className="flex items-center gap-3 px-5 pt-5 pb-4 border-b border-base-100">
             <div className="p-2 bg-emerald-100 text-emerald-600 rounded-xl">
-              <TrendingUp className="w-4 h-4" />
+              <TrendingUp className="size-4" />
             </div>
             <div>
               <h2 className="text-xs font-black text-base-content tracking-tight uppercase">{t('charts.revenue_evolution')}</h2>
@@ -235,7 +235,7 @@ export default function PerformanceOverview({
               </ResponsiveContainer>
             ) : (
               <div className="h-full flex items-center justify-center opacity-20">
-                <TrendingUp className="w-12 h-12" />
+                <TrendingUp className="size-12" />
               </div>
             )}
           </div>
@@ -245,7 +245,7 @@ export default function PerformanceOverview({
         <div className="bg-base-100 border border-base-200 rounded-2xl shadow-sm overflow-hidden flex flex-col">
           <div className="flex items-center gap-3 px-5 pt-5 pb-4 border-b border-base-100">
             <div className="p-2 bg-indigo-100 text-indigo-600 rounded-xl">
-              <History className="w-4 h-4" />
+              <History className="size-4" />
             </div>
             <div>
               <h2 className="text-xs font-black text-base-content tracking-tight uppercase">{t('hourly_traffic_title')}</h2>
@@ -276,7 +276,7 @@ export default function PerformanceOverview({
               </ResponsiveContainer>
             ) : (
               <div className="h-full flex items-center justify-center opacity-20">
-                <History className="w-12 h-12" />
+                <History className="size-12" />
               </div>
             )}
           </div>

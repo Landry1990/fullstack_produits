@@ -4,7 +4,7 @@ Rapports financiers, comptables et analyse de TVA — RapportFinanceMixin.
 import csv
 import json
 from datetime import datetime, time, timedelta
-from decimal import Decimal
+from decimal import Decimal, ROUND_HALF_UP
 
 import openpyxl
 from django.db.models import Count, Exists, F, OuterRef, Q, Sum
@@ -512,24 +512,37 @@ class RapportFinanceMixin:
             item     = alloc.facture_produit
             f        = item.facture
             p        = item.produit
-            qty      = float(alloc.quantity)
-            price    = float(item.selling_price - item.discount)
-            cost     = float(alloc.cost_price)
-            mt_vente = round(price * qty, 2)
-            mt_achat = round(cost * qty, 2)
-            marge    = round(mt_vente - mt_achat, 2)
+            tva      = Decimal(str(item.tva or 0))
+            qty      = Decimal(str(alloc.quantity))
+            price_ttc = item.selling_price - item.discount
+            
+            # Application au prorata de la remise globale de la facture
+            ratio_remise = Decimal('1')
+            if f.total_ttc and f.total_ttc > 0:
+                # Ratio = TTC Net / TTC Brut
+                total_brut = f.total_ttc + f.remise
+                if total_brut > 0:
+                    ratio_remise = f.total_ttc / total_brut
+            
+            # Prix TTC net (après remise ligne et remise globale)
+            mt_vente_ttc_net = (price_ttc * qty) * ratio_remise
+            
+            cost     = Decimal(str(alloc.cost_price))
+            mt_achat = (cost * qty).quantize(Decimal('1'), rounding=ROUND_HALF_UP)
+            marge    = mt_vente_ttc_net - mt_achat
+            
             results.append({
                 'date':           f.date.strftime('%d/%m/%Y'),
                 'facture':        f.numero_facture or f'#{f.id}',
                 'produit':        p.name,
                 'lot':            alloc.stock_lot.lot if alloc.stock_lot else 'N/A',
-                'quantite':       qty,
-                'prix_vente_net': round(price, 2),
-                'cout_achat':     round(cost, 2),
-                'mt_vente':       mt_vente,
-                'mt_achat':       mt_achat,
-                'marge':          marge,
-                'taux_marge':     round(marge / mt_vente * 100, 1) if mt_vente > 0 else 0,
+                'quantite':       float(qty),
+                'prix_vente_net': float((mt_vente_ttc_net / qty).quantize(Decimal('0.01'))) if qty > 0 else 0,
+                'cout_achat':     float(cost),
+                'mt_vente':       float(mt_vente_ttc_net.quantize(Decimal('1'), rounding=ROUND_HALF_UP)),
+                'mt_achat':       float(mt_achat),
+                'marge':          float(marge.quantize(Decimal('1'), rounding=ROUND_HALF_UP)),
+                'taux_marge':     round(float(marge / mt_vente_ttc_net * 100), 1) if mt_vente_ttc_net > 0 else 0,
             })
 
         # 2. Lignes non allouées (fallback dernier lot reçu)
@@ -557,24 +570,34 @@ class RapportFinanceMixin:
         for item in unallocated:
             f        = item.facture
             p        = item.produit
-            qty      = float(item.quantity)
-            price    = float(item.selling_price - item.discount)
-            cost     = last_lot_cost.get(p.id, float(p.pmp or 0))
-            mt_vente = round(price * qty, 2)
-            mt_achat = round(cost * qty, 2)
-            marge    = round(mt_vente - mt_achat, 2)
+            tva      = Decimal(str(item.tva or 0))
+            qty      = Decimal(str(item.quantity))
+            price_ttc = item.selling_price - item.discount
+            
+            ratio_remise = Decimal('1')
+            if f.total_ttc and f.total_ttc > 0:
+                total_brut = f.total_ttc + f.remise
+                if total_brut > 0:
+                    ratio_remise = f.total_ttc / total_brut
+            
+            mt_vente_ttc_net = (price_ttc * qty) * ratio_remise
+            
+            cost_unit = Decimal(str(last_lot_cost.get(p.id, float(p.pmp or 0))))
+            mt_achat = (cost_unit * qty).quantize(Decimal('1'), rounding=ROUND_HALF_UP)
+            marge    = mt_vente_ttc_net - mt_achat
+            
             results.append({
                 'date':           f.date.strftime('%d/%m/%Y'),
                 'facture':        f.numero_facture or f'#{f.id}',
                 'produit':        p.name,
                 'lot':            'SANS LOT',
-                'quantite':       qty,
-                'prix_vente_net': round(price, 2),
-                'cout_achat':     round(cost, 2),
-                'mt_vente':       mt_vente,
-                'mt_achat':       mt_achat,
-                'marge':          marge,
-                'taux_marge':     round(marge / mt_vente * 100, 1) if mt_vente > 0 else 0,
+                'quantite':       float(qty),
+                'prix_vente_net': float((mt_vente_ttc_net / qty).quantize(Decimal('0.01'))) if qty > 0 else 0,
+                'cout_achat':     float(cost_unit),
+                'mt_vente':       float(mt_vente_ttc_net.quantize(Decimal('1'), rounding=ROUND_HALF_UP)),
+                'mt_achat':       float(mt_achat),
+                'marge':          float(marge.quantize(Decimal('1'), rounding=ROUND_HALF_UP)),
+                'taux_marge':     round(float(marge / mt_vente_ttc_net * 100), 1) if mt_vente_ttc_net > 0 else 0,
             })
         # --- Filtre marge avant pagination ---
         filtre_marge = request.query_params.get('filtre_marge', '')

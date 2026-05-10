@@ -1,5 +1,27 @@
 import { formatDate as _formatDate } from './dateUtils';
 
+const DEFAULT_CURRENCY_FORMATTER = new Intl.NumberFormat('fr-FR', { 
+    minimumFractionDigits: 0, 
+    maximumFractionDigits: 0 
+});
+
+const formatterCache = new Map<string, Intl.NumberFormat>();
+
+const getFormatter = (locale: string, options: Intl.NumberFormatOptions) => {
+    // Optimization for the most common case
+    if (locale === 'fr-FR' && options.minimumFractionDigits === 0 && options.maximumFractionDigits === 0 && Object.keys(options).length === 2) {
+        return DEFAULT_CURRENCY_FORMATTER;
+    }
+
+    const key = `${locale}-${JSON.stringify(options)}`;
+    let formatter = formatterCache.get(key);
+    if (!formatter) {
+        formatter = new Intl.NumberFormat(locale, options);
+        formatterCache.set(key, formatter);
+    }
+    return formatter;
+};
+
 export const normalizeNumberInput = (value: string | number, options?: { min?: number; max?: number }) => {
     let parsedValue: number
 
@@ -26,21 +48,21 @@ export const normalizeNumberInput = (value: string | number, options?: { min?: n
 }
 
 export const formatPrice = (price: number, decimals: number = 0, locale: string = 'fr-FR') => {
-    return new Intl.NumberFormat(locale, {
+    return getFormatter(locale, {
         minimumFractionDigits: decimals,
         maximumFractionDigits: decimals,
     }).format(price);
 }
 
 export const formatCurrency = (amount: number, locale: string = 'fr-FR', symbol: string = 'F') => {
-    return new Intl.NumberFormat(locale, {
+    return getFormatter(locale, {
         minimumFractionDigits: 0,
         maximumFractionDigits: 0,
     }).format(amount) + '\u00a0' + symbol;
 }
 
 export const formatNumber = (value: number, decimals: number = 0, locale: string = 'fr-FR') => {
-    return new Intl.NumberFormat(locale, {
+    return getFormatter(locale, {
         minimumFractionDigits: decimals,
         maximumFractionDigits: decimals,
     }).format(value);

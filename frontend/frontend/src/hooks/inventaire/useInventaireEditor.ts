@@ -360,6 +360,23 @@ export const useInventaireEditor = (
             }
 
             const lines = text.split(/\r\n|\n/);
+
+            // 1. Créer une Map d'indexation pour les produits par CIP (O(1) lookup)
+            const productByCipMap = new Map<string, ProduitModel>();
+            allProducts.forEach(p => {
+                const cips = [normalizeCip(p.cip1), normalizeCip(p.cip2), normalizeCip(p.cip3)];
+                cips.forEach(cip => {
+                    if (cip) {
+                        productByCipMap.set(cip, p);
+                        // Aussi indexer sans les zéros de tête pour plus de flexibilité
+                        const numeric = cip.replace(/^0+/, '');
+                        if (numeric && !productByCipMap.has(numeric)) {
+                            productByCipMap.set(numeric, p);
+                        }
+                    }
+                });
+            });
+
             const importMap = new Map<number, number>(); // productId -> totalQuantity
             let productsFoundCount = 0;
             const notFoundItems: { cip: string; qty: string }[] = [];
@@ -373,7 +390,7 @@ export const useInventaireEditor = (
                 }
             }
 
-            // Parsing et Matching
+            // 2. Parsing et Matching
             lines.forEach((line, index) => {
                 if (!line.trim() || index === 0) return; // Sauter en-tête ou vide
 
@@ -386,12 +403,8 @@ export const useInventaireEditor = (
                 const normalizedSearchCip = normalizeCip(rawCip);
                 const numericSearch = normalizedSearchCip.replace(/^0+/, '');
 
-                const product = allProducts.find(p => {
-                    const norms = [normalizeCip(p.cip1), normalizeCip(p.cip2), normalizeCip(p.cip3)];
-                    if (norms.includes(normalizedSearchCip)) return true;
-                    if (numericSearch && norms.some(n => n.replace(/^0+/, '') === numericSearch)) return true;
-                    return false;
-                });
+                // Recherche O(1) via la Map
+                const product = productByCipMap.get(normalizedSearchCip) || productByCipMap.get(numericSearch);
 
                 if (product) {
                     const qty = parseFloat(rawQty.replace(',', '.')) || 0;

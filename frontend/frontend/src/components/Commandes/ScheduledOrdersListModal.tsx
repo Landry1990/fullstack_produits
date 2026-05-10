@@ -95,13 +95,13 @@ export default function ScheduledOrdersListModal({
             onClose={onClose}
             title="Commandes Programmées"
             subtitle="Gérez vos plannings de génération automatique de commandes"
-            icon={<Calendar className="w-6 h-6 text-primary" />}
+            icon={<Calendar className="size-6 text-primary" />}
             maxWidth="max-w-4xl"
             footer={
                 <div className="flex justify-between items-center w-full">
                     <button className="btn btn-ghost" onClick={onClose}>Fermer</button>
                     <button className="btn btn-primary shadow-lg shadow-primary/20" onClick={onCreateSchedule}>
-                        <Plus className="w-4 h-4 mr-2" />
+                        <Plus className="size-4 mr-2" />
                         Nouveau Planning
                     </button>
                 </div>
@@ -115,8 +115,8 @@ export default function ScheduledOrdersListModal({
                     </div>
                 ) : schedules.length === 0 ? (
                     <div className="flex flex-col items-center justify-center py-20 text-center space-y-4">
-                        <div className="w-20 h-20 bg-base-200 rounded-full flex items-center justify-center text-base-content/20">
-                            <Calendar className="w-10 h-10" />
+                        <div className="size-20 bg-base-200 rounded-full flex items-center justify-center text-base-content/20">
+                            <Calendar className="size-10" />
                         </div>
                         <div className="space-y-1">
                             <h3 className="text-lg font-bold">Aucun planning configuré</h3>
@@ -146,7 +146,7 @@ export default function ScheduledOrdersListModal({
                                             <td className="py-4 pl-6">
                                                 <div className="flex items-center gap-3">
                                                     <div className="p-1.5 bg-primary/10 text-primary rounded-lg">
-                                                        <Package className="w-3.5 h-3.5" />
+                                                        <Package className="size-3.5" />
                                                     </div>
                                                     <span className="font-bold text-sm text-base-content">{fournisseur?.name || "Inconnu"}</span>
                                                 </div>
@@ -154,7 +154,7 @@ export default function ScheduledOrdersListModal({
                                             <td className="py-4">
                                                 <div className="flex flex-col">
                                                     <span className="text-xs font-bold text-base-content/80 flex items-center gap-1">
-                                                        <Clock className="w-3 h-3 text-primary" />
+                                                        <Clock className="size-3 text-primary" />
                                                         {schedule.time}
                                                     </span>
                                                     <span className="text-[10px] text-base-content/40 font-medium">
@@ -182,7 +182,7 @@ export default function ScheduledOrdersListModal({
                                                     >
                                                         {triggeringId === schedule.id
                                                             ? <span className="loading loading-spinner loading-xs" />
-                                                            : <Zap className="w-3.5 h-3.5" />}
+                                                            : <Zap className="size-3.5" />}
                                                         Lancer
                                                     </button>
                                                     <button 
@@ -190,14 +190,14 @@ export default function ScheduledOrdersListModal({
                                                         onClick={() => onEditSchedule(schedule)}
                                                         title="Modifier"
                                                     >
-                                                        <Edit className="w-3.5 h-3.5" />
+                                                        <Edit className="size-3.5" />
                                                     </button>
                                                     <button 
                                                         className="btn btn-ghost btn-xs text-error hover:bg-error/10 rounded-lg p-1"
                                                         onClick={() => schedule.id && handleDelete(schedule.id)}
                                                         title="Supprimer"
                                                     >
-                                                        <Trash2 className="w-3.5 h-3.5" />
+                                                        <Trash2 className="size-3.5" />
                                                     </button>
                                                 </div>
                                             </td>

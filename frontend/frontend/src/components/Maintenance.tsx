@@ -398,7 +398,7 @@ export default function Maintenance() {
       {/* Header */}
       <div className="flex items-center gap-3 mb-6">
         <div className="p-3 rounded-xl bg-gradient-to-br from-red-500/20 to-orange-500/20">
-          <Wrench className="w-7 h-7 text-red-400" />
+          <Wrench className="size-7 text-red-400" />
         </div>
         <div>
           <h1 className="text-2xl font-bold">{t('title')}</h1>
@@ -408,7 +408,7 @@ export default function Maintenance() {
 
       {/* Warning Banner */}
       <div className="alert alert-warning mb-6 shadow-lg">
-        <AlertTriangle className="w-5 h-5" />
+        <AlertTriangle className="size-5" />
         <div>
           <h3 className="font-bold">{t('irreversible')}</h3>
           <p className="text-sm">{t('warning_msg')}</p>
@@ -422,7 +422,7 @@ export default function Maintenance() {
             <div className="card-body">
               <div className="flex items-center justify-between mb-4">
                 <h2 className="card-title text-lg">
-                  <CheckSquare className="w-5 h-5 text-primary" />
+                  <CheckSquare className="size-5 text-primary" />
                   {t('tables_title')}
                 </h2>
                 <div className="flex gap-2">
@@ -452,17 +452,17 @@ export default function Maintenance() {
                             onClick={(e) => { e.stopPropagation(); toggleCategory(availableKeys); }}
                           >
                             {allCatSelected ? (
-                              <CheckSquare className="w-4 h-4 text-primary" />
+                              <CheckSquare className="size-4 text-primary" />
                             ) : someCatSelected ? (
-                              <CheckSquare className="w-4 h-4 text-primary/50" />
+                              <CheckSquare className="size-4 text-primary/50" />
                             ) : (
-                              <Square className="w-4 h-4 text-base-content/40" />
+                              <Square className="size-4 text-base-content/40" />
                             )}
                           </button>
                           <span className="font-semibold text-sm">{cat.label}</span>
                           <span className="badge badge-sm badge-ghost">{availableKeys.length}</span>
                         </div>
-                        {isExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                        {isExpanded ? <ChevronUp className="size-4" /> : <ChevronDown className="size-4" />}
                       </div>
 
                       {/* Category items */}
@@ -507,7 +507,7 @@ export default function Maintenance() {
           <div className="card bg-base-100 shadow-xl">
             <div className="card-body">
               <h2 className="card-title text-lg mb-2">
-                <Calendar className="w-5 h-5 text-secondary" />
+                <Calendar className="size-5 text-secondary" />
                 {t('period_title')}
               </h2>
               <div className="form-control mb-2">
@@ -546,7 +546,7 @@ export default function Maintenance() {
                 onClick={handlePreview}
                 disabled={loading || selectedTables.size === 0}
               >
-                {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Eye className="w-4 h-4" />}
+                {loading ? <Loader2 className="size-4 animate-spin" /> : <Eye className="size-4" />}
                 {t('preview_btn')}
               </button>
 
@@ -555,7 +555,7 @@ export default function Maintenance() {
                 onClick={handleExport}
                 disabled={exporting || selectedTables.size === 0}
               >
-                {exporting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
+                {exporting ? <Loader2 className="size-4 animate-spin" /> : <Download className="size-4" />}
                 {t('export_btn')}
               </button>
 
@@ -566,7 +566,7 @@ export default function Maintenance() {
                 onClick={() => { if (selectedTables.size > 0) setShowConfirmModal(true); else toast.error(t('common:select_tables')); }}
                 disabled={selectedTables.size === 0}
               >
-                <Trash2 className="w-4 h-4" />
+                <Trash2 className="size-4" />
                 {t('purge_btn')}
               </button>
             </div>
@@ -576,7 +576,7 @@ export default function Maintenance() {
           <div className="card bg-base-100 shadow-xl border border-primary/20">
             <div className="card-body gap-4">
               <h2 className="card-title text-lg flex items-center gap-2">
-                <Database className="w-5 h-5 text-primary" />
+                <Database className="size-5 text-primary" />
                 {t('backup_title')}
               </h2>
 
@@ -589,7 +589,7 @@ export default function Maintenance() {
                     onClick={handleManualBackup}
                     disabled={backupLoading}
                   >
-                    {backupLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
+                    {backupLoading ? <Loader2 className="size-4 animate-spin" /> : <Download className="size-4" />}
                     {t('backup_now')}
                   </button>
 
@@ -613,7 +613,7 @@ export default function Maintenance() {
                 {/* Scheduled Backup */}
                 <div className="space-y-3">
                   <h3 className="text-xs font-bold uppercase tracking-wider text-base-content/50 flex items-center gap-2">
-                    <Clock className="w-4 h-4" />
+                    <Clock className="size-4" />
                     {t('automatic')}
                   </h3>
                   
@@ -660,7 +660,7 @@ export default function Maintenance() {
                     onClick={saveBackupSettings}
                     disabled={savingSettings || !pharmacySettings}
                   >
-                    {savingSettings ? <Loader2 className="w-3 h-3 animate-spin" /> : <Save className="w-3 h-3" />}
+                    {savingSettings ? <Loader2 className="size-3 animate-spin" /> : <Save className="size-3" />}
                     {t('save_settings')}
                   </button>
                 </div>
@@ -673,7 +673,7 @@ export default function Maintenance() {
           <div className="card bg-base-100 shadow-xl border border-error/20">
             <div className="card-body gap-4">
               <h2 className="card-title text-lg flex items-center gap-2">
-                <Upload className="w-5 h-5 text-error" />
+                <Upload className="size-5 text-error" />
                 {t('restore_title')}
               </h2>
 
@@ -694,7 +694,7 @@ export default function Maintenance() {
                   onClick={() => { if (restoreFile) setShowRestoreConfirm(true); else toast.error(t('common:select_file')); }}
                   disabled={restoring || !restoreFile}
                 >
-                  {restoring ? <Loader2 className="w-4 h-4 animate-spin" /> : <ShieldAlert className="w-4 h-4" />}
+                  {restoring ? <Loader2 className="size-4 animate-spin" /> : <ShieldAlert className="size-4" />}
                   {t('restore_now')}
                 </button>
                 
@@ -721,7 +721,7 @@ export default function Maintenance() {
           <div className="card bg-base-100 shadow-xl border border-secondary/20">
             <div className="card-body gap-4">
               <h2 className="card-title text-lg flex items-center gap-2">
-                <ShieldAlert className="w-5 h-5 text-secondary" />
+                <ShieldAlert className="size-5 text-secondary" />
                 {t('code_management.title')}
               </h2>
 
@@ -734,7 +734,7 @@ export default function Maintenance() {
                     onClick={handleCodeBackup}
                     disabled={codeBackupLoading}
                   >
-                    {codeBackupLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
+                    {codeBackupLoading ? <Loader2 className="size-4 animate-spin" /> : <Download className="size-4" />}
                     {t('code_management.backup_now')}
                   </button>
                 </div>
@@ -757,7 +757,7 @@ export default function Maintenance() {
                     onClick={handleCodeRestore}
                     disabled={codeRestoring || !codeRestoreFile}
                   >
-                    {codeRestoring ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
+                    {codeRestoring ? <Loader2 className="size-4 animate-spin" /> : <Upload className="size-4" />}
                     {t('code_management.restore_now')}
                   </button>
                 </div>
@@ -784,7 +784,7 @@ export default function Maintenance() {
         <div className="card bg-base-100 shadow-xl mt-6">
           <div className="card-body">
             <h2 className="card-title text-lg mb-4">
-              <Eye className="w-5 h-5 text-info" />
+              <Eye className="size-5 text-info" />
               {t('preview_title', { count: totalPreviewCount })}
             </h2>
             <div className="overflow-x-auto">
@@ -832,7 +832,7 @@ export default function Maintenance() {
         <div className="card bg-success/10 border border-success/30 shadow-xl mt-6">
           <div className="card-body">
             <h2 className="card-title text-lg text-success mb-4">
-              <Trash2 className="w-5 h-5" />
+              <Trash2 className="size-5" />
               {t('purge_finished')}
             </h2>
             <div className="overflow-x-auto">
@@ -863,13 +863,13 @@ export default function Maintenance() {
           <div className="modal-box max-w-md">
             <div className="flex items-center gap-3 mb-4">
               <div className="p-2 rounded-full bg-error/20">
-                <ShieldAlert className="w-6 h-6 text-error" />
+                <ShieldAlert className="size-6 text-error" />
               </div>
               <h3 className="font-bold text-lg">{t('confirm_title')}</h3>
             </div>
 
             <div className="alert alert-error mb-4">
-              <AlertTriangle className="w-5 h-5" />
+              <AlertTriangle className="size-5" />
               <span className="text-sm">
                 {t('confirm_msg')}
               </span>
@@ -914,7 +914,7 @@ export default function Maintenance() {
                 onClick={handlePurge}
                 disabled={purging || !password}
               >
-                {purging ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
+                {purging ? <Loader2 className="size-4 animate-spin" /> : <Trash2 className="size-4" />}
                 {t('confirm_purge')}
               </button>
             </div>
@@ -929,13 +929,13 @@ export default function Maintenance() {
           <div className="modal-box border-2 border-error/50 shadow-2xl">
             <div className="flex items-center gap-3 mb-4">
               <div className="p-2 rounded-full bg-error/20">
-                <AlertTriangle className="w-6 h-6 text-error" />
+                <AlertTriangle className="size-6 text-error" />
               </div>
               <h3 className="font-bold text-lg text-error">{t('restore_title')}</h3>
             </div>
 
             <div className="alert alert-error mb-4 shadow-sm">
-              <ShieldAlert className="w-5 h-5" />
+              <ShieldAlert className="size-5" />
               <span className="text-sm">
                 {t('confirm_msg')}
                 <div className="font-mono mt-1 font-bold text-xs">{restoreFile?.name}</div>
@@ -966,7 +966,7 @@ export default function Maintenance() {
                 onClick={handleRestore}
                 disabled={restoring || !restorePassword}
               >
-                {restoring ? <Loader2 className="w-4 h-4 animate-spin" /> : <Database className="w-4 h-4" />}
+                {restoring ? <Loader2 className="size-4 animate-spin" /> : <Database className="size-4" />}
                 {t('restore_now')}
               </button>
             </div>

@@ -37,7 +37,7 @@ export default function ClientDeleteWarningModal({
         <div className="bg-warning/10 p-6 border-b border-warning/20">
           <div className="flex items-start gap-4">
             <div className="p-3 bg-warning/20 rounded-xl">
-              <AlertTriangle className="w-8 h-8 text-warning" />
+              <AlertTriangle className="size-8 text-warning" />
             </div>
             <div className="flex-1">
               <h3 className="text-xl font-black text-warning">
@@ -51,7 +51,7 @@ export default function ClientDeleteWarningModal({
               onClick={onClose}
               className="btn btn-ghost btn-circle btn-sm"
             >
-              <X className="w-5 h-5" />
+              <X className="size-5" />
             </button>
           </div>
         </div>
@@ -68,14 +68,14 @@ export default function ClientDeleteWarningModal({
           <div className="grid grid-cols-2 gap-4">
             <div className="bg-error/5 border border-error/20 rounded-xl p-4">
               <div className="flex items-center gap-2 text-error mb-2">
-                <FileText className="w-5 h-5" />
+                <FileText className="size-5" />
                 <span className="font-bold text-sm">Factures impayées</span>
               </div>
               <p className="text-3xl font-black text-error">{invoiceCount}</p>
             </div>
             <div className="bg-error/5 border border-error/20 rounded-xl p-4">
               <div className="flex items-center gap-2 text-error mb-2">
-                <DollarSign className="w-5 h-5" />
+                <DollarSign className="size-5" />
                 <span className="font-bold text-sm">Montant total dû</span>
               </div>
               <p className="text-3xl font-black text-error">
@@ -132,7 +132,7 @@ export default function ClientDeleteWarningModal({
             onClick={onClose}
             className="btn btn-warning w-full gap-2 font-black"
           >
-            <X className="w-4 h-4" />
+            <X className="size-4" />
             J'ai compris
           </button>
         </div>

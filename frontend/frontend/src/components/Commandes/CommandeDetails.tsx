@@ -231,7 +231,7 @@ const CommandeDetails: React.FC<CommandeDetailsProps> = ({
           return (
             <div className="p-4 bg-success/10 border border-success/20 rounded-lg mb-4 shrink-0">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-success/20 flex items-center justify-center">
+                <div className="size-10 rounded-full bg-success/20 flex items-center justify-center">
                   <span className="text-success font-bold">UG</span>
                 </div>
                 <div className="flex-1">

@@ -12,6 +12,8 @@ interface ProductFiltersProps {
   setFilterExclusive: (exclusive: boolean) => void;
   showInactive: boolean;
   setShowInactive: (show: boolean) => void;
+  showInStockOnly: boolean;
+  setShowInStockOnly: (show: boolean) => void;
 }
 
 export const ProductFilters: React.FC<ProductFiltersProps> = (props) => {
@@ -25,7 +27,9 @@ export const ProductFilters: React.FC<ProductFiltersProps> = (props) => {
     filterExclusive,
     setFilterExclusive,
     showInactive,
-    setShowInactive
+    setShowInactive,
+    showInStockOnly,
+    setShowInStockOnly
   } = props;
 
   const { t } = useTranslation(['products', 'common']);
@@ -37,6 +41,7 @@ export const ProductFilters: React.FC<ProductFiltersProps> = (props) => {
     setFilterFournisseur('');
     setFilterExclusive(false);
     setShowInactive(false);
+    setShowInStockOnly(false);
   };
 
   return (
@@ -57,7 +62,31 @@ export const ProductFilters: React.FC<ProductFiltersProps> = (props) => {
             </svg>
           </button>
         </div>
-        {(filterRayon || filterFournisseur || filterExclusive || showInactive) && (
+        <div className="flex items-center gap-4 mt-3 px-1">
+          <label className="flex items-center gap-2 cursor-pointer group">
+            <input 
+              type="checkbox" 
+              className="checkbox checkbox-primary checkbox-sm rounded-md" 
+              checked={showInStockOnly}
+              onChange={(e) => setShowInStockOnly(e.target.checked)}
+            />
+            <span className="text-xs font-bold text-base-content/70 group-hover:text-primary transition-colors">
+              {t('products:filters.in_stock_only', { defaultValue: 'En stock uniquement' })}
+            </span>
+          </label>
+          <label className="flex items-center gap-2 cursor-pointer group ml-2">
+            <input 
+              type="checkbox" 
+              className="checkbox checkbox-secondary checkbox-sm rounded-md" 
+              checked={showInactive}
+              onChange={(e) => setShowInactive(e.target.checked)}
+            />
+            <span className="text-xs font-bold text-base-content/70 group-hover:text-secondary transition-colors">
+              {t('products:filters.show_inactive', { defaultValue: 'Afficher inactifs' })}
+            </span>
+          </label>
+        </div>
+        {(filterRayon || filterFournisseur || filterExclusive || showInactive || showInStockOnly) && (
           <div className="mt-2 flex items-center gap-2">
             <button className="btn btn-ghost btn-xs text-error" onClick={resetFilters}>
               {t('products:filters.reset')}
@@ -67,6 +96,7 @@ export const ProductFilters: React.FC<ProductFiltersProps> = (props) => {
               {filterFournisseur && <span className="badge badge-warning badge-outline badge-xs px-2">{t('products:filters.provider_active')}</span>}
               {filterExclusive && <span className="badge badge-primary badge-outline badge-xs px-2">{t('products:filters.exclusive_only')}</span>}
               {showInactive && <span className="badge badge-secondary badge-outline badge-xs px-2">{t('products:filters.inactive_only')}</span>}
+              {showInStockOnly && <span className="badge badge-success badge-outline badge-xs px-2">{t('products:filters.in_stock_only', { defaultValue: 'En stock' })}</span>}
             </div>
           </div>
         )}

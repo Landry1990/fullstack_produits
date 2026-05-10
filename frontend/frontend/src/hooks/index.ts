@@ -23,8 +23,8 @@ export { useKeyboardNavigation } from './useKeyboardNavigation';
 export { useSearchNavigation } from './useSearchNavigation';
 
 // Printing hook
+export { default as usePrint } from './usePrint';
 export {
-    usePrint,
     formatMoney,
     formatDateFr,
     printRow,
@@ -37,9 +37,7 @@ export {
 } from './usePrint';
 
 // Sale completion hook
-export {
-    useSaleCompletion
-} from './useSaleCompletion';
+export { default as useSaleCompletion } from './useSaleCompletion';
 
 export type {
     UseSaleCompletionReturn

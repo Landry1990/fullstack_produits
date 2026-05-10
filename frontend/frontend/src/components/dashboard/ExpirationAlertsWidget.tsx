@@ -58,7 +58,7 @@ export default function ExpirationAlertsWidget({ className = '' }: ExpirationAle
     return (
       <div className={`bg-white rounded-2xl shadow-sm border border-gray-100 p-4 ${className}`}>
         <div className="flex items-center gap-2 mb-3">
-          <Package className="w-5 h-5 text-gray-400" />
+          <Package className="size-5 text-gray-400" />
           <span className="text-sm font-semibold text-gray-600">{t('expiration.widget_title', { defaultValue: 'Alertes Péremption' })}</span>
         </div>
         <div className="space-y-2">
@@ -73,7 +73,7 @@ export default function ExpirationAlertsWidget({ className = '' }: ExpirationAle
     return (
       <div className={`bg-red-50 rounded-2xl shadow-sm border border-red-100 p-4 ${className}`}>
         <div className="flex items-center gap-2 text-red-600">
-          <AlertTriangle className="w-5 h-5" />
+          <AlertTriangle className="size-5" />
           <span className="text-sm font-medium">{t('expiration.error_loading', { defaultValue: 'Erreur chargement alertes' })}</span>
         </div>
       </div>
@@ -92,7 +92,7 @@ export default function ExpirationAlertsWidget({ className = '' }: ExpirationAle
       <div className={`bg-emerald-50 rounded-2xl shadow-sm border border-emerald-100 p-4 ${className}`}>
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <Package className="w-5 h-5 text-emerald-500" />
+            <Package className="size-5 text-emerald-500" />
             <span className="text-sm font-semibold text-emerald-700">
               {t('expiration.no_alerts', { defaultValue: 'Aucune alerte péremption' })}
             </span>
@@ -127,7 +127,7 @@ export default function ExpirationAlertsWidget({ className = '' }: ExpirationAle
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <div className={`p-2 rounded-lg ${stats.critical_count > 0 ? 'bg-red-100' : stats.warning_count > 0 ? 'bg-orange-100' : 'bg-amber-100'}`}>
-              <AlertTriangle className={`w-5 h-5 ${stats.critical_count > 0 ? 'text-red-500' : stats.warning_count > 0 ? 'text-orange-500' : 'text-amber-500'}`} />
+              <AlertTriangle className={`size-5 ${stats.critical_count > 0 ? 'text-red-500' : stats.warning_count > 0 ? 'text-orange-500' : 'text-amber-500'}`} />
             </div>
             <div>
               <h3 className="text-sm font-bold text-gray-800">
@@ -162,7 +162,7 @@ export default function ExpirationAlertsWidget({ className = '' }: ExpirationAle
               className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
               title={t('expiration.view_all', { defaultValue: 'Voir tous les périmés' })}
             >
-              <ExternalLink className="w-4 h-4" />
+              <ExternalLink className="size-4" />
             </Link>
           </div>
         </div>
@@ -209,7 +209,7 @@ export default function ExpirationAlertsWidget({ className = '' }: ExpirationAle
 
                   <div className="flex items-center gap-3 mt-1 text-xs text-gray-500">
                     <span className="flex items-center gap-1">
-                      <Package className="w-3 h-3" />
+                      <Package className="size-3" />
                       {alert.quantity_remaining} unité{alert.quantity_remaining > 1 ? 's' : ''}
                     </span>
                     {alert.lot_numero && (
@@ -247,12 +247,12 @@ export default function ExpirationAlertsWidget({ className = '' }: ExpirationAle
         >
           {expanded ? (
             <>
-              <ChevronUp className="w-4 h-4" />
+              <ChevronUp className="size-4" />
               {t('common:actions.show_less', { defaultValue: 'Voir moins' })}
             </>
           ) : (
             <>
-              <ChevronDown className="w-4 h-4" />
+              <ChevronDown className="size-4" />
               {t('common:actions.show_more', { defaultValue: `Voir ${alerts.length - 3} de plus` })}
             </>
           )}
@@ -265,7 +265,7 @@ export default function ExpirationAlertsWidget({ className = '' }: ExpirationAle
           to="/app/perimes"
           className="flex items-center justify-center gap-2 w-full py-2 px-4 bg-white border border-gray-200 rounded-xl text-sm font-medium text-gray-700 hover:bg-gray-50 hover:border-gray-300 transition-all"
         >
-          <Clock className="w-4 h-4" />
+          <Clock className="size-4" />
           {t('expiration.manage_perimes', { defaultValue: 'Gérer les produits périmés' })}
         </Link>
       </div>

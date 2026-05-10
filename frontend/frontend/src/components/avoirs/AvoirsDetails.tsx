@@ -77,7 +77,7 @@ export const AvoirsDetails: React.FC<AvoirsDetailsProps> = ({ data }) => {
                         className="btn btn-circle btn-ghost btn-sm"
                         title={t('stock:avoirs.details.back')}
                     >
-                        <ArrowLeft className="w-5 h-5" />
+                        <ArrowLeft className="size-5" />
                     </button>
                     <div>
                         <div className="flex items-center gap-3">
@@ -92,7 +92,7 @@ export const AvoirsDetails: React.FC<AvoirsDetailsProps> = ({ data }) => {
                             <span>{t('stock:avoirs.details.created_at', { date: format(new Date(selectedAvoir.created_at || selectedAvoir.date), 'dd/MM/yyyy HH:mm', { locale: i18n.language === 'fr' ? fr : enUS }) })}</span>
                             {selectedAvoir.created_by_name && (
                                 <>
-                                    <span className="w-1 h-1 rounded-full bg-base-content/30" />
+                                    <span className="size-1 rounded-full bg-base-content/30" />
                                     <span>{t('stock:avoirs.details.created_by', { name: selectedAvoir.created_by_name })}</span>
                                 </>
                             )}
@@ -105,7 +105,7 @@ export const AvoirsDetails: React.FC<AvoirsDetailsProps> = ({ data }) => {
                         onClick={() => window.print()} 
                         className="btn btn-ghost flex-1 sm:flex-none gap-2"
                     >
-                        <Printer className="w-4 h-4" />
+                        <Printer className="size-4" />
                         <span className="hidden sm:inline">{t('stock:avoirs.details.print')}</span>
                     </button>
 
@@ -123,7 +123,7 @@ export const AvoirsDetails: React.FC<AvoirsDetailsProps> = ({ data }) => {
                                 onClick={() => handleValidate(selectedAvoir)}
                                 disabled={savingValidation}
                             >
-                                <CheckCircle2 className="w-4 h-4" />
+                                <CheckCircle2 className="size-4" />
                                 {t('stock:avoirs.details.validate')}
                             </button>
                         </>
@@ -209,12 +209,12 @@ export const AvoirsDetails: React.FC<AvoirsDetailsProps> = ({ data }) => {
                             >
                                 {allLinesClosed ? (
                                     <>
-                                        <Unlock className="w-4 h-4" />
+                                        <Unlock className="size-4" />
                                         {t('stock:avoirs.details.reopen_all')}
                                     </>
                                 ) : (
                                     <>
-                                        <Lock className="w-4 h-4" />
+                                        <Lock className="size-4" />
                                         {t('stock:avoirs.details.close_all')}
                                     </>
                                 )}
@@ -242,7 +242,7 @@ export const AvoirsDetails: React.FC<AvoirsDetailsProps> = ({ data }) => {
                                                     className={`btn btn-ghost btn-circle btn-sm ${ligne.est_cloture ? 'text-success hover:bg-success/10' : 'text-base-content/30 hover:bg-base-content/10'}`}
                                                     title={ligne.est_cloture ? t('stock:avoirs.details.reopen_line') : t('stock:avoirs.details.close_line')}
                                                 >
-                                                    {ligne.est_cloture ? <Lock className="w-4 h-4" /> : <Unlock className="w-4 h-4" />}
+                                                    {ligne.est_cloture ? <Lock className="size-4" /> : <Unlock className="size-4" />}
                                                 </button>
                                             </td>
                                             <td>

@@ -129,49 +129,30 @@ const PrescriptionScannerModal: React.FC<PrescriptionScannerModalProps> = ({
       const extracted = prescriptionOcrService.parseOcrResult(result);
       setExtractionData(extracted);
 
-      // Fuzzy match products
+      // Fuzzy match products using fuzzysort (optimized)
       const matches: MatchResult[] = extracted.potential_products.map(ocrLine => {
-        // Nettoyage du bruit OCR classique (posologie, grammaire) pour la recherche
         const cleanQuery = ocrLine
           .replace(/\b(boite|boites|comprimé|comprimés|cpr|gelules|sirop|ampoules|matin|midi|soir|posologie|ordonnance|qsp|jours|mois|de|la|le|les|des|un|une|et|a|au|dr|docteur)\b/gi, '')
           .replace(/[^\w\s]/gi, ' ')
           .replace(/\s+/g, ' ')
           .trim();
 
-        const calculateSimilarity = (query: string, target: string) => {
-            const qTokens = query.toLowerCase().split(/\s+/).filter(w => w.length > 2);
-            const tTokens = target.toLowerCase().split(/\s+/).filter(w => w.length > 2);
-            if (qTokens.length === 0) return 0;
-
-            let matchesCount = 0;
-            for (const q of qTokens) {
-                let bestTokenScore = 0;
-                for (const t of tTokens) {
-                    if (t === q) { bestTokenScore = 1; break; }
-                    // Tolérance aux petites fautes OCR via inclusion
-                    if (t.includes(q) || q.includes(t)) bestTokenScore = Math.max(bestTokenScore, 0.7);
-                }
-                matchesCount += bestTokenScore;
-            }
-            return matchesCount / Math.max(qTokens.length, 1); // Score entre 0 et 1 (peut dépasser si très bien matché mais limité par principe)
-        };
-
         const query = cleanQuery.length > 2 ? cleanQuery : ocrLine;
 
-        // Scorer tous les produits avec l'algorithme sur-mesure
-        const scoredProducts = products.map(p => ({
-            obj: p,
-            score: calculateSimilarity(query, p.name)
-        })).sort((a, b) => b.score - a.score);
+        // Utiliser fuzzysort pour un matching rapide et précis
+        const results = fuzzysort.go(query, products, {
+          key: 'name',
+          limit: 3,
+          threshold: -10000, // Ajuster si besoin pour être plus ou moins permissif
+        });
 
-        // Récupérer le top 3 (score > 0.25 pour être permissif)
-        const topResults = scoredProducts.filter(p => p.score > 0.25).slice(0, 3);
+        const topResults = results.map(r => r.obj);
 
         return {
           ocrLine,
-          matchedProduct: topResults[0] ? topResults[0].obj : null,
-          score: topResults[0] ? topResults[0].score : 0,
-          suggestions: topResults.map(r => r.obj),
+          matchedProduct: topResults[0] || null,
+          score: results[0] ? results[0].score : 0,
+          suggestions: topResults,
         };
       });
 
@@ -238,7 +219,7 @@ const PrescriptionScannerModal: React.FC<PrescriptionScannerModalProps> = ({
       onClose={onClose}
       title="Scanner Ordonnance"
       subtitle="Capturez une photo pour extraction automatique avec OCR"
-      icon={<Camera className="w-5 h-5 text-primary" />}
+      icon={<Camera className="size-5 text-primary" />}
       maxWidth="max-w-4xl"
     >
       <div className="flex flex-col h-[70vh]">
@@ -255,7 +236,7 @@ const PrescriptionScannerModal: React.FC<PrescriptionScannerModalProps> = ({
                   onClick={() => fileInputRef.current?.click()}
                 >
                   <div className="p-4 bg-primary/10 rounded-full text-primary">
-                    <Upload className="w-8 h-8" />
+                    <Upload className="size-8" />
                   </div>
                   <div className="text-center">
                     <p className="font-bold">Glissez une image ici</p>
@@ -265,26 +246,26 @@ const PrescriptionScannerModal: React.FC<PrescriptionScannerModalProps> = ({
                     className="btn btn-primary btn-sm rounded-lg"
                     onClick={(e) => { e.stopPropagation(); startCamera(); }}
                   >
-                    <Camera className="w-4 h-4 mr-2" />
+                    <Camera className="size-4 mr-2" />
                     Utiliser la caméra
                   </button>
                 </div>
               )}
 
               {showCamera && (
-                <div className="relative flex-1 bg-black rounded-2xl overflow-hidden shadow-xl">
+                <div className="relative flex-1 bg-gray-950 rounded-2xl overflow-hidden shadow-xl">
                   <video 
                     ref={videoRef} 
                     autoPlay 
                     playsInline 
-                    className="w-full h-full object-cover"
+                    className="size-full object-cover"
                   />
                   <div className="absolute bottom-6 left-0 right-0 flex justify-center gap-3">
                     <button className="btn btn-circle btn-primary btn-lg shadow-lg" onClick={capturePhoto}>
-                      <div className="w-4 h-4 rounded-full border-2 border-white" />
+                      <div className="size-4 rounded-full border-2 border-white" />
                     </button>
                     <button className="btn btn-circle btn-ghost bg-white/20 backdrop-blur-md text-white" onClick={stopCamera}>
-                      <Trash2 className="w-5 h-5" />
+                      <Trash2 className="size-5" />
                     </button>
                   </div>
                 </div>
@@ -292,10 +273,10 @@ const PrescriptionScannerModal: React.FC<PrescriptionScannerModalProps> = ({
 
               {preview && (
                 <div className="relative flex-1 rounded-2xl overflow-hidden group shadow-lg bg-base-300">
-                  <img src={preview} alt="Scan preview" className="w-full h-full object-contain" />
+                  <img src={preview} alt="Scan preview" className="size-full object-contain" />
                   <div className="absolute top-4 right-4 flex gap-2">
                     <button className="btn btn-circle btn-sm btn-error shadow-lg" onClick={reset}>
-                      <Trash2 className="w-4 h-4" />
+                      <Trash2 className="size-4" />
                     </button>
                   </div>
                   {!isProcessing && matchResults.length === 0 && (
@@ -305,7 +286,7 @@ const PrescriptionScannerModal: React.FC<PrescriptionScannerModalProps> = ({
                         onClick={processOcr}
                         disabled={loadingProducts}
                       >
-                        {loadingProducts ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <RefreshCw className="w-4 h-4 mr-2" />}
+                        {loadingProducts ? <Loader2 className="size-4 animate-spin mr-2" /> : <RefreshCw className="size-4 mr-2" />}
                         Lancer l'analyse OCR
                       </button>
                     </div>
@@ -328,7 +309,7 @@ const PrescriptionScannerModal: React.FC<PrescriptionScannerModalProps> = ({
             <div className="flex flex-col bg-base-200/50 rounded-2xl border border-base-content/5 overflow-hidden">
                 <div className="p-4 border-b border-base-content/5 bg-base-200/80 backdrop-blur-sm flex justify-between items-center">
                     <h3 className="font-bold flex items-center gap-2">
-                        <Search className="w-4 h-4 text-primary" />
+                        <Search className="size-4 text-primary" />
                         Médicaments identifiés
                     </h3>
                     <span className="badge badge-sm badge-secondary">{matchResults.filter(r => r.matchedProduct).length} reconnus</span>
@@ -337,7 +318,7 @@ const PrescriptionScannerModal: React.FC<PrescriptionScannerModalProps> = ({
                 <div className="flex-1 overflow-y-auto p-4 space-y-3">
                   {matchResults.length === 0 ? (
                     <div className="h-full flex flex-col items-center justify-center p-8 text-center text-base-content/40 opacity-50 italic">
-                      <AlertCircle className="w-12 h-12 mb-4 stroke-1" />
+                      <AlertCircle className="size-12 mb-4 stroke-1" />
                       <p>Les produits détectés apparaîtront ici après l'analyse.</p>
                     </div>
                   ) : (
@@ -345,7 +326,7 @@ const PrescriptionScannerModal: React.FC<PrescriptionScannerModalProps> = ({
                       <div key={idx} className={`p-3 rounded-xl border transition-all ${result.matchedProduct ? 'bg-success/5 border-success/30' : 'bg-base-100 border-base-content/10'}`}>
                         <div className="flex justify-between items-start mb-2">
                           <span className="text-[10px] font-bold text-base-content/40 uppercase tracking-tighter">Lu sur l'ordonnance :</span>
-                          {result.matchedProduct && <Check className="w-4 h-4 text-success" />}
+                          {result.matchedProduct && <Check className="size-4 text-success" />}
                         </div>
                         <p className="font-medium text-sm mb-2">{result.ocrLine}</p>
                         
@@ -363,7 +344,7 @@ const PrescriptionScannerModal: React.FC<PrescriptionScannerModalProps> = ({
                           
                           {result.suggestions.length === 0 && (
                               <p className="text-[10px] text-error flex items-center gap-1 py-1">
-                                  <AlertCircle className="w-3 h-3" />
+                                  <AlertCircle className="size-3" />
                                   Aucune correspondance trouvée
                               </p>
                           )}
@@ -381,8 +362,8 @@ const PrescriptionScannerModal: React.FC<PrescriptionScannerModalProps> = ({
             <div className="text-xs text-base-content/50">
                 {extractionData && (
                     <div className="flex gap-4">
-                        <span className="flex items-center gap-1"><Check className="w-3 h-3 text-success" /> Patient détecté</span>
-                        <span className="flex items-center gap-1"><Check className="w-3 h-3 text-success" /> Médecin détecté</span>
+                        <span className="flex items-center gap-1"><Check className="size-3 text-success" /> Patient détecté</span>
+                        <span className="flex items-center gap-1"><Check className="size-3 text-success" /> Médecin détecté</span>
                     </div>
                 )}
             </div>
@@ -393,7 +374,7 @@ const PrescriptionScannerModal: React.FC<PrescriptionScannerModalProps> = ({
                   disabled={matchResults.filter(r => r.matchedProduct).length === 0 || isProcessing}
                   onClick={validateScan}
                 >
-                  <Check className="w-4 h-4 mr-2" />
+                  <Check className="size-4 mr-2" />
                   Valider et ajouter
                 </button>
             </div>

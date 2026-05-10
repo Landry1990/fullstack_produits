@@ -58,28 +58,33 @@ export function useFacturationClients() {
             const clientsData = Array.isArray(data) ? data : data.results
             const loadedClients = clientsData || []
             setClients(loadedClients)
-
-            // Select "CLIENTS DIVERS" by default if it exists and no client is already selected
-            if (!debouncedSearch && !selectedClient) {
-                const clientsDivers = loadedClients.find((c: Client) =>
-                    c.name.trim().toUpperCase() === 'CLIENTS DIVERS' ||
-                    c.name.trim().toUpperCase() === 'CLIENT DIVERS'
-                )
-                if (clientsDivers) {
-                    setSelectedClient(clientsDivers.id)
-                }
-            }
         } catch (error) {
             console.error('Erreur chargement clients:', error)
             toast.error('Impossible de charger la liste des clients')
         } finally {
             setLoading(false)
         }
-    }, [debouncedSearch, selectedClient])
+    }, [debouncedSearch])
 
     useEffect(() => {
         fetchClients()
     }, [fetchClients])
+
+    const [hasInitialAutoSelect, setHasInitialAutoSelect] = useState(false)
+
+    // Select "CLIENTS DIVERS" by default on initial load only
+    useEffect(() => {
+        if (clients.length > 0 && !selectedClient && !clientSearch && !hasInitialAutoSelect) {
+            const clientsDivers = clients.find((c: Client) =>
+                c.name.trim().toUpperCase() === 'CLIENTS DIVERS' ||
+                c.name.trim().toUpperCase() === 'CLIENT DIVERS'
+            )
+            if (clientsDivers) {
+                setSelectedClient(clientsDivers.id)
+                setHasInitialAutoSelect(true)
+            }
+        }
+    }, [clients, selectedClient, clientSearch, hasInitialAutoSelect])
 
     // Load Ayants Droit when client changes
     useEffect(() => {

@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo } from 'react'
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import { useNavigate } from 'react-router-dom'
 import api from '../services/api'
@@ -233,7 +233,7 @@ export default function CaisseCentralisee() {
 
   // Trier les factures par date chronologique (plus ancienne en premier)
   const sortedFactures = useMemo(() => 
-    [...facturesEnAttente].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()),
+    facturesEnAttente.toSorted((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()),
     [facturesEnAttente]
   )
 
@@ -243,11 +243,46 @@ export default function CaisseCentralisee() {
     setIsPaymentModalOpen(true)
   }, [])
 
+  const latestHandlers = useRef({
+    handleEncaisser,
+    openCouponSelectionForFacture,
+    fetchFacturesEnAttente,
+    fetchCoupons,
+    sortedFactures,
+    selectedRowIndex,
+    isPaymentModalOpen,
+    isGenererCouponModalOpen,
+    isDetailsCouponModalOpen,
+    isSudoModalOpen,
+    showTicketPreview,
+    isCouponPanelOpen,
+    user
+  })
+  
+  useEffect(() => {
+    latestHandlers.current = {
+      handleEncaisser,
+      openCouponSelectionForFacture,
+      fetchFacturesEnAttente,
+      fetchCoupons,
+      sortedFactures,
+      selectedRowIndex,
+      isPaymentModalOpen,
+      isGenererCouponModalOpen,
+      isDetailsCouponModalOpen,
+      isSudoModalOpen,
+      showTicketPreview,
+      isCouponPanelOpen,
+      user
+    }
+  })
+
   // Raccourcis clavier (mouse killing)
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      const h = latestHandlers.current
       // Ignorer si une modale est ouverte ou si l'utilisateur tape dans un champ
-      if (isPaymentModalOpen || isGenererCouponModalOpen || isDetailsCouponModalOpen || isSudoModalOpen) {
+      if (h.isPaymentModalOpen || h.isGenererCouponModalOpen || h.isDetailsCouponModalOpen || h.isSudoModalOpen) {
         // Escape pour fermer les modales
         if (e.key === 'Escape') {
           setIsPaymentModalOpen(false)
@@ -257,7 +292,7 @@ export default function CaisseCentralisee() {
         }
         return
       }
-      if (showTicketPreview && e.key === 'Escape') {
+      if (h.showTicketPreview && e.key === 'Escape') {
         setShowTicketPreview(false)
         return
       }
@@ -270,36 +305,36 @@ export default function CaisseCentralisee() {
       // Navigation avec flèches
       if (e.key === 'ArrowDown' || e.key === 'j') {
         e.preventDefault()
-        setSelectedRowIndex(prev => Math.min(prev + 1, sortedFactures.length - 1))
+        setSelectedRowIndex(prev => Math.min(prev + 1, h.sortedFactures.length - 1))
       } else if (e.key === 'ArrowUp' || e.key === 'k') {
         e.preventDefault()
         setSelectedRowIndex(prev => Math.max(prev - 1, 0))
       }
       // Enter pour encaisser la vente sélectionnée
-      else if (e.key === 'Enter' && sortedFactures.length > 0) {
+      else if (e.key === 'Enter' && h.sortedFactures.length > 0) {
         e.preventDefault()
-        const facture = sortedFactures[selectedRowIndex]
-        if (facture && ((user as any)?.can_cash_out || user?.is_superuser)) {
-          handleEncaisser(facture)
+        const facture = h.sortedFactures[h.selectedRowIndex]
+        if (facture && ((h.user as any)?.can_cash_out || h.user?.is_superuser)) {
+          h.handleEncaisser(facture)
         }
       }
       // C pour ouvrir le panneau des coupons
       else if (e.key === 'c' || e.key === 'C') {
         e.preventDefault()
-        if (sortedFactures.length > 0) {
-          openCouponSelectionForFacture(sortedFactures[selectedRowIndex])
+        if (h.sortedFactures.length > 0) {
+          h.openCouponSelectionForFacture(h.sortedFactures[h.selectedRowIndex])
         }
       }
       // R pour rafraîchir
       else if (e.key === 'r' || e.key === 'R') {
         e.preventDefault()
-        fetchFacturesEnAttente()
-        fetchCoupons()
+        h.fetchFacturesEnAttente()
+        h.fetchCoupons()
         toast.success(t('messages.refreshed'))
       }
       // Escape pour fermer le panneau coupons
       else if (e.key === 'Escape') {
-        if (isCouponPanelOpen) {
+        if (h.isCouponPanelOpen) {
           setIsCouponPanelOpen(false)
           setFactureForCoupon(null)
         }
@@ -307,7 +342,7 @@ export default function CaisseCentralisee() {
       // 1-9 pour sélectionner directement une vente
       else if (e.key >= '1' && e.key <= '9') {
         const index = parseInt(e.key) - 1
-        if (index < sortedFactures.length) {
+        if (index < h.sortedFactures.length) {
           setSelectedRowIndex(index)
         }
       }
@@ -315,7 +350,7 @@ export default function CaisseCentralisee() {
 
     document.addEventListener('keydown', handleKeyDown)
     return () => document.removeEventListener('keydown', handleKeyDown)
-  }, [sortedFactures, selectedRowIndex, isPaymentModalOpen, isGenererCouponModalOpen, isDetailsCouponModalOpen, isSudoModalOpen, showTicketPreview, isCouponPanelOpen, user, handleEncaisser, openCouponSelectionForFacture, fetchFacturesEnAttente, fetchCoupons])
+  }, [t])
 
   // Garder l'index valide quand la liste change
   useEffect(() => {
@@ -653,7 +688,7 @@ export default function CaisseCentralisee() {
           {isMultiCaisse && (
             <div className="flex items-center gap-2 bg-base-200 p-1.5 rounded-xl border border-base-300">
               <div className="flex items-center gap-2 px-3 text-base-content/60">
-                <Monitor className="w-4 h-4" />
+                <Monitor className="size-4" />
                 <span className="text-xs font-bold uppercase tracking-wider">Poste :</span>
               </div>
               <select 
@@ -671,14 +706,14 @@ export default function CaisseCentralisee() {
 
           <div className="flex items-center gap-3 flex-wrap">
             <div className="flex items-center gap-1.5 text-xs text-primary bg-primary/10 px-3 py-1.5 rounded-full font-medium">
-              <RefreshCw className="w-3.5 h-3.5 animate-spin" style={{ animationDuration: '3s' }} />
+              <RefreshCw className="size-3.5 animate-spin" />
               {t('auto_refresh')}
             </div>
             <button 
               onClick={() => setIsCouponPanelOpen(!isCouponPanelOpen)}
               className={`btn btn-sm gap-2 ${isCouponPanelOpen ? 'btn-primary' : 'btn-outline btn-primary'}`}
             >
-              <Ticket className="w-4 h-4" />
+              <Ticket className="size-4" />
               {t('coupons_active', { count: activeCouponsCount })}
             </button>
             {appliedCouponsCount > 0 && (
@@ -696,13 +731,13 @@ export default function CaisseCentralisee() {
         <div className="bg-gradient-to-br from-error/10 to-error/5 p-4 rounded-xl border border-error/20 flex items-center justify-between">
           <div>
             <div className="text-xs font-bold text-error uppercase tracking-wider mb-1 flex items-center gap-1">
-              <Clock className="w-3 h-3" /> {t('stats_pending_title', { defaultValue: 'En Attente' })}
+              <Clock className="size-3" /> {t('stats_pending_title', { defaultValue: 'En Attente' })}
             </div>
             <div className="text-2xl font-bold text-base-content">{facturesEnAttente.length}</div>
             <div className="text-xs text-base-content/60">{t('stats_pending_desc', { defaultValue: 'facture(s) à encaisser' })}</div>
           </div>
-          <div className="w-12 h-12 rounded-full bg-error/10 flex items-center justify-center">
-            <Clock className="w-6 h-6 text-error" />
+          <div className="size-12 rounded-full bg-error/10 flex items-center justify-center">
+            <Clock className="size-6 text-error" />
           </div>
         </div>
 
@@ -710,13 +745,13 @@ export default function CaisseCentralisee() {
         <div className="bg-gradient-to-br from-primary/10 to-primary/5 p-4 rounded-xl border border-primary/20 flex items-center justify-between">
           <div>
             <div className="text-xs font-bold text-primary uppercase tracking-wider mb-1 flex items-center gap-1">
-              <Banknote className="w-3 h-3" /> {t('stats_total_title', { defaultValue: 'Montant Total' })}
+              <Banknote className="size-3" /> {t('stats_total_title', { defaultValue: 'Montant Total' })}
             </div>
             <div className="text-2xl font-bold text-base-content">{formatCurrency(Math.round(totalMontantEnAttente))}</div>
             <div className="text-xs text-base-content/60">{t('stats_total_desc', { defaultValue: 'à encaisser' })}</div>
           </div>
-          <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
-            <Banknote className="w-6 h-6 text-primary" />
+          <div className="size-12 rounded-full bg-primary/10 flex items-center justify-center">
+            <Banknote className="size-6 text-primary" />
           </div>
         </div>
 
@@ -724,13 +759,13 @@ export default function CaisseCentralisee() {
         <div className="bg-gradient-to-br from-secondary/10 to-secondary/5 p-4 rounded-xl border border-secondary/20 flex items-center justify-between">
           <div>
             <div className="text-xs font-bold text-secondary uppercase tracking-wider mb-1 flex items-center gap-1">
-              <Ticket className="w-3 h-3" /> {t('stats_coupons_title', { defaultValue: 'Coupons Actifs' })}
+              <Ticket className="size-3" /> {t('stats_coupons_title', { defaultValue: 'Coupons Actifs' })}
             </div>
             <div className="text-2xl font-bold text-base-content">{activeCouponsCount}</div>
             <div className="text-xs text-base-content/60">{appliedCouponsCount > 0 ? t('coupons_applied', { count: appliedCouponsCount }) : t('stats_coupons_desc', { defaultValue: 'coupon(s) disponible(s)' })}</div>
           </div>
-          <div className="w-12 h-12 rounded-full bg-secondary/10 flex items-center justify-center">
-            <Ticket className="w-6 h-6 text-secondary" />
+          <div className="size-12 rounded-full bg-secondary/10 flex items-center justify-center">
+            <Ticket className="size-6 text-secondary" />
           </div>
         </div>
       </div>
@@ -775,7 +810,7 @@ export default function CaisseCentralisee() {
           {/* Keyboard Shortcuts Footer */}
           <div className="p-3 border-t border-base-200 flex items-center justify-between text-xs text-base-content/40">
             <div className="flex items-center gap-1">
-              <Keyboard className="w-3.5 h-3.5" />
+              <Keyboard className="size-3.5" />
               <span className="hidden sm:inline">{t('shortcuts.title')}</span>
             </div>
             <div className="flex gap-3">

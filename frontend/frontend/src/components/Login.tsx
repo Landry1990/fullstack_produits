@@ -244,7 +244,6 @@ export default function Login() {
                                   padding: '0.6rem 1rem',
                                   color: '#fff',
                                   fontSize: '0.8rem',
-                                  outline: 'none',
                                   boxSizing: 'border-box',
                                 }}
                               />
@@ -270,7 +269,7 @@ export default function Login() {
                               >
                                 <div style={{ display: 'flex', flexDirection: 'column' }}>
                                   <span style={{ fontSize: '0.9rem', fontWeight: 600 }}>{u.full_name}</span>
-                                  <span style={{ fontSize: '0.7rem', opacity: 0.5 }}>@{u.username}</span>
+                                  <span style={{ fontSize: '0.8rem', opacity: 0.5 }}>@{u.username}</span>
                                 </div>
                                 {username === u.username && <Shield size={14} style={{ color: 'var(--primary-pro)' }} />}
                               </button>
@@ -364,7 +363,7 @@ export default function Login() {
                 <div style={{ 
                   textAlign: 'center', 
                   marginTop: '1.5rem', 
-                  fontSize: '0.65rem', 
+                  fontSize: '0.75rem', 
                   color: '#475569',
                   textTransform: 'uppercase',
                   letterSpacing: '0.1em'

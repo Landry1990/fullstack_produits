@@ -19,7 +19,7 @@ export const AjustementsQuickStats: React.FC<AjustementsQuickStatsProps> = ({
         {
             label: t('ajustements.stats.total'),
             value: totalCount,
-            icon: <Activity className="w-6 h-6" />,
+            icon: <Activity className="size-6" />,
             color: 'primary',
             bg: 'bg-primary/10',
             text: 'text-primary',
@@ -28,7 +28,7 @@ export const AjustementsQuickStats: React.FC<AjustementsQuickStatsProps> = ({
         {
             label: t('ajustements.stats.positive'),
             value: `+${positiveSum}`,
-            icon: <PlusCircle className="w-6 h-6" />,
+            icon: <PlusCircle className="size-6" />,
             color: 'success',
             bg: 'bg-success/10',
             text: 'text-success',
@@ -37,7 +37,7 @@ export const AjustementsQuickStats: React.FC<AjustementsQuickStatsProps> = ({
         {
             label: t('ajustements.stats.negative'),
             value: negativeSum,
-            icon: <MinusCircle className="w-6 h-6" />,
+            icon: <MinusCircle className="size-6" />,
             color: 'error',
             bg: 'bg-error/10',
             text: 'text-error',

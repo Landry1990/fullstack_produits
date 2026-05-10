@@ -77,7 +77,7 @@ export const InventaireDataTab: React.FC<InventaireDataTabProps> = ({
     if (lignes.length === 0) {
         return (
             <div className="bg-base-100 rounded-2xl shadow-sm border border-base-300 p-12 text-center text-base-content/40 flex flex-col items-center gap-4 animate-in fade-in">
-                <div className="w-16 h-16 rounded-full bg-base-200 flex items-center justify-center mb-2">
+                <div className="size-16 rounded-full bg-base-200 flex items-center justify-center mb-2">
                     <PackageX className="h-8 w-8" />
                 </div>
                 <div>
@@ -128,7 +128,7 @@ export const InventaireDataTab: React.FC<InventaireDataTabProps> = ({
                     onClick={() => setSortOrder(prev => prev === 'asc' ? 'desc' : 'asc')}
                     title={sortOrder === 'asc' ? t('common:sort.asc', 'Croissant') : t('common:sort.desc', 'Décroissant')}
                 >
-                    {sortOrder === 'asc' ? <ArrowUp className="w-4 h-4" /> : <ArrowDown className="w-4 h-4" />}
+                    {sortOrder === 'asc' ? <ArrowUp className="size-4" /> : <ArrowDown className="size-4" />}
                 </button>
             </div>
 

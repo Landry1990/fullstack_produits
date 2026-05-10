@@ -320,7 +320,15 @@ export function useFacturationActions({
             safeStorage.removeItem(`activeCartLignes_${user.id}`, 'local')
             safeStorage.removeItem(`activeSaleContext_${user.id}`, 'local')
         }
-    }, [cart, clientsHook, ui, productSearch, user])
+
+        // Auto-focus search input for next sale
+        setTimeout(() => {
+            if (searchInputRef.current) {
+                searchInputRef.current.focus()
+                searchInputRef.current.select()
+            }
+        }, 150)
+    }, [cart, clientsHook, ui, productSearch, user, searchInputRef])
 
     const _resetSale = useCallback(() => {
         _resetSaleDataOnly()

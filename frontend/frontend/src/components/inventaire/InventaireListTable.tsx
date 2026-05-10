@@ -35,7 +35,7 @@ export const InventaireListTable: React.FC<InventaireListTableProps> = ({
     if (loading) {
         return (
             <div className="flex flex-col items-center justify-center py-20 text-base-content/40 animate-in fade-in duration-500">
-                <div className="w-16 h-16 border-4 border-primary/20 border-t-primary rounded-full animate-spin mb-4"></div>
+                <div className="size-16 border-4 border-primary/20 border-t-primary rounded-full animate-spin mb-4"></div>
                 <p className="font-medium animate-pulse">{t('common:loading')}</p>
             </div>
         );
@@ -45,7 +45,7 @@ export const InventaireListTable: React.FC<InventaireListTableProps> = ({
         return (
             <div className="flex flex-col items-center justify-center py-20 text-base-content/40 bg-base-100/50 m-4 rounded-2xl border border-dashed border-base-200">
                 <div className="bg-base-200/50 p-4 rounded-full mb-4">
-                    <Package className="w-10 h-10 text-base-content/30" />
+                    <Package className="size-10 text-base-content/30" />
                 </div>
                 <h3 className="text-lg font-semibold text-base-content mb-1">{t('inventaire.list.empty', { defaultValue: 'Aucun inventaire trouvé' })}</h3>
             </div>
@@ -101,7 +101,7 @@ export const InventaireListTable: React.FC<InventaireListTableProps> = ({
                                          #{inv.id}
                                     </span>
                                     <span className="text-xs text-base-content/60 flex items-center gap-1.5 mt-0.5">
-                                        <Calendar className="w-3 h-3" />
+                                        <Calendar className="size-3" />
                                         {formatDate(inv.date)}
                                     </span>
                                 </div>

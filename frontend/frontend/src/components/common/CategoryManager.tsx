@@ -344,7 +344,7 @@ export default function CategoryManager({
               </div>
            </div>
            <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 opacity-30" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 opacity-30" />
               <input 
                 type="text" 
                 placeholder={t('stock:organisation.category_manager.search', { type })}
@@ -510,7 +510,7 @@ export default function CategoryManager({
                         {products.map(p => (
                            <div key={p.id} className="bg-base-200/30 border border-base-100 p-4 rounded-2xl flex items-center justify-between group hover:bg-base-200/50 transition-all">
                               <div className="flex items-center gap-4 overflow-hidden">
-                                 <div className="w-12 h-12 bg-base-100 rounded-xl flex items-center justify-center shadow-sm">
+                                 <div className="size-12 bg-base-100 rounded-xl flex items-center justify-center shadow-sm">
                                     <Package size={20} className="text-primary/40" />
                                  </div>
                                  <div className="overflow-hidden">
@@ -584,7 +584,7 @@ export default function CategoryManager({
         subtitle={editingCategory 
           ? t('stock:organisation.category_manager.edit_subtitle') 
           : t('stock:organisation.category_manager.new_subtitle', { type: title })}
-        icon={editingCategory ? <Pencil className="w-5 h-5" /> : <Plus className="w-5 h-5" />}
+        icon={editingCategory ? <Pencil className="size-5" /> : <Plus className="size-5" />}
       >
         <form onSubmit={handleSubmit} className="p-6 space-y-5">
            <div>
@@ -641,11 +641,11 @@ export default function CategoryManager({
         title={t('stock:organisation.category_manager.assoc_products_title')}
         subtitle={t('stock:organisation.category_manager.assoc_products_subtitle', { name: selectedCategory ? getCategoryName(selectedCategory) : '' })}
         maxWidth="max-w-4xl"
-        icon={<Plus className="w-6 h-6" />}
+        icon={<Plus className="size-6" />}
       >
         <div className="p-6 flex flex-col h-[600px]">
            <div className="relative mb-6">
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 opacity-30" />
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 size-5 opacity-30" />
               <input 
                 type="text" 
                 placeholder={t('stock:organisation.category_manager.search_products_placeholder')} 

@@ -23,7 +23,7 @@ export default function JournalCaisseStats({ state }: Props) {
               <div className="text-[10px] text-base-content/40 mt-1 font-medium">{t('stats.ca_real')}</div>
             </div>
             <div className="p-3 bg-primary/10 rounded-lg text-primary">
-              <ArrowUpRight className="w-5 h-5" />
+              <ArrowUpRight className="size-5" />
             </div>
           </div>
         </div>
@@ -40,7 +40,7 @@ export default function JournalCaisseStats({ state }: Props) {
               <div className="text-[9px] text-base-content/40 mt-1 font-medium">{t('stats.debt_collection')}</div>
             </div>
             <div className="p-2 bg-base-200 rounded-lg text-base-content/30">
-              <Wallet className="w-4 h-4" />
+              <Wallet className="size-4" />
             </div>
           </div>
         </div>
@@ -54,7 +54,7 @@ export default function JournalCaisseStats({ state }: Props) {
               <div className="text-[10px] text-success/60 font-medium mt-1 uppercase italic">{t('stats.cash_formula')}</div>
             </div>
             <div className="p-3 bg-success/10 rounded-lg text-success">
-              <Banknote className="w-5 h-5" />
+              <Banknote className="size-5" />
             </div>
           </div>
         </div>
@@ -67,11 +67,11 @@ export default function JournalCaisseStats({ state }: Props) {
           </div>
           <div className="flex flex-col gap-1 mt-2">
             <div className="flex justify-between items-center text-[11px]">
-              <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-orange-500"></span> OM</span>
+              <span className="flex items-center gap-1"><span className="size-2 rounded-full bg-orange-500"></span> OM</span>
               <span className="font-bold opacity-70">{formatCurrency(serverTotals?.details?.om ?? totauxParMode.global_par_mode.om)}</span>
             </div>
             <div className="flex justify-between items-center text-[11px]">
-              <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-yellow-400"></span> MoMo</span>
+              <span className="flex items-center gap-1"><span className="size-2 rounded-full bg-yellow-400"></span> MoMo</span>
               <span className="font-bold opacity-70">{formatCurrency(serverTotals?.details?.momo ?? totauxParMode.global_par_mode.momo)}</span>
             </div>
           </div>
@@ -86,7 +86,7 @@ export default function JournalCaisseStats({ state }: Props) {
               <div className="text-[10px] text-base-content/40 mt-1 font-medium uppercase text-xs">{t('stats.non_cash_sales')}</div>
             </div>
             <div className="p-3 bg-info/10 rounded-lg text-info">
-              <CreditCard className="w-5 h-5" />
+              <CreditCard className="size-5" />
             </div>
           </div>
         </div>
@@ -117,7 +117,7 @@ export default function JournalCaisseStats({ state }: Props) {
           
           return (
             <div key={mode} className={`badge badge-ghost border-base-300 gap-2 p-3 text-[10px] font-bold`}>
-              <span className={`w-1.5 h-1.5 rounded-full bg-${info.color}`}></span>
+              <span className={`size-1.5 rounded-full bg-${info.color}`}></span>
               <span className="opacity-60">{info.label}:</span>
               <span>{formatCurrency(numValue)}</span>
             </div>
@@ -127,14 +127,14 @@ export default function JournalCaisseStats({ state }: Props) {
         {/* Part 2: Movements breakdown */}
         {(serverTotals?.total_entrees ?? totauxParMode.entrees) !== 0 && (
           <div className="badge badge-success badge-outline gap-2 p-3 text-[10px] font-bold text-success/80">
-            <ArrowUpRight className="w-3 h-3" />
+            <ArrowUpRight className="size-3" />
             <span className="opacity-60">{t('filter.entries')}:</span>
             <span>{formatCurrency(serverTotals?.total_entrees ?? totauxParMode.entrees)}</span>
           </div>
         )}
         {(serverTotals?.total_sorties ?? totauxParMode.sorties) !== 0 && (
           <div className="badge badge-error badge-outline gap-2 p-3 text-[10px] font-bold text-error/80">
-            <ArrowDownRight className="w-3 h-3" />
+            <ArrowDownRight className="size-3" />
             <span className="opacity-60">{t('filter.exits')}:</span>
             <span>{formatCurrency(serverTotals?.total_sorties ?? totauxParMode.sorties)}</span>
           </div>

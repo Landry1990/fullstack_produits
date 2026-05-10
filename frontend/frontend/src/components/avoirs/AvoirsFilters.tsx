@@ -23,7 +23,7 @@ export const AvoirsFilters: React.FC<AvoirsFiltersProps> = ({
             <div className="flex flex-col md:flex-row gap-4 justify-between items-center">
                 <div className="flex flex-1 gap-4 items-center w-full md:w-auto">
                     <div className="relative flex-1 max-w-md">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-base-content/40" />
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-base-content/40" />
                         <input
                             type="text"
                             placeholder={t('stock:avoirs.search_placeholder')}
@@ -46,7 +46,7 @@ export const AvoirsFilters: React.FC<AvoirsFiltersProps> = ({
                         className="btn btn-primary gap-2 text-white shadow-sm hover:shadow-md transition-all"
                         onClick={onNew}
                     >
-                        <Plus className="w-4 h-4" />
+                        <Plus className="size-4" />
                         <span className="hidden sm:inline">{t('stock:avoirs.create_btn')}</span>
                         <span className="sm:hidden">{t('common:add')}</span>
                     </button>

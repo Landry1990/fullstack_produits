@@ -209,8 +209,8 @@ export default function Sidebar() {
   ];
 
   // Logic to calculate menuItems based on authentication
-  const menuItems = allMenuItems.map(item => {
-    if (user?.is_superuser) return item;
+  const menuItems = allMenuItems.flatMap(item => {
+    if (user?.is_superuser) return [item];
     
     const allowed = (user as any)?.allowed_menus || [];
     
@@ -241,12 +241,12 @@ export default function Sidebar() {
         return false;
       });
       
-      return filteredSubmenus.length > 0 ? { ...item, submenus: filteredSubmenus } : null;
+      return filteredSubmenus.length > 0 ? [{ ...item, submenus: filteredSubmenus }] : [];
     }
     
-    if (item.key === 'changelog') return item;
-    return hasExplicitParent || hasLegacyCategory || allowed.includes(item.key) ? item : null;
-  }).filter(Boolean) as typeof allMenuItems;
+    if (item.key === 'changelog') return [item];
+    return (hasExplicitParent || hasLegacyCategory || allowed.includes(item.key)) ? [item] : [];
+  });
 
 
 
@@ -284,10 +284,10 @@ export default function Sidebar() {
       {/* Mobile toggle button */}
       <button
         onClick={toggleSidebar}
-        className="fixed top-3 left-3 z-50 lg:hidden w-9 h-9 rounded-xl bg-neutral text-white flex items-center justify-center shadow-lg"
+        className="fixed top-3 left-3 z-50 lg:hidden size-9 rounded-xl bg-neutral text-white flex items-center justify-center shadow-lg"
         aria-label="Toggle menu"
       >
-        {isOpen ? <X className="w-4 h-4" /> : <Menu className="w-4 h-4" />}
+        {isOpen ? <X className="size-4" /> : <Menu className="size-4" />}
       </button>
 
       {/* Overlay mobile */}
@@ -322,10 +322,10 @@ export default function Sidebar() {
           {/* Collapse button desktop */}
           <button
             onClick={toggleCollapse}
-            className="hidden lg:flex shrink-0 w-6 h-6 rounded-lg bg-white/5 hover:bg-white/15 text-white/40 hover:text-white items-center justify-center transition-all"
+            className="hidden lg:flex shrink-0 size-6 rounded-lg bg-white/5 hover:bg-white/15 text-white/40 hover:text-white items-center justify-center transition-all"
             title={isCollapsed ? 'Déplier' : 'Replier'}
           >
-            {isCollapsed ? <ChevronRight className="w-3.5 h-3.5" /> : <ChevronLeft className="w-3.5 h-3.5" />}
+            {isCollapsed ? <ChevronRight className="size-3.5" /> : <ChevronLeft className="size-3.5" />}
           </button>
         </div>
 
@@ -347,7 +347,7 @@ export default function Sidebar() {
                             ${isParentOfActive ? 'bg-emerald-500/15 text-emerald-400' : 'text-white/50 hover:text-white hover:bg-white/5'}`}
                           title={item.label}
                         >
-                          <span className="w-5 h-5">{item.icon}</span>
+                          <span className="size-5">{item.icon}</span>
                         </div>
                         <ul tabIndex={0} className="dropdown-content z-[100] menu p-2 shadow-2xl bg-[#1a2235] border border-white/10 rounded-2xl w-52 ml-2">
                           <li className="px-3 py-1.5">
@@ -377,11 +377,11 @@ export default function Sidebar() {
                               : 'text-white/50 hover:text-white/90 hover:bg-white/5'
                             }`}
                         >
-                          <span className={`w-5 h-5 shrink-0 transition-colors ${isMenuOpen || isParentOfActive ? 'text-emerald-400' : ''}`}>
+                          <span className={`size-5 shrink-0 transition-colors ${isMenuOpen || isParentOfActive ? 'text-emerald-400' : ''}`}>
                             {item.icon}
                           </span>
                           <span className="flex-1 text-left text-[15px] font-semibold tracking-tight truncate">{item.label}</span>
-                          <ChevronDown className={`w-3.5 h-3.5 shrink-0 transition-transform duration-200 ${isMenuOpen ? 'rotate-180' : ''}`} />
+                          <ChevronDown className={`size-3.5 shrink-0 transition-transform duration-200 ${isMenuOpen ? 'rotate-180' : ''}`} />
                         </button>
 
                         {/* Submenus with vertical connector */}
@@ -432,7 +432,7 @@ export default function Sidebar() {
                       }`
                     }
                   >
-                    <span className="w-5 h-5 shrink-0">{item.icon}</span>
+                    <span className="size-5 shrink-0">{item.icon}</span>
                     {!isCollapsed && <span className="text-[15px] font-semibold tracking-tight truncate">{item.label}</span>}
                   </NavLink>
                 </li>

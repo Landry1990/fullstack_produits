@@ -85,7 +85,7 @@ export function ObjectivesSettings({ isOpen, onClose }: Props) {
                 <div className="flex items-center justify-between p-6 sm:p-8 border-b border-base-200 bg-base-100">
                     <div>
                         <h2 className="text-2xl font-black tracking-tight text-base-content flex items-center gap-3">
-                            <Target className="w-6 h-6 text-primary" />
+                            <Target className="size-6 text-primary" />
                             {t('manager_dashboard.settings.title', 'Configuration des Objectifs')}
                         </h2>
                         <p className="text-sm font-medium text-base-content/60 mt-1">
@@ -96,7 +96,7 @@ export function ObjectivesSettings({ isOpen, onClose }: Props) {
                         onClick={onClose}
                         className="btn btn-ghost btn-circle btn-sm hover:rotate-90 transition-transform text-base-content/60 hover:text-base-content"
                     >
-                        <X className="w-5 h-5" />
+                        <X className="size-5" />
                     </button>
                 </div>
 
@@ -123,7 +123,7 @@ export function ObjectivesSettings({ isOpen, onClose }: Props) {
                                             : 'border-base-200 hover:border-base-300 hover:bg-base-200/50 cursor-pointer text-base-content/70'
                                         }`}
                                     >
-                                        <Hand className={`w-6 h-6 mb-3 ${config.mode === 'MANUEL' ? 'text-primary' : 'text-base-content/50'}`} />
+                                        <Hand className={`size-6 mb-3 ${config.mode === 'MANUEL' ? 'text-primary' : 'text-base-content/50'}`} />
                                         <h3 className={`font-bold ${config.mode === 'MANUEL' ? 'text-primary' : ''}`}>{t('manager_dashboard.settings.modes.manual_title')}</h3>
                                         <p className="text-xs mt-1 leading-relaxed opacity-80">{t('manager_dashboard.settings.modes.manual_desc')}</p>
                                     </button>
@@ -137,7 +137,7 @@ export function ObjectivesSettings({ isOpen, onClose }: Props) {
                                             : 'border-base-200 hover:border-base-300 hover:bg-base-200/50 cursor-pointer text-base-content/70'
                                         }`}
                                     >
-                                        <Target className={`w-6 h-6 mb-3 ${config.mode === 'FIXE' ? 'text-secondary' : 'text-base-content/50'}`} />
+                                        <Target className={`size-6 mb-3 ${config.mode === 'FIXE' ? 'text-secondary' : 'text-base-content/50'}`} />
                                         <h3 className={`font-bold ${config.mode === 'FIXE' ? 'text-secondary' : ''}`}>{t('manager_dashboard.settings.modes.fixed_title')}</h3>
                                         <p className="text-xs mt-1 leading-relaxed opacity-80">{t('manager_dashboard.settings.modes.fixed_desc')}</p>
                                     </button>
@@ -151,7 +151,7 @@ export function ObjectivesSettings({ isOpen, onClose }: Props) {
                                             : 'border-base-200 hover:border-base-300 hover:bg-base-200/50 cursor-pointer text-base-content/70'
                                         }`}
                                     >
-                                        <TrendingUp className={`w-6 h-6 mb-3 ${config.mode === 'DYNAMIQUE' ? 'text-accent' : 'text-base-content/50'}`} />
+                                        <TrendingUp className={`size-6 mb-3 ${config.mode === 'DYNAMIQUE' ? 'text-accent' : 'text-base-content/50'}`} />
                                         <h3 className={`font-bold ${config.mode === 'DYNAMIQUE' ? 'text-accent' : ''}`}>{t('manager_dashboard.settings.modes.dynamic_title')}</h3>
                                         <p className="text-xs mt-1 leading-relaxed opacity-80">{t('manager_dashboard.settings.modes.dynamic_desc')}</p>
                                     </button>
@@ -220,7 +220,7 @@ export function ObjectivesSettings({ isOpen, onClose }: Props) {
 
                                 {config.mode === 'MANUEL' && (
                                     <div className="p-4 bg-info/10 text-info rounded-xl text-sm leading-relaxed flex items-start gap-3 animate-in slide-in-from-top-2 fade-in">
-                                        <Hand className="w-5 h-5 shrink-0 mt-0.5" />
+                                        <Hand className="size-5 shrink-0 mt-0.5" />
                                         <p>{t('manager_dashboard.settings.modes.manual_notice')}</p>
                                     </div>
                                 )}
@@ -247,7 +247,7 @@ export function ObjectivesSettings({ isOpen, onClose }: Props) {
                             <span className="loading loading-spinner loading-sm"></span>
                         ) : (
                             <>
-                                <Save className="w-4 h-4" />
+                                <Save className="size-4" />
                                 {t('common:save')}
                             </>
                         )}

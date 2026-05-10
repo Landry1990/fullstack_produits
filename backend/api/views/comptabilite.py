@@ -27,10 +27,13 @@ class ExerciceComptableViewSet(viewsets.ModelViewSet):
     serializer_class = ExerciceComptableSerializer
     permission_classes = [permissions.IsAuthenticated]
 
+from ..filters import EcritureComptableFilter
+
 class EcritureComptableViewSet(viewsets.ModelViewSet):
-    queryset = EcritureComptable.objects.all()
+    queryset = EcritureComptable.objects.all().select_related('journal', 'exercice').prefetch_related('lignes', 'lignes__compte')
     serializer_class = EcritureComptableSerializer
     permission_classes = [permissions.IsAuthenticated]
+    filterset_class = EcritureComptableFilter
 
     @action(detail=False, methods=['get'])
     def balance(self, request):

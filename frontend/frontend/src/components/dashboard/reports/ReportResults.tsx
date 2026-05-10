@@ -45,7 +45,7 @@ export const ReportResults: React.FC<ReportResultsProps> = ({
     if (!results) {
         return (
             <div className="flex-1 flex flex-col items-center justify-center text-base-content/20 animate-in fade-in duration-700">
-                <Inbox className="w-24 h-24 mb-4 opacity-10" />
+                <Inbox className="size-24 mb-4 opacity-10" />
                 <p className="text-xl font-black uppercase tracking-[0.2em]">{t('results.execute_prompt', 'En attente d\'exécution...')}</p>
             </div>
         );
@@ -61,7 +61,7 @@ export const ReportResults: React.FC<ReportResultsProps> = ({
         if (selectedQuery.resultType === 'raw') {
             return (
                 <div className="flex flex-col items-center justify-center py-20 text-success animate-in zoom-in duration-500">
-                    <Download className="w-16 h-16 mb-4" />
+                    <Download className="size-16 mb-4" />
                     <p className="text-lg font-black uppercase tracking-widest">{t('results.export_success_short', { defaultValue: 'Rapport Généré' })}</p>
                     {results && typeof results === 'object' && (results as any).filename && (
                          <p className="text-xs opacity-60 mt-2">{(results as any).filename}</p>
@@ -106,7 +106,7 @@ export const ReportResults: React.FC<ReportResultsProps> = ({
             if (results.length === 0) {
                 return (
                     <div className="flex flex-col items-center justify-center py-20 text-base-content/30 italic">
-                        <Inbox className="w-12 h-12 mb-2 opacity-20" />
+                        <Inbox className="size-12 mb-2 opacity-20" />
                         <p>{t('results.empty', 'Aucun résultat trouvé pour cette période.')}</p>
                     </div>
                 );
@@ -126,7 +126,7 @@ export const ReportResults: React.FC<ReportResultsProps> = ({
                     {/* Filtre marge — visible uniquement pour detail_marges_lots */}
                     {isMargesReport && (
                         <div className="flex items-center gap-2 px-6 py-3 border-b border-base-200 bg-base-50">
-                            <AlertTriangle className="w-3.5 h-3.5 text-warning shrink-0" />
+                            <AlertTriangle className="size-3.5 text-warning shrink-0" />
                             <span className="text-[10px] font-black uppercase tracking-widest text-base-content/40 mr-2">Filtre marge :</span>
                             {(['all', 'negative', 'low'] as const).map(f => (
                                 <button
@@ -187,7 +187,7 @@ export const ReportResults: React.FC<ReportResultsProps> = ({
                                         ))}
                                         <td className="pr-4">
                                             <button className="btn btn-ghost btn-xs opacity-0 group-hover:opacity-100 transition-all rounded-lg hover:bg-primary/10 hover:text-primary">
-                                                <Eye className="w-4 h-4" />
+                                                <Eye className="size-4" />
                                             </button>
                                         </td>
                                     </tr>
@@ -281,7 +281,7 @@ export const ReportResults: React.FC<ReportResultsProps> = ({
                             disabled={!pagination.previous || loading}
                             onClick={() => onPageChange(pagination.previous)}
                         >
-                            <ChevronLeft className="w-4 h-4" />
+                            <ChevronLeft className="size-4" />
                             {t('common:previous', 'Précédent')}
                         </button>
                         <button 
@@ -290,7 +290,7 @@ export const ReportResults: React.FC<ReportResultsProps> = ({
                             onClick={() => onPageChange(pagination.next)}
                         >
                             {t('common:next', 'Suivant')}
-                            <ChevronRight className="w-4 h-4" />
+                            <ChevronRight className="size-4" />
                         </button>
                     </div>
                 </div>

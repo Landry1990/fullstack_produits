@@ -208,7 +208,7 @@ export default function ReapproRayon() {
         <div>
           <div className="flex items-center gap-3">
             <div className="p-3 bg-primary text-primary-content rounded-2xl shadow-lg shadow-primary/20">
-              <Package className="w-6 h-6" />
+              <Package className="size-6" />
             </div>
             <div>
                 <h1 className="text-2xl font-black text-base-content tracking-tight">{t('reappro.title', { defaultValue: 'Réapprovisionnement Rayon' })}</h1>
@@ -222,7 +222,7 @@ export default function ReapproRayon() {
             to="/app/reappro-history" 
             className="btn btn-sm btn-ghost hover:bg-base-100 text-[10px] font-black uppercase tracking-widest gap-2 rounded-xl border border-base-300 shadow-sm"
           >
-            <History className="w-3.5 h-3.5" />
+            <History className="size-3.5" />
             Historique
           </Link>
           <div className="flex items-center gap-2 bg-base-100 p-1.5 rounded-xl shadow-sm border border-base-300">
@@ -230,14 +230,14 @@ export default function ReapproRayon() {
                 onClick={fetchNeedsRefill} 
                 className={`btn btn-sm btn-ghost hover:bg-base-200 text-[10px] font-black uppercase tracking-widest gap-2 rounded-lg ${loading ? 'loading' : ''}`}
             >
-                {!loading && <RefreshCw className="w-3.5 h-3.5" />}
+                {!loading && <RefreshCw className="size-3.5" />}
                 {t('common:refresh')}
             </button>
             <button 
                 onClick={() => window.print()} 
                 className="btn btn-sm btn-ghost hover:bg-base-200 text-[10px] font-black uppercase tracking-widest gap-2 rounded-lg"
             >
-                <Printer className="w-3.5 h-3.5" />
+                <Printer className="size-3.5" />
                 {t('common:print')}
             </button>
           </div>
@@ -248,7 +248,7 @@ export default function ReapproRayon() {
                 className="btn btn-sm btn-primary text-[10px] font-black uppercase tracking-widest gap-2 rounded-lg"
                 disabled={loading || products.length === 0}
             >
-                <Truck className="w-3.5 h-3.5" />
+                <Truck className="size-3.5" />
                 Tout réapprovisionner
             </button>
           </div>
@@ -259,7 +259,7 @@ export default function ReapproRayon() {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 no-print">
         <div className="card bg-base-100 shadow-sm border border-base-300 rounded-2xl overflow-hidden p-6 flex flex-row items-center gap-4">
           <div className={`p-3 rounded-xl ${stats.criticalProductsCount > 0 ? 'bg-red-100 text-red-600' : 'bg-emerald-100 text-emerald-600'}`}>
-            <AlertCircle className="w-6 h-6" />
+            <AlertCircle className="size-6" />
           </div>
           <div>
             <p className="text-[10px] font-bold text-base-content/40 uppercase tracking-widest">Alertes Critiques</p>
@@ -268,7 +268,7 @@ export default function ReapproRayon() {
         </div>
         <div className="card bg-base-100 shadow-sm border border-base-300 rounded-2xl overflow-hidden p-6 flex flex-row items-center gap-4">
           <div className="p-3 rounded-xl bg-blue-100 text-blue-600">
-            <Truck className="w-6 h-6" />
+            <Truck className="size-6" />
           </div>
           <div>
             <p className="text-[10px] font-bold text-base-content/40 uppercase tracking-widest">Volume Suggéré</p>
@@ -277,7 +277,7 @@ export default function ReapproRayon() {
         </div>
         <div className="card bg-base-100 shadow-sm border border-base-300 rounded-2xl overflow-hidden p-6 flex flex-row items-center gap-4">
           <div className="p-3 rounded-xl bg-purple-100 text-purple-600">
-            <Filter className="w-6 h-6" />
+            <Filter className="size-6" />
           </div>
           <div>
             <p className="text-[10px] font-bold text-base-content/40 uppercase tracking-widest">Produits Affichés</p>
@@ -292,7 +292,7 @@ export default function ReapproRayon() {
         <div className="p-6 border-b border-base-200 flex flex-col md:flex-row md:items-center justify-between gap-6 bg-base-50/50 no-print">
           <div className="flex flex-col md:flex-row md:items-center gap-4 flex-1">
             <div className="relative flex-1 max-w-md">
-              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-base-content/30" />
+              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 size-4 text-base-content/30" />
               <input 
                 type="text" 
                 placeholder={t('common:search_product_placeholder')} 
@@ -332,7 +332,7 @@ export default function ReapproRayon() {
         {selectedIds.length > 0 && (
             <div className="px-6 py-3 bg-primary/5 border-b border-primary/10 flex items-center justify-between animate-in slide-in-from-top duration-300">
                 <div className="flex items-center gap-3">
-                    <div className="bg-primary text-primary-content w-6 h-6 rounded-lg flex items-center justify-center text-[10px] font-black">
+                    <div className="bg-primary text-primary-content size-6 rounded-lg flex items-center justify-center text-[10px] font-black">
                         {selectedIds.length}
                     </div>
                     <span className="text-xs font-black text-primary uppercase tracking-widest">Produits sélectionnés</span>
@@ -387,7 +387,7 @@ export default function ReapproRayon() {
                 <tr>
                    <td colSpan={7} className="py-24 text-center">
                       <div className="flex flex-col items-center justify-center opacity-20">
-                          <Package className="w-16 h-16 mb-4" />
+                          <Package className="size-16 mb-4" />
                           <h3 className="text-xl font-black uppercase tracking-tight">Aucun produit à réapprovisionner</h3>
                           <p className="text-sm font-bold max-w-xs mt-2 italic">Tous vos rayons sont actuellement bien fournis selon les paramètres de stock.</p>
                       </div>
@@ -420,7 +420,7 @@ export default function ReapproRayon() {
                         <div className="flex flex-col gap-1.5">
                             <div className="flex justify-between items-center px-1">
                                 <div className="flex items-center gap-1.5">
-                                    <div className={`w-1.5 h-1.5 rounded-full ${isLow ? 'bg-red-500 animate-pulse' : 'bg-emerald-500'}`}></div>
+                                    <div className={`size-1.5 rounded-full ${isLow ? 'bg-red-500 animate-pulse' : 'bg-emerald-500'}`}></div>
                                     <span className={`text-[9px] font-black uppercase tracking-widest ${isLow ? 'text-red-700' : 'text-emerald-700'}`}>
                                         {isLow ? 'Alerte Critique' : 'Niveau Correct'}
                                     </span>
@@ -453,11 +453,11 @@ export default function ReapproRayon() {
                             <div className="flex flex-col items-center animate-in zoom-in duration-300">
                                 <span className="text-sm font-black text-primary">+{suggest}</span>
                                 <div className="flex items-center gap-1 text-[8px] font-black text-primary/40 uppercase tracking-widest">
-                                    <ChevronRight className="w-2 h-2" /> Suggéré
+                                    <ChevronRight className="size-2" /> Suggéré
                                 </div>
                             </div>
                         ) : (
-                            <CheckCircle2 className="w-5 h-5 text-emerald-500 mx-auto opacity-20" />
+                            <CheckCircle2 className="size-5 text-emerald-500 mx-auto opacity-20" />
                         )}
                       </td>
                       <td className="text-right no-print">
@@ -466,7 +466,7 @@ export default function ReapproRayon() {
                             onClick={() => handleTransfer(p)}
                             disabled={suggest <= 0}
                         >
-                            <Truck className="w-4 h-4 transition-transform group-hover/btn:translate-x-1" />
+                            <Truck className="size-4 transition-transform group-hover/btn:translate-x-1" />
                             <span className="text-[9px] font-black uppercase tracking-widest ml-2 hidden xl:inline">Transférer</span>
                         </button>
                       </td>
@@ -516,8 +516,8 @@ export default function ReapproRayon() {
         maxWidth="max-w-md"
       >
         <div className="p-8 text-center">
-            <div className="w-20 h-20 bg-primary/10 text-primary rounded-3xl flex items-center justify-center mx-auto mb-6 shadow-sm">
-                <Truck className="w-10 h-10" />
+            <div className="size-20 bg-primary/10 text-primary rounded-3xl flex items-center justify-center mx-auto mb-6 shadow-sm">
+                <Truck className="size-10" />
             </div>
             <h3 className="text-xl font-black text-base-content tracking-tight">Réapprovisionner les stocks ?</h3>
             <p className="text-sm font-bold text-base-content/40 mt-3 leading-relaxed">
@@ -554,8 +554,8 @@ export default function ReapproRayon() {
         maxWidth="max-w-md"
       >
         <div className="p-8 text-center">
-            <div className="w-20 h-20 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto mb-6 shadow-sm">
-                <CheckCircle2 className="w-10 h-10" />
+            <div className="size-20 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto mb-6 shadow-sm">
+                <CheckCircle2 className="size-10" />
             </div>
             <h3 className="text-xl font-black text-base-content tracking-tight">Transfert Réussi !</h3>
             <p className="text-sm font-bold text-base-content/40 mt-3 leading-relaxed">
@@ -570,7 +570,7 @@ export default function ReapproRayon() {
                         setShowSuccessModal(false);
                     }}
                 >
-                    <Download className="w-4 h-4" />
+                    <Download className="size-4" />
                     Télécharger la confirmation PDF
                 </button>
                 <div className="grid grid-cols-2 gap-3">

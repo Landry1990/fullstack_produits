@@ -67,7 +67,7 @@ export default function AnalyseTemporelle() {
             <div className="space-y-6">
               <div className="flex justify-between items-center bg-base-200/50 p-4 rounded-lg">
                 <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center text-2xl">
+                  <div className="size-12 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center text-2xl">
                     ⚡
                   </div>
                   <div>
@@ -150,7 +150,7 @@ export default function AnalyseTemporelle() {
             <div className="space-y-6">
               <div className="flex justify-between items-center bg-base-200/50 p-4 rounded-lg">
                 <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 rounded-full bg-green-100 text-green-600 flex items-center justify-center text-2xl">
+                  <div className="size-12 rounded-full bg-green-100 text-green-600 flex items-center justify-center text-2xl">
                     📅
                   </div>
                   <div>
@@ -235,7 +235,7 @@ export default function AnalyseTemporelle() {
             <div className="space-y-6">
               <div className="flex justify-between items-center bg-base-200/50 p-4 rounded-lg">
                 <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 rounded-full bg-orange-100 text-orange-600 flex items-center justify-center text-2xl">
+                  <div className="size-12 rounded-full bg-orange-100 text-orange-600 flex items-center justify-center text-2xl">
                     🍂
                   </div>
                   <div>

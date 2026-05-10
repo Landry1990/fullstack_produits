@@ -12,7 +12,7 @@ interface SortIconProps {
 
 const SortIcon: React.FC<SortIconProps> = ({ column, sortConfig }) => {
     if (sortConfig.key !== column) return null;
-    return <ArrowUpRight className={`w-3 h-3 transition-transform ${sortConfig.direction === 'desc' ? 'rotate-180' : ''}`} />;
+    return <ArrowUpRight className={`size-3 transition-transform ${sortConfig.direction === 'desc' ? 'rotate-180' : ''}`} />;
 };
 
 interface CreancesTableProps {
@@ -64,7 +64,7 @@ export const CreancesTable: React.FC<CreancesTableProps> = ({
             return (
                 <div className="flex flex-col items-center justify-center py-20 bg-base-100 rounded-2xl border border-dashed border-base-300">
                     <div className="p-4 bg-base-200 rounded-full mb-4">
-                        <Users className="w-8 h-8 text-base-content/20" />
+                        <Users className="size-8 text-base-content/20" />
                     </div>
                     <p className="text-base-content/50 font-medium">{t('creances:client_list.empty')}</p>
                 </div>
@@ -93,7 +93,7 @@ export const CreancesTable: React.FC<CreancesTableProps> = ({
                             >
                                 <td className="py-4 px-6">
                                     <div className="flex items-center gap-4">
-                                        <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary font-black text-xs uppercase shadow-sm border border-primary/20 group-hover:scale-110 transition-transform">
+                                        <div className="size-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary font-black text-xs uppercase shadow-sm border border-primary/20 group-hover:scale-110 transition-transform">
                                             {groupe.client.name.substring(0, 2)}
                                         </div>
                                         <div className="flex flex-col">
@@ -124,7 +124,7 @@ export const CreancesTable: React.FC<CreancesTableProps> = ({
                                             onViewClient(groupe.client.id.toString());
                                         }}
                                     >
-                                        <ChevronRight className="w-5 h-5" />
+                                        <ChevronRight className="size-5" />
                                     </button>
                                 </td>
                             </tr>
@@ -140,7 +140,7 @@ export const CreancesTable: React.FC<CreancesTableProps> = ({
         return (
             <div className="flex flex-col items-center justify-center py-24 bg-base-100 rounded-3xl border-2 border-dashed border-base-200 m-8">
                 <div className="p-5 bg-base-100 shadow-xl shadow-base-200/50 rounded-2xl mb-6">
-                    <Hash className="w-10 h-10 text-base-content/10" />
+                    <Hash className="size-10 text-base-content/10" />
                 </div>
                 <p className="text-base-content/30 font-black uppercase tracking-widest text-xs">{t('creances:invoice_list.empty')}</p>
             </div>
@@ -163,13 +163,13 @@ export const CreancesTable: React.FC<CreancesTableProps> = ({
                             </th>
                         )}
                         <th className="sticky top-0 z-30 bg-base-200 opacity-100 border-b border-base-300 text-[10px] font-black uppercase tracking-widest text-base-content/40 cursor-pointer hover:text-primary transition-colors p-4" onClick={() => onSort('date')}>
-                            <div className="flex items-center gap-2"><Calendar className="w-3.5 h-3.5" /> {t('creances:invoice_list.date')} <SortIcon column="date" sortConfig={sortConfig} /></div>
+                            <div className="flex items-center gap-2"><Calendar className="size-3.5" /> {t('creances:invoice_list.date')} <SortIcon column="date" sortConfig={sortConfig} /></div>
                         </th>
                         <th className="sticky top-0 z-30 bg-base-200 opacity-100 border-b border-base-300 text-[10px] font-black uppercase tracking-widest text-base-content/40 cursor-pointer hover:text-primary transition-colors p-4" onClick={() => onSort('numero_facture')}>
-                            <div className="flex items-center gap-2"><Hash className="w-3.5 h-3.5" /> {t('creances:invoice_list.invoice_number')} <SortIcon column="numero_facture" sortConfig={sortConfig} /></div>
+                            <div className="flex items-center gap-2"><Hash className="size-3.5" /> {t('creances:invoice_list.invoice_number')} <SortIcon column="numero_facture" sortConfig={sortConfig} /></div>
                         </th>
                         <th className="sticky top-0 z-30 bg-base-200 opacity-100 border-b border-base-300 text-[10px] font-black uppercase tracking-widest text-base-content/40 cursor-pointer hover:text-primary transition-colors p-4" onClick={() => onSort('ayant_droit')}>
-                            <div className="flex items-center gap-2"><Users className="w-3.5 h-3.5" /> {t('creances:invoice_list.beneficiary')} <SortIcon column="ayant_droit" sortConfig={sortConfig} /></div>
+                            <div className="flex items-center gap-2"><Users className="size-3.5" /> {t('creances:invoice_list.beneficiary')} <SortIcon column="ayant_droit" sortConfig={sortConfig} /></div>
                         </th>
                         <th className="sticky top-0 z-30 bg-base-200 opacity-100 border-b border-base-300 text-[10px] font-black uppercase tracking-widest text-base-content/40 text-right cursor-pointer hover:text-primary transition-colors p-4" onClick={() => onSort('total_ttc')}>
                             <div className="flex items-center justify-end gap-2">{t('creances:invoice_list.total')} <SortIcon column="total_ttc" sortConfig={sortConfig} /></div>
@@ -238,7 +238,7 @@ export const CreancesTable: React.FC<CreancesTableProps> = ({
                                             className="btn btn-sm btn-circle btn-ghost hover:bg-primary/10 hover:text-primary transition-all shadow-sm group/btn"
                                             title={t('creances:invoice_list.view_payments')}
                                         >
-                                            <Eye className="w-4 h-4" />
+                                            <Eye className="size-4" />
                                         </button>
                                         {!isPaid && (
                                             <button
@@ -246,7 +246,7 @@ export const CreancesTable: React.FC<CreancesTableProps> = ({
                                                 className="btn btn-sm btn-circle btn-primary shadow-lg shadow-primary/20 hover:scale-110 active:scale-95 transition-all"
                                                 title={t('creances:invoice_list.add_payment')}
                                             >
-                                                <DollarSign className="w-4 h-4" />
+                                                <DollarSign className="size-4" />
                                             </button>
                                         )}
                                     </div>

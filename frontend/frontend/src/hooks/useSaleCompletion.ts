@@ -47,7 +47,7 @@ export interface UseSaleCompletionReturn {
 /**
  * Hook pour gérer la finalisation d'une vente
  */
-export function useSaleCompletion(options: UseSaleCompletionOptions = {}): UseSaleCompletionReturn {
+function useSaleCompletion(options: UseSaleCompletionOptions = {}): UseSaleCompletionReturn {
     const { onSuccess, onError, onReset } = options;
     const { settings: pharmacySettings } = usePharmacySettings();
     const { t } = useTranslation(['sales', 'common']);
@@ -405,96 +405,103 @@ export function useSaleCompletion(options: UseSaleCompletionOptions = {}): UseSa
             let totalVerse = 0;
 
             // 1. Enregistrer les paiements
+            // 1. Enregistrer les paiements et mettre à jour le statut en parallèle
             const montantADevoir = (facture.part_client !== null && Number(facture.part_client) >= 0)
                 ? Number(facture.part_client)
                 : Number(facture.total_ttc);
 
             let resteAEnregistrer = montantADevoir;
 
-            await Promise.all(paiementsList.map(async (p) => {
-                const isRefund = montantADevoir < 0;
-                if (!isRefund && resteAEnregistrer <= 0) return;
-                if (isRefund && resteAEnregistrer >= 0) return;
+            const [_, updatedFacture] = await Promise.all([
+                Promise.all(paiementsList.map(async (p) => {
+                    const isRefund = montantADevoir < 0;
+                    if (!isRefund && resteAEnregistrer <= 0) return;
+                    if (isRefund && resteAEnregistrer >= 0) return;
 
-                const montantReel = isRefund
-                    ? Math.max(p.montant, resteAEnregistrer)
-                    : Math.min(p.montant, resteAEnregistrer);
-                const payload = {
-                    facture_id: facture.id,
-                    mode_paiement: p.mode,
-                    montant: montantReel,
-                    reference: reference || null,
-                    statut: 'completee',
-                };
-                await caisseService.createPaiement(payload);
-                resteAEnregistrer -= montantReel;
-                totalVerse += montantReel;
-            }));
-
-            // 2. Mettre à jour le statut de la facture
-            await venteService.update(facture.id, { status: 'PAY' });
-
-            // 3. Rafraîchir les données
-            const updatedFacture = await venteService.getById(facture.id);
+                    const montantReel = isRefund
+                        ? Math.max(p.montant, resteAEnregistrer)
+                        : Math.min(p.montant, resteAEnregistrer);
+                    const payload = {
+                        facture_id: facture.id,
+                        mode_paiement: p.mode,
+                        montant: montantReel,
+                        reference: reference || null,
+                        statut: 'completee',
+                    };
+                    await caisseService.createPaiement(payload);
+                    resteAEnregistrer -= montantReel;
+                    totalVerse += montantReel;
+                })),
+                venteService.update(facture.id, { status: 'PAY' })
+            ]);
 
             const rendu = totalVerse - Number(updatedFacture.total_ttc);
 
-            // 4. GESTION DES PROMIS (Unifiée) — Créer en DB puis générer le ticket
+            // 2. GESTION DES PROMIS ET ORDONNANCIER en parallèle
             const promisLines = params.lignesFacture.filter(l => l.isPromis && l.promisQuantity && l.promisQuantity > 0);
-            if (promisLines.length > 0) {
-                try {
-                    // Créer les Promis en base de données via l'API
-                    await Promise.all(promisLines.map(l =>
-                        promisService.create({
-                            facture: facture.id,
-                            produit: l.produit.id,
-                            quantite: l.promisQuantity,
-                            client_phone: params.promisPhone || l.promisPhone || '',
-                            client_name: params.promisClientName || '',
-                            client: facture.client || undefined,
-                        })
-                    ));
+            
+            const sideEffects = [];
 
-                    // Générer le ticket PDF
-                    generatePromisTicket({
-                        client_name: updatedFacture.client_name || params.manualClientName || 'Client',
-                        client_phone: params.promisPhone || params.lignesFacture.find(l => l.promisPhone)?.promisPhone,
-                        items: promisLines.map(l => ({
-                            id: 0,
-                            produit_nom: l.produit.name,
-                            promisQuantity: l.promisQuantity || 0,
-                            produit: l.produit,
-                            date_promis: new Date().toISOString(),
-                            status: 'ATT'
-                        } satisfies PromisItem)),
-                        pharmacy: pharmacySettings,
-                        facture_id: updatedFacture.numero_facture || updatedFacture.id,
-                        is_paid: true
-                    });
-                    toast.success(t('messages.promis_recorded'));
-                } catch (err: unknown) {
-                    console.error("Erreur création/génération promis:", err);
-                }
+            if (promisLines.length > 0) {
+                sideEffects.push((async () => {
+                    try {
+                        await Promise.all(promisLines.map(l =>
+                            promisService.create({
+                                facture: facture.id,
+                                produit: l.produit.id,
+                                quantite: l.promisQuantity,
+                                client_phone: params.promisPhone || l.promisPhone || '',
+                                client_name: params.promisClientName || '',
+                                client: facture.client || undefined,
+                            })
+                        ));
+                        
+                        generatePromisTicket({
+                            client_name: updatedFacture.client_name || params.manualClientName || 'Client',
+                            client_phone: params.promisPhone || params.lignesFacture.find(l => l.promisPhone)?.promisPhone,
+                            items: promisLines.map(l => ({
+                                id: 0,
+                                produit_nom: l.produit.name,
+                                promisQuantity: l.promisQuantity || 0,
+                                produit: l.produit,
+                                date_promis: new Date().toISOString(),
+                                status: 'ATT'
+                            } satisfies PromisItem)),
+                            pharmacy: pharmacySettings,
+                            facture_id: updatedFacture.numero_facture || updatedFacture.id,
+                            is_paid: true
+                        });
+                        toast.success(t('messages.promis_recorded'));
+                    } catch (err) {
+                        console.error("Erreur promis:", err);
+                    }
+                })());
             }
 
-            // 5. GESTION ORDONNANCIER (Unifiée)
             if (params.tempOrdonnanceData) {
-                try {
-                    await ordonnancierService.create({
-                        ...params.tempOrdonnanceData,
-                        facture: updatedFacture.id,
-                        image_ordonnance: params.prescriptionImage,
-                        lignes: params.tempOrdonnanceData.lignes.map(l => ({
-                            produit: l.produit_id,
-                            produit_nom: l.produit_nom,
-                            quantite: l.quantite,
-                            surveillance_category: l.surveillance_category || 'NONE'
-                        }))
-                    });
-                    toast.success(t('messages.prescription_recorded'));
-                } catch (err: unknown) {
-                    console.error("Erreur ordonnancier:", err);
-                }
+                const ordonnanceData = params.tempOrdonnanceData;
+                sideEffects.push((async () => {
+                    try {
+                        await ordonnancierService.create({
+                            ...ordonnanceData,
+                            facture: updatedFacture.id,
+                            image_ordonnance: params.prescriptionImage,
+                            lignes: ordonnanceData.lignes.map(l => ({
+                                produit: l.produit_id,
+                                produit_nom: l.produit_nom,
+                                quantite: l.quantite,
+                                surveillance_category: l.surveillance_category || 'NONE'
+                            }))
+                        });
+                        toast.success(t('messages.prescription_recorded'));
+                    } catch (err) {
+                        console.error("Erreur ordonnancier:", err);
+                    }
+                })());
+            }
+
+            if (sideEffects.length > 0) {
+                await Promise.all(sideEffects);
             }
 
             // 6. Impression Facture A4

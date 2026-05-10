@@ -65,8 +65,8 @@ export const PromisTable: React.FC<PromisTableProps> = ({
     if (promisList.length === 0) {
         return (
             <div className="flex flex-col items-center justify-center p-12 text-base-content/60 gap-4">
-                <div className="w-16 h-16 rounded-full bg-base-200 flex items-center justify-center">
-                    <svg className="w-8 h-8 opacity-50" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <div className="size-16 rounded-full bg-base-200 flex items-center justify-center">
+                    <svg className="size-8 opacity-50" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
                     </svg>
                 </div>
@@ -92,31 +92,31 @@ export const PromisTable: React.FC<PromisTableProps> = ({
                         <>
                             <li>
                                 <a onClick={() => onDeliver(id)} className="flex items-center gap-3 py-3 hover:bg-success/10 text-success font-medium">
-                                    <Check className="w-4 h-4" /> {t('stock:promis.actions.deliver')}
+                                    <Check className="size-4" /> {t('stock:promis.actions.deliver')}
                                 </a>
                             </li>
                             <li>
                                 <a onClick={() => onCancel(id)} className="flex items-center gap-3 py-3 hover:bg-error/10 text-error font-medium">
-                                    <X className="w-4 h-4" /> {t('stock:promis.actions.cancel')}
+                                    <X className="size-4" /> {t('stock:promis.actions.cancel')}
                                 </a>
                             </li>
                         </>
                     )}
                     <li>
                         <a onClick={() => onPrint(id)} className="flex items-center gap-3 py-3 hover:bg-base-200">
-                            <Printer className="w-4 h-4" /> {t('stock:promis.actions.print')}
+                            <Printer className="size-4" /> {t('stock:promis.actions.print')}
                         </a>
                     </li>
                     {p.client_phone_display && (
                         <>
                             <li>
                                 <a onClick={() => onSms(p)} className="flex items-center gap-3 py-3 hover:bg-info/10 text-info">
-                                    <MessageCircle className="w-4 h-4" /> {t('stock:promis.actions.sms')}
+                                    <MessageCircle className="size-4" /> {t('stock:promis.actions.sms')}
                                 </a>
                             </li>
                             <li>
                                 <a onClick={() => onWhatsApp(id)} className="flex items-center gap-3 py-3 hover:bg-success/10 text-success">
-                                    <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.414 0 .018 5.396.015 12.03c0 2.12.541 4.191 1.57 6.017L0 24l6.135-1.61a11.75 11.75 0 005.917 1.595h.004c6.637 0 12.032-5.396 12.035-12.032.002-3.218-1.248-6.242-3.517-8.511z"/></svg> {t('stock:promis.actions.whatsapp')}
+                                    <svg className="size-4" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.414 0 .018 5.396.015 12.03c0 2.12.541 4.191 1.57 6.017L0 24l6.135-1.61a11.75 11.75 0 005.917 1.595h.004c6.637 0 12.032-5.396 12.035-12.032.002-3.218-1.248-6.242-3.517-8.511z"/></svg> {t('stock:promis.actions.whatsapp')}
                                 </a>
                             </li>
                         </>
@@ -131,13 +131,13 @@ export const PromisTable: React.FC<PromisTableProps> = ({
                 </li>
                 <li>
                     <a onClick={onBulkDeliver} className={`flex items-center gap-3 py-3 hover:bg-success/10 text-success font-medium ${bulkLoading ? 'disabled' : ''}`}>
-                        {bulkLoading ? <span className="loading loading-spinner loading-xs" /> : <Check className="w-4 h-4" />}
+                        {bulkLoading ? <span className="loading loading-spinner loading-xs" /> : <Check className="size-4" />}
                         {t('stock:promis.actions.deliver')}
                     </a>
                 </li>
                 <li>
                     <a onClick={onBulkCancel} className={`flex items-center gap-3 py-3 hover:bg-error/10 text-error font-medium ${bulkLoading ? 'disabled' : ''}`}>
-                        {bulkLoading ? <span className="loading loading-spinner loading-xs" /> : <X className="w-4 h-4" />}
+                        {bulkLoading ? <span className="loading loading-spinner loading-xs" /> : <X className="size-4" />}
                         {t('stock:promis.actions.cancel')}
                     </a>
                 </li>
@@ -146,7 +146,7 @@ export const PromisTable: React.FC<PromisTableProps> = ({
     };
 
     return (
-        <div className="overflow-auto w-full h-full relative">
+        <div className="overflow-auto size-full relative">
             <table className="table table-zebra table-pin-rows w-full text-sm">
                 <thead>
                     <tr className="bg-base-200 text-base-content/70 border-b border-base-300">
@@ -257,7 +257,7 @@ export const PromisTable: React.FC<PromisTableProps> = ({
                                             <ul tabIndex={0} className="dropdown-content z-[1] menu p-2 shadow-lg bg-base-100 rounded-xl w-44 border border-base-200">
                                                 <li>
                                                     <a onClick={() => onPrint(p.id)} className="flex items-center gap-2 hover:bg-primary/10 hover:text-primary">
-                                                        <Printer className="w-4 h-4" />
+                                                        <Printer className="size-4" />
                                                         {t('stock:promis.actions.print')}
                                                     </a>
                                                 </li>
@@ -265,13 +265,13 @@ export const PromisTable: React.FC<PromisTableProps> = ({
                                                     <>
                                                         <li>
                                                             <a onClick={() => onSms(p)} className="flex items-center gap-2 hover:bg-info/10 hover:text-info">
-                                                                <MessageCircle className="w-4 h-4" />
+                                                                <MessageCircle className="size-4" />
                                                                 {t('stock:promis.actions.sms')}
                                                             </a>
                                                         </li>
                                                         <li>
                                                             <a onClick={() => onWhatsApp(p.id)} className="flex items-center gap-2 hover:bg-success/10 hover:text-success font-bold">
-                                                                <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.414 0 .018 5.396.015 12.03c0 2.12.541 4.191 1.57 6.017L0 24l6.135-1.61a11.75 11.75 0 005.917 1.595h.004c6.637 0 12.032-5.396 12.035-12.032.002-3.218-1.248-6.242-3.517-8.511z"/></svg>
+                                                                <svg className="size-4" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.414 0 .018 5.396.015 12.03c0 2.12.541 4.191 1.57 6.017L0 24l6.135-1.61a11.75 11.75 0 005.917 1.595h.004c6.637 0 12.032-5.396 12.035-12.032.002-3.218-1.248-6.242-3.517-8.511z"/></svg>
                                                                 {t('stock:promis.actions.whatsapp')}
                                                             </a>
                                                         </li>

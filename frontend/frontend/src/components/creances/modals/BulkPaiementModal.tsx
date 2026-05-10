@@ -39,7 +39,7 @@ export const BulkPaiementModal: React.FC<BulkPaiementModalProps> = ({
                 {/* Summary Section */}
                 <div className="bg-primary/5 border border-primary/20 p-6 rounded-2xl flex flex-col items-center gap-4 text-center">
                     <div className="p-3 bg-base-100 rounded-2xl shadow-sm">
-                        <Layers className="w-8 h-8 text-primary" />
+                        <Layers className="size-8 text-primary" />
                     </div>
                     <div>
                         <div className="text-sm font-bold text-primary uppercase tracking-widest mb-1">
@@ -53,7 +53,7 @@ export const BulkPaiementModal: React.FC<BulkPaiementModalProps> = ({
 
                 {/* Warning Alert */}
                 <div className="alert alert-warning bg-warning/10 border-warning/20 p-4 rounded-xl flex items-start gap-3 shadow-sm">
-                    <AlertTriangle className="w-4 h-4 text-warning shrink-0 mt-0.5" />
+                    <AlertTriangle className="size-4 text-warning shrink-0 mt-0.5" />
                     <div className="text-[11px] font-medium leading-relaxed">
                         {t('creances:bulk_modal.warning_text')}
                         <br />
@@ -65,7 +65,7 @@ export const BulkPaiementModal: React.FC<BulkPaiementModalProps> = ({
                 <div className="space-y-4">
                     <div className="space-y-1.5">
                         <label className="text-[10px] font-black uppercase tracking-widest text-base-content/40 flex items-center gap-1.5 ml-1">
-                            <CreditCard className="w-3 h-3" /> {t('creances:bulk_modal.payment_mode')}
+                            <CreditCard className="size-3" /> {t('creances:bulk_modal.payment_mode')}
                         </label>
                         <select
                             value={form.modePaiement}
@@ -83,7 +83,7 @@ export const BulkPaiementModal: React.FC<BulkPaiementModalProps> = ({
 
                     <div className="space-y-1.5">
                         <label className="text-[10px] font-black uppercase tracking-widest text-base-content/40 flex items-center gap-1.5 ml-1">
-                            <Hash className="w-3 h-3" /> {t('creances:bulk_modal.bulk_reference')}
+                            <Hash className="size-3" /> {t('creances:bulk_modal.bulk_reference')}
                         </label>
                         <input
                             type="text"
@@ -97,7 +97,7 @@ export const BulkPaiementModal: React.FC<BulkPaiementModalProps> = ({
 
                 <div className="bg-base-50 p-3 rounded-xl flex items-center gap-3 border border-base-200">
                     <div className="p-2 bg-base-100 rounded-lg shadow-sm">
-                        <Info className="w-3 h-3 text-base-content/40" />
+                        <Info className="size-3 text-base-content/40" />
                     </div>
                     <p className="text-[10px] text-base-content/50 font-medium">
                         {t('creances:bulk_modal.supervisor_hint')}
@@ -112,7 +112,7 @@ export const BulkPaiementModal: React.FC<BulkPaiementModalProps> = ({
                         onClick={onConfirm} 
                         className="btn btn-primary flex-1 font-black uppercase tracking-widest text-xs shadow-lg shadow-primary/20 gap-2"
                     >
-                        <CheckCircle2 className="w-4 h-4" />
+                        <CheckCircle2 className="size-4" />
                         {t('creances:bulk_modal.confirm_payment')}
                     </button>
                 </div>

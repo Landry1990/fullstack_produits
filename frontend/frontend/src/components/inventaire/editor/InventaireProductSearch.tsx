@@ -134,7 +134,7 @@ export const InventaireProductSearch: React.FC<InventaireProductSearchProps> = (
                 <dialog className="modal modal-open">
                 <div className="modal-box max-w-md rounded-2xl shadow-2xl border border-base-300 p-0 overflow-hidden bg-base-100">
                     <div className="p-6 border-b border-base-200 bg-base-50 flex items-center gap-4">
-                        <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center">
+                        <div className="size-12 rounded-xl bg-primary/10 flex items-center justify-center">
                             <Database className="h-6 w-6 text-primary" />
                         </div>
                         <div>
@@ -163,7 +163,7 @@ export const InventaireProductSearch: React.FC<InventaireProductSearchProps> = (
                                 </div>
                             ) : availableLots.length === 0 ? (
                                 <div className="flex flex-col items-center justify-center py-12 gap-3 text-center px-6">
-                                    <div className="w-16 h-16 rounded-full bg-base-100 flex items-center justify-center mb-2 shadow-sm border border-base-300">
+                                    <div className="size-16 rounded-full bg-base-100 flex items-center justify-center mb-2 shadow-sm border border-base-300">
                                         <Database className="h-8 w-8 text-base-content/20" />
                                     </div>
                                     <h4 className="font-bold text-base-content text-lg">{t('inventaire.lot_modal.no_lots_title', 'Aucun lot disponible')}</h4>

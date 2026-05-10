@@ -80,11 +80,11 @@ export default function ReapproHistory() {
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
         <div className="flex items-center gap-4">
           <Link to="/app/reappro-rayon" className="btn btn-ghost btn-circle bg-base-100 shadow-sm border border-base-300">
-            <ChevronLeft className="w-5 h-5" />
+            <ChevronLeft className="size-5" />
           </Link>
           <div className="flex items-center gap-3">
             <div className="p-3 bg-purple-600 text-white rounded-2xl shadow-lg shadow-purple-600/20">
-              <History className="w-6 h-6" />
+              <History className="size-6" />
             </div>
             <div>
                 <h1 className="text-2xl font-black text-base-content tracking-tight">Historique Réappro</h1>
@@ -94,7 +94,7 @@ export default function ReapproHistory() {
         </div>
 
         <div className="relative max-w-md w-full">
-          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-base-content/30" />
+          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 size-4 text-base-content/30" />
           <input 
             type="text" 
             placeholder="Rechercher par N° ou utilisateur..." 
@@ -130,7 +130,7 @@ export default function ReapproHistory() {
                     <tr>
                         <td colSpan={6} className="py-24 text-center">
                             <div className="flex flex-col items-center justify-center opacity-20">
-                                <History className="w-16 h-16 mb-4" />
+                                <History className="size-16 mb-4" />
                                 <h3 className="text-xl font-black uppercase tracking-tight">Aucun historique trouvé</h3>
                             </div>
                         </td>
@@ -145,14 +145,14 @@ export default function ReapproHistory() {
                             </td>
                             <td>
                                 <div className="flex items-center gap-2">
-                                    <Calendar className="w-3.5 h-3.5 text-base-content/30" />
+                                    <Calendar className="size-3.5 text-base-content/30" />
                                     <span className="text-xs font-bold">{new Date(session.created_at).toLocaleString()}</span>
                                 </div>
                             </td>
                             <td>
                                 <div className="flex items-center gap-2">
-                                    <div className="w-6 h-6 bg-base-200 rounded-full flex items-center justify-center">
-                                        <User className="w-3 h-3 opacity-40" />
+                                    <div className="size-6 bg-base-200 rounded-full flex items-center justify-center">
+                                        <User className="size-3 opacity-40" />
                                     </div>
                                     <span className="text-xs font-bold">{session.user_name || 'Inconnu'}</span>
                                 </div>
@@ -169,7 +169,7 @@ export default function ReapproHistory() {
                                         onClick={() => setSelectedSession(session)}
                                         className="btn btn-sm btn-ghost hover:bg-base-200 text-[10px] font-black uppercase tracking-widest gap-2 rounded-xl"
                                     >
-                                        <Eye className="w-3.5 h-3.5" />
+                                        <Eye className="size-3.5" />
                                         Voir
                                     </button>
                                     <button 
@@ -177,7 +177,7 @@ export default function ReapproHistory() {
                                         className={`btn btn-sm btn-primary bg-purple-600 hover:bg-purple-700 border-none text-[10px] font-black uppercase tracking-widest gap-2 rounded-xl shadow-md shadow-purple-600/10 ${downloadingId === session.id ? 'loading' : ''}`}
                                         disabled={downloadingId === session.id}
                                     >
-                                        {!downloadingId && <Download className="w-3.5 h-3.5" />}
+                                        {!downloadingId && <Download className="size-3.5" />}
                                         PDF
                                     </button>
                                 </div>
