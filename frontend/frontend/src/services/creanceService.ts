@@ -22,6 +22,7 @@ export interface BulkPaiementPayload {
     reference: string;
     validated_by_id: number;
     sudo_password: string;
+    montant_total?: number; // Optionnel: pour paiement partiel
 }
 
 const creanceService = {
@@ -40,7 +41,23 @@ const creanceService = {
         return response.data;
     },
 
-    bulkPaiement: async (payload: BulkPaiementPayload): Promise<{ detail: string; releve_id: number; creances?: any[] }> => {
+    bulkPaiement: async (payload: BulkPaiementPayload): Promise<{
+        detail: string;
+        releve_id: number;
+        releve_reference?: string;
+        total_amount: string;
+        total_dettes: string;
+        reste_a_payer: string;
+        paiements: Array<{
+            facture_id: number;
+            numero_facture: string;
+            montant_total_facture: string;
+            montant_paye: string;
+            reste_avant: string;
+            reste_apres: string;
+            est_soldee: boolean;
+        }>;
+    }> => {
         const response = await api.post('creances/bulk_paiement/', payload);
         return response.data;
     },

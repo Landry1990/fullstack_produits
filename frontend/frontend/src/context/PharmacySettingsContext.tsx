@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from 'react';
+import { createContext, use, useState, useEffect, useCallback, useMemo, type ReactNode } from 'react';
 import api from '../services/api';
 import { toast } from 'react-hot-toast';
 import { useAuth } from './AuthContext';
@@ -132,21 +132,24 @@ export const PharmacySettingsProvider = ({ children }: { children: ReactNode }) 
     pharmacy_name: licence?.pharmacie_nom || settings.pharmacy_name
   };
 
+  // Mémoriser l'objet value pour éviter les re-renders inutiles
+  const contextValue = useMemo(() => ({
+    settings: effectiveSettings,
+    loading,
+    error,
+    updateSettings,
+    refetch: fetchSettings
+  }), [effectiveSettings, loading, error, updateSettings, fetchSettings]);
+
   return (
-    <PharmacySettingsContext.Provider value={{ 
-      settings: effectiveSettings, 
-      loading, 
-      error, 
-      updateSettings, 
-      refetch: fetchSettings 
-    }}>
+    <PharmacySettingsContext.Provider value={contextValue}>
       {children}
     </PharmacySettingsContext.Provider>
   );
 };
 
 export const usePharmacySettings = () => {
-  const context = useContext(PharmacySettingsContext);
+  const context = use(PharmacySettingsContext);
   if (context === undefined) {
     throw new Error('usePharmacySettings must be used within a PharmacySettingsProvider');
   }

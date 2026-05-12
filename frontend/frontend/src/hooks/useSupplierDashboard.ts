@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import api from '../services/api';
+import { getApiErrorDetail } from '../utils/errorHandling';
 
 export interface SupplierDashboardStats {
     total_dette: number;
@@ -34,9 +35,9 @@ export function useSupplierDashboard() {
         try {
             const response = await api.get('fournisseurs/dashboard_stats/');
             setStats(response.data);
-        } catch (err: any) {
+        } catch (err) {
             console.error('Error fetching supplier dashboard stats:', err);
-            setError(err.response?.data?.detail || 'Erreur lors de la récupération des statistiques');
+            setError(getApiErrorDetail(err, 'Erreur lors de la récupération des statistiques'));
         } finally {
             setLoading(false);
         }

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { Suspense } from 'react';
 import { useTranslation } from 'react-i18next';
 import { formatPrice, formatCurrency } from '../../../utils/formatters';
 import {
@@ -8,7 +8,7 @@ import {
 import {
     BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
     ResponsiveContainer, Cell
-} from 'recharts';
+} from '../../LazyRecharts';
 import { useInventaireAudit } from '../../../hooks/inventaire/useInventaireAudit';
 
 interface InventaireAuditProps {
@@ -283,7 +283,7 @@ export const InventaireAudit: React.FC<InventaireAuditProps> = ({ onBack }) => {
                                     type="category" 
                                     tick={{ fontSize: 10, fontWeight: 'bold' }} 
                                     width={120}
-                                    tickFormatter={(val) => val || 'N/A'}
+                                    tickFormatter={(val: string) => val || 'N/A'}
                                 />
                                 <Tooltip 
                                     formatter={(value: any) => [

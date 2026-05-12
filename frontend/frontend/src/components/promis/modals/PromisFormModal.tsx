@@ -165,7 +165,7 @@ export const PromisFormModal: React.FC<PromisFormModalProps> = ({
                         className="input input-bordered w-full focus:border-primary transition-colors font-mono"
                         placeholder={t('stock:promis.modal.phone_placeholder')}
                         value={formData.client_phone}
-                        onChange={(e) => setFormData(prev => ({ ...prev, client_phone: e.target.value }))}
+                        onChange={(e) => setFormData(prev => ({ ...prev, client: null, client_phone: e.target.value }))}
                     />
                 </div>
 

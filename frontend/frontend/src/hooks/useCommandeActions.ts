@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { toast } from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
+import { getApiErrorDetail } from '../utils/errorHandling';
 import type { Commande, CommandeProduit, User } from '../types';
 import commandeService, { type SudoCredentials } from '../services/commandeService';
 import { usePharmacySettings } from './usePharmacySettings';
@@ -104,8 +105,8 @@ export function useCommandeActions({
                 setViewMode('LIST');
             }
 
-        } catch (err: any) {
-            toast.error(err.response?.data?.error || err.response?.data?.detail || err.response?.data?.message || "Erreur de sauvegarde");
+        } catch (err) {
+            toast.error(getApiErrorDetail(err, "Erreur de sauvegarde"));
         } finally {
             if (!isAutoSave) setExecutingAction(false);
         }
@@ -120,8 +121,8 @@ export function useCommandeActions({
             fetchCommandes();
             setSelectedCommande(null);
             setViewMode('LIST');
-        } catch (err: any) {
-            toast.error(err.response?.data?.message || t('messages.delete_error'));
+        } catch (err) {
+            toast.error(getApiErrorDetail(err, t('messages.delete_error')));
         } finally {
             setExecutingAction(false);
         }
@@ -136,8 +137,8 @@ export function useCommandeActions({
             fetchCommandes();
             const updated = await commandeService.getById(commande.id);
             setSelectedCommande(updated);
-        } catch (err: any) {
-            toast.error(err.response?.data?.message || "Erreur de clôture");
+        } catch (err) {
+            toast.error(getApiErrorDetail(err, "Erreur de clôture"));
         } finally {
             setExecutingAction(false);
         }
@@ -154,8 +155,8 @@ export function useCommandeActions({
             const updated = await commandeService.getById(commande.id);
             setSelectedCommande(updated);
             fetchCommandes();
-        } catch (err: any) {
-            toast.error("Erreur lors du changement de statut");
+        } catch (err) {
+            toast.error(getApiErrorDetail(err, "Erreur lors du changement de statut"));
         } finally {
             setExecutingAction(false);
         }
@@ -170,8 +171,8 @@ export function useCommandeActions({
             fetchCommandes();
             const updated = await commandeService.getById(commande.id);
             setSelectedCommande(updated);
-        } catch (err: any) {
-            toast.error("Erreur lors de l'annulation");
+        } catch (err) {
+            toast.error(getApiErrorDetail(err, "Erreur lors de l'annulation"));
         } finally {
             setExecutingAction(false);
         }

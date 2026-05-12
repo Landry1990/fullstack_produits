@@ -106,6 +106,52 @@ class WhatsAppLog(models.Model):
     def __str__(self):
         return f"WhatsApp à {self.recipient_name or self.recipient_number} ({self.get_status_display()})"
 
+
+class TelegramLog(models.Model):
+    """Log des messages Telegram envoyés."""
+    class Type(models.TextChoices):
+        FACTURE = 'FACTURE', 'Envoi Facture'
+        PROMIS = 'PROMIS', 'Disponibilité Promis'
+        MANUEL = 'MANUEL', 'Envoi Manuel'
+        RAPPEL = 'RAPPEL', 'Rappel Paiement'
+        RAPPORT = 'RAPPORT', 'Rapport Flash'
+
+    class Status(models.TextChoices):
+        PENDING = 'PENDING', 'En attente'
+        SENT = 'SENT', 'Envoyé'
+        FAILED = 'FAILED', 'Échec'
+        DELIVERED = 'DELIVERED', 'Reçu'
+
+    recipient_chat_id = models.CharField(max_length=50, help_text="Chat ID Telegram du destinataire")
+    recipient_name = models.CharField(max_length=100, blank=True)
+    message = models.TextField()
+
+    # Attachment info
+    has_attachment = models.BooleanField(default=False)
+    attachment_path = models.CharField(max_length=255, blank=True, null=True)
+
+    type = models.CharField(max_length=20, choices=Type.choices, default=Type.RAPPORT)
+    status = models.CharField(max_length=20, choices=Status.choices, default=Status.PENDING)
+
+    provider_message_id = models.CharField(max_length=100, blank=True, null=True)
+    provider_response = models.TextField(blank=True, null=True)
+
+    facture = models.ForeignKey('Facture', on_delete=models.SET_NULL, null=True, blank=True, related_name='telegram_logs')
+    client = models.ForeignKey('Client', on_delete=models.SET_NULL, null=True, blank=True, related_name='telegram_logs')
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    sent_at = models.DateTimeField(null=True, blank=True)
+    sent_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
+
+    class Meta:
+        ordering = ['-created_at']
+        verbose_name = "Journal Telegram"
+        verbose_name_plural = "Journal Telegram"
+
+    def __str__(self):
+        return f"Telegram à {self.recipient_name or self.recipient_chat_id} ({self.get_status_display()})"
+
+
 class InternalMessage(models.Model):
     """Messages internes entre utilisateurs (vendeurs, pharmaciens)."""
     sender = models.ForeignKey(User, on_delete=models.CASCADE, related_name='sent_messages')

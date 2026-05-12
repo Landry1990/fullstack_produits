@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { toast } from 'react-hot-toast';
 import { licenceService, type LicenceNotification } from '../services/licenceService';
 import { AlertTriangle, Info, XCircle, X } from 'lucide-react';
@@ -10,9 +10,11 @@ import { AlertTriangle, Info, XCircle, X } from 'lucide-react';
  * À placer dans le layout principal (ex: App.tsx)
  */
 export function LicenceNotifications() {
-  const [notifications, setNotifications] = useState<LicenceNotification[]>([]);
-  const [dismissedIds, setDismissedIds] = useState<Set<number>>(new Set());
-  const [isLoading, setIsLoading] = useState(true);
+  const notificationsRef = useRef<LicenceNotification[]>([]);
+  const dismissedIdsRef = useRef<Set<number>>(new Set());
+  const isLoadingRef = useRef(true);
+  // Trigger pour forcer le re-render quand nécessaire
+  const [tick, setTick] = useState(0);
 
   // Charger les notifications au montage
   useEffect(() => {
@@ -25,13 +27,14 @@ export function LicenceNotifications() {
 
   const loadNotifications = async () => {
     try {
-      setIsLoading(true);
+      isLoadingRef.current = true;
       const data = await licenceService.getNotifications();
-      setNotifications(data.notifications);
+      notificationsRef.current = data.notifications;
     } catch (error) {
       console.error('Erreur chargement notifications licence:', error);
     } finally {
-      setIsLoading(false);
+      isLoadingRef.current = false;
+      setTick(t => t + 1); // Force re-render après chargement
     }
   };
 
@@ -39,7 +42,8 @@ export function LicenceNotifications() {
   const handleDismiss = useCallback(async (notification: LicenceNotification) => {
     try {
       await licenceService.dismissNotification(notification.id);
-      setDismissedIds(prev => new Set(prev).add(notification.id));
+      dismissedIdsRef.current.add(notification.id);
+      setTick(t => t + 1);
       toast.success('Notification ignorée');
     } catch (error) {
       toast.error('Erreur lors de la suppression');
@@ -48,13 +52,13 @@ export function LicenceNotifications() {
 
   // Afficher les notifications actives non ignorées
   useEffect(() => {
-    if (isLoading) return;
+    if (isLoadingRef.current) return;
 
-    const activeNotifications = notifications.filter(
-      n => !dismissedIds.has(n.id)
+    const activeNotifications = notificationsRef.current.filter(
+      (n: LicenceNotification) => !dismissedIdsRef.current.has(n.id)
     );
 
-    activeNotifications.forEach(notification => {
+    activeNotifications.forEach((notification: LicenceNotification) => {
       // Afficher comme toast persistant selon la sévérité
       switch (notification.severity) {
         case 'CRITICAL':
@@ -118,7 +122,7 @@ export function LicenceNotifications() {
           break;
       }
     });
-  }, [notifications, dismissedIds, isLoading, handleDismiss]);
+  }, [tick, handleDismiss]);
 
   return null; // Pas de rendu visuel, les toasts gèrent l'affichage
 }

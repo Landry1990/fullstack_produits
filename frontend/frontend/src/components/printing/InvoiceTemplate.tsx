@@ -225,7 +225,7 @@ const InvoiceTemplate: React.FC<InvoiceTemplateProps> = ({ settings, data, isBon
                           </td>
                           <td className="py-2 px-2 text-center align-middle font-bold text-base-content">{item.quantity}</td>
                           <td className="py-2 px-2 text-right align-middle text-base-content/80 font-medium">{formatNumber(htUnit, 0)}</td>
-                          <td className="py-2 px-2 text-right align-middle text-red-400 font-medium">{item.discount > 0 ? `-${formatNumber(item.discount, 0)}` : '—'}</td>
+                          <td className="py-2 px-2 text-right align-middle text-red-400 font-medium">{item.discount > 0 ? `-${formatNumber(item.discount, 0)}` : '-'}</td>
                           <td className="py-2 px-3 text-right align-middle font-black text-base-content text-[10.5px]">{formatNumber(totalLineNetHT, 0)}</td>
                       </tr>
                     );

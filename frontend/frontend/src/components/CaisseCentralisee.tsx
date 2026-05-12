@@ -12,6 +12,7 @@ import { PaymentModal } from './caisse/PaymentModal'
 import { FacturesTable } from './caisse/FacturesTable'
 import { CouponPanel } from './caisse/CouponPanel'
 import { useTranslation } from 'react-i18next'
+import { getApiErrorDetail } from '../utils/errorHandling'
 import PremiumModal from './common/PremiumModal'
 import { TicketTemplate } from './printing/TicketTemplate'
 import { RefreshCw, Ticket, Banknote, Clock, Keyboard, Monitor } from 'lucide-react'
@@ -136,9 +137,9 @@ export default function CaisseCentralisee() {
       // Ouvrir un aperçu pour impression
       setCouponTrouve(data)
       setIsDetailsCouponModalOpen(true)
-    } catch (err: any) {
+    } catch (err) {
       console.error('Erreur génération coupon:', err)
-      toast.error(err.response?.data?.detail || t('messages.error_generation'))
+      toast.error(getApiErrorDetail(err, t('messages.error_generation')))
     } finally {
       setLoading(false)
     }
@@ -205,7 +206,7 @@ export default function CaisseCentralisee() {
     try {
       await api.post(`coupons/${couponId}/utiliser/`, { facture_id: factureId })
       fetchCoupons()
-    } catch (err: any) {
+    } catch (err) {
       console.error('Erreur utilisation coupon:', err)
       // Ne pas bloquer - le paiement a réussi
     }
@@ -484,9 +485,9 @@ export default function CaisseCentralisee() {
       }
 
       toast.success(t('messages.modification_success'))
-    } catch (err: any) {
+    } catch (err) {
       console.error('Erreur lors du paiement:', err)
-      toast.error(err.response?.data?.detail || t('messages.save_payment_error'))
+      toast.error(getApiErrorDetail(err, t('messages.save_payment_error')))
     } finally {
       setLoading(false)
     }
@@ -508,9 +509,9 @@ export default function CaisseCentralisee() {
         phone: phone
       })
       toast.success(response.data.detail || 'Ticket envoyé par WhatsApp !')
-    } catch (err: any) {
+    } catch (err) {
       console.error('Erreur envoi WhatsApp:', err)
-      toast.error(err.response?.data?.detail || t('messages.whatsapp_send_error'))
+      toast.error(getApiErrorDetail(err, t('messages.whatsapp_send_error')))
     } finally {
       setLoading(false)
     }
@@ -622,9 +623,9 @@ export default function CaisseCentralisee() {
       setFacturesEnAttente(prev => prev.map(f => f.id === factureId ? { ...updatedFacture, session_ticket_number: f.session_ticket_number } : f))
       toast.success(t('messages.modification_success'))
       
-    } catch (err: any) {
+    } catch (err) {
       console.error('Erreur modification produit:', err)
-      toast.error(err.response?.data?.detail || t('messages.modification_error'))
+      toast.error(getApiErrorDetail(err, t('messages.modification_error')))
     } finally {
       setLoading(false)
     }
@@ -658,9 +659,9 @@ export default function CaisseCentralisee() {
       setFacturesEnAttente(prev => prev.map(f => f.id === factureId ? { ...updatedFacture, session_ticket_number: f.session_ticket_number } : f))
       toast.success(t('messages.product_removed'))
       
-    } catch (err: any) {
+    } catch (err) {
       console.error('Erreur suppression produit:', err)
-      toast.error(err.response?.data?.detail || t('messages.modification_error'))
+      toast.error(getApiErrorDetail(err, t('messages.modification_error')))
     } finally {
       setLoading(false)
     }

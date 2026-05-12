@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
 import { useAccounting } from '../../hooks/useAccounting';
 import { 
     LayoutDashboard, 
@@ -30,7 +30,7 @@ import {
     Cell,
     PieChart,
     Pie
-} from 'recharts';
+} from '../LazyRecharts';
 import Pagination from '../ui/Pagination';
 
 const amountFormatter = new Intl.NumberFormat('fr-FR', { maximumFractionDigits: 0 });
@@ -99,32 +99,31 @@ export default function Comptabilite({ defaultTab = 'dashboard' }: ComptabiliteP
     };
 
     return (
-        <div className="min-h-screen bg-base-200/50 text-base-content p-4 md:p-10 animate-fade-in">
-            {/* Header Executive */}
-            <div className="flex flex-col xl:flex-row xl:items-end justify-between mb-12 gap-8">
-                <div className="relative">
-                    <div className="absolute -left-4 top-0 w-1 h-full bg-primary rounded-full blur-sm opacity-50"></div>
-                    <span className="text-[10px] font-black uppercase tracking-[0.4em] text-primary mb-2 block ml-2">{t('ohada')}</span>
-                    <h1 className="text-4xl md:text-6xl font-black tracking-tighter flex items-center gap-4 leading-none">
+        <div className="min-h-screen bg-base-200/50 text-base-content p-4 md:p-8 animate-fade-in">
+            {/* Header - Harmonized with other pages */}
+            <div className="flex flex-col xl:flex-row xl:items-center justify-between mb-8 gap-6">
+                <div>
+                    <span className="text-xs font-semibold uppercase tracking-wider text-primary mb-2 block">{t('ohada')}</span>
+                    <h1 className="text-2xl md:text-3xl font-bold tracking-tight flex items-center gap-3">
                         {t('title')}
                         {isFetching && (
-                            <RefreshCcw className="size-6 text-primary animate-spin opacity-20" />
+                            <RefreshCcw className="size-5 text-primary animate-spin opacity-40" />
                         )}
                     </h1>
-                    <p className="text-base-content/40 mt-3 font-bold text-lg max-w-xl leading-relaxed">{t('subtitle')}</p>
+                    <p className="text-base-content/60 mt-2 text-sm max-w-xl">{t('subtitle')}</p>
                 </div>
 
-                <div className="flex flex-wrap items-center gap-4 bg-base-100/50 backdrop-blur-md p-3 rounded-[2rem] border border-white/10 shadow-2xl">
+                <div className="flex flex-wrap items-center gap-3 bg-base-100 p-3 rounded-xl border border-base-300 shadow-sm">
                     {/* Exercice Selector */}
-                    <div className="flex items-center gap-4 px-4 py-2 bg-base-100 rounded-2xl border border-base-300 shadow-inner">
-                        <Calendar className="size-5 text-primary" />
+                    <div className="flex items-center gap-3 px-3 py-2 bg-base-200 rounded-lg border border-base-300">
+                        <Calendar className="size-4 text-primary" />
                         <select 
-                            className="bg-transparent border-none focus:ring-0 text-sm font-black uppercase tracking-wider text-base-content cursor-pointer select select-ghost select-sm"
+                            className="bg-transparent border-none focus:ring-0 text-sm font-medium text-base-content cursor-pointer"
                             value={currentExercice?.id || ''}
                             onChange={(e) => handleExerciceChange(e.target.value)}
                         >
                             {exercices?.map(ex => (
-                                <option key={ex.id} value={ex.id} className="bg-base-100 text-base-content font-bold">
+                                <option key={ex.id} value={ex.id}>
                                     {ex.nom} {ex.est_cloture ? '• '+t('exercice.closed') : ''}
                                 </option>
                             ))}
@@ -132,17 +131,17 @@ export default function Comptabilite({ defaultTab = 'dashboard' }: ComptabiliteP
                     </div>
 
                     {/* Date Range Picker */}
-                    <div className="flex items-center gap-2 bg-base-100 rounded-2xl border border-base-300 shadow-inner px-4 overflow-hidden">
+                    <div className="flex items-center gap-2 bg-base-200 rounded-lg border border-base-300 px-3 py-2">
                         <input 
                             type="date" 
-                            className="bg-transparent border-none focus:ring-0 text-xs font-black p-3 w-32 outline-none"
+                            className="bg-transparent border-none focus:ring-0 text-sm p-1 w-32"
                             value={dateRange.start}
                             onChange={(e) => setDateRange({...dateRange, start: e.target.value})}
                         />
-                        <div className="w-px h-8 bg-base-300"></div>
+                        <div className="w-px h-4 bg-base-400"></div>
                         <input 
                             type="date" 
-                            className="bg-transparent border-none focus:ring-0 text-xs font-black p-3 w-32 outline-none"
+                            className="bg-transparent border-none focus:ring-0 text-sm p-1 w-32"
                             value={dateRange.end}
                             onChange={(e) => setDateRange({...dateRange, end: e.target.value})}
                         />
@@ -150,25 +149,22 @@ export default function Comptabilite({ defaultTab = 'dashboard' }: ComptabiliteP
                 </div>
             </div>
 
-            {/* Navigation Glass Tabs */}
-            <div className="flex overflow-x-auto hide-scrollbar gap-3 mb-12 p-2 rounded-3xl bg-base-100/30 backdrop-blur-xl border border-white/20 shadow-xl w-full lg:w-fit">
+            {/* Navigation Tabs - Harmonized */}
+            <div className="flex overflow-x-auto hide-scrollbar gap-2 mb-8 p-1.5 rounded-xl bg-base-100 border border-base-300 shadow-sm w-full lg:w-fit">
                 {tabs.map((tab) => (
                     <button
                         key={tab.id}
                         onClick={() => setActiveTab(tab.id)}
-                        className={`group flex-shrink-0 flex items-center gap-3 px-6 py-4 md:px-8 rounded-2xl transition-all duration-500 font-black text-[11px] uppercase tracking-[0.2em] relative overflow-hidden
+                        className={`group flex-shrink-0 flex items-center gap-2 px-4 py-2.5 rounded-lg transition-all duration-200 font-medium text-sm relative
                             ${activeTab === tab.id 
-                                ? 'bg-primary text-white shadow-2xl shadow-primary/40' 
-                                : 'text-base-content/40 hover:text-base-content hover:bg-base-100/50'
+                                ? 'bg-primary text-white shadow-sm' 
+                                : 'text-base-content/60 hover:text-base-content hover:bg-base-200'
                             }`}
                     >
-                        <span className={`transition-transform duration-500 ${activeTab === tab.id ? 'scale-110 rotate-12' : 'group-hover:rotate-12'}`}>
+                        <span className={`transition-transform ${activeTab === tab.id ? 'scale-110' : ''}`}>
                             {tab.icon}
                         </span>
-                        {tab.label}
-                        {activeTab === tab.id && (
-                            <div className="absolute inset-0 bg-gradient-to-tr from-white/20 to-transparent pointer-events-none"></div>
-                        )}
+                        <span className="whitespace-nowrap">{tab.label}</span>
                     </button>
                 ))}
             </div>
@@ -176,8 +172,8 @@ export default function Comptabilite({ defaultTab = 'dashboard' }: ComptabiliteP
             {/* Content Area */}
             {isLoading ? (
                 <div className="flex flex-col items-center justify-center py-20 animate-pulse">
-                    <RefreshCcw className="size-12 text-primary animate-spin mb-4" />
-                    <p className="font-black uppercase tracking-widest text-primary/40">{t('loading_msg')}</p>
+                    <RefreshCcw className="size-10 text-primary animate-spin mb-3" />
+                    <p className="font-medium text-base-content/40">{t('loading_msg')}</p>
                 </div>
             ) : (
                 <div className="space-y-6">
@@ -218,50 +214,43 @@ export default function Comptabilite({ defaultTab = 'dashboard' }: ComptabiliteP
 // ── Sub-components ────────────────────────────────────────────────────────────
 
 function DashboardTab({ resultat, actions, t }: any) {
-    
-
     return (
-        <div className="grid grid-cols-1 md:grid-cols-4 lg:grid-cols-6 gap-6 animate-fade-in">
-            {/* KPI Summary Cards */}
-            <div className="md:col-span-2 bg-base-100 p-6 rounded-3xl border border-base-300 shadow-sm relative overflow-hidden group">
-                <div className="absolute top-0 right-0 size-24 bg-primary/5 blur-3xl -mr-8 -mt-8"></div>
-                <p className="text-base-content/40 font-black text-[10px] uppercase tracking-widest mb-2">{t('dashboard.revenue')} (701)</p>
-                <h3 className="text-3xl font-black text-primary">{formatFCFA(resultat?.total_produits || 0)}</h3>
-                <div className="mt-4 flex items-center gap-2 text-[10px] font-black text-primary/40 uppercase">
-                    <ArrowUpRight className="size-4" />
-                    Chiffre d'affaires
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 animate-fade-in">
+            {/* KPI Summary Cards - Harmonized */}
+            <div className="bg-base-100 p-5 rounded-xl border border-base-300 shadow-sm">
+                <p className="text-base-content/50 text-xs font-medium uppercase tracking-wide mb-1">{t('dashboard.revenue')} (701)</p>
+                <h3 className="text-2xl font-bold text-primary">{formatFCFA(resultat?.total_produits || 0)}</h3>
+                <div className="mt-2 flex items-center gap-1 text-xs text-primary/60">
+                    <ArrowUpRight className="size-3" />
+                    <span>Chiffre d'affaires</span>
                 </div>
             </div>
 
-            <div className="md:col-span-2 bg-base-100 p-6 rounded-3xl border border-base-300 shadow-sm relative overflow-hidden group">
-                <div className="absolute top-0 right-0 size-24 bg-warning/5 blur-3xl -mr-8 -mt-8"></div>
-                <p className="text-base-content/40 font-black text-[10px] uppercase tracking-widest mb-2">Valeur Stock (311)</p>
-                <h3 className="text-3xl font-black text-warning">{formatFCFA(resultat?.valeur_stock || 0)}</h3>
-                <div className="mt-4 flex items-center gap-2 text-[10px] font-black text-warning/40 uppercase">
-                    <BookOpen className="size-4" />
-                    Variation d'inventaire
+            <div className="bg-base-100 p-5 rounded-xl border border-base-300 shadow-sm">
+                <p className="text-base-content/50 text-xs font-medium uppercase tracking-wide mb-1">Valeur Stock (311)</p>
+                <h3 className="text-2xl font-bold text-warning">{formatFCFA(resultat?.valeur_stock || 0)}</h3>
+                <div className="mt-2 flex items-center gap-1 text-xs text-warning/60">
+                    <BookOpen className="size-3" />
+                    <span>Variation d'inventaire</span>
                 </div>
             </div>
 
-            <div className="md:col-span-2 bg-base-100 p-6 rounded-3xl border border-base-300 shadow-sm relative overflow-hidden group">
-                <div className="absolute top-0 right-0 size-24 bg-error/5 blur-3xl -mr-8 -mt-8"></div>
-                <p className="text-base-content/40 font-black text-[10px] uppercase tracking-widest mb-2">{t('dashboard.expenses')} (Achats +)</p>
-                <h3 className="text-3xl font-black text-error">{formatFCFA(resultat?.total_charges || 0)}</h3>
-                <div className="mt-4 flex items-center gap-2 text-[10px] font-black text-error/40 uppercase">
-                    <ArrowDownRight className="size-4" />
-                    Dépenses
+            <div className="bg-base-100 p-5 rounded-xl border border-base-300 shadow-sm">
+                <p className="text-base-content/50 text-xs font-medium uppercase tracking-wide mb-1">{t('dashboard.expenses')} (Achats +)</p>
+                <h3 className="text-2xl font-bold text-error">{formatFCFA(resultat?.total_charges || 0)}</h3>
+                <div className="mt-2 flex items-center gap-1 text-xs text-error/60">
+                    <ArrowDownRight className="size-3" />
+                    <span>Dépenses</span>
                 </div>
             </div>
 
             {/* Performance Chart Card */}
-            <div className="md:col-span-4 bg-base-100 p-6 rounded-3xl border border-base-300 shadow-sm flex flex-col gap-4">
-                <div className="flex items-center justify-between">
-                    <div>
-                        <h4 className="font-black text-sm uppercase tracking-tighter text-primary">Performance Financière</h4>
-                        <p className="text-[10px] font-bold text-base-content/30 uppercase tracking-widest">Comparaison Produits vs Charges</p>
-                    </div>
+            <div className="md:col-span-2 bg-base-100 p-5 rounded-xl border border-base-300 shadow-sm">
+                <div className="mb-4">
+                    <h4 className="font-semibold text-sm text-primary">Performance Financière</h4>
+                    <p className="text-xs text-base-content/50">Comparaison Produits vs Charges</p>
                 </div>
-                <div className="h-48 w-full mt-2">
+                <div className="h-40">
                     <ResponsiveContainer width="100%" height="100%">
                         <BarChart data={[
                             { name: 'Produits', value: resultat?.total_produits || 0, fill: '#16a34a' },
@@ -272,15 +261,14 @@ function DashboardTab({ resultat, actions, t }: any) {
                                 dataKey="name" 
                                 axisLine={false} 
                                 tickLine={false} 
-                                tick={{fontSize: 10, fontWeight: 900}} 
+                                tick={{fontSize: 11}} 
                             />
                             <YAxis hide />
                             <Tooltip 
-                                contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)' }}
-                                cursor={{fill: 'transparent'}}
+                                contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)' }}
                                 formatter={(value: number) => [formatFCFA(value), '']}
                             />
-                            <Bar dataKey="value" radius={[10, 10, 10, 10]} barSize={40}>
+                            <Bar dataKey="value" radius={[6, 6, 6, 6]} barSize={36}>
                                 <Cell fill="#16a34a" />
                                 <Cell fill="#ef4444" />
                             </Bar>
@@ -289,39 +277,31 @@ function DashboardTab({ resultat, actions, t }: any) {
                 </div>
             </div>
 
-            <div className={`md:col-span-2 p-6 rounded-3xl border border-base-300 shadow-sm relative overflow-hidden flex flex-col justify-between
+            {/* Net Result Card */}
+            <div className={`bg-base-100 p-5 rounded-xl border border-base-300 shadow-sm flex flex-col justify-between
                 ${resultat?.resultat_net >= 0 ? 'bg-primary/5' : 'bg-error/5'}`}>
-                <div className="absolute top-0 right-0 size-32 bg-white/10 blur-2xl -mr-10 -mt-10"></div>
                 <div>
-                    <p className="text-base-content/40 font-black text-[10px] uppercase tracking-widest mb-2">{t('dashboard.net_result')}</p>
-                    <h3 className={`text-3xl font-black ${resultat?.resultat_net >= 0 ? 'text-primary' : 'text-error'}`}>
+                    <p className="text-base-content/50 text-xs font-medium uppercase tracking-wide mb-1">{t('dashboard.net_result')}</p>
+                    <h3 className={`text-2xl font-bold ${resultat?.resultat_net >= 0 ? 'text-primary' : 'text-error'}`}>
                         {formatFCFA(resultat?.resultat_net || 0)}
                     </h3>
                 </div>
-                <div className="flex items-center justify-between mt-4">
-                    <span className={`px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-wider
-                        ${resultat?.resultat_net >= 0 ? 'bg-primary text-white' : 'bg-error text-white'}`}>
-                        {resultat?.resultat_net >= 0 ? t('dashboard.profit') : t('dashboard.loss')}
-                    </span>
-                </div>
+                <span className={`mt-3 px-2 py-1 rounded-full text-xs font-medium w-fit
+                    ${resultat?.resultat_net >= 0 ? 'bg-primary text-white' : 'bg-error text-white'}`}>
+                    {resultat?.resultat_net >= 0 ? t('dashboard.profit') : t('dashboard.loss')}
+                </span>
             </div>
 
-            {/* Closure Banner */}
-            <div className="md:col-span-6 bg-primary p-6 md:p-10 rounded-[2.5rem] flex flex-col md:flex-row items-center justify-between gap-6 md:gap-8 shadow-xl shadow-primary/20 relative overflow-hidden text-center md:text-left">
-                <div className="absolute inset-0 opacity-10 pointer-events-none">
-                    <div className="grid grid-cols-6 gap-2 h-full transform -skew-x-12">
-                        {Array.from({ length: 6 }).map((_, i) => <div key={i} className="border-r border-white"></div>)}
-                    </div>
-                </div>
-                
-                <div className="relative z-10">
-                    <h4 className="text-2xl md:text-3xl font-black text-white tracking-tighter mb-2">{t('dashboard.ready_title')}</h4>
-                    <p className="text-white/80 font-bold text-sm md:text-base">{t('dashboard.ready_subtitle')}</p>
+            {/* Closure Banner - Simplified */}
+            <div className="md:col-span-3 bg-primary p-5 rounded-xl flex flex-col md:flex-row items-center justify-between gap-4 shadow-sm text-center md:text-left">
+                <div>
+                    <h4 className="text-lg font-semibold text-white">{t('dashboard.ready_title')}</h4>
+                    <p className="text-white/80 text-sm">{t('dashboard.ready_subtitle')}</p>
                 </div>
 
                 <button 
                     onClick={() => actions.initializeHistory.mutate()}
-                    className="btn btn-lg w-full md:w-auto bg-white text-primary border-none px-6 md:px-10 py-4 rounded-2xl font-black text-[10px] md:text-xs uppercase tracking-widest hover:scale-105 transition-all shadow-2xl active:scale-95"
+                    className="btn bg-white text-primary border-none px-4 py-2 rounded-lg font-medium text-sm hover:bg-white/90 transition-colors"
                 >
                     <RefreshCcw className={`size-4 mr-2 ${actions.initializeHistory.isPending ? 'animate-spin' : ''}`} />
                     {actions.initializeHistory.isPending ? t('dashboard.init_loading') : t('dashboard.init_button')}
@@ -336,37 +316,37 @@ function AchatsTab({ ecritures, count, page, setPage, locale, t }: any) {
     const totalPages = Math.ceil(count / itemsPerPage);
 
     return (
-        <div className="card bg-base-100 rounded-3xl border border-base-300 overflow-hidden shadow-sm animate-fade-in">
-            <div className="p-6 border-b border-base-300 bg-base-100">
-                <h3 className="font-black text-xl uppercase tracking-tighter text-primary">{t('achats.title')}</h3>
-                <p className="text-xs text-base-content/40 font-bold mt-1 uppercase tracking-widest">{t('achats.subtitle')}</p>
+        <div className="card bg-base-100 rounded-xl border border-base-300 overflow-hidden shadow-sm">
+            <div className="p-5 border-b border-base-300">
+                <h3 className="font-semibold text-lg text-primary">{t('achats.title')}</h3>
+                <p className="text-xs text-base-content/50 mt-1">{t('achats.subtitle')}</p>
             </div>
             <div className="overflow-x-auto">
-                <table className="table w-full text-left whitespace-nowrap">
+                <table className="table w-full text-left">
                     <thead>
-                        <tr className="bg-base-50/50 border-b border-base-200 text-base-content/50 text-[10px] font-black uppercase tracking-widest">
-                            <th className="px-6 py-4">{t('ledger.cols.date')}</th>
-                            <th className="px-6 py-4">{t('ledger.cols.ref')}</th>
-                            <th className="px-6 py-4">{t('ledger.cols.label')}</th>
-                            <th className="px-6 py-4 text-right">{t('ledger.cols.debit')}</th>
-                            <th className="px-6 py-4 text-right">{t('ledger.cols.credit')}</th>
+                        <tr className="bg-base-50 border-b border-base-200 text-xs font-medium uppercase text-base-content/60">
+                            <th className="px-4 py-3">{t('ledger.cols.date')}</th>
+                            <th className="px-4 py-3">{t('ledger.cols.ref')}</th>
+                            <th className="px-4 py-3">{t('ledger.cols.label')}</th>
+                            <th className="px-4 py-3 text-right">{t('ledger.cols.debit')}</th>
+                            <th className="px-4 py-3 text-right">{t('ledger.cols.credit')}</th>
                         </tr>
                     </thead>
-                    <tbody className="divide-y divide-base-100 font-bold">
+                    <tbody className="divide-y divide-base-100">
                         {ecritures.map((e: any) => (
                             <React.Fragment key={e.id}>
                                 <tr className="group hover:bg-base-50 transition-colors">
-                                    <td className="px-6 py-4 text-sm font-bold text-base-content/80">{format(new Date(e.date), 'dd MMM yyyy', { locale })}</td>
-                                    <td className="px-6 py-4 text-primary font-black text-sm text-[13px] font-black">{e.reference}</td>
-                                    <td className="px-6 py-4 text-sm font-black uppercase tracking-tighter">{e.libelle}</td>
-                                    <td className="px-6 py-4 text-right text-primary font-black text-sm">{e.total_debit > 0 ? formatAmount(e.total_debit) : '-'}</td>
-                                    <td className="px-6 py-4 text-right text-error font-black text-sm">{e.total_credit > 0 ? formatAmount(e.total_credit) : '-'}</td>
+                                    <td className="px-4 py-3 text-sm text-base-content/70">{format(new Date(e.date), 'dd MMM yyyy', { locale })}</td>
+                                    <td className="px-4 py-3 text-primary font-medium text-sm">{e.reference}</td>
+                                    <td className="px-4 py-3 text-sm">{e.libelle}</td>
+                                    <td className="px-4 py-3 text-right text-primary font-medium text-sm">{e.total_debit > 0 ? formatAmount(e.total_debit) : '-'}</td>
+                                    <td className="px-4 py-3 text-right text-error font-medium text-sm">{e.total_credit > 0 ? formatAmount(e.total_credit) : '-'}</td>
                                 </tr>
                             </React.Fragment>
                         ))}
                         {ecritures.length === 0 && (
                             <tr>
-                                <td colSpan={5} className="py-20 text-center text-base-content/30 italic font-bold">
+                                <td colSpan={5} className="py-12 text-center text-base-content/40 text-sm">
                                     {t('achats.no_data')}
                                 </td>
                             </tr>
@@ -394,15 +374,15 @@ function GrandLivreTab({ ecritures, count, page, setPage, search, setSearch, loc
     const totalPages = Math.ceil(count / itemsPerPage);
 
     return (
-        <div className="card bg-base-100 rounded-3xl border border-base-300 overflow-hidden shadow-sm">
-            <div className="p-6 border-b border-base-300 flex items-center justify-between bg-base-100">
-                <h3 className="font-black text-xl uppercase tracking-tighter text-primary">{t('ledger.title')}</h3>
+        <div className="card bg-base-100 rounded-xl border border-base-300 overflow-hidden shadow-sm">
+            <div className="p-5 border-b border-base-300 flex items-center justify-between">
+                <h3 className="font-semibold text-lg text-primary">{t('ledger.title')}</h3>
                 <div className="relative">
                     <Search className="size-4 absolute left-3 top-1/2 -translate-y-1/2 text-base-content/30" />
                     <input 
                         type="text" 
                         placeholder={t('ledger.search_placeholder')}
-                        className="input input-bordered bg-base-200 border-base-300 rounded-xl pl-10 pr-4 py-2 text-xs font-bold focus:ring-primary w-64"
+                        className="input input-bordered bg-base-200 border-base-300 rounded-lg pl-10 pr-4 py-2 text-sm focus:ring-primary w-64"
                         value={search}
                         onChange={(e) => {
                             setSearch(e.target.value);
@@ -412,43 +392,43 @@ function GrandLivreTab({ ecritures, count, page, setPage, search, setSearch, loc
                 </div>
             </div>
             <div className="overflow-x-auto">
-                <table className="table w-full text-left whitespace-nowrap">
+                <table className="table w-full text-left">
                     <thead>
-                        <tr className="bg-base-50/50 border-b border-base-200 text-base-content/50 text-[10px] font-black uppercase tracking-widest">
-                            <th className="px-6 py-4">{t('ledger.cols.date')}</th>
-                            <th className="px-6 py-4">{t('ledger.cols.journal')}</th>
-                            <th className="px-6 py-4">{t('ledger.cols.ref')}</th>
-                            <th className="px-6 py-4">{t('ledger.cols.label')}</th>
-                            <th className="px-6 py-4 text-right">{t('ledger.cols.debit')}</th>
-                            <th className="px-6 py-4 text-right">{t('ledger.cols.credit')}</th>
+                        <tr className="bg-base-50 border-b border-base-200 text-xs font-medium uppercase text-base-content/60">
+                            <th className="px-4 py-3">{t('ledger.cols.date')}</th>
+                            <th className="px-4 py-3">{t('ledger.cols.journal')}</th>
+                            <th className="px-4 py-3">{t('ledger.cols.ref')}</th>
+                            <th className="px-4 py-3">{t('ledger.cols.label')}</th>
+                            <th className="px-4 py-3 text-right">{t('ledger.cols.debit')}</th>
+                            <th className="px-4 py-3 text-right">{t('ledger.cols.credit')}</th>
                         </tr>
                     </thead>
-                    <tbody className="divide-y divide-base-100 font-bold">
+                    <tbody className="divide-y divide-base-100">
                         {ecritures.map((e: any) => (
                             <React.Fragment key={e.id}>
                                 <tr className="group hover:bg-base-50 transition-colors">
-                                    <td className="px-6 py-4 text-sm font-bold text-base-content/80">{format(new Date(e.date), 'dd MMM yyyy', { locale })}</td>
-                                    <td className="px-6 py-4"><span className="badge badge-neutral badge-sm font-black text-[9px] uppercase">{e.journal_code}</span></td>
-                                    <td className="px-6 py-4 text-primary font-black text-sm text-[13px] font-black">{e.reference}</td>
-                                    <td className="px-6 py-4 text-sm font-black uppercase tracking-tighter">{e.libelle}</td>
-                                    <td className="px-6 py-4 text-right text-primary font-black text-sm">{e.total_debit > 0 ? formatAmount(e.total_debit) : '-'}</td>
-                                    <td className="px-6 py-4 text-right text-error font-black text-sm">{e.total_credit > 0 ? formatAmount(e.total_credit) : '-'}</td>
+                                    <td className="px-4 py-3 text-sm text-base-content/70">{format(new Date(e.date), 'dd MMM yyyy', { locale })}</td>
+                                    <td className="px-4 py-3"><span className="badge badge-neutral badge-sm font-medium text-xs">{e.journal_code}</span></td>
+                                    <td className="px-4 py-3 text-primary font-medium text-sm">{e.reference}</td>
+                                    <td className="px-4 py-3 text-sm">{e.libelle}</td>
+                                    <td className="px-4 py-3 text-right text-primary font-medium text-sm">{e.total_debit > 0 ? formatAmount(e.total_debit) : '-'}</td>
+                                    <td className="px-4 py-3 text-right text-error font-medium text-sm">{e.total_credit > 0 ? formatAmount(e.total_credit) : '-'}</td>
                                 </tr>
                                 {e.lignes?.map((l: any) => (
-                                    <tr key={l.id} className="text-[11px] text-base-content/40 hover:text-base-content transition-colors bg-base-50/30">
+                                    <tr key={l.id} className="text-xs text-base-content/50 hover:text-base-content transition-colors bg-base-50/30">
                                         <td colSpan={3}></td>
-                                        <td className="px-6 py-1.5 pl-10 border-l-2 border-primary/10 italic">
+                                        <td className="px-4 py-2 pl-8 border-l-2 border-primary/10">
                                             {l.compte_numero} - {l.compte_libelle}
                                         </td>
-                                        <td className="px-6 py-1.5 text-right font-bold opacity-60 text-sm">{l.debit > 0 ? formatAmount(l.debit) : ''}</td>
-                                        <td className="px-6 py-1.5 text-right font-bold opacity-60 text-sm">{l.credit > 0 ? formatAmount(l.credit) : ''}</td>
+                                        <td className="px-4 py-2 text-right font-medium">{l.debit > 0 ? formatAmount(l.debit) : ''}</td>
+                                        <td className="px-4 py-2 text-right font-medium">{l.credit > 0 ? formatAmount(l.credit) : ''}</td>
                                     </tr>
                                 ))}
                             </React.Fragment>
                         ))}
                         {ecritures.length === 0 && (
                             <tr>
-                                <td colSpan={6} className="py-10 text-center text-base-content/40 italic font-bold">
+                                <td colSpan={6} className="py-10 text-center text-base-content/40 text-sm">
                                     Aucune écriture trouvée
                                 </td>
                             </tr>
@@ -473,28 +453,28 @@ function GrandLivreTab({ ecritures, count, page, setPage, search, setSearch, loc
 
 function BalanceTab({ balance, t }: any) {
     return (
-        <div className="card bg-base-100 rounded-3xl border border-base-300 overflow-hidden shadow-sm">
+        <div className="card bg-base-100 rounded-xl border border-base-300 overflow-hidden shadow-sm">
             <div className="overflow-x-auto">
-                <table className="table w-full text-left whitespace-nowrap">
+                <table className="table w-full text-left">
                     <thead>
-                    <tr className="bg-base-50/50 border-b border-base-200 text-[10px] font-black uppercase tracking-widest text-base-content/50">
-                        <th className="px-6 py-4">{t('balance.cols.account')}</th>
-                        <th className="px-6 py-4">{t('balance.cols.label')}</th>
-                        <th className="px-6 py-4 text-right">{t('balance.cols.debit_mov')}</th>
-                        <th className="px-6 py-4 text-right">{t('balance.cols.credit_mov')}</th>
-                        <th className="px-6 py-4 text-right">{t('balance.cols.debit_sol')}</th>
-                        <th className="px-6 py-4 text-right">{t('balance.cols.credit_sol')}</th>
+                    <tr className="bg-base-50 border-b border-base-200 text-xs font-medium uppercase text-base-content/60">
+                        <th className="px-4 py-3">{t('balance.cols.account')}</th>
+                        <th className="px-4 py-3">{t('balance.cols.label')}</th>
+                        <th className="px-4 py-3 text-right">{t('balance.cols.debit_mov')}</th>
+                        <th className="px-4 py-3 text-right">{t('balance.cols.credit_mov')}</th>
+                        <th className="px-4 py-3 text-right">{t('balance.cols.debit_sol')}</th>
+                        <th className="px-4 py-3 text-right">{t('balance.cols.credit_sol')}</th>
                     </tr>
                 </thead>
-                <tbody className="divide-y divide-base-100 font-bold">
+                <tbody className="divide-y divide-base-100">
                     {balance?.map((b: any) => (
-                        <tr key={b.numero} className="hover:bg-primary/5 transition-colors">
-                            <td className="px-6 py-4 font-mono text-primary font-black">{b.numero}</td>
-                            <td className="px-6 py-4 text-sm uppercase tracking-tighter">{b.libelle}</td>
-                            <td className="px-6 py-4 text-right text-base-content/60 font-bold text-sm">{formatAmount(b.mouvement_debit || 0)}</td>
-                            <td className="px-6 py-4 text-right text-base-content/60 font-bold text-sm">{formatAmount(b.mouvement_credit || 0)}</td>
-                            <td className="px-6 py-4 text-right text-primary font-black text-sm">{b.cloture_debit > 0 ? formatAmount(b.cloture_debit) : '-'}</td>
-                            <td className="px-6 py-4 text-right text-error font-black text-sm">{b.cloture_credit > 0 ? formatAmount(b.cloture_credit) : '-'}</td>
+                        <tr key={b.numero} className="hover:bg-base-50 transition-colors">
+                            <td className="px-4 py-3 font-mono text-primary font-medium">{b.numero}</td>
+                            <td className="px-4 py-3 text-sm">{b.libelle}</td>
+                            <td className="px-4 py-3 text-right text-base-content/60 text-sm">{formatAmount(b.mouvement_debit || 0)}</td>
+                            <td className="px-4 py-3 text-right text-base-content/60 text-sm">{formatAmount(b.mouvement_credit || 0)}</td>
+                            <td className="px-4 py-3 text-right text-primary font-medium text-sm">{b.cloture_debit > 0 ? formatAmount(b.cloture_debit) : '-'}</td>
+                            <td className="px-4 py-3 text-right text-error font-medium text-sm">{b.cloture_credit > 0 ? formatAmount(b.cloture_credit) : '-'}</td>
                         </tr>
                     ))}
                 </tbody>
@@ -505,56 +485,54 @@ function BalanceTab({ balance, t }: any) {
 }
 
 function BilanTab({ bilan, t }: any) {
-    
-
     return (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            <div className="card bg-base-100 rounded-3xl border border-base-300 overflow-hidden shadow-sm">
-                <div className="p-6 bg-primary/5 border-b border-base-300">
-                    <h3 className="text-xl font-black text-primary flex items-center justify-between uppercase tracking-tighter">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="card bg-base-100 rounded-xl border border-base-300 overflow-hidden shadow-sm">
+                <div className="p-5 bg-primary/5 border-b border-base-300">
+                    <h3 className="text-lg font-semibold text-primary flex items-center justify-between">
                         {t('bilan.actif')}
                         <span>{formatFCFA(bilan?.total_actif || 0)}</span>
                     </h3>
                 </div>
-                <div className="p-6 space-y-4">
+                <div className="p-5 space-y-3">
                     {bilan?.details_actif?.map((d: any) => (
-                        <div key={d.numero} className="flex items-center justify-between border-b border-base-300 pb-3">
+                        <div key={d.numero} className="flex items-center justify-between border-b border-base-300 pb-2">
                             <div>
-                                <span className="font-mono text-primary/40 font-black text-[10px] block">{d.numero}</span>
-                                <span className="font-black text-sm uppercase tracking-tight">{d.libelle}</span>
+                                <span className="font-mono text-primary/40 text-xs block">{d.numero}</span>
+                                <span className="font-medium text-sm">{d.libelle}</span>
                             </div>
-                            <span className="font-black text-primary">{formatFCFA(d.solde)}</span>
+                            <span className="font-semibold text-primary">{formatFCFA(d.solde)}</span>
                         </div>
                     ))}
                 </div>
             </div>
 
-            <div className="card bg-base-100 rounded-3xl border border-base-300 overflow-hidden shadow-sm">
-                <div className="p-6 bg-error/5 border-b border-base-300">
-                    <h3 className="text-xl font-black text-error flex items-center justify-between uppercase tracking-tighter">
+            <div className="card bg-base-100 rounded-xl border border-base-300 overflow-hidden shadow-sm">
+                <div className="p-5 bg-error/5 border-b border-base-300">
+                    <h3 className="text-lg font-semibold text-error flex items-center justify-between">
                         {t('bilan.passif')}
                         <span>{formatFCFA(bilan?.total_passif || 0)}</span>
                     </h3>
                 </div>
-                <div className="p-6 space-y-4">
+                <div className="p-5 space-y-3">
                     {bilan?.details_passif?.map((d: any) => (
-                        <div key={d.numero} className="flex items-center justify-between border-b border-base-300 pb-3">
+                        <div key={d.numero} className="flex items-center justify-between border-b border-base-300 pb-2">
                             <div>
-                                <span className="font-mono text-error/40 font-black text-[10px] block">{d.numero}</span>
-                                <span className="font-black text-sm uppercase tracking-tight">{d.libelle}</span>
+                                <span className="font-mono text-error/40 text-xs block">{d.numero}</span>
+                                <span className="font-medium text-sm">{d.libelle}</span>
                             </div>
-                            <span className="font-black text-error">{formatFCFA(d.solde)}</span>
+                            <span className="font-semibold text-error">{formatFCFA(d.solde)}</span>
                         </div>
                     ))}
                 </div>
             </div>
 
-            <div className="md:col-span-2 bg-base-100 p-6 rounded-2xl border-2 border-dashed border-base-300 text-center">
-                <p className="text-base-content/40 text-[10px] font-black uppercase tracking-widest mb-1">{t('bilan.equilibrium')}</p>
-                <p className={`text-2xl font-black ${bilan?.equilibre === 0 ? 'text-primary' : 'text-warning'}`}>
+            <div className="md:col-span-2 bg-base-100 p-5 rounded-xl border-2 border-dashed border-base-300 text-center">
+                <p className="text-base-content/40 text-xs font-medium uppercase tracking-wide mb-1">{t('bilan.equilibrium')}</p>
+                <p className={`text-xl font-semibold ${bilan?.equilibre === 0 ? 'text-primary' : 'text-warning'}`}>
                     {t('bilan.difference')} : {formatFCFA(bilan?.equilibre || 0)}
                 </p>
-                <p className="text-[10px] text-base-content/40 mt-2 italic">{t('bilan.note')}</p>
+                <p className="text-xs text-base-content/40 mt-2 italic">{t('bilan.note')}</p>
             </div>
         </div>
     );
@@ -564,17 +542,17 @@ function PlanTab({ comptes }: any) {
     return (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {comptes?.map((c: any) => (
-                <div key={c.numero} className="card bg-base-100 p-5 rounded-2xl border border-base-300 flex flex-row items-center justify-between group hover:border-primary/30 transition-all shadow-sm">
+                <div key={c.numero} className="card bg-base-100 p-4 rounded-xl border border-base-300 flex flex-row items-center justify-between group hover:border-primary/30 transition-all shadow-sm">
                     <div>
-                        <span className={`text-[10px] font-black px-2 py-0.5 rounded-lg mb-1 inline-block
+                        <span className={`text-xs font-medium px-2 py-1 rounded-md mb-1 inline-block
                             ${c.type === 'PRODUIT' ? 'bg-primary/10 text-primary' : 
                               c.type === 'CHARGE' ? 'bg-error/10 text-error' : 'bg-base-300 text-base-content/60'}`}>
                             {c.type}
                         </span>
-                        <h4 className="font-black text-xs text-base-content/70 uppercase tracking-tight">{c.libelle}</h4>
-                        <p className="text-2xl font-black text-base-content font-mono">{c.numero}</p>
+                        <h4 className="font-medium text-sm text-base-content/70">{c.libelle}</h4>
+                        <p className="text-xl font-semibold text-base-content font-mono">{c.numero}</p>
                     </div>
-                    <div className="size-10 rounded-full bg-base-200 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all">
+                    <div className="size-8 rounded-full bg-base-200 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all">
                         <ChevronRight className="size-4 text-primary" />
                     </div>
                 </div>
@@ -584,45 +562,43 @@ function PlanTab({ comptes }: any) {
 }
 
 function ResultatTab({ resultat, t }: any) {
-    
-
     return (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            <div className="card bg-base-100 rounded-3xl border border-base-300 overflow-hidden border-t-4 border-t-primary shadow-sm">
-                <div className="p-6 bg-primary/5">
-                    <h3 className="text-xl font-black text-primary flex items-center justify-between uppercase tracking-tighter">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="card bg-base-100 rounded-xl border border-base-300 overflow-hidden border-t-4 border-t-primary shadow-sm">
+                <div className="p-5 bg-primary/5">
+                    <h3 className="text-lg font-semibold text-primary flex items-center justify-between">
                         {t('resultat.products')}
                         <span>{formatFCFA(resultat?.total_produits || 0)}</span>
                     </h3>
                 </div>
-                <div className="p-6 space-y-4">
+                <div className="p-5 space-y-3">
                     {resultat?.details_produits?.map((d: any) => (
-                        <div key={d.compte__numero} className="flex items-center justify-between border-b border-base-300 pb-3">
-                            <div className="flex items-center gap-3">
-                                <span className="font-mono text-primary/40 font-black text-sm">{d.compte__numero}</span>
-                                <span className="font-black text-sm uppercase tracking-tight">{d.compte__libelle}</span>
+                        <div key={d.compte__numero} className="flex items-center justify-between border-b border-base-300 pb-2">
+                            <div className="flex items-center gap-2">
+                                <span className="font-mono text-primary/40 text-xs">{d.compte__numero}</span>
+                                <span className="font-medium text-sm">{d.compte__libelle}</span>
                             </div>
-                            <span className="font-black text-primary">{formatFCFA(d.montant)}</span>
+                            <span className="font-semibold text-primary">{formatFCFA(d.montant)}</span>
                         </div>
                     ))}
                 </div>
             </div>
 
-            <div className="card bg-base-100 rounded-3xl border border-base-300 overflow-hidden border-t-4 border-t-error shadow-sm">
-                <div className="p-6 bg-error/5">
-                    <h3 className="text-xl font-black text-error flex items-center justify-between uppercase tracking-tighter">
+            <div className="card bg-base-100 rounded-xl border border-base-300 overflow-hidden border-t-4 border-t-error shadow-sm">
+                <div className="p-5 bg-error/5">
+                    <h3 className="text-lg font-semibold text-error flex items-center justify-between">
                         {t('resultat.charges')}
                         <span>{formatFCFA(resultat?.total_charges || 0)}</span>
                     </h3>
                 </div>
-                <div className="p-6 space-y-4">
+                <div className="p-5 space-y-3">
                     {resultat?.details_charges?.map((d: any) => (
-                        <div key={d.compte__numero} className="flex items-center justify-between border-b border-base-300 pb-3">
-                            <div className="flex items-center gap-3">
-                                <span className="font-mono text-error/40 font-black text-sm">{d.compte__numero}</span>
-                                <span className="font-black text-sm uppercase tracking-tight">{d.compte__libelle}</span>
+                        <div key={d.compte__numero} className="flex items-center justify-between border-b border-base-300 pb-2">
+                            <div className="flex items-center gap-2">
+                                <span className="font-mono text-error/40 text-xs">{d.compte__numero}</span>
+                                <span className="font-medium text-sm">{d.compte__libelle}</span>
                             </div>
-                            <span className="font-black text-error/80">{formatFCFA(d.montant)}</span>
+                            <span className="font-semibold text-error">{formatFCFA(d.montant)}</span>
                         </div>
                     ))}
                     {(!resultat?.details_charges || resultat.details_charges.length === 0) && (
@@ -696,28 +672,28 @@ function ChargesTab({ actions, comptes, journaux, t }: any) {
     const chargeAccounts = comptes?.filter((c: any) => c.numero.startsWith('6'));
 
     return (
-        <div className="max-w-4xl mx-auto animate-fade-in">
-            <div className="text-center mb-10">
-                <h3 className="text-3xl font-black text-primary uppercase tracking-tighter mb-2">Saisie Simplifiée des Charges</h3>
-                <p className="text-base-content/50 font-bold text-sm">Enregistrez vos dépenses courantes. Elles seront automatiquement intégrées au compte de résultat.</p>
+        <div className="max-w-4xl mx-auto">
+            <div className="text-center mb-8">
+                <h3 className="text-2xl font-semibold text-primary mb-2">Saisie Simplifiée des Charges</h3>
+                <p className="text-base-content/50 text-sm">Enregistrez vos dépenses courantes. Elles seront automatiquement intégrées au compte de résultat.</p>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 {/* Sélecteur visuel de catégories */}
-                <div className="md:col-span-1 space-y-3">
-                    <p className="text-[10px] font-black text-base-content/40 uppercase tracking-widest mb-4">Catégorie de dépense</p>
+                <div className="md:col-span-1 space-y-2">
+                    <p className="text-xs font-medium text-base-content/40 uppercase tracking-wide mb-3">Catégorie de dépense</p>
                     {categoriesOHADA.map(cat => (
                         <button
                             key={cat.id}
                             type="button"
                             onClick={() => setFormData({...formData, typeCharge: cat.compte})}
-                            className={`w-full flex items-center gap-4 p-4 rounded-2xl border-2 transition-all text-left group
+                            className={`w-full flex items-center gap-3 p-3 rounded-xl border transition-all text-left group
                                 ${formData.typeCharge === cat.compte 
-                                    ? 'border-primary bg-primary/10 shadow-lg' 
+                                    ? 'border-primary bg-primary/10 shadow-sm' 
                                     : 'border-base-300 bg-base-100 hover:border-primary/30 hover:bg-base-200/50'}`}
                         >
-                            <span className="text-2xl grayscale group-hover:grayscale-0 transition-all">{cat.icon}</span>
-                            <span className={`font-black text-sm ${formData.typeCharge === cat.compte ? 'text-primary' : 'text-base-content'}`}>
+                            <span className="text-xl grayscale group-hover:grayscale-0 transition-all">{cat.icon}</span>
+                            <span className={`font-medium text-sm ${formData.typeCharge === cat.compte ? 'text-primary' : 'text-base-content'}`}>
                                 {cat.label}
                             </span>
                         </button>
@@ -725,14 +701,14 @@ function ChargesTab({ actions, comptes, journaux, t }: any) {
                 </div>
 
                 {/* Formulaire de détails */}
-                <div className="md:col-span-2 card bg-base-100 p-8 rounded-3xl border border-base-300 shadow-xl h-fit">
-                    <form onSubmit={handleSubmit} className="space-y-6">
+                <div className="md:col-span-2 card bg-base-100 p-6 rounded-xl border border-base-300 shadow-sm h-fit">
+                    <form onSubmit={handleSubmit} className="space-y-5">
                         
                         {formData.typeCharge === 'autre' && (
-                            <div className="bg-warning/10 p-4 rounded-2xl border border-warning/20 mb-6 animate-fade-in">
-                                <label className="block text-[10px] font-black text-warning uppercase tracking-widest mb-2">Sélectionnez le compte exact</label>
+                            <div className="bg-warning/10 p-4 rounded-xl border border-warning/20 mb-4 animate-fade-in">
+                                <label className="block text-xs font-medium text-warning uppercase tracking-wide mb-2">Sélectionnez le compte exact</label>
                                 <select 
-                                    className="select select-bordered w-full bg-base-100 border-warning/30 rounded-xl py-2 font-black text-base-content"
+                                    className="select select-bordered w-full bg-base-100 border-warning/30 rounded-lg py-2 font-medium text-base-content"
                                     value={formData.comptePersonnalise}
                                     onChange={(e) => setFormData({...formData, comptePersonnalise: e.target.value})}
                                     required
@@ -745,11 +721,11 @@ function ChargesTab({ actions, comptes, journaux, t }: any) {
                             </div>
                         )}
 
-                        <div className="grid grid-cols-2 gap-6">
+                        <div className="grid grid-cols-2 gap-4">
                             <div className="col-span-2 md:col-span-1">
-                                <label className="block text-[10px] font-black text-base-content/40 uppercase tracking-widest mb-2">Moyen de Paiement</label>
+                                <label className="block text-xs font-medium text-base-content/60 uppercase tracking-wide mb-2">Moyen de Paiement</label>
                                 <select 
-                                    className="select select-bordered w-full bg-base-200 border-base-300 rounded-2xl py-3 font-black text-base-content focus:ring-primary h-14"
+                                    className="select select-bordered w-full bg-base-200 border-base-300 rounded-lg py-2.5 font-medium text-base-content focus:ring-primary"
                                     value={formData.modePaiement}
                                     onChange={(e) => setFormData({...formData, modePaiement: e.target.value})}
                                     required
@@ -759,10 +735,10 @@ function ChargesTab({ actions, comptes, journaux, t }: any) {
                                 </select>
                             </div>
                             <div className="col-span-2 md:col-span-1">
-                                <label className="block text-[10px] font-black text-base-content/40 uppercase tracking-widest mb-2">{t('charges.date')}</label>
+                                <label className="block text-xs font-medium text-base-content/60 uppercase tracking-wide mb-2">{t('charges.date')}</label>
                                 <input 
                                     type="date"
-                                    className="input input-bordered w-full bg-base-200 border-base-300 rounded-2xl py-3 px-4 font-black text-base-content focus:ring-primary h-14"
+                                    className="input input-bordered w-full bg-base-200 border-base-300 rounded-lg py-2.5 px-3 font-medium text-base-content focus:ring-primary"
                                     value={formData.date}
                                     onChange={(e) => setFormData({...formData, date: e.target.value})}
                                     required
@@ -771,11 +747,11 @@ function ChargesTab({ actions, comptes, journaux, t }: any) {
                         </div>
 
                         <div>
-                            <label className="block text-[10px] font-black text-base-content/40 uppercase tracking-widest mb-2">Motif (Libellé)</label>
+                            <label className="block text-xs font-medium text-base-content/60 uppercase tracking-wide mb-2">Motif (Libellé)</label>
                             <input 
                                 type="text" 
                                 placeholder="Ex: Paiement facture ENEO Avril..."
-                                className="input input-bordered w-full bg-base-200 border-base-300 rounded-2xl py-4 px-4 font-black text-base-content focus:ring-primary h-14"
+                                className="input input-bordered w-full bg-base-200 border-base-300 rounded-lg py-3 px-4 font-medium text-base-content focus:ring-primary"
                                 value={formData.libelle}
                                 onChange={(e) => setFormData({...formData, libelle: e.target.value})}
                                 required
@@ -783,30 +759,30 @@ function ChargesTab({ actions, comptes, journaux, t }: any) {
                         </div>
 
                         <div>
-                            <label className="block text-[10px] font-black text-base-content/40 uppercase tracking-widest mb-2">Montant (FCFA)</label>
+                            <label className="block text-xs font-medium text-base-content/60 uppercase tracking-wide mb-2">Montant (FCFA)</label>
                             <div className="relative">
                                 <input 
                                     type="number" 
                                     placeholder="0"
-                                    className="input input-bordered w-full bg-base-200 border-base-300 rounded-2xl py-5 px-4 text-4xl font-black text-primary focus:ring-primary pr-20 h-24 text-right"
+                                    className="input input-bordered w-full bg-base-200 border-base-300 rounded-lg py-4 px-4 text-2xl font-semibold text-primary focus:ring-primary pr-16 text-right"
                                     value={formData.montant}
                                     onChange={(e) => setFormData({...formData, montant: e.target.value})}
                                     required
                                 />
-                                <span className="absolute left-6 top-1/2 -translate-y-1/2 text-primary font-black text-3xl opacity-50">FCFA</span>
+                                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-primary font-semibold text-lg opacity-50">FCFA</span>
                             </div>
                         </div>
 
                         <button 
                             type="submit"
-                            className="btn btn-primary w-full h-16 rounded-2xl font-black text-sm uppercase tracking-[0.2em] transition-all shadow-xl shadow-primary/20 hover:scale-[1.02]"
+                            className="btn btn-primary w-full py-3 rounded-lg font-medium text-sm transition-all hover:shadow-md"
                             disabled={actions.createEcriture.isPending || !formData.typeCharge}
                         >
                             {actions.createEcriture.isPending ? t('charges.saving') : "Enregistrer la dépense"}
                         </button>
                         
                         {!formData.typeCharge && (
-                            <p className="text-center text-error text-xs font-bold mt-2">Veuillez sélectionner une catégorie de dépense à gauche.</p>
+                            <p className="text-center text-error text-xs font-medium mt-2">Veuillez sélectionner une catégorie de dépense à gauche.</p>
                         )}
                     </form>
                 </div>

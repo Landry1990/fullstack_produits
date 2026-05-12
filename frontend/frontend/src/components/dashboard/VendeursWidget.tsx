@@ -1,10 +1,10 @@
-import { useState } from 'react';
+import { useState, Suspense } from 'react';
 import { Link } from 'react-router-dom';
 import { Trophy, TrendingUp, TrendingDown, Minus, ArrowRight, Users } from 'lucide-react';
 import {
     BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
     ResponsiveContainer, Cell
-} from 'recharts';
+} from '../LazyRecharts';
 import { useVendeursRanking } from '../../hooks/useDashboard';
 
 interface VendeursWidgetProps {
@@ -14,7 +14,7 @@ interface VendeursWidgetProps {
 const BAR_COLORS = ['#10B981', '#3B82F6', '#F59E0B', '#EF4444', '#8B5CF6', '#EC4899'];
 
 function EvolutionBadge({ value }: { value?: number | null }) {
-    if (value === null || value === undefined) return <span className="text-base-content/30 text-xs">—</span>;
+    if (value === null || value === undefined) return <span className="text-base-content/30 text-xs">-</span>;
     if (value > 0) return (
         <span className="inline-flex items-center gap-0.5 text-emerald-500 font-black text-xs">
             <TrendingUp className="size-3" />+{value}%
@@ -197,7 +197,7 @@ export default function VendeursWidget({ formatCurrencyLocal }: VendeursWidgetPr
                         <ResponsiveContainer width="100%" height={220}>
                             <BarChart data={chartData} layout="vertical" margin={{ left: 0, right: 10 }}>
                                 <CartesianGrid strokeDasharray="3 3" opacity={0.2} horizontal={false} />
-                                <XAxis type="number" tickFormatter={v => `${(v / 1000).toFixed(0)}k`} fontSize={10} />
+                                <XAxis type="number" tickFormatter={(v: number) => `${(v / 1000).toFixed(0)}k`} fontSize={10} />
                                 <YAxis type="category" dataKey="name" width={55} fontSize={11} fontWeight={700} />
                                 <Tooltip
                                     formatter={(value: number) => [formatCurrencyLocal(value), 'CA']}

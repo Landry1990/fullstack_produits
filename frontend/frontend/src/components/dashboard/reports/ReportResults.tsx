@@ -12,6 +12,9 @@ import type { QueryDefinition, PaginationData } from '../../../hooks/useCentreRa
 import { MonthlyReportView } from './MonthlyReportView';
 import { ChevronLeft, ChevronRight, Inbox, Eye, Download, AlertTriangle } from 'lucide-react';
 
+// Constante de module pour éviter la recréation à chaque render
+const EMPTY_PARAMS: Record<string, any> = {};
+
 interface ReportResultsProps {
     selectedQuery: QueryDefinition;
     results: any;
@@ -29,7 +32,7 @@ export const ReportResults: React.FC<ReportResultsProps> = ({
     loading,
     onPageChange,
     onFilterChange,
-    currentParams = {}
+    currentParams = EMPTY_PARAMS
 }) => {
     const { t } = useTranslation(['reports', 'common']);
     const tableContainerRef = useRef<HTMLDivElement>(null);
@@ -113,8 +116,12 @@ export const ReportResults: React.FC<ReportResultsProps> = ({
             }
 
             const isMargesReport = selectedQuery.id === 'detail_marges_lots';
+            const isMultiYearCAReport = selectedQuery.id === 'rapport_ca_multi_annuel';
 
-            const filteredResults = results;
+            // Pour le rapport CA multi-annuel, exclure la ligne total_general car le footer calcule déjà les totaux
+            const filteredResults = isMultiYearCAReport 
+                ? results.filter((r: any) => r.Mois !== 'total_general')
+                : results;
 
             const rawColumns = Object.keys(results[0]).filter(k => !k.startsWith('_') && k !== 'id');
             const columns = selectedQuery.columns 

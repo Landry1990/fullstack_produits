@@ -4,12 +4,20 @@ import type { Facture, PaginatedResponse } from '../types';
 import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
 
+// Formater la date locale au format YYYY-MM-DD (évite les problèmes de timezone UTC)
+const formatLocalDate = (date: Date): string => {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+};
+
 export const useSalesData = () => {
     const { t } = useTranslation(['sales', 'common']);
     const [factures, setFactures] = useState<Facture[]>([]);
     const [loading, setLoading] = useState(true);
-    const [startDate, setStartDate] = useState(new Date().toISOString().split('T')[0]);
-    const [endDate, setEndDate] = useState(new Date().toISOString().split('T')[0]);
+    const [startDate, setStartDate] = useState(() => formatLocalDate(new Date()));
+    const [endDate, setEndDate] = useState(() => formatLocalDate(new Date()));
     const [searchTerm, setSearchTerm] = useState('');
     const [statusFilter, setStatusFilter] = useState('ALL');
     const [sellerFilter, setSellerFilter] = useState(''); // ID of the seller

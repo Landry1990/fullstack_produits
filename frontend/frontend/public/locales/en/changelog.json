@@ -13,6 +13,16 @@
   "footer": "Zenith PMS · All versions since Jan. 2026",
   "no_results": "No entries for this filter.",
   "versions": {
+    "2.10.0": {
+      "date": "May 12, 2026",
+      "title": "Billing & Orders Fixes",
+      "items": [
+        "Fixed: duplicate product search results in wholesale orders",
+        "Fixed: cart validation area fixed at bottom with scrollbar",
+        "Fixed: auto-selection of 'Clients Divers' in promis creation",
+        "Harmonized accounting interface (dashboard, tables, forms)"
+      ]
+    },
     "2.9.0": {
       "date": "May 3, 2026",
       "title": "Licence System & Recycle Bin",

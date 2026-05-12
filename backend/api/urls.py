@@ -27,7 +27,7 @@ from .views.auth import verify_password
 from .views.etat_inventaire import EtatInventairePDFView
 from .views.rapports import RapportViewSet
 from .ordonnancier_view import OrdonnancierViewSet
-from .views.communication import SmsViewSet, SmsTemplateViewSet, WhatsAppLogViewSet, InternalMessageViewSet, MessageTemplateViewSet
+from .views.communication import SmsViewSet, SmsTemplateViewSet, WhatsAppLogViewSet, TelegramLogViewSet, InternalMessageViewSet, MessageTemplateViewSet
 from .views.finance_stats import FinanceStatsViewSet
 from .views.objectifs import ObjectifViewSet
 from .views.configuration_objectifs import ConfigurationObjectifsViewSet
@@ -83,6 +83,7 @@ router.register(r'coupons', CouponMonnaieViewSet, basename='coupon')
 router.register(r'sms', SmsViewSet, basename='sms')
 router.register(r'sms-templates', SmsTemplateViewSet, basename='smstemplate')
 router.register(r'whatsapp-logs', WhatsAppLogViewSet, basename='whatsapplog')
+router.register(r'telegram-logs', TelegramLogViewSet, basename='telegramlog')
 router.register(r'paiements-fournisseurs', PaiementFournisseurViewSet, basename='paiementfournisseur')
 router.register(r'configuration-options', ConfigurationOptionViewSet, basename='configurationoption')
 router.register(r'promis', PromisViewSet, basename='promis')

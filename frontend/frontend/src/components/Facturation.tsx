@@ -214,7 +214,7 @@ export default function Facturation() {
         </div>
 
         {/* RIGHT : Panier */}
-        <aside className="w-full lg:w-[400px] xl:w-[440px] pos-checkout flex flex-col z-10 border-t lg:border-t-0 overflow-y-auto lg:overflow-hidden flex-1 lg:flex-none min-h-[55vh] sm:min-h-[60vh] lg:min-h-0 lg:max-h-none">
+        <aside className="w-full lg:w-[400px] xl:w-[440px] pos-checkout flex flex-col z-10 border-t lg:border-t-0 overflow-hidden flex-1 lg:flex-none min-h-[55vh] sm:min-h-[60vh] lg:min-h-0 lg:max-h-[calc(100vh-80px)]">
 
           {/* Panier header */}
           <div className="px-4 py-3 bg-base-200/50 border-b border-base-300 flex items-center justify-between shrink-0">
@@ -232,8 +232,8 @@ export default function Facturation() {
           {/* Alertes cliniques */}
           <ClinicalAlerts alerts={hook.clinicalAlerts} />
 
-          {/* Items panier */}
-          <div className="flex-1 overflow-y-auto pos-sidebar-scroll min-h-0">
+          {/* Items panier - hauteur max avec scroll */}
+          <div className="flex-1 overflow-y-auto pos-sidebar-scroll min-h-0 max-h-[calc(100vh-380px)]">
             <CartTable
               lignesFacture={hook.sortedLignes}
               updateQuantite={hook.secureUpdateQuantite}
@@ -250,8 +250,8 @@ export default function Facturation() {
             />
           </div>
 
-          {/* Totaux + actions */}
-          <div className="shrink-0 p-3 sm:p-4 border-t border-base-300 bg-base-200/50">
+          {/* Totaux + actions - FIXE EN BAS */}
+          <div className="shrink-0 p-3 sm:p-4 border-t border-base-300 bg-base-200/50 sticky bottom-0">
             <TotalsSection
               totalHT={hook.totals.totalHt}
               remiseGlobale={hook.ui.remiseGlobale}

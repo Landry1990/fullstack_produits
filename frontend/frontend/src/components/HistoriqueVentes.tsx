@@ -4,6 +4,7 @@ import { format } from 'date-fns';
 import { useAuth } from '../context/AuthContext';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'react-hot-toast';
+import { getApiErrorDetail } from '../utils/errorHandling';
 import { formatCurrency } from '../utils/formatters';
 
 interface DailySale {
@@ -104,9 +105,8 @@ const HistoriqueVentes = () => {
     try {
       await api.post('telegram/rapport-flash-date/', { date: row.date });
       toast.success(t('common:telegram.send_success'), { icon: '📨' });
-    } catch (err: any) {
-      const msg = err?.response?.data?.message || t('common:telegram.send_error');
-      toast.error(msg);
+    } catch (err) {
+      toast.error(getApiErrorDetail(err, t('common:telegram.send_error')));
     } finally {
       setSendingTelegram(null);
     }

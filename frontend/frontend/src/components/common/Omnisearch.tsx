@@ -470,7 +470,7 @@ export default function Omnisearch() {
                                 </div>
                                 <div className="flex justify-between items-baseline">
                                     <div className="text-lg font-black text-secondary">
-                                        {(selectedItem.data as ProduitModel).dernier_achat ? formatDate((selectedItem.data as ProduitModel).dernier_achat as string) : '—'}
+                                        {(selectedItem.data as ProduitModel).dernier_achat ? formatDate((selectedItem.data as ProduitModel).dernier_achat as string) : '-'}
                                     </div>
                                     <div className="text-xs font-mono font-bold opacity-60">
                                         {(selectedItem.data as ProduitModel).last_purchase_price ? `${Number((selectedItem.data as ProduitModel).last_purchase_price).toLocaleString()} F` : ''}
@@ -529,12 +529,12 @@ export default function Omnisearch() {
                         <div className="space-y-4 pt-4 border-t border-base-200">
                             <div className="flex flex-col gap-1">
                                 <span className="text-[9px] font-black uppercase tracking-widest text-base-content/30">{t('omnisearch.preview.contact')}</span>
-                                <p className="text-sm font-bold truncate">{(selectedItem.data as Client).phone || '—'}</p>
+                                <p className="text-sm font-bold truncate">{(selectedItem.data as Client).phone || '-'}</p>
                                 <p className="text-xs font-medium opacity-60 truncate">{(selectedItem.data as Client).email || ''}</p>
                             </div>
                             <div className="flex flex-col gap-1">
                                 <span className="text-[9px] font-black uppercase tracking-widest text-base-content/30">{t('omnisearch.preview.address')}</span>
-                                <p className="text-xs font-bold leading-relaxed">{(selectedItem.data as Client).address || '—'}</p>
+                                <p className="text-xs font-bold leading-relaxed">{(selectedItem.data as Client).address || '-'}</p>
                             </div>
                         </div>
                     </div>
@@ -669,12 +669,12 @@ export default function Omnisearch() {
                         <div className="space-y-6 pt-4 border-t border-base-200">
                             <div className="flex flex-col gap-1">
                                 <span className="text-[9px] font-black uppercase tracking-widest text-base-content/30">{t('omnisearch.preview.contact')}</span>
-                                <p className="text-sm font-bold">{(selectedItem.data as Fournisseur).phone || '—'}</p>
+                                <p className="text-sm font-bold">{(selectedItem.data as Fournisseur).phone || '-'}</p>
                                 <p className="text-xs font-medium opacity-60">{(selectedItem.data as Fournisseur).email || ''}</p>
                             </div>
                             <div className="flex flex-col gap-1">
                                 <span className="text-[9px] font-black uppercase tracking-widest text-base-content/30">{t('omnisearch.preview.address')}</span>
-                                <p className="text-sm font-bold leading-relaxed">{(selectedItem.data as Fournisseur).address || '—'}</p>
+                                <p className="text-sm font-bold leading-relaxed">{(selectedItem.data as Fournisseur).address || '-'}</p>
                             </div>
                         </div>
                     </div>

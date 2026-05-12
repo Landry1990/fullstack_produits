@@ -7,6 +7,7 @@ from django.db.models import Sum, Q, Value, DecimalField, Count, F
 from django.db.models.functions import Coalesce, Abs
 from django_filters.rest_framework import DjangoFilterBackend
 from django.utils import timezone
+from django.utils.dateparse import parse_date
 from datetime import datetime
 from decimal import Decimal, InvalidOperation
 import logging

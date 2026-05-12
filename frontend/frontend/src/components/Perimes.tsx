@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import api from '../services/api'
 import { toast } from 'react-hot-toast'
 import { useTranslation } from 'react-i18next'
+import { getApiErrorDetail } from '../utils/errorHandling'
 import { 
   BarChart2, 
   List, 
@@ -63,7 +64,7 @@ export default function Perimes() {
   const [error, setError] = useState<string | null>(null)
   const [filterDays, setFilterDays] = useState<number>(30)
   const [showExpiredOnly, setShowExpiredOnly] = useState<boolean>(true)
-  const [selectedLotIds, setSelectedLotIds] = useState<number[]>([])
+  const [selectedLotIds, setSelectedLotIds] = useState<Set<number>>(new Set())
   const [adjustments, setAdjustments] = useState<StockAdjustment[]>([])
   const [loadingAdjustments, setLoadingAdjustments] = useState(false)
   const [activeTab, setActiveTab] = useState<'dashboard' | 'list' | 'history'>('dashboard')
@@ -155,7 +156,7 @@ export default function Perimes() {
   const fetchLots = async () => {
     setLoading(true)
     setError(null)
-    setSelectedLotIds([]) // Reset selection on refresh
+    setSelectedLotIds(new Set()) // Reset selection on refresh
     try {
       const today = new Date()
       const thresholdDate = new Date()
@@ -209,9 +210,9 @@ export default function Perimes() {
         toast.success(t('perimes.messages.success_exit'))
         fetchLots()
         fetchStats() 
-      } catch (err: any) {
-        console.error('Erreur sortie stock:', err)
-        toast.error(t('perimes.messages.error_exit') + ': ' + (err.response?.data?.detail || err.response?.data?.error || err.message || 'Erreur inconnue'))
+      } catch (err) {
+        console.error('Erreur sortie stock:', err);
+        toast.error(t('perimes.messages.error_exit') + ': ' + getApiErrorDetail(err, 'Erreur inconnue'))
       } finally {
         setProcessing(false)
       }
@@ -222,43 +223,50 @@ export default function Perimes() {
   }
 
   const handleBulkSortir = async () => {
-      if (selectedLotIds.length === 0) return
+      if (selectedLotIds.size === 0) return
 
       requireSudo(async (validatorId, password) => {
           try {
               setProcessing(true)
               await api.post('stock-lots/bulk_sortir_perimes/', {
-                  lot_ids: selectedLotIds,
+                  lot_ids: Array.from(selectedLotIds),
                   reason: t('stock:perimes.confirm.bulk_exit_title'),
                   validated_by_id: validatorId,
                   sudo_password: password
               })
-              toast.success(t('perimes.messages.success_bulk_exit', { count: selectedLotIds.length }))
+              toast.success(t('perimes.messages.success_bulk_exit', { count: selectedLotIds.size }))
               fetchLots()
               fetchStats()
-          } catch (err: any) {
+          } catch (err) {
               console.error('Erreur sortie groupée:', err)
-              toast.error(t('perimes.messages.error_bulk_exit'))
+              toast.error(getApiErrorDetail(err, t('perimes.messages.error_bulk_exit')))
           } finally {
               setProcessing(false)
           }
       }, {
           title: t('perimes.confirm.bulk_exit_title'),
-          message: t('perimes.confirm.bulk_exit_message', { count: selectedLotIds.length })
+          message: t('perimes.confirm.bulk_exit_message', { count: selectedLotIds.size })
       })
   }
 
   const toggleLotSelection = (id: number) => {
-      setSelectedLotIds(prev => 
-          prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
-      )
+      setSelectedLotIds(prev => {
+          const newSet = new Set(prev);
+          if (newSet.has(id)) {
+              newSet.delete(id);
+          } else {
+              newSet.add(id);
+          }
+          return newSet;
+      });
   }
 
   const toggleAllSelection = () => {
-      if (selectedLotIds.length === lots.filter(l => l.quantity_remaining > 0).length) {
-          setSelectedLotIds([])
+      const availableLots = lots.filter(l => l.quantity_remaining > 0);
+      if (selectedLotIds.size === availableLots.length) {
+          setSelectedLotIds(new Set())
       } else {
-          setSelectedLotIds(lots.filter(l => l.quantity_remaining > 0).map(l => l.id))
+          setSelectedLotIds(new Set(availableLots.map(l => l.id)))
       }
   }
 
@@ -564,13 +572,13 @@ export default function Perimes() {
             <div className="p-0 border-b border-base-200 bg-base-100 relative z-20 shrink-0 sticky top-0 overflow-visible">
                <div className="p-4 flex flex-col gap-3">
                   <div className="flex justify-between items-center h-10">
-                     {selectedLotIds.length > 0 ? (
+                     {selectedLotIds.size > 0 ? (
                         <div className="flex items-center gap-2 animate-in fade-in slide-in-from-left-2 duration-200">
                           <div className="dropdown dropdown-bottom">
                             <div tabIndex={0} role="button" className="btn btn-sm btn-primary gap-2 h-9">
                               <MoreVertical className="size-4" />
                               {t('common:actions_title')}
-                              <span className="badge badge-sm bg-primary-focus border-none text-white">{selectedLotIds.length}</span>
+                              <span className="badge badge-sm bg-primary-focus border-none text-white">{selectedLotIds.size}</span>
                             </div>
                             <ul tabIndex={0} className="dropdown-content z-[100] menu p-2 shadow-2xl bg-base-100 rounded-box w-56 border border-base-200 mt-2">
                               <li className="menu-title px-4 py-2 text-[10px] font-bold uppercase tracking-widest text-base-content/40">
@@ -584,7 +592,7 @@ export default function Perimes() {
                             </ul>
                           </div>
                           <button 
-                            onClick={() => setSelectedLotIds([])}
+                            onClick={() => setSelectedLotIds(new Set())}
                             className="btn btn-sm btn-ghost gap-2 text-base-content/60 hover:text-base-content h-9"
                           >
                             <X className="size-4" />
@@ -653,7 +661,7 @@ export default function Perimes() {
                           <input 
                             type="checkbox" 
                             className="checkbox checkbox-xs rounded-md" 
-                            checked={selectedLotIds.length === lots.filter(l => l.quantity_remaining > 0).length && lots.filter(l => l.quantity_remaining > 0).length > 0}
+                            checked={selectedLotIds.size === lots.filter(l => l.quantity_remaining > 0).length && lots.filter(l => l.quantity_remaining > 0).length > 0}
                             onChange={toggleAllSelection}
                           />
                       </th>
@@ -668,12 +676,12 @@ export default function Perimes() {
                   </thead>
                   <tbody className="divide-y divide-base-200">
                     {lots.map((lot) => (
-                      <tr key={lot.id} className={`hover:bg-base-200/30 transition-colors group ${lot.quantity_remaining <= 0 ? 'bg-base-100/50' : ''} ${selectedLotIds.includes(lot.id) ? 'bg-primary/5' : ''}`}>
+                      <tr key={lot.id} className={`hover:bg-base-200/30 transition-colors group ${lot.quantity_remaining <= 0 ? 'bg-base-100/50' : ''} ${selectedLotIds.has(lot.id) ? 'bg-primary/5' : ''}`}>
                         <td className="py-2.5 px-4 text-center">
                             <input 
                                 type="checkbox" 
                                 className="checkbox checkbox-xs checkbox-primary rounded-md" 
-                                checked={selectedLotIds.includes(lot.id)}
+                                checked={selectedLotIds.has(lot.id)}
                                 onChange={() => toggleLotSelection(lot.id)}
                                 disabled={lot.quantity_remaining <= 0}
                             />

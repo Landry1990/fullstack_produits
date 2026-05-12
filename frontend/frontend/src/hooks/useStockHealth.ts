@@ -40,9 +40,9 @@ export const useStockHealth = () => {
         try {
             const response = await api.get('statistiques/stock_health/', { signal: controller.signal });
             setData(response.data);
-        } catch (err: any) {
-            if (err?.code === 'ERR_CANCELED') return;
-            setError(err.message || 'Error fetching stock health data');
+        } catch (err) {
+            if (err instanceof Error && err.name === 'AbortError') return;
+            setError(err instanceof Error ? err.message : 'Error fetching stock health data');
         } finally {
             setLoading(false);
         }

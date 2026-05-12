@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { Suspense } from 'react';
 import { 
   TrendingDown, 
   AlertCircle, 
@@ -24,7 +24,7 @@ import {
   Cell,
   BarChart,
   Bar
-} from 'recharts';
+} from '../LazyRecharts';
 import { formatCurrency } from '../../utils/formatters';
 import { useSupplierDashboard } from '../../hooks/useSupplierDashboard';
 import { useTranslation } from 'react-i18next';
@@ -169,7 +169,7 @@ export default function SupplierDashboard({ onViewAllDeadlines }: SupplierDashbo
                   axisLine={false} 
                   tickLine={false} 
                   tick={{fontSize: 10, fontWeight: 700, fill: '#94a3b8'}}
-                  tickFormatter={(v) => `${v/1000}k`}
+                  tickFormatter={(v: number) => `${v/1000}k`}
                   width={40}
                 />
                 <Tooltip 

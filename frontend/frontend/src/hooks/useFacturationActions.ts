@@ -1,6 +1,7 @@
 import { useCallback } from 'react';
 import api from '../services/api';
 import { toast } from 'react-hot-toast';
+import { getApiErrorDetail } from '../utils/errorHandling';
 import { safeStorage } from '../utils/storage';
 import type { Facture, LigneFacture, TotalsData, User, StockLot, Client } from '../types';
 import type { OrdonnanceData } from '../components/OrdonnanceModal';
@@ -157,8 +158,8 @@ export function useFacturationActions({
             ui.setIsModificationMode(true)
 
             toast.success("Bon de livraison généré - Document prêt pour validation")
-        } catch (error: any) {
-            toast.error(`Erreur lors de la création du document : ${error.message}`)
+        } catch (error) {
+            toast.error(`Erreur lors de la création du document : ${error instanceof Error ? error.message : 'Erreur inconnue'}`)
         } finally {
             setLoading(false)
         }
@@ -173,8 +174,8 @@ export function useFacturationActions({
             if (facture.id) {
                 window.open(`/app/print-invoice/${facture.id}`, '_blank')
             }
-        } catch (err: any) {
-            setError(err?.response?.data?.detail || "Erreur lors de l'impression de la facture")
+        } catch (err) {
+            setError(getApiErrorDetail(err, "Erreur lors de l'impression de la facture"))
         }
     }, [setError])
 
@@ -234,8 +235,8 @@ export function useFacturationActions({
         try {
             const response = await api.post(`factures/${facture.id}/send_whatsapp/`, { phone: phone })
             toast.success(response.data.detail || 'Ticket envoyé par WhatsApp !')
-        } catch (err: any) {
-            toast.error(err.response?.data?.detail || "Erreur lors de l'envoi WhatsApp")
+        } catch (err) {
+            toast.error(getApiErrorDetail(err, "Erreur lors de l'envoi WhatsApp"))
         } finally {
             setLoading(false)
         }
@@ -260,8 +261,8 @@ export function useFacturationActions({
             toast.success(t('prescriptions:messages.save_success'));
             ui.setShowOrdonnanceModal(false);
             ui.setPendingOrdonnanceFacture(null);
-        } catch (err: any) {
-            toast.error(t('prescriptions:messages.save_error') + ": " + (err.response?.data?.detail || err.message));
+        } catch (err) {
+            toast.error(t('prescriptions:messages.save_error') + ": " + getApiErrorDetail(err, err instanceof Error ? err.message : 'Erreur'));
         } finally {
             setLoading(false);
         }

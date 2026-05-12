@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, Suspense } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   LineChart,
@@ -9,7 +9,7 @@ import {
   Tooltip,
   ResponsiveContainer,
   ReferenceLine,
-} from 'recharts';
+} from '../LazyRecharts';
 import type { ProduitModel, StockLot } from '../../types';
 import { formatCurrency } from '../../utils/formatters';
 import { formatDate } from '../../utils/dateUtils';
@@ -40,8 +40,8 @@ const PriceEvolutionChart = ({ achats, t }: { achats: any[]; t: any }) => {
         const filtered = selectedFournisseur === 'all'
             ? achats
             : achats.filter((a) => a.fournisseur_name === selectedFournisseur);
-        return [...filtered]
-            .sort((a, b) => new Date(a.commande_date).getTime() - new Date(b.commande_date).getTime())
+        return filtered
+            .toSorted((a, b) => new Date(a.commande_date).getTime() - new Date(b.commande_date).getTime())
             .map((a) => ({
                 date: new Date(a.commande_date).toLocaleDateString(undefined, { month: 'short', year: '2-digit' }),
                 prix: Math.round(Number(a.price_cost)),
@@ -109,13 +109,13 @@ const PriceEvolutionChart = ({ achats, t }: { achats: any[]; t: any }) => {
                     <XAxis dataKey="date" fontSize={10} tick={{ fontWeight: 700 }} />
                     <YAxis
                         fontSize={10}
-                        tickFormatter={(v) => formatCurrency(v)}
+                        tickFormatter={(v: number) => formatCurrency(v)}
                         domain={['auto', 'auto']}
                         width={70}
                     />
                     <Tooltip
                         formatter={(value: number) => [formatCurrency(value), t('products:detail.purchases.price', { defaultValue: 'Prix achat' })]}
-                        labelFormatter={(label, payload) => {
+                        labelFormatter={(label: string, payload: any[]) => {
                             const item = payload?.[0]?.payload;
                             return item ? `${item.fullDate}${item.fournisseur ? ` — ${item.fournisseur}` : ''}` : label;
                         }}

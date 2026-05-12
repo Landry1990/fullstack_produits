@@ -1,13 +1,14 @@
 from django.db import models
 from django.contrib.auth.models import User
 from django.utils import timezone
+from datetime import date
 
 class UserDailySession(models.Model):
     """
     Tracks the first login and last logout of a user per day.
     """
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='daily_sessions')
-    date = models.DateField(default=timezone.now)
+    date = models.DateField(default=date.today)
     first_login = models.DateTimeField(auto_now_add=True)
     last_logout = models.DateTimeField(null=True, blank=True)
     workstation = models.CharField(max_length=100, null=True, blank=True)

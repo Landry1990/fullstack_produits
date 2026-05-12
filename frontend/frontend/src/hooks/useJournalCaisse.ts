@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import api from '../services/api';
 import { toast } from 'react-hot-toast';
+import { getApiErrorDetail } from '../utils/errorHandling';
 import type { CaisseTransaction, MouvementCaisse } from '../types';
 import { usePharmacySettings } from './usePharmacySettings';
 import { useAuth } from '../context/AuthContext';
@@ -137,8 +138,8 @@ export function useJournalCaisse() {
       setMouvements(Array.isArray(mouvData) ? mouvData : (mouvData?.results || []));
       if (totalsData) setServerTotals(totalsData);
       if (usersData) setUsers(usersData);
-    } catch (err: any) {
-      if (err?.name === 'CanceledError') return;
+    } catch (err) {
+      if (err instanceof Error && err.name === 'CanceledError') return;
       setError(t('table.loading_error') || 'Erreur lors du chargement des données');
       console.error('Erreur page_init caisse:', err);
     } finally {
@@ -235,8 +236,8 @@ export function useJournalCaisse() {
       
       const response = await api.get('caisse/', { params, signal });
       processTransactionsData(response.data);
-    } catch (err: any) {
-      if (err?.name === 'CanceledError') return;
+    } catch (err) {
+      if (err instanceof Error && err.name === 'CanceledError') return;
       console.error('Erreur:', err);
       throw err;
     }
@@ -592,9 +593,9 @@ export function useJournalCaisse() {
       
       setIsClosingModalOpen(false);
       fetchData();
-    } catch (err: any) {
+    } catch (err) {
       console.error('Erreur clôture:', err);
-      const errorMessage = err.response?.data?.detail || err.message || 'Erreur inconnue';
+      const errorMessage = getApiErrorDetail(err, err instanceof Error ? err.message : 'Erreur inconnue');
       setError(`${t('messages.close_error')}: ${errorMessage}`);
       toast.error(errorMessage);
     } finally {

@@ -3,6 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import api from '../services/api'
 import { toast } from 'react-hot-toast'
+import { getApiErrorDetail, getErrorMessage } from '../utils/errorHandling';
 import { useConfirm } from '../hooks/useConfirm';
 import { useAuth } from '../context/AuthContext';
 import PasswordConfirmModal from './PasswordConfirmModal';
@@ -188,8 +189,8 @@ export default function Produit() {
       await api.post(`produits/${produit.id}/transfer_to_shelf/`, { quantity: qty });
       toast.success(t('products:messages.transfer_success', { count: qty }));
       refetchProduits();
-    } catch (err: any) {
-      toast.error(err.response?.data?.detail || t('products:messages.transfer_error'));
+    } catch (err) {
+      toast.error(getApiErrorDetail(err, t('products:messages.transfer_error')));
     } finally { setTransferLoading(false); }
   };
 
@@ -214,7 +215,7 @@ export default function Produit() {
       await deleteProduitMutation.mutateAsync(produitId);
       setSelectedProduit(null)
       toast.success(t('products:messages.delete_success'))
-    } catch (err) { toast.error(t('products:messages.delete_error')) }
+    } catch (err) { toast.error(getApiErrorDetail(err, t('products:messages.delete_error'))) }
   }
 
   const handleDeleteProduit = async (produit: ProduitModel) => {
@@ -244,7 +245,7 @@ export default function Produit() {
       toast.success(isActive ? t('products:messages.status_reactivated') : t('products:messages.status_hidden'))
       setSelectedProduit(prev => prev ? ({ ...prev, is_active: isActive }) : null)
       refetchProduits()
-    } catch (err) { toast.error(t('products:messages.status_error')) }
+    } catch (err) { toast.error(getApiErrorDetail(err, t('products:messages.status_error'))) }
   }
 
   const handleOpenEditModal = (produit: ProduitModel) => {
@@ -308,7 +309,7 @@ export default function Produit() {
       setSelectedProduit(updatedProduit)
       setIsEditModalOpen(false)
       toast.success(t('products:messages.update_success'))
-    } catch (err) { toast.error(t('products:messages.update_error')) }
+    } catch (err) { toast.error(getApiErrorDetail(err, t('products:messages.update_error'))) }
   }
 
   const executeStockAdjustment = async () => {
@@ -332,7 +333,7 @@ export default function Produit() {
         };
       });
       setIsAdjustmentModalOpen(false)
-    } catch (err: any) { toast.error(err.response?.data?.detail || t('products:messages.adjust_error')) }
+    } catch (err) { toast.error(getApiErrorDetail(err, t('products:messages.adjust_error'))) }
   }
 
   const handleStockAdjustmentSubmit = async (e: React.FormEvent) => {
@@ -385,7 +386,7 @@ export default function Produit() {
       const url = window.URL.createObjectURL(new Blob([resp.data]));
       const link = document.createElement('a'); link.href = url; link.setAttribute('download', `etiquettes_${produit.name}.pdf`);
       document.body.appendChild(link); link.click(); link.remove();
-    } catch (err) { toast.error(t('products:messages.generation_error')) }
+    } catch (err) { toast.error(getApiErrorDetail(err, t('products:messages.generation_error'))) }
   }
 
   // Keyboard navigation

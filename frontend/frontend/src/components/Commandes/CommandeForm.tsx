@@ -313,50 +313,7 @@ export default function CommandeForm({
                   </div>
                 </div>
                 
-                {/* Dropdown résultats */}
-                {searchProduitQuery && (
-                  <div className="absolute left-4 right-4 top-full mt-2 bg-base-100 rounded-xl shadow-xl border border-base-200 max-h-96 overflow-y-auto z-50">
-                    {filteredProduits.length === 0 ? (
-                      <div className="text-center py-8 text-base-content/40 text-sm">
-                        {t('orders:form.no_product_found')}
-                      </div>
-                    ) : (
-                      <div className="p-2 space-y-1">
-                        {filteredProduits.map((p, idx) => {
-                          const itemProps = getItemProps(idx);
-                          return (
-                          <div 
-                            key={p.id}
-                            {...itemProps}
-                            onClick={() => selectProduct(p)}
-                            style={itemProps.style}
-                            className={`
-                              group flex items-center justify-between p-3 rounded-lg cursor-pointer transition-all
-                              ${itemProps.className ? 'shadow-md' : 'hover:bg-base-100'}
-                            `}
-                          >
-                            <div className="flex-1 min-w-0">
-                              <div className="font-medium truncate text-sm">{p.name}</div>
-                              <div className="text-xs flex gap-3 mt-0.5 opacity-80">
-                                <span>{t('orders:form.search_results.stock')}: {p.stock}</span>
-                                <span>{t('orders:form.search_results.price')}: {p.selling_price} {t('common:currency_symbol', 'F')}</span>
-                                {(p.cip1 || p.cip2 || p.cip3) && (
-                                  <span>{t('orders:form.search_results.cip')}: {p.cip1 || p.cip2 || p.cip3}</span>
-                                )}
-                              </div>
-                            </div>
-                            <div className={`opacity-0 group-hover:opacity-100 ${itemProps.className ? 'opacity-100' : ''}`}>
-                              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" />
-                              </svg>
-                            </div>
-                          </div>
-                        )})}
-                      </div>
-                    )}
-                  </div>
-                )}
-              </div>
+            </div>
             </div>
 
             {/* Tableau des produits */}

@@ -33,6 +33,9 @@ class PromisViewSet(MultiTermSearchMixin, viewsets.ModelViewSet):
     ordering = ['-date_promis']
 
     def perform_create(self, serializer):
+        # DEBUG: Log the incoming data
+        logger.info(f"DEBUG PROMIS - Request data: {self.request.data}")
+        logger.info(f"DEBUG PROMIS - Client ID: {self.request.data.get('client')}, Client name: {self.request.data.get('client_name')}, Client phone: {self.request.data.get('client_phone')}")
         serializer.save(created_by=self.request.user)
 
     def perform_destroy(self, instance):
