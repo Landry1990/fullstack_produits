@@ -636,7 +636,7 @@ export default function Clients() {
                                   selectedClient.ayants_droit.map((ad: AyantDroit, idx: number) => (
                                     <tr key={idx} className="hover:bg-base-200/20 border-b border-base-200/50 last:border-0">
                                        <td className="py-4 px-6 text-sm font-black">{ad.nom}</td>
-                                       <td className="py-4 px-6 text-sm font-bold opacity-60 italic">{ad.societe || '—'}</td>
+                                       <td className="py-4 px-6 text-sm font-bold opacity-60 italic">{ad.societe || '-'}</td>
                                        <td className="py-4 px-6 text-sm font-black text-right font-mono text-secondary">{ad.matricule}</td>
                                     </tr>
                                   ))

@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import api from '../../services/api';
 import { toast } from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
+import { getApiErrorDetail } from '../../utils/errorHandling';
 import type { ProduitModel, LigneInventaire, StockLot } from '../../types';
 
 export const useProductSearch = (
@@ -43,10 +44,10 @@ export const useProductSearch = (
                 const productsList = Array.isArray(response.data) ? response.data : response.data.results;
                 setSearchResults(productsList || []);
                 setSelectedItemIndex(productsList?.length > 0 ? 0 : -1);
-            } catch (err: any) {
-                if (err?.code === 'ERR_CANCELED') return;
+            } catch (err) {
+                if (err instanceof Error && err.name === 'CanceledError') return;
                 console.error("Erreur recherche produits", err);
-                toast.error(t('common:messages.error_loading', { defaultValue: 'Erreur recherche' }));
+                toast.error(getApiErrorDetail(err, t('common:messages.error_loading', { defaultValue: 'Erreur recherche' })));
             } finally {
                 setLoadingSearch(false);
             }

@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, Suspense } from 'react';
 import api from '../services/api';
 import { formatCurrency } from '../utils/formatters';
 import { getLocale } from '../utils/dateUtils';
@@ -14,7 +14,7 @@ import {
   PieChart,
   Pie,
   Cell
-} from 'recharts';
+} from './LazyRecharts';
 import {
   useAnalyseFournisseurs,
   useComparaisonPrix,
@@ -208,7 +208,7 @@ export default function StatistiquesFournisseur() {
                         <CartesianGrid strokeDasharray="3 3" />
                         <XAxis dataKey="nom" />
                         <YAxis />
-                        <Tooltip formatter={(value) => `${formatCurrency(Number(value), i18n.language === 'fr' ? 'fr-FR' : 'en-GB', t('common:currency'))}`} />
+                        <Tooltip formatter={(value: number | string) => `${formatCurrency(Number(value), i18n.language === 'fr' ? 'fr-FR' : 'en-GB', t('common:currency'))}`} />
                         <Legend />
                         <Bar dataKey="ca_ttc" name={t('sales_tab.chart.ca')} fill="#10b981" />
                         <Bar dataKey="marge_brute" name={t('sales_tab.chart.margin')} fill="#f59e0b" />
@@ -414,7 +414,7 @@ export default function StatistiquesFournisseur() {
                                                 <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                                             ))}
                                         </Pie>
-                                         <Tooltip formatter={(value) => `${formatCurrency(Number(value), i18n.language === 'fr' ? 'fr-FR' : 'en-GB', t('common:currency'))}`} />
+                                         <Tooltip formatter={(value: number | string) => `${formatCurrency(Number(value), i18n.language === 'fr' ? 'fr-FR' : 'en-GB', t('common:currency'))}`} />
                                     </PieChart>
                                 </ResponsiveContainer>
                             </div>

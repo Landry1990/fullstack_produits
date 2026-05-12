@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useTranslation } from 'react-i18next';
 import api from '../services/api';
 import { toast } from 'react-hot-toast';
@@ -15,7 +15,7 @@ import {
   Tooltip,
   Legend,
   ResponsiveContainer
-} from 'recharts';
+} from './LazyRecharts';
 
 
 interface VendeurRanking {
@@ -265,7 +265,7 @@ export default function ClassementVendeurs() {
                 <LineChart data={chartData}>
                   <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
                   <XAxis dataKey="label" fontSize={11} />
-                  <YAxis tickFormatter={(v) => `${(v / 1000).toFixed(0)}k`} fontSize={11} />
+                  <YAxis tickFormatter={(v: number) => `${(v / 1000).toFixed(0)}k`} fontSize={11} />
                   <Tooltip formatter={(value: number) => formatMoney(value, t('common:currency'))} />
                   <Legend />
                   {evolutionData.map((series, index) => (
@@ -301,7 +301,7 @@ export default function ClassementVendeurs() {
             <ResponsiveContainer width="100%" height={300}>
               <BarChart data={ranking.data.slice(0, 5)} layout="vertical">
                 <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
-                <XAxis type="number" tickFormatter={(v) => `${(v / 1000).toFixed(0)}k`} />
+                <XAxis type="number" tickFormatter={(v: number) => `${(v / 1000).toFixed(0)}k`} />
                 <YAxis type="category" dataKey="vendeur" width={100} fontSize={12} />
                 <Tooltip formatter={(value: number) => formatMoney(value, t('common:currency'))} />
                 <Bar dataKey="chiffre_affaires" name={t('sellers:ranking.revenue')} radius={[0, 4, 4, 0]}>

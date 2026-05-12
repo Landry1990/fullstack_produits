@@ -60,7 +60,7 @@ from .audit import (
 )
 
 # Communication
-from .communication import SmsLog, SmsTemplate, WhatsAppLog, InternalMessage, MessageTemplate
+from .communication import SmsLog, SmsTemplate, WhatsAppLog, TelegramLog, InternalMessage, MessageTemplate
 
 # Signals for soft delete (preserving names before deletion)
 from .signals import (

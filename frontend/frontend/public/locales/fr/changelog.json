@@ -13,6 +13,16 @@
   "footer": "Zenith PMS · Toutes les versions depuis Jan. 2026",
   "no_results": "Aucune entrée pour ce filtre.",
   "versions": {
+    "2.10.0": {
+      "date": "12 Mai 2026",
+      "title": "Corrections Facturation & Commandes",
+      "items": [
+        "Correction : résultats de recherche produit en double dans les commandes grossistes",
+        "Correction : zone de validation du panier fixée en bas avec barre de défilement",
+        "Correction : sélection client 'Clients Divers' automatique dans les promis",
+        "Harmonisation de l'interface de la comptabilité (dashboard, tableaux, formulaires)"
+      ]
+    },
     "2.9.0": {
       "date": "3 Mai 2026",
       "title": "Système de Licences & Corbeille",

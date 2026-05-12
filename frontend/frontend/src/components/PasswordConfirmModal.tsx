@@ -1,4 +1,4 @@
-﻿import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import api from '../services/api';
 import { toast } from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
@@ -45,8 +45,9 @@ export default function PasswordConfirmModal({
       await api.post('verify-password/', { password });
       onConfirm();
       onClose();
-    } catch (err: any) {
-        if (err.response?.status === 403) {
+    } catch (err) {
+        const status = (err as { response?: { status?: number } })?.response?.status;
+        if (status === 403) {
              setError(t('password_confirm.incorrect'));
              toast.error(t('password_confirm.incorrect'));
         } else {

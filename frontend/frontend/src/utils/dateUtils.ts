@@ -2,6 +2,9 @@ import i18n from '../i18n';
 
 /**
  * Fonctions utilitaires pour formater les dates selon la langue courante (fr/en)
+ * 
+ * ⚠️ IMPORTANT: Toutes les dates sont gérées en heure locale (UTC+1 pour la Côte d'Ivoire)
+ * pour éviter les problèmes de décalage horaire entre le frontend et le backend.
  */
 
 /**
@@ -11,6 +14,50 @@ export const getLocale = () => {
     const lng = i18n.language;
     if (lng === 'en') return 'en-US'; // mm/dd/yyyy (US style as requested by user)
     return 'fr-FR'; // dd/mm/yyyy
+};
+
+/**
+ * Retourne la date locale au format YYYY-MM-DD (évite les problèmes UTC)
+ * 
+ * Ex: new Date() à 23h30 UTC+1 → "2026-05-12" (pas "2026-05-13" comme toISOString)
+ */
+export const getLocalDateString = (date: Date = new Date()): string => {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+};
+
+/**
+ * Retourne la date et heure locale au format ISO complet avec timezone
+ * Format: YYYY-MM-DDTHH:mm:ss+HH:mm
+ */
+export const getLocalDateTimeString = (date: Date = new Date()): string => {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    const hours = String(date.getHours()).padStart(2, '0');
+    const minutes = String(date.getMinutes()).padStart(2, '0');
+    const seconds = String(date.getSeconds()).padStart(2, '0');
+    
+    // Calculer le décalage horaire local (ex: +01:00 pour UTC+1)
+    const tzOffset = -date.getTimezoneOffset();
+    const tzHours = String(Math.floor(Math.abs(tzOffset) / 60)).padStart(2, '0');
+    const tzMinutes = String(Math.abs(tzOffset) % 60).padStart(2, '0');
+    const tzSign = tzOffset >= 0 ? '+' : '-';
+    
+    return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}${tzSign}${tzHours}:${tzMinutes}`;
+};
+
+/**
+ * Parse une chaîne de date en objet Date (gère ISO et format local)
+ */
+export const parseDate = (dateString: string | Date | null | undefined): Date | null => {
+    if (!dateString) return null;
+    if (dateString instanceof Date) return isNaN(dateString.getTime()) ? null : dateString;
+    
+    const d = new Date(dateString);
+    return isNaN(d.getTime()) ? null : d;
 };
 
 /**

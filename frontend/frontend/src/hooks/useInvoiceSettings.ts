@@ -22,8 +22,8 @@ export function useInvoiceSettings() {
             const { data } = await api.get<InvoiceSettings>('invoice-settings/', { signal });
             setSettings(data);
             setError(null);
-        } catch (err: any) {
-            if (err?.name === 'CanceledError') return;
+        } catch (err) {
+            if (err instanceof Error && err.name === 'CanceledError') return;
             console.error('Error fetching invoice settings:', err);
             setError('Erreur lors du chargement des paramètres de facturation');
         } finally {

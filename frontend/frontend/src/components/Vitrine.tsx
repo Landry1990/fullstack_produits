@@ -20,28 +20,34 @@ interface Product {
 // --- Composant Gestion (Admin) ---
 function GestionVitrine({ products, isLoading, searchTerm, setSearchTerm, showPublicOnly, setShowPublicOnly, toggleVisibility, updatePrice, bulkToggle }: any) {
     const { t } = useTranslation(['vitrine', 'common']);
-    const [selectedIds, setSelectedIds] = useState<number[]>([]);
+    const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
 
     // Clear selection when search changes or products refresh significantly
     useEffect(() => {
-        setSelectedIds([]);
+        setSelectedIds(new Set());
     }, [searchTerm, showPublicOnly]);
 
     const toggleSelection = (id: number) => {
-        setSelectedIds(prev => 
-            prev.includes(id) ? prev.filter(pId => pId !== id) : [...prev, id]
-        );
+        setSelectedIds(prev => {
+            const newSet = new Set(prev);
+            if (newSet.has(id)) {
+                newSet.delete(id);
+            } else {
+                newSet.add(id);
+            }
+            return newSet;
+        });
     };
 
     const handleSelectAll = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.checked) {
-            setSelectedIds(products.map((p: Product) => p.id));
+            setSelectedIds(new Set(products.map((p: Product) => p.id)));
         } else {
-            setSelectedIds([]);
+            setSelectedIds(new Set());
         }
     };
 
-    const isAllSelected = products.length > 0 && selectedIds.length === products.length;
+    const isAllSelected = products.length > 0 && selectedIds.size === products.length;
 
     return (
         <div className="space-y-6 relative">
@@ -71,18 +77,18 @@ function GestionVitrine({ products, isLoading, searchTerm, setSearchTerm, showPu
             </div>
 
             {/* Bulk Actions Bar */}
-            {selectedIds.length > 0 && (
+            {selectedIds.size > 0 && (
                 <div className="alert bg-base-100 shadow-lg border-l-4 border-primary flex flex-col sm:flex-row justify-between items-center gap-4 animate-in slide-in-from-top-2">
                     <div className="flex items-center gap-2">
                         <CheckCircle className="size-5 text-primary" />
-                        <span className="font-semibold">{t('gestion.selected_count', { count: selectedIds.length })}</span>
+                        <span className="font-semibold">{t('gestion.selected_count', { count: selectedIds.size })}</span>
                     </div>
                     <div className="flex gap-2">
                         <button 
                             className="btn btn-sm btn-success text-white"
                             onClick={() => {
-                                bulkToggle.mutate({ ids: selectedIds, target_status: true });
-                                setSelectedIds([]);
+                                bulkToggle.mutate({ ids: Array.from(selectedIds), target_status: true });
+                                setSelectedIds(new Set());
                             }}
                         >
                             {t('gestion.publish')}
@@ -90,15 +96,15 @@ function GestionVitrine({ products, isLoading, searchTerm, setSearchTerm, showPu
                         <button 
                             className="btn btn-sm btn-error text-white"
                             onClick={() => {
-                                bulkToggle.mutate({ ids: selectedIds, target_status: false });
-                                setSelectedIds([]);
+                                bulkToggle.mutate({ ids: Array.from(selectedIds), target_status: false });
+                                setSelectedIds(new Set());
                             }}
                         >
                             {t('gestion.unpublish')}
                         </button>
                          <button 
                             className="btn btn-sm btn-ghost"
-                            onClick={() => setSelectedIds([])}
+                            onClick={() => setSelectedIds(new Set())}
                         >
                             {t('gestion.cancel')}
                         </button>
@@ -135,12 +141,12 @@ function GestionVitrine({ products, isLoading, searchTerm, setSearchTerm, showPu
                         <tr><td colSpan={7} className="text-center p-8 text-base-content/60">{t('gestion.table.empty')}</td></tr>
                     ) : (
                         products.map((product: Product) => (
-                            <tr key={product.id} className={`hover:bg-base-50 ${selectedIds.includes(product.id) ? 'bg-base-200' : ''}`}>
+                            <tr key={product.id} className={`hover:bg-base-50 ${selectedIds.has(product.id) ? 'bg-base-200' : ''}`}>
                                 <td>
                                     <input 
                                         type="checkbox" 
                                         className="checkbox checkbox-sm"
-                                        checked={selectedIds.includes(product.id)}
+                                        checked={selectedIds.has(product.id)}
                                         onChange={() => toggleSelection(product.id)}
                                     />
                                 </td>

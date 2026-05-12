@@ -8,6 +8,81 @@ import { formatCurrency } from '../../utils/formatters';
 import ActionIcon from '../ui/ActionIcon';
 import SelectionHeader from '../ui/SelectionHeader';
 
+// Composant séparé pour éviter les re-renders inutiles
+interface BulkActionsMenuProps {
+    selectedIds: Set<number>;
+    avoirs: Avoir[];
+    onView: (avoir: Avoir) => void;
+    onEdit: (avoir: Avoir) => void;
+    onValidate: (avoir: Avoir) => void;
+    onDelete: (avoir: Avoir) => void;
+    onBulkValidate: () => void;
+    onBulkDelete: () => void;
+    bulkLoading: boolean;
+}
+
+const BulkActionsMenu: React.FC<BulkActionsMenuProps> = React.memo(({
+    selectedIds, avoirs, onView, onEdit, onValidate, onDelete, onBulkValidate, onBulkDelete, bulkLoading
+}) => {
+    const { t } = useTranslation(['stock', 'common']);
+
+    if (selectedIds.size === 1) {
+        const id = Array.from(selectedIds)[0];
+        const avoir = avoirs.find(x => x.id === id);
+        if (!avoir) return null;
+        return (
+            <>
+                <li className="menu-title px-4 py-2 text-xs font-bold uppercase tracking-widest text-base-content/40">
+                    {t('common:single_selection')}
+                </li>
+                <li>
+                    <a onClick={() => onView(avoir)} className="flex items-center gap-3 py-3 hover:bg-info/10 text-info font-medium">
+                        <Eye className="size-4" /> {t('common:view')}
+                    </a>
+                </li>
+                {(avoir.status?.toUpperCase() === 'BROUILLON' || avoir.status?.toUpperCase() === 'BRO') && (
+                    <>
+                        <li>
+                            <a onClick={() => onEdit(avoir)} className="flex items-center gap-3 py-3 hover:bg-warning/10 text-warning font-medium">
+                                <Edit className="size-4" /> {t('common:edit')}
+                            </a>
+                        </li>
+                        <li>
+                            <a onClick={() => onValidate(avoir)} className="flex items-center gap-3 py-3 hover:bg-success/10 text-success font-medium">
+                                <CheckCircle2 className="size-4" /> {t('common:validate')}
+                            </a>
+                        </li>
+                        <li>
+                            <a onClick={() => onDelete(avoir)} className="flex items-center gap-3 py-3 hover:bg-error/10 text-error font-medium">
+                                <Trash2 className="size-4" /> {t('common:delete')}
+                            </a>
+                        </li>
+                    </>
+                )}
+            </>
+        );
+    }
+    return (
+        <>
+            <li className="menu-title px-4 py-2 text-xs font-bold uppercase tracking-widest text-base-content/40">
+                {t('common:bulk_actions')}
+            </li>
+            <li>
+                <a onClick={onBulkValidate} className={`flex items-center gap-3 py-3 hover:bg-success/10 text-success font-medium ${bulkLoading ? 'disabled' : ''}`}>
+                    {bulkLoading ? <span className="loading loading-spinner loading-xs" /> : <Check className="size-4" />}
+                    {t('common:validate_all')}
+                </a>
+            </li>
+            <li>
+                <a onClick={onBulkDelete} className={`flex items-center gap-3 py-3 hover:bg-error/10 text-error font-medium ${bulkLoading ? 'disabled' : ''}`}>
+                    {bulkLoading ? <span className="loading loading-spinner loading-xs" /> : <Trash2 className="size-4" />}
+                    {t('common:delete_all')}
+                </a>
+            </li>
+        </>
+    );
+});
+
 interface AvoirsTableProps {
     avoirs: Avoir[];
     loading: boolean;
@@ -110,64 +185,6 @@ export const AvoirsTable: React.FC<AvoirsTableProps> = ({
     }).length;
     const allSelected = draftAvoirsCount > 0 && selectedIds.size === draftAvoirsCount;
 
-    const renderBulkActions = () => {
-        if (selectedIds.size === 1) {
-            const id = Array.from(selectedIds)[0];
-            const avoir = avoirs.find(x => x.id === id);
-            if (!avoir) return null;
-            return (
-                <>
-                    <li className="menu-title px-4 py-2 text-xs font-bold uppercase tracking-widest text-base-content/40">
-                        {t('common:single_selection')}
-                    </li>
-                    <li>
-                        <a onClick={() => onView(avoir)} className="flex items-center gap-3 py-3 hover:bg-info/10 text-info font-medium">
-                            <Eye className="size-4" /> {t('common:view')}
-                        </a>
-                    </li>
-                    {(avoir.status?.toUpperCase() === 'BROUILLON' || avoir.status?.toUpperCase() === 'BRO') && (
-                        <>
-                            <li>
-                                <a onClick={() => onEdit(avoir)} className="flex items-center gap-3 py-3 hover:bg-warning/10 text-warning font-medium">
-                                    <Edit className="size-4" /> {t('common:edit')}
-                                </a>
-                            </li>
-                            <li>
-                                <a onClick={() => onValidate(avoir)} className="flex items-center gap-3 py-3 hover:bg-success/10 text-success font-medium">
-                                    <CheckCircle2 className="size-4" /> {t('common:validate')}
-                                </a>
-                            </li>
-                            <li>
-                                <a onClick={() => onDelete(avoir)} className="flex items-center gap-3 py-3 hover:bg-error/10 text-error font-medium">
-                                    <Trash2 className="size-4" /> {t('common:delete')}
-                                </a>
-                            </li>
-                        </>
-                    )}
-                </>
-            );
-        }
-        return (
-            <>
-                <li className="menu-title px-4 py-2 text-xs font-bold uppercase tracking-widest text-base-content/40">
-                    {t('common:bulk_actions')}
-                </li>
-                <li>
-                    <a onClick={onBulkValidate} className={`flex items-center gap-3 py-3 hover:bg-success/10 text-success font-medium ${bulkLoading ? 'disabled' : ''}`}>
-                        {bulkLoading ? <span className="loading loading-spinner loading-xs" /> : <Check className="size-4" />}
-                        {t('common:validate_all')}
-                    </a>
-                </li>
-                <li>
-                    <a onClick={onBulkDelete} className={`flex items-center gap-3 py-3 hover:bg-error/10 text-error font-medium ${bulkLoading ? 'disabled' : ''}`}>
-                        {bulkLoading ? <span className="loading loading-spinner loading-xs" /> : <Trash2 className="size-4" />}
-                        {t('common:delete_all')}
-                    </a>
-                </li>
-            </>
-        );
-    };
-
     return (
         <div className="overflow-auto size-full relative">
             <table className="table table-zebra table-pin-rows w-full text-sm">
@@ -189,7 +206,19 @@ export const AvoirsTable: React.FC<AvoirsTableProps> = ({
                                 selectedCount={selectedIds.size}
                                 onClear={onClearSelection}
                                 colSpan={6}
-                                actions={renderBulkActions()}
+                                actions={
+                                    <BulkActionsMenu
+                                        selectedIds={selectedIds}
+                                        avoirs={avoirs}
+                                        onView={onView}
+                                        onEdit={onEdit}
+                                        onValidate={onValidate}
+                                        onDelete={onDelete}
+                                        onBulkValidate={onBulkValidate}
+                                        onBulkDelete={onBulkDelete}
+                                        bulkLoading={bulkLoading}
+                                    />
+                                }
                             >
                                 <></>
                             </SelectionHeader>

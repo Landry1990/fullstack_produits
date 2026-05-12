@@ -2,12 +2,12 @@ from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
-from django.db.models import Sum, Count, Q, Avg, F as models_f, ExpressionWrapper, DecimalField
-from django.db.models.functions import TruncDate
+from django.db.models import Sum, Count, Q, Avg, F as models_f, ExpressionWrapper, DecimalField, F, OuterRef, Subquery
+from django.db.models.functions import TruncDate, Coalesce
 from django.utils import timezone
 from datetime import datetime
 from decimal import Decimal
-from ..models import Facture, Caisse, FactureProduit
+from ..models import Facture, Caisse, FactureProduit, FactureProduitAllocation
 import logging
 
 logger = logging.getLogger(__name__)
@@ -23,25 +23,37 @@ class HistoriqueVentesViewSet(viewsets.ViewSet):
         date_fin = request.query_params.get('date_fin')
         page = int(request.query_params.get('page', 1))
         page_size = int(request.query_params.get('page_size', 31))
-        
+
         # Base queryset: only validated or paid invoices (exclude cancelled, brouillon, and proforma)
+        # NOTE: L'historique des ventes INCLUT les is_divers (toutes les ventes)
         factures = Facture.objects.filter(
             status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE]
-        ).exclude(produits__allocations__stock_lot__is_divers=True).distinct()
+        )
         
+        # DEBUG: Loguer les factures exclues pour troubleshooting
+        excluded = Facture.objects.exclude(
+            status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE]
+        )
+        if date_debut:
+            excluded = excluded.filter(date__date__gte=date_debut)
+        if date_fin:
+            excluded = excluded.filter(date__date__lte=date_fin)
+        for f in excluded[:5]:
+            logger.warning(f"[HISTORIQUE DEBUG] Facture exclue: {f.numero} - Status: {f.status} - Date: {f.date}")
+
         # Apply date filters
         if date_debut:
             factures = factures.filter(date__date__gte=date_debut)
         if date_fin:
             factures = factures.filter(date__date__lte=date_fin)
-        
+
         # Group by date and aggregate
         daily_stats_query = factures.annotate(
             jour=TruncDate('date')
         ).values('jour').annotate(
             nb_ventes=Count('id'),
             ca_ht=Sum('total_ht'),
-            ca_ttc=Sum('total_ttc'),
+            ca_ttc=Sum('total_ttc'),  # INCLUT is_divers
             tva=Sum('total_tva'),
             total_remise=Sum('remise'),
         ).order_by('-jour')
@@ -56,6 +68,7 @@ class HistoriqueVentesViewSet(viewsets.ViewSet):
         )
         
         # Payment totals for the entire filtered period
+        # NOTE: Déjà filtré via facture__in=factures qui sont status__in=[VALIDEE, PAYEE]
         global_paiements = Caisse.objects.filter(
             facture__in=factures,
             statut='completee'
@@ -86,8 +99,10 @@ class HistoriqueVentesViewSet(viewsets.ViewSet):
             ca_ttc_factures = float(day['ca_ttc'] or 0)
             
             # Get payment modes for this day
+            # NOTE: Filtrer aussi par statut facture pour cohérence avec ca_ttc
             paiements = Caisse.objects.filter(
                 facture__date__date=jour,
+                facture__status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE],
                 statut='completee'
             ).exclude(mode_paiement='recouvrement').values('mode_paiement').annotate(
                 total=Sum('montant')
@@ -265,20 +280,21 @@ class HistoriqueVentesViewSet(viewsets.ViewSet):
         date_debut = request.query_params.get('date_debut')
         date_fin = request.query_params.get('date_fin')
         
+        # NOTE: L'historique des ventes INCLUT les is_divers (toutes les ventes)
         factures = Facture.objects.filter(
             status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE]
-        ).exclude(produits__allocations__stock_lot__is_divers=True).distinct()
+        )
         if date_debut:
             factures = factures.filter(date__date__gte=date_debut)
         if date_fin:
             factures = factures.filter(date__date__lte=date_fin)
-            
+
         daily_stats = factures.annotate(
             jour=TruncDate('date')
         ).values('jour').annotate(
             nb_ventes=Count('id'),
             ca_ht=Sum('total_ht'),
-            ca_ttc=Sum('total_ttc'),
+            ca_ttc=Sum('total_ttc'),  # INCLUT is_divers
             tva=Sum('total_tva')
         ).order_by('-jour')
 
@@ -312,8 +328,10 @@ class HistoriqueVentesViewSet(viewsets.ViewSet):
             ca_ttc = float(day['ca_ttc'] or 0)
             panier_moyen = ca_ttc / nb_ventes if nb_ventes > 0 else 0
             
+            # NOTE: Filtrer aussi par statut facture pour cohérence avec ca_ttc
             paiements = Caisse.objects.filter(
                 facture__date__date=jour,
+                facture__status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE],
                 statut='completee'
             ).exclude(mode_paiement='recouvrement').values('mode_paiement').annotate(
                 total=Sum('montant')

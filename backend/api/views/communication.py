@@ -3,8 +3,8 @@ from django.db import models
 from rest_framework import viewsets, status, permissions
 from rest_framework.decorators import action
 from rest_framework.response import Response
-from ..models import SmsLog, SmsTemplate, Promis, Client, WhatsAppLog, InternalMessage, MessageTemplate
-from ..serializers import SmsLogSerializer, SmsTemplateSerializer, WhatsAppLogSerializer, InternalMessageSerializer, MessageTemplateSerializer
+from ..models import SmsLog, SmsTemplate, Promis, Client, WhatsAppLog, TelegramLog, InternalMessage, MessageTemplate
+from ..serializers import SmsLogSerializer, SmsTemplateSerializer, WhatsAppLogSerializer, TelegramLogSerializer, InternalMessageSerializer, MessageTemplateSerializer
 from ..services.sms import SmsService
 from ..pagination import StandardResultsSetPagination
 
@@ -99,15 +99,41 @@ class WhatsAppLogViewSet(viewsets.ReadOnlyModelViewSet):
         type_filter = self.request.query_params.get('type')
         status_filter = self.request.query_params.get('status')
         client_id = self.request.query_params.get('client')
-        
+
         if type_filter:
             qs = qs.filter(type=type_filter)
         if status_filter:
             qs = qs.filter(status=status_filter)
         if client_id:
             qs = qs.filter(client_id=client_id)
-            
+
         return qs
+
+
+class TelegramLogViewSet(viewsets.ReadOnlyModelViewSet):
+    """
+    Historique des messages Telegram.
+    """
+    queryset = TelegramLog.objects.all().order_by('-created_at')
+    serializer_class = TelegramLogSerializer
+    permission_classes = [permissions.IsAuthenticated]
+    pagination_class = StandardResultsSetPagination
+
+    def get_queryset(self):
+        qs = super().get_queryset()
+        type_filter = self.request.query_params.get('type')
+        status_filter = self.request.query_params.get('status')
+        client_id = self.request.query_params.get('client')
+
+        if type_filter:
+            qs = qs.filter(type=type_filter)
+        if status_filter:
+            qs = qs.filter(status=status_filter)
+        if client_id:
+            qs = qs.filter(client_id=client_id)
+
+        return qs
+
 
 class InternalMessageViewSet(viewsets.ModelViewSet):
     """

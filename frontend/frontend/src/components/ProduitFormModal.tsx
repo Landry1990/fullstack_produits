@@ -280,7 +280,7 @@ export default function ProduitFormModal({
                     }));
                   }}
                 >
-                  <option value="">—</option>
+                  <option value="">-</option>
                   {fournisseurs.map(f => <option key={f.id} value={f.id}>{f.name}</option>)}
                 </select>
               </label>
@@ -330,7 +330,7 @@ export default function ProduitFormModal({
                   value={form.forme}
                   onChange={(e) => setForm((p) => ({ ...p, forme: e.target.value }))}
                 >
-                  <option value="">—</option>
+                  <option value="">-</option>
                   {formes.map(f => <option key={f.id} value={f.id}>{f.nom}</option>)}
                 </select>
               </label>
@@ -341,7 +341,7 @@ export default function ProduitFormModal({
                   value={form.groupe}
                   onChange={(e) => setForm((p) => ({ ...p, groupe: e.target.value }))}
                 >
-                  <option value="">—</option>
+                  <option value="">-</option>
                   {groupes.map(g => <option key={g.id} value={g.id}>{g.nom}</option>)}
                 </select>
               </label>

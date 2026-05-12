@@ -1,3 +1,4 @@
+import { Suspense } from 'react';
 import { 
   TrendingUp, 
   Wallet, 
@@ -21,7 +22,7 @@ import {
   Tooltip, 
   ResponsiveContainer,
   Legend
-} from 'recharts';
+} from '../LazyRecharts';
 import { Link } from 'react-router-dom';
 import { formatCurrency } from '../../utils/formatters';
 
@@ -199,7 +200,7 @@ export default function PerformanceOverview({
                   </defs>
                   <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f3f4f6" />
                   <XAxis dataKey="jour" tick={{ fontSize: 11, fontWeight: 800, fill: '#6b7280' }} axisLine={false} tickLine={false} dy={8} />
-                  <YAxis yAxisId="ca" tick={{ fontSize: 10, fontWeight: 700, fill: '#9ca3af' }} axisLine={false} tickLine={false} tickFormatter={(v) => formatCurrencyLocal(v)} width={80} />
+                  <YAxis yAxisId="ca" tick={{ fontSize: 10, fontWeight: 700, fill: '#9ca3af' }} axisLine={false} tickLine={false} tickFormatter={(v: number) => formatCurrencyLocal(v)} width={80} />
                   <YAxis yAxisId="ventes" orientation="right" tick={{ fontSize: 10, fontWeight: 700, fill: '#f59e0b' }} axisLine={false} tickLine={false} width={30} />
                   <Tooltip
                     formatter={(v: number, name: string) => name === 'montant' ? [formatCurrencyLocal(v), 'CA'] : [v, 'Ventes']}

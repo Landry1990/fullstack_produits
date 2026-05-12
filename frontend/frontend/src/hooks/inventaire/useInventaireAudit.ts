@@ -58,8 +58,8 @@ export const useInventaireAudit = () => {
 
             const response = await api.get('inventaires/audit_discrepancies/', { params, signal: controller.signal });
             setData(response.data);
-        } catch (error: any) {
-            if (error?.code === 'ERR_CANCELED') return;
+        } catch (error) {
+            if (error instanceof Error && error.name === 'CanceledError') return;
             console.error("Erreur audit", error);
             toast.error(t('common:messages.error_loading'));
         } finally {

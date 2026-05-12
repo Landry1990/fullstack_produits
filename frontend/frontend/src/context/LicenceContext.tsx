@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, type ReactNode } from 'react';
+import React, { createContext, use, useState, useEffect, useMemo, useCallback, type ReactNode } from 'react';
 import api from '../services/api';
 import { toast } from 'react-hot-toast';
 
@@ -24,7 +24,7 @@ export const LicenceProvider = ({ children }: { children: ReactNode }) => {
     const [loading, setLoading] = useState(true);
     const [daysRemaining, setDaysRemaining] = useState<number | null>(null);
 
-    const fetchLicence = async () => {
+    const fetchLicence = useCallback(async () => {
         try {
             const res = await api.get('/licence/');
             if (res.data.is_valid && res.data.payload) {
@@ -63,21 +63,29 @@ export const LicenceProvider = ({ children }: { children: ReactNode }) => {
         } finally {
             setLoading(false);
         }
-    };
+    }, []);
 
     useEffect(() => {
         fetchLicence();
     }, []);
 
+    // Mémoriser l'objet value pour éviter les re-renders inutiles
+    const contextValue = useMemo(() => ({
+        licence,
+        loading,
+        daysRemaining,
+        refreshLicence: fetchLicence
+    }), [licence, loading, daysRemaining, fetchLicence]);
+
     return (
-        <LicenceContext.Provider value={{ licence, loading, daysRemaining, refreshLicence: fetchLicence }}>
+        <LicenceContext.Provider value={contextValue}>
             {children}
         </LicenceContext.Provider>
     );
 };
 
 export const useLicence = () => {
-    const context = useContext(LicenceContext);
+    const context = use(LicenceContext);
     if (context === undefined) {
         throw new Error('useLicence must be used within a LicenceProvider');
     }

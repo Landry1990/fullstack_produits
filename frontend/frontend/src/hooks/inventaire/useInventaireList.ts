@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import api from '../../services/api';
 import { toast } from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
+import { getApiErrorDetail } from '../../utils/errorHandling';
 import type { Inventaire } from '../../types';
 
 // Depending on how types are defined, you might need to adjust this import
@@ -78,8 +79,8 @@ export const useInventaireList = () => {
                 setInventaires([]);
                 setTotalCount(0);
             }
-        } catch (error: any) {
-            if (error?.code === 'ERR_CANCELED') return;
+        } catch (error) {
+            if (error instanceof Error && error.name === 'CanceledError') return;
             console.error(error);
             toast.error(t('common:messages.error_loading', { defaultValue: 'Erreur lors du chargement' }));
         } finally {
@@ -126,7 +127,7 @@ export const useInventaireList = () => {
             // fetchInventaires(); // Optionnel si on veut vraiment re-synchroniser tout, mais filtrer localement suffit pour l'instantanéité
         } catch (error) {
             console.error(error);
-            toast.error(t('common:messages.error_deleting'));
+            toast.error(getApiErrorDetail(error, t('common:messages.error_deleting')));
         } finally {
             setDeleting(false);
         }

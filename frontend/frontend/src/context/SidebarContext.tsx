@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect, type ReactNode } from 'react'
+import { createContext, use, useState, useEffect, useMemo, type ReactNode } from 'react'
 
 interface SidebarContextType {
   isOpen: boolean
@@ -55,26 +55,29 @@ export function SidebarProvider({ children }: { children: ReactNode }) {
     return next
   })
 
+  // Mémoriser l'objet value pour éviter les re-renders inutiles
+  const contextValue = useMemo(() => ({
+    isOpen,
+    isCollapsed,
+    isZenithMode,
+    isMidnightTheme,
+    toggleSidebar,
+    closeSidebar,
+    openSidebar,
+    toggleCollapse,
+    toggleZenithMode,
+    toggleMidnightTheme
+  }), [isOpen, isCollapsed, isZenithMode, isMidnightTheme]);
+
   return (
-    <SidebarContext.Provider value={{ 
-      isOpen, 
-      isCollapsed,
-      isZenithMode, 
-      isMidnightTheme,
-      toggleSidebar, 
-      closeSidebar, 
-      openSidebar, 
-      toggleCollapse,
-      toggleZenithMode,
-      toggleMidnightTheme
-    }}>
+    <SidebarContext.Provider value={contextValue}>
       {children}
     </SidebarContext.Provider>
   )
 }
 
 export function useSidebar() {
-  const context = useContext(SidebarContext)
+  const context = use(SidebarContext)
   if (context === undefined) {
     throw new Error('useSidebar must be used within a SidebarProvider')
   }

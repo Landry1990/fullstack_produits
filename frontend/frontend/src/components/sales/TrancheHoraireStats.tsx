@@ -3,6 +3,7 @@ import { Clock, Search } from 'lucide-react';
 import api from '../../services/api';
 import { useTranslation } from 'react-i18next';
 import { getLocale } from '../../utils/dateUtils';
+import { getApiErrorDetail } from '../../utils/errorHandling';
 
 
 interface TrancheHoraireStatsProps {
@@ -33,9 +34,9 @@ export const TrancheHoraireStats: React.FC<TrancheHoraireStatsProps> = ({ onVeri
                 params: { date_debut: dateDebut, date_fin: dateFin }
             });
             onVerify?.(response.data);
-        } catch (err: any) {
+        } catch (err) {
             console.error("Failed to fetch tranche stats", err);
-            setError(err.response?.data?.detail || t('sales:tranche_horaire.error_loading'));
+            setError(getApiErrorDetail(err, t('sales:tranche_horaire.error_loading')));
         } finally {
             setLoading(false);
         }

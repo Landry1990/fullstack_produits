@@ -157,7 +157,7 @@ export default function Sidebar() {
       submenus: [
         // { path: '/app/invoice-settings', label: t('parametres.facture'), key: 'settings_facture' }, (removed)
         { path: '/app/pharmacy-settings', label: t('parametres.pharmacie'), key: 'settings_pharmacie' },
-        { path: '/app/whatsapp-history', label: t('parametres.whatsapp'), key: 'settings_whatsapp' },
+        { path: '/app/telegram-history', label: t('parametres.telegram', 'Historique Telegram'), key: 'settings_telegram' },
       ]
     },
     { path: '/app/aide-formation', label: t('aide_formation'), key: 'aide_formation', icon: (

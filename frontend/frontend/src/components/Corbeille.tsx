@@ -227,13 +227,13 @@ export default function Corbeille() {
   };
 
   const formatDate = (dateStr: string | null) => {
-    if (!dateStr) return '—';
+    if (!dateStr) return '-';
     try {
       return new Date(dateStr).toLocaleDateString('fr-FR', {
         day: '2-digit', month: 'short', year: 'numeric',
         hour: '2-digit', minute: '2-digit'
       });
-    } catch { return '—'; }
+    } catch { return '-'; }
   };
 
   const getDetailString = (item: TrashedItem) => {

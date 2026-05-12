@@ -321,7 +321,7 @@ const GestionDivers: React.FC<{ defaultTab?: 'ca' | 'commandes' | 'stock' }> = (
             {totalPages > 1 && (
               <div className="px-6 py-4 border-t border-gray-100 flex items-center justify-between bg-gray-50">
                 <span className="text-sm text-gray-500">
-                  Page {page} / {totalPages} — {totalCount} résultats
+                  Page {page} / {totalPages} · {totalCount} résultats
                 </span>
                 <div className="flex gap-2">
                   <button

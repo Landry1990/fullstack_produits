@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { formatCurrency } from '../../utils/formatters';
 import { formatDate } from '../../utils/dateUtils';
 import { toast } from 'react-hot-toast';
+import { getApiErrorDetail } from '../../utils/errorHandling';
 import SkeletonTable from '../ui/SkeletonTable';
 
 export default function Ruptures() {
@@ -94,8 +95,8 @@ export default function Ruptures() {
       });
       toast.success(res.data.message);
       clearSelection();
-    } catch (error: any) {
-      toast.error(error.response?.data?.error || t('common:error_generic'));
+    } catch (error) {
+      toast.error(getApiErrorDetail(error, t('common:error_generic')));
     } finally {
       setIsBulkAdding(false);
     }
@@ -199,12 +200,8 @@ export default function Ruptures() {
       setSearchQuery('');
       if (activeTab === 'fournisseur') fetchFournisseurRuptures();
       if (activeTab === 'pharmacie') fetchPharmacieRuptures(pharmaciePage);
-    } catch (error: any) {
-        if (error.response?.data?.non_field_errors) {
-             toast.error(error.response.data.non_field_errors[0]);
-        } else {
-             toast.error(t('ruptures.fournisseur.declare_error', 'Erreur de signalement'));
-        }
+    } catch (error) {
+        toast.error(getApiErrorDetail(error, t('ruptures.fournisseur.declare_error', 'Erreur de signalement')));
     }
   };
 
@@ -215,8 +212,8 @@ export default function Ruptures() {
         quantity: 1
       });
       toast.success(res.data.message || t('ruptures.pharmacie.added_to_order_success', 'Ajouté à la commande'));
-    } catch (error: any) {
-      toast.error(error.response?.data?.error || t('ruptures.pharmacie.added_to_order_error', 'Erreur d\'ajout à la commande'));
+    } catch (error) {
+      toast.error(getApiErrorDetail(error, t('ruptures.pharmacie.added_to_order_error', 'Erreur d\'ajout à la commande')));
     }
   };
 

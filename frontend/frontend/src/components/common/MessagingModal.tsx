@@ -432,7 +432,7 @@ export default function MessagingModal({ isOpen, onClose, currentUser, onMessage
             <div className="space-y-4">
               <h4 className="text-lg font-bold flex items-center gap-2 mb-6 sticky top-0 bg-base-100 z-10 pb-2">
                 <Shield className="size-5 text-warning" />
-                Supervision — Tous les messages
+                Supervision – Tous les messages
                 <span className="badge badge-warning badge-sm">{allMessages.length}</span>
               </h4>
               <div className="grid gap-3">

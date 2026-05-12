@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { toast } from 'react-hot-toast';
+import { getApiErrorDetail } from '../utils/errorHandling';
 import { 
   LayoutDashboard, 
   RefreshCw,
@@ -91,9 +92,8 @@ export default function Dashboard() {
     try {
         await api.post('telegram/rapport-inventaire/');
         toast.success(t('common:telegram.send_success'), { icon: '📦' });
-    } catch (err: any) {
-        const msg = err?.response?.data?.message || t('common:telegram.send_error');
-        toast.error(msg);
+    } catch (err) {
+        toast.error(getApiErrorDetail(err, t('common:telegram.send_error')));
     } finally {
         setSendingInventaire(false);
     }
@@ -113,9 +113,8 @@ export default function Dashboard() {
     try {
         await api.post('telegram/rapport-flash/', { stats });
         toast.success(t('common:telegram.send_success'), { icon: '📊' });
-    } catch (err: any) {
-        const msg = err?.response?.data?.message || t('common:telegram.send_error');
-        toast.error(msg);
+    } catch (err) {
+        toast.error(getApiErrorDetail(err, t('common:telegram.send_error')));
     } finally {
         setSendingReport(false);
     }

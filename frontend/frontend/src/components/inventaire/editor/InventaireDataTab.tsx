@@ -36,7 +36,7 @@ export const InventaireDataTab: React.FC<InventaireDataTabProps> = ({
 
     // Sorting lines
     const sortedLines = useMemo(() => {
-        return [...lignes].sort((a, b) => {
+        return lignes.toSorted((a, b) => {
             let comparison = 0;
             switch (sortBy) {
                 case 'nom': {

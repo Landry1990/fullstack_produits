@@ -6,6 +6,7 @@ import { useSudo } from './useSudo';
 import creanceService from '../services/creanceService';
 import { usePharmacySettings } from './usePharmacySettings';
 import { generateRelevePdf } from '../utils/print/relevePdf';
+import { generateTicketReglementPdf } from '../utils/print/ticketReglementPdf';
 
 interface UseCreanceActionsProps {
     refresh: () => void;
@@ -40,6 +41,7 @@ export const useCreanceActions = ({
     const [modePaiement, setModePaiement] = useState('especes');
     const [montantPaiement, setMontantPaiement] = useState('');
     const [referencePaiement, setReferencePaiement] = useState('');
+    const [montantTotalBulk, setMontantTotalBulk] = useState<string>(''); // Pour paiement partiel sur plusieurs factures
 
     const handleOpenPaiementModal = useCallback((creance: Creance) => {
         setSelectedCreance(creance);
@@ -60,6 +62,7 @@ export const useCreanceActions = ({
         setModePaiement('especes');
         setReferencePaiement('');
         setMontantPaiement('');
+        setMontantTotalBulk(''); // Reset du montant bulk
     }, [selectedIds.length]);
 
     const handlePrintDirectReceipt = useCallback(async (creanceId: number, paiementId?: number) => {
@@ -151,20 +154,68 @@ export const useCreanceActions = ({
 
     const performBulkPayment = useCallback(async (validatorId: number, password: string) => {
         try {
-            const data = await creanceService.bulkPaiement({
+            const payload: any = {
                 facture_ids: selectedIds,
                 mode_paiement: modePaiement,
                 reference: referencePaiement,
                 validated_by_id: validatorId,
                 sudo_password: password
-            });
+            };
+            // Si un montant bulk personnalisé est saisi, l'ajouter
+            if (montantTotalBulk && parseFloat(montantTotalBulk) > 0) {
+                payload.montant_total = parseFloat(montantTotalBulk);
+            }
+            
+            const data = await creanceService.bulkPaiement(payload);
 
             const releveId = data.releve_id;
 
             setIsBulkModalOpen(false);
             setSelectedIds([]);
+            setMontantTotalBulk(''); // Reset après paiement
             refresh();
             toast.success(t('creances:toasts.bulk_success'));
+
+            // Générer le ticket de confirmation avec les détails
+            if (data.paiements && data.paiements.length > 0) {
+                try {
+                    // Récupérer le nom du client depuis les créances
+                    const firstCreance = filteredCreances.find(c => c.id === selectedIds[0]);
+                    const clientName = firstCreance?.client_name || 'Client';
+                    
+                    console.log('=== BULK PAYMENT RESPONSE ===');
+                    console.log('Total dettes:', data.total_dettes);
+                    console.log('Montant réglé:', data.total_amount);
+                    console.log('Reste à payer global:', data.reste_a_payer);
+                    console.log('=== PAIEMENTS DÉTAIL ===');
+                    data.paiements?.forEach((p: any, i: number) => {
+                        console.log(`  ${i+1}. Facture ${p.numero_facture}:`, {
+                            montant_paye: p.montant_paye,
+                            reste_avant: p.reste_avant,
+                            reste_apres: p.reste_apres,
+                            est_soldee: p.est_soldee,
+                            type_est_soldee: typeof p.est_soldee
+                        });
+                    });
+                    
+                    const ticketDoc = generateTicketReglementPdf({
+                        reference: data.releve_reference || `REL-${releveId}`,
+                        date: new Date().toISOString(),
+                        client_name: clientName,
+                        mode_paiement: modePaiement,
+                        total_dettes: data.total_dettes || data.total_amount,
+                        montant_regle: data.total_amount,
+                        reste_a_payer: data.reste_a_payer || '0.00',
+                        paiements: data.paiements,
+                        settings: pharmacySettings
+                    });
+                    
+                    ticketDoc.save(`ticket_reglement_${data.releve_reference || releveId}.pdf`);
+                } catch (ticketErr) {
+                    console.error('Erreur génération ticket:', ticketErr);
+                    toast.error('Erreur lors de la génération du ticket de confirmation');
+                }
+            }
 
             if (releveId && window.confirm(t('creances:toasts.confirm_print_bulk_receipt'))) {
                 await handlePrintBulkReceipt(releveId);
@@ -174,7 +225,7 @@ export const useCreanceActions = ({
             toast.error(error.response?.data?.detail || t('common:messages.error_saving'));
             console.error('Erreur:', err);
         }
-    }, [selectedIds, modePaiement, referencePaiement, setSelectedIds, refresh, handlePrintBulkReceipt]);
+    }, [selectedIds, modePaiement, referencePaiement, montantTotalBulk, setSelectedIds, refresh, handlePrintBulkReceipt, filteredCreances, pharmacySettings]);
 
     const confirmBulkPayment = () => {
         requireSudo(performBulkPayment);
@@ -230,7 +281,9 @@ export const useCreanceActions = ({
             montantPaiement,
             setMontantPaiement,
             referencePaiement,
-            setReferencePaiement
+            setReferencePaiement,
+            montantTotalBulk,
+            setMontantTotalBulk
         },
         actions: {
             handleOpenPaiementModal,

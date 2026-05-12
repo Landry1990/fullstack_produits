@@ -123,6 +123,11 @@ else:
     print('✓ Superuser existant')
 "
 
+# ── 6b. Garantir l'existence du compte de secours ──
+echo ""
+echo "🔐 Vérification du compte de secours..."
+python scripts/ensure_emergency_admin.py || echo "⚠️  Vérification du compte de secours échouée"
+
 # ── 7. Import des données fournisseur si spécifié et base vide ──
 if [ -n "$SUPPLIER_DATA" ]; then
     echo ""

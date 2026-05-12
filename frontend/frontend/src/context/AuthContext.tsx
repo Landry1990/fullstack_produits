@@ -1,4 +1,4 @@
-import { createContext, useState, useContext, useEffect, useCallback, type ReactNode } from 'react';
+import { createContext, useState, use, useEffect, useCallback, useMemo, type ReactNode } from 'react';
 import type { User } from '../types';
 import { safeStorage } from '../utils/storage';
 import api, { setAuthToken, clearAuthSession, resetSessionExpiredFlag } from '../services/api';
@@ -152,10 +152,21 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setUser(null);
   }, []);
 
+  // Mémoriser l'objet value pour éviter les re-renders inutiles des enfants
+  const contextValue = useMemo(() => ({
+    user,
+    login,
+    logout,
+    isAuthenticated: !!user,
+    loading,
+    getServerDate,
+    syncTime
+  }), [user, login, logout, loading, getServerDate, syncTime]);
+
   return (
     // On rend le contexte disponible pour tous les enfants
     // isAuthenticated est calculé dynamiquement : vrai si 'user' n'est pas null
-    <AuthContext.Provider value={{ user, login, logout, isAuthenticated: !!user, loading, getServerDate, syncTime }}>
+    <AuthContext.Provider value={contextValue}>
       {children}
     </AuthContext.Provider>
   );
@@ -163,7 +174,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
 // Hook personnalisé pour utiliser le contexte d'authentification plus facilement
 export const useAuth = () => {
-  const context = useContext(AuthContext);
+  const context = use(AuthContext);
   if (context === undefined) {
     throw new Error('useAuth must be used within an AuthProvider');
   }

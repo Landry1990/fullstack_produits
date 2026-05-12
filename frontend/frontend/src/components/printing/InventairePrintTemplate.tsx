@@ -244,7 +244,7 @@ const InventairePrintTemplate: React.FC<InventairePrintTemplateProps> = ({ setti
                         : "Veuillez remplir la colonne 'Qté Physique' lors de votre comptage. Les lots non listés doivent être signalés au verso."}
                 </div>
                 <div className="text-right font-bold text-slate-500 uppercase tracking-widest">
-                    {settings.pharmacy_name} — Logiciel ZENITH
+                    {settings.pharmacy_name} · Logiciel ZENITH
                 </div>
             </div>
         </div>
