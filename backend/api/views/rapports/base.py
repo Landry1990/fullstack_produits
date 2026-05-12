@@ -13,8 +13,6 @@ class RapportBaseMixin:
             status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE],
             date__gte=date_debut,
             date__lt=date_fin
-        ).exclude(
-            produits__allocations__stock_lot__is_divers=True
         ).prefetch_related('produits', 'produits__produit', 'paiements')
 
     def _calculate_ca_stats(self, factures):
@@ -127,16 +125,33 @@ class RapportBaseMixin:
         }
 
     def _calculate_creances(self):
+        # Sous-requête pour calculer le total TTC des produits NON is_divers par facture
+        from django.db.models import OuterRef, Subquery
+
+        # Calculer le montant des produits is_divers par facture pour l'ajuster
+        divers_total_sub = FactureProduitAllocation.objects.filter(
+            facture_produit__facture=OuterRef('pk'),
+            stock_lot__is_divers=True
+        ).values('facture_produit__facture').annotate(
+            total_divers=Coalesce(
+                Sum(F('selling_price') * F('quantity'), output_field=DecimalField()),
+                Decimal('0.00')
+            )
+        ).values('total_divers')
+
         stats = Facture.objects.filter(
             status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE]
-        ).exclude(
-            produits__allocations__stock_lot__is_divers=True
         ).annotate(
+            divers_amount=Coalesce(
+                Subquery(divers_total_sub, output_field=DecimalField()),
+                Decimal('0.00')
+            ),
+            adjusted_total=F('total_ttc') - F('divers_amount'),
             paid_amount=Coalesce(
                 Sum('paiements__montant', filter=Q(paiements__statut='completee') & ~Q(paiements__mode_paiement='en_compte')),
                 Value(0, output_field=DecimalField())
             ),
-            reste=F('total_ttc') - F('paid_amount')
+            reste=F('adjusted_total') - F('paid_amount')
         ).filter(reste__gt=0.5).aggregate(
             total=Coalesce(Sum('reste'), Decimal('0.00')),
             nb_factures=Count('id')

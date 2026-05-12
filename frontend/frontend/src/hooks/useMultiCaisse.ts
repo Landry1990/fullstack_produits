@@ -50,8 +50,8 @@ export function useMultiCaisse(_options: UseMultiCaisseOptions = {}): UseMultiCa
                         setSelectedPosteCaisseId(postesList[0].id)
                     }
                 }
-            } catch (err: any) {
-                if (err?.name !== 'CanceledError') handleApiError(err, 'Erreur lors du chargement des paramètres.')
+            } catch (err) {
+                if (err instanceof Error && err.name !== 'CanceledError') handleApiError(err, 'Erreur lors du chargement des paramètres.')
             } finally {
                 setMultiCaisseLoading(false)
             }

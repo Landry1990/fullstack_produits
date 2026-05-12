@@ -1,5 +1,5 @@
 
-import { forwardRef } from 'react';
+import type { Ref } from 'react';
 import Barcode from 'react-barcode';
 import type { TicketCaisse, PharmacySettings } from '../../types';
 import { formatNumber } from '../../utils/formatters';
@@ -7,9 +7,10 @@ import { formatNumber } from '../../utils/formatters';
 interface TicketTemplateProps {
   ticket: TicketCaisse;
   settings: PharmacySettings;
+  ref?: Ref<HTMLDivElement>;
 }
 
-export const TicketTemplate = forwardRef<HTMLDivElement, TicketTemplateProps>(({ ticket, settings }, ref) => {
+export const TicketTemplate = ({ ticket, settings, ref }: TicketTemplateProps) => {
   const getProductName = (p: any) => {
     if (!p) return 'Article inconnu';
     if (typeof p.produit === 'object') return p.produit.name;
@@ -279,6 +280,4 @@ export const TicketTemplate = forwardRef<HTMLDivElement, TicketTemplateProps>(({
 
     </div>
   );
-});
-
-TicketTemplate.displayName = 'TicketTemplate';
+};

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, Suspense } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   AreaChart,
@@ -16,7 +16,7 @@ import {
   Tooltip,
   Legend,
   ResponsiveContainer
-} from 'recharts';
+} from './LazyRecharts';
 import {
   useCAEvolution,
   useMargesEvolution,
@@ -510,7 +510,7 @@ export default function ModuleFinancier() {
                     fill="#8884d8"
                     dataKey="ca"
                     nameKey="name"
-                    label={({ name, percent }) => 
+                    label={({ name, percent }: { name: string; percent: number }) => 
                       `${String(name || '').substring(0, 10)}... ${((percent || 0) * 100).toFixed(0)}%`
                     }
                   >
@@ -627,7 +627,7 @@ export default function ModuleFinancier() {
                 <ResponsiveContainer width="100%" height={300}>
                   <BarChart data={categoryAnalysis.data.slice(0, 10)} layout="vertical">
                     <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
-                    <XAxis type="number" tickFormatter={(v) => formatMoney(v)} />
+                    <XAxis type="number" tickFormatter={(v: number) => formatMoney(v)} />
                     <YAxis 
                       type="category" 
                       dataKey="nom" 

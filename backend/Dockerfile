@@ -5,11 +5,17 @@ FROM python:3.11-slim
 WORKDIR /app
 
 # Installer les dépendances système nécessaires pour Psycopg2 et autres
+# + tzdata pour le fuseau horaire local
 RUN apt-get update && apt-get install -y \
     libpq-dev \
     gcc \
     curl \
+    tzdata \
     && rm -rf /var/lib/apt/lists/*
+
+# Définir le fuseau horaire local (Africa/Douala = UTC+1)
+ENV TZ=Africa/Douala
+RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 
 # Copier les fichiers de dépendances
 COPY requirements.txt .

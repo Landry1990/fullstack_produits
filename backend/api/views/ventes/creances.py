@@ -409,6 +409,7 @@ class CreanceViewSet(viewsets.ReadOnlyModelViewSet):
         facture_ids = request.data.get('facture_ids', [])
         mode_paiement = request.data.get('mode_paiement')
         reference_base = request.data.get('reference', '')
+        montant_total = request.data.get('montant_total')  # NOUVEAU: montant global optionnel
         
         reference = f"{reference_base} [{mode_paiement.upper()}] [RECOUV]".strip()
         mode_paiement = 'recouvrement'
@@ -425,7 +426,7 @@ class CreanceViewSet(viewsets.ReadOnlyModelViewSet):
 
         factures = Facture.objects.filter(id__in=facture_ids).annotate(
             montant_paye_annotated=Coalesce(Subquery(paid_subquery), Value(0, output_field=DecimalField()))
-        )
+        ).order_by('created_at')  # Ordre chronologique pour répartition
         
         if not factures.exists():
              return Response({'detail': 'No invoices found.'}, status=status.HTTP_404_NOT_FOUND)
@@ -440,26 +441,89 @@ class CreanceViewSet(viewsets.ReadOnlyModelViewSet):
         
         releve = RelevePaiement.objects.create(client=client, generated_by=request.user if request.user.is_authenticated else None, total_amount=Decimal('0.00'), reference=releve_ref)
 
-        total_paid_bulk = Decimal('0.00')
-        count_processed = 0
-
+        # Calculer le total des dettes
+        total_dettes = Decimal('0.00')
+        factures_data = []
         for facture in factures:
             montant_paye = getattr(facture, 'montant_paye_annotated', Decimal('0.00'))
             reste = facture.total_ttc - montant_paye
-            if reste <= 0:
-                continue
-            paiement = Caisse.objects.create(facture=facture, mode_paiement=mode_paiement, montant=reste, reference=reference, statut='completee', user=validation_user, releve=releve)
+            if reste > 0:
+                total_dettes += reste
+                factures_data.append({'facture': facture, 'reste': reste})
+        
+        if not factures_data:
+            return Response({'detail': 'Toutes les factures sont déjà payées.'}, status=status.HTTP_400_BAD_REQUEST)
+        
+        # Déterminer le montant à répartir
+        if montant_total is not None:
+            try:
+                montant_a_repartir = Decimal(str(montant_total))
+                if montant_a_repartir <= 0:
+                    return Response({'detail': 'Le montant total doit être positif.'}, status=status.HTTP_400_BAD_REQUEST)
+                if montant_a_repartir > total_dettes:
+                    return Response({'detail': f'Le montant ({montant_a_repartir}) dépasse le total des dettes ({total_dettes}).'}, status=status.HTTP_400_BAD_REQUEST)
+            except (ValueError, TypeError):
+                return Response({'detail': 'montant_total doit être un nombre valide.'}, status=status.HTTP_400_BAD_REQUEST)
+        else:
+            # Comportement original: payer tout
+            montant_a_repartir = total_dettes
+
+        total_paid_bulk = Decimal('0.00')
+        count_processed = 0
+        paiements_details = []
+
+        # Répartition chronologique du montant
+        montant_restant = montant_a_repartir
+        for data in factures_data:
+            if montant_restant <= 0:
+                break
+            facture = data['facture']
+            reste = data['reste']
+            
+            # Payer le minimum entre ce qui reste à payer et le solde de la facture
+            montant_paiement = min(montant_restant, reste)
+            
+            paiement = Caisse.objects.create(
+                facture=facture, 
+                mode_paiement=mode_paiement, 
+                montant=montant_paiement, 
+                reference=reference, 
+                statut='completee', 
+                user=validation_user, 
+                releve=releve
+            )
             
             from ...services.payment_service import PaymentService
             PaymentService.process_payment(paiement, is_created=True)
             
-            total_paid_bulk += reste
+            total_paid_bulk += montant_paiement
+            montant_restant -= montant_paiement
             count_processed += 1
+            reste_apres = reste - montant_paiement
+            paiements_details.append({
+                'facture_id': facture.id,
+                'numero_facture': facture.numero_facture,
+                'montant_total_facture': str(facture.total_ttc),
+                'montant_paye': str(montant_paiement),
+                'reste_avant': str(reste),
+                'reste_apres': str(reste_apres),
+                'est_soldee': reste_apres <= 0
+            })
             
         releve.total_amount = total_paid_bulk
         releve.save()
+        
+        reste_a_payer_global = total_dettes - total_paid_bulk
 
-        return Response({'detail': f'Règlement groupé effectué. {count_processed} factures traitées.', 'releve_id': releve.id, 'releve_reference': releve.reference, 'total_amount': str(total_paid_bulk)})
+        return Response({
+            'detail': f'Règlement effectué. {count_processed} factures traitées.',
+            'releve_id': releve.id, 
+            'releve_reference': releve.reference, 
+            'total_amount': str(total_paid_bulk),
+            'total_dettes': str(total_dettes),
+            'reste_a_payer': str(reste_a_payer_global),
+            'paiements': paiements_details
+        })
 
     @action(detail=False, methods=['get'])
     def imprimer_releve_paiement(self, request):
@@ -524,7 +588,7 @@ class CreanceViewSet(viewsets.ReadOnlyModelViewSet):
             story.append(Spacer(1, 0.5*cm))
             
             # Paiements du relevé
-            paiements = releve.paiements.filter(statut='completee').order_by('date_paiement')
+            paiements = releve.paiements_caisse.filter(statut='completee').order_by('date_paiement')
             
             if paiements.exists():
                 headers = ["Date", "Montant", "Mode", "Référence"]

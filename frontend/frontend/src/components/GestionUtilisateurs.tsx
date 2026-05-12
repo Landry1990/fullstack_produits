@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import api from '../services/api';
 import { toast } from 'react-hot-toast';
+import { getApiErrorDetail } from '../utils/errorHandling';
 import { useAuth } from '../context/AuthContext';
 import { useConfirm } from '../hooks/useConfirm';
 import PasswordConfirmModal from './PasswordConfirmModal';
@@ -421,9 +422,9 @@ export default function GestionUtilisateurs() {
       await api.patch(`users/${userId}/`, { is_active: false });
       toast.success(t('messages.deactivated', { username, defaultValue: `${username} a été désactivé (corbeille).` }));
       fetchUsers();
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error deleting/deactivating user:', error);
-      toast.error(t('messages.deactivate_error', { defaultValue: 'Erreur lors de la mise à la corbeille.' }));
+      toast.error(getApiErrorDetail(error, t('messages.deactivate_error', { defaultValue: 'Erreur lors de la mise à la corbeille.' })));
     }
   };
 
@@ -503,16 +504,15 @@ export default function GestionUtilisateurs() {
         toast.success(t('messages.updated'));
       } else {
         const { data: newUser } = await api.post('users/', payload);
-        setUsers(prev => [...prev, newUser].sort((a, b) => a.username.localeCompare(b.username)));
+        setUsers(prev => [...prev, newUser].toSorted((a, b) => a.username.localeCompare(b.username)));
         toast.success(t('messages.created'));
       }
       
       setModalOpen(false);
       // fetchUsers(); // Supprimé pour l'instantanéité
-    } catch (error: any) {
-      console.error('Error saving user:', error.response?.data || error);
-      const backendError = error.response?.data ? JSON.stringify(error.response.data) : '';
-      toast.error(`${t('messages.save_error')} ${backendError}`);
+    } catch (error) {
+      console.error('Error saving user:', error);
+      toast.error(getApiErrorDetail(error, t('messages.save_error')));
     }
   };
 

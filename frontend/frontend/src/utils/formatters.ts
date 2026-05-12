@@ -22,8 +22,12 @@ const getFormatter = (locale: string, options: Intl.NumberFormatOptions) => {
     return formatter;
 };
 
-export const normalizeNumberInput = (value: string | number, options?: { min?: number; max?: number }) => {
+export const normalizeNumberInput = (value: string | number | null | undefined, options?: { min?: number; max?: number }) => {
     let parsedValue: number
+
+    if (value == null) {
+        return 0
+    }
 
     if (typeof value === 'number') {
         parsedValue = value

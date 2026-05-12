@@ -92,7 +92,7 @@ const StockAnalysis = lazyWithRetry(() => import('./components/StockAnalysis'));
 const HistoriqueClotures = lazyWithRetry(() => import('./components/HistoriqueClotures'));
 const HistoriqueVentes = lazyWithRetry(() => import('./components/HistoriqueVentes'));
 const HistoriqueAchats = lazyWithRetry(() => import('./components/HistoriqueAchats'));
-const WhatsAppHistory = lazyWithRetry(() => import('./components/WhatsAppHistory'));
+const TelegramHistory = lazyWithRetry(() => import('./components/TelegramHistory'));
 const OrdonnancierPage = lazyWithRetry(() => import('./components/Ordonnancier'));
 const CentreRapports = lazyWithRetry(() => import('./components/CentreRapports'));
 const AnalyseABC = lazyWithRetry(() => import('./components/AnalyseABC'));
@@ -221,7 +221,7 @@ export const router = createBrowserRouter([
           { path: 'divers/commandes', ...perm('divers_commandes', GestionDivers, { defaultTab: 'commandes' }) },
 
           // ── Communication ──
-          { path: 'whatsapp-history', ...perm('settings_whatsapp', WhatsAppHistory) },
+          { path: 'telegram-history', ...perm('settings_telegram', TelegramHistory) },
 
           // ── Aide ──
           { path: 'aide-formation', ...perm('aide_formation', HelpTraining) },

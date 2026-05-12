@@ -80,8 +80,6 @@ export default function Login() {
     return `${type}-${randomId}`;
   });
 
-  // Focus states for input glow effects
-  const [focusedField, setFocusedField] = useState<string | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -211,8 +209,6 @@ export default function Login() {
                         <button
                           type="button"
                           onClick={() => { setIsOpen(prev => { if (!prev) setSearchTerm(''); return !prev; }); }}
-                          onFocus={() => setFocusedField('username')}
-                          onBlur={() => setFocusedField(null)}
                           className={`zl-input-base zl-dropdown-btn ${isOpen ? 'is-active' : ''}`}
                         >
                           <span>
@@ -286,8 +282,6 @@ export default function Login() {
                         placeholder="ADMIN"
                         value={username}
                         onChange={(e) => setUsername(e.target.value)}
-                        onFocus={() => setFocusedField('username')}
-                        onBlur={() => setFocusedField(null)}
                       />
                     )}
                   </div>
@@ -311,8 +305,6 @@ export default function Login() {
                           value={password}
                           autoFocus
                           onChange={(e) => setPassword(e.target.value)}
-                          onFocus={() => setFocusedField('password')}
-                          onBlur={() => setFocusedField(null)}
                         />
                         <button
                           type="button"

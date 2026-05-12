@@ -4,6 +4,9 @@ import PremiumModal from '../common/PremiumModal'
 import { ShieldAlert, Package, ArrowDown, History, Zap } from 'lucide-react'
 import type { ProduitModel, Client } from '../../types'
 
+// Constante de module pour éviter la recréation à chaque render
+const EMPTY_RESOLUTION_ACTIONS: Record<number, 'promis' | 'force' | 'reduce'> = {}
+
 interface StockResolutionModalProps {
   isOpen: boolean
   onClose: () => void
@@ -27,7 +30,7 @@ export default function StockResolutionModal({
   isOpen,
   onClose,
   stockResolutionItems,
-  resolutionActions = {},
+  resolutionActions = EMPTY_RESOLUTION_ACTIONS,
   setResolutionActions,
   promisPhone,
   setPromisPhone,

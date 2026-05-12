@@ -815,7 +815,7 @@ export default function Maintenance() {
                              ))}
                           </div>
                         ) : (
-                          <span className="text-base-content/30 text-xs">—</span>
+                          <span className="text-base-content/30 text-xs">-</span>
                         )}
                       </td>
                     </tr>

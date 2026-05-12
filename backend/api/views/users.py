@@ -21,9 +21,8 @@ def auto_close_old_sessions(user=None):
     Closes any unclosed sessions from previous days.
     If user is provided, only closes sessions for that user.
     """
-    from django.utils import timezone
     import datetime
-    today = timezone.now().date()
+    today = datetime.date.today()
     
     # We use a separate import here to avoid circular dependencies if any
     from ..models import UserDailySession
@@ -34,9 +33,8 @@ def auto_close_old_sessions(user=None):
         
     for session in query:
         # Set logout to 23:59:59 of that day
-        end_of_day = timezone.make_aware(
-            datetime.datetime.combine(session.date, datetime.time.max)
-        )
+        # Use naive datetime since USE_TZ is False
+        end_of_day = datetime.datetime.combine(session.date, datetime.time.max)
         session.last_logout = end_of_day
         session.save()
 
@@ -88,9 +86,8 @@ class CustomAuthToken(ObtainAuthToken):
             can_cash_out = user.profile.can_cash_out
             
         # Record daily session (login)
-        from django.utils import timezone
         import datetime
-        today = timezone.now().date()
+        today = datetime.date.today()
         
         # 1. Auto-close old unclosed sessions for THIS user
         auto_close_old_sessions(user=user)
@@ -120,7 +117,7 @@ class CustomAuthToken(ObtainAuthToken):
             'can_do_returns': can_do_returns,
             'can_sell_negative_stock': can_sell_negative_stock,
             'can_cash_out': can_cash_out,
-            'server_time': timezone.now().isoformat(),
+            'server_time': datetime.datetime.now().isoformat(),
             'permissions': {
                 'can_delete_invoice': user.is_superuser,
                 'can_view_stats': user.is_superuser or (hasattr(user, 'profile') and user.profile.role == 'manager'),
@@ -279,27 +276,13 @@ class UserViewSet(viewsets.ModelViewSet):
             
         return Response(data)
 
-    @action(detail=True, methods=['post'], parser_classes=[MultiPartParser, FormParser])
-    def upload_photo(self, request, pk=None):
-        user = self.get_object()
-        if 'photo' not in request.data:
-             return Response({'detail': 'Aucune photo fournie.'}, status=status.HTTP_400_BAD_REQUEST)
-        
-        # Ensure profile exists
-        profile, created = UserProfile.objects.get_or_create(user=user)
-        
-        profile.photo = request.data['photo']
-        profile.save()
-        
-        return Response({'status': 'Photo mise à jour', 'photo_url': profile.photo.url})
-
     @action(detail=False, methods=['post'], permission_classes=[IsAuthenticated])
     def logout(self, request):
         """
         Record logout time for the current user and revoke auth tokens.
         """
-        from django.utils import timezone
-        today = timezone.now().date()
+        import datetime
+        today = datetime.date.today()
         
         # Révocation explicite des tokens pour invalider immédiatement la session API.
         # Idempotent: delete() retourne 0 si aucun token n'existe, sans erreur.
@@ -307,7 +290,7 @@ class UserViewSet(viewsets.ModelViewSet):
         
         try:
             session = UserDailySession.objects.get(user=request.user, date=today)
-            session.last_logout = timezone.now()
+            session.last_logout = datetime.datetime.now()
             # If workstation identifier is sent during logout, update it
             workstation = request.data.get('workstation')
             if workstation:
@@ -320,7 +303,7 @@ class UserViewSet(viewsets.ModelViewSet):
             UserDailySession.objects.create(
                 user=request.user, 
                 date=today, 
-                last_logout=timezone.now(),
+                last_logout=datetime.datetime.now(),
                 workstation=workstation
             )
             return Response({'status': 'Déconnexion enregistrée (nouvelle session)'})
@@ -337,7 +320,7 @@ class UserDailySessionViewSet(viewsets.ReadOnlyModelViewSet):
     ordering_fields = ['first_login', 'last_logout', 'date']
 
     def get_queryset(self):
-        user = self.request.user
+        user: User = self.request.user  # type: ignore[assignment]
         
         # Auto-close old sessions when viewing the list
         # If superuser, close ALL old sessions. If regular user, only close their own.
@@ -369,8 +352,8 @@ class UserDailySessionViewSet(viewsets.ReadOnlyModelViewSet):
         
         # 2. Update session logout time if not already set
         if not session.last_logout:
-            from django.utils import timezone
-            session.last_logout = timezone.now()
+            import datetime
+            session.last_logout = datetime.datetime.now()
             session.save()
             
         log_audit(

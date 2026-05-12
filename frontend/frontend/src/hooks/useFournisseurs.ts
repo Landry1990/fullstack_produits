@@ -5,6 +5,7 @@ import api from '../services/api';
 import { useConfirm } from './useConfirm';
 import { useAuth } from '../context/AuthContext';
 import { toast } from 'react-hot-toast';
+import { getApiErrorDetail } from '../utils/errorHandling';
 import type { Fournisseur, PaginatedResponse } from '../types';
 import { useSudo } from './useSudo';
 
@@ -125,8 +126,8 @@ export function useFournisseurs() {
         { signal: controller.signal }
       );
       setCatalogue(response.data.produits || []);
-    } catch (err: any) {
-      if (err?.code === 'ERR_CANCELED') return;
+    } catch (err) {
+      if (err instanceof Error && err.name === 'AbortError') return;
       console.error('Erreur lors du chargement du catalogue:', err);
       setCatalogue([]);
     } finally {
@@ -288,8 +289,9 @@ export function useFournisseurs() {
       setNewFournisseur(emptyForm);
       closeAddModal();
     } catch (err: unknown) {
-      if ((err as any)?.response) {
-        const detail = (err as any).response?.data ?? (err as any).message;
+      const axiosErr = err as { response?: { data?: unknown }; message?: string };
+      if (axiosErr?.response) {
+        const detail = axiosErr.response?.data ?? axiosErr.message;
         setError(typeof detail === 'string' ? detail : formatBackendErrors(detail));
       } else {
         setError(t('providers:messages.save_error') || "Erreur inconnue lors de l'ajout du fournisseur");
@@ -312,8 +314,9 @@ export function useFournisseurs() {
       setSelectedFournisseur(updatedFournisseur);
       closeEditModal();
     } catch (err: unknown) {
-      if ((err as any)?.response) {
-        const detail = (err as any).response?.data ?? (err as any).message;
+      const axiosErr = err as { response?: { data?: unknown }; message?: string };
+      if (axiosErr?.response) {
+        const detail = axiosErr.response?.data ?? axiosErr.message;
         setError(typeof detail === 'string' ? detail : formatBackendErrors(detail));
       } else {
         setError(t('providers:messages.save_error') || "Erreur inconnue lors de la modification du fournisseur");
@@ -329,7 +332,7 @@ export function useFournisseurs() {
       setSelectedFournisseur(null);
       toast.success(t('providers:messages.delete_success'));
     } catch (err: unknown) {
-      const axiosErr = err as any;
+      const axiosErr = err as { response?: { status?: number; data?: { detail?: string; message?: string; error?: string } }; message?: string };
       if (axiosErr?.response) {
         if (axiosErr.response?.status === 500 || (axiosErr.response?.data?.detail && String(axiosErr.response.data.detail).includes('protected'))) {
              toast.error(t('providers:messages.delete_protected'));
@@ -353,8 +356,8 @@ export function useFournisseurs() {
         setSelectedFournisseur(null);
       }
       toast.success(t('providers:messages.bulk_delete_success', { count: selectedIds.length }));
-    } catch (err: any) {
-      toast.error(err.response?.data?.detail || err.response?.data?.error || t('providers:messages.bulk_delete_error'));
+    } catch (err) {
+      toast.error(getApiErrorDetail(err, t('providers:messages.bulk_delete_error')));
       console.error(err);
     }
   }

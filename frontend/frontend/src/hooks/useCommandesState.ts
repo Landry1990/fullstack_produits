@@ -102,6 +102,17 @@ export function useCommandesState(forcedType?: 'LOC' | 'DIR' | 'DIV') {
   const { data: rayons = [] } = useCommandeRayons();
   const { data: formes = [] } = useFormes();
 
+  // Filtrer les fournisseurs selon le type de commande
+  // LOC/DIR: exclure les fournisseurs "divers"
+  // DIV: uniquement les fournisseurs "divers"
+  const filteredFournisseurs = useMemo(() => {
+    if (activeTab === 'DIV') {
+      return fournisseurs.filter(f => f.is_divers);
+    } else {
+      return fournisseurs.filter(f => !f.is_divers);
+    }
+  }, [fournisseurs, activeTab]);
+
   const commandes = useMemo(() => commandesData?.results || [], [commandesData]);
   const totalCount = commandesData?.count || 0;
   const pageSize = commandesData?.results?.length || 20;
@@ -1197,7 +1208,13 @@ export function useCommandesState(forcedType?: 'LOC' | 'DIR' | 'DIV') {
   }, [produitsList]);
 
   function openCreateView(type: 'LOC' | 'DIR' | 'DIV' = activeTab) {
-    setNewCommandeFournisseurId(fournisseurs.length > 0 ? String(fournisseurs[0].id) : '')
+    // Filtrer les fournisseurs selon le type de commande
+    const fournisseursForType = type === 'DIV' 
+      ? fournisseurs.filter(f => f.is_divers)
+      : fournisseurs.filter(f => !f.is_divers);
+    
+    // Pré-sélectionner le premier fournisseur approprié, ou vider si aucun
+    setNewCommandeFournisseurId(fournisseursForType.length > 0 ? String(fournisseursForType[0].id) : '')
     setNumeroFacture('')
     setCommandeProduits([])
     setSearchProduitQuery('')
@@ -1290,7 +1307,7 @@ export function useCommandesState(forcedType?: 'LOC' | 'DIR' | 'DIV') {
     },
     listProps: {
       sortedCommandes,
-      fournisseurs,
+      fournisseurs: filteredFournisseurs,
       loading,
       totalCount,
       page,
@@ -1313,7 +1330,7 @@ export function useCommandesState(forcedType?: 'LOC' | 'DIR' | 'DIV') {
     },
     detailsProps: {
       commande: selectedCommande,
-      fournisseurs,
+      fournisseurs: filteredFournisseurs,
       produitsList,
       executingAction,
       onBack: handleBackToList,
@@ -1333,7 +1350,7 @@ export function useCommandesState(forcedType?: 'LOC' | 'DIR' | 'DIV') {
     formProps: {
       viewMode: viewMode as any, // Typed internally, let compiler infer or force
       selectedCommande,
-      fournisseurs,
+      fournisseurs: filteredFournisseurs,
       newCommandeFournisseurId,
       setNewCommandeFournisseurId,
       numeroFacture,
@@ -1380,7 +1397,7 @@ export function useCommandesState(forcedType?: 'LOC' | 'DIR' | 'DIV') {
     },
     modals: {
       handleApplySuggestions,
-      fournisseurs,
+      fournisseurs: filteredFournisseurs,
       produitsList,
       produitsEndpoint,
       handleProduitCreated,

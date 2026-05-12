@@ -184,6 +184,7 @@ class RapportFinanceMixin:
 
     @action(detail=False, methods=['get'])
     def rapport_ca_multi_annuel(self, request):
+        # Récupérer toutes les années avec des factures (en excluant les lots is_divers)
         annees = [
             d.year for d in Facture.objects
             .filter(status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE])
@@ -204,7 +205,11 @@ class RapportFinanceMixin:
                 date_debut = timezone.make_aware(datetime(annee, m_idx, 1))
                 date_fin   = (date_debut + timedelta(days=32)).replace(day=1)
                 ca_tva = ca_exo = Decimal('0.00')
-                for item in self._calculate_ca_par_tva(self._get_factures_periode(date_debut, date_fin)):
+                # Exclure les factures avec des produits is_divers
+                factures = self._get_factures_periode(date_debut, date_fin).exclude(
+                    produits__allocations__stock_lot__is_divers=True
+                )
+                for item in self._calculate_ca_par_tva(factures):
                     if item['taux'] > 0:
                         ca_tva += item['ca_ttc']
                     else:
@@ -241,6 +246,7 @@ class RapportFinanceMixin:
         except ValueError:
             return Response({'error': 'Format de date invalide'}, status=400)
 
+        # Filtrer les lignes de facture - exclure uniquement les lignes avec is_divers, pas les factures entières
         lignes = (
             FactureProduit.objects
             .filter(
@@ -248,7 +254,7 @@ class RapportFinanceMixin:
                 facture__status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE],
                 tva__gt=0,
             )
-            .exclude(facture__produits__allocations__stock_lot__is_divers=True)
+            .exclude(allocations__stock_lot__is_divers=True)
             .values('produit__name', 'produit__cip1', 'tva')
             .annotate(
                 total_qty=Sum('quantity'),
@@ -294,11 +300,11 @@ class RapportFinanceMixin:
                          'Total HT', 'Total TVA', 'Total TTC', 'Remise',
                          'Mode de Paiement', 'Caissier'])
 
+        # Récupérer toutes les factures - le filtre is_divers sera appliqué au niveau des lignes si nécessaire
         factures = (
             Facture.objects
             .filter(date__range=(date_debut, date_fin),
                     status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE])
-            .exclude(produits__allocations__stock_lot__is_divers=True)
             .select_related('client', 'created_by')
             .prefetch_related('paiements')
         )
@@ -333,11 +339,11 @@ class RapportFinanceMixin:
         except ValueError as e:
             return Response({"error": str(e)}, status=400)
 
+        # Récupérer toutes les factures de la période (sans exclure celles avec produits divers)
         factures = (
             Facture.objects
             .filter(status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE],
                     date__gte=date_debut, date__lte=date_fin)
-            .exclude(produits__allocations__stock_lot__is_divers=True)
             .select_related('validated_by')
         )
         stats = (
@@ -388,11 +394,11 @@ class RapportFinanceMixin:
         except ValueError as e:
             return Response({"error": str(e)}, status=400)
 
+        # Récupérer toutes les factures de la période (sans exclure celles avec produits divers)
         factures = (
             Facture.objects
             .filter(status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE],
                     date__gte=date_debut, date__lte=date_fin)
-            .exclude(produits__allocations__stock_lot__is_divers=True)
             .select_related('client', 'validated_by')
             .prefetch_related('produits')
         )
@@ -492,16 +498,18 @@ class RapportFinanceMixin:
         except ValueError as e:
             return Response({"error": str(e)}, status=400)
 
+        # Récupérer toutes les factures de la période (sans exclure celles avec produits divers)
         factures = Facture.objects.filter(
             date__range=(date_debut, date_fin),
             status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE],
-        ).exclude(produits__allocations__stock_lot__is_divers=True)
+        )
         results = []
 
-        # 1. Lignes allouées (lot connu)
+        # 1. Lignes allouées (lot connu) - exclure uniquement les lignes is_divers
         allocations = (
             FactureProduitAllocation.objects
             .filter(facture_produit__facture__in=factures)
+            .exclude(stock_lot__is_divers=True)
             .select_related(
                 'facture_produit', 'facture_produit__facture',
                 'facture_produit__produit', 'stock_lot',
@@ -546,6 +554,7 @@ class RapportFinanceMixin:
             })
 
         # 2. Lignes non allouées (fallback dernier lot reçu)
+        # Exclure les produits qui ont des lots is_divers
         unallocated = (
             FactureProduit.objects
             .filter(facture__in=factures)
@@ -553,6 +562,7 @@ class RapportFinanceMixin:
                 FactureProduitAllocation.objects.filter(facture_produit=OuterRef('pk'))
             ))
             .filter(has_alloc=False)
+            .exclude(produit__stock_lots__is_divers=True)
             .select_related('facture', 'produit')
         )
         # Pré-charger le dernier lot reçu par produit pour éviter N+1

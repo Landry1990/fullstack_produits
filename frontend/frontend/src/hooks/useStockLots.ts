@@ -25,8 +25,8 @@ export function useStockLots(produitId: number | null) {
                 })
                 const data = Array.isArray(response.data) ? response.data : (response.data.results || [])
                 setLots(data)
-            } catch (err: any) {
-                if (err?.code === 'ERR_CANCELED') return
+            } catch (err) {
+                if (err instanceof Error && err.name === 'AbortError') return;
                 console.error('Error fetching stock lots:', err)
                 setError('Impossible de charger les lots du produit')
             } finally {

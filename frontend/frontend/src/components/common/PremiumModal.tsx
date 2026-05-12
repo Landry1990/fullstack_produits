@@ -1,4 +1,4 @@
-﻿import React, { useEffect, useCallback } from 'react';
+import React, { useEffect, useRef } from 'react';
 
 interface PremiumModalProps {
   /** Whether the modal is visible */
@@ -63,24 +63,31 @@ const PremiumModal: React.FC<PremiumModalProps> = ({
   disableClose = false,
   className = '',
 }) => {
-  // Escape key handler
-  const handleEscape = useCallback((e: KeyboardEvent) => {
-    if (e.key === 'Escape' && !disableClose) {
-      onClose();
-    }
-  }, [onClose, disableClose]);
+  // Use refs so the effect listener always calls the latest handler
+  // without needing to re-subscribe on every render.
+  const onCloseRef = useRef(onClose);
+  const disableCloseRef = useRef(disableClose);
+  onCloseRef.current = onClose;
+  disableCloseRef.current = disableClose;
 
   useEffect(() => {
-    if (isOpen) {
-      document.addEventListener('keydown', handleEscape);
-      // Prevent body scroll when modal is open
-      document.body.style.overflow = 'hidden';
-    }
+    if (!isOpen) return;
+
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && !disableCloseRef.current) {
+        onCloseRef.current();
+      }
+    };
+
+    document.addEventListener('keydown', handleEscape);
+    // Prevent body scroll when modal is open
+    document.body.style.overflow = 'hidden';
+
     return () => {
       document.removeEventListener('keydown', handleEscape);
       document.body.style.overflow = '';
     };
-  }, [isOpen, handleEscape]);
+  }, [isOpen]);
 
   if (!isOpen) return null;
 

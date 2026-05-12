@@ -1,9 +1,9 @@
-import { useState } from 'react';
+import { useState, Suspense } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   BarChart, Bar, LineChart, Line, Legend
-} from 'recharts';
+} from './LazyRecharts';
 import { usePeakHours, useDailyComparison, useSeasonality } from '../hooks/useTemporalAnalysis';
 import { formatCurrency, formatNumber } from '../utils/formatters';
 
@@ -110,7 +110,7 @@ export default function AnalyseTemporelle() {
                       </defs>
                       <CartesianGrid strokeDasharray="3 3" vertical={false} />
                       <XAxis dataKey="hour" tick={{ fontSize: 12 }} />
-                      <YAxis yAxisId="left" tick={{ fontSize: 12 }} tickFormatter={(val) => `${val/1000}k`} />
+                      <YAxis yAxisId="left" tick={{ fontSize: 12 }} tickFormatter={(val: number) => `${val/1000}k`} />
                       <YAxis yAxisId="right" orientation="right" tick={{ fontSize: 12 }} />
                       <Tooltip 
                         contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
@@ -188,7 +188,7 @@ export default function AnalyseTemporelle() {
                       <BarChart data={dailyData?.data || []}>
                         <CartesianGrid strokeDasharray="3 3" vertical={false} />
                         <XAxis dataKey="day" tick={{ fontSize: 12 }} />
-                        <YAxis tick={{ fontSize: 12 }} tickFormatter={(val) => `${val/1000}k`} />
+                        <YAxis tick={{ fontSize: 12 }} tickFormatter={(val: number) => `${val/1000}k`} />
                         <Tooltip 
                           cursor={{fill: 'transparent'}}
                           contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
@@ -272,7 +272,7 @@ export default function AnalyseTemporelle() {
                       <LineChart data={seasonalityData?.monthly_trends || []}>
                         <CartesianGrid strokeDasharray="3 3" vertical={false} />
                         <XAxis dataKey="month" tick={{ fontSize: 12 }} />
-                        <YAxis tick={{ fontSize: 12 }} tickFormatter={(val) => `${val/1000000}M`} />
+                        <YAxis tick={{ fontSize: 12 }} tickFormatter={(val: number) => `${val/1000000}M`} />
                         <Tooltip 
                           contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
                           formatter={(value: number) => [`${formatCurrency(Math.round(value))}`, t('stock:temporal_analysis.columns.avg_revenue')]}

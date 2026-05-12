@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useCallback } from 'react'
+import { useState, useRef, useEffect, useMemo, useCallback } from 'react'
 import JsBarcode from 'jsbarcode'
 import PremiumModal from './common/PremiumModal'
 import { useTranslation } from 'react-i18next'
@@ -40,6 +40,9 @@ interface SimplePrintLabelsModalProps {
   selectedRows?: Set<number>
   onClose: () => void
 }
+
+// Constante de module pour éviter la recréation à chaque render
+const EMPTY_PRODUCTS_LIST: ProduitModel[] = []
 
 /* ═══════════════════════════════════════════
    STORAGE KEY
@@ -325,7 +328,7 @@ export default function SimplePrintLabelsModal({
   commandeId,
   commandeNumero,
   commande,
-  produitsList = [],
+  produitsList = EMPTY_PRODUCTS_LIST,
   selectedRows,
   onClose,
 }: SimplePrintLabelsModalProps) {

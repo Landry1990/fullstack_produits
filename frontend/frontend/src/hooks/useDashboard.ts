@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import api from '../services/api';
 import type { StockLot } from '../types';
+import { getLocalDateString } from '../utils/dateUtils';
 
 interface DashboardStats {
     role?: 'PHARMACIEN' | 'VENDEUR' | 'CAISSIER';
@@ -135,7 +136,7 @@ export const useExpiringLots = (months: number, enabled: boolean = true) => {
             futureDate.setMonth(today.getMonth() + months);
 
             const params = new URLSearchParams({
-                date_expiration_lte: futureDate.toISOString().split('T')[0],
+                date_expiration_lte: getLocalDateString(futureDate),
                 ordering: 'date_expiration'
             });
 

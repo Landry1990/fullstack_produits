@@ -1,5 +1,5 @@
 ﻿import React from 'react';
-import { Layers, CreditCard, Hash, AlertTriangle, CheckCircle2, Info } from 'lucide-react';
+import { Layers, CreditCard, Hash, AlertTriangle, CheckCircle2, Info, Wallet } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import PremiumModal from '../../common/PremiumModal';
 import { formatCurrency } from '../../../utils/formatters';
@@ -14,6 +14,8 @@ interface BulkPaiementModalProps {
         setModePaiement: (mode: string) => void;
         referencePaiement: string;
         setReferencePaiement: (ref: string) => void;
+        montantTotalBulk: string;
+        setMontantTotalBulk: (val: string) => void;
     };
     onConfirm: () => void;
 }
@@ -48,6 +50,12 @@ export const BulkPaiementModal: React.FC<BulkPaiementModalProps> = ({
                         <div className="text-3xl font-black text-base-content italic tracking-tight">
                             {formatCurrency(Math.round(totalAmount))}
                         </div>
+                        <div className="text-xs text-base-content/50">
+                            {form.montantTotalBulk && parseFloat(form.montantTotalBulk) > 0 
+                                ? `Règlement partiel: ${formatCurrency(parseFloat(form.montantTotalBulk))} / ${formatCurrency(totalAmount)}`
+                                : 'Règlement total des factures sélectionnées'
+                            }
+                        </div>
                     </div>
                 </div>
 
@@ -63,6 +71,32 @@ export const BulkPaiementModal: React.FC<BulkPaiementModalProps> = ({
 
                 {/* Form Fields */}
                 <div className="space-y-4">
+                    {/* Montant personnalisé - Paiement partiel */}
+                    <div className="space-y-1.5">
+                        <label className="text-[10px] font-black uppercase tracking-widest text-base-content/40 flex items-center gap-1.5 ml-1">
+                            <Wallet className="size-3" /> Montant à régler (optionnel)
+                        </label>
+                        <input
+                            type="number"
+                            placeholder={`Max: ${formatCurrency(totalAmount)} - Laisser vide pour tout régler`}
+                            value={form.montantTotalBulk}
+                            onChange={(e) => {
+                                const val = e.target.value;
+                                const num = parseFloat(val);
+                                if (!val || (num > 0 && num <= totalAmount)) {
+                                    form.setMontantTotalBulk(val);
+                                }
+                            }}
+                            className="input input-bordered w-full focus:ring-2 focus:ring-primary/20 transition-all font-mono text-sm"
+                        />
+                        <p className="text-[10px] text-base-content/40 ml-1">
+                            {form.montantTotalBulk 
+                                ? `Restera à payer: ${formatCurrency(totalAmount - parseFloat(form.montantTotalBulk || '0'))}`
+                                : 'Laisser vide pour régler le total des factures'
+                            }
+                        </p>
+                    </div>
+
                     <div className="space-y-1.5">
                         <label className="text-[10px] font-black uppercase tracking-widest text-base-content/40 flex items-center gap-1.5 ml-1">
                             <CreditCard className="size-3" /> {t('creances:bulk_modal.payment_mode')}

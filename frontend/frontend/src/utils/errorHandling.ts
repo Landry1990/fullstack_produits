@@ -8,13 +8,48 @@ export interface StartErrorExtraction {
     message: string;
 }
 
-export function extractErrorMessage(err: any): string {
+/**
+ * Type-safe helper to extract an error message from an `unknown` catch variable.
+ * Handles Axios errors, native Errors, strings, and arbitrary objects.
+ */
+export function getErrorMessage(err: unknown): string {
+    if (!err) return "Une erreur inconnue est survenue.";
+    if (typeof err === 'string') return err;
+    if (err instanceof Error) return err.message;
+    if (typeof err === 'object' && err !== null && 'message' in err) {
+        return String((err as { message: unknown }).message);
+    }
+    return "Une erreur inattendue est survenue.";
+}
+
+/**
+ * Type-safe helper to extract the API detail string from an Axios-like error.
+ * Returns the `response.data.detail` if present, or falls back to the provided default.
+ */
+export function getApiErrorDetail(err: unknown, fallback: string): string {
+    if (
+        typeof err === 'object' && err !== null &&
+        'response' in err &&
+        typeof (err as Record<string, unknown>).response === 'object' &&
+        (err as Record<string, unknown>).response !== null
+    ) {
+        const response = (err as { response: Record<string, unknown> }).response;
+        if (typeof response.data === 'object' && response.data !== null && 'detail' in response.data) {
+            return String((response.data as { detail: unknown }).detail);
+        }
+    }
+    return fallback;
+}
+
+export function extractErrorMessage(err: unknown): string {
     if (!err) return "Une erreur inconnue est survenue.";
 
+    const errObj = err as Record<string, any>;
+
     // 1. Gestion de la réponse API (Axios)
-    if (err.response) {
-        const status = err.response.status;
-        const data = err.response.data;
+    if (errObj.response) {
+        const status = errObj.response.status;
+        const data = errObj.response.data;
 
         // Cas Erreur Serveur (500)
         if (status >= 500) {
@@ -73,13 +108,14 @@ export function extractErrorMessage(err: any): string {
     }
 
     // 2. Gestion des erreurs réseau ou sans réponse
-    if (err.message) {
-        if (err.message === 'Network Error') {
+    if (errObj.message) {
+        if (errObj.message === 'Network Error') {
             return "Erreur de connexion : Impossible de joindre le serveur.";
         }
-        return err.message;
+        return errObj.message;
     }
 
     // 3. Fallback
     return typeof err === 'string' ? err : "Une erreur inattendue est survenue.";
 }
+

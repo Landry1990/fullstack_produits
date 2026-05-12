@@ -390,7 +390,7 @@ export default function ClientFormModal({
                                 <tr key={idx} className="hover:bg-primary/5 transition-colors group/row">
                                     <td className="py-2 px-4 font-black text-xs">{ad.nom}</td>
                                     <td className="py-2 px-4 font-mono font-black text-xs opacity-60 group-hover/row:opacity-100">{ad.matricule}</td>
-                                    <td className="py-2 px-4 font-bold text-xs text-base-content/60">{ad.societe || '—'}</td>
+                                    <td className="py-2 px-4 font-bold text-xs text-base-content/60">{ad.societe || '-'}</td>
                                     <td className="py-2 text-right">
                                         <button 
                                             type="button" 

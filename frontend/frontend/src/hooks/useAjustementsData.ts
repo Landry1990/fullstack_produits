@@ -69,8 +69,8 @@ export const useAjustementsData = () => {
                 setStats(statsResponse.data);
             }
 
-        } catch (err: any) {
-            if (err?.code === 'ERR_CANCELED') return;
+        } catch (err) {
+            if (err instanceof Error && err.name === 'AbortError') return;
             toast.error(t('common:messages.error_loading'));
             console.error(err);
         } finally {

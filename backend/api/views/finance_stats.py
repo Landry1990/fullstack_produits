@@ -129,34 +129,60 @@ class FinanceStatsViewSet(viewsets.ViewSet):
                 status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE]
             )
             
-            stats = month_factures.aggregate(
-                ca=Coalesce(Sum('total_ttc'), Decimal('0')),
-                remise_globale=Coalesce(Sum('remise'), Decimal('0'))
-            )
-            
-            # Margin from allocations
-            m_alloc = FactureProduitAllocation.objects.filter(
+            # Calculate margin HT by iterating allocations (selling_price is TTC)
+            allocs = FactureProduitAllocation.objects.filter(
                 facture_produit__facture__in=month_factures
-            ).aggregate(
-                m=Coalesce(Sum((F('facture_produit__selling_price') - F('facture_produit__discount') - F('cost_price')) * F('quantity')), Decimal('0'))
-            )['m']
+            ).select_related('facture_produit')
             
-            # Margin from unallocated
-            m_unalloc = FactureProduit.objects.filter(
+            m_alloc = Decimal('0')
+            ca_ht_alloc = Decimal('0')
+            for alloc in allocs:
+                item = alloc.facture_produit
+                tva = Decimal(str(item.tva or 0))
+                qty = Decimal(str(alloc.quantity))
+                selling_ttc = Decimal(str(alloc.selling_price))
+                discount_ttc = Decimal(str(item.discount or 0))
+                cost = Decimal(str(alloc.cost_price))
+                
+                # Convert TTC to HT
+                divisor = (1 + tva / 100) if tva >= 0 else 1
+                selling_ht = selling_ttc / divisor
+                discount_ht = discount_ttc / divisor
+                
+                m_alloc += (selling_ht - discount_ht - cost) * qty
+                ca_ht_alloc += (selling_ht - discount_ht) * qty
+            
+            # Margin from unallocated items
+            unalloc_items = FactureProduit.objects.filter(
                 facture__in=month_factures
             ).annotate(
                 has_alloc=Exists(FactureProduitAllocation.objects.filter(facture_produit=OuterRef('pk')))
-            ).filter(has_alloc=False).aggregate(
-                m=Coalesce(Sum((F('selling_price') - F('discount') - F('produit__pmp')) * F('quantity')), Decimal('0'))
-            )['m']
+            ).filter(has_alloc=False).select_related('produit')
             
-            total_ca = float(stats['ca'])
-            total_marge = float(m_alloc + m_unalloc - stats['remise_globale'])
+            m_unalloc = Decimal('0')
+            ca_ht_unalloc = Decimal('0')
+            for item in unalloc_items:
+                tva = Decimal(str(item.tva or 0))
+                qty = Decimal(str(item.quantity))
+                selling_ttc = Decimal(str(item.selling_price))
+                discount_ttc = Decimal(str(item.discount or 0))
+                cost = Decimal(str(item.produit.pmp or 0))
+                
+                # Convert TTC to HT
+                divisor = (1 + tva / 100) if tva >= 0 else 1
+                selling_ht = selling_ttc / divisor
+                discount_ht = discount_ttc / divisor
+                
+                m_unalloc += (selling_ht - discount_ht - cost) * qty
+                ca_ht_unalloc += (selling_ht - discount_ht) * qty
+            
+            total_ca_ht = float(ca_ht_alloc + ca_ht_unalloc)
+            total_marge = float(m_alloc + m_unalloc)
             
             margin_map[key] = {
-                'ca': total_ca,
+                'ca': total_ca_ht,
                 'marge': total_marge,
-                'taux': round((total_marge / total_ca) * 100, 1) if total_ca > 0 else 0
+                'taux': round((total_marge / total_ca_ht) * 100, 1) if total_ca_ht > 0 else 0
             }
             
             current = current + relativedelta(months=1)
@@ -367,28 +393,59 @@ class FinanceStatsViewSet(viewsets.ViewSet):
         if yearly_stats['count'] > 0:
             panier_moyen_annee = float(yearly_stats['ca']) / yearly_stats['count']
         
-        # --- Margin Rate (Improved: including unallocated and global discounts) ---
-        monthly_stats_remise = monthly_invoices.aggregate(r=Coalesce(Sum('remise'), Decimal('0')))['r']
-        
-        m_alloc_mois = FactureProduitAllocation.objects.filter(
+        # --- Margin Rate HT (selling_price is TTC, need conversion) ---
+        allocs_month = FactureProduitAllocation.objects.filter(
             facture_produit__facture__in=monthly_invoices
-        ).aggregate(
-            m=Coalesce(Sum((F('facture_produit__selling_price') - F('facture_produit__discount') - F('cost_price')) * F('quantity')), Decimal('0'))
-        )['m']
+        ).select_related('facture_produit')
         
-        m_unalloc_mois = FactureProduit.objects.filter(
+        m_alloc_mois = Decimal('0')
+        ca_ht_alloc_mois = Decimal('0')
+        for alloc in allocs_month:
+            item = alloc.facture_produit
+            tva = Decimal(str(item.tva or 0))
+            qty = Decimal(str(alloc.quantity))
+            selling_ttc = Decimal(str(alloc.selling_price))
+            discount_ttc = Decimal(str(item.discount or 0))
+            cost = Decimal(str(alloc.cost_price))
+            
+            # Convert TTC to HT
+            divisor = (1 + tva / 100) if tva >= 0 else 1
+            selling_ht = selling_ttc / divisor
+            discount_ht = discount_ttc / divisor
+            
+            m_alloc_mois += (selling_ht - discount_ht - cost) * qty
+            ca_ht_alloc_mois += (selling_ht - discount_ht) * qty
+        
+        # Unallocated items
+        unalloc_month = FactureProduit.objects.filter(
             facture__in=monthly_invoices
         ).annotate(
             has_alloc=Exists(FactureProduitAllocation.objects.filter(facture_produit=OuterRef('pk')))
-        ).filter(has_alloc=False).aggregate(
-            m=Coalesce(Sum((F('selling_price') - F('discount') - F('produit__pmp')) * F('quantity')), Decimal('0'))
-        )['m']
+        ).filter(has_alloc=False).select_related('produit')
         
-        total_marge_mois = m_alloc_mois + m_unalloc_mois - monthly_stats_remise
+        m_unalloc_mois = Decimal('0')
+        ca_ht_unalloc_mois = Decimal('0')
+        for item in unalloc_month:
+            tva = Decimal(str(item.tva or 0))
+            qty = Decimal(str(item.quantity))
+            selling_ttc = Decimal(str(item.selling_price))
+            discount_ttc = Decimal(str(item.discount or 0))
+            cost = Decimal(str(item.produit.pmp or 0))
+            
+            # Convert TTC to HT
+            divisor = (1 + tva / 100) if tva >= 0 else 1
+            selling_ht = selling_ttc / divisor
+            discount_ht = discount_ttc / divisor
+            
+            m_unalloc_mois += (selling_ht - discount_ht - cost) * qty
+            ca_ht_unalloc_mois += (selling_ht - discount_ht) * qty
+        
+        total_ca_ht_mois = ca_ht_alloc_mois + ca_ht_unalloc_mois
+        total_marge_mois = m_alloc_mois + m_unalloc_mois
         
         taux_marge = 0
-        if monthly_stats['ca'] > 0:
-            taux_marge = round((float(total_marge_mois) / float(monthly_stats['ca'])) * 100, 1)
+        if total_ca_ht_mois > 0:
+            taux_marge = round((float(total_marge_mois) / float(total_ca_ht_mois)) * 100, 1)
         
         # --- DSI (Days Stock Inventory) ---
         # DSI = (Stock Value / COGS per day)
@@ -475,38 +532,60 @@ class FinanceStatsViewSet(viewsets.ViewSet):
         else:  # mois
             start_date = today.replace(day=1)
         
-        # Aggregate from allocations
-        products = FactureProduitAllocation.objects.annotate(
+        # Aggregate from allocations - selling_price is TTC, need HT for margin calc
+        allocations = FactureProduitAllocation.objects.annotate(
             num_p=Count('facture_produit__facture__paiements')
         ).filter(
             facture_produit__facture__date__date__gte=start_date,
             facture_produit__facture__status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE]
-        ).exclude(facture_produit__facture__status='VAL', num_p=0).values(
-            'facture_produit__produit__id',
-            'facture_produit__produit__name',
-            'facture_produit__produit__cip1'
-        ).annotate(
-            ca=Coalesce(Sum(F('quantity') * F('selling_price'), output_field=DecimalField()), Decimal('0')),
-            marge=Coalesce(Sum((F('selling_price') - F('cost_price')) * F('quantity'), output_field=DecimalField()), Decimal('0')),
-            quantite=Coalesce(Sum('quantity'), 0)
+        ).exclude(facture_produit__facture__status='VAL', num_p=0).select_related(
+            'facture_produit', 'facture_produit__produit'
         )
         
+        # Calculate CA HT and margin HT per product
+        product_stats = {}
+        for alloc in allocations:
+            p = alloc.facture_produit.produit
+            p_id = p.id
+            tva = Decimal(str(alloc.facture_produit.tva or 0))
+            qty = Decimal(str(alloc.quantity))
+            selling_ttc = Decimal(str(alloc.selling_price))
+            cost = Decimal(str(alloc.cost_price))
+            
+            # Convert TTC to HT
+            selling_ht = selling_ttc / (1 + tva / 100) if tva >= 0 else selling_ttc
+            
+            if p_id not in product_stats:
+                product_stats[p_id] = {
+                    'id': p_id,
+                    'nom': p.name,
+                    'cip': p.cip1,
+                    'ca_ht': Decimal('0'),
+                    'marge': Decimal('0'),
+                    'quantite': 0
+                }
+            
+            product_stats[p_id]['ca_ht'] += selling_ht * qty
+            product_stats[p_id]['marge'] += (selling_ht - cost) * qty
+            product_stats[p_id]['quantite'] += alloc.quantity
+        
         # Sort by criteria
-        if critere == 'marge':
-            products = products.order_by('-marge')[:50]
-        else:
-            products = products.order_by('-ca')[:50]
+        sorted_products = sorted(
+            product_stats.values(),
+            key=lambda x: x['marge' if critere == 'marge' else 'ca_ht'],
+            reverse=True
+        )[:50]
         
         data = []
-        for item in products:
-            ca = float(item['ca'])
+        for item in sorted_products:
+            ca = float(item['ca_ht'])
             marge = float(item['marge'])
             taux = round((marge / ca) * 100, 1) if ca > 0 else 0
             
             data.append({
-                'id': item['facture_produit__produit__id'],
-                'nom': item['facture_produit__produit__name'],
-                'cip': item['facture_produit__produit__cip1'],
+                'id': item['id'],
+                'nom': item['nom'],
+                'cip': item['cip'],
                 'ca': ca,
                 'marge': marge,
                 'taux_marge': taux,
@@ -657,22 +736,49 @@ class FinanceStatsViewSet(viewsets.ViewSet):
             name_field = 'facture_produit__produit__rayon__name'
             default_name = 'Sans rayon'
         
-        data = base_qs.values(id_field, name_field).annotate(
-            ca=Coalesce(Sum(F('quantity') * F('selling_price'), output_field=DecimalField()), Decimal('0')),
-            marge=Coalesce(Sum((F('selling_price') - F('cost_price')) * F('quantity'), output_field=DecimalField()), Decimal('0')),
-            nb_ventes=Count('id')
-        ).order_by('-ca')
+        # Calculate HT values by iterating (selling_price is TTC)
+        allocations = base_qs.select_related('facture_produit', 'facture_produit__produit')
         
-        total_ca = sum(float(item['ca']) for item in data) or 1
-        total_marge = sum(float(item['marge']) for item in data)
+        cat_stats = {}
+        for alloc in allocations:
+            p = alloc.facture_produit.produit
+            cat_id = getattr(p, cat_type).id if getattr(p, cat_type) else 0
+            cat_name = getattr(p, cat_type).name if getattr(p, cat_type) else default_name
+            
+            tva = Decimal(str(alloc.facture_produit.tva or 0))
+            qty = Decimal(str(alloc.quantity))
+            selling_ttc = Decimal(str(alloc.selling_price))
+            cost = Decimal(str(alloc.cost_price))
+            
+            # Convert TTC to HT
+            selling_ht = selling_ttc / (1 + tva / 100) if tva >= 0 else selling_ttc
+            
+            if cat_id not in cat_stats:
+                cat_stats[cat_id] = {
+                    'id': cat_id,
+                    'nom': cat_name,
+                    'ca_ht': Decimal('0'),
+                    'marge': Decimal('0'),
+                    'nb_ventes': 0
+                }
+            
+            cat_stats[cat_id]['ca_ht'] += selling_ht * qty
+            cat_stats[cat_id]['marge'] += (selling_ht - cost) * qty
+            cat_stats[cat_id]['nb_ventes'] += 1
+        
+        # Sort by CA HT
+        sorted_data = sorted(cat_stats.values(), key=lambda x: x['ca_ht'], reverse=True)
+        
+        total_ca = sum(float(item['ca_ht']) for item in sorted_data) or 1
+        total_marge = sum(float(item['marge']) for item in sorted_data)
         
         result = []
-        for item in data:
-            ca = float(item['ca'])
+        for item in sorted_data:
+            ca = float(item['ca_ht'])
             marge = float(item['marge'])
             result.append({
-                'id': item[id_field] or 0,
-                'nom': item[name_field] or default_name,
+                'id': item['id'],
+                'nom': item['nom'],
                 'ca': ca,
                 'marge': marge,
                 'taux_marge': round((marge / ca) * 100, 1) if ca > 0 else 0,
@@ -799,44 +905,59 @@ class FinanceStatsViewSet(viewsets.ViewSet):
         ).exclude(facture__status='VAL', num_p=0)
         
         # 1. Calculer les moyennes globales pour références
-        stats_globales = base_qs.aggregate(
-            avg_volume=Avg('quantity'),
-            avg_marge_taux=Avg(F('selling_price') / F('produit__cost_price'), output_field=DecimalField())
-        )
-        
-        # Moyenne volume par produit (approximation simple)
-        # Idéalement : Total ventes / Nombre produits vendus
         total_ventes_qty = base_qs.aggregate(sum=Sum('quantity'))['sum'] or 0
         nb_produits_distincts = base_qs.values('produit').distinct().count() or 1
         seuil_volume_eleve = (total_ventes_qty / nb_produits_distincts) * 1.5  # 50% au-dessus de la moyenne
         
-        # 2. Agrégation par produit
-        produits_stats = base_qs.values(
-            'produit__id', 'produit__name', 'produit__cost_price', 'produit__selling_price'
-        ).annotate(
-            volume_total=Sum('quantity'),
-            marge_totale=Sum((F('selling_price') - F('produit__cost_price')) * F('quantity'), output_field=DecimalField())
-        )
+        # 2. Agrégation par produit avec calcul HT (selling_price is TTC)
+        facture_produits = base_qs.select_related('produit')
+        
+        produits_stats = {}
+        for fp in facture_produits:
+            p = fp.produit
+            p_id = p.id
+            tva = Decimal(str(fp.tva or 0))
+            qty = fp.quantity
+            selling_ttc = Decimal(str(fp.selling_price))
+            cost = Decimal(str(p.cost_price or 0))
+            
+            # Convert TTC to HT
+            selling_ht = selling_ttc / (1 + tva / 100) if tva >= 0 else selling_ttc
+            
+            if p_id not in produits_stats:
+                produits_stats[p_id] = {
+                    'id': p_id,
+                    'name': p.name,
+                    'cost_price': cost,
+                    'selling_price': selling_ht,  # Store HT for margin calc
+                    'volume_total': 0,
+                    'marge_totale': Decimal('0')
+                }
+            
+            produits_stats[p_id]['volume_total'] += qty
+            produits_stats[p_id]['marge_totale'] += (selling_ht - cost) * qty
         
         opportunites_nego = []
         stock_dormant = []
         suggestions_prix = []
         
-        for p in produits_stats:
-            volume = p['volume_total'] or 0
-            cp = float(p['produit__cost_price'] or 0)
-            sp = float(p['produit__selling_price'] or 0)
+        for p in produits_stats.values():
+            volume = p['volume_total']
+            cp = float(p['cost_price'])
+            sp = float(p['selling_price'])
+            marge_totale = float(p['marge_totale'])
             
             if cp <= 0 or sp <= 0:
                 continue
                 
-            taux_marge = ((sp - cp) / sp) * 100
+            # Taux de marge HT : (PV HT - PA HT) / PV HT
+            taux_marge = (marge_totale / (sp * volume)) * 100 if volume > 0 and sp > 0 else 0
             
             # Cas 1 : Faible marge (< 15%) mais Fort volume
             if taux_marge < 15 and volume > seuil_volume_eleve:
                 opportunites_nego.append({
-                    'id': p['produit__id'],
-                    'nom': p['produit__name'],
+                    'id': p['id'],
+                    'nom': p['name'],
                     'taux_marge': round(taux_marge, 1),
                     'volume': volume,
                     'marge_perdue': round((0.15 * sp - (sp - cp)) * volume, 2)  # Gain potentiel si marge monte à 15%
@@ -846,8 +967,8 @@ class FinanceStatsViewSet(viewsets.ViewSet):
             # Note: "Faible rotation" ici est approximé par faible volume de vente relatif
             if taux_marge > 40 and volume < (seuil_volume_eleve / 4):
                 stock_dormant.append({
-                    'id': p['produit__id'],
-                    'nom': p['produit__name'],
+                    'id': p['id'],
+                    'nom': p['name'],
                     'taux_marge': round(taux_marge, 1),
                     'volume': volume,
                     'prix_actuel': sp
@@ -860,8 +981,8 @@ class FinanceStatsViewSet(viewsets.ViewSet):
                 prix_suggere = sp * 1.05
                 
                 suggestions_prix.append({
-                    'id': p['produit__id'],
-                    'nom': p['produit__name'],
+                    'id': p['id'],
+                    'nom': p['name'],
                     'taux_actuel': round(taux_marge, 1),
                     'prix_actuel': sp,
                     'prix_suggere': round(prix_suggere, 2),

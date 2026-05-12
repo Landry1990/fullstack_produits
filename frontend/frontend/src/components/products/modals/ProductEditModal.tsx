@@ -130,7 +130,7 @@ export const ProductEditModal: React.FC<ProductEditModalProps> = ({
                 });
               }}
             >
-              <option value="">—</option>
+              <option value="">-</option>
               {fournisseurs.map(f => <option key={f.id} value={f.id}>{f.name}</option>)}
             </Select>
 

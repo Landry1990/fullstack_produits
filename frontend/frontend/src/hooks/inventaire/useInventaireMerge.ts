@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import api from '../../services/api';
 import { toast } from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
+import { getApiErrorDetail } from '../../utils/errorHandling';
 import type { Inventaire } from '../../types';
 
 interface UseInventaireMergeProps {
@@ -56,8 +57,8 @@ export const useInventaireMerge = ({
             const candidates = (Array.isArray(res.data) ? res.data : res.data.results)
                 .filter((inv: Inventaire) => inv.id !== activeInventaire.id);
             setMergeCandidates(candidates);
-        } catch (err: any) {
-            if (err?.code === 'ERR_CANCELED') return;
+        } catch (err) {
+            if (err instanceof Error && err.name === 'CanceledError') return;
             console.error("Erreur candidats fusion", err);
         } finally {
             setLoadingMergeCandidates(false);
@@ -115,8 +116,7 @@ export const useInventaireMerge = ({
             setSelectedMergeSource(null);
         } catch (err: unknown) {
             console.error("Erreur fusion", err);
-            const error = err as { response?: { data?: { error?: string } } };
-            toast.error(error.response?.data?.error || t('inventaire.merge.error', { defaultValue: 'Erreur lors de la fusion' }));
+            toast.error(getApiErrorDetail(err, t('inventaire.merge.error', { defaultValue: 'Erreur lors de la fusion' })));
         } finally {
             setMerging(false);
         }

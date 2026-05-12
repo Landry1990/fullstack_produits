@@ -165,11 +165,14 @@ class DashboardViewSet(viewsets.ViewSet):
             ]
 
             # 6. Today's Margin (Improved with unallocated products and discounts)
+            # NOTE: Le dashboard ne filtre PAS les is_divers (contrairement aux rapports mensuels)
             factures_today_qs = Facture.objects.filter(
                 date__date=today,
                 status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE]
-            ).exclude(produits__allocations__stock_lot__is_divers=True).distinct().annotate(num_p=Count('paiements')).exclude(status=Facture.Status.VALIDEE, num_p=0)
-            
+            ).annotate(
+                num_p=Count('paiements')
+            ).exclude(status=Facture.Status.VALIDEE, num_p=0)
+
             total_global_remise = factures_today_qs.aggregate(s=Coalesce(Sum('remise'), Decimal('0')))['s']
 
             # 6a. Margin from allocated products (FIFO/FEFO)
@@ -316,6 +319,7 @@ class DashboardViewSet(viewsets.ViewSet):
         )
 
         # 2. Somme des Coûts (Allocations + Unallocated fallback)
+        # NOTE: Le dashboard ne filtre PAS les is_divers (contrairement aux rapports mensuels)
         # Coûts depuis les allocations
         cost_alloc_stats = FactureProduitAllocation.objects.filter(
             facture_produit__facture__in=factures_mois_qs
@@ -330,7 +334,9 @@ class DashboardViewSet(viewsets.ViewSet):
             facture__in=factures_mois_qs
         ).annotate(
             has_allocation=Exists(FactureProduitAllocation.objects.filter(facture_produit=OuterRef('pk')))
-        ).filter(has_allocation=False).aggregate(
+        ).filter(
+            has_allocation=False
+        ).aggregate(
             cost_jour=Coalesce(Sum(Case(When(facture__date__date=today, then=F('produit__pmp') * F('quantity')), default=Value(0, output_field=DecimalField()))), Decimal('0')),
             cost_sem=Coalesce(Sum(Case(When(facture__date__date__gte=start_of_week, then=F('produit__pmp') * F('quantity')), default=Value(0, output_field=DecimalField()))), Decimal('0')),
             cost_mois=Coalesce(Sum(F('produit__pmp') * F('quantity')), Decimal('0'))

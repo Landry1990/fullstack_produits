@@ -83,7 +83,7 @@ export default function ConfigOptionManager({
         toast.success(t('common:messages.success_save'));
       } else {
         const { data: created } = await api.post('configuration-options/', payload);
-        setOptions(prev => [...prev, created].sort((a, b) => a.order - b.order || a.label.localeCompare(b.label)));
+        setOptions(prev => [...prev, created].toSorted((a, b) => a.order - b.order || a.label.localeCompare(b.label)));
         toast.success(t('common:messages.success_save'));
       }
       setIsModalOpen(false);

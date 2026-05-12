@@ -126,8 +126,10 @@ export const useClotureCommande = () => {
 
     return useMutation({
         mutationFn: async (commandeId: number) => {
-            const res = await commandeService.cloturer(commandeId);
-            const updated = await commandeService.getById(commandeId);
+            const [res, updated] = await Promise.all([
+                commandeService.cloturer(commandeId),
+                commandeService.getById(commandeId)
+            ]);
             return { message: res.message, commande: updated };
         },
         onSuccess: (result) => {
@@ -156,8 +158,10 @@ export const useAnnulerReception = () => {
 
     return useMutation({
         mutationFn: async (commandeId: number) => {
-            const res = await commandeService.annulerReception(commandeId);
-            const updated = await commandeService.getById(commandeId);
+            const [res, updated] = await Promise.all([
+                commandeService.annulerReception(commandeId),
+                commandeService.getById(commandeId)
+            ]);
             return { details: res.details, commande: updated };
         },
         onSuccess: (result) => {

@@ -1,3 +1,4 @@
+import { Suspense } from 'react';
 import { 
   PieChart as PieChartIcon,
   CreditCard,
@@ -15,7 +16,7 @@ import {
   Cell, 
   Tooltip, 
   ResponsiveContainer 
-} from 'recharts';
+} from '../LazyRecharts';
 
 interface FinancialSummaryProps {
   stats: any;

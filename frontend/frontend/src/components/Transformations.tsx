@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import api from '../services/api';
 import { toast } from 'react-hot-toast';
+import { getApiErrorDetail } from '../utils/errorHandling';
 import { useTranslation } from 'react-i18next';
 import { useConfirm } from '../hooks/useConfirm';
 import { useProductSearch } from '../hooks/useProductSearch';
@@ -256,22 +257,9 @@ const Transformations: React.FC = () => {
       setIsRelationModalOpen(false);
       resetRelationForm();
       fetchData();
-    } catch (error: any) {
+    } catch (error) {
       console.error(error);
-      const errorMsg = error.response?.data?.non_field_errors?.[0] 
-        || error.response?.data?.error 
-        || error.response?.data?.detail
-        || t('transformations.messages.create_error');
-      
-      if (typeof error.response?.data === 'object') {
-         const firstError = Object.values(error.response.data)[0];
-         if (Array.isArray(firstError)) {
-             toast.error(`${Object.keys(error.response.data)[0]}: ${firstError[0]}`);
-             return;
-         }
-      }
-      
-      toast.error(errorMsg);
+      toast.error(getApiErrorDetail(error, t('transformations.messages.create_error')));
     }
   };
 
@@ -324,8 +312,8 @@ const Transformations: React.FC = () => {
         setIsTransformerModalOpen(false);
         fetchData(); 
       }
-    } catch (error: any) {
-      toast.error(error.response?.data?.error || t('transformations.messages.transform_error'));
+    } catch (error) {
+      toast.error(getApiErrorDetail(error, t('transformations.messages.transform_error')));
       setSubmitting(false);
     }
   };

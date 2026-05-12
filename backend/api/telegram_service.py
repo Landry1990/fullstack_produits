@@ -8,6 +8,7 @@ class TelegramService:
     """
     Service pour l'envoi de messages via Telegram Bot API.
     Les credentials sont lus depuis PharmacySettings.
+    Les envois sont automatiquement enregistrés dans TelegramLog.
     """
 
     # Dictionnaire de traduction pour les rapports
@@ -112,19 +113,42 @@ class TelegramService:
         return '', ''
 
     @staticmethod
-    def send_message(text: str, bot_token: str = None, chat_id: str = None, parse_mode: str = 'HTML') -> tuple[bool, str]:
+    def send_message(text: str, bot_token: str = None, chat_id: str = None, parse_mode: str = 'HTML',
+                     message_type: str = 'RAPPORT', recipient_name: str = '',
+                     facture=None, client=None, user=None) -> tuple[bool, str]:
         """
         Envoie un message texte via le bot Telegram.
         Retourne (success: bool, message: str).
+        Enregistre automatiquement l'envoi dans TelegramLog.
         """
+        from .models import TelegramLog
+
         if not bot_token or not chat_id:
             token, cid = TelegramService._get_credentials()
             bot_token = bot_token or token
             chat_id = chat_id or cid
 
+        # Créer le log en attente
+        log = TelegramLog.objects.create(
+            recipient_chat_id=chat_id or '',
+            recipient_name=recipient_name or 'Pharmacienne',
+            message=text[:1000],  # Limiter la taille stockée
+            type=message_type,
+            status=TelegramLog.Status.PENDING,
+            facture=facture,
+            client=client,
+            sent_by=user
+        )
+
         if not bot_token:
+            log.status = TelegramLog.Status.FAILED
+            log.provider_response = "Token bot Telegram manquant"
+            log.save()
             return False, "Token bot Telegram manquant"
         if not chat_id:
+            log.status = TelegramLog.Status.FAILED
+            log.provider_response = "Chat ID manquant"
+            log.save()
             return False, "Chat ID manquant"
 
         # Telegram limite les messages à 4096 caractères
@@ -143,15 +167,31 @@ class TelegramService:
             data = resp.json()
             if resp.status_code == 200 and data.get('ok'):
                 logger.info(f"[Telegram] Message envoyé à chat_id={chat_id}")
+                # Mettre à jour le log
+                log.status = TelegramLog.Status.SENT
+                log.sent_at = timezone.now()
+                log.provider_message_id = str(data.get('result', {}).get('message_id', ''))
+                log.provider_response = str(data)
+                log.save()
                 return True, "Message envoyé avec succès ✅"
 
             error_desc = data.get('description', 'Erreur inconnue')
             error_code = data.get('error_code', resp.status_code)
             logger.warning(f"[Telegram] Erreur {error_code}: {error_desc}")
+            # Mettre à jour le log avec l'erreur
+            log.status = TelegramLog.Status.FAILED
+            log.provider_response = f"Erreur {error_code}: {error_desc}"
+            log.save()
             return False, f"Erreur Telegram ({error_code}): {error_desc}"
 
         except requests.exceptions.Timeout:
+            log.status = TelegramLog.Status.FAILED
+            log.provider_response = "Timeout — impossible de joindre l'API Telegram"
+            log.save()
             return False, "Timeout — impossible de joindre l'API Telegram"
         except Exception as e:
             logger.error(f"[Telegram] Exception: {e}")
+            log.status = TelegramLog.Status.FAILED
+            log.provider_response = str(e)
+            log.save()
             return False, str(e)

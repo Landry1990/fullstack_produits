@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { useSearchParams } from 'react-router-dom';
 import api from '../services/api';
 import { toast } from 'react-hot-toast';
+import { getApiErrorDetail } from '../utils/errorHandling';
 import { usePharmacySettings } from './usePharmacySettings';
 import { exportToExcel } from '../utils/excelExport';
 
@@ -104,8 +105,8 @@ export function useCentreRapports() {
                 const { data } = await api.get('clients/', { signal });
                 const clientList = data.results || data;
                 setClients(clientList);
-            } catch (err: any) {
-                if (err?.name !== 'CanceledError') console.error('Erreur chargement clients:', err);
+            } catch (err) {
+                if (err instanceof Error && err.name !== 'CanceledError') console.error('Erreur chargement clients:', err);
             }
         };
         loadClients();
@@ -114,8 +115,8 @@ export function useCentreRapports() {
             try {
                 const { data } = await api.get('rapports/suppliers_with_stock/', { signal });
                 setSuppliers(data);
-            } catch (err: any) {
-                if (err?.name !== 'CanceledError') console.error('Erreur chargement fournisseurs:', err);
+            } catch (err) {
+                if (err instanceof Error && err.name !== 'CanceledError') console.error('Erreur chargement fournisseurs:', err);
             }
         };
         loadSuppliers();
@@ -124,8 +125,8 @@ export function useCentreRapports() {
             try {
                 const { data } = await api.get('users/', { signal });
                 setUsers(data.results || data);
-            } catch (err: any) {
-                if (err?.name !== 'CanceledError') console.error('Erreur chargement utilisateurs:', err);
+            } catch (err) {
+                if (err instanceof Error && err.name !== 'CanceledError') console.error('Erreur chargement utilisateurs:', err);
             }
         };
         loadUsers();
@@ -134,8 +135,8 @@ export function useCentreRapports() {
             try {
                 const { data } = await api.get('familles/', { signal });
                 setFamilles(data.results || data);
-            } catch (err: any) {
-                if (err?.name !== 'CanceledError') console.error('Erreur chargement familles:', err);
+            } catch (err) {
+                if (err instanceof Error && err.name !== 'CanceledError') console.error('Erreur chargement familles:', err);
             }
         };
         loadFamilles();
@@ -338,9 +339,9 @@ export function useCentreRapports() {
             }
 
             if (!urlOverride) toast.success(`Requête "${selectedQuery.name}" exécutée`);
-        } catch (err: any) {
+        } catch (err) {
             console.error('Erreur requête:', err);
-            setError(err.response?.data?.detail || err.message || 'Erreur lors de l\'exécution de la requête');
+            setError(getApiErrorDetail(err, err instanceof Error ? err.message : 'Erreur lors de l\'exécution de la requête'));
             toast.error('Erreur lors de l\'exécution');
         } finally {
             setLoading(false);

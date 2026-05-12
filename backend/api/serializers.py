@@ -12,7 +12,7 @@ from .models import (
     Ordonnancier, LigneOrdonnancier, PharmacySettings, CouponMonnaie,
     Groupe, SmsLog, SmsTemplate, PaiementFournisseur, ConfigurationOption,
     Promotion, PromotionPackItem, ObjectifCommercial, ConfigurationObjectifs, TVA,
-    WhatsAppLog, RuptureFournisseur, DepotClient, InternalMessage, MessageTemplate,
+    WhatsAppLog, TelegramLog, RuptureFournisseur, DepotClient, InternalMessage, MessageTemplate,
     ReapproSession, PosteCaisse, OrderSchedule,
     CompteComptable, JournalComptable, EcritureComptable, LigneEcriture, ExerciceComptable
 )
@@ -1481,6 +1481,18 @@ class WhatsAppLogSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = WhatsAppLog
+        fields = '__all__'
+
+
+class TelegramLogSerializer(serializers.ModelSerializer):
+    sent_by_name = serializers.CharField(source='sent_by.username', read_only=True)
+    type_display = serializers.CharField(source='get_type_display', read_only=True)
+    status_display = serializers.CharField(source='get_status_display', read_only=True)
+    facture_numero = serializers.CharField(source='facture.numero_facture', read_only=True)
+    client_name_db = serializers.CharField(source='client.name', read_only=True)
+
+    class Meta:
+        model = TelegramLog
         fields = '__all__'
 
 

@@ -175,7 +175,7 @@ const StockValuationTemplate: React.FC<StockValuationTemplateProps> = ({ setting
             {data.group_breakdown && data.group_breakdown.length > 0 && (
                 <div className="mt-4 mb-12 animate-in fade-in slide-in-from-bottom-4 duration-700">
                     <h2 className="text-sm font-black text-slate-900 uppercase tracking-widest border-b-2 border-slate-900 pb-2 mb-6 flex justify-between items-center">
-                        <span>{t('stock_valuation.tva_breakdown_title')} — {getGroupLabel()}</span>
+                        <span>{t('stock_valuation.tva_breakdown_title')} – {getGroupLabel()}</span>
                         <span className="text-[10px] text-slate-300 font-bold">{data.group_breakdown.length} {t('common.categories', 'Catégories')}</span>
                     </h2>
                     
@@ -243,7 +243,7 @@ const StockValuationTemplate: React.FC<StockValuationTemplateProps> = ({ setting
 
             {/* Footer */}
             <div className="mt-10 pt-4 border-t border-slate-50 text-center text-[9px] text-slate-300 uppercase font-black tracking-[0.3em]">
-                {settings.pharmacy_name} — {t('stock_valuation.footer_label')} — ZENITH
+                {settings.pharmacy_name} · {t('stock_valuation.footer_label')} · ZENITH
             </div>
         </div>
     );

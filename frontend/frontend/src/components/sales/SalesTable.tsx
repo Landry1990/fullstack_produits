@@ -8,6 +8,57 @@ import ActionIcon from '../ui/ActionIcon';
 import SelectionHeader from '../ui/SelectionHeader';
 import { Checkbox } from '../ui/Checkbox';
 
+// Composant séparé pour éviter les re-renders inutiles
+interface BulkActionsMenuProps {
+    selectedIds: number[];
+    factures: Facture[];
+    onView: (facture: Facture) => void;
+    onPrint: (facture: Facture) => void;
+    onPrintTicket: (facture: Facture) => void;
+    onPrintBL: (facture: Facture) => void;
+    onDuplicate: (facture: Facture) => void;
+    onGenerateAvoir: (facture: Facture) => void;
+    onRefund: (facture: Facture) => void;
+    onDelete: (id: number) => void;
+    onBulkDelete: () => void;
+}
+
+const BulkActionsMenu: React.FC<BulkActionsMenuProps> = React.memo(({
+    selectedIds, factures, onView, onPrint, onPrintTicket, onPrintBL,
+    onDuplicate, onGenerateAvoir, onRefund, onDelete, onBulkDelete
+}) => {
+    const { t } = useTranslation(['sales', 'common']);
+
+    if (selectedIds.length === 1) {
+        const selectedFacture = factures.find(f => f.id === selectedIds[0]);
+        if (!selectedFacture) return null;
+        return (
+            <>
+                <li className="menu-title text-xs opacity-50 px-4 py-2 uppercase tracking-widest">{t('common:single_selection', { defaultValue: 'Sélection' })}</li>
+                <li><a onClick={() => onView(selectedFacture)} className="gap-3 py-3"><Eye className="size-4 text-secondary" />{t('common:details')}</a></li>
+                <li><a onClick={() => onPrint(selectedFacture)} className="gap-3 py-3"><Printer className="size-4 text-primary" />Format A4</a></li>
+                <li><a onClick={() => onPrintTicket(selectedFacture)} className="gap-3 py-3"><Receipt className="size-4 text-primary" />Ticket Caisse</a></li>
+                <li><a onClick={() => onPrintBL(selectedFacture)} className="gap-3 py-3"><Truck className="size-4 text-primary" />Bon de livraison</a></li>
+                <li><a onClick={() => onDuplicate(selectedFacture)} className="gap-3 py-3"><Copy className="size-4 text-info" />{t('common:duplicate', { defaultValue: 'Dupliquer' })}</a></li>
+                {(selectedFacture.status === 'VALIDEE' || selectedFacture.status === 'PAY' || selectedFacture.status === 'VAL' || selectedFacture.status === 'PAYEE') && (
+                    <li><a onClick={() => onGenerateAvoir(selectedFacture)} className="gap-3 py-3"><FileDigit className="size-4 text-primary" />Générer un avoir</a></li>
+                )}
+                {selectedFacture.status !== 'ANN' && selectedFacture.status !== 'BROU' && (
+                    <li><a onClick={() => onRefund(selectedFacture)} className="gap-3 py-3"><RotateCcw className="size-4 text-warning" />{t('common:refund', { defaultValue: "Modifier/Retour" })}</a></li>
+                )}
+                <div className="divider my-0"></div>
+                <li><a onClick={() => onDelete(selectedFacture.id)} className="gap-3 py-3 text-error hover:bg-error/10 font-bold"><Trash2 className="size-4" />{t('common:delete')}</a></li>
+            </>
+        );
+    }
+    return (
+        <>
+            <li className="menu-title text-xs opacity-50 px-4 py-2 uppercase tracking-widest">{t('common:bulk_actions')}</li>
+            <li><a onClick={onBulkDelete} className="gap-3 py-3 text-error hover:bg-error/10 font-bold"><Trash2 className="size-4" />{t('sales:confirm_bulk_delete', { count: selectedIds.length })}</a></li>
+        </>
+    );
+});
+
 interface SalesTableProps {
     factures: Facture[];
     onView: (facture: Facture) => void;
@@ -96,82 +147,6 @@ export const SalesTable: React.FC<SalesTableProps> = ({
         );
     }
 
-    const renderBulkActions = () => {
-        if (selectedIds.length === 1) {
-            const selectedFacture = factures.find(f => f.id === selectedIds[0]);
-            if (!selectedFacture) return null;
-            return (
-                <>
-                    <li className="menu-title text-xs opacity-50 px-4 py-2 uppercase tracking-widest">{t('common:single_selection', { defaultValue: 'Sélection' })}</li>
-                    <li>
-                        <a onClick={() => onView(selectedFacture)} className="gap-3 py-3">
-                            <Eye className="size-4 text-secondary" />
-                            {t('common:details')}
-                        </a>
-                    </li>
-                    <li>
-                        <a onClick={() => onPrint(selectedFacture)} className="gap-3 py-3">
-                            <Printer className="size-4 text-primary" />
-                            Format A4
-                        </a>
-                    </li>
-                    <li>
-                        <a onClick={() => onPrintTicket(selectedFacture)} className="gap-3 py-3">
-                            <Receipt className="size-4 text-primary" />
-                            Ticket Caisse
-                        </a>
-                    </li>
-                    <li>
-                        <a onClick={() => onPrintBL(selectedFacture)} className="gap-3 py-3">
-                            <Truck className="size-4 text-primary" />
-                            Bon de livraison
-                        </a>
-                    </li>
-                    <li>
-                        <a onClick={() => onDuplicate(selectedFacture)} className="gap-3 py-3">
-                            <Copy className="size-4 text-info" />
-                            {t('common:duplicate', { defaultValue: 'Dupliquer' })}
-                        </a>
-                    </li>
-                    {(selectedFacture.status === 'VALIDEE' || selectedFacture.status === 'PAY' || selectedFacture.status === 'VAL' || selectedFacture.status === 'PAYEE') && (
-                        <li>
-                            <a onClick={() => onGenerateAvoir(selectedFacture)} className="gap-3 py-3">
-                                <FileDigit className="size-4 text-primary" />
-                                Générer un avoir
-                            </a>
-                        </li>
-                    )}
-                    {selectedFacture.status !== 'ANN' && selectedFacture.status !== 'BROU' && (
-                        <li>
-                            <a onClick={() => onRefund(selectedFacture)} className="gap-3 py-3">
-                                <RotateCcw className="size-4 text-warning" />
-                                {t('common:refund', { defaultValue: "Modifier/Retour" })}
-                            </a>
-                        </li>
-                    )}
-                    <div className="divider my-0"></div>
-                    <li>
-                        <a onClick={() => onDelete(selectedFacture.id)} className="gap-3 py-3 text-error hover:bg-error/10 font-bold">
-                            <Trash2 className="size-4" />
-                            {t('common:delete')}
-                        </a>
-                    </li>
-                </>
-            );
-        }
-        return (
-            <>
-                <li className="menu-title text-xs opacity-50 px-4 py-2 uppercase tracking-widest">{t('common:bulk_actions')}</li>
-                <li>
-                    <a onClick={handleBulkDelete} className="gap-3 py-3 text-error hover:bg-error/10 font-bold">
-                        <Trash2 className="size-4" />
-                        {t('sales:confirm_bulk_delete', { count: selectedIds.length })}
-                    </a>
-                </li>
-            </>
-        );
-    };
-
     return (
         <div className="overflow-x-auto overflow-y-auto max-h-[calc(100vh-220px)] min-h-[450px]">
             <table className="w-full border-separate border-spacing-0">
@@ -190,7 +165,21 @@ export const SalesTable: React.FC<SalesTableProps> = ({
                                 selectedCount={selectedIds.length}
                                 onClear={() => setSelectedIds([])}
                                 colSpan={9}
-                                actions={renderBulkActions()}
+                                actions={
+                                    <BulkActionsMenu
+                                        selectedIds={selectedIds}
+                                        factures={factures}
+                                        onView={onView}
+                                        onPrint={onPrint}
+                                        onPrintTicket={onPrintTicket}
+                                        onPrintBL={onPrintBL}
+                                        onDuplicate={onDuplicate}
+                                        onGenerateAvoir={onGenerateAvoir}
+                                        onRefund={onRefund}
+                                        onDelete={onDelete}
+                                        onBulkDelete={handleBulkDelete}
+                                    />
+                                }
                             >
                                 {/* Empty children as SelectionHeader handles its own content when selectedCount > 0 */}
                                 <></>

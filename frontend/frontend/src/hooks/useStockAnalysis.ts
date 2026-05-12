@@ -81,8 +81,8 @@ export const useStockAnalysis = () => {
                 suppliersData = response.data.results;
             }
             setFournisseurs(suppliersData);
-        } catch (err: any) {
-            if (err?.name === 'CanceledError') return;
+        } catch (err) {
+            if (err instanceof Error && err.name === 'CanceledError') return;
             console.error('Erreur chargement fournisseurs:', err);
             setFournisseurs([]);
         }
@@ -116,8 +116,8 @@ export const useStockAnalysis = () => {
                 { params, signal }
             );
             setData(response.data);
-        } catch (err: any) {
-            if (err?.name === 'CanceledError') return;
+        } catch (err) {
+            if (err instanceof Error && err.name === 'CanceledError') return;
             console.error(err);
             setError(t('stock:analyse.error'));
         } finally {

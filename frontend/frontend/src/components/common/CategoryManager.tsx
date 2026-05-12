@@ -185,7 +185,7 @@ export default function CategoryManager({
         toast.success(t('stock:organisation.category_manager.success_save', { type: title }));
       } else {
         const { data: newCat } = await api.post(apiPath.replace(/^\/api\//, ''), payload);
-        setCategories(prev => [...prev, newCat].sort((a, b) => {
+        setCategories(prev => [...prev, newCat].toSorted((a, b) => {
             const nameA = a.name || a.nom || '';
             const nameB = b.name || b.nom || '';
             return nameA.localeCompare(nameB);
@@ -263,7 +263,7 @@ export default function CategoryManager({
       toast.success(t('stock:organisation.category_manager.product_added', { name: product.name, type }));
       
       // Update local products list
-      setProducts(prev => [...prev, updatedProduct].sort((a, b) => a.name.localeCompare(b.name)));
+      setProducts(prev => [...prev, updatedProduct].toSorted((a, b) => a.name.localeCompare(b.name)));
       setTotalCount(prev => prev + 1);
       
       // Remove from search results to avoid double add

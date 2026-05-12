@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { usePharmacySettings, type PharmacySettings } from '../../hooks/usePharmacySettings'
 import { useTVA } from '../../hooks/useTVA'
 import { useInvoiceSettings } from '../../hooks/useInvoiceSettings'
+import { getApiErrorDetail } from '../../utils/errorHandling'
 
 export default function PharmacySettingsForm() {
   const { t } = useTranslation('pharmacy_settings')
@@ -59,8 +60,8 @@ export default function PharmacySettingsForm() {
       } else {
         import('react-hot-toast').then(({ toast }) => toast.error('⚠️ ' + res.data.message, { duration: 8000 }))
       }
-    } catch (err: any) {
-      const msg = err?.response?.data?.message || 'Erreur inconnue'
+    } catch (err) {
+      const msg = getApiErrorDetail(err, 'Erreur inconnue')
       import('react-hot-toast').then(({ toast }) => toast.error('❌ ' + msg, { duration: 8000 }))
     } finally {
       setGettingChatId(false)
@@ -84,8 +85,8 @@ export default function PharmacySettingsForm() {
         chat_id: formData.telegram_chat_id,
       })
       import('react-hot-toast').then(({ toast }) => toast.success('✅ ' + (res.data.message || 'Envoyé')))
-    } catch (err: any) {
-      const msg = err?.response?.data?.message || 'Erreur inconnue'
+    } catch (err) {
+      const msg = getApiErrorDetail(err, 'Erreur inconnue')
       import('react-hot-toast').then(({ toast }) => toast.error('❌ ' + msg, { duration: 8000 }))
     } finally {
       setTestingTelegram(false)
@@ -103,8 +104,8 @@ export default function PharmacySettingsForm() {
       const { default: api } = await import('../../services/api')
       const res = await api.post('whatsapp/test/', { numero: numero.replace('+', '') })
       import('react-hot-toast').then(({ toast }) => toast.success('✅ ' + (res.data.message || 'Envoyé')))
-    } catch (err: any) {
-      const msg = err?.response?.data?.message || err?.response?.data?.error || 'Erreur inconnue'
+    } catch (err) {
+      const msg = getApiErrorDetail(err, 'Erreur inconnue')
       import('react-hot-toast').then(({ toast }) => toast.error('❌ ' + msg, { duration: 8000 }))
     } finally {
       setTestingWhatsapp(false)

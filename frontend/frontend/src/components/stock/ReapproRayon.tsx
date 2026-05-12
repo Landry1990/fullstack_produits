@@ -31,7 +31,7 @@ export default function ReapproRayon() {
   const [loading, setLoading] = useState(true);
   const [transferringIds, setTransferringIds] = useState<number[]>([]);
   const [showConfirmBulk, setShowConfirmBulk] = useState(false);
-  const [selectedIds, setSelectedIds] = useState<number[]>([]);
+  const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [lastSessionId, setLastSessionId] = useState<number | null>(null);
   
@@ -62,7 +62,7 @@ export default function ReapproRayon() {
             rayon: selectedRayon || undefined
         });
         setProducts(response.results || []);
-        setSelectedIds([]);
+        setSelectedIds(new Set());
     } catch (error) {
       console.error('Error fetching refill needs:', error);
       toast.error(t('reappro.messages.error_loading_products'));
@@ -100,15 +100,23 @@ export default function ReapproRayon() {
   const paginatedProducts = products.slice((page - 1) * itemsPerPage, page * itemsPerPage);
 
   const toggleSelectAll = () => {
-    if (selectedIds.length === products.length) {
-        setSelectedIds([]);
+    if (selectedIds.size === products.length) {
+        setSelectedIds(new Set());
     } else {
-        setSelectedIds(products.map(p => p.id));
+        setSelectedIds(new Set(products.map(p => p.id)));
     }
   };
 
   const toggleSelect = (id: number) => {
-    setSelectedIds(prev => prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]);
+    setSelectedIds(prev => {
+        const newSet = new Set(prev);
+        if (newSet.has(id)) {
+            newSet.delete(id);
+        } else {
+            newSet.add(id);
+        }
+        return newSet;
+    });
   };
 
   const handleTransfer = async (produit: ProduitModel) => {
@@ -136,7 +144,7 @@ export default function ReapproRayon() {
   const [pendingIds, setPendingIds] = useState<number[]>([]);
 
   const handleBulkAction = (type: 'selection' | 'all') => {
-    const ids = type === 'all' ? products.map(p => p.id) : selectedIds;
+    const ids = type === 'all' ? products.map(p => p.id) : Array.from(selectedIds);
     if (ids.length === 0) return;
 
     setPendingIds(ids);
@@ -329,18 +337,18 @@ export default function ReapproRayon() {
         </div>
 
         {/* Selection Action Bar (Sticky) */}
-        {selectedIds.length > 0 && (
+        {selectedIds.size > 0 && (
             <div className="px-6 py-3 bg-primary/5 border-b border-primary/10 flex items-center justify-between animate-in slide-in-from-top duration-300">
                 <div className="flex items-center gap-3">
                     <div className="bg-primary text-primary-content size-6 rounded-lg flex items-center justify-center text-[10px] font-black">
-                        {selectedIds.length}
+                        {selectedIds.size}
                     </div>
                     <span className="text-xs font-black text-primary uppercase tracking-widest">Produits sélectionnés</span>
                 </div>
                 <div className="flex items-center gap-2">
                     <button 
                         className="btn btn-xs btn-ghost text-[10px] font-black uppercase tracking-widest"
-                        onClick={() => setSelectedIds([])}
+                        onClick={() => setSelectedIds(new Set())}
                     >
                         Annuler
                     </button>
@@ -361,8 +369,8 @@ export default function ReapproRayon() {
               <tr className="bg-base-200/30 border-b border-base-200">
                 <th className="bg-transparent w-12 no-print">
                     <Checkbox
-                        checked={selectedIds.length === products.length && products.length > 0}
-                        indeterminate={selectedIds.length > 0 && selectedIds.length < products.length}
+                        checked={selectedIds.size === products.length && products.length > 0}
+                        indeterminate={selectedIds.size > 0 && selectedIds.size < products.length}
                         onChange={toggleSelectAll}
                         size="sm"
                     />
@@ -399,7 +407,7 @@ export default function ReapproRayon() {
                   const suggest = Math.min(needed, p.stock_reserve ?? 0);
                   const isLow = (p.stock ?? 0) <= (p.min_rayon ?? 0);
                   const percent = Math.min(100, Math.max(0, ((p.stock ?? 0) / (p.capacite_rayon || 1)) * 100));
-                  const isSelected = selectedIds.includes(p.id);
+                  const isSelected = selectedIds.has(p.id);
 
                   return (
                     <tr key={p.id} className={`group hover:bg-base-200/30 transition-all border-b border-base-200/50 ${isSelected ? 'bg-primary/5' : ''}`}>

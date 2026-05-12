@@ -195,7 +195,7 @@ export function useFacturationClients() {
             };
             const createdClient = await clientService.create(payload)
 
-            setClients(prev => [...prev, createdClient].sort((a, b) => a.name.localeCompare(b.name)))
+            setClients(prev => [...prev, createdClient].toSorted((a, b) => a.name.localeCompare(b.name)))
             setSelectedClient(createdClient.id)
             setShowClientCreateModal(false)
             setClientSearch('')
