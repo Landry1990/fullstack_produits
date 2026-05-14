@@ -10,7 +10,8 @@
     "avoirs": "Avoirs",
     "promis": "Promis",
     "inventaires": "Inventaires",
-    "factures": "Ventes"
+    "factures": "Ventes",
+    "users": "Utilisateurs"
   },
   "search": "Rechercher dans la corbeille...",
   "empty_state": {
@@ -38,7 +39,8 @@
     "avoir": "Avoir",
     "promis": "Promis",
     "inventaire": "Inventaire",
-    "facture": "Vente"
+    "facture": "Vente",
+    "user": "Utilisateur"
   },
   "messages": {
     "fetch_error": "Erreur lors du chargement de la corbeille",

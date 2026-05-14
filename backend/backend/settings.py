@@ -22,6 +22,9 @@ if not SECRET_KEY:
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.getenv('DJANGO_DEBUG', 'False').lower() == 'true'
 
+# Enable Django Silk profiler (default: False in production/pre-prod)
+ENABLE_SILK = os.getenv('ENABLE_SILK', 'False').lower() == 'true'
+
 ALLOWED_HOSTS = os.getenv('DJANGO_ALLOWED_HOSTS', 'localhost,127.0.0.1,backend,frontend,*').split(',')
 
 # Support pour les proxys comme Nginx/ngrok
@@ -52,14 +55,21 @@ INSTALLED_APPS = [
     'rest_framework.authtoken', # Token Auth
     'django_filters',  # Django Filter (templates & backends)
     'corsheaders',
-    'silk',
 ]
+
+if ENABLE_SILK:
+    INSTALLED_APPS.append('silk')
 
 MIDDLEWARE = [
     'api.middleware.allow_private_ips.AllowPrivateIPsMiddleware',  # DOIT ÊTRE EN PREMIER - Autorise IPs privées réseau local
     'django.middleware.security.SecurityMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware',
-    'silk.middleware.SilkyMiddleware',
+]
+
+if ENABLE_SILK:
+    MIDDLEWARE.append('silk.middleware.SilkyMiddleware')
+
+MIDDLEWARE += [
     'django.contrib.sessions.middleware.SessionMiddleware',
     'corsheaders.middleware.CorsMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -102,15 +112,16 @@ REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': [
         'rest_framework.permissions.IsAuthenticated',
     ],
-    'DEFAULT_THROTTLE_CLASSES': [
-        'rest_framework.throttling.AnonRateThrottle',
-        'rest_framework.throttling.UserRateThrottle',
-    ],
-    'DEFAULT_THROTTLE_RATES': {
-        'anon': os.getenv('DJANGO_THROTTLE_ANON', '100/day'),
-        'user': os.getenv('DJANGO_THROTTLE_USER', '100000/day'),  # Increased for auto-refresh support
-        'auth': os.getenv('DJANGO_THROTTLE_AUTH', '5/min'),
-    },
+    # Throttling désactivé en pré-prod pour éviter les erreurs 429
+    # 'DEFAULT_THROTTLE_CLASSES': [
+    #     'rest_framework.throttling.AnonRateThrottle',
+    #     'rest_framework.throttling.UserRateThrottle',
+    # ],
+    # 'DEFAULT_THROTTLE_RATES': {
+    #     'anon': os.getenv('DJANGO_THROTTLE_ANON', '100/day'),
+    #     'user': os.getenv('DJANGO_THROTTLE_USER', '100000/day'),
+    #     'auth': os.getenv('DJANGO_THROTTLE_AUTH', '60/min'),
+    # },
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
     'PAGE_SIZE': 50,
     'PAGE_SIZE_QUERY_PARAM': 'page_size',

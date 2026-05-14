@@ -58,7 +58,7 @@ interface StockDiversResponse {
 }
 
 const GestionDivers: React.FC<{ defaultTab?: 'ca' | 'commandes' | 'stock' }> = ({ defaultTab = 'ca' }) => {
-  const { t } = useTranslation();
+  const { t } = useTranslation('orders');
   const [activeTab, setActiveTab] = useState<'ca' | 'commandes' | 'stock'>(() => defaultTab);
   const [loading, setLoading] = useState(false);
   const [ventes, setVentes] = useState<VenteDivers[]>([]);
@@ -154,10 +154,10 @@ const GestionDivers: React.FC<{ defaultTab?: 'ca' | 'commandes' | 'stock' }> = (
         <div>
           <h1 className="text-3xl font-bold text-gray-900 flex items-center">
             <Package className="h-8 w-8 mr-3 text-indigo-600" />
-            {t('divers.title', 'Gestion Divers')}
+            {t('divers.revenue_tab')}
           </h1>
           <p className="text-gray-500 mt-1">
-            Gestion des produits importés (voyages) et dépôts après-vente
+            {t('divers.imported_products_management')}
           </p>
         </div>
       </div>
@@ -174,7 +174,7 @@ const GestionDivers: React.FC<{ defaultTab?: 'ca' | 'commandes' | 'stock' }> = (
         >
           <div className="flex items-center justify-center">
             <DollarSign className="h-5 w-5 mr-2" />
-            {t('divers.ca', 'CA Divers')}
+            {t('divers.revenue')}
           </div>
         </button>
         <button
@@ -187,7 +187,7 @@ const GestionDivers: React.FC<{ defaultTab?: 'ca' | 'commandes' | 'stock' }> = (
         >
           <div className="flex items-center justify-center">
             <ShoppingBag className="h-5 w-5 mr-2" />
-            {t('divers.commandes', 'Commandes Divers')}
+            {t('divers.orders_tab')}
           </div>
         </button>
         <button
@@ -200,7 +200,7 @@ const GestionDivers: React.FC<{ defaultTab?: 'ca' | 'commandes' | 'stock' }> = (
         >
           <div className="flex items-center justify-center">
             <Warehouse className="h-5 w-5 mr-2" />
-            {t('divers.stock', 'Stock Divers')}
+            {t('divers.stock_tab')}
           </div>
         </button>
       </div>
@@ -234,16 +234,16 @@ const GestionDivers: React.FC<{ defaultTab?: 'ca' | 'commandes' | 'stock' }> = (
                 className="ml-auto inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors"
               >
                 <Filter className="h-4 w-4 mr-2" />
-                Filtrer
+                {t('divers.filter')}
               </button>
             </div>
 
             <div className="bg-indigo-600 p-6 rounded-xl shadow-md text-white">
-              <p className="text-indigo-100 text-sm font-medium uppercase tracking-wider mb-1">Chiffre d'Affaires Total</p>
+              <p className="text-indigo-100 text-sm font-medium uppercase tracking-wider mb-1">{t('divers.revenue')}</p>
               <h2 className="text-3xl font-bold">{totalCA.toLocaleString()} F</h2>
               <div className="mt-4 flex items-center text-indigo-100 text-xs">
                 <CalendarDays className="h-3 w-3 mr-1" />
-                Période du {format(new Date(dateRange.debut), 'dd/MM/yy')} au {format(new Date(dateRange.fin), 'dd/MM/yy')}
+                {t('divers.period_from')} {format(new Date(dateRange.debut), 'dd/MM/yy')} {t('divers.to')} {format(new Date(dateRange.fin), 'dd/MM/yy')}
               </div>
             </div>
           </div>
@@ -253,22 +253,22 @@ const GestionDivers: React.FC<{ defaultTab?: 'ca' | 'commandes' | 'stock' }> = (
             <div className="px-6 py-4 border-b border-gray-100 bg-gray-50 flex justify-between items-center">
               <h3 className="font-semibold text-gray-800 flex items-center">
                 <ClipboardList className="h-5 w-5 mr-2 text-indigo-500" />
-                Détail des ventes "Divers"
+                {t('divers.detail_sales')}
               </h3>
-              <span className="text-xs text-gray-500">{totalCount} transactions trouvées</span>
+              <span className="text-xs text-gray-500">{t('divers.transactions_found', {count: totalCount})}</span>
             </div>
             
             <div className="overflow-x-auto">
               <table className="min-w-full divide-y divide-gray-200">
                 <thead className="bg-white">
                   <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Facture</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Produit</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Lot</th>
-                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Qté</th>
-                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">PU</th>
-                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Total</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('divers.table.date')}</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('divers.table.invoice')}</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('divers.table.product')}</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('divers.table.lot')}</th>
+                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">{t('divers.table.qty')}</th>
+                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">{t('divers.table.unit_price')}</th>
+                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">{t('divers.table.total')}</th>
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-100">
@@ -281,7 +281,7 @@ const GestionDivers: React.FC<{ defaultTab?: 'ca' | 'commandes' | 'stock' }> = (
                   ) : ventes.length === 0 ? (
                     <tr>
                       <td colSpan={7} className="px-6 py-12 text-center text-gray-500">
-                        Aucune vente "Divers" trouvée pour cette période.
+                        {t('divers.no_sales_found')}
                       </td>
                     </tr>
                   ) : (
@@ -321,7 +321,7 @@ const GestionDivers: React.FC<{ defaultTab?: 'ca' | 'commandes' | 'stock' }> = (
             {totalPages > 1 && (
               <div className="px-6 py-4 border-t border-gray-100 flex items-center justify-between bg-gray-50">
                 <span className="text-sm text-gray-500">
-                  Page {page} / {totalPages} · {totalCount} résultats
+                  Page {page} / {totalPages} · {totalCount} {t('divers.results')}
                 </span>
                 <div className="flex gap-2">
                   <button
@@ -329,14 +329,14 @@ const GestionDivers: React.FC<{ defaultTab?: 'ca' | 'commandes' | 'stock' }> = (
                     disabled={page <= 1}
                     className="inline-flex items-center px-3 py-1.5 text-sm font-medium rounded-lg border border-gray-300 bg-white hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
                   >
-                    <ChevronLeft className="h-4 w-4 mr-1" /> Précédent
+                    <ChevronLeft className="h-4 w-4 mr-1" /> {t('divers.previous')}
                   </button>
                   <button
                     onClick={() => setPage(p => Math.min(totalPages, p + 1))}
                     disabled={page >= totalPages}
                     className="inline-flex items-center px-3 py-1.5 text-sm font-medium rounded-lg border border-gray-300 bg-white hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
                   >
-                    Suivant <ChevronRight className="h-4 w-4 ml-1" />
+                    {t('divers.next')} <ChevronRight className="h-4 w-4 ml-1" />
                   </button>
                 </div>
               </div>
@@ -356,7 +356,7 @@ const GestionDivers: React.FC<{ defaultTab?: 'ca' | 'commandes' | 'stock' }> = (
           {/* Valorisation Selector */}
           <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
             <div className="flex items-center gap-4">
-              <span className="text-sm font-medium text-gray-700">Méthode de valorisation :</span>
+              <span className="text-sm font-medium text-gray-700">{t('divers.valuation_method')}</span>
               <div className="flex gap-2">
                 <button
                   onClick={() => setValorisation('ACHAT')}
@@ -366,7 +366,7 @@ const GestionDivers: React.FC<{ defaultTab?: 'ca' | 'commandes' | 'stock' }> = (
                       : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                   }`}
                 >
-                  Coût d'achat (PMP)
+                  {t('divers.purchase_cost')}
                 </button>
                 <button
                   onClick={() => setValorisation('VENTE')}
@@ -376,7 +376,7 @@ const GestionDivers: React.FC<{ defaultTab?: 'ca' | 'commandes' | 'stock' }> = (
                       : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                   }`}
                 >
-                  Prix de vente
+                  {t('divers.selling_price')}
                 </button>
               </div>
             </div>
@@ -385,25 +385,25 @@ const GestionDivers: React.FC<{ defaultTab?: 'ca' | 'commandes' | 'stock' }> = (
           {stockLoading ? (
             <div className="bg-white p-12 rounded-xl shadow-sm border border-gray-100 text-center">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600 mx-auto"></div>
-              <p className="mt-4 text-gray-500">Chargement de la valorisation...</p>
+              <p className="mt-4 text-gray-500">{t('divers.loading_valuation')}</p>
             </div>
           ) : stockData ? (
             <>
               {/* Summary Cards */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div className="bg-indigo-600 p-6 rounded-xl shadow-md text-white">
-                  <p className="text-indigo-100 text-sm font-medium uppercase tracking-wider mb-1">Valeur Totale TTC</p>
+                  <p className="text-indigo-100 text-sm font-medium uppercase tracking-wider mb-1">{t('divers.total_value_ttc')}</p>
                   <h2 className="text-3xl font-bold">{stockData.total_ttc.toLocaleString()} F</h2>
                   <p className="mt-2 text-indigo-100 text-xs">
-                    {stockData.type_valorisation === 'PMP' ? 'Valorisation au coût d\'achat' : 'Valorisation au prix de vente'}
+                    {stockData.type_valorisation === 'PMP' ? t('divers.purchase_cost') : t('divers.selling_price')}
                   </p>
                 </div>
                 <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-                  <p className="text-gray-500 text-sm font-medium uppercase tracking-wider mb-1">Valeur HT</p>
+                  <p className="text-gray-500 text-sm font-medium uppercase tracking-wider mb-1">{t('divers.value_ht')}</p>
                   <h2 className="text-2xl font-bold text-gray-900">{stockData.total_ht.toLocaleString()} F</h2>
                 </div>
                 <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-                  <p className="text-gray-500 text-sm font-medium uppercase tracking-wider mb-1">TVA Totale</p>
+                  <p className="text-gray-500 text-sm font-medium uppercase tracking-wider mb-1">{t('divers.total_vat')}</p>
                   <h2 className="text-2xl font-bold text-gray-900">{stockData.total_tva.toLocaleString()} F</h2>
                 </div>
               </div>
@@ -413,17 +413,17 @@ const GestionDivers: React.FC<{ defaultTab?: 'ca' | 'commandes' | 'stock' }> = (
                 <div className="px-6 py-4 border-b border-gray-100 bg-gray-50">
                   <h3 className="font-semibold text-gray-800 flex items-center">
                     <ClipboardList className="h-5 w-5 mr-2 text-indigo-500" />
-                    Répartition par taux de TVA
+                    {t('divers.vat_breakdown')}
                   </h3>
                 </div>
                 <div className="overflow-x-auto">
                   <table className="min-w-full divide-y divide-gray-200">
                     <thead className="bg-white">
                       <tr>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Taux TVA</th>
-                        <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Base HT</th>
-                        <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Montant TVA</th>
-                        <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Total TTC</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('divers.table.vat_rate')}</th>
+                        <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">{t('divers.table.base_ht')}</th>
+                        <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">{t('divers.table.vat_amount')}</th>
+                        <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">{t('divers.table.total_ttc')}</th>
                       </tr>
                     </thead>
                     <tbody className="bg-white divide-y divide-gray-100">
@@ -453,17 +453,17 @@ const GestionDivers: React.FC<{ defaultTab?: 'ca' | 'commandes' | 'stock' }> = (
                 <div className="px-6 py-4 border-b border-gray-100 bg-gray-50">
                   <h3 className="font-semibold text-gray-800 flex items-center">
                     <Package className="h-5 w-5 mr-2 text-indigo-500" />
-                    Répartition par rayon
+                    {t('divers.section_breakdown')}
                   </h3>
                 </div>
                 <div className="overflow-x-auto">
                   <table className="min-w-full divide-y divide-gray-200">
                     <thead className="bg-white">
                       <tr>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Rayon</th>
-                        <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Base HT</th>
-                        <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Montant TVA</th>
-                        <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Total TTC</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('divers.table.section')}</th>
+                        <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">{t('divers.table.base_ht')}</th>
+                        <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">{t('divers.table.vat_amount')}</th>
+                        <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">{t('divers.table.total_ttc')}</th>
                       </tr>
                     </thead>
                     <tbody className="bg-white divide-y divide-gray-100">
@@ -491,7 +491,7 @@ const GestionDivers: React.FC<{ defaultTab?: 'ca' | 'commandes' | 'stock' }> = (
           ) : (
             <div className="bg-white p-12 rounded-xl shadow-sm border border-gray-100 text-center">
               <Warehouse className="h-12 w-12 text-gray-300 mx-auto mb-4" />
-              <p className="text-gray-500">Aucune donnée de stock divers disponible</p>
+              <p className="text-gray-500">{t('divers.no_stock_data')}</p>
             </div>
           )}
         </div>

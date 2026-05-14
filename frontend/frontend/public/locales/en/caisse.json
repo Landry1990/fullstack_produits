@@ -13,7 +13,8 @@
         "cash_in": "Cash In",
         "coupon": "Coupon",
         "refresh": "Refresh",
-        "quick_select": "Quick select"
+        "quick_select": "Quick select",
+        "enter_key": "Enter"
     },
     "table": {
         "ticket": "Ticket",
@@ -376,6 +377,8 @@
             "close": "Close"
         }
     },
+    "poste_label": "Post: ",
+    "all_posts": "All posts",
     "common": {
         "unknown": "Unknown",
         "creance": "DEBT",

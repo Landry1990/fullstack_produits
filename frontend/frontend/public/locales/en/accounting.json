@@ -79,5 +79,18 @@
       "subtitle": "Track purchase entries generated during order reception",
       "no_data": "No purchases recorded for this period."
     },
-    "loading_msg": "Analyzing accounts in progress..."
+    "loading_msg": "Analyzing accounts in progress...",
+    "loading_data": "Loading data...",
+    "kpi": {
+        "revenue_label": "Revenue",
+        "stock_value_label": "Stock Value",
+        "stock_variation_label": "Inventory Variation",
+        "expenses_label": "Expenses"
+    },
+    "performance": {
+        "title": "Financial Performance",
+        "subtitle": "Products vs Expenses Comparison",
+        "produits_label": "Products",
+        "charges_label": "Expenses"
+    }
 }

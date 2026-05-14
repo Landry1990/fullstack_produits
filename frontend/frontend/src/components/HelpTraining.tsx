@@ -3,6 +3,7 @@ import {
   BookOpen, Play, Search, ShoppingCart, Package,
   TrendingUp, Users, Settings, Truck, Clock, ChevronRight, Keyboard
 } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 interface Video {
   id: string;
@@ -20,102 +21,106 @@ interface Category {
   videos: Video[];
 }
 
-const CATEGORIES: Category[] = [
+const getCategories = (t: any): Category[] => [
   {
     id: 'ventes',
-    label: 'Ventes & Caisse',
+    label: t('help:training.categories.ventes'),
     color: 'text-emerald-600',
     bg: 'bg-emerald-50 border-emerald-200',
     icon: ShoppingCart,
     videos: [
-      { id: 'v1', title: 'Faire une vente rapide', duration: '3:20', youtubeId: 'YOUTUBE_ID_ICI' },
-      { id: 'v2', title: 'Gérer les modes de paiement', duration: '2:45', youtubeId: 'YOUTUBE_ID_ICI' },
-      { id: 'v3', title: 'Émettre une facture client', duration: '4:10', youtubeId: 'YOUTUBE_ID_ICI' },
+      { id: 'v1', title: t('help:training.videos.v1'), duration: '3:20', youtubeId: 'YOUTUBE_ID_ICI' },
+      { id: 'v2', title: t('help:training.videos.v2'), duration: '2:45', youtubeId: 'YOUTUBE_ID_ICI' },
+      { id: 'v3', title: t('help:training.videos.v3'), duration: '4:10', youtubeId: 'YOUTUBE_ID_ICI' },
     ]
   },
   {
     id: 'stock',
-    label: 'Gestion du Stock',
+    label: t('help:training.categories.stock'),
     color: 'text-amber-600',
     bg: 'bg-amber-50 border-amber-200',
     icon: Package,
     videos: [
-      { id: 'v4', title: 'Réceptionner une commande', duration: '5:00', youtubeId: 'YOUTUBE_ID_ICI' },
-      { id: 'v5', title: 'Faire un inventaire', duration: '6:30', youtubeId: 'YOUTUBE_ID_ICI' },
-      { id: 'v6', title: 'Gérer les péremptions', duration: '3:15', youtubeId: 'YOUTUBE_ID_ICI' },
+      { id: 'v4', title: t('help:training.videos.v4'), duration: '5:00', youtubeId: 'YOUTUBE_ID_ICI' },
+      { id: 'v5', title: t('help:training.videos.v5'), duration: '6:30', youtubeId: 'YOUTUBE_ID_ICI' },
+      { id: 'v6', title: t('help:training.videos.v6'), duration: '3:15', youtubeId: 'YOUTUBE_ID_ICI' },
     ]
   },
   {
     id: 'fournisseurs',
-    label: 'Fournisseurs',
-    color: 'text-blue-600',
+    label: t('help:training.categories.fournisseurs'),
+    color: 'text-primary',
     bg: 'bg-blue-50 border-blue-200',
     icon: Truck,
     videos: [
-      { id: 'v7', title: 'Créer une commande fournisseur', duration: '4:50', youtubeId: 'YOUTUBE_ID_ICI' },
-      { id: 'v8', title: 'Enregistrer un paiement fournisseur', duration: '3:00', youtubeId: 'YOUTUBE_ID_ICI' },
+      { id: 'v7', title: t('help:training.videos.v7'), duration: '4:50', youtubeId: 'YOUTUBE_ID_ICI' },
+      { id: 'v8', title: t('help:training.videos.v8'), duration: '3:00', youtubeId: 'YOUTUBE_ID_ICI' },
     ]
   },
   {
     id: 'clients',
-    label: 'Clients & Créances',
+    label: t('help:training.categories.clients'),
     color: 'text-purple-600',
     bg: 'bg-purple-50 border-purple-200',
     icon: Users,
     videos: [
-      { id: 'v9', title: 'Gérer les créances clients', duration: '4:00', youtubeId: 'YOUTUBE_ID_ICI' },
-      { id: 'v10', title: 'Programme de fidélité', duration: '2:30', youtubeId: 'YOUTUBE_ID_ICI' },
+      { id: 'v9', title: t('help:training.videos.v9'), duration: '4:00', youtubeId: 'YOUTUBE_ID_ICI' },
+      { id: 'v10', title: t('help:training.videos.v10'), duration: '2:30', youtubeId: 'YOUTUBE_ID_ICI' },
     ]
   },
   {
     id: 'dashboard',
-    label: 'Tableau de Bord',
+    label: t('help:training.categories.dashboard'),
     color: 'text-indigo-600',
     bg: 'bg-indigo-50 border-indigo-200',
     icon: TrendingUp,
     videos: [
-      { id: 'v11', title: 'Lire le rapport flash', duration: '3:45', youtubeId: 'YOUTUBE_ID_ICI' },
-      { id: 'v12', title: 'Analyser les statistiques', duration: '5:20', youtubeId: 'YOUTUBE_ID_ICI' },
+      { id: 'v11', title: t('help:training.videos.v11'), duration: '3:45', youtubeId: 'YOUTUBE_ID_ICI' },
+      { id: 'v12', title: t('help:training.videos.v12'), duration: '5:20', youtubeId: 'YOUTUBE_ID_ICI' },
     ]
   },
   {
     id: 'parametres',
-    label: 'Paramètres',
+    label: t('help:training.categories.parametres'),
     color: 'text-rose-600',
     bg: 'bg-rose-50 border-rose-200',
     icon: Settings,
     videos: [
-      { id: 'v13', title: 'Configurer la pharmacie', duration: '4:00', youtubeId: 'YOUTUBE_ID_ICI' },
-      { id: 'v14', title: 'Gérer les utilisateurs', duration: '3:10', youtubeId: 'YOUTUBE_ID_ICI' },
+      { id: 'v13', title: t('help:training.videos.v13'), duration: '4:00', youtubeId: 'YOUTUBE_ID_ICI' },
+      { id: 'v14', title: t('help:training.videos.v14'), duration: '3:10', youtubeId: 'YOUTUBE_ID_ICI' },
     ]
   },
 ];
 
-const SHORTCUTS = [
-  { key: 'F2', label: 'Nouvelle vente' },
-  { key: '/', label: 'Recherche produit' },
-  { key: 'F4', label: 'Valider ligne' },
-  { key: 'F9', label: 'Encaisser', highlight: true },
-  { key: 'Ctrl+S', label: 'Sauvegarder' },
-  { key: 'Alt+Z', label: 'Annuler ligne' },
-  { key: 'Esc', label: 'Fermer / Annuler' },
+const getShortcuts = (t: any) => [
+  { key: 'F2', label: t('help:training.shortcuts.f2') },
+  { key: '/', label: t('help:training.shortcuts.slash') },
+  { key: 'F4', label: t('help:training.shortcuts.f4') },
+  { key: 'F9', label: t('help:training.shortcuts.f9'), highlight: true },
+  { key: 'Ctrl+S', label: t('help:training.shortcuts.ctrl_s') },
+  { key: 'Alt+Z', label: t('help:training.shortcuts.alt_z') },
+  { key: 'Esc', label: t('help:training.close') },
 ];
 
 const HelpTraining = () => {
+  const { t } = useTranslation(['help', 'common']);
   const [search, setSearch] = useState('');
   const [activeCategory, setActiveCategory] = useState('ventes');
   const [activeVideo, setActiveVideo] = useState<Video | null>(null);
 
-  const currentCategory = CATEGORIES.find(c => c.id === activeCategory) || CATEGORIES[0];
+  const CATEGORIES = getCategories(t);
+  const SHORTCUTS = getShortcuts(t);
+
+  const currentCategory = CATEGORIES.find((c: Category) => c.id === activeCategory) || CATEGORIES[0];
 
   const filteredCategories = search.trim()
-    ? CATEGORIES.map(cat => ({
+    ? CATEGORIES.map((cat: Category) => ({
         ...cat,
-        videos: cat.videos.filter(v => v.title.toLowerCase().includes(search.toLowerCase()))
-      })).filter(cat => cat.videos.length > 0)
+        videos: cat.videos.filter((v: Video) => v.title.toLowerCase().includes(search.toLowerCase()))
+      })).filter((cat: Category) => cat.videos.length > 0)
     : CATEGORIES;
 
-  const allVideos = search.trim() ? filteredCategories.flatMap(c => c.videos) : currentCategory.videos;
+  const allVideos = search.trim() ? filteredCategories.flatMap((c: Category) => c.videos) : currentCategory.videos;
 
   return (
     <div className="min-h-screen bg-base-200/40 p-3 md:p-6">
@@ -128,15 +133,15 @@ const HelpTraining = () => {
               <BookOpen className="size-6" />
             </div>
             <div>
-              <h1 className="text-2xl font-black text-base-content tracking-tight">Formation</h1>
-              <p className="text-xs text-base-content/40 font-medium">Tutoriels vidéo PharmaGest</p>
+              <h1 className="text-2xl font-black text-base-content tracking-tight">{t('help:training.title')}</h1>
+              <p className="text-xs text-base-content/40 font-medium">{t('help:training.subtitle')}</p>
             </div>
           </div>
           <div className="relative w-full sm:w-72">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-base-content/30" />
             <input
               type="text"
-              placeholder="Rechercher un tutoriel..."
+              placeholder={t('help:training.search_placeholder')}
               value={search}
               onChange={e => setSearch(e.target.value)}
               className="input input-bordered w-full pl-9 text-sm rounded-xl h-10"
@@ -149,7 +154,7 @@ const HelpTraining = () => {
           {/* Sidebar catégories */}
           {!search && (
             <div className="lg:col-span-1 space-y-1">
-              {CATEGORIES.map(cat => {
+              {CATEGORIES.map((cat: Category) => {
                 const Icon = cat.icon;
                 const isActive = cat.id === activeCategory;
                 return (
@@ -175,10 +180,10 @@ const HelpTraining = () => {
               <div className="mt-4 pt-4 border-t border-base-200">
                 <div className="flex items-center gap-2 px-2 mb-3">
                   <Keyboard className="size-4 text-base-content/30" />
-                  <span className="text-[10px] font-black uppercase tracking-widest text-base-content/30">Raccourcis</span>
+                  <span className="text-[10px] font-black uppercase tracking-widest text-base-content/30">{t('help:training.shortcuts.title')}</span>
                 </div>
                 <div className="space-y-1.5">
-                  {SHORTCUTS.map((s, i) => (
+                  {SHORTCUTS.map((s: any, i: number) => (
                     <div key={i} className="flex items-center justify-between px-2 py-1">
                       <span className="text-xs text-base-content/50">{s.label}</span>
                       <kbd className={`kbd kbd-xs text-[10px] ${s.highlight ? 'bg-primary text-white border-primary' : ''}`}>{s.key}</kbd>
@@ -212,7 +217,7 @@ const HelpTraining = () => {
                       <span>{activeVideo.duration}</span>
                     </div>
                   </div>
-                  <button onClick={() => setActiveVideo(null)} className="btn btn-ghost btn-sm text-xs">Fermer</button>
+                  <button onClick={() => setActiveVideo(null)} className="btn btn-ghost btn-sm text-xs">{t('help:training.close')}</button>
                 </div>
               </div>
             )}
@@ -220,13 +225,13 @@ const HelpTraining = () => {
             {/* Titre catégorie ou résultats recherche */}
             {search ? (
               <p className="text-sm font-bold text-base-content/50">
-                {allVideos.length} résultat{allVideos.length > 1 ? 's' : ''} pour « {search} »
+                {allVideos.length} {t('common:results', { count: allVideos.length })} « {search} »
               </p>
             ) : (
               <div className={`flex items-center gap-2 px-4 py-2.5 rounded-xl border text-sm font-bold ${currentCategory.bg} ${currentCategory.color}`}>
                 <currentCategory.icon className="size-4" />
                 {currentCategory.label}
-                <span className="ml-auto text-xs opacity-60">{currentCategory.videos.length} vidéo{currentCategory.videos.length > 1 ? 's' : ''}</span>
+                <span className="ml-auto text-xs opacity-60">{currentCategory.videos.length} {t('help:training.videos_count')}{currentCategory.videos.length > 1 ? 's' : ''}</span>
               </div>
             )}
 
@@ -250,7 +255,7 @@ const HelpTraining = () => {
                       <div className="size-full flex items-center justify-center bg-gradient-to-br from-slate-800 to-slate-900">
                         <div className="text-center">
                           <Play className="size-8 text-white/20 mx-auto mb-1" />
-                          <span className="text-[10px] text-white/20 font-bold uppercase tracking-wider">Bientôt disponible</span>
+                          <span className="text-[10px] text-white/20 font-bold uppercase tracking-wider">{t('help:training.soon')}</span>
                         </div>
                       </div>
                     )}
@@ -276,8 +281,8 @@ const HelpTraining = () => {
             {allVideos.length === 0 && (
               <div className="flex flex-col items-center justify-center py-20 text-center opacity-40">
                 <Search className="size-10 mb-3" />
-                <p className="font-bold">Aucun tutoriel trouvé</p>
-                <p className="text-sm">Essayez un autre mot-clé</p>
+                <p className="font-bold">{t('help:training.no_results')}</p>
+                <p className="text-sm">{t('help:training.try_again')}</p>
               </div>
             )}
           </div>

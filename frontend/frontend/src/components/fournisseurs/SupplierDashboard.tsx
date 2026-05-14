@@ -1,4 +1,4 @@
-import React, { Suspense } from 'react';
+import React from 'react';
 import { 
   TrendingDown, 
   AlertCircle, 
@@ -24,7 +24,7 @@ import {
   Cell,
   BarChart,
   Bar
-} from '../LazyRecharts';
+} from 'recharts';
 import { formatCurrency } from '../../utils/formatters';
 import { useSupplierDashboard } from '../../hooks/useSupplierDashboard';
 import { useTranslation } from 'react-i18next';

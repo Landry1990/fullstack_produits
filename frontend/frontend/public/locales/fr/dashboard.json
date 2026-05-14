@@ -68,7 +68,15 @@
     "charts": {
         "revenue_evolution": "Évolution du Chiffre d'Affaires",
         "last_7_days": "7 derniers jours",
-        "amount": "Montant"
+        "amount": "Montant",
+        "payment_mix": "Qualité du CA",
+        "today_payments": "Répartition des paiements du jour",
+        "no_data": "Aucun paiement aujourd'hui"
+    },
+    "tabs": {
+        "overview": "Performance",
+        "stock": "Stock",
+        "finance": "Finance"
     },
     "hourly_traffic": {
         "title": "Fréquentation par Heure",

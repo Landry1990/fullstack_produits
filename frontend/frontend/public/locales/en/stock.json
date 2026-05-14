@@ -1054,6 +1054,48 @@
             "times": "times"
         }
     },
+    "reappro": {
+        "title": "Shelf Replenishment",
+        "critical_alerts": "Critical Alerts",
+        "suggested_volume": "Suggested Volume",
+        "displayed_products": "Displayed Products",
+        "alerts_only": "Alerts only",
+        "selected_products": "Selected Products",
+        "analyze": "Analyze",
+        "columns": {
+            "product": "Product",
+            "section_status": "Shelf Status",
+            "section": "Shelf",
+            "reserve": "Reserve",
+            "suggestion": "Suggestion",
+            "actions": "Actions"
+        },
+        "loading": "Analyzing stock...",
+        "empty": "No products to replenish",
+        "empty_desc": "All your shelves are currently well stocked according to the stock parameters.",
+        "min": "MIN",
+        "cap": "CAP",
+        "reserve": "Reserve",
+        "suggested": "Suggested",
+        "status": {
+            "critical": "Critical Alert",
+            "ok": "Correct Level"
+        },
+        "transfer": "Transfer",
+        "transfer_all": "Replenish all",
+        "modal": {
+            "title": "Replenish stocks?",
+            "confirm": "You are about to transfer reserve stock to shelf for {{count}} products.",
+            "download": "Download",
+            "download_pdf": "Download PDF confirmation",
+            "view_history": "View History",
+            "close": "Close",
+            "confirm_btn": "Confirm transfer",
+            "success": "Transfer Successful!",
+            "success_desc": "The stocks have been transferred. You can download the confirmation document or view the detailed history.",
+            "cancel": "Cancel"
+        }
+    },
     "sidebar": {
         "stock": {
             "organisation": {

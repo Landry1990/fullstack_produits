@@ -682,14 +682,14 @@ export default function CaisseCentralisee() {
             <div className="flex items-center gap-2 bg-base-200 p-1.5 rounded-xl border border-base-300">
               <div className="flex items-center gap-2 px-3 text-base-content/60">
                 <Monitor className="size-4" />
-                <span className="text-xs font-bold uppercase tracking-wider">Poste :</span>
+                <span className="text-xs font-bold uppercase tracking-wider">{t('poste_label')}</span>
               </div>
               <select 
                 className="select select-sm select-ghost font-bold text-xs focus:bg-base-100"
                 value={selectedPosteCaisseId}
                 onChange={(e) => setSelectedPosteCaisseId(e.target.value)}
               >
-                <option value="all">Tous les postes</option>
+                <option value="all">{t('all_posts')}</option>
                 {postesCaisses.map(p => (
                   <option key={p.id} value={p.id}>{p.nom}</option>
                 ))}
@@ -808,7 +808,7 @@ export default function CaisseCentralisee() {
             </div>
             <div className="flex gap-3">
               <span><kbd className="kbd kbd-xs">↑↓</kbd> {t('shortcuts.navigate')}</span>
-              <span><kbd className="kbd kbd-xs">Entrée</kbd> {t('shortcuts.cash_in')}</span>
+              <span><kbd className="kbd kbd-xs">{t('shortcuts.enter_key', 'Entrée')}</kbd> {t('shortcuts.cash_in')}</span>
               <span><kbd className="kbd kbd-xs">C</kbd> {t('shortcuts.coupon')}</span>
               <span><kbd className="kbd kbd-xs">R</kbd> {t('shortcuts.refresh')}</span>
               <span><kbd className="kbd kbd-xs">1-9</kbd> {t('shortcuts.quick_select')}</span>

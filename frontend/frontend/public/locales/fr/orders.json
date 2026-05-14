@@ -1,4 +1,45 @@
 {
+    "divers": {
+        "title": "Gestion Divers",
+        "revenue_tab": "Chiffre d'affaires",
+        "imported_products_management": "Gestion des produits divers",
+        "orders_tab": "Commandes",
+        "stock_tab": "Stock",
+        "revenue": "Chiffre d'Affaires Total",
+        "period_from": "Période du",
+        "to": "au",
+        "detail_sales": "Détail des ventes \"Divers\"",
+        "transactions_found": "{{count}} transactions trouvées",
+        "no_sales_found": "Aucune vente \"Divers\" trouvée pour cette période.",
+        "valuation_method": "Méthode de valorisation :",
+        "purchase_cost": "Coût d'achat (PMP)",
+        "selling_price": "Prix de vente",
+        "loading_valuation": "Chargement de la valorisation...",
+        "total_value_ttc": "Valeur Totale TTC",
+        "value_ht": "Valeur HT",
+        "total_vat": "TVA Totale",
+        "no_stock_data": "Aucune donnée de stock divers disponible",
+        "filter": "Filtrer",
+        "previous": "Précédent",
+        "next": "Suivant",
+        "results": "résultats",
+        "table": {
+            "date": "Date",
+            "invoice": "Facture",
+            "product": "Produit",
+            "lot": "Lot",
+            "qty": "Qté",
+            "unit_price": "PU",
+            "total": "Total",
+            "vat_rate": "Taux TVA",
+            "base_ht": "Base HT",
+            "vat_amount": "Montant TVA",
+            "total_ttc": "Total TTC",
+            "section": "Rayon"
+        },
+        "vat_breakdown": "Répartition par taux de TVA",
+        "section_breakdown": "Répartition par rayon"
+    },
     "title_local": "Gestion des Commandes Locales",
     "title_direct": "Gestion des Commandes Directes (Import)",
     "subtitle": "Planifiez vos achats et suivez vos livraisons",
@@ -20,9 +61,36 @@
         "pending": "En attente",
         "closed": "Clôturée"
     },
+    "scheduling": {
+        "cancel": "Annuler",
+        "save_service": "Enregistrer le service",
+        "analyze": "Lancer l'analyse",
+        "supplier_partner": "Fournisseur Partenaire",
+        "service_mode": "Mode Service",
+        "active": "ACTIF",
+        "paused": "PAUSE",
+        "frequency_timing": "Fréquence & Timing",
+        "activation_days": "Jours d'activation",
+        "every": "Toutes les",
+        "weeks_short": "SEM",
+        "hour": "Heure",
+        "start_on": "Début le",
+        "calculation_intelligence": "Intelligence de Calcul",
+        "predictive_analysis": "Analyse prédictive",
+        "predictive_desc": "Anticipe via l'historique",
+        "simple_replacement": "Remplacement pur",
+        "simple_desc": "Période fixe",
+        "cumulative": "Cumulatif",
+        "cumulative_desc": "Depuis dernière cmd",
+        "maximized": "Maximisé",
+        "maximized_desc": "Optimise le stock",
+        "review_back": "Revoir",
+        "apply_orders": "Appliquer les commandes"
+    },
     "list": {
         "title": "Historique des Commandes",
         "suggestions_btn": "Suggestions",
+        "scheduling_btn": "Planification",
         "create_btn": "Nouvelle Commande",
         "sort_by": "Trier par",
         "filter_by": "Filtrer par",
@@ -112,6 +180,8 @@
     },
     "product_table": {
         "title": "Produits ({{count}})",
+        "import_btn": "Import",
+        "new_product_btn": "Nouveau produit",
         "search_placeholder": "Rechercher un produit...",
         "sort_options": {
             "chrono": "Chronologie",
@@ -159,6 +229,20 @@
             "rotation_unknown": "Rotation inconnue",
             "margin_value": "Montant Marge"
         }
+    },
+    "actions": {
+        "transfer": "Transférer",
+        "transfer_products": "Transférer vers un autre fournisseur"
+    },
+    "transfer_modal": {
+        "title": "Transférer vers un autre fournisseur",
+        "description": "Les produits sélectionnés seront transférés vers une nouvelle commande chez le fournisseur choisi.",
+        "supplier_label": "Fournisseur destination",
+        "select_supplier": "Sélectionner un fournisseur",
+        "products_title": "Produits à transférer",
+        "qty_label": "Qté",
+        "cancel": "Annuler",
+        "transfer_btn": "Transférer"
     },
     "messages": {
         "create_success": "Commande créée avec succès",

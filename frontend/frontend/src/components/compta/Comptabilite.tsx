@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, Suspense } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, Suspense } from 'react';
 import { useAccounting } from '../../hooks/useAccounting';
 import { 
     LayoutDashboard, 
@@ -19,18 +19,6 @@ import {
 import { format } from 'date-fns';
 import { fr, enUS } from 'date-fns/locale';
 import { useTranslation } from 'react-i18next';
-import { 
-    BarChart, 
-    Bar, 
-    XAxis, 
-    YAxis, 
-    CartesianGrid, 
-    Tooltip, 
-    ResponsiveContainer, 
-    Cell,
-    PieChart,
-    Pie
-} from '../LazyRecharts';
 import Pagination from '../ui/Pagination';
 
 const amountFormatter = new Intl.NumberFormat('fr-FR', { maximumFractionDigits: 0 });
@@ -180,7 +168,7 @@ export default function Comptabilite({ defaultTab = 'dashboard' }: ComptabiliteP
                     <Suspense fallback={
                         <div className="flex flex-col items-center justify-center py-20 opacity-30">
                             <RefreshCcw className="size-8 animate-spin mb-2" />
-                            <p className="text-xs font-medium uppercase tracking-wider">Chargement des données...</p>
+                            <p className="text-xs font-medium uppercase tracking-wider">{t('loading_data')}</p>
                         </div>
                     }>
                         {activeTab === 'dashboard' && <DashboardTab resultat={resultat} actions={actions} t={t} />}
@@ -230,16 +218,16 @@ function DashboardTab({ resultat, actions, t }: any) {
                 <h3 className="text-2xl font-bold text-primary">{formatFCFA(resultat?.total_produits || 0)}</h3>
                 <div className="mt-2 flex items-center gap-1 text-xs text-primary/60">
                     <ArrowUpRight className="size-3" />
-                    <span>Chiffre d'affaires</span>
+                    <span>{t('kpi.revenue_label')}</span>
                 </div>
             </div>
 
             <div className="bg-base-100 p-5 rounded-xl border border-base-300 shadow-sm">
-                <p className="text-base-content/50 text-xs font-medium uppercase tracking-wide mb-1">Valeur Stock (311)</p>
+                <p className="text-base-content/50 text-xs font-medium uppercase tracking-wide mb-1">{t('kpi.stock_value_label')} (311)</p>
                 <h3 className="text-2xl font-bold text-warning">{formatFCFA(resultat?.valeur_stock || 0)}</h3>
                 <div className="mt-2 flex items-center gap-1 text-xs text-warning/60">
                     <BookOpen className="size-3" />
-                    <span>Variation d'inventaire</span>
+                    <span>{t('kpi.stock_variation_label')}</span>
                 </div>
             </div>
 
@@ -248,40 +236,25 @@ function DashboardTab({ resultat, actions, t }: any) {
                 <h3 className="text-2xl font-bold text-error">{formatFCFA(resultat?.total_charges || 0)}</h3>
                 <div className="mt-2 flex items-center gap-1 text-xs text-error/60">
                     <ArrowDownRight className="size-3" />
-                    <span>Dépenses</span>
+                    <span>{t('kpi.expenses_label')}</span>
                 </div>
             </div>
 
-            {/* Performance Chart Card */}
+            {/* Performance Comparison Card */}
             <div className="md:col-span-2 bg-base-100 p-5 rounded-xl border border-base-300 shadow-sm">
                 <div className="mb-4">
-                    <h4 className="font-semibold text-sm text-primary">Performance Financière</h4>
-                    <p className="text-xs text-base-content/50">Comparaison Produits vs Charges</p>
+                    <h4 className="font-semibold text-sm text-primary">{t('performance.title')}</h4>
+                    <p className="text-xs text-base-content/50">{t('performance.subtitle')}</p>
                 </div>
-                <div className="h-40">
-                    <ResponsiveContainer width="100%" height="100%">
-                        <BarChart data={[
-                            { name: 'Produits', value: resultat?.total_produits || 0, fill: '#16a34a' },
-                            { name: 'Charges', value: resultat?.total_charges || 0, fill: '#ef4444' }
-                        ]}>
-                            <CartesianGrid strokeDasharray="3 3" vertical={false} strokeOpacity={0.1} />
-                            <XAxis 
-                                dataKey="name" 
-                                axisLine={false} 
-                                tickLine={false} 
-                                tick={{fontSize: 11}} 
-                            />
-                            <YAxis hide />
-                            <Tooltip 
-                                contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)' }}
-                                formatter={(value: number) => [formatFCFA(value), '']}
-                            />
-                            <Bar dataKey="value" radius={[6, 6, 6, 6]} barSize={36}>
-                                <Cell fill="#16a34a" />
-                                <Cell fill="#ef4444" />
-                            </Bar>
-                        </BarChart>
-                    </ResponsiveContainer>
+                <div className="grid grid-cols-2 gap-4">
+                    <div className="bg-green-50 p-4 rounded-lg">
+                        <p className="text-xs text-green-600 font-medium">{t('performance.produits_label')}</p>
+                        <p className="text-lg font-bold text-green-700">{formatFCFA(resultat?.total_produits || 0)}</p>
+                    </div>
+                    <div className="bg-red-50 p-4 rounded-lg">
+                        <p className="text-xs text-red-600 font-medium">{t('performance.charges_label')}</p>
+                        <p className="text-lg font-bold text-red-700">{formatFCFA(resultat?.total_charges || 0)}</p>
+                    </div>
                 </div>
             </div>
 

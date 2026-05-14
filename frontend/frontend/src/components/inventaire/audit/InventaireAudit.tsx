@@ -1,4 +1,4 @@
-import React, { Suspense } from 'react';
+import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { formatPrice, formatCurrency } from '../../../utils/formatters';
 import {
@@ -8,7 +8,7 @@ import {
 import {
     BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
     ResponsiveContainer, Cell
-} from '../../LazyRecharts';
+} from 'recharts';
 import { useInventaireAudit } from '../../../hooks/inventaire/useInventaireAudit';
 
 interface InventaireAuditProps {

@@ -16,7 +16,7 @@ import {
   Cell, 
   Tooltip, 
   ResponsiveContainer 
-} from '../LazyRecharts';
+} from 'recharts';
 
 interface FinancialSummaryProps {
   stats: any;

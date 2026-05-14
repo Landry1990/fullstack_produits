@@ -82,5 +82,18 @@
       "subtitle": "Suivi des écritures d'achat générées lors de la réception des commandes",
       "no_data": "Aucun achat enregistré pour cette période."
     },
-    "loading_msg": "Analyse des comptes en cours..."
+    "loading_msg": "Analyse des comptes en cours...",
+    "loading_data": "Chargement des données...",
+    "kpi": {
+        "revenue_label": "Chiffre d'affaires",
+        "stock_value_label": "Valeur Stock",
+        "stock_variation_label": "Variation d'inventaire",
+        "expenses_label": "Dépenses"
+    },
+    "performance": {
+        "title": "Performance Financière",
+        "subtitle": "Comparaison Produits vs Charges",
+        "produits_label": "Produits",
+        "charges_label": "Charges"
+    }
 }

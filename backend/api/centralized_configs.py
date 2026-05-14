@@ -11,21 +11,8 @@ from decimal import Decimal
 
 
 # ============================================================================
-# CONFIGURATIONS DE VIEWSET - Patterns réutilisables
+# CONFIGURATIONS DE PAGINATION
 # ============================================================================
-
-class BaseViewSetConfig:
-    """Configuration de base pour tous les ViewSets"""
-    permission_classes = [IsAuthenticated]
-    pagination_class = None  # Sera défini après la classe StandardResultsSetPagination
-    
-    # Configuration standard des filtres
-    default_filter_backends = [
-        'django_filters.rest_framework.DjangoFilterBackend',
-        'rest_framework.filters.SearchFilter',
-        'rest_framework.filters.OrderingFilter'
-    ]
-
 
 class StandardResultsSetPagination(PageNumberPagination):
     """
@@ -37,7 +24,21 @@ class StandardResultsSetPagination(PageNumberPagination):
     max_page_size = 1000
 
 
-# Note: BaseViewSetConfig.pagination_class sera défini par héritage dans les ViewSets concrets
+# ============================================================================
+# CONFIGURATIONS DE VIEWSET - Patterns réutilisables
+# ============================================================================
+
+class BaseViewSetConfig:
+    """Configuration de base pour tous les ViewSets"""
+    permission_classes = [IsAuthenticated]
+    pagination_class = StandardResultsSetPagination  # Pagination standard activée par défaut
+    
+    # Configuration standard des filtres
+    default_filter_backends = [
+        'django_filters.rest_framework.DjangoFilterBackend',
+        'rest_framework.filters.SearchFilter',
+        'rest_framework.filters.OrderingFilter'
+    ]
 
 
 # ============================================================================

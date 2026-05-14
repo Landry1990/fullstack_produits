@@ -18,7 +18,7 @@ const GuideFinancier: React.FC = () => {
   return (
     <div className="p-6 max-w-5xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
       {/* Hero Header */}
-      <div className="bg-gradient-to-r from-primary to-secondary rounded-3xl p-8 text-white shadow-xl relative overflow-hidden">
+      <div className="bg-gradient-to-r from-primary to-secondary rounded-xl p-8 text-white shadow-xl relative overflow-hidden">
         <div className="relative z-10">
           <div className="flex items-center gap-3 mb-4">
             <div className="bg-white/20 p-2 rounded-xl backdrop-blur-md">
@@ -210,15 +210,15 @@ const GuideFinancier: React.FC = () => {
                 </p>
                 <ul className="space-y-3 text-sm text-blue-900/70">
                   <li className="flex gap-2">
-                    <span className="font-bold text-blue-600">01.</span>
+                    <span className="font-bold text-primary">01.</span>
                     <span>{t('guide.sections.advanced_analysis.reason_1')}</span>
                   </li>
                   <li className="flex gap-2">
-                    <span className="font-bold text-blue-600">02.</span>
+                    <span className="font-bold text-primary">02.</span>
                     <span>{t('guide.sections.advanced_analysis.reason_2')}</span>
                   </li>
                   <li className="flex gap-2">
-                    <span className="font-bold text-blue-600">03.</span>
+                    <span className="font-bold text-primary">03.</span>
                     <span>{t('guide.sections.advanced_analysis.reason_3')}</span>
                   </li>
                 </ul>

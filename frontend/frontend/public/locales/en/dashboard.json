@@ -68,7 +68,15 @@
     "charts": {
         "revenue_evolution": "Revenue Evolution",
         "last_7_days": "Last 7 days",
-        "amount": "Amount"
+        "amount": "Amount",
+        "payment_mix": "Revenue Quality",
+        "today_payments": "Today's Payment Distribution",
+        "no_data": "No payments today"
+    },
+    "tabs": {
+        "overview": "Performance",
+        "stock": "Stock",
+        "finance": "Finance"
     },
     "hourly_traffic": {
         "title": "Hourly Traffic",
