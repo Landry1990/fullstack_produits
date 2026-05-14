@@ -1,6 +1,6 @@
 # 🔧 Corrections des Problèmes de Date/Timezone
 
-## ⚠️ Problème Identifié
+## ⚠️ Problème UTC Identifié et Corrigé
 Le frontend utilisait `new Date().toISOString().split('T')[0]` pour obtenir la date du jour, mais cette méthode retourne la date en **UTC** (Universal Time Coordinated). 
 
 ### Exemple du problème :
@@ -99,6 +99,28 @@ Les données déjà enregistrées avec la mauvaise méthode pourraient avoir des
 1. Identifier les enregistrements concernés (heure entre 23h-00h UTC)
 2. Mettre à jour les dates si nécessaire
 3. Vérifier la cohérence des rapports comptables
+
+---
+
+## 📝 Note Importante : Différence entre SalesTable et Journal de Caisse
+
+### Ce n'est PAS un bug UTC !
+Une **différence de date** entre le SalesTable et le Journal de Caisse n'est pas forcément un problème de timezone. C'est souvent une **différence de logique métier** :
+
+| Vue | Champ Date | Signification |
+|-----|------------|---------------|
+| **SalesTable** | `Facture.date` | Date où la vente a été créée |
+| **Journal de Caisse** | `Caisse.date_paiement` | Date où l'argent a été encaissé |
+
+### Exemple réel :
+- **11 Mai 23h30** : Facture `FAC-000041` créée (vente)
+- **12 Mai 00h15** : Paiement encaissé (date du lendemain)
+- Résultat : La vente apparaît le 11 dans SalesTable, mais le paiement apparaît le 12 dans le Journal de Caisse
+
+### Pourquoi on garde ainsi :
+- **Performance** : Charger toutes les ventes pour vérifier leurs paiements surchargerait le serveur
+- **Cohérence comptable** : Les ventes et les encaissements sont deux concepts distincts
+- **Solution utilisateur** : Si une vente payée le 12 n'apparaît pas le 12 dans SalesTable, étendre la plage de dates au 11
 
 ---
 **Date de correction :** 12 Mai 2026

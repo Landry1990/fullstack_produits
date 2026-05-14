@@ -1,22 +1,43 @@
 import type { ComponentType } from 'react';
-import { lazy } from 'react';
+import { lazy, Suspense } from 'react';
 
-// Lazy load recharts components to reduce initial bundle size (~500KB saved)
-// Usage: import { LineChart } from './LazyRecharts'
+/**
+ * Lazy load helper that wraps the lazy component in a regular functional component.
+ * This prevents React 19 "read-only _status" errors when these components are 
+ * passed to HOCs or parent components (like ResponsiveContainer) that use cloneElement.
+ * 
+ * For container components (Charts, ResponsiveContainer), we add a Suspense boundary.
+ * For child components (XAxis, Bar, etc.), we don't add Suspense so they can 
+ * suspend the parent chart correctly and be identified by Recharts.
+ */
+const createLazyComponent = (name: string) => {
+  const LazyComp = lazy(() => import('recharts').then(m => ({ 
+    default: (m as any)[name] as ComponentType<any> 
+  })));
+  
+  const Component = (props: any) => {
+    return <LazyComp {...props} />;
+  };
+  
+  Component.displayName = name;
+  return Component;
+};
 
-export const LineChart = lazy(() => import('recharts').then(m => ({ default: m.LineChart as ComponentType<any> })));
-export const Line = lazy(() => import('recharts').then(m => ({ default: m.Line as ComponentType<any> })));
-export const BarChart = lazy(() => import('recharts').then(m => ({ default: m.BarChart as ComponentType<any> })));
-export const Bar = lazy(() => import('recharts').then(m => ({ default: m.Bar as ComponentType<any> })));
-export const AreaChart = lazy(() => import('recharts').then(m => ({ default: m.AreaChart as ComponentType<any> })));
-export const Area = lazy(() => import('recharts').then(m => ({ default: m.Area as ComponentType<any> })));
-export const XAxis = lazy(() => import('recharts').then(m => ({ default: m.XAxis as ComponentType<any> })));
-export const YAxis = lazy(() => import('recharts').then(m => ({ default: m.YAxis as ComponentType<any> })));
-export const CartesianGrid = lazy(() => import('recharts').then(m => ({ default: m.CartesianGrid as ComponentType<any> })));
-export const Tooltip = lazy(() => import('recharts').then(m => ({ default: m.Tooltip as ComponentType<any> })));
-export const Legend = lazy(() => import('recharts').then(m => ({ default: m.Legend as ComponentType<any> })));
-export const ResponsiveContainer = lazy(() => import('recharts').then(m => ({ default: m.ResponsiveContainer as ComponentType<any> })));
-export const Cell = lazy(() => import('recharts').then(m => ({ default: m.Cell as ComponentType<any> })));
-export const PieChart = lazy(() => import('recharts').then(m => ({ default: m.PieChart as ComponentType<any> })));
-export const Pie = lazy(() => import('recharts').then(m => ({ default: m.Pie as ComponentType<any> })));
-export const ReferenceLine = lazy(() => import('recharts').then(m => ({ default: m.ReferenceLine as ComponentType<any> })));
+export const LineChart = createLazyComponent('LineChart');
+export const Line = createLazyComponent('Line');
+export const BarChart = createLazyComponent('BarChart');
+export const Bar = createLazyComponent('Bar');
+export const AreaChart = createLazyComponent('AreaChart');
+export const Area = createLazyComponent('Area');
+export const XAxis = createLazyComponent('XAxis');
+export const YAxis = createLazyComponent('YAxis');
+export const CartesianGrid = createLazyComponent('CartesianGrid');
+export const Tooltip = createLazyComponent('Tooltip');
+export const Legend = createLazyComponent('Legend');
+export const ResponsiveContainer = createLazyComponent('ResponsiveContainer');
+export const Cell = createLazyComponent('Cell');
+export const PieChart = createLazyComponent('PieChart');
+export const Pie = createLazyComponent('Pie');
+export const ReferenceLine = createLazyComponent('ReferenceLine');
+
+

@@ -268,7 +268,7 @@ export default function StockUGReport() {
               <div>
                 <p className="text-xs font-bold text-base-content/40 tracking-wider uppercase">{t('stock:rapport_ug.stats.history_ug')}</p>
                 <p className="text-2xl font-black text-base-content tracking-tight">
-                  {loading ? '...' : formatNumber(data?.global_total_ug ?? 0)}
+                  {loading ? '…' : formatNumber(data?.global_total_ug ?? 0)}
                 </p>
               </div>
             </div>
@@ -282,7 +282,7 @@ export default function StockUGReport() {
               <div>
                 <p className="text-xs font-bold text-base-content/40 tracking-wider uppercase">{t('stock:rapport_ug.stats.current_stock_ug')}</p>
                 <p className="text-2xl font-black text-emerald-500 tracking-tight">
-                  {loading ? '...' : formatNumber(data?.global_total_ug_restantes ?? 0)}
+                  {loading ? '…' : formatNumber(data?.global_total_ug_restantes ?? 0)}
                 </p>
               </div>
             </div>
@@ -296,13 +296,13 @@ export default function StockUGReport() {
               <div>
                 <p className="text-xs font-bold text-base-content/40 tracking-wider uppercase">{t('stock:rapport_ug.stats.estimated_value')}</p>
                 <p className="text-2xl font-black text-base-content/80 tracking-tight">
-                  {loading ? '...' : `${formatCurrency(data?.global_total_valeur ?? 0)}`}
+                  {loading ? '…' : `${formatCurrency(data?.global_total_valeur ?? 0)}`}
                 </p>
               </div>
             </div>
           </div>
           
-          <div className="bg-base-100 rounded-3xl p-6 shadow-sm border border-base-200 flex flex-col justify-center border-l-4 border-l-blue-500">
+          <div className="bg-base-100 rounded-3xl p-6 shadow-sm border border-base-200 flex flex-col justify-center ring-1 ring-blue-500/10">
             <div className="flex items-center gap-4 mb-2">
               <div className="size-12 rounded-xl bg-blue-500/10 text-blue-500 flex items-center justify-center">
                  <Banknote className="size-6" />
@@ -310,7 +310,7 @@ export default function StockUGReport() {
               <div>
                 <p className="text-xs font-bold text-blue-400 tracking-wider uppercase">{t('stock:rapport_ug.stats.latent_cash')}</p>
                 <p className="text-2xl font-black text-base-content tracking-tight">
-                  {loading ? '...' : `${formatCurrency(data?.global_total_valeur_restante ?? 0)}`}
+                  {loading ? '…' : `${formatCurrency(data?.global_total_valeur_restante ?? 0)}`}
                 </p>
               </div>
             </div>

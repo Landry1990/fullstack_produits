@@ -143,11 +143,15 @@ DATABASES = {
         # Valeur en secondes, None = connexions persistantes, 0 = fermeture après chaque requête
         'CONN_MAX_AGE': int(os.getenv('DB_CONN_MAX_AGE', '600')),  # 10 minutes par défaut
         
-        # Options PostgreSQL pour optimiser les performances
+        # Options PostgreSQL pour optimiser les performances et éviter les deadlocks
         'OPTIONS': {
             # Psycopg3 utilise automatiquement READ COMMITTED par défaut
             # Pas besoin de spécifier isolation_level explicitement
-            'options': '-c client_encoding=UTF8',
+            
+            # Timeouts pour éviter les deadlocks (en millisecondes)
+            # statement_timeout: annule les requêtes qui prennent trop de temps
+            # lock_timeout: annule si l'attente de verrou est trop longue
+            'options': '-c client_encoding=UTF8 -c statement_timeout=30000 -c lock_timeout=5000',
             
             # Connection pooling côté client (optionnel, pour pgBouncer)
             # 'server_side_binding': False,  # Décommenter si vous utilisez pgBouncer
@@ -370,9 +374,22 @@ LOGGING = {
 
 
 # Silk Configuration
-SILK_PYTHON_PROFILER = True
+SILK_PYTHON_PROFILER = False  # Désactivé - cause des deadlocks PostgreSQL
 SILK_AUTHENTICATION = True
 SILK_AUTHORISATION = True
+
+# Exclusions pour éviter les deadlocks sur opérations intensives
+SILKY_EXCLUDE_URLS = [
+    r'^/api/rapports/.*',  # Rapports lourds
+    r'^/api/factures/.*',  # Ventes fréquentes
+    r'^/api/stock-lots/.*',  # Mouvements stock
+    r'^/api/inventaires/.*',  # Inventaires
+]
+
+# Limiter la rétention pour réduire la taille de la table silk_response
+SILKY_MAX_RECORDED_REQUESTS = 1000
+SILKY_MAX_RESPONSE_BODY_SIZE = 1024  # 1KB max
+SILKY_MAX_REQUEST_BODY_SIZE = 1024  # 1KB max
 
 # Sentry Configuration
 import sentry_sdk

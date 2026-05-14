@@ -60,34 +60,21 @@ export default function CaisseCentralisee() {
   // Fonction pour récupérer les factures en attente
   const fetchFacturesEnAttente = useCallback(async () => {
     try {
-      const params: Record<string, any> = { status__in: 'BROU,VAL', include_pending: true }
+      const params: Record<string, any> = { 
+        status__in: 'BROU,VAL', 
+        include_pending: true,
+        include_details: true 
+      }
       if (selectedPosteCaisseId !== 'all') params.poste_caisse = selectedPosteCaisseId
 
       const response = await api.get('factures/', { params })
       const facturesList = response.data.results || response.data || []
       
-      // Fetch full details for each invoice to get products
-      const facturesWithDetails = await Promise.all(
-        facturesList.map(async (facture: Facture) => {
-          try {
-            const detailResponse = await api.get(`factures/${facture.id}/`)
-            // Preserve session_ticket_number from list response (assigned by backend)
-            return { 
-              ...detailResponse.data, 
-              session_ticket_number: facture.session_ticket_number 
-            }
-          } catch (err) {
-            console.error(`Failed to fetch details for invoice ${facture.id}:`, err)
-            return facture // Fallback to list data
-          }
-        })
-      )
-      
-      setFacturesEnAttente(facturesWithDetails)
+      setFacturesEnAttente(facturesList)
     } catch (err) {
       console.error('Erreur lors du chargement des factures en attente:', err)
     }
-  }, [])
+  }, [selectedPosteCaisseId])
 
 
   // Fonction pour récupérer les coupons (actifs + récemment utilisés)
@@ -408,6 +395,9 @@ export default function CaisseCentralisee() {
         // Le coupon est déjà déduit de montantAEncaisser dans le frontend
       }
 
+      const paiementPromises = [];
+      // resteAEnregistrer already declared above
+
       for (const paiement of paiementsValides) {
         if (resteAEnregistrer <= 0) break;
 
@@ -428,9 +418,11 @@ export default function CaisseCentralisee() {
           paiementPayload.part_assurance = 0
         }
 
-        await api.post('caisse/', paiementPayload)
+        paiementPromises.push(api.post('caisse/', paiementPayload))
         resteAEnregistrer -= montantReel;
       }
+
+      await Promise.all(paiementPromises);
 
       // 3. Mettre à jour le statut à PAYEE
       await api.patch(`factures/${factureValidee.id}/`, { status: 'PAY' })

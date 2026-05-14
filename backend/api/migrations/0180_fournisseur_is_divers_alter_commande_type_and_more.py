@@ -26,11 +26,42 @@ class Migration(migrations.Migration):
             name='code',
             field=models.CharField(help_text='Code lettrage automatique (L-2024-0001)', max_length=20, unique=True),
         ),
-        migrations.AlterField(
-            model_name='lettrage',
-            name='lignes',
-            field=models.ManyToManyField(related_name='lettrages', to='api.ligneecriture'),
+        
+        # Utilisation de SeparateDatabaseAndState pour gérer le changement de ManyToManyField (through -> non-through)
+        # Cela évite l'erreur "ValueError: Cannot alter field ... add or remove through="
+        migrations.SeparateDatabaseAndState(
+            state_operations=[
+                migrations.RemoveField(
+                    model_name='lettrage',
+                    name='lignes',
+                ),
+                migrations.AddField(
+                    model_name='lettrage',
+                    name='lignes',
+                    field=models.ManyToManyField(related_name='lettrages', to='api.ligneecriture'),
+                ),
+            ],
+            database_operations=[
+                # 1. Supprimer l'ancienne table de liaison (manuelle via through)
+                migrations.RunSQL("DROP TABLE IF EXISTS api_lettrage_lignes CASCADE;"),
+                # 2. Créer la nouvelle table de liaison (automatique)
+                # On utilise RunSQL pour créer la table exactement comme Django le ferait par défaut
+                migrations.RunSQL(
+                    sql="""
+                    CREATE TABLE api_lettrage_lignes (
+                        id bigserial NOT NULL PRIMARY KEY,
+                        lettrage_id bigint NOT NULL REFERENCES api_lettrage(id) DEFERRABLE INITIALLY DEFERRED,
+                        ligneecriture_id bigint NOT NULL REFERENCES api_ligneecriture(id) DEFERRABLE INITIALLY DEFERRED,
+                        CONSTRAINT api_lettrage_lignes_lettrage_id_ligneecriture_id_key UNIQUE (lettrage_id, ligneecriture_id)
+                    );
+                    CREATE INDEX api_lettrage_lignes_lettrage_id_idx ON api_lettrage_lignes (lettrage_id);
+                    CREATE INDEX api_lettrage_lignes_ligneecriture_id_idx ON api_lettrage_lignes (ligneecriture_id);
+                    """,
+                    reverse_sql="DROP TABLE IF EXISTS api_lettrage_lignes CASCADE;"
+                ),
+            ]
         ),
+
         migrations.AlterField(
             model_name='lettrage',
             name='montant_total',

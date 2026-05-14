@@ -169,7 +169,7 @@ export default function JournalCaisseTable({ state }: Props) {
                   return (
                     <React.Fragment key={transaction.id}>
                       <tr
-                        className={`hover:bg-base-50/50 transition-colors group ${transaction.isReleveGroup ? 'bg-primary/5 cursor-pointer border-l-4 border-l-primary' : ''}`}
+                        className={`hover:bg-base-50/50 transition-colors group ${transaction.isReleveGroup ? 'bg-primary/5 cursor-pointer border-l-2 border-l-primary ring-1 ring-inset ring-primary/10' : ''}`}
                         onClick={() => transaction.isReleveGroup && transaction.releve_id && toggleReleve(transaction.releve_id)}
                       >
                         <td className="font-mono text-xs whitespace-nowrap pl-6 py-4">
@@ -265,7 +265,7 @@ export default function JournalCaisseTable({ state }: Props) {
                       </tr>
 
                       {isExpanded && transaction.items?.map(subItem => (
-                        <tr key={subItem.id} className="bg-primary/5 border-l-4 border-l-primary/30">
+                        <tr key={subItem.id} className="bg-primary/5 border-l-2 border-l-primary/30">
                           <td className="pl-12 py-3 text-[11px] opacity-60 font-mono">↳ {formatDate(subItem.date_paiement).split(' ')[1]}</td>
                           <td className="py-3 opacity-40 text-[11px]">-</td>
                           <td className="py-3 opacity-40 text-[11px]">-</td>

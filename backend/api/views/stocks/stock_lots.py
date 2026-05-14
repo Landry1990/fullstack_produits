@@ -17,10 +17,13 @@ from ...serializers_optimized import StockLotListSerializer, StockLotDetailSeria
 from ...serializer_mixins import OptimizedSerializerMixin
 from ...audit_helpers import log_audit
 from ...sudo_utils import validate_sudo_mode
-from ...pagination import StandardResultsSetPagination
+from ...centralized_configs import (
+    BaseViewSetConfig,
+    StandardResultsSetPagination
+)
 
 
-class StockLotViewSet(OptimizedSerializerMixin, viewsets.ModelViewSet):
+class StockLotViewSet(BaseViewSetConfig, OptimizedSerializerMixin, viewsets.ModelViewSet):
     """
     API endpoint for stock lots (expiry management) with optimized serializers.
     - List view: Lightweight serializer (8 fields)
@@ -31,8 +34,6 @@ class StockLotViewSet(OptimizedSerializerMixin, viewsets.ModelViewSet):
     filter_backends = (DjangoFilterBackend, filters.OrderingFilter)
     filterset_fields = ['produit', 'fournisseur']
     ordering_fields = ['date_expiration', 'date_reception']
-    permission_classes = [IsAuthenticated]
-    pagination_class = StandardResultsSetPagination
     
     # Serializers optimisés
     list_serializer_class = StockLotListSerializer

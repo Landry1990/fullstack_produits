@@ -1,6 +1,7 @@
 # Generated manually for emergency superuser creation
 from django.db import migrations
 from django.contrib.auth import get_user_model
+from django.utils import timezone
 import os
 
 
@@ -25,7 +26,8 @@ def create_emergency_superuser(apps, schema_editor):
             email='admin@localhost',
             password='ChangeMeImmediately123!',  # À changer IMMÉDIATEMENT
             first_name='System',
-            last_name='Administrator'
+            last_name='Administrator',
+            last_login=timezone.now()
         )
         # Marquer comme compte technique protégé
         user.profile.is_technical_account = True

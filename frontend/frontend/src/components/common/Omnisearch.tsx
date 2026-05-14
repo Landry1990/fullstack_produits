@@ -218,7 +218,7 @@ export default function Omnisearch() {
               onValueChange={setSearch} 
               autoFocus
               className="flex-1 h-16 bg-transparent outline-none border-none text-base-content placeholder:text-base-content/20 text-xl font-medium"
-              placeholder={t('omnisearch.placeholder', 'Rechercher (produits, clients, navigation) ...')} 
+              placeholder={t('omnisearch.placeholder', 'Rechercher (produits, clients, navigation) …')} 
             />
             {loading && <span className="loading loading-spinner loading-sm text-primary"></span>}
             <div className="ml-4 flex items-center gap-1.5 opacity-30 select-none">
@@ -233,7 +233,7 @@ export default function Omnisearch() {
                     {loading ? (
                         <div className="flex flex-col items-center gap-2">
                             <span className="loading loading-ring loading-md text-primary"></span>
-                            <span>Recherche en cours...</span>
+                            <span>Recherche en cours…</span>
                         </div>
                     ) : t('omnisearch.empty', 'Aucun résultat trouvé.')}
                     </Command.Empty>

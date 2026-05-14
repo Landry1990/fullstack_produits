@@ -642,8 +642,8 @@ export default function GestionUtilisateurs() {
             
             <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-6 space-y-8">
               <div className="space-y-4">
-                <div className="flex items-center gap-2 border-l-4 border-primary pl-3">
-                  <h4 className="font-bold text-sm uppercase tracking-wider text-base-content/70">{t('modal.basic_info')}</h4>
+                <div className="flex items-center gap-2 border-l-2 border-primary pl-3 bg-primary/5 py-1 rounded-r-lg">
+                  <h4 className="font-bold text-xs uppercase tracking-widest text-primary">{t('modal.basic_info')}</h4>
                 </div>
                 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -701,8 +701,8 @@ export default function GestionUtilisateurs() {
 
 
               <div className="space-y-4">
-                <div className="flex items-center gap-2 border-l-4 border-secondary pl-3">
-                  <h4 className="font-bold text-sm uppercase tracking-wider text-base-content/70">{t('modal.authorized_menus')}</h4>
+                <div className="flex items-center gap-2 border-l-2 border-secondary pl-3 bg-secondary/5 py-1 rounded-r-lg">
+                  <h4 className="font-bold text-xs uppercase tracking-widest text-secondary">{t('modal.authorized_menus')}</h4>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -758,8 +758,8 @@ export default function GestionUtilisateurs() {
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                   <div className="space-y-4">
-                    <div className="flex items-center gap-2 border-l-4 border-success pl-3">
-                      <h4 className="font-bold text-sm uppercase tracking-wider text-base-content/70">{t('modal.special_permissions')}</h4>
+                    <div className="flex items-center gap-2 border-l-2 border-success pl-3 bg-success/5 py-1 rounded-r-lg">
+                      <h4 className="font-bold text-xs uppercase tracking-widest text-success">{t('modal.special_permissions')}</h4>
                     </div>
                     
                     <div className="grid grid-cols-1 gap-3 bg-base-200/50 p-4 rounded-xl border border-base-300">
@@ -831,8 +831,8 @@ export default function GestionUtilisateurs() {
                   </div>
 
                   <div className="space-y-4">
-                    <div className="flex items-center gap-2 border-l-4 border-error pl-3">
-                      <h4 className="font-bold text-sm uppercase tracking-wider text-base-content/70">{t('modal.security_sudo')}</h4>
+                    <div className="flex items-center gap-2 border-l-2 border-error pl-3 bg-error/5 py-1 rounded-r-lg">
+                      <h4 className="font-bold text-xs uppercase tracking-widest text-error">{t('modal.security_sudo')}</h4>
                     </div>
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 bg-base-200/50 p-4 rounded-xl border border-base-300">

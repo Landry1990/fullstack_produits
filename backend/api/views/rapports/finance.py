@@ -300,20 +300,30 @@ class RapportFinanceMixin:
                          'Total HT', 'Total TVA', 'Total TTC', 'Remise',
                          'Mode de Paiement', 'Caissier'])
 
-        # Récupérer toutes les factures - le filtre is_divers sera appliqué au niveau des lignes si nécessaire
+        # OPTIMISATION: Prefetch des paiements complétés pour éviter N+1
+        from django.db.models import Prefetch
+        from ...models import Caisse
+        
         factures = (
             Facture.objects
             .filter(date__range=(date_debut, date_fin),
                     status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE])
             .select_related('client', 'created_by')
-            .prefetch_related('paiements')
+            .prefetch_related(
+                Prefetch(
+                    'paiements',
+                    queryset=Caisse.objects.filter(statut='completee').only('mode_paiement'),
+                    to_attr='completed_paiements'
+                )
+            )
+            .iterator(chunk_size=100)  # Streaming pour grandes exportations
         )
         modes_dict = dict(Caisse.MODES_PAIEMENT)
         for f in factures:
+            # Utilise les paiements préchargés
             modes = ", ".join(
                 str(modes_dict.get(m, m))
-                for m in f.paiements.filter(statut='completee')
-                .values_list('mode_paiement', flat=True).distinct()
+                for m in set(p.mode_paiement for p in f.completed_paiements)
             )
             writer.writerow([
                 f.date.strftime('%d/%m/%Y'),

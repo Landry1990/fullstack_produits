@@ -14,7 +14,7 @@ from django_filters.rest_framework import DjangoFilterBackend
 from ..models import Profile as UserProfile, Client, AuditLog, UserDailySession
 from ..serializers import UserSerializer, ProfileSerializer as UserProfileSerializer
 from ..audit_helpers import log_audit
-from ..pagination import StandardResultsSetPagination
+from ..centralized_configs import BaseViewSetConfig, StandardResultsSetPagination
 
 def auto_close_old_sessions(user=None):
     """
@@ -124,14 +124,12 @@ class CustomAuthToken(ObtainAuthToken):
             }
         })
 
-class UserViewSet(viewsets.ModelViewSet):
+class UserViewSet(BaseViewSetConfig, viewsets.ModelViewSet):
     """
     API endpoint for users.
     """
     queryset = User.objects.all().order_by('username')
     serializer_class = UserSerializer
-    permission_classes = [IsAuthenticated]
-    pagination_class = StandardResultsSetPagination
     parser_classes = (MultiPartParser, FormParser, JSONParser)
 
     def get_permissions(self):
@@ -150,7 +148,7 @@ class UserViewSet(viewsets.ModelViewSet):
     
     def get_queryset(self):
         user = self.request.user
-        if user.is_superuser:
+        if getattr(user, 'is_superuser', False):
             return User.objects.all().order_by('username')
         return User.objects.filter(id=user.id)
 
@@ -320,11 +318,11 @@ class UserDailySessionViewSet(viewsets.ReadOnlyModelViewSet):
     ordering_fields = ['first_login', 'last_logout', 'date']
 
     def get_queryset(self):
-        user: User = self.request.user  # type: ignore[assignment]
+        user = self.request.user
         
         # Auto-close old sessions when viewing the list
         # If superuser, close ALL old sessions. If regular user, only close their own.
-        if user.is_superuser:
+        if getattr(user, 'is_superuser', False):
             auto_close_old_sessions()
             return UserDailySession.objects.all().order_by('-date', '-first_login')
         
