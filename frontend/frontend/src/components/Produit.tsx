@@ -82,6 +82,11 @@ export default function Produit() {
     return () => clearTimeout(timer)
   }, [searchQuery])
 
+  // Reset page when stock filter changes
+  useEffect(() => {
+    setPage(1)
+  }, [showInStockOnly, showInactive, filterRayon, filterFournisseur])
+
   const { 
     data: productsData, 
     isLoading: loading, 
