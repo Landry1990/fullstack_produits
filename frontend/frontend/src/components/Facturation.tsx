@@ -46,14 +46,14 @@ export default function Facturation() {
             <button
               onClick={hook.toggleZenithMode}
               className={`size-7 rounded-lg flex items-center justify-center transition-all ${hook.isZenithMode ? 'bg-primary text-white' : 'text-base-content/40 hover:text-base-content hover:bg-base-200'}`}
-              title={hook.isZenithMode ? "Quitter Mode Zenith" : "Mode Zenith (Alt+Z)"}
+              title={hook.isZenithMode ? hook.t('pos.exit_zenith') : hook.t('pos.zenith_title')}
             >
               {hook.isZenithMode ? <EyeOff size={14} /> : <Eye size={14} />}
             </button>
             <button
               onClick={hook.toggleMidnightTheme}
               className={`size-7 rounded-lg flex items-center justify-center transition-all ${hook.isMidnightTheme ? 'bg-secondary text-white' : 'text-base-content/40 hover:text-base-content hover:bg-base-200'}`}
-              title={hook.isMidnightTheme ? "Thème Clair" : "Thème Midnight"}
+              title={hook.isMidnightTheme ? hook.t('pos.theme_light') : hook.t('pos.theme_dark')}
             >
               {hook.isMidnightTheme ? <Sun size={14} /> : <Moon size={14} />}
             </button>
@@ -198,8 +198,8 @@ export default function Facturation() {
                 </svg>
               </div>
               <div>
-                <p className="text-xs font-black text-base-content uppercase tracking-widest mb-1">Prêt pour la vente</p>
-                <p className="text-[10px] text-base-content/50">Scannez ou recherchez un article</p>
+                <p className="text-xs font-black text-base-content uppercase tracking-widest mb-1">{hook.t('pos.ready_for_sale')}</p>
+                <p className="text-[10px] text-base-content/50">{hook.t('pos.scan_or_search')}</p>
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 w-full">
                 {[['F9','Valider'],['ENTRÉE','Recherche'],['ESC','Annuler'],['F8','En attente']].map(([k,v]) => (
@@ -456,7 +456,7 @@ export default function Facturation() {
       <PremiumModal
         isOpen={hook.showHelp}
         onClose={() => hook.setShowHelp(false)}
-        title="Raccourcis Clavier - Pharmacie"
+        title={hook.t('pos.keyboard_shortcuts')}
         icon={<span className="text-primary text-xl">⌨️</span>}
         gradientFrom="primary/10"
         gradientTo="primary/5"
@@ -464,51 +464,51 @@ export default function Facturation() {
         <div className="p-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-3">
-              <h3 className="font-bold text-primary border-b border-primary/20 pb-1 mb-2">Navigation & Recherche</h3>
+              <h3 className="font-bold text-primary border-b border-primary/20 pb-1 mb-2">{hook.t('pos.navigation_search')}</h3>
               <div className="flex justify-between items-center text-sm">
-                <span>Recherche Produit</span>
+                <span>{hook.t('pos.search_product')}</span>
                 <kbd className="kbd kbd-sm font-sans">F2</kbd>
               </div>
               <div className="flex justify-between items-center text-sm">
-                <span>Focus Recherche (si non-input)</span>
+                <span>{hook.t('pos.focus_search')}</span>
                 <kbd className="kbd kbd-sm font-sans">/</kbd>
               </div>
               <div className="flex justify-between items-center text-sm">
-                <span>Recherche Client / Focus Quantité</span>
+                <span>{hook.t('pos.search_client_qty')}</span>
                 <kbd className="kbd kbd-sm font-sans">F4</kbd>
               </div>
               <div className="flex justify-between items-center text-sm">
-                <span>Recherche Client (direct)</span>
+                <span>{hook.t('pos.search_client_direct')}</span>
                 <kbd className="kbd kbd-sm font-sans">Ctrl + F</kbd>
               </div>
             </div>
             
             <div className="space-y-3">
-              <h3 className="font-bold text-secondary border-b border-secondary/20 pb-1 mb-2">Actions Vente</h3>
+              <h3 className="font-bold text-secondary border-b border-secondary/20 pb-1 mb-2">{hook.t('pos.sales_actions')}</h3>
               <div className="flex justify-between items-center text-sm">
-                <span className="font-bold text-success">Payer / Encaisser</span>
+                <span className="font-bold text-success">{hook.t('pos.pay_cash')}</span>
                 <kbd className="kbd kbd-sm font-sans">F9</kbd>
               </div>
               <div className="flex justify-between items-center text-sm">
-                <span className="font-bold text-warning">Suspendre (Mettre en attente)</span>
+                <span className="font-bold text-warning">{hook.t('pos.suspend_hold')}</span>
                 <kbd className="kbd kbd-sm font-sans">Ctrl + S / F7</kbd>
               </div>
               <div className="flex justify-between items-center text-sm">
-                <span className="font-bold text-warning-focus">Rappeler Vente en attente</span>
+                <span className="font-bold text-warning-focus">{hook.t('pos.recall_sale')}</span>
                 <kbd className="kbd kbd-sm font-sans">F8</kbd>
               </div>
               <div className="flex justify-between items-center text-sm">
-                <span>Mode Zenith (Plein écran)</span>
+                <span>{hook.t('pos.zenith_mode')}</span>
                 <kbd className="kbd kbd-sm font-sans">Alt + Z</kbd>
               </div>
               <div className="flex justify-between items-center text-sm">
-                <span>Fermer / Annuler</span>
+                <span>{hook.t('pos.close_cancel')}</span>
                 <kbd className="kbd kbd-sm font-sans">Esc</kbd>
               </div>
             </div>
           </div>
           <div className="mt-6 p-3 bg-base-200 rounded-lg text-xs text-center text-base-content/60 italic">
-            Astuce : Utilisez les touches fléchées pour naviguer dans les résultats de recherche et la touche Entrée pour valider.
+            {hook.t('pos.keyboard_shortcuts_tip')}
           </div>
         </div>
       </PremiumModal>

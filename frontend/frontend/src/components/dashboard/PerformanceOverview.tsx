@@ -22,7 +22,7 @@ import {
   Tooltip, 
   ResponsiveContainer,
   Legend
-} from '../LazyRecharts';
+} from 'recharts';
 import { Link } from 'react-router-dom';
 import { formatCurrency } from '../../utils/formatters';
 

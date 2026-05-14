@@ -1,27 +1,32 @@
 import type { ComponentType } from 'react';
-import { lazy, Suspense } from 'react';
+import { lazy, Suspense, memo, forwardRef } from 'react';
+// Import ResponsiveContainer directly - it has issues with lazy loading
+import { ResponsiveContainer as RC } from 'recharts';
 
 /**
  * Lazy load helper that wraps the lazy component in a regular functional component.
- * This prevents React 19 "read-only _status" errors when these components are 
- * passed to HOCs or parent components (like ResponsiveContainer) that use cloneElement.
- * 
- * For container components (Charts, ResponsiveContainer), we add a Suspense boundary.
- * For child components (XAxis, Bar, etc.), we don't add Suspense so they can 
- * suspend the parent chart correctly and be identified by Recharts.
  */
 const createLazyComponent = (name: string) => {
-  const LazyComp = lazy(() => import('recharts').then(m => ({ 
-    default: (m as any)[name] as ComponentType<any> 
-  })));
+  const LazyComp = lazy(() => import('recharts').then(m => {
+    const Component = (m as any)[name];
+    if (!Component) {
+      console.error(`Recharts component '${name}' not found`);
+      return { default: () => null } as any;
+    }
+    return { default: Component } as any;
+  }));
   
-  const Component = (props: any) => {
+  // Simple wrapper without ref forwarding to avoid type issues
+  const Component = memo((props: any) => {
     return <LazyComp {...props} />;
-  };
+  });
   
   Component.displayName = name;
   return Component;
 };
+
+// Export ResponsiveContainer directly (not lazy)
+export const ResponsiveContainer = RC;
 
 export const LineChart = createLazyComponent('LineChart');
 export const Line = createLazyComponent('Line');
@@ -34,7 +39,7 @@ export const YAxis = createLazyComponent('YAxis');
 export const CartesianGrid = createLazyComponent('CartesianGrid');
 export const Tooltip = createLazyComponent('Tooltip');
 export const Legend = createLazyComponent('Legend');
-export const ResponsiveContainer = createLazyComponent('ResponsiveContainer');
+// ResponsiveContainer is imported directly above
 export const Cell = createLazyComponent('Cell');
 export const PieChart = createLazyComponent('PieChart');
 export const Pie = createLazyComponent('Pie');

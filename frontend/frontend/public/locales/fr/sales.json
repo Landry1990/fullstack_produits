@@ -146,5 +146,26 @@
         "passerby_client": "Client de passage",
         "cancel": "Annuler",
         "print": "Imprimer"
+    },
+    "pos": {
+        "ready_for_sale": "Prêt pour la vente",
+        "scan_or_search": "Scannez ou recherchez un article",
+        "keyboard_shortcuts": "Raccourcis Clavier",
+        "navigation_search": "Navigation & Recherche",
+        "search_product": "Recherche Produit",
+        "focus_search": "Focus Recherche (si non-input)",
+        "search_client_qty": "Recherche Client / Focus Quantité",
+        "search_client_direct": "Recherche Client (direct)",
+        "sales_actions": "Actions Vente",
+        "pay_cash": "Payer / Encaisser",
+        "suspend_hold": "Suspendre (Mettre en attente)",
+        "recall_sale": "Rappeler Vente en attente",
+        "zenith_mode": "Mode Zenith (Plein écran)",
+        "close_cancel": "Fermer / Annuler",
+        "exit_zenith": "Quitter Mode Zenith",
+        "zenith_title": "Mode Zenith (Alt+Z)",
+        "theme_light": "Thème Clair",
+        "theme_dark": "Thème Midnight",
+        "keyboard_shortcuts_tip": "Astuce : Utilisez les touches fléchées pour naviguer dans les résultats de recherche et la touche Entrée pour valider."
     }
 }

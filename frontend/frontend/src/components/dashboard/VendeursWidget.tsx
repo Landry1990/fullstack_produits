@@ -4,7 +4,7 @@ import { Trophy, TrendingUp, TrendingDown, Minus, ArrowRight, Users } from 'luci
 import {
     BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
     ResponsiveContainer, Cell
-} from '../LazyRecharts';
+} from 'recharts';
 import { useVendeursRanking } from '../../hooks/useDashboard';
 
 interface VendeursWidgetProps {

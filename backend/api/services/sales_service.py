@@ -187,22 +187,25 @@ class SalesService:
         # Call the logic directly or via a static method
         SalesService.validate_invoice(facture, validation_user, validation_data, operator=user)
 
-        # 8. Non-Centralized Payments
-        if not centralized:
-            for p_data in paiements_data:
-                paiement = Caisse.objects.create(
-                    facture=facture,
-                    mode_paiement=p_data['mode'],
-                    montant=Decimal(str(p_data['montant'])),
-                    reference=p_data.get('reference'),
-                    statut='completee',
-                    user=user,
-                    part_patient=p_data.get('part_patient'),
-                    part_assurance=p_data.get('part_assurance')
-                )
-                from .payment_service import PaymentService
-                PaymentService.process_payment(paiement, is_created=True)
-            facture.refresh_from_db()
+        # 8. Non-Centralized Payments (create immediately only if NOT centralized)
+        # When centralized=True, the Caisse Centrale will create payments later
+        if not centralized and paiements_data:
+            if not Caisse.objects.filter(facture=facture).exists():
+                for p_data in paiements_data:
+                    if Decimal(str(p_data.get('montant', 0))) > 0:
+                        paiement = Caisse.objects.create(
+                            facture=facture,
+                            mode_paiement=p_data.get('mode', 'especes'),
+                            montant=Decimal(str(p_data['montant'])),
+                            reference=p_data.get('reference'),
+                            statut='completee',
+                            user=user,
+                            part_patient=p_data.get('part_patient'),
+                            part_assurance=p_data.get('part_assurance')
+                        )
+                        from .payment_service import PaymentService
+                        PaymentService.process_payment(paiement, is_created=True)
+                facture.refresh_from_db()
 
         return facture
 
@@ -453,15 +456,6 @@ class SalesService:
                 from .payment_service import PaymentService
                 PaymentService.process_payment(paiement_en_compte, is_created=True)
         
-        # 8. Single payment Record if mode_paiement provided
-        mode_paiement = data.get('mode_paiement')
-        if mode_paiement and facture.total_ttc > 0 and not Caisse.objects.filter(facture=facture).exists():
-            paiement_single = Caisse.objects.create(
-                facture=facture, mode_paiement=mode_paiement, montant=facture.total_ttc,
-                statut='completee', user=operator
-            )
-            from .payment_service import PaymentService
-            PaymentService.process_payment(paiement_single, is_created=True)
 
         # Cache invalidation
         cache_key = f'stats_jour_{timezone.now().strftime("%Y-%m-%d")}'

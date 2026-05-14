@@ -151,8 +151,8 @@ export default function Login() {
                 <Shield size={20} />
               </div>
               <div className="zl-feature-text">
-                <h4>Sécurité Avancée</h4>
-                <p>Authentification SSL et protection des données.</p>
+                <h4>{t('features.advanced_security')}</h4>
+                <p>{t('features.security_desc')}</p>
               </div>
             </div>
             
@@ -161,8 +161,8 @@ export default function Login() {
                 <Monitor size={20} />
               </div>
               <div className="zl-feature-text">
-                <h4>Multi-Postes</h4>
-                <p>Synchronisation en temps réel.</p>
+                <h4>{t('features.multi_postes')}</h4>
+                <p>{t('features.multi_postes_desc')}</p>
               </div>
             </div>
           </div>
@@ -186,7 +186,7 @@ export default function Login() {
             <div style={{ position: 'relative', zIndex: isOpen ? 200 : 1 }}>
               <span className="zl-greeting">{greeting}</span>
               <h2 className="zl-card-title">{t('title')}</h2>
-              <p className="zl-card-subtitle">Identifiez-vous pour accéder à votre espace pro</p>
+              <p className="zl-card-subtitle">{t('login_form.subtitle')}</p>
 
               <form onSubmit={handleSubmit}>
                 {/* Error Logic */}
@@ -373,7 +373,7 @@ export default function Login() {
                       title="Réinitialiser la licence"
                     >
                       <RefreshCcw size={12} />
-                      <span>Réinitialiser la licence (Mode Admin)</span>
+                      <span>{t('login_form.reset_licence')}</span>
                     </button>
                   </div>
                 )}

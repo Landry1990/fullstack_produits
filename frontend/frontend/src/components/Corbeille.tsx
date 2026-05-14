@@ -208,7 +208,7 @@ export default function Corbeille() {
 
   const getTypeBadge = (type: string) => {
     const config: Record<string, { bg: string; text: string; labelKey: string }> = {
-      produit: { bg: 'bg-blue-500/10', text: 'text-blue-600', labelKey: 'badges.produit' },
+      produit: { bg: 'bg-blue-500/10', text: 'text-primary', labelKey: 'badges.produit' },
       client: { bg: 'bg-emerald-500/10', text: 'text-emerald-600', labelKey: 'badges.client' },
       fournisseur: { bg: 'bg-amber-500/10', text: 'text-amber-600', labelKey: 'badges.fournisseur' },
       commande: { bg: 'bg-indigo-500/10', text: 'text-indigo-600', labelKey: 'badges.commande' },
@@ -264,7 +264,7 @@ export default function Corbeille() {
   return (
     <div className="min-h-screen bg-base-200/50 p-4 md:p-6 space-y-5 font-sans">
       {/* Header */}
-      <div className="max-w-[1400px] mx-auto">
+      <div className="max-w-7xl mx-auto">
         <div className="flex items-center gap-3 mb-2">
           <div className="size-12 bg-red-500/10 rounded-2xl flex items-center justify-center">
             <Trash2 className="size-6 text-red-500" />
@@ -280,7 +280,7 @@ export default function Corbeille() {
           <div className="ml-auto flex items-center gap-2">
             <button
               onClick={fetchData}
-              className="btn btn-sm btn-ghost text-base-content/50 hover:text-blue-600"
+              className="btn btn-sm btn-ghost text-base-content/50 hover:text-primary"
               disabled={loading}
             >
               {loading
@@ -302,7 +302,7 @@ export default function Corbeille() {
       </div>
 
       {/* Stats Cards */}
-      <div className="max-w-[1400px] mx-auto grid grid-cols-2 md:grid-cols-4 gap-3">
+      <div className="max-w-7xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-3">
         {TAB_CONFIG_KEYS.map(tab => {
           const count = tab.key === 'all'
             ? (data?.total ?? 0)
@@ -330,7 +330,7 @@ export default function Corbeille() {
       </div>
 
       {/* Main Content */}
-      <div className="max-w-[1400px] mx-auto bg-base-100 rounded-2xl shadow-sm border border-base-200 overflow-hidden">
+      <div className="max-w-7xl mx-auto bg-base-100 rounded-2xl shadow-sm border border-base-200 overflow-hidden">
         {/* Toolbar */}
         <div className="p-4 border-b border-base-200 flex flex-col sm:flex-row gap-3">
           {/* Search */}
