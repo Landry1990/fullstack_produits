@@ -40,6 +40,7 @@ from .views.stocks.reappro_history import ReapproSessionViewSet
 from .views.version import app_version
 from .views.corbeille import CorbeilleViewSet
 from .views.licence import LicenceStatusView, LicenceNotificationsView
+from .views.margin_views import MarginViewSet
 
 # Create a router and register our viewsets with it.
 router = DefaultRouter()
@@ -103,6 +104,7 @@ router.register(r'message-templates', MessageTemplateViewSet, basename='messaget
 router.register(r'reappro-sessions', ReapproSessionViewSet, basename='reapprosession')
 router.register(r'postes-caisses', PosteCaisseViewSet, basename='postecaisse')
 router.register(r'corbeille', CorbeilleViewSet, basename='corbeille')
+router.register(r'margins', MarginViewSet, basename='margin')
 
 # Comptabilité
 router.register(r'compta/comptes', CompteComptableViewSet, basename='compta-compte')

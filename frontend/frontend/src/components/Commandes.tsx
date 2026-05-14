@@ -150,7 +150,7 @@ export default function Commandes({ forcedType }: CommandesProps) {
         message={state.sudoState.message || ""}
       />
 
-      {!forcedType && state.isTransferModalOpen && (
+      {state.isTransferModalOpen && (
         <TransferCommandeModal
           isOpen={state.isTransferModalOpen}
           onClose={() => state.setIsTransferModalOpen(false)}
@@ -164,7 +164,7 @@ export default function Commandes({ forcedType }: CommandesProps) {
         />
       )}
 
-      {!forcedType && state.isMergeModalOpen && (
+      {state.isMergeModalOpen && (
         <MergeCommandesModal
           isOpen={state.isMergeModalOpen}
           onClose={() => state.setIsMergeModalOpen(false)}

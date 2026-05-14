@@ -213,17 +213,119 @@ class RapportInventoryMixin:
             
         return res
 
+    def _get_valeur_stock_pharmacie_data(self, valorisation='ACHAT', group_by=None):
+        """
+        Méthode interne pour calculer les agrégats de valeur de stock PHARMACIE uniquement
+        (exclut les lots divers - cadeaux, voyages, etc.)
+        """
+        is_pmp = valorisation == 'ACHAT'
+        
+        # Récupérer tous les lots NON divers avec stock > 0
+        lots_pharmacie = StockLot.objects.filter(
+            is_divers=False, 
+            quantity_remaining__gt=0
+        ).select_related('produit', 'produit__rayon')
+        
+        tva_map = {}
+        group_map = {}
+        total_ttc_global = Decimal('0')
+        total_ht_global = Decimal('0')
+        total_tva_global = Decimal('0')
+        
+        for lot in lots_pharmacie:
+            qty = Decimal(str(lot.quantity_remaining))
+            # Utiliser price_cost (PMP du lot) ou selling_price selon valorisation
+            if is_pmp:
+                price_ttc = lot.price_cost or Decimal('0')
+            else:
+                price_ttc = lot.produit.selling_price or Decimal('0')
+            
+            tva_rate = lot.produit.tva or Decimal('0')
+            
+            ttc_line = qty * price_ttc
+            if tva_rate > 0:
+                ht_line = (ttc_line / (1 + tva_rate / Decimal('100'))).quantize(Decimal('0.01'))
+                tva_line = ttc_line - ht_line
+            else:
+                ht_line = ttc_line
+                tva_line = Decimal('0')
+                
+            total_ttc_global += ttc_line
+            total_ht_global += ht_line
+            total_tva_global += tva_line
+            
+            # 1. Groupement par TVA
+            rate_key = str(float(tva_rate))
+            if rate_key not in tva_map:
+                tva_map[rate_key] = {'rate': float(tva_rate), 'ht': Decimal('0'), 'tva': Decimal('0'), 'ttc': Decimal('0')}
+            tva_map[rate_key]['ht'] += ht_line
+            tva_map[rate_key]['tva'] += tva_line
+            tva_map[rate_key]['ttc'] += ttc_line
+            
+            # 2. Groupement par catégorie (Rayon, Forme, Groupe)
+            if group_by in ['rayon', 'forme', 'groupe']:
+                group_obj = getattr(lot.produit, group_by, None)
+                if group_by == 'rayon':
+                    group_name = group_obj.name if group_obj else "Non classé"
+                else:
+                    group_name = group_obj.nom if group_obj else "Non classé"
+                    
+                if group_name not in group_map:
+                    group_map[group_name] = {'name': group_name, 'ht': Decimal('0'), 'tva': Decimal('0'), 'ttc': Decimal('0')}
+                
+                group_map[group_name]['ht'] += ht_line
+                group_map[group_name]['tva'] += tva_line
+                group_map[group_name]['ttc'] += ttc_line
+        
+        res = {
+            'is_pmp': is_pmp,
+            'type_valorisation': 'PMP' if is_pmp else 'VENTE',
+            'total_ht': total_ht_global,
+            'total_tva': total_tva_global,
+            'total_ttc': total_ttc_global,
+            'tva_breakdown': sorted(tva_map.values(), key=lambda x: x['rate']),
+            'date': timezone.now()
+        }
+        
+        if group_by in ['rayon', 'forme', 'groupe']:
+            res['group_by'] = group_by
+            res['group_breakdown'] = sorted(group_map.values(), key=lambda x: x['ttc'], reverse=True)
+            
+        return res
+
     @action(detail=False, methods=['get'])
     def valeur_stock_json(self, request):
-        """Retourne les données de valorisation au format JSON pour l'impression frontend."""
+        """
+        Retourne les données de valorisation au format JSON pour l'impression frontend.
+        
+        Paramètres:
+        - valorisation: 'ACHAT' (PMP) ou 'VENTE' (prix de vente)
+        - group_by: 'rayon', 'forme', 'groupe' (optionnel)
+        - type: 'tous' (défaut), 'pharmacie' (sans divers), 'divers' (lots divers uniquement)
+        """
         valorisation = request.query_params.get('valorisation', 'ACHAT')
         group_by = request.query_params.get('group_by')
-        data = self._get_valeur_stock_summary_data(valorisation, group_by=group_by)
+        stock_type = request.query_params.get('type', 'tous')
+        
+        if stock_type == 'pharmacie':
+            data = self._get_valeur_stock_pharmacie_data(valorisation, group_by=group_by)
+        elif stock_type == 'divers':
+            data = self._get_valeur_stock_divers_data(valorisation)
+        else:
+            # Type 'tous' - comportement historique (tous les produits)
+            data = self._get_valeur_stock_summary_data(valorisation, group_by=group_by)
+        
         return Response(data)
 
     @action(detail=False, methods=['get'])
     def valeur_stock_pdf(self, request):
-        """Génère un récapitulatif PDF (Legacy/Direct) de la valeur du stock."""
+        """
+        Génère un récapitulatif PDF (Legacy/Direct) de la valeur du stock.
+        
+        Paramètres:
+        - valorisation: 'ACHAT' (PMP) ou 'VENTE' (prix de vente)
+        - type: 'tous' (défaut), 'pharmacie' (sans divers), 'divers' (lots divers uniquement)
+        """
         from api.pdf_utils import (
             get_pharma_styles, draw_pharma_header, draw_pharma_footer, 
             format_currency, PharmaColors, get_pharma_table_style, 
@@ -231,7 +333,19 @@ class RapportInventoryMixin:
         )
         
         valorisation = request.query_params.get('valorisation', 'ACHAT')
-        data = self._get_valeur_stock_summary_data(valorisation)
+        stock_type = request.query_params.get('type', 'tous')
+        
+        # Sélectionner la méthode de calcul selon le type
+        if stock_type == 'pharmacie':
+            data = self._get_valeur_stock_pharmacie_data(valorisation)
+            type_suffix = " - PHARMACIE (sans divers)"
+        elif stock_type == 'divers':
+            data = self._get_valeur_stock_divers_data(valorisation)
+            type_suffix = " - DIVERS"
+        else:
+            data = self._get_valeur_stock_summary_data(valorisation)
+            type_suffix = ""
+        
         is_pmp = data['is_pmp']
 
         # 2. Construction du PDF
@@ -246,7 +360,8 @@ class RapportInventoryMixin:
         
         # --- Section 1: Récapitulatif Global ---
         type_label = "COÛT D'ACHAT (PMP)" if is_pmp else "PRIX DE VENTE (TTC)"
-        doc_title = "VALEUR STOCK (ACHAT PMP)" if is_pmp else "VALEUR STOCK (VENTE)"
+        doc_title = f"VALEUR STOCK{type_suffix} ({'ACHAT PMP' if is_pmp else 'VENTE'})" if is_pmp else f"VALEUR STOCK{type_suffix} ({'VENTE'})" if stock_type != 'divers' else f"VALEUR STOCK DIVERS ({'VENTE'})"
+        doc_title = f"VALEUR STOCK{type_suffix} ({'PMP' if is_pmp else 'VENTE'})" if stock_type != 'divers' else f"VALEUR STOCK DIVERS ({'PMP' if is_pmp else 'VENTE'})"
         
         story.append(Paragraph(f"RÉCAPITULATIF GÉNÉRAL — {type_label}", styles['PharmaSubtitle']))
         story.append(Spacer(1, 3*mm))

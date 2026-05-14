@@ -857,7 +857,7 @@ export function useCommandesState(forcedType?: 'LOC' | 'DIR' | 'DIV') {
     if (statuses.size > 1) return { canMerge: false, reason: t('orders:messages.merge_same_status') };
     
     const status = selectedOrders[0]?.status;
-    if (status === 'CLOT') return { canMerge: false, reason: t('orders:messages.merge_not_closed') };
+    if (status !== 'PREP') return { canMerge: false, reason: t('orders:messages.merge_only_prep', { defaultValue: 'Seules les commandes en préparation peuvent être fusionnées.' }) };
     
     return { canMerge: true, status };
   }

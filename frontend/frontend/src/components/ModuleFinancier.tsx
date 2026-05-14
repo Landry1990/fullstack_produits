@@ -115,30 +115,38 @@ export default function ModuleFinancier() {
   const trendInfo = predictions ? getTrendInfo(predictions.tendance) : null;
 
   return (
-    <div className="p-6 space-y-6">
-      {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-base-content">
-            {t('title', 'Module Financier')}
-          </h1>
-          <p className="text-base-content/60">
-            {t('subtitle', 'Analyse et prédictions du chiffre d\'affaires')}
-          </p>
+    <Suspense fallback={
+      <div className="p-6 space-y-6 animate-pulse">
+        <div className="h-20 bg-base-100 rounded-2xl mb-6"></div>
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          {[1, 2, 3, 4].map(i => <div key={i} className="h-32 bg-base-100 rounded-2xl"></div>)}
         </div>
-        <div className="flex gap-2">
-          <select 
-            className="select select-bordered select-sm"
-            value={periode}
-            onChange={(e) => setPeriode(e.target.value as 'mois' | 'trimestre' | 'annee')}
-          >
-            <option value="mois">{t('periode.mois', 'Ce mois')}</option>
-            <option value="trimestre">{t('periode.trimestre', 'Ce trimestre')}</option>
-            <option value="annee">{t('periode.annee', 'Cette année')}</option>
-          </select>
-        </div>
+        <div className="h-96 bg-base-100 rounded-2xl"></div>
       </div>
-
+    }>
+      <div className="p-6 space-y-6">
+        {/* Header */}
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+          <div>
+            <h1 className="text-2xl font-bold text-base-content">
+              {t('title', 'Module Financier')}
+            </h1>
+            <p className="text-base-content/60">
+              {t('subtitle', 'Analyse et prédictions du chiffre d\'affaires')}
+            </p>
+          </div>
+          <div className="flex gap-2">
+            <select 
+              className="select select-bordered select-sm"
+              value={periode}
+              onChange={(e) => setPeriode(e.target.value as 'mois' | 'trimestre' | 'annee')}
+            >
+              <option value="mois">{t('periode.mois', 'Ce mois')}</option>
+              <option value="trimestre">{t('periode.trimestre', 'Ce trimestre')}</option>
+              <option value="annee">{t('periode.annee', 'Cette année')}</option>
+            </select>
+          </div>
+        </div>
       {/* KPIs Cards */}
       {loadingKPIs ? (
         <div data-testid="finance-loading" className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -235,23 +243,27 @@ export default function ModuleFinancier() {
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="p-4 bg-base-200 rounded-xl">
                     <p className="text-xs uppercase font-bold opacity-50 mb-1">{isEnglish ? 'Current Period' : 'Période Actuelle'}</p>
-                    <p className="text-2xl font-black">{varianceReport.period1.stats.margin_pct.toFixed(1)}%</p>
-                    <p className="text-xs opacity-70">{formatMoney(varianceReport.period1.stats.margin)} {isEnglish ? 'Profit' : 'Marge'}</p>
+                    <p className="text-2xl font-black">{Number(varianceReport?.period1?.stats?.margin_pct || 0).toFixed(1)}%</p>
+                    <p className="text-xs opacity-70">{formatMoney(Number(varianceReport?.period1?.stats?.margin || 0))} {isEnglish ? 'Profit' : 'Marge'}</p>
                   </div>
                   <div className="p-4 bg-base-200 rounded-xl">
                     <p className="text-xs uppercase font-bold opacity-50 mb-1">{isEnglish ? 'Baseline' : 'Référence (Hier)'}</p>
-                    <p className="text-2xl font-black">{varianceReport.period2.stats.margin_pct.toFixed(1)}%</p>
-                    <p className="text-xs opacity-70">{formatMoney(varianceReport.period2.stats.margin)} {isEnglish ? 'Profit' : 'Marge'}</p>
+                    <p className="text-2xl font-black">{Number(varianceReport?.period2?.stats?.margin_pct || 0).toFixed(1)}%</p>
+                    <p className="text-xs opacity-70">{formatMoney(Number(varianceReport?.period2?.stats?.margin || 0))} {isEnglish ? 'Profit' : 'Marge'}</p>
                   </div>
                 </div>
 
                 <div className="space-y-3">
                   <h3 className="font-bold text-sm uppercase tracking-wider opacity-60">{isEnglish ? 'Key Insights' : 'Analyses Clés'}</h3>
-                  {varianceReport.insights.map((insight: any, idx: number) => (
-                    <div key={idx} className="alert alert-info shadow-sm bg-info/10 border-info/20 text-sm">
-                      <span>{isEnglish ? insight.en : insight.fr}</span>
-                    </div>
-                  ))}
+                  {varianceReport.insights.map((insight: any, idx: number) => {
+                    const text = isEnglish ? insight?.en : insight?.fr;
+                    const safeText = typeof text === 'string' ? text : JSON.stringify(text);
+                    return (
+                      <div key={idx} className="alert alert-info shadow-sm bg-info/10 border-info/20 text-sm">
+                        <span>{safeText}</span>
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
 
@@ -273,15 +285,24 @@ export default function ModuleFinancier() {
                         </tr>
                       </thead>
                       <tbody>
-                        {varianceReport.suspicious_products.map((p: any) => (
-                          <tr key={p.produit__id} className="hover:bg-base-content/5 transition-colors">
-                            <td className="font-medium max-w-[150px] truncate">{p.produit__name}</td>
-                            <td className={`text-right font-bold ${p.unit_margin_pct > 80 ? 'text-purple-500' : 'text-orange-500'}`}>
-                              {parseFloat(p.unit_margin_pct).toFixed(1)}%
-                            </td>
-                            <td className="text-right opacity-70">{formatMoney(p.produit__pmp)}</td>
-                          </tr>
-                        ))}
+                        {varianceReport.suspicious_products.map((p: any, idx: number) => {
+                          const productId = p?.produit__id || p?.id || `prod-${idx}`;
+                          const productName = typeof p?.produit__name === 'string' ? p.produit__name : 
+                                            typeof p?.nom === 'string' ? p.nom : 'Produit inconnu';
+                          const marginPct = typeof p?.unit_margin_pct === 'number' ? p.unit_margin_pct : 
+                                          typeof p?.unit_margin_pct === 'string' ? parseFloat(p.unit_margin_pct) : 0;
+                          const pmp = typeof p?.produit__pmp === 'number' ? p.produit__pmp : 
+                                    typeof p?.produit__pmp === 'string' ? parseFloat(p.produit__pmp) : 0;
+                          return (
+                            <tr key={productId} className="hover:bg-base-content/5 transition-colors">
+                              <td className="font-medium max-w-[150px] truncate">{String(productName)}</td>
+                              <td className={`text-right font-bold ${marginPct > 80 ? 'text-purple-500' : 'text-orange-500'}`}>
+                                {marginPct.toFixed(1)}%
+                              </td>
+                              <td className="text-right opacity-70">{formatMoney(pmp)}</td>
+                            </tr>
+                          );
+                        })}
                       </tbody>
                     </table>
                     <p className="text-[10px] mt-4 italic opacity-50">
@@ -735,19 +756,27 @@ export default function ModuleFinancier() {
                       </thead>
                       <tbody>
                         {marginAnalysis.opportunites_nego.length > 0 ? (
-                          marginAnalysis.opportunites_nego.map((item) => (
-                            <tr key={item.id}>
-                              <td className="max-w-[120px] truncate" title={item.nom}>
-                                {item.nom}
-                              </td>
-                              <td className="text-right text-warning font-bold">
-                                {item.taux_marge}%
-                              </td>
-                              <td className="text-right text-success">
-                                +{formatMoney(item.marge_perdue)}
-                              </td>
-                            </tr>
-                          ))
+                          marginAnalysis.opportunites_nego.map((item: any, idx: number) => {
+                            const itemId = item?.id || `opportunity-${idx}`;
+                            const itemName = typeof item?.nom === 'string' ? item.nom : 'Produit inconnu';
+                            const tauxMarge = typeof item?.taux_marge === 'number' ? item.taux_marge : 
+                                            typeof item?.taux_marge === 'string' ? parseFloat(item.taux_marge) : 0;
+                            const margePerdue = typeof item?.marge_perdue === 'number' ? item.marge_perdue :
+                                              typeof item?.marge_perdue === 'string' ? parseFloat(item.marge_perdue) : 0;
+                            return (
+                              <tr key={itemId}>
+                                <td className="max-w-[120px] truncate" title={itemName}>
+                                  {itemName}
+                                </td>
+                                <td className="text-right text-warning font-bold">
+                                  {tauxMarge}%
+                                </td>
+                                <td className="text-right text-success">
+                                  +{formatMoney(margePerdue)}
+                                </td>
+                              </tr>
+                            );
+                          })
                         ) : (
                           <tr><td colSpan={3} className="text-center opacity-50">{t('analysis.no_opportunity', 'Aucune opportunité détectée')}</td></tr>
                         )}
@@ -779,19 +808,27 @@ export default function ModuleFinancier() {
                       </thead>
                       <tbody>
                         {marginAnalysis.stock_dormant.length > 0 ? (
-                          marginAnalysis.stock_dormant.map((item) => (
-                            <tr key={item.id}>
-                              <td className="max-w-[120px] truncate" title={item.nom}>
-                                {item.nom}
-                              </td>
-                              <td className="text-right text-success font-bold">
-                                {item.taux_marge}%
-                              </td>
-                              <td className="text-right">
-                                {formatMoney(item.prix_actuel)}
-                              </td>
-                            </tr>
-                          ))
+                          marginAnalysis.stock_dormant.map((item: any, idx: number) => {
+                            const itemId = item?.id || `dormant-${idx}`;
+                            const itemName = typeof item?.nom === 'string' ? item.nom : 'Produit inconnu';
+                            const tauxMarge = typeof item?.taux_marge === 'number' ? item.taux_marge : 
+                                            typeof item?.taux_marge === 'string' ? parseFloat(item.taux_marge) : 0;
+                            const prixActuel = typeof item?.prix_actuel === 'number' ? item.prix_actuel :
+                                             typeof item?.prix_actuel === 'string' ? parseFloat(item.prix_actuel) : 0;
+                            return (
+                              <tr key={itemId}>
+                                <td className="max-w-[120px] truncate" title={itemName}>
+                                  {itemName}
+                                </td>
+                                <td className="text-right text-success font-bold">
+                                  {tauxMarge}%
+                                </td>
+                                <td className="text-right">
+                                  {formatMoney(prixActuel)}
+                                </td>
+                              </tr>
+                            );
+                          })
                         ) : (
                           <tr><td colSpan={3} className="text-center opacity-50">{t('analysis.no_dormant', 'Aucun produit dormant détecté')}</td></tr>
                         )}
@@ -823,19 +860,27 @@ export default function ModuleFinancier() {
                       </thead>
                       <tbody>
                         {marginAnalysis.suggestions_prix.length > 0 ? (
-                          marginAnalysis.suggestions_prix.map((item) => (
-                            <tr key={item.id}>
-                              <td className="max-w-[120px] truncate" title={item.nom}>
-                                {item.nom}
-                              </td>
-                              <td className="text-right text-error font-bold">
-                                {item.taux_actuel}%
-                              </td>
-                              <td className="text-right text-success font-bold">
-                                {formatMoney(item.prix_suggere)}
-                              </td>
-                            </tr>
-                          ))
+                          marginAnalysis.suggestions_prix.map((item: any, idx: number) => {
+                            const itemId = item?.id || `suggestion-${idx}`;
+                            const itemName = typeof item?.nom === 'string' ? item.nom : 'Produit inconnu';
+                            const tauxActuel = typeof item?.taux_actuel === 'number' ? item.taux_actuel : 
+                                             typeof item?.taux_actuel === 'string' ? parseFloat(item.taux_actuel) : 0;
+                            const prixSuggere = typeof item?.prix_suggere === 'number' ? item.prix_suggere :
+                                              typeof item?.prix_suggere === 'string' ? parseFloat(item.prix_suggere) : 0;
+                            return (
+                              <tr key={itemId}>
+                                <td className="max-w-[120px] truncate" title={itemName}>
+                                  {itemName}
+                                </td>
+                                <td className="text-right text-error font-bold">
+                                  {tauxActuel}%
+                                </td>
+                                <td className="text-right text-success font-bold">
+                                  {formatMoney(prixSuggere)}
+                                </td>
+                              </tr>
+                            );
+                          })
                         ) : (
                           <tr><td colSpan={3} className="text-center opacity-50">{t('analysis.optimized', 'Prix optimisés')}</td></tr>
                         )}
@@ -881,39 +926,50 @@ export default function ModuleFinancier() {
                   </tr>
                 </thead>
                 <tbody>
-                  {supplierAnalysis.slice(0, 10).map((item, index) => (
-                    <tr key={item.id}>
-                      <td className="font-bold">{index + 1}</td>
-                      <td>{item.nom}</td>
-                      <td className="text-center">
-                        <div className="flex flex-col items-center">
-                          <div className={`radial-progress text-xs ${
-                            item.score_global >= 80 ? 'text-success' : 
-                            item.score_global >= 50 ? 'text-warning' : 'text-error'
-                          }`} style={{ "--value": item.score_global, "--size": "3rem" } as any}>
-                            {item.score_global}
+                  {supplierAnalysis.slice(0, 10).map((item: any, index: number) => {
+                    const volumeValeur = item?.details?.volume?.valeur || 0;
+                    const volumeScore = item?.details?.volume?.score || 0;
+                    const qualiteIncidents = item?.details?.qualite?.incidents || 0;
+                    const qualiteScore = item?.details?.qualite?.score || 0;
+                    const regulariteLivraisons = item?.details?.regularite?.nb_livraisons || 0;
+                    const regulariteScore = item?.details?.regularite?.score || 0;
+                    const scoreGlobal = item?.score_global || 0;
+                    const supplierName = typeof item?.nom === 'string' ? item.nom : 'Fournisseur inconnu';
+                    const supplierId = item?.id || `supplier-${index}`;
+                    return (
+                      <tr key={supplierId}>
+                        <td className="font-bold">{index + 1}</td>
+                        <td>{supplierName}</td>
+                        <td className="text-center">
+                          <div className="flex flex-col items-center">
+                            <div className={`radial-progress text-xs ${
+                              scoreGlobal >= 80 ? 'text-success' : 
+                              scoreGlobal >= 50 ? 'text-warning' : 'text-error'
+                            }`} style={{ "--value": scoreGlobal, "--size": "3rem" } as any}>
+                              {scoreGlobal}
+                            </div>
                           </div>
-                        </div>
-                      </td>
-                      <td className="text-center">
-                        <div className="tooltip" data-tip={`${formatMoneyFull(item.details.volume.valeur || 0)}`}>
-                          <progress className="progress progress-primary w-20" value={item.details.volume.score} max="100"></progress>
-                        </div>
-                      </td>
-                      <td className="text-center">
-                        <div className="tooltip" data-tip={`${item.details.qualite.incidents} incidents`}>
-                          <progress className={`progress w-20 ${
-                            item.details.qualite.score >= 90 ? 'progress-success' : 'progress-error'
-                          }`} value={item.details.qualite.score} max="100"></progress>
-                        </div>
-                      </td>
-                      <td className="text-center">
-                         <div className="tooltip" data-tip={`${item.details.regularite.nb_livraisons} livraisons`}>
-                          <progress className="progress progress-info w-20" value={item.details.regularite.score} max="100"></progress>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
+                        </td>
+                        <td className="text-center">
+                          <div className="tooltip" data-tip={`${formatMoneyFull(volumeValeur)}`}>
+                            <progress className="progress progress-primary w-20" value={volumeScore} max="100"></progress>
+                          </div>
+                        </td>
+                        <td className="text-center">
+                          <div className="tooltip" data-tip={`${qualiteIncidents} incidents`}>
+                            <progress className={`progress w-20 ${
+                              qualiteScore >= 90 ? 'progress-success' : 'progress-error'
+                            }`} value={qualiteScore} max="100"></progress>
+                          </div>
+                        </td>
+                        <td className="text-center">
+                          <div className="tooltip" data-tip={`${regulariteLivraisons} livraisons`}>
+                            <progress className="progress progress-info w-20" value={regulariteScore} max="100"></progress>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
@@ -956,7 +1012,8 @@ export default function ModuleFinancier() {
           </div>
         </div>
       )}
-    </div>
+      </div>
+    </Suspense>
   );
 }
 

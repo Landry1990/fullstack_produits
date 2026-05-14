@@ -243,7 +243,7 @@ export default function CentreRapports() {
                                         <div className="flex-1 flex flex-col items-center justify-center p-12 bg-base-100 rounded-2xl shadow-sm border border-base-300">
                                             <span className="loading loading-bars loading-lg text-primary mb-4"></span>
                                             <p className="text-xs font-black uppercase tracking-[0.3em] text-primary animate-pulse">
-                                                Calcul des données en cours...
+                                                Calcul des données en cours…
                                             </p>
                                         </div>
                                     ) : (

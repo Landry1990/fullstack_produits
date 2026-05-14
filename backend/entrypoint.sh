@@ -49,7 +49,7 @@ echo "✓ Base de données connectée"
 # ── 2. Migrations (avec timeout) ──
 echo ""
 echo "📥 Application des migrations..."
-timeout 120 python manage.py migrate --noinput || {
+timeout 300 python manage.py migrate --noinput || {
     echo "⚠ Les migrations ont échoué ou pris trop de temps"
     # Ne pas bloquer le démarrage — le serveur peut fonctionner avec des migrations en attente
 }
@@ -113,11 +113,12 @@ echo "👤 Vérification du superuser..."
 python -c "
 import os
 import django
+from django.utils import timezone
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'backend.settings')
 django.setup()
 from django.contrib.auth.models import User
 if not User.objects.filter(is_superuser=True).exists():
-    User.objects.create_superuser('admin', 'admin@pharmacie.local', 'admin123')
+    User.objects.create_superuser('admin', 'admin@pharmacie.local', 'admin123', last_login=timezone.now())
     print('✓ Superuser créé: admin / admin123')
 else:
     print('✓ Superuser existant')

@@ -67,7 +67,7 @@ export default defineConfig({
 
   server: {
     host: '0.0.0.0', // Accepte les connexions de tous les appareils du réseau
-    port: 3000,
+    port: 4000,
     strictPort: true,
     allowedHosts: true, // Autorise l'accès via n'importe quel nom d'hôte (réseau local)
     proxy: {

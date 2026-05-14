@@ -1,4 +1,4 @@
-import React, { useState, useEffect, Suspense } from 'react';
+import React, { useState, useEffect, useCallback, Suspense } from 'react';
 import { useAccounting } from '../../hooks/useAccounting';
 import { 
     LayoutDashboard, 
@@ -90,13 +90,13 @@ export default function Comptabilite({ defaultTab = 'dashboard' }: ComptabiliteP
         { id: 'plan', label: t('tabs.plan'), icon: <Settings className="size-4" /> },
     ];
 
-    const handleExerciceChange = (exId: string) => {
+    const handleExerciceChange = useCallback((exId: string) => {
         const selected = exercices?.find(ex => ex.id.toString() === exId);
         if (selected) {
             setCurrentExercice(selected);
             setDateRange({ start: selected.date_debut, end: selected.date_fin });
         }
-    };
+    }, [exercices, setCurrentExercice, setDateRange]);
 
     return (
         <div className="min-h-screen bg-base-200/50 text-base-content p-4 md:p-8 animate-fade-in">
@@ -177,35 +177,43 @@ export default function Comptabilite({ defaultTab = 'dashboard' }: ComptabiliteP
                 </div>
             ) : (
                 <div className="space-y-6">
-                    {activeTab === 'dashboard' && <DashboardTab resultat={resultat} actions={actions} t={t} />}
-                    {activeTab === 'grand-livre' && (
-                        <GrandLivreTab 
-                            ecritures={ecritures} 
-                            count={ecrituresCount}
-                            page={ecrituresPage}
-                            setPage={setEcrituresPage}
-                            search={ecrituresSearch}
-                            setSearch={setEcrituresSearch}
-                            locale={currentLocale} 
-                            t={t} 
-                        />
-                    )}
-                    {activeTab === 'achats' && (
-                        <AchatsTab 
-                            ecritures={ecritures} 
-                            count={ecrituresCount}
-                            page={ecrituresPage}
-                            setPage={setEcrituresPage}
-                            locale={currentLocale} 
-                            t={t} 
-                        />
-                    )}
-                    {activeTab === 'balance' && <BalanceTab balance={balance?.comptes || []} t={t} />}
-                    {activeTab === 'bilan' && <BilanTab bilan={bilan} t={t} />}
-                    {activeTab === 'resultat' && <ResultatTab resultat={resultat} t={t} />}
-                    {activeTab === 'plan' && <PlanTab comptes={comptes} />}
-                    {activeTab === 'charges' && <ChargesTab actions={actions} comptes={comptes} journaux={journaux} t={t} />}
+                    <Suspense fallback={
+                        <div className="flex flex-col items-center justify-center py-20 opacity-30">
+                            <RefreshCcw className="size-8 animate-spin mb-2" />
+                            <p className="text-xs font-medium uppercase tracking-wider">Chargement des données...</p>
+                        </div>
+                    }>
+                        {activeTab === 'dashboard' && <DashboardTab resultat={resultat} actions={actions} t={t} />}
+                        {activeTab === 'grand-livre' && (
+                            <GrandLivreTab 
+                                ecritures={ecritures} 
+                                count={ecrituresCount}
+                                page={ecrituresPage}
+                                setPage={setEcrituresPage}
+                                search={ecrituresSearch}
+                                setSearch={setEcrituresSearch}
+                                locale={currentLocale} 
+                                t={t} 
+                            />
+                        )}
+                        {activeTab === 'achats' && (
+                            <AchatsTab 
+                                ecritures={ecritures} 
+                                count={ecrituresCount}
+                                page={ecrituresPage}
+                                setPage={setEcrituresPage}
+                                locale={currentLocale} 
+                                t={t} 
+                            />
+                        )}
+                        {activeTab === 'balance' && <BalanceTab balance={balance?.comptes || []} t={t} />}
+                        {activeTab === 'bilan' && <BilanTab bilan={bilan} t={t} />}
+                        {activeTab === 'resultat' && <ResultatTab resultat={resultat} t={t} />}
+                        {activeTab === 'plan' && <PlanTab comptes={comptes} />}
+                        {activeTab === 'charges' && <ChargesTab actions={actions} comptes={comptes} journaux={journaux} t={t} />}
+                    </Suspense>
                 </div>
+
             )}
         </div>
     );

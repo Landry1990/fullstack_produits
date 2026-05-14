@@ -31,7 +31,12 @@ from api.serializer_mixins import OptimizedSerializerMixin
 from api.audit_helpers import log_audit
 from api.sudo_utils import validate_sudo_mode
 from api.whatsapp_service import WhatsAppService
-from api.pagination import StandardResultsSetPagination
+from api.centralized_configs import (
+    BaseViewSetConfig,
+    CommonFilterFields,
+    StandardResultsSetPagination,
+    SQLAnnotations
+)
 
 logger = logging.getLogger(__name__)
 
@@ -89,7 +94,7 @@ def header_footer_facture(canvas, doc, company_info, facture_info, facture):
     canvas.restoreState()
 
 
-class FactureViewSet(OptimizedSerializerMixin, viewsets.ModelViewSet):
+class FactureViewSet(BaseViewSetConfig, OptimizedSerializerMixin, viewsets.ModelViewSet):
     """
     API endpoint for factures with optimized serializers.
     - List view: Lightweight serializer (7 fields) - excludes products and payments
@@ -102,25 +107,31 @@ class FactureViewSet(OptimizedSerializerMixin, viewsets.ModelViewSet):
         
         # FIX BUG: Utilisation de Subquery pour éviter le produit cartésien (multiplication des montants par le nombre d'articles)
         from api.models import Caisse
-        base_caisse = Caisse.objects.filter(facture=OuterRef('pk'), statut='completee').values('facture').annotate(
+        
+        base_caisse_regle = Caisse.objects.filter(
+            facture=OuterRef('pk'), 
+            statut='completee'
+        ).exclude(mode_paiement='en_compte').values('facture').annotate(
+            total=Sum('montant')
+        ).values('total')
+
+        base_caisse_compte = Caisse.objects.filter(
+            facture=OuterRef('pk'), 
+            statut='completee',
+            mode_paiement='en_compte'
+        ).values('facture').annotate(
             total=Sum('montant')
         ).values('total')
 
         queryset = queryset.annotate(
             montant_regle=Coalesce(
-                Subquery(
-                    base_caisse.exclude(mode_paiement='en_compte')[:1],
-                    output_field=DecimalField()
-                ),
-                Value(0, output_field=DecimalField())
+                Subquery(base_caisse_regle[:1], output_field=DecimalField()),
+                Value(Decimal('0'), output_field=DecimalField())
             ),
             montant_en_compte=Coalesce(
-                Subquery(
-                    base_caisse.filter(mode_paiement='en_compte')[:1],
-                    output_field=DecimalField()
-                ),
-                Value(0, output_field=DecimalField())
-            )
+                Subquery(base_caisse_compte[:1], output_field=DecimalField()),
+                Value(Decimal('0'), output_field=DecimalField())
+            ),
         )
         
         # Masquer les factures 'envoyées à la caisse' (VAL sans paiement) de la liste par défaut
@@ -132,17 +143,17 @@ class FactureViewSet(OptimizedSerializerMixin, viewsets.ModelViewSet):
 
         # Add prefetch only for detail view where products/payments are shown, OR omnisearch, OR printing
         is_omnisearch = self.request.query_params.get('layout') == 'omnisearch'
+        is_checkout = self.request.query_params.get('include_details') == 'true'
         is_printing = self.action in ['retrieve', 'imprimer', 'imprimer_proforma', 'generer_avoir']
-        if is_printing or is_omnisearch:
+        
+        if is_printing or is_omnisearch or is_checkout:
             queryset = queryset.prefetch_related('produits__produit', 'paiements')
             
         return queryset
     serializer_class = FactureSerializer
-    permission_classes = [IsAuthenticated]
-    pagination_class = StandardResultsSetPagination
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
     filterset_fields = {
-        'status': ['exact', 'in'],
+        **CommonFilterFields.status_filters(),
         'client': ['exact'],
         'date': ['gte', 'lte', 'date'],
         'numero_facture': ['exact', 'icontains'],
@@ -154,6 +165,8 @@ class FactureViewSet(OptimizedSerializerMixin, viewsets.ModelViewSet):
     def get_serializer_class(self):
         if self.request.query_params.get('layout') == 'omnisearch':
             return FactureOmnisearchSerializer
+        if self.request.query_params.get('include_details') == 'true':
+            return self.detail_serializer_class
         return super().get_serializer_class()
 
     # Serializers optimisés

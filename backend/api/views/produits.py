@@ -1,15 +1,20 @@
 from rest_framework import viewsets, filters
-from rest_framework.permissions import IsAuthenticated
-from django.db.models import Count, OuterRef, Subquery, IntegerField, CharField, Q, F
+from django.db.models import Count, OuterRef, Subquery, IntegerField, CharField, Q, F, Sum, DecimalField, Min
 from django.db.models.functions import Coalesce
-from ..models import Produit, Promis, CommandeProduit
+from django.db.models import Prefetch
+from ..models import Produit, Promis, CommandeProduit, StockLot
 from ..serializers import ProduitSerializer
 from ..serializers_optimized import ProduitListSerializer, ProduitDetailSerializer
 from ..serializer_mixins import OptimizedSerializerMixin
 from ..cache_mixins import CachedSearchMixin
 from ..search_mixins import MultiTermSearchMixin
-from ..pagination import StandardResultsSetPagination
 from ..cache_utils import SearchCache
+from ..centralized_configs import (
+    BaseViewSetConfig, 
+    CommonSearchFields, 
+    CommonOrderingFields,
+    StandardResultsSetPagination
+)
 
 # Imports des mixins modulaires
 from .produit_actions import (
@@ -21,6 +26,7 @@ from .produit_actions import (
 )
 
 class ProduitViewSet(
+    BaseViewSetConfig,
     CachedSearchMixin, 
     MultiTermSearchMixin, 
     OptimizedSerializerMixin, 
@@ -36,19 +42,58 @@ class ProduitViewSet(
     - Automatic caching for search queries (TTL: 5 minutes)
     - Optimized serializers for list vs detail views
     - Multi-term AND search (e.g., "doli 500" finds products with both terms)
+    - SQL annotations for stock value and expiring dates (avoids N+1 queries)
     """
     queryset = Produit.objects.select_related('rayon', 'fournisseur', 'forme').order_by('name')
     serializer_class = ProduitSerializer
     list_serializer_class = ProduitListSerializer
     detail_serializer_class = ProduitDetailSerializer
-    permission_classes = [IsAuthenticated]
-    pagination_class = StandardResultsSetPagination
     filter_backends = [filters.OrderingFilter]
-    ordering_fields = ['name', 'stock', 'selling_price', 'updated_at']
-    search_fields = ['^name', '^cip1', '^cip2', '^cip3']
+    ordering_fields = CommonOrderingFields.product_ordering()
+    search_fields = CommonSearchFields.product_fields()
 
     def get_queryset(self):
         queryset = super().get_queryset()
+        
+        # OPTIMISATION: Annotations SQL pour éviter les requêtes N+1
+        # Calcul de la valeur du stock (somme des lots * prix ou stock * cost_price)
+        valeur_stock_lots = StockLot.objects.filter(
+            produit=OuterRef('pk'),
+            quantity_remaining__gt=0
+        ).values('produit').annotate(
+            total=Sum(F('quantity_remaining') * F('price_cost'), output_field=DecimalField())
+        ).values('total')
+        
+        # Date d'expiration la plus proche parmi les lots actifs
+        next_expiring_lots = StockLot.objects.filter(
+            produit=OuterRef('pk'),
+            quantity_remaining__gt=0,
+            date_expiration__isnull=False
+        ).values('produit').annotate(
+            min_date=Min('date_expiration')
+        ).values('min_date')
+        
+        queryset = queryset.annotate(
+            # Valeur stock calculée en SQL
+            valeur_stock_calc=Coalesce(
+                Subquery(valeur_stock_lots),
+                F('stock') * F('cost_price'),
+                output_field=DecimalField()
+            ),
+            # Date d'expiration la plus proche
+            next_expiring_calc=Subquery(next_expiring_lots, output_field=CharField())
+        )
+        
+        # OPTIMISATION: Prefetch des lots actifs pour éviter N+1 dans get_stock_lots
+        # Seulement pour les actions qui ont besoin des lots (retrieve, pas list)
+        if self.action in ['retrieve', 'update', 'partial_update']:
+            queryset = queryset.prefetch_related(
+                Prefetch(
+                    'stock_lots',
+                    queryset=StockLot.objects.filter(quantity_remaining__gt=0).order_by('date_expiration'),
+                    to_attr='active_lots'
+                )
+            )
         
         # Annotation pour le nombre de promis actifs
         promis_subquery = Promis.objects.filter(

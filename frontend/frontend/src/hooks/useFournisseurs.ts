@@ -99,7 +99,7 @@ export function useFournisseurs() {
         setSelectedFournisseur(updated);
       }
     }
-  }, [fournisseurs, selectedFournisseur]);
+  }, [fournisseurs]); // ✅ Retiré selectedFournisseur des dépendances
 
   const totalPages = Math.max(1, Math.ceil(totalCount / itemsPerPage));
 
@@ -187,13 +187,13 @@ export function useFournisseurs() {
   useEffect(() => {
     fetchFournisseurs();
     return () => fournisseursControllerRef.current?.abort();
-  }, [fetchFournisseurs]);
+  }, [showInactive, currentPage, debouncedSearch]); // ✅ Dépendances directes au lieu de la fonction
 
   useEffect(() => {
     if (selectedFournisseur && !fournisseurs.some(f => f.id === selectedFournisseur.id)) {
       setSelectedFournisseur(null);
     }
-  }, [fournisseurs, selectedFournisseur]);
+  }, [fournisseurs]); // ✅ Retiré selectedFournisseur des dépendances
 
   useEffect(() => {
     if (location.state?.selectedSupplierId && fournisseurs.length > 0) {
