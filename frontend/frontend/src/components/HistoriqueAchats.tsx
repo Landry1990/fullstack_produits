@@ -342,7 +342,7 @@ const HistoriqueAchats = ({ forcedType }: HistoriqueAchatsProps) => {
 
           {/* Table Container */}
           <div className="flex-1 min-h-0 flex flex-col">
-            <div className={`overflow-auto flex-1 rounded-3xl border-2 border-base-200/60 bg-base-100 shadow-sm transition-opacity duration-300 ${loading ? 'opacity-50 pointer-events-none' : 'opacity-100'}`}>
+            <div className={`overflow-auto flex-1 rounded-xl border-2 border-base-200/60 bg-base-100 shadow-sm transition-opacity duration-300 ${loading ? 'opacity-50 pointer-events-none' : 'opacity-100'}`}>
               <table className="table table-sm w-full border-separate border-spacing-0">
                 <thead>
                   <tr className="bg-base-300 text-[11px] font-black text-base-content uppercase tracking-[0.15em]">
@@ -468,7 +468,7 @@ const HistoriqueAchats = ({ forcedType }: HistoriqueAchatsProps) => {
           .no-print, .tabs, .pagination, button, .select, input, .tooltip {
             display: none !important;
           }
-          .card, .rounded-3xl, .border-2, .shadow-sm, .shadow-lg {
+          .card, .rounded-xl, .border-2, .shadow-sm, .shadow-lg {
             border: none !important;
             box-shadow: none !important;
             border-radius: 0 !important;

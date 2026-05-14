@@ -1324,7 +1324,10 @@ export function useCommandesState(forcedType?: 'LOC' | 'DIR' | 'DIV') {
       canMerge: canMergeSelectedOrders().canMerge,
       onOpenMergeModal: openMergeModal,
       onOpenCreateView: () => openCreateView(activeTab),
-      onOpenSuggestionModal: () => setIsSuggestionModalOpen(true),
+      onOpenSuggestionModal: () => {
+        console.log('onOpenSuggestionModal called, setting isSuggestionModalOpen to true');
+        setIsSuggestionModalOpen(true);
+      },
       onViewDetails: handleViewDetails,
       onBulkDelete,
     },

@@ -1,4 +1,4 @@
-import { useState, Suspense } from 'react';
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   AreaChart,
@@ -16,7 +16,7 @@ import {
   Tooltip,
   Legend,
   ResponsiveContainer
-} from './LazyRecharts';
+} from 'recharts';
 import {
   useCAEvolution,
   useMargesEvolution,
@@ -115,16 +115,7 @@ export default function ModuleFinancier() {
   const trendInfo = predictions ? getTrendInfo(predictions.tendance) : null;
 
   return (
-    <Suspense fallback={
-      <div className="p-6 space-y-6 animate-pulse">
-        <div className="h-20 bg-base-100 rounded-2xl mb-6"></div>
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          {[1, 2, 3, 4].map(i => <div key={i} className="h-32 bg-base-100 rounded-2xl"></div>)}
-        </div>
-        <div className="h-96 bg-base-100 rounded-2xl"></div>
-      </div>
-    }>
-      <div className="p-6 space-y-6">
+    <div className="p-6 space-y-6">
         {/* Header */}
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           <div>
@@ -531,7 +522,7 @@ export default function ModuleFinancier() {
                     fill="#8884d8"
                     dataKey="ca"
                     nameKey="name"
-                    label={({ name, percent }: { name: string; percent: number }) => 
+                    label={({ name, percent }: { name?: string; percent?: number }) => 
                       `${String(name || '').substring(0, 10)}... ${((percent || 0) * 100).toFixed(0)}%`
                     }
                   >
@@ -1012,8 +1003,7 @@ export default function ModuleFinancier() {
           </div>
         </div>
       )}
-      </div>
-    </Suspense>
+    </div>
   );
 }
 

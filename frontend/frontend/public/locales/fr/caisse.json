@@ -13,7 +13,8 @@
         "cash_in": "Encaisser",
         "coupon": "Coupon",
         "refresh": "Rafraîchir",
-        "quick_select": "Sélection rapide"
+        "quick_select": "Sélection rapide",
+        "enter_key": "Entrée"
     },
     "table": {
         "ticket": "Ticket",
@@ -376,6 +377,8 @@
             "close": "Fermer"
         }
     },
+    "poste_label": "Poste :",
+    "all_posts": "Tous les postes",
     "common": {
         "unknown": "Inconnu",
         "creance": "CRÉANCE",
@@ -390,4 +393,4 @@
             "next": "Suivant"
         }
     }
-}
+}

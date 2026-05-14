@@ -231,7 +231,7 @@ export default function ReapproRayon() {
             className="btn btn-sm btn-ghost hover:bg-base-100 text-[10px] font-black uppercase tracking-widest gap-2 rounded-xl border border-base-300 shadow-sm"
           >
             <History className="size-3.5" />
-            Historique
+            {t('common:history')}
           </Link>
           <div className="flex items-center gap-2 bg-base-100 p-1.5 rounded-xl shadow-sm border border-base-300">
             <button 
@@ -257,7 +257,7 @@ export default function ReapproRayon() {
                 disabled={loading || products.length === 0}
             >
                 <Truck className="size-3.5" />
-                Tout réapprovisionner
+                {t('stock:reappro.transfer_all')}
             </button>
           </div>
         </div>
@@ -270,7 +270,7 @@ export default function ReapproRayon() {
             <AlertCircle className="size-6" />
           </div>
           <div>
-            <p className="text-[10px] font-bold text-base-content/40 uppercase tracking-widest">Alertes Critiques</p>
+            <p className="text-[10px] font-bold text-base-content/40 uppercase tracking-widest">{t('stock:reappro.critical_alerts')}</p>
             <p className="text-2xl font-black">{stats.criticalProductsCount}</p>
           </div>
         </div>
@@ -279,7 +279,7 @@ export default function ReapproRayon() {
             <Truck className="size-6" />
           </div>
           <div>
-            <p className="text-[10px] font-bold text-base-content/40 uppercase tracking-widest">Volume Suggéré</p>
+            <p className="text-[10px] font-bold text-base-content/40 uppercase tracking-widest">{t('stock:reappro.suggested_volume')}</p>
             <p className="text-2xl font-black">{stats.totalToTransfer} <small className="text-xs">unités</small></p>
           </div>
         </div>
@@ -288,7 +288,7 @@ export default function ReapproRayon() {
             <Filter className="size-6" />
           </div>
           <div>
-            <p className="text-[10px] font-bold text-base-content/40 uppercase tracking-widest">Produits Affichés</p>
+            <p className="text-[10px] font-bold text-base-content/40 uppercase tracking-widest">{t('stock:reappro.displayed_products')}</p>
             <p className="text-2xl font-black">{stats.totalDisplayed}</p>
           </div>
         </div>
@@ -324,7 +324,7 @@ export default function ReapproRayon() {
           <div className="flex items-center gap-4">
             <div className="form-control">
               <label className="label cursor-pointer gap-3 bg-base-100 px-4 py-2 rounded-xl border border-base-300 shadow-sm transition-all hover:bg-base-200">
-                <span className="label-text text-[10px] font-black uppercase tracking-widest text-base-content/60">Seulement les alertes</span> 
+                <span className="label-text text-[10px] font-black uppercase tracking-widest text-base-content/60">{t('stock:reappro.alerts_only')}</span> 
                 <input 
                     type="checkbox" 
                     className="toggle toggle-primary toggle-sm" 
@@ -343,7 +343,7 @@ export default function ReapproRayon() {
                     <div className="bg-primary text-primary-content size-6 rounded-lg flex items-center justify-center text-[10px] font-black">
                         {selectedIds.size}
                     </div>
-                    <span className="text-xs font-black text-primary uppercase tracking-widest">Produits sélectionnés</span>
+                    <span className="text-xs font-black text-primary uppercase tracking-widest">{t('stock:reappro.selected_products')}</span>
                 </div>
                 <div className="flex items-center gap-2">
                     <button 
@@ -356,7 +356,7 @@ export default function ReapproRayon() {
                         className="btn btn-xs btn-primary px-4 text-[10px] font-black uppercase tracking-widest rounded-lg shadow-md shadow-primary/20"
                         onClick={() => handleBulkAction('selection')}
                     >
-                        Réapprovisionner la sélection
+                        Réapprovision{t('stock:reappro.transfer')}
                     </button>
                 </div>
             </div>
@@ -375,12 +375,12 @@ export default function ReapproRayon() {
                         size="sm"
                     />
                 </th>
-                <th className="bg-transparent text-[10px] font-black uppercase tracking-widest text-base-content/40">Produit</th>
-                <th className="bg-transparent text-[10px] font-black uppercase tracking-widest text-base-content/40">État du Rayon</th>
-                <th className="bg-transparent text-[10px] font-black uppercase tracking-widest text-base-content/40 text-center">Rayon</th>
-                <th className="bg-transparent text-[10px] font-black uppercase tracking-widest text-base-content/40 text-center">Réserve</th>
-                <th className="bg-transparent text-[10px] font-black uppercase tracking-widest text-base-content/40 text-center text-primary">Suggestion</th>
-                <th className="bg-transparent text-[10px] font-black uppercase tracking-widest text-base-content/40 text-right no-print">Actions</th>
+                <th className="bg-transparent text-[10px] font-black uppercase tracking-widest text-base-content/40">{t('stock:reappro.columns.product')}</th>
+                <th className="bg-transparent text-[10px] font-black uppercase tracking-widest text-base-content/40">{t('stock:reappro.columns.section_status')}</th>
+                <th className="bg-transparent text-[10px] font-black uppercase tracking-widest text-base-content/40 text-center">{t('stock:reappro.columns.section')}</th>
+                <th className="bg-transparent text-[10px] font-black uppercase tracking-widest text-base-content/40 text-center">{t('stock:reappro.columns.reserve')}</th>
+                <th className="bg-transparent text-[10px] font-black uppercase tracking-widest text-base-content/40 text-center text-primary">{t('stock:reappro.columns.suggestion')}</th>
+                <th className="bg-transparent text-[10px] font-black uppercase tracking-widest text-base-content/40 text-right no-print">{t('stock:reappro.columns.actions')}</th>
               </tr>
             </thead>
             <tbody>
@@ -388,7 +388,7 @@ export default function ReapproRayon() {
                 <tr>
                    <td colSpan={7} className="py-24 text-center">
                       <span className="loading loading-spinner loading-lg text-primary"></span>
-                      <p className="text-[10px] font-black uppercase tracking-widest text-base-content/30 mt-4 italic">Analyse des stocks en cours...</p>
+                      <p className="text-[10px] font-black uppercase tracking-widest text-base-content/30 mt-4 italic">{t('stock:reappro.loading')}</p>
                    </td>
                 </tr>
               ) : products.length === 0 ? (
@@ -396,8 +396,8 @@ export default function ReapproRayon() {
                    <td colSpan={7} className="py-24 text-center">
                       <div className="flex flex-col items-center justify-center opacity-20">
                           <Package className="size-16 mb-4" />
-                          <h3 className="text-xl font-black uppercase tracking-tight">Aucun produit à réapprovisionner</h3>
-                          <p className="text-sm font-bold max-w-xs mt-2 italic">Tous vos rayons sont actuellement bien fournis selon les paramètres de stock.</p>
+                          <h3 className="text-xl font-black uppercase tracking-tight">{t('stock:reappro.empty')}</h3>
+                          <p className="text-sm font-bold max-w-xs mt-2 italic">{t('stock:reappro.empty_desc')}</p>
                       </div>
                    </td>
                 </tr>
@@ -421,7 +421,7 @@ export default function ReapproRayon() {
                       <td>
                         <div className="flex flex-col">
                             <span className="text-xs font-black text-base-content max-w-[200px] truncate">{p.name}</span>
-                            <span className="text-[9px] font-bold text-base-content/30 uppercase tracking-widest">{p.rayon_name || 'Sans Rayon'}</span>
+                            <span className="text-[9px] font-bold text-base-content/30 uppercase tracking-widest">{p.rayon_name || t('common:no_section')}</span>
                         </div>
                       </td>
                       <td className="w-48">
@@ -430,7 +430,7 @@ export default function ReapproRayon() {
                                 <div className="flex items-center gap-1.5">
                                     <div className={`size-1.5 rounded-full ${isLow ? 'bg-red-500 animate-pulse' : 'bg-emerald-500'}`}></div>
                                     <span className={`text-[9px] font-black uppercase tracking-widest ${isLow ? 'text-red-700' : 'text-emerald-700'}`}>
-                                        {isLow ? 'Alerte Critique' : 'Niveau Correct'}
+                                        {isLow ? t('stock:reappro.status.critical') : t('stock:reappro.status.ok')}
                                     </span>
                                 </div>
                                 <span className="text-[9px] font-black text-base-content/30">{Math.round(percent)}%</span>
@@ -446,8 +446,8 @@ export default function ReapproRayon() {
                       <td className="text-center">
                         <span className="text-xs font-black text-base-content">{p.stock}</span>
                         <div className="flex items-center justify-center gap-1 mt-0.5 opacity-30">
-                            <span className="text-[8px] font-bold">MIN {p.min_rayon ?? 0}</span>
-                            <span className="text-[8px] font-bold">CAP {p.capacite_rayon ?? 0}</span>
+                            <span className="text-[8px] font-bold">{t('stock:reappro.min')} {p.min_rayon ?? 0}</span>
+                            <span className="text-[8px] font-bold">{t('stock:reappro.cap')} {p.capacite_rayon ?? 0}</span>
                         </div>
                       </td>
                       <td className="text-center">
@@ -461,7 +461,7 @@ export default function ReapproRayon() {
                             <div className="flex flex-col items-center animate-in zoom-in duration-300">
                                 <span className="text-sm font-black text-primary">+{suggest}</span>
                                 <div className="flex items-center gap-1 text-[8px] font-black text-primary/40 uppercase tracking-widest">
-                                    <ChevronRight className="size-2" /> Suggéré
+                                    <ChevronRight className="size-2" /> {t('stock:reappro.suggested')}
                                 </div>
                             </div>
                         ) : (
@@ -475,7 +475,7 @@ export default function ReapproRayon() {
                             disabled={suggest <= 0}
                         >
                             <Truck className="size-4 transition-transform group-hover/btn:translate-x-1" />
-                            <span className="text-[9px] font-black uppercase tracking-widest ml-2 hidden xl:inline">Transférer</span>
+                            <span className="text-[9px] font-black uppercase tracking-widest ml-2 hidden xl:inline">{t('stock:reappro.transfer')}</span>
                         </button>
                       </td>
                     </tr>
@@ -498,7 +498,7 @@ export default function ReapproRayon() {
                         disabled={page === 1}
                         onClick={() => setPage(page - 1)}
                     >
-                        Précédent
+                        {t('common:previous')}
                     </button>
                     <div className="px-3 text-[10px] font-black">{page}</div>
                     <button 
@@ -506,7 +506,7 @@ export default function ReapproRayon() {
                         disabled={page === totalPages}
                         onClick={() => setPage(page + 1)}
                     >
-                        Suivant
+                        {t('common:next')}
                     </button>
                 </div>
             </div>
@@ -520,18 +520,16 @@ export default function ReapproRayon() {
             setShowConfirmBulk(false);
             if (bulkActionType === null) setPendingIds([]);
         }}
-        title="Confirmation de transfert"
+        title={t('stock:reappro.modal.confirm')}
         maxWidth="max-w-md"
       >
         <div className="p-8 text-center">
             <div className="size-20 bg-primary/10 text-primary rounded-3xl flex items-center justify-center mx-auto mb-6 shadow-sm">
                 <Truck className="size-10" />
             </div>
-            <h3 className="text-xl font-black text-base-content tracking-tight">Réapprovisionner les stocks ?</h3>
+            <h3 className="text-xl font-black text-base-content tracking-tight">{t('stock:reappro.modal.title')}</h3>
             <p className="text-sm font-bold text-base-content/40 mt-3 leading-relaxed">
-                Vous êtes sur le point de transférer les stocks réserve vers le rayon pour 
-                <span className="text-primary mx-1">{pendingIds.length}</span> 
-                produits.
+                {t('stock:reappro.modal.confirm', {count: pendingIds.length})}
             </p>
             
             <div className="flex gap-4 mt-8">
@@ -539,7 +537,7 @@ export default function ReapproRayon() {
                     className="btn btn-ghost flex-1 h-12 rounded-2xl text-[10px] font-black uppercase tracking-widest"
                     onClick={() => setShowConfirmBulk(false)}
                 >
-                    Annuler
+                    {t('stock:reappro.modal.cancel')}
                 </button>
                 <button 
                     className="btn btn-primary flex-1 h-12 rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-lg shadow-primary/20"
@@ -548,7 +546,7 @@ export default function ReapproRayon() {
                         executeBulkTransfer(pendingIds);
                     }}
                 >
-                    Confirmer
+                    {t('stock:reappro.modal.confirm_btn')}
                 </button>
             </div>
         </div>
@@ -558,16 +556,16 @@ export default function ReapproRayon() {
       <PremiumModal
         isOpen={showSuccessModal}
         onClose={() => setShowSuccessModal(false)}
-        title="Réapprovisionnement Terminé"
+        title={t('stock:reappro.success')}
         maxWidth="max-w-md"
       >
         <div className="p-8 text-center">
             <div className="size-20 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto mb-6 shadow-sm">
                 <CheckCircle2 className="size-10" />
             </div>
-            <h3 className="text-xl font-black text-base-content tracking-tight">Transfert Réussi !</h3>
+            <h3 className="text-xl font-black text-base-content tracking-tight">{t('stock:reappro.modal.success')}</h3>
             <p className="text-sm font-bold text-base-content/40 mt-3 leading-relaxed">
-                Les stocks ont été transférés. Vous pouvez télécharger le document de confirmation ou consulter l'historique détaillé.
+                {t('stock:reappro.modal.success_desc')}
             </p>
             
             <div className="flex flex-col gap-3 mt-8">
@@ -579,20 +577,20 @@ export default function ReapproRayon() {
                     }}
                 >
                     <Download className="size-4" />
-                    Télécharger la confirmation PDF
+                    {t('stock:reappro.modal.download_pdf')}
                 </button>
                 <div className="grid grid-cols-2 gap-3">
                     <Link 
                         to="/app/reappro-history"
                         className="btn btn-ghost h-12 rounded-2xl text-[10px] font-black uppercase tracking-widest border border-base-300"
                     >
-                        Voir Historique
+                        {t('stock:reappro.modal.view_history')}
                     </Link>
                     <button 
                         className="btn btn-ghost h-12 rounded-2xl text-[10px] font-black uppercase tracking-widest border border-base-300"
                         onClick={() => setShowSuccessModal(false)}
                     >
-                        Fermer
+                        {t('stock:reappro.modal.close')}
                     </button>
                 </div>
             </div>
@@ -609,8 +607,8 @@ export default function ReapproRayon() {
         }}
         onValidate={handleSudoValidate}
         saving={sudoSaving}
-        title="Validation Requise"
-        message="Veuillez confirmer votre identité pour effectuer ce transfert de stock groupé."
+        title={t('sudo.title', 'Validation Requise')}
+        message={t('sudo.message', 'Veuillez confirmer votre identité pour effectuer ce transfert de stock groupé.')}
       />
       
       {/* Print Styles */}

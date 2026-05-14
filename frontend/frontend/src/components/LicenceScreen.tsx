@@ -4,8 +4,10 @@ import { toast } from 'react-hot-toast';
 import api from '../services/api';
 import { useNavigate } from 'react-router-dom';
 import { useLicence } from '../context/LicenceContext';
+import { useTranslation } from 'react-i18next';
 
 const LicenceScreen = () => {
+    const { t } = useTranslation('auth');
     const [hardwareId, setHardwareId] = useState<string>('Chargement...');
     const [cle, setCle] = useState('');
     const [loading, setLoading] = useState(false);
@@ -85,18 +87,18 @@ const LicenceScreen = () => {
         <div className="min-h-screen bg-slate-900 flex items-center justify-center p-4">
             {/* Arrière-plan dynamique */}
             <div className="absolute inset-0 overflow-hidden pointer-events-none">
-                <div className="absolute -top-[20%] -left-[10%] w-[50%] h-[50%] rounded-full bg-blue-600/20 blur-[120px]" />
+                <div className="absolute -top-[20%] -left-[10%] w-[50%] h-[50%] rounded-full bg-primary/20 blur-[120px]" />
                 <div className="absolute top-[40%] -right-[10%] w-[40%] h-[60%] rounded-full bg-purple-600/20 blur-[120px]" />
             </div>
 
-            <div className="relative w-full max-w-xl bg-slate-800/80 backdrop-blur-xl border border-slate-700 rounded-3xl shadow-2xl p-8 md:p-10">
+            <div className="relative w-full max-w-xl bg-slate-800/80 backdrop-blur-xl border border-slate-700 rounded-xl shadow-2xl p-8 md:p-10">
                 <div className="text-center mb-8">
                     <div className="inline-flex items-center justify-center size-20 rounded-full bg-red-500/10 mb-4 ring-4 ring-red-500/20">
                         <Lock className="size-10 text-red-400" />
                     </div>
-                    <h1 className="text-3xl font-bold text-white mb-2">Système Verrouillé</h1>
+                    <h1 className="text-3xl font-bold text-white mb-2">{t('licence.locked_title')}</h1>
                     <p className="text-slate-400">
-                        {status?.message || "Une licence valide est requise pour utiliser cette application."}
+                        {status?.message || t('licence.locked_message')}
                     </p>
                 </div>
 
@@ -146,28 +148,28 @@ const LicenceScreen = () => {
                         <div className="bg-blue-500/5 border border-blue-500/20 rounded-2xl p-6">
                             <div className="flex items-center gap-2 text-blue-400 mb-4">
                                 <Info className="size-5" />
-                                <h3 className="font-bold">Détails de la licence</h3>
+                                <h3 className="font-bold">{t('licence.details')}</h3>
                             </div>
                             
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div className="flex items-center gap-3">
                                     <Hospital className="size-5 text-slate-500" />
                                     <div>
-                                        <p className="text-[10px] text-slate-500 uppercase font-bold">Pharmacie</p>
+                                        <p className="text-[10px] text-slate-500 uppercase font-bold">{t('licence.pharmacy')}</p>
                                         <p className="text-white text-sm">{previewData.pharmacie_nom}</p>
                                     </div>
                                 </div>
                                 <div className="flex items-center gap-3">
                                     <UserCheck className="size-5 text-slate-500" />
                                     <div>
-                                        <p className="text-[10px] text-slate-500 uppercase font-bold">Pharmacien</p>
+                                        <p className="text-[10px] text-slate-500 uppercase font-bold">{t('licence.pharmacist')}</p>
                                         <p className="text-white text-sm">{previewData.pharmacien_nom}</p>
                                     </div>
                                 </div>
                                 <div className="flex items-center gap-3">
                                     <ShieldAlert className="size-5 text-slate-500" />
                                     <div>
-                                        <p className="text-[10px] text-slate-500 uppercase font-bold">Plan</p>
+                                        <p className="text-[10px] text-slate-500 uppercase font-bold">{t('licence.plan')}</p>
                                         <p className={`text-sm font-bold ${previewData.plan === 'PREMIUM' ? 'text-amber-400' : 'text-blue-400'}`}>
                                             {previewData.plan}
                                         </p>
@@ -176,7 +178,7 @@ const LicenceScreen = () => {
                                 <div className="flex items-center gap-3">
                                     <Calendar className="size-5 text-slate-500" />
                                     <div>
-                                        <p className="text-[10px] text-slate-500 uppercase font-bold">Expire le</p>
+                                        <p className="text-[10px] text-slate-500 uppercase font-bold">{t('licence.expires')}</p>
                                         <p className="text-white text-sm">
                                             {new Date(previewData.exp * 1000).toLocaleDateString()}
                                         </p>
@@ -250,7 +252,7 @@ const LicenceScreen = () => {
                 )}
 
                 <div className="mt-8 text-center text-xs text-slate-500">
-                    <p>Protected by Advanced RSA Cryptography</p>
+                    <p>{t('licence.protected_by')}</p>
                 </div>
             </div>
         </div>

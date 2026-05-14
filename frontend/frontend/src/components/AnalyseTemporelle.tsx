@@ -1,9 +1,9 @@
-import { useState, Suspense } from 'react';
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   BarChart, Bar, LineChart, Line, Legend
-} from './LazyRecharts';
+} from 'recharts';
 import { usePeakHours, useDailyComparison, useSeasonality } from '../hooks/useTemporalAnalysis';
 import { formatCurrency, formatNumber } from '../utils/formatters';
 

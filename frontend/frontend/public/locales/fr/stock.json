@@ -1082,6 +1082,48 @@
             "avg_basket_short": "Panier M."
         }
     },
+    "reappro": {
+        "title": "Réapprovisionnement Rayon",
+        "critical_alerts": "Alertes Critiques",
+        "suggested_volume": "Volume Suggéré",
+        "displayed_products": "Produits Affichés",
+        "alerts_only": "Seulement les alertes",
+        "selected_products": "Produits sélectionnés",
+        "analyze": "Analyser",
+        "columns": {
+            "product": "Produit",
+            "section_status": "État du Rayon",
+            "section": "Rayon",
+            "reserve": "Réserve",
+            "suggestion": "Suggestion",
+            "actions": "Actions"
+        },
+        "loading": "Analyse des stocks en cours...",
+        "empty": "Aucun produit à réapprovisionner",
+        "empty_desc": "Tous vos rayons sont actuellement bien fournis selon les paramètres de stock.",
+        "min": "MIN",
+        "cap": "CAP",
+        "reserve": "Réserve",
+        "suggested": "Suggéré",
+        "status": {
+            "critical": "Alerte Critique",
+            "ok": "Niveau Correct"
+        },
+        "transfer": "Transférer",
+        "transfer_all": "Tout réapprovisionner",
+        "modal": {
+            "title": "Réapprovisionner les stocks ?",
+            "confirm": "Vous êtes sur le point de transférer les stocks réserve vers le rayon pour {{count}} produits.",
+            "download": "Télécharger",
+            "download_pdf": "Télécharger la confirmation PDF",
+            "view_history": "Voir Historique",
+            "close": "Fermer",
+            "confirm_btn": "Confirmer le transfert",
+            "success": "Transfert Réussi !",
+            "success_desc": "Les stocks ont été transférés. Vous pouvez télécharger le document de confirmation ou consulter l'historique détaillé.",
+            "cancel": "Annuler"
+        }
+    },
     "sidebar": {
         "stock": {
             "organisation": {

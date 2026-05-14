@@ -41,6 +41,7 @@ interface CommandeListProps {
   // Navigation / Actions
   onOpenCreateView: () => void;
   onOpenSuggestionModal: () => void;
+  onOpenScheduledList: () => void;
   onViewDetails: (commande: Commande) => void;
   onBulkDelete: () => void;
 }
@@ -65,6 +66,7 @@ export default function CommandeList({
   onOpenMergeModal,
   onOpenCreateView,
   onOpenSuggestionModal,
+  onOpenScheduledList,
   onViewDetails,
   onBulkDelete
 }: CommandeListProps) {
@@ -88,11 +90,23 @@ export default function CommandeList({
         <div className="flex gap-2 w-full md:w-auto">
             <button 
                 className="btn btn-secondary btn-sm gap-2" 
-                onClick={onOpenSuggestionModal}
+                onClick={() => {
+                    console.log('Suggestions button clicked, onOpenSuggestionModal:', onOpenSuggestionModal);
+                    onOpenSuggestionModal();
+                }}
                 disabled={loading}
             >
                 {loading ? <span className="loading loading-spinner loading-xs" /> : <span>✨</span>} 
                 {t('orders:list.suggestions_btn')}
+            </button>
+            <button 
+                className="btn btn-info btn-sm gap-2" 
+                onClick={onOpenScheduledList}
+                disabled={loading}
+                title="Planification automatique"
+            >
+                {loading ? <span className="loading loading-spinner loading-xs" /> : <span>⏰</span>} 
+                <span className="hidden sm:inline">{t('orders:list.scheduling_btn', 'Planification')}</span>
             </button>
             <button 
                 className="btn btn-primary btn-sm gap-2 text-white" 

@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, Suspense } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import api from '../services/api';
 import { formatCurrency } from '../utils/formatters';
 import { getLocale } from '../utils/dateUtils';
@@ -14,7 +14,7 @@ import {
   PieChart,
   Pie,
   Cell
-} from './LazyRecharts';
+} from 'recharts';
 import {
   useAnalyseFournisseurs,
   useComparaisonPrix,
@@ -178,7 +178,7 @@ export default function StatistiquesFournisseur() {
                 <div className="card bg-base-100 shadow-sm border border-base-200">
                 <div className="card-body p-4">
                     <p className="text-sm font-medium text-base-content/70">{t('sales_tab.cards.purchase_cost')}</p>
-                    <h3 className="text-2xl font-bold text-blue-600">{formatCurrency(Math.round(totaux.cout_achat), i18n.language === 'fr' ? 'fr-FR' : 'en-GB', t('common:currency'))}</h3>
+                    <h3 className="text-2xl font-bold text-primary">{formatCurrency(Math.round(totaux.cout_achat), i18n.language === 'fr' ? 'fr-FR' : 'en-GB', t('common:currency'))}</h3>
                 </div>
                 </div>
                 <div className="card bg-base-100 shadow-sm border border-base-200">

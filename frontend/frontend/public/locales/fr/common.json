@@ -51,7 +51,8 @@
     "actions": {
         "confirm": "Confirmer",
         "search": "Chercher",
-        "close": "Fermer"
+        "close": "Fermer",
+        "refresh": "Actualiser"
     },
     "telegram": {
         "send_success": "Rapport envoyé sur Telegram !",

@@ -1,4 +1,45 @@
 {
+    "divers": {
+        "title": "Miscellaneous Management",
+        "revenue_tab": "Revenue",
+        "imported_products_management": "Miscellaneous products management",
+        "orders_tab": "Orders",
+        "stock_tab": "Stock",
+        "revenue": "Total Revenue",
+        "period_from": "Period from",
+        "to": "to",
+        "detail_sales": "Miscellaneous Sales Detail",
+        "transactions_found": "{{count}} transactions found",
+        "no_sales_found": "No miscellaneous sales found for this period.",
+        "valuation_method": "Valuation method:",
+        "purchase_cost": "Purchase cost (PMP)",
+        "selling_price": "Selling price",
+        "loading_valuation": "Loading valuation...",
+        "total_value_ttc": "Total Value TTC",
+        "value_ht": "Value HT",
+        "total_vat": "Total VAT",
+        "no_stock_data": "No miscellaneous stock data available",
+        "filter": "Filter",
+        "previous": "Previous",
+        "next": "Next",
+        "results": "results",
+        "table": {
+            "date": "Date",
+            "invoice": "Invoice",
+            "product": "Product",
+            "lot": "Lot",
+            "qty": "Qty",
+            "unit_price": "Unit Price",
+            "total": "Total",
+            "vat_rate": "VAT Rate",
+            "base_ht": "Base HT",
+            "vat_amount": "VAT Amount",
+            "total_ttc": "Total TTC",
+            "section": "Section"
+        },
+        "vat_breakdown": "Breakdown by VAT rate",
+        "section_breakdown": "Breakdown by section"
+    },
     "title_local": "Local Orders Management",
     "title_direct": "Direct Orders Management (Import)",
     "subtitle": "Plan your purchases and track your deliveries",
@@ -20,9 +61,34 @@
         "pending": "Pending",
         "closed": "Closed"
     },
+    "scheduling": {
+        "cancel": "Cancel",
+        "save_service": "Save Service",
+        "analyze": "Run Analysis",
+        "supplier_partner": "Partner Supplier",
+        "service_mode": "Service Mode",
+        "active": "ACTIVE",
+        "paused": "PAUSED",
+        "frequency_timing": "Frequency & Timing",
+        "activation_days": "Activation Days",
+        "every": "Every",
+        "weeks_short": "WKS",
+        "hour": "Time",
+        "start_on": "Start on",
+        "calculation_intelligence": "Calculation Intelligence",
+        "predictive_analysis": "Predictive Analysis",
+        "predictive_desc": "Anticipates via history",
+        "simple_replacement": "Pure Replacement",
+        "simple_desc": "Fixed period",
+        "maximized": "Maximized",
+        "maximized_desc": "Optimizes stock",
+        "review_back": "Review",
+        "apply_orders": "Apply Orders"
+    },
     "list": {
         "title": "Purchase History",
         "suggestions_btn": "Suggestions",
+        "scheduling_btn": "Scheduling",
         "create_btn": "New Order",
         "sort_by": "Sort by",
         "filter_by": "Filter by",
@@ -112,6 +178,8 @@
     },
     "product_table": {
         "title": "Products ({{count}})",
+        "import_btn": "Import",
+        "new_product_btn": "New Product",
         "search_placeholder": "Search for a product...",
         "sort_options": {
             "chrono": "Chronological",
@@ -159,6 +227,20 @@
             "rotation_unknown": "Unknown rotation",
             "margin_value": "Margin Amount"
         }
+    },
+    "actions": {
+        "transfer": "Transfer",
+        "transfer_products": "Transfer to another supplier"
+    },
+    "transfer_modal": {
+        "title": "Transfer to another supplier",
+        "description": "Selected products will be transferred to a new order with the chosen supplier.",
+        "supplier_label": "Destination supplier",
+        "select_supplier": "Select a supplier",
+        "products_title": "Products to transfer",
+        "qty_label": "Qty",
+        "cancel": "Cancel",
+        "transfer_btn": "Transfer"
     },
     "messages": {
         "create_success": "Order created successfully",

@@ -14,8 +14,7 @@ import { usePharmacySettings } from '../hooks/usePharmacySettings';
 
 import { TrancheHoraireStats } from './sales/TrancheHoraireStats';
 import Pagination from './ui/Pagination';
-
-// Styles (if any specific, otherwise rely on tailwind)
+import { Receipt } from 'lucide-react';
 
 const Ventes: React.FC = () => {
     const { t } = useTranslation(['sales', 'common']);
@@ -47,69 +46,70 @@ const Ventes: React.FC = () => {
     const [trancheStats, setTrancheStats] = React.useState<any>(null);
     
     return (
-        <div className="min-h-screen bg-base-200 p-6 space-y-6 font-sans">
+        <div className="min-h-screen bg-base-200/60 font-sans">
             
-            {/* Header Section */}
-            <div className="flex flex-col gap-6">
-                
-                {/* Title & Filters & QuickStats */}
-                <div className="w-full space-y-4">
-                    <div className="bg-base-100 rounded-2xl shadow-sm border border-base-300 flex flex-col">
-                        <div className="p-6 border-b border-base-200">
-                            <h1 className="text-2xl font-bold text-base-content tracking-tight">
-                                {t('title')}
-                            </h1>
-                            <p className="text-base-content/60 text-sm mt-1">
-                                {t('subtitle')}
-                            </p>
-                        </div>
-                        
-                        <SalesFilters 
-                            filters={filters}
-                            onDeleteDrafts={handleDeleteBrouillons}
-                            onRefresh={() => { refresh(); }}
-                            users={users}
-                        />
+            {/* ── HEADER ── */}
+            <div className="sticky top-0 z-30 bg-base-100/95 backdrop-blur-md border-b border-base-200 px-4 sm:px-6 py-3">
+                <div className="flex items-center gap-3 min-w-0">
+                    <div className="p-2 bg-primary/10 text-primary rounded-xl shrink-0">
+                        <Receipt className="size-5" />
                     </div>
-                     <TrancheHoraireStats 
-                        startDate={filters.startDate}
-                        endDate={filters.endDate}
-                        onVerify={(data) => {
-                            setTrancheStats({
-                                ...stats,
-                                total_ttc: data.total_ttc,
-                                total_regle: data.total_regle,
-                                total_en_compte: data.total_en_compte,
-                            });
-                            setShowQuickStats(true);
-                        }} 
-                     />
-                     {/* Quick Stats Dashboard */}
-                     {showQuickStats && (
-                        <SalesQuickStats 
-                            stats={trancheStats || stats} 
-                            onClose={() => setShowQuickStats(false)} 
-                        />
-                     )}
+                    <div className="min-w-0">
+                        <h1 className="text-base font-black text-base-content tracking-tight leading-none truncate">
+                            {t('title')}
+                        </h1>
+                        <p className="text-[10px] font-bold text-base-content/40 uppercase tracking-widest">
+                            {t('subtitle')}
+                        </p>
+                    </div>
                 </div>
             </div>
 
-            {/* Main Content: Table */}
-            <div className="bg-base-100 rounded-2xl shadow-sm border border-base-300 overflow-visible">
-                <SalesTable 
-                    factures={filteredFactures}
-                    loading={loading}
-                    onView={actions.handleViewProducts}
-                    onPrint={actions.handlePrintInvoice}
-                    onPrintBL={actions.handlePrintBL}
-                    onPrintTicket={actions.handlePrintTicket}
-                    onRefund={actions.handleEditInvoice}
-                    onDuplicate={actions.handleDuplicateInvoice}
-                    onGenerateAvoir={actions.handleGenerateAvoir}
-                    onDelete={deleteFacture}
-                    onBulkDelete={bulkDeleteFactures}
+            <div className="p-4 sm:p-6 space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-200">
+                <SalesFilters 
+                    filters={filters}
+                    onDeleteDrafts={handleDeleteBrouillons}
+                    onRefresh={() => { refresh(); }}
+                    users={users}
                 />
-                
+
+                <TrancheHoraireStats 
+                    startDate={filters.startDate}
+                    endDate={filters.endDate}
+                    onVerify={(data) => {
+                        setTrancheStats({
+                            ...stats,
+                            total_ttc: data.total_ttc,
+                            total_regle: data.total_regle,
+                            total_en_compte: data.total_en_compte,
+                        });
+                        setShowQuickStats(true);
+                    }} 
+                />
+
+                {showQuickStats && (
+                    <SalesQuickStats 
+                        stats={trancheStats || stats} 
+                        onClose={() => setShowQuickStats(false)} 
+                    />
+                )}
+
+                {/* Main Content: Table */}
+                <div className="bg-base-100 rounded-xl shadow-sm border border-base-200 overflow-visible">
+                    <SalesTable 
+                        factures={filteredFactures}
+                        loading={loading}
+                        onView={actions.handleViewProducts}
+                        onPrint={actions.handlePrintInvoice}
+                        onPrintBL={actions.handlePrintBL}
+                        onPrintTicket={actions.handlePrintTicket}
+                        onRefund={actions.handleEditInvoice}
+                        onDuplicate={actions.handleDuplicateInvoice}
+                        onGenerateAvoir={actions.handleGenerateAvoir}
+                        onDelete={deleteFacture}
+                        onBulkDelete={bulkDeleteFactures}
+                    />
+                    
                     <Pagination 
                         currentPage={pagination?.currentPage || 1}
                         totalPages={pagination?.totalPages || 1}
@@ -119,31 +119,32 @@ const Ventes: React.FC = () => {
                         hasNext={pagination?.hasNext}
                         isLoading={loading}
                     />
+                </div>
+
+                {/* Modals */}
+                <ProductDetailsModal 
+                    isOpen={modals.showProductDetailsModal}
+                    onClose={() => modals.setShowProductDetailsModal(false)}
+                    facture={modals.selectedFacture}
+                    loading={modals.detailsLoading}
+                />
+
+                <ClientNameModal 
+                    isOpen={modals.showClientNameModal}
+                    onClose={() => {
+                        modals.setShowClientNameModal(false);
+                    }}
+                    onConfirm={actions.handleConfirmPrintClientName}
+                    facture={modals.pendingPrintFacture}
+                />
+
+                <TicketPreviewModal
+                    isOpen={modals.showTicketModal}
+                    onClose={() => modals.setShowTicketModal(false)}
+                    ticket={modals.selectedTicket}
+                    settings={settings}
+                />
             </div>
-
-            {/* Modals */}
-            <ProductDetailsModal 
-                isOpen={modals.showProductDetailsModal}
-                onClose={() => modals.setShowProductDetailsModal(false)}
-                facture={modals.selectedFacture}
-                loading={modals.detailsLoading}
-            />
-
-            <ClientNameModal 
-                isOpen={modals.showClientNameModal}
-                onClose={() => {
-                    modals.setShowClientNameModal(false);
-                }}
-                onConfirm={actions.handleConfirmPrintClientName}
-                facture={modals.pendingPrintFacture}
-            />
-
-            <TicketPreviewModal
-                isOpen={modals.showTicketModal}
-                onClose={() => modals.setShowTicketModal(false)}
-                ticket={modals.selectedTicket}
-                settings={settings}
-            />
 
         </div>
     );

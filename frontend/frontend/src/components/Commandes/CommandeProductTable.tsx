@@ -178,8 +178,14 @@ export default function CommandeProductTable({
                                 Suppr.
                             </button>
                             {viewMode === 'EDIT' && selectedCommande?.status === 'PREP' && (
-                                <button type="button" className="btn btn-info btn-xs h-6 min-h-6 px-2 text-[10px]" onClick={openTransferModal}>
-                                    ➡️
+                                <button 
+                                    type="button" 
+                                    className="btn btn-info btn-xs h-6 min-h-6 px-2 text-[10px] flex items-center gap-1" 
+                                    onClick={openTransferModal}
+                                    title={t('orders:actions.transfer_products')}
+                                >
+                                    <span>➡️</span>
+                                    <span className="hidden sm:inline">{t('orders:actions.transfer')}</span>
                                 </button>
                             )}
                         </div>

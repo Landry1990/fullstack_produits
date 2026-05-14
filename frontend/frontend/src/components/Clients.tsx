@@ -350,7 +350,7 @@ export default function Clients() {
   };
 
   return (
-    <div className="flex flex-col lg:flex-row h-full lg:h-[calc(100vh-64px)] bg-base-100">
+    <div className="flex flex-col lg:flex-row h-full lg:h-[calc(100vh-64px)] bg-base-200/60">
       {/* LEFT PANEL */}
       <div className={`w-full lg:w-1/3 border-b lg:border-b-0 lg:border-r border-base-200 flex flex-col bg-base-100/50 ${selectedClient ? 'hidden lg:flex' : 'flex'} h-[calc(100vh-140px)] lg:h-full`}>
         <div className="p-4 border-b border-base-200 space-y-4">
@@ -516,7 +516,7 @@ export default function Clients() {
             <div className="flex-1 overflow-y-auto p-8">
                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                   {/* Info Card */}
-                  <div className="card bg-base-100 border border-base-200 rounded-3xl shadow-sm overflow-hidden">
+                  <div className="card bg-base-100 border border-base-200 rounded-xl shadow-sm overflow-hidden">
                      <div className="p-4 bg-base-50/50 border-b border-base-200 flex items-center gap-2">
                         <div className="p-1.5 bg-primary/10 text-primary rounded-lg"><User className="size-4" /></div>
                         <h3 className="text-[10px] font-black uppercase tracking-widest text-base-content/40">{t('clients:sections.contact')}</h3>
@@ -540,7 +540,7 @@ export default function Clients() {
                   </div>
 
                   {/* Finance/Loyalty Card */}
-                  <div className="card bg-base-100 border border-base-200 rounded-3xl shadow-sm overflow-hidden">
+                  <div className="card bg-base-100 border border-base-200 rounded-xl shadow-sm overflow-hidden">
                      <div className="p-4 bg-base-50/50 border-b border-base-200 flex items-center gap-2">
                         <div className="p-1.5 bg-secondary/10 text-secondary rounded-lg"><ShieldCheck className="size-4" /></div>
                         <h3 className="text-[10px] font-black uppercase tracking-widest text-base-content/40">{t('clients:sections.programs')}</h3>
@@ -617,7 +617,7 @@ export default function Clients() {
 
                   {/* Beneficiaries Table */}
                   {selectedClient.client_type === 'PROFESSIONNEL' && (
-                    <div className="lg:col-span-2 card bg-base-100 border border-base-200 rounded-3xl shadow-sm overflow-hidden">
+                    <div className="lg:col-span-2 card bg-base-100 border border-base-200 rounded-xl shadow-sm overflow-hidden">
                        <div className="p-4 bg-base-50/50 border-b border-base-200 flex items-center gap-2">
                           <Users className="size-4 text-info" />
                           <h3 className="text-[10px] font-black uppercase tracking-widest text-base-content/40">{t('clients:beneficiaries.title')}</h3>

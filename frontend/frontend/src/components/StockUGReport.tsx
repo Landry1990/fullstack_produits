@@ -260,7 +260,7 @@ export default function StockUGReport() {
 
         {/* Global KPIs */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <div className="bg-base-100 rounded-3xl p-6 shadow-sm border border-base-200 flex flex-col justify-center">
+          <div className="bg-base-100 rounded-xl p-6 shadow-sm border border-base-200 flex flex-col justify-center">
             <div className="flex items-center gap-4 mb-2">
               <div className="size-12 rounded-xl bg-base-200 text-base-content/60 flex items-center justify-center">
                  <PackageOpen className="size-6" />
@@ -274,7 +274,7 @@ export default function StockUGReport() {
             </div>
           </div>
           
-          <div className="bg-base-100 rounded-3xl p-6 shadow-sm border border-base-200 flex flex-col justify-center">
+          <div className="bg-base-100 rounded-xl p-6 shadow-sm border border-base-200 flex flex-col justify-center">
             <div className="flex items-center gap-4 mb-2">
               <div className="size-12 rounded-xl bg-emerald-500/10 text-emerald-500 flex items-center justify-center">
                  <PackageOpen className="size-6" />
@@ -288,7 +288,7 @@ export default function StockUGReport() {
             </div>
           </div>
           
-          <div className="bg-base-100 rounded-3xl p-6 shadow-sm border border-base-200 flex flex-col justify-center">
+          <div className="bg-base-100 rounded-xl p-6 shadow-sm border border-base-200 flex flex-col justify-center">
             <div className="flex items-center gap-4 mb-2">
               <div className="size-12 rounded-xl bg-base-200 text-base-content/60 flex items-center justify-center">
                  <Banknote className="size-6" />
@@ -302,7 +302,7 @@ export default function StockUGReport() {
             </div>
           </div>
           
-          <div className="bg-base-100 rounded-3xl p-6 shadow-sm border border-base-200 flex flex-col justify-center ring-1 ring-blue-500/10">
+          <div className="bg-base-100 rounded-xl p-6 shadow-sm border border-base-200 flex flex-col justify-center ring-1 ring-blue-500/10">
             <div className="flex items-center gap-4 mb-2">
               <div className="size-12 rounded-xl bg-blue-500/10 text-blue-500 flex items-center justify-center">
                  <Banknote className="size-6" />
@@ -318,7 +318,7 @@ export default function StockUGReport() {
         </div>
 
         {/* List Card */}
-        <div className="bg-base-100 rounded-3xl shadow-sm border border-base-200 overflow-hidden flex flex-col">
+        <div className="bg-base-100 rounded-xl shadow-sm border border-base-200 overflow-hidden flex flex-col">
           {/* Toolbar */}
           <div className="px-6 py-4 border-b border-base-200 flex flex-col sm:flex-row justify-between items-center gap-4 bg-base-200/50">
             <h2 className="text-lg font-bold text-base-content flex items-center gap-2">

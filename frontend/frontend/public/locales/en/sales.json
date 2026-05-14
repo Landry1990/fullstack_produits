@@ -146,5 +146,26 @@
         "passerby_client": "Walk-in Customer",
         "cancel": "Cancel",
         "print": "Print"
+    },
+    "pos": {
+        "ready_for_sale": "Ready for sale",
+        "scan_or_search": "Scan or search an item",
+        "keyboard_shortcuts": "Keyboard Shortcuts",
+        "navigation_search": "Navigation & Search",
+        "search_product": "Product Search",
+        "focus_search": "Focus Search (if non-input)",
+        "search_client_qty": "Client Search / Focus Quantity",
+        "search_client_direct": "Client Search (direct)",
+        "sales_actions": "Sales Actions",
+        "pay_cash": "Pay / Cash in",
+        "suspend_hold": "Suspend (Hold)",
+        "recall_sale": "Recall Sale on Hold",
+        "zenith_mode": "Zenith Mode (Fullscreen)",
+        "close_cancel": "Close / Cancel",
+        "exit_zenith": "Exit Zenith Mode",
+        "zenith_title": "Zenith Mode (Alt+Z)",
+        "theme_light": "Light Theme",
+        "theme_dark": "Midnight Theme",
+        "keyboard_shortcuts_tip": "Tip: Use arrow keys to navigate search results and Enter to validate."
     }
 }

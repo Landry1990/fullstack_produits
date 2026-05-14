@@ -1,4 +1,4 @@
-import { useState, useEffect, Suspense } from 'react';
+import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import api from '../services/api';
 import { toast } from 'react-hot-toast';
@@ -15,7 +15,7 @@ import {
   Tooltip,
   Legend,
   ResponsiveContainer
-} from './LazyRecharts';
+} from 'recharts';
 
 
 interface VendeurRanking {

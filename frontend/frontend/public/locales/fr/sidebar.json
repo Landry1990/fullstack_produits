@@ -81,6 +81,9 @@
     "user_sessions_sidebar": "Sessions Utilisateurs",
     "aide_formation": "Aide et Formation",
     "audit": "Journal d'Audit",
+    "compta": {
+        "title": "Comptabilité"
+    },
     "statistiques": {
         "title": "Statistiques",
         "rapports": "Centre de Rapports",

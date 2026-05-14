@@ -10,7 +10,8 @@
     "avoirs": "Credits",
     "promis": "Promised",
     "inventaires": "Inventories",
-    "factures": "Sales"
+    "factures": "Sales",
+    "users": "Users"
   },
   "search": "Search in the recycle bin...",
   "empty_state": {
@@ -38,7 +39,8 @@
     "avoir": "Credit",
     "promis": "Promised",
     "inventaire": "Inventory",
-    "facture": "Sale"
+    "facture": "Sale",
+    "user": "User"
   },
   "messages": {
     "fetch_error": "Error loading recycle bin",

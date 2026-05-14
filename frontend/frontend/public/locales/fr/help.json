@@ -72,5 +72,48 @@
         "description": "Une fois ajouté, ajustez les quantités. Le système sépare automatiquement ce que le patient doit payer."
       }
     }
+  },
+  "training": {
+    "title": "Formation",
+    "subtitle": "Tutoriels vidéo PharmaGest",
+    "search_placeholder": "Rechercher un tutoriel...",
+    "categories": {
+      "ventes": "Ventes & Caisse",
+      "stock": "Gestion du Stock",
+      "fournisseurs": "Fournisseurs",
+      "clients": "Clients & Créances",
+      "dashboard": "Tableau de Bord",
+      "parametres": "Paramètres"
+    },
+    "videos": {
+      "v1": "Faire une vente rapide",
+      "v2": "Gérer les modes de paiement",
+      "v3": "Émettre une facture client",
+      "v4": "Réceptionner une commande",
+      "v5": "Faire un inventaire",
+      "v6": "Gérer les péremptions",
+      "v7": "Créer une commande fournisseur",
+      "v8": "Enregistrer un paiement fournisseur",
+      "v9": "Gérer les créances clients",
+      "v10": "Programme de fidélité",
+      "v11": "Lire le rapport flash",
+      "v12": "Analyser les statistiques",
+      "v13": "Configurer la pharmacie",
+      "v14": "Gérer les utilisateurs"
+    },
+    "shortcuts": {
+      "title": "Raccourcis",
+      "f2": "Nouvelle vente",
+      "slash": "Recherche produit",
+      "f4": "Valider ligne",
+      "f9": "Encaisser",
+      "ctrl_s": "Sauvegarder",
+      "alt_z": "Annuler ligne"
+    },
+    "close": "Fermer",
+    "soon": "Bientôt disponible",
+    "no_results": "Aucun tutoriel trouvé",
+    "try_again": "Essayez un autre mot-clé",
+    "videos_count": "vidéo"
   }
 }

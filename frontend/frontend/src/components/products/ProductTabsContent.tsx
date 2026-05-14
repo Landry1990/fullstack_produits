@@ -1,4 +1,4 @@
-import React, { useState, useMemo, Suspense } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   LineChart,
@@ -9,7 +9,7 @@ import {
   Tooltip,
   ResponsiveContainer,
   ReferenceLine,
-} from '../LazyRecharts';
+} from 'recharts';
 import type { ProduitModel, StockLot } from '../../types';
 import { formatCurrency } from '../../utils/formatters';
 import { formatDate } from '../../utils/dateUtils';
@@ -115,7 +115,7 @@ const PriceEvolutionChart = ({ achats, t }: { achats: any[]; t: any }) => {
                     />
                     <Tooltip
                         formatter={(value: number) => [formatCurrency(value), t('products:detail.purchases.price', { defaultValue: 'Prix achat' })]}
-                        labelFormatter={(label: string, payload: any[]) => {
+                        labelFormatter={(label: string, payload: readonly any[]) => {
                             const item = payload?.[0]?.payload;
                             return item ? `${item.fullDate}${item.fournisseur ? ` — ${item.fournisseur}` : ''}` : label;
                         }}
