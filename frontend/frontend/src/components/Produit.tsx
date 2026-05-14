@@ -88,6 +88,7 @@ export default function Produit() {
   } = useProduits({
     search: debouncedSearchQuery,
     page: page,
+    page_size: 50,
     rayon: filterRayon,
     fournisseur: filterFournisseur,
     include_inactive: showInactive,

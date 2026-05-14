@@ -19,10 +19,11 @@ class HistoriqueVentesViewSet(viewsets.ViewSet):
     
     def list(self, request):
         # Get query parameters
+        from ..centralized_configs import PaginationHelper, PaginationDefaults
         date_debut = request.query_params.get('date_debut')
         date_fin = request.query_params.get('date_fin')
-        page = int(request.query_params.get('page', 1))
-        page_size = int(request.query_params.get('page_size', 31))
+        page = PaginationHelper.get_page_number(request)
+        page_size = PaginationHelper.get_page_size(request, PaginationDefaults.DEFAULT_REPORT_PAGE_SIZE)
 
         # Base queryset: only validated or paid invoices (exclude cancelled, brouillon, and proforma)
         # NOTE: L'historique des ventes INCLUT les is_divers (toutes les ventes)

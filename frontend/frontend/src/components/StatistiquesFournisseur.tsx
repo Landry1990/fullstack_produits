@@ -406,9 +406,8 @@ export default function StatistiquesFournisseur() {
                                             cy="50%"
                                             innerRadius={60}
                                             outerRadius={100}
-                                            fill="#8884d8"
                                             paddingAngle={5}
-                                            dataKey="value"
+                                            dataKey="ca"
                                         >
                                             {repartitionAchats?.data.map((_, index) => (
                                                 <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
@@ -437,7 +436,7 @@ export default function StatistiquesFournisseur() {
                                                 </td>
                                                 <td className="font-bold">{entry.nom}</td>
                                                 <td>{entry.pourcentage}%</td>
-                                                 <td>{formatCurrency(Math.round(entry.value), i18n.language === 'fr' ? 'fr-FR' : 'en-GB', t('common:currency'))}</td>
+                                                 <td>{formatCurrency(Math.round(Number(entry.ca)), i18n.language === 'fr' ? 'fr-FR' : 'en-GB', t('common:currency'))}</td>
                                             </tr>
                                         ))}
                                     </tbody>

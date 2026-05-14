@@ -27,8 +27,9 @@ class PromotionPackItemSerializer(serializers.ModelSerializer):
 
 class PromotionSerializer(serializers.ModelSerializer):
     """Serializer pour la gestion des promotions"""
-    products_count = serializers.IntegerField(source='products.count', read_only=True)
-    rayons_count = serializers.IntegerField(source='rayons.count', read_only=True)
+    # OPTIMISATION: Utilise les annotations SQL au lieu de requêtes N+1 (.count)
+    products_count = serializers.IntegerField(read_only=True)  # From annotation
+    rayons_count = serializers.IntegerField(read_only=True)      # From annotation
     discount_type_display = serializers.CharField(source='get_discount_type_display', read_only=True)
     pack_items = PromotionPackItemSerializer(many=True, required=False)
     
@@ -52,8 +53,9 @@ class ConfigurationObjectifsSerializer(serializers.ModelSerializer):
 
 class PromotionSerializer(serializers.ModelSerializer):
     """Serializer pour la gestion des promotions"""
-    products_count = serializers.IntegerField(source='products.count', read_only=True)
-    rayons_count = serializers.IntegerField(source='rayons.count', read_only=True)
+    # OPTIMISATION: Utilise les annotations SQL au lieu de requêtes N+1 (.count)
+    products_count = serializers.IntegerField(read_only=True)  # From annotation
+    rayons_count = serializers.IntegerField(read_only=True)      # From annotation
     discount_type_display = serializers.CharField(source='get_discount_type_display', read_only=True)
     pack_items = PromotionPackItemSerializer(many=True, required=False)
     
@@ -389,8 +391,19 @@ class ProduitSerializer(serializers.ModelSerializer):
     famille_risque_nom = serializers.CharField(source='famille_risque.nom', read_only=True)
     famille_risque_niveau = serializers.CharField(source='famille_risque.niveau_risque', read_only=True)
     stock = serializers.IntegerField(read_only=True)
-    valeur_stock = serializers.SerializerMethodField()
-    next_expiring_date = serializers.SerializerMethodField()
+    # OPTIMISATION: Utilise les annotations SQL au lieu de requêtes N+1
+    valeur_stock = serializers.DecimalField(
+        source='valeur_stock_calc', 
+        max_digits=15, 
+        decimal_places=2, 
+        read_only=True,
+        allow_null=True
+    )
+    next_expiring_date = serializers.DateField(
+        source='next_expiring_calc',
+        read_only=True,
+        allow_null=True
+    )
     stock_lots = serializers.SerializerMethodField()
     active_promotion = serializers.SerializerMethodField()
 
@@ -426,76 +439,45 @@ class ProduitSerializer(serializers.ModelSerializer):
         
         return data
 
-    def get_valeur_stock(self, obj):
-        try:
-            # Calcul de la valeur totale du stock pour ce produit
-            # Si gestion par lot, somme des valeurs des lots
-            if obj.use_lot_management:
-                from django.db.models import F, DecimalField
-                total_value = obj.stock_lots.aggregate(
-                    total=Sum(F('quantity_remaining') * F('price_cost'), output_field=DecimalField())
-                )['total']
-                return total_value if total_value is not None else Decimal('0.00')
-            # Sinon, stock * prix d'achat
-            return obj.stock * obj.cost_price if obj.stock is not None and obj.cost_price is not None else Decimal('0.00')
-        except Exception:
-            return Decimal('0.00')
-
     def get_stock_lots(self, obj):
+        """
+        Retourne les lots actifs. 
+        OPTIMISATION: Utilise le prefetch 'active_lots' si disponible, sinon fallback sur requête.
+        """
         try:
-            if obj.use_lot_management:
-                # Retourne les lots avec stock > 0, triés par date d'expiration
-                return StockLotSerializer(obj.stock_lots.filter(quantity_remaining__gt=0).order_by('date_expiration'), many=True).data
-            return []
+            if not obj.use_lot_management:
+                return []
+            
+            # Si le prefetch a été fait, utiliser l'attribut préchargé
+            if hasattr(obj, 'active_lots'):
+                return StockLotSerializer(obj.active_lots, many=True).data
+            
+            # Fallback: requête seulement si nécessaire (pour les vues sans prefetch)
+            lots = obj.stock_lots.filter(quantity_remaining__gt=0).order_by('date_expiration')
+            return StockLotSerializer(lots, many=True).data
         except Exception:
             return []
-
-    def get_next_expiring_date(self, obj):
-        try:
-            """
-            Retourne la date d'expiration la plus proche :
-            1. Soit celle définie directement sur le produit (si produit simple)
-            2. Soit celle du lot qui expire le plus tôt (si gestion par lot)
-            """
-            # Priorité à la date directe si présente (produit simple) ou gestion hybride
-            direct_date = obj.expire_date
-            
-            # Si gestion par lots, chercher le lot le plus proche ayant du stock
-            # Note: On pourrait aussi regarder TOUS les lots (même stock 0 ?) -> Non, seulement stock dispo pertinent
-            min_lot_date = None
-            if obj.use_lot_management:
-                # On utilise related_name par defaut 'stocklot_set' ou on suppose 'stock_lots' ?
-                # Verifions le model StockLot, il a un FK vers Produit.
-                # L'accès inverse est 'stock_lots' (défini dans models.py).
-                lot = obj.stock_lots.filter(
-                    quantity_remaining__gt=0, 
-                    date_expiration__isnull=False
-                ).order_by('date_expiration').first()
-                
-                if lot:
-                    min_lot_date = lot.date_expiration
-            
-            # Logique de fusion : prendre le plus urgent des deux (ou celui qui existe)
-            if direct_date and min_lot_date:
-                return min(direct_date, min_lot_date)
-            return direct_date or min_lot_date
-        except Exception:
-            return None
 
     def get_active_promotion(self, obj):
+        """
+        Retourne la meilleure promotion active.
+        OPTIMISATION: Vérifie d'abord si les promos sont préchargées.
+        """
         try:
-            """Retourne la meilleure promotion active pour une unité"""
-            # On simule une quantité de 1 pour voir la promo affichable
-            # Mais pour BUY_X_GET_Y, il faut voir la condition.
-            # On va retourner la première promo applicable trouvée, ou celle qui donne le meilleur avantage théorique.
-            # Simplification: on réutilise le service mais avec qty=1 pour voir si une promo existe,
-            # ou mieux, on liste les promos actives liées.
-            
-            # Optimisation: on pourrait précharger ça, mais ici on fait simple pour l'UI
-            # On cherche juste si une promo existe
-            promo = PromotionService.get_active_promotions().filter(
-                Q(products=obj) | Q(rayons=obj.rayon)
-            ).first()
+            # Si les promos sont préchargées via prefetch_related
+            if hasattr(obj, '_prefetched_objects_cache') and 'promotions' in obj._prefetched_objects_cache:
+                from datetime import date
+                today = date.today()
+                active_promos = [
+                    p for p in obj.promotions.all() 
+                    if p.is_active and p.start_date <= today and (p.end_date is None or p.end_date >= today)
+                ]
+                promo = active_promos[0] if active_promos else None
+            else:
+                # Fallback: requête optimisée
+                promo = PromotionService.get_active_promotions().filter(
+                    Q(products=obj) | Q(rayons=obj.rayon)
+                ).select_related().first()
             
             if promo:
                 return {

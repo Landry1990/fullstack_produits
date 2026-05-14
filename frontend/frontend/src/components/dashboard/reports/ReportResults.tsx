@@ -118,12 +118,28 @@ export const ReportResults: React.FC<ReportResultsProps> = ({
             const isMargesReport = selectedQuery.id === 'detail_marges_lots';
             const isMultiYearCAReport = selectedQuery.id === 'rapport_ca_multi_annuel';
 
-            // Pour le rapport CA multi-annuel, exclure la ligne total_general car le footer calcule déjà les totaux
-            const filteredResults = isMultiYearCAReport 
-                ? results.filter((r: any) => r.Mois !== 'total_general')
+            // Filtrer les lignes TOTAL du backend pour éviter le double total (backend + frontend footer)
+            // Certains rapports retournent déjà une ligne total qu'il ne faut pas compter dans le calcul frontend
+            const isTotalRow = (r: any): boolean => {
+                if (!r || typeof r !== 'object') return false;
+                // Déjà géré pour le rapport multi-annuel
+                if (isMultiYearCAReport && r.Mois === 'total_general') return true;
+                // Détecter les lignes TOTAL (case insensitive) dans n'importe quelle colonne string
+                return Object.values(r).some(val => 
+                    typeof val === 'string' && val.toUpperCase() === 'TOTAL'
+                );
+            };
+            
+            // S'assurer que results est bien un tableau avant de filtrer
+            const filteredResults = Array.isArray(results) 
+                ? results.filter((r: any) => !isTotalRow(r))
                 : results;
 
-            const rawColumns = Object.keys(results[0]).filter(k => !k.startsWith('_') && k !== 'id');
+            // Utiliser filteredResults (et non results) pour obtenir les colonnes
+            const dataForColumns = filteredResults.length > 0 ? filteredResults : results;
+            const rawColumns = dataForColumns.length > 0 
+                ? Object.keys(dataForColumns[0]).filter(k => !k.startsWith('_') && k !== 'id')
+                : [];
             const columns = selectedQuery.columns 
                 ? selectedQuery.columns.filter(col => rawColumns.includes(col))
                 : rawColumns;
@@ -255,7 +271,7 @@ export const ReportResults: React.FC<ReportResultsProps> = ({
                     </div>
                     {!isMargesReport && filteredResults.length > 100 && !pagination && (
                         <div className="p-4 bg-base-50 text-center text-[10px] font-black uppercase text-base-content/30 tracking-[0.2em] border-t border-base-200">
-                            {t('results.limited_display', 'Affichage limité aux 100 premiers résultats sur {{total}}', { total: results.length })}
+                            {t('results.limited_display', 'Affichage limité aux 100 premiers résultats sur {{total}}', { total: Array.isArray(results) ? results.length : 0 })}
                         </div>
                     )}
                 </div>

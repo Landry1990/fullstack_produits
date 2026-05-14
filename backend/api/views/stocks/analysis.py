@@ -171,11 +171,8 @@ class StockAnalysisUnsoldView(APIView):
         except ValueError:
             page = 1
             
-        try:
-            page_size = int(request.query_params.get('page_size', 50))
-            if page_size < 1: page_size = 50
-        except ValueError:
-            page_size = 50
+        from ...centralized_configs import PaginationHelper, PaginationDefaults
+        page_size = PaginationHelper.get_page_size(request, PaginationDefaults.DEFAULT_ANALYSIS_PAGE_SIZE)
         
         today = timezone.now()
         cutoff_date = (today - timedelta(days=days_threshold)).date()

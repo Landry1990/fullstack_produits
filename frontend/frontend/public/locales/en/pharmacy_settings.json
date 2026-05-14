@@ -13,6 +13,13 @@
         "orders": "Order Configuration",
         "whatsapp": "WhatsApp Business API"
     },
+    "tabs": {
+        "general": "General",
+        "printing": "Printing",
+        "stocks": "Stocks & Orders",
+        "tva": "Taxes (VAT)",
+        "notifications": "Notifications"
+    },
     "labels": {
         "pharmacy_name": "Pharmacy Name",
         "niu": "Unique Identification Number (NIU)",

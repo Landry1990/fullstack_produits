@@ -1,7 +1,6 @@
 from rest_framework import viewsets, status, filters
 from rest_framework.decorators import action
 from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated
 from django.db import transaction
 from django.db.models import Sum, Q, Value, DecimalField, Count, F
 from django.db.models.functions import Coalesce, Abs
@@ -20,12 +19,16 @@ from ...models import (
 from ...serializers import CaisseSerializer, ClotureCaisseSerializer, MouvementCaisseSerializer
 from ...audit_helpers import log_audit
 from ...sudo_utils import validate_sudo_mode
-from ...pagination import StandardResultsSetPagination
+from ...centralized_configs import (
+    BaseViewSetConfig,
+    CommonFilterFields,
+    StandardResultsSetPagination
+)
 
 logger = logging.getLogger(__name__)
 
 
-class CaisseViewSet(viewsets.ModelViewSet):
+class CaisseViewSet(BaseViewSetConfig, viewsets.ModelViewSet):
     """API endpoint for caisse (paiements)."""
     queryset = Caisse.objects.select_related(
         'facture', 'facture__client', 'user', 
@@ -34,8 +37,6 @@ class CaisseViewSet(viewsets.ModelViewSet):
     serializer_class = CaisseSerializer
     filter_backends = (DjangoFilterBackend,)
     filterset_fields = ['facture', 'mode_paiement', 'statut', 'user']
-    permission_classes = [IsAuthenticated]
-    pagination_class = StandardResultsSetPagination
 
     def get_queryset(self):
         queryset = super().get_queryset()
@@ -177,9 +178,9 @@ class CaisseViewSet(viewsets.ModelViewSet):
         )['ca'] or Decimal('0.00')
         
         # Pagination avec DRF (headers + metadata)
-        from ...pagination import StandardResultsSetPagination
+        from ...centralized_configs import PaginationHelper, PaginationDefaults, StandardResultsSetPagination
         paginator = StandardResultsSetPagination()
-        paginator.page_size = int(request.query_params.get('page_size', 50))
+        paginator.page_size = PaginationHelper.get_page_size(request, PaginationDefaults.DEFAULT_LIST_PAGE_SIZE)
         
         page_qs = paginator.paginate_queryset(queryset, request, view=self)
         
@@ -269,13 +270,26 @@ class CaisseViewSet(viewsets.ModelViewSet):
         # Filtre pour exclure le recouvrement et le dépôt (déjà compté en ENTREE)
         recouvrement_q = Q(mode_paiement='recouvrement') | Q(reference__icontains='[RECOUV]')
         paiements_sales = transactions.exclude(recouvrement_q).exclude(mode_paiement__in=['en_compte', 'depot'])
-
-        total_ventes = paiements_sales.aggregate(Sum('montant'))['montant__sum'] or Decimal('0.00')
-        total_ventes_especes = paiements_sales.filter(mode_paiement='especes').aggregate(Sum('montant'))['montant__sum'] or Decimal('0.00')
-
         paiements_recouv = transactions.filter(recouvrement_q)
-        total_recouvrement = paiements_recouv.aggregate(Sum('montant'))['montant__sum'] or Decimal('0.00')
-        total_recouv_especes = paiements_recouv.filter(mode_paiement='especes').aggregate(Sum('montant'))['montant__sum'] or Decimal('0.00')
+
+        # OPTIMISATION: Regroupe les aggregates en une seule requête par type
+        # 1. Totaux des ventes (tous modes + espèces + coupons) en UNE requête
+        ventes_aggregated = paiements_sales.aggregate(
+            total=Coalesce(Sum('montant'), Value(0, output_field=DecimalField())),
+            especes=Coalesce(Sum('montant', filter=Q(mode_paiement='especes')), Value(0, output_field=DecimalField())),
+            coupons=-Coalesce(Sum('montant', filter=Q(mode_paiement='coupon')), Value(0, output_field=DecimalField()))
+        )
+        total_ventes = ventes_aggregated['total']
+        total_ventes_especes = ventes_aggregated['especes']
+        total_coupons = ventes_aggregated['coupons']
+
+        # 2. Totaux des recouvrements en UNE requête
+        recouv_aggregated = paiements_recouv.aggregate(
+            total=Coalesce(Sum('montant'), Value(0, output_field=DecimalField())),
+            especes=Coalesce(Sum('montant', filter=Q(mode_paiement='especes')), Value(0, output_field=DecimalField()))
+        )
+        total_recouvrement = recouv_aggregated['total']
+        total_recouv_especes = recouv_aggregated['especes']
 
         # Global breakdown par mode (Ventes + Recouvrements)
         # On exclut ce qui n'est pas un flux financier réel (en_compte, depot)
@@ -297,14 +311,13 @@ class CaisseViewSet(viewsets.ModelViewSet):
         if user_id:
             mouvements = mouvements.filter(user_id=user_id)
             
+        # OPTIMISATION: Déjà optimisé avec un seul aggregate
         moves_aggregated = mouvements.aggregate(
             entrees=Coalesce(Sum('montant', filter=Q(type='ENTREE')), Value(0, output_field=DecimalField())),
             sorties=Coalesce(Sum('montant', filter=Q(type='SORTIE')), Value(0, output_field=DecimalField()))
         )
         total_entrees = moves_aggregated['entrees']
         total_sorties = moves_aggregated['sorties']
-        
-        total_coupons = -(transactions.filter(mode_paiement='coupon').aggregate(Sum('montant'))['montant__sum'] or Decimal('0.00'))
         
         # FIX: Le total théorique (fond de caisse physique) doit inclure 
         # les ventes espèces ET les recouvrements espèces.
@@ -584,10 +597,8 @@ class CaisseViewSet(viewsets.ModelViewSet):
         return Response({'status': 'success', 'cloture_id': cloture.pk, 'montant_reel': float(montant_reel), 'montant_theorique': float(total_theorique), 'ecart': float(ecart), 'total_ventes': float(total_ventes), 'total_entrees': float(total_entrees), 'total_sorties': float(total_sorties), 'details': details})  # type: ignore[attr-defined]
 
 
-class ClotureCaisseViewSet(viewsets.ReadOnlyModelViewSet):
+class ClotureCaisseViewSet(BaseViewSetConfig, viewsets.ReadOnlyModelViewSet):
     serializer_class = ClotureCaisseSerializer
-    permission_classes = [IsAuthenticated]
-    pagination_class = StandardResultsSetPagination
     
     def get_queryset(self):
         queryset = ClotureCaisse.objects.select_related('user').order_by('-date')
@@ -610,9 +621,10 @@ class ClotureCaisseViewSet(viewsets.ReadOnlyModelViewSet):
         return queryset
 
     def list(self, request, *args, **kwargs):
+        from ...centralized_configs import PaginationHelper, PaginationDefaults
         queryset = self.get_queryset()
-        page = int(request.query_params.get('page', 1))
-        page_size = int(request.query_params.get('page_size', 31))
+        page = PaginationHelper.get_page_number(request)
+        page_size = PaginationHelper.get_page_size(request, PaginationDefaults.DEFAULT_REPORT_PAGE_SIZE)
         total_count = queryset.count()
         
         totals_agg = queryset.aggregate(total_theorique=Sum('montant_theorique'), total_reel=Sum('montant_reel'), total_ecart=Sum('ecart_caisse'))

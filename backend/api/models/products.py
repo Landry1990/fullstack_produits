@@ -6,6 +6,10 @@ from django.db import models
 from django.contrib.postgres.indexes import GinIndex  # Recherche textuelle performante
 from django.utils import timezone
 from decimal import Decimal
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from .stock import StockLot, StockAdjustment, MouvementStock
 
 
 class Rayon(models.Model):
@@ -109,6 +113,12 @@ class DrugInteraction(models.Model):
 class Produit(models.Model):
     """Model representing a product."""
     id = models.AutoField(primary_key=True)
+    
+    # Reverse relationships (defined in other models)
+    if TYPE_CHECKING:
+        stock_lots: models.Manager[StockLot]
+        adjustments: models.Manager[StockAdjustment]
+        mouvements_stock: models.Manager[MouvementStock]
     rayon = models.ForeignKey('Rayon', on_delete=models.SET_NULL, null=True, blank=True)
     fournisseur = models.ForeignKey('Fournisseur', on_delete=models.SET_NULL, null=True, blank=True)
     is_supplier_exclusive = models.BooleanField(
@@ -237,6 +247,12 @@ class Produit(models.Model):
         default=30,
         help_text="Durée par défaut du traitement en jours (utilisé pour les rappels)"
     )
+
+    # Relations définies dans d'autres modèles (pour aide IDE)
+    # StockLot.produit avec related_name='stock_lots'
+    # StockAdjustment.produit avec related_name='adjustments'
+    # MouvementStock.produit avec related_name='mouvements_stock'
+    # RuptureFournisseur.produit avec related_name='ruptures_fournisseurs'
 
 
     @property

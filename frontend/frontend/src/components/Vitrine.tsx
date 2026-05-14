@@ -1,4 +1,4 @@
-﻿import { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '../services/api';
@@ -78,7 +78,7 @@ function GestionVitrine({ products, isLoading, searchTerm, setSearchTerm, showPu
 
             {/* Bulk Actions Bar */}
             {selectedIds.size > 0 && (
-                <div className="alert bg-base-100 shadow-lg border-l-4 border-primary flex flex-col sm:flex-row justify-between items-center gap-4 animate-in slide-in-from-top-2">
+                <div className="alert bg-base-100 shadow-xl border-l-2 border-primary flex flex-col sm:flex-row justify-between items-center gap-4 animate-in slide-in-from-top-2 ring-1 ring-primary/5">
                     <div className="flex items-center gap-2">
                         <CheckCircle className="size-5 text-primary" />
                         <span className="font-semibold">{t('gestion.selected_count', { count: selectedIds.size })}</span>
@@ -325,8 +325,8 @@ function SimulateurClient() {
 
             {/* Colonne "Panier" / Disponibilité */}
             <div className="lg:col-span-1 order-2 lg:order-none">
-                <div className="card bg-base-100 shadow-xl h-full border-t-4 border-primary sticky top-4 lg:static">
-                    <div className="card-body p-4 lg:p-8">
+                <div className="card bg-base-100 shadow-xl h-full ring-1 ring-primary/5 sticky top-4 lg:static overflow-hidden">
+                    <div className="bg-primary/5 p-4 border-b border-primary/10">
                         <h2 className="card-title flex justify-between">
                             <span>{t('simulateur.my_list')}</span>
                             <div className="indicator">
@@ -334,6 +334,8 @@ function SimulateurClient() {
                                 <ShoppingCart className="size-6" />
                             </div>
                         </h2>
+                    </div>
+                    <div className="card-body p-4 lg:p-6 bg-base-100">
                         
                         <div className="divider my-2"></div>
 
