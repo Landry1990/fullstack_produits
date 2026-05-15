@@ -72,7 +72,7 @@ export function useCommandesState(forcedType?: 'LOC' | 'DIR' | 'DIV') {
       };
       fetchAndShow();
     }
-  }, [location.state, navigate, location.pathname, t]);
+  }, [location.state, navigate, t]);
 
   const tauxChange = useCommandesStore((s) => s.tauxChange);
   const setTauxChange = useCommandesStore((s) => s.setTauxChange);
@@ -508,45 +508,46 @@ export function useCommandesState(forcedType?: 'LOC' | 'DIR' | 'DIV') {
       
       const loadProducts = async () => {
         if (!Array.isArray(data.products) || data.products.length === 0) return;
-        
-        const newLines: CommandeProduit[] = []; 
-        for (const p of data.products) {
-          try {
-            const fullProduct = await produitService.getById(p.id);
-            const avgSales = (p as any).avg_daily_sales;
-            const coverageDays = 30;
-            const suggestedQty = avgSales && avgSales > 0
-              ? Math.max(1, Math.ceil(avgSales * coverageDays) - (fullProduct.stock || 0))
-              : Math.max(1, (fullProduct.stock_minimum || 10) - (fullProduct.stock || 0));
-            
-            newLines.push({
-              id: Date.now() + p.id, 
-              produit: fullProduct,
-              quantity: suggestedQty,
-              unites_gratuites: 0,
-              price: fullProduct.cost_price || '0',
-              tva: fullProduct.tva || '0',
-              marge: fullProduct.taux_marge || '1.3',
-              selling_price: fullProduct.selling_price || '0',
-              lot: '',
-              date_expiration: '',
-            });
-          } catch (err) {
-            console.error(`Failed to fetch product ${p.id}:`, err);
-            newLines.push({
-              id: Date.now() + p.id,
-              produit: { id: p.id, name: p.name, stock: p.stock } as any,
-              quantity: 10,
-              unites_gratuites: 0,
-              price: '0',
-              tva: '0',
-              marge: '1.3',
-              selling_price: '0',
-              lot: '',
-              date_expiration: '',
-            });
-          }
-        }
+
+        const newLines = await Promise.all(
+          data.products.map(async (p: { id: number; name: string; stock: number; avg_daily_sales?: number }) => {
+            try {
+              const fullProduct = await produitService.getById(p.id);
+              const avgSales = (p as any).avg_daily_sales;
+              const coverageDays = 30;
+              const suggestedQty = avgSales && avgSales > 0
+                ? Math.max(1, Math.ceil(avgSales * coverageDays) - (fullProduct.stock || 0))
+                : Math.max(1, (fullProduct.stock_minimum || 10) - (fullProduct.stock || 0));
+
+              return {
+                id: Date.now() + p.id,
+                produit: fullProduct,
+                quantity: suggestedQty,
+                unites_gratuites: 0,
+                price: fullProduct.cost_price || '0',
+                tva: fullProduct.tva || '0',
+                marge: fullProduct.taux_marge || '1.3',
+                selling_price: fullProduct.selling_price || '0',
+                lot: '',
+                date_expiration: '',
+              };
+            } catch (err) {
+              console.error(`Failed to fetch product ${p.id}:`, err);
+              return {
+                id: Date.now() + p.id,
+                produit: { id: p.id, name: p.name, stock: p.stock } as any,
+                quantity: 10,
+                unites_gratuites: 0,
+                price: '0',
+                tva: '0',
+                marge: '1.3',
+                selling_price: '0',
+                lot: '',
+                date_expiration: '',
+              };
+            }
+          })
+        );
         setCommandeProduits(newLines);
 
         // Pré-sélectionner le fournisseur du premier produit qui en a un

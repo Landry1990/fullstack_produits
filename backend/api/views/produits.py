@@ -1,4 +1,6 @@
 from rest_framework import viewsets, filters
+from rest_framework.decorators import action
+from rest_framework.response import Response
 from django.db.models import Count, OuterRef, Subquery, IntegerField, CharField, Q, F, Sum, DecimalField, Min
 from django.db.models.functions import Coalesce
 from django.db.models import Prefetch
@@ -146,6 +148,15 @@ class ProduitViewSet(
         if rayon_id is not None:
              queryset = queryset.filter(rayon_id=rayon_id)
 
+        # Filtrage par DCI / Substance
+        substance_id = self.request.query_params.get('substances')
+        if substance_id:
+            queryset = queryset.filter(Q(substances__id=substance_id) | Q(dci_reference_id=substance_id)).distinct()
+
+        dci_id = self.request.query_params.get('dci_reference')
+        if dci_id:
+            queryset = queryset.filter(dci_reference_id=dci_id)
+
         fournisseur_id = self.request.query_params.get('fournisseur')
         if fournisseur_id is not None:
              queryset = queryset.filter(fournisseur_id=fournisseur_id)
@@ -186,3 +197,55 @@ class ProduitViewSet(
             instance.name = f"{instance.name}{suffix}"
         instance.save(update_fields=['is_active', 'name'])
         SearchCache.invalidate_all_products()
+
+    @action(detail=True, methods=['get'])
+    def substituts(self, request, pk=None):
+        """
+        Retourne les produits substituables : partage au moins une substance,
+        stock > 0, actif. Utilise toutes les substances liées (M2M), pas seulement dci_reference.
+        """
+        from django.db.models import Q
+        from ..serializers_optimized import ProduitListSerializer
+
+        produit = self.get_object()
+        substances = list(produit.substances.all())
+
+        if not substances:
+            dci = produit.dci_reference
+            if not dci:
+                return Response({'substituts': [], 'dci': None, 'message': 'Aucune DCI définie pour ce produit.'})
+            substances = [dci]
+
+        substance_ids = [s.id for s in substances]
+        qs = Produit.objects.filter(
+            Q(substances__id__in=substance_ids) | Q(dci_reference_id__in=substance_ids),
+            is_active=True,
+            stock__gt=0
+        ).exclude(pk=produit.pk).select_related('rayon', 'fournisseur', 'forme').distinct().order_by('selling_price')
+
+        serializer = ProduitListSerializer(qs, many=True, context={'request': request})
+
+        # DCI affichée : la substance avec le plus de produits liés (plus pertinente cliniquement)
+        # ou le dci_reference s'il existe
+        primary_dci = produit.dci_reference
+        if primary_dci and primary_dci.id in substance_ids:
+            dci_name = primary_dci.nom
+        else:
+            dci_name = substances[0].nom if substances else None
+
+        return Response({
+            'substituts': serializer.data,
+            'dci': dci_name,
+            'dcis': [s.nom for s in substances],
+            'count': qs.count()
+        })
+
+    @action(detail=False, methods=['get'])
+    def sans_dci(self, request):
+        """
+        Retourne les produits actifs sans DCI de référence (pour maintenance).
+        """
+        from ..serializers_optimized import ProduitListSerializer
+        qs = Produit.objects.filter(dci_reference__isnull=True, is_active=True).order_by('name')[:50]
+        serializer = ProduitListSerializer(qs, many=True, context={'request': request})
+        return Response({'produits': serializer.data, 'count': qs.count()})

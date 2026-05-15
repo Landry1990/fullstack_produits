@@ -72,8 +72,12 @@ class Substance(models.Model):
     """
     nom = models.CharField(max_length=255, unique=True)
     code_cas = models.CharField(
-        max_length=50, blank=True, null=True, 
+        max_length=50, blank=True, null=True,
         help_text="Code CAS pour identification unique"
+    )
+    contre_indications = models.TextField(
+        blank=True, null=True,
+        help_text="Contre-indications et avertissements (source OpenFDA)"
     )
 
     def __str__(self):
@@ -81,6 +85,29 @@ class Substance(models.Model):
 
     class Meta:
         ordering = ['nom']
+
+
+class MedicamentReference(models.Model):
+    """
+    Table de référence unifiée des médicaments (Base ANSM).
+    Contient le code CIS, le nom nettoyé, la forme et les substances actives.
+    Utilisée pour l'aide à la saisie et les suggestions de substitution.
+    """
+    cis = models.CharField(max_length=20, primary_key=True, verbose_name="Code CIS")
+    nom = models.CharField(max_length=500, db_index=True)
+    forme = models.CharField(max_length=255, blank=True, null=True)
+    substances = models.TextField(blank=True, null=True, help_text="Liste des substances actives séparées par des points-virgules")
+
+    def __str__(self):
+        return f"{self.cis} - {self.nom}"
+
+    class Meta:
+        verbose_name = "Référence Médicament"
+        verbose_name_plural = "Références Médicaments"
+        ordering = ['nom']
+        indexes = [
+            GinIndex(fields=['nom'], name='med_ref_nom_trgm_idx', opclasses=['gin_trgm_ops']),
+        ]
 
 
 class DrugInteraction(models.Model):
@@ -178,6 +205,20 @@ class Produit(models.Model):
     substances = models.ManyToManyField(
         Substance, blank=True, related_name='produits', 
         help_text="Substances actives structurées pour les interactions"
+    )
+    dci_reference = models.ForeignKey(
+        Substance, on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='produits_generiques',
+        help_text="DCI de référence pour la substitution générique (ex: Paracétamol)"
+    )
+    is_generic = models.BooleanField(
+        default=False,
+        help_text="Ce produit est un générique (prix généralement plus bas)"
+    )
+    produit_reference = models.ForeignKey(
+        'self', on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='generiques',
+        help_text="Produit de marque/origine de référence (si ce produit est un générique)"
     )
     
     # Ordonnancier - Champs pour identifier les médicaments soumis à ordonnance

@@ -14,6 +14,7 @@ from .models import (
     Promotion, PromotionPackItem, ObjectifCommercial, ConfigurationObjectifs, TVA,
     WhatsAppLog, TelegramLog, RuptureFournisseur, DepotClient, InternalMessage, MessageTemplate,
     ReapproSession, PosteCaisse, OrderSchedule,
+    Substance, MedicamentReference,
     CompteComptable, JournalComptable, EcritureComptable, LigneEcriture, ExerciceComptable
 )
 from .services import PromotionService
@@ -253,6 +254,18 @@ class UserSerializer(serializers.ModelSerializer):
             
         return instance
 
+
+class SubstanceSerializer(serializers.ModelSerializer):
+    produits_count = serializers.IntegerField(read_only=True)
+    class Meta:
+        model = Substance
+        fields = ['id', 'nom', 'code_cas', 'produits_count', 'contre_indications']
+
+class MedicamentReferenceSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = MedicamentReference
+        fields = ['cis', 'nom', 'forme', 'substances']
+
 class RayonSerializer(serializers.ModelSerializer):
     parent_name = serializers.CharField(source='parent.name', read_only=True)
 
@@ -406,6 +419,10 @@ class ProduitSerializer(serializers.ModelSerializer):
     )
     stock_lots = serializers.SerializerMethodField()
     active_promotion = serializers.SerializerMethodField()
+    # DCI / Clinique
+    dci_reference_nom = serializers.CharField(source='dci_reference.nom', read_only=True)
+    produit_reference_name = serializers.CharField(source='produit_reference.name', read_only=True)
+    substances_ids = serializers.PrimaryKeyRelatedField(source='substances', many=True, read_only=True)
 
     class Meta:
         model = Produit
@@ -421,7 +438,11 @@ class ProduitSerializer(serializers.ModelSerializer):
             'taux_marge', 'pourcentage_marge', 'is_supplier_exclusive',
             'active_promotion', 'is_chronic', 'default_treatment_days',
             'stock_reserve', 'has_reserve_storage', 'capacite_rayon', 'min_rayon',
-            'stock_minimum', 'stock_maximum', 'is_active', 'blocking_alerte'
+            'stock_minimum', 'stock_maximum', 'is_active', 'blocking_alerte',
+            # DCI / Clinique
+            'substances', 'substances_ids', 'dci_reference', 'dci_reference_nom',
+            'produit_reference', 'produit_reference_name', 'is_generic',
+            'code_atc', 'substance_active'
         ]
         read_only_fields = ['created_at', 'updated_at', 'taux_marge', 'pourcentage_marge', 'total_stock']
 

@@ -13,10 +13,11 @@ interface UseCartOptions {
     apiBaseUrl?: string
     onRequirePrescription?: () => void
     onAlert?: (msg: string, title: string, type: 'product' | 'client', is_blocking: boolean, targetId?: number) => void
+    onSubstitution?: (produit: ProduitModel) => void
     quantityInputsRef?: React.MutableRefObject<Map<number, HTMLInputElement>>
 }
 
-export function useCart({ onRequirePrescription, onAlert, quantityInputsRef }: UseCartOptions = {}) {
+export function useCart({ onRequirePrescription, onAlert, onSubstitution, quantityInputsRef }: UseCartOptions = {}) {
     const { user } = useAuth()
     
     // Logic keys (prefixed with user ID for multi-user safety)
@@ -59,6 +60,13 @@ export function useCart({ onRequirePrescription, onAlert, quantityInputsRef }: U
         setLoading(true)
         try {
             const { data: fullProduit } = await api.get<ProduitModel>(`produits/${produit.id}/`)
+
+            // SUBSTITUTION CHECK: if product is out of stock, trigger substitution modal
+            if (fullProduit.stock <= 0 && onSubstitution) {
+                setLoading(false)
+                onSubstitution(fullProduit)
+                return
+            }
 
             setLignesFacture(prevLignes => {
                 // REDUNDANCY / INTERACTION CHECK
