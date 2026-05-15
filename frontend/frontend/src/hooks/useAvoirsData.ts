@@ -244,7 +244,7 @@ export function useAvoirsData(): UseAvoirsDataReturn {
 
             window.history.replaceState({}, document.title);
         }
-    }, [location.state]);
+    }, []);
 
     const handleEdit = (avoir: Avoir) => {
         setEditingAvoirId(avoir.id);

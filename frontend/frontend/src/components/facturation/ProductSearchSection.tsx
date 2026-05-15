@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { formatCurrency } from '../../utils/formatters'
 import type { ProduitModel } from '../../types'
 import { useSearchNavigation } from '../../hooks/useSearchNavigation'
-import { Package, Pill } from 'lucide-react'
+import { Package, Pill, FlaskConical } from 'lucide-react'
 import { toast } from 'react-hot-toast'
 import api from '../../services/api'
 
@@ -33,9 +33,14 @@ const ProductSearchSection = React.memo(({
   onCsvImport
 }: ProductSearchSectionProps) => {
   const { t } = useTranslation(['facturation', 'common'])
-  const [searchMode, setSearchMode] = useState<'products' | 'packs'>('products')
+  const [searchMode, setSearchMode] = useState<'products' | 'packs' | 'dci'>('products')
   const [packResults, setPackResults] = useState<any[]>([])
   const [packLoading, setPackLoading] = useState(false)
+  const [dciResults, setDciResults] = useState<any[]>([])
+  const [dciLoading, setDciLoading] = useState(false)
+  const [selectedDci, setSelectedDci] = useState<any | null>(null)
+  const [dciProducts, setDciProducts] = useState<ProduitModel[]>([])
+  const [dciProductsLoading, setDciProductsLoading] = useState(false)
 
   // Wrapper that clears search after adding product
   const handleAddProduit = (produit: ProduitModel) => {
@@ -53,9 +58,20 @@ const ProductSearchSection = React.memo(({
 
   // Hook for keyboard navigation (ArrowUp, ArrowDown, Enter)
   // We switch the list based on searchMode
+  const navList =
+    searchMode === 'products' ? filteredProduits :
+    searchMode === 'packs' ? packResults :
+    selectedDci ? dciProducts : dciResults;
+
+  const navAction =
+    searchMode === 'products' ? handleAddProduit :
+    searchMode === 'packs' ? handleAddPack :
+    selectedDci ? handleAddProduit :
+    (dci: any) => { setSelectedDci(dci); setSearchQuery(''); fetchDciProducts(dci.id); };
+
   const { getItemProps, handleKeyDown: handleNavKeyDown } = useSearchNavigation(
-    searchMode === 'products' ? filteredProduits : packResults,
-    searchMode === 'products' ? handleAddProduit : handleAddPack, 
+    navList as any[],
+    navAction as any,
     { resetOnSelect: true, searchInputRef }
   )
 
@@ -86,11 +102,51 @@ const ProductSearchSection = React.memo(({
       }
   }
 
-  // Custom debounce logic for packs
+  const searchDci = async (query: string) => {
+      if (query.length < 2) {
+          setDciResults([])
+          return
+      }
+      setDciLoading(true)
+      try {
+          const response = await api.get('substances/', {
+              params: { search: query, page_size: 50 }
+          });
+          const data = response.data;
+          setDciResults(Array.isArray(data) ? data : data.results || []);
+      } catch (e) {
+          console.error("DCI search error", e)
+      } finally {
+          setDciLoading(false)
+      }
+  }
+
+  const fetchDciProducts = async (substanceId: number) => {
+      setDciProductsLoading(true)
+      try {
+          const response = await api.get('produits/', {
+              params: { substances: substanceId, page_size: 100 }
+          });
+          const data = response.data;
+          setDciProducts(Array.isArray(data) ? data : data.results || []);
+      } catch (e) {
+          console.error("DCI products error", e)
+      } finally {
+          setDciProductsLoading(false)
+      }
+  }
+
+  // Custom debounce logic for packs and dci
   React.useEffect(() => {
     if (searchMode === 'packs') {
         const timer = setTimeout(() => {
             if (searchQuery) searchPacks(searchQuery)
+        }, 300)
+        return () => clearTimeout(timer)
+    }
+    if (searchMode === 'dci') {
+        const timer = setTimeout(() => {
+            if (searchQuery) searchDci(searchQuery)
         }, 300)
         return () => clearTimeout(timer)
     }
@@ -115,7 +171,7 @@ const ProductSearchSection = React.memo(({
     <div className="flex-1 relative flex flex-col gap-2 p-3 md:p-4">
       <div className="flex justify-between items-center">
             <label className="label text-xs font-bold text-base-content/50 uppercase tracking-wider py-0">
-                {searchMode === 'products' ? t('facturation:search.label') : t('facturation:search.label_pack')}
+                {searchMode === 'products' ? t('facturation:search.label') : searchMode === 'packs' ? t('facturation:search.label_pack') : t('facturation:search.label_dci')}
             </label>
             
             {/* Tabs */}
@@ -131,6 +187,12 @@ const ProductSearchSection = React.memo(({
                     onClick={() => { setSearchMode('packs'); setSearchQuery(''); searchInputRef.current?.focus() }}
                 >
                     <Package size={14} /> {t('facturation:search.tabs_packs')}
+                </button>
+                <button 
+                    className={`px-3 py-1 text-xs font-bold rounded-md flex items-center gap-1 transition-all ${searchMode === 'dci' ? 'bg-base-100 shadow text-accent' : 'text-base-content/60 hover:text-base-content/90'}`}
+                    onClick={() => { setSearchMode('dci'); setSearchQuery(''); setSelectedDci(null); setDciProducts([]); searchInputRef.current?.focus() }}
+                >
+                    <FlaskConical size={14} /> {t('facturation:search.tabs_dci')}
                 </button>
                 
                 {/* File Upload for CSV */}
@@ -167,17 +229,25 @@ const ProductSearchSection = React.memo(({
         <input
           ref={searchInputRef}
           type="text"
-          placeholder={searchMode === 'products' ? (placeholder || t('facturation:search.placeholder')) : t('facturation:search.placeholder_pack')}
+          placeholder={
+            searchMode === 'products' ? (placeholder || t('facturation:search.placeholder')) :
+            searchMode === 'packs' ? t('facturation:search.placeholder_pack') :
+            t('facturation:search.placeholder_dci')
+          }
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           onKeyDown={onInternalKeyDown}
-          className={`input input-bordered w-full pl-12 text-lg h-14 bg-base-50 focus:bg-base-100 transition-colors focus:ring-2 ${searchMode === 'products' ? 'focus:ring-primary/20' : 'focus:ring-secondary/20'}`}
+          className={`input input-bordered w-full pl-12 text-lg h-14 bg-base-50 focus:bg-base-100 transition-colors focus:ring-2 ${
+            searchMode === 'products' ? 'focus:ring-primary/20' :
+            searchMode === 'packs' ? 'focus:ring-secondary/20' :
+            'focus:ring-accent/20'
+          }`}
         />
         <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 absolute left-4 top-1/2 -translate-y-1/2 text-base-content/40" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
       </div>
       
       {/* Search Results Dropdown */}
-      {searchQuery && (
+      {(searchQuery || selectedDci) && (
         <div className="absolute left-0 right-0 top-full mt-2 bg-base-100 rounded-xl shadow-xl border border-base-200 max-h-[60vh] overflow-y-auto z-50">
           
           {/* PRODUCT MODE */}
@@ -268,6 +338,107 @@ const ProductSearchSection = React.memo(({
                     )
                 })}
                 </div>
+            )
+          )}
+
+          {/* DCI MODE */}
+          {searchMode === 'dci' && (
+            selectedDci ? (
+              /* DCI Products view */
+              <div className="p-2">
+                <div className="flex items-center justify-between mb-2 p-2 bg-accent/10 rounded-lg">
+                  <div className="flex items-center gap-2">
+                    <FlaskConical size={16} className="text-accent" />
+                    <span className="font-bold text-sm">{selectedDci.nom}</span>
+                  </div>
+                  <button
+                    className="btn btn-xs btn-ghost"
+                    onClick={() => { setSelectedDci(null); setDciProducts([]); searchInputRef.current?.focus() }}
+                  >
+                    ← Retour
+                  </button>
+                </div>
+                {dciProductsLoading ? (
+                  <div className="text-center py-8"><span className="loading loading-spinner loading-sm"></span></div>
+                ) : dciProducts.length === 0 ? (
+                  <div className="text-center py-8 text-base-content/40 text-sm">Aucun produit en stock pour cette DCI</div>
+                ) : (
+                  <div className="max-h-80 overflow-y-auto space-y-1">
+                  {dciProducts.map((produit, idx) => {
+                    const itemProps = getItemProps(idx);
+                    return (
+                    <div
+                      key={produit.id}
+                      {...itemProps}
+                      onClick={() => {
+                        if ((produit.stock ?? 0) > 0) {
+                          handleAddProduit(produit)
+                          setSelectedDci(null)
+                          setDciProducts([])
+                        }
+                      }}
+                      style={itemProps.style}
+                      className={`
+                        group flex items-center justify-between p-3 rounded-lg cursor-pointer transition-all
+                        ${itemProps.className ? 'shadow-md' : 'hover:bg-base-100'}
+                        ${(produit.stock ?? 0) <= 0 ? 'opacity-50 cursor-not-allowed' : ''}
+                      `}
+                    >
+                      <div className="flex-1 min-w-0">
+                        <div className="font-medium truncate text-sm">{produit.name}</div>
+                        <div className="text-xs flex gap-3 mt-0.5 opacity-80">
+                          <span className={(produit.stock ?? 0) <= 0 ? 'text-error font-bold' : ''}>
+                            {t('facturation:search.stock_label')} {produit.stock}
+                          </span>
+                          <span>{formatCurrency(Number(produit.selling_price))}</span>
+                        </div>
+                      </div>
+                      {(produit.stock ?? 0) > 0 && (
+                        <button className="btn btn-ghost btn-sm btn-circle opacity-0 group-hover:opacity-100 text-accent">
+                        +
+                        </button>
+                      )}
+                    </div>
+                    )
+                  })}
+                  </div>
+                )}
+              </div>
+            ) : (
+              /* DCI Search results */
+              dciResults.length === 0 ? (
+                <div className="text-center py-8 text-base-content/40 text-sm">
+                {dciLoading ? <span className="loading loading-spinner loading-sm"></span> : searchQuery.length < 2 ? t('facturation:search.min_chars') : t('facturation:search.no_results_dci')}
+                </div>
+              ) : (
+                <div className="max-h-96 overflow-y-auto space-y-1 p-1">
+                {dciResults.map((dci, idx) => {
+                  const itemProps = getItemProps(idx);
+                  return (
+                  <div
+                    key={dci.id}
+                    {...itemProps}
+                    onClick={() => { setSelectedDci(dci); setSearchQuery(''); fetchDciProducts(dci.id); }}
+                    style={itemProps.style}
+                    className={`
+                      group flex items-center justify-between p-3 rounded-lg cursor-pointer transition-all border-l-4 border-accent/50
+                      ${itemProps.className ? 'shadow-md bg-accent/5' : 'hover:bg-base-100'}
+                    `}
+                  >
+                    <div className="flex-1 min-w-0">
+                      <div className="font-bold text-accent text-sm">{dci.nom}</div>
+                      <div className="text-xs text-base-content/60 mt-0.5">
+                        {dci.produits_count || 0} {t('facturation:search.dci_products_count')}
+                      </div>
+                    </div>
+                    <button className="btn btn-ghost btn-sm btn-circle opacity-0 group-hover:opacity-100 text-accent">
+                      →
+                    </button>
+                  </div>
+                  )
+                })}
+                </div>
+              )
             )
           )}
 

@@ -181,7 +181,7 @@ export default function Clients() {
         }
       }
     }
-  }, [location.state, clients]);
+  }, [clients]);
 
   const handleSelectClient = async (client: Client) => {
     setLoadingHistory(true);

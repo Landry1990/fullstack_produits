@@ -44,6 +44,7 @@ export function useFacturationState() {
   const [pointsToUse, setPointsToUse] = useState(0)
   const [usePendingDiscount, setUsePendingDiscount] = useState(false)
   const [showHelp, setShowHelp] = useState(false)
+  const [substitutionProduct, setSubstitutionProduct] = useState<ProduitModel | null>(null)
 
   const [refreshTrigger, setRefreshTrigger] = useState(0)
   const triggerUiRefresh = useCallback(() => {
@@ -68,6 +69,7 @@ export function useFacturationState() {
   const cart = useCart({
     onRequirePrescription: () => ui.setShowOrdonnanceModal(true),
     onAlert: (message, title, type, is_blocking, targetId) => ui.pushDisplayAlert({ message, title, type, is_blocking, targetId }),
+    onSubstitution: (produit) => setSubstitutionProduct(produit),
     quantityInputsRef
   })
 
@@ -599,6 +601,9 @@ export function useFacturationState() {
     pharmacySettings,
 
     currentMarkup,
+    // Substitution
+    substitutionProduct,
+    setSubstitutionProduct,
     // Refs
     searchInputRef,
     clientSearchRef,

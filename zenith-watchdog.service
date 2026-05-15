@@ -1,0 +1,18 @@
+[Unit]
+Description=Zenith Pharma Docker Watchdog
+Documentation=https://github.com/zenith-pharma/fullstack_produits
+After=docker.service
+Requires=docker.service
+
+[Service]
+Type=simple
+Restart=always
+RestartSec=10
+WorkingDirectory=/opt/zenith-pharma
+ExecStart=/bin/bash /opt/zenith-pharma/start-watchdog.sh --interval 30 --log /opt/zenith-pharma/logs/watchdog.log
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=zenith-watchdog
+
+[Install]
+WantedBy=multi-user.target

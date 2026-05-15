@@ -123,7 +123,7 @@ export default function Produit() {
         }
       }
     }
-  }, [location.state, productsData]);
+  }, [productsData]);
 
   const { data: rayons = [] } = useRayons();
   const { data: fournisseurs = [] } = useFournisseurs();

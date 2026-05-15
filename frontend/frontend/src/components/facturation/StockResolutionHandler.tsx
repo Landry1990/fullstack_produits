@@ -56,24 +56,23 @@ export const StockResolutionHandler: React.FC<StockResolutionHandlerProps> = ({
     
 
     const handleConfirm = () => {
-        // Apply Resolution actions to the invoice lines
-        const updatedLignes = lignesFacture.map(ligne => {
+        // Apply Resolution actions to the invoice lines — single-pass reduce
+        const updatedLignes = lignesFacture.reduce<LigneFacture[]>((acc, ligne) => {
             const action = resolutionActions[ligne.produit.id]
-            
+            let updated: LigneFacture
+
             if (action === 'promis') {
                 const stock = Math.max(0, ligne.produit.stock ?? 0)
                 const promisQty = Math.max(0, ligne.quantite - stock)
-                return {
+                updated = {
                     ...ligne,
                     isPromis: true,
                     promisQuantity: promisQty,
                     promisPhone: promisPhone || undefined,
-                    // The line quantity for the invoice remains the original requested quantity
-                    // The backend will subtract promisQuantity from the destocking
                 }
             } else if (action === 'reduce') {
                 const stock = Math.max(0, ligne.produit.stock ?? 0)
-                return {
+                updated = {
                     ...ligne,
                     quantite: stock,
                     isPromis: false,
@@ -81,14 +80,20 @@ export const StockResolutionHandler: React.FC<StockResolutionHandlerProps> = ({
                 }
             } else {
                 // Action 'force' OR default (not in conflict)
-                return {
+                updated = {
                     ...ligne,
                     isPromis: false,
                     promisQuantity: 0,
                 }
             }
-        }).filter(l => l.quantite > 0 || l.promisQuantity > 0) // Remove lines with 0 in both (e.g. reduce to 0 with no promis)
-        
+
+            // Keep only lines with quantity > 0 or promisQuantity > 0
+            if (updated.quantite > 0 || (updated.promisQuantity ?? 0) > 0) {
+                acc.push(updated)
+            }
+            return acc
+        }, [])
+
         setLignesFacture(updatedLignes)
         
         // Update Client Name if provided in modal logic

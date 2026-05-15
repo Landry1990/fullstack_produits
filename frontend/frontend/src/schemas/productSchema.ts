@@ -30,6 +30,14 @@ export const productSchema = z.object({
   
   description: z.string().optional().nullable(),
   message_alerte: z.string().optional().nullable(),
+  
+  // DCI / Clinique
+  substances: z.array(z.number()).optional(),
+  dci_reference: z.coerce.number().nullable().optional(),
+  is_generic: z.boolean().default(false),
+  produit_reference: z.coerce.number().nullable().optional(),
+  code_atc: z.string().optional().nullable(),
+  substance_active: z.string().optional().nullable(),
 }).refine((data) => data.selling_price >= data.cost_price, {
   message: "Le prix de vente doit être supérieur ou égal au prix d'achat",
   path: ["selling_price"],

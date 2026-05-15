@@ -329,6 +329,16 @@
             "password_required": "Mot de passe requis"
         }
     },
+    "substitution": {
+        "title": "Substitution — {{produit}}",
+        "dci_label": "DCI : {{dci}}",
+        "no_dci": "Aucune DCI définie pour ce produit.",
+        "none_available": "Aucun substitut disponible.",
+        "product": "Produit",
+        "stock": "Stock",
+        "price": "Prix",
+        "select": "Choisir"
+    },
     "omnisearch": {
         "placeholder": "Rechercher (produits, clients, navigation)...",
         "empty": "Aucun résultat trouvé.",

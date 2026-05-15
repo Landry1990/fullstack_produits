@@ -30,7 +30,7 @@ type PaymentModalProps = {
     modePaiement: string
     setModePaiement: (val: any) => void
     paiements: PaymentItem[]
-    setPaiements: (items: any[]) => void
+    setPaiements: (items: PaymentItem[] | ((prev: PaymentItem[]) => PaymentItem[])) => void
     onCompleteSale: (sudoCredentials?: { validatorId: number, password: string }) => void
     onRegisterPayment: () => void
     selectedClient: number | null
@@ -235,7 +235,7 @@ export default function PaymentModal({
                                         if (e.key === 'Enter') {
                                             e.preventDefault()
                                             if (montantPaye && Number(montantPaye) !== 0) {
-                                                setPaiements([...paiements, { mode: modePaiement as any, montant: Number(montantPaye) }])
+                                                setPaiements(prev => [...prev, { mode: modePaiement as any, montant: Number(montantPaye) }])
                                                 // Calc rest
                                                 const dejaAlloue = paiements.reduce((acc, p) => acc + p.montant, 0) + Number(montantPaye)
                                                 const reste = totals.partPatient - dejaAlloue
@@ -250,7 +250,7 @@ export default function PaymentModal({
                                 className="btn btn-sm btn-square btn-ghost border border-base-300"
                                 onClick={() => {
                                     if (montantPaye && Number(montantPaye) !== 0) {
-                                        setPaiements([...paiements, { mode: modePaiement as any, montant: Number(montantPaye) }])
+                                        setPaiements(prev => [...prev, { mode: modePaiement as any, montant: Number(montantPaye) }])
                                         const dejaAlloue = paiements.reduce((acc, p) => acc + p.montant, 0) + Number(montantPaye)
                                         const reste = totals.partPatient - dejaAlloue
                                         setMontantPaye(reste !== 0 ? reste.toString() : '')
