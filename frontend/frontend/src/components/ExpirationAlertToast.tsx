@@ -12,7 +12,7 @@ export function ExpirationAlertToasts() {
   const hasShownRef = useRef(false);
 
   const { data, isSuccess } = useExpirationAlerts({
-    days: 14,
+    days: 30,
     enabled: true,
   });
 
@@ -31,6 +31,8 @@ export function ExpirationAlertToasts() {
     const critical = alerts.filter((a: ExpirationAlert) => a.level === 'critical');
     const warning = alerts.filter((a: ExpirationAlert) => a.level === 'warning');
     const others = alerts.filter((a: ExpirationAlert) => a.level === 'notice' || a.level === 'info');
+
+    const timers: ReturnType<typeof setTimeout>[] = [];
 
     // Toast critique - persistant avec son
     if (critical.length > 0) {
@@ -72,40 +74,44 @@ export function ExpirationAlertToasts() {
 
     // Toast warning (10s)
     if (warning.length > 0) {
-      setTimeout(() => {
-        toast(
-          (t) => (
-            <div onClick={() => toast.dismiss(t.id)} style={{ cursor: 'pointer' }}>
-              <strong>⚠️ Péremption imminente</strong>
-              <br />
-              <span>{warning.length} produit(s) expirent dans 8-14 jours</span>
-            </div>
-          ),
-          {
-            duration: 10000,
-            id: 'expiration-warning-login',
-            style: {
-              border: '2px solid #f97316',
-              background: '#fff7ed',
-              color: '#c2410c',
-              minWidth: '300px',
-            },
-          }
-        );
-      }, critical.length > 0 ? 500 : 0);
+      timers.push(
+        setTimeout(() => {
+          toast(
+            (t) => (
+              <div onClick={() => toast.dismiss(t.id)} style={{ cursor: 'pointer' }}>
+                <strong>⚠️ Péremption imminente</strong>
+                <br />
+                <span>{warning.length} produit(s) expirent dans 8-14 jours</span>
+              </div>
+            ),
+            {
+              duration: 10000,
+              id: 'expiration-warning-login',
+              style: {
+                border: '2px solid #f97316',
+                background: '#fff7ed',
+                color: '#c2410c',
+                minWidth: '300px',
+              },
+            }
+          );
+        }, critical.length > 0 ? 500 : 0)
+      );
     }
 
     // Toast info (5s)
     if (others.length > 0 && (critical.length > 0 || warning.length > 0)) {
-      setTimeout(() => {
-        toast.success(
-          `📦 ${others.length} autre(s) produit(s) en surveillance péremption`,
-          {
-            duration: 5000,
-            id: 'expiration-others-login',
-          }
-        );
-      }, (critical.length > 0 ? 500 : 0) + (warning.length > 0 ? 500 : 0));
+      timers.push(
+        setTimeout(() => {
+          toast.success(
+            `📦 ${others.length} autre(s) produit(s) en surveillance péremption`,
+            {
+              duration: 5000,
+              id: 'expiration-others-login',
+            }
+          );
+        }, (critical.length > 0 ? 500 : 0) + (warning.length > 0 ? 500 : 0))
+      );
     }
 
     // Toast récapitulatif si beaucoup d'alertes sans critiques
@@ -125,6 +131,10 @@ export function ExpirationAlertToasts() {
     }
 
     hasShownRef.current = true;
+
+    return () => {
+      timers.forEach(clearTimeout);
+    };
   }, [isSuccess, data]);
 
   // Ce composant ne rend rien visuellement

@@ -87,6 +87,15 @@ export interface ProduitModel {
     active_promis_count?: number
     message_alerte?: string | null
     blocking_alerte?: boolean
+    // DCI / Clinique
+    substances?: number[]
+    dci_reference?: number | null
+    dci_reference_nom?: string | null
+    produit_reference?: number | null
+    produit_reference_name?: string | null
+    is_generic?: boolean
+    code_atc?: string | null
+    substance_active?: string | null
 }
 
 export interface ProduitForm {
@@ -120,6 +129,13 @@ export interface ProduitForm {
     min_rayon?: string
     message_alerte?: string
     blocking_alerte?: boolean
+    // DCI / Clinique
+    substances?: number[]
+    dci_reference?: string
+    is_generic?: boolean
+    produit_reference?: string
+    code_atc?: string
+    substance_active?: string
 }
 
 export interface StockAdjustment {

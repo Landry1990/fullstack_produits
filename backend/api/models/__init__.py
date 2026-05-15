@@ -17,7 +17,7 @@ from .settings import (
 # Products
 from .products import (
     Rayon, Forme, Groupe, FamilleRisque, 
-    Substance, DrugInteraction, Produit
+    Substance, DrugInteraction, Produit, MedicamentReference
 )
 
 # Stock
@@ -80,7 +80,7 @@ __all__ = [
     'LoyaltySetting', 'PharmacySettings', 'InvoiceSettings', 'ConfigurationOption',
     # Products
     'Rayon', 'Forme', 'Groupe', 'FamilleRisque', 
-    'Substance', 'DrugInteraction', 'Produit',
+    'Substance', 'DrugInteraction', 'Produit', 'MedicamentReference',
     # Stock
     'StockLot', 'LotSequence', 'StockAdjustment', 'MouvementStock',
     'TicketSessionSequence', 'RuptureFournisseur', 'ReapproSession',

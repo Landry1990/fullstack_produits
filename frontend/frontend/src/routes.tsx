@@ -65,6 +65,7 @@ import Produit from './components/Produit';
 import Ventes from './components/Ventes';
 import Facturation from './components/Facturation';
 import Commandes from './components/Commandes';
+import CatalogDCI from './components/CatalogDCI';
 
 // ── Lazy-loaded pages (routes secondaires) ──
 const Fournisseurs = lazyWithRetry(() => import('./components/Fournisseurs'));
@@ -110,6 +111,7 @@ const PharmacySettingsForm = lazyWithRetry(() => import('./components/settings/P
 const Maintenance = lazyWithRetry(() => import('./components/Maintenance'));
 const Changelog = lazyWithRetry(() => import('./components/Changelog'));
 const Corbeille = lazyWithRetry(() => import('./components/Corbeille'));
+const ImportDCIPage = lazyWithRetry(() => import('./components/ImportDCIPage'));
 const Comptabilite = lazyWithRetry(() => import('./components/compta/Comptabilite'));
 
 // ── Helper to reduce boilerplate ──
@@ -154,6 +156,7 @@ export const router = createBrowserRouter([
 
           // ── Produits & Stock ──
           { path: 'produits', ...perm('produits', Produit) },
+          { path: 'catalog-dci', ...perm('produits', CatalogDCI) },
           { path: 'vitrine', ...perm('vitrine', Vitrine) },
 
           // ── Commandes ──
@@ -231,6 +234,7 @@ export const router = createBrowserRouter([
           { path: 'utilisateurs', ...admin(GestionUtilisateurs) },
           { path: 'user-sessions', ...admin(UserSessions) },
           { path: 'journal-audit', ...admin(JournalAudit) },
+          { path: 'import-dci', ...admin(ImportDCIPage) },
           { path: 'maintenance', ...admin(Maintenance) },
           { path: 'corbeille', ...admin(Corbeille) },
 

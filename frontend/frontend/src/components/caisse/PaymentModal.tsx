@@ -64,10 +64,11 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
       setMontantPaye(montantDu.toString())
       setPaiements([])
       setModePaiement('especes')
-      setTimeout(() => {
+      const timer = setTimeout(() => {
         montantInputRef.current?.focus()
         montantInputRef.current?.select()
       }, 150)
+      return () => clearTimeout(timer)
     }
   }, [isOpen]) // eslint-disable-line react-hooks/exhaustive-deps
 

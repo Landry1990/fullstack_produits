@@ -62,5 +62,24 @@
     "messages": {
         "save_success": "Enregistré dans l'ordonnancier",
         "save_error": "Erreur lors de l'enregistrement de l'ordonnance"
+    },
+    "pos": {
+        "zenith_title": "Zenith Pharma - POS",
+        "theme_dark": "Thème sombre",
+        "ready_for_sale": "Prêt pour la vente",
+        "scan_or_search": "Scannez ou recherchez un produit",
+        "keyboard_shortcuts": "Raccourcis clavier",
+        "navigation_search": "Navigation & Recherche",
+        "search_product": "Rechercher un produit",
+        "focus_search": "Focus recherche",
+        "search_client_qty": "Rechercher client / quantité",
+        "search_client_direct": "Recherche client directe",
+        "sales_actions": "Actions de vente",
+        "pay_cash": "Payer / Encaisser",
+        "suspend_hold": "Suspendre / Mettre en attente",
+        "recall_sale": "Rappeler une vente",
+        "zenith_mode": "Mode Zenith",
+        "close_cancel": "Fermer / Annuler",
+        "keyboard_shortcuts_tip": "Astuce : utilisez les raccourcis clavier pour aller plus vite"
     }
 }

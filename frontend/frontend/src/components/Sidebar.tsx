@@ -47,6 +47,9 @@ export default function Sidebar() {
     { path: '/app/produits', label: t('produits'), key: 'produits', icon: (
       <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" /></svg>
     )},
+    { path: '/app/catalog-dci', label: t('catalog_dci'), key: 'produits', icon: (
+      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+    )},
     { path: '/app/vitrine', label: t('vitrine'), key: 'vitrine', icon: (
       <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9" /></svg>
     )},
@@ -191,6 +194,14 @@ export default function Sidebar() {
       )
     },
     {
+      path: '/app/import-dci',
+      label: t('import_dci', 'Import DCI & Matching'),
+      key: 'import_dci',
+      icon: (
+        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
+      )
+    },
+    {
       path: '/app/maintenance',
       label: t('maintenance'),
       key: 'maintenance',
@@ -266,7 +277,7 @@ export default function Sidebar() {
         setOpenMenu(null);
       }
     }
-  }, [location.pathname]);
+  }, []);
 
   const toggleMenu = (key: string) => {
     setOpenMenu(prev => prev === key ? null : key);

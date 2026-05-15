@@ -15,6 +15,12 @@ interface InventaireAuditProps {
     onBack: () => void;
 }
 
+// Module-level component to avoid recreation on every render
+const SortIcon = ({ column, sortConfig }: { column: string; sortConfig: { key: string; direction: 'asc' | 'desc' } }) => {
+    if (sortConfig.key !== column) return null;
+    return sortConfig.direction === 'asc' ? <ChevronUp className="h-3 w-3 inline ml-1" /> : <ChevronDown className="h-3 w-3 inline ml-1" />;
+};
+
 export const InventaireAudit: React.FC<InventaireAuditProps> = ({ onBack }) => {
     const { t } = useTranslation(['stock', 'common']);
     
@@ -104,11 +110,6 @@ export const InventaireAudit: React.FC<InventaireAuditProps> = ({ onBack }) => {
             key,
             direction: prev.key === key && prev.direction === 'asc' ? 'desc' : 'asc'
         }));
-    };
-
-    const SortIcon = ({ column }: { column: string }) => {
-        if (sortConfig.key !== column) return null;
-        return sortConfig.direction === 'asc' ? <ChevronUp className="h-3 w-3 inline ml-1" /> : <ChevronDown className="h-3 w-3 inline ml-1" />;
     };
 
     if (loading && !data) {
@@ -324,13 +325,13 @@ export const InventaireAudit: React.FC<InventaireAuditProps> = ({ onBack }) => {
                                 <tr className="border-b border-base-200">
                                     <th className="py-3">{t('inventaire.audit.table.col_product')}</th>
                                     <th className="text-right py-3 cursor-pointer hover:text-primary transition-colors" onClick={() => handleSort('total_quantite')}>
-                                        {t('inventaire.audit.table.col_gap_qty')} <SortIcon column="total_quantite" />
+                                        {t('inventaire.audit.table.col_gap_qty')} <SortIcon column="total_quantite" sortConfig={sortConfig} />
                                     </th>
                                     <th className="text-right py-3 cursor-pointer hover:text-primary transition-colors" onClick={() => handleSort('total_valeur')}>
-                                        {t('inventaire.audit.table.col_total_val')} <SortIcon column="total_valeur" />
+                                        {t('inventaire.audit.table.col_total_val')} <SortIcon column="total_valeur" sortConfig={sortConfig} />
                                     </th>
                                     <th className="text-center py-3 cursor-pointer hover:text-primary transition-colors" onClick={() => handleSort('occurrence')}>
-                                        {t('inventaire.audit.table.col_occurrences')} <SortIcon column="occurrence" />
+                                        {t('inventaire.audit.table.col_occurrences')} <SortIcon column="occurrence" sortConfig={sortConfig} />
                                     </th>
                                 </tr>
                             </thead>

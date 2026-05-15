@@ -27,7 +27,7 @@ export const InventaireProductSearch: React.FC<InventaireProductSearchProps> = (
         handleMultiLotConfirm
     } = searchLogic;
 
-    if (isReadOnly) return null;
+    const lotModalRef = React.useRef<HTMLDivElement>(null);
 
     React.useEffect(() => {
         if (selectedItemIndex >= 0) {
@@ -37,8 +37,6 @@ export const InventaireProductSearch: React.FC<InventaireProductSearchProps> = (
             }
         }
     }, [selectedItemIndex]);
-
-    const lotModalRef = React.useRef<HTMLDivElement>(null);
 
     React.useEffect(() => {
         if (showLotModal && lotModalRef.current) {
@@ -55,6 +53,8 @@ export const InventaireProductSearch: React.FC<InventaireProductSearchProps> = (
             }
         }
     }, [showLotModal, loadingLots]);
+
+    if (isReadOnly) return null;
 
     const getItemProps = (index: number) => ({
         className: index === selectedItemIndex ? 'bg-primary text-primary-content shadow-lg shadow-primary/20 scale-[1.01]' : 'hover:bg-base-200'

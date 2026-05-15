@@ -206,7 +206,7 @@ export function useFournisseurs() {
         window.history.replaceState({}, document.title);
       }
     }
-  }, [location.state, fournisseurs]);
+  }, [fournisseurs]);
 
   function openAddModal() {
     setNewFournisseur(emptyForm);

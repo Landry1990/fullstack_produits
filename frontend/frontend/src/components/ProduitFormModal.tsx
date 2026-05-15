@@ -4,6 +4,7 @@ import type { FormEvent } from 'react';
 import api from '../services/api';
 import type { ProduitForm, ProduitModel, Rayon, Fournisseur, Forme, Groupe } from '../types';
 import { useTVA } from '../hooks/useTVA';
+import { useSubstances, type Substance } from '../hooks/useSubstances';
 import PremiumModal from './common/PremiumModal';
 import { normalizeNumberInput } from '../utils/formatters';
 import { getLocale } from '../utils/dateUtils';
@@ -39,6 +40,9 @@ export default function ProduitFormModal({
   const { t } = useTranslation(['products', 'common']);
   const titleText = title || t('products:create_title');
   const { tvaList, loading: loadingTVA } = useTVA();
+  const { data: substancesData } = useSubstances({ page: 1 });
+  const substancesList = substancesData?.results || [];
+  const [substanceSearch, setSubstanceSearch] = useState('');
   
   const [form, setForm] = useState<ProduitForm>({
     name: '', stock: '', cost_price: '', selling_price: '', cip1: '', cip2: '', cip3: '',
@@ -51,6 +55,12 @@ export default function ProduitFormModal({
     is_chronic: false,
     default_treatment_days: '30',
     message_alerte: '',
+    substances: [],
+    dci_reference: '',
+    is_generic: false,
+    produit_reference: '',
+    code_atc: '',
+    substance_active: '',
     ...initialData,
   });
 
@@ -136,6 +146,12 @@ export default function ProduitFormModal({
         capacite_rayon: normalizeNumberInput(form.capacite_rayon || '', { min: 0 }),
         min_rayon: normalizeNumberInput(form.min_rayon || '', { min: 0 }),
         message_alerte: form.message_alerte?.trim() || null,
+        substances: form.substances || [],
+        dci_reference: form.dci_reference ? parseInt(form.dci_reference, 10) : null,
+        is_generic: form.is_generic || false,
+        produit_reference: form.produit_reference ? parseInt(form.produit_reference, 10) : null,
+        code_atc: form.code_atc?.trim() || null,
+        substance_active: form.substance_active?.trim() || null,
       };
 
       const validation = productSchema.safeParse(payload);
@@ -360,6 +376,114 @@ export default function ProduitFormModal({
                     <span className="label-text-alt text-error/70">Ce message s'affichera en plein écran lors du passage de ce produit en caisse.</span>
                   </div>
                </label>
+            </div>
+
+            {/* Section DCI / Clinique */}
+            <div className="mt-4 p-4 rounded-xl border-2 border-secondary/20 bg-secondary/5">
+              <h4 className="text-sm font-bold uppercase tracking-wider text-secondary mb-4">DCI & Clinique</h4>
+              
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+                <label className="form-control w-full">
+                  <div className="label"><span className="label-text font-semibold text-xs">Substance active (libre)</span></div>
+                  <input 
+                    type="text"
+                    className="input input-bordered input-sm w-full"
+                    placeholder="Ex: Paracétamol"
+                    value={form.substance_active || ''}
+                    onChange={(e) => setForm((p) => ({ ...p, substance_active: e.target.value }))}
+                  />
+                </label>
+                <label className="form-control w-full">
+                  <div className="label"><span className="label-text font-semibold text-xs">Code ATC</span></div>
+                  <input 
+                    type="text"
+                    className="input input-bordered input-sm w-full font-mono"
+                    placeholder="N02BE01"
+                    value={form.code_atc || ''}
+                    onChange={(e) => setForm((p) => ({ ...p, code_atc: e.target.value }))}
+                  />
+                </label>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+                <label className="form-control w-full">
+                  <div className="label"><span className="label-text font-semibold text-xs">DCI de référence</span></div>
+                  <select 
+                    className="select select-bordered select-sm w-full" 
+                    value={form.dci_reference}
+                    onChange={(e) => setForm((p) => ({ ...p, dci_reference: e.target.value }))}
+                  >
+                    <option value="">-</option>
+                    {substancesList.map(s => <option key={s.id} value={s.id}>{s.nom}</option>)}
+                  </select>
+                </label>
+                <label className="form-control w-full">
+                  <div className="label"><span className="label-text font-semibold text-xs">Produit de référence (origine)</span></div>
+                  <input 
+                    type="text"
+                    disabled
+                    className="input input-bordered input-sm w-full opacity-50"
+                    placeholder="Sélection automatique"
+                    value=""
+                    title="A venir: sélection du produit de marque de référence"
+                  />
+                </label>
+              </div>
+
+              <div className="form-control mb-4">
+                <label className="label cursor-pointer justify-start gap-4">
+                  <input 
+                    type="checkbox" 
+                    className="checkbox checkbox-secondary" 
+                    checked={form.is_generic || false}
+                    onChange={(e) => setForm((p) => ({ ...p, is_generic: e.target.checked }))} 
+                  />
+                  <div>
+                    <span className="label-text font-bold">Générique</span>
+                    <p className="text-[10px] opacity-60">Ce produit est un générique (prix plus bas)</p>
+                  </div>
+                </label>
+              </div>
+
+              <div>
+                <div className="label"><span className="label-text font-semibold text-xs">Substances actives (interactions)</span></div>
+                <input
+                  type="text"
+                  className="input input-bordered input-sm w-full mb-2"
+                  placeholder="Filtrer les substances..."
+                  value={substanceSearch}
+                  onChange={(e) => setSubstanceSearch(e.target.value)}
+                />
+                <div className="max-h-32 overflow-y-auto p-2 rounded-xl bg-base-100 border border-base-200 space-y-1">
+                  {substancesList
+                    .filter(s => s.nom.toLowerCase().includes(substanceSearch.toLowerCase()))
+                    .map((s) => {
+                      const selected = (form.substances || []).includes(s.id);
+                      return (
+                        <label key={s.id} className="flex items-center gap-2 cursor-pointer hover:bg-base-200 p-1 rounded-lg">
+                          <input
+                            type="checkbox"
+                            className="checkbox checkbox-sm checkbox-secondary"
+                            checked={selected}
+                            onChange={() => {
+                              const current = form.substances || [];
+                              setForm((p) => ({
+                                ...p,
+                                substances: selected
+                                  ? current.filter(id => id !== s.id)
+                                  : [...current, s.id]
+                              }));
+                            }}
+                          />
+                          <span className="text-xs font-medium">{s.nom}</span>
+                        </label>
+                      );
+                    })}
+                  {substancesList.length === 0 && (
+                    <span className="text-xs opacity-50 p-2 block">Aucune substance chargée</span>
+                  )}
+                </div>
+              </div>
             </div>
           </div>
 

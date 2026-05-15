@@ -18,6 +18,7 @@ import PremiumModal from './common/PremiumModal'
 import { ClientNameModal } from './sales/modals/ClientNameModal'
 import { StockResolutionHandler } from './facturation/StockResolutionHandler'
 import FacturationNotifications from './facturation/FacturationNotifications'
+import { SubstitutionModal } from './SubstitutionModal'
 import AlertMessageModal from './facturation/AlertMessageModal'
 import DisplayAlertModal from './facturation/DisplayAlertModal'
 import PrescriptionScannerModal from './facturation/PrescriptionScannerModal'
@@ -587,6 +588,17 @@ export default function Facturation() {
             hook.ui.setPrescriptionImage(data.imageFile);
           }
         }}
+      />
+
+      {/* Substitution Modal */}
+      <SubstitutionModal
+        produitId={hook.substitutionProduct?.id ?? null}
+        produitName={hook.substitutionProduct?.name ?? ''}
+        onSelect={(substitut) => {
+          hook.cart.addProduit(substitut, { isRetrocession: hook.isRetrocession })
+          hook.setSubstitutionProduct(null)
+        }}
+        onClose={() => hook.setSubstitutionProduct(null)}
       />
     </div>
   )

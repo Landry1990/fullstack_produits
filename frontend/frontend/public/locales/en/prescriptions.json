@@ -62,5 +62,24 @@
     "messages": {
         "save_success": "Saved in prescription registry",
         "save_error": "Error while saving prescription"
+    },
+    "pos": {
+        "zenith_title": "Zenith Pharma - POS",
+        "theme_dark": "Dark theme",
+        "ready_for_sale": "Ready for sale",
+        "scan_or_search": "Scan or search a product",
+        "keyboard_shortcuts": "Keyboard shortcuts",
+        "navigation_search": "Navigation & Search",
+        "search_product": "Search product",
+        "focus_search": "Focus search",
+        "search_client_qty": "Search client / quantity",
+        "search_client_direct": "Direct client search",
+        "sales_actions": "Sales actions",
+        "pay_cash": "Pay / Cash in",
+        "suspend_hold": "Suspend / Hold",
+        "recall_sale": "Recall sale",
+        "zenith_mode": "Zenith mode",
+        "close_cancel": "Close / Cancel",
+        "keyboard_shortcuts_tip": "Tip: use keyboard shortcuts to go faster"
     }
 }

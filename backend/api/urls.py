@@ -23,6 +23,7 @@ from .views.formes import FormeViewSet
 from .views.paiements import PaiementFournisseurViewSet
 from .views.coupons import CouponMonnaieViewSet
 from .views.groupes import GroupeViewSet
+from .views.substances import SubstanceViewSet
 from .views.auth import verify_password
 from .views.etat_inventaire import EtatInventairePDFView
 from .views.rapports import RapportViewSet
@@ -41,6 +42,8 @@ from .views.version import app_version
 from .views.corbeille import CorbeilleViewSet
 from .views.licence import LicenceStatusView, LicenceNotificationsView
 from .views.margin_views import MarginViewSet
+from .views.meds_reference import MedicamentReferenceViewSet
+from .views.dci_admin import DCIAdminViewSet
 
 # Create a router and register our viewsets with it.
 router = DefaultRouter()
@@ -80,6 +83,7 @@ router.register(r'audit-logs', AuditLogViewSet, basename='audit-log')
 router.register(r'loyalty-settings', LoyaltySettingViewSet, basename='loyaltysetting')
 router.register(r'formes', FormeViewSet, basename='forme')
 router.register(r'groupes', GroupeViewSet, basename='groupe')
+router.register(r'substances', SubstanceViewSet, basename='substance')
 router.register(r'coupons', CouponMonnaieViewSet, basename='coupon')
 router.register(r'sms', SmsViewSet, basename='sms')
 router.register(r'sms-templates', SmsTemplateViewSet, basename='smstemplate')
@@ -105,6 +109,8 @@ router.register(r'reappro-sessions', ReapproSessionViewSet, basename='reapproses
 router.register(r'postes-caisses', PosteCaisseViewSet, basename='postecaisse')
 router.register(r'corbeille', CorbeilleViewSet, basename='corbeille')
 router.register(r'margins', MarginViewSet, basename='margin')
+router.register(r'med-ref', MedicamentReferenceViewSet, basename='medreference')
+router.register(r'dci-admin', DCIAdminViewSet, basename='dci-admin')
 
 # Comptabilité
 router.register(r'compta/comptes', CompteComptableViewSet, basename='compta-compte')
