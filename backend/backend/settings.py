@@ -25,7 +25,9 @@ DEBUG = os.getenv('DJANGO_DEBUG', 'False').lower() == 'true'
 # Enable Django Silk profiler (default: False in production/pre-prod)
 ENABLE_SILK = os.getenv('ENABLE_SILK', 'False').lower() == 'true'
 
-ALLOWED_HOSTS = os.getenv('DJANGO_ALLOWED_HOSTS', 'localhost,127.0.0.1,backend,frontend,*').split(',')
+_hosts = os.getenv('DJANGO_ALLOWED_HOSTS', 'localhost,127.0.0.1,backend,frontend').split(',')
+ALLOWED_HOSTS = [h.strip() for h in _hosts if h.strip() and h.strip() != '*']
+# '*' in ALLOWED_HOSTS disables Host header validation — never use in production
 
 # Support pour les proxys comme Nginx/ngrok
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
@@ -206,7 +208,8 @@ TIME_ZONE = 'Africa/Douala'
 
 USE_I18N = True
 
-USE_TZ = False  # Désactivé pour travailler avec l'heure locale du système
+USE_TZ = True  # Activé — évite les bugs timezone dans les containers Docker
+# Django stocke UTC en DB et convertit vers TIME_ZONE à la volée
 
 
 # Static files (CSS, JavaScript, Images)
@@ -275,14 +278,18 @@ if REDIS_URL:
             'LOCATION': REDIS_URL,
             'OPTIONS': {
                 'CLIENT_CLASS': 'django_redis.client.DefaultClient',
+                'SOCKET_CONNECT_TIMEOUT': 5,
+                'SOCKET_TIMEOUT': 5,
+                'RETRY_ON_TIMEOUT': True,
             }
         }
     }
 else:
+    # LocMemCache = per-process cache. With Gunicorn multi-worker each worker
+    # has its own cache → not shared. Use DummyCache to avoid stale data.
     CACHES = {
         'default': {
-            'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
-            'LOCATION': 'unique-snowflake',
+            'BACKEND': 'django.core.cache.backends.dummy.DummyCache',
         }
     }
 

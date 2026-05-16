@@ -33,34 +33,31 @@ export const Select: React.FC<SelectProps> = ({
   }[size];
 
   return (
-    <div className={`form-control w-full ${containerClassName}`}>
+    <div className={`w-full ${containerClassName}`}>
       {label && (
-        <div className="label pt-0 px-1">
-          <span className="label-text font-bold text-base-content/60 uppercase text-[10px] tracking-wider">{label}</span>
-        </div>
+        <label className="block text-[10px] font-semibold text-gray-500 uppercase tracking-wider mb-1.5">
+          {label}
+        </label>
       )}
       <div className="relative group">
         <select
           className={`
-            select select-bordered w-full transition-all duration-200 appearance-none
+            w-full rounded-lg border transition-all duration-200 appearance-none outline-none
             ${sizeClasses}
-            ${error ? 'select-error text-error' : 'focus:select-primary'}
-            bg-base-100 border-base-300 hover:border-base-400
-            focus:shadow-[0_0_0_4px_rgba(34,197,94,0.1)]
+            ${error ? 'border-red-300 text-red-600 focus:border-red-500 focus:ring-2 focus:ring-red-100' : 'border-gray-200 text-gray-900 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-50'}
+            bg-white hover:border-gray-300
             ${className}
           `}
           {...props}
         >
           {children}
         </select>
-        <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-base-content/30 group-focus-within:text-primary transition-colors">
+        <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400 group-focus-within:text-indigo-500 transition-colors">
           <ChevronDown size={14} strokeWidth={3} />
         </div>
       </div>
       {error && (
-        <div className="label pb-0 px-1">
-          <span className="label-text-alt text-error font-medium">{error}</span>
-        </div>
+        <p className="text-xs text-red-600 mt-1 font-medium">{error}</p>
       )}
     </div>
   );

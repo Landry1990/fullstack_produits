@@ -1,0 +1,21 @@
+[Unit]
+Description=Zenith Pharma Webhook Deploy
+Documentation=https://github.com/zenith-pharma/fullstack_produits
+After=docker.service network.target
+Wants=docker.service
+
+[Service]
+Type=simple
+Restart=always
+RestartSec=5
+WorkingDirectory=/opt/zenith-pharma
+Environment=PYTHONUNBUFFERED=1
+ExecStart=/usr/bin/python3 /opt/zenith-pharma/webhook-deploy.py --port 9000 --secret %DEPLOY_SECRET%
+# Le secret doit etre defini dans /etc/systemd/system/zenith-webhook.service.d/override.conf
+# ou via: systemctl edit zenith-webhook
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=zenith-webhook
+
+[Install]
+WantedBy=multi-user.target

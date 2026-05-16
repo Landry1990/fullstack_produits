@@ -83,6 +83,11 @@ function Deploy-Backend {
     docker cp backend/api/views/meds_reference.py fullstack_produits-backend-1:/app/api/views/meds_reference.py
     docker cp backend/api/views/produits.py fullstack_produits-backend-1:/app/api/views/produits.py
     docker cp backend/api/views/dci_admin.py fullstack_produits-backend-1:/app/api/views/dci_admin.py
+    docker cp backend/api/views/finance_stats.py fullstack_produits-backend-1:/app/api/views/finance_stats.py
+    docker cp backend/api/services/finance_base_queries.py fullstack_produits-backend-1:/app/api/services/finance_base_queries.py
+    docker cp backend/api/services/finance_predictions.py fullstack_produits-backend-1:/app/api/services/finance_predictions.py
+    docker cp backend/api/services/finance_marges.py fullstack_produits-backend-1:/app/api/services/finance_marges.py
+    docker cp backend/api/services/finance_formatters.py fullstack_produits-backend-1:/app/api/services/finance_formatters.py
 
     if ($IncludeModels) {
         Write-Host "  Migration..." -ForegroundColor Yellow

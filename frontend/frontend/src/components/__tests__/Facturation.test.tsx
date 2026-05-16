@@ -83,6 +83,8 @@ describe('Facturation Integration', () => {
     updateLineLot: vi.fn(),
     removeLigne: vi.fn(),
     clearCart: vi.fn(),
+    applyMarkupToCart: vi.fn(),
+    bulkAddProduits: vi.fn(),
     cartStats: { sousTotal: 0, totalTva: 0 },
     loading: false
   }

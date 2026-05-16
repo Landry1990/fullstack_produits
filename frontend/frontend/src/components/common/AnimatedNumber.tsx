@@ -14,6 +14,10 @@ export const AnimatedNumber: React.FC<AnimatedNumberProps> = ({
     const [displayValue, setDisplayValue] = useState(0);
 
     useEffect(() => {
+        if (duration <= 0) {
+            setDisplayValue(value);
+            return;
+        }
         let startTime: number | null = null;
         const startValue = displayValue;
 
