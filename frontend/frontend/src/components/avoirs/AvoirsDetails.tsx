@@ -28,13 +28,13 @@ export const AvoirsDetails: React.FC<AvoirsDetailsProps> = ({ data }) => {
     const getStatusStyle = (status: string) => {
         switch (status?.toUpperCase()) {
             case 'BROUILLON':
-            case 'BRO': return 'bg-warning/10 text-warning border-warning/20';
+            case 'BRO': return 'bg-amber-50 text-amber-600 border-amber-200';
             case 'VAL':
             case 'VALIDE':
             case 'VALIDÉ':
             case 'VALIDEE':
-            case 'VALIDÉE': return 'bg-success/10 text-success border-success/20';
-            default: return 'bg-base-200 text-base-content/60 border-base-300';
+            case 'VALIDÉE': return 'bg-emerald-50 text-emerald-600 border-emerald-200';
+            default: return 'bg-gray-100 text-gray-500 border-gray-200';
         }
     };
 
@@ -67,14 +67,14 @@ export const AvoirsDetails: React.FC<AvoirsDetailsProps> = ({ data }) => {
     };
 
     return (
-        <div className="min-h-screen bg-base-200 p-4 md:p-6 space-y-6">
+        <div className="min-h-screen bg-gray-100 p-4 md:p-6 space-y-6">
             
             {/* Header / Actions */}
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-base-100 p-4 rounded-2xl shadow-sm border border-base-300 sticky top-4 z-50">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-4 rounded-2xl shadow-sm border border-gray-200 sticky top-4 z-50">
                 <div className="flex items-center gap-3">
                     <button 
                         onClick={handleBackToList}
-                        className="btn btn-circle btn-ghost btn-sm"
+                        className="inline-flex items-center justify-center size-8 rounded-full text-gray-500 hover:text-gray-900 hover:bg-gray-50 transition-colors"
                         title={t('stock:avoirs.details.back')}
                     >
                         <ArrowLeft className="size-5" />
@@ -88,11 +88,11 @@ export const AvoirsDetails: React.FC<AvoirsDetailsProps> = ({ data }) => {
                                 {getStatusLabel(selectedAvoir.status)}
                             </span>
                         </div>
-                        <p className="text-sm text-base-content/60 mt-0.5 flex items-center gap-2">
+                        <p className="text-sm text-gray-500 mt-0.5 flex items-center gap-2">
                             <span>{t('stock:avoirs.details.created_at', { date: format(new Date(selectedAvoir.created_at || selectedAvoir.date), 'dd/MM/yyyy HH:mm', { locale: i18n.language === 'fr' ? fr : enUS }) })}</span>
                             {selectedAvoir.created_by_name && (
                                 <>
-                                    <span className="size-1 rounded-full bg-base-content/30" />
+                                    <span className="size-1 rounded-full bg-gray-400" />
                                     <span>{t('stock:avoirs.details.created_by', { name: selectedAvoir.created_by_name })}</span>
                                 </>
                             )}
@@ -103,7 +103,7 @@ export const AvoirsDetails: React.FC<AvoirsDetailsProps> = ({ data }) => {
                 <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
                     <button 
                         onClick={() => window.print()} 
-                        className="btn btn-ghost flex-1 sm:flex-none gap-2"
+                        className="inline-flex items-center justify-center h-9 px-3 text-gray-500 hover:text-gray-900 hover:bg-gray-50 rounded-lg text-sm font-medium transition-colors gap-2"
                     >
                         <Printer className="size-4" />
                         <span className="hidden sm:inline">{t('stock:avoirs.details.print')}</span>
@@ -112,14 +112,14 @@ export const AvoirsDetails: React.FC<AvoirsDetailsProps> = ({ data }) => {
                     {(selectedAvoir.status?.toUpperCase() === 'BROUILLON' || selectedAvoir.status?.toUpperCase() === 'BRO') && (
                         <>
                             <button 
-                                className="btn btn-error btn-outline flex-1 sm:flex-none"
+                                className="inline-flex items-center justify-center h-9 px-4 rounded-lg border border-red-200 bg-red-50 text-red-700 text-sm font-bold hover:bg-red-100 transition-all"
                                 onClick={() => handleDelete(selectedAvoir)}
                                 disabled={savingValidation}
                             >
                                 {t('stock:avoirs.details.delete')}
                             </button>
                             <button 
-                                className="btn btn-success flex-1 sm:flex-none gap-2 text-white shadow-sm"
+                                className="inline-flex items-center justify-center gap-2 h-9 px-4 bg-emerald-600 text-white rounded-lg text-sm font-bold hover:bg-emerald-700 transition-colors shadow-sm"
                                 onClick={() => handleValidate(selectedAvoir)}
                                 disabled={savingValidation}
                             >
@@ -136,25 +136,25 @@ export const AvoirsDetails: React.FC<AvoirsDetailsProps> = ({ data }) => {
                 {/* Left Col: Info Cards */}
                 <div className="lg:col-span-1 space-y-6">
                     {/* Fournisseur Info */}
-                    <div className="bg-base-100 rounded-2xl shadow-sm border border-base-300 p-5">
-                        <h2 className="text-sm font-bold text-base-content/50 uppercase tracking-widest mb-4">
+                    <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-5">
+                        <h2 className="text-sm font-bold text-gray-500 uppercase tracking-widest mb-4">
                             {t('stock:avoirs.details.fournisseur_info')}
                         </h2>
                         <div className="space-y-4">
                             <div>
-                                <p className="text-sm text-base-content/60 mb-1">{t('stock:avoirs.form.fournisseur')}</p>
+                                <p className="text-sm text-gray-500 mb-1">{t('stock:avoirs.form.fournisseur')}</p>
                                 <p className="font-bold text-lg">{selectedAvoir.fournisseur_name}</p>
                             </div>
                             <div>
-                                <p className="text-sm text-base-content/60 mb-1">{t('stock:avoirs.details.type_label')}</p>
-                                <div className="inline-flex items-center px-2.5 py-1 rounded-md bg-base-200 text-base-content/70 text-sm font-medium border border-base-300">
+                                <p className="text-sm text-gray-500 mb-1">{t('stock:avoirs.details.type_label')}</p>
+                                <div className="inline-flex items-center px-2.5 py-1 rounded-md bg-gray-100 text-gray-500 text-sm font-medium border border-gray-200">
                                     {getTypeAvoirLabel(selectedAvoir.type_avoir)}
                                 </div>
                             </div>
                             {selectedAvoir.observations && (
                                 <div>
-                                    <p className="text-sm text-base-content/60 mb-1">{t('stock:avoirs.details.observations_label')}</p>
-                                    <p className="text-sm bg-base-200/50 p-3 rounded-xl border border-base-200/50">
+                                    <p className="text-sm text-gray-500 mb-1">{t('stock:avoirs.details.observations_label')}</p>
+                                    <p className="text-sm bg-gray-50 p-3 rounded-xl border border-gray-100/50">
                                         {selectedAvoir.observations}
                                     </p>
                                 </div>
@@ -162,24 +162,24 @@ export const AvoirsDetails: React.FC<AvoirsDetailsProps> = ({ data }) => {
                         </div>
                     </div>
 
-                    <div className="lg:col-span-3 bg-base-100 rounded-2xl shadow-sm border border-base-300 p-4 flex flex-wrap items-center gap-x-8 gap-y-4 text-sm">
+                    <div className="lg:col-span-3 bg-white rounded-2xl shadow-sm border border-gray-200 p-4 flex flex-wrap items-center gap-x-8 gap-y-4 text-sm">
                         <div className="flex flex-col">
-                            <span className="text-[9px] font-bold text-base-content/40 uppercase leading-none mb-1">{t('stock:avoirs.details.items_count')}</span>
-                            <span className="font-mono font-bold text-base-content/80 text-base whitespace-nowrap">
+                            <span className="text-[9px] font-bold text-gray-400 uppercase leading-none mb-1">{t('stock:avoirs.details.items_count')}</span>
+                            <span className="font-mono font-bold text-gray-500 text-base whitespace-nowrap">
                                 {selectedAvoir.produits?.length || 0}
                             </span>
                         </div>
                         
-                        <div className="flex flex-col border-l pl-5 border-base-200">
-                            <span className="text-[9px] font-bold text-base-content/40 uppercase leading-none mb-1">{t('stock:avoirs.details.total_qty')}</span>
-                            <span className="font-mono font-bold text-base-content/80 text-base whitespace-nowrap">
+                        <div className="flex flex-col border-l pl-5 border-gray-100">
+                            <span className="text-[9px] font-bold text-gray-400 uppercase leading-none mb-1">{t('stock:avoirs.details.total_qty')}</span>
+                            <span className="font-mono font-bold text-gray-500 text-base whitespace-nowrap">
                                 {selectedAvoir.produits?.reduce((sum, p) => sum + Number(p.quantity || 0), 0)}
                             </span>
                         </div>
 
-                        <div className="flex flex-col border-l pl-5 border-base-200">
-                            <span className="text-[9px] font-black text-primary uppercase leading-none mb-1">{t('stock:avoirs.details.total_ht')}</span>
-                            <span className="font-mono font-black text-2xl text-primary leading-none whitespace-nowrap">
+                        <div className="flex flex-col border-l pl-5 border-gray-100">
+                            <span className="text-[9px] font-black text-indigo-600 uppercase leading-none mb-1">{t('stock:avoirs.details.total_ht')}</span>
+                            <span className="font-mono font-black text-2xl text-indigo-600 leading-none whitespace-nowrap">
                                 {formatCurrency(Number(selectedAvoir.total_ht) || 0)}
                             </span>
                         </div>
@@ -188,24 +188,24 @@ export const AvoirsDetails: React.FC<AvoirsDetailsProps> = ({ data }) => {
 
                 {/* Right Col: Products Table */}
                 <div className="lg:col-span-2 space-y-6">
-                    <div className="bg-base-100 rounded-2xl shadow-sm border border-base-300 overflow-hidden">
+                    <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
                         
-                        <div className="p-4 sm:p-5 border-b border-base-200 bg-base-50 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                        <div className="p-4 sm:p-5 border-b border-gray-100 bg-gray-50 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                             <div>
                                 <h3 className="font-bold text-lg flex items-center gap-2">
                                     {t('stock:avoirs.details.lines_title')}
-                                    <span className="badge badge-primary badge-sm">
+                                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold bg-indigo-50 text-indigo-700 border border-indigo-200">
                                         {selectedAvoir.produits?.length || 0}
                                     </span>
                                 </h3>
-                                <p className="text-sm text-base-content/60 mt-0.5">
+                                <p className="text-sm text-gray-500 mt-0.5">
                                     {t('stock:avoirs.details.lines_subtitle')}
                                 </p>
                             </div>
                             
                             <button 
                                 onClick={handleToggleAllCloture}
-                                className={`btn btn-sm gap-2 w-full sm:w-auto ${allLinesClosed ? 'btn-outline' : 'btn-neutral'}`}
+                                className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-gray-600 hover:bg-gray-50 rounded-lg text-sm font-medium transition-colors gap-2 w-full sm:w-auto ${allLinesClosed ? 'btn-outline' : 'btn-neutral'}`}
                             >
                                 {allLinesClosed ? (
                                     <>
@@ -222,8 +222,8 @@ export const AvoirsDetails: React.FC<AvoirsDetailsProps> = ({ data }) => {
                         </div>
 
                         <div className="overflow-x-auto">
-                            <table className="table w-full text-sm">
-                                <thead className="bg-base-200/50">
+                            <table className="w-full text-sm border-separate border-spacing-0">
+                                <thead className="bg-gray-50">
                                     <tr>
                                         <th className="w-12 text-center">{t('stock:avoirs.table.status')}</th>
                                         <th>{t('stock:avoirs.form.table_product')}</th>
@@ -235,11 +235,11 @@ export const AvoirsDetails: React.FC<AvoirsDetailsProps> = ({ data }) => {
                                 </thead>
                                 <tbody>
                                     {selectedAvoir.produits?.map((ligne, idx) => (
-                                        <tr key={ligne.id || idx} className="hover:bg-base-50 transition-colors group">
+                                        <tr key={ligne.id || idx} className="hover:bg-gray-50 transition-colors group">
                                             <td className="text-center">
                                                 <button 
                                                     onClick={() => handleToggleCloture(ligne.id, ligne.est_cloture)}
-                                                    className={`btn btn-ghost btn-circle btn-sm ${ligne.est_cloture ? 'text-success hover:bg-success/10' : 'text-base-content/30 hover:bg-base-content/10'}`}
+                                                    className={`inline-flex items-center justify-center size-8 rounded-full text-gray-500 hover:text-gray-900 hover:bg-gray-50 transition-colors ${ligne.est_cloture ? 'text-emerald-600 hover:bg-emerald-50' : 'text-gray-400 hover:bg-gray-100'}`}
                                                     title={ligne.est_cloture ? t('stock:avoirs.details.reopen_line') : t('stock:avoirs.details.close_line')}
                                                 >
                                                     {ligne.est_cloture ? <Lock className="size-4" /> : <Unlock className="size-4" />}
@@ -247,25 +247,25 @@ export const AvoirsDetails: React.FC<AvoirsDetailsProps> = ({ data }) => {
                                             </td>
                                             <td>
                                                 <div className="font-bold">{ligne.produit_nom}</div>
-                                                <div className="text-xs text-base-content/60 font-mono mt-0.5">{ligne.produit_cip}</div>
+                                                <div className="text-xs text-gray-500 font-mono mt-0.5">{ligne.produit_cip}</div>
                                             </td>
                                             <td>
-                                                <div className="font-mono text-xs bg-base-200 px-2 py-1 rounded w-fit mb-1 font-bold">
+                                                <div className="font-mono text-xs bg-gray-100 px-2 py-1 rounded w-fit mb-1 font-bold">
                                                     {ligne.lot || t('stock:avoirs.form.no_lot')}
                                                 </div>
-                                                <div className="text-xs text-base-content/60">
+                                                <div className="text-xs text-gray-500">
                                                     {ligne.date_expiration ? format(new Date(ligne.date_expiration), 'dd/MM/yyyy', { locale: i18n.language === 'fr' ? fr : enUS }) : t('stock:avoirs.form.no_date')}
                                                 </div>
                                             </td>
                                             <td className="text-center">
-                                                <span className="font-bold text-base bg-base-200 px-3 py-1 rounded-lg">
+                                                <span className="font-bold text-base bg-gray-100 px-3 py-1 rounded-lg">
                                                     {ligne.quantity}
                                                 </span>
                                             </td>
                                             <td className="text-right font-mono">
                                                 {formatCurrency(Number(ligne.price || 0))}
                                             </td>
-                                            <td className="text-right font-bold text-primary font-mono">
+                                            <td className="text-right font-bold text-indigo-600 font-mono">
                                                 {formatCurrency(Number(ligne.total || (Number(ligne.quantity) * Number(ligne.price))))}
                                             </td>
                                         </tr>
@@ -273,7 +273,7 @@ export const AvoirsDetails: React.FC<AvoirsDetailsProps> = ({ data }) => {
                                     
                                     {(!selectedAvoir.produits || selectedAvoir.produits.length === 0) && (
                                         <tr>
-                                            <td colSpan={6} className="text-center py-8 text-base-content/50">
+                                            <td colSpan={6} className="text-center py-8 text-gray-500">
                                                 {t('stock:avoirs.details.no_lines')}
                                             </td>
                                         </tr>

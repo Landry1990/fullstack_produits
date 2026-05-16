@@ -346,7 +346,7 @@ export default function CommandeProductTable({
                             onChange={(e) => updateCommandeProduitField(index, 'quantity', e.target.value)}
                             onKeyDown={(e) => handleTableFieldKeyDown(e, index, 0)}
                             onFocus={handleSelectAll}
-                            className={`input input-ghost h-7 min-h-7 px-1 text-sm w-full text-right font-bold focus:bg-base-100 focus:text-primary ${!fieldsConfig[0].editable ? 'bg-base-200 cursor-not-allowed' : ''}`}
+                            className={`input input-bordered input-sm h-8 min-h-8 px-2 text-sm w-full text-right font-bold focus:bg-base-100 focus:text-primary ${!fieldsConfig[0].editable ? 'bg-base-200 cursor-not-allowed' : ''}`}
                             autoFocus={focusedField?.row === index && focusedField?.field === 0}
                             readOnly={!fieldsConfig[0].editable}
                             tabIndex={!fieldsConfig[0].editable ? -1 : 0}
@@ -368,7 +368,7 @@ export default function CommandeProductTable({
                             }}
                             onKeyDown={(e) => handleTableFieldKeyDown(e, index, 1)}
                             onFocus={handleSelectAll}
-                            className={`input input-ghost h-7 min-h-7 px-1 text-xs w-full text-center font-bold bg-success/5 focus:bg-success/10 focus:text-success ${!fieldsConfig[1].editable ? 'bg-base-200 cursor-not-allowed' : ''}`}
+                            className={`input input-bordered input-sm h-8 min-h-8 px-2 text-xs w-full text-center font-bold bg-success/5 focus:bg-success/10 focus:text-success ${!fieldsConfig[1].editable ? 'bg-base-200 cursor-not-allowed' : ''}`}
                             placeholder="0"
                             autoFocus={focusedField?.row === index && focusedField?.field === 1}
                             readOnly={!fieldsConfig[1].editable}
@@ -386,7 +386,7 @@ export default function CommandeProductTable({
                                 onChange={(e) => updateCommandeProduitField(index, 'prix_euro', e.target.value)}
                                 onFocus={handleSelectAll}
                                 onKeyDown={(e) => handleTableFieldKeyDown(e, index, 2)}
-                                className="input input-ghost h-7 min-h-7 px-1 text-sm w-full text-right focus:bg-blue-50 focus:text-blue-600 font-mono"
+                                className="input input-bordered input-sm h-8 min-h-8 px-2 text-sm w-full text-right focus:bg-blue-50 focus:text-blue-600 font-mono"
                                 placeholder="..."
                             />
                             </td>
@@ -401,7 +401,7 @@ export default function CommandeProductTable({
                             onChange={(e) => updateCommandeProduitField(index, 'price', e.target.value)}
                             onKeyDown={(e) => handleTableFieldKeyDown(e, index, (commandeType === 'DIR' ? 3 : 2))}
                             onFocus={handleSelectAll}
-                            className={`input input-ghost h-7 min-h-7 px-1 text-sm w-full text-right focus:bg-base-100 focus:text-primary ${!fieldsConfig[2].editable ? 'bg-base-200 cursor-not-allowed' : ''}`}
+                            className={`input input-bordered input-sm h-8 min-h-8 px-2 text-sm w-full text-right focus:bg-base-100 focus:text-primary ${!fieldsConfig[2].editable ? 'bg-base-200 cursor-not-allowed' : ''}`}
                             autoFocus={focusedField?.row === index && focusedField?.field === 2}
                             readOnly={!fieldsConfig[2].editable}
                             tabIndex={!fieldsConfig[2].editable ? -1 : 0}
@@ -417,7 +417,7 @@ export default function CommandeProductTable({
                             onChange={(e) => updateCommandeProduitField(index, 'tva', e.target.value)}
                             onKeyDown={(e) => handleTableFieldKeyDown(e, index, (commandeType === 'DIR' ? 4 : 3))}
                             onFocus={handleSelectAll}
-                            className={`input input-ghost h-7 min-h-7 px-1 text-sm w-full text-right opacity-70 focus:opacity-100 ${!fieldsConfig[3].editable ? 'bg-base-200 cursor-not-allowed' : ''}`}
+                            className={`input input-bordered input-sm h-8 min-h-8 px-2 text-sm w-full text-right opacity-70 focus:opacity-100 ${!fieldsConfig[3].editable ? 'bg-base-200 cursor-not-allowed' : ''}`}
                             autoFocus={focusedField?.row === index && focusedField?.field === 3}
                             readOnly={!fieldsConfig[3].editable}
                             tabIndex={!fieldsConfig[3].editable ? -1 : 0}
@@ -433,7 +433,7 @@ export default function CommandeProductTable({
                             onChange={(e) => updateCommandeProduitField(index, 'marge', e.target.value)}
                             onKeyDown={(e) => handleTableFieldKeyDown(e, index, (commandeType === 'DIR' ? 5 : 4))}
                             onFocus={handleSelectAll}
-                            className={`input input-ghost h-7 min-h-7 px-1 text-sm w-full text-right font-bold focus:bg-base-100 ${Number(p.marge || 0) >= 1.34 ? 'text-success' : 'text-warning'} ${!fieldsConfig[4].editable ? 'bg-base-200 cursor-not-allowed' : ''}`}
+                            className={`input input-bordered input-sm h-8 min-h-8 px-2 text-sm w-full text-right font-bold focus:bg-base-100 ${Number(p.marge || 0) >= 1.34 ? 'text-success' : 'text-warning'} ${!fieldsConfig[4].editable ? 'bg-base-200 cursor-not-allowed' : ''}`}
                             autoFocus={focusedField?.row === index && focusedField?.field === 4}
                             readOnly={!fieldsConfig[4].editable}
                             tabIndex={!fieldsConfig[4].editable ? -1 : 0}
@@ -449,7 +449,7 @@ export default function CommandeProductTable({
                             onChange={(e) => updateCommandeProduitField(index, 'selling_price', e.target.value)}
                             onKeyDown={(e) => handleTableFieldKeyDown(e, index, (commandeType === 'DIR' ? 6 : 5))}
                             onFocus={handleSelectAll}
-                            className={`input input-ghost h-7 min-h-7 px-1 text-sm w-full text-right font-bold focus:bg-base-100 focus:text-primary ${!fieldsConfig[5].editable ? 'bg-base-200 cursor-not-allowed' : ''}`}
+                            className={`input input-bordered input-sm h-8 min-h-8 px-2 text-sm w-full text-right font-bold focus:bg-base-100 focus:text-primary ${!fieldsConfig[5].editable ? 'bg-base-200 cursor-not-allowed' : ''}`}
                             autoFocus={focusedField?.row === index && focusedField?.field === 5}
                             readOnly={!fieldsConfig[5].editable}
                             tabIndex={!fieldsConfig[5].editable ? -1 : 0}
@@ -465,7 +465,7 @@ export default function CommandeProductTable({
                             onChange={(e) => updateCommandeProduitField(index, 'lot', e.target.value)}
                             onKeyDown={(e) => handleTableFieldKeyDown(e, index, (commandeType === 'DIR' ? 7 : 6))}
                             onFocus={handleSelectAll}
-                            className={`input input-ghost h-7 min-h-7 px-1 text-[10px] w-full focus:bg-base-100 ${!fieldsConfig[6].editable ? 'bg-base-200 cursor-not-allowed' : ''}`}
+                            className={`input input-bordered input-sm h-8 min-h-8 px-2 text-[10px] w-full focus:bg-base-100 ${!fieldsConfig[6].editable ? 'bg-base-200 cursor-not-allowed' : ''}`}
                             placeholder="Lot"
                             autoFocus={focusedField?.row === index && focusedField?.field === 6}
                             readOnly={!fieldsConfig[6].editable}
@@ -488,7 +488,7 @@ export default function CommandeProductTable({
                             }}
                             onKeyDown={(e) => handleTableFieldKeyDown(e, index, (commandeType === 'DIR' ? 8 : 7))}
                             onFocus={handleSelectAll}
-                            className={`input input-ghost h-7 min-h-7 px-1 text-[10px] w-full focus:bg-base-100 ${!fieldsConfig[7].editable ? 'bg-base-200 cursor-not-allowed' : ''} ${p.date_expiration && !/^(0[1-9]|1[0-2])\/\d{2}$/.test(p.date_expiration) ? 'input-error text-error' : ''}`}
+                            className={`input input-bordered input-sm h-8 min-h-8 px-2 text-[10px] w-full focus:bg-base-100 ${!fieldsConfig[7].editable ? 'bg-base-200 cursor-not-allowed' : ''} ${p.date_expiration && !/^(0[1-9]|1[0-2])\/\d{2}$/.test(p.date_expiration) ? 'input-error text-error' : ''}`}
                             placeholder="MM/YY"
                             maxLength={5}
                             autoFocus={focusedField?.row === index && focusedField?.field === 7}

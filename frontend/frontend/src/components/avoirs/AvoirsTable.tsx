@@ -32,28 +32,28 @@ const BulkActionsMenu: React.FC<BulkActionsMenuProps> = React.memo(({
         if (!avoir) return null;
         return (
             <>
-                <li className="menu-title px-4 py-2 text-xs font-bold uppercase tracking-widest text-base-content/40">
+                <li className="menu-title px-4 py-2 text-xs font-bold uppercase tracking-widest text-gray-400">
                     {t('common:single_selection')}
                 </li>
                 <li>
-                    <a onClick={() => onView(avoir)} className="flex items-center gap-3 py-3 hover:bg-info/10 text-info font-medium">
+                    <a onClick={() => onView(avoir)} className="flex items-center gap-3 py-3 hover:bg-blue-50 text-blue-600 font-medium">
                         <Eye className="size-4" /> {t('common:view')}
                     </a>
                 </li>
                 {(avoir.status?.toUpperCase() === 'BROUILLON' || avoir.status?.toUpperCase() === 'BRO') && (
                     <>
                         <li>
-                            <a onClick={() => onEdit(avoir)} className="flex items-center gap-3 py-3 hover:bg-warning/10 text-warning font-medium">
+                            <a onClick={() => onEdit(avoir)} className="flex items-center gap-3 py-3 hover:bg-amber-50 text-amber-600 font-medium">
                                 <Edit className="size-4" /> {t('common:edit')}
                             </a>
                         </li>
                         <li>
-                            <a onClick={() => onValidate(avoir)} className="flex items-center gap-3 py-3 hover:bg-success/10 text-success font-medium">
+                            <a onClick={() => onValidate(avoir)} className="flex items-center gap-3 py-3 hover:bg-emerald-50 text-emerald-600 font-medium">
                                 <CheckCircle2 className="size-4" /> {t('common:validate')}
                             </a>
                         </li>
                         <li>
-                            <a onClick={() => onDelete(avoir)} className="flex items-center gap-3 py-3 hover:bg-error/10 text-error font-medium">
+                            <a onClick={() => onDelete(avoir)} className="flex items-center gap-3 py-3 hover:bg-red-50 text-red-600 font-medium">
                                 <Trash2 className="size-4" /> {t('common:delete')}
                             </a>
                         </li>
@@ -64,18 +64,18 @@ const BulkActionsMenu: React.FC<BulkActionsMenuProps> = React.memo(({
     }
     return (
         <>
-            <li className="menu-title px-4 py-2 text-xs font-bold uppercase tracking-widest text-base-content/40">
+            <li className="menu-title px-4 py-2 text-xs font-bold uppercase tracking-widest text-gray-400">
                 {t('common:bulk_actions')}
             </li>
             <li>
-                <a onClick={onBulkValidate} className={`flex items-center gap-3 py-3 hover:bg-success/10 text-success font-medium ${bulkLoading ? 'disabled' : ''}`}>
-                    {bulkLoading ? <span className="loading loading-spinner loading-xs" /> : <Check className="size-4" />}
+                <a onClick={onBulkValidate} className={`flex items-center gap-3 py-3 hover:bg-emerald-50 text-emerald-600 font-medium ${bulkLoading ? 'disabled' : ''}`}>
+                    {bulkLoading ? <span className="inline-block size-3 border-2 border-gray-200 border-t-indigo-600 rounded-full animate-spin" /> : <Check className="size-4" />}
                     {t('common:validate_all')}
                 </a>
             </li>
             <li>
-                <a onClick={onBulkDelete} className={`flex items-center gap-3 py-3 hover:bg-error/10 text-error font-medium ${bulkLoading ? 'disabled' : ''}`}>
-                    {bulkLoading ? <span className="loading loading-spinner loading-xs" /> : <Trash2 className="size-4" />}
+                <a onClick={onBulkDelete} className={`flex items-center gap-3 py-3 hover:bg-red-50 text-red-600 font-medium ${bulkLoading ? 'disabled' : ''}`}>
+                    {bulkLoading ? <span className="inline-block size-3 border-2 border-gray-200 border-t-indigo-600 rounded-full animate-spin" /> : <Trash2 className="size-4" />}
                     {t('common:delete_all')}
                 </a>
             </li>
@@ -119,13 +119,13 @@ export const AvoirsTable: React.FC<AvoirsTableProps> = ({
     const getStatusStyle = (status: string) => {
         switch (status?.toUpperCase()) {
             case 'BROUILLON':
-            case 'BRO': return 'bg-warning/10 text-warning border-warning/20';
+            case 'BRO': return 'bg-amber-50 text-amber-600 border-amber-200';
             case 'VAL':
             case 'VALIDE':
             case 'VALIDÉ':
             case 'VALIDEE':
-            case 'VALIDÉE': return 'bg-success/10 text-success border-success/20';
-            default: return 'bg-base-200 text-base-content/60 border-base-300';
+            case 'VALIDÉE': return 'bg-emerald-50 text-emerald-600 border-emerald-200';
+            default: return 'bg-gray-100 text-gray-500 border-gray-200';
         }
     };
 
@@ -159,8 +159,8 @@ export const AvoirsTable: React.FC<AvoirsTableProps> = ({
 
     if (loading) {
         return (
-            <div className="flex flex-col items-center justify-center p-12 text-base-content/60 gap-4">
-                <span className="loading loading-spinner loading-md text-primary" />
+            <div className="flex flex-col items-center justify-center p-12 text-gray-500 gap-4">
+                <span className="inline-block size-4 border-2 border-gray-200 border-t-indigo-600 rounded-full animate-spin loading-md text-indigo-600" />
                 <p>{t('stock:avoirs.loading')}</p>
             </div>
         );
@@ -168,8 +168,8 @@ export const AvoirsTable: React.FC<AvoirsTableProps> = ({
 
     if (avoirs.length === 0) {
         return (
-            <div className="flex flex-col items-center justify-center p-12 text-base-content/60 gap-4">
-                <div className="size-16 rounded-full bg-base-200 flex items-center justify-center">
+            <div className="flex flex-col items-center justify-center p-12 text-gray-500 gap-4">
+                <div className="size-16 rounded-full bg-gray-100 flex items-center justify-center">
                     <svg className="size-8 opacity-50" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
                     </svg>
@@ -187,14 +187,14 @@ export const AvoirsTable: React.FC<AvoirsTableProps> = ({
 
     return (
         <div className="overflow-auto size-full relative">
-            <table className="table table-zebra table-pin-rows w-full text-sm">
+            <table className="w-full text-sm border-separate border-spacing-0">
                 <thead>
-                    <tr className="bg-base-200 text-base-content/70 border-b border-base-300">
-                        <th className="w-12 text-center rounded-tl-xl sticky top-0 z-30 bg-base-200 opacity-100 border-b border-base-300">
-                            <label className="cursor-pointer label p-0 justify-center">
+                    <tr className="bg-gray-100 text-gray-500 border-b border-gray-200">
+                        <th className="w-12 text-center rounded-tl-xl sticky top-0 z-30 bg-gray-100  border-b border-gray-200">
+                            <label className="cursor-pointer flex items-center justify-center p-0">
                                 <input 
                                     type="checkbox" 
-                                    className="checkbox checkbox-sm checkbox-primary" 
+                                    className="size-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 cursor-pointer" 
                                     checked={allSelected}
                                     onChange={onToggleSelectAll}
                                     disabled={draftAvoirsCount === 0}
@@ -224,29 +224,29 @@ export const AvoirsTable: React.FC<AvoirsTableProps> = ({
                             </SelectionHeader>
                         ) : (
                             <>
-                                <th className="sticky top-0 z-30 bg-base-200 opacity-100 border-b border-base-300 text-[10px] font-black uppercase tracking-widest text-base-content/40 px-6 py-4">{t('stock:avoirs.table.date')}</th>
-                                <th className="sticky top-0 z-30 bg-base-200 opacity-100 border-b border-base-300 text-[10px] font-black uppercase tracking-widest text-base-content/40 px-6 py-4">{t('stock:avoirs.table.numero')}</th>
-                                <th className="sticky top-0 z-30 bg-base-200 opacity-100 border-b border-base-300 text-[10px] font-black uppercase tracking-widest text-base-content/40 px-6 py-4">{t('stock:avoirs.table.fournisseur')}</th>
-                                <th className="sticky top-0 z-30 bg-base-200 opacity-100 border-b border-base-300 text-[10px] font-black uppercase tracking-widest text-base-content/40 px-6 py-4 text-right">{t('stock:avoirs.table.montant')}</th>
-                                <th className="sticky top-0 z-30 bg-base-200 opacity-100 border-b border-base-300 text-[10px] font-black uppercase tracking-widest text-base-content/40 px-6 py-4 text-center">{t('stock:avoirs.table.status')}</th>
-                                <th className="sticky top-0 z-30 bg-base-200 opacity-100 border-b border-base-300 text-[10px] font-black uppercase tracking-widest text-base-content/40 px-6 py-4 text-right pr-6">{t('common:actions_title')}</th>
+                                <th className="sticky top-0 z-30 bg-gray-100  border-b border-gray-200 text-[10px] font-black uppercase tracking-widest text-gray-400 px-6 py-4">{t('stock:avoirs.table.date')}</th>
+                                <th className="sticky top-0 z-30 bg-gray-100  border-b border-gray-200 text-[10px] font-black uppercase tracking-widest text-gray-400 px-6 py-4">{t('stock:avoirs.table.numero')}</th>
+                                <th className="sticky top-0 z-30 bg-gray-100  border-b border-gray-200 text-[10px] font-black uppercase tracking-widest text-gray-400 px-6 py-4">{t('stock:avoirs.table.fournisseur')}</th>
+                                <th className="sticky top-0 z-30 bg-gray-100  border-b border-gray-200 text-[10px] font-black uppercase tracking-widest text-gray-400 px-6 py-4 text-right">{t('stock:avoirs.table.montant')}</th>
+                                <th className="sticky top-0 z-30 bg-gray-100  border-b border-gray-200 text-[10px] font-black uppercase tracking-widest text-gray-400 px-6 py-4 text-center">{t('stock:avoirs.table.status')}</th>
+                                <th className="sticky top-0 z-30 bg-gray-100  border-b border-gray-200 text-[10px] font-black uppercase tracking-widest text-gray-400 px-6 py-4 text-right pr-6">{t('common:actions_title')}</th>
                             </>
                         )}
                     </tr>
                 </thead>
-                <tbody className="text-base-content font-medium">
+                <tbody className="text-gray-900 font-medium">
                     {avoirs.map((avoir) => (
                         <tr 
                             key={avoir.id} 
-                            className={`hover:bg-base-200/50 transition-colors group cursor-pointer ${selectedIds.has(avoir.id) ? 'bg-primary/5' : ''}`}
+                            className={`hover:bg-gray-50 transition-colors group cursor-pointer ${selectedIds.has(avoir.id) ? 'bg-indigo-50' : ''}`}
                             onClick={() => selectedIds.size === 0 && onView(avoir)}
                         >
                             <td className="text-center" onClick={(e) => e.stopPropagation()}>
                                 {(avoir.status?.toUpperCase() === 'BROUILLON' || avoir.status?.toUpperCase() === 'BRO') && (
-                                    <label className="cursor-pointer label p-0 justify-center">
+                                    <label className="cursor-pointer flex items-center justify-center p-0">
                                         <input 
                                             type="checkbox" 
-                                            className="checkbox checkbox-sm checkbox-primary" 
+                                            className="size-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 cursor-pointer" 
                                             checked={selectedIds.has(avoir.id)}
                                             onChange={() => onToggleSelection(avoir.id)}
                                         />
@@ -255,22 +255,22 @@ export const AvoirsTable: React.FC<AvoirsTableProps> = ({
                             </td>
                             <td>
                                 <div className="flex flex-col">
-                                    <span className="font-semibold text-base-content">
+                                    <span className="font-semibold text-gray-900">
                                         {format(new Date(avoir.created_at || avoir.date), 'dd/MM/yyyy', { locale: i18n.language === 'fr' ? fr : enUS })}
                                     </span>
-                                    <span className="text-xs text-base-content/60">
+                                    <span className="text-xs text-gray-500">
                                         {format(new Date(avoir.created_at || avoir.date), 'HH:mm', { locale: i18n.language === 'fr' ? fr : enUS })}
                                     </span>
                                 </div>
                             </td>
                             <td>
-                                <span className="font-mono text-base-content/80 font-semibold">{avoir.numero}</span>
+                                <span className="font-mono text-gray-500 font-semibold">{avoir.numero}</span>
                             </td>
                             <td>
                                 <div className="font-bold">{avoir.fournisseur_name}</div>
                                 <div className="text-[10px] opacity-50 uppercase tracking-tight">{getTypeAvoirLabel(avoir.type_avoir)}</div>
                             </td>
-                            <td className="text-right font-bold text-primary">
+                            <td className="text-right font-bold text-indigo-600">
                                 {formatCurrency(Number(avoir.total_ht) || 0)}
                             </td>
                             <td className="text-center">
@@ -280,7 +280,7 @@ export const AvoirsTable: React.FC<AvoirsTableProps> = ({
                             </td>
                             <td className="text-right" onClick={(e) => e.stopPropagation()}>
                                 {selectedIds.size === 0 && (
-                                    <div className="flex items-center justify-end gap-1 opacity-60 group-hover:opacity-100 transition-opacity">
+                                    <div className="flex items-center justify-end gap-1 opacity-60 group-hover: transition-opacity">
                                         <ActionIcon 
                                             icon={Eye}
                                             onClick={() => onView(avoir)}

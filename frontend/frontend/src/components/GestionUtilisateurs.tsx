@@ -93,7 +93,8 @@ const MENU_HIERARCHY = [
       { key: 'inventaire_transformations', labelKey: 'sidebar:stock.transformations.title' },
       { key: 'inventaire_perimes', labelKey: 'sidebar:stock.perimes.title' },
       { key: 'inventaire_organisation', labelKey: 'sidebar:stock.organisation.title' },
-      { key: 'inventaire_etats', labelKey: 'sidebar:stock.etats_inventaire.title' }
+      { key: 'inventaire_etats', labelKey: 'sidebar:stock.etats_inventaire.title' },
+      { key: 'inventaire_rapport_ug', labelKey: 'sidebar:stock.rapport_ug' }
     ]
   },
   { 
@@ -106,7 +107,8 @@ const MENU_HIERARCHY = [
       { key: 'statistiques_mensuels', labelKey: 'sidebar:statistiques.mensuel' },
       { key: 'statistiques_finances', labelKey: 'sidebar:statistiques.finances' },
       { key: 'statistiques_vendeurs', labelKey: 'sidebar:statistiques.classement_vendeurs' },
-      { key: 'statistiques_temporelle', labelKey: 'sidebar:statistiques.analyse_temporelle' }
+      { key: 'statistiques_temporelle', labelKey: 'sidebar:statistiques.analyse_temporelle' },
+      { key: 'statistiques_guide', labelKey: 'sidebar:statistiques.guide' }
     ]
   },
   {
@@ -115,7 +117,8 @@ const MENU_HIERARCHY = [
     submenus: [
       { key: 'settings_facture', labelKey: 'sidebar:parametres.facture' },
       { key: 'settings_pharmacie', labelKey: 'sidebar:parametres.pharmacie' },
-      { key: 'settings_whatsapp', labelKey: 'sidebar:parametres.whatsapp' }
+      { key: 'settings_whatsapp', labelKey: 'sidebar:parametres.whatsapp' },
+      { key: 'settings_telegram', labelKey: 'sidebar:parametres.telegram' }
     ]
   },
   {
@@ -144,7 +147,9 @@ const MENU_HIERARCHY = [
   { key: 'user_sessions', labelKey: 'sidebar:user_sessions_sidebar' },
   { key: 'audit', labelKey: 'sidebar:audit' },
   { key: 'maintenance', labelKey: 'sidebar:maintenance' },
-  { key: 'corbeille', labelKey: 'sidebar:corbeille' }
+  { key: 'corbeille', labelKey: 'sidebar:corbeille' },
+  { key: 'perimes', labelKey: 'sidebar:stock.perimes.title' },
+  { key: 'commandes', labelKey: 'sidebar:commandes.title' }
 ];
 
 const getAllMenuKeys = () => {
@@ -517,14 +522,14 @@ export default function GestionUtilisateurs() {
   };
 
   if (!currentUser?.is_superuser) {
-    return <div className="p-4 text-error">{t('messages.access_denied')}</div>;
+    return <div className="p-4 text-red-600">{t('messages.access_denied')}</div>;
   }
 
   return (
     <div className="p-6">
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold text-primary">{t('title')}</h1>
-        <button className="btn btn-primary" onClick={() => handleOpenModal()}>
+        <h1 className="text-2xl font-bold text-indigo-600">{t('title')}</h1>
+        <button className="inline-flex items-center gap-1.5 px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-bold hover:bg-indigo-700 transition-colors shadow-sm" onClick={() => handleOpenModal()}>
           <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
           </svg>
@@ -532,8 +537,8 @@ export default function GestionUtilisateurs() {
         </button>
       </div>
 
-      <div className="overflow-x-auto bg-base-100 rounded-lg shadow">
-        <table className="table w-full">
+      <div className="overflow-x-auto bg-white rounded-lg shadow">
+        <table className="w-full text-sm">
           <thead>
             <tr>
               <th>{t('table.user')}</th>
@@ -547,15 +552,15 @@ export default function GestionUtilisateurs() {
               <tr key={user.id} className="hover">
                 <td>
                   <div className="flex items-center space-x-3">
-                    <div className="avatar placeholder">
-                      <div className="bg-neutral-focus text-neutral-content rounded-full w-10">
+                    <div className="inline-flex items-center justify-center">
+                      <div className="bg-gray-800 text-white rounded-full w-10">
                         <span className="text-xl">{user.username.charAt(0).toUpperCase()}</span>
                       </div>
                     </div>
                     <div>
                       <div className="font-bold flex items-center gap-2">
                         {user.username}
-                        {!user.is_active && <span className="badge badge-error badge-xs p-1 h-auto text-[8px] uppercase">{t('badges.inactive', 'Inactif')}</span>}
+                        {!user.is_active && <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[8px] font-bold bg-red-100 text-red-700 uppercase">{t('badges.inactive', 'Inactif')}</span>}
                       </div>
                       <div className="text-sm opacity-50">{user.first_name} {user.last_name}</div>
                       <div className="text-xs opacity-50">{user.email}</div>
@@ -579,10 +584,10 @@ export default function GestionUtilisateurs() {
                     </span>
                     <div className="flex flex-wrap gap-1 mt-1">
                       {user.is_superuser ? (
-                        <span className="badge badge-outline badge-xs">{t('badges.full_access')}</span>
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-gray-50 text-gray-600 border border-gray-200">{t('badges.full_access')}</span>
                       ) : (
                         user.profile?.allowed_menus.map(menu => (
-                          <span key={menu} className="badge badge-outline badge-xs opacity-70">
+                          <span key={menu} className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-gray-50 text-gray-600 border border-gray-200 opacity-70">
                             {menu}
                           </span>
                         ))
@@ -593,12 +598,12 @@ export default function GestionUtilisateurs() {
                 <td>
                   <div className="flex gap-2">
                     {user.profile?.can_cash_out && (
-                      <div className="badge badge-success badge-outline gap-1" title={t('permissions.cash_out')}>
+                      <div className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200" title={t('permissions.cash_out')}>
                         <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
                       </div>
                     )}
                     {user.profile?.can_sell_negative_stock && (
-                      <div className="badge badge-warning badge-outline gap-1" title={t('permissions.negative_stock')}>
+                      <div className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-bold bg-amber-50 text-amber-700 border border-amber-200" title={t('permissions.negative_stock')}>
                         <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
                       </div>
                     )}
@@ -606,14 +611,14 @@ export default function GestionUtilisateurs() {
                 </td>
                 <td className="text-right">
                   <button 
-                    className="btn btn-ghost btn-sm"
+                    className="inline-flex items-center gap-1 px-2.5 py-1.5 text-gray-600 hover:bg-gray-50 rounded-lg text-sm font-medium transition-colors"
                     onClick={() => handleOpenModal(user)}
                   >
                     {t('actions.edit')}
                   </button>
                   {currentUser?.username !== user.username && (
                     <button 
-                      className="btn btn-ghost btn-sm text-error"
+                      className="inline-flex items-center gap-1 px-2.5 py-1.5 text-gray-600 hover:bg-gray-50 rounded-lg text-sm font-medium transition-colors text-red-600"
                       onClick={() => handleDeleteUser(user.id, user.username)}
                     >
                       <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
@@ -628,22 +633,22 @@ export default function GestionUtilisateurs() {
       </div>
 
       {modalOpen && (
-        <div className="modal modal-open">
-          <div className="modal-box w-11/12 max-w-5xl p-0 overflow-hidden flex flex-col max-h-[90vh]">
-            <div className="p-6 pb-2 border-b border-base-300 flex justify-between items-center bg-base-100 flex-none">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+          <div className="bg-white w-11/12 max-w-5xl rounded-xl shadow-xl overflow-hidden flex flex-col max-h-[90vh]">
+            <div className="p-6 pb-2 border-b border-gray-200 flex justify-between items-center bg-white flex-none">
               <h3 className="font-bold text-xl flex items-center gap-2">
-                <div className="size-8 rounded-lg bg-primary/10 text-primary flex items-center justify-center">
+                <div className="size-8 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center">
                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
                 </div>
                 {editingUser ? t('modal.edit_title') : t('modal.new_title')}
               </h3>
-              <button className="btn btn-sm btn-circle btn-ghost" onClick={() => setModalOpen(false)}>✕</button>
+              <button className="inline-flex items-center justify-center size-8 rounded-full text-gray-500 hover:bg-gray-50 transition-colors" onClick={() => setModalOpen(false)}>✕</button>
             </div>
             
             <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-6 space-y-8">
               <div className="space-y-4">
-                <div className="flex items-center gap-2 border-l-2 border-primary pl-3 bg-primary/5 py-1 rounded-r-lg">
-                  <h4 className="font-bold text-xs uppercase tracking-widest text-primary">{t('modal.basic_info')}</h4>
+                <div className="flex items-center gap-2 border-l-2 border-indigo-500 pl-3 bg-indigo-50/50 py-1 rounded-r-lg">
+                  <h4 className="font-bold text-xs uppercase tracking-widest text-indigo-600">{t('modal.basic_info')}</h4>
                 </div>
                 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -682,12 +687,12 @@ export default function GestionUtilisateurs() {
                     onChange={e => setFormData({...formData, password: e.target.value})}
                     placeholder={editingUser ? t('form.password_placeholder_edit') : ''}
                   />
-                  <div className="form-control w-full">
-                    <label className="label pt-0 px-1">
-                      <span className="label-text font-bold text-base-content/60 uppercase text-[10px] tracking-wider">{t('form.role')}</span>
+                  <div className="flex flex-col gap-1 w-full">
+                    <label className="flex flex-col gap-0.5 pt-0 px-1">
+                      <span className="label-text font-bold text-gray-500 uppercase text-[10px] tracking-wider">{t('form.role')}</span>
                     </label>
                     <select 
-                      className="select select-bordered w-full h-10 select-sm"
+                      className="w-full rounded-lg border border-gray-200 bg-white h-10 px-3 text-sm font-bold focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-50 transition-all"
                       value={formData.role}
                       onChange={e => handleRoleChange(e.target.value)}
                     >
@@ -701,8 +706,8 @@ export default function GestionUtilisateurs() {
 
 
               <div className="space-y-4">
-                <div className="flex items-center gap-2 border-l-2 border-secondary pl-3 bg-secondary/5 py-1 rounded-r-lg">
-                  <h4 className="font-bold text-xs uppercase tracking-widest text-secondary">{t('modal.authorized_menus')}</h4>
+                <div className="flex items-center gap-2 border-l-2 border-secondary pl-3 bg-purple-50/50 py-1 rounded-r-lg">
+                  <h4 className="font-bold text-xs uppercase tracking-widest text-purple-600">{t('modal.authorized_menus')}</h4>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -712,12 +717,12 @@ export default function GestionUtilisateurs() {
                       const indeterminate = !isParentChecked && menu.submenus?.some(sub => formData.allowed_menus.includes(sub.key));
 
                       return (
-                        <div key={menu.key} className="bg-base-200/30 rounded-xl border border-base-300 overflow-hidden flex flex-col h-full">
-                           <div className="bg-base-200/80 p-3 flex-none border-b border-base-300">
+                        <div key={menu.key} className={`bg-gray-50/30 rounded-xl border border-gray-200 overflow-hidden ${menu.submenus && menu.submenus.length > 0 ? 'flex flex-col h-full' : ''}`}>
+                           <div className="bg-gray-50/80 p-3 flex-none border-b border-gray-200">
                              <label className="flex items-center cursor-pointer gap-3">
                                <input 
                                  type="checkbox" 
-                                 className={`checkbox checkbox-sm checkbox-primary shrink-0 ${indeterminate ? 'checkbox-indeterminate' : ''}`}
+                                 className={`size-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 shrink-0 cursor-pointer ${indeterminate ? '' : ''}`}
                                  checked={isParentChecked || indeterminate}
                                  onChange={() => handleMenuToggle(menu.key, menu.submenus)}
                                  disabled={formData.is_superuser}
@@ -727,7 +732,7 @@ export default function GestionUtilisateurs() {
                            </div>
                            
                            {menu.submenus && menu.submenus.length > 0 && (
-                               <div className="p-3 grid grid-cols-1 gap-1.5 flex-1 bg-base-100/50">
+                               <div className="p-3 grid grid-cols-1 gap-1.5 flex-1 bg-white/50">
                                   {menu.submenus.map(sub => {
                                      const subLabel = t(sub.labelKey);
                                      return (
@@ -749,7 +754,7 @@ export default function GestionUtilisateurs() {
                    )})}
                 </div>
                 {formData.is_superuser && (
-                  <div className="alert alert-info py-2 shadow-sm italic text-sm">
+                  <div className="p-3 rounded-lg bg-blue-50 border border-blue-200 text-blue-800 text-sm italic shadow-sm flex items-center gap-2">
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" className="stroke-current shrink-0 size-4"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                     <span>{t('modal.admin_note')}</span>
                   </div>
@@ -758,21 +763,21 @@ export default function GestionUtilisateurs() {
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                   <div className="space-y-4">
-                    <div className="flex items-center gap-2 border-l-2 border-success pl-3 bg-success/5 py-1 rounded-r-lg">
-                      <h4 className="font-bold text-xs uppercase tracking-widest text-success">{t('modal.special_permissions')}</h4>
+                    <div className="flex items-center gap-2 border-l-2 border-success pl-3 bg-emerald-50/50 py-1 rounded-r-lg">
+                      <h4 className="font-bold text-xs uppercase tracking-widest text-emerald-600">{t('modal.special_permissions')}</h4>
                     </div>
                     
-                    <div className="grid grid-cols-1 gap-3 bg-base-200/50 p-4 rounded-xl border border-base-300">
-                      <label className="label cursor-pointer justify-start gap-4 p-2 bg-base-100 rounded-lg border border-base-200 hover:border-success transition-all shadow-sm group">
+                    <div className="grid grid-cols-1 gap-3 bg-gray-50/50 p-4 rounded-xl border border-gray-200">
+                      <label className="label cursor-pointer justify-start gap-4 p-2 bg-white rounded-lg border border-gray-100 hover:border-success transition-all shadow-sm group">
                         <input 
                           type="checkbox" 
-                          className="toggle toggle-success toggle-sm"
+                          className="size-4 rounded border-gray-300 text-emerald-600 focus:ring-emerald-500 cursor-pointer appearance-none checked:bg-emerald-600"
                           checked={formData.can_cash_out}
                           onChange={e => setFormData({...formData, can_cash_out: e.target.checked})}
                           disabled={formData.is_superuser || formData.role === 'VENDEUR'}
                         />
                         <div className="flex flex-col">
-                          <span className="font-bold text-xs group-hover:text-success transition-colors">{t('permissions.cash_out')}</span>
+                          <span className="font-bold text-xs group-hover:text-emerald-600 transition-colors">{t('permissions.cash_out')}</span>
                           <span className="text-[10px] opacity-60 leading-none mt-0.5">{t('permissions.cash_out_desc')}</span>
                         </div>
                       </label>
@@ -783,7 +788,7 @@ export default function GestionUtilisateurs() {
                           checked={formData.can_do_returns} 
                           onChange={checked => setFormData({...formData, can_do_returns: checked})} 
                           label={t('permissions.returns')} 
-                          className="p-2 bg-base-100/50 rounded-lg"
+                          className="p-2 bg-white/50 rounded-lg"
                         />
                         <Checkbox 
                           size="xs"
@@ -791,38 +796,38 @@ export default function GestionUtilisateurs() {
                           checked={formData.can_sell_negative_stock} 
                           onChange={checked => setFormData({...formData, can_sell_negative_stock: checked})} 
                           label={t('permissions.negative_stock')} 
-                          className="p-2 bg-base-100/50 rounded-lg text-warning font-bold"
+                          className="p-2 bg-white/50 rounded-lg text-amber-600 font-bold"
                         />
                         <Checkbox 
                           size="xs"
                           checked={formData.can_modify_price} 
                           onChange={checked => setFormData({...formData, can_modify_price: checked})} 
                           label={t('permissions.modify_price')} 
-                          className="p-2 bg-base-100/50 rounded-lg"
+                          className="p-2 bg-white/50 rounded-lg"
                         />
                         <Checkbox 
                           size="xs"
                           checked={formData.can_generate_coupon} 
                           onChange={checked => setFormData({...formData, can_generate_coupon: checked})} 
                           label={t('permissions.generate_coupon')} 
-                          className="p-2 bg-base-100/50 rounded-lg"
+                          className="p-2 bg-white/50 rounded-lg"
                         />
                         <Checkbox 
                           size="xs"
                           checked={formData.can_modify_invoice} 
                           onChange={checked => setFormData({...formData, can_modify_invoice: checked})} 
                           label={t('permissions.modify_invoice')} 
-                          className="p-2 bg-base-100/50 rounded-lg"
+                          className="p-2 bg-white/50 rounded-lg"
                         />
                       </div>
 
-                      <div className="form-control px-2 mt-1">
-                        <label className="label py-1">
-                          <span className="label-text text-[10px] font-bold opacity-60">{t('form.max_discount')}</span>
+                      <div className="flex flex-col gap-1 px-2 mt-1">
+                        <label className="flex flex-col gap-0.5 py-1">
+                          <span className="text-[10px] font-bold text-gray-500">{t('form.max_discount')}</span>
                         </label>
                         <input 
                           type="number" 
-                          className="input input-bordered input-xs !h-8 font-bold" 
+                          className="w-full rounded-lg border border-gray-200 bg-white h-8 px-3 text-sm font-bold focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-50 transition-all" 
                           value={formData.max_discount_rate}
                           onChange={e => setFormData({...formData, max_discount_rate: parseInt(e.target.value) || 0})}
                         />
@@ -831,71 +836,71 @@ export default function GestionUtilisateurs() {
                   </div>
 
                   <div className="space-y-4">
-                    <div className="flex items-center gap-2 border-l-2 border-error pl-3 bg-error/5 py-1 rounded-r-lg">
-                      <h4 className="font-bold text-xs uppercase tracking-widest text-error">{t('modal.security_sudo')}</h4>
+                    <div className="flex items-center gap-2 border-l-2 border-error pl-3 bg-red-50/50 py-1 rounded-r-lg">
+                      <h4 className="font-bold text-xs uppercase tracking-widest text-red-600">{t('modal.security_sudo')}</h4>
                     </div>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 bg-base-200/50 p-4 rounded-xl border border-base-300">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 bg-gray-50/50 p-4 rounded-xl border border-gray-200">
                       <Checkbox 
                         size="xs" color="error"
                         checked={formData.can_validate_zero_amount}
                         onChange={checked => setFormData({...formData, can_validate_zero_amount: checked})}
                         label={t('permissions.validate_zero_amount', 'Autoriser ventes à 0F')}
-                        className="p-2 bg-base-100/50 rounded-lg text-error font-bold"
+                        className="p-2 bg-white/50 rounded-lg text-red-600 font-bold"
                       />
                       <Checkbox 
                         size="xs" color="error"
                         checked={formData.can_cancel_invoice} onChange={checked => setFormData({...formData, can_cancel_invoice: checked})}
-                        label={t('permissions.cancel_invoice')} className="p-2 bg-base-100/50 rounded-lg text-error font-medium"
+                        label={t('permissions.cancel_invoice')} className="p-2 bg-white/50 rounded-lg text-red-600 font-medium"
                       />
                       <Checkbox 
                         size="xs" color="error"
                         checked={formData.can_cancel_promis} onChange={checked => setFormData({...formData, can_cancel_promis: checked})}
-                        label={t('permissions.cancel_promis')} className="p-2 bg-base-100/50 rounded-lg text-error font-medium"
+                        label={t('permissions.cancel_promis')} className="p-2 bg-white/50 rounded-lg text-red-600 font-medium"
                       />
                       <Checkbox 
                         size="xs" color="error"
                         checked={formData.can_delete_product} onChange={checked => setFormData({...formData, can_delete_product: checked})}
-                        label={t('permissions.delete_product')} className="p-2 bg-base-100/50 rounded-lg text-error font-medium"
+                        label={t('permissions.delete_product')} className="p-2 bg-white/50 rounded-lg text-red-600 font-medium"
                       />
                       <Checkbox 
                         size="xs" color="error"
                         checked={formData.can_delete_fournisseur} onChange={checked => setFormData({...formData, can_delete_fournisseur: checked})}
-                        label={t('permissions.delete_fournisseur')} className="p-2 bg-base-100/50 rounded-lg text-error font-medium"
+                        label={t('permissions.delete_fournisseur')} className="p-2 bg-white/50 rounded-lg text-red-600 font-medium"
                       />
                       <Checkbox 
                         size="xs" color="warning"
                         checked={formData.can_adjust_stock} onChange={checked => setFormData({...formData, can_adjust_stock: checked})}
-                        label={t('permissions.adjust_stock')} className="p-2 bg-base-100/50 rounded-lg text-warning font-medium"
+                        label={t('permissions.adjust_stock')} className="p-2 bg-white/50 rounded-lg text-amber-600 font-medium"
                       />
                       <Checkbox 
                         size="xs" color="warning"
                         checked={formData.can_manage_perimes} onChange={checked => setFormData({...formData, can_manage_perimes: checked})}
-                        label={t('permissions.manage_perimes')} className="p-2 bg-base-100/50 rounded-lg text-warning font-medium"
+                        label={t('permissions.manage_perimes')} className="p-2 bg-white/50 rounded-lg text-amber-600 font-medium"
                       />
                       <Checkbox 
                         size="xs" color="warning"
                         checked={formData.can_manage_avoirs} onChange={checked => setFormData({...formData, can_manage_avoirs: checked})}
-                        label={t('permissions.manage_avoirs')} className="p-2 bg-base-100/50 rounded-lg text-warning font-medium"
+                        label={t('permissions.manage_avoirs')} className="p-2 bg-white/50 rounded-lg text-amber-600 font-medium"
                       />
                       <Checkbox 
                         size="xs" color="warning"
                         checked={formData.can_delete_commande} onChange={checked => setFormData({...formData, can_delete_commande: checked})}
-                        label={t('permissions.delete_commande')} className="p-2 bg-base-100/50 rounded-lg text-warning font-medium"
+                        label={t('permissions.delete_commande')} className="p-2 bg-white/50 rounded-lg text-amber-600 font-medium"
                       />
                       <Checkbox 
                         size="xs" color="warning"
                         checked={formData.can_close_commande} onChange={checked => setFormData({...formData, can_close_commande: checked})}
-                        label={t('permissions.close_commande')} className="p-2 bg-base-100/50 rounded-lg text-warning font-medium"
+                        label={t('permissions.close_commande')} className="p-2 bg-white/50 rounded-lg text-amber-600 font-medium"
                       />
                     </div>
                   </div>
               </div>
             </form>
 
-            <div className="p-4 bg-base-200 border-t border-base-300 flex justify-end gap-3 flex-none">
-              <button type="button" className="btn btn-ghost" onClick={() => setModalOpen(false)}>{t('common:cancel')}</button>
-              <button type="submit" onClick={() => handleSubmit({ preventDefault: () => {} } as React.FormEvent)} className="btn btn-primary px-10 shadow-lg shadow-primary/20">{t('common:save')}</button>
+            <div className="p-4 bg-gray-50 border-t border-gray-200 flex justify-end gap-3 flex-none">
+              <button type="button" className="inline-flex items-center gap-1.5 px-3 py-2 text-gray-600 hover:bg-gray-50 rounded-lg text-sm font-medium transition-colors" onClick={() => setModalOpen(false)}>{t('common:cancel')}</button>
+              <button type="submit" onClick={() => handleSubmit({ preventDefault: () => {} } as React.FormEvent)} className="inline-flex items-center gap-1.5 px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-bold hover:bg-indigo-700 transition-colors shadow-sm px-10 shadow-lg shadow-indigo-200">{t('common:save')}</button>
             </div>
           </div>
         </div>

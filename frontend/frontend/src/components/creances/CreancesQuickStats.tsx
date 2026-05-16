@@ -29,15 +29,15 @@ export const CreancesQuickStats: React.FC<CreancesQuickStatsProps> = ({
         {
             label: t('creances:stats.total_paid'),
             value: `${formatCurrency(Math.round(totalPaid))} ${t('common:currency')}`,
-            icon: <CheckCircle className="size-5 text-success" />,
-            bgColor: 'bg-success/10',
+            icon: <CheckCircle className="size-5 text-emerald-600" />,
+            bgColor: 'bg-emerald-50',
             borderColor: 'border-success/20'
         },
         {
             label: t('creances:stats.remaining'),
             value: `${formatCurrency(Math.round(totalRemaining))} ${t('common:currency')}`,
-            icon: <Clock className="size-5 text-warning" />,
-            bgColor: 'bg-warning/10',
+            icon: <Clock className="size-5 text-amber-600" />,
+            bgColor: 'bg-amber-50',
             borderColor: 'border-warning/20'
         },
         {
@@ -54,16 +54,16 @@ export const CreancesQuickStats: React.FC<CreancesQuickStatsProps> = ({
             {stats.map((stat, idx) => (
                 <div 
                     key={idx}
-                    className={`${stat.bgColor} ${stat.borderColor} border p-4 rounded-2xl shadow-sm transition-all hover:shadow-md flex items-center gap-4`}
+                    className={`${stat.bgColor} ${stat.borderColor} border p-4 rounded-xl shadow-sm transition-all hover:shadow-md flex items-center gap-4`}
                 >
-                    <div className="p-3 bg-base-100 rounded-xl shadow-sm">
+                    <div className="p-3 bg-white rounded-xl shadow-sm">
                         {stat.icon}
                     </div>
                     <div>
-                        <div className="text-xs font-bold text-base-content/50 uppercase tracking-wider">
+                        <div className="text-xs font-bold text-gray-500 uppercase tracking-wider">
                             {stat.label}
                         </div>
-                        <div className="text-xl font-black text-base-content mt-0.5">
+                        <div className="text-xl font-black text-gray-900 mt-0.5">
                             {stat.value}
                         </div>
                     </div>
