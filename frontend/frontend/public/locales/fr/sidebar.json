@@ -83,7 +83,13 @@
     "aide_formation": "Aide et Formation",
     "audit": "Journal d'Audit",
     "compta": {
-        "title": "Comptabilité"
+        "title": "Comptabilité",
+        "dashboard": "Tableau de Bord",
+        "grand_livre": "Grand Livre",
+        "balance": "Balance",
+        "resultat": "Compte de Résultat",
+        "charges": "Charges",
+        "plan": "Plan Comptable"
     },
     "statistiques": {
         "title": "Statistiques",
