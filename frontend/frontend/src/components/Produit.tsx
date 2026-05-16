@@ -8,7 +8,7 @@ import { useConfirm } from '../hooks/useConfirm';
 import { useAuth } from '../context/AuthContext';
 import PasswordConfirmModal from './PasswordConfirmModal';
 import type { ProduitModel, Facture } from '../types'
-import { Package, Upload, RotateCw, RefreshCw, Home, AlertTriangle } from 'lucide-react'
+import { Package, Upload, RotateCw, RefreshCw } from 'lucide-react'
 
 import {
   useProduits,
@@ -429,78 +429,68 @@ export default function Produit() {
   const error = loadError instanceof Error ? loadError.message : (loadError ? String(loadError) : null);
 
   return (
-    <div className="min-h-screen bg-base-200/60 font-sans">
+    <div className="h-full flex flex-col overflow-hidden bg-gray-50">
       {/* ── HEADER ── */}
-      <div className="sticky top-0 z-30 bg-base-100/95 backdrop-blur-md border-b border-base-200 px-4 sm:px-6 py-3">
-        <div className="flex items-center justify-between gap-3">
-          <div className="flex items-center gap-3 min-w-0">
-            <div className="p-2 bg-primary/10 text-primary rounded-xl shrink-0">
-              <Package className="size-5" />
-            </div>
-            <div className="min-w-0">
-              <h1 className="text-base font-black text-base-content tracking-tight leading-none truncate">
-                {t('products:title', { defaultValue: 'Gestion des produits' })}
-              </h1>
-              <p className="text-[10px] font-bold text-base-content/40 uppercase tracking-widest">
-                {t('products:subtitle', { defaultValue: 'Créez et gérez vos produits et services' })}
-              </p>
-            </div>
+      <div className="px-6 py-4 border-b border-gray-100 bg-white shrink-0 flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div className="flex items-center gap-3">
+          <div className="p-2.5 bg-indigo-50 rounded-lg">
+            <Package className="size-5 text-indigo-600" />
           </div>
-          <div className="flex items-center gap-2 shrink-0">
-            <button 
-              onClick={() => recalculateRotationMutation.mutate()} 
-              className="btn btn-sm btn-ghost btn-circle text-base-content/50 hover:text-primary"
-              title={t('products:actions.rotation')}
-            >
-              <RotateCw className="size-4" />
-            </button>
-            <button 
-              onClick={() => refetchProduits()} 
-              className="btn btn-sm btn-ghost btn-circle text-base-content/50 hover:text-primary"
-              disabled={loading}
-              title={t('common:actions.refresh')}
-            >
-              {loading ? <span className="loading loading-spinner loading-xs" /> : <RefreshCw className="size-4" />}
-            </button>
-            <button 
-              className="btn btn-sm btn-primary gap-1.5 rounded-xl text-xs font-black"
-              onClick={() => setIsCreateModalOpen(true)}
-            >
-              <Package className="size-3.5" />
-              <span>{t('products:actions.new', { defaultValue: 'Nouveau' })}</span>
-            </button>
-            <button 
-              className="btn btn-sm btn-ghost gap-1.5 rounded-xl text-xs font-black border border-base-300"
-              onClick={() => setIsImportModalOpen(true)}
-            >
-              <Upload className="size-3.5" />
-              <span>{t('products:import.title')}</span>
-            </button>
+          <div>
+            <h1 className="text-lg font-bold text-gray-900">
+              {t('products:title', { defaultValue: 'Gestion des produits' })}
+            </h1>
+            <p className="text-xs text-gray-400 font-medium">
+              {t('products:subtitle', { defaultValue: 'Créez et gérez vos produits et services' })}
+            </p>
           </div>
         </div>
-        {/* Breadcrumb */}
-        <div className="flex items-center gap-1.5 mt-2 text-[10px] font-bold text-base-content/40 uppercase tracking-widest">
-          <Home className="size-3" />
-          <span>{t('common:dashboard', { defaultValue: 'Tableau de bord' })}</span>
-          <span className="text-base-content/20">/</span>
-          <span className="text-base-content/70">{t('products:title', { defaultValue: 'Produits' })}</span>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => recalculateRotationMutation.mutate()}
+            className="p-2 text-gray-400 hover:bg-gray-100 rounded-lg transition-colors"
+            title={t('products:actions.rotation')}
+          >
+            <RotateCw className="size-4" />
+          </button>
+          <button
+            onClick={() => refetchProduits()}
+            className="p-2 text-gray-400 hover:bg-gray-100 rounded-lg transition-colors"
+            disabled={loading}
+            title={t('common:actions.refresh')}
+          >
+            {loading ? <span className="inline-block size-4 border-2 border-gray-300 border-t-gray-600 rounded-full animate-spin" /> : <RefreshCw className="size-4" />}
+          </button>
+          <button
+            className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg text-white bg-indigo-600 hover:bg-indigo-700 transition-colors shadow-sm"
+            onClick={() => setIsCreateModalOpen(true)}
+          >
+            <Package className="size-3.5" />
+            <span>{t('products:actions.new', { defaultValue: 'Nouveau' })}</span>
+          </button>
+          <button
+            className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg border border-gray-200 bg-white text-gray-700 hover:bg-gray-50 transition-colors"
+            onClick={() => setIsImportModalOpen(true)}
+          >
+            <Upload className="size-3.5" />
+            <span>{t('products:import.title')}</span>
+          </button>
         </div>
       </div>
 
-      <div className="p-4 sm:p-6 space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-200">
+      <div className="flex-1 overflow-y-auto p-4 space-y-4">
       {error && (
-        <div className="alert alert-error shadow-sm rounded-xl py-3 border-none font-medium">
-          <AlertTriangle className="size-5 shrink-0" />
-          <span>{error}</span>
+        <div className="px-4 py-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
+          {error}
         </div>
       )}
 
       {/* Main Content Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 min-h-[600px] w-full">
-        {/* Left Panel: List & Actions - REDUCED WIDTH */}
-        <div className="lg:col-span-12 xl:col-span-5 bg-base-100 rounded-xl shadow-sm border border-base-200 flex flex-col overflow-hidden">
-          <ProductFilters 
-            searchQuery={searchQuery} setSearchQuery={setSearchQuery} 
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 min-h-[500px] w-full">
+        {/* Left Panel: List & Actions */}
+        <div className="lg:col-span-12 xl:col-span-5 bg-white rounded-xl shadow-sm border border-gray-100 flex flex-col overflow-hidden">
+          <ProductFilters
+            searchQuery={searchQuery} setSearchQuery={setSearchQuery}
             filterRayon={filterRayon} setFilterRayon={setFilterRayon}
             filterFournisseur={filterFournisseur} setFilterFournisseur={setFilterFournisseur}
             filterExclusive={filterExclusive} setFilterExclusive={setFilterExclusive}
@@ -508,9 +498,9 @@ export default function Produit() {
             showInStockOnly={showInStockOnly} setShowInStockOnly={setShowInStockOnly}
           />
 
-          <ProductTable 
-            products={produits} selectedProduit={selectedProduit} 
-            onViewDetails={handleViewDetails} loading={loading} 
+          <ProductTable
+            products={produits} selectedProduit={selectedProduit}
+            onViewDetails={handleViewDetails} loading={loading}
             selectedProductIds={selectedProductIds}
             onSelectProduct={(id) => setSelectedProductIds(prev => prev.includes(id) ? prev.filter(pid => pid !== id) : [...prev, id])}
             onSelectAll={() => setSelectedProductIds(prev => prev.length === produits.length ? [] : produits.map(p => p.id))}
@@ -529,24 +519,24 @@ export default function Produit() {
             />
           )}
 
-          <div className="p-3 border-t border-base-200 bg-base-200/50 shrink-0 flex justify-between px-6">
+          <div className="px-4 py-2 border-t border-gray-100 bg-gray-50 shrink-0 flex justify-between items-center">
             <div className="flex items-center gap-1.5">
-              <span className="text-[10px] font-bold text-base-content/40 uppercase tracking-widest">Global</span>
-              <span className="text-primary font-black text-sm">{totalCount}</span>
+              <span className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider">Global</span>
+              <span className="text-indigo-600 font-bold text-sm">{totalCount}</span>
             </div>
             <div className="flex items-center gap-4">
               <div className="flex items-center gap-1.5" title="Stock Faible">
-                <div className="size-2 rounded-full bg-amber-400 animate-pulse"></div>
-                <span className="text-amber-500 font-bold text-sm">{lowStockCount}</span>
+                <div className="size-2 rounded-full bg-amber-400"></div>
+                <span className="text-amber-600 font-semibold text-sm">{lowStockCount}</span>
               </div>
               <div className="flex items-center gap-1.5" title="Rupture">
                 <div className="size-2 rounded-full bg-red-500"></div>
-                <span className="text-red-500 font-bold text-sm">{outOfStockCount}</span>
+                <span className="text-red-600 font-semibold text-sm">{outOfStockCount}</span>
               </div>
             </div>
           </div>
 
-          <BulkActionsBar 
+          <BulkActionsBar
             selectedCount={selectedProductIds.length} rayons={rayons} fournisseurs={fournisseurs} loading={actionLoading}
             onDeselectAll={() => setSelectedProductIds([])}
             onBulkDelete={handleBulkDelete}
@@ -555,20 +545,20 @@ export default function Produit() {
           />
         </div>
 
-        {/* Right Panel: Details - INCREASED WIDTH */}
-        <div className="lg:col-span-12 xl:col-span-7 bg-base-100 rounded-xl shadow-sm border border-base-200 flex flex-col overflow-hidden">
-          <ProductDetailPanel 
-            selectedProduit={selectedProduit} detailsLoading={detailsLoading} 
+        {/* Right Panel: Details */}
+        <div className="lg:col-span-12 xl:col-span-7 bg-white rounded-xl shadow-sm border border-gray-100 flex flex-col overflow-hidden">
+          <ProductDetailPanel
+            selectedProduit={selectedProduit} detailsLoading={detailsLoading}
             activeTab={activeTab} setActiveTab={setActiveTab}
-            lots={lots} monthlyStats={monthlyStats} 
+            lots={lots} monthlyStats={monthlyStats}
             achats={achats} loadingAchats={loadingAchats}
             stockHistory={stockHistory} loadingHistory={loadingHistory} transferLoading={transferLoading}
             onMovementClick={handleMovementClick}
             onOpenAdjustment={() => {
-              setAdjustmentForm({ 
-                new_quantity: String(selectedProduit?.stock || 0), 
+              setAdjustmentForm({
+                new_quantity: String(selectedProduit?.stock || 0),
                 new_reserve_quantity: String(selectedProduit?.stock_reserve || 0),
-                reason_type: 'INVENTAIRE' 
+                reason_type: 'INVENTAIRE'
               });
               setIsAdjustmentModalOpen(true);
             }}

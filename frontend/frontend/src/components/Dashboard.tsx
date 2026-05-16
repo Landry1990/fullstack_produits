@@ -142,7 +142,7 @@ export default function Dashboard() {
   if (loading) {
     return (
       <div className="p-6 flex justify-center items-center h-96">
-        <span className="loading loading-spinner loading-lg text-primary"></span>
+        <div className="size-10 border-2 border-gray-200 border-t-indigo-600 rounded-full animate-spin"></div>
       </div>
     );
   }
@@ -150,7 +150,7 @@ export default function Dashboard() {
   if (error) {
     return (
       <div className="p-6">
-        <div className="alert alert-error shadow-sm rounded-2xl border-none">
+        <div className="bg-red-50 border border-red-100 rounded-xl p-4 flex items-center gap-3 text-red-700">
           <AlertTriangle className="size-6" />
           <span className="font-bold text-sm tracking-tight">{error}</span>
         </div>
@@ -165,22 +165,22 @@ export default function Dashboard() {
   ] as const;
 
   return (
-    <div className="min-h-screen bg-base-200/60 font-sans">
+    <div className="min-h-screen bg-gray-50 font-sans">
       {/* ── HEADER ─────────────────────────────────────────── */}
-      <div className="sticky top-0 z-30 bg-base-100/95 backdrop-blur-md border-b border-base-200 px-4 sm:px-6 py-3">
+      <div className="sticky top-0 z-30 bg-white border-b border-gray-100 px-4 sm:px-6 py-3">
         <div className="flex items-center justify-between gap-3">
 
           {/* Left: title + date */}
           <div className="flex items-center gap-3 min-w-0">
-            <div className="p-2 bg-primary/10 text-primary rounded-xl shrink-0">
+            <div className="p-2 bg-indigo-50 text-indigo-600 rounded-lg shrink-0">
               <LayoutDashboard className="size-5" />
             </div>
             <div className="min-w-0">
-              <h1 className="text-base font-black text-base-content tracking-tight leading-none truncate">
+              <h1 className="text-base font-bold text-gray-900 tracking-tight leading-none truncate">
                 {licence?.pharmacie_nom || t('title')}
               </h1>
               <div className="flex items-center gap-2 mt-0.5">
-                <p className="text-[10px] font-bold text-base-content/40 uppercase tracking-widest hidden sm:block">
+                <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-widest hidden sm:block">
                   {licence?.pharmacien_nom || getServerDate().toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })}
                 </p>
                 {daysRemaining !== null && (
@@ -198,34 +198,34 @@ export default function Dashboard() {
 
           {/* Right: actions */}
           <div className="flex items-center gap-2 shrink-0">
-            <Link to="/app/facturation" className="btn btn-sm btn-primary gap-1.5 rounded-xl text-xs font-black">
+            <Link to="/app/facturation" className="inline-flex items-center gap-1.5 px-4 py-2 bg-indigo-600 text-white rounded-lg text-xs font-bold hover:bg-indigo-700 transition-colors shadow-sm">
               <Plus className="size-3.5" />
               <span className="hidden sm:inline">{t('actions.new_invoice')}</span>
               <span className="sm:hidden">Vente</span>
             </Link>
             <button
-              className="btn btn-sm btn-ghost btn-circle text-base-content/50 hover:text-primary"
+              className="p-2 rounded-lg text-gray-400 hover:bg-gray-100 hover:text-indigo-600 transition-colors"
               onClick={handleRefreshAll}
               disabled={loading}
               title={t('common:actions.refresh')}
             >
-              {loading ? <span className="loading loading-spinner loading-xs" /> : <RefreshCw className="size-4" />}
+              {loading ? <span className="inline-block size-4 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin" /> : <RefreshCw className="size-4" />}
             </button>
             <button
-              className={`btn btn-sm btn-ghost btn-circle ${sendingReport ? 'loading' : 'text-[#229ED9] hover:bg-[#229ED9]/10'}`}
+              className={`p-2 rounded-lg transition-colors ${sendingReport ? 'text-gray-300' : 'text-sky-500 hover:bg-sky-50'}`}
               onClick={handleSendTelegramReport}
               disabled={sendingReport}
               title={t('common:telegram.flash_report')}
             >
-              {!sendingReport && <MessageCircle className="size-4" />}
+              {sendingReport ? <span className="inline-block size-4 border-2 border-gray-300 border-t-transparent rounded-full animate-spin" /> : <MessageCircle className="size-4" />}
             </button>
             <button
-              className={`btn btn-sm btn-ghost btn-circle ${sendingInventaire ? 'loading' : 'text-[#229ED9] hover:bg-[#229ED9]/10'}`}
+              className={`p-2 rounded-lg transition-colors ${sendingInventaire ? 'text-gray-300' : 'text-sky-500 hover:bg-sky-50'}`}
               onClick={handleSendTelegramInventaire}
               disabled={sendingInventaire}
               title={t('common:telegram.inventory_report')}
             >
-              {!sendingInventaire && <Package className="size-4" />}
+              {sendingInventaire ? <span className="inline-block size-4 border-2 border-gray-300 border-t-transparent rounded-full animate-spin" /> : <Package className="size-4" />}
             </button>
           </div>
         </div>
@@ -239,7 +239,7 @@ export default function Dashboard() {
               className={`flex items-center gap-2 px-4 py-2 rounded-t-xl text-[11px] font-black uppercase tracking-widest transition-all border-b-2 ${
                 activeTab === key
                   ? `${activeBg} text-white border-transparent shadow-sm`
-                  : 'bg-base-200/50 text-base-content/40 border-transparent hover:text-base-content hover:bg-base-200'
+                  : 'bg-gray-50 text-gray-400 border-transparent hover:text-gray-700 hover:bg-gray-100'
               }`}
             >
               <Icon className="size-3.5" />
@@ -250,7 +250,7 @@ export default function Dashboard() {
       </div>
 
       {/* ── TAB CONTENT ────────────────────────────────────── */}
-      <div className="p-4 sm:p-6 animate-in fade-in slide-in-from-bottom-2 duration-200">
+      <div className="p-4 sm:p-6">
         {activeTab === 'overview' && (
           <PerformanceOverview
             stats={stats}

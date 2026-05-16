@@ -229,13 +229,14 @@ class FactureOmnisearchSerializer(FactureListSerializer):
         fields = FactureListSerializer.Meta.fields + ['produits_details']
 
     def get_produits_details(self, obj):
+        # Use prefetch_related('produits__produit') in the view to avoid N+1
         return [
             {
                 'nom': p.produit.name if p.produit else p.produit_nom,
                 'quantite': p.quantity,
                 'prix': str(p.selling_price)
             }
-            for p in obj.produits.all()
+            for p in obj.produits.all().select_related('produit')
         ]
 
 
@@ -250,13 +251,14 @@ class CommandeOmnisearchSerializer(CommandeListSerializer):
         fields = CommandeListSerializer.Meta.fields + ['produits_details']
 
     def get_produits_details(self, obj):
+        # Use prefetch_related('produits__produit') in the view to avoid N+1
         return [
             {
                 'nom': p.produit.name if p.produit else p.produit_nom,
                 'quantite': p.quantity + p.unites_gratuites,
                 'prix': str(p.price)
             }
-            for p in obj.produits.all()
+            for p in obj.produits.all().select_related('produit')
         ]
 
 

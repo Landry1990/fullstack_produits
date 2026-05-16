@@ -1,18 +1,8 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { 
-  X, 
-  Plus, 
-  Trash2,
-  Save,
-  User,
-  Award,
-  Activity,
-  Mail,
-  Phone,
-  MapPin,
-  ShieldCheck,
-  CreditCard
+import {
+  X, Plus, Trash2, Save, User, Award, Activity, Mail,
+  Phone, MapPin, ShieldCheck, CreditCard, Building2, FileText
 } from 'lucide-react';
 import type { Client, AyantDroit } from '../../types';
 
@@ -26,407 +16,376 @@ interface ClientFormModalProps {
   isEdit?: boolean;
 }
 
-export default function ClientFormModal({ 
-  isOpen, 
-  onClose, 
-  onSubmit, 
-  data, 
-  setData, 
-  isSubmitting, 
-  isEdit = false 
+export default function ClientFormModal({
+  isOpen, onClose, onSubmit, data, setData, isSubmitting, isEdit = false
 }: ClientFormModalProps) {
   const { t } = useTranslation(['clients', 'common']);
-  const [tempAyantDroit, setTempAyantDroit] = useState<AyantDroit>({ matricule: '', nom: '', societe: '' });
+  const [tempAD, setTempAD] = useState<AyantDroit>({ matricule: '', nom: '', societe: '' });
 
   if (!isOpen) return null;
 
-  const handleAddAyantDroit = () => {
-    if (!tempAyantDroit.matricule || !tempAyantDroit.nom) return;
-    setData({
-      ...data,
-      ayants_droit: [...(data.ayants_droit || []), { ...tempAyantDroit }]
-    });
-    setTempAyantDroit({ matricule: '', nom: '', societe: '' });
+  const isPro = data.client_type === 'PROFESSIONNEL';
+
+  const addAD = () => {
+    if (!tempAD.matricule || !tempAD.nom) return;
+    setData({ ...data, ayants_droit: [...(data.ayants_droit || []), { ...tempAD }] });
+    setTempAD({ matricule: '', nom: '', societe: '' });
   };
 
-  const handleRemoveAyantDroit = (index: number) => {
+  const removeAD = (index: number) => {
     const updated = [...(data.ayants_droit || [])];
     updated.splice(index, 1);
     setData({ ...data, ayants_droit: updated });
   };
 
+  const Field = ({
+    label, icon: Icon, children, required
+  }: {
+    label: string;
+    icon: React.ElementType;
+    children: React.ReactNode;
+    required?: boolean;
+  }) => (
+    <div className="space-y-1.5">
+      <label className="flex items-center gap-1.5 text-xs font-medium text-gray-500">
+        <Icon className="size-3.5 text-indigo-500" />
+        {label}
+        {required && <span className="text-red-500">*</span>}
+      </label>
+      {children}
+    </div>
+  );
+
   return (
-    <div className="modal modal-open bg-base-300/40 backdrop-blur-sm transition-all duration-300">
-      <div className="modal-box max-w-5xl p-0 overflow-hidden rounded-[1.5rem] border border-white/10 shadow-[0_32px_64px_-12px_rgba(0,0,0,0.2)] bg-base-100/95 backdrop-blur-xl flex flex-col h-auto max-h-[95vh] transition-all duration-500 scale-100 animate-in zoom-in-95">
-        
-        {/* Header - More compact */}
-        <div className="px-6 py-4 border-b border-base-200/50 bg-gradient-to-r from-primary/5 via-transparent to-secondary/5 flex justify-between items-center shrink-0">
-          <div className="flex items-center gap-4">
-             <div className="relative">
-                <div className="absolute inset-0 bg-primary/20 blur-lg rounded-full"></div>
-                <div className="relative p-2.5 bg-gradient-to-br from-primary to-primary-focus text-white rounded-xl shadow-lg shadow-primary/20 text-sm">
-                    <User className="size-5" />
-                </div>
-             </div>
-             <div>
-               <h3 className="text-lg font-black tracking-tight leading-tight">
-                 {isEdit ? t('clients:actions.edit') : t('clients:actions.create')}
-               </h3>
-               <div className="flex items-center gap-2 mt-0.5">
-                 <span className="px-1.5 py-0.5 bg-base-200 text-[9px] font-black uppercase tracking-widest rounded text-base-content/40 border border-base-300/50">
-                    ID: {data.id || 'NEW'}
-                 </span>
-                 <p className="text-[10px] font-bold text-primary/60 uppercase tracking-widest">{t('clients:sections.general_info')}</p>
-               </div>
-             </div>
+    <div className="fixed inset-0 z-50 flex items-center justify-center">
+      <div className="absolute inset-0 bg-gray-900/40 backdrop-blur-sm" onClick={onClose} />
+      <div className="relative z-10 w-full max-w-3xl max-h-[92vh] flex flex-col bg-white rounded-xl shadow-2xl border border-gray-100 m-4">
+
+        {/* Header */}
+        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-indigo-50 text-indigo-600 rounded-lg">
+              <User className="size-5" />
+            </div>
+            <div>
+              <h2 className="text-lg font-bold text-gray-900 leading-tight">
+                {isEdit ? t('clients:actions.edit') : t('clients:actions.create')}
+              </h2>
+              {isEdit && data.id && (
+                <span className="text-[10px] text-gray-400 font-medium uppercase tracking-wider">
+                  ID {data.id}
+                </span>
+              )}
+            </div>
           </div>
-          <button 
-            onClick={onClose} 
-            className="btn btn-sm btn-circle btn-ghost hover:bg-error/10 hover:text-error transition-all"
-          >
-            <X className="size-5"/>
+          <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
+            <X className="size-5 text-gray-400" />
           </button>
         </div>
 
-        {/* Form Body - More compact spacing */}
-        <form 
-          onSubmit={onSubmit} 
-          className="flex-1 overflow-y-auto px-6 py-6 space-y-6 scrollbar-thin scrollbar-thumb-base-300 scrollbar-track-transparent"
-        >
-            {/* Main Info Section */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 bg-base-200/20 p-5 rounded-[1.25rem] border border-base-200/50 relative overflow-hidden">
-                <div className="form-control">
-                    <label className="label py-1">
-                    <span className="label-text text-[9px] uppercase font-black tracking-widest text-base-content/40 flex items-center gap-1.5">
-                        <User className="size-3" /> {t('common:name')}*
-                    </span>
-                    </label>
-                    <input 
-                    className="input input-bordered input-md rounded-xl font-bold bg-base-100 border-base-300 focus:border-primary shadow-sm" 
-                    value={data.name || ''} 
-                    onChange={e => setData({...data, name: e.target.value})} 
-                    required 
-                    placeholder="Nom complet"
-                    />
-                </div>
+        {/* Body */}
+        <form onSubmit={onSubmit} className="flex-1 overflow-y-auto p-6 space-y-6">
 
-                <div className="form-control text-sm">
-                    <label className="label py-1">
-                    <span className="label-text text-[9px] uppercase font-black tracking-widest text-base-content/40 flex items-center gap-1.5">
-                        <Phone className="size-3" /> {t('common:phone')}
-                    </span>
-                    </label>
-                    <input 
-                    className="input input-bordered input-md rounded-xl font-mono font-black bg-base-100 border-base-300 focus:border-primary shadow-sm" 
-                    value={data.phone || ''} 
-                    onChange={e => setData({...data, phone: e.target.value})} 
-                    placeholder="+225..."
-                    />
-                </div>
+          {/* Section: Type */}
+          <div className="flex gap-3">
+            {(['PARTICULIER', 'PROFESSIONNEL'] as const).map((type) => (
+              <button
+                key={type}
+                type="button"
+                onClick={() => setData({ ...data, client_type: type })}
+                className={`flex items-center gap-2 px-4 py-2.5 rounded-lg border text-sm font-medium transition-all ${
+                  data.client_type === type
+                    ? 'border-indigo-500 bg-indigo-50 text-indigo-700'
+                    : 'border-gray-200 bg-white text-gray-600 hover:border-gray-300 hover:bg-gray-50'
+                }`}
+              >
+                {type === 'PARTICULIER' ? <User className="size-4" /> : <Building2 className="size-4" />}
+                {t(`clients:types.${type.toLowerCase()}`)}
+              </button>
+            ))}
+          </div>
 
-                <div className="form-control">
-                    <label className="label py-1">
-                    <span className="label-text text-[9px] uppercase font-black tracking-widest text-base-content/40 flex items-center gap-1.5">
-                        <Mail className="size-3" /> {t('common:email')}
-                    </span>
-                    </label>
-                    <input 
-                    type="email" 
-                    className="input input-bordered input-md rounded-xl font-bold bg-base-100 border-base-300 focus:border-primary shadow-sm" 
-                    value={data.email || ''} 
-                    onChange={e => setData({...data, email: e.target.value})} 
-                    placeholder="email@exemple.com"
-                    />
-                </div>
-
-                <div className="form-control">
-                    <label className="label py-1">
-                    <span className="label-text text-[9px] uppercase font-black tracking-widest text-base-content/40 flex items-center gap-1.5">
-                        <ShieldCheck className="size-3" /> {t('clients:fields.type')}
-                    </span>
-                    </label>
-                    <select 
-                    className="select select-bordered select-md rounded-xl font-black bg-base-100 border-base-300 focus:border-primary shadow-sm"
-                    value={data.client_type || 'PARTICULIER'}
-                    onChange={e => setData({...data, client_type: e.target.value as any})}
-                    >
-                    <option value="PARTICULIER">👤 {t('clients:types.individual')}</option>
-                    <option value="PROFESSIONNEL">🏢 {t('clients:types.professional')}</option>
-                    </select>
-                </div>
-
-                <div className="form-control md:col-span-2">
-                    <label className="label py-1">
-                    <span className="label-text text-[9px] uppercase font-black tracking-widest text-base-content/40 flex items-center gap-1.5">
-                        <MapPin className="size-3" /> {t('clients:fields.address')}
-                    </span>
-                    </label>
-                    <input 
-                    className="input input-bordered input-md rounded-xl font-bold bg-base-100 border-base-300 focus:border-primary shadow-sm" 
-                    value={data.address || ''} 
-                    onChange={e => setData({...data, address: e.target.value})} 
-                    placeholder="Quartier, Rue, Porte..."
-                    />
-                </div>
-
-                {data.client_type === 'PROFESSIONNEL' && (
-                  <>
-                    <div className="form-control">
-                        <label className="label py-1">
-                        <span className="label-text text-[9px] uppercase font-black tracking-widest text-base-content/40 flex items-center gap-1.5">
-                            <ShieldCheck className="size-3" /> NIU
-                        </span>
-                        </label>
-                        <input 
-                        className="input input-bordered input-md rounded-xl font-black bg-base-100 border-base-300 focus:border-primary shadow-sm" 
-                        value={(data as any).niu || ''} 
-                        onChange={e => setData({...data, niu: e.target.value})} 
-                        placeholder="N° Identifiant Unique"
-                        />
-                    </div>
-                    <div className="form-control">
-                        <label className="label py-1">
-                        <span className="label-text text-[9px] uppercase font-black tracking-widest text-base-content/40 flex items-center gap-1.5">
-                            <ShieldCheck className="size-3" /> Registre Commerce
-                        </span>
-                        </label>
-                        <input 
-                        className="input input-bordered input-md rounded-xl font-black bg-base-100 border-base-300 focus:border-primary shadow-sm" 
-                        value={(data as any).registre_commerce || ''} 
-                        onChange={e => setData({...data, registre_commerce: e.target.value})} 
-                        placeholder="RCCM..."
-                        />
-                    </div>
-                  </>
-                )}
-            </div>
-
-            {/* Status & Fidelity Grid - Compact Switches */}
+          {/* Section: Informations générales */}
+          <div className="bg-white p-5 rounded-xl border border-gray-100 shadow-sm space-y-4">
+            <h3 className="text-xs font-semibold uppercase tracking-wider text-gray-400">
+              {t('clients:sections.general_info')}
+            </h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-               <div className="group bg-base-200/30 p-4 rounded-[1.25rem] border border-base-200/60 hover:border-primary/30 transition-all flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                        <div className={`p-2 rounded-xl transition-all ${data.is_active !== false ? 'bg-success/10 text-success' : 'bg-base-300 text-base-content/30'}`}>
-                           <Activity className="size-5" />
-                        </div>
-                        <div>
-                            <span className="block font-black text-xs">{t('common:is_active')}</span>
-                            <p className="text-[9px] text-base-content/40 font-bold uppercase">{t('clients:hints.is_active')}</p>
-                        </div>
-                    </div>
-                    <input 
-                      type="checkbox" 
-                      checked={data.is_active ?? true} 
-                      onChange={e => setData({...data, is_active: e.target.checked})}
-                      className="toggle toggle-success toggle-sm" 
-                    />
-               </div>
+              <Field label={t('common:name')} icon={User} required>
+                <input
+                  value={data.name || ''}
+                  onChange={(e) => setData({ ...data, name: e.target.value })}
+                  required
+                  className="input input-bordered input-sm w-full h-10 rounded-lg focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/20"
+                  placeholder="Nom complet"
+                />
+              </Field>
 
-               <div className="group bg-base-200/30 p-4 rounded-[1.25rem] border border-base-200/60 hover:border-secondary/30 transition-all flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                        <div className={`p-2 rounded-xl transition-all ${data.is_loyalty_member ?? true ? 'bg-secondary/10 text-secondary' : 'bg-base-300 text-base-content/30'}`}>
-                           <Award className="size-5" />
-                        </div>
-                        <div>
-                            <span className="block font-black text-xs">{t('clients:fields.loyalty_member')}</span>
-                            <p className="text-[9px] text-base-content/40 font-bold uppercase">{t('clients:hints.loyalty_member')}</p>
-                        </div>
-                    </div>
-                    <div className="flex items-center gap-4">
-                        {data.is_loyalty_member !== false && (
-                            <div className="flex items-center gap-2 px-4 py-2 bg-secondary/15 text-secondary rounded-2xl border border-secondary/30 shadow-sm animate-in fade-in zoom-in duration-300">
-                                <Award className="size-5" />
-                                <div className="flex flex-col">
-                                    <span className="text-[10px] font-black uppercase leading-none opacity-70">Points</span>
-                                    <span className="text-lg font-black leading-tight">
-                                        {data.points_fidelite || 0}
-                                    </span>
-                                </div>
-                            </div>
-                        )}
-                        <input 
-                          type="checkbox" 
-                          checked={data.is_loyalty_member ?? true} 
-                          onChange={e => setData({...data, is_loyalty_member: e.target.checked})}
-                          className="toggle toggle-secondary toggle-md" 
-                        />
-                    </div>
-               </div>
+              <Field label={t('common:phone')} icon={Phone}>
+                <input
+                  value={data.phone || ''}
+                  onChange={(e) => setData({ ...data, phone: e.target.value })}
+                  className="input input-bordered input-sm w-full h-10 rounded-lg font-mono focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/20"
+                  placeholder="+225 XX XX XX XX"
+                />
+              </Field>
 
-               {data.client_type === 'PARTICULIER' && (
-                 <div className="group bg-base-200/30 p-4 rounded-[1.25rem] border border-base-200/60 hover:border-primary/30 transition-all flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                          <div className={`p-2 rounded-xl transition-all ${data.is_deposit_enabled ? 'bg-primary/10 text-primary' : 'bg-base-300 text-base-content/30'}`}>
-                             <CreditCard className="size-5" />
-                          </div>
-                          <div>
-                              <span className="block font-black text-xs">{t('clients:fields.is_deposit_enabled')}</span>
-                              <p className="text-[9px] text-base-content/40 font-bold uppercase">{t('clients:hints.is_deposit_enabled')}</p>
-                          </div>
-                      </div>
-                      <input 
-                        type="checkbox" 
-                        checked={data.is_deposit_enabled ?? false} 
-                        onChange={e => setData({...data, is_deposit_enabled: e.target.checked})}
-                        className="toggle toggle-primary toggle-md" 
-                      />
-                 </div>
-               )}
+              <Field label={t('common:email')} icon={Mail}>
+                <input
+                  type="email"
+                  value={data.email || ''}
+                  onChange={(e) => setData({ ...data, email: e.target.value })}
+                  className="input input-bordered input-sm w-full h-10 rounded-lg focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/20"
+                  placeholder="email@exemple.com"
+                />
+              </Field>
+
+              <Field label={t('clients:fields.address')} icon={MapPin}>
+                <input
+                  value={data.address || ''}
+                  onChange={(e) => setData({ ...data, address: e.target.value })}
+                  className="input input-bordered input-sm w-full h-10 rounded-lg focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/20"
+                  placeholder="Adresse complète"
+                />
+              </Field>
             </div>
+          </div>
 
-            {/* Financial Conditions Section - More compact */}
-            <div className="p-5 bg-base-200/20 rounded-[1.25rem] border border-base-200/50 space-y-4">
+          {/* Section: Informations professionnelles */}
+          {isPro && (
+            <div className="bg-white p-5 rounded-xl border border-gray-100 shadow-sm space-y-4">
+              <h3 className="text-xs font-semibold uppercase tracking-wider text-gray-400">
+                {t('clients:sections.pro_info')}
+              </h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <Field label="NIU" icon={ShieldCheck}>
+                  <input
+                    value={(data as any).niu || ''}
+                    onChange={(e) => setData({ ...data, niu: e.target.value })}
+                    className="input input-bordered input-sm w-full h-10 rounded-lg focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/20"
+                    placeholder="N° Identifiant Unique"
+                  />
+                </Field>
+                <Field label="RCCM" icon={FileText}>
+                  <input
+                    value={(data as any).registre_commerce || ''}
+                    onChange={(e) => setData({ ...data, registre_commerce: e.target.value })}
+                    className="input input-bordered input-sm w-full h-10 rounded-lg focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/20"
+                    placeholder="Registre du Commerce"
+                  />
+                </Field>
+              </div>
+            </div>
+          )}
+
+          {/* Section: Paramètres */}
+          <div className="bg-white p-5 rounded-xl border border-gray-100 shadow-sm space-y-4">
+            <h3 className="text-xs font-semibold uppercase tracking-wider text-gray-400">
+              {t('clients:sections.settings')}
+            </h3>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+              {/* Actif */}
+              <label className="flex items-center justify-between p-3 rounded-lg border border-gray-100 bg-gray-50 cursor-pointer hover:border-gray-200 transition-colors">
                 <div className="flex items-center gap-3">
-                   <h4 className="text-[9px] font-black uppercase tracking-[0.2em] text-base-content/30 flex items-center gap-2">
-                     <span className="size-2 rounded-full bg-primary/30"></span>
-                     {t('clients:sections.finance')}
-                   </h4>
-                   <div className="h-px flex-1 bg-base-300/50"></div>
+                  <div className={`p-1.5 rounded-md ${data.is_active !== false ? 'bg-green-100 text-green-700' : 'bg-gray-200 text-gray-400'}`}>
+                    <Activity className="size-4" />
+                  </div>
+                  <span className="text-sm font-medium text-gray-700">{t('common:is_active')}</span>
                 </div>
+                <input
+                  type="checkbox"
+                  checked={data.is_active ?? true}
+                  onChange={(e) => setData({ ...data, is_active: e.target.checked })}
+                  className="toggle toggle-success toggle-sm"
+                />
+              </label>
 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div className="form-control">
-                      <label className="label py-1"><span className="label-text text-[9px] font-black text-base-content/40 uppercase">{t('clients:finance.auto_discount')} (%)</span></label>
-                      <input 
-                        type="number" 
-                        className="input input-bordered input-md rounded-xl font-black bg-base-100 h-10" 
-                        value={data.remise_automatique || '0'} 
-                        onChange={e => setData({...data, remise_automatique: e.target.value})} 
-                      />
-                    </div>
-
-                    {data.client_type === 'PROFESSIONNEL' && (
-                        <>
-                            <div className="form-control">
-                              <label className="label py-1"><span className="label-text text-[9px] font-black text-base-content/40 uppercase">{t('clients:finance.credit_limit')}</span></label>
-                              <input 
-                                type="number" 
-                                className="input input-bordered input-md rounded-xl font-black text-secondary bg-base-100 h-10" 
-                                value={data.plafond || '0'} 
-                                onChange={e => setData({...data, plafond: e.target.value})} 
-                              />
-                            </div>
-                            <div className="form-control">
-                              <label className="label py-1"><span className="label-text text-[9px] font-black text-base-content/40 uppercase">{t('clients:finance.coverage')} (%)</span></label>
-                              <input 
-                                type="number" 
-                                className="input input-bordered input-md rounded-xl font-black text-info bg-base-100 h-10" 
-                                value={data.taux_couverture || '0'} 
-                                onChange={e => setData({...data, taux_couverture: e.target.value})} 
-                              />
-                            </div>
-                            <div className="form-control">
-                              <label className="label py-1"><span className="label-text text-[9px] font-black text-base-content/40 uppercase">{t('clients:finance.majoration_pro')} (%)</span></label>
-                              <input 
-                                type="number" 
-                                className="input input-bordered input-md rounded-xl font-black text-warning bg-base-100 h-10" 
-                                value={data.majoration_pro_pourcentage || '0'} 
-                                onChange={e => setData({...data, majoration_pro_pourcentage: e.target.value})} 
-                              />
-                            </div>
-                        </>
+              {/* Fidélité */}
+              <label className="flex items-center justify-between p-3 rounded-lg border border-gray-100 bg-gray-50 cursor-pointer hover:border-gray-200 transition-colors">
+                <div className="flex items-center gap-3">
+                  <div className={`p-1.5 rounded-md ${data.is_loyalty_member ?? true ? 'bg-amber-100 text-amber-700' : 'bg-gray-200 text-gray-400'}`}>
+                    <Award className="size-4" />
+                  </div>
+                  <div>
+                    <span className="text-sm font-medium text-gray-700 block">{t('clients:fields.loyalty_member')}</span>
+                    {(data.is_loyalty_member ?? true) && (
+                      <span className="text-[10px] text-amber-600 font-medium">{data.points_fidelite || 0} pts</span>
                     )}
+                  </div>
                 </div>
-            </div>
+                <input
+                  type="checkbox"
+                  checked={data.is_loyalty_member ?? true}
+                  onChange={(e) => setData({ ...data, is_loyalty_member: e.target.checked })}
+                  className="toggle toggle-warning toggle-sm"
+                />
+              </label>
 
-            {/* Ayants Droit Section - Data grid style but compact */}
-            {data.client_type === 'PROFESSIONNEL' && (
-               <div className="p-5 bg-base-200/20 rounded-[1.25rem] border border-base-200/50 space-y-4">
+              {/* Dépôt */}
+              {!isPro && (
+                <label className="flex items-center justify-between p-3 rounded-lg border border-gray-100 bg-gray-50 cursor-pointer hover:border-gray-200 transition-colors">
                   <div className="flex items-center gap-3">
-                     <h4 className="text-[9px] font-black uppercase tracking-[0.2em] text-base-content/30 flex items-center gap-2">
-                       <span className="size-2 rounded-full bg-secondary/30"></span>
-                       {t('clients:beneficiaries.title')}
-                     </h4>
-                     <div className="h-px flex-1 bg-base-300/50"></div>
+                    <div className={`p-1.5 rounded-md ${data.is_deposit_enabled ? 'bg-indigo-100 text-indigo-700' : 'bg-gray-200 text-gray-400'}`}>
+                      <CreditCard className="size-4" />
+                    </div>
+                    <span className="text-sm font-medium text-gray-700">{t('clients:fields.is_deposit_enabled')}</span>
                   </div>
-                  
-                  <div className="grid grid-cols-1 lg:grid-cols-10 gap-3 items-end">
-                    <div className="lg:col-span-3 form-control">
-                        <input 
-                            className="input input-bordered input-sm rounded-lg font-bold bg-base-100 focus:border-primary h-9" 
-                            placeholder={t('clients:beneficiaries.name_placeholder')}
-                            value={tempAyantDroit.nom}
-                            onChange={e => setTempAyantDroit({...tempAyantDroit, nom: e.target.value})}
-                        />
-                    </div>
-                    <div className="lg:col-span-3 form-control">
-                        <input 
-                            className="input input-bordered input-sm rounded-lg font-mono font-black bg-base-100 focus:border-primary h-9" 
-                            placeholder={t('clients:beneficiaries.id_placeholder')}
-                            value={tempAyantDroit.matricule}
-                            onChange={e => setTempAyantDroit({...tempAyantDroit, matricule: e.target.value})}
-                        />
-                    </div>
-                    <div className="lg:col-span-3 form-control">
-                        <input 
-                            className="input input-bordered input-sm rounded-lg font-bold bg-base-100 focus:border-primary h-9" 
-                            placeholder="Société"
-                            value={tempAyantDroit.societe || ''}
-                            onChange={e => setTempAyantDroit({...tempAyantDroit, societe: e.target.value})}
-                        />
-                    </div>
-                    <button 
-                        type="button" 
-                        onClick={handleAddAyantDroit} 
-                        className="btn btn-primary btn-sm lg:col-span-1 rounded-lg h-9"
-                        disabled={!tempAyantDroit.nom || !tempAyantDroit.matricule}
-                    >
-                        <Plus className="size-4" />
-                    </button>
-                  </div>
+                  <input
+                    type="checkbox"
+                    checked={data.is_deposit_enabled ?? false}
+                    onChange={(e) => setData({ ...data, is_deposit_enabled: e.target.checked })}
+                    className="toggle toggle-primary toggle-sm"
+                  />
+                </label>
+              )}
+            </div>
+          </div>
 
-                  {data.ayants_droit && data.ayants_droit.length > 0 && (
-                    <div className="rounded-xl overflow-hidden border border-base-300/50 bg-base-100/50 backdrop-blur-sm mt-3">
-                        <table className="table table-xs w-full">
-                            <thead className="bg-base-200/50">
-                                <tr>
-                                    <th className="py-2 px-4 text-[8px] font-black text-base-content/40 uppercase">{t('common:name')}</th>
-                                    <th className="py-2 px-4 text-[8px] font-black text-base-content/40 uppercase">{t('clients:beneficiaries.col_id')}</th>
-                                    <th className="py-2 px-4 text-[8px] font-black text-base-content/40 uppercase">{t('clients:beneficiaries.company')}</th>
-                                    <th className="py-2 w-8"></th>
-                                </tr>
-                            </thead>
-                            <tbody className="divide-y divide-base-200/30">
-                                {data.ayants_droit.map((ad: AyantDroit, idx: number) => (
-                                <tr key={idx} className="hover:bg-primary/5 transition-colors group/row">
-                                    <td className="py-2 px-4 font-black text-xs">{ad.nom}</td>
-                                    <td className="py-2 px-4 font-mono font-black text-xs opacity-60 group-hover/row:opacity-100">{ad.matricule}</td>
-                                    <td className="py-2 px-4 font-bold text-xs text-base-content/60">{ad.societe || '-'}</td>
-                                    <td className="py-2 text-right">
-                                        <button 
-                                            type="button" 
-                                            onClick={() => handleRemoveAyantDroit(idx)}
-                                            className="p-1.5 text-error/30 hover:text-error hover:bg-error/10 rounded-lg transition-all"
-                                        >
-                                            <Trash2 className="size-3.5" />
-                                        </button>
-                                    </td>
-                                </tr>
-                                ))}
-                            </tbody>
-                        </table>
-                    </div>
-                  )}
-               </div>
-            )}
+          {/* Section: Conditions financières */}
+          <div className="bg-white p-5 rounded-xl border border-gray-100 shadow-sm space-y-4">
+            <h3 className="text-xs font-semibold uppercase tracking-wider text-gray-400">
+              {t('clients:sections.finance')}
+            </h3>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <Field label={t('clients:finance.auto_discount') + ' (%)'} icon={ShieldCheck}>
+                <input
+                  type="number"
+                  min={0} max={100}
+                  value={data.remise_automatique || '0'}
+                  onChange={(e) => setData({ ...data, remise_automatique: e.target.value })}
+                  className="input input-bordered input-sm w-full h-10 rounded-lg focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/20"
+                />
+              </Field>
+              {isPro && (
+                <>
+                  <Field label={t('clients:finance.credit_limit')} icon={CreditCard}>
+                    <input
+                      type="number"
+                      value={data.plafond || '0'}
+                      onChange={(e) => setData({ ...data, plafond: e.target.value })}
+                      className="input input-bordered input-sm w-full h-10 rounded-lg focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/20"
+                    />
+                  </Field>
+                  <Field label={t('clients:finance.coverage') + ' (%)'} icon={ShieldCheck}>
+                    <input
+                      type="number"
+                      min={0} max={100}
+                      value={data.taux_couverture || '0'}
+                      onChange={(e) => setData({ ...data, taux_couverture: e.target.value })}
+                      className="input input-bordered input-sm w-full h-10 rounded-lg focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/20"
+                    />
+                  </Field>
+                  <Field label={t('clients:finance.majoration_pro') + ' (%)'} icon={ShieldCheck}>
+                    <input
+                      type="number"
+                      min={0} max={100}
+                      value={data.majoration_pro_pourcentage || '0'}
+                      onChange={(e) => setData({ ...data, majoration_pro_pourcentage: e.target.value })}
+                      className="input input-bordered input-sm w-full h-10 rounded-lg focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/20"
+                    />
+                  </Field>
+                </>
+              )}
+            </div>
+          </div>
+
+          {/* Section: Ayants droit */}
+          {isPro && (
+            <div className="bg-white p-5 rounded-xl border border-gray-100 shadow-sm space-y-4">
+              <h3 className="text-xs font-semibold uppercase tracking-wider text-gray-400">
+                {t('clients:beneficiaries.title')}
+              </h3>
+              <div className="flex gap-2 items-end">
+                <div className="flex-1 min-w-0">
+                  <input
+                    value={tempAD.nom}
+                    onChange={(e) => setTempAD({ ...tempAD, nom: e.target.value })}
+                    className="input input-bordered input-sm w-full h-9 rounded-lg focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/20"
+                    placeholder={t('clients:beneficiaries.name_placeholder')}
+                  />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <input
+                    value={tempAD.matricule}
+                    onChange={(e) => setTempAD({ ...tempAD, matricule: e.target.value })}
+                    className="input input-bordered input-sm w-full h-9 rounded-lg font-mono focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/20"
+                    placeholder={t('clients:beneficiaries.id_placeholder')}
+                  />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <input
+                    value={tempAD.societe || ''}
+                    onChange={(e) => setTempAD({ ...tempAD, societe: e.target.value })}
+                    className="input input-bordered input-sm w-full h-9 rounded-lg focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/20"
+                    placeholder="Société"
+                  />
+                </div>
+                <button
+                  type="button"
+                  onClick={addAD}
+                  disabled={!tempAD.nom || !tempAD.matricule}
+                  className="inline-flex items-center px-3 py-2 h-9 border border-transparent text-sm font-medium rounded-lg text-white bg-indigo-600 hover:bg-indigo-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors shrink-0"
+                >
+                  <Plus className="size-4" />
+                </button>
+              </div>
+
+              {data.ayants_droit && data.ayants_droit.length > 0 && (
+                <div className="rounded-xl overflow-hidden border border-gray-100">
+                  <table className="min-w-full divide-y divide-gray-200">
+                    <thead className="bg-gray-50">
+                      <tr>
+                        <th className="px-4 py-2 text-left text-[10px] font-semibold text-gray-500 uppercase tracking-wider">{t('common:name')}</th>
+                        <th className="px-4 py-2 text-left text-[10px] font-semibold text-gray-500 uppercase tracking-wider">{t('clients:beneficiaries.col_id')}</th>
+                        <th className="px-4 py-2 text-left text-[10px] font-semibold text-gray-500 uppercase tracking-wider">{t('clients:beneficiaries.company')}</th>
+                        <th className="px-4 py-2 w-10"></th>
+                      </tr>
+                    </thead>
+                    <tbody className="bg-white divide-y divide-gray-100">
+                      {data.ayants_droit.map((ad: AyantDroit, idx: number) => (
+                        <tr key={idx} className="hover:bg-gray-50 transition-colors">
+                          <td className="px-4 py-2.5 text-sm font-medium text-gray-900">{ad.nom}</td>
+                          <td className="px-4 py-2.5 text-sm font-mono text-gray-500">{ad.matricule}</td>
+                          <td className="px-4 py-2.5 text-sm text-gray-500">{ad.societe || '—'}</td>
+                          <td className="px-4 py-2.5">
+                            <button
+                              type="button"
+                              onClick={() => removeAD(idx)}
+                              className="p-1 text-gray-300 hover:text-red-600 hover:bg-red-50 rounded-md transition-colors"
+                            >
+                              <Trash2 className="size-3.5" />
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+          )}
         </form>
 
-        {/* Footer - Consistent with compact style */}
-        <div className="px-6 py-4 border-t border-base-200/50 bg-base-50/50 flex justify-end items-center gap-4 shrink-0">
-          <button 
-            type="button" 
-            onClick={onClose} 
-            className="btn btn-ghost btn-md rounded-xl px-6 font-black uppercase text-[10px] tracking-widest"
+        {/* Footer */}
+        <div className="flex justify-end items-center gap-3 px-6 py-4 border-t border-gray-100 bg-gray-50/50 rounded-b-xl">
+          <button
+            type="button"
+            onClick={onClose}
+            className="inline-flex items-center px-5 py-2 text-sm font-medium rounded-lg border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 transition-colors"
           >
             {t('common:cancel')}
           </button>
-          
-          <button 
-            type="submit" 
+          <button
+            type="submit"
             onClick={(e) => { e.preventDefault(); onSubmit(e as any); }}
-            className={`btn btn-primary btn-md rounded-xl px-8 gap-2 shadow-lg shadow-primary/20 font-black tracking-widest text-[10px] uppercase ${isSubmitting ? 'loading' : ''}`}
             disabled={isSubmitting}
+            className="inline-flex items-center px-6 py-2 text-sm font-medium rounded-lg text-white bg-indigo-600 hover:bg-indigo-700 disabled:opacity-60 transition-colors gap-2"
           >
-            {!isSubmitting && <Save className="size-4" />}
+            {isSubmitting ? (
+              <span className="inline-block size-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+            ) : (
+              <Save className="size-4" />
+            )}
             {isEdit ? t('common:save_changes') : t('common:add')}
           </button>
         </div>

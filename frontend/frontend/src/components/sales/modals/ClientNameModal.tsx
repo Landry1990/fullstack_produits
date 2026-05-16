@@ -40,30 +40,30 @@ export const ClientNameModal: React.FC<ClientNameModalProps> = ({
     if (!isOpen || !facture) return null;
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-            <div className="bg-base-100 rounded-xl shadow-2xl w-full max-w-md overflow-hidden animate-in fade-in zoom-in-95 duration-200">
-                <div className="border-b border-gray-100 p-4 flex justify-between items-center bg-gray-50/50">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+            <div className="bg-white rounded-xl shadow-2xl border border-gray-100 w-full max-w-md overflow-hidden">
+                <div className="border-b border-gray-100 p-4 flex justify-between items-center">
                     <div className="flex items-center gap-3">
-                        <div className="bg-blue-100 p-2 rounded-lg">
-                            <Printer className="size-5 text-blue-600" />
+                        <div className="bg-indigo-50 p-2 rounded-lg">
+                            <Printer className="size-5 text-indigo-600" />
                         </div>
                         <div>
-                            <h3 className="font-semibold text-base-content">
+                            <h3 className="font-semibold text-gray-900">
                                 {t('modals.print_invoice')}
                             </h3>
-                            <div className="text-xs text-base-content/60 font-mono">
+                            <div className="text-xs text-gray-400 font-mono">
                                 #{facture.numero_facture || facture.id}
                             </div>
                         </div>
                     </div>
-                    <button onClick={onClose} className="p-1 hover:bg-base-300 rounded-full transition-colors text-base-content/40 hover:text-base-content/80">
+                    <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-lg transition-colors text-gray-400 hover:text-gray-600">
                         <X className="size-5" />
                     </button>
                 </div>
 
                 <form onSubmit={handleSubmit} className="p-6">
                     <div className="mb-6">
-                        <label className="block text-sm font-medium text-base-content/90 mb-2">
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
                             {t('messages.prompt_client_name')}
                         </label>
                         <div className="relative">
@@ -71,13 +71,13 @@ export const ClientNameModal: React.FC<ClientNameModalProps> = ({
                                 type="text"
                                 value={clientNameInput}
                                 onChange={(e) => setClientNameInput(e.target.value)}
-                                className="w-full px-4 py-3 rounded-lg border border-base-200 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all outline-none"
+                                className="w-full px-4 py-3 rounded-lg border border-gray-200 bg-white text-gray-900 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-50 outline-none transition-all"
                                 placeholder={t('clients:sales_modal.print_placeholder')}
                                 autoFocus
                             />
                         </div>
-                        <p className="mt-2 text-xs text-base-content/60 flex items-center gap-1">
-                            <span className="inline-block size-1 bg-gray-400 rounded-full"></span>
+                        <p className="mt-2 text-xs text-gray-400 flex items-center gap-1">
+                            <span className="inline-block size-1 bg-gray-300 rounded-full"></span>
                             {t('clients:sales_modal.print_hint')}
                         </p>
                     </div>
@@ -86,13 +86,13 @@ export const ClientNameModal: React.FC<ClientNameModalProps> = ({
                         <button
                             type="button"
                             onClick={onClose}
-                            className="px-4 py-2 text-base-content/80 font-medium hover:bg-base-200 rounded-lg transition-colors"
+                            className="px-5 py-2 text-gray-700 font-medium bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
                         >
                             {t('common:cancel')}
                         </button>
                         <button
                             type="submit"
-                            className="px-6 py-2 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 focus:ring-4 focus:ring-blue-200 transition-all flex items-center gap-2 shadow-lg shadow-blue-600/20"
+                            className="px-6 py-2 bg-indigo-600 text-white font-medium rounded-lg hover:bg-indigo-700 transition-colors flex items-center gap-2 shadow-sm"
                         >
                             <Printer className="size-4" />
                             {t('common:print')}

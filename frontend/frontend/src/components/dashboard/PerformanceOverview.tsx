@@ -120,7 +120,7 @@ export default function PerformanceOverview({
               <div className="absolute top-0 left-0 right-0 h-1 rounded-t-2xl" style={{ background: card.accent }} />
 
               <div className="flex items-start justify-between gap-2">
-                <p className="text-[10px] font-black uppercase tracking-widest text-base-content/40 leading-tight">
+                <p className="text-[10px] font-black uppercase tracking-widest text-gray-400 leading-tight">
                   {card.title}
                 </p>
                 <div className="size-9 rounded-xl flex items-center justify-center shrink-0" style={{ background: card.accent + '20', color: card.accent }}>
@@ -128,7 +128,7 @@ export default function PerformanceOverview({
                 </div>
               </div>
 
-              <p className={`text-xl sm:text-2xl font-black text-base-content tracking-tight leading-none ${card.highlight ? 'text-3xl sm:text-4xl' : ''}`}>
+              <p className={`text-xl sm:text-2xl font-black text-gray-900 tracking-tight leading-none ${card.highlight ? 'text-3xl sm:text-4xl' : ''}`}>
                 {card.value}
               </p>
 
@@ -144,7 +144,7 @@ export default function PerformanceOverview({
           );
 
           return (
-            <div key={i} className={`bg-base-100 border border-base-200 rounded-2xl shadow-sm overflow-hidden transition-all ${card.link ? 'hover:shadow-md hover:-translate-y-0.5 cursor-pointer active:scale-[0.98]' : ''}`}>
+            <div key={i} className={`bg-white border border-gray-100 rounded-xl shadow-sm overflow-hidden transition-all ${card.link ? 'hover:shadow-md hover:-translate-y-0.5 cursor-pointer active:scale-[0.98]' : ''}`}>
               {card.link ? <Link to={card.link} className="block h-full">{inner}</Link> : inner}
             </div>
           );
@@ -178,14 +178,14 @@ export default function PerformanceOverview({
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-5">
 
         {/* Revenue Bar Chart */}
-        <div className="bg-base-100 border border-base-200 rounded-2xl shadow-sm overflow-hidden flex flex-col">
-          <div className="flex items-center gap-3 px-5 pt-5 pb-4 border-b border-base-100">
-            <div className="p-2 bg-emerald-100 text-emerald-600 rounded-xl">
+        <div className="bg-white border border-gray-100 rounded-xl shadow-sm overflow-hidden flex flex-col">
+          <div className="flex items-center gap-3 px-5 pt-5 pb-4 border-b border-gray-100">
+            <div className="p-2 bg-emerald-50 text-emerald-600 rounded-lg">
               <TrendingUp className="size-4" />
             </div>
             <div>
-              <h2 className="text-xs font-black text-base-content tracking-tight uppercase">{t('charts.revenue_evolution')}</h2>
-              <p className="text-[10px] font-bold text-base-content/30 uppercase tracking-widest">{t('charts.last_7_days')}</p>
+              <h2 className="text-xs font-bold text-gray-900 tracking-tight uppercase">{t('charts.revenue_evolution')}</h2>
+              <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">{t('charts.last_7_days')}</p>
             </div>
           </div>
           <div className="p-4 sm:p-5 h-64 sm:h-72">
@@ -243,14 +243,14 @@ export default function PerformanceOverview({
         </div>
 
         {/* Hourly Traffic Chart */}
-        <div className="bg-base-100 border border-base-200 rounded-2xl shadow-sm overflow-hidden flex flex-col">
-          <div className="flex items-center gap-3 px-5 pt-5 pb-4 border-b border-base-100">
-            <div className="p-2 bg-indigo-100 text-indigo-600 rounded-xl">
+        <div className="bg-white border border-gray-100 rounded-xl shadow-sm overflow-hidden flex flex-col">
+          <div className="flex items-center gap-3 px-5 pt-5 pb-4 border-b border-gray-100">
+            <div className="p-2 bg-indigo-50 text-indigo-600 rounded-lg">
               <History className="size-4" />
             </div>
             <div>
-              <h2 className="text-xs font-black text-base-content tracking-tight uppercase">{t('hourly_traffic_title')}</h2>
-              <p className="text-[10px] font-bold text-base-content/30 uppercase tracking-widest">{t('hourly_traffic_desc')}</p>
+              <h2 className="text-xs font-bold text-gray-900 tracking-tight uppercase">{t('hourly_traffic_title')}</h2>
+              <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">{t('hourly_traffic_desc')}</p>
             </div>
           </div>
           <div className="p-4 sm:p-5 h-64 sm:h-72">

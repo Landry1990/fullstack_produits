@@ -40,33 +40,40 @@ export default function Commandes({ forcedType }: CommandesProps) {
   }, [location.state, listProps, navigate, state]);
   
   return (
-    <div className="h-full flex flex-col overflow-hidden bg-base-100">
-      <div className="flex flex-col items-center pt-4 mb-4 shrink-0">
-          <h1 className="text-xl md:text-2xl font-bold text-center mb-4">
-              {state.activeTab === 'DIV' ? 'Commandes Divers' : state.activeTab === 'DIR' ? state.t('orders:title_direct') : state.t('orders:title_local')}
-          </h1>
-          
+    <div className="h-full flex flex-col overflow-hidden bg-gray-50">
+      <div className="px-6 py-4 border-b border-gray-100 bg-white shrink-0 flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <div className="p-2.5 bg-indigo-50 rounded-lg">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+              </svg>
+            </div>
+            <h1 className="text-lg font-bold text-gray-900">
+                {state.activeTab === 'DIV' ? 'Commandes Divers' : state.activeTab === 'DIR' ? state.t('orders:title_direct') : state.t('orders:title_local')}
+            </h1>
+          </div>
+
           {!forcedType && (
-            <div className="tabs tabs-boxed">
-                <a 
-                className={`tab ${state.activeTab === 'LOC' ? 'tab-active' : ''}`}
+            <div className="bg-gray-50 p-1 rounded-lg flex gap-1 border border-gray-200">
+                <button
+                className={`px-5 py-2 rounded-md text-sm font-medium transition-all ${state.activeTab === 'LOC' ? 'bg-white text-indigo-700 shadow-sm border border-gray-200' : 'text-gray-500 hover:text-gray-700'}`}
                 onClick={() => state.setActiveTab('LOC')}
                 >
                 {state.t('orders:tabs.local')}
-                </a> 
-                <a 
-                className={`tab ${state.activeTab === 'DIR' ? 'tab-active' : ''}`}
+                </button>
+                <button
+                className={`px-5 py-2 rounded-md text-sm font-medium transition-all ${state.activeTab === 'DIR' ? 'bg-white text-indigo-700 shadow-sm border border-gray-200' : 'text-gray-500 hover:text-gray-700'}`}
                 onClick={() => state.setActiveTab('DIR')}
                 >
                 {state.t('orders:tabs.direct')}
-                </a>
+                </button>
             </div>
           )}
       </div>
 
       {state.error && (
-        <div role="alert" className="alert alert-error mb-4 shrink-0 mx-4 w-auto">
-          <span>{state.error}</span>
+        <div role="alert" className="mx-4 mt-4 px-4 py-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm shrink-0">
+          {state.error}
         </div>
       )}
 
