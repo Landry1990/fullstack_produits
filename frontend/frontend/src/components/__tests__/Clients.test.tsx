@@ -45,6 +45,15 @@ describe('Clients Component', () => {
   });
 
   it('filters clients on search', async () => {
+    vi.mocked(clientService.getAll).mockImplementation((params: any) => {
+      const search = params?.search?.toLowerCase() || '';
+      const filtered = mockClients.filter(c => 
+        c.name.toLowerCase().includes(search) || 
+        c.phone.includes(search)
+      );
+      return Promise.resolve({ results: filtered, count: filtered.length } as any);
+    });
+
     render(
       <MemoryRouter>
         <Clients />
@@ -54,9 +63,10 @@ describe('Clients Component', () => {
     const searchInput = screen.getByPlaceholderText(/Rechercher/i);
     fireEvent.change(searchInput, { target: { value: 'Jean' } });
 
-    // Wait for debounce (300ms)
+    // Wait for debounce + fetch
     await waitFor(() => {
-        expect(clientService.getAll).toHaveBeenCalledWith(expect.objectContaining({ search: 'Jean' }));
+        expect(screen.getByText('Jean Dupont')).toBeInTheDocument();
+        expect(screen.queryByText('Pharmacie Centrale')).not.toBeInTheDocument();
     }, { timeout: 1000 });
   });
 

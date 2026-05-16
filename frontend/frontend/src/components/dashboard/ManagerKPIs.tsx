@@ -11,7 +11,7 @@ interface ProgressBarProps {
 const ProgressBar: React.FC<ProgressBarProps> = ({ rate, colorClass = 'bg-primary' }) => {
     const displayRate = Math.min(rate, 100);
     return (
-        <div className="w-full bg-base-200 rounded-full h-3 overflow-hidden shadow-inner border border-base-300">
+        <div className="w-full bg-gray-100 rounded-full h-3 overflow-hidden shadow-inner border border-gray-200">
             <div 
                 className={`h-full transition-all duration-1000 ease-out fill-mode-forwards rounded-full ${colorClass}`}
                 style={{ width: `${displayRate}%` }}
@@ -66,26 +66,26 @@ export const ManagerKPIs: React.FC<ManagerKPIsProps> = ({ kpis }) => {
     const formatCurrencyLocal = (amount: number) => formatCurrencyStandard(amount, currentLocale, currencySymbol);
 
     const items = [
-        { 
-            label: t('manager_dashboard.periods.today', "Aujourd'hui"), 
-            key: 'jour', 
-            color: 'bg-primary', 
+        {
+            label: t('manager_dashboard.periods.today', "Aujourd'hui"),
+            key: 'jour',
+            color: 'bg-indigo-500',
             icon: <Calendar className="size-5" />,
-            colorText: 'text-primary'
+            colorText: 'text-indigo-600'
         },
-        { 
-            label: t('manager_dashboard.periods.week', 'Semaine'), 
-            key: 'semaine', 
-            color: 'bg-secondary', 
+        {
+            label: t('manager_dashboard.periods.week', 'Semaine'),
+            key: 'semaine',
+            color: 'bg-blue-500',
             icon: <BarChart3 className="size-5" />,
-            colorText: 'text-secondary'
+            colorText: 'text-blue-600'
         },
-        { 
-            label: t('manager_dashboard.periods.month', 'Mois'), 
-            key: 'mois', 
-            color: 'bg-accent', 
+        {
+            label: t('manager_dashboard.periods.month', 'Mois'),
+            key: 'mois',
+            color: 'bg-amber-500',
             icon: <TrendingUp className="size-5" />,
-            colorText: 'text-accent'
+            colorText: 'text-amber-600'
         }
     ];
 
@@ -127,33 +127,33 @@ export const ManagerKPIs: React.FC<ManagerKPIsProps> = ({ kpis }) => {
                 const isSuccess = data.rate >= 100 && data.target > 0;
                 
                 return (
-                    <div key={item.key} className={`bg-base-100 rounded-2xl shadow-sm border ${isSuccess ? 'border-success/50 shadow-success/20 shadow-lg relative overflow-visible' : 'border-base-300 overflow-hidden'} transition-all duration-500`}>
+                    <div key={item.key} className={`bg-white rounded-xl shadow-sm border ${isSuccess ? 'border-emerald-200 shadow-emerald-100 shadow-lg relative overflow-visible' : 'border-gray-200 overflow-hidden'} transition-all duration-500`}>
                         {isSuccess && (
-                            <div className="absolute -top-3 -right-3 bg-success text-success-content rounded-full p-2 shadow-lg animate-pulse z-10 scale-110">
+                            <div className="absolute -top-3 -right-3 bg-emerald-500 text-white rounded-full p-2 shadow-lg animate-pulse z-10 scale-110">
                                 <Trophy size={20} />
                             </div>
                         )}
                         <div className="p-6 h-full flex flex-col justify-between relative overflow-hidden">
                             {isSuccess && (
-                                <div className="absolute inset-0 bg-gradient-to-tr from-success/5 to-transparent pointer-events-none" />
+                                <div className="absolute inset-0 bg-gradient-to-tr from-emerald-50 to-transparent pointer-events-none" />
                             )}
                             <div className="flex justify-between items-center mb-4 relative z-10">
-                                <div className={`flex items-center gap-2 font-bold ${isSuccess ? 'text-success' : item.colorText} uppercase tracking-tight transition-colors duration-500`}>
+                                <div className={`flex items-center gap-2 font-bold ${isSuccess ? 'text-emerald-600' : item.colorText} uppercase tracking-tight transition-colors duration-500`}>
                                     {item.icon}
                                     <span>{item.label}</span>
                                 </div>
-                                <span className={`badge ${isSuccess ? 'badge-success animate-pulse shadow-sm' : item.key === 'jour' ? 'badge-primary' : item.key === 'semaine' ? 'badge-secondary' : 'badge-accent'} font-bold transition-colors duration-500`}>
+                                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold transition-colors duration-500 ${isSuccess ? 'bg-emerald-100 text-emerald-700 animate-pulse shadow-sm' : item.key === 'jour' ? 'bg-indigo-100 text-indigo-700' : item.key === 'semaine' ? 'bg-blue-100 text-blue-700' : 'bg-amber-100 text-amber-700'}`}>
                                     {Math.round(data.rate)}%
                                 </span>
                             </div>
                             
                             <div className="mb-4 relative z-10">
-                                <span className={`text-3xl font-black ${isSuccess ? 'text-success drop-shadow-sm' : 'text-base-content'} transition-colors duration-500`}>
+                                <span className={`text-3xl font-black ${isSuccess ? 'text-emerald-600 drop-shadow-sm' : 'text-gray-900'} transition-colors duration-500`}>
                                     {formatCurrencyLocal(data.actual)}
                                 </span>
                                 {data.margin !== undefined && (
-                                    <div className="text-xs font-bold opacity-70 mt-1 flex items-center gap-1">
-                                        <TrendingUp size={12} className="text-success" />
+                                    <div className="text-xs font-bold text-gray-500 mt-1 flex items-center gap-1">
+                                        <TrendingUp size={12} className="text-emerald-500" />
                                         <span>{t('manager_dashboard.margin_label')} : {formatCurrencyLocal(data.margin)}</span>
                                     </div>
                                 )}
@@ -164,27 +164,27 @@ export const ManagerKPIs: React.FC<ManagerKPIsProps> = ({ kpis }) => {
                                     <span>{t('manager_dashboard.progression', 'Progression')}</span>
                                     <span>{t('manager_dashboard.target', 'Cible')}: {formatCurrencyLocal(data.target)}</span>
                                 </div>
-                                <ProgressBar 
-                                    rate={data.rate} 
-                                    colorClass={isSuccess ? 'bg-success' : item.color} 
+                                <ProgressBar
+                                    rate={data.rate}
+                                    colorClass={isSuccess ? 'bg-emerald-500' : item.color}
                                 />
                             </div>
 
                             {/* Section Palier / Stretch Goal */}
                             {isSuccess && (
-                                <div className="space-y-2 mt-4 pt-4 border-t border-base-200/50 animate-in fade-in slide-in-from-top-2 duration-500">
+                                <div className="space-y-2 mt-4 pt-4 border-t border-gray-100">
                                     {(() => {
                                         const palier = getPalierInfo(data.actual, data.target);
                                         if (!palier) return null;
                                         return (
                                             <>
-                                                <div className="flex justify-between text-xs font-bold uppercase tracking-tight text-warning">
-                                                    <span className="flex items-center gap-1"><Zap size={12} className="fill-warning" /> {t('manager_dashboard.palier_label', { level: palier.level })}</span>
+                                                <div className="flex justify-between text-xs font-bold uppercase tracking-tight text-amber-600">
+                                                    <span className="flex items-center gap-1"><Zap size={12} className="text-amber-500" /> {t('manager_dashboard.palier_label', { level: palier.level })}</span>
                                                     <span>{formatCurrencyLocal(palier.target)}</span>
                                                 </div>
                                                 <ProgressBar 
                                                     rate={palier.rate} 
-                                                    colorClass="bg-warning shadow-[0_0_8px_rgba(251,191,36,0.6)]" 
+                                                    colorClass="bg-amber-400 shadow-[0_0_8px_rgba(251,191,36,0.6)]" 
                                                 />
                                             </>
                                         );

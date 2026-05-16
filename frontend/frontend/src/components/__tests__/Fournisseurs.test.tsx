@@ -96,10 +96,8 @@ describe('Fournisseurs Component', () => {
         });
 
         await waitFor(() => {
-            // "Gestion Financière" is an i18n key providers:finance_modal.title or similar
-            // In setup.ts, translation returns key or default.
-            // We check for some keyword that should be in the modal
-            expect(screen.getByText(/Gestion/i) || screen.getByText(/Finance/i) || screen.getByText(/Règlements/i)).toBeInTheDocument();
+            // Look for the finance modal by its specific title text
+            expect(screen.getByText(/Gestion Financi/i)).toBeInTheDocument();
         });
     });
 

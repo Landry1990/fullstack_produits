@@ -46,9 +46,16 @@ loglevel  = os.getenv("GUNICORN_LOG_LEVEL", "warning")  # "info" en debug
 access_log_format = '%(h)s %(l)s %(u)s %(t)s "%(r)s" %(s)s %(b)s %(D)sµs'
 
 # ── Performance ──────────────────────────────────────────────────
-# Précharge l'application avant de forker les workers
-# → partage la mémoire Django entre workers (économie RAM ~30%)
-preload_app = True
+# DISABLED: preload_app causes PostgreSQL connection sharing between
+# forked workers → deadlocks and "SSL SYSCALL error: EOF detected".
+# CONN_MAX_AGE in Django keeps connections open; forked workers inherit
+# the same socket file descriptor → multiple processes write to one conn.
+preload_app = False
+
+def post_fork(server, worker):
+    """Close inherited DB connections after fork to prevent sharing."""
+    from django.db import connection
+    connection.close()
 
 # Reduce Python GIL contention
 worker_tmp_dir = "/dev/shm" if os.path.exists("/dev/shm") else None

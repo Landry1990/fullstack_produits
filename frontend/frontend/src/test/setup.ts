@@ -245,6 +245,13 @@ window.ResizeObserver = vi.fn().mockImplementation(() => ({
   disconnect: vi.fn(),
 }));
 
+// Mock for requestAnimationFrame (jsdom doesn't execute it automatically)
+window.requestAnimationFrame = vi.fn((callback: FrameRequestCallback) => {
+  callback(0);
+  return 0;
+});
+window.cancelAnimationFrame = vi.fn();
+
 // Mock for html2pdf/jspdf if needed for environment stability
 vi.mock('jspdf', () => ({
   default: vi.fn().mockImplementation(() => ({
@@ -266,6 +273,22 @@ vi.mock('react-barcode', () => ({
 }));
 
 // Mock for react-datepicker
+// Mock for LicenceContext
+vi.mock('../context/LicenceContext', () => {
+  const mockLicenceValue = {
+    licence: { type: 'STANDARD', expiry_date: '2030-12-31', max_users: 10 },
+    daysRemaining: 365,
+    loading: false,
+    refreshLicence: vi.fn(),
+  };
+  const MockLicenceContext = React.createContext(mockLicenceValue);
+  return {
+    LicenceContext: MockLicenceContext,
+    LicenceProvider: ({ children }: any) => React.createElement(MockLicenceContext.Provider, { value: mockLicenceValue }, children),
+    useLicence: () => mockLicenceValue,
+  };
+});
+
 vi.mock('react-datepicker', () => {
   return {
     default: ({ selected, onChange, placeholderText }: any) => (

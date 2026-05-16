@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   AreaChart,
@@ -50,8 +50,16 @@ const formatMoneyFull = (value: number) => {
   return formatCurrency(value);
 };
 
+// Stable formatter functions for Recharts (avoid inline functions that cause infinite re-renders)
+const tooltipFormatterMoney = (value: number) => formatMoneyFull(value);
+const tooltipFormatterPercent = (value: number, name: string) =>
+  name === 'taux' ? `${value}%` : formatMoneyFull(value);
+const tooltipFormatterOptional = (value: number) => value ? formatMoneyFull(value) : '-';
+const pieLabelFormatter = ({ name, percent }: { name?: string; percent?: number }) =>
+  `${String(name || '').substring(0, 10)}... ${((percent || 0) * 100).toFixed(0)}%`;
+
 export default function ModuleFinancier() {
-  const { t } = useTranslation(['finance', 'common', 'sidebar']);
+  const { t, i18n } = useTranslation(['finance', 'common', 'sidebar']);
   const [periode, setPeriode] = useState<'mois' | 'trimestre' | 'annee'>('mois');
   const [critereTop, setCritereTop] = useState<'ca' | 'marge'>('ca');
   const [repartitionBy, setRepartitionBy] = useState<'categorie' | 'fournisseur'>('categorie');
@@ -70,39 +78,43 @@ export default function ModuleFinancier() {
   const { data: supplierAnalysis, isLoading: loadingSupplierAnalysis } = useAnalyseFournisseurs();
   const { data: varianceReport, isLoading: loadingVariance } = useMarginVarianceAnalysis();
 
-  const isEnglish = useTranslation().i18n.language.startsWith('en');
+  const isEnglish = i18n.language.startsWith('en');
 
   // Prepare chart data for CA Evolution
-  const caChartData = caEvolution?.labels.map((label, i) => ({
+  const caChartData = useMemo(() => caEvolution?.labels.map((label, i) => ({
     name: label,
     current: caEvolution.data[i],
     n1: caEvolution.comparaison_n1[i]
-  })) || [];
+  })) || [], [caEvolution]);
 
   // Prepare chart data for Margins
-  const margesChartData = margesData?.labels.map((label, i) => ({
+  const margesChartData = useMemo(() => margesData?.labels.map((label, i) => ({
     name: label,
     marge: margesData.marge_brute[i],
     taux: margesData.taux_marge[i]
-  })) || [];
+  })) || [], [margesData]);
 
   // Prepare predictions chart data
-  const predictionsChartData = [
-    ...(predictions?.labels.map((label, i) => ({
-      name: label,
-      historique: predictions.historique[i],
-      prediction: null as number | null
-    })) || []),
-    ...(predictions?.prediction_labels.map((label, i) => ({
-      name: label,
-      historique: null as number | null,
-      prediction: predictions.predictions[i]
-    })) || [])
-  ];
+  const predictionsChartData = useMemo(() => {
+    if (!predictions) return [];
+    return [
+      ...(predictions.labels.map((label, i) => ({
+        name: label,
+        historique: predictions.historique[i],
+        prediction: null as number | null
+      }))),
+      ...(predictions.prediction_labels.map((label, i) => ({
+        name: label,
+        historique: null as number | null,
+        prediction: predictions.predictions[i]
+      })))
+    ];
+  }, [predictions]);
 
-  // Get trend icon and color
-  const getTrendInfo = (tendance: string) => {
-    switch (tendance) {
+  // Get trend icon and color (memoized to avoid infinite re-renders in Recharts)
+  const trendInfo = useMemo(() => {
+    if (!predictions) return null;
+    switch (predictions.tendance) {
       case 'hausse':
         return { icon: '📈', color: 'text-green-500', label: t('trend.up', 'En hausse') };
       case 'baisse':
@@ -110,9 +122,18 @@ export default function ModuleFinancier() {
       default:
         return { icon: '➡️', color: 'text-yellow-500', label: t('trend.stable', 'Stable') };
     }
-  };
+  }, [predictions?.tendance, t]);
 
-  const trendInfo = predictions ? getTrendInfo(predictions.tendance) : null;
+  // Memoize chart data to prevent infinite re-renders in Recharts
+  const pieChartData = useMemo(() =>
+    repartition?.data.map(item => ({ ...item, name: item.nom })) || [],
+    [repartition]
+  );
+
+  const categoryChartData = useMemo(() =>
+    categoryAnalysis?.data.slice(0, 10) || [],
+    [categoryAnalysis]
+  );
 
   return (
     <div className="p-6 space-y-6">
@@ -367,11 +388,11 @@ export default function ModuleFinancier() {
                     <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
                     <XAxis dataKey="name" fontSize={12} />
                     <YAxis tickFormatter={formatMoney} fontSize={12} />
-                    <Tooltip formatter={(value: number) => formatMoneyFull(value)} />
+                    <Tooltip formatter={tooltipFormatterMoney} />
                     <Legend />
-                    <Area 
-                      type="monotone" 
-                      dataKey="current" 
+                    <Area
+                      type="monotone"
+                      dataKey="current"
                       name={t('charts.current_revenue', 'CA Actuel')}
                       stroke="#10B981" 
                       fillOpacity={1} 
@@ -416,9 +437,7 @@ export default function ModuleFinancier() {
                     <XAxis dataKey="name" fontSize={12} />
                     <YAxis yAxisId="left" tickFormatter={formatMoney} fontSize={12} />
                     <YAxis yAxisId="right" orientation="right" unit="%" fontSize={12} />
-                    <Tooltip formatter={(value: number, name: string) => 
-                      name === 'taux' ? `${value}%` : formatMoneyFull(value)
-                    } />
+                    <Tooltip formatter={tooltipFormatterPercent} />
                     <Legend />
                     <Bar yAxisId="left" dataKey="marge" name={t('margin', 'Marge Brute')} fill="#3B82F6" radius={[4, 4, 0, 0]} />
                     <Line yAxisId="right" type="monotone" dataKey="taux" name={t('margin_rate', 'Taux %')} stroke="#F59E0B" strokeWidth={2} />
@@ -459,7 +478,7 @@ export default function ModuleFinancier() {
                     <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
                     <XAxis dataKey="name" fontSize={12} />
                     <YAxis tickFormatter={formatMoney} fontSize={12} />
-                    <Tooltip formatter={(value: number) => value ? formatMoneyFull(value) : '-'} />
+                    <Tooltip formatter={tooltipFormatterOptional} />
                     <Legend />
                     <Line 
                       type="monotone" 
@@ -514,7 +533,7 @@ export default function ModuleFinancier() {
               <ResponsiveContainer width="100%" height={280}>
                 <PieChart>
                   <Pie
-                    data={repartition.data.map(item => ({ ...item, name: item.nom }))}
+                    data={pieChartData}
                     cx="50%"
                     cy="50%"
                     labelLine={false}
@@ -522,15 +541,13 @@ export default function ModuleFinancier() {
                     fill="#8884d8"
                     dataKey="ca"
                     nameKey="name"
-                    label={({ name, percent }: { name?: string; percent?: number }) => 
-                      `${String(name || '').substring(0, 10)}... ${((percent || 0) * 100).toFixed(0)}%`
-                    }
+                    label={pieLabelFormatter}
                   >
                     {repartition.data.map((_, index) => (
                       <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                     ))}
                   </Pie>
-                  <Tooltip formatter={(value: number) => formatMoneyFull(value)} />
+                  <Tooltip formatter={tooltipFormatterMoney} />
                 </PieChart>
               </ResponsiveContainer>
             ) : (
@@ -637,16 +654,16 @@ export default function ModuleFinancier() {
               {/* Bar Chart */}
               <div>
                 <ResponsiveContainer width="100%" height={300}>
-                  <BarChart data={categoryAnalysis.data.slice(0, 10)} layout="vertical">
+                  <BarChart data={categoryChartData} layout="vertical">
                     <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
-                    <XAxis type="number" tickFormatter={(v: number) => formatMoney(v)} />
-                    <YAxis 
-                      type="category" 
-                      dataKey="nom" 
-                      width={120} 
+                    <XAxis type="number" tickFormatter={formatMoney} />
+                    <YAxis
+                      type="category"
+                      dataKey="nom"
+                      width={120}
                       tick={{ fontSize: 11 }}
                     />
-                    <Tooltip formatter={(value: number) => formatMoneyFull(value)} />
+                    <Tooltip formatter={tooltipFormatterMoney} />
                     <Bar dataKey="ca" fill="#3B82F6" name="CA" />
                     <Bar dataKey="marge" fill="#10B981" name={t('margin', 'Marge')} />
                   </BarChart>

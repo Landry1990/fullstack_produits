@@ -28,9 +28,9 @@ export default function DashboardManager() {
 
     if (statsLoading) {
         return (
-            <div className="min-h-screen bg-base-200 flex flex-col items-center justify-center gap-4">
-                <span className="loading loading-spinner loading-lg text-primary"></span>
-                <p className="text-sm font-bold text-base-content/40 uppercase tracking-widest animate-pulse">
+            <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center gap-3">
+                <div className="size-10 border-2 border-gray-200 border-t-indigo-600 rounded-full animate-spin"></div>
+                <p className="text-sm font-medium text-gray-400 uppercase tracking-widest animate-pulse">
                     {t('manager_dashboard.loading', 'Chargement du tableau de bord...')}
                 </p>
             </div>
@@ -44,37 +44,37 @@ export default function DashboardManager() {
     };
 
     return (
-        <div className="min-h-screen bg-base-200 p-6 space-y-6 font-sans">
+        <div className="min-h-screen bg-gray-50 p-6 space-y-5 font-sans">
             <Toaster position="top-right" />
-            
-            <div className="max-w-[1600px] mx-auto space-y-6 animate-in fade-in duration-500">
+
+            <div className="max-w-[1600px] mx-auto space-y-5">
                 {/* Header Section */}
-                <div className="bg-base-100 rounded-2xl shadow-sm border border-base-300 overflow-hidden">
-                    <div className="p-6 border-b border-base-200 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+                    <div className="p-5 border-b border-gray-100 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                         <div>
-                            <h1 className="text-2xl font-bold text-base-content tracking-tight">
-                                {t('manager_dashboard.title', 'Tableau de Bord')} 
-                                <span className="text-primary ml-2 uppercase text-xl font-black">{t('manager_dashboard.manager', 'Manager')}</span>
+                            <h1 className="text-xl font-bold text-gray-900 tracking-tight">
+                                {t('manager_dashboard.title', 'Tableau de Bord')}
+                                <span className="text-indigo-600 ml-2 uppercase text-lg font-black">{t('manager_dashboard.manager', 'Manager')}</span>
                             </h1>
-                            <p className="text-base-content/60 text-sm mt-1">
+                            <p className="text-gray-500 text-sm mt-1">
                                 {t('manager_dashboard.subtitle', 'Suivi de la Marge Brute et couverture des charges')}
                             </p>
                         </div>
-                        
-                        <div className="flex items-center gap-3">
-                            <button 
+
+                        <div className="flex items-center gap-2">
+                            <button
                                 onClick={() => setIsSettingsModalOpen(true)}
-                                className="btn btn-ghost btn-circle btn-md hover:bg-base-200"
+                                className="p-2.5 rounded-lg hover:bg-gray-100 transition-colors text-gray-500"
                                 title={t('manager_dashboard.settings_tooltip')}
                             >
-                                <Settings className="size-5 text-base-content/70" />
+                                <Settings className="size-5" />
                             </button>
-                            <button 
+                            <button
                                 onClick={() => actions.openObjectiveModal()}
-                                className="btn btn-primary btn-md rounded-xl shadow-sm gap-2"
+                                className="inline-flex items-center gap-2 px-4 py-2.5 bg-indigo-600 text-white rounded-lg font-bold text-sm hover:bg-indigo-700 transition-colors shadow-sm"
                             >
                                 <PlusCircle className="size-5" />
-                                <span className="font-bold hidden sm:inline">
+                                <span className="hidden sm:inline">
                                     {t('manager_dashboard.set_objective', 'Fixer un Objectif')}
                                 </span>
                             </button>

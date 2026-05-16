@@ -1,8 +1,8 @@
-
 import { useState, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import api from '../../services/api'
 import { toast } from 'react-hot-toast'
+import { Upload, X, FileText, CheckCircle, AlertCircle } from 'lucide-react'
 
 interface ImportProductsModalProps {
   onClose: () => void
@@ -44,7 +44,7 @@ export default function ImportProductsModal({ onClose, onSuccess }: ImportProduc
     try {
       const response = await api.post('products/import/', formData, {
         onUploadProgress: (progressEvent) => {
-          if (progressEvent.total) { // Check if total is defined
+          if (progressEvent.total) {
              const percent = Math.round((progressEvent.loaded * 100) / progressEvent.total)
              setProgress(percent)
           }
@@ -65,55 +65,60 @@ export default function ImportProductsModal({ onClose, onSuccess }: ImportProduc
   }
 
   return (
-    <div className="modal modal-open">
-      <div className="modal-box relative max-w-lg">
-        <button 
-          onClick={onClose} 
-          className="btn btn-sm btn-circle btn-ghost absolute right-2 top-2"
-          disabled={uploading}
-        >
-          ✕
-        </button>
-        
-        <h3 className="font-bold text-lg mb-4">{t('products:import.title')}</h3>
-        
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      <div className="absolute inset-0 bg-black/40" onClick={() => !uploading && onClose()} />
+      <div className="relative bg-white rounded-xl shadow-2xl border border-gray-100 w-full max-w-lg">
+        {/* Header */}
+        <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-indigo-50 rounded-lg">
+              <Upload className="size-5 text-indigo-600" />
+            </div>
+            <h3 className="text-base font-bold text-gray-900">{t('products:import.title')}</h3>
+          </div>
+          <button
+            onClick={onClose}
+            className="p-2 text-gray-400 hover:bg-gray-100 rounded-lg transition-colors"
+            disabled={uploading}
+          >
+            <X className="size-5" />
+          </button>
+        </div>
+
+        <div className="p-6">
         {!result ? (
           <div className="space-y-4">
-            <div 
+            <div
               className={`
-                border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-colors
-                ${file ? 'border-primary bg-primary/5' : 'border-base-300 hover:border-primary/50'}
+                border-2 border-dashed rounded-xl p-8 text-center cursor-pointer transition-colors
+                ${file ? 'border-indigo-300 bg-indigo-50/30' : 'border-gray-200 hover:border-indigo-200 hover:bg-gray-50/50'}
               `}
               onDragOver={(e) => e.preventDefault()}
               onDrop={handleDrop}
               onClick={() => fileInputRef.current?.click()}
             >
-              <input 
-                type="file" 
-                ref={fileInputRef} 
-                className="hidden" 
-                accept=".csv,.xlsx,.xls" 
-                onChange={handleFileChange} 
+              <input
+                type="file"
+                ref={fileInputRef}
+                className="hidden"
+                accept=".csv,.xlsx,.xls"
+                onChange={handleFileChange}
               />
-              
+
               {file ? (
                 <div className="flex flex-col items-center gap-2">
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-10 w-10 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                  </svg>
-                  <span className="font-medium truncate max-w-xs">{file.name}</span>
-                  <span className="text-xs text-base-content/60">{(file.size / 1024).toFixed(1)} KB</span>
+                  <FileText className="size-10 text-indigo-500" />
+                  <span className="font-medium text-gray-700 truncate max-w-xs">{file.name}</span>
+                  <span className="text-xs text-gray-400">{(file.size / 1024).toFixed(1)} KB</span>
                 </div>
               ) : (
-                <div className="flex flex-col items-center gap-2 text-base-content/60">
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-10 w-10" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
-                  </svg>
-                  <span className="font-medium">{t('products:import.drag_drop')}</span>
+                <div className="flex flex-col items-center gap-2 text-gray-400">
+                  <Upload className="size-10" />
+                  <span className="font-medium text-gray-500">{t('products:import.drag_drop')}</span>
                   <span className="text-xs">{t('products:import.support')}</span>
-                  <div className="mt-2 text-xs bg-base-200 p-2 rounded text-left">
-                     <strong>{t('products:import.expected_columns')}</strong>
-                     <ul className="list-disc list-inside mt-1">
+                  <div className="mt-3 text-xs bg-gray-50 p-3 rounded-lg text-left border border-gray-100">
+                     <strong className="text-gray-600">{t('products:import.expected_columns')}</strong>
+                     <ul className="list-disc list-inside mt-1 text-gray-500">
                        <li>{t('products:import.col_name')}</li>
                        <li>{t('products:import.col_public')}</li>
                        <li>{t('products:import.col_cession')}</li>
@@ -129,25 +134,27 @@ export default function ImportProductsModal({ onClose, onSuccess }: ImportProduc
             {uploading && (
               <div className="space-y-2">
                  <div className="flex justify-between text-xs">
-                   <span>{t('products:import.uploading')}</span>
-                   <span>{progress}%</span>
+                   <span className="text-gray-500">{t('products:import.uploading')}</span>
+                   <span className="font-semibold text-gray-700">{progress}%</span>
                  </div>
-                 <progress className="progress progress-primary w-full" value={progress} max="100"></progress>
+                 <div className="w-full bg-gray-100 rounded-full h-2 overflow-hidden">
+                   <div className="bg-indigo-500 h-2 rounded-full transition-all duration-300" style={{ width: `${progress}%` }} />
+                 </div>
               </div>
             )}
 
-            <div className="modal-action">
-              <button className="btn btn-ghost" onClick={onClose} disabled={uploading}>{t('common:cancel')}</button>
-              <button 
-                className="btn btn-primary" 
-                onClick={handleUpload} 
+            <div className="flex justify-end gap-3 pt-2">
+              <button className="px-6 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors" onClick={onClose} disabled={uploading}>{t('common:cancel')}</button>
+              <button
+                className="px-6 py-2 text-sm font-medium text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 transition-colors shadow-sm disabled:opacity-50"
+                onClick={handleUpload}
                 disabled={!file || uploading}
               >
                 {uploading ? (
-                  <>
-                    <span className="loading loading-spinner loading-xs"></span>
+                  <span className="flex items-center gap-2">
+                    <span className="inline-block size-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
                     {t('products:import.processing')}
-                  </>
+                  </span>
                 ) : (
                   <>{t('products:actions.create')}</>
                 )}
@@ -156,11 +163,15 @@ export default function ImportProductsModal({ onClose, onSuccess }: ImportProduc
           </div>
         ) : (
           <div className="space-y-4">
-             <div className={`alert ${result.errors && result.errors.length > 0 ? 'alert-warning' : 'alert-success'}`}>
-                <svg xmlns="http://www.w3.org/2000/svg" className="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+             <div className={`flex items-start gap-3 p-4 rounded-xl ${result.errors && result.errors.length > 0 ? 'bg-amber-50 border border-amber-100' : 'bg-emerald-50 border border-emerald-100'}`}>
+                {result.errors && result.errors.length > 0 ? (
+                  <AlertCircle className="size-6 text-amber-600 shrink-0 mt-0.5" />
+                ) : (
+                  <CheckCircle className="size-6 text-emerald-600 shrink-0 mt-0.5" />
+                )}
                 <div>
-                  <h3 className="font-bold">{t('products:import.success_title')}</h3>
-                  <div className="text-xs">
+                  <h3 className="font-semibold text-gray-900">{t('products:import.success_title')}</h3>
+                  <div className="text-sm text-gray-600 mt-1">
                     <p>{t('products:import.created', { count: result.imported })}</p>
                     <p>{t('products:import.updated', { count: result.updated })}</p>
                   </div>
@@ -168,24 +179,25 @@ export default function ImportProductsModal({ onClose, onSuccess }: ImportProduc
              </div>
 
              {result.errors && result.errors.length > 0 && (
-               <div className="bg-base-200 p-4 rounded-lg max-h-40 overflow-y-auto">
-                 <h4 className="font-bold text-xs mb-2 text-error">{t('products:import.errors_title')}</h4>
-                 <ul className="list-disc list-inside text-xs space-y-1 text-base-content/80">
+               <div className="bg-gray-50 p-4 rounded-xl max-h-40 overflow-y-auto border border-gray-100">
+                 <h4 className="font-semibold text-xs mb-2 text-red-600">{t('products:import.errors_title')}</h4>
+                 <ul className="list-disc list-inside text-xs space-y-1 text-gray-600">
                    {result.errors.slice(0, 10).map((err, idx) => (
                      <li key={idx}>{err}</li>
                    ))}
                    {result.errors.length > 10 && (
-                     <li className="italic">{t('products:import.more_errors', { count: result.errors.length - 10 })}</li>
+                     <li className="italic text-gray-400">{t('products:import.more_errors', { count: result.errors.length - 10 })}</li>
                    )}
                  </ul>
                </div>
              )}
 
-             <div className="modal-action">
-               <button className="btn btn-primary" onClick={onClose}>Fermer</button>
+             <div className="flex justify-end">
+               <button className="px-6 py-2 text-sm font-medium text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 transition-colors" onClick={onClose}>Fermer</button>
              </div>
           </div>
         )}
+        </div>
       </div>
     </div>
   )
