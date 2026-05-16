@@ -153,24 +153,24 @@ const UserSessions: React.FC = () => {
     };
 
     return (
-        <div className="min-h-screen bg-base-200 p-6 space-y-6 font-sans">
+        <div className="min-h-screen bg-gray-50 p-6 space-y-6 font-sans">
             
-            <div className="bg-base-100 rounded-2xl shadow-sm border border-base-300 flex flex-col overflow-hidden">
-                <div className="p-6 border-b border-base-200 flex flex-col md:flex-row md:items-center justify-between gap-6">
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200 flex flex-col overflow-hidden">
+                <div className="p-6 border-b border-gray-100 flex flex-col md:flex-row md:items-center justify-between gap-6">
                     <div>
-                        <h1 className="text-2xl font-bold text-base-content tracking-tight">{t('sessions.title')}</h1>
-                        <p className="text-base-content/60 text-sm mt-1">{t('sessions.subtitle')}</p>
+                        <h1 className="text-2xl font-bold text-gray-900 tracking-tight">{t('sessions.title')}</h1>
+                        <p className="text-gray-500 text-sm mt-1">{t('sessions.subtitle')}</p>
                     </div>
 
-                    <div className="tabs tabs-boxed bg-base-200 gap-1 p-1 self-start md:self-center">
+                    <div className="tabs tabs-boxed bg-gray-50 gap-1 p-1 self-start md:self-center">
                         <button 
-                            className={`tab tab-sm md:tab-md transition-all duration-200 ${activeTab === 'daily' ? 'tab-active !bg-primary !text-primary-content font-bold shadow-sm' : 'hover:bg-base-300'}`}
+                            className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${activeTab === 'daily' ? 'tab-active !bg-primary !text-indigo-600-content font-bold shadow-sm' : 'hover:bg-gray-200'}`}
                             onClick={() => setActiveTab('daily')}
                         >
                             {t('sessions.tabs.daily')}
                         </button>
                         <button 
-                            className={`tab tab-sm md:tab-md transition-all duration-200 ${activeTab === 'monthly' ? 'tab-active !bg-primary !text-primary-content font-bold shadow-sm' : 'hover:bg-base-300'}`}
+                            className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${activeTab === 'monthly' ? 'tab-active !bg-primary !text-indigo-600-content font-bold shadow-sm' : 'hover:bg-gray-200'}`}
                             onClick={() => setActiveTab('monthly')}
                         >
                             {t('sessions.tabs.monthly')}
@@ -181,14 +181,14 @@ const UserSessions: React.FC = () => {
                 <div className="p-6">
                     {activeTab === 'daily' ? (
                         <form onSubmit={handleFilter} className="flex flex-wrap items-end gap-4">
-                            <div className="form-control">
-                                <label className="label py-1">
-                                    <span className="label-text text-xs font-bold uppercase opacity-60 tracking-wider font-mono">{t('sessions.date')}</span>
+                            <div className="flex flex-col gap-1">
+                                <label className="flex flex-col gap-0.5 py-1">
+                                    <span className="text-[10px] font-bold uppercase tracking-wider text-gray-500 font-mono">{t('sessions.date')}</span>
                                 </label>
                                 <input 
                                     type="date"
                                     lang={getLocale()} 
-                                    className="input input-bordered input-sm focus:input-primary h-10 w-full md:w-44" 
+                                    className="w-full md:w-44 rounded-lg border border-gray-200 bg-white h-10 px-3 text-sm font-bold focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-50 transition-all" 
                                     value={startDate}
                                     onChange={(e) => {
                                         setStartDate(e.target.value);
@@ -198,12 +198,12 @@ const UserSessions: React.FC = () => {
                             </div>
 
                             {user?.is_superuser && (
-                                <div className="form-control">
-                                    <label className="label py-1">
-                                        <span className="label-text text-xs font-bold uppercase opacity-60 tracking-wider font-mono">{t('sessions.operator')}</span>
+                                <div className="flex flex-col gap-1">
+                                    <label className="flex flex-col gap-0.5 py-1">
+                                        <span className="text-[10px] font-bold uppercase tracking-wider text-gray-500 font-mono">{t('sessions.operator')}</span>
                                     </label>
                                     <select 
-                                        className="select select-bordered select-sm focus:select-primary h-10 w-full md:w-56"
+                                        className="w-full md:w-56 rounded-lg border border-gray-200 bg-white h-10 px-3 text-sm font-bold focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-50 transition-all"
                                         value={selectedUser}
                                         onChange={(e) => setSelectedUser(e.target.value)}
                                     >
@@ -215,18 +215,18 @@ const UserSessions: React.FC = () => {
                                 </div>
                             )}
 
-                            <button type="submit" className="btn btn-primary btn-sm h-10 px-8 font-bold shadow-md hover:shadow-lg transition-all" disabled={loading}>
-                                {loading ? <span className="loading loading-spinner loading-xs"></span> : t('common:filter')}
+                            <button type="submit" className="inline-flex items-center justify-center h-10 px-8 bg-indigo-600 text-white text-sm font-bold rounded-lg shadow-sm hover:shadow-md hover:bg-indigo-700 transition-all" disabled={loading}>
+                                {loading ? <span className="inline-block size-4 border-2 border-gray-200 border-t-indigo-600 rounded-full animate-spin"></span> : t('common:filter')}
                             </button>
                         </form>
                     ) : (
                         <form onSubmit={handleRecapFilter} className="flex flex-wrap items-end gap-4">
-                            <div className="form-control">
-                                <label className="label py-1">
-                                    <span className="label-text text-xs font-bold uppercase opacity-60 tracking-wider font-mono">{t('sessions.recap.month')}</span>
+                            <div className="flex flex-col gap-1">
+                                <label className="flex flex-col gap-0.5 py-1">
+                                    <span className="text-[10px] font-bold uppercase tracking-wider text-gray-500 font-mono">{t('sessions.recap.month')}</span>
                                 </label>
                                 <select 
-                                    className="select select-bordered select-sm focus:select-primary h-10 w-full md:w-44"
+                                    className="w-full md:w-44 rounded-lg border border-gray-200 bg-white h-10 px-3 text-sm font-bold focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-50 transition-all"
                                     value={recapMonth}
                                     onChange={(e) => setRecapMonth(e.target.value)}
                                 >
@@ -236,12 +236,12 @@ const UserSessions: React.FC = () => {
                                 </select>
                             </div>
 
-                            <div className="form-control">
-                                <label className="label py-1">
-                                    <span className="label-text text-xs font-bold uppercase opacity-60 tracking-wider font-mono">{t('sessions.recap.year')}</span>
+                            <div className="flex flex-col gap-1">
+                                <label className="flex flex-col gap-0.5 py-1">
+                                    <span className="text-[10px] font-bold uppercase tracking-wider text-gray-500 font-mono">{t('sessions.recap.year')}</span>
                                 </label>
                                 <select 
-                                    className="select select-bordered select-sm focus:select-primary h-10 w-full md:w-32"
+                                    className="w-full md:w-32 rounded-lg border border-gray-200 bg-white h-10 px-3 text-sm font-bold focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-50 transition-all"
                                     value={recapYear}
                                     onChange={(e) => setRecapYear(e.target.value)}
                                 >
@@ -251,99 +251,99 @@ const UserSessions: React.FC = () => {
                                 </select>
                             </div>
 
-                            <button type="submit" className="btn btn-primary btn-sm h-10 px-8 font-bold shadow-md hover:shadow-lg transition-all" disabled={loading}>
-                                {loading ? <span className="loading loading-spinner loading-xs"></span> : t('common:filter')}
+                            <button type="submit" className="inline-flex items-center justify-center h-10 px-8 bg-indigo-600 text-white text-sm font-bold rounded-lg shadow-sm hover:shadow-md hover:bg-indigo-700 transition-all" disabled={loading}>
+                                {loading ? <span className="inline-block size-4 border-2 border-gray-200 border-t-indigo-600 rounded-full animate-spin"></span> : t('common:filter')}
                             </button>
                         </form>
                     )}
                 </div>
             </div>
 
-            <div className="bg-base-100 rounded-2xl shadow-sm border border-base-300 overflow-hidden">
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
                 <div className="overflow-x-auto">
                     {activeTab === 'daily' ? (
-                        <table className="table table-zebra w-full">
+                        <table className="w-full text-sm border-separate border-spacing-0">
                             <thead>
-                                <tr className="bg-base-200/50">
-                                    <th className="text-xs uppercase font-bold text-base-content/50 py-4 px-6">{t('sessions.operator')}</th>
-                                    <th className="text-xs uppercase font-bold text-base-content/50 py-4 px-6">{t('sessions.date')}</th>
-                                    <th className="text-xs uppercase font-bold text-base-content/50 py-4 px-6">{t('sessions.workstation')}</th>
-                                    <th className="text-xs uppercase font-bold text-base-content/50 py-4 px-6">{t('sessions.first_login')}</th>
-                                    <th className="text-xs uppercase font-bold text-base-content/50 py-4 px-6">{t('sessions.last_logout')}</th>
-                                    <th className="text-xs uppercase font-bold text-base-content/50 py-4 px-6">{t('sessions.duration')}</th>
-                                    <th className="text-xs uppercase font-bold text-base-content/50 py-4 px-6 text-right">{t('sessions.status')}</th>
+                                <tr className="bg-gray-50/50">
+                                    <th className="text-xs uppercase font-bold text-gray-500 py-4 px-6">{t('sessions.operator')}</th>
+                                    <th className="text-xs uppercase font-bold text-gray-500 py-4 px-6">{t('sessions.date')}</th>
+                                    <th className="text-xs uppercase font-bold text-gray-500 py-4 px-6">{t('sessions.workstation')}</th>
+                                    <th className="text-xs uppercase font-bold text-gray-500 py-4 px-6">{t('sessions.first_login')}</th>
+                                    <th className="text-xs uppercase font-bold text-gray-500 py-4 px-6">{t('sessions.last_logout')}</th>
+                                    <th className="text-xs uppercase font-bold text-gray-500 py-4 px-6">{t('sessions.duration')}</th>
+                                    <th className="text-xs uppercase font-bold text-gray-500 py-4 px-6 text-right">{t('sessions.status')}</th>
                                 </tr>
                             </thead>
-                            <tbody className="divide-y divide-base-200">
+                            <tbody className="divide-y divide-gray-100">
                                 {loading ? (
                                     <tr>
                                         <td colSpan={7} className="text-center py-20">
-                                            <span className="loading loading-spinner loading-lg text-primary"></span>
-                                            <p className="mt-4 text-base-content/40 font-medium">{t('common:loading')}</p>
+                                            <span className="loading loading-spinner loading-lg text-indigo-600"></span>
+                                            <p className="mt-4 text-gray-400 font-medium">{t('common:loading')}</p>
                                         </td>
                                     </tr>
                                 ) : sessions.length === 0 ? (
                                     <tr>
-                                        <td colSpan={7} className="text-center py-20 text-base-content/40 italic">
+                                        <td colSpan={7} className="text-center py-20 text-gray-400 italic">
                                             {t('common:no_result')}
                                         </td>
                                     </tr>
                                 ) : (
                                     sessions.map(session => (
-                                        <tr key={session.id} className="hover:bg-base-200/50 transition-colors group">
+                                        <tr key={session.id} className="hover:bg-gray-50/50 transition-colors group">
                                             <td className="py-4 px-6">
                                                 <div className="flex items-center gap-4">
-                                                    <div className="avatar placeholder">
-                                                        <div className="bg-primary/10 text-primary rounded-xl size-10 flex items-center justify-center font-bold border border-primary/20">
+                                                    <div className="inline-flex items-center justify-center">
+                                                        <div className="bg-indigo-50 text-indigo-600 rounded-xl size-10 flex items-center justify-center font-bold border border-indigo-200">
                                                             <span>{session.username.charAt(0).toUpperCase()}</span>
                                                         </div>
                                                     </div>
                                                     <div>
-                                                        <div className="font-bold text-base-content">{session.full_name}</div>
-                                                        <div className="text-xs text-base-content/40">@{session.username}</div>
+                                                        <div className="font-bold text-gray-900">{session.full_name}</div>
+                                                        <div className="text-xs text-gray-400">@{session.username}</div>
                                                     </div>
                                                 </div>
                                             </td>
-                                            <td className="py-4 px-6 text-base-content/70 font-medium">{formatDate(session.date)}</td>
+                                            <td className="py-4 px-6 text-gray-500 font-medium">{formatDate(session.date)}</td>
                                             <td className="py-4 px-6">
                                                 <div className="flex items-center gap-2">
-                                                    <div className="size-8 rounded-lg bg-base-content/5 flex items-center justify-center text-base-content/40">
+                                                    <div className="size-8 rounded-lg bg-gray-50 flex items-center justify-center text-gray-400">
                                                         <Monitor size={14} />
                                                     </div>
-                                                    <span className="text-sm font-medium text-base-content/60">
+                                                    <span className="text-sm font-medium text-gray-500">
                                                         {session.workstation || '---'}
                                                     </span>
                                                 </div>
                                             </td>
-                                            <td className="py-4 px-6 font-mono font-bold text-success">{formatTime(session.first_login)}</td>
-                                            <td className="py-4 px-6 font-mono font-bold text-warning">{formatTime(session.last_logout)}</td>
-                                            <td className="py-4 px-6 font-semibold text-primary">
+                                            <td className="py-4 px-6 font-mono font-bold text-emerald-600">{formatTime(session.first_login)}</td>
+                                            <td className="py-4 px-6 font-mono font-bold text-amber-600">{formatTime(session.last_logout)}</td>
+                                            <td className="py-4 px-6 font-semibold text-indigo-600">
                                                 {session.duration_display ? session.duration_display : t('sessions.not_closed')}
                                             </td>
                                             <td className="py-4 px-6 text-right">
                                                 <div className="flex items-center justify-end gap-2">
                                                     {session.last_logout ? (
-                                                        <div className="badge badge-success badge-sm gap-1 py-3 px-3">
-                                                            <div className="size-1.5 rounded-full bg-success-content opacity-50"></div>
+                                                        <div className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                                            <div className="size-1.5 rounded-full bg-emerald-700 opacity-50"></div>
                                                             {t('sessions.closed')}
                                                         </div>
                                                     ) : (
                                                         <>
                                                             {format(getServerDate(), 'yyyy-MM-dd') === session.date ? (
-                                                                <div className="badge badge-info badge-sm gap-1 py-3 px-4 animate-pulse">
-                                                                    <div className="size-1.5 rounded-full bg-info-content"></div>
+                                                                <div className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-blue-50 text-blue-700 border border-blue-200 animate-pulse">
+                                                                    <div className="size-1.5 rounded-full bg-blue-700"></div>
                                                                     {t('sessions.ongoing')}
                                                                 </div>
                                                             ) : (
-                                                                <div className="badge badge-ghost badge-sm gap-1 py-3 px-4 opacity-50 border border-base-content/20">
-                                                                    <div className="size-1.5 rounded-full bg-base-content opacity-30"></div>
+                                                                <div className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-gray-50 text-gray-400 border border-gray-200 opacity-50">
+                                                                    <div className="size-1.5 rounded-full bg-gray-500 opacity-30"></div>
                                                                     {t('sessions.not_closed')}
                                                                 </div>
                                                             )}
                                                             
                                                             {user?.is_superuser && (
                                                                 <button 
-                                                                    className={`btn btn-circle btn-ghost btn-xs text-error hover:bg-error/10 ${disconnectingId === session.id ? 'loading' : ''}`}
+                                                                    className={`btn btn-circle btn-ghost btn-xs text-red-600 hover:bg-red-50 ${disconnectingId === session.id ? 'loading' : ''}`}
                                                                     title={t('sessions.force_logout')}
                                                                     onClick={() => handleForceLogout(session.id, session.username)}
                                                                     disabled={!!disconnectingId}
@@ -361,56 +361,56 @@ const UserSessions: React.FC = () => {
                             </tbody>
                         </table>
                     ) : (
-                        <table className="table table-zebra w-full">
+                        <table className="w-full text-sm border-separate border-spacing-0">
                             <thead>
-                                <tr className="bg-base-200/50">
-                                    <th className="text-xs uppercase font-bold text-base-content/50 py-4 px-6">{t('sessions.operator')}</th>
-                                    <th className="text-xs uppercase font-bold text-base-content/50 py-4 px-6 text-center">{t('sessions.recap.days_present')}</th>
-                                    <th className="text-xs uppercase font-bold text-base-content/50 py-4 px-6 text-right">{t('sessions.recap.total_hours')}</th>
-                                    <th className="text-xs uppercase font-bold text-base-content/50 py-4 px-6 text-right">{t('sessions.recap.avg_hours')}</th>
+                                <tr className="bg-gray-50/50">
+                                    <th className="text-xs uppercase font-bold text-gray-500 py-4 px-6">{t('sessions.operator')}</th>
+                                    <th className="text-xs uppercase font-bold text-gray-500 py-4 px-6 text-center">{t('sessions.recap.days_present')}</th>
+                                    <th className="text-xs uppercase font-bold text-gray-500 py-4 px-6 text-right">{t('sessions.recap.total_hours')}</th>
+                                    <th className="text-xs uppercase font-bold text-gray-500 py-4 px-6 text-right">{t('sessions.recap.avg_hours')}</th>
                                 </tr>
                             </thead>
-                            <tbody className="divide-y divide-base-200">
+                            <tbody className="divide-y divide-gray-100">
                                 {loading ? (
                                     <tr>
                                         <td colSpan={4} className="text-center py-20">
-                                            <span className="loading loading-spinner loading-lg text-primary"></span>
+                                            <span className="loading loading-spinner loading-lg text-indigo-600"></span>
                                         </td>
                                     </tr>
                                 ) : recapData.length === 0 ? (
                                     <tr>
-                                        <td colSpan={4} className="text-center py-20 text-base-content/40 italic">
+                                        <td colSpan={4} className="text-center py-20 text-gray-400 italic">
                                             {t('common:no_result')}
                                         </td>
                                     </tr>
                                 ) : (
                                     recapData.map(stat => (
-                                        <tr key={stat.user_id} className="hover:bg-base-200/50 transition-colors">
+                                        <tr key={stat.user_id} className="hover:bg-gray-50/50 transition-colors">
                                             <td className="py-5 px-6">
                                                 <div className="flex items-center gap-4">
-                                                    <div className="avatar placeholder">
-                                                        <div className="bg-secondary/10 text-secondary rounded-xl size-12 flex items-center justify-center font-bold border border-secondary/20">
+                                                    <div className="inline-flex items-center justify-center">
+                                                        <div className="bg-purple-50 text-purple-600 rounded-xl size-12 flex items-center justify-center font-bold border border-purple-200">
                                                             <span>{stat.username.charAt(0).toUpperCase()}</span>
                                                         </div>
                                                     </div>
                                                     <div>
-                                                        <div className="font-bold text-lg text-base-content">{stat.full_name}</div>
-                                                        <div className="text-sm text-base-content/40">@{stat.username}</div>
+                                                        <div className="font-bold text-lg text-gray-900">{stat.full_name}</div>
+                                                        <div className="text-sm text-gray-400">@{stat.username}</div>
                                                     </div>
                                                 </div>
                                             </td>
                                             <td className="py-5 px-6 text-center">
-                                                <div className="badge badge-lg bg-base-200 text-base-content font-bold border-none h-10 px-6">
+                                                <div className="badge badge-lg bg-gray-50 text-gray-900 font-bold border-none h-10 px-6">
                                                     {stat.days_count} {t('sessions.recap.days_present')}
                                                 </div>
                                             </td>
                                             <td className="py-5 px-6 text-right">
-                                                <div className="text-xl font-black text-primary tracking-tight">
+                                                <div className="text-xl font-black text-indigo-600 tracking-tight">
                                                     {stat.total_duration_display}
                                                 </div>
                                             </td>
                                             <td className="py-5 px-6 text-right">
-                                                <div className="text-sm font-medium text-base-content/60">
+                                                <div className="text-sm font-medium text-gray-500">
                                                     <span className="text-xs uppercase opacity-40 mr-1">{t('sessions.recap.avg')}</span> {stat.avg_duration_display}
                                                 </div>
                                             </td>

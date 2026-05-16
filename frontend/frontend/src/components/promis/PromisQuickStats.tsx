@@ -15,41 +15,41 @@ export const PromisQuickStats: React.FC<PromisQuickStatsProps> = ({ stats }) => 
             title: t('stock:promis.stats.all_title'),
             value: stats.total,
             icon: <PackageOpen className="size-5" />,
-            colorClass: "text-primary",
-            bgClass: "bg-primary/10",
+            colorClass: "text-indigo-600",
+            bgClass: "bg-indigo-50",
         },
         {
             title: t('stock:promis.stats.att_title'),
             value: stats.enAttente,
             icon: <Clock className="size-5" />,
-            colorClass: "text-warning",
-            bgClass: "bg-warning/10",
+            colorClass: "text-amber-600",
+            bgClass: "bg-amber-50",
         },
         {
             title: t('stock:promis.stats.del_title'),
             value: stats.delivres,
             icon: <CheckCircle2 className="size-5" />,
-            colorClass: "text-success",
-            bgClass: "bg-success/10",
+            colorClass: "text-emerald-600",
+            bgClass: "bg-emerald-50",
         },
         {
             title: t('stock:promis.stats.ann_title'),
             value: stats.annules,
             icon: <XCircle className="size-5" />,
-            colorClass: "text-error",
-            bgClass: "bg-error/10",
+            colorClass: "text-red-600",
+            bgClass: "bg-red-50",
         }
     ];
 
     return (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             {statItems.map((item, index) => (
-                <div key={index} className="bg-base-100 rounded-2xl shadow-sm border border-base-300 p-5 flex items-center gap-4 transition-all hover:shadow-md hover:border-base-content/20">
+                <div key={index} className="bg-white rounded-2xl shadow-sm border border-gray-200 p-5 flex items-center gap-4 transition-all hover:shadow-md hover:border-gray-400">
                     <div className={`size-12 rounded-xl flex items-center justify-center ${item.bgClass} ${item.colorClass}`}>
                         {item.icon}
                     </div>
                     <div>
-                        <p className="text-sm font-medium text-base-content/60">{item.title}</p>
+                        <p className="text-sm font-medium text-gray-500">{item.title}</p>
                         <p className={`text-2xl font-bold ${item.colorClass}`}>{item.value}</p>
                     </div>
                 </div>

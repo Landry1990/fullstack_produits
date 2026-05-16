@@ -31,12 +31,12 @@ export const AvoirsLotModal: React.FC<LotModalProps> = ({
             <div className="space-y-4">
                 {loadingLots ? (
                     <div className="flex justify-center p-8">
-                        <span className="loading loading-spinner loading-md text-primary" />
+                        <span className="inline-block size-4 border-2 border-gray-200 border-t-indigo-600 rounded-full animate-spin loading-md text-indigo-600" />
                     </div>
                 ) : availableLots.length > 0 ? (
-                    <div className="overflow-x-auto border border-base-200 rounded-xl">
-                        <table className="table table-zebra table-sm">
-                            <thead className="bg-base-200">
+                    <div className="overflow-x-auto border border-gray-100 rounded-xl">
+                        <table className="w-full text-sm border-separate border-spacing-0">
+                            <thead className="bg-gray-100">
                                 <tr>
                                     <th>{t('avoirs.form.table_lot')}</th>
                                     <th>{t('avoirs.table.date')}</th>
@@ -53,13 +53,13 @@ export const AvoirsLotModal: React.FC<LotModalProps> = ({
                                             {lot.date_expiration ? format(new Date(lot.date_expiration), 'dd/MM/yyyy', { locale: i18n.language === 'fr' ? fr : enUS }) : '-'}
                                         </td>
                                         <td>
-                                            <span className="badge badge-sm badge-ghost">{lot.quantity_remaining}</span>
+                                            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold bg-gray-100 text-gray-700 border border-gray-200">{lot.quantity_remaining}</span>
                                         </td>
                                         <td className="font-mono text-xs">{formatCurrency(lot.price_cost || 0)}</td>
                                         <td className="text-right">
                                             <button 
                                                 type="button"
-                                                className="btn btn-primary btn-sm"
+                                                className="inline-flex items-center justify-center h-8 px-3 bg-indigo-600 text-white rounded-lg text-xs font-bold hover:bg-indigo-700 transition-colors shadow-sm"
                                                 onClick={() => onSelectLot(lot)}
                                             >
                                                 {t('common:select', 'Sélectionner')}
@@ -71,7 +71,7 @@ export const AvoirsLotModal: React.FC<LotModalProps> = ({
                         </table>
                     </div>
                 ) : (
-                    <div className="text-center p-8 bg-base-200/50 rounded-xl text-base-content/60">
+                    <div className="text-center p-8 bg-gray-50 rounded-xl text-gray-500">
                         {t('avoirs.modals.no_lots', 'Aucun lot disponible en stock pour ce produit.')}
                     </div>
                 )}

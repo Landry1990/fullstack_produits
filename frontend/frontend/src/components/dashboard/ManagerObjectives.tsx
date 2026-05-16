@@ -18,16 +18,16 @@ export const ManagerObjectives: React.FC<ManagerObjectivesProps> = ({ currentObj
     const formatCurrencyLocal = (amount: number) => formatCurrency(amount, getLocale(), currencySymbol);
 
     const objectiveTypes = [
-        { label: t('manager_dashboard.periods.daily', 'Journalier'), code: 'JOUR', color: 'text-primary' },
-        { label: t('manager_dashboard.periods.weekly', 'Hebdomadaire'), code: 'SEMAINE', color: 'text-secondary' },
-        { label: t('manager_dashboard.periods.monthly', 'Mensuel'), code: 'MOIS', color: 'text-accent' }
+        { label: t('manager_dashboard.periods.daily', 'Journalier'), code: 'JOUR', color: 'text-indigo-600' },
+        { label: t('manager_dashboard.periods.weekly', 'Hebdomadaire'), code: 'SEMAINE', color: 'text-purple-600' },
+        { label: t('manager_dashboard.periods.monthly', 'Mensuel'), code: 'MOIS', color: 'text-amber-600' }
     ];
 
     return (
-        <div className="bg-base-100 rounded-2xl shadow-sm border border-base-300 overflow-hidden flex flex-col">
-            <div className="p-6 border-b border-base-200 flex justify-between items-center">
-                <h3 className="text-lg font-bold text-base-content flex items-center gap-2">
-                    <Target className="size-5 text-primary" /> 
+        <div className="bg-base-100 rounded-xl shadow-sm border border-gray-200 overflow-hidden flex flex-col">
+            <div className="p-6 border-b border-gray-100 flex justify-between items-center">
+                <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
+                    <Target className="size-5 text-indigo-600" /> 
                     {t('manager_dashboard.active_objectives', 'Objectifs Actifs')}
                 </h3>
                 <button 
@@ -43,14 +43,14 @@ export const ManagerObjectives: React.FC<ManagerObjectivesProps> = ({ currentObj
                 {objectiveTypes.map(p => {
                     const obj = currentObj ? (currentObj as any)[p.code.toLowerCase()] : null;
                     return (
-                        <div key={p.code} className="flex items-center justify-between p-4 rounded-xl border border-base-200 hover:bg-base-200/50 transition-all group">
+                        <div key={p.code} className="flex items-center justify-between p-4 rounded-xl border border-gray-100 hover:bg-gray-50 transition-all group">
                             <div>
                                 <span className={`text-[10px] font-bold uppercase tracking-widest ${p.color}`}>{p.label}</span>
-                                <div className="font-black text-base-content text-lg">
+                                <div className="font-black text-gray-900 text-lg">
                                     {obj ? formatCurrencyLocal(Number(obj.ca_objectif)) : t('manager_dashboard.not_defined', 'Non défini')}
                                 </div>
                                 {obj && obj.date_debut && (
-                                    <div className="text-[10px] text-base-content/40 font-bold uppercase mt-0.5">
+                                    <div className="text-[10px] text-gray-400 font-bold uppercase mt-0.5">
                                         {t('manager_dashboard.since_date', { 
                                             date: formatDate(obj.date_debut) 
                                         })}

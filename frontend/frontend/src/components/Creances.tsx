@@ -35,23 +35,23 @@ export default function Creances() {
     }, [data.selectedIds, data.creances]);
 
     return (
-        <div className="min-h-screen bg-base-200 p-6 space-y-6 font-sans overflow-auto">
+        <div className="min-h-screen bg-gray-50 p-6 space-y-6 font-sans overflow-auto">
             <Toaster position="top-center" />
 
             {/* Header Area */}
             <div className="flex flex-col gap-6">
-                <div className="bg-base-100 rounded-2xl shadow-sm border border-base-300 flex flex-col">
-                    <div className="p-6 border-b border-base-200 flex justify-between items-center bg-base-100/50">
+                <div className="bg-white rounded-xl shadow-sm border border-gray-200 flex flex-col">
+                    <div className="p-6 border-b border-gray-100 flex justify-between items-center bg-white/50">
                         <div>
                             <div className="flex items-center gap-3">
-                                <div className="p-2 bg-primary/10 text-primary rounded-xl">
+                                <div className="p-2 bg-indigo-50 text-indigo-600 rounded-xl">
                                     <Wallet className="size-6" />
                                 </div>
                                 <div>
-                                    <h1 className="text-2xl font-black text-base-content tracking-tight">
+                                    <h1 className="text-2xl font-black text-gray-900 tracking-tight">
                                         {t('creances:title')}
                                     </h1>
-                                    <p className="text-xs font-bold text-base-content/40 uppercase tracking-widest mt-0.5">
+                                    <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mt-0.5">
                                         {t('creances:subtitle')}
                                     </p>
                                 </div>
@@ -62,17 +62,17 @@ export default function Creances() {
                         {data.filters.selectedClient && data.selectedIds.length > 0 && !data.filters.showHistory && (
                             <div className="flex items-center gap-4 animate-in fade-in zoom-in duration-300">
                                 <div className="flex flex-col items-end">
-                                    <span className="text-[10px] font-black uppercase tracking-widest text-base-content/40">{t('creances:selection')}</span>
-                                    <span className="text-sm font-black text-primary">{t('creances:invoices_count', { count: data.selectedIds.length })}</span>
+                                    <span className="text-[10px] font-black uppercase tracking-widest text-gray-400">{t('creances:selection')}</span>
+                                    <span className="text-sm font-black text-indigo-600">{t('creances:invoices_count', { count: data.selectedIds.length })}</span>
                                 </div>
-                                <div className="h-8 w-px bg-base-200"></div>
+                                <div className="h-8 w-px bg-gray-50"></div>
                                 <div className="flex flex-col items-end mr-2">
-                                    <span className="text-[10px] font-black uppercase tracking-widest text-base-content/40">{t('creances:total_due')}</span>
-                                    <span className="text-sm font-black text-base-content">{formatCurrency(Math.round(bulkTotalAmount))}</span>
+                                    <span className="text-[10px] font-black uppercase tracking-widest text-gray-400">{t('creances:total_due')}</span>
+                                    <span className="text-sm font-black text-gray-900">{formatCurrency(Math.round(bulkTotalAmount))}</span>
                                 </div>
                                 <button 
                                     onClick={actions.actions.handleBulkPayment} 
-                                    className="btn btn-primary btn-sm px-6 font-black uppercase tracking-widest text-[10px] shadow-lg shadow-primary/20"
+                                    className="btn btn-primary btn-sm px-6 font-black uppercase tracking-widest text-[10px] shadow-lg shadow-indigo-200"
                                 >
                                     <DollarSign className="size-4 mr-2" />
                                     {t('creances:pay_selection')}
@@ -111,7 +111,7 @@ export default function Creances() {
             />
 
             {/* Main Content Table Card */}
-            <div className="bg-base-100 rounded-2xl shadow-sm border border-base-300 overflow-hidden flex-1 relative min-h-[500px]">
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden flex-1 relative min-h-[500px]">
                 <CreancesTable 
                     mode={data.filters.selectedClient ? 'invoices' : 'clients'}
                     groupedClients={data.groupedClients}
@@ -144,8 +144,8 @@ export default function Creances() {
             </div>
             {/* Error handling */}
             {data.error && (
-                <div className="toast toast-bottom toast-center">
-                    <div className="alert alert-error shadow-lg">
+                <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50">
+                    <div className="px-4 py-3 rounded-xl bg-red-50 border border-red-200 text-red-800 text-sm font-medium shadow-sm">
                         <span>{data.error}</span>
                     </div>
                 </div>
