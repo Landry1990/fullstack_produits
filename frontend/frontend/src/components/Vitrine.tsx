@@ -342,7 +342,7 @@ function SimulateurClient() {
                         <div className="space-y-4 overflow-y-auto max-h-[300px] lg:max-h-[500px]">
                             {cart.length === 0 ? (
                                 <div className="text-center text-base-content/40 py-10">
-                                    <ShoppingCart className="size-16 mx-auto mb-2 opacity-20" />
+                                    <ShoppingCart className="size-16 mx-auto mb-2 text-base-content/20" />
                                     {t('simulateur.empty_list')}
                                 </div>
                             ) : (
@@ -362,7 +362,7 @@ function SimulateurClient() {
                                                     </span>
                                                 )}
                                                 
-                                                <span className="font-mono text-sm opacity-70">
+                                                <span className="font-mono text-sm text-base-content/70">
                                                     {formatCurrency(normalizeNumberInput(item.public_price || item.selling_price))}
                                                 </span>
                                             </div>

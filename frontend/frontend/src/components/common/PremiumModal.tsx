@@ -101,11 +101,11 @@ const PremiumModal: React.FC<PremiumModalProps> = ({
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className={`bg-gradient-to-r from-${gradientFrom} via-${gradientVia} to-${gradientTo} px-6 py-5 border-b border-gray-100 shrink-0`}>
+        <div className={`bg-gradient-to-r from-${gradientFrom} via-${gradientVia} to-${gradientTo} px-6 py-5 border-b border-base-200 shrink-0`}>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3 min-w-0">
               {icon && (
-                <div className="size-10 rounded-xl bg-white/50 flex items-center justify-center shrink-0">
+                <div className="size-10 rounded-xl bg-base-100/50 flex items-center justify-center shrink-0">
                   {icon}
                 </div>
               )}
@@ -135,7 +135,7 @@ const PremiumModal: React.FC<PremiumModalProps> = ({
 
         {/* Footer (optional) */}
         {footer && (
-          <div className="px-6 py-4 border-t border-gray-100 bg-gray-50/50 shrink-0">
+          <div className="px-6 py-4 border-t border-base-200 bg-base-200/50 shrink-0">
             {footer}
           </div>
         )}

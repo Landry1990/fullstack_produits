@@ -88,7 +88,7 @@ export function useCommandeActions({
                     quantity: parseInt(String(p.quantity || 0)) || 0,
                     unites_gratuites: parseInt(String(p.unites_gratuites || 0)) || 0,
                     price: parseAndFormat(p.price),
-                    price_cost: parseAndFormat(p.price),
+                    price_cost: parseAndFormat(p.price_cost || p.price),
                     selling_price: parseAndFormat(p.selling_price),
                     prix_euro: parseEuro(p.prix_euro),
                     tva: p.tva !== undefined && p.tva !== null ? String(p.tva) : undefined,

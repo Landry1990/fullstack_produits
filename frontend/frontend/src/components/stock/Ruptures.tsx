@@ -288,7 +288,7 @@ export default function Ruptures() {
                  <Filter className="size-6" />
               </div>
               <div className="flex-1">
-                <p className="text-xs font-bold uppercase opacity-50 mb-1">{t('ruptures.pharmacie.filters.rayon', 'Filtrer par Rayon')}</p>
+                <p className="text-xs font-bold uppercase text-base-content/50 mb-1">{t('ruptures.pharmacie.filters.rayon', 'Filtrer par Rayon')}</p>
                 <select 
                   className="select select-ghost select-xs w-full font-bold focus:outline-none p-0 h-auto"
                   value={selectedRayon}
@@ -305,7 +305,7 @@ export default function Ruptures() {
                  <ShoppingBag className="size-6" />
               </div>
               <div className="flex-1">
-                <p className="text-xs font-bold uppercase opacity-50 mb-1">{t('ruptures.pharmacie.filters.fournisseur', 'Filtrer par Fournisseur')}</p>
+                <p className="text-xs font-bold uppercase text-base-content/50 mb-1">{t('ruptures.pharmacie.filters.fournisseur', 'Filtrer par Fournisseur')}</p>
                 <select 
                   className="select select-ghost select-xs w-full font-bold focus:outline-none p-0 h-auto"
                   value={selectedFournisseur}
@@ -320,7 +320,7 @@ export default function Ruptures() {
 
           <div className="card bg-base-100 shadow-sm border border-base-200 overflow-hidden">
             <div className="card-body p-0">
-              <div className="flex items-center gap-2 p-4 text-emerald-700 bg-emerald-50 border-b border-emerald-100">
+              <div className="flex items-center gap-2 p-4 text-success bg-success/10 border-b border-emerald-100">
                 <BadgeInfo className="size-5 shrink-0" />
                 <p className="text-xs font-semibold">{t('ruptures.pharmacie.info', 'Affichage des produits à forte rotation (en rupture de stock)')}</p>
               </div>
@@ -357,7 +357,7 @@ export default function Ruptures() {
                         pharmacieData.map((p) => {
                           const isHighRotation = Number(p.rotation_moyenne) > 5;
                           return (
-                            <tr key={p.id} className={`hover:bg-base-50 transition-colors border-b border-base-200/50 ${isHighRotation ? 'bg-red-50/40' : ''}`}>
+                            <tr key={p.id} className={`hover:bg-base-50 transition-colors border-b border-base-200/50 ${isHighRotation ? 'bg-error/10/40' : ''}`}>
                               <td>
                                 <input 
                                   type="checkbox" 
@@ -366,7 +366,7 @@ export default function Ruptures() {
                                   onChange={() => toggleSelection(p.id, 'pharmacie')}
                                 />
                               </td>
-                              <td className="font-mono text-xs whitespace-nowrap opacity-70">{p.cip1 || '-'}</td>
+                              <td className="font-mono text-xs whitespace-nowrap text-base-content/70">{p.cip1 || '-'}</td>
                               <td className="font-black whitespace-nowrap">
                                 {p.name}
                                 {isHighRotation && <span className="ml-2 badge badge-error badge-xs font-bold pulse text-xs">URGENT</span>}
@@ -441,7 +441,7 @@ export default function Ruptures() {
                     </div>
                     <div className="flex gap-2">
                         <button 
-                            className="btn btn-sm btn-ghost hover:bg-white/10 font-bold"
+                            className="btn btn-sm btn-ghost hover:bg-base-100/10 font-bold"
                             onClick={() => setSelectedPharmacyIds(new Set())}
                         >
                             {t('common:cancel', 'Annuler')}
@@ -483,14 +483,14 @@ export default function Ruptures() {
                                     {isSearching ? (
                                         <li className="p-4 text-center disabled"><span className="loading loading-spinner mx-auto text-primary"></span></li>
                                     ) : searchResults.length === 0 ? (
-                                        <li className="p-4 text-center text-sm disabled font-medium opacity-50">{t('ruptures.fournisseur.no_results', 'Aucun produit trouvé')}</li>
+                                        <li className="p-4 text-center text-sm disabled font-medium text-base-content/50">{t('ruptures.fournisseur.no_results', 'Aucun produit trouvé')}</li>
                                     ) : (
                                         searchResults.map(p => (
                                             <li key={p.id} className="border-b border-base-100 last:border-b-0">
                                                 <a onClick={() => declarerRuptureFournisseur(p.id)} className="flex items-center justify-between py-4 px-4 hover:bg-base-200">
                                                     <div className="flex flex-col">
                                                         <span className="font-black text-sm">{p.name}</span>
-                                                        <span className="text-xs font-bold opacity-50 uppercase tracking-widest">{t('ruptures.fournisseur.stock', 'Stock')}: {p.stock} | {p.fournisseur_name || 'N/A'}</span>
+                                                        <span className="text-xs font-bold text-base-content/50 uppercase tracking-widest">{t('ruptures.fournisseur.stock', 'Stock')}: {p.stock} | {p.fournisseur_name || 'N/A'}</span>
                                                     </div>
                                                     <Plus className="size-5 text-primary" />
                                                 </a>
@@ -537,12 +537,12 @@ export default function Ruptures() {
                                 <tr>
                                     <td colSpan={5} className="text-center py-20 text-base-content/30 italic">
                                         <ShieldAlert className="size-16 mx-auto mb-4 opacity-10" />
-                                        <p className="text-lg font-black uppercase tracking-tighter opacity-20">{t('ruptures.fournisseur.empty', 'Aucune rupture fournisseur active')}</p>
+                                        <p className="text-lg font-black uppercase tracking-tighter text-base-content/20">{t('ruptures.fournisseur.empty', 'Aucune rupture fournisseur active')}</p>
                                     </td>
                                 </tr>
                             ) : (
                                 fournisseurData.map((r) => (
-                                <tr key={r.id} className="hover:bg-red-50/20 transition-colors border-b border-base-200/50">
+                                <tr key={r.id} className="hover:bg-error/10/20 transition-colors border-b border-base-200/50">
                                     <td>
                                         <input 
                                             type="checkbox" 
@@ -551,18 +551,18 @@ export default function Ruptures() {
                                             onChange={() => toggleSelection(r.produit, 'fournisseur')}
                                         />
                                     </td>
-                                    <td className="font-black text-red-600">
+                                    <td className="font-black text-error">
                                         {r.produit_nom}
                                         {r.remarques && <p className="text-xs font-bold text-base-content/40 mt-1 uppercase tracking-wider">{r.remarques}</p>}
                                     </td>
-                                    <td className="text-sm font-bold opacity-70">{r.fournisseur_nom || '-'}</td>
-                                    <td className="text-sm font-mono opacity-50">
+                                    <td className="text-sm font-bold text-base-content/70">{r.fournisseur_nom || '-'}</td>
+                                    <td className="text-sm font-mono text-base-content/50">
                                         {formatDate(r.date_debut)}
                                     </td>
                                     <td className="text-right">
                                         <div className="flex gap-2 justify-end items-center">
                                             <button 
-                                                className="btn btn-sm btn-ghost hover:bg-emerald-100 hover:text-emerald-700 text-base-content/40 hover:opacity-100 transition-all gap-2"
+                                                className="btn btn-sm btn-ghost hover:bg-success/20 hover:text-success text-base-content/40 hover:opacity-100 transition-all gap-2"
                                                 onClick={() => marquerResolu(r.id)}
                                                 title={t('ruptures.fournisseur.mark_resolved', 'Marquer comme résolu')}
                                             >
@@ -593,7 +593,7 @@ export default function Ruptures() {
                             </div>
                             <div className="flex gap-2">
                                 <button 
-                                    className="btn btn-sm btn-ghost hover:bg-white/10 font-bold"
+                                    className="btn btn-sm btn-ghost hover:bg-base-100/10 font-bold"
                                     onClick={() => setSelectedProviderIds(new Set())}
                                 >
                                     {t('common:cancel', 'Annuler')}
@@ -626,7 +626,7 @@ export default function Ruptures() {
                       <AlertTriangle className="size-6 text-amber-400" />
                       {t('ruptures.stats.title', 'Analyses de Fréquence')}
                   </h2>
-                  <p className="opacity-70 text-sm font-medium mt-1">{t('ruptures.stats.subtitle', 'Top des produits les plus souvent absents')}</p>
+                  <p className="text-base-content/70 text-sm font-medium mt-1">{t('ruptures.stats.subtitle', 'Top des produits les plus souvent absents')}</p>
                 </div>
                 
                 <div className="flex flex-wrap items-center gap-3">
@@ -644,7 +644,7 @@ export default function Ruptures() {
                         </select>
                         <button 
                           onClick={exportStats}
-                          className="btn btn-sm join-item bg-neutral-content text-neutral border-none hover:bg-white gap-2"
+                          className="btn btn-sm join-item bg-neutral-content text-neutral border-none hover:bg-base-100 gap-2"
                         >
                           <Download className="size-4" />
                           <span className="font-black italic text-xs">EXPORTER CSV</span>
@@ -675,7 +675,7 @@ export default function Ruptures() {
                         statsData.map((stat, index) => (
                           <tr key={stat.produit_id} className="hover:bg-base-50 transition-colors border-b border-base-100 last:border-b-0 group">
                             <td className="text-center">
-                               <div className={`size-8 rounded-lg flex items-center justify-center mx-auto text-sm font-black ${index < 3 ? 'bg-amber-400 text-amber-900 shadow-md' : 'bg-base-200 opacity-50'}`}>
+                               <div className={`size-8 rounded-lg flex items-center justify-center mx-auto text-sm font-black ${index < 3 ? 'bg-amber-400 text-amber-900 shadow-md' : 'bg-base-200 text-base-content/50'}`}>
                                   {index + 1}
                                </div>
                             </td>

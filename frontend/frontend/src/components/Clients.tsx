@@ -348,10 +348,10 @@ export default function Clients() {
   };
 
   return (
-    <div className="flex flex-col lg:flex-row h-full lg:h-[calc(100vh-64px)] bg-gray-50">
+    <div className="flex flex-col lg:flex-row h-full lg:h-[calc(100vh-64px)] bg-base-200">
       {/* LEFT PANEL */}
-      <div className={`w-full lg:w-1/3 border-b lg:border-b-0 lg:border-r border-gray-100 flex flex-col bg-white ${selectedClient ? 'hidden lg:flex' : 'flex'} h-[calc(100vh-140px)] lg:h-full`}>
-        <div className="p-4 border-b border-gray-100 space-y-4">
+      <div className={`w-full lg:w-1/3 border-b lg:border-b-0 lg:border-r border-base-200 flex flex-col bg-base-100 ${selectedClient ? 'hidden lg:flex' : 'flex'} h-[calc(100vh-140px)] lg:h-full`}>
+        <div className="p-4 border-b border-base-200 space-y-4">
            {selectedIds.length > 0 ? (
              <SelectionHeader
                 selectedCount={selectedIds.length}
@@ -359,7 +359,7 @@ export default function Clients() {
                 colSpan={1}
                 actions={
                   <li>
-                    <a onClick={handleBulkDelete} className="text-red-600 hover:bg-red-50 font-medium">
+                    <a onClick={handleBulkDelete} className="text-error hover:bg-error/10 font-medium">
                       <Trash2 className="size-4" />
                       {t('clients:actions.bulk_delete', { count: selectedIds.length })}
                     </a>
@@ -371,26 +371,26 @@ export default function Clients() {
            ) : (
              <div className="flex justify-between items-center h-10">
                <div className="flex items-center gap-2">
-                 <div className="p-2 bg-indigo-50 text-indigo-600 rounded-lg">
+                 <div className="p-2 bg-primary/10 text-primary rounded-lg">
                     <Users className="size-5" />
                  </div>
-                 <h2 className="font-bold text-lg text-gray-900">{t('clients:title')}</h2>
+                 <h2 className="font-bold text-lg text-base-content">{t('clients:title')}</h2>
                </div>
                <div className="flex gap-1 items-center">
                  <button
                     onClick={() => setShowInactive(!showInactive)}
-                    className={`p-2 rounded-lg transition-colors ${showInactive ? 'bg-indigo-50 text-indigo-600' : 'text-gray-400 hover:bg-gray-100'}`}
+                    className={`p-2 rounded-lg transition-colors ${showInactive ? 'bg-primary/10 text-primary' : 'text-base-content/50 hover:bg-base-200'}`}
                     title={showInactive ? t('clients:filters.hide_inactive') : t('clients:filters.show_inactive')}
                  >
                     {showInactive ? <Eye className="size-4" /> : <EyeOff className="size-4" />}
                  </button>
                  <button
                     onClick={() => setIsLoyaltyConfigOpen(true)}
-                    className="p-2 text-gray-400 hover:bg-gray-100 rounded-lg transition-colors"
+                    className="p-2 text-base-content/50 hover:bg-base-200 rounded-lg transition-colors"
                  >
                     <Settings className="size-4" />
                  </button>
-                 <button className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg text-white bg-indigo-600 hover:bg-indigo-700 transition-colors shadow-sm" onClick={handleOpenCreate}>
+                 <button className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg text-white bg-primary hover:bg-primary-focus transition-colors shadow-sm" onClick={handleOpenCreate}>
                    <UserPlus className="size-4" />
                    {t('clients:actions.create')}
                  </button>
@@ -399,9 +399,9 @@ export default function Clients() {
            )}
 
            <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-gray-400" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-base-content/50" />
               <input
-                className="input input-sm input-bordered w-full pl-10 h-10 rounded-lg bg-gray-50 border-gray-200 focus:bg-white focus:border-indigo-500 transition-all text-sm"
+                className="w-full pl-10 h-10 rounded-lg bg-base-200 border border-base-300 text-sm text-base-content focus:outline-none focus:bg-base-100 focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
                 placeholder={t('clients:filters.search_placeholder')}
                 value={searchTerm}
                 onChange={e => setSearchTerm(e.target.value)}
@@ -418,25 +418,25 @@ export default function Clients() {
             <ul className="p-2 space-y-0.5">
                {clients.map(client => (
                  <li key={client.id}>
-                    <div className={`flex items-center gap-2 p-2 rounded-lg transition-all cursor-pointer ${selectedClient?.id === client.id ? 'bg-indigo-50' : 'hover:bg-gray-50'}`} onClick={() => handleSelectClient(client)}>
+                    <div className={`flex items-center gap-2 p-2 rounded-lg transition-all cursor-pointer ${selectedClient?.id === client.id ? 'bg-primary/10' : 'hover:bg-base-200'}`} onClick={() => handleSelectClient(client)}>
                        <input
                          type="checkbox"
-                         className="checkbox checkbox-xs rounded border-gray-300"
+                         className="size-4 rounded border-base-300 text-primary focus:ring-primary cursor-pointer"
                          checked={selectedIds.includes(client.id)}
                          onChange={() => setSelectedIds(prev => prev.includes(client.id) ? prev.filter(id => id !== client.id) : [...prev, client.id])}
                          onClick={(e) => e.stopPropagation()}
                        />
                        <div className="flex-1 min-w-0">
                           <div className="flex justify-between items-center">
-                             <p className={`text-sm font-semibold truncate ${selectedClient?.id === client.id ? 'text-indigo-700' : 'text-gray-900'}`}>{client.name}</p>
-                             <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-md uppercase tracking-wide ${client.client_type === 'PROFESSIONNEL' ? 'bg-amber-50 text-amber-700 border border-amber-100' : 'bg-gray-100 text-gray-500'}`}>
+                             <p className={`text-sm font-semibold truncate ${selectedClient?.id === client.id ? 'text-primary' : 'text-base-content'}`}>{client.name}</p>
+                             <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-md uppercase tracking-wide ${client.client_type === 'PROFESSIONNEL' ? 'bg-warning/10 text-warning border border-amber-100' : 'bg-base-200 text-base-content/60'}`}>
                                 {client.client_type === 'PROFESSIONNEL' ? t('clients:types.pro_short') : t('clients:types.part_short')}
                              </span>
                           </div>
-                          <div className="flex items-center justify-between gap-1.5 text-xs text-gray-400">
+                          <div className="flex items-center justify-between gap-1.5 text-xs text-base-content/50">
                              <span className="flex items-center gap-1"><Phone className="size-3" /> {client.phone || '—'}</span>
                              {client.client_type === 'PROFESSIONNEL' && (client as any).ayants_droit_count > 0 && (
-                               <span className="flex items-center gap-0.5 text-indigo-600 bg-indigo-50 px-1.5 py-0.5 rounded text-[10px] font-medium">
+                               <span className="flex items-center gap-0.5 text-primary bg-primary/10 px-1.5 py-0.5 rounded text-[10px] font-medium">
                                  <Users className="size-3" />
                                  {(client as any).ayants_droit_count}
                                </span>
@@ -461,41 +461,41 @@ export default function Clients() {
       </div>
 
       {/* RIGHT PANEL */}
-      <div className={`flex-1 bg-gray-50 flex flex-col overflow-hidden max-w-full ${!selectedClient ? 'hidden lg:flex' : 'flex'} h-[calc(100vh-80px)] lg:h-full`}>
+      <div className={`flex-1 bg-base-200 flex flex-col overflow-hidden max-w-full ${!selectedClient ? 'hidden lg:flex' : 'flex'} h-[calc(100vh-80px)] lg:h-full`}>
         {selectedClient ? (
           <>
-            <div className="p-4 lg:p-6 border-b border-gray-100 bg-white flex flex-col sm:flex-row justify-between items-start sm:items-center shrink-0 gap-4">
+            <div className="p-4 lg:p-6 border-b border-base-200 bg-base-100 flex flex-col sm:flex-row justify-between items-start sm:items-center shrink-0 gap-4">
                <div className="flex items-center gap-4 w-full">
                   <button
-                    className="lg:hidden p-2 hover:bg-gray-100 rounded-lg transition-colors mr-1"
+                    className="lg:hidden p-2 hover:bg-base-200 rounded-lg transition-colors mr-1"
                     onClick={() => setSelectedClient(null)}
                   >
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7" /></svg>
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-base-content/70" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7" /></svg>
                   </button>
-                  <div className="size-12 lg:w-14 lg:h-14 bg-indigo-50 text-indigo-600 rounded-xl flex items-center justify-center text-xl lg:text-2xl font-bold shrink-0">
+                  <div className="size-12 lg:w-14 lg:h-14 bg-primary/10 text-primary rounded-xl flex items-center justify-center text-xl lg:text-2xl font-bold shrink-0">
                     {selectedClient.name.charAt(0)}
                   </div>
                   <div>
-                     <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
+                     <h2 className="text-xl font-bold text-base-content flex items-center gap-2">
                        {selectedClient.name}
-                       {selectedClient.is_active === false && <span className="px-2 py-0.5 bg-amber-100 text-amber-700 rounded-md text-[10px] font-semibold">{t('clients:status.inactive')}</span>}
+                       {selectedClient.is_active === false && <span className="px-2 py-0.5 bg-warning/20 text-warning rounded-md text-[10px] font-semibold">{t('clients:status.inactive')}</span>}
                      </h2>
-                     <p className="flex items-center gap-3 text-xs text-gray-500 mt-0.5">
+                     <p className="flex items-center gap-3 text-xs text-base-content/60 mt-0.5">
                         <span className="flex items-center gap-1"><Phone className="size-3" /> {selectedClient.phone || '—'}</span>
                         <span className="flex items-center gap-1"><Mail className="size-3" /> {selectedClient.email || '—'}</span>
                      </p>
                   </div>
                </div>
                <div className="flex items-center gap-2">
-                  <button className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg border border-gray-200 text-gray-700 hover:bg-gray-50 transition-colors" onClick={() => handleOpenEdit(selectedClient)}>
+                  <button className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg border border-base-300 text-base-content hover:bg-base-200 transition-colors" onClick={() => handleOpenEdit(selectedClient)}>
                     <Edit className="size-4" /> {t('common:edit')}
                   </button>
-                  <button className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg border border-red-200 text-red-600 hover:bg-red-50 transition-colors" onClick={handleDelete}>
+                  <button className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg border border-red-200 text-error hover:bg-error/10 transition-colors" onClick={handleDelete}>
                     <Trash2 className="size-4" /> {t('common:delete')}
                   </button>
                   <button
                     onClick={() => setIsHistoryOpen(true)}
-                    className="p-2 text-indigo-600 bg-indigo-50 hover:bg-indigo-100 rounded-lg transition-colors"
+                    className="p-2 text-primary bg-primary/10 hover:bg-primary/20 rounded-lg transition-colors"
                     title={t('clients:sections.purchase_history')}
                   >
                     <ShoppingBag className="size-4" />
@@ -503,7 +503,7 @@ export default function Clients() {
                   {selectedClient.client_type === 'PARTICULIER' && selectedClient.is_deposit_enabled && (
                     <button
                       onClick={() => setIsDepositModalOpen(true)}
-                      className="p-2 text-gray-400 hover:bg-gray-100 rounded-lg transition-colors"
+                      className="p-2 text-base-content/50 hover:bg-base-200 rounded-lg transition-colors"
                       title={t('clients:finance.manage_deposit')}
                     >
                       <CreditCard className="size-4" />
@@ -511,7 +511,7 @@ export default function Clients() {
                   )}
                   <button
                     onClick={handleToggleActive}
-                    className="p-2 text-gray-400 hover:bg-gray-100 rounded-lg transition-colors"
+                    className="p-2 text-base-content/50 hover:bg-base-200 rounded-lg transition-colors"
                   >
                     {selectedClient.is_active ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
                   </button>
@@ -521,23 +521,23 @@ export default function Clients() {
             <div className="flex-1 overflow-y-auto p-6">
                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 max-w-5xl">
                   {/* Info Card */}
-                  <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
-                     <div className="px-5 py-3 border-b border-gray-100 bg-gray-50/50 flex items-center gap-2">
-                        <div className="p-1.5 bg-indigo-50 text-indigo-600 rounded-md"><User className="size-4" /></div>
-                        <h3 className="text-xs font-semibold uppercase tracking-wider text-gray-400">{t('clients:sections.contact')}</h3>
+                  <div className="bg-base-100 rounded-xl border border-base-200 shadow-sm overflow-hidden">
+                     <div className="px-5 py-3 border-b border-base-200 bg-base-200/50 flex items-center gap-2">
+                        <div className="p-1.5 bg-primary/10 text-primary rounded-md"><User className="size-4" /></div>
+                        <h3 className="text-xs font-semibold uppercase tracking-wider text-base-content/50">{t('clients:sections.contact')}</h3>
                      </div>
                      <div className="p-5 space-y-4">
                         <div className="space-y-1">
-                           <span className="text-[10px] font-semibold uppercase tracking-wider text-gray-400">{t('clients:fields.address')}</span>
-                           <div className="flex items-start gap-2 text-sm text-gray-700">
+                           <span className="text-[10px] font-semibold uppercase tracking-wider text-base-content/50">{t('clients:fields.address')}</span>
+                           <div className="flex items-start gap-2 text-sm text-base-content">
                               <MapPin className="size-4 text-indigo-500 mt-0.5 shrink-0" />
                               <span>{selectedClient.address || t('common:no_address')}</span>
                            </div>
                         </div>
                         <div className="space-y-1">
-                           <span className="text-[10px] font-semibold uppercase tracking-wider text-gray-400">{t('clients:fields.type')}</span>
-                           <div className="text-sm font-medium text-gray-700 flex items-center gap-2">
-                              <Activity className="size-4 text-gray-500" />
+                           <span className="text-[10px] font-semibold uppercase tracking-wider text-base-content/50">{t('clients:fields.type')}</span>
+                           <div className="text-sm font-medium text-base-content flex items-center gap-2">
+                              <Activity className="size-4 text-base-content/60" />
                               {selectedClient.client_type === 'PROFESSIONNEL' ? t('clients:types.professional') : t('clients:types.individual')}
                            </div>
                         </div>
@@ -545,22 +545,22 @@ export default function Clients() {
                   </div>
 
                   {/* Finance/Loyalty Card */}
-                  <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
-                     <div className="px-5 py-3 border-b border-gray-100 bg-gray-50/50 flex items-center gap-2">
-                        <div className="p-1.5 bg-amber-50 text-amber-600 rounded-md"><ShieldCheck className="size-4" /></div>
-                        <h3 className="text-xs font-semibold uppercase tracking-wider text-gray-400">{t('clients:sections.programs')}</h3>
+                  <div className="bg-base-100 rounded-xl border border-base-200 shadow-sm overflow-hidden">
+                     <div className="px-5 py-3 border-b border-base-200 bg-base-200/50 flex items-center gap-2">
+                        <div className="p-1.5 bg-warning/10 text-warning rounded-md"><ShieldCheck className="size-4" /></div>
+                        <h3 className="text-xs font-semibold uppercase tracking-wider text-base-content/50">{t('clients:sections.programs')}</h3>
                      </div>
                      <div className="p-5 grid grid-cols-2 gap-3">
                         {selectedClient.client_type === 'PARTICULIER' && (
-                           <div className="p-3 bg-amber-50 border border-amber-100 rounded-lg flex flex-col gap-1 relative">
-                              <span className="text-[10px] font-semibold uppercase tracking-wider text-amber-600/70">{t('clients:history.loyalty')}</span>
+                           <div className="p-3 bg-warning/10 border border-amber-100 rounded-lg flex flex-col gap-1 relative">
+                              <span className="text-[10px] font-semibold uppercase tracking-wider text-warning/70">{t('clients:history.loyalty')}</span>
                               <div className="flex justify-between items-end">
-                                 <div className="text-lg font-bold text-amber-700">
+                                 <div className="text-lg font-bold text-warning">
                                     {selectedClient.points_fidelite ?? 0} {t('clients:units.pts')}
                                  </div>
                                  {loyaltyThreshold > 0 && (
                                    <div className="radial-progress text-amber-300" style={{ "--value": Math.min(100, ((selectedClient.points_fidelite ?? 0) / loyaltyThreshold) * 100), "--size": "2.5rem", "--thickness": "3px" } as any}>
-                                      <span className="text-[10px] font-bold text-amber-700">
+                                      <span className="text-[10px] font-bold text-warning">
                                          {Math.min(100, Math.round(((selectedClient.points_fidelite ?? 0) / loyaltyThreshold) * 100))}%
                                       </span>
                                    </div>
@@ -576,45 +576,45 @@ export default function Clients() {
                         {selectedClient.client_type === 'PARTICULIER' && (
                           <>
                             {selectedClient.is_deposit_enabled ? (
-                              <div className="p-3 bg-indigo-50 border border-indigo-100 rounded-lg flex flex-col gap-1 cursor-pointer hover:bg-indigo-100 transition-colors" onClick={() => setIsDepositModalOpen(true)}>
+                              <div className="p-3 bg-primary/10 border border-indigo-100 rounded-lg flex flex-col gap-1 cursor-pointer hover:bg-primary/20 transition-colors" onClick={() => setIsDepositModalOpen(true)}>
                                  <span className="text-[10px] font-semibold uppercase tracking-wider text-indigo-500/70">{t('clients:finance.solde_depot')}</span>
-                                 <div className="text-lg font-bold text-indigo-700">{formatCurrency(parseFloat(selectedClient.solde_depot || '0'))}</div>
+                                 <div className="text-lg font-bold text-primary">{formatCurrency(parseFloat(selectedClient.solde_depot || '0'))}</div>
                               </div>
                             ) : (
-                              <div className="p-3 bg-gray-50 border border-gray-100 rounded-lg flex flex-col gap-1 opacity-50">
-                                 <span className="text-[10px] font-semibold uppercase tracking-wider text-gray-400">{t('clients:finance.solde_depot')}</span>
-                                 <div className="text-lg font-bold text-gray-500">{formatCurrency(0)}</div>
+                              <div className="p-3 bg-base-200 border border-base-200 rounded-lg flex flex-col gap-1 text-base-content/50">
+                                 <span className="text-[10px] font-semibold uppercase tracking-wider text-base-content/50">{t('clients:finance.solde_depot')}</span>
+                                 <div className="text-lg font-bold text-base-content/60">{formatCurrency(0)}</div>
                               </div>
                             )}
-                            <div className="p-3 bg-gray-50 border border-gray-100 rounded-lg flex flex-col gap-1">
-                               <span className="text-[10px] font-semibold uppercase tracking-wider text-gray-400">{t('clients:finance.auto_discount')}</span>
-                               <div className="text-lg font-bold text-gray-700">{selectedClient.remise_automatique || 0}{t('clients:units.percent')}</div>
+                            <div className="p-3 bg-base-200 border border-base-200 rounded-lg flex flex-col gap-1">
+                               <span className="text-[10px] font-semibold uppercase tracking-wider text-base-content/50">{t('clients:finance.auto_discount')}</span>
+                               <div className="text-lg font-bold text-base-content">{selectedClient.remise_automatique || 0}{t('clients:units.percent')}</div>
                             </div>
                           </>
                         )}
                         {selectedClient.client_type === 'PROFESSIONNEL' && (
-                          <div className="col-span-2 p-3 bg-indigo-50 border border-indigo-100 rounded-lg flex flex-col gap-1">
+                          <div className="col-span-2 p-3 bg-primary/10 border border-indigo-100 rounded-lg flex flex-col gap-1">
                              <span className="text-[10px] font-semibold uppercase tracking-wider text-indigo-500/70">{t('clients:finance.auto_discount')}</span>
-                             <div className="text-lg font-bold text-indigo-700">{selectedClient.remise_automatique || 0}{t('clients:units.percent')}</div>
+                             <div className="text-lg font-bold text-primary">{selectedClient.remise_automatique || 0}{t('clients:units.percent')}</div>
                           </div>
                         )}
                         {selectedClient.client_type === 'PROFESSIONNEL' && (
-                          <div className="col-span-2 p-3 bg-orange-50 border border-orange-100 rounded-lg flex justify-between items-center">
+                          <div className="col-span-2 p-3 bg-warning/10 border border-orange-100 rounded-lg flex justify-between items-center">
                              <div>
                                 <span className="text-[10px] font-semibold uppercase tracking-wider text-orange-500/70">{t('clients:finance.debt_usage')}</span>
-                                <div className="text-base font-bold text-gray-800">
-                                  {formatCurrency(normalizeNumberInput(selectedClient.current_debt || '0'))} <span className="text-gray-400 font-normal">/ {formatCurrency(normalizeNumberInput(selectedClient.plafond || '0'))}</span>
+                                <div className="text-base font-bold text-base-content">
+                                  {formatCurrency(normalizeNumberInput(selectedClient.current_debt || '0'))} <span className="text-base-content/50 font-normal">/ {formatCurrency(normalizeNumberInput(selectedClient.plafond || '0'))}</span>
                                 </div>
                              </div>
                              <div className="radial-progress text-orange-300" style={{ "--value": Math.min(100, (normalizeNumberInput(selectedClient.current_debt || '0') / normalizeNumberInput(selectedClient.plafond || '1')) * 100), "--size": "3rem", "--thickness": "4px" } as any}>
-                                <span className="text-[10px] font-bold text-orange-700">{(normalizeNumberInput(selectedClient.current_debt || '0') / normalizeNumberInput(selectedClient.plafond || '1') * 100).toFixed(0)}%</span>
+                                <span className="text-[10px] font-bold text-warning">{(normalizeNumberInput(selectedClient.current_debt || '0') / normalizeNumberInput(selectedClient.plafond || '1') * 100).toFixed(0)}%</span>
                              </div>
                           </div>
                         )}
                         {selectedClient.client_type === 'PROFESSIONNEL' && selectedClient.majoration_pro_pourcentage && parseFloat(selectedClient.majoration_pro_pourcentage) > 0 && (
-                           <div className="col-span-2 p-3 bg-red-50 border border-red-100 rounded-lg flex flex-col gap-1">
+                           <div className="col-span-2 p-3 bg-error/10 border border-red-100 rounded-lg flex flex-col gap-1">
                               <span className="text-[10px] font-semibold uppercase tracking-wider text-red-500/70">{t('clients:finance.majoration_pro')}</span>
-                              <div className="text-lg font-bold text-red-700">+{selectedClient.majoration_pro_pourcentage}{t('clients:units.percent')}</div>
+                              <div className="text-lg font-bold text-error">+{selectedClient.majoration_pro_pourcentage}{t('clients:units.percent')}</div>
                            </div>
                         )}
                      </div>
@@ -622,31 +622,31 @@ export default function Clients() {
 
                   {/* Beneficiaries Table */}
                   {selectedClient.client_type === 'PROFESSIONNEL' && (
-                    <div className="lg:col-span-2 bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
-                       <div className="px-5 py-3 border-b border-gray-100 bg-gray-50/50 flex items-center gap-2">
+                    <div className="lg:col-span-2 bg-base-100 rounded-xl border border-base-200 shadow-sm overflow-hidden">
+                       <div className="px-5 py-3 border-b border-base-200 bg-base-200/50 flex items-center gap-2">
                           <Users className="size-4 text-indigo-500" />
-                          <h3 className="text-xs font-semibold uppercase tracking-wider text-gray-400">{t('clients:beneficiaries.title')}</h3>
+                          <h3 className="text-xs font-semibold uppercase tracking-wider text-base-content/50">{t('clients:beneficiaries.title')}</h3>
                        </div>
                        <div className="overflow-x-auto">
-                          <table className="min-w-full divide-y divide-gray-100">
-                             <thead className="bg-gray-50">
+                          <table className="min-w-full divide-y divide-base-200">
+                             <thead className="bg-base-200">
                                 <tr>
-                                   <th className="px-6 py-3 text-left text-[10px] font-semibold text-gray-500 uppercase tracking-wider">{t('clients:beneficiaries.col_name')}</th>
-                                   <th className="px-6 py-3 text-left text-[10px] font-semibold text-gray-500 uppercase tracking-wider">{t('clients:beneficiaries.company') || 'Société'}</th>
-                                   <th className="px-6 py-3 text-right text-[10px] font-semibold text-gray-500 uppercase tracking-wider">{t('clients:beneficiaries.col_id')}</th>
+                                   <th className="px-6 py-3 text-left text-[10px] font-semibold text-base-content/60 uppercase tracking-wider">{t('clients:beneficiaries.col_name')}</th>
+                                   <th className="px-6 py-3 text-left text-[10px] font-semibold text-base-content/60 uppercase tracking-wider">{t('clients:beneficiaries.company') || 'Société'}</th>
+                                   <th className="px-6 py-3 text-right text-[10px] font-semibold text-base-content/60 uppercase tracking-wider">{t('clients:beneficiaries.col_id')}</th>
                                 </tr>
                              </thead>
-                             <tbody className="bg-white divide-y divide-gray-100">
+                             <tbody className="bg-base-100 divide-y divide-base-200">
                                 {selectedClient.ayants_droit && selectedClient.ayants_droit.length > 0 ? (
                                   selectedClient.ayants_droit.map((ad: AyantDroit, idx: number) => (
-                                    <tr key={idx} className="hover:bg-gray-50 transition-colors">
-                                       <td className="px-6 py-3 text-sm font-medium text-gray-900">{ad.nom}</td>
-                                       <td className="px-6 py-3 text-sm text-gray-500">{ad.societe || '—'}</td>
-                                       <td className="px-6 py-3 text-sm font-mono text-gray-500 text-right">{ad.matricule}</td>
+                                    <tr key={idx} className="hover:bg-base-200 transition-colors">
+                                       <td className="px-6 py-3 text-sm font-medium text-base-content">{ad.nom}</td>
+                                       <td className="px-6 py-3 text-sm text-base-content/60">{ad.societe || '—'}</td>
+                                       <td className="px-6 py-3 text-sm font-mono text-base-content/60 text-right">{ad.matricule}</td>
                                     </tr>
                                   ))
                                 ) : (
-                                  <tr><td colSpan={3} className="py-12 text-center text-sm text-gray-400">{t('clients:beneficiaries.empty')}</td></tr>
+                                  <tr><td colSpan={3} className="py-12 text-center text-sm text-base-content/50">{t('clients:beneficiaries.empty')}</td></tr>
                                 )}
                              </tbody>
                           </table>
@@ -657,11 +657,11 @@ export default function Clients() {
             </div>
           </>
         ) : (
-          <div className="flex-1 flex flex-col items-center justify-center gap-6 opacity-20 p-12 text-center">
-             <Users className="size-24 text-gray-400" />
+          <div className="flex-1 flex flex-col items-center justify-center gap-6 text-base-content/20 p-12 text-center">
+             <Users className="size-24 text-base-content/50" />
              <div>
-                <h3 className="text-xl font-bold text-gray-400">{t('clients:modals.select_client_empty')}</h3>
-                <p className="text-sm text-gray-400 mt-2 max-w-sm mx-auto">{t('clients:modals.select_client_empty_desc')}</p>
+                <h3 className="text-xl font-bold text-base-content/50">{t('clients:modals.select_client_empty')}</h3>
+                <p className="text-sm text-base-content/50 mt-2 max-w-sm mx-auto">{t('clients:modals.select_client_empty_desc')}</p>
              </div>
           </div>
         )}

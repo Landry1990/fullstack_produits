@@ -34,7 +34,7 @@ export default function JournalCaisseStats({ state }: Props) {
             <div>
               <div className="flex items-center gap-2 mb-1">
                 <h3 className="text-base-content/60 text-[10px] font-bold uppercase tracking-wider">{t('stats.recoveries')}</h3>
-                <span className="badge badge-ghost badge-xs text-[8px] uppercase font-bold opacity-50">{t('stats.memo')}</span>
+                <span className="badge badge-ghost badge-xs text-[8px] uppercase font-bold text-base-content/50">{t('stats.memo')}</span>
               </div>
               <div className="text-xl font-bold text-base-content/70">{formatCurrency(serverTotals?.total_recouvrement ?? totauxParMode.recouvrement)}</div>
               <div className="text-[9px] text-base-content/40 mt-1 font-medium">{t('stats.debt_collection')}</div>
@@ -68,11 +68,11 @@ export default function JournalCaisseStats({ state }: Props) {
           <div className="flex flex-col gap-1 mt-2">
             <div className="flex justify-between items-center text-[11px]">
               <span className="flex items-center gap-1"><span className="size-2 rounded-full bg-orange-500"></span> OM</span>
-              <span className="font-bold opacity-70">{formatCurrency(serverTotals?.details?.om ?? totauxParMode.global_par_mode.om)}</span>
+              <span className="font-bold text-base-content/70">{formatCurrency(serverTotals?.details?.om ?? totauxParMode.global_par_mode.om)}</span>
             </div>
             <div className="flex justify-between items-center text-[11px]">
               <span className="flex items-center gap-1"><span className="size-2 rounded-full bg-yellow-400"></span> MoMo</span>
-              <span className="font-bold opacity-70">{formatCurrency(serverTotals?.details?.momo ?? totauxParMode.global_par_mode.momo)}</span>
+              <span className="font-bold text-base-content/70">{formatCurrency(serverTotals?.details?.momo ?? totauxParMode.global_par_mode.momo)}</span>
             </div>
           </div>
         </div>
@@ -144,7 +144,7 @@ export default function JournalCaisseStats({ state }: Props) {
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-0 mt-4 sm:mt-0">
           <div className="flex items-center gap-4 bg-base-200 py-2 px-6 rounded-l-full border border-base-300">
             <div className="flex flex-col">
-              <span className="text-[9px] font-black uppercase opacity-50">{t('stats.interval_activity')}</span>
+              <span className="text-[9px] font-black uppercase text-base-content/50">{t('stats.interval_activity')}</span>
               <span className="text-sm font-bold text-base-content">{formatCurrency((serverTotals?.total_ventes ?? totauxParMode.ventes) + (serverTotals?.total_entrees ?? totauxParMode.entrees))}</span>
             </div>
             <div className="w-px h-6 bg-base-300"></div>
@@ -156,10 +156,10 @@ export default function JournalCaisseStats({ state }: Props) {
 
           <div className="flex items-center gap-4 bg-primary text-white py-2 px-6 rounded-r-emerald-none rounded-r-full shadow-xl shadow-primary/20 flex-1 sm:flex-none justify-center sm:justify-start">
             <div className="flex flex-col items-start">
-              <span className="text-[10px] font-black uppercase opacity-70 tracking-wider leading-tight">{t('stats.net_operational_balance')}</span>
+              <span className="text-[10px] font-black uppercase text-base-content/70 tracking-wider leading-tight">{t('stats.net_operational_balance')}</span>
               <span className="text-[8px] opacity-60 uppercase font-bold">{t('stats.excluding_recoveries')}</span>
             </div>
-            <div className="w-px h-6 bg-white/20 mx-1"></div>
+            <div className="w-px h-6 bg-base-100/20 mx-1"></div>
             <span className="text-xl font-black">{formatCurrency((serverTotals?.total_ventes ?? totauxParMode.ventes) + (serverTotals?.total_entrees ?? totauxParMode.entrees) - (serverTotals?.total_sorties ?? totauxParMode.sorties))}</span>
           </div>
         </div>

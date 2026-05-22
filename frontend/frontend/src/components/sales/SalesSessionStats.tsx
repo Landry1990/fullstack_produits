@@ -15,11 +15,11 @@ export const SalesSessionStats: React.FC<SalesSessionStatsProps> = ({ session })
 
     return (
         <div className="bg-gradient-to-r from-primary to-secondary rounded-2xl p-6 text-primary-content shadow-xl shadow-primary/20 relative overflow-hidden group border border-white/10">
-            <div className="absolute top-0 right-0 p-8 bg-white/10 rounded-full -mr-10 -mt-10 blur-2xl group-hover:bg-white/20 transition-all duration-500"></div>
+            <div className="absolute top-0 right-0 p-8 bg-base-100/10 rounded-full -mr-10 -mt-10 blur-2xl group-hover:bg-base-100/20 transition-all duration-500"></div>
             
             <div className="relative z-10">
                 <div className="flex justify-between items-start mb-4">
-                    <div className="flex items-center gap-2 text-primary-content/90 bg-white/10 px-3 py-1 rounded-full text-xs font-medium backdrop-blur-sm">
+                    <div className="flex items-center gap-2 text-primary-content/90 bg-base-100/10 px-3 py-1 rounded-full text-xs font-medium backdrop-blur-sm">
                         <TrendingUp className="size-3" />
                          {t('stats.session_total', { defaultValue: "Caisse Session" })}
                     </div>
@@ -40,7 +40,7 @@ export const SalesSessionStats: React.FC<SalesSessionStatsProps> = ({ session })
                    <div className="opacity-90">
                        {new Date(session.date_debut).toLocaleTimeString('fr-FR', {hour: '2-digit', minute:'2-digit'})} - {new Date(session.date_fin).toLocaleTimeString('fr-FR', {hour: '2-digit', minute:'2-digit'})}
                    </div>
-                   <div className="mt-1 font-medium bg-white/10 self-start px-2 py-0.5 rounded text-white">
+                   <div className="mt-1 font-medium bg-base-100/10 self-start px-2 py-0.5 rounded text-white">
                        {session.nombre_factures} ventes
                    </div>
                 </div>

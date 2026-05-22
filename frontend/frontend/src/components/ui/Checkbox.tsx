@@ -49,16 +49,16 @@ export const Checkbox: React.FC<CheckboxProps> = ({
 
   // Map theme colors to CSS classes
   const colorClass = {
-    primary: 'text-indigo-600',
-    success: 'text-emerald-600',
-    warning: 'text-amber-600',
-    error: 'text-red-600',
-    base: 'text-gray-300'
+    primary: 'text-primary',
+    success: 'text-success',
+    warning: 'text-warning',
+    error: 'text-error',
+    base: 'text-base-content/40'
   }[color];
 
   return (
     <div
-      className={`inline-flex items-center gap-2 transition-all ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer active:scale-95'} ${className}`}
+      className={`inline-flex items-center gap-2 transition-all ${disabled ? 'text-base-content/50 cursor-not-allowed' : 'cursor-pointer active:scale-95'} ${className}`}
       onClick={(e) => {
         e.stopPropagation();
         handleChange(e);
@@ -79,10 +79,10 @@ export const Checkbox: React.FC<CheckboxProps> = ({
         ) : checked ? (
           <CheckSquare size={iconSize} className={colorClass} strokeWidth={2.5} />
         ) : (
-          <Square size={iconSize} className="text-gray-200 hover:text-gray-300 transition-colors" strokeWidth={2} />
+          <Square size={iconSize} className="text-gray-200 hover:text-base-content/40 transition-colors" strokeWidth={2} />
         )}
       </div>
-      {label && <span className="text-sm font-medium select-none text-gray-600">{label}</span>}
+      {label && <span className="text-sm font-medium select-none text-base-content/70">{label}</span>}
     </div>
   );
 };

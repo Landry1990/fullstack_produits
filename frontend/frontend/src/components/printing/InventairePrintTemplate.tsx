@@ -142,7 +142,7 @@ const InventairePrintTemplate: React.FC<InventairePrintTemplateProps> = ({ setti
                     {data.stock_label && (
                         <div>
                             <span className="text-base-content/40 uppercase font-bold mr-2">Option :</span>
-                            <span className="font-bold text-emerald-600">{data.stock_label}</span>
+                            <span className="font-bold text-success">{data.stock_label}</span>
                         </div>
                     )}
                 </div>
@@ -153,16 +153,16 @@ const InventairePrintTemplate: React.FC<InventairePrintTemplateProps> = ({ setti
             <div className="space-y-8">
                 {sortedGroups.map((groupName, groupIdx) => (
                     <div key={groupName} className="group-block" style={{ pageBreakBefore: groupIdx > 0 ? 'auto' : 'avoid' }}>
-                        <h2 className="group-title text-sm font-black text-slate-900 uppercase tracking-wider mb-2 border-l-4 border-primary pl-3 bg-slate-50 py-1.5 flex justify-between items-center">
+                        <h2 className="group-title text-sm font-black text-base-content uppercase tracking-wider mb-2 border-l-4 border-primary pl-3 bg-base-200 py-1.5 flex justify-between items-center">
                             <span>{groupName}</span>
-                            <span className="text-[10px] font-bold text-slate-400 normal-case pr-4">
+                            <span className="text-[10px] font-bold text-base-content/50 normal-case pr-4">
                                 {data.groups[groupName].filter(i => !i.is_lot_line).length} produits
                             </span>
                         </h2>
 
                         <table className="w-full border-collapse">
                             <thead>
-                                <tr className="bg-slate-100/50 text-slate-900 border-b-2 border-slate-900 text-[9px] uppercase tracking-wider font-bold">
+                                <tr className="bg-base-200/50 text-base-content border-b-2 border-slate-900 text-[9px] uppercase tracking-wider font-bold">
                                     <th className="py-2 px-2 text-left w-12">ID</th>
                                     <th className="py-2 px-2 text-left w-24">CIP</th>
                                     <th className="py-2 px-2 text-left">Désignation</th>
@@ -185,33 +185,33 @@ const InventairePrintTemplate: React.FC<InventairePrintTemplateProps> = ({ setti
                             </thead>
                             <tbody className="text-[10px]">
                                 {data.groups[groupName].map((item, idx) => (
-                                    <tr key={`${groupName}-${idx}`} className={`border-b border-slate-100 ${item.is_lot_line ? 'bg-slate-50/30' : ''}`}>
-                                        <td className="py-1.5 px-2 font-mono text-slate-400">{item.id}</td>
+                                    <tr key={`${groupName}-${idx}`} className={`border-b border-slate-100 ${item.is_lot_line ? 'bg-base-200/30' : ''}`}>
+                                        <td className="py-1.5 px-2 font-mono text-base-content/50">{item.id}</td>
                                         <td className="py-1.5 px-2 font-mono">{item.cip1 || '-'}</td>
                                         <td className="py-1.5 px-2">
-                                            <div className={`${item.is_lot_line ? 'pl-4 text-slate-500 italic' : 'font-bold text-slate-900'} leading-tight`}>
+                                            <div className={`${item.is_lot_line ? 'pl-4 text-base-content/60 italic' : 'font-bold text-base-content'} leading-tight`}>
                                                 {item.is_lot_line && '↳ '}{item.name}
                                             </div>
                                         </td>
-                                        <td className="py-1.5 px-2 text-center font-bold text-slate-600 cursor-default" title="Numéro de lot">
+                                        <td className="py-1.5 px-2 text-center font-bold text-base-content/70 cursor-default" title="Numéro de lot">
                                             {item.lot_numero || '-'}
                                         </td>
                                         {data.is_report ? (
                                             <>
-                                                <td className="py-1.5 px-2 text-right font-medium text-slate-500">{item.stock_theorique}</td>
-                                                <td className="py-1.5 px-2 text-right font-medium text-slate-900">{item.quantite_physique}</td>
-                                                <td className={`py-1.5 px-2 text-right font-black ${item.ecart && item.ecart < 0 ? 'text-red-600' : item.ecart && item.ecart > 0 ? 'text-emerald-600' : 'text-slate-300'}`}>
+                                                <td className="py-1.5 px-2 text-right font-medium text-base-content/60">{item.stock_theorique}</td>
+                                                <td className="py-1.5 px-2 text-right font-medium text-base-content">{item.quantite_physique}</td>
+                                                <td className={`py-1.5 px-2 text-right font-black ${item.ecart && item.ecart < 0 ? 'text-error' : item.ecart && item.ecart > 0 ? 'text-success' : 'text-slate-300'}`}>
                                                     {item.ecart && item.ecart > 0 ? `+${item.ecart}` : item.ecart}
                                                 </td>
-                                                <td className={`py-1.5 px-2 text-right font-black ${item.valeur_ecart && item.valeur_ecart < 0 ? 'text-red-700' : item.valeur_ecart && item.valeur_ecart > 0 ? 'text-emerald-700' : 'text-slate-300'}`}>
+                                                <td className={`py-1.5 px-2 text-right font-black ${item.valeur_ecart && item.valeur_ecart < 0 ? 'text-error' : item.valeur_ecart && item.valeur_ecart > 0 ? 'text-success' : 'text-slate-300'}`}>
                                                     {formatNumber(item.valeur_ecart)}
                                                 </td>
                                             </>
                                         ) : (
                                             <>
-                                                <td className="py-1.5 px-2 text-right font-bold text-slate-900 pr-4">{item.stock}</td>
-                                                <td className="py-1.5 px-2 text-right text-slate-500 pr-4">{formatNumber(item.selling_price)}</td>
-                                                <td className="py-1.5 px-2 border-l border-slate-200 bg-slate-50/20 text-center font-bold text-sm">
+                                                <td className="py-1.5 px-2 text-right font-bold text-base-content pr-4">{item.stock}</td>
+                                                <td className="py-1.5 px-2 text-right text-base-content/60 pr-4">{formatNumber(item.selling_price)}</td>
+                                                <td className="py-1.5 px-2 border-l border-base-300 bg-base-200/20 text-center font-bold text-sm">
                                                     {item.quantite_physique !== undefined ? item.quantite_physique : ''}
                                                 </td>
                                             </>
@@ -237,13 +237,13 @@ const InventairePrintTemplate: React.FC<InventairePrintTemplateProps> = ({ setti
             )}
 
             {/* Legend / Info */}
-            <div className="mt-8 pt-4 border-t border-slate-200 grid grid-cols-2 gap-8 text-[9px]">
-                <div className="italic text-slate-400">
+            <div className="mt-8 pt-4 border-t border-base-300 grid grid-cols-2 gap-8 text-[9px]">
+                <div className="italic text-base-content/50">
                     {data.is_report 
                         ? "Ce rapport détaille les écarts constatés entre le stock théorique et le comptage physique."
                         : "Veuillez remplir la colonne 'Qté Physique' lors de votre comptage. Les lots non listés doivent être signalés au verso."}
                 </div>
-                <div className="text-right font-bold text-slate-500 uppercase tracking-widest">
+                <div className="text-right font-bold text-base-content/60 uppercase tracking-widest">
                     {settings.pharmacy_name} · Logiciel ZENITH
                 </div>
             </div>

@@ -30,10 +30,10 @@ export const RefundModal: React.FC<RefundModalProps> = ({
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-in fade-in duration-200">
             <div className="bg-base-100 rounded-xl shadow-2xl w-full max-w-md overflow-hidden animate-in scale-95 duration-200">
-                <div className="border-b border-gray-100 p-4 flex justify-between items-center bg-red-50/50">
+                <div className="border-b border-base-200 p-4 flex justify-between items-center bg-error/10/50">
                     <div className="flex items-center gap-3">
-                        <div className="bg-red-100 p-2 rounded-lg">
-                            <AlertTriangle className="size-5 text-red-600" />
+                        <div className="bg-error/20 p-2 rounded-lg">
+                            <AlertTriangle className="size-5 text-error" />
                         </div>
                         <h3 className="font-bold text-base-content">
                             {t('refund_title')}
@@ -46,7 +46,7 @@ export const RefundModal: React.FC<RefundModalProps> = ({
 
                 <form onSubmit={handleSubmit} className="p-6">
                     <div className="mb-6">
-                        <div className="bg-red-50 text-red-700 text-sm p-3 rounded-lg border border-red-100 mb-4">
+                        <div className="bg-error/10 text-error text-sm p-3 rounded-lg border border-red-100 mb-4">
                             Cette action générera un avoir et annulera la facture <strong>#{facture.numero_facture || facture.id}</strong>.
                         </div>
 
@@ -73,7 +73,7 @@ export const RefundModal: React.FC<RefundModalProps> = ({
                         </button>
                         <button
                             type="submit"
-                            className="px-6 py-2 bg-red-600 text-white font-medium rounded-lg hover:bg-red-700 focus:ring-4 focus:ring-red-200 transition-all shadow-lg shadow-red-600/20"
+                            className="px-6 py-2 bg-error text-white font-medium rounded-lg hover:bg-error-focus focus:ring-4 focus:ring-red-200 transition-all shadow-lg shadow-red-600/20"
                         >
                             {t('common:confirm')}
                         </button>

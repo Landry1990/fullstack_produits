@@ -34,13 +34,13 @@ export const Input: React.FC<InputProps> = ({
   return (
     <div className={`w-full ${containerClassName}`}>
       {label && (
-        <label className="block text-[10px] font-semibold text-gray-500 uppercase tracking-wider mb-1.5">
+        <label className="block text-[10px] font-semibold text-base-content/60 uppercase tracking-wider mb-1.5">
           {label}
         </label>
       )}
       <div className="relative group">
         {icon && (
-          <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-indigo-500 transition-colors">
+          <div className="absolute left-3 top-1/2 -translate-y-1/2 text-base-content/50 group-focus-within:text-indigo-500 transition-colors">
             {icon}
           </div>
         )}
@@ -49,16 +49,16 @@ export const Input: React.FC<InputProps> = ({
             w-full rounded-lg border transition-all duration-200 outline-none
             ${sizeClasses}
             ${icon ? 'pl-10' : ''}
-            ${error ? 'border-red-300 text-red-600 focus:border-red-500 focus:ring-2 focus:ring-red-100' : 'border-gray-200 text-gray-900 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-50'}
-            bg-white hover:border-gray-300
-            placeholder:text-gray-300
+            ${error ? 'border-red-300 text-error focus:border-red-500 focus:ring-2 focus:ring-red-100' : 'border-base-300 text-base-content focus:border-primary focus:ring-2 focus:ring-primary/20'}
+            bg-base-100 hover:border-base-300
+            placeholder:text-base-content/40
             ${className}
           `}
           {...props}
         />
       </div>
       {error && (
-        <p className="text-xs text-red-600 mt-1 font-medium">{error}</p>
+        <p className="text-xs text-error mt-1 font-medium">{error}</p>
       )}
     </div>
   );

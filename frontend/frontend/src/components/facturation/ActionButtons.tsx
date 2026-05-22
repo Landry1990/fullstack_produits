@@ -143,7 +143,7 @@ function FooterActions({
           </label>
           <ul tabIndex={0} className="dropdown-content z-[100] menu p-2 shadow-2xl bg-base-100 border border-base-200 rounded-box w-64 mb-2">
             {/* MODES SECTION */}
-            <li className="menu-title text-xs uppercase opacity-50 px-2 mt-1">Modes</li>
+            <li className="menu-title text-xs uppercase text-base-content/50 px-2 mt-1">Modes</li>
             <li>
                 <label className="flex items-center justify-between cursor-pointer py-2 active:bg-base-200">
                     <span className="text-xs font-medium uppercase">{t('facturation:actions.retrocession_mode')}</span>
@@ -167,10 +167,10 @@ function FooterActions({
                 </label>
             </li>
 
-            <div className="divider my-1 opacity-50"></div>
+            <div className="divider my-1 text-base-content/50"></div>
 
             {/* DOCUMENTS SECTION */}
-            <li className="menu-title text-xs uppercase opacity-50 px-2">Documents</li>
+            <li className="menu-title text-xs uppercase text-base-content/50 px-2">Documents</li>
             <li>
               <button onClick={onScanOrdonnance} className="py-2.5 text-primary">
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
@@ -190,10 +190,10 @@ function FooterActions({
               </button>
             </li>
 
-            <div className="divider my-1 opacity-50"></div>
+            <div className="divider my-1 text-base-content/50"></div>
 
             {/* SALES MANAGEMENT */}
-            <li className="menu-title text-xs uppercase opacity-50 px-2">Gestion Vente</li>
+            <li className="menu-title text-xs uppercase text-base-content/50 px-2">Gestion Vente</li>
             <li>
               <button 
                 onClick={onSuspend} 

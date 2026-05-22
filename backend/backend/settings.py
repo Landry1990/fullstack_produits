@@ -66,6 +66,7 @@ MIDDLEWARE = [
     'api.middleware.allow_private_ips.AllowPrivateIPsMiddleware',  # DOIT ÊTRE EN PREMIER - Autorise IPs privées réseau local
     'django.middleware.security.SecurityMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware',
+    'django.middleware.gzip.GZipMiddleware',  # Compression des réponses API
 ]
 
 if ENABLE_SILK:
@@ -240,8 +241,12 @@ CORS_ALLOW_ALL_ORIGINS = os.getenv('CORS_ALLOW_ALL', 'False').lower() == 'true'
 if not CORS_ALLOW_ALL_ORIGINS:
     CORS_ALLOWED_ORIGINS = os.getenv(
         'CORS_ALLOWED_ORIGINS', 
-        'http://localhost,http://localhost:3000,http://localhost:5173,http://127.0.0.1,http://127.0.0.1:3000,http://192.168.1.192,http://192.168.1.192:3000,http://Odessa1988'
+        'http://localhost,http://localhost:3000,http://localhost:5173,http://127.0.0.1,http://127.0.0.1:3000,http://192.168.1.192,http://192.168.1.192:3000,http://Odessa1988,http://192.168.1.181'
     ).split(',')
+    # Ajouter automatiquement toutes les IPs privées locales pour les PDA
+    _local_origins = [f'http://192.168.1.{i}' for i in range(1, 255)]
+    _local_origins += [f'http://192.168.0.{i}' for i in range(1, 255)]
+    CORS_ALLOWED_ORIGINS = list(set(CORS_ALLOWED_ORIGINS + _local_origins))
 
 CORS_ALLOW_CREDENTIALS = True
 
@@ -249,6 +254,10 @@ CSRF_TRUSTED_ORIGINS = os.getenv(
     'CSRF_TRUSTED_ORIGINS', 
     'http://localhost,http://localhost:3000,http://127.0.0.1,http://127.0.0.1:3000,http://192.168.1.192,http://192.168.1.192:3000,http://Odessa1988'
 ).split(',')
+# Ajouter automatiquement les IPs locales pour CSRF
+_local_csrf = [f'http://192.168.1.{i}' for i in range(1, 255)]
+_local_csrf += [f'http://192.168.0.{i}' for i in range(1, 255)]
+CSRF_TRUSTED_ORIGINS = list(set(CSRF_TRUSTED_ORIGINS + _local_csrf))
 
 # Security cookies in production
 if not DEBUG:
@@ -441,3 +450,45 @@ if SENTRY_DSN:
         profiles_sample_rate=1.0 if DEBUG else 0.2,
     )
 
+# ──────────────────────────────────────────────
+# Django Channels / WebSocket Configuration
+# ──────────────────────────────────────────────
+
+# ASGI application
+ASGI_APPLICATION = 'backend.asgi.application'
+
+# Cache API avec Redis
+if REDIS_URL:
+    CACHES = {
+        'default': {
+            'BACKEND': 'django_redis.cache.RedisCache',
+            'LOCATION': REDIS_URL,
+            'OPTIONS': {
+                'CLIENT_CLASS': 'django_redis.client.DefaultClient',
+            }
+        }
+    }
+
+# Channel Layer - Utilise Redis si disponible, sinon mémoire (dév)
+if REDIS_URL:
+    CHANNEL_LAYERS = {
+        'default': {
+            'BACKEND': 'channels_redis.core.RedisChannelLayer',
+            'CONFIG': {
+                'hosts': [REDIS_URL],
+            },
+        },
+    }
+else:
+    # Mode développement - channel layer en mémoire
+    CHANNEL_LAYERS = {
+        'default': {
+            'BACKEND': 'channels.layers.InMemoryChannelLayer',
+        },
+    }
+
+# Ajouter 'channels' et 'daphne' à INSTALLED_APPS
+INSTALLED_APPS = ['daphne'] + INSTALLED_APPS + ['channels']
+
+# WebSocket allowed origins (même que CORS)
+CHANNELS_WS_ALLOWED_ORIGINS = CORS_ALLOWED_ORIGINS if not CORS_ALLOW_ALL_ORIGINS else ['*']

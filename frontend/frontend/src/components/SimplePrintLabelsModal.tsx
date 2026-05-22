@@ -938,7 +938,7 @@ ${labelsHTML}
               <label className="text-xs font-bold uppercase tracking-wider text-base-content/40">
                 {t('preview')} ({labelsData.length})
               </label>
-              <div className="badge badge-sm badge-outline text-[10px] opacity-50">Zoom 200%</div>
+              <div className="badge badge-sm badge-outline text-[10px] text-base-content/50">Zoom 200%</div>
             </div>
             
             <div className="bg-base-300/30 rounded-2xl p-6 max-h-[400px] overflow-y-auto custom-scrollbar border border-base-content/5">

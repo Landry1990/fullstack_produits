@@ -114,7 +114,7 @@ export default function EcheancierFournisseursModal({ isOpen, onClose, onRegler,
           </div>
         ) : filteredEcheances.length === 0 ? (
           <div className="text-center flex-1 flex flex-col justify-center p-10 bg-base-200/50 rounded-xl border border-slate-100">
-            <div className="text-4xl mb-4 opacity-50">✅</div>
+            <div className="text-4xl mb-4 text-base-content/50">✅</div>
             <h3 className="text-lg font-bold text-base-content/90">{t('providers:schedule.empty')}</h3>
             <p className="text-sm text-base-content/60">{t('providers:schedule.empty_subtitle')}</p>
           </div>
@@ -146,7 +146,7 @@ export default function EcheancierFournisseursModal({ isOpen, onClose, onRegler,
                         </div>
                     </td>
                     <td className="py-3 text-right">
-                      <div className={`font-black tracking-tight ${e.status === 'EN RETARD' ? 'text-red-600' : 'text-base-content/90'}`}>
+                      <div className={`font-black tracking-tight ${e.status === 'EN RETARD' ? 'text-error' : 'text-base-content/90'}`}>
                         {formatCurrency(e.montant_du)}
                       </div>
                     </td>
@@ -157,9 +157,9 @@ export default function EcheancierFournisseursModal({ isOpen, onClose, onRegler,
                     </td>
                     <td className="py-3 text-center">
                       <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider ${
-                        e.status === 'EN RETARD' ? 'bg-red-100 text-red-700' :
-                        e.status === "AUJOURD'HUI" ? 'bg-amber-100 text-amber-700' :
-                        'bg-emerald-100 text-emerald-700'
+                        e.status === 'EN RETARD' ? 'bg-error/20 text-error' :
+                        e.status === "AUJOURD'HUI" ? 'bg-warning/20 text-warning' :
+                        'bg-success/20 text-success'
                       }`}>
                         {e.status}
                         {e.jours_restants < 0 ? ` (${Math.abs(e.jours_restants)}j)` : e.jours_restants > 0 ? ` (dans ${e.jours_restants}j)` : ''}

@@ -109,7 +109,7 @@ export const ReportResults: React.FC<ReportResultsProps> = ({
             if (results.length === 0) {
                 return (
                     <div className="flex flex-col items-center justify-center py-20 text-base-content/30 italic">
-                        <Inbox className="size-12 mb-2 opacity-20" />
+                        <Inbox className="size-12 mb-2 text-base-content/20" />
                         <p>{t('results.empty', 'Aucun résultat trouvé pour cette période.')}</p>
                     </div>
                 );

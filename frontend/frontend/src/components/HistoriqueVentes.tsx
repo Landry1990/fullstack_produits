@@ -219,14 +219,14 @@ const HistoriqueVentes = () => {
                                         </div>
                                     </td>
                                     <td className="text-right font-mono text-sm py-3">{formatMoney(row.especes)}</td>
-                                    <td className="text-right font-mono text-sm py-3 opacity-70">{formatMoney(row.carte)}</td>
-                                    <td className="text-right font-mono text-sm py-3 opacity-70">{formatMoney(row.cheque)}</td>
-                                    <td className="text-right font-mono text-sm py-3 opacity-70">{formatMoney(row.virement)}</td>
+                                    <td className="text-right font-mono text-sm py-3 text-base-content/70">{formatMoney(row.carte)}</td>
+                                    <td className="text-right font-mono text-sm py-3 text-base-content/70">{formatMoney(row.cheque)}</td>
+                                    <td className="text-right font-mono text-sm py-3 text-base-content/70">{formatMoney(row.virement)}</td>
                                     <td className="text-right font-mono text-sm py-3">{formatMoney(row.om + row.momo)}</td>
                                     <td className="text-right font-mono text-sm py-3 text-secondary italic">{formatMoney(row.coupon || 0)}</td>
                                     <td className="text-right font-mono text-sm py-3 text-warning">{formatMoney(row.en_compte || 0)}</td>
                                     <td className="text-center py-3">
-                                        <div className="badge badge-sm badge-outline opacity-70">{row.nb_ventes}</div>
+                                        <div className="badge badge-sm badge-outline text-base-content/70">{row.nb_ventes}</div>
                                     </td>
                                     <td className="text-right font-medium py-3">{formatMoney(row.panier_moyen)}</td>
                                     <td className="text-right font-mono text-sm py-3 text-success font-semibold">{formatMoney(row.marge || 0)}</td>
@@ -250,7 +250,7 @@ const HistoriqueVentes = () => {
                             {data.length === 0 && (
                                 <tr>
                                     <td colSpan={14} className="text-center py-20">
-                                        <div className="flex flex-col items-center gap-2 opacity-30">
+                                        <div className="flex flex-col items-center gap-2 text-base-content/30">
                                             <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                                             </svg>
@@ -268,9 +268,9 @@ const HistoriqueVentes = () => {
                                     </td>
                                     <td className="text-right py-4 text-primary text-lg">{formatMoney(globalTotals.ca_ttc)}</td>
                                     <td className="text-right py-4">{formatMoney(globalTotals.especes)}</td>
-                                    <td className="text-right py-4 opacity-70">{formatMoney(globalTotals.carte)}</td>
-                                    <td className="text-right py-4 opacity-70">{formatMoney(globalTotals.cheque)}</td>
-                                    <td className="text-right py-4 opacity-70">{formatMoney(globalTotals.virement)}</td>
+                                    <td className="text-right py-4 text-base-content/70">{formatMoney(globalTotals.carte)}</td>
+                                    <td className="text-right py-4 text-base-content/70">{formatMoney(globalTotals.cheque)}</td>
+                                    <td className="text-right py-4 text-base-content/70">{formatMoney(globalTotals.virement)}</td>
                                     <td className="text-right py-4">{formatMoney(globalTotals.om + globalTotals.momo)}</td>
                                     <td className="text-right py-4 text-secondary">{formatMoney(globalTotals.coupon)}</td>
                                     <td className="text-right py-4 text-warning">{formatMoney(globalTotals.en_compte || 0)}</td>

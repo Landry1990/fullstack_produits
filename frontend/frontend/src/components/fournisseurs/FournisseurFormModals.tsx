@@ -5,6 +5,32 @@ interface Props {
   hook: ReturnType<typeof useFournisseurs>;
 }
 
+// Composants Field et Section déplacés hors du composant parent pour éviter recréation à chaque render
+const Field = ({
+  label, children, required
+}: {
+  label: string;
+  children: React.ReactNode;
+  required?: boolean;
+}) => (
+  <div className="space-y-1.5">
+    <label className="block text-xs font-medium text-base-content/60">
+      {label}
+      {required && <span className="text-red-500 ml-0.5">*</span>}
+    </label>
+    {children}
+  </div>
+);
+
+const Section = ({ title, children }: { title: string; children: React.ReactNode }) => (
+  <div className="bg-base-100 p-5 rounded-xl border border-base-200 shadow-sm space-y-4">
+    <h4 className="text-xs font-semibold uppercase tracking-wider text-base-content/50">
+      {title}
+    </h4>
+    {children}
+  </div>
+);
+
 export default function FournisseurFormModals({ hook }: Props) {
   const { state, actions } = hook;
   const {
@@ -15,31 +41,6 @@ export default function FournisseurFormModals({ hook }: Props) {
     editingFournisseur,
     isSubmitting
   } = state;
-
-  const Field = ({
-    label, children, required
-  }: {
-    label: string;
-    children: React.ReactNode;
-    required?: boolean;
-  }) => (
-    <div className="space-y-1.5">
-      <label className="block text-xs font-medium text-gray-500">
-        {label}
-        {required && <span className="text-red-500 ml-0.5">*</span>}
-      </label>
-      {children}
-    </div>
-  );
-
-  const Section = ({ title, children }: { title: string; children: React.ReactNode }) => (
-    <div className="bg-white p-5 rounded-xl border border-gray-100 shadow-sm space-y-4">
-      <h4 className="text-xs font-semibold uppercase tracking-wider text-gray-400">
-        {title}
-      </h4>
-      {children}
-    </div>
-  );
 
   const renderForm = (isEdit: boolean) => {
     const data = isEdit ? editingFournisseur : newFournisseur;
@@ -57,22 +58,22 @@ export default function FournisseurFormModals({ hook }: Props) {
     return (
       <div className="fixed inset-0 z-50 flex items-center justify-center">
         <div className="absolute inset-0 bg-gray-900/40 backdrop-blur-sm" onClick={close} />
-        <div className="relative z-10 w-full max-w-2xl max-h-[92vh] flex flex-col bg-white rounded-xl shadow-2xl border border-gray-100 m-4">
+        <div className="relative z-10 w-full max-w-2xl max-h-[92vh] flex flex-col bg-base-100 rounded-xl shadow-2xl border border-base-200 m-4">
           {/* Header */}
-          <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
+          <div className="flex items-center justify-between px-6 py-4 border-b border-base-200">
             <div className="flex items-center gap-3">
-              <div className="p-2 bg-indigo-50 text-indigo-600 rounded-lg">
+              <div className="p-2 bg-primary/10 text-primary rounded-lg">
                 <Building2 className="size-5" />
               </div>
               <div>
-                <h2 className="text-lg font-bold text-gray-900 leading-tight">{title}</h2>
+                <h2 className="text-lg font-bold text-base-content leading-tight">{title}</h2>
                 {isEdit && editingFournisseur && (
-                  <span className="text-[10px] text-gray-400 font-medium">{editingFournisseur.name}</span>
+                  <span className="text-[10px] text-base-content/50 font-medium">{editingFournisseur.name}</span>
                 )}
               </div>
             </div>
-            <button onClick={close} className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
-              <X className="size-5 text-gray-400" />
+            <button onClick={close} className="p-2 hover:bg-base-200 rounded-lg transition-colors">
+              <X className="size-5 text-base-content/50" />
             </button>
           </div>
 
@@ -86,7 +87,7 @@ export default function FournisseurFormModals({ hook }: Props) {
                     placeholder={t('providers:form.name_placeholder')}
                     value={data.name}
                     onChange={e => setData((f: any) => ({...f, name: e.target.value}))}
-                    className="input input-bordered input-sm w-full h-10 rounded-lg focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/20"
+                    className="input-ref input-bordered input-sm w-full h-10 rounded-lg focus:border-primary focus:ring-1 focus:ring-primary/20"
                     required
                     disabled={isSubmitting}
                     autoFocus={!isEdit}
@@ -98,7 +99,7 @@ export default function FournisseurFormModals({ hook }: Props) {
                     placeholder={t('providers:form.phone_placeholder')}
                     value={data.phone}
                     onChange={e => setData((f: any) => ({...f, phone: e.target.value}))}
-                    className="input input-bordered input-sm w-full h-10 rounded-lg focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/20"
+                    className="input-ref input-bordered input-sm w-full h-10 rounded-lg focus:border-primary focus:ring-1 focus:ring-primary/20"
                     required
                     disabled={isSubmitting}
                   />
@@ -110,22 +111,22 @@ export default function FournisseurFormModals({ hook }: Props) {
                   placeholder={t('providers:form.email_placeholder')}
                   value={data.email}
                   onChange={e => setData((f: any) => ({...f, email: e.target.value}))}
-                  className="input input-bordered input-sm w-full h-10 rounded-lg focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/20"
+                  className="input-ref input-bordered input-sm w-full h-10 rounded-lg focus:border-primary focus:ring-1 focus:ring-primary/20"
                   required
                   disabled={isSubmitting}
                 />
               </Field>
-              <label className="flex items-center gap-3 p-3 rounded-lg border border-gray-100 bg-gray-50 cursor-pointer hover:border-gray-200 transition-colors">
+              <label className="flex items-center gap-3 p-3 rounded-lg border border-base-200 bg-base-200 cursor-pointer hover:border-base-300 transition-colors">
                 <input
                   type="checkbox"
                   checked={data.is_divers || false}
                   onChange={e => setData((f: any) => ({...f, is_divers: e.target.checked}))}
-                  className="checkbox checkbox-primary checkbox-sm"
+                  className="size-4 rounded border-base-300 text-primary focus:ring-primary cursor-pointer"
                   disabled={isSubmitting}
                 />
                 <div className="flex flex-col">
-                  <span className="text-sm font-medium text-gray-700">Fournisseur Divers</span>
-                  <span className="text-[11px] text-gray-500">Utilisé pour la gestion des achats divers.</span>
+                  <span className="text-sm font-medium text-base-content">Fournisseur Divers</span>
+                  <span className="text-[11px] text-base-content/60">Utilisé pour la gestion des achats divers.</span>
                 </div>
               </label>
             </Section>
@@ -136,7 +137,7 @@ export default function FournisseurFormModals({ hook }: Props) {
                   <select
                     value={data.type_reglement}
                     onChange={e => setData((f: any) => ({...f, type_reglement: e.target.value as 'FACTURE'|'RELEVE'}))}
-                    className="select select-bordered select-sm w-full h-10 rounded-lg focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/20"
+                    className="select-ref select-bordered select-sm w-full h-10 rounded-lg focus:border-primary focus:ring-1 focus:ring-primary/20"
                     disabled={isSubmitting}
                   >
                     <option value="FACTURE">{t('providers:form.payment_type_invoice')}</option>
@@ -150,14 +151,14 @@ export default function FournisseurFormModals({ hook }: Props) {
                     placeholder={t('providers:form.delay_hint')}
                     value={data.delai_paiement_jours}
                     onChange={e => setData((f: any) => ({...f, delai_paiement_jours: parseInt(e.target.value) || 0}))}
-                    className="input input-bordered input-sm w-full h-10 rounded-lg focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/20"
+                    className="input-ref input-bordered input-sm w-full h-10 rounded-lg focus:border-primary focus:ring-1 focus:ring-primary/20"
                     disabled={isSubmitting}
                   />
                 </Field>
               </div>
               {data.type_reglement === 'RELEVE' && (
-                <div className="p-4 bg-orange-50 border border-orange-100 rounded-lg">
-                  <label className="block text-xs font-semibold uppercase tracking-wider text-orange-600 mb-2">
+                <div className="p-4 bg-warning/10 border border-orange-100 rounded-lg">
+                  <label className="block text-xs font-semibold uppercase tracking-wider text-warning mb-2">
                     Durée de la tranche de relevé (jours)
                   </label>
                   <input
@@ -167,7 +168,7 @@ export default function FournisseurFormModals({ hook }: Props) {
                     placeholder="Ex: 10"
                     value={data.periode_releve_jours ?? 10}
                     onChange={e => setData((f: any) => ({...f, periode_releve_jours: parseInt(e.target.value) || 10}))}
-                    className="input input-bordered input-sm w-full h-10 rounded-lg focus:border-orange-400 focus:ring-1 focus:ring-orange-200"
+                    className="input-ref input-bordered input-sm w-full h-10 rounded-lg focus:border-orange-400 focus:ring-1 focus:ring-orange-200"
                     disabled={isSubmitting}
                   />
                   <p className="text-[11px] text-orange-500 mt-1">Le relevé commence le 1er du mois.</p>
@@ -181,22 +182,22 @@ export default function FournisseurFormModals({ hook }: Props) {
                   placeholder={t('providers:form.address_placeholder')}
                   value={data.address}
                   onChange={e => setData((f: any) => ({...f, address: e.target.value}))}
-                  className="textarea textarea-bordered textarea-sm w-full h-24 rounded-lg resize-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/20"
+                  className="textarea-ref textarea-bordered textarea-sm w-full h-24 rounded-lg resize-none focus:border-primary focus:ring-1 focus:ring-primary/20"
                   required
                   disabled={isSubmitting}
                 />
               </Field>
-              <p className="text-[11px] text-gray-400">{t('providers:form.address_hint')}</p>
+              <p className="text-[11px] text-base-content/50">{t('providers:form.address_hint')}</p>
             </Section>
           </form>
 
           {/* Footer */}
-          <div className="flex justify-end items-center gap-3 px-6 py-4 border-t border-gray-100 bg-gray-50/50 rounded-b-xl">
+          <div className="flex justify-end items-center gap-3 px-6 py-4 border-t border-base-200 bg-base-200/50 rounded-b-xl">
             <button
               type="button"
               onClick={close}
               disabled={isSubmitting}
-              className="inline-flex items-center px-5 py-2 text-sm font-medium rounded-lg border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 transition-colors"
+              className="inline-flex items-center px-5 py-2 text-sm font-medium rounded-lg border border-base-300 bg-base-100 text-base-content hover:bg-base-200 transition-colors"
             >
               {t('providers:form.cancel')}
             </button>
@@ -204,7 +205,7 @@ export default function FournisseurFormModals({ hook }: Props) {
               type="submit"
               onClick={(e) => { e.preventDefault(); handleSubmit(e as any); }}
               disabled={isSubmitting}
-              className="inline-flex items-center px-6 py-2 text-sm font-medium rounded-lg text-white bg-indigo-600 hover:bg-indigo-700 disabled:opacity-60 transition-colors gap-2"
+              className="inline-flex items-center px-6 py-2 text-sm font-medium rounded-lg text-white bg-primary hover:bg-primary-focus disabled:opacity-60 transition-colors gap-2"
             >
               {isSubmitting ? (
                 <span className="inline-block size-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />

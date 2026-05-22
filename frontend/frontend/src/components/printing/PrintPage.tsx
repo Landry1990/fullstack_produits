@@ -129,7 +129,7 @@ const PrintPage: React.FC = () => {
     */
 
     if (loading) return <div className="flex items-center justify-center h-screen">Chargement du document...</div>;
-    if (error) return <div className="flex items-center justify-center h-screen text-red-600 font-bold">{error}</div>;
+    if (error) return <div className="flex items-center justify-center h-screen text-error font-bold">{error}</div>;
     if (!settings || (!invoiceData && !inventoryData && !stockValuationData)) return <div>Données incomplètes</div>;
 
     return (
@@ -152,7 +152,7 @@ const PrintPage: React.FC = () => {
                     className={`px-6 py-2 rounded-lg shadow-lg font-bold transition-colors ${
                         isPrinting 
                         ? 'bg-blue-400 cursor-wait text-white' 
-                        : 'bg-blue-600 hover:bg-blue-700 text-white'
+                        : 'bg-info hover:bg-info-focus text-white'
                     }`}
                 >
                     {isPrinting ? 'Impression...' : 'Imprimer'}

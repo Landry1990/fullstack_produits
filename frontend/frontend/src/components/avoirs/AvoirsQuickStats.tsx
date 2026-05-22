@@ -26,34 +26,34 @@ export const AvoirsQuickStats: React.FC<AvoirsQuickStatsProps> = ({ avoirs }) =>
             title: t('stock:avoirs.stats.total'),
             value: stats.total,
             icon: <FileText className="size-5" />,
-            colorClass: "text-indigo-600",
-            bgClass: "bg-indigo-50",
+            colorClass: "text-primary",
+            bgClass: "bg-primary/10",
         },
         {
             title: t('stock:avoirs.stats.valides'),
             value: stats.valides,
             icon: <CheckCircle2 className="size-5" />,
-            colorClass: "text-emerald-600",
-            bgClass: "bg-emerald-50",
+            colorClass: "text-success",
+            bgClass: "bg-success/10",
         },
         {
             title: t('stock:avoirs.stats.brouillons'),
             value: stats.brouillons,
             icon: <AlertCircle className="size-5" />,
-            colorClass: "text-amber-600",
-            bgClass: "bg-amber-50",
+            colorClass: "text-warning",
+            bgClass: "bg-warning/10",
         }
     ];
 
     return (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {statItems.map((item, index) => (
-                <div key={index} className="bg-white rounded-2xl shadow-sm border border-gray-200 p-5 flex items-center gap-4 transition-all hover:shadow-md hover:border-gray-400">
+                <div key={index} className="bg-base-100 rounded-2xl shadow-sm border border-base-300 p-5 flex items-center gap-4 transition-all hover:shadow-md hover:border-gray-400">
                     <div className={`size-12 rounded-xl flex items-center justify-center ${item.bgClass} ${item.colorClass}`}>
                         {item.icon}
                     </div>
                     <div>
-                        <p className="text-sm font-medium text-gray-500">{item.title}</p>
+                        <p className="text-sm font-medium text-base-content/60">{item.title}</p>
                         <p className={`text-2xl font-bold ${item.colorClass}`}>{item.value}</p>
                     </div>
                 </div>

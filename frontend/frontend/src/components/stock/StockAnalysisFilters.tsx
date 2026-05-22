@@ -44,10 +44,10 @@ export const StockAnalysisFilters: React.FC<StockAnalysisFiltersProps> = ({
                     <button
                         key={tab.id}
                         onClick={() => onTabChange(tab.id as any)}
-                        className={`btn btn-sm px-4 sm:px-6 rounded-[14px] border-none transition-all gap-2 shrink-0 ${
+                        className={`inline-flex items-center justify-center px-3 py-1.5 text-sm rounded-[14px] border-none transition-all gap-2 shrink-0 ${
                             activeTab === tab.id 
                             ? (tab.id === 'pilotage' ? 'bg-primary text-white shadow-lg' : 'bg-base-100 text-primary shadow-sm font-black') 
-                            : 'btn-ghost text-base-content/40 font-bold hover:bg-base-100/50'
+                            : 'hover:bg-base-200 text-base-content/50 font-bold hover:bg-base-100/50'
                         }`}
                     >
                         {tab.icon}
@@ -58,7 +58,7 @@ export const StockAnalysisFilters: React.FC<StockAnalysisFiltersProps> = ({
             </div>
 
             {activeTab !== 'pilotage' && (
-                <div className="flex flex-col lg:flex-row gap-6 items-end border-t border-base-200 pt-6 animate-in fade-in slide-in-from-top-2 duration-300">
+                <div className="bg-base-100 p-4 rounded-[32px] shadow-sm border border-base-300">
                     <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-4">
                         {/* Supplier Filter */}
                         <div className="space-y-1.5">
@@ -66,7 +66,7 @@ export const StockAnalysisFilters: React.FC<StockAnalysisFiltersProps> = ({
                                 <User className="size-3" /> {t('stock:analyse.filters.supplier')}
                             </label>
                             <select 
-                                className="select select-sm select-bordered w-full font-bold focus:ring-2 focus:ring-primary/20 transition-all"
+                                className={`select border border-base-300 rounded-lg w-full font-bold focus:ring-2 focus:ring-primary/20 transition-all ${selectedFournisseur === '' ? 'text-base-content/50' : ''}`}
                                 value={selectedFournisseur}
                                 onChange={(e) => onFournisseurChange(e.target.value)}
                             >
@@ -80,11 +80,11 @@ export const StockAnalysisFilters: React.FC<StockAnalysisFiltersProps> = ({
                         {/* Unsold Days Threshold */}
                         {activeTab === 'unsold' && (
                             <div className="space-y-1.5">
-                                <label className="text-[10px] font-black uppercase tracking-widest text-base-content/40 flex items-center gap-1.5 ml-1">
+                                <label className="text-[10px] font-black uppercase tracking-widest text-base-content/50 flex items-center gap-1.5 ml-1">
                                     <Calendar className="size-3" /> {t('stock:analyse.filters.days_threshold')}
                                 </label>
                                 <select 
-                                    className="select select-sm select-bordered w-full font-bold focus:ring-2 focus:ring-primary/20 transition-all"
+                                    className="select select-sm border border-base-300 rounded-lg w-full font-bold focus:ring-2 focus:ring-primary/20 transition-all"
                                     value={unsoldDays}
                                     onChange={(e) => onUnsoldDaysChange(Number(e.target.value))}
                                 >
@@ -100,11 +100,11 @@ export const StockAnalysisFilters: React.FC<StockAnalysisFiltersProps> = ({
 
                     <div className="shrink-0">
                         <button 
-                            className={`btn btn-sm ${loading ? 'btn-disabled' : 'btn-primary'} gap-2 shadow-sm rounded-xl px-6`}
+                            className={`btn btn-sm ${activeTab === 'overstock' ? 'bg-primary text-white' : 'bg-base-200 text-base-content'} rounded-xl`}
                             onClick={onRefresh}
                             disabled={loading}
                         >
-                            {loading ? <span className="loading loading-spinner loading-xs"></span> : <RotateCcw className="size-4" />}
+                            {loading ? <span className="animate-spin rounded-full size-4 border-b-2 border-white"></span> : <RotateCcw className="size-4" />}
                             {t('stock:analyse.filters.refresh')}
                         </button>
                     </div>

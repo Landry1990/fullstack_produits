@@ -42,21 +42,21 @@ export const ProductEditModal: React.FC<ProductEditModalProps> = ({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/40" onClick={onClose} />
-      <div className="relative bg-white rounded-xl shadow-2xl border border-gray-100 w-full max-w-4xl max-h-[90vh] overflow-y-auto">
+      <div className="relative bg-base-100 rounded-xl shadow-2xl border border-base-200 w-full max-w-4xl max-h-[90vh] overflow-y-auto">
         {/* Header */}
-        <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
+        <div className="px-6 py-4 border-b border-base-200 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="p-2 bg-indigo-50 rounded-lg">
-              <Package className="size-5 text-indigo-600" />
+            <div className="p-2 bg-primary/10 rounded-lg">
+              <Package className="size-5 text-primary" />
             </div>
             <div>
-              <h3 className="text-base font-bold text-gray-900">
+              <h3 className="text-base font-bold text-base-content">
                 {form.id ? `✏️ ${t('products:edit_title')}` : `➕ ${t('products:create_title')}`}
               </h3>
-              {form.name && <p className="text-xs text-gray-400">{form.name}</p>}
+              {form.name && <p className="text-xs text-base-content/50">{form.name}</p>}
             </div>
           </div>
-          <button onClick={onClose} className="p-2 text-gray-400 hover:bg-gray-100 rounded-lg transition-colors">
+          <button onClick={onClose} className="p-2 text-base-content/50 hover:bg-base-200 rounded-lg transition-colors">
             <X className="size-5" />
           </button>
         </div>
@@ -64,7 +64,7 @@ export const ProductEditModal: React.FC<ProductEditModalProps> = ({
         <form className="p-6 space-y-6" onSubmit={onSubmit}>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             <div className="space-y-4">
-              <h4 className="text-xs font-semibold uppercase tracking-wider text-gray-400 border-b border-gray-100 pb-2">{t('products:form.general_info')}</h4>
+              <h4 className="text-xs font-semibold uppercase tracking-wider text-base-content/50 border-b border-base-200 pb-2">{t('products:form.general_info')}</h4>
 
               <Input
                 label={t('products:form.name')}
@@ -170,22 +170,22 @@ export const ProductEditModal: React.FC<ProductEditModalProps> = ({
 
               <div className="pt-4 border-t border-red-100">
                  <div className="w-full">
-                    <label className="block text-[10px] font-semibold text-red-600 uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
+                    <label className="block text-[10px] font-semibold text-error uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
                       <AlertTriangle size={12} /> Message d'alerte comptoir
                     </label>
                     <textarea
-                      className="w-full rounded-lg border border-gray-200 bg-red-50/30 hover:border-gray-300 focus:border-red-400 focus:ring-2 focus:ring-red-50 transition-all min-h-[80px] text-sm p-3 outline-none"
+                      className="w-full rounded-lg border border-base-300 bg-error/10/30 hover:border-base-300 focus:border-red-400 focus:ring-2 focus:ring-red-50 transition-all min-h-[80px] text-sm p-3 outline-none"
                       placeholder="Ex: Changement de conditionnement, vérifier le code barre..."
                       value={form.message_alerte || ''}
                       onChange={(e) => setForm({ ...form, message_alerte: e.target.value })}
                     />
-                    <p className="text-[10px] text-gray-400 mt-1 italic">Ce message s'affichera en plein écran lors du passage de ce produit en caisse.</p>
+                    <p className="text-[10px] text-base-content/50 mt-1 italic">Ce message s'affichera en plein écran lors du passage de ce produit en caisse.</p>
                  </div>
               </div>
             </div>
 
             <div className="space-y-4">
-               <h4 className="text-xs font-semibold uppercase tracking-wider text-gray-400 border-b border-gray-100 pb-2">{t('products:form.price_margin')}</h4>
+               <h4 className="text-xs font-semibold uppercase tracking-wider text-base-content/50 border-b border-base-200 pb-2">{t('products:form.price_margin')}</h4>
 
                <div className="grid grid-cols-2 gap-4">
                   <Input
@@ -199,7 +199,7 @@ export const ProductEditModal: React.FC<ProductEditModalProps> = ({
                     label={t('products:form.selling_price')}
                     type="number"
                     icon={<DollarSign size={16} className="text-indigo-500" />}
-                    className="font-semibold text-indigo-600"
+                    className="font-semibold text-primary"
                     value={form.selling_price}
                     onChange={(e) => setForm({ ...form, selling_price: e.target.value })}
                   />
@@ -230,9 +230,9 @@ export const ProductEditModal: React.FC<ProductEditModalProps> = ({
                     checked={form.use_lot_management}
                     onChange={checked => setForm({...form, use_lot_management: checked})}
                     label={t('products:form.lot_management')}
-                    className="p-3 rounded-lg border bg-gray-50 border-gray-200 w-full hover:bg-gray-100 transition-colors"
+                    className="p-3 rounded-lg border bg-base-200 border-base-300 w-full hover:bg-base-200 transition-colors"
                   />
-                  <p className="text-[10px] text-gray-400 ml-8 mt-1">{t('products:form.lot_management_desc')}</p>
+                  <p className="text-[10px] text-base-content/50 ml-8 mt-1">{t('products:form.lot_management_desc')}</p>
                </div>
             </div>
           </div>
@@ -242,7 +242,7 @@ export const ProductEditModal: React.FC<ProductEditModalProps> = ({
                   checked={form.requires_prescription || false}
                   onChange={checked => setForm({ ...form, requires_prescription: checked })}
                   label={t('products:form.requires_prescription')}
-                  className="p-3 rounded-lg border bg-blue-50/50 border-blue-100 hover:bg-blue-50 transition-colors"
+                  className="p-3 rounded-lg border bg-info/10/50 border-blue-100 hover:bg-info/10 transition-colors"
                 />
                 <Checkbox
                   color="warning"
@@ -250,18 +250,18 @@ export const ProductEditModal: React.FC<ProductEditModalProps> = ({
                   disabled={!form.fournisseur}
                   onChange={checked => setForm({ ...form, is_supplier_exclusive: checked })}
                   label={t('products:form.supplier_exclusive')}
-                  className={`p-3 rounded-lg border transition-all ${form.fournisseur ? 'bg-amber-50/50 border-amber-100 hover:bg-amber-50' : 'bg-gray-50 opacity-50 cursor-not-allowed'}`}
+                  className={`p-3 rounded-lg border transition-all ${form.fournisseur ? 'bg-warning/10/50 border-amber-100 hover:bg-warning/10' : 'bg-base-200 text-base-content/50 cursor-not-allowed'}`}
                 />
           </div>
 
-          <div className="p-5 rounded-xl border border-indigo-100 bg-indigo-50/30">
+          <div className="p-5 rounded-xl border border-indigo-100 bg-primary/10/30">
              <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-3">
-                  <div className="p-2 bg-indigo-100 rounded-lg">
-                    <Layers className="text-indigo-600 size-5" />
+                  <div className="p-2 bg-primary/20 rounded-lg">
+                    <Layers className="text-primary size-5" />
                   </div>
                   <div>
-                    <h4 className="text-sm font-semibold text-indigo-700">{t('products:form.reserve_title')}</h4>
+                    <h4 className="text-sm font-semibold text-primary">{t('products:form.reserve_title')}</h4>
                     <p className="text-[10px] text-indigo-400 font-medium">{t('products:form.reserve_desc')}</p>
                   </div>
                 </div>
@@ -302,9 +302,9 @@ export const ProductEditModal: React.FC<ProductEditModalProps> = ({
              )}
           </div>
 
-          <div className="flex justify-end gap-3 pt-6 border-t border-gray-100">
-            <button type="button" className="px-6 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors" onClick={onClose}>{t('common:cancel')}</button>
-            <button type="submit" className="px-8 py-2 text-sm font-medium text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 transition-colors shadow-sm">💾 {form.id ? t('common:save') : t('common:confirm')}</button>
+          <div className="flex justify-end gap-3 pt-6 border-t border-base-200">
+            <button type="button" className="px-6 py-2 text-sm font-medium text-base-content bg-base-100 border border-base-300 rounded-lg hover:bg-base-200 transition-colors" onClick={onClose}>{t('common:cancel')}</button>
+            <button type="submit" className="px-8 py-2 text-sm font-medium text-white bg-primary rounded-lg hover:bg-primary-focus transition-colors shadow-sm">💾 {form.id ? t('common:save') : t('common:confirm')}</button>
           </div>
         </form>
       </div>

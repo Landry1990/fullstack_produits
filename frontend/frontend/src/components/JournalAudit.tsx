@@ -123,13 +123,13 @@ const JournalAudit: React.FC = () => {
           case 'INV_CANCEL':
           case 'ORD_CNCL':
           case 'INV_DEL':
-            return { badge: 'badge-error', icon: '🗑️', bg: 'bg-red-50', color: 'text-red-700' };
+            return { badge: 'badge-error', icon: '🗑️', bg: 'bg-error/10', color: 'text-error' };
           case 'CLOTURE':
           case 'ORD_RECV':
-            return { badge: 'badge-info', icon: '💰', bg: 'bg-blue-50', color: 'text-blue-700' };
+            return { badge: 'badge-info', icon: '💰', bg: 'bg-info/10', color: 'text-info' };
           case 'INV_VALID':
           case 'INV_VAL':
-            return { badge: 'badge-primary', icon: '✅', bg: 'bg-purple-50', color: 'text-purple-700' };
+            return { badge: 'badge-primary', icon: '✅', bg: 'bg-secondary/10', color: 'text-purple-700' };
           default:
             return { badge: 'badge-ghost', icon: '📝', bg: 'bg-base-200/50', color: 'text-base-content/90' };
         }
@@ -214,14 +214,14 @@ const JournalAudit: React.FC = () => {
             <div className="p-4 bg-base-200/50 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between border-b border-base-200">
                 <div className="flex items-center gap-2">
                     <span className="p-2 bg-primary/10 rounded-lg">🔍</span>
-                    <h3 className="font-black text-sm uppercase tracking-wider opacity-70">{t('filters.title')}</h3>
+                    <h3 className="font-black text-sm uppercase tracking-wider text-base-content/70">{t('filters.title')}</h3>
                 </div>
                 <div className="flex flex-wrap items-stretch sm:items-center gap-2 w-full sm:w-auto">
                     <button onClick={() => setShowStats(!showStats)} className={`btn btn-sm flex-1 sm:flex-none ${showStats ? 'btn-primary' : 'btn-ghost'} rounded-lg font-bold`}>
                         {showStats ? t('filters.hide_stats') : t('filters.show_stats')}
                     </button>
                     <button onClick={handleExportCSV} className="btn btn-sm btn-success text-white rounded-lg font-bold flex-1 sm:flex-none">{t('filters.export')}</button>
-                    <button onClick={handleResetFilters} className="btn btn-sm btn-ghost rounded-lg opacity-50 hover:opacity-100 flex-1 sm:flex-none">{t('filters.reset')}</button>
+                    <button onClick={handleResetFilters} className="btn btn-sm btn-ghost rounded-lg text-base-content/50 hover:opacity-100 flex-1 sm:flex-none">{t('filters.reset')}</button>
                 </div>
             </div>
 
@@ -273,13 +273,13 @@ const JournalAudit: React.FC = () => {
           {loading ? (
             <div className="flex flex-col items-center justify-center py-24 bg-base-100 rounded-3xl border-2 border-dashed border-base-200">
               <div className="loading loading-spinner loading-lg text-primary"></div>
-              <span className="mt-4 font-black uppercase text-xs opacity-30 tracking-widest">{t('view.loading')}</span>
+              <span className="mt-4 font-black uppercase text-xs text-base-content/30 tracking-widest">{t('view.loading')}</span>
             </div>
           ) : filteredLogs.length === 0 ? (
             <div className="bg-base-100 rounded-3xl border-2 border-dashed border-base-200 p-24 text-center">
-              <div className="text-5xl mb-6 opacity-20">🍃</div>
+              <div className="text-5xl mb-6 text-base-content/20">🍃</div>
               <p className="font-black text-lg opacity-40 uppercase">{t('view.empty_title')}</p>
-              <p className="text-sm opacity-30 mt-1">{t('view.empty_subtitle')}</p>
+              <p className="text-sm text-base-content/30 mt-1">{t('view.empty_subtitle')}</p>
             </div>
           ) : viewMode === 'cards' ? (
             <div className="space-y-4">
@@ -313,7 +313,7 @@ const JournalAudit: React.FC = () => {
                                         <div className="size-1.5 rounded-full bg-base-300"></div>
                                         {log.user_name || t('view.system_user')}
                                     </span>
-                                    <span className="opacity-30 font-bold">{format(new Date(log.timestamp), 'dd MMMM yyyy', { locale: i18n.language === 'fr' ? fr : undefined })}</span>
+                                    <span className="text-base-content/30 font-bold">{format(new Date(log.timestamp), 'dd MMMM yyyy', { locale: i18n.language === 'fr' ? fr : undefined })}</span>
                                     {formattedDetails && (
                                         <span className="font-black text-primary/80 bg-primary/5 px-2 py-0.5 rounded-md border border-primary/10">
                                             {formattedDetails}
@@ -334,7 +334,7 @@ const JournalAudit: React.FC = () => {
                     
                     {isExpanded && log.details && (
                       <div className="bg-neutral text-neutral-content p-6 font-mono text-[11px] border-t border-neutral-focus">
-                        <div className="flex justify-between items-center mb-4 opacity-50">
+                        <div className="flex justify-between items-center mb-4 text-base-content/50">
                             <span className="font-black">{t('view.raw_data')}</span>
                             <span className="text-[9px]">ID: {log.id}</span>
                         </div>
@@ -352,11 +352,11 @@ const JournalAudit: React.FC = () => {
               <table className="table w-full min-w-[720px]">
                 <thead>
                   <tr className="bg-base-200/50">
-                    <th className="font-black text-[10px] uppercase opacity-50 pl-6">{t('table.timestamp')}</th>
-                    <th className="font-black text-[10px] uppercase opacity-50">{t('table.user')}</th>
-                    <th className="font-black text-[10px] uppercase opacity-50">{t('table.operation')}</th>
-                    <th className="font-black text-[10px] uppercase opacity-50">{t('table.description')}</th>
-                    <th className="font-black text-[10px] uppercase opacity-50 text-right pr-6">{t('table.status')}</th>
+                    <th className="font-black text-[10px] uppercase text-base-content/50 pl-6">{t('table.timestamp')}</th>
+                    <th className="font-black text-[10px] uppercase text-base-content/50">{t('table.user')}</th>
+                    <th className="font-black text-[10px] uppercase text-base-content/50">{t('table.operation')}</th>
+                    <th className="font-black text-[10px] uppercase text-base-content/50">{t('table.description')}</th>
+                    <th className="font-black text-[10px] uppercase text-base-content/50 text-right pr-6">{t('table.status')}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-base-200">
@@ -370,7 +370,7 @@ const JournalAudit: React.FC = () => {
                         <td className="pl-6 border-none">
                             <div className="flex flex-col">
                                 <span className="font-black text-xs">{format(new Date(log.timestamp), 'HH:mm:ss', { locale: i18n.language === 'fr' ? fr : undefined })}</span>
-                                <span className="text-[9px] font-bold opacity-30">{format(new Date(log.timestamp), 'dd/MM/yy', { locale: i18n.language === 'fr' ? fr : undefined })}</span>
+                                <span className="text-[9px] font-bold text-base-content/30">{format(new Date(log.timestamp), 'dd/MM/yy', { locale: i18n.language === 'fr' ? fr : undefined })}</span>
                             </div>
                         </td>
                         <td className="border-none">
@@ -391,7 +391,7 @@ const JournalAudit: React.FC = () => {
                              <div className="flex flex-col gap-0.5 py-1">
                                 <span className="font-bold text-xs text-base-content/80">{log.description}</span>
                                 {details && <span className="text-[10px] font-black text-primary bg-primary/5 px-2 py-1 rounded inline-block w-fit">{details}</span>}
-                                {log.model_name && <span className="text-[9px] font-bold opacity-20 uppercase tracking-tighter">{log.model_name} #{log.object_id}</span>}
+                                {log.model_name && <span className="text-[9px] font-bold text-base-content/20 uppercase tracking-tighter">{log.model_name} #{log.object_id}</span>}
                              </div>
                         </td>
                         <td className="text-right pr-6 border-none">

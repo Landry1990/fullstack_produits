@@ -196,7 +196,7 @@ export default function SmartOrganizerModal({ isOpen, onClose, targetCategory, o
                         </div>
                     ) : (
                         <div className="flex flex-col items-center justify-center p-12 text-base-content/40 gap-2">
-                            <Search className="size-8 opacity-20" />
+                            <Search className="size-8 text-base-content/20" />
                             <p className="text-sm italic">{t('stock:organisation.smart_organizer.no_results')}</p>
                         </div>
                     )}

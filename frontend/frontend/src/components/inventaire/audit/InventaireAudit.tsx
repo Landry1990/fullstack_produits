@@ -54,7 +54,7 @@ export const InventaireAudit: React.FC<InventaireAuditProps> = ({ onBack }) => {
                 </div>
                 <div className="p-0 flex-1 overflow-y-auto max-h-[500px]">
                     {!data || data.length === 0 ? (
-                        <div className="flex flex-col items-center justify-center h-full py-12 gap-3 opacity-20">
+                        <div className="flex flex-col items-center justify-center h-full py-12 gap-3 text-base-content/20">
                             <Package className="h-10 w-10" />
                             <p className="text-sm font-medium">{t('inventaire.analysis.no_data', { defaultValue: 'Aucune donnée' })}</p>
                         </div>
@@ -268,7 +268,7 @@ export const InventaireAudit: React.FC<InventaireAuditProps> = ({ onBack }) => {
                                 ? t('inventaire.audit.chart.title_value', { type: groupBy === 'RAYON' ? 'Rayon' : 'Groupe' }) 
                                 : t('inventaire.audit.chart.title_freq', { type: groupBy === 'RAYON' ? 'Rayon' : 'Groupe' })}
                         </div>
-                        <span className="text-[10px] font-black opacity-30 uppercase tracking-widest">{metric} / {groupBy}</span>
+                        <span className="text-[10px] font-black text-base-content/30 uppercase tracking-widest">{metric} / {groupBy}</span>
                     </h3>
                     <div className="h-[300px] w-full">
                         <ResponsiveContainer width="100%" height="100%">
@@ -354,7 +354,7 @@ export const InventaireAudit: React.FC<InventaireAuditProps> = ({ onBack }) => {
                                 {(!data?.top_pertes || data.top_pertes.length === 0) && (
                                     <tr>
                                         <td colSpan={4} className="text-center py-12">
-                                            <div className="flex flex-col items-center opacity-30 gap-2">
+                                            <div className="flex flex-col items-center text-base-content/30 gap-2">
                                                 <Package className="h-12 w-12" />
                                                 <p className="text-sm font-bold uppercase tracking-widest">{t('inventaire.audit.table.empty')}</p>
                                             </div>

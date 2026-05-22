@@ -118,7 +118,7 @@ export const AjustementsTable: React.FC<AjustementsTableProps> = ({
                 </div>
                 <div className="flex items-center gap-1 bg-base-200 p-1 rounded-2xl shadow-inner">
                     <button 
-                        className="btn btn-sm btn-ghost btn-circle hover:bg-base-100 hover:text-primary transition-all disabled:opacity-30"
+                        className="btn btn-sm btn-ghost btn-circle hover:bg-base-100 hover:text-primary transition-all disabled:text-base-content/30"
                         disabled={currentPage <= 1}
                         onClick={() => onPageChange(currentPage - 1)}
                     >
@@ -128,7 +128,7 @@ export const AjustementsTable: React.FC<AjustementsTableProps> = ({
                         {currentPage}
                     </div>
                     <button 
-                        className="btn btn-sm btn-ghost btn-circle hover:bg-base-100 hover:text-primary transition-all disabled:opacity-30"
+                        className="btn btn-sm btn-ghost btn-circle hover:bg-base-100 hover:text-primary transition-all disabled:text-base-content/30"
                         disabled={currentPage >= totalPages}
                         onClick={() => onPageChange(currentPage + 1)}
                     >

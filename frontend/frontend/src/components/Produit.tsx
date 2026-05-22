@@ -429,18 +429,18 @@ export default function Produit() {
   const error = loadError instanceof Error ? loadError.message : (loadError ? String(loadError) : null);
 
   return (
-    <div className="h-full flex flex-col overflow-hidden bg-gray-50">
+    <div className="flex-1 flex flex-col overflow-hidden bg-base-200">
       {/* ── HEADER ── */}
-      <div className="px-6 py-4 border-b border-gray-100 bg-white shrink-0 flex flex-col sm:flex-row items-center justify-between gap-4">
+      <div className="px-6 py-4 border-b border-base-200 bg-base-100 shrink-0 flex flex-col sm:flex-row items-center justify-between gap-4">
         <div className="flex items-center gap-3">
-          <div className="p-2.5 bg-indigo-50 rounded-lg">
-            <Package className="size-5 text-indigo-600" />
+          <div className="p-2.5 bg-primary/10 rounded-lg">
+            <Package className="size-5 text-primary" />
           </div>
           <div>
-            <h1 className="text-lg font-bold text-gray-900">
+            <h1 className="text-lg font-bold text-base-content">
               {t('products:title', { defaultValue: 'Gestion des produits' })}
             </h1>
-            <p className="text-xs text-gray-400 font-medium">
+            <p className="text-xs text-base-content/50 font-medium">
               {t('products:subtitle', { defaultValue: 'Créez et gérez vos produits et services' })}
             </p>
           </div>
@@ -448,28 +448,28 @@ export default function Produit() {
         <div className="flex items-center gap-2">
           <button
             onClick={() => recalculateRotationMutation.mutate()}
-            className="p-2 text-gray-400 hover:bg-gray-100 rounded-lg transition-colors"
+            className="p-2 text-base-content/50 hover:bg-base-200 rounded-lg transition-colors"
             title={t('products:actions.rotation')}
           >
             <RotateCw className="size-4" />
           </button>
           <button
             onClick={() => refetchProduits()}
-            className="p-2 text-gray-400 hover:bg-gray-100 rounded-lg transition-colors"
+            className="p-2 text-base-content/50 hover:bg-base-200 rounded-lg transition-colors"
             disabled={loading}
             title={t('common:actions.refresh')}
           >
-            {loading ? <span className="inline-block size-4 border-2 border-gray-300 border-t-gray-600 rounded-full animate-spin" /> : <RefreshCw className="size-4" />}
+            {loading ? <span className="inline-block size-4 border-2 border-base-300 border-t-gray-600 rounded-full animate-spin" /> : <RefreshCw className="size-4" />}
           </button>
           <button
-            className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg text-white bg-indigo-600 hover:bg-indigo-700 transition-colors shadow-sm"
+            className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg text-white bg-primary hover:bg-primary-focus transition-colors shadow-sm"
             onClick={() => setIsCreateModalOpen(true)}
           >
             <Package className="size-3.5" />
             <span>{t('products:actions.new', { defaultValue: 'Nouveau' })}</span>
           </button>
           <button
-            className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg border border-gray-200 bg-white text-gray-700 hover:bg-gray-50 transition-colors"
+            className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg border border-base-300 bg-base-100 text-base-content hover:bg-base-200 transition-colors"
             onClick={() => setIsImportModalOpen(true)}
           >
             <Upload className="size-3.5" />
@@ -478,75 +478,83 @@ export default function Produit() {
         </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto p-4 space-y-4">
+      <div className="flex-1 p-4 space-y-4 min-h-0 overflow-hidden">
       {error && (
-        <div className="px-4 py-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
+        <div className="px-4 py-3 bg-error/10 border border-red-200 rounded-lg text-error text-sm">
           {error}
         </div>
       )}
 
       {/* Main Content Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 min-h-[500px] w-full">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 h-full min-h-0 w-full">
         {/* Left Panel: List & Actions */}
-        <div className="lg:col-span-12 xl:col-span-5 bg-white rounded-xl shadow-sm border border-gray-100 flex flex-col overflow-hidden">
-          <ProductFilters
-            searchQuery={searchQuery} setSearchQuery={setSearchQuery}
-            filterRayon={filterRayon} setFilterRayon={setFilterRayon}
-            filterFournisseur={filterFournisseur} setFilterFournisseur={setFilterFournisseur}
-            filterExclusive={filterExclusive} setFilterExclusive={setFilterExclusive}
-            showInactive={showInactive} setShowInactive={setShowInactive}
-            showInStockOnly={showInStockOnly} setShowInStockOnly={setShowInStockOnly}
-          />
+        <div className="lg:col-span-12 xl:col-span-5 bg-base-100 rounded-xl shadow-sm border border-base-200 flex flex-col overflow-hidden h-full">
+          <div className="shrink-0">
+            <ProductFilters
+              searchQuery={searchQuery} setSearchQuery={setSearchQuery}
+              filterRayon={filterRayon} setFilterRayon={setFilterRayon}
+              filterFournisseur={filterFournisseur} setFilterFournisseur={setFilterFournisseur}
+              filterExclusive={filterExclusive} setFilterExclusive={setFilterExclusive}
+              showInactive={showInactive} setShowInactive={setShowInactive}
+              showInStockOnly={showInStockOnly} setShowInStockOnly={setShowInStockOnly}
+            />
+          </div>
 
-          <ProductTable
-            products={produits} selectedProduit={selectedProduit}
-            onViewDetails={handleViewDetails} loading={loading}
-            selectedProductIds={selectedProductIds}
-            onSelectProduct={(id) => setSelectedProductIds(prev => prev.includes(id) ? prev.filter(pid => pid !== id) : [...prev, id])}
-            onSelectAll={() => setSelectedProductIds(prev => prev.length === produits.length ? [] : produits.map(p => p.id))}
-            onZoom={() => setIsDetailsModalOpen(true)}
-          />
+          <div className="overflow-y-auto flex-1 min-h-0">
+            <ProductTable
+              products={produits} selectedProduit={selectedProduit}
+              onViewDetails={handleViewDetails} loading={loading}
+              selectedProductIds={selectedProductIds}
+              onSelectProduct={(id) => setSelectedProductIds(prev => prev.includes(id) ? prev.filter(pid => pid !== id) : [...prev, id])}
+              onSelectAll={() => setSelectedProductIds(prev => prev.length === produits.length ? [] : produits.map(p => p.id))}
+              onZoom={() => setIsDetailsModalOpen(true)}
+            />
+          </div>
 
           {totalPages > 1 && (
-            <Pagination
-              currentPage={page}
-              totalPages={totalPages}
-              totalItems={totalCount}
-              onPrev={() => setPage(p => Math.max(1, p - 1))}
-              onNext={() => setPage(p => Math.min(totalPages, p + 1))}
-              hasNext={page < totalPages}
-              isLoading={loading}
-            />
+            <div className="shrink-0">
+              <Pagination
+                currentPage={page}
+                totalPages={totalPages}
+                totalItems={totalCount}
+                onPrev={() => setPage(p => Math.max(1, p - 1))}
+                onNext={() => setPage(p => Math.min(totalPages, p + 1))}
+                hasNext={page < totalPages}
+                isLoading={loading}
+              />
+            </div>
           )}
 
-          <div className="px-4 py-2 border-t border-gray-100 bg-gray-50 shrink-0 flex justify-between items-center">
+          <div className="px-4 py-2 border-t border-base-200 bg-base-200 shrink-0 flex justify-between items-center">
             <div className="flex items-center gap-1.5">
-              <span className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider">Global</span>
-              <span className="text-indigo-600 font-bold text-sm">{totalCount}</span>
+              <span className="text-[10px] font-semibold text-base-content/50 uppercase tracking-wider">Global</span>
+              <span className="text-primary font-bold text-sm">{totalCount}</span>
             </div>
             <div className="flex items-center gap-4">
               <div className="flex items-center gap-1.5" title="Stock Faible">
                 <div className="size-2 rounded-full bg-amber-400"></div>
-                <span className="text-amber-600 font-semibold text-sm">{lowStockCount}</span>
+                <span className="text-warning font-semibold text-sm">{lowStockCount}</span>
               </div>
               <div className="flex items-center gap-1.5" title="Rupture">
                 <div className="size-2 rounded-full bg-red-500"></div>
-                <span className="text-red-600 font-semibold text-sm">{outOfStockCount}</span>
+                <span className="text-error font-semibold text-sm">{outOfStockCount}</span>
               </div>
             </div>
           </div>
 
-          <BulkActionsBar
-            selectedCount={selectedProductIds.length} rayons={rayons} fournisseurs={fournisseurs} loading={actionLoading}
-            onDeselectAll={() => setSelectedProductIds([])}
-            onBulkDelete={handleBulkDelete}
-            onBulkChangeRayon={() => { /* handleBulkChangeRayon Logic */ }}
-            onBulkChangeFournisseur={() => { /* handleBulkChangeFournisseur Logic */ }}
-          />
+          <div className="shrink-0">
+            <BulkActionsBar
+              selectedCount={selectedProductIds.length} rayons={rayons} fournisseurs={fournisseurs} loading={actionLoading}
+              onDeselectAll={() => setSelectedProductIds([])}
+              onBulkDelete={handleBulkDelete}
+              onBulkChangeRayon={() => { /* handleBulkChangeRayon Logic */ }}
+              onBulkChangeFournisseur={() => { /* handleBulkChangeFournisseur Logic */ }}
+            />
+          </div>
         </div>
 
         {/* Right Panel: Details */}
-        <div className="lg:col-span-12 xl:col-span-7 bg-white rounded-xl shadow-sm border border-gray-100 flex flex-col overflow-hidden">
+        <div className="lg:col-span-12 xl:col-span-7 bg-base-100 rounded-xl shadow-sm border border-base-200 flex flex-col overflow-hidden h-full">
           <ProductDetailPanel
             selectedProduit={selectedProduit} detailsLoading={detailsLoading}
             activeTab={activeTab} setActiveTab={setActiveTab}

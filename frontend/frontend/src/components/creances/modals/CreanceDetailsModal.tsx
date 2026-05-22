@@ -45,68 +45,68 @@ export const CreanceDetailsModal: React.FC<CreanceDetailsModalProps> = ({
         >
             <div className="space-y-6">
                 {/* Facture Identity */}
-                <div className="flex flex-col md:flex-row gap-4 p-4 bg-gray-50/50 rounded-xl border border-gray-100 shadow-inner">
+                <div className="flex flex-col md:flex-row gap-4 p-4 bg-base-200/50 rounded-xl border border-base-200 shadow-inner">
                     <div className="flex-1 space-y-1">
-                        <div className="text-[10px] font-black uppercase text-gray-400 tracking-widest">{t('creances:details_modal.invoice')}</div>
-                        <div className="text-xl font-black text-indigo-600 tracking-tighter">{creance.numero_facture}</div>
-                        <div className="text-sm font-bold text-gray-500">{t('creances:details_modal.issued_on')} {formatDate(creance.date)}</div>
+                        <div className="text-[10px] font-black uppercase text-base-content/50 tracking-widest">{t('creances:details_modal.invoice')}</div>
+                        <div className="text-xl font-black text-primary tracking-tighter">{creance.numero_facture}</div>
+                        <div className="text-sm font-bold text-base-content/60">{t('creances:details_modal.issued_on')} {formatDate(creance.date)}</div>
                     </div>
-                    <div className="flex-1 space-y-1 md:border-l md:pl-4 border-gray-200">
-                        <div className="text-[10px] font-black uppercase text-gray-400 tracking-widest">{t('creances:details_modal.client_beneficiary')}</div>
-                        <div className="text-base font-bold text-gray-900">{creance.client_name}</div>
-                        <div className="text-xs font-semibold text-gray-500">{creance.ayant_droit_details?.nom || t('creances:details_modal.no_beneficiary')}</div>
+                    <div className="flex-1 space-y-1 md:border-l md:pl-4 border-base-300">
+                        <div className="text-[10px] font-black uppercase text-base-content/50 tracking-widest">{t('creances:details_modal.client_beneficiary')}</div>
+                        <div className="text-base font-bold text-base-content">{creance.client_name}</div>
+                        <div className="text-xs font-semibold text-base-content/60">{creance.ayant_droit_details?.nom || t('creances:details_modal.no_beneficiary')}</div>
                     </div>
-                    <div className="flex-1 space-y-1 md:border-l md:pl-4 border-gray-200">
-                        <div className="text-[10px] font-black uppercase text-gray-400 tracking-widest">{t('creances:details_modal.financial_summary')}</div>
+                    <div className="flex-1 space-y-1 md:border-l md:pl-4 border-base-300">
+                        <div className="text-[10px] font-black uppercase text-base-content/50 tracking-widest">{t('creances:details_modal.financial_summary')}</div>
                         <div className="flex items-center gap-2">
                             <span className="text-xs font-bold">{t('creances:details_modal.total')}</span>
                             <span className="font-black">{formatCurrency(Math.round(parseFloat(creance.total_ttc)))}</span>
                         </div>
                         <div className="flex items-center gap-2">
-                            <span className="text-xs font-bold text-amber-600">{t('creances:details_modal.remaining')}</span>
-                            <span className="font-black text-amber-600">{formatCurrency(Math.round(parseFloat(creance.reste_a_payer)))}</span>
+                            <span className="text-xs font-bold text-warning">{t('creances:details_modal.remaining')}</span>
+                            <span className="font-black text-warning">{formatCurrency(Math.round(parseFloat(creance.reste_a_payer)))}</span>
                         </div>
                     </div>
                 </div>
 
                 {/* Paiements Table */}
                 <div className="space-y-3">
-                    <h4 className="text-xs font-black uppercase tracking-widest text-indigo-600 flex items-center gap-2 px-1">
+                    <h4 className="text-xs font-black uppercase tracking-widest text-primary flex items-center gap-2 px-1">
                         <History className="size-3.5" /> {t('creances:details_modal.payment_list')}
                     </h4>
                     
                     {paiements.length === 0 ? (
-                        <div className="bg-white border border-dashed border-gray-200 rounded-xl p-10 text-center">
-                            <p className="text-gray-400 italic text-sm">{t('creances:details_modal.no_payments')}</p>
+                        <div className="bg-base-100 border border-dashed border-base-300 rounded-xl p-10 text-center">
+                            <p className="text-base-content/50 italic text-sm">{t('creances:details_modal.no_payments')}</p>
                         </div>
                     ) : (
-                        <div className="bg-white rounded-xl border border-gray-100 overflow-hidden shadow-sm">
+                        <div className="bg-base-100 rounded-xl border border-base-200 overflow-hidden shadow-sm">
                             <table className="table w-full">
                                 <thead>
-                                    <tr className="bg-white border-b border-gray-100">
-                                        <th className="text-[9px] font-black uppercase text-gray-400 tracking-widest">{t('creances:details_modal.headers.date')}</th>
-                                        <th className="text-[9px] font-black uppercase text-gray-400 tracking-widest">{t('creances:details_modal.headers.mode')}</th>
-                                        <th className="text-[9px] font-black uppercase text-gray-400 tracking-widest">{t('creances:details_modal.headers.reference')}</th>
-                                        <th className="text-[9px] font-black uppercase text-gray-400 tracking-widest text-right">{t('creances:details_modal.headers.amount')}</th>
-                                        <th className="text-[9px] font-black uppercase text-gray-400 tracking-widest text-center">{t('creances:details_modal.headers.actions')}</th>
+                                    <tr className="bg-base-100 border-b border-base-200">
+                                        <th className="text-[9px] font-black uppercase text-base-content/50 tracking-widest">{t('creances:details_modal.headers.date')}</th>
+                                        <th className="text-[9px] font-black uppercase text-base-content/50 tracking-widest">{t('creances:details_modal.headers.mode')}</th>
+                                        <th className="text-[9px] font-black uppercase text-base-content/50 tracking-widest">{t('creances:details_modal.headers.reference')}</th>
+                                        <th className="text-[9px] font-black uppercase text-base-content/50 tracking-widest text-right">{t('creances:details_modal.headers.amount')}</th>
+                                        <th className="text-[9px] font-black uppercase text-base-content/50 tracking-widest text-center">{t('creances:details_modal.headers.actions')}</th>
                                     </tr>
                                 </thead>
                                 <tbody className="text-sm">
                                     {paiements.map((p: any) => (
                                         <tr key={p.id} className="hover:bg-base-50 transition-colors border-b border-base-100 last:border-none">
-                                            <td className="font-mono text-gray-500">{formatDateTime(p.date_paiement || p.created_at)}</td>
+                                            <td className="font-mono text-base-content/60">{formatDateTime(p.date_paiement || p.created_at)}</td>
                                             <td className="font-bold">
                                                 <div className="flex items-center gap-2">
                                                     <span className="text-lg leading-none">{getModeIcon(p.mode_paiement)}</span>
                                                     <span className="capitalize">{t(`common:payment_modes.${p.mode_paiement}`)}</span>
                                                 </div>
                                             </td>
-                                            <td className="font-mono text-xs text-gray-500">{p.reference || '-'}</td>
+                                            <td className="font-mono text-xs text-base-content/60">{p.reference || '-'}</td>
                                             <td className="text-right font-black italic">{formatCurrency(Math.round(parseFloat(p.montant)))}</td>
                                             <td className="text-center">
                                                 <button 
                                                     onClick={() => onPrintReceipt(creance.id, p.id)}
-                                                    className="btn btn-xs btn-circle btn-ghost hover:bg-indigo-50 hover:text-indigo-600 transition-all shadow-sm"
+                                                    className="btn btn-xs btn-circle btn-ghost hover:bg-primary/10 hover:text-primary transition-all shadow-sm"
                                                     title={t('creances:details_modal.print_receipt')}
                                                 >
                                                     <Printer className="size-3.5" />
@@ -120,9 +120,9 @@ export const CreanceDetailsModal: React.FC<CreanceDetailsModalProps> = ({
                     )}
                 </div>
 
-                <div className="flex justify-between items-center bg-indigo-50/50 p-4 rounded-xl border border-indigo-500/10">
-                    <div className="text-xs font-bold text-indigo-600/60 uppercase tracking-widest">{t('creances:details_modal.total_collected')}</div>
-                    <div className="text-2xl font-black text-indigo-600 italic tracking-tighter">
+                <div className="flex justify-between items-center bg-primary/10/50 p-4 rounded-xl border border-indigo-500/10">
+                    <div className="text-xs font-bold text-primary/60 uppercase tracking-widest">{t('creances:details_modal.total_collected')}</div>
+                    <div className="text-2xl font-black text-primary italic tracking-tighter">
                         {formatCurrency(Math.round(parseFloat(creance.montant_paye)))}
                     </div>
                 </div>

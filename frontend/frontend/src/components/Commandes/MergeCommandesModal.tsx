@@ -95,7 +95,7 @@ export default function MergeCommandesModal({
             <div className="modal-box max-w-2xl">
                 {loadingMergeDetails ? (
                     <div className="flex flex-col items-center justify-center py-12">
-                        <span className="loading loading-spinner loading-lg mb-4"></span>
+                        <span className="inline-block size-8 border-2 border-base-300 border-t-indigo-600 rounded-full animate-spin mb-4"></span>
                         <p>{t('orders:merge_modal.loading')}</p>
                     </div>
                 ) : (
@@ -104,17 +104,17 @@ export default function MergeCommandesModal({
                             {t('orders:merge_modal.title', { count: selectedOrderIds.size })}
                         </h3>
                         
-                        <p className="text-sm text-base-content/70 mb-4">
+                        <p className="text-sm text-base-content/60 mb-4">
                            {t('orders:merge_modal.description')}
                         </p>
 
                         {/* Sélection du fournisseur final */}
-                        <div className="form-control mb-4">
+                        <div className=" mb-4">
                             <label className="label">
-                                <span className="label-text font-semibold">{t('orders:merge_modal.supplier_label')}</span>
+                                <span className="text-sm font-medium text-base-content font-semibold">{t('orders:merge_modal.supplier_label')}</span>
                             </label>
                             <select
-                                className="select select-bordered w-full"
+                                className="select-ref select-bordered w-full"
                                 value={mergeTargetOrderId ?? ''}
                                 onChange={(e) => setMergeTargetOrderId(e.target.value ? parseInt(e.target.value) : null)}
                             >
@@ -142,17 +142,17 @@ export default function MergeCommandesModal({
                                     return (
                                         <div 
                                             key={order.id} 
-                                            className={`flex justify-between items-center text-sm p-2 rounded ${isTarget ? 'bg-primary/20 border border-primary' : 'bg-base-100'}`}
+                                            className={`flex justify-between items-center text-sm p-2 rounded ${isTarget ? 'bg-primary/20 border border-indigo-500' : 'bg-base-100'}`}
                                         >
                                             <div className="flex items-center gap-2">
-                                                {isTarget && <span className="badge badge-primary badge-xs">{t('orders:merge_modal.main_badge')}</span>}
+                                                {isTarget && <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold bg-primary/20 text-primary">{t('orders:merge_modal.main_badge')}</span>}
                                                 <span className="font-medium">{t('orders:merge_modal.order_label', { id: order.id })}</span>
                                                 <span className="text-base-content/50">
                                                     ({fournisseurs.find(f => f.id === order.fournisseur)?.name})
                                                 </span>
                                             </div>
                                             <div className="flex items-center gap-2">
-                                                <span className="badge badge-ghost">{t('orders:merge_modal.products_badge', { count: order.produits?.length || 0 })}</span>
+                                                <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold bg-base-200 text-base-content/60">{t('orders:merge_modal.products_badge', { count: order.produits?.length || 0 })}</span>
                                                 <span className="font-bold">{formatCurrency(Number(order.total))}</span>
                                             </div>
                                         </div>
@@ -178,17 +178,17 @@ export default function MergeCommandesModal({
                         </div>
 
                         {/* Actions */}
-                        <div className="modal-action">
+                        <div className="flex justify-end gap-3 pt-4">
                             <button 
                                 type="button" 
-                                className="btn btn-ghost" 
+                                className="btn-ref btn-ghost" 
                                 onClick={onClose}
                             >
                                 {t('orders:merge_modal.cancel')}
                             </button>
                             <button 
                                 type="button" 
-                                className="btn btn-secondary"
+                                className="inline-flex items-center justify-center gap-2 px-4 py-2 bg-gray-900 text-white text-sm font-bold rounded-xl hover:bg-gray-800 transition-colors"
                                 onClick={handleMergeOrders}
                                 disabled={!mergeTargetOrderId}
                             >

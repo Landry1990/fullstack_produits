@@ -17,22 +17,28 @@ export function ExpirationAlertToasts() {
   });
 
   useEffect(() => {
+    const timers: ReturnType<typeof setTimeout>[] = [];
+    
     // Ne montrer qu'une seule fois au chargement
-    if (hasShownRef.current || !isSuccess || !data) return;
+    if (hasShownRef.current || !isSuccess || !data) {
+      return () => {
+        timers.forEach(clearTimeout);
+      };
+    }
 
     const { alerts, stats } = data;
 
     if (alerts.length === 0) {
       hasShownRef.current = true;
-      return;
+      return () => {
+        timers.forEach(clearTimeout);
+      };
     }
 
     // Grouper par niveau
     const critical = alerts.filter((a: ExpirationAlert) => a.level === 'critical');
     const warning = alerts.filter((a: ExpirationAlert) => a.level === 'warning');
     const others = alerts.filter((a: ExpirationAlert) => a.level === 'notice' || a.level === 'info');
-
-    const timers: ReturnType<typeof setTimeout>[] = [];
 
     // Toast critique - persistant avec son
     if (critical.length > 0) {

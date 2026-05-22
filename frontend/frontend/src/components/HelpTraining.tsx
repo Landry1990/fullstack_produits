@@ -25,8 +25,8 @@ const getCategories = (t: any): Category[] => [
   {
     id: 'ventes',
     label: t('help:training.categories.ventes'),
-    color: 'text-emerald-600',
-    bg: 'bg-emerald-50 border-emerald-200',
+    color: 'text-success',
+    bg: 'bg-success/10 border-emerald-200',
     icon: ShoppingCart,
     videos: [
       { id: 'v1', title: t('help:training.videos.v1'), duration: '3:20', youtubeId: 'YOUTUBE_ID_ICI' },
@@ -37,8 +37,8 @@ const getCategories = (t: any): Category[] => [
   {
     id: 'stock',
     label: t('help:training.categories.stock'),
-    color: 'text-amber-600',
-    bg: 'bg-amber-50 border-amber-200',
+    color: 'text-warning',
+    bg: 'bg-warning/10 border-amber-200',
     icon: Package,
     videos: [
       { id: 'v4', title: t('help:training.videos.v4'), duration: '5:00', youtubeId: 'YOUTUBE_ID_ICI' },
@@ -50,7 +50,7 @@ const getCategories = (t: any): Category[] => [
     id: 'fournisseurs',
     label: t('help:training.categories.fournisseurs'),
     color: 'text-primary',
-    bg: 'bg-blue-50 border-blue-200',
+    bg: 'bg-info/10 border-blue-200',
     icon: Truck,
     videos: [
       { id: 'v7', title: t('help:training.videos.v7'), duration: '4:50', youtubeId: 'YOUTUBE_ID_ICI' },
@@ -61,7 +61,7 @@ const getCategories = (t: any): Category[] => [
     id: 'clients',
     label: t('help:training.categories.clients'),
     color: 'text-purple-600',
-    bg: 'bg-purple-50 border-purple-200',
+    bg: 'bg-secondary/10 border-purple-200',
     icon: Users,
     videos: [
       { id: 'v9', title: t('help:training.videos.v9'), duration: '4:00', youtubeId: 'YOUTUBE_ID_ICI' },
@@ -71,8 +71,8 @@ const getCategories = (t: any): Category[] => [
   {
     id: 'dashboard',
     label: t('help:training.categories.dashboard'),
-    color: 'text-indigo-600',
-    bg: 'bg-indigo-50 border-indigo-200',
+    color: 'text-primary',
+    bg: 'bg-primary/10 border-indigo-200',
     icon: TrendingUp,
     videos: [
       { id: 'v11', title: t('help:training.videos.v11'), duration: '3:45', youtubeId: 'YOUTUBE_ID_ICI' },
@@ -260,8 +260,8 @@ const HelpTraining = () => {
                       </div>
                     )}
                     <div className="absolute inset-0 flex items-center justify-center bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <div className="size-12 bg-white rounded-full flex items-center justify-center shadow-xl">
-                        <Play className="size-5 text-slate-900 ml-0.5" />
+                      <div className="size-12 bg-base-100 rounded-full flex items-center justify-center shadow-xl">
+                        <Play className="size-5 text-base-content ml-0.5" />
                       </div>
                     </div>
                     <div className="absolute bottom-2 right-2 bg-black/70 text-white text-[10px] font-bold px-1.5 py-0.5 rounded flex items-center gap-1">

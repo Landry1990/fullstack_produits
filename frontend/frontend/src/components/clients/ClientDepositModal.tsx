@@ -91,7 +91,7 @@ export default function ClientDepositModal({ isOpen, onClose, client, onSuccess 
                 {/* Tabs */}
                 <div className="flex border-b border-base-300 px-6 bg-base-100 sticky top-0 z-10">
                     <button
-                        className={`py-4 px-6 text-sm font-medium transition-colors border-b-2 ${activeTab === 'transaction' ? 'border-primary text-primary' : 'border-transparent text-base-content/60 hover:text-base-content'}`}
+                        className={`py-4 px-6 text-sm font-medium transition-colors border-b-2 ${activeTab === 'transaction' ? 'border-indigo-500 text-primary' : 'border-transparent text-base-content/60 hover:text-base-content'}`}
                         onClick={() => setActiveTab('transaction')}
                     >
                         <div className="flex items-center gap-2">
@@ -100,7 +100,7 @@ export default function ClientDepositModal({ isOpen, onClose, client, onSuccess 
                         </div>
                     </button>
                     <button
-                        className={`py-4 px-6 text-sm font-medium transition-colors border-b-2 ${activeTab === 'history' ? 'border-primary text-primary' : 'border-transparent text-base-content/60 hover:text-base-content'}`}
+                        className={`py-4 px-6 text-sm font-medium transition-colors border-b-2 ${activeTab === 'history' ? 'border-indigo-500 text-primary' : 'border-transparent text-base-content/60 hover:text-base-content'}`}
                         onClick={() => setActiveTab('history')}
                     >
                         <div className="flex items-center gap-2">
@@ -136,7 +136,7 @@ export default function ClientDepositModal({ isOpen, onClose, client, onSuccess 
                                     <div className="relative">
                                         <input
                                             type="number"
-                                            className="input input-bordered w-full h-12 rounded-xl pl-10"
+                                            className="w-full h-12 rounded-xl border border-base-300 bg-base-100 pl-10 text-sm font-medium text-base-content focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
                                             value={montant}
                                             onChange={e => setMontant(e.target.value)}
                                             placeholder="0"
@@ -149,7 +149,7 @@ export default function ClientDepositModal({ isOpen, onClose, client, onSuccess 
                                 <div>
                                     <label className="block text-xs font-bold uppercase tracking-wider text-base-content/40 mb-2">{t('common:payment_modes.title') || 'Mode de paiement'}</label>
                                     <select
-                                        className="select select-bordered w-full h-12 rounded-xl"
+                                        className="w-full h-12 rounded-xl border border-base-300 bg-base-100 px-3 text-sm font-medium text-base-content focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all appearance-none"
                                         value={modePaiement}
                                         onChange={e => setModePaiement(e.target.value)}
                                     >
@@ -166,7 +166,7 @@ export default function ClientDepositModal({ isOpen, onClose, client, onSuccess 
                             <div>
                                 <label className="block text-xs font-bold uppercase tracking-wider text-base-content/40 mb-2">Notes</label>
                                 <textarea
-                                    className="textarea textarea-bordered w-full rounded-xl"
+                                    className="w-full rounded-xl border border-base-300 bg-base-100 p-3 text-sm font-medium text-base-content focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
                                     rows={3}
                                     value={notes}
                                     onChange={e => setNotes(e.target.value)}
@@ -177,10 +177,10 @@ export default function ClientDepositModal({ isOpen, onClose, client, onSuccess 
                             <div className="flex justify-end pt-4">
                                 <button
                                     type="submit"
-                                    className={`btn btn-lg px-12 rounded-xl shadow-lg ${type === 'DEPOT' ? 'btn-primary shadow-primary/20' : 'btn-error shadow-error/20 text-white'}`}
+                                    className={`inline-flex items-center justify-center gap-2 px-12 py-3 rounded-xl text-sm font-bold transition-colors shadow-lg ${type === 'DEPOT' ? 'bg-primary text-white hover:bg-primary-focus shadow-indigo-500/20' : 'bg-error text-white hover:bg-error-focus shadow-red-500/20'}`}
                                     disabled={loading}
                                 >
-                                    {loading && <span className="loading loading-spinner"></span>}
+                                    {loading && <span className="inline-block size-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>}
                                     {type === 'DEPOT' ? t('common:add_deposit') : t('common:make_withdrawal')}
                                 </button>
                             </div>
@@ -188,10 +188,10 @@ export default function ClientDepositModal({ isOpen, onClose, client, onSuccess 
                     ) : (
                         <div className="space-y-4">
                             {loadingHistory ? (
-                                <div className="flex justify-center py-12"><span className="loading loading-spinner loading-lg text-primary"></span></div>
+                                <div className="flex justify-center py-12"><span className="inline-block size-8 border-2 border-base-300 border-t-indigo-600 rounded-full animate-spin"></span></div>
                             ) : history.length > 0 ? (
                                 <div className="overflow-x-auto">
-                                    <table className="table table-zebra w-full shadow-none">
+                                    <table className="w-full">
                                         <thead>
                                             <tr className="text-xs uppercase tracking-wider text-base-content/40">
                                                 <th>{t('common:date')}</th>
@@ -209,10 +209,10 @@ export default function ClientDepositModal({ isOpen, onClose, client, onSuccess 
                                                         {formatDateFr(item.date)}
                                                     </td>
                                                     <td>
-                                                        <span className={`badge badge-sm font-bold whitespace-nowrap h-auto py-1 px-2.5 ${
-                                                            item.type === 'DEPOT' ? 'badge-success text-white' : 
-                                                            item.type === 'RETRAIT' ? 'badge-error text-white' : 
-                                                            item.type === 'ACHAT' ? 'badge-info text-white' : 'badge-warning text-white'
+                                                        <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold whitespace-nowrap ${
+                                                            item.type === 'DEPOT' ? 'bg-success/20 text-success' : 
+                                                            item.type === 'RETRAIT' ? 'bg-error/20 text-error' : 
+                                                            item.type === 'ACHAT' ? 'bg-info/20 text-info' : 'bg-warning/20 text-warning'
                                                         }`}>
                                                             {item.type_display}
                                                         </span>
@@ -233,7 +233,7 @@ export default function ClientDepositModal({ isOpen, onClose, client, onSuccess 
                                 </div>
                             ) : (
                                 <div className="text-center py-12 text-base-content/40">
-                                    <History className="size-12 mx-auto mb-3 opacity-20" />
+                                    <History className="size-12 mx-auto mb-3 text-base-content/20" />
                                     <p>{t('common:no_results_found')}</p>
                                 </div>
                             )}

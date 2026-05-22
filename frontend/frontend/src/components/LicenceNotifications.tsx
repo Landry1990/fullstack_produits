@@ -1,6 +1,7 @@
 import { useEffect, useState, useCallback, useRef } from 'react';
 import { toast } from 'react-hot-toast';
 import { licenceService, type LicenceNotification } from '../services/licenceService';
+import { useAuth } from '../context/AuthContext';
 import { AlertTriangle, Info, XCircle, X } from 'lucide-react';
 
 /**
@@ -10,20 +11,22 @@ import { AlertTriangle, Info, XCircle, X } from 'lucide-react';
  * À placer dans le layout principal (ex: App.tsx)
  */
 export function LicenceNotifications() {
+  const { isAuthenticated, loading } = useAuth();
   const notificationsRef = useRef<LicenceNotification[]>([]);
   const dismissedIdsRef = useRef<Set<number>>(new Set());
   const isLoadingRef = useRef(true);
   // Trigger pour forcer le re-render quand nécessaire
   const [tick, setTick] = useState(0);
 
-  // Charger les notifications au montage
+  // Charger les notifications au montage (seulement si authentifié)
   useEffect(() => {
+    if (loading || !isAuthenticated) return;
     loadNotifications();
 
     // Recharger toutes les 5 minutes
     const interval = setInterval(loadNotifications, 5 * 60 * 1000);
     return () => clearInterval(interval);
-  }, []);
+  }, [isAuthenticated, loading]);
 
   const loadNotifications = async () => {
     try {
@@ -167,7 +170,7 @@ function LicenceToastContent({ notification, onDismiss }: LicenceToastContentPro
       </div>
       <button
         onClick={onDismiss}
-        className="flex-shrink-0 p-1 hover:bg-white/20 rounded-full transition-colors"
+        className="flex-shrink-0 p-1 hover:bg-base-100/20 rounded-full transition-colors"
         title="Ignorer cette alerte"
       >
         <X className="size-5" />
@@ -180,6 +183,7 @@ function LicenceToastContent({ notification, onDismiss }: LicenceToastContentPro
  * Hook pour vérifier le statut de la licence
  */
 export function useLicenceStatus() {
+  const { isAuthenticated, loading } = useAuth();
   const [status, setStatus] = useState<{
     isValid: boolean;
     isLifetime: boolean;
@@ -189,6 +193,8 @@ export function useLicenceStatus() {
   } | null>(null);
 
   useEffect(() => {
+    if (loading || !isAuthenticated) return;
+
     const checkStatus = async () => {
       try {
         const data = await licenceService.getNotifications();
@@ -205,7 +211,7 @@ export function useLicenceStatus() {
     };
 
     checkStatus();
-  }, []);
+  }, [isAuthenticated, loading]);
 
   return status;
 }

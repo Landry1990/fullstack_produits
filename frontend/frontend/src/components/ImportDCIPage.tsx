@@ -129,7 +129,7 @@ export default function ImportDCIPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-black tracking-tight">{t('products:dci_admin.title', 'Gestion DCI & Matching')}</h1>
-          <p className="text-sm opacity-50 mt-1 font-medium">{t('products:dci_admin.subtitle', 'Import de substances et liaison automatique avec la base ANSM')}</p>
+          <p className="text-sm text-base-content/50 mt-1 font-medium">{t('products:dci_admin.subtitle', 'Import de substances et liaison automatique avec la base ANSM')}</p>
         </div>
         <button onClick={fetchStats} className="btn btn-ghost btn-sm opacity-60 hover:opacity-100">
           {t('common:refresh', 'Actualiser')}
@@ -174,7 +174,7 @@ export default function ImportDCIPage() {
             <UploadIcon />
             {t('products:dci_admin.import_compo', 'Importer COMPO.txt')}
           </h2>
-          <p className="text-sm opacity-50 mb-4">{t('products:dci_admin.import_desc', 'Fichier ANSM contenant la liste des substances actives')}</p>
+          <p className="text-sm text-base-content/50 mb-4">{t('products:dci_admin.import_desc', 'Fichier ANSM contenant la liste des substances actives')}</p>
           <div className="flex items-center gap-3">
             <input
               type="file"
@@ -203,7 +203,7 @@ export default function ImportDCIPage() {
             <MagicIcon />
             {t('products:dci_admin.auto_match', 'Matcher automatique')}
           </h2>
-          <p className="text-sm opacity-50 mb-4">{t('products:dci_admin.match_desc', 'Analyse tous les produits et tente de les lier aux substances par nom')}</p>
+          <p className="text-sm text-base-content/50 mb-4">{t('products:dci_admin.match_desc', 'Analyse tous les produits et tente de les lier aux substances par nom')}</p>
           <button
             className="btn btn-secondary rounded-2xl w-full"
             disabled={matching}
@@ -246,12 +246,12 @@ export default function ImportDCIPage() {
           <table className="table w-full">
             <thead>
               <tr className="border-b border-base-200 bg-base-200/30">
-                <th className="text-xs uppercase tracking-wider opacity-50 font-bold">{t('products:produit', 'Produit')}</th>
-                <th className="text-xs uppercase tracking-wider opacity-50 font-bold">CIP</th>
-                <th className="text-xs uppercase tracking-wider opacity-50 font-bold">Stock</th>
-                <th className="text-xs uppercase tracking-wider opacity-50 font-bold">Prix</th>
-                <th className="text-xs uppercase tracking-wider opacity-50 font-bold">{t('products:dci_admin.suggestion', 'Suggestion')}</th>
-                <th className="text-xs uppercase tracking-wider opacity-50 font-bold">{t('products:dci_admin.manual_link', 'Liaison manuelle')}</th>
+                <th className="text-xs uppercase tracking-wider text-base-content/50 font-bold">{t('products:produit', 'Produit')}</th>
+                <th className="text-xs uppercase tracking-wider text-base-content/50 font-bold">CIP</th>
+                <th className="text-xs uppercase tracking-wider text-base-content/50 font-bold">Stock</th>
+                <th className="text-xs uppercase tracking-wider text-base-content/50 font-bold">Prix</th>
+                <th className="text-xs uppercase tracking-wider text-base-content/50 font-bold">{t('products:dci_admin.suggestion', 'Suggestion')}</th>
+                <th className="text-xs uppercase tracking-wider text-base-content/50 font-bold">{t('products:dci_admin.manual_link', 'Liaison manuelle')}</th>
                 <th></th>
               </tr>
             </thead>
@@ -264,8 +264,8 @@ export default function ImportDCIPage() {
                 unlinkedData?.results.map(p => (
                   <tr key={p.id} className="border-b border-base-200 hover:bg-base-200/30 transition-colors">
                     <td className="font-bold text-sm">{p.name}</td>
-                    <td className="font-mono text-xs opacity-50">{p.cip1 || '-'}</td>
-                    <td className="text-sm opacity-70">{p.stock}</td>
+                    <td className="font-mono text-xs text-base-content/50">{p.cip1 || '-'}</td>
+                    <td className="text-sm text-base-content/70">{p.stock}</td>
                     <td className="font-mono text-sm font-bold text-primary">{p.selling_price} F</td>
                     <td>
                       {p.suggestion ? (
@@ -274,7 +274,7 @@ export default function ImportDCIPage() {
                           {p.suggestion.nom}
                         </span>
                       ) : (
-                        <span className="opacity-30 text-xs">-</span>
+                        <span className="text-base-content/30 text-xs">-</span>
                       )}
                     </td>
                     <td>

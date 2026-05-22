@@ -37,7 +37,7 @@ export const StockAnalysisStats: React.FC<StockAnalysisStatsProps> = ({
             color: 'primary',
             bg: 'bg-primary/10',
             text: 'text-primary',
-            border: 'border-primary/20'
+            border: 'border-indigo-200'
         },
         {
             label: t('stock:analyse.stats.item_count'),
@@ -46,7 +46,7 @@ export const StockAnalysisStats: React.FC<StockAnalysisStatsProps> = ({
             color: 'warning',
             bg: 'bg-warning/10',
             text: 'text-warning',
-            border: 'border-warning/20'
+            border: 'border-amber-200'
         },
         {
             label: getValueLabel(),
@@ -55,7 +55,7 @@ export const StockAnalysisStats: React.FC<StockAnalysisStatsProps> = ({
             color: 'error',
             bg: 'bg-error/10',
             text: 'text-error',
-            border: 'border-error/20'
+            border: 'border-red-200'
         },
         ...(activeTab === 'shortage' ? [{
             label: t('stock:analyse.stats.critical_alerts'),
@@ -65,7 +65,7 @@ export const StockAnalysisStats: React.FC<StockAnalysisStatsProps> = ({
             color: 'error',
             bg: 'bg-error/10',
             text: 'text-error',
-            border: 'border-error/20'
+            border: 'border-red-200'
         }] : [])
     ];
 
@@ -80,7 +80,7 @@ export const StockAnalysisStats: React.FC<StockAnalysisStatsProps> = ({
                         {stat.icon}
                     </div>
                     <div className="min-w-0 flex-1">
-                        <div className="text-[10px] font-black uppercase tracking-widest text-base-content/40 mb-1 truncate">
+                        <div className="text-[10px] font-black uppercase tracking-widest text-base-content/50 mb-1 truncate">
                             {stat.label}
                         </div>
                         <div className={`text-xl font-black ${stat.text} tracking-tighter truncate`}>

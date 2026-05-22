@@ -266,7 +266,7 @@ export default function ReapproRayon() {
       {/* Quick Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 no-print">
         <div className="card bg-base-100 shadow-sm border border-base-300 rounded-2xl overflow-hidden p-6 flex flex-row items-center gap-4">
-          <div className={`p-3 rounded-xl ${stats.criticalProductsCount > 0 ? 'bg-red-100 text-red-600' : 'bg-emerald-100 text-emerald-600'}`}>
+          <div className={`p-3 rounded-xl ${stats.criticalProductsCount > 0 ? 'bg-error/20 text-error' : 'bg-success/20 text-success'}`}>
             <AlertCircle className="size-6" />
           </div>
           <div>
@@ -275,7 +275,7 @@ export default function ReapproRayon() {
           </div>
         </div>
         <div className="card bg-base-100 shadow-sm border border-base-300 rounded-2xl overflow-hidden p-6 flex flex-row items-center gap-4">
-          <div className="p-3 rounded-xl bg-blue-100 text-blue-600">
+          <div className="p-3 rounded-xl bg-info/20 text-info">
             <Truck className="size-6" />
           </div>
           <div>
@@ -284,7 +284,7 @@ export default function ReapproRayon() {
           </div>
         </div>
         <div className="card bg-base-100 shadow-sm border border-base-300 rounded-2xl overflow-hidden p-6 flex flex-row items-center gap-4">
-          <div className="p-3 rounded-xl bg-purple-100 text-purple-600">
+          <div className="p-3 rounded-xl bg-secondary/20 text-purple-600">
             <Filter className="size-6" />
           </div>
           <div>
@@ -394,7 +394,7 @@ export default function ReapproRayon() {
               ) : products.length === 0 ? (
                 <tr>
                    <td colSpan={7} className="py-24 text-center">
-                      <div className="flex flex-col items-center justify-center opacity-20">
+                      <div className="flex flex-col items-center justify-center text-base-content/20">
                           <Package className="size-16 mb-4" />
                           <h3 className="text-xl font-black uppercase tracking-tight">{t('stock:reappro.empty')}</h3>
                           <p className="text-sm font-bold max-w-xs mt-2 italic">{t('stock:reappro.empty_desc')}</p>
@@ -429,7 +429,7 @@ export default function ReapproRayon() {
                             <div className="flex justify-between items-center px-1">
                                 <div className="flex items-center gap-1.5">
                                     <div className={`size-1.5 rounded-full ${isLow ? 'bg-red-500 animate-pulse' : 'bg-emerald-500'}`}></div>
-                                    <span className={`text-[9px] font-black uppercase tracking-widest ${isLow ? 'text-red-700' : 'text-emerald-700'}`}>
+                                    <span className={`text-[9px] font-black uppercase tracking-widest ${isLow ? 'text-error' : 'text-success'}`}>
                                         {isLow ? t('stock:reappro.status.critical') : t('stock:reappro.status.ok')}
                                     </span>
                                 </div>
@@ -445,7 +445,7 @@ export default function ReapproRayon() {
                       </td>
                       <td className="text-center">
                         <span className="text-xs font-black text-base-content">{p.stock}</span>
-                        <div className="flex items-center justify-center gap-1 mt-0.5 opacity-30">
+                        <div className="flex items-center justify-center gap-1 mt-0.5 text-base-content/30">
                             <span className="text-[8px] font-bold">{t('stock:reappro.min')} {p.min_rayon ?? 0}</span>
                             <span className="text-[8px] font-bold">{t('stock:reappro.cap')} {p.capacite_rayon ?? 0}</span>
                         </div>
@@ -465,7 +465,7 @@ export default function ReapproRayon() {
                                 </div>
                             </div>
                         ) : (
-                            <CheckCircle2 className="size-5 text-emerald-500 mx-auto opacity-20" />
+                            <CheckCircle2 className="size-5 text-emerald-500 mx-auto text-base-content/20" />
                         )}
                       </td>
                       <td className="text-right no-print">
@@ -560,7 +560,7 @@ export default function ReapproRayon() {
         maxWidth="max-w-md"
       >
         <div className="p-8 text-center">
-            <div className="size-20 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto mb-6 shadow-sm">
+            <div className="size-20 bg-success/20 text-success rounded-full flex items-center justify-center mx-auto mb-6 shadow-sm">
                 <CheckCircle2 className="size-10" />
             </div>
             <h3 className="text-xl font-black text-base-content tracking-tight">{t('stock:reappro.modal.success')}</h3>
@@ -570,7 +570,7 @@ export default function ReapproRayon() {
             
             <div className="flex flex-col gap-3 mt-8">
                 <button 
-                    className="btn btn-primary h-12 rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-lg shadow-emerald-500/20 bg-emerald-600 hover:bg-emerald-700 border-none gap-2"
+                    className="btn btn-primary h-12 rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-lg shadow-emerald-500/20 bg-success hover:bg-success-focus border-none gap-2"
                     onClick={() => {
                         if (lastSessionId) handleDownloadPdf(lastSessionId);
                         setShowSuccessModal(false);

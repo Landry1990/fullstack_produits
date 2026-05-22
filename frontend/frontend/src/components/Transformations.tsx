@@ -178,7 +178,7 @@ const ProductAutocomplete: React.FC<ProductAutocompleteProps> = ({
                       <span>{t('common:stock')}: <b>{formatNumber(p.stock)}</b></span>
                     </div>
                   </div>
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 opacity-30 group-hover:opacity-100 transition-opacity" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-base-content/30 group-hover:opacity-100 transition-opacity" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />
                   </svg>
                 </div>
@@ -367,8 +367,8 @@ const Transformations: React.FC = () => {
       <div className="flex-1 overflow-auto p-6">
         {loading ? (
           <div className="flex flex-col items-center justify-center p-20 gap-4">
-            <span className="loading loading-spinner loading-lg text-primary opacity-20"></span>
-            <p className="text-[10px] font-black uppercase tracking-widest opacity-30">{t('common:loading')}</p>
+            <span className="loading loading-spinner loading-lg text-primary text-base-content/20"></span>
+            <p className="text-[10px] font-black uppercase tracking-widest text-base-content/30">{t('common:loading')}</p>
           </div>
         ) : (
           <div className="h-full">
@@ -382,7 +382,7 @@ const Transformations: React.FC = () => {
                              {relation.produit_source_nom.charAt(0).toUpperCase()}
                           </div>
                           <div className="max-w-[120px]">
-                             <div className="text-[9px] font-black opacity-30 uppercase tracking-widest mb-0.5">{t('common:source')}</div>
+                             <div className="text-[9px] font-black text-base-content/30 uppercase tracking-widest mb-0.5">{t('common:source')}</div>
                              <div className="font-bold text-xs truncate" title={relation.produit_source_nom}>{relation.produit_source_nom}</div>
                           </div>
                        </div>
@@ -391,7 +391,7 @@ const Transformations: React.FC = () => {
                        </div>
                         <div className="flex items-center gap-3 text-right">
                           <div className="max-w-[120px]">
-                             <div className="text-[9px] font-black opacity-30 uppercase tracking-widest mb-0.5">{t('stock:transformations.labels.dest')}</div>
+                             <div className="text-[9px] font-black text-base-content/30 uppercase tracking-widest mb-0.5">{t('stock:transformations.labels.dest')}</div>
                              <div className="font-bold text-xs truncate text-success" title={relation.produit_destination_nom}>{relation.produit_destination_nom}</div>
                           </div>
                         </div>
@@ -419,7 +419,7 @@ const Transformations: React.FC = () => {
                   </div>
                 ))}
                 {relations.length === 0 && (
-                  <div className="col-span-full flex flex-col items-center justify-center py-20 opacity-20 italic">
+                  <div className="col-span-full flex flex-col items-center justify-center py-20 text-base-content/20 italic">
                     <svg xmlns="http://www.w3.org/2000/svg" className="h-16 w-16 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" /></svg>
                     <p className="font-bold uppercase tracking-widest text-xs">{t('stock:transformations.labels.no_relations')}</p>
                   </div>
@@ -451,7 +451,7 @@ const Transformations: React.FC = () => {
                           <td className="max-w-xs">
                              <div className="flex items-center gap-2 text-xs font-bold truncate">
                                 <span className="opacity-40">{hist.produit_source_nom}</span>
-                                <ChevronRight size={12} className="opacity-20" />
+                                <ChevronRight size={12} className="text-base-content/20" />
                                 <span className="text-success">{hist.produit_destination_nom}</span>
                              </div>
                           </td>
@@ -469,7 +469,7 @@ const Transformations: React.FC = () => {
                       ))}
                       {historique.length === 0 && (
                         <tr>
-                          <td colSpan={5} className="text-center py-20 opacity-20 italic font-bold uppercase tracking-widest text-xs">{t('stock:transformations.table_history.empty')}</td>
+                          <td colSpan={5} className="text-center py-20 text-base-content/20 italic font-bold uppercase tracking-widest text-xs">{t('stock:transformations.table_history.empty')}</td>
                         </tr>
                       )}
                     </tbody>
@@ -513,7 +513,7 @@ const Transformations: React.FC = () => {
             <div className="flex items-center gap-2 text-base-200">
               <div className="h-px w-12 bg-base-300"></div>
               <div className="size-8 rounded-full bg-primary/5 flex items-center justify-center">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-primary opacity-50" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-primary text-base-content/50" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 14l-7 7m0 0l-7-7m7 7V3" />
                 </svg>
               </div>
@@ -563,7 +563,7 @@ const Transformations: React.FC = () => {
               <div className="flex items-center justify-between text-sm">
                   <div className="text-center flex-1">
                     <div className="font-bold text-base-content truncate text-xs">{selectedSource.name}</div>
-                    <div className="text-[10px] font-black opacity-30 mt-0.5">× 1 {t('stock:transformations.labels.unit')}</div>
+                    <div className="text-[10px] font-black text-base-content/30 mt-0.5">× 1 {t('stock:transformations.labels.unit')}</div>
                   </div>
                   <div className="px-4 text-primary/40 flex flex-col items-center">
                     <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -635,7 +635,7 @@ const Transformations: React.FC = () => {
                   required
                   autoFocus
                 />
-                <div className="text-[10px] uppercase font-black opacity-30 mt-3">{t('transformations.modal_transform.qty_to_transform')}</div>
+                <div className="text-[10px] uppercase font-black text-base-content/30 mt-3">{t('transformations.modal_transform.qty_to_transform')}</div>
               </div>
 
               {/* Arrow */}

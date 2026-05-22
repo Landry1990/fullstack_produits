@@ -69,6 +69,14 @@ class ClientViewSet(OptimizedSerializerMixin, viewsets.ModelViewSet):
 
     def get_queryset(self):
         qs = super().get_queryset()
+        
+        # Optimisation: select_related pour les clés étrangères
+        qs = qs.select_related()
+        
+        # En mode détail, prefetch les ayants droit pour éviter N+1
+        if self.action in ['retrieve', 'update', 'partial_update']:
+            qs = qs.prefetch_related('ayants_droit')
+        
         # Par défaut, ne montrer que les clients actifs SEULEMENT pour la liste
         # Pour le détail/update/actions, on veut pouvoir accéder même aux inactifs
         include_inactive = self.request.query_params.get('include_inactive', '').lower() in ['true', '1', 'yes']

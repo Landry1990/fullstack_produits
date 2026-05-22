@@ -37,6 +37,22 @@ export interface PharmacySettings {
   telegram_enabled?: boolean;
   telegram_bot_token?: string;
   telegram_chat_id?: string;
+  // Rapport Automatique Mensuel
+  monthly_report_enabled?: boolean;
+  monthly_report_day?: number;
+  report_include_sales?: boolean;
+  report_include_margin?: boolean;
+  report_include_stock_health?: boolean;
+  report_include_ruptures?: boolean;
+  report_include_expiration?: boolean;
+  report_include_top_products?: boolean;
+  report_include_slow_moving?: boolean;
+  report_include_debt?: boolean;
+  report_include_financial_summary?: boolean;
+  report_include_comparison?: boolean;
+  report_recipients_email?: string;
+  report_send_whatsapp?: boolean;
+  report_send_telegram?: boolean;
 }
 
 const DEFAULT_SETTINGS: PharmacySettings = {
@@ -70,6 +86,22 @@ const DEFAULT_SETTINGS: PharmacySettings = {
   telegram_enabled: false,
   telegram_bot_token: '',
   telegram_chat_id: '',
+  // Rapport Automatique Mensuel - valeurs par défaut
+  monthly_report_enabled: true,
+  monthly_report_day: 1,
+  report_include_sales: true,
+  report_include_margin: true,
+  report_include_stock_health: true,
+  report_include_ruptures: true,
+  report_include_expiration: true,
+  report_include_top_products: true,
+  report_include_slow_moving: true,
+  report_include_debt: true,
+  report_include_financial_summary: true,
+  report_include_comparison: false,
+  report_recipients_email: '',
+  report_send_whatsapp: false,
+  report_send_telegram: false,
 };
 
 interface PharmacySettingsContextType {

@@ -657,6 +657,72 @@ class FactureViewSet(BaseViewSetConfig, OptimizedSerializerMixin, viewsets.Model
             'count': count
         }, status=status.HTTP_200_OK)
 
+    @action(detail=False, methods=['post'], url_path='mobile')
+    @transaction.atomic
+    def sync_mobile(self, request):
+        """
+        Endpoint dédié à l'application mobile LAN (Store-and-Forward).
+        Reçoit une facture créée hors-ligne et la finalise sur le serveur.
+        """
+        data = request.data
+        uuid_mobile = data.get('uuid')
+        client_name = data.get('client')
+        items = data.get('items', [])
+        total = data.get('total', 0)
+
+        if not items:
+            return Response({'detail': "La facture mobile ne contient aucun article."}, status=status.HTTP_400_BAD_REQUEST)
+            
+        try:
+            # Transformation du payload mobile vers le format attendu par SalesService
+            produits_data = []
+            for item in items:
+                produits_data.append({
+                    'product_id': item.get('product_id'),
+                    'quantity': item.get('quantity', 1),
+                    'selling_price': item.get('unit_price', 0),
+                    'discount': 0
+                })
+                
+            payload_vente = {
+                'client_name_override': client_name,
+                'produits': produits_data,
+                'totals': {'totalTtc': total},
+                'remise': 0,
+                'centralized_cash_register': True,
+                'is_mobile_sync': True, # Optionnel : flag pour statistiques futures
+                'mobile_uuid': uuid_mobile
+            }
+            
+            # Finalisation standard (qui gère le stock, caisse, etc.)
+            facture = SalesService.finalize_sale(request.user, payload_vente, centralized=True)
+            
+            # Audit spécifique Mobile
+            log_audit(
+                user=request.user,
+                action=AuditLog.Action.CREATE,
+                model_name='Facture',
+                object_id=facture.id,
+                description=f"Sync Facture Mobile LAN {facture.numero_facture} (Montant: {total:,.0f} F)",
+                details={'uuid_mobile': uuid_mobile},
+                request=request
+            )
+            
+            return Response({
+                'uuid': uuid_mobile,
+                'server_number': facture.numero_facture,
+                'id': facture.id,
+                'status': 'synced'
+            }, status=status.HTTP_201_CREATED)
+            
+        except ValueError as e:
+            transaction.set_rollback(True)
+            return Response({'detail': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            transaction.set_rollback(True)
+            logger.error(f"[MOBILE SYNC] Erreur critique lors de la synchronisation: {str(e)}", exc_info=True)
+            return Response({'detail': "Erreur lors de la synchronisation de la facture."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
 
     @action(detail=False, methods=['get'])
     def stats_jour(self, request):

@@ -328,7 +328,7 @@ const HistoriqueAchats = ({ forcedType }: HistoriqueAchatsProps) => {
             <div className="bg-gradient-to-br from-emerald-500/5 to-emerald-500/10 border border-emerald-500/20 rounded-2xl px-5 py-3 flex items-center justify-between shadow-sm">
               <div className="flex items-center gap-3">
                 <div className="size-10 rounded-xl bg-emerald-500/20 flex items-center justify-center">
-                  <TrendingUp className="size-5 text-emerald-600" />
+                  <TrendingUp className="size-5 text-success" />
                 </div>
                 <div>
                   <p className="text-[10px] font-bold text-base-content/40 uppercase tracking-widest leading-none mb-1">{t('history.columns.total_purchase')}</p>
@@ -342,7 +342,7 @@ const HistoriqueAchats = ({ forcedType }: HistoriqueAchatsProps) => {
 
           {/* Table Container */}
           <div className="flex-1 min-h-0 flex flex-col">
-            <div className={`overflow-auto flex-1 rounded-xl border-2 border-base-200/60 bg-base-100 shadow-sm transition-opacity duration-300 ${loading ? 'opacity-50 pointer-events-none' : 'opacity-100'}`}>
+            <div className={`overflow-auto flex-1 rounded-xl border-2 border-base-200/60 bg-base-100 shadow-sm transition-opacity duration-300 ${loading ? 'text-base-content/50 pointer-events-none' : 'opacity-100'}`}>
               <table className="table table-sm w-full border-separate border-spacing-0">
                 <thead>
                   <tr className="bg-base-300 text-[11px] font-black text-base-content uppercase tracking-[0.15em]">
@@ -404,13 +404,13 @@ const HistoriqueAchats = ({ forcedType }: HistoriqueAchatsProps) => {
                             <div className="font-bold text-sm text-base-content/80 group-hover:text-primary">{row.produit__name}</div>
                           </td>
                           <td className="py-3">
-                            <div className="font-mono text-xs opacity-50">{row.produit__cip1}</div>
+                            <div className="font-mono text-xs text-base-content/50">{row.produit__cip1}</div>
                           </td>
                           <td className="py-3 text-center">
                             <span className="badge badge-sm font-bold bg-base-200 border-none">{row.total_quantite}</span>
                           </td>
                           <td className="py-3 text-center">
-                            <span className="text-xs font-bold opacity-70">{row.nb_commandes}</span>
+                            <span className="text-xs font-bold text-base-content/70">{row.nb_commandes}</span>
                           </td>
                           <td className="py-3 text-right pr-8">
                             <span className="text-sm font-black text-base-content">
@@ -425,7 +425,7 @@ const HistoriqueAchats = ({ forcedType }: HistoriqueAchatsProps) => {
                   {data.length === 0 && !loading && (
                     <tr>
                       <td colSpan={activeTab === 'summary' ? 3 : 5} className="text-center py-24 bg-base-100">
-                        <div className="flex flex-col items-center gap-3 opacity-20">
+                        <div className="flex flex-col items-center gap-3 text-base-content/20">
                           <Package className="size-12" />
                           <p className="text-sm font-bold uppercase tracking-widest">{t('history.no_data')}</p>
                         </div>
