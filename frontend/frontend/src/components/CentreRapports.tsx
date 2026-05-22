@@ -266,12 +266,12 @@ export default function CentreRapports() {
                         ) : (
                             <div className="h-[calc(100vh-100px)] flex flex-col items-center justify-center text-base-content/20 animate-in fade-in duration-1000">
                                 <div className="size-32 rounded-full bg-base-300/30 flex items-center justify-center mb-6 border border-base-300/50">
-                                    <LayoutPanelTop className="size-16 opacity-20" />
+                                    <LayoutPanelTop className="size-16 text-base-content/20" />
                                 </div>
                                 <h2 className="text-2xl font-black uppercase tracking-[0.2em]">
                                     {t('title', 'Centre de Rapports')}
                                 </h2>
-                                <p className="text-xs font-bold uppercase tracking-widest mt-2 opacity-50">
+                                <p className="text-xs font-bold uppercase tracking-widest mt-2 text-base-content/50">
                                     {t('select_query_prompt', 'Sélectionnez un rapport pour commencer')}
                                 </p>
                             </div>

@@ -727,13 +727,14 @@ class DashboardViewSet(viewsets.ViewSet):
         
         alert_clients = []
         for client in clients:
-            if client.current_debt > client.plafond:
+            debt = client.current_debt_annotated
+            if debt > client.plafond:
                 alert_clients.append({
                     'id': client.id,
                     'name': client.name,
-                    'current_debt': client.current_debt,
+                    'current_debt': debt,
                     'plafond': client.plafond,
-                    'percent': (client.current_debt / client.plafond) * 100
+                    'percent': (debt / client.plafond) * 100
                 })
         
         # Sort by highest percentage/severity
@@ -1081,17 +1082,20 @@ class StatistiquesViewSet(viewsets.ViewSet):
             count=Count('id')
         ).filter(count__gte=threshold).order_by('-count')
         
+        # Charger tous les utilisateurs concernés en une seule fois
+        user_ids = [c['user'] for c in cancellations if c['user']]
+        users_map = {}
+        if user_ids:
+            users = User.objects.filter(id__in=user_ids)
+            users_map = {u.id: (u.get_full_name() or u.username) for u in users}
+
         results = []
         for c in cancellations:
             user_id = c['user']
             if not user_id:
                 name = "Système / Inconnu"
             else:
-                try:
-                    u = User.objects.get(pk=user_id)
-                    name = u.get_full_name() or u.username
-                except User.DoesNotExist:
-                    name = f"Utilisateur #{user_id}"
+                name = users_map.get(user_id, f"Utilisateur #{user_id}")
             
             # Note: total_amount might need cleaner extraction depending on DB/Django version JSONField support
             # For now returning count is the MVP

@@ -82,19 +82,19 @@ export function ObjectivesSettings({ isOpen, onClose }: Props) {
             
             <div className="relative bg-base-100 rounded-3xl shadow-2xl w-full max-w-2xl overflow-hidden flex flex-col max-h-[90vh] animate-in slide-in-from-bottom-4 fade-in duration-300">
                 {/* Header */}
-                <div className="flex items-center justify-between p-6 sm:p-8 border-b border-gray-100 bg-base-100">
+                <div className="flex items-center justify-between p-6 sm:p-8 border-b border-base-200 bg-base-100">
                     <div>
-                        <h2 className="text-2xl font-black tracking-tight text-gray-900 flex items-center gap-3">
-                            <Target className="size-6 text-indigo-600" />
+                        <h2 className="text-2xl font-black tracking-tight text-base-content flex items-center gap-3">
+                            <Target className="size-6 text-primary" />
                             {t('manager_dashboard.settings.title', 'Configuration des Objectifs')}
                         </h2>
-                        <p className="text-sm font-medium text-gray-500 mt-1">
+                        <p className="text-sm font-medium text-base-content/60 mt-1">
                             {t('manager_dashboard.settings.subtitle', 'Automatisez et personnalisez le calcul de vos cibles de vente.')}
                         </p>
                     </div>
                     <button 
                         onClick={onClose}
-                        className="btn btn-ghost btn-circle btn-sm hover:rotate-90 transition-transform text-gray-500 hover:text-gray-900"
+                        className="btn btn-ghost btn-circle btn-sm hover:rotate-90 transition-transform text-base-content/60 hover:text-base-content"
                     >
                         <X className="size-5" />
                     </button>
@@ -104,13 +104,13 @@ export function ObjectivesSettings({ isOpen, onClose }: Props) {
                 <div className="p-6 sm:p-8 overflow-y-auto bg-base-50/50 flex-1 space-y-8">
                     {isLoading ? (
                         <div className="flex justify-center items-center py-12">
-                            <span className="loading loading-spinner loading-lg text-indigo-600"></span>
+                            <span className="loading loading-spinner loading-lg text-primary"></span>
                         </div>
                     ) : (
                         <>
                             {/* Mode Selection */}
                             <div className="space-y-4">
-                                <label className="text-sm font-bold text-gray-500 uppercase tracking-wider block">
+                                <label className="text-sm font-bold text-base-content/60 uppercase tracking-wider block">
                                     {t('manager_dashboard.settings.mode_label')}
                                 </label>
                                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -120,11 +120,11 @@ export function ObjectivesSettings({ isOpen, onClose }: Props) {
                                         className={`p-4 rounded-xl border-2 text-left transition-all ${
                                             config.mode === 'MANUEL' 
                                             ? 'border-primary bg-primary/5 shadow-md shadow-primary/10' 
-                                            : 'border-gray-100 hover:border-gray-200 hover:bg-gray-50 cursor-pointer text-gray-500'
+                                            : 'border-base-200 hover:border-base-300 hover:bg-base-200 cursor-pointer text-base-content/60'
                                         }`}
                                     >
-                                        <Hand className={`size-6 mb-3 ${config.mode === 'MANUEL' ? 'text-indigo-600' : 'text-gray-500'}`} />
-                                        <h3 className={`font-bold ${config.mode === 'MANUEL' ? 'text-indigo-600' : ''}`}>{t('manager_dashboard.settings.modes.manual_title')}</h3>
+                                        <Hand className={`size-6 mb-3 ${config.mode === 'MANUEL' ? 'text-primary' : 'text-base-content/60'}`} />
+                                        <h3 className={`font-bold ${config.mode === 'MANUEL' ? 'text-primary' : ''}`}>{t('manager_dashboard.settings.modes.manual_title')}</h3>
                                         <p className="text-xs mt-1 leading-relaxed opacity-80">{t('manager_dashboard.settings.modes.manual_desc')}</p>
                                     </button>
 
@@ -134,10 +134,10 @@ export function ObjectivesSettings({ isOpen, onClose }: Props) {
                                         className={`p-4 rounded-xl border-2 text-left transition-all ${
                                             config.mode === 'FIXE' 
                                             ? 'border-secondary bg-secondary/5 shadow-md shadow-secondary/10' 
-                                            : 'border-gray-100 hover:border-gray-200 hover:bg-gray-50 cursor-pointer text-gray-500'
+                                            : 'border-base-200 hover:border-base-300 hover:bg-base-200 cursor-pointer text-base-content/60'
                                         }`}
                                     >
-                                        <Target className={`size-6 mb-3 ${config.mode === 'FIXE' ? 'text-purple-600' : 'text-gray-500'}`} />
+                                        <Target className={`size-6 mb-3 ${config.mode === 'FIXE' ? 'text-purple-600' : 'text-base-content/60'}`} />
                                         <h3 className={`font-bold ${config.mode === 'FIXE' ? 'text-purple-600' : ''}`}>{t('manager_dashboard.settings.modes.fixed_title')}</h3>
                                         <p className="text-xs mt-1 leading-relaxed opacity-80">{t('manager_dashboard.settings.modes.fixed_desc')}</p>
                                     </button>
@@ -148,18 +148,18 @@ export function ObjectivesSettings({ isOpen, onClose }: Props) {
                                         className={`p-4 rounded-xl border-2 text-left transition-all ${
                                             config.mode === 'DYNAMIQUE' 
                                             ? 'border-accent bg-accent/5 shadow-md shadow-accent/10' 
-                                            : 'border-gray-100 hover:border-gray-200 hover:bg-gray-50 cursor-pointer text-gray-500'
+                                            : 'border-base-200 hover:border-base-300 hover:bg-base-200 cursor-pointer text-base-content/60'
                                         }`}
                                     >
-                                        <TrendingUp className={`size-6 mb-3 ${config.mode === 'DYNAMIQUE' ? 'text-amber-600' : 'text-gray-500'}`} />
-                                        <h3 className={`font-bold ${config.mode === 'DYNAMIQUE' ? 'text-amber-600' : ''}`}>{t('manager_dashboard.settings.modes.dynamic_title')}</h3>
+                                        <TrendingUp className={`size-6 mb-3 ${config.mode === 'DYNAMIQUE' ? 'text-warning' : 'text-base-content/60'}`} />
+                                        <h3 className={`font-bold ${config.mode === 'DYNAMIQUE' ? 'text-warning' : ''}`}>{t('manager_dashboard.settings.modes.dynamic_title')}</h3>
                                         <p className="text-xs mt-1 leading-relaxed opacity-80">{t('manager_dashboard.settings.modes.dynamic_desc')}</p>
                                     </button>
                                 </div>
                             </div>
 
                             {/* Conditional Settings */}
-                            <div className="space-y-6 pt-6 border-t border-gray-100">
+                            <div className="space-y-6 pt-6 border-t border-base-200">
                                 {config.mode === 'FIXE' && (
                                     <div className="grid sm:grid-cols-2 gap-6 animate-in slide-in-from-top-2 fade-in">
                                         <div className="form-control">
@@ -173,10 +173,10 @@ export function ObjectivesSettings({ isOpen, onClose }: Props) {
                                                     value={config.seuil_rentabilite_mensuel}
                                                     onChange={e => setConfig({...config, seuil_rentabilite_mensuel: normalizeNumberInput(e.target.value)})}
                                                 />
-                                                <span className="btn join-item pointer-events-none bg-gray-100 border-gray-100">{t('common:currency_symbol', 'F')}</span>
+                                                <span className="btn join-item pointer-events-none bg-base-200 border-base-200">{t('common:currency_symbol', 'F')}</span>
                                             </div>
                                             <label className="label">
-                                                <span className="label-text-alt text-gray-500">{t('manager_dashboard.settings.fixed.expenses_help')}</span>
+                                                <span className="label-text-alt text-base-content/60">{t('manager_dashboard.settings.fixed.expenses_help')}</span>
                                             </label>
                                         </div>
 
@@ -210,16 +210,16 @@ export function ObjectivesSettings({ isOpen, onClose }: Props) {
                                                 value={config.pourcentage_croissance}
                                                 onChange={e => setConfig({...config, pourcentage_croissance: normalizeNumberInput(e.target.value)})}
                                             />
-                                            <span className="btn join-item pointer-events-none bg-gray-100 border-gray-100">%</span>
+                                            <span className="btn join-item pointer-events-none bg-base-200 border-base-200">%</span>
                                         </div>
                                         <label className="label">
-                                            <span className="label-text-alt text-gray-500">{t('manager_dashboard.settings.dynamic.growth_help')}</span>
+                                            <span className="label-text-alt text-base-content/60">{t('manager_dashboard.settings.dynamic.growth_help')}</span>
                                         </label>
                                     </div>
                                 )}
 
                                 {config.mode === 'MANUEL' && (
-                                    <div className="p-4 bg-blue-50 text-blue-600 rounded-xl text-sm leading-relaxed flex items-start gap-3 animate-in slide-in-from-top-2 fade-in">
+                                    <div className="p-4 bg-info/10 text-info rounded-xl text-sm leading-relaxed flex items-start gap-3 animate-in slide-in-from-top-2 fade-in">
                                         <Hand className="size-5 shrink-0 mt-0.5" />
                                         <p>{t('manager_dashboard.settings.modes.manual_notice')}</p>
                                     </div>
@@ -230,7 +230,7 @@ export function ObjectivesSettings({ isOpen, onClose }: Props) {
                 </div>
 
                 {/* Footer */}
-                <div className="p-6 sm:p-8 border-t border-gray-100 bg-base-50 flex justify-end gap-3 mt-auto">
+                <div className="p-6 sm:p-8 border-t border-base-200 bg-base-50 flex justify-end gap-3 mt-auto">
                     <button 
                         onClick={onClose}
                         className="btn btn-ghost rounded-xl font-bold"

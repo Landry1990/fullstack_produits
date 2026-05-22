@@ -531,34 +531,55 @@ class FinanceStatsViewSet(viewsets.ViewSet):
     @action(detail=False, methods=['get'])
     def analyse_fournisseurs(self, request):
         from ..models import Fournisseur, StockLot, StockAdjustment
+        from collections import defaultdict
         today = timezone.now().date()
         start_date = today - relativedelta(months=12)
 
-        fournisseurs = Fournisseur.objects.filter(
+        fournisseurs = list(Fournisseur.objects.filter(
             stocklot__date_reception__date__gte=start_date
-        ).distinct()
+        ).distinct())
+
+        if not fournisseurs:
+            return Response([])
+
+        fournisseur_ids = [f.id for f in fournisseurs]
+
+        # 1. Récupérer TOUS les lots de ces fournisseurs en UNE SEULE requête
+        all_lots = StockLot.objects.filter(
+            fournisseur_id__in=fournisseur_ids,
+            date_reception__date__gte=start_date
+        ).order_by('date_reception')
+
+        # Grouper les lots par fournisseur en mémoire
+        lots_by_fournisseur = defaultdict(list)
+        for lot in all_lots:
+            lots_by_fournisseur[lot.fournisseur_id].append(lot)
+
+        # 2. Récupérer TOUS les ajustements de stock groupés en UNE SEULE requête
+        all_adjustments = StockAdjustment.objects.filter(
+            stock_lot__fournisseur_id__in=fournisseur_ids,
+            reason_type__in=['AVARIE', 'CASSE', 'ERR_ENTREE', 'PERIME'],
+            created_at__date__gte=start_date
+        ).values('stock_lot__fournisseur_id').annotate(
+            count=Count('id')
+        )
+        adjustments_map = {item['stock_lot__fournisseur_id']: item['count'] for item in all_adjustments}
 
         result = []
         for f in fournisseurs:
-            lots = StockLot.objects.filter(fournisseur=f, date_reception__date__gte=start_date)
-            stats_volume = lots.aggregate(
-                total_achat=Coalesce(Sum(F('quantity_initial') * F('price_cost'), output_field=DecimalField()), Decimal('0')),
-                nb_livraisons=Count('id')
-            )
-            total_achat = float(stats_volume['total_achat'])
-            nb_livraisons = stats_volume['nb_livraisons']
+            lots = lots_by_fournisseur[f.id]
+            nb_livraisons = len(lots)
             if nb_livraisons == 0:
                 continue
 
-            problemes = StockAdjustment.objects.filter(
-                stock_lot__fournisseur=f,
-                reason_type__in=['AVARIE', 'CASSE', 'ERR_ENTREE', 'PERIME'],
-                created_at__date__gte=start_date
-            ).count()
+            # Calculs rapides en mémoire RAM
+            total_achat = sum(float(lot.quantity_initial * lot.price_cost) for lot in lots)
+            problemes = adjustments_map.get(f.id, 0)
+            
             taux_probleme = min(1.0, problemes / nb_livraisons) if nb_livraisons > 0 else 0
             score_qualite = 100 * (1.0 - taux_probleme)
 
-            dates_livraison = list(lots.order_by('date_reception').values_list('date_reception', flat=True))
+            dates_livraison = [lot.date_reception for lot in lots]
             if len(dates_livraison) > 1:
                 first_date = dates_livraison[0]
                 days = [(d - first_date).days for d in dates_livraison]
@@ -591,6 +612,7 @@ class FinanceStatsViewSet(viewsets.ViewSet):
     @action(detail=False, methods=['get'])
     def comparaison_prix_achat(self, request):
         from ..models import StockLot
+        from collections import defaultdict
         today = timezone.now().date()
         start_date = today - relativedelta(months=12)
 
@@ -603,21 +625,34 @@ class FinanceStatsViewSet(viewsets.ViewSet):
         ).filter(nb_fournisseurs__gt=1)
 
         product_ids = [p['produit'] for p in produits_multi_source]
-        results = []
+        
+        if not product_ids:
+            return Response([])
 
+        # Une seule requête d'agrégation pour tous les produits d'intérêt
+        all_lots = StockLot.objects.filter(
+            produit_id__in=product_ids,
+            date_reception__date__gte=start_date
+        ).values('produit_id', 'produit__name', 'fournisseur__name').annotate(
+            avg_price=Avg('price_cost')
+        )
+
+        lots_by_product = defaultdict(list)
+        for lot in all_lots:
+            lots_by_product[lot['produit_id']].append(lot)
+
+        results = []
         for pid in product_ids:
-            lots = StockLot.objects.filter(
-                produit_id=pid, date_reception__date__gte=start_date
-            ).values('produit__name', 'fournisseur__name').annotate(
-                avg_price=Avg('price_cost')
-            )
+            lots = lots_by_product.get(pid, [])
             if not lots:
                 continue
             produit_name = lots[0]['produit__name']
             prices = [{'fournisseur': l['fournisseur__name'], 'prix_moyen': float(l['avg_price'])} for l in lots]
+            
             min_price = min(p['prix_moyen'] for p in prices)
             max_price = max(p['prix_moyen'] for p in prices)
             ecart_max = ((max_price - min_price) / min_price) * 100 if min_price > 0 else 0
+            
             results.append({
                 'id': pid, 'produit': produit_name, 'offres': prices,
                 'ecart_pourcentage': round(ecart_max, 1), 'meilleur_prix': min_price

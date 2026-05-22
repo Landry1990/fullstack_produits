@@ -56,7 +56,7 @@ export default function JournalCaisseTable({ state }: Props) {
           </div>
         ) : filteredItems.length === 0 ? (
           <div className="flex flex-col items-center justify-center p-12 text-base-content/30 gap-3 text-center">
-            <div className="size-20 bg-base-200 rounded-full flex items-center justify-center text-4xl mb-2 opacity-50 shadow-inner">📂</div>
+            <div className="size-20 bg-base-200 rounded-full flex items-center justify-center text-4xl mb-2 text-base-content/50 shadow-inner">📂</div>
             <p className="text-lg font-bold italic">{t('table.no_transaction')}</p>
             <p className="text-xs opacity-60 max-w-xs">{t('table.no_transaction_desc') || "Aucune opération ne correspond à vos filtres actuels."}</p>
           </div>
@@ -145,7 +145,7 @@ export default function JournalCaisseTable({ state }: Props) {
                           <div className="font-bold text-sm text-base-content">{mouv.motif}</div>
                           <div className="text-xs text-base-content/50 italic max-w-xs truncate" title={mouv.description}>{mouv.description || t('table.no_description')}</div>
                         </td>
-                        <td className="font-mono text-[10px] py-4 opacity-50">MOUV-{mouv.id}</td>
+                        <td className="font-mono text-[10px] py-4 text-base-content/50">MOUV-{mouv.id}</td>
                         <td className={`text-right font-black text-base py-4 ${mouv.type === 'ENTREE' ? 'text-success' : 'text-error'}`}>
                           {mouv.type === 'ENTREE' ? '+' : '-'}{formatCurrencyLocal(normalizeNumberInput(mouv.montant))}
                         </td>

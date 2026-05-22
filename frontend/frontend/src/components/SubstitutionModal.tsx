@@ -21,7 +21,7 @@ export function SubstitutionModal({ produitId, produitName, onSelect, onClose }:
         <h3 className="font-bold text-lg mb-2">
           {t('substitution.title', { produit: produitName })}
         </h3>
-        <p className="text-sm opacity-70 mb-4">
+        <p className="text-sm text-base-content/70 mb-4">
           {data?.dci ? t('substitution.dci_label', { dci: data.dci }) : t('substitution.no_dci')}
         </p>
 

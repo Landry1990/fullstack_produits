@@ -31,7 +31,7 @@ interface CorbeilleData {
 type TabKey = 'all' | 'produits' | 'clients' | 'fournisseurs' | 'commandes' | 'avoirs' | 'promis' | 'inventaires' | 'factures' | 'users';
 
 const TAB_CONFIG_KEYS: { key: TabKey; labelKey: string; icon: React.ReactNode; color: string }[] = [
-  { key: 'all', labelKey: 'tabs.all', icon: <Trash2 className="size-4" />, color: 'text-gray-900' },
+  { key: 'all', labelKey: 'tabs.all', icon: <Trash2 className="size-4" />, color: 'text-base-content' },
   { key: 'produits', labelKey: 'tabs.produits', icon: <Package className="size-4" />, color: 'text-blue-500' },
   { key: 'clients', labelKey: 'tabs.clients', icon: <Users className="size-4" />, color: 'text-emerald-500' },
   { key: 'fournisseurs', labelKey: 'tabs.fournisseurs', icon: <Truck className="size-4" />, color: 'text-amber-500' },
@@ -40,7 +40,7 @@ const TAB_CONFIG_KEYS: { key: TabKey; labelKey: string; icon: React.ReactNode; c
   { key: 'promis', labelKey: 'tabs.promis', icon: <Clock className="size-4" />, color: 'text-purple-500' },
   { key: 'inventaires', labelKey: 'tabs.inventaires', icon: <ClipboardList className="size-4" />, color: 'text-teal-500' },
   { key: 'factures', labelKey: 'tabs.factures', icon: <Receipt className="size-4" />, color: 'text-orange-500' },
-  { key: 'users', labelKey: 'tabs.users', icon: <Users className="size-4" />, color: 'text-slate-500' },
+  { key: 'users', labelKey: 'tabs.users', icon: <Users className="size-4" />, color: 'text-base-content/60' },
 ];
 
 export default function Corbeille() {
@@ -201,24 +201,24 @@ export default function Corbeille() {
       case 'promis': return <Clock className="size-4 text-purple-500" />;
       case 'inventaire': return <ClipboardList className="size-4 text-teal-500" />;
       case 'facture': return <Receipt className="size-4 text-orange-500" />;
-      case 'user': return <Users className="size-4 text-slate-500" />;
+      case 'user': return <Users className="size-4 text-base-content/60" />;
       default: return <Trash2 className="size-4" />;
     }
   };
 
   const getTypeBadge = (type: string) => {
     const config: Record<string, { bg: string; text: string; labelKey: string }> = {
-      produit: { bg: 'bg-blue-500/10', text: 'text-indigo-600', labelKey: 'badges.produit' },
-      client: { bg: 'bg-emerald-500/10', text: 'text-emerald-600', labelKey: 'badges.client' },
-      fournisseur: { bg: 'bg-amber-500/10', text: 'text-amber-600', labelKey: 'badges.fournisseur' },
-      commande: { bg: 'bg-indigo-500/10', text: 'text-indigo-600', labelKey: 'badges.commande' },
+      produit: { bg: 'bg-blue-500/10', text: 'text-primary', labelKey: 'badges.produit' },
+      client: { bg: 'bg-emerald-500/10', text: 'text-success', labelKey: 'badges.client' },
+      fournisseur: { bg: 'bg-amber-500/10', text: 'text-warning', labelKey: 'badges.fournisseur' },
+      commande: { bg: 'bg-indigo-500/10', text: 'text-primary', labelKey: 'badges.commande' },
       avoir: { bg: 'bg-rose-500/10', text: 'text-rose-600', labelKey: 'badges.avoir' },
       promis: { bg: 'bg-purple-500/10', text: 'text-purple-600', labelKey: 'badges.promis' },
       inventaire: { bg: 'bg-teal-500/10', text: 'text-teal-600', labelKey: 'badges.inventaire' },
-      facture: { bg: 'bg-orange-500/10', text: 'text-orange-600', labelKey: 'badges.facture' },
-      user: { bg: 'bg-slate-500/10', text: 'text-slate-600', labelKey: 'badges.user' },
+      facture: { bg: 'bg-orange-500/10', text: 'text-warning', labelKey: 'badges.facture' },
+      user: { bg: 'bg-slate-500/10', text: 'text-base-content/70', labelKey: 'badges.user' },
     };
-    const c = config[type] || { bg: 'bg-gray-100', text: 'text-gray-900', labelKey: type };
+    const c = config[type] || { bg: 'bg-base-200', text: 'text-base-content', labelKey: type };
     return (
       <span className={`px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider ${c.bg} ${c.text}`}>
         {t(c.labelKey, { defaultValue: type })}
@@ -262,7 +262,7 @@ export default function Corbeille() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 p-4 md:p-6 space-y-5 font-sans">
+    <div className="min-h-screen bg-base-200 p-4 md:p-6 space-y-5 font-sans">
       {/* Header */}
       <div className="max-w-7xl mx-auto">
         <div className="flex items-center gap-3 mb-2">
@@ -270,27 +270,27 @@ export default function Corbeille() {
             <Trash2 className="size-6 text-red-500" />
           </div>
           <div>
-            <h1 className="text-2xl md:text-3xl font-bold text-gray-900 tracking-tight">
+            <h1 className="text-2xl md:text-3xl font-bold text-base-content tracking-tight">
               {t('title')}
             </h1>
-            <p className="text-gray-500 text-sm">
+            <p className="text-base-content/60 text-sm">
               {t('subtitle')}
             </p>
           </div>
           <div className="ml-auto flex items-center gap-2">
             <button
               onClick={fetchData}
-              className="inline-flex items-center gap-1.5 px-2.5 py-1.5 text-gray-500 hover:text-indigo-600 hover:bg-gray-50 rounded-lg text-sm font-medium transition-colors"
+              className="inline-flex items-center gap-1.5 px-2.5 py-1.5 text-base-content/60 hover:text-primary hover:bg-base-200 rounded-lg text-sm font-medium transition-colors"
               disabled={loading}
             >
               {loading
-                ? <span className="inline-block size-3 border-2 border-gray-200 border-t-indigo-600 rounded-full animate-spin" />
+                ? <span className="inline-block size-3 border-2 border-base-300 border-t-indigo-600 rounded-full animate-spin" />
                 : <RotateCcw className="size-4" />}
             </button>
             {(data?.total ?? 0) > 0 && (
               <button
                 onClick={handleEmptyTrash}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-red-600 text-white rounded-xl text-xs font-bold hover:bg-red-700 transition-colors shadow-sm"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-error text-white rounded-xl text-xs font-bold hover:bg-error-focus transition-colors shadow-sm"
                 disabled={actionLoading}
               >
                 <Trash2 className="size-3.5" />
@@ -313,16 +313,16 @@ export default function Corbeille() {
               onClick={() => { setActiveTab(tab.key); setSelectedIds([]); }}
               className={`flex items-center gap-3 p-4 rounded-2xl border transition-all duration-200 ${
                 activeTab === tab.key
-                  ? 'bg-white border-indigo-200 shadow-md shadow-indigo-50/50 ring-1 ring-indigo-200'
-                  : 'bg-white/60 border-gray-100 hover:bg-white hover:shadow-sm'
+                  ? 'bg-base-100 border-indigo-200 shadow-md shadow-indigo-50/50 ring-1 ring-indigo-200'
+                  : 'bg-base-100/60 border-base-200 hover:bg-base-100 hover:shadow-sm'
               }`}
             >
-              <div className={`p-2 rounded-xl ${activeTab === tab.key ? 'bg-indigo-50' : 'bg-gray-100'}`}>
+              <div className={`p-2 rounded-xl ${activeTab === tab.key ? 'bg-primary/10' : 'bg-base-200'}`}>
                 {tab.icon}
               </div>
               <div className="text-left">
-                <p className="text-2xl font-black text-gray-900">{count}</p>
-                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">{t(tab.labelKey)}</p>
+                <p className="text-2xl font-black text-base-content">{count}</p>
+                <p className="text-[10px] font-bold text-base-content/50 uppercase tracking-widest">{t(tab.labelKey)}</p>
               </div>
             </button>
           );
@@ -330,22 +330,22 @@ export default function Corbeille() {
       </div>
 
       {/* Main Content */}
-      <div className="max-w-7xl mx-auto bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+      <div className="max-w-7xl mx-auto bg-base-100 rounded-2xl shadow-sm border border-base-200 overflow-hidden">
         {/* Toolbar */}
-        <div className="p-4 border-b border-gray-100 flex flex-col sm:flex-row gap-3">
+        <div className="p-4 border-b border-base-200 flex flex-col sm:flex-row gap-3">
           {/* Search */}
           <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-gray-300" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-base-content/40" />
             <input
               type="text"
               placeholder={t('search')}
               value={searchQuery}
               onChange={e => setSearchQuery(e.target.value)}
-              className="w-full rounded-xl border border-gray-200 bg-gray-50 pl-10 pr-8 h-10 text-sm font-medium text-gray-900 focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-50 transition-all"
+              className="w-full rounded-xl border border-base-300 bg-base-200 pl-10 pr-8 h-10 text-sm font-medium text-base-content focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
             />
             {searchQuery && (
               <button onClick={() => setSearchQuery('')} className="absolute right-3 top-1/2 -translate-y-1/2">
-                <X className="size-4 text-gray-300 hover:text-gray-900" />
+                <X className="size-4 text-base-content/40 hover:text-base-content" />
               </button>
             )}
           </div>
@@ -353,12 +353,12 @@ export default function Corbeille() {
           {/* Bulk actions */}
           {selectedIds.length > 0 && (
             <div className="flex items-center gap-2 ">
-              <span className="text-xs font-bold text-gray-500">
+              <span className="text-xs font-bold text-base-content/60">
                 {t('actions.selected', { count: selectedIds.length })}
               </span>
               <button
                 onClick={() => handleRestore(selectedIds)}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-emerald-600 text-white rounded-xl text-xs font-bold hover:bg-emerald-700 transition-colors shadow-sm"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-success text-white rounded-xl text-xs font-bold hover:bg-success-focus transition-colors shadow-sm"
                 disabled={actionLoading}
               >
                 <RotateCcw className="size-3.5" />
@@ -366,7 +366,7 @@ export default function Corbeille() {
               </button>
               <button
                 onClick={() => handlePurge(selectedIds)}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-red-600 text-white rounded-xl text-xs font-bold hover:bg-red-700 transition-colors shadow-sm"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-error text-white rounded-xl text-xs font-bold hover:bg-error-focus transition-colors shadow-sm"
                 disabled={actionLoading}
               >
                 <Trash2 className="size-3.5" />
@@ -374,7 +374,7 @@ export default function Corbeille() {
               </button>
               <button
                 onClick={() => setSelectedIds([])}
-                className="inline-flex items-center gap-1.5 px-2.5 py-1.5 text-gray-500 hover:bg-gray-50 rounded-xl text-sm font-medium transition-colors"
+                className="inline-flex items-center gap-1.5 px-2.5 py-1.5 text-base-content/60 hover:bg-base-200 rounded-xl text-sm font-medium transition-colors"
               >
                 <X className="size-3.5" />
               </button>
@@ -385,14 +385,14 @@ export default function Corbeille() {
         {/* Loading */}
         {loading && (
           <div className="flex items-center justify-center py-20">
-            <span className="inline-block size-8 border-2 border-gray-200 border-t-indigo-600 rounded-full animate-spin" />
+            <span className="inline-block size-8 border-2 border-base-300 border-t-indigo-600 rounded-full animate-spin" />
           </div>
         )}
 
         {/* Empty State */}
         {!loading && filteredItems.length === 0 && (
-          <div className="flex flex-col items-center justify-center py-20 text-gray-400">
-            <div className="size-20 rounded-full bg-gray-100 flex items-center justify-center mb-4">
+          <div className="flex flex-col items-center justify-center py-20 text-base-content/50">
+            <div className="size-20 rounded-full bg-base-200 flex items-center justify-center mb-4">
               <Trash2 className="size-8" />
             </div>
             <p className="font-bold text-lg">{t('empty_state.title')}</p>
@@ -405,11 +405,11 @@ export default function Corbeille() {
           <div className="overflow-x-auto">
             <table className="w-full text-sm border-separate border-spacing-0">
               <thead>
-                <tr className="text-[10px] font-black text-gray-400 uppercase tracking-widest border-b border-gray-100">
+                <tr className="text-[10px] font-black text-base-content/50 uppercase tracking-widest border-b border-base-200">
                   <th className="w-10">
                     <input
                       type="checkbox"
-                      className="size-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 cursor-pointer"
+                      className="size-4 rounded border-base-300 text-primary focus:ring-primary cursor-pointer"
                       checked={selectedIds.length === filteredItems.length && filteredItems.length > 0}
                       onChange={selectAll}
                     />
@@ -425,40 +425,40 @@ export default function Corbeille() {
                 {filteredItems.map(item => (
                   <tr
                     key={`${item.type}-${item.id}`}
-                    className={`border-b border-gray-100/60 hover:bg-gray-50 transition-colors ${
-                      isSelected(item.type, item.id) ? 'bg-indigo-50' : ''
+                    className={`border-b border-base-200/60 hover:bg-base-200 transition-colors ${
+                      isSelected(item.type, item.id) ? 'bg-primary/10' : ''
                     }`}
                   >
                     <td>
                       <input
                         type="checkbox"
-                        className="size-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 cursor-pointer"
+                        className="size-4 rounded border-base-300 text-primary focus:ring-primary cursor-pointer"
                         checked={isSelected(item.type, item.id)}
                         onChange={() => toggleSelect(item.type, item.id)}
                       />
                     </td>
                     <td>
                       <div className="flex items-center gap-2.5">
-                        <div className="p-1.5 rounded-lg bg-gray-100">{getTypeIcon(item.type)}</div>
-                        <span className="font-bold text-sm text-gray-900 truncate max-w-[250px]">
+                        <div className="p-1.5 rounded-lg bg-base-200">{getTypeIcon(item.type)}</div>
+                        <span className="font-bold text-sm text-base-content truncate max-w-[250px]">
                           {item.name}
                         </span>
                       </div>
                     </td>
                     <td>{getTypeBadge(item.type)}</td>
                     <td className="hidden md:table-cell">
-                      <span className="text-xs text-gray-500 truncate max-w-[300px] inline-block">
+                      <span className="text-xs text-base-content/60 truncate max-w-[300px] inline-block">
                         {getDetailString(item)}
                       </span>
                     </td>
                     <td className="hidden md:table-cell">
-                      <span className="text-xs text-gray-400">{formatDate(item.deleted_at)}</span>
+                      <span className="text-xs text-base-content/50">{formatDate(item.deleted_at)}</span>
                     </td>
                     <td>
                       <div className="flex items-center gap-1 justify-end">
                         <button
                           onClick={() => handleRestore([{ model: item.type, id: item.id }])}
-                          className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-emerald-600 hover:bg-emerald-50 text-xs font-medium transition-colors"
+                          className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-success hover:bg-success/10 text-xs font-medium transition-colors"
                           title={t('actions.restore')}
                           disabled={actionLoading}
                         >
@@ -467,7 +467,7 @@ export default function Corbeille() {
                         </button>
                         <button
                           onClick={() => handlePurge([{ model: item.type, id: item.id }])}
-                          className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-red-500 hover:bg-red-50 text-xs font-medium transition-colors"
+                          className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-red-500 hover:bg-error/10 text-xs font-medium transition-colors"
                           title={t('actions.delete_permanently')}
                           disabled={actionLoading}
                         >
@@ -485,12 +485,12 @@ export default function Corbeille() {
 
         {/* Footer */}
         {!loading && filteredItems.length > 0 && (
-          <div className="p-3 border-t border-gray-100 bg-gray-50 flex items-center justify-between px-6">
+          <div className="p-3 border-t border-base-200 bg-base-200 flex items-center justify-between px-6">
             <div className="flex items-center gap-1.5">
-              <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">{t('footer.total')}</span>
+              <span className="text-[10px] font-bold text-base-content/50 uppercase tracking-widest">{t('footer.total')}</span>
               <span className="text-red-500 font-black text-sm">{filteredItems.length}</span>
             </div>
-            <div className="flex items-center gap-1 text-[10px] text-gray-300">
+            <div className="flex items-center gap-1 text-[10px] text-base-content/40">
               <AlertTriangle className="size-3" />
               {t('footer.warning')}
             </div>

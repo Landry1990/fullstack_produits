@@ -36,8 +36,9 @@ graceful_timeout = 30
 
 # ── Mémoire & stabilité ──────────────────────────────────────────
 # Redémarre un worker après N requêtes — évite les fuites mémoire progressives
-max_requests = 1000
-max_requests_jitter = 100  # Évite que tous les workers redémarrent en même temps
+# Valeur augmentée pour production (évite latence due aux redémarrages fréquents)
+max_requests = 5000
+max_requests_jitter = 500  # Évite que tous les workers redémarrent en même temps
 
 # ── Logs ─────────────────────────────────────────────────────────
 accesslog = "-"           # stdout

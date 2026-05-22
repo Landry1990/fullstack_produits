@@ -164,22 +164,27 @@ export function useJournalCaisse() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [page]);
 
+  // Fetch quand les dates changent (sélection manuelle ou détection shift terminée)
   useEffect(() => {
     if (isInitialMount.current) {
       isInitialMount.current = false;
       return;
     }
+    // Attendre que le shift soit détecté avant de fetch (évite double requête)
+    if (selectedUser && !detectedShift?.active) return;
+    
     setPage(1);
     const controller = new AbortController();
     fetchPageInit(controller.signal);
     return () => controller.abort();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedUser, dateDebut, dateFin]);
+  }, [dateDebut, dateFin, detectedShift?.active]);
 
   useEffect(() => {
     if (selectedUser) {
       handleUserShiftDetection(selectedUser);
     } else {
+      // Retour à "toutes les caissières" - réinitialiser complètement
       setDetectedShift(null);
       const today = getServerDate();
       today.setHours(0, 0, 0, 0);
@@ -187,11 +192,17 @@ export function useJournalCaisse() {
       endToday.setHours(23, 59, 59, 999);
       setDateDebut(today);
       setDateFin(endToday);
+      setPage(1); // Réinitialiser la pagination
+      // Forcer le rechargement des données pour "tout"
+      const controller = new AbortController();
+      fetchPageInit(controller.signal);
+      return () => controller.abort();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedUser]);
 
   const handleUserShiftDetection = async (userId: string) => {
+    setLoading(true); // Bloquer l'UI pendant la détection
     try {
       const response = await api.get('caisse/get_user_shift/', {
         params: { user_id: userId }
@@ -203,6 +214,7 @@ export function useJournalCaisse() {
         const end = end_date ? new Date(end_date) : new Date();
         
         setDetectedShift({ start, end, active: true });
+        // Mettre à jour les dates ET fetcher les données dans la foulée
         setDateDebut(start);
         setDateFin(end);
         toast.success(t('messages.shift_detected'));
@@ -214,10 +226,14 @@ export function useJournalCaisse() {
         endToday.setHours(23,59,59,999);
         setDateDebut(today);
         setDateFin(endToday);
+        toast(t('messages.no_shift_found', { defaultValue: 'Aucune activité trouvée pour cette période' }), { icon: 'ℹ️' });
       }
     } catch (err) {
       console.error("Erreur détection shift:", err);
       setDetectedShift(null);
+      toast.error(t('messages.shift_error', { defaultValue: 'Erreur lors de la détection du shift' }));
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -244,26 +260,22 @@ export function useJournalCaisse() {
   };
 
   const filteredItems = useMemo(() => {
+    // NOTE: Les transactions et mouvements viennent déjà filtrés par date de l'API
+    // On ne refiltre PAS par date ici pour éviter les incohérences
     const filteredTrans = transactions.filter(transaction => {
       const matchesSearch = searchQuery === '' || 
         transaction.client_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         transaction.facture_numero?.toLowerCase().includes(searchQuery.toLowerCase()) ||
         transaction.user_details?.full_name.toLowerCase().includes(searchQuery.toLowerCase());
 
-      if (filterType !== 'all') return false;
+      // Filtre type: les transactions sont des "entrées" de trésorerie
+      const matchesType = filterType === 'all' || 
+        filterType === 'entrees' || // Les transactions sont des entrées de caisse
+        (filterType === 'sorties' && false); // Les transactions ne sont jamais des sorties
 
       const matchesMode = filterMode === 'all' || transaction.mode_paiement === filterMode;
 
-      let matchesDate = true;
-      if (dateDebut && dateFin) {
-        const transactionDate = new Date(transaction.date_paiement);
-        const debut = dateDebut;
-        const fin = new Date(dateFin);
-        fin.setHours(23, 59, 59, 999);
-        matchesDate = transactionDate >= debut && transactionDate <= fin;
-      }
-
-      return matchesSearch && matchesMode && matchesDate;
+      return matchesSearch && matchesType && matchesMode;
     });
 
     const filteredMouvs = mouvements.filter(mouv => {
@@ -277,15 +289,7 @@ export function useJournalCaisse() {
         (filterType === 'entrees' && mouv.type === 'ENTREE') ||
         (filterType === 'sorties' && mouv.type === 'SORTIE');
 
-       let matchesDate = true;
-       if (dateDebut && dateFin) {
-        const d = new Date(mouv.date);
-        const debut = dateDebut;
-        const fin = new Date(dateFin);
-        fin.setHours(23, 59, 59, 999);
-        matchesDate = d >= debut && d <= fin;
-      }
-      return matchesSearch && matchesMode && matchesDate && matchesType;
+      return matchesSearch && matchesMode && matchesType;
     });
 
     const combined = [
@@ -295,7 +299,7 @@ export function useJournalCaisse() {
     
     return combined.sort((a, b) => new Date(b.date_paiement).getTime() - new Date(a.date_paiement).getTime());
 
-  }, [transactions, mouvements, searchQuery, filterMode, filterType, dateDebut, dateFin]);
+  }, [transactions, mouvements, searchQuery, filterMode, filterType]); // ← Plus de dateDebut/dateFin
 
   type GroupedItem =
     | (CaisseTransaction & { _kind: 'transaction'; isReleveGroup?: boolean; items?: CaisseTransaction[] })
@@ -336,73 +340,36 @@ export function useJournalCaisse() {
      return result;
   }, [filteredItems]);
 
+  // Utiliser uniquement serverTotals comme source de vérité
+  // Les totaux côté client sont désactivés pour éviter les incohérences
   const totauxParMode = useMemo(() => {
-    const totaux = {
-      especes: 0,
-      cheque: 0,
-      carte: 0,
-      virement: 0,
-      om: 0,
-      momo: 0,
-      en_compte: 0,
-      depot: 0,
-      total: 0,
-      entrees: 0,
-      sorties: 0,
-      recouvrement: 0,
-      ventes: 0,
-      ventes_par_mode: { especes: 0, cheque: 0, carte: 0, virement: 0, om: 0, momo: 0, depot: 0, en_compte: 0 } as Record<string, number>,
-      recouv_par_mode: { especes: 0, cheque: 0, carte: 0, virement: 0, om: 0, momo: 0 } as Record<string, number>,
-      global_par_mode: { especes: 0, cheque: 0, carte: 0, virement: 0, om: 0, momo: 0, depot: 0, en_compte: 0 } as Record<string, number>
+    // Fallback si serverTotals n'est pas encore chargé
+    const details = serverTotals?.details || {};
+    
+    return {
+      especes: details.especes || 0,
+      cheque: details.cheque || 0,
+      carte: details.carte || 0,
+      virement: details.virement || 0,
+      om: details.om || 0,
+      momo: details.momo || 0,
+      en_compte: details.en_compte || 0,
+      depot: details.depot || 0,
+      recouvrement: details.recouvrement || 0,
+      total: serverTotals?.total_theorique || 0,
+      entrees: serverTotals?.total_entrees || 0,
+      sorties: serverTotals?.total_sorties || 0,
+      ventes: serverTotals?.total_ventes || 0,
+      ventes_par_mode: { 
+        especes: 0, cheque: 0, carte: 0, virement: 0, 
+        om: 0, momo: 0, depot: 0, en_compte: 0 
+      },
+      recouv_par_mode: { 
+        especes: 0, cheque: 0, carte: 0, virement: 0, om: 0, momo: 0 
+      },
+      global_par_mode: details
     };
-
-    // Note: We used to use filteredItems, but for accurate CA stats we should look at all transactions 
-    // of the period, while only adding physical ones to the 'total' (cash).
-    transactions.forEach((item) => {
-       if (item.statut !== 'completee') return;
-       const montant = normalizeNumberInput(item.montant);
-       const isRecouvrement = (item.mode_paiement as string) === 'recouvrement' || item.is_creance_settlement || (item.reference && item.reference.includes('[RECOUV]'));
-       
-       if (isRecouvrement) {
-           totaux.recouvrement += montant;
-           if (totaux.recouv_par_mode[item.mode_paiement] !== undefined) {
-               totaux.recouv_par_mode[item.mode_paiement] += montant;
-           }
-       } else {
-           totaux.ventes += montant;
-           if (totaux.ventes_par_mode[item.mode_paiement] !== undefined) {
-               totaux.ventes_par_mode[item.mode_paiement] += montant;
-           }
-           
-           if ((totaux as any)[item.mode_paiement] !== undefined) {
-               (totaux as any)[item.mode_paiement] += montant;
-           }
-       }
-
-       // GLOBAL BREAKDOWN: Add to global mode total (Sales + Recoveries)
-       if (totaux.global_par_mode[item.mode_paiement] !== undefined) {
-           totaux.global_par_mode[item.mode_paiement] += montant;
-       }
-
-       // PHYSICAL CASH: Always add to drawer total if mode is 'especes'
-       if (item.mode_paiement === 'especes') {
-           totaux.total += montant;
-       }
-    });
-
-    mouvements.forEach((item) => {
-       const montant = normalizeNumberInput(item.montant);
-       if (item.type === 'ENTREE') {
-           totaux.entrees += montant;
-           totaux.total += montant;
-       } else {
-           totaux.sorties += montant;
-           totaux.total -= montant;
-       }
-    });
-
-    return totaux;
-  }, [transactions, mouvements]);
+  }, [serverTotals]);
 
   const openClosingModal = () => {
       const currentTotals = (serverTotals || totauxParMode) as any;

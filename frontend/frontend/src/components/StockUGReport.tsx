@@ -388,7 +388,7 @@ export default function StockUGReport() {
                 ) : data?.fournisseurs.length === 0 ? (
                   <tr>
                     <td colSpan={5} className="px-6 py-12 text-center text-base-content/40">
-                      <PackageOpen className="size-12 mx-auto mb-3 opacity-20" />
+                      <PackageOpen className="size-12 mx-auto mb-3 text-base-content/20" />
                       <p className="font-medium text-base-content/60">{t('stock:rapport_ug.table.empty')}</p>
                     </td>
                   </tr>
@@ -445,7 +445,7 @@ export default function StockUGReport() {
                                  </thead>
                                  <tbody>
                                    {stat.details.map(detail => (
-                                     <tr key={detail.lot_id} className={detail.quantity_free_remaining === 0 ? 'opacity-50' : ''}>
+                                     <tr key={detail.lot_id} className={detail.quantity_free_remaining === 0 ? 'text-base-content/50' : ''}>
                                        <td className="font-medium text-base-content/90">{detail.produit_nom}</td>
                                        <td className="text-base-content/60 font-mono text-xs">{detail.lot_numero}</td>
                                        <td className="text-base-content/80">

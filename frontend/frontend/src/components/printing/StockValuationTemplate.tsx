@@ -90,12 +90,12 @@ const StockValuationTemplate: React.FC<StockValuationTemplateProps> = ({ setting
 
             {/* Main Stats Banner */}
             <div className="grid grid-cols-1 gap-8 mb-12">
-                <div className="bg-slate-50 border-2 border-slate-100 rounded-3xl p-8 flex justify-between items-center relative overflow-hidden">
+                <div className="bg-base-200 border-2 border-slate-100 rounded-3xl p-8 flex justify-between items-center relative overflow-hidden">
                     <div className="absolute top-0 right-0 size-32 bg-primary/5 rounded-full -mr-16 -mt-16"></div>
                     <div className="absolute bottom-0 left-0 size-24 bg-primary/5 rounded-full -ml-12 -mb-12"></div>
                     
                     <div className="relative z-10">
-                        <div className="text-[10px] uppercase font-black text-slate-400 tracking-[0.3em] mb-4">{t('stock_valuation.valuation_method')}</div>
+                        <div className="text-[10px] uppercase font-black text-base-content/50 tracking-[0.3em] mb-4">{t('stock_valuation.valuation_method')}</div>
                         <div className="flex items-center gap-4">
                             <div className="size-12 rounded-2xl bg-primary/10 flex items-center justify-center text-primary">
                                 <svg xmlns="http://www.w3.org/2000/svg" className="size-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -103,14 +103,14 @@ const StockValuationTemplate: React.FC<StockValuationTemplateProps> = ({ setting
                                 </svg>
                             </div>
                             <div>
-                                <div className="text-2xl font-black text-slate-900 uppercase tracking-tight">{typeLabel}</div>
+                                <div className="text-2xl font-black text-base-content uppercase tracking-tight">{typeLabel}</div>
                             </div>
                         </div>
                     </div>
 
                     <div className="text-right relative z-10">
                         <div className="text-[10px] uppercase font-black text-primary tracking-[0.3em] mb-2">{t('stock_valuation.total_general')}</div>
-                        <div className="text-5xl font-black text-slate-900 tracking-tighter tabular-nums leading-none">
+                        <div className="text-5xl font-black text-base-content tracking-tighter tabular-nums leading-none">
                             {formatCurrency(data.total_ttc)}
                         </div>
                     </div>
@@ -120,19 +120,19 @@ const StockValuationTemplate: React.FC<StockValuationTemplateProps> = ({ setting
             {/* Detailed Totals Section */}
             <div className="grid grid-cols-2 gap-10 mb-8">
                 <div className="space-y-6">
-                    <h2 className="text-sm font-black text-slate-900 uppercase tracking-widest border-b-2 border-slate-900 pb-2 flex justify-between items-center">
+                    <h2 className="text-sm font-black text-base-content uppercase tracking-widest border-b-2 border-slate-900 pb-2 flex justify-between items-center">
                         <span>{t('monthly_report.total_ca')}</span>
                         <span className="text-[10px] text-slate-300 font-bold">{t('total_general')}</span>
                     </h2>
                     
                     <div className="space-y-3">
-                        <div className="flex justify-between items-center px-4 py-4 bg-white border border-slate-100 rounded-2xl shadow-sm">
-                            <span className="text-[11px] font-black uppercase text-slate-400 tracking-widest">{t('stock_valuation.ht_total')}</span>
-                            <span className="text-lg font-black text-slate-900">{formatCurrency(data.total_ht)}</span>
+                        <div className="flex justify-between items-center px-4 py-4 bg-base-100 border border-slate-100 rounded-2xl shadow-sm">
+                            <span className="text-[11px] font-black uppercase text-base-content/50 tracking-widest">{t('stock_valuation.ht_total')}</span>
+                            <span className="text-lg font-black text-base-content">{formatCurrency(data.total_ht)}</span>
                         </div>
-                        <div className="flex justify-between items-center px-4 py-4 bg-white border border-slate-100 rounded-2xl shadow-sm">
-                            <span className="text-[11px] font-black uppercase text-slate-400 tracking-widest">{t('stock_valuation.tva_total')}</span>
-                            <span className="text-lg font-black text-slate-900">{formatCurrency(data.total_tva)}</span>
+                        <div className="flex justify-between items-center px-4 py-4 bg-base-100 border border-slate-100 rounded-2xl shadow-sm">
+                            <span className="text-[11px] font-black uppercase text-base-content/50 tracking-widest">{t('stock_valuation.tva_total')}</span>
+                            <span className="text-lg font-black text-base-content">{formatCurrency(data.total_tva)}</span>
                         </div>
                         <div className="flex justify-between items-center px-4 py-5 bg-primary text-white rounded-2xl shadow-md ring-4 ring-primary/10">
                             <span className="text-[11px] font-black uppercase tracking-widest">{t('stock_valuation.recap_title')} {data.is_pmp ? 'PMP' : 'TTC'}</span>
@@ -142,14 +142,14 @@ const StockValuationTemplate: React.FC<StockValuationTemplateProps> = ({ setting
                 </div>
 
                 <div className="space-y-6">
-                    <h2 className="text-sm font-black text-slate-900 uppercase tracking-widest border-b-2 border-slate-900 pb-2 flex justify-between items-center">
+                    <h2 className="text-sm font-black text-base-content uppercase tracking-widest border-b-2 border-slate-900 pb-2 flex justify-between items-center">
                         <span>{t('stock_valuation.tva_breakdown_title')}</span>
                     </h2>
                     
-                    <div className="bg-white border border-slate-100 rounded-2xl shadow-sm overflow-hidden">
+                    <div className="bg-base-100 border border-slate-100 rounded-2xl shadow-sm overflow-hidden">
                         <table className="w-full text-center border-collapse">
                             <thead>
-                                <tr className="bg-slate-50 text-[9px] uppercase font-black text-slate-400 border-b border-slate-100">
+                                <tr className="bg-base-200 text-[9px] uppercase font-black text-base-content/50 border-b border-slate-100">
                                     <th className="py-4 px-2">{t('stock_valuation.tva_table_rate')}</th>
                                     <th className="py-4 px-2">{t('stock_valuation.tva_table_base')}</th>
                                     <th className="py-4 px-2">{t('stock_valuation.tva_table_tva')}</th>
@@ -160,9 +160,9 @@ const StockValuationTemplate: React.FC<StockValuationTemplateProps> = ({ setting
                                 {data.tva_breakdown.map((item, idx) => (
                                     <tr key={idx} className="border-b border-slate-50 last:border-0">
                                         <td className="py-4 px-2 font-black text-primary bg-primary/5">{item.rate}%</td>
-                                        <td className="py-4 px-2 font-medium text-slate-600">{formatNumber(item.ht, 0)}</td>
-                                        <td className="py-4 px-2 font-medium text-slate-600">{formatNumber(item.tva, 0)}</td>
-                                        <td className="py-4 px-2 font-black text-slate-900">{formatNumber(item.ttc, 0)}</td>
+                                        <td className="py-4 px-2 font-medium text-base-content/70">{formatNumber(item.ht, 0)}</td>
+                                        <td className="py-4 px-2 font-medium text-base-content/70">{formatNumber(item.tva, 0)}</td>
+                                        <td className="py-4 px-2 font-black text-base-content">{formatNumber(item.ttc, 0)}</td>
                                     </tr>
                                 ))}
                             </tbody>
@@ -174,12 +174,12 @@ const StockValuationTemplate: React.FC<StockValuationTemplateProps> = ({ setting
             {/* Optional Group Breakdown Section */}
             {data.group_breakdown && data.group_breakdown.length > 0 && (
                 <div className="mt-4 mb-12 animate-in fade-in slide-in-from-bottom-4 duration-700">
-                    <h2 className="text-sm font-black text-slate-900 uppercase tracking-widest border-b-2 border-slate-900 pb-2 mb-6 flex justify-between items-center">
+                    <h2 className="text-sm font-black text-base-content uppercase tracking-widest border-b-2 border-slate-900 pb-2 mb-6 flex justify-between items-center">
                         <span>{t('stock_valuation.tva_breakdown_title')} – {getGroupLabel()}</span>
                         <span className="text-[10px] text-slate-300 font-bold">{data.group_breakdown.length} {t('common.categories', 'Catégories')}</span>
                     </h2>
                     
-                    <div className="bg-white border-2 border-slate-100 rounded-3xl overflow-hidden shadow-sm">
+                    <div className="bg-base-100 border-2 border-slate-100 rounded-3xl overflow-hidden shadow-sm">
                         <table className="w-full border-collapse">
                             <thead>
                                 <tr className="bg-slate-900 text-white text-[9px] uppercase font-black tracking-widest">
@@ -191,19 +191,19 @@ const StockValuationTemplate: React.FC<StockValuationTemplateProps> = ({ setting
                             </thead>
                             <tbody className="text-[11px]">
                                 {data.group_breakdown.map((item, idx) => (
-                                    <tr key={idx} className={`border-b border-slate-50 last:border-0 hover:bg-slate-50/50 transition-colors ${idx % 2 === 1 ? 'bg-slate-50/20' : ''}`}>
-                                        <td className="py-4 px-6 text-left font-black text-slate-900">
+                                    <tr key={idx} className={`border-b border-slate-50 last:border-0 hover:bg-base-200/50 transition-colors ${idx % 2 === 1 ? 'bg-base-200/20' : ''}`}>
+                                        <td className="py-4 px-6 text-left font-black text-base-content">
                                             {item.name}
                                         </td>
-                                        <td className="py-4 px-4 text-right font-medium text-slate-500 tabular-nums">{formatNumber(item.ht, 0)}</td>
-                                        <td className="py-4 px-4 text-right font-medium text-slate-500 tabular-nums">{formatNumber(item.tva, 0)}</td>
-                                        <td className="py-4 px-6 text-right font-black text-slate-900 tabular-nums bg-primary/5 group-hover:bg-primary/10">
+                                        <td className="py-4 px-4 text-right font-medium text-base-content/60 tabular-nums">{formatNumber(item.ht, 0)}</td>
+                                        <td className="py-4 px-4 text-right font-medium text-base-content/60 tabular-nums">{formatNumber(item.tva, 0)}</td>
+                                        <td className="py-4 px-6 text-right font-black text-base-content tabular-nums bg-primary/5 group-hover:bg-primary/10">
                                             {formatNumber(item.ttc, 0)}
                                         </td>
                                     </tr>
                                 ))}
-                                <tr className="bg-slate-100/50 font-black">
-                                    <td className="py-4 px-6 text-left uppercase text-[9px] tracking-widest text-slate-400">Total Reconstitué</td>
+                                <tr className="bg-base-200/50 font-black">
+                                    <td className="py-4 px-6 text-left uppercase text-[9px] tracking-widest text-base-content/50">Total Reconstitué</td>
                                     <td className="py-4 px-4 text-right tabular-nums">{formatNumber(data.total_ht, 0)}</td>
                                     <td className="py-4 px-4 text-right tabular-nums">{formatNumber(data.total_tva, 0)}</td>
                                     <td className="py-4 px-6 text-right tabular-nums text-lg text-primary">{formatNumber(data.total_ttc, 0)}</td>
@@ -216,11 +216,11 @@ const StockValuationTemplate: React.FC<StockValuationTemplateProps> = ({ setting
 
             {/* Note and Certification */}
             <div className="mt-8 border-t-2 border-slate-100 pt-8">
-                <div className="flex gap-12 items-start text-slate-400">
+                <div className="flex gap-12 items-start text-base-content/50">
                     <div className="flex-1 space-y-4">
                         <div className="flex items-center gap-3">
                             <div className="size-1.5 rounded-full bg-primary"></div>
-                            <span className="text-[10px] font-black uppercase tracking-widest text-slate-900">{t('stock_valuation.note_title')}</span>
+                            <span className="text-[10px] font-black uppercase tracking-widest text-base-content">{t('stock_valuation.note_title')}</span>
                         </div>
                         <p className="text-[11px] leading-relaxed italic pr-12">
                             {data.is_pmp 
@@ -234,7 +234,7 @@ const StockValuationTemplate: React.FC<StockValuationTemplateProps> = ({ setting
                     
                     <div className="w-64 text-center">
                         <div className="text-[9px] uppercase font-black tracking-[0.2em] mb-4">{t('stock_valuation.stamp_placeholder')}</div>
-                        <div className="h-28 border-2 border-dashed border-slate-200 rounded-3xl flex items-center justify-center italic text-[9px] text-slate-300">
+                        <div className="h-28 border-2 border-dashed border-base-300 rounded-3xl flex items-center justify-center italic text-[9px] text-slate-300">
                             ---
                         </div>
                     </div>

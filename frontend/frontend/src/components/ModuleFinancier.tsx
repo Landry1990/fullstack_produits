@@ -175,7 +175,7 @@ export default function ModuleFinancier() {
                 {t('kpis.avg_basket', 'Panier Moyen')}
               </h3>
               <p className="text-3xl font-bold">{formatMoneyFull(kpis.panier_moyen.mois)}</p>
-              <p className="text-xs opacity-70">
+              <p className="text-xs text-base-content/70">
                 {t('kpis.annual')}: {formatMoneyFull(kpis.panier_moyen.annee)}
               </p>
             </div>
@@ -188,7 +188,7 @@ export default function ModuleFinancier() {
                 {t('kpis.margin_rate', 'Taux de Marge')}
               </h3>
               <p className="text-3xl font-bold">{kpis.taux_marge}%</p>
-              <p className="text-xs opacity-70">
+              <p className="text-xs text-base-content/70">
                 {kpis.nb_ventes_mois} {t('charts.sales_count', 'ventes ce mois')}
               </p>
             </div>
@@ -201,7 +201,7 @@ export default function ModuleFinancier() {
                 {t('kpis.dsi', 'Jours Stock (DSI)')}
               </h3>
               <p className="text-3xl font-bold">{kpis.dsi} j</p>
-              <p className="text-xs opacity-70">
+              <p className="text-xs text-base-content/70">
                 Stock: {formatMoneyFull(kpis.stock_value)}
               </p>
             </div>
@@ -218,7 +218,7 @@ export default function ModuleFinancier() {
               <p className="text-3xl font-bold">
                 {kpis.croissance_mensuelle >= 0 ? '+' : ''}{kpis.croissance_mensuelle}%
               </p>
-              <p className="text-xs opacity-70">
+              <p className="text-xs text-base-content/70">
                 CA: {formatMoneyFull(kpis.ca_mois)}
               </p>
             </div>
@@ -235,7 +235,7 @@ export default function ModuleFinancier() {
                 <span className="text-2xl">📊</span>
                 {isEnglish ? 'Margin Variance Report' : 'Rapport de Variation de Marge'}
               </h2>
-              <p className="text-sm opacity-70">
+              <p className="text-sm text-base-content/70">
                 {isEnglish ? 'Analysis of profit fluctuations and data integrity' : 'Analyse des fluctuations de profit et intégrité des données'}
               </p>
             </div>
@@ -254,14 +254,14 @@ export default function ModuleFinancier() {
               <div className="space-y-6">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="p-4 bg-base-200 rounded-xl">
-                    <p className="text-xs uppercase font-bold opacity-50 mb-1">{isEnglish ? 'Current Period' : 'Période Actuelle'}</p>
+                    <p className="text-xs uppercase font-bold text-base-content/50 mb-1">{isEnglish ? 'Current Period' : 'Période Actuelle'}</p>
                     <p className="text-2xl font-black">{Number(varianceReport?.period1?.stats?.margin_pct || 0).toFixed(1)}%</p>
-                    <p className="text-xs opacity-70">{formatMoney(Number(varianceReport?.period1?.stats?.margin || 0))} {isEnglish ? 'Profit' : 'Marge'}</p>
+                    <p className="text-xs text-base-content/70">{formatMoney(Number(varianceReport?.period1?.stats?.margin || 0))} {isEnglish ? 'Profit' : 'Marge'}</p>
                   </div>
                   <div className="p-4 bg-base-200 rounded-xl">
-                    <p className="text-xs uppercase font-bold opacity-50 mb-1">{isEnglish ? 'Baseline' : 'Référence (Hier)'}</p>
+                    <p className="text-xs uppercase font-bold text-base-content/50 mb-1">{isEnglish ? 'Baseline' : 'Référence (Hier)'}</p>
                     <p className="text-2xl font-black">{Number(varianceReport?.period2?.stats?.margin_pct || 0).toFixed(1)}%</p>
-                    <p className="text-xs opacity-70">{formatMoney(Number(varianceReport?.period2?.stats?.margin || 0))} {isEnglish ? 'Profit' : 'Marge'}</p>
+                    <p className="text-xs text-base-content/70">{formatMoney(Number(varianceReport?.period2?.stats?.margin || 0))} {isEnglish ? 'Profit' : 'Marge'}</p>
                   </div>
                 </div>
 
@@ -290,7 +290,7 @@ export default function ModuleFinancier() {
                   <div className="overflow-x-auto">
                     <table className="table table-xs w-full">
                       <thead>
-                        <tr className="opacity-50">
+                        <tr className="text-base-content/50">
                           <th>{isEnglish ? 'Product' : 'Produit'}</th>
                           <th className="text-right">{isEnglish ? 'Margin' : 'Marge'}</th>
                           <th className="text-right">{isEnglish ? 'Cost (PMP)' : 'Coût (PMP)'}</th>
@@ -311,13 +311,13 @@ export default function ModuleFinancier() {
                               <td className={`text-right font-bold ${marginPct > 80 ? 'text-purple-500' : 'text-orange-500'}`}>
                                 {marginPct.toFixed(1)}%
                               </td>
-                              <td className="text-right opacity-70">{formatMoney(pmp)}</td>
+                              <td className="text-right text-base-content/70">{formatMoney(pmp)}</td>
                             </tr>
                           );
                         })}
                       </tbody>
                     </table>
-                    <p className="text-[10px] mt-4 italic opacity-50">
+                    <p className="text-[10px] mt-4 italic text-base-content/50">
                       {isEnglish 
                         ? '* High margins (>80%) often indicate missing cost prices (PMP = 0).' 
                         : '* Les marges élevées (>80%) indiquent souvent des prix d\'achat manquants (PMP = 0).'}
@@ -749,7 +749,7 @@ export default function ModuleFinancier() {
                     <span className="text-warning">⚠️</span>
                     {t('analysis.opportunities', 'Faible Marge / Fort Volume')}
                   </h4>
-                  <p className="text-xs opacity-70 mb-2">
+                  <p className="text-xs text-base-content/70 mb-2">
                     {t('analysis.negotiation', 'Opportunités de négociation fournisseur')}
                   </p>
                   
@@ -786,7 +786,7 @@ export default function ModuleFinancier() {
                             );
                           })
                         ) : (
-                          <tr><td colSpan={3} className="text-center opacity-50">{t('analysis.no_opportunity', 'Aucune opportunité détectée')}</td></tr>
+                          <tr><td colSpan={3} className="text-center text-base-content/50">{t('analysis.no_opportunity', 'Aucune opportunité détectée')}</td></tr>
                         )}
                       </tbody>
                     </table>
@@ -801,7 +801,7 @@ export default function ModuleFinancier() {
                     <span className="text-error">🛑</span>
                     {t('analysis.dormant', 'Forte Marge / Faible Rotation')}
                   </h4>
-                  <p className="text-xs opacity-70 mb-2">
+                  <p className="text-xs text-base-content/70 mb-2">
                     {t('analysis.dormant_risk', 'Risque de stock dormant (Argent immobilisé)')}
                   </p>
                   
@@ -838,7 +838,7 @@ export default function ModuleFinancier() {
                             );
                           })
                         ) : (
-                          <tr><td colSpan={3} className="text-center opacity-50">{t('analysis.no_dormant', 'Aucun produit dormant détecté')}</td></tr>
+                          <tr><td colSpan={3} className="text-center text-base-content/50">{t('analysis.no_dormant', 'Aucun produit dormant détecté')}</td></tr>
                         )}
                       </tbody>
                     </table>
@@ -853,7 +853,7 @@ export default function ModuleFinancier() {
                     <span className="text-success">💡</span>
                     {t('analysis.price_opt', 'Optimisation Prix (+5%)')}
                   </h4>
-                  <p className="text-xs opacity-70 mb-2">
+                  <p className="text-xs text-base-content/70 mb-2">
                     {t('analysis.low_margin_impact', 'Produits à marge très faible (Impact estimé)')}
                   </p>
                   
@@ -890,7 +890,7 @@ export default function ModuleFinancier() {
                             );
                           })
                         ) : (
-                          <tr><td colSpan={3} className="text-center opacity-50">{t('analysis.optimized', 'Prix optimisés')}</td></tr>
+                          <tr><td colSpan={3} className="text-center text-base-content/50">{t('analysis.optimized', 'Prix optimisés')}</td></tr>
                         )}
                       </tbody>
                     </table>

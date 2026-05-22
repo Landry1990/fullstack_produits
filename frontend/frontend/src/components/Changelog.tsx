@@ -11,10 +11,10 @@ interface VersionMeta {
 }
 
 const BADGE_STYLES: Record<BadgeType, string> = {
-  new:     'bg-emerald-100 text-emerald-800 border-emerald-200',
-  fix:     'bg-red-100 text-red-800 border-red-200',
-  improve: 'bg-blue-100 text-blue-800 border-blue-200',
-  perf:    'bg-purple-100 text-purple-800 border-purple-200',
+  new:     'bg-success/20 text-emerald-800 border-emerald-200',
+  fix:     'bg-error/20 text-red-800 border-red-200',
+  improve: 'bg-info/20 text-blue-800 border-blue-200',
+  perf:    'bg-secondary/20 text-purple-800 border-purple-200',
 };
 
 const ITEM_ICONS: Record<BadgeType, string> = {

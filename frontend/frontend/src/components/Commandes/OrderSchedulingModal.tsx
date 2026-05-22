@@ -306,25 +306,25 @@ export default function OrderSchedulingModal({
             maxWidth="max-w-4xl"
             footer={
                 <div className="flex justify-between items-center w-full">
-                    <button className="btn btn-ghost" onClick={onClose}>{t('scheduling.cancel')}</button>
+                    <button className="btn-ref btn-ghost" onClick={onClose}>{t('scheduling.cancel')}</button>
                     <div className="flex gap-2">
                         {activeTab === 'gen' && stepGen === 2 && (
-                            <button className="btn btn-ghost" onClick={() => setStepGen(1)}>
+                            <button className="btn-ref btn-ghost" onClick={() => setStepGen(1)}>
                                 <ChevronLeft className="size-4 mr-2" />
                                 Paramètres
                             </button>
                         )}
                         {activeTab === 'plan' ? (
-                            <button className="btn btn-primary px-10 rounded-xl" onClick={handleSave} disabled={saving}>
-                                {saving ? <span className="loading loading-spinner loading-xs"></span> : <><Check className="size-4 mr-2" />{t('scheduling.save_service')}</>}
+                            <button className="inline-flex items-center justify-center gap-2 px-10 py-2.5 bg-primary text-white text-sm font-bold rounded-xl hover:bg-primary-focus transition-colors shadow-lg shadow-indigo-500/20" onClick={handleSave} disabled={saving}>
+                                {saving ? <span className="inline-block size-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></span> : <><Check className="size-4 mr-2" />{t('scheduling.save_service')}</>}
                             </button>
                         ) : (
                             stepGen === 1 ? (
-                                <button className="btn btn-primary px-10 rounded-xl" onClick={fetchSuggestions} disabled={loadingSuggestions}>
-                                    {loadingSuggestions ? <span className="loading loading-spinner loading-xs"></span> : <><Search className="size-4 mr-2" />{t('scheduling.analyze')}</>}
+                                <button className="inline-flex items-center justify-center gap-2 px-10 py-2.5 bg-primary text-white text-sm font-bold rounded-xl hover:bg-primary-focus transition-colors shadow-lg shadow-indigo-500/20" onClick={fetchSuggestions} disabled={loadingSuggestions}>
+                                    {loadingSuggestions ? <span className="inline-block size-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></span> : <><Search className="size-4 mr-2" />{t('scheduling.analyze')}</>}
                                 </button>
                             ) : (
-                                <button className="btn btn-primary px-10 rounded-xl" onClick={handleApply} disabled={selectedSuggestions.size === 0}>
+                                <button className="inline-flex items-center justify-center gap-2 px-10 py-2.5 bg-primary text-white text-sm font-bold rounded-xl hover:bg-primary-focus transition-colors shadow-lg shadow-indigo-500/20" onClick={handleApply} disabled={selectedSuggestions.size === 0}>
                                     <ShoppingCart className="size-4 mr-2" />
                                     Créer la commande ({selectedSuggestions.size})
                                 </button>
@@ -336,12 +336,12 @@ export default function OrderSchedulingModal({
         >
             <div className="p-0 flex flex-col bg-base-100 min-h-[520px] h-[520px]">
                 {/* Header info */}
-                <div className="p-4 border-b border-base-200 bg-slate-50/50">
+                <div className="p-4 border-b border-base-300 bg-base-200/50">
                     <div className="flex flex-wrap items-center gap-4">
                         <div className="flex-1 min-w-[250px]">
                             <label className="text-[10px] font-black uppercase tracking-widest text-primary/60 mb-1 block">{t('scheduling.supplier_partner')}</label>
                             <select 
-                                className="select select-bordered select-sm w-full font-bold text-primary bg-white rounded-xl border-primary/20 focus:border-primary"
+                                className="select-ref select-bordered select-sm w-full font-bold text-primary bg-base-100 rounded-xl border-primary/20 focus:border-primary"
                                 value={schedule.fournisseur || ''}
                                 onChange={(e) => setSchedule({...schedule, fournisseur: parseInt(e.target.value) || 0})}
                             >
@@ -351,11 +351,11 @@ export default function OrderSchedulingModal({
                                 ))}
                             </select>
                         </div>
-                        <div className="flex items-center gap-4 bg-white p-2 rounded-xl border border-base-200 shadow-sm">
+                        <div className="flex items-center gap-4 bg-base-100 p-2 rounded-xl border border-base-300 shadow-sm">
                             <div className="flex flex-col items-end">
-                                <span className="text-[10px] font-bold text-base-content/40 uppercase">{t('scheduling.service_mode')}</span>
+                                <span className="text-[10px] font-bold text-base-content/50 uppercase">{t('scheduling.service_mode')}</span>
                                 <div className="flex items-center gap-2">
-                                    <div className={`size-2 rounded-full ${schedule.is_active ? 'bg-success animate-pulse' : 'bg-base-300'}`}></div>
+                                    <div className={`size-2 rounded-full ${schedule.is_active ? 'bg-success animate-pulse' : 'bg-base-200'}`}></div>
                                     <span className="text-xs font-black text-base-content">{schedule.is_active ? t('scheduling.active') : t('scheduling.paused')}</span>
                                 </div>
                             </div>
@@ -371,11 +371,11 @@ export default function OrderSchedulingModal({
 
                 {/* Tabs */}
                 <div className="px-4 pt-4">
-                    <div className="tabs tabs-boxed bg-base-200/50 p-1 rounded-2xl w-fit">
-                        <button className={`tab tab-sm font-bold rounded-xl px-8 h-9 transition-all ${activeTab === 'plan' ? 'tab-active bg-white shadow-sm text-primary' : 'text-base-content/50 hover:text-primary'}`} onClick={() => setActiveTab('plan')}>
+                    <div className="inline-flex bg-base-200/50 p-1 rounded-2xl w-fit gap-1">
+                        <button className={`inline-flex items-center justify-center text-sm font-bold rounded-xl px-8 h-9 transition-all ${activeTab === 'plan' ? 'bg-base-100 shadow-sm text-primary' : 'text-base-content/50 hover:text-primary'}`} onClick={() => setActiveTab('plan')}>
                             <Calendar className="size-3.5 mr-2" /> Configuration
                         </button>
-                        <button className={`tab tab-sm font-bold rounded-xl px-8 h-9 transition-all ${activeTab === 'gen' ? 'tab-active bg-white shadow-sm text-primary' : 'text-base-content/50 hover:text-primary'}`} onClick={() => setActiveTab('gen')}>
+                        <button className={`inline-flex items-center justify-center text-sm font-bold rounded-xl px-8 h-9 transition-all ${activeTab === 'gen' ? 'bg-base-100 shadow-sm text-primary' : 'text-base-content/50 hover:text-primary'}`} onClick={() => setActiveTab('gen')}>
                             <Search className="size-3.5 mr-2" /> Aperçu Immédiat
                         </button>
                     </div>
@@ -386,7 +386,7 @@ export default function OrderSchedulingModal({
                         <div className="space-y-4">
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 {/* Section 1: Timing */}
-                                <div className="bg-white border border-base-200 rounded-3xl p-5 shadow-sm space-y-4">
+                                <div className="bg-base-100 border border-base-300 rounded-3xl p-5 shadow-sm space-y-4">
                                     <div className="flex items-center gap-2 mb-2">
                                         <div className="p-2 bg-primary/10 text-primary rounded-xl">
                                             <Clock className="size-4" />
@@ -396,7 +396,7 @@ export default function OrderSchedulingModal({
 
                                     <div className="space-y-4">
                                         <div>
-                                            <label className="text-[10px] font-bold text-base-content/40 uppercase mb-2 block">{t('scheduling.activation_days')}</label>
+                                            <label className="text-[10px] font-bold text-base-content/50 uppercase mb-2 block">{t('scheduling.activation_days')}</label>
                                             <div className="flex justify-between gap-1">
                                                 {days.map(d => (
                                                     <button
@@ -404,8 +404,8 @@ export default function OrderSchedulingModal({
                                                         onClick={() => toggleDay(d.value)}
                                                         className={`size-9 rounded-full text-xs font-black transition-all flex items-center justify-center border-2 
                                                             ${schedule.active_days.includes(d.value) 
-                                                                ? 'bg-primary border-primary text-white shadow-md shadow-primary/20 scale-110' 
-                                                                : 'bg-base-100 border-base-200 text-base-content/40 hover:border-primary/30'}`}
+                                                                ? 'bg-primary border-indigo-600 text-white shadow-md shadow-indigo-500/20 scale-110' 
+                                                                : 'bg-base-100 border-base-300 text-base-content/50 hover:border-indigo-500/30'}`}
                                                         title={d.full}
                                                     >
                                                         {d.label}
@@ -416,26 +416,26 @@ export default function OrderSchedulingModal({
 
                                         <div className="grid grid-cols-3 gap-3">
                                             <div className="space-y-1">
-                                                <label className="text-[10px] font-bold text-base-content/40 uppercase block">{t('scheduling.every')}</label>
+                                                <label className="text-[10px] font-bold text-base-content/50 uppercase block">{t('scheduling.every')}</label>
                                                 <div className="join w-full">
-                                                    <input type="number" className="input input-bordered input-sm join-item w-full font-bold" value={schedule.frequency_weeks} onChange={(e) => setSchedule({...schedule, frequency_weeks: parseInt(e.target.value) || 1})}/>
+                                                    <input type="number" className="input-ref input-bordered input-sm join-item w-full font-bold" value={schedule.frequency_weeks} onChange={(e) => setSchedule({...schedule, frequency_weeks: parseInt(e.target.value) || 1})}/>
                                                     <span className="bg-base-200 px-3 flex items-center text-[10px] font-black join-item">{t('scheduling.weeks_short')}</span>
                                                 </div>
                                             </div>
                                             <div className="space-y-1">
-                                                <label className="text-[10px] font-bold text-base-content/40 uppercase block">{t('scheduling.hour')}</label>
-                                                <input type="time" className="input input-bordered input-sm w-full font-bold rounded-lg" value={schedule.time} onChange={(e) => setSchedule({...schedule, time: e.target.value})}/>
+                                                <label className="text-[10px] font-bold text-base-content/50 uppercase block">{t('scheduling.hour')}</label>
+                                                <input type="time" className="input-ref input-bordered input-sm w-full font-bold rounded-lg" value={schedule.time} onChange={(e) => setSchedule({...schedule, time: e.target.value})}/>
                                             </div>
                                             <div className="space-y-1">
-                                                <label className="text-[10px] font-bold text-base-content/40 uppercase block">{t('scheduling.start_on')}</label>
-                                                <input type="date" className="input input-bordered input-sm w-full font-bold rounded-lg" value={schedule.start_date} onChange={(e) => setSchedule({...schedule, start_date: e.target.value})}/>
+                                                <label className="text-[10px] font-bold text-base-content/50 uppercase block">{t('scheduling.start_on')}</label>
+                                                <input type="date" className="input-ref input-bordered input-sm w-full font-bold rounded-lg" value={schedule.start_date} onChange={(e) => setSchedule({...schedule, start_date: e.target.value})}/>
                                             </div>
                                         </div>
                                     </div>
                                 </div>
 
                                 {/* Section 2: Logic & Intelligence */}
-                                <div className="bg-white border border-base-200 rounded-3xl p-5 shadow-sm space-y-4">
+                                <div className="bg-base-100 border border-base-300 rounded-3xl p-5 shadow-sm space-y-4">
                                     <div className="flex items-center gap-2 mb-2">
                                         <div className="p-2 bg-blue-500/10 text-blue-500 rounded-xl">
                                             <Zap className="size-4" />
@@ -446,50 +446,50 @@ export default function OrderSchedulingModal({
                                     <div className="space-y-3">
                                         <div className="grid grid-cols-3 gap-2">
                                             <button 
-                                                className={`p-3 rounded-2xl border-2 text-left transition-all ${schedule.execution_mode === 'OPTIMISE' ? 'border-primary bg-primary/5' : 'border-base-100 bg-base-50'}`}
+                                                className={`p-3 rounded-2xl border-2 text-left transition-all ${schedule.execution_mode === 'OPTIMISE' ? 'border-primary bg-primary/10' : 'border-base-200 bg-base-200'}`}
                                                 onClick={() => setSchedule({...schedule, execution_mode: 'OPTIMISE'})}
                                             >
                                                 <div className="text-[10px] font-black text-primary mb-1">{t('scheduling.predictive_analysis')}</div>
-                                                <div className="text-[11px] font-bold leading-tight opacity-70 text-base-content">{t('scheduling.predictive_desc')}</div>
+                                                <div className="text-[11px] font-bold leading-tight text-base-content/70 text-base-content">{t('scheduling.predictive_desc')}</div>
                                             </button>
                                             <button 
-                                                className={`p-3 rounded-2xl border-2 text-left transition-all ${schedule.execution_mode === 'SIMPLE' ? 'border-primary bg-primary/5' : 'border-base-100 bg-base-50'}`}
+                                                className={`p-3 rounded-2xl border-2 text-left transition-all ${schedule.execution_mode === 'SIMPLE' ? 'border-primary bg-primary/10' : 'border-base-200 bg-base-200'}`}
                                                 onClick={() => setSchedule({...schedule, execution_mode: 'SIMPLE'})}
                                             >
                                                 <div className="text-[10px] font-black text-primary mb-1">{t('scheduling.simple_replacement')}</div>
-                                                <div className="text-[11px] font-bold leading-tight opacity-70 text-base-content">{t('scheduling.simple_desc')}</div>
+                                                <div className="text-[11px] font-bold leading-tight text-base-content/70 text-base-content">{t('scheduling.simple_desc')}</div>
                                             </button>
                                             <button 
-                                                className={`p-3 rounded-2xl border-2 text-left transition-all ${schedule.execution_mode === 'CUMULATIF' ? 'border-primary bg-primary/5' : 'border-base-100 bg-base-50'}`}
+                                                className={`p-3 rounded-2xl border-2 text-left transition-all ${schedule.execution_mode === 'CUMULATIF' ? 'border-primary bg-primary/10' : 'border-base-200 bg-base-200'}`}
                                                 onClick={() => setSchedule({...schedule, execution_mode: 'CUMULATIF'})}
                                             >
                                                 <div className="text-[10px] font-black text-primary mb-1">{t('scheduling.cumulative')}</div>
-                                                <div className="text-[11px] font-bold leading-tight opacity-70 text-base-content">{t('scheduling.cumulative_desc')}</div>
+                                                <div className="text-[11px] font-bold leading-tight text-base-content/70 text-base-content">{t('scheduling.cumulative_desc')}</div>
                                             </button>
                                         </div>
 
                                         {/* Période d'analyse visible pour tous les modes */}
-                                        <div className={`p-3 rounded-2xl border flex items-center justify-between ${schedule.execution_mode === 'OPTIMISE' ? 'bg-blue-50/50 border-blue-100' : schedule.execution_mode === 'CUMULATIF' ? 'bg-green-50/50 border-green-100' : 'bg-slate-50 border-slate-200'}`}>
+                                        <div className={`p-3 rounded-2xl border flex items-center justify-between ${schedule.execution_mode === 'OPTIMISE' ? 'bg-info/10/50 border-blue-100' : schedule.execution_mode === 'CUMULATIF' ? 'bg-green-50/50 border-green-100' : 'bg-base-200 border-base-300'}`}>
                                             <div className="flex items-center gap-2">
-                                                <Info className={`size-3.5 ${schedule.execution_mode === 'OPTIMISE' ? 'text-blue-500' : schedule.execution_mode === 'CUMULATIF' ? 'text-green-500' : 'text-slate-500'}`} />
-                                                <span className={`text-[10px] font-bold ${schedule.execution_mode === 'OPTIMISE' ? 'text-blue-700' : schedule.execution_mode === 'CUMULATIF' ? 'text-green-700' : 'text-slate-700'}`}>
+                                                <Info className={`size-3.5 ${schedule.execution_mode === 'OPTIMISE' ? 'text-blue-500' : schedule.execution_mode === 'CUMULATIF' ? 'text-green-500' : 'text-base-content/60'}`} />
+                                                <span className={`text-[10px] font-bold ${schedule.execution_mode === 'OPTIMISE' ? 'text-info' : schedule.execution_mode === 'CUMULATIF' ? 'text-green-700' : 'text-base-content'}`}>
                                                     {schedule.execution_mode === 'OPTIMISE' ? "Période d'analyse" : schedule.execution_mode === 'CUMULATIF' ? "Période initiale" : "Période de comptage"}
                                                 </span>
                                             </div>
                                             <div className="flex items-center gap-2">
                                                 <input 
                                                     type="number" 
-                                                    className={`w-12 bg-transparent border-b text-center font-black text-xs focus:outline-none ${schedule.execution_mode === 'OPTIMISE' ? 'border-blue-300 text-blue-600' : 'border-slate-300 text-slate-600'}`} 
+                                                    className={`w-12 bg-transparent border-b text-center font-black text-xs focus:outline-none ${schedule.execution_mode === 'OPTIMISE' ? 'border-blue-300 text-info' : 'border-slate-300 text-base-content/70'}`} 
                                                     value={schedule.analysis_period_days} 
                                                     onChange={(e) => setSchedule({...schedule, analysis_period_days: parseInt(e.target.value) || 30})}
                                                     min={1}
                                                     max={365}
                                                 />
-                                                <span className={`text-[10px] font-bold ${schedule.execution_mode === 'OPTIMISE' ? 'text-blue-700' : 'text-slate-700'}`}>jours</span>
+                                                <span className={`text-[10px] font-bold ${schedule.execution_mode === 'OPTIMISE' ? 'text-info' : 'text-base-content'}`}>jours</span>
                                             </div>
                                         </div>
                                         {schedule.execution_mode === 'SIMPLE' && (
-                                            <p className="text-[9px] text-slate-500 leading-tight">
+                                            <p className="text-[9px] text-base-content/60 leading-tight">
                                                 Le système comptera les ventes sur ces {schedule.analysis_period_days} derniers jours pour suggérer un réassort identique.
                                             </p>
                                         )}
@@ -502,7 +502,7 @@ export default function OrderSchedulingModal({
                                 </div>
 
                                 {/* Section 3: Safety Controls */}
-                                <div className="bg-white border border-base-200 rounded-3xl p-5 shadow-sm space-y-4">
+                                <div className="bg-base-100 border border-base-300 rounded-3xl p-5 shadow-sm space-y-4">
                                     <div className="flex items-center justify-between mb-2">
                                         <div className="flex items-center gap-2">
                                             <div className="p-2 bg-amber-500/10 text-amber-500 rounded-xl">
@@ -512,7 +512,7 @@ export default function OrderSchedulingModal({
                                         </div>
                                         <input 
                                             type="checkbox" 
-                                            className="checkbox checkbox-xs checkbox-warning rounded-md" 
+                                            className="size-4 rounded border-base-300 text-amber-500 focus:ring-amber-500 cursor-pointer" 
                                             checked={schedule.min_amount > 0} 
                                             onChange={(e) => setSchedule({...schedule, min_amount: e.target.checked ? 100000 : 0})}
                                         />
@@ -520,23 +520,23 @@ export default function OrderSchedulingModal({
 
                                     {schedule.min_amount > 0 ? (
                                         <div className="space-y-1 animate-in fade-in slide-in-from-top-2 duration-300">
-                                            <label className="text-[10px] font-bold text-base-content/40 uppercase block">Montant Min de Commande (HT)</label>
+                                            <label className="text-[10px] font-bold text-base-content/50 uppercase block">Montant Min de Commande (HT)</label>
                                             <div className="relative">
-                                                <input type="number" className="input input-bordered input-sm w-full font-bold pr-8" value={schedule.min_amount} onChange={(e) => setSchedule({...schedule, min_amount: parseInt(e.target.value) || 0})}/>
-                                                <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] font-black opacity-30">F</span>
+                                                <input type="number" className="input-ref input-bordered input-sm w-full font-bold pr-8" value={schedule.min_amount} onChange={(e) => setSchedule({...schedule, min_amount: parseInt(e.target.value) || 0})}/>
+                                                <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] font-black text-base-content/30">F</span>
                                             </div>
-                                            <p className="text-[9px] text-amber-700/60 font-bold leading-tight mt-2">Le ravitaillement automatique ne se déclenche que si ce montant est atteint.</p>
+                                            <p className="text-[9px] text-warning/60 font-bold leading-tight mt-2">Le ravitaillement automatique ne se déclenche que si ce montant est atteint.</p>
                                         </div>
                                     ) : (
-                                        <div className="p-3 bg-slate-50 rounded-2xl border border-dashed border-base-200 text-center">
-                                            <p className="text-[10px] font-bold text-base-content/40 uppercase">Filtre Désactivé</p>
+                                        <div className="p-3 bg-base-200 rounded-2xl border border-dashed border-base-300 text-center">
+                                            <p className="text-[10px] font-bold text-base-content/50 uppercase">Filtre Désactivé</p>
                                             <p className="text-[9px] text-base-content/30 mt-1">La commande sera créée quel que soit le montant.</p>
                                         </div>
                                     )}
                                 </div>
 
                                 {/* Section 4: Notifications */}
-                                <div className="bg-white border border-base-200 rounded-3xl p-5 shadow-sm space-y-4">
+                                <div className="bg-base-100 border border-base-300 rounded-3xl p-5 shadow-sm space-y-4">
                                     <div className="flex items-center gap-2 mb-2">
                                         <div className="p-2 bg-indigo-500/10 text-indigo-500 rounded-xl">
                                             <Bell className="size-4" />
@@ -546,30 +546,30 @@ export default function OrderSchedulingModal({
 
                                     <div className="grid grid-cols-2 gap-3">
                                         <button 
-                                            className={`flex items-center gap-3 p-3 rounded-2xl border-2 transition-all ${schedule.notify_whatsapp ? 'border-success bg-success/5' : 'border-base-100 bg-base-50'}`}
+                                            className={`flex items-center gap-3 p-3 rounded-2xl border-2 transition-all ${schedule.notify_whatsapp ? 'border-emerald-500 bg-success/10' : 'border-base-200 bg-base-200'}`}
                                             onClick={() => setSchedule({...schedule, notify_whatsapp: !schedule.notify_whatsapp})}
                                         >
-                                            <div className={`size-3 rounded-full ${schedule.notify_whatsapp ? 'bg-success' : 'bg-base-300'}`}></div>
+                                            <div className={`size-3 rounded-full ${schedule.notify_whatsapp ? 'bg-success' : 'bg-base-200'}`}></div>
                                             <span className="text-[11px] font-black text-base-content">WhatsApp</span>
                                         </button>
                                         <button 
-                                            className={`flex items-center gap-3 p-3 rounded-2xl border-2 transition-all ${schedule.notify_sms ? 'border-primary bg-primary/5' : 'border-base-100 bg-base-50'}`}
+                                            className={`flex items-center gap-3 p-3 rounded-2xl border-2 transition-all ${schedule.notify_sms ? 'border-indigo-500 bg-primary/10' : 'border-base-200 bg-base-200'}`}
                                             onClick={() => setSchedule({...schedule, notify_sms: !schedule.notify_sms})}
                                         >
-                                            <div className={`size-3 rounded-full ${schedule.notify_sms ? 'bg-primary' : 'bg-base-300'}`}></div>
+                                            <div className={`size-3 rounded-full ${schedule.notify_sms ? 'bg-primary' : 'bg-base-200'}`}></div>
                                             <span className="text-[11px] font-black text-base-content">SMS Direct</span>
                                         </button>
                                     </div>
-                                    <p className="text-[10px] italic text-base-content/40 text-center">Vous recevrez un résumé à chaque exécution du service.</p>
+                                    <p className="text-[10px] italic text-base-content/50 text-center">Vous recevrez un résumé à chaque exécution du service.</p>
                                 </div>
                             </div>
 
-                            <div className="mt-2 bg-white border border-base-200 rounded-3xl p-4 shadow-sm">
+                            <div className="mt-2 bg-base-100 border border-base-300 rounded-3xl p-4 shadow-sm">
                                 <div className="flex items-center gap-2 mb-2 px-1">
-                                    <MessageSquare className="size-3.5 text-base-content/40" />
-                                    <label className="text-[10px] font-black uppercase text-base-content/40 tracking-widest">Notes de Service</label>
+                                    <MessageSquare className="size-3.5 text-base-content/50" />
+                                    <label className="text-[10px] font-black uppercase text-base-content/50 tracking-widest">Notes de Service</label>
                                 </div>
-                                <textarea className="textarea textarea-bordered w-full h-16 rounded-2xl resize-none text-sm font-medium border-base-100 focus:border-primary" placeholder="Consignes particulières pour ce ravitaillement automatique..." value={schedule.comment} onChange={(e) => setSchedule({...schedule, comment: e.target.value})}></textarea>
+                                <textarea className="textarea-ref textarea-bordered w-full h-16 rounded-2xl resize-none text-sm font-medium border-base-200 focus:border-primary" placeholder="Consignes particulières pour ce ravitaillement automatique..." value={schedule.comment} onChange={(e) => setSchedule({...schedule, comment: e.target.value})}></textarea>
                             </div>
                         </div>
                     ) : (
@@ -578,25 +578,25 @@ export default function OrderSchedulingModal({
                             {stepGen === 1 ? (
                                 <div className="max-w-2xl mx-auto space-y-4 pt-4">
                                     <div className="grid grid-cols-3 gap-3">
-                                        <label className={`p-3 cursor-pointer rounded-2xl border-2 transition-all flex flex-col items-center text-center gap-2 ${suggestionParams.mode === 'simple' ? 'border-primary bg-primary/5' : 'border-base-200 bg-base-100 hover:border-primary/20'}`}>
+                                        <label className={`p-3 cursor-pointer rounded-2xl border-2 transition-all flex flex-col items-center text-center gap-2 ${suggestionParams.mode === 'simple' ? 'border-primary bg-primary/10' : 'border-base-300 bg-base-100 hover:border-primary/20'}`}>
                                             <input type="radio" className="hidden" checked={suggestionParams.mode === 'simple'} onChange={() => setSuggestionParams({...suggestionParams, mode: 'simple'})}/>
-                                            <div className={`p-2 rounded-xl ${suggestionParams.mode === 'simple' ? 'bg-primary text-white' : 'bg-base-200 text-base-content/40'}`}><ShieldCheck className="size-4" /></div>
+                                            <div className={`p-2 rounded-xl ${suggestionParams.mode === 'simple' ? 'bg-primary text-white' : 'bg-base-200 text-base-content/50'}`}><ShieldCheck className="size-4" /></div>
                                             <div className="space-y-0.5">
                                                 <span className="text-xs font-black block">REMPLACEMENT</span>
                                                 <p className="text-[9px] font-bold opacity-60">Simple & Sûr</p>
                                             </div>
                                         </label>
-                                        <label className={`p-3 cursor-pointer rounded-2xl border-2 transition-all flex flex-col items-center text-center gap-2 ${suggestionParams.mode === 'optimise' ? 'border-primary bg-primary/5' : 'border-base-200 bg-base-100 hover:border-primary/20'}`}>
+                                        <label className={`p-3 cursor-pointer rounded-2xl border-2 transition-all flex flex-col items-center text-center gap-2 ${suggestionParams.mode === 'optimise' ? 'border-primary bg-primary/10' : 'border-base-300 bg-base-100 hover:border-primary/20'}`}>
                                             <input type="radio" className="hidden" checked={suggestionParams.mode === 'optimise'} onChange={() => setSuggestionParams({...suggestionParams, mode: 'optimise'})}/>
-                                            <div className={`p-2 rounded-xl ${suggestionParams.mode === 'optimise' ? 'bg-primary text-white' : 'bg-base-200 text-base-content/40'}`}><Zap className="size-4" /></div>
+                                            <div className={`p-2 rounded-xl ${suggestionParams.mode === 'optimise' ? 'bg-primary text-white' : 'bg-base-200 text-base-content/50'}`}><Zap className="size-4" /></div>
                                             <div className="space-y-0.5">
                                                 <span className="text-xs font-black block">PRÉDICTIF</span>
                                                 <p className="text-[9px] font-bold opacity-60">Tendances & IA</p>
                                             </div>
                                         </label>
-                                        <label className={`p-3 cursor-pointer rounded-2xl border-2 transition-all flex flex-col items-center text-center gap-2 ${suggestionParams.mode === 'ventes_horaire' ? 'border-primary bg-primary/5' : 'border-base-200 bg-base-100 hover:border-primary/20'}`}>
+                                        <label className={`p-3 cursor-pointer rounded-2xl border-2 transition-all flex flex-col items-center text-center gap-2 ${suggestionParams.mode === 'ventes_horaire' ? 'border-primary bg-primary/10' : 'border-base-300 bg-base-100 hover:border-primary/20'}`}>
                                             <input type="radio" className="hidden" checked={suggestionParams.mode === 'ventes_horaire'} onChange={() => setSuggestionParams({...suggestionParams, mode: 'ventes_horaire'})}/>
-                                            <div className={`p-2 rounded-xl ${suggestionParams.mode === 'ventes_horaire' ? 'bg-primary text-white' : 'bg-base-200 text-base-content/40'}`}><Clock className="size-4" /></div>
+                                            <div className={`p-2 rounded-xl ${suggestionParams.mode === 'ventes_horaire' ? 'bg-primary text-white' : 'bg-base-200 text-base-content/50'}`}><Clock className="size-4" /></div>
                                             <div className="space-y-0.5">
                                                 <span className="text-xs font-black block">TEMPOREL</span>
                                                 <p className="text-[9px] font-bold opacity-60">Ventes horaires</p>
@@ -604,7 +604,7 @@ export default function OrderSchedulingModal({
                                         </label>
                                     </div>
                                     
-                                    <div className="bg-slate-50 border border-base-200 p-5 rounded-3xl space-y-4">
+                                    <div className="bg-base-200 border border-base-300 p-5 rounded-3xl space-y-4">
                                         <div className="flex items-center gap-2 mb-2">
                                             <Settings2 className="size-4 text-primary" />
                                             <h4 className="text-[10px] font-black uppercase text-base-content/60 tracking-widest">Paramètres d'analyse</h4>
@@ -613,11 +613,11 @@ export default function OrderSchedulingModal({
                                             <div className="grid grid-cols-2 gap-4">
                                                 <div className="space-y-1">
                                                     <label className="text-[10px] font-bold uppercase opacity-40">Date Début</label>
-                                                    <input type="date" className="input input-bordered w-full rounded-xl font-bold" value={suggestionParams.dateDebut} onChange={(e) => setSuggestionParams({...suggestionParams, dateDebut: e.target.value})}/>
+                                                    <input type="date" className="input-ref input-bordered w-full rounded-xl font-bold" value={suggestionParams.dateDebut} onChange={(e) => setSuggestionParams({...suggestionParams, dateDebut: e.target.value})}/>
                                                 </div>
                                                 <div className="space-y-1">
                                                     <label className="text-[10px] font-bold uppercase opacity-40">Date Fin</label>
-                                                    <input type="date" className="input input-bordered w-full rounded-xl font-bold" value={suggestionParams.dateFin} onChange={(e) => setSuggestionParams({...suggestionParams, dateFin: e.target.value})}/>
+                                                    <input type="date" className="input-ref input-bordered w-full rounded-xl font-bold" value={suggestionParams.dateFin} onChange={(e) => setSuggestionParams({...suggestionParams, dateFin: e.target.value})}/>
                                                 </div>
                                             </div>
                                         ) : (
@@ -625,15 +625,15 @@ export default function OrderSchedulingModal({
                                                 <div className="space-y-1">
                                                     <label className="text-[10px] font-bold uppercase opacity-40">Période d'analyse (jours)</label>
                                                     <div className="join w-full">
-                                                        <input type="number" className="input input-bordered join-item w-full font-bold" value={suggestionParams.periode} onChange={(e) => setSuggestionParams({...suggestionParams, periode: parseInt(e.target.value) || 0})}/>
+                                                        <input type="number" className="input-ref input-bordered join-item w-full font-bold" value={suggestionParams.periode} onChange={(e) => setSuggestionParams({...suggestionParams, periode: parseInt(e.target.value) || 0})}/>
                                                         <span className="join-item bg-base-200 px-4 flex items-center text-[10px] font-black">JOURS</span>
                                                     </div>
                                                 </div>
                                                 <div className="space-y-1">
                                                     <label className="text-[10px] font-bold uppercase opacity-40">Budget Max (HT)</label>
                                                     <div className="relative">
-                                                        <input type="number" className="input input-bordered w-full rounded-xl font-bold" placeholder="Illimité" value={suggestionParams.budgetMax} onChange={(e) => setSuggestionParams({...suggestionParams, budgetMax: e.target.value})}/>
-                                                        <span className="absolute right-4 top-1/2 -translate-y-1/2 text-xs font-black opacity-20">F</span>
+                                                        <input type="number" className="input-ref input-bordered w-full rounded-xl font-bold" placeholder="Illimité" value={suggestionParams.budgetMax} onChange={(e) => setSuggestionParams({...suggestionParams, budgetMax: e.target.value})}/>
+                                                        <span className="absolute right-4 top-1/2 -translate-y-1/2 text-xs font-black text-base-content/20">F</span>
                                                     </div>
                                                 </div>
                                             </div>
@@ -644,24 +644,24 @@ export default function OrderSchedulingModal({
                                 <div className="flex flex-col gap-4 animate-in fade-in slide-in-from-bottom-2 duration-500">
                                     <div className="flex justify-between items-center bg-slate-900 text-white p-5 rounded-3xl shadow-xl shadow-slate-900/10">
                                         <div className="flex items-center gap-4">
-                                            <div className="p-3 bg-white/10 rounded-2xl">
+                                            <div className="p-3 bg-base-100/10 rounded-2xl">
                                                 <ShoppingCart className="size-6 text-primary" />
                                             </div>
                                             <div>
-                                                <div className="text-[10px] opacity-50 uppercase font-black tracking-widest">Total Estimé de la commande</div>
-                                                <div className="text-2xl font-mono font-black text-primary">{formatPrice(totalHt)} F <span className="text-xs opacity-50 ml-1">HT</span></div>
+                                                <div className="text-[10px] text-base-content/50 uppercase font-black tracking-widest">Total Estimé de la commande</div>
+                                                <div className="text-2xl font-mono font-black text-primary">{formatPrice(totalHt)} F <span className="text-xs text-base-content/50 ml-1">HT</span></div>
                                             </div>
                                         </div>
                                         <div className="text-right">
-                                            <div className="text-[10px] opacity-50 uppercase font-black tracking-widest">Articles suggérés</div>
+                                            <div className="text-[10px] text-base-content/50 uppercase font-black tracking-widest">Articles suggérés</div>
                                             <div className="text-xl font-black">{suggestions.length} produits</div>
                                         </div>
                                     </div>
-                                    <div className="overflow-auto flex-1 border border-base-200 rounded-3xl bg-white shadow-inner">
-                                        <table className="table table-pin-rows table-sm">
+                                    <div className="overflow-auto flex-1 border border-base-300 rounded-3xl bg-base-100 shadow-inner">
+                                        <table className="w-full text-sm">
                                             <thead>
-                                                <tr className="bg-base-50 text-[10px] font-black uppercase text-base-content/40">
-                                                    <th className="w-10"><input type="checkbox" className="checkbox checkbox-xs" checked={selectedSuggestions.size === suggestions.length} onChange={() => setSelectedSuggestions(selectedSuggestions.size === suggestions.length ? new Set() : new Set(suggestions.map((_, i) => i)))}/></th>
+                                                <tr className="bg-base-200 text-[10px] font-black uppercase text-base-content/50">
+                                                    <th className="w-10"><input type="checkbox" className="size-4 rounded border-base-300 text-primary focus:ring-primary cursor-pointer" checked={selectedSuggestions.size === suggestions.length} onChange={() => setSelectedSuggestions(selectedSuggestions.size === suggestions.length ? new Set() : new Set(suggestions.map((_, i) => i)))}/></th>
                                                     <th>Désignation Produit</th>
                                                     <th className="text-center">Stock</th>
                                                     <th className="text-center">Ventes</th>
@@ -671,10 +671,10 @@ export default function OrderSchedulingModal({
                                             </thead>
                                             <tbody>
                                                 {suggestions.map((item, idx) => (
-                                                    <tr key={idx} className={`hover:bg-slate-50 cursor-pointer transition-colors ${selectedSuggestions.has(idx) ? 'bg-primary/5' : ''}`} onClick={() => setSelectedSuggestions(prev => { const next = new Set(prev); if (next.has(idx)) next.delete(idx); else next.add(idx); return next; })}>
-                                                        <td><input type="checkbox" className="checkbox checkbox-xs checkbox-primary rounded" checked={selectedSuggestions.has(idx)} onChange={() => {}}/></td>
+                                                    <tr key={idx} className={`hover:bg-base-200 cursor-pointer transition-colors ${selectedSuggestions.has(idx) ? 'bg-primary/10' : ''}`} onClick={() => setSelectedSuggestions(prev => { const next = new Set(prev); if (next.has(idx)) next.delete(idx); else next.add(idx); return next; })}>
+                                                        <td><input type="checkbox" className="size-4 rounded border-base-300 text-primary focus:ring-primary cursor-pointer" checked={selectedSuggestions.has(idx)} onChange={() => {}}/></td>
                                                         <td className="font-black text-xs text-base-content">{item.produit_nom}</td>
-                                                        <td className="text-center"><span className="badge badge-ghost font-mono text-[10px] font-bold">{item.stock_actuel}</span></td>
+                                                        <td className="text-center"><span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold bg-base-200 text-base-content/60 font-mono">{item.stock_actuel}</span></td>
                                                         <td className="text-center font-bold text-xs">{item.ventes_periode}</td>
                                                         <td className="text-right text-primary font-black text-sm">x{item.quantite_suggeree}</td>
                                                         <td className="text-right font-mono font-bold text-xs">{formatPrice(item.montant_ht || (item.prix_achat * item.quantite_suggeree))} F</td>

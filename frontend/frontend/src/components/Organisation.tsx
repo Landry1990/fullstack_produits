@@ -83,14 +83,14 @@ export default function Organisation({ defaultTab = 'rayons' }: OrganisationProp
            </div>
 
            {/* Tabs Navigation (Style Ventes.tsx) */}
-           <div className="bg-base-50/50 p-1 rounded-xl border border-base-200 flex gap-1">
+           <div className="bg-base-200 p-1 rounded-xl border border-base-200 flex gap-1">
               {tabs.map(tab => (
                 <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id as any)}
                   className={`flex items-center gap-2 px-6 py-2 rounded-lg font-bold text-sm transition-all ${
                     activeTab === tab.id 
-                    ? `bg-${tab.color} text-${tab.color}-content shadow-sm` 
+                    ? 'bg-primary text-white shadow-sm' 
                     : 'hover:bg-base-200 opacity-60'
                   }`}
                 >

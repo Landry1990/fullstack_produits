@@ -21,6 +21,25 @@ def run_scheduler_loop():
         except Exception as e:
             logger.error(f"Background Task Runner Error: {e}")
             
+        # Vérification et envoi automatisé du rapport mensuel Telegram (le 1er de chaque mois)
+        try:
+            from django.utils import timezone
+            from .models import TelegramLog
+            now = timezone.now()
+            if now.day == 1:
+                # Vérifier si un rapport mensuel a déjà été envoyé pour le mois en cours
+                already_sent = TelegramLog.objects.filter(
+                    type=TelegramLog.Type.RAPPORT,
+                    status=TelegramLog.Status.SENT,
+                    sent_at__year=now.year,
+                    sent_at__month=now.month
+                ).exists()
+                if not already_sent:
+                    logger.info("Scheduler: Premier jour du mois détecté. Envoi du rapport mensuel Telegram...")
+                    call_command('send_monthly_telegram_report')
+        except Exception as e:
+            logger.error(f"Background Task Runner - Telegram Report Error: {e}")
+            
         # Wait 10 minutes before next check
         # (600 seconds = 10 minutes)
         time.sleep(600)

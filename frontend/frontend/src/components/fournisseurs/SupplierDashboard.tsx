@@ -50,10 +50,10 @@ export default function SupplierDashboard({ onViewAllDeadlines }: SupplierDashbo
 
   if (error || !stats) {
     return (
-      <div className="alert alert-error shadow-lg rounded-2xl">
+      <div className="alert-ref alert-error shadow-lg rounded-2xl">
         <AlertCircle className="size-6" />
         <span>{error || t('providers:messages.load_error')}</span>
-        <button className="btn btn-sm btn-ghost" onClick={refresh}>{t('common:retry')}</button>
+        <button className="btn-ref btn-sm btn-ghost" onClick={refresh}>{t('common:retry')}</button>
       </div>
     );
   }
@@ -100,7 +100,7 @@ export default function SupplierDashboard({ onViewAllDeadlines }: SupplierDashbo
       {/* KPI Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {kpis.map((card, i) => (
-          <div key={i} className="bg-base-100 border border-base-200 rounded-3xl shadow-sm overflow-hidden group hover:shadow-md transition-all">
+          <div key={i} className="bg-base-100 border border-base-300 rounded-3xl shadow-sm overflow-hidden group hover:shadow-md transition-all">
             <div className="relative p-5 flex flex-col gap-3 h-full">
               <div className="absolute top-0 left-0 right-0 h-1" style={{ background: card.accent }} />
               
@@ -119,7 +119,7 @@ export default function SupplierDashboard({ onViewAllDeadlines }: SupplierDashbo
 
               <div className="flex items-center gap-1.5 mt-auto">
                 <span className={`inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full ${
-                  card.accent === '#ef4444' || card.accent === '#f97316' ? 'bg-red-50 text-red-600' : 'bg-blue-50 text-blue-600'
+                  card.accent === '#ef4444' || card.accent === '#f97316' ? 'bg-error/10 text-error' : 'bg-info/10 text-info'
                 }`}>
                   {card.sub}
                 </span>
@@ -132,8 +132,8 @@ export default function SupplierDashboard({ onViewAllDeadlines }: SupplierDashbo
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
         
         {/* Evolution Chart */}
-        <div className="xl:col-span-2 bg-base-100 border border-base-200 rounded-3xl shadow-sm overflow-hidden flex flex-col">
-          <div className="flex items-center justify-between px-6 py-5 border-b border-base-100 bg-slate-50/50">
+        <div className="xl:col-span-2 bg-base-100 border border-base-300 rounded-3xl shadow-sm overflow-hidden flex flex-col">
+          <div className="flex items-center justify-between px-6 py-5 border-b border-base-200 bg-base-200/50">
             <div className="flex items-center gap-3">
               <div className="p-2.5 bg-primary/10 text-primary rounded-2xl">
                 <TrendingUp className="size-5" />
@@ -143,7 +143,7 @@ export default function SupplierDashboard({ onViewAllDeadlines }: SupplierDashbo
                 <p className="text-[10px] font-bold text-base-content/30 uppercase tracking-widest">{t('providers:dashboard.charts.evolution_subtitle')}</p>
               </div>
             </div>
-            <button onClick={refresh} className="btn btn-ghost btn-circle btn-xs opacity-40 hover:opacity-100 transition-opacity">
+            <button onClick={refresh} className="inline-flex items-center justify-center size-7 rounded-full text-base-content/60 hover:bg-base-200 opacity-40 hover:opacity-100 transition-opacity">
                <RefreshCw className="size-3" />
             </button>
           </div>
@@ -192,9 +192,9 @@ export default function SupplierDashboard({ onViewAllDeadlines }: SupplierDashbo
         </div>
 
         {/* Distribution Pie Chart */}
-        <div className="bg-base-100 border border-base-200 rounded-3xl shadow-sm overflow-hidden flex flex-col">
-          <div className="flex items-center gap-3 px-6 py-5 border-b border-base-100 bg-slate-50/50">
-            <div className="p-2.5 bg-amber-100 text-amber-600 rounded-2xl">
+        <div className="bg-base-100 border border-base-300 rounded-3xl shadow-sm overflow-hidden flex flex-col">
+          <div className="flex items-center gap-3 px-6 py-5 border-b border-base-200 bg-base-200/50">
+            <div className="p-2.5 bg-warning/20 text-warning rounded-2xl">
               <PieChartIcon className="size-5" />
             </div>
             <div>
@@ -246,10 +246,10 @@ export default function SupplierDashboard({ onViewAllDeadlines }: SupplierDashbo
       </div>
 
       {/* Upcoming Deadlines Table */}
-      <div className="bg-base-100 border border-base-200 rounded-3xl shadow-sm overflow-hidden flex flex-col">
-        <div className="flex items-center justify-between px-6 py-5 border-b border-base-100 bg-slate-50/50">
+      <div className="bg-base-100 border border-base-300 rounded-3xl shadow-sm overflow-hidden flex flex-col">
+        <div className="flex items-center justify-between px-6 py-5 border-b border-base-200 bg-base-200/50">
           <div className="flex items-center gap-3">
-            <div className="p-2.5 bg-emerald-100 text-emerald-600 rounded-2xl">
+            <div className="p-2.5 bg-success/20 text-success rounded-2xl">
               <Calendar className="size-5" />
             </div>
             <div>
@@ -259,14 +259,14 @@ export default function SupplierDashboard({ onViewAllDeadlines }: SupplierDashbo
           </div>
           <button 
             onClick={onViewAllDeadlines}
-            className="btn btn-ghost btn-sm text-[10px] font-black uppercase tracking-widest"
+            className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-base-content/60 hover:bg-base-200 text-[10px] font-black uppercase tracking-widest transition-colors"
           >
             {t('providers:dashboard.deadlines.view_all')} <ChevronRight className="size-3 ml-1" />
           </button>
         </div>
 
         <div className="overflow-x-auto">
-          <table className="table table-lg">
+          <table className="w-full">
             <thead>
               <tr className="text-[10px] font-black uppercase text-base-content/40 bg-base-200/30 border-none">
                 <th className="pl-6">{t('providers:table.provider')}</th>
@@ -283,7 +283,7 @@ export default function SupplierDashboard({ onViewAllDeadlines }: SupplierDashbo
                     <td colSpan={6} className="text-center py-8 text-base-content/30 font-bold uppercase text-xs tracking-widest">{t('providers:dashboard.deadlines.no_deadlines')}</td>
                  </tr>
               ) : (stats?.prochaines_echeances ?? []).map((ech, i) => (
-                <tr key={i} className="hover:bg-slate-50/50 transition-colors group">
+                <tr key={i} className="hover:bg-base-200/50 transition-colors group">
                   <td className="pl-6 py-4">
                     <span className="font-black text-base-content text-sm">{ech.fournisseur_nom}</span>
                   </td>
@@ -304,16 +304,16 @@ export default function SupplierDashboard({ onViewAllDeadlines }: SupplierDashbo
                     <span className="font-black text-base-content text-sm">{formatCurrency(ech.montant_du)}</span>
                   </td>
                   <td className="text-center">
-                    <span className={`badge badge-sm font-black text-[9px] uppercase py-2 px-3 border-none ${
-                      ech.status === 'EN RETARD' ? 'bg-red-50 text-red-600' : 
-                      ech.status === "AUJOURD'HUI" ? 'bg-amber-50 text-amber-600' : 
-                      'bg-emerald-50 text-emerald-600'
+                    <span className={`inline-flex items-center rounded-full font-black text-[9px] uppercase py-2 px-3 ${
+                      ech.status === 'EN RETARD' ? 'bg-error/10 text-error' : 
+                      ech.status === "AUJOURD'HUI" ? 'bg-warning/10 text-warning' : 
+                      'bg-success/10 text-success'
                     }`}>
                       {ech.status}
                     </span>
                   </td>
                   <td className="pr-6 text-right">
-                    <button className="btn btn-ghost btn-sm btn-circle opacity-0 group-hover:opacity-100 transition-opacity">
+                    <button className="inline-flex items-center justify-center size-7 rounded-full text-base-content/60 hover:bg-base-200 opacity-0 group-hover:opacity-100 transition-opacity">
                       <ArrowUpRight className="size-4" />
                     </button>
                   </td>

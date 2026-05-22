@@ -24,7 +24,7 @@ export const Button: React.FC<ButtonProps> = ({
   ref,
   ...props
 }) => {
-  const baseStyles = 'inline-flex items-center justify-center gap-2 font-semibold transition-all duration-300 active:scale-95 disabled:pointer-events-none disabled:opacity-50 outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2';
+  const baseStyles = 'inline-flex items-center justify-center gap-2 font-semibold transition-all duration-300 active:scale-95 disabled:pointer-events-none disabled:text-base-content/50 outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2';
   
   const variants = {
     primary: 'bg-primary text-primary-content hover:bg-primary/90 shadow-sm hover:shadow-md hover:-translate-y-[1px]',
@@ -32,7 +32,7 @@ export const Button: React.FC<ButtonProps> = ({
     outline: 'border-2 border-base-300 bg-transparent hover:bg-base-200 text-base-content hover:border-base-400',
     ghost: 'bg-transparent hover:bg-base-200 text-base-content',
     danger: 'bg-error text-error-content hover:bg-error/90 shadow-sm hover:shadow-error/30 hover:-translate-y-[1px]',
-    glass: 'glass-panel-pro text-base-content hover:bg-white/40 dark:hover:bg-black/40',
+    glass: 'glass-panel-pro text-base-content hover:bg-base-100/40 dark:hover:bg-black/40',
   };
 
   const sizes = {

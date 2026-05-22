@@ -154,14 +154,14 @@ const InvoiceTemplate: React.FC<InvoiceTemplateProps> = ({ settings, data, isBon
             <div className="flex flex-col gap-1 text-sm">
               <p className="font-bold text-base-content uppercase">{data.client_name_override || data.client?.name || t('invoice.walk_in_customer')}</p>
               {data.ayant_droit_details && (
-                <p className="font-medium text-blue-700">{t('invoice.beneficiary')}: {data.ayant_droit_details.nom}</p>
+                <p className="font-medium text-info">{t('invoice.beneficiary')}: {data.ayant_droit_details.nom}</p>
               )}
               {data.client?.address && <p>{data.client.address}</p>}
               {data.client?.phone && <p>{t('invoice.tel')} : {data.client.phone}</p>}
               {data.client_solde_depot && Number(data.client_solde_depot) > 0 && (
                 <div className="mt-2 pt-2 border-t border-slate-100 flex justify-between items-center">
-                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-tighter">{t('invoice.remaining_deposit')}</span>
-                    <span className="font-black text-slate-900 text-sm">{formatCurrency(Number(data.client_solde_depot))}</span>
+                    <span className="text-[10px] font-black text-base-content/50 uppercase tracking-tighter">{t('invoice.remaining_deposit')}</span>
+                    <span className="font-black text-base-content text-sm">{formatCurrency(Number(data.client_solde_depot))}</span>
                 </div>
               )}
             </div>
@@ -188,7 +188,7 @@ const InvoiceTemplate: React.FC<InvoiceTemplateProps> = ({ settings, data, isBon
                 )}
                 <div className="flex justify-between">
                     <span className="text-base-content/60">{t('invoice.payment_method')} :</span>
-                    <span className="font-bold uppercase text-emerald-600">{data.mode_reglement || t('invoice.cash')}</span>
+                    <span className="font-bold uppercase text-success">{data.mode_reglement || t('invoice.cash')}</span>
                 </div>
             </div>
         </div>
@@ -213,7 +213,7 @@ const InvoiceTemplate: React.FC<InvoiceTemplateProps> = ({ settings, data, isBon
                     const totalLineNetHT = ((Number(item.selling_price) - Number(item.discount)) * item.quantity) / (1 + (Number(item.tva)||0)/100);
                     
                     return (
-                      <tr key={idx} className="group border-b border-slate-50 hover:bg-slate-50/30 transition-colors break-inside-avoid">
+                      <tr key={idx} className="group border-b border-slate-50 hover:bg-base-200/30 transition-colors break-inside-avoid">
                           <td className="py-2 px-3">
                               <div className="font-bold text-base-content text-[10.5px] uppercase leading-tight">{item.produit_nom}</div>
                               {item.cip && <div className="text-[8.5px] text-base-content/40 font-mono mt-0.5 tracking-tight inline-block mr-3">{t('invoice.cip')}: {item.cip}</div>}
@@ -313,7 +313,7 @@ const InvoiceTemplate: React.FC<InvoiceTemplateProps> = ({ settings, data, isBon
                     )}
                     
                     {data.remise > 0 && (
-                      <div className="grid grid-cols-[1fr,115px] items-center px-1 py-1 bg-red-50/50 rounded-md text-red-600 border border-red-100/50">
+                      <div className="grid grid-cols-[1fr,115px] items-center px-1 py-1 bg-error/10/50 rounded-md text-error border border-red-100/50">
                           <span className="text-[9px] uppercase font-black tracking-widest pl-1">{t('invoice.discount_label')}</span>
                           <div className="text-right font-mono font-black pr-2">
                             -{formatCurrency(data.remise)}
@@ -352,7 +352,7 @@ const InvoiceTemplate: React.FC<InvoiceTemplateProps> = ({ settings, data, isBon
                             {formatCurrency(data.part_client ?? 0)}
                           </div>
                         </div>
-                        <div className="bg-emerald-600 rounded-lg shadow-sm text-white grid grid-cols-[1fr,115px] items-center px-1 py-2.5 ring-1 ring-emerald-700/10">
+                        <div className="bg-success rounded-lg shadow-sm text-white grid grid-cols-[1fr,115px] items-center px-1 py-2.5 ring-1 ring-emerald-700/10">
                           <span className="text-[9px] uppercase font-black tracking-[0.1em] pl-1">{t('invoice.part_assurance')}</span>
                           <div className="text-right font-mono font-black text-lg leading-none pr-2 text-right">
                             {formatCurrency(data.part_assurance ?? 0)}
@@ -364,7 +364,7 @@ const InvoiceTemplate: React.FC<InvoiceTemplateProps> = ({ settings, data, isBon
 
                 <div className="mt-4 pt-4 border-t border-slate-100 flex flex-col items-center">
                     <div className="text-[8px] uppercase font-black tracking-widest text-base-content/40 mb-6 text-center">{t('invoice.stamp_signature')}</div>
-                    <div className="w-full h-20 border-2 border-dashed border-slate-100 rounded-xl flex items-center justify-center text-[8px] text-slate-200 bg-slate-50/10 italic">
+                    <div className="w-full h-20 border-2 border-dashed border-slate-100 rounded-xl flex items-center justify-center text-[8px] text-slate-200 bg-base-200/10 italic">
                         {t('invoice.stamp_placeholder')}
                     </div>
                 </div>

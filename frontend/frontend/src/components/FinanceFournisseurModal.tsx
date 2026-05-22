@@ -87,7 +87,7 @@ export default function FinanceFournisseurModal({ isOpen, onClose, fournisseur, 
             title={t('providers:finance.title')}
             subtitle={fournisseur.name}
             icon={
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-success" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
                 </svg>
             }
@@ -98,10 +98,10 @@ export default function FinanceFournisseurModal({ isOpen, onClose, fournisseur, 
             disableClose={isSubmitting}
         >
             {/* Debt Balance Banner */}
-            <div className="px-6 py-3 bg-gradient-to-r from-gray-50 to-white border-b border-gray-100 flex justify-end">
+            <div className="px-6 py-3 bg-gradient-to-r from-gray-50 to-white border-b border-base-200 flex justify-end">
                 <div className="text-right">
                     <p className="text-[10px] text-base-content/60 uppercase font-bold tracking-wider">{t('providers:details.debt_balance')}</p>
-                    <p className={`text-xl font-black font-mono ${ normalizeNumberInput(fournisseur.solde_dette || 0) > 0 ? 'text-red-500' : 'text-emerald-600'}`}>
+                    <p className={`text-xl font-black font-mono ${ normalizeNumberInput(fournisseur.solde_dette || 0) > 0 ? 'text-red-500' : 'text-success'}`}>
                         {formatCurrency(normalizeNumberInput(fournisseur.solde_dette || 0))}
                     </p>
                 </div>
@@ -111,7 +111,7 @@ export default function FinanceFournisseurModal({ isOpen, onClose, fournisseur, 
                 {/* Left Panel: New Payment Form */}
                 <div className="w-1/3 border-r bg-base-100 p-6 overflow-y-auto">
                     <h4 className="font-bold text-lg mb-6 flex items-center gap-2">
-                         <span className="size-8 rounded-full bg-blue-100 text-primary flex items-center justify-center text-sm">{t('common:currency')}</span>
+                         <span className="size-8 rounded-full bg-info/20 text-primary flex items-center justify-center text-sm">{t('common:currency')}</span>
                          {t('providers:finance.new_payment')}
                     </h4>
                     <form onSubmit={handleSubmit} className="space-y-4">
@@ -124,7 +124,7 @@ export default function FinanceFournisseurModal({ isOpen, onClose, fournisseur, 
                                 step="0.01" 
                                 value={montant}
                                 onChange={e => setMontant(e.target.value)}
-                                className={`input input-bordered w-full font-mono font-bold text-lg rounded-xl focus:border-emerald-500 focus:ring-emerald-500/20 ${prefilledMontant ? 'bg-emerald-50 border-emerald-200' : ''}`}
+                                className={`input input-bordered w-full font-mono font-bold text-lg rounded-xl focus:border-emerald-500 focus:ring-emerald-500/20 ${prefilledMontant ? 'bg-success/10 border-emerald-200' : ''}`}
                                 placeholder="0.00"
                                 required 
                             />    <span className="absolute left-3 top-3.5 text-base-content/40 font-bold">{t('common:currency')}</span>
@@ -178,7 +178,7 @@ export default function FinanceFournisseurModal({ isOpen, onClose, fournisseur, 
                 </div>
 
                 {/* Right Panel: History */}
-                <div className="flex-1 bg-slate-50/50 flex flex-col overflow-hidden">
+                <div className="flex-1 bg-base-200/50 flex flex-col overflow-hidden">
                     <div className="p-4 border-b bg-base-100/50 backdrop-blur shrink-0">
                         <h4 className="font-bold text-base-content/90">{t('providers:finance.history')}</h4>
                     </div>
@@ -189,7 +189,7 @@ export default function FinanceFournisseurModal({ isOpen, onClose, fournisseur, 
                             </div>
                         ) : paiements.length === 0 ? (
                             <div className="flex flex-col items-center justify-center h-full text-base-content/40 gap-2">
-                                <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 opacity-50" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 text-base-content/50" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                                 </svg>
                                 <p>{t('providers:finance.no_payments')}</p>
@@ -214,7 +214,7 @@ export default function FinanceFournisseurModal({ isOpen, onClose, fournisseur, 
                                             <td>
                                                 <span className={`badge badge-sm font-semibold capitalize ${
                                                     paiement.mode_paiement === 'ESP' ? 'badge-warning bg-yellow-100 text-yellow-800 border-none' :
-                                                    paiement.mode_paiement === 'CHQ' ? 'badge-info bg-blue-100 text-blue-800 border-none' :
+                                                    paiement.mode_paiement === 'CHQ' ? 'badge-info bg-info/20 text-blue-800 border-none' :
                                                     'badge-ghost'
                                                 }`}>
                                                     {paiement.mode_paiement === 'ESP' ? t('providers:finance.modes.cash') :

@@ -46,19 +46,19 @@ const Ventes: React.FC = () => {
     const [trancheStats, setTrancheStats] = React.useState<any>(null);
     
     return (
-        <div className="min-h-screen bg-gray-50 font-sans">
+        <div className="min-h-screen bg-base-200 font-sans">
 
             {/* ── HEADER ── */}
-            <div className="sticky top-0 z-30 bg-white border-b border-gray-100 px-4 sm:px-6 py-3">
+            <div className="sticky top-0 z-30 bg-base-100 border-b border-base-200 px-4 sm:px-6 py-3">
                 <div className="flex items-center gap-3 min-w-0">
-                    <div className="p-2 bg-indigo-50 text-indigo-600 rounded-lg shrink-0">
+                    <div className="p-2 bg-primary/10 text-primary rounded-lg shrink-0">
                         <Receipt className="size-5" />
                     </div>
                     <div className="min-w-0">
-                        <h1 className="text-base font-bold text-gray-900 tracking-tight leading-none truncate">
+                        <h1 className="text-base font-bold text-base-content tracking-tight leading-none truncate">
                             {t('title')}
                         </h1>
-                        <p className="text-[10px] font-medium text-gray-400 uppercase tracking-widest">
+                        <p className="text-[10px] font-medium text-base-content/50 uppercase tracking-widest">
                             {t('subtitle')}
                         </p>
                     </div>
@@ -95,7 +95,7 @@ const Ventes: React.FC = () => {
                 )}
 
                 {/* Main Content: Table */}
-                <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-visible">
+                <div className="bg-base-100 rounded-xl shadow-sm border border-base-200 overflow-visible">
                     <SalesTable
                         factures={filteredFactures}
                         loading={loading}

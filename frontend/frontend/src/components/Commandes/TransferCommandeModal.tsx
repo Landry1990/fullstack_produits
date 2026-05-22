@@ -33,7 +33,7 @@ export default function TransferCommandeModal({
     const [transferCataloguePrices, setTransferCataloguePrices] = useState<Map<number, number>>(new Map());
     const [loadingCatalogue, setLoadingCatalogue] = useState(false);
 
-    // Reset state on open
+    // Reset e on open
     useEffect(() => {
         if (isOpen) {
             setTransferTargetFournisseur('');
@@ -161,17 +161,17 @@ export default function TransferCommandeModal({
                     {t('orders:transfer_modal.title')}
                 </h3>
 
-                <p className="text-sm text-base-content/70 mb-4">
+                <p className="text-sm text-base-content/60 mb-4">
                    {t('orders:transfer_modal.description')}
                 </p>
 
                 {/* Sélection du fournisseur */}
-                <div className="form-control mb-4">
+                <div className=" mb-4">
                     <label className="label">
-                        <span className="label-text font-semibold">{t('orders:transfer_modal.supplier_label')}</span>
+                        <span className="text-sm font-medium text-base-content font-semibold">{t('orders:transfer_modal.supplier_label')}</span>
                     </label>
                     <select
-                        className="select select-bordered w-full"
+                        className="select-ref select-bordered w-full"
                         value={transferTargetFournisseur}
                         onChange={handleSupplierChange}
                     >
@@ -219,19 +219,19 @@ export default function TransferCommandeModal({
                                         <span className="text-base-content/60">{formatCurrency(currentPrice)}</span>
                                         {hasPriceInfo && (
                                             <>
-                                                <span className="text-base-content/40">→</span>
+                                                <span className="text-base-content/50">→</span>
                                                 <span className={newPrice < currentPrice ? 'text-success font-semibold' : newPrice > currentPrice ? 'text-error font-semibold' : ''}>
                                                     {formatCurrency(newPrice)}
                                                 </span>
                                                 {priceDiff !== 0 && (
-                                                    <span className={`badge badge-xs ${priceDiff > 0 ? 'badge-success' : 'badge-error'}`}>
+                                                    <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold ${priceDiff > 0 ? 'bg-success/20 text-success' : 'bg-error/20 text-error'}`}>
                                                         {priceDiff > 0 ? '+' : ''}{formatCurrency(priceDiff * quantity)}
                                                     </span>
                                                 )}
                                             </>
                                         )}
                                         {!hasPriceInfo && transferTargetFournisseur && !loadingCatalogue && (
-                                            <span className="badge badge-ghost badge-xs">{t('orders:transfer_modal.unknown_price')}</span>
+                                            <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold bg-base-200 text-base-content/60">{t('orders:transfer_modal.unknown_price')}</span>
                                         )}
                                     </div>
                                 </div>
@@ -271,22 +271,22 @@ export default function TransferCommandeModal({
 
                 {loadingCatalogue && (
                     <div className="flex items-center justify-center py-4">
-                        <span className="loading loading-spinner loading-sm mr-2"></span>
+                        <span className="inline-block size-4 border-2 border-base-300 border-t-indigo-600 rounded-full animate-spin mr-2"></span>
                         {t('orders:transfer_modal.loading_prices')}
                     </div>
                 )}
 
-                <div className="modal-action">
+                <div className="flex justify-end gap-3 pt-4">
                     <button
                         type="button"
-                        className="btn btn-ghost"
+                        className="btn-ref btn-ghost"
                         onClick={onClose}
                     >
                         {t('orders:transfer_modal.cancel')}
                     </button>
                     <button
                         type="button"
-                        className="btn btn-info"
+                        className="btn-ref btn-info"
                         onClick={handleTransfer}
                         disabled={!transferTargetFournisseur || loadingCatalogue}
                     >

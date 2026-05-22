@@ -1,0 +1,44 @@
+VEILLE CONCURRENTIELLE - Observations du 22/05/2026
+====================================================
+
+PHARMACIE CONCURRENTE OBSERVÉE:
+- Date: 22/05/2026
+- Contexte: Visite sur place
+
+BONNES PRATIQUES OBSERVÉES:
+===========================
+
+1. [À compléter]
+   - Description:
+   - Avantage:
+   - Priorité: Haute/Moyenne/Basse
+
+2. [À compléter]
+   - Description:
+   - Avantage:
+   - Priorité: Haute/Moyenne/Basse
+
+3. [À compléter]
+   - Description:
+   - Avantage:
+   - Priorité: Haute/Moyenne/Basse
+
+POINTS À IMPLEMENTER DANS NOTRE APP:
+=====================================
+- 🔥 RAPPORTS AUTOMATISÉS (Priorité HAUTE)
+  * Rapport quotidien automatique par email/WhatsApp
+  * Alertes seuils critiques (rupture, péremption)
+  * Tableau de bord hebdomadaire performance
+  * Export PDF programmé (mensuel pour comptable)
+  * Synthèse matinale par SMS (ventes hier, stock alertes)
+
+- 
+-
+
+NOTES DIVERSES:
+===============
+-
+
+====================================================
+Créé par: User
+Date: 22/05/2026

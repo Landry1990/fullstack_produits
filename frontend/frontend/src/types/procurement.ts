@@ -34,6 +34,7 @@ export interface CommandeProduit {
     quantity: number
     unites_gratuites?: number
     price: string
+    price_cost?: string
     selling_price?: string
     lot?: string
     date_expiration?: string

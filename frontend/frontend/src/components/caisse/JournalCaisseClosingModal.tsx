@@ -109,7 +109,7 @@ export default function JournalCaisseClosingModal({ state }: Props) {
               <button className="btn btn-outline border-base-300 font-bold flex items-center justify-center gap-2" onClick={() => handleImprimerCloture()}>
                 <Printer className="size-5" /> {t('closing.ticket')}
               </button>
-              <button className="btn btn-ghost font-bold opacity-50" onClick={() => setIsClosingModalOpen(false)}>
+              <button className="btn btn-ghost font-bold text-base-content/50" onClick={() => setIsClosingModalOpen(false)}>
                 {t('common:cancel')}
               </button>
             </div>

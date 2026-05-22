@@ -27,19 +27,19 @@ export const StockAnalysisTable: React.FC<StockAnalysisTableProps> = ({
         switch (urgency) {
             case 'critical':
                 return (
-                    <div className="badge border-none bg-error/20 text-error gap-1.5 font-black uppercase text-[10px] tracking-widest px-3 py-2">
+                    <div className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold border-none bg-error/10 text-error gap-1.5 font-black uppercase tracking-widest px-3 py-2">
                         <AlertTriangle className="size-3" /> {t('stock:analyse.shortage.urgency.critical')}
                     </div>
                 );
             case 'warning':
                 return (
-                    <div className="badge border-none bg-warning/20 text-warning gap-1.5 font-black uppercase text-[10px] tracking-widest px-3 py-2">
+                    <div className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold border-none bg-warning/10 text-warning gap-1.5 font-black uppercase tracking-widest px-3 py-2">
                         <AlertTriangle className="size-3" /> {t('stock:analyse.shortage.urgency.warning')}
                     </div>
                 );
             case 'caution':
                 return (
-                    <div className="badge border-none bg-info/20 text-info gap-1.5 font-black uppercase text-[10px] tracking-widest px-3 py-2">
+                    <div className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold border-none bg-info/10 text-info gap-1.5 font-black uppercase tracking-widest px-3 py-2">
                         <AlertTriangle className="size-3" /> {t('stock:analyse.shortage.urgency.caution')}
                     </div>
                 );
@@ -51,8 +51,8 @@ export const StockAnalysisTable: React.FC<StockAnalysisTableProps> = ({
     if (loading) {
         return (
             <div className="flex flex-col items-center justify-center h-96 gap-4">
-                <span className="loading loading-spinner loading-lg text-primary"></span>
-                <p className="text-sm font-medium text-base-content/40 uppercase tracking-widest animate-pulse">
+                <span className="animate-spin rounded-full size-8 border-b-2 border-indigo-600"></span>
+                <p className="text-sm font-medium text-base-content/50 uppercase tracking-widest animate-pulse">
                     {t('stock:analyse.messages.loading')}
                 </p>
             </div>
@@ -62,10 +62,10 @@ export const StockAnalysisTable: React.FC<StockAnalysisTableProps> = ({
     if (items.length === 0) {
         const getEmptyIcon = () => {
             switch (activeTab) {
-                case 'unsold': return <Clock className="size-12 text-base-content/20" />;
-                case 'overstock': return <TrendingUp className="size-12 text-base-content/20" />; // Note: TrendingUp should be imported or use a fallback
-                case 'shortage': return <CheckCircle2 className="size-12 text-base-content/20" />;
-                default: return <Package className="size-12 text-base-content/20" />;
+                case 'unsold': return <Clock className="size-12 text-base-content/50" />;
+                case 'overstock': return <TrendingUp className="size-12 text-base-content/50" />; // Note: TrendingUp should be imported or use a fallback
+                case 'shortage': return <CheckCircle2 className="size-12 text-base-content/50" />;
+                default: return <Package className="size-12 text-base-content/50" />;
             }
         };
 
@@ -79,59 +79,59 @@ export const StockAnalysisTable: React.FC<StockAnalysisTableProps> = ({
         };
 
         return (
-            <div className="flex flex-col items-center justify-center py-32 bg-base-100 rounded-3xl border-2 border-dashed border-base-200 m-6">
+            <div className="flex flex-col items-center justify-center py-32 bg-base-100 rounded-3xl border-2 border-dashed border-base-300 m-6">
                 <div className="p-6 bg-base-200 rounded-full mb-6">
                     {getEmptyIcon()}
                 </div>
                 <h3 className="text-xl font-black text-base-content/60">{getEmptyText()}</h3>
-                <p className="text-sm font-semibold text-base-content/30 mt-2">{t('stock:analyse.empty.all_good')}</p>
+                <p className="text-sm font-semibold text-base-content/50 mt-2">{t('stock:analyse.empty.all_good')}</p>
             </div>
         );
     }
 
     return (
         <div className="overflow-x-auto">
-            <table className="table w-full">
+            <table className="w-full text-sm">
                 <thead>
-                    <tr className="bg-base-200/50 border-b border-base-200">
+                    <tr className="bg-base-200/50 border-b border-base-300">
                         {(activeTab === 'shortage' || activeTab === 'overstock') && (
                             <th className="w-12 text-center">
                                 <input
                                     type="checkbox"
-                                    className="checkbox checkbox-sm checkbox-primary"
+                                    className="size-4 rounded border-base-300 text-primary focus:ring-primary"
                                     checked={selectedItems.size === items.length && items.length > 0}
                                     onChange={onToggleSelectAll}
                                 />
                             </th>
                         )}
-                        <th className="text-[10px] font-black uppercase tracking-widest text-base-content/40 px-6 py-4">
+                        <th className="text-[10px] font-black uppercase tracking-widest text-base-content/50 px-6 py-4">
                             <div className="flex items-center gap-1.5"><Package className="size-3" /> {t('stock:analyse.columns.product')}</div>
                         </th>
-                        <th className="text-[10px] font-black uppercase tracking-widest text-base-content/40 text-center">
+                        <th className="text-[10px] font-black uppercase tracking-widest text-base-content/50 text-center">
                             {t('stock:analyse.columns.current_stock')}
                         </th>
 
                         {activeTab === 'unsold' ? (
                             <>
-                                <th className="text-[10px] font-black uppercase tracking-widest text-base-content/40">{t('stock:analyse.columns.last_purchase')}</th>
-                                <th className="text-[10px] font-black uppercase tracking-widest text-base-content/40">{t('stock:analyse.columns.last_sale')}</th>
-                                <th className="text-[10px] font-black uppercase tracking-widest text-base-content/40 text-center">{t('stock:analyse.columns.inactive_since')}</th>
-                                <th className="text-[10px] font-black uppercase tracking-widest text-base-content/40 text-right">{t('stock:analyse.columns.cost_price')}</th>
-                                <th className="text-[10px] font-black uppercase tracking-widest text-base-content/40 text-right px-6">{t('stock:analyse.columns.stock_value')}</th>
+                                <th className="text-[10px] font-black uppercase tracking-widest text-base-content/50">{t('stock:analyse.columns.last_purchase')}</th>
+                                <th className="text-[10px] font-black uppercase tracking-widest text-base-content/50">{t('stock:analyse.columns.last_sale')}</th>
+                                <th className="text-[10px] font-black uppercase tracking-widest text-base-content/50 text-center">{t('stock:analyse.columns.inactive_since')}</th>
+                                <th className="text-[10px] font-black uppercase tracking-widest text-base-content/50 text-right">{t('stock:analyse.columns.cost_price')}</th>
+                                <th className="text-[10px] font-black uppercase tracking-widest text-base-content/50 text-right px-6">{t('stock:analyse.columns.stock_value')}</th>
                             </>
                         ) : activeTab === 'overstock' ? (
                             <>
-                                <th className="text-[10px] font-black uppercase tracking-widest text-base-content/40 text-center">{t('stock:analyse.columns.avg_rotation')}</th>
-                                <th className="text-[10px] font-black uppercase tracking-widest text-base-content/40 text-center">{t('stock:analyse.columns.threshold')}</th>
-                                <th className="text-[10px] font-black uppercase tracking-widest text-base-content/40 text-center">{t('stock:analyse.columns.excess_qty')}</th>
-                                <th className="text-[10px] font-black uppercase tracking-widest text-base-content/40 text-right px-6">{t('stock:analyse.columns.excess_value')}</th>
+                                <th className="text-[10px] font-black uppercase tracking-widest text-base-content/50 text-center">{t('stock:analyse.columns.avg_rotation')}</th>
+                                <th className="text-[10px] font-black uppercase tracking-widest text-base-content/50 text-center">{t('stock:analyse.columns.threshold')}</th>
+                                <th className="text-[10px] font-black uppercase tracking-widest text-base-content/50 text-center">{t('stock:analyse.columns.excess_qty')}</th>
+                                <th className="text-[10px] font-black uppercase tracking-widest text-base-content/50 text-right px-6">{t('stock:analyse.columns.excess_value')}</th>
                             </>
                         ) : (
                             <>
-                                <th className="text-[10px] font-black uppercase tracking-widest text-base-content/40 text-center">{t('stock:analyse.columns.avg_daily_sales')}</th>
-                                <th className="text-[10px] font-black uppercase tracking-widest text-base-content/40 text-center">{t('stock:analyse.columns.days_until_stockout')}</th>
-                                <th className="text-[10px] font-black uppercase tracking-widest text-base-content/40 text-center">{t('stock:analyse.columns.urgency')}</th>
-                                <th className="text-[10px] font-black uppercase tracking-widest text-base-content/40 text-right px-6">{t('stock:analyse.columns.value_at_risk')}</th>
+                                <th className="text-[10px] font-black uppercase tracking-widest text-base-content/50 text-center">{t('stock:analyse.columns.avg_daily_sales')}</th>
+                                <th className="text-[10px] font-black uppercase tracking-widest text-base-content/50 text-center">{t('stock:analyse.columns.days_until_stockout')}</th>
+                                <th className="text-[10px] font-black uppercase tracking-widest text-base-content/50 text-center">{t('stock:analyse.columns.urgency')}</th>
+                                <th className="text-[10px] font-black uppercase tracking-widest text-base-content/50 text-right px-6">{t('stock:analyse.columns.value_at_risk')}</th>
                             </>
                         )}
                     </tr>
@@ -142,13 +142,13 @@ export const StockAnalysisTable: React.FC<StockAnalysisTableProps> = ({
                         return (
                             <tr 
                                 key={item.id} 
-                                className={`hover:bg-base-200/30 transition-colors group ${isSelected ? 'bg-primary/5' : ''}`}
+                                className={`hover:bg-base-200/30 transition-colors group ${isSelected ? 'bg-primary/10/5' : ''}`}
                             >
                                 {(activeTab === 'shortage' || activeTab === 'overstock') && (
                                     <td className="text-center">
                                         <input
                                             type="checkbox"
-                                            className="checkbox checkbox-sm checkbox-primary"
+                                            className="size-4 rounded border-base-300 text-primary focus:ring-primary"
                                             checked={isSelected}
                                             onChange={() => onToggleSelect(item.id)}
                                         />
@@ -156,12 +156,12 @@ export const StockAnalysisTable: React.FC<StockAnalysisTableProps> = ({
                                 )}
                                 <td className="px-4 py-2">
                                     <div className="font-bold text-base-content tracking-tight uppercase">{item.name}</div>
-                                    <div className="text-[10px] font-black text-base-content/40 uppercase tracking-widest mt-0.5" title="CIP / Code Barre">
+                                    <div className="text-[10px] font-black text-base-content/50 uppercase tracking-widest mt-0.5" title="CIP / Code Barre">
                                         CIP: {item.cip || item.id}
                                     </div>
                                 </td>
                                 <td className="text-center py-2">
-                                    <div className="badge badge-md bg-base-200 border-none font-black min-w-10 rounded-lg shadow-inner italic">
+                                    <div className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold bg-base-200 border-none font-black min-w-10 rounded-lg shadow-inner italic">
                                         {item.stock}
                                     </div>
                                 </td>
@@ -175,11 +175,11 @@ export const StockAnalysisTable: React.FC<StockAnalysisTableProps> = ({
                                             {item.derniere_vente ? new Date(item.derniere_vente).toLocaleDateString(i18n.language) : <span className="text-error font-black italic">{t('stock:analyse.messages.never_sold')}</span>}
                                         </td>
                                         <td className="text-center">
-                                            <div className="badge border-none bg-warning/20 text-warning font-black italic">
+                                            <div className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold border-none bg-warning/10 text-warning font-black italic">
                                                 {item.days_since_sale ?? '-'} {t('stock:analyse.day_short', { defaultValue: 'j' })}
                                             </div>
                                         </td>
-                                        <td className="text-right font-mono font-bold text-base-content/40">
+                                        <td className="text-right font-mono font-bold text-base-content/60">
                                             {formatCurrency(Math.round(item.cost_price))}
                                         </td>
                                         <td className="text-right font-black text-error px-6">
@@ -190,9 +190,9 @@ export const StockAnalysisTable: React.FC<StockAnalysisTableProps> = ({
                                     <>
                                         <td className="text-center font-mono">
                                             <span className="font-bold">{Number(item.rotation || 0).toFixed(0)}</span>
-                                            <span className="text-[10px] text-base-content/30 ml-1">/ {t('stock:analyse.per_month')}</span>
+                                            <span className="text-[10px] text-base-content/50 ml-1">/ {t('stock:analyse.per_month')}</span>
                                         </td>
-                                        <td className="text-center font-bold text-base-content/40">{item.threshold}</td>
+                                        <td className="text-center font-bold text-base-content/60">{item.threshold}</td>
                                         <td className="text-center">
                                             <span className="text-error font-black italic">+{item.excess_qty}</span>
                                         </td>
@@ -204,7 +204,7 @@ export const StockAnalysisTable: React.FC<StockAnalysisTableProps> = ({
                                     <>
                                         <td className="text-center font-mono">
                                             <span className="font-bold">{item.avg_daily_sales}</span>
-                                            <span className="text-[10px] text-base-content/30 ml-1">/ {t('stock:analyse.per_day')}</span>
+                                            <span className="text-[10px] text-base-content/50 ml-1">/ {t('stock:analyse.per_day')}</span>
                                         </td>
                                         <td className="text-center">
                                             <div className={`font-black italic ${

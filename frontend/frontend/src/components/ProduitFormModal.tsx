@@ -165,31 +165,31 @@ export default function ProduitFormModal({
 
   if (!open) return null;
 
-  const inputBase = "w-full rounded-lg border border-gray-200 bg-white text-gray-900 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-50 outline-none h-10 px-3 text-sm transition-all";
-  const inputSm = "w-full rounded-lg border border-gray-200 bg-white text-gray-900 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-50 outline-none h-9 px-3 text-xs transition-all";
-  const selectBase = "w-full rounded-lg border border-gray-200 bg-white text-gray-900 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-50 outline-none h-10 px-3 text-sm transition-all appearance-none";
-  const selectSm = "w-full rounded-lg border border-gray-200 bg-white text-gray-900 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-50 outline-none h-9 px-3 text-xs transition-all appearance-none";
+  const inputBase = "w-full rounded-lg border border-base-300 bg-base-100 text-base-content focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none h-10 px-3 text-sm transition-all";
+  const inputSm = "w-full rounded-lg border border-base-300 bg-base-100 text-base-content focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none h-9 px-3 text-xs transition-all";
+  const selectBase = "w-full rounded-lg border border-base-300 bg-base-100 text-base-content focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none h-10 px-3 text-sm transition-all appearance-none";
+  const selectSm = "w-full rounded-lg border border-base-300 bg-base-100 text-base-content focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none h-9 px-3 text-xs transition-all appearance-none";
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/40" onClick={onClose} />
-      <div className="relative bg-white rounded-xl shadow-2xl border border-gray-100 w-full max-w-4xl max-h-[90vh] overflow-y-auto">
+      <div className="relative bg-base-100 rounded-xl shadow-2xl border border-base-200 w-full max-w-4xl max-h-[90vh] overflow-y-auto">
         {/* Header */}
-        <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
+        <div className="px-6 py-4 border-b border-base-200 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="p-2 bg-indigo-50 rounded-lg">
+            <div className="p-2 bg-primary/10 rounded-lg">
               <span className="text-lg">➕</span>
             </div>
-            <h3 className="text-base font-bold text-gray-900">{titleText}</h3>
+            <h3 className="text-base font-bold text-base-content">{titleText}</h3>
           </div>
-          <button onClick={onClose} className="p-2 text-gray-400 hover:bg-gray-100 rounded-lg transition-colors">
+          <button onClick={onClose} className="p-2 text-base-content/50 hover:bg-base-200 rounded-lg transition-colors">
             <X className="size-5" />
           </button>
         </div>
 
         <form className="p-6 space-y-6" onSubmit={handleSubmit}>
           {error && (
-            <div className="bg-red-50 border border-red-100 rounded-lg p-3 flex items-center gap-2 text-red-700 text-sm">
+            <div className="bg-error/10 border border-red-100 rounded-lg p-3 flex items-center gap-2 text-error text-sm">
               <span className="shrink-0 text-lg">⚠️</span>
               <span>{error}</span>
             </div>
@@ -198,20 +198,20 @@ export default function ProduitFormModal({
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* Left column */}
             <div className="space-y-4">
-              <h4 className="text-xs font-semibold uppercase tracking-wider text-gray-400 border-b border-gray-100 pb-2">{t('products:form.general_info')}</h4>
+              <h4 className="text-xs font-semibold uppercase tracking-wider text-base-content/50 border-b border-base-200 pb-2">{t('products:form.general_info')}</h4>
 
               <div>
-                <label className="block text-[10px] font-semibold text-gray-500 uppercase tracking-wider mb-1.5">{t('products:form.name')}</label>
+                <label className="block text-[10px] font-semibold text-base-content/60 uppercase tracking-wider mb-1.5">{t('products:form.name')}</label>
                 <input type="text" className={inputBase} value={form.name} onChange={(e) => setForm((p) => ({ ...p, name: e.target.value }))} required autoFocus />
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-[10px] font-semibold text-gray-500 uppercase tracking-wider mb-1.5">{t('products:form.initial_stock')}</label>
+                  <label className="block text-[10px] font-semibold text-base-content/60 uppercase tracking-wider mb-1.5">{t('products:form.initial_stock')}</label>
                   <input type="number" className={inputBase} value={form.stock} onChange={(e) => setForm((p) => ({ ...p, stock: e.target.value }))} min={0} step={1} required />
                 </div>
                 <div>
-                  <label className="block text-[10px] font-semibold text-gray-500 uppercase tracking-wider mb-1.5">{t('products:form.rayon')}</label>
+                  <label className="block text-[10px] font-semibold text-base-content/60 uppercase tracking-wider mb-1.5">{t('products:form.rayon')}</label>
                   <select className={selectBase} value={form.rayon} onChange={(e) => setForm((f) => ({ ...f, rayon: e.target.value }))}>
                     <option value="">{t('products:form.select_rayon')}</option>
                     {rayons.filter(r => !r.parent).map(parent => (
@@ -228,16 +228,16 @@ export default function ProduitFormModal({
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-[10px] font-semibold text-gray-500 uppercase tracking-wider mb-1.5">{t('products:form.cip1')}</label>
+                  <label className="block text-[10px] font-semibold text-base-content/60 uppercase tracking-wider mb-1.5">{t('products:form.cip1')}</label>
                   <input className={`${inputBase} font-mono`} value={form.cip1} onChange={(e) => setForm((p) => ({ ...p, cip1: e.target.value }))} />
                 </div>
                 <div className="grid grid-cols-2 gap-2">
                   <div>
-                    <label className="block text-[10px] font-semibold text-gray-500 uppercase tracking-wider mb-1.5">{t('products:form.cip2')}</label>
+                    <label className="block text-[10px] font-semibold text-base-content/60 uppercase tracking-wider mb-1.5">{t('products:form.cip2')}</label>
                     <input className={`${inputSm} font-mono`} value={form.cip2} onChange={(e) => setForm((p) => ({ ...p, cip2: e.target.value }))} />
                   </div>
                   <div>
-                    <label className="block text-[10px] font-semibold text-gray-500 uppercase tracking-wider mb-1.5">{t('products:form.cip3')}</label>
+                    <label className="block text-[10px] font-semibold text-base-content/60 uppercase tracking-wider mb-1.5">{t('products:form.cip3')}</label>
                     <input className={`${inputSm} font-mono`} value={form.cip3} onChange={(e) => setForm((p) => ({ ...p, cip3: e.target.value }))} />
                   </div>
                 </div>
@@ -245,7 +245,7 @@ export default function ProduitFormModal({
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-[10px] font-semibold text-gray-500 uppercase tracking-wider mb-1.5">{t('products:form.provider')}</label>
+                  <label className="block text-[10px] font-semibold text-base-content/60 uppercase tracking-wider mb-1.5">{t('products:form.provider')}</label>
                   <select className={selectBase} value={form.fournisseur} onChange={(e) => {
                     const val = e.target.value;
                     setForm((p) => ({ ...p, fournisseur: val, is_supplier_exclusive: val ? p.is_supplier_exclusive : false }));
@@ -258,29 +258,29 @@ export default function ProduitFormModal({
 
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                 <div>
-                  <label className="block text-[10px] font-semibold text-gray-500 uppercase tracking-wider mb-1.5">{t('products:form.alert')}</label>
+                  <label className="block text-[10px] font-semibold text-base-content/60 uppercase tracking-wider mb-1.5">{t('products:form.alert')}</label>
                   <input type="number" className={inputSm} value={form.stock_alert} onChange={(e) => setForm((p) => ({ ...p, stock_alert: e.target.value }))} min={0} step={1} />
                 </div>
                 <div>
-                  <label className="block text-[10px] font-semibold text-gray-500 uppercase tracking-wider mb-1.5">{t('products:form.min')}</label>
+                  <label className="block text-[10px] font-semibold text-base-content/60 uppercase tracking-wider mb-1.5">{t('products:form.min')}</label>
                   <input type="number" className={inputSm} value={form.stock_minimum} onChange={(e) => setForm((p) => ({ ...p, stock_minimum: e.target.value }))} min={0} step={1} />
                 </div>
                 <div>
-                  <label className="block text-[10px] font-semibold text-gray-500 uppercase tracking-wider mb-1.5">{t('products:form.max')}</label>
+                  <label className="block text-[10px] font-semibold text-base-content/60 uppercase tracking-wider mb-1.5">{t('products:form.max')}</label>
                   <input type="number" className={inputSm} value={form.stock_maximum} onChange={(e) => setForm((p) => ({ ...p, stock_maximum: e.target.value }))} min={0} step={1} />
                 </div>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-[10px] font-semibold text-gray-500 uppercase tracking-wider mb-1.5">{t('products:form.forme')}</label>
+                  <label className="block text-[10px] font-semibold text-base-content/60 uppercase tracking-wider mb-1.5">{t('products:form.forme')}</label>
                   <select className={selectSm} value={form.forme} onChange={(e) => setForm((p) => ({ ...p, forme: e.target.value }))}>
                     <option value="">-</option>
                     {formes.map(f => <option key={f.id} value={f.id}>{f.nom}</option>)}
                   </select>
                 </div>
                 <div>
-                  <label className="block text-[10px] font-semibold text-gray-500 uppercase tracking-wider mb-1.5">{t('products:form.groupe')}</label>
+                  <label className="block text-[10px] font-semibold text-base-content/60 uppercase tracking-wider mb-1.5">{t('products:form.groupe')}</label>
                   <select className={selectSm} value={form.groupe} onChange={(e) => setForm((p) => ({ ...p, groupe: e.target.value }))}>
                     <option value="">-</option>
                     {groupes.map(g => <option key={g.id} value={g.id}>{g.nom}</option>)}
@@ -290,11 +290,11 @@ export default function ProduitFormModal({
 
               <div className="pt-4 border-t border-red-100">
                 <div>
-                  <label className="block text-[10px] font-semibold text-red-600 uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
+                  <label className="block text-[10px] font-semibold text-error uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
                     ⚠️ Message d&apos;alerte comptoir (Optionnel)
                   </label>
                   <textarea
-                    className="w-full rounded-lg border border-gray-200 bg-red-50/30 hover:border-gray-300 focus:border-red-400 focus:ring-2 focus:ring-red-50 transition-all min-h-[80px] text-sm p-3 outline-none"
+                    className="w-full rounded-lg border border-base-300 bg-error/10/30 hover:border-base-300 focus:border-red-400 focus:ring-2 focus:ring-red-50 transition-all min-h-[80px] text-sm p-3 outline-none"
                     placeholder="Ex: Changement de conditionnement, vérifier le code barre..."
                     value={form.message_alerte || ''}
                     onChange={(e) => setForm((p) => ({ ...p, message_alerte: e.target.value }))}
@@ -306,28 +306,28 @@ export default function ProduitFormModal({
 
             {/* Right column */}
             <div className="space-y-4">
-              <h4 className="text-xs font-semibold uppercase tracking-wider text-gray-400 border-b border-gray-100 pb-2">{t('products:form.price_margin')}</h4>
+              <h4 className="text-xs font-semibold uppercase tracking-wider text-base-content/50 border-b border-base-200 pb-2">{t('products:form.price_margin')}</h4>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-[10px] font-semibold text-gray-500 uppercase tracking-wider mb-1.5">{t('products:form.cost_price')}</label>
+                  <label className="block text-[10px] font-semibold text-base-content/60 uppercase tracking-wider mb-1.5">{t('products:form.cost_price')}</label>
                   <div className="flex">
                     <input type="number" className={`${inputBase} rounded-r-none border-r-0`} value={form.cost_price} onChange={(e) => setForm((p) => ({ ...p, cost_price: e.target.value }))} step="0.01" required />
-                    <span className="px-3 flex items-center bg-gray-50 border border-gray-200 border-l-0 rounded-r-lg text-gray-500 text-sm font-medium">F</span>
+                    <span className="px-3 flex items-center bg-base-200 border border-base-300 border-l-0 rounded-r-lg text-base-content/60 text-sm font-medium">F</span>
                   </div>
                 </div>
                 <div>
-                  <label className="block text-[10px] font-semibold text-gray-500 uppercase tracking-wider mb-1.5">{t('products:form.selling_price')}</label>
+                  <label className="block text-[10px] font-semibold text-base-content/60 uppercase tracking-wider mb-1.5">{t('products:form.selling_price')}</label>
                   <div className="flex">
-                    <input type="number" className={`${inputBase} rounded-r-none border-r-0 font-semibold text-indigo-600`} value={form.selling_price} onChange={(e) => setForm((p) => ({ ...p, selling_price: e.target.value }))} step="0.01" required />
-                    <span className="px-3 flex items-center bg-gray-50 border border-gray-200 border-l-0 rounded-r-lg text-gray-500 text-sm font-medium">F</span>
+                    <input type="number" className={`${inputBase} rounded-r-none border-r-0 font-semibold text-primary`} value={form.selling_price} onChange={(e) => setForm((p) => ({ ...p, selling_price: e.target.value }))} step="0.01" required />
+                    <span className="px-3 flex items-center bg-base-200 border border-base-300 border-l-0 rounded-r-lg text-base-content/60 text-sm font-medium">F</span>
                   </div>
                 </div>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                 <div>
-                  <label className="block text-[10px] font-semibold text-gray-500 uppercase tracking-wider mb-1.5">{t('products:form.tva')}</label>
+                  <label className="block text-[10px] font-semibold text-base-content/60 uppercase tracking-wider mb-1.5">{t('products:form.tva')}</label>
                   <select className={selectSm} value={form.tva} onChange={(e) => setForm((p) => ({ ...p, tva: e.target.value }))} disabled={loadingTVA}>
                     {tvaList.map((t) => (
                       <option key={t.id} value={t.taux}>{t.taux}% {t.libelle ? `(${t.libelle})` : ''}</option>
@@ -335,47 +335,47 @@ export default function ProduitFormModal({
                   </select>
                 </div>
                 <div>
-                  <label className="block text-[10px] font-semibold text-gray-500 uppercase tracking-wider mb-1.5">{t('products:form.margin_coeff')}</label>
-                  <div className={`${inputSm} flex items-center justify-center font-bold ${tauxMarge < 1 ? 'text-red-600' : 'text-emerald-600'}`}>{tauxMarge.toFixed(0)}</div>
+                  <label className="block text-[10px] font-semibold text-base-content/60 uppercase tracking-wider mb-1.5">{t('products:form.margin_coeff')}</label>
+                  <div className={`${inputSm} flex items-center justify-center font-bold ${tauxMarge < 1 ? 'text-error' : 'text-success'}`}>{tauxMarge.toFixed(0)}</div>
                 </div>
                 <div>
-                  <label className="block text-[10px] font-semibold text-gray-500 uppercase tracking-wider mb-1.5">{t('products:form.margin_percent')}</label>
-                  <div className={`${inputSm} flex items-center justify-center font-bold ${pourcMarge < 0 ? 'text-red-600' : 'text-emerald-600'}`}>{pourcMarge.toFixed(1)}%</div>
+                  <label className="block text-[10px] font-semibold text-base-content/60 uppercase tracking-wider mb-1.5">{t('products:form.margin_percent')}</label>
+                  <div className={`${inputSm} flex items-center justify-center font-bold ${pourcMarge < 0 ? 'text-error' : 'text-success'}`}>{pourcMarge.toFixed(1)}%</div>
                 </div>
               </div>
 
               <div>
-                <label className="block text-[10px] font-semibold text-gray-500 uppercase tracking-wider mb-1.5">{t('products:form.expiration_date')}</label>
+                <label className="block text-[10px] font-semibold text-base-content/60 uppercase tracking-wider mb-1.5">{t('products:form.expiration_date')}</label>
                 <input type="date" lang={getLocale()} className={inputBase} value={form.expire_date} onChange={(e) => setForm((p) => ({ ...p, expire_date: e.target.value }))} />
               </div>
 
-              <div className="flex items-center gap-3 p-3 rounded-lg border bg-gray-50 border-gray-200 hover:bg-gray-100 transition-colors cursor-pointer" onClick={() => setForm((p) => ({ ...p, use_lot_management: !p.use_lot_management }))}>
-                <input type="checkbox" className="size-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500" checked={form.use_lot_management} onChange={(e) => setForm((p) => ({ ...p, use_lot_management: e.target.checked }))} />
+              <div className="flex items-center gap-3 p-3 rounded-lg border bg-base-200 border-base-300 hover:bg-base-200 transition-colors cursor-pointer" onClick={() => setForm((p) => ({ ...p, use_lot_management: !p.use_lot_management }))}>
+                <input type="checkbox" className="size-4 rounded border-base-300 text-primary focus:ring-primary" checked={form.use_lot_management} onChange={(e) => setForm((p) => ({ ...p, use_lot_management: e.target.checked }))} />
                 <div>
-                  <span className="text-sm font-medium text-gray-700">{t('products:form.lot_management')}</span>
-                  <p className="text-[10px] text-gray-400">{t('products:form.lot_management_desc')}</p>
+                  <span className="text-sm font-medium text-base-content">{t('products:form.lot_management')}</span>
+                  <p className="text-[10px] text-base-content/50">{t('products:form.lot_management_desc')}</p>
                 </div>
               </div>
             </div>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="p-3 rounded-lg border bg-blue-50/50 border-blue-100 hover:bg-blue-50 transition-colors cursor-pointer" onClick={() => setForm(p => ({ ...p, requires_prescription: !p.requires_prescription }))}>
+            <div className="p-3 rounded-lg border bg-info/10/50 border-blue-100 hover:bg-info/10 transition-colors cursor-pointer" onClick={() => setForm(p => ({ ...p, requires_prescription: !p.requires_prescription }))}>
               <div className="flex items-center gap-3">
-                <input type="checkbox" className="size-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500" checked={form.requires_prescription} onChange={(e) => setForm(p => ({ ...p, requires_prescription: e.target.checked }))} />
+                <input type="checkbox" className="size-4 rounded border-base-300 text-primary focus:ring-primary" checked={form.requires_prescription} onChange={(e) => setForm(p => ({ ...p, requires_prescription: e.target.checked }))} />
                 <div>
-                  <span className="text-sm font-medium text-gray-700">{t('products:form.requires_prescription')}</span>
-                  <p className="text-xs text-gray-500">{t('products:form.prescription_desc')}</p>
+                  <span className="text-sm font-medium text-base-content">{t('products:form.requires_prescription')}</span>
+                  <p className="text-xs text-base-content/60">{t('products:form.prescription_desc')}</p>
                 </div>
               </div>
             </div>
 
-            <div className={`p-3 rounded-lg border transition-all cursor-pointer ${form.fournisseur ? 'bg-amber-50/50 border-amber-100 hover:bg-amber-50' : 'bg-gray-50 opacity-50'}`} onClick={() => form.fournisseur && setForm((p) => ({ ...p, is_supplier_exclusive: !p.is_supplier_exclusive }))}>
+            <div className={`p-3 rounded-lg border transition-all cursor-pointer ${form.fournisseur ? 'bg-warning/10/50 border-amber-100 hover:bg-warning/10' : 'bg-base-200 text-base-content/50'}`} onClick={() => form.fournisseur && setForm((p) => ({ ...p, is_supplier_exclusive: !p.is_supplier_exclusive }))}>
               <div className="flex items-center gap-3">
-                <input type="checkbox" className="size-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500" checked={form.is_supplier_exclusive} onChange={(e) => setForm((p) => ({ ...p, is_supplier_exclusive: e.target.checked }))} disabled={!form.fournisseur} />
+                <input type="checkbox" className="size-4 rounded border-base-300 text-primary focus:ring-primary" checked={form.is_supplier_exclusive} onChange={(e) => setForm((p) => ({ ...p, is_supplier_exclusive: e.target.checked }))} disabled={!form.fournisseur} />
                 <div>
-                  <span className="text-sm font-medium text-gray-700">{t('products:form.supplier_exclusive')}</span>
-                  <p className="text-xs text-gray-500">
+                  <span className="text-sm font-medium text-base-content">{t('products:form.supplier_exclusive')}</span>
+                  <p className="text-xs text-base-content/60">
                     {t('products:form.exclusive_desc', { provider: form.fournisseur ? fournisseurs.find(f => String(f.id) === form.fournisseur)?.name : t('products:form.provider_placeholder_short') })}
                   </p>
                 </div>
@@ -384,10 +384,10 @@ export default function ProduitFormModal({
           </div>
 
           {/* Section Réserve */}
-          <div className="p-5 rounded-xl border border-indigo-100 bg-indigo-50/30">
+          <div className="p-5 rounded-xl border border-indigo-100 bg-primary/10/30">
             <div className="flex items-center justify-between mb-4">
               <div>
-                <h4 className="text-sm font-semibold text-indigo-700">{t('products:form.reserve_title')}</h4>
+                <h4 className="text-sm font-semibold text-primary">{t('products:form.reserve_title')}</h4>
                 <p className="text-[10px] text-indigo-400 font-medium">{t('products:form.reserve_desc')}</p>
               </div>
               <input type="checkbox" className="toggle toggle-primary toggle-md" checked={form.has_reserve_storage} onChange={(e) => {
@@ -399,47 +399,47 @@ export default function ProduitFormModal({
             {form.has_reserve_storage && (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-[10px] font-semibold text-gray-500 uppercase tracking-wider mb-1.5">{t('products:form.rayon_capacity')}</label>
+                  <label className="block text-[10px] font-semibold text-base-content/60 uppercase tracking-wider mb-1.5">{t('products:form.rayon_capacity')}</label>
                   <input type="number" className={inputBase} placeholder={t('products:form.placeholder_capacity')} value={form.capacite_rayon} onChange={(e) => setForm(p => ({ ...p, capacite_rayon: e.target.value }))} />
-                  <p className="text-xs text-gray-400 mt-1">{t('products:form.capacity_desc')}</p>
+                  <p className="text-xs text-base-content/50 mt-1">{t('products:form.capacity_desc')}</p>
                 </div>
                 <div>
-                  <label className="block text-[10px] font-semibold text-gray-500 uppercase tracking-wider mb-1.5">{t('products:form.rayon_reorder_threshold')}</label>
+                  <label className="block text-[10px] font-semibold text-base-content/60 uppercase tracking-wider mb-1.5">{t('products:form.rayon_reorder_threshold')}</label>
                   <input type="number" className={inputBase} placeholder={t('products:form.placeholder_reorder')} value={form.min_rayon} onChange={(e) => setForm(p => ({ ...p, min_rayon: e.target.value }))} />
-                  <p className="text-xs text-gray-400 mt-1">{t('products:form.reorder_desc')}</p>
+                  <p className="text-xs text-base-content/50 mt-1">{t('products:form.reorder_desc')}</p>
                 </div>
               </div>
             )}
           </div>
 
           {/* Pathologie Chronique */}
-          <div className={`p-3 rounded-lg border transition-all cursor-pointer ${form.is_chronic ? 'bg-emerald-50/50 border-emerald-100' : 'bg-white border-gray-100 hover:bg-gray-50'}`} onClick={() => setForm((p) => ({ ...p, is_chronic: !p.is_chronic }))}>
+          <div className={`p-3 rounded-lg border transition-all cursor-pointer ${form.is_chronic ? 'bg-success/10/50 border-emerald-100' : 'bg-base-100 border-base-200 hover:bg-base-200'}`} onClick={() => setForm((p) => ({ ...p, is_chronic: !p.is_chronic }))}>
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
               <div className="flex items-center gap-3">
-                <input type="checkbox" className="size-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500" checked={form.is_chronic} onChange={(e) => setForm((p) => ({ ...p, is_chronic: e.target.checked }))} />
+                <input type="checkbox" className="size-4 rounded border-base-300 text-primary focus:ring-primary" checked={form.is_chronic} onChange={(e) => setForm((p) => ({ ...p, is_chronic: e.target.checked }))} />
                 <div>
-                  <span className="text-sm font-medium text-gray-700">{t('products:form.chronic_pathology')}</span>
-                  <p className="text-xs text-gray-500">{t('products:form.chronic_desc')}</p>
+                  <span className="text-sm font-medium text-base-content">{t('products:form.chronic_pathology')}</span>
+                  <p className="text-xs text-base-content/60">{t('products:form.chronic_desc')}</p>
                 </div>
               </div>
 
               {form.is_chronic && (
                 <div className="w-full md:w-48">
-                  <label className="block text-[10px] font-semibold text-gray-500 uppercase tracking-wider mb-1.5">{t('products:form.treatment_duration')}</label>
+                  <label className="block text-[10px] font-semibold text-base-content/60 uppercase tracking-wider mb-1.5">{t('products:form.treatment_duration')}</label>
                   <div className="flex">
                     <input type="number" className={`${inputSm} rounded-r-none border-r-0`} value={form.default_treatment_days} onChange={(e) => setForm((p) => ({ ...p, default_treatment_days: e.target.value }))} min={1} />
-                    <span className="px-3 flex items-center bg-gray-50 border border-gray-200 border-l-0 rounded-r-lg text-gray-500 text-xs font-medium">{t('common:days')}</span>
+                    <span className="px-3 flex items-center bg-base-200 border border-base-300 border-l-0 rounded-r-lg text-base-content/60 text-xs font-medium">{t('common:days')}</span>
                   </div>
                 </div>
               )}
             </div>
           </div>
 
-          <div className="flex justify-end gap-3 pt-6 border-t border-gray-100">
-            <button type="button" className="px-6 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors" onClick={onClose} disabled={loading}>
+          <div className="flex justify-end gap-3 pt-6 border-t border-base-200">
+            <button type="button" className="px-6 py-2 text-sm font-medium text-base-content bg-base-100 border border-base-300 rounded-lg hover:bg-base-200 transition-colors" onClick={onClose} disabled={loading}>
               {t('common:cancel')}
             </button>
-            <button type="submit" className="px-8 py-2 text-sm font-medium text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 transition-colors shadow-sm disabled:opacity-50" disabled={loading}>
+            <button type="submit" className="px-8 py-2 text-sm font-medium text-white bg-primary rounded-lg hover:bg-primary-focus transition-colors shadow-sm disabled:text-base-content/50" disabled={loading}>
               {loading ? <span className="inline-block size-4 border-2 border-white border-t-transparent rounded-full animate-spin" /> : `💾 ${t('products:actions.create')}`}
             </button>
           </div>

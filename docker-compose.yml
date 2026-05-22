@@ -1,0 +1,99 @@
+# Docker Compose - Développement avec WebSocket (Daphne)
+services:
+  # Base de données PostgreSQL
+  db:
+    image: postgres:15-alpine
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_DB=fullstack_db
+      - POSTGRES_USER=fullstack_user
+      - POSTGRES_PASSWORD=fullstack_password
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U fullstack_user -d fullstack_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - app-network
+
+  # Cache Redis (pour Django Cache + Channels)
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - app-network
+
+  # Backend Django avec WebSocket (Daphne)
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    command: >
+      sh -c "pip install channels channels-redis daphne &&
+             python manage.py migrate &&
+             python manage.py collectstatic --noinput &&
+             daphne -b 0.0.0.0 -p 8000 backend.asgi:application"
+    volumes:
+      - ./backend:/app
+      - static_volume:/app/staticfiles
+      - media_volume:/app/media
+    environment:
+      - DJANGO_DEBUG=True
+      - DJANGO_SECRET_KEY=dev-secret-key-change-in-production
+      - DJANGO_ALLOWED_HOSTS=localhost,127.0.0.1,backend,frontend,*
+      - CORS_ALLOWED_ORIGINS=http://localhost,http://localhost:3000,http://localhost:5173,http://frontend
+      - CORS_ALLOW_ALL=true
+      - DB_ENGINE=django.db.backends.postgresql
+      - DB_NAME=fullstack_db
+      - DB_USER=fullstack_user
+      - DB_PASSWORD=fullstack_password
+      - DB_HOST=db
+      - DB_PORT=5432
+      - REDIS_URL=redis://redis:6379/0
+    ports:
+      - "8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    networks:
+      - app-network
+
+  # Frontend (Vite dev server)
+  frontend:
+    build:
+      context: ./frontend/frontend
+      dockerfile: Dockerfile.dev
+    # Si pas de Dockerfile.dev, utiliser node directement
+    image: node:20-alpine
+    working_dir: /app
+    command: >
+      sh -c "npm install && npm run dev -- --host 0.0.0.0"
+    volumes:
+      - ./frontend/frontend:/app
+      - /app/node_modules
+    environment:
+      - VITE_API_URL=http://localhost:8000
+    ports:
+      - "5173:5173"
+    depends_on:
+      - backend
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    driver: bridge
+
+volumes:
+  postgres_data:
+  redis_data:
+  static_volume:
+  media_volume:

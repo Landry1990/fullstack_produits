@@ -39,7 +39,7 @@ export default function LotSelectionModal({ isOpen, onClose, produit, onSelectLo
         ) : error ? (
           <div className="alert alert-error text-sm rounded-xl">{error}</div>
         ) : (
-          <div className="overflow-x-auto rounded-xl border border-gray-100">
+          <div className="overflow-x-auto rounded-xl border border-base-200">
             <table className="table table-sm w-full">
               <thead className="bg-base-200/50">
                 <tr>
@@ -84,7 +84,7 @@ export default function LotSelectionModal({ isOpen, onClose, produit, onSelectLo
                         >
                           <td>
                             <div className="font-medium">{lot.lot}</div>
-                            <div className="text-xs opacity-50">Reçu le {formatDate(lot.date_reception)}</div>
+                            <div className="text-xs text-base-content/50">Reçu le {formatDate(lot.date_reception)}</div>
                           </td>
                           <td className={expiryColor}>
                             {lot.date_expiration ? (() => { const d = new Date(lot.date_expiration); return `${String(d.getMonth() + 1).padStart(2, '0')}/${String(d.getFullYear()).slice(-2)}`; })() : 'N/A'}

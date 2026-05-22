@@ -1244,7 +1244,7 @@ export default function CaisseCentralisee() {
                 <div className="divider my-1"></div>
                 
                 <div className="bg-base-100 p-2 rounded border border-base-200 space-y-1">
-                  <div className="font-bold text-[10px] uppercase opacity-50 mb-1">Création</div>
+                  <div className="font-bold text-[10px] uppercase text-base-content/50 mb-1">Création</div>
                   <div className="flex justify-between">
                     <span>Généré par:</span>
                     <span className="font-medium">{couponTrouve.cree_par_nom || 'Système'}</span>
@@ -1257,7 +1257,7 @@ export default function CaisseCentralisee() {
 
                 {couponTrouve.status === 'UTILISE' && (
                   <div className="bg-success/5 p-2 rounded border border-success/20 space-y-1">
-                    <div className="font-bold text-[10px] uppercase text-success opacity-70 mb-1">Utilisation</div>
+                    <div className="font-bold text-[10px] uppercase text-success text-base-content/70 mb-1">Utilisation</div>
                     <div className="flex justify-between">
                       <span>Utilisé par:</span>
                       <span className="font-medium">{couponTrouve.utilise_par_nom || 'N/A'}</span>
@@ -1273,7 +1273,7 @@ export default function CaisseCentralisee() {
                 
                 {couponTrouve.notes && (
                   <div className="mt-2 p-2 bg-base-100 rounded italic border border-base-200">
-                    <span className="font-bold not-italic opacity-50 block text-[10px] mb-1">Notes:</span>
+                    <span className="font-bold not-italic text-base-content/50 block text-[10px] mb-1">Notes:</span>
                     "{couponTrouve.notes}"
                   </div>
                 )}

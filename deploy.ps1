@@ -48,7 +48,12 @@ function Deploy-Frontend {
     Push-Location (Join-Path $scriptPath "frontend/frontend")
     try {
         Write-Host "  Building..." -ForegroundColor Yellow
-        npm run build 2>&1 | Select-String -Pattern "error|built" | ForEach-Object { Write-Host "  $_" }
+        npm run build
+        if ($LASTEXITCODE -ne 0) {
+            Write-Host "  ❌ Build échoué!" -ForegroundColor Red
+            throw "Build frontend échoué avec le code $LASTEXITCODE"
+        }
+        Write-Host "  ✅ Build réussi" -ForegroundColor Green
 
         Write-Host "  Copie vers conteneur..." -ForegroundColor Yellow
         docker cp dist/. fullstack_produits-frontend-1:/usr/share/nginx/html/

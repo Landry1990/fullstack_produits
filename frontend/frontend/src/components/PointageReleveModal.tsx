@@ -284,7 +284,7 @@ export default function PointageReleveModal({ isOpen, onClose, fournisseurs, onR
                    </button>
                 </div>
                 <div className="text-sm font-bold text-base-content/90">
-                  {t('providers:pointage_modal.pointed_sum')} <span className="font-mono text-emerald-600 bg-emerald-50 px-2 py-1 rounded ml-1">{formatCurrency(pointageSum)}</span>
+                  {t('providers:pointage_modal.pointed_sum')} <span className="font-mono text-success bg-success/10 px-2 py-1 rounded ml-1">{formatCurrency(pointageSum)}</span>
                 </div>
               </div>
 
@@ -305,7 +305,7 @@ export default function PointageReleveModal({ isOpen, onClose, fournisseurs, onR
                       return (
                         <tr 
                           key={f.id} 
-                          className={`hover transition-colors cursor-pointer border-b border-slate-100 last:border-0 ${isPointed ? 'bg-emerald-50/50' : 'bg-base-100'}`}
+                          className={`hover transition-colors cursor-pointer border-b border-slate-100 last:border-0 ${isPointed ? 'bg-success/10/50' : 'bg-base-100'}`}
                           onClick={() => togglePointage(f.id)}
                         >
                           <td className="text-center">
@@ -317,7 +317,7 @@ export default function PointageReleveModal({ isOpen, onClose, fournisseurs, onR
                             />
                           </td>
                           <td>
-                            <div className={`font-medium ${isPointed ? 'text-emerald-700' : 'text-base-content/80'}`}>
+                            <div className={`font-medium ${isPointed ? 'text-success' : 'text-base-content/80'}`}>
                               {new Date(f.date_cloture).toLocaleDateString(getLocale(), { weekday: 'short', day: '2-digit', month: 'short', year: 'numeric' })}
                             </div>
                           </td>
@@ -327,7 +327,7 @@ export default function PointageReleveModal({ isOpen, onClose, fournisseurs, onR
                             </div>
                           </td>
                           <td className="text-right">
-                            <div className={`font-black font-mono ${isPointed ? 'text-emerald-700' : 'text-base-content/90'}`}>
+                            <div className={`font-black font-mono ${isPointed ? 'text-success' : 'text-base-content/90'}`}>
                               {formatCurrency(f.montant)}
                             </div>
                           </td>

@@ -1,0 +1,4700 @@
+{
+  "mode": "production",
+  "totalFiles": 220,
+  "filesModified": 161,
+  "totalChanges": 5108,
+  "topFiles": [
+    {
+      "file": "components\\settings\\PharmacySettingsForm.tsx",
+      "changes": 257,
+      "details": [
+        {
+          "description": "Fond principal",
+          "original": "\\bbg-white\\b",
+          "replacement": "bg-base-100",
+          "count": 24
+        },
+        {
+          "description": "Fond secondaire",
+          "original": "\\bbg-gray-50\\b",
+          "replacement": "bg-base-200",
+          "count": 15
+        },
+        {
+          "description": "Fond secondaire",
+          "original": "\\bbg-gray-100\\b",
+          "replacement": "bg-base-200",
+          "count": 11
+        },
+        {
+          "description": "Bordure standard",
+          "original": "\\bborder-gray-200\\b",
+          "replacement": "border-base-300",
+          "count": 10
+        },
+        {
+          "description": "Bordure légère",
+          "original": "\\bborder-gray-100\\b",
+          "replacement": "border-base-200",
+          "count": 29
+        },
+        {
+          "description": "Texte principal",
+          "original": "\\btext-gray-900\\b",
+          "replacement": "text-base-content",
+          "count": 14
+        },
+        {
+          "description": "Texte principal",
+          "original": "\\btext-gray-700\\b",
+          "replacement": "text-base-content",
+          "count": 27
+        },
+        {
+          "description": "Texte secondaire",
+          "original": "\\btext-gray-600\\b",
+          "replacement": "text-base-content/70",
+          "count": 3
+        },
+        {
+          "description": "Texte secondaire",
+          "original": "\\btext-gray-500\\b",
+          "replacement": "text-base-content/60",
+          "count": 46
+        },
+        {
+          "description": "Texte tertiaire",
+          "original": "\\btext-gray-400\\b",
+          "replacement": "text-base-content/50",
+          "count": 15
+        },
+        {
+          "description": "Fond primaire léger",
+          "original": "\\bbg-indigo-50\\b",
+          "replacement": "bg-primary/10",
+          "count": 11
+        },
+        {
+          "description": "Fond succès léger",
+          "original": "\\bbg-emerald-50\\b",
+          "replacement": "bg-success/10",
+          "count": 1
+        },
+        {
+          "description": "Fond erreur léger",
+          "original": "\\bbg-red-50\\b",
+          "replacement": "bg-error/10",
+          "count": 1
+        },
+        {
+          "description": "Texte primaire",
+          "original": "\\btext-indigo-600\\b",
+          "replacement": "text-primary",
+          "count": 21
+        },
+        {
+          "description": "Texte info",
+          "original": "\\btext-blue-600\\b",
+          "replacement": "text-info",
+          "count": 4
+        },
+        {
+          "description": "Texte succès",
+          "original": "\\btext-emerald-600\\b",
+          "replacement": "text-success",
+          "count": 3
+        },
+        {
+          "description": "Texte erreur",
+          "original": "\\btext-red-600\\b",
+          "replacement": "text-error",
+          "count": 2
+        },
+        {
+          "description": "Texte warning",
+          "original": "\\btext-amber-600\\b",
+          "replacement": "text-warning",
+          "count": 1
+        },
+        {
+          "description": "Bouton primaire",
+          "original": "\\bbg-indigo-600\\b",
+          "replacement": "bg-primary",
+          "count": 2
+        },
+        {
+          "description": "Hover bouton primaire",
+          "original": "\\bhover:bg-indigo-700\\b",
+          "replacement": "hover:bg-primary-focus",
+          "count": 2
+        },
+        {
+          "description": "Ring focus",
+          "original": "\\bfocus:ring-indigo-50\\b",
+          "replacement": "focus:ring-primary/20",
+          "count": 7
+        },
+        {
+          "description": "Focus bordure",
+          "original": "\\bfocus:border-indigo-500\\b",
+          "replacement": "focus:border-primary",
+          "count": 7
+        },
+        {
+          "description": "Opacité faible",
+          "original": "\\bopacity-30\\b",
+          "replacement": "text-base-content/30",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "file": "components\\compta\\Comptabilite.tsx",
+      "changes": 189,
+      "details": [
+        {
+          "description": "Fond principal",
+          "original": "\\bbg-white\\b",
+          "replacement": "bg-base-100",
+          "count": 21
+        },
+        {
+          "description": "Fond secondaire",
+          "original": "\\bbg-gray-50\\b",
+          "replacement": "bg-base-200",
+          "count": 9
+        },
+        {
+          "description": "Fond secondaire",
+          "original": "\\bbg-gray-100\\b",
+          "replacement": "bg-base-200",
+          "count": 10
+        },
+        {
+          "description": "Bordure standard",
+          "original": "\\bborder-gray-200\\b",
+          "replacement": "border-base-300",
+          "count": 34
+        },
+        {
+          "description": "Bordure légère",
+          "original": "\\bborder-gray-100\\b",
+          "replacement": "border-base-200",
+          "count": 3
+        },
+        {
+          "description": "Texte principal",
+          "original": "\\btext-gray-900\\b",
+          "replacement": "text-base-content",
+          "count": 10
+        },
+        {
+          "description": "Texte principal",
+          "original": "\\btext-gray-700\\b",
+          "replacement": "text-base-content",
+          "count": 1
+        },
+        {
+          "description": "Texte secondaire",
+          "original": "\\btext-gray-500\\b",
+          "replacement": "text-base-content/60",
+          "count": 23
+        },
+        {
+          "description": "Texte tertiaire",
+          "original": "\\btext-gray-400\\b",
+          "replacement": "text-base-content/50",
+          "count": 8
+        },
+        {
+          "description": "Fond primaire léger",
+          "original": "\\bbg-indigo-50\\b",
+          "replacement": "bg-primary/10",
+          "count": 5
+        },
+        {
+          "description": "Fond succès léger",
+          "original": "\\bbg-emerald-50\\b",
+          "replacement": "bg-success/10",
+          "count": 1
+        },
+        {
+          "description": "Fond erreur léger",
+          "original": "\\bbg-red-50\\b",
+          "replacement": "bg-error/10",
+          "count": 5
+        },
+        {
+          "description": "Texte primaire",
+          "original": "\\btext-indigo-600\\b",
+          "replacement": "text-primary",
+          "count": 30
+        },
+        {
+          "description": "Texte succès",
+          "original": "\\btext-emerald-600\\b",
+          "replacement": "text-success",
+          "count": 1
+        },
+        {
+          "description": "Texte succès",
+          "original": "\\btext-emerald-700\\b",
+          "replacement": "text-success",
+          "count": 1
+        },
+        {
+          "description": "Texte erreur",
+          "original": "\\btext-red-600\\b",
+          "replacement": "text-error",
+          "count": 15
+        },
+        {
+          "description": "Texte erreur",
+          "original": "\\btext-red-700\\b",
+          "replacement": "text-error",
+          "count": 1
+        },
+        {
+          "description": "Texte warning",
+          "original": "\\btext-amber-600\\b",
+          "replacement": "text-warning",
+          "count": 4
+        },
+        {
+          "description": "Bouton primaire",
+          "original": "\\bbg-indigo-600\\b",
+          "replacement": "bg-primary",
+          "count": 1
+        },
+        {
+          "description": "Hover bouton primaire",
+          "original": "\\bhover:bg-indigo-700\\b",
+          "replacement": "hover:bg-primary-focus",
+          "count": 1
+        },
+        {
+          "description": "Séparation légère",
+          "original": "\\bdivide-gray-100\\b",
+          "replacement": "divide-base-200",
+          "count": 3
+        },
+        {
+          "description": "Opacité faible",
+          "original": "\\bopacity-30\\b",
+          "replacement": "text-base-content/30",
+          "count": 1
+        },
+        {
+          "description": "Opacité moyenne",
+          "original": "\\bopacity-50\\b",
+          "replacement": "text-base-content/50",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "file": "components\\Perimes.tsx",
+      "changes": 165,
+      "details": [
+        {
+          "description": "Fond principal",
+          "original": "\\bbg-white\\b",
+          "replacement": "bg-base-100",
+          "count": 14
+        },
+        {
+          "description": "Fond secondaire",
+          "original": "\\bbg-gray-50\\b",
+          "replacement": "bg-base-200",
+          "count": 9
+        },
+        {
+          "description": "Fond secondaire",
+          "original": "\\bbg-gray-100\\b",
+          "replacement": "bg-base-200",
+          "count": 7
+        },
+        {
+          "description": "Fond tertiaire",
+          "original": "\\bbg-gray-200\\b",
+          "replacement": "bg-base-300",
+          "count": 5
+        },
+        {
+          "description": "Bordure standard",
+          "original": "\\bborder-gray-200\\b",
+          "replacement": "border-base-300",
+          "count": 16
+        },
+        {
+          "description": "Bordure légère",
+          "original": "\\bborder-gray-100\\b",
+          "replacement": "border-base-200",
+          "count": 10
+        },
+        {
+          "description": "Bordure",
+          "original": "\\bborder-gray-300\\b",
+          "replacement": "border-base-300",
+          "count": 3
+        },
+        {
+          "description": "Texte principal",
+          "original": "\\btext-gray-900\\b",
+          "replacement": "text-base-content",
+          "count": 11
+        },
+        {
+          "description": "Texte principal",
+          "original": "\\btext-gray-700\\b",
+          "replacement": "text-base-content",
+          "count": 6
+        },
+        {
+          "description": "Texte secondaire",
+          "original": "\\btext-gray-600\\b",
+          "replacement": "text-base-content/70",
+          "count": 2
+        },
+        {
+          "description": "Texte secondaire",
+          "original": "\\btext-gray-500\\b",
+          "replacement": "text-base-content/60",
+          "count": 17
+        },
+        {
+          "description": "Texte tertiaire",
+          "original": "\\btext-gray-400\\b",
+          "replacement": "text-base-content/50",
+          "count": 8
+        },
+        {
+          "description": "Texte faible",
+          "original": "\\btext-gray-300\\b",
+          "replacement": "text-base-content/40",
+          "count": 3
+        },
+        {
+          "description": "Fond primaire léger",
+          "original": "\\bbg-indigo-50\\b",
+          "replacement": "bg-primary/10",
+          "count": 1
+        },
+        {
+          "description": "Fond info",
+          "original": "\\bbg-blue-100\\b",
+          "replacement": "bg-info/20",
+          "count": 1
+        },
+        {
+          "description": "Fond succès léger",
+          "original": "\\bbg-emerald-50\\b",
+          "replacement": "bg-success/10",
+          "count": 1
+        },
+        {
+          "description": "Fond erreur léger",
+          "original": "\\bbg-red-50\\b",
+          "replacement": "bg-error/10",
+          "count": 8
+        },
+        {
+          "description": "Fond erreur",
+          "original": "\\bbg-red-100\\b",
+          "replacement": "bg-error/20",
+          "count": 2
+        },
+        {
+          "description": "Fond warning léger",
+          "original": "\\bbg-amber-50\\b",
+          "replacement": "bg-warning/10",
+          "count": 2
+        },
+        {
+          "description": "Fond warning",
+          "original": "\\bbg-amber-100\\b",
+          "replacement": "bg-warning/20",
+          "count": 1
+        },
+        {
+          "description": "Texte primaire",
+          "original": "\\btext-indigo-600\\b",
+          "replacement": "text-primary",
+          "count": 3
+        },
+        {
+          "description": "Texte info",
+          "original": "\\btext-blue-600\\b",
+          "replacement": "text-info",
+          "count": 1
+        },
+        {
+          "description": "Texte erreur",
+          "original": "\\btext-red-600\\b",
+          "replacement": "text-error",
+          "count": 10
+        },
+        {
+          "description": "Texte erreur",
+          "original": "\\btext-red-700\\b",
+          "replacement": "text-error",
+          "count": 2
+        },
+        {
+          "description": "Texte warning",
+          "original": "\\btext-amber-600\\b",
+          "replacement": "text-warning",
+          "count": 3
+        },
+        {
+          "description": "Bouton primaire",
+          "original": "\\bbg-indigo-600\\b",
+          "replacement": "bg-primary",
+          "count": 5
+        },
+        {
+          "description": "Hover bouton primaire",
+          "original": "\\bhover:bg-indigo-700\\b",
+          "replacement": "hover:bg-primary-focus",
+          "count": 1
+        },
+        {
+          "description": "Bouton succès",
+          "original": "\\bbg-emerald-600\\b",
+          "replacement": "bg-success",
+          "count": 1
+        },
+        {
+          "description": "Hover bouton succès",
+          "original": "\\bhover:bg-emerald-700\\b",
+          "replacement": "hover:bg-success-focus",
+          "count": 1
+        },
+        {
+          "description": "Séparation",
+          "original": "\\bdivide-gray-200\\b",
+          "replacement": "divide-base-300",
+          "count": 1
+        },
+        {
+          "description": "Séparation légère",
+          "original": "\\bdivide-gray-100\\b",
+          "replacement": "divide-base-200",
+          "count": 1
+        },
+        {
+          "description": "Ring focus",
+          "original": "\\bfocus:ring-indigo-50\\b",
+          "replacement": "focus:ring-primary/20",
+          "count": 3
+        },
+        {
+          "description": "Ring focus",
+          "original": "\\bfocus:ring-indigo-500\\b",
+          "replacement": "focus:ring-primary",
+          "count": 2
+        },
+        {
+          "description": "Focus bordure",
+          "original": "\\bfocus:border-indigo-500\\b",
+          "replacement": "focus:border-primary",
+          "count": 3
+        },
+        {
+          "description": "Opacité faible",
+          "original": "\\bopacity-20\\b",
+          "replacement": "text-base-content/20",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "file": "components\\common\\MessagingModal.tsx",
+      "changes": 160,
+      "details": [
+        {
+          "description": "Fond principal",
+          "original": "\\bbg-white\\b",
+          "replacement": "bg-base-100",
+          "count": 17
+        },
+        {
+          "description": "Fond secondaire",
+          "original": "\\bbg-gray-50\\b",
+          "replacement": "bg-base-200",
+          "count": 8
+        },
+        {
+          "description": "Fond secondaire",
+          "original": "\\bbg-gray-100\\b",
+          "replacement": "bg-base-200",
+          "count": 12
+        },
+        {
+          "description": "Fond tertiaire",
+          "original": "\\bbg-gray-200\\b",
+          "replacement": "bg-base-300",
+          "count": 1
+        },
+        {
+          "description": "Bordure standard",
+          "original": "\\bborder-gray-200\\b",
+          "replacement": "border-base-300",
+          "count": 11
+        },
+        {
+          "description": "Bordure légère",
+          "original": "\\bborder-gray-100\\b",
+          "replacement": "border-base-200",
+          "count": 6
+        },
+        {
+          "description": "Bordure",
+          "original": "\\bborder-gray-300\\b",
+          "replacement": "border-base-300",
+          "count": 5
+        },
+        {
+          "description": "Texte principal",
+          "original": "\\btext-gray-900\\b",
+          "replacement": "text-base-content",
+          "count": 9
+        },
+        {
+          "description": "Texte principal",
+          "original": "\\btext-gray-700\\b",
+          "replacement": "text-base-content",
+          "count": 8
+        },
+        {
+          "description": "Texte secondaire",
+          "original": "\\btext-gray-600\\b",
+          "replacement": "text-base-content/70",
+          "count": 11
+        },
+        {
+          "description": "Texte secondaire",
+          "original": "\\btext-gray-500\\b",
+          "replacement": "text-base-content/60",
+          "count": 8
+        },
+        {
+          "description": "Texte tertiaire",
+          "original": "\\btext-gray-400\\b",
+          "replacement": "text-base-content/50",
+          "count": 15
+        },
+        {
+          "description": "Texte faible",
+          "original": "\\btext-gray-300\\b",
+          "replacement": "text-base-content/40",
+          "count": 1
+        },
+        {
+          "description": "Fond primaire léger",
+          "original": "\\bbg-indigo-50\\b",
+          "replacement": "bg-primary/10",
+          "count": 3
+        },
+        {
+          "description": "Fond primaire",
+          "original": "\\bbg-indigo-100\\b",
+          "replacement": "bg-primary/20",
+          "count": 1
+        },
+        {
+          "description": "Fond erreur léger",
+          "original": "\\bbg-red-50\\b",
+          "replacement": "bg-error/10",
+          "count": 3
+        },
+        {
+          "description": "Fond erreur",
+          "original": "\\bbg-red-100\\b",
+          "replacement": "bg-error/20",
+          "count": 1
+        },
+        {
+          "description": "Fond warning",
+          "original": "\\bbg-amber-100\\b",
+          "replacement": "bg-warning/20",
+          "count": 3
+        },
+        {
+          "description": "Texte primaire",
+          "original": "\\btext-indigo-600\\b",
+          "replacement": "text-primary",
+          "count": 9
+        },
+        {
+          "description": "Texte succès",
+          "original": "\\btext-emerald-600\\b",
+          "replacement": "text-success",
+          "count": 1
+        },
+        {
+          "description": "Texte erreur",
+          "original": "\\btext-red-600\\b",
+          "replacement": "text-error",
+          "count": 4
+        },
+        {
+          "description": "Texte erreur",
+          "original": "\\btext-red-700\\b",
+          "replacement": "text-error",
+          "count": 1
+        },
+        {
+          "description": "Texte warning",
+          "original": "\\btext-amber-600\\b",
+          "replacement": "text-warning",
+          "count": 1
+        },
+        {
+          "description": "Texte warning",
+          "original": "\\btext-amber-700\\b",
+          "replacement": "text-warning",
+          "count": 2
+        },
+        {
+          "description": "Bouton primaire",
+          "original": "\\bbg-indigo-600\\b",
+          "replacement": "bg-primary",
+          "count": 7
+        },
+        {
+          "description": "Hover bouton primaire",
+          "original": "\\bhover:bg-indigo-700\\b",
+          "replacement": "hover:bg-primary-focus",
+          "count": 2
+        },
+        {
+          "description": "Bouton succès",
+          "original": "\\bbg-emerald-600\\b",
+          "replacement": "bg-success",
+          "count": 2
+        },
+        {
+          "description": "Hover bouton succès",
+          "original": "\\bhover:bg-emerald-700\\b",
+          "replacement": "hover:bg-success-focus",
+          "count": 2
+        },
+        {
+          "description": "Ring focus",
+          "original": "\\bfocus:ring-indigo-500\\b",
+          "replacement": "focus:ring-primary",
+          "count": 3
+        },
+        {
+          "description": "Focus bordure",
+          "original": "\\bfocus:border-indigo-500\\b",
+          "replacement": "focus:border-primary",
+          "count": 3
+        }
+      ]
+    },
+    {
+      "file": "components\\Commandes\\OrderSchedulingModal.tsx",
+      "changes": 154,
+      "details": [
+        {
+          "description": "Fond principal",
+          "original": "\\bbg-white\\b",
+          "replacement": "bg-base-100",
+          "count": 16
+        },
+        {
+          "description": "Fond secondaire",
+          "original": "\\bbg-gray-50\\b",
+          "replacement": "bg-base-200",
+          "count": 12
+        },
+        {
+          "description": "Fond secondaire",
+          "original": "\\bbg-gray-100\\b",
+          "replacement": "bg-base-200",
+          "count": 4
+        },
+        {
+          "description": "Fond secondaire",
+          "original": "\\bbg-slate-50\\b",
+          "replacement": "bg-base-200",
+          "count": 5
+        },
+        {
+          "description": "Bordure standard",
+          "original": "\\bborder-gray-200\\b",
+          "replacement": "border-base-300",
+          "count": 14
+        },
+        {
+          "description": "Bordure légère",
+          "original": "\\bborder-gray-100\\b",
+          "replacement": "border-base-200",
+          "count": 6
+        },
+        {
+          "description": "Bordure",
+          "original": "\\bborder-gray-300\\b",
+          "replacement": "border-base-300",
+          "count": 3
+        },
+        {
+          "description": "Bordure",
+          "original": "\\bborder-slate-200\\b",
+          "replacement": "border-base-300",
+          "count": 1
+        },
+        {
+          "description": "Texte principal",
+          "original": "\\btext-gray-900\\b",
+          "replacement": "text-base-content",
+          "count": 12
+        },
+        {
+          "description": "Texte secondaire",
+          "original": "\\btext-gray-500\\b",
+          "replacement": "text-base-content/60",
+          "count": 2
+        },
+        {
+          "description": "Texte tertiaire",
+          "original": "\\btext-gray-400\\b",
+          "replacement": "text-base-content/50",
+          "count": 17
+        },
+        {
+          "description": "Texte principal",
+          "original": "\\btext-slate-700\\b",
+          "replacement": "text-base-content",
+          "count": 2
+        },
+        {
+          "description": "Texte secondaire",
+          "original": "\\btext-slate-600\\b",
+          "replacement": "text-base-content/70",
+          "count": 1
+        },
+        {
+          "description": "Texte secondaire",
+          "original": "\\btext-slate-500\\b",
+          "replacement": "text-base-content/60",
+          "count": 2
+        },
+        {
+          "description": "Fond primaire léger",
+          "original": "\\bbg-indigo-50\\b",
+          "replacement": "bg-primary/10",
+          "count": 8
+        },
+        {
+          "description": "Fond info léger",
+          "original": "\\bbg-blue-50\\b",
+          "replacement": "bg-info/10",
+          "count": 1
+        },
+        {
+          "description": "Fond succès léger",
+          "original": "\\bbg-emerald-50\\b",
+          "replacement": "bg-success/10",
+          "count": 1
+        },
+        {
+          "description": "Texte primaire",
+          "original": "\\btext-indigo-600\\b",
+          "replacement": "text-primary",
+          "count": 17
+        },
+        {
+          "description": "Texte info",
+          "original": "\\btext-blue-600\\b",
+          "replacement": "text-info",
+          "count": 1
+        },
+        {
+          "description": "Texte info",
+          "original": "\\btext-blue-700\\b",
+          "replacement": "text-info",
+          "count": 2
+        },
+        {
+          "description": "Texte warning",
+          "original": "\\btext-amber-700\\b",
+          "replacement": "text-warning",
+          "count": 1
+        },
+        {
+          "description": "Bouton primaire",
+          "original": "\\bbg-indigo-600\\b",
+          "replacement": "bg-primary",
+          "count": 9
+        },
+        {
+          "description": "Hover bouton primaire",
+          "original": "\\bhover:bg-indigo-700\\b",
+          "replacement": "hover:bg-primary-focus",
+          "count": 3
+        },
+        {
+          "description": "Bouton succès",
+          "original": "\\bbg-emerald-600\\b",
+          "replacement": "bg-success",
+          "count": 2
+        },
+        {
+          "description": "Ring focus",
+          "original": "\\bfocus:ring-indigo-500\\b",
+          "replacement": "focus:ring-primary",
+          "count": 2
+        },
+        {
+          "description": "Focus bordure",
+          "original": "\\bfocus:border-indigo-500\\b",
+          "replacement": "focus:border-primary",
+          "count": 2
+        },
+        {
+          "description": "Opacité faible",
+          "original": "\\bopacity-20\\b",
+          "replacement": "text-base-content/20",
+          "count": 1
+        },
+        {
+          "description": "Opacité faible",
+          "original": "\\bopacity-30\\b",
+          "replacement": "text-base-content/30",
+          "count": 1
+        },
+        {
+          "description": "Opacité moyenne",
+          "original": "\\bopacity-50\\b",
+          "replacement": "text-base-content/50",
+          "count": 3
+        },
+        {
+          "description": "Opacité forte",
+          "original": "\\bopacity-70\\b",
+          "replacement": "text-base-content/70",
+          "count": 3
+        }
+      ]
+    },
+    {
+      "file": "components\\common\\CategoryManager.tsx",
+      "changes": 140,
+      "details": [
+        {
+          "description": "Fond principal",
+          "original": "\\bbg-white\\b",
+          "replacement": "bg-base-100",
+          "count": 9
+        },
+        {
+          "description": "Fond secondaire",
+          "original": "\\bbg-gray-50\\b",
+          "replacement": "bg-base-200",
+          "count": 21
+        },
+        {
+          "description": "Fond secondaire",
+          "original": "\\bbg-gray-100\\b",
+          "replacement": "bg-base-200",
+          "count": 2
+        },
+        {
+          "description": "Bordure standard",
+          "original": "\\bborder-gray-200\\b",
+          "replacement": "border-base-300",
+          "count": 10
+        },
+        {
+          "description": "Bordure légère",
+          "original": "\\bborder-gray-100\\b",
+          "replacement": "border-base-200",
+          "count": 8
+        },
+        {
+          "description": "Bordure",
+          "original": "\\bborder-gray-300\\b",
+          "replacement": "border-base-300",
+          "count": 1
+        },
+        {
+          "description": "Texte principal",
+          "original": "\\btext-gray-900\\b",
+          "replacement": "text-base-content",
+          "count": 6
+        },
+        {
+          "description": "Texte secondaire",
+          "original": "\\btext-gray-500\\b",
+          "replacement": "text-base-content/60",
+          "count": 18
+        },
+        {
+          "description": "Texte tertiaire",
+          "original": "\\btext-gray-400\\b",
+          "replacement": "text-base-content/50",
+          "count": 4
+        },
+        {
+          "description": "Texte faible",
+          "original": "\\btext-gray-300\\b",
+          "replacement": "text-base-content/40",
+          "count": 2
+        },
+        {
+          "description": "Fond primaire léger",
+          "original": "\\bbg-indigo-50\\b",
+          "replacement": "bg-primary/10",
+          "count": 5
+        },
+        {
+          "description": "Fond primaire",
+          "original": "\\bbg-indigo-100\\b",
+          "replacement": "bg-primary/20",
+          "count": 2
+        },
+        {
+          "description": "Fond info léger",
+          "original": "\\bbg-blue-50\\b",
+          "replacement": "bg-info/10",
+          "count": 5
+        },
+        {
+          "description": "Fond succès léger",
+          "original": "\\bbg-emerald-50\\b",
+          "replacement": "bg-success/10",
+          "count": 1
+        },
+        {
+          "description": "Fond succès",
+          "original": "\\bbg-emerald-100\\b",
+          "replacement": "bg-success/20",
+          "count": 1
+        },
+        {
+          "description": "Texte primaire",
+          "original": "\\btext-indigo-600\\b",
+          "replacement": "text-primary",
+          "count": 8
+        },
+        {
+          "description": "Texte info",
+          "original": "\\btext-blue-600\\b",
+          "replacement": "text-info",
+          "count": 4
+        },
+        {
+          "description": "Texte succès",
+          "original": "\\btext-emerald-700\\b",
+          "replacement": "text-success",
+          "count": 1
+        },
+        {
+          "description": "Texte erreur",
+          "original": "\\btext-red-600\\b",
+          "replacement": "text-error",
+          "count": 3
+        },
+        {
+          "description": "Bouton primaire",
+          "original": "\\bbg-indigo-600\\b",
+          "replacement": "bg-primary",
+          "count": 4
+        },
+        {
+          "description": "Hover bouton primaire",
+          "original": "\\bhover:bg-indigo-700\\b",
+          "replacement": "hover:bg-primary-focus",
+          "count": 3
+        },
+        {
+          "description": "Bouton info",
+          "original": "\\bbg-blue-600\\b",
+          "replacement": "bg-info",
+          "count": 1
+        },
+        {
+          "description": "Hover bouton info",
+          "original": "\\bhover:bg-blue-700\\b",
+          "replacement": "hover:bg-info-focus",
+          "count": 1
+        },
+        {
+          "description": "Ring focus",
+          "original": "\\bfocus:ring-indigo-50\\b",
+          "replacement": "focus:ring-primary/20",
+          "count": 5
+        },
+        {
+          "description": "Ring focus",
+          "original": "\\bfocus:ring-indigo-500\\b",
+          "replacement": "focus:ring-primary",
+          "count": 2
+        },
+        {
+          "description": "Focus bordure",
+          "original": "\\bfocus:border-indigo-500\\b",
+          "replacement": "focus:border-primary",
+          "count": 5
+        },
+        {
+          "description": "Opacité faible",
+          "original": "\\bopacity-30\\b",
+          "replacement": "text-base-content/30",
+          "count": 2
+        },
+        {
+          "description": "Opacité moyenne",
+          "original": "\\bopacity-50\\b",
+          "replacement": "text-base-content/50",
+          "count": 5
+        },
+        {
+          "description": "Opacité forte",
+          "original": "\\bopacity-70\\b",
+          "replacement": "text-base-content/70",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "file": "components\\divers\\GestionDivers.tsx",
+      "changes": 131,
+      "details": [
+        {
+          "description": "Fond principal",
+          "original": "\\bbg-white\\b",
+          "replacement": "bg-base-100",
+          "count": 18
+        },
+        {
+          "description": "Fond secondaire",
+          "original": "\\bbg-gray-50\\b",
+          "replacement": "bg-base-200",
+          "count": 12
+        },
+        {
+          "description": "Fond secondaire",
+          "original": "\\bbg-gray-100\\b",
+          "replacement": "bg-base-200",
+          "count": 3
+        },
+        {
+          "description": "Fond tertiaire",
+          "original": "\\bbg-gray-200\\b",
+          "replacement": "bg-base-300",
+          "count": 2
+        },
+        {
+          "description": "Bordure standard",
+          "original": "\\bborder-gray-200\\b",
+          "replacement": "border-base-300",
+          "count": 1
+        },
+        {
+          "description": "Bordure légère",
+          "original": "\\bborder-gray-100\\b",
+          "replacement": "border-base-200",
+          "count": 13
+        },
+        {
+          "description": "Bordure",
+          "original": "\\bborder-gray-300\\b",
+          "replacement": "border-base-300",
+          "count": 2
+        },
+        {
+          "description": "Texte principal",
+          "original": "\\btext-gray-900\\b",
+          "replacement": "text-base-content",
+          "count": 7
+        },
+        {
+          "description": "Texte principal",
+          "original": "\\btext-gray-800\\b",
+          "replacement": "text-base-content",
+          "count": 3
+        },
+        {
+          "description": "Texte principal",
+          "original": "\\btext-gray-700\\b",
+          "replacement": "text-base-content",
+          "count": 6
+        },
+        {
+          "description": "Texte secondaire",
+          "original": "\\btext-gray-600\\b",
+          "replacement": "text-base-content/70",
+          "count": 6
+        },
+        {
+          "description": "Texte secondaire",
+          "original": "\\btext-gray-500\\b",
+          "replacement": "text-base-content/60",
+          "count": 26
+        },
+        {
+          "description": "Texte tertiaire",
+          "original": "\\btext-gray-400\\b",
+          "replacement": "text-base-content/50",
+          "count": 3
+        },
+        {
+          "description": "Texte faible",
+          "original": "\\btext-gray-300\\b",
+          "replacement": "text-base-content/40",
+          "count": 1
+        },
+        {
+          "description": "Fond primaire léger",
+          "original": "\\bbg-indigo-50\\b",
+          "replacement": "bg-primary/10",
+          "count": 3
+        },
+        {
+          "description": "Texte primaire",
+          "original": "\\btext-indigo-600\\b",
+          "replacement": "text-primary",
+          "count": 8
+        },
+        {
+          "description": "Bouton primaire",
+          "original": "\\bbg-indigo-600\\b",
+          "replacement": "bg-primary",
+          "count": 5
+        },
+        {
+          "description": "Hover bouton primaire",
+          "original": "\\bhover:bg-indigo-700\\b",
+          "replacement": "hover:bg-primary-focus",
+          "count": 1
+        },
+        {
+          "description": "Séparation",
+          "original": "\\bdivide-gray-200\\b",
+          "replacement": "divide-base-300",
+          "count": 3
+        },
+        {
+          "description": "Séparation légère",
+          "original": "\\bdivide-gray-100\\b",
+          "replacement": "divide-base-200",
+          "count": 3
+        },
+        {
+          "description": "Ring focus",
+          "original": "\\bfocus:ring-indigo-500\\b",
+          "replacement": "focus:ring-primary",
+          "count": 3
+        },
+        {
+          "description": "Focus bordure",
+          "original": "\\bfocus:border-indigo-500\\b",
+          "replacement": "focus:border-primary",
+          "count": 2
+        }
+      ]
+    },
+    {
+      "file": "components\\products\\ProductTabsContent.tsx",
+      "changes": 131,
+      "details": [
+        {
+          "description": "Fond principal",
+          "original": "\\bbg-white\\b",
+          "replacement": "bg-base-100",
+          "count": 6
+        },
+        {
+          "description": "Fond secondaire",
+          "original": "\\bbg-gray-50\\b",
+          "replacement": "bg-base-200",
+          "count": 13
+        },
+        {
+          "description": "Fond secondaire",
+          "original": "\\bbg-gray-100\\b",
+          "replacement": "bg-base-200",
+          "count": 2
+        },
+        {
+          "description": "Bordure standard",
+          "original": "\\bborder-gray-200\\b",
+          "replacement": "border-base-300",
+          "count": 11
+        },
+        {
+          "description": "Bordure légère",
+          "original": "\\bborder-gray-100\\b",
+          "replacement": "border-base-200",
+          "count": 16
+        },
+        {
+          "description": "Texte principal",
+          "original": "\\btext-gray-900\\b",
+          "replacement": "text-base-content",
+          "count": 1
+        },
+        {
+          "description": "Texte principal",
+          "original": "\\btext-gray-700\\b",
+          "replacement": "text-base-content",
+          "count": 4
+        },
+        {
+          "description": "Texte secondaire",
+          "original": "\\btext-gray-600\\b",
+          "replacement": "text-base-content/70",
+          "count": 2
+        },
+        {
+          "description": "Texte secondaire",
+          "original": "\\btext-gray-500\\b",
+          "replacement": "text-base-content/60",
+          "count": 7
+        },
+        {
+          "description": "Texte tertiaire",
+          "original": "\\btext-gray-400\\b",
+          "replacement": "text-base-content/50",
+          "count": 29
+        },
+        {
+          "description": "Texte faible",
+          "original": "\\btext-gray-300\\b",
+          "replacement": "text-base-content/40",
+          "count": 1
+        },
+        {
+          "description": "Fond primaire léger",
+          "original": "\\bbg-indigo-50\\b",
+          "replacement": "bg-primary/10",
+          "count": 1
+        },
+        {
+          "description": "Fond info léger",
+          "original": "\\bbg-blue-50\\b",
+          "replacement": "bg-info/10",
+          "count": 1
+        },
+        {
+          "description": "Fond succès léger",
+          "original": "\\bbg-emerald-50\\b",
+          "replacement": "bg-success/10",
+          "count": 2
+        },
+        {
+          "description": "Fond erreur léger",
+          "original": "\\bbg-red-50\\b",
+          "replacement": "bg-error/10",
+          "count": 2
+        },
+        {
+          "description": "Fond warning léger",
+          "original": "\\bbg-amber-50\\b",
+          "replacement": "bg-warning/10",
+          "count": 2
+        },
+        {
+          "description": "Texte primaire",
+          "original": "\\btext-indigo-600\\b",
+          "replacement": "text-primary",
+          "count": 3
+        },
+        {
+          "description": "Texte primaire",
+          "original": "\\btext-indigo-700\\b",
+          "replacement": "text-primary",
+          "count": 1
+        },
+        {
+          "description": "Texte info",
+          "original": "\\btext-blue-600\\b",
+          "replacement": "text-info",
+          "count": 7
+        },
+        {
+          "description": "Texte info",
+          "original": "\\btext-blue-700\\b",
+          "replacement": "text-info",
+          "count": 1
+        },
+        {
+          "description": "Texte succès",
+          "original": "\\btext-emerald-600\\b",
+          "replacement": "text-success",
+          "count": 6
+        },
+        {
+          "description": "Texte succès",
+          "original": "\\btext-emerald-700\\b",
+          "replacement": "text-success",
+          "count": 1
+        },
+        {
+          "description": "Texte erreur",
+          "original": "\\btext-red-600\\b",
+          "replacement": "text-error",
+          "count": 4
+        },
+        {
+          "description": "Texte erreur",
+          "original": "\\btext-red-700\\b",
+          "replacement": "text-error",
+          "count": 1
+        },
+        {
+          "description": "Texte warning",
+          "original": "\\btext-amber-600\\b",
+          "replacement": "text-warning",
+          "count": 2
+        },
+        {
+          "description": "Texte warning",
+          "original": "\\btext-amber-700\\b",
+          "replacement": "text-warning",
+          "count": 2
+        },
+        {
+          "description": "Bouton primaire",
+          "original": "\\bbg-indigo-600\\b",
+          "replacement": "bg-primary",
+          "count": 1
+        },
+        {
+          "description": "Ring focus",
+          "original": "\\bfocus:ring-indigo-50\\b",
+          "replacement": "focus:ring-primary/20",
+          "count": 1
+        },
+        {
+          "description": "Focus bordure",
+          "original": "\\bfocus:border-indigo-500\\b",
+          "replacement": "focus:border-primary",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "file": "components\\GestionUtilisateurs.tsx",
+      "changes": 127,
+      "details": [
+        {
+          "description": "Fond principal",
+          "original": "\\bbg-white\\b",
+          "replacement": "bg-base-100",
+          "count": 25
+        },
+        {
+          "description": "Fond secondaire",
+          "original": "\\bbg-gray-50\\b",
+          "replacement": "bg-base-200",
+          "count": 11
+        },
+        {
+          "description": "Fond secondaire",
+          "original": "\\bbg-gray-100\\b",
+          "replacement": "bg-base-200",
+          "count": 1
+        },
+        {
+          "description": "Fond tertiaire",
+          "original": "\\bbg-gray-200\\b",
+          "replacement": "bg-base-300",
+          "count": 1
+        },
+        {
+          "description": "Bordure standard",
+          "original": "\\bborder-gray-200\\b",
+          "replacement": "border-base-300",
+          "count": 11
+        },
+        {
+          "description": "Bordure légère",
+          "original": "\\bborder-gray-100\\b",
+          "replacement": "border-base-200",
+          "count": 1
+        },
+        {
+          "description": "Bordure",
+          "original": "\\bborder-gray-300\\b",
+          "replacement": "border-base-300",
+          "count": 2
+        },
+        {
+          "description": "Texte principal",
+          "original": "\\btext-gray-700\\b",
+          "replacement": "text-base-content",
+          "count": 2
+        },
+        {
+          "description": "Texte secondaire",
+          "original": "\\btext-gray-600\\b",
+          "replacement": "text-base-content/70",
+          "count": 6
+        },
+        {
+          "description": "Texte secondaire",
+          "original": "\\btext-gray-500\\b",
+          "replacement": "text-base-content/60",
+          "count": 6
+        },
+        {
+          "description": "Fond primaire léger",
+          "original": "\\bbg-indigo-50\\b",
+          "replacement": "bg-primary/10",
+          "count": 3
+        },
+        {
+          "description": "Fond info léger",
+          "original": "\\bbg-blue-50\\b",
+          "replacement": "bg-info/10",
+          "count": 1
+        },
+        {
+          "description": "Fond succès léger",
+          "original": "\\bbg-emerald-50\\b",
+          "replacement": "bg-success/10",
+          "count": 3
+        },
+        {
+          "description": "Fond erreur léger",
+          "original": "\\bbg-red-50\\b",
+          "replacement": "bg-error/10",
+          "count": 2
+        },
+        {
+          "description": "Fond erreur",
+          "original": "\\bbg-red-100\\b",
+          "replacement": "bg-error/20",
+          "count": 2
+        },
+        {
+          "description": "Fond warning léger",
+          "original": "\\bbg-amber-50\\b",
+          "replacement": "bg-warning/10",
+          "count": 1
+        },
+        {
+          "description": "Fond secondaire léger",
+          "original": "\\bbg-purple-50\\b",
+          "replacement": "bg-secondary/10",
+          "count": 1
+        },
+        {
+          "description": "Texte primaire",
+          "original": "\\btext-indigo-600\\b",
+          "replacement": "text-primary",
+          "count": 7
+        },
+        {
+          "description": "Texte succès",
+          "original": "\\btext-emerald-600\\b",
+          "replacement": "text-success",
+          "count": 4
+        },
+        {
+          "description": "Texte succès",
+          "original": "\\btext-emerald-700\\b",
+          "replacement": "text-success",
+          "count": 1
+        },
+        {
+          "description": "Texte erreur",
+          "original": "\\btext-red-600\\b",
+          "replacement": "text-error",
+          "count": 10
+        },
+        {
+          "description": "Texte erreur",
+          "original": "\\btext-red-700\\b",
+          "replacement": "text-error",
+          "count": 1
+        },
+        {
+          "description": "Texte warning",
+          "original": "\\btext-amber-600\\b",
+          "replacement": "text-warning",
+          "count": 6
+        },
+        {
+          "description": "Texte warning",
+          "original": "\\btext-amber-700\\b",
+          "replacement": "text-warning",
+          "count": 1
+        },
+        {
+          "description": "Bouton primaire",
+          "original": "\\bbg-indigo-600\\b",
+          "replacement": "bg-primary",
+          "count": 3
+        },
+        {
+          "description": "Hover bouton primaire",
+          "original": "\\bhover:bg-indigo-700\\b",
+          "replacement": "hover:bg-primary-focus",
+          "count": 3
+        },
+        {
+          "description": "Bouton succès",
+          "original": "\\bbg-emerald-600\\b",
+          "replacement": "bg-success",
+          "count": 1
+        },
+        {
+          "description": "Ring focus",
+          "original": "\\bfocus:ring-indigo-50\\b",
+          "replacement": "focus:ring-primary/20",
+          "count": 3
+        },
+        {
+          "description": "Ring focus",
+          "original": "\\bfocus:ring-indigo-500\\b",
+          "replacement": "focus:ring-primary",
+          "count": 1
+        },
+        {
+          "description": "Focus bordure",
+          "original": "\\bfocus:border-indigo-500\\b",
+          "replacement": "focus:border-primary",
+          "count": 3
+        },
+        {
+          "description": "Opacité moyenne",
+          "original": "\\bopacity-50\\b",
+          "replacement": "text-base-content/50",
+          "count": 3
+        },
+        {
+          "description": "Opacité forte",
+          "original": "\\bopacity-70\\b",
+          "replacement": "text-base-content/70",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "file": "components\\Clients.tsx",
+      "changes": 125,
+      "details": [
+        {
+          "description": "Fond principal",
+          "original": "\\bbg-white\\b",
+          "replacement": "bg-base-100",
+          "count": 7
+        },
+        {
+          "description": "Fond secondaire",
+          "original": "\\bbg-gray-50\\b",
+          "replacement": "bg-base-200",
+          "count": 12
+        },
+        {
+          "description": "Fond secondaire",
+          "original": "\\bbg-gray-100\\b",
+          "replacement": "bg-base-200",
+          "count": 6
+        },
+        {
+          "description": "Bordure standard",
+          "original": "\\bborder-gray-200\\b",
+          "replacement": "border-base-300",
+          "count": 2
+        },
+        {
+          "description": "Bordure légère",
+          "original": "\\bborder-gray-100\\b",
+          "replacement": "border-base-200",
+          "count": 11
+        },
+        {
+          "description": "Bordure",
+          "original": "\\bborder-gray-300\\b",
+          "replacement": "border-base-300",
+          "count": 1
+        },
+        {
+          "description": "Texte principal",
+          "original": "\\btext-gray-900\\b",
+          "replacement": "text-base-content",
+          "count": 5
+        },
+        {
+          "description": "Texte principal",
+          "original": "\\btext-gray-800\\b",
+          "replacement": "text-base-content",
+          "count": 1
+        },
+        {
+          "description": "Texte principal",
+          "original": "\\btext-gray-700\\b",
+          "replacement": "text-base-content",
+          "count": 4
+        },
+        {
+          "description": "Texte secondaire",
+          "original": "\\btext-gray-600\\b",
+          "replacement": "text-base-content/70",
+          "count": 1
+        },
+        {
+          "description": "Texte secondaire",
+          "original": "\\btext-gray-500\\b",
+          "replacement": "text-base-content/60",
+          "count": 9
+        },
+        {
+          "description": "Texte tertiaire",
+          "original": "\\btext-gray-400\\b",
+          "replacement": "text-base-content/50",
+          "count": 18
+        },
+        {
+          "description": "Fond primaire léger",
+          "original": "\\bbg-indigo-50\\b",
+          "replacement": "bg-primary/10",
+          "count": 9
+        },
+        {
+          "description": "Fond primaire",
+          "original": "\\bbg-indigo-100\\b",
+          "replacement": "bg-primary/20",
+          "count": 2
+        },
+        {
+          "description": "Fond erreur léger",
+          "original": "\\bbg-red-50\\b",
+          "replacement": "bg-error/10",
+          "count": 3
+        },
+        {
+          "description": "Fond warning léger",
+          "original": "\\bbg-amber-50\\b",
+          "replacement": "bg-warning/10",
+          "count": 3
+        },
+        {
+          "description": "Fond warning",
+          "original": "\\bbg-amber-100\\b",
+          "replacement": "bg-warning/20",
+          "count": 1
+        },
+        {
+          "description": "Fond warning léger",
+          "original": "\\bbg-orange-50\\b",
+          "replacement": "bg-warning/10",
+          "count": 1
+        },
+        {
+          "description": "Texte primaire",
+          "original": "\\btext-indigo-600\\b",
+          "replacement": "text-primary",
+          "count": 7
+        },
+        {
+          "description": "Texte primaire",
+          "original": "\\btext-indigo-700\\b",
+          "replacement": "text-primary",
+          "count": 3
+        },
+        {
+          "description": "Texte erreur",
+          "original": "\\btext-red-600\\b",
+          "replacement": "text-error",
+          "count": 2
+        },
+        {
+          "description": "Texte erreur",
+          "original": "\\btext-red-700\\b",
+          "replacement": "text-error",
+          "count": 1
+        },
+        {
+          "description": "Texte warning",
+          "original": "\\btext-amber-600\\b",
+          "replacement": "text-warning",
+          "count": 2
+        },
+        {
+          "description": "Texte warning",
+          "original": "\\btext-amber-700\\b",
+          "replacement": "text-warning",
+          "count": 4
+        },
+        {
+          "description": "Texte warning",
+          "original": "\\btext-orange-700\\b",
+          "replacement": "text-warning",
+          "count": 1
+        },
+        {
+          "description": "Bouton primaire",
+          "original": "\\bbg-indigo-600\\b",
+          "replacement": "bg-primary",
+          "count": 1
+        },
+        {
+          "description": "Hover bouton primaire",
+          "original": "\\bhover:bg-indigo-700\\b",
+          "replacement": "hover:bg-primary-focus",
+          "count": 1
+        },
+        {
+          "description": "Séparation légère",
+          "original": "\\bdivide-gray-100\\b",
+          "replacement": "divide-base-200",
+          "count": 2
+        },
+        {
+          "description": "Ring focus",
+          "original": "\\bfocus:ring-indigo-50\\b",
+          "replacement": "focus:ring-primary/20",
+          "count": 1
+        },
+        {
+          "description": "Ring focus",
+          "original": "\\bfocus:ring-indigo-500\\b",
+          "replacement": "focus:ring-primary",
+          "count": 1
+        },
+        {
+          "description": "Focus bordure",
+          "original": "\\bfocus:border-indigo-500\\b",
+          "replacement": "focus:border-primary",
+          "count": 1
+        },
+        {
+          "description": "Opacité faible",
+          "original": "\\bopacity-20\\b",
+          "replacement": "text-base-content/20",
+          "count": 1
+        },
+        {
+          "description": "Opacité moyenne",
+          "original": "\\bopacity-50\\b",
+          "replacement": "text-base-content/50",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "file": "components\\Commandes\\SuggestionCommandeModal.tsx",
+      "changes": 121,
+      "details": [
+        {
+          "description": "Fond principal",
+          "original": "\\bbg-white\\b",
+          "replacement": "bg-base-100",
+          "count": 8
+        },
+        {
+          "description": "Fond secondaire",
+          "original": "\\bbg-gray-50\\b",
+          "replacement": "bg-base-200",
+          "count": 15
+        },
+        {
+          "description": "Fond secondaire",
+          "original": "\\bbg-gray-100\\b",
+          "replacement": "bg-base-200",
+          "count": 2
+        },
+        {
+          "description": "Bordure standard",
+          "original": "\\bborder-gray-200\\b",
+          "replacement": "border-base-300",
+          "count": 9
+        },
+        {
+          "description": "Bordure légère",
+          "original": "\\bborder-gray-100\\b",
+          "replacement": "border-base-200",
+          "count": 5
+        },
+        {
+          "description": "Bordure",
+          "original": "\\bborder-gray-300\\b",
+          "replacement": "border-base-300",
+          "count": 2
+        },
+        {
+          "description": "Texte principal",
+          "original": "\\btext-gray-900\\b",
+          "replacement": "text-base-content",
+          "count": 12
+        },
+        {
+          "description": "Texte secondaire",
+          "original": "\\btext-gray-500\\b",
+          "replacement": "text-base-content/60",
+          "count": 12
+        },
+        {
+          "description": "Texte tertiaire",
+          "original": "\\btext-gray-400\\b",
+          "replacement": "text-base-content/50",
+          "count": 11
+        },
+        {
+          "description": "Fond primaire léger",
+          "original": "\\bbg-indigo-50\\b",
+          "replacement": "bg-primary/10",
+          "count": 5
+        },
+        {
+          "description": "Fond succès",
+          "original": "\\bbg-emerald-100\\b",
+          "replacement": "bg-success/20",
+          "count": 1
+        },
+        {
+          "description": "Fond erreur",
+          "original": "\\bbg-red-100\\b",
+          "replacement": "bg-error/20",
+          "count": 3
+        },
+        {
+          "description": "Fond warning",
+          "original": "\\bbg-amber-100\\b",
+          "replacement": "bg-warning/20",
+          "count": 1
+        },
+        {
+          "description": "Texte primaire",
+          "original": "\\btext-indigo-600\\b",
+          "replacement": "text-primary",
+          "count": 13
+        },
+        {
+          "description": "Texte succès",
+          "original": "\\btext-emerald-700\\b",
+          "replacement": "text-success",
+          "count": 1
+        },
+        {
+          "description": "Texte erreur",
+          "original": "\\btext-red-600\\b",
+          "replacement": "text-error",
+          "count": 1
+        },
+        {
+          "description": "Texte erreur",
+          "original": "\\btext-red-700\\b",
+          "replacement": "text-error",
+          "count": 2
+        },
+        {
+          "description": "Texte warning",
+          "original": "\\btext-amber-700\\b",
+          "replacement": "text-warning",
+          "count": 1
+        },
+        {
+          "description": "Bouton primaire",
+          "original": "\\bbg-indigo-600\\b",
+          "replacement": "bg-primary",
+          "count": 11
+        },
+        {
+          "description": "Ring focus",
+          "original": "\\bfocus:ring-indigo-500\\b",
+          "replacement": "focus:ring-primary",
+          "count": 2
+        },
+        {
+          "description": "Focus bordure",
+          "original": "\\bfocus:border-indigo-500\\b",
+          "replacement": "focus:border-primary",
+          "count": 4
+        }
+      ]
+    },
+    {
+      "file": "components\\Commandes\\CommandeDetails.tsx",
+      "changes": 119,
+      "details": [
+        {
+          "description": "Fond principal",
+          "original": "\\bbg-white\\b",
+          "replacement": "bg-base-100",
+          "count": 8
+        },
+        {
+          "description": "Fond secondaire",
+          "original": "\\bbg-gray-50\\b",
+          "replacement": "bg-base-200",
+          "count": 5
+        },
+        {
+          "description": "Fond secondaire",
+          "original": "\\bbg-gray-100\\b",
+          "replacement": "bg-base-200",
+          "count": 2
+        },
+        {
+          "description": "Bordure standard",
+          "original": "\\bborder-gray-200\\b",
+          "replacement": "border-base-300",
+          "count": 7
+        },
+        {
+          "description": "Bordure légère",
+          "original": "\\bborder-gray-100\\b",
+          "replacement": "border-base-200",
+          "count": 4
+        },
+        {
+          "description": "Bordure",
+          "original": "\\bborder-gray-300\\b",
+          "replacement": "border-base-300",
+          "count": 5
+        },
+        {
+          "description": "Texte principal",
+          "original": "\\btext-gray-900\\b",
+          "replacement": "text-base-content",
+          "count": 8
+        },
+        {
+          "description": "Texte principal",
+          "original": "\\btext-gray-700\\b",
+          "replacement": "text-base-content",
+          "count": 4
+        },
+        {
+          "description": "Texte secondaire",
+          "original": "\\btext-gray-600\\b",
+          "replacement": "text-base-content/70",
+          "count": 3
+        },
+        {
+          "description": "Texte secondaire",
+          "original": "\\btext-gray-500\\b",
+          "replacement": "text-base-content/60",
+          "count": 15
+        },
+        {
+          "description": "Texte tertiaire",
+          "original": "\\btext-gray-400\\b",
+          "replacement": "text-base-content/50",
+          "count": 17
+        },
+        {
+          "description": "Texte faible",
+          "original": "\\btext-gray-300\\b",
+          "replacement": "text-base-content/40",
+          "count": 1
+        },
+        {
+          "description": "Fond info léger",
+          "original": "\\bbg-blue-50\\b",
+          "replacement": "bg-info/10",
+          "count": 1
+        },
+        {
+          "description": "Fond succès léger",
+          "original": "\\bbg-emerald-50\\b",
+          "replacement": "bg-success/10",
+          "count": 4
+        },
+        {
+          "description": "Fond succès",
+          "original": "\\bbg-emerald-100\\b",
+          "replacement": "bg-success/20",
+          "count": 1
+        },
+        {
+          "description": "Fond erreur léger",
+          "original": "\\bbg-red-50\\b",
+          "replacement": "bg-error/10",
+          "count": 1
+        },
+        {
+          "description": "Fond warning léger",
+          "original": "\\bbg-amber-50\\b",
+          "replacement": "bg-warning/10",
+          "count": 3
+        },
+        {
+          "description": "Texte primaire",
+          "original": "\\btext-indigo-600\\b",
+          "replacement": "text-primary",
+          "count": 3
+        },
+        {
+          "description": "Texte info",
+          "original": "\\btext-blue-700\\b",
+          "replacement": "text-info",
+          "count": 1
+        },
+        {
+          "description": "Texte succès",
+          "original": "\\btext-emerald-600\\b",
+          "replacement": "text-success",
+          "count": 4
+        },
+        {
+          "description": "Texte succès",
+          "original": "\\btext-emerald-700\\b",
+          "replacement": "text-success",
+          "count": 3
+        },
+        {
+          "description": "Texte erreur",
+          "original": "\\btext-red-600\\b",
+          "replacement": "text-error",
+          "count": 3
+        },
+        {
+          "description": "Texte warning",
+          "original": "\\btext-amber-600\\b",
+          "replacement": "text-warning",
+          "count": 2
+        },
+        {
+          "description": "Texte warning",
+          "original": "\\btext-amber-700\\b",
+          "replacement": "text-warning",
+          "count": 3
+        },
+        {
+          "description": "Bouton primaire",
+          "original": "\\bbg-indigo-600\\b",
+          "replacement": "bg-primary",
+          "count": 1
+        },
+        {
+          "description": "Hover bouton primaire",
+          "original": "\\bhover:bg-indigo-700\\b",
+          "replacement": "hover:bg-primary-focus",
+          "count": 1
+        },
+        {
+          "description": "Bouton info",
+          "original": "\\bbg-blue-600\\b",
+          "replacement": "bg-info",
+          "count": 1
+        },
+        {
+          "description": "Hover bouton info",
+          "original": "\\bhover:bg-blue-700\\b",
+          "replacement": "hover:bg-info-focus",
+          "count": 1
+        },
+        {
+          "description": "Bouton succès",
+          "original": "\\bbg-emerald-600\\b",
+          "replacement": "bg-success",
+          "count": 1
+        },
+        {
+          "description": "Hover bouton succès",
+          "original": "\\bhover:bg-emerald-700\\b",
+          "replacement": "hover:bg-success-focus",
+          "count": 1
+        },
+        {
+          "description": "Bouton warning",
+          "original": "\\bbg-amber-600\\b",
+          "replacement": "bg-warning",
+          "count": 1
+        },
+        {
+          "description": "Hover bouton warning",
+          "original": "\\bhover:bg-amber-700\\b",
+          "replacement": "hover:bg-warning-focus",
+          "count": 1
+        },
+        {
+          "description": "Séparation légère",
+          "original": "\\bdivide-gray-100\\b",
+          "replacement": "divide-base-200",
+          "count": 2
+        },
+        {
+          "description": "Focus bordure",
+          "original": "\\bfocus:border-indigo-500\\b",
+          "replacement": "focus:border-primary",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "file": "components\\ProduitFormModal.tsx",
+      "changes": 117,
+      "details": [
+        {
+          "description": "Fond principal",
+          "original": "\\bbg-white\\b",
+          "replacement": "bg-base-100",
+          "count": 7
+        },
+        {
+          "description": "Fond secondaire",
+          "original": "\\bbg-gray-50\\b",
+          "replacement": "bg-base-200",
+          "count": 7
+        },
+        {
+          "description": "Fond secondaire",
+          "original": "\\bbg-gray-100\\b",
+          "replacement": "bg-base-200",
+          "count": 2
+        },
+        {
+          "description": "Bordure standard",
+          "original": "\\bborder-gray-200\\b",
+          "replacement": "border-base-300",
+          "count": 10
+        },
+        {
+          "description": "Bordure légère",
+          "original": "\\bborder-gray-100\\b",
+          "replacement": "border-base-200",
+          "count": 6
+        },
+        {
+          "description": "Bordure",
+          "original": "\\bborder-gray-300\\b",
+          "replacement": "border-base-300",
+          "count": 5
+        },
+        {
+          "description": "Texte principal",
+          "original": "\\btext-gray-900\\b",
+          "replacement": "text-base-content",
+          "count": 5
+        },
+        {
+          "description": "Texte principal",
+          "original": "\\btext-gray-700\\b",
+          "replacement": "text-base-content",
+          "count": 5
+        },
+        {
+          "description": "Texte secondaire",
+          "original": "\\btext-gray-500\\b",
+          "replacement": "text-base-content/60",
+          "count": 27
+        },
+        {
+          "description": "Texte tertiaire",
+          "original": "\\btext-gray-400\\b",
+          "replacement": "text-base-content/50",
+          "count": 6
+        },
+        {
+          "description": "Fond primaire léger",
+          "original": "\\bbg-indigo-50\\b",
+          "replacement": "bg-primary/10",
+          "count": 2
+        },
+        {
+          "description": "Fond info léger",
+          "original": "\\bbg-blue-50\\b",
+          "replacement": "bg-info/10",
+          "count": 2
+        },
+        {
+          "description": "Fond succès léger",
+          "original": "\\bbg-emerald-50\\b",
+          "replacement": "bg-success/10",
+          "count": 1
+        },
+        {
+          "description": "Fond erreur léger",
+          "original": "\\bbg-red-50\\b",
+          "replacement": "bg-error/10",
+          "count": 2
+        },
+        {
+          "description": "Fond warning léger",
+          "original": "\\bbg-amber-50\\b",
+          "replacement": "bg-warning/10",
+          "count": 2
+        },
+        {
+          "description": "Texte primaire",
+          "original": "\\btext-indigo-600\\b",
+          "replacement": "text-primary",
+          "count": 5
+        },
+        {
+          "description": "Texte primaire",
+          "original": "\\btext-indigo-700\\b",
+          "replacement": "text-primary",
+          "count": 1
+        },
+        {
+          "description": "Texte succès",
+          "original": "\\btext-emerald-600\\b",
+          "replacement": "text-success",
+          "count": 2
+        },
+        {
+          "description": "Texte erreur",
+          "original": "\\btext-red-600\\b",
+          "replacement": "text-error",
+          "count": 3
+        },
+        {
+          "description": "Texte erreur",
+          "original": "\\btext-red-700\\b",
+          "replacement": "text-error",
+          "count": 1
+        },
+        {
+          "description": "Bouton primaire",
+          "original": "\\bbg-indigo-600\\b",
+          "replacement": "bg-primary",
+          "count": 1
+        },
+        {
+          "description": "Hover bouton primaire",
+          "original": "\\bhover:bg-indigo-700\\b",
+          "replacement": "hover:bg-primary-focus",
+          "count": 1
+        },
+        {
+          "description": "Ring focus",
+          "original": "\\bfocus:ring-indigo-50\\b",
+          "replacement": "focus:ring-primary/20",
+          "count": 4
+        },
+        {
+          "description": "Ring focus",
+          "original": "\\bfocus:ring-indigo-500\\b",
+          "replacement": "focus:ring-primary",
+          "count": 4
+        },
+        {
+          "description": "Focus bordure",
+          "original": "\\bfocus:border-indigo-500\\b",
+          "replacement": "focus:border-primary",
+          "count": 4
+        },
+        {
+          "description": "Opacité moyenne",
+          "original": "\\bopacity-50\\b",
+          "replacement": "text-base-content/50",
+          "count": 2
+        }
+      ]
+    },
+    {
+      "file": "components\\stock\\StockHealthDashboard.tsx",
+      "changes": 112,
+      "details": [
+        {
+          "description": "Bordure standard",
+          "original": "\\bborder-gray-200\\b",
+          "replacement": "border-base-300",
+          "count": 15
+        },
+        {
+          "description": "Texte principal",
+          "original": "\\btext-gray-900\\b",
+          "replacement": "text-base-content",
+          "count": 15
+        },
+        {
+          "description": "Texte principal",
+          "original": "\\btext-gray-700\\b",
+          "replacement": "text-base-content",
+          "count": 9
+        },
+        {
+          "description": "Texte secondaire",
+          "original": "\\btext-gray-500\\b",
+          "replacement": "text-base-content/60",
+          "count": 4
+        },
+        {
+          "description": "Texte tertiaire",
+          "original": "\\btext-gray-400\\b",
+          "replacement": "text-base-content/50",
+          "count": 10
+        },
+        {
+          "description": "Fond primaire léger",
+          "original": "\\bbg-indigo-50\\b",
+          "replacement": "bg-primary/10",
+          "count": 2
+        },
+        {
+          "description": "Fond info léger",
+          "original": "\\bbg-blue-50\\b",
+          "replacement": "bg-info/10",
+          "count": 3
+        },
+        {
+          "description": "Fond succès léger",
+          "original": "\\bbg-emerald-50\\b",
+          "replacement": "bg-success/10",
+          "count": 2
+        },
+        {
+          "description": "Fond erreur léger",
+          "original": "\\bbg-red-50\\b",
+          "replacement": "bg-error/10",
+          "count": 2
+        },
+        {
+          "description": "Fond warning léger",
+          "original": "\\bbg-amber-50\\b",
+          "replacement": "bg-warning/10",
+          "count": 19
+        },
+        {
+          "description": "Texte primaire",
+          "original": "\\btext-indigo-600\\b",
+          "replacement": "text-primary",
+          "count": 3
+        },
+        {
+          "description": "Texte succès",
+          "original": "\\btext-emerald-600\\b",
+          "replacement": "text-success",
+          "count": 4
+        },
+        {
+          "description": "Texte erreur",
+          "original": "\\btext-red-600\\b",
+          "replacement": "text-error",
+          "count": 10
+        },
+        {
+          "description": "Texte warning",
+          "original": "\\btext-amber-600\\b",
+          "replacement": "text-warning",
+          "count": 8
+        },
+        {
+          "description": "Bouton succès",
+          "original": "\\bbg-emerald-600\\b",
+          "replacement": "bg-success",
+          "count": 1
+        },
+        {
+          "description": "Bouton erreur",
+          "original": "\\bbg-red-600\\b",
+          "replacement": "bg-error",
+          "count": 3
+        },
+        {
+          "description": "Hover bouton erreur",
+          "original": "\\bhover:bg-red-700\\b",
+          "replacement": "hover:bg-error-focus",
+          "count": 1
+        },
+        {
+          "description": "Bouton warning",
+          "original": "\\bbg-amber-600\\b",
+          "replacement": "bg-warning",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "file": "components\\clients\\ClientFormModal.tsx",
+      "changes": 106,
+      "details": [
+        {
+          "description": "Fond principal",
+          "original": "\\bbg-white\\b",
+          "replacement": "bg-base-100",
+          "count": 9
+        },
+        {
+          "description": "Fond secondaire",
+          "original": "\\bbg-gray-50\\b",
+          "replacement": "bg-base-200",
+          "count": 8
+        },
+        {
+          "description": "Fond secondaire",
+          "original": "\\bbg-gray-100\\b",
+          "replacement": "bg-base-200",
+          "count": 1
+        },
+        {
+          "description": "Fond tertiaire",
+          "original": "\\bbg-gray-200\\b",
+          "replacement": "bg-base-300",
+          "count": 3
+        },
+        {
+          "description": "Bordure standard",
+          "original": "\\bborder-gray-200\\b",
+          "replacement": "border-base-300",
+          "count": 4
+        },
+        {
+          "description": "Bordure légère",
+          "original": "\\bborder-gray-100\\b",
+          "replacement": "border-base-200",
+          "count": 12
+        },
+        {
+          "description": "Bordure",
+          "original": "\\bborder-gray-300\\b",
+          "replacement": "border-base-300",
+          "count": 2
+        },
+        {
+          "description": "Texte principal",
+          "original": "\\btext-gray-900\\b",
+          "replacement": "text-base-content",
+          "count": 2
+        },
+        {
+          "description": "Texte principal",
+          "original": "\\btext-gray-700\\b",
+          "replacement": "text-base-content",
+          "count": 4
+        },
+        {
+          "description": "Texte secondaire",
+          "original": "\\btext-gray-600\\b",
+          "replacement": "text-base-content/70",
+          "count": 1
+        },
+        {
+          "description": "Texte secondaire",
+          "original": "\\btext-gray-500\\b",
+          "replacement": "text-base-content/60",
+          "count": 6
+        },
+        {
+          "description": "Texte tertiaire",
+          "original": "\\btext-gray-400\\b",
+          "replacement": "text-base-content/50",
+          "count": 10
+        },
+        {
+          "description": "Texte faible",
+          "original": "\\btext-gray-300\\b",
+          "replacement": "text-base-content/40",
+          "count": 1
+        },
+        {
+          "description": "Fond primaire léger",
+          "original": "\\bbg-indigo-50\\b",
+          "replacement": "bg-primary/10",
+          "count": 2
+        },
+        {
+          "description": "Fond primaire",
+          "original": "\\bbg-indigo-100\\b",
+          "replacement": "bg-primary/20",
+          "count": 1
+        },
+        {
+          "description": "Fond erreur léger",
+          "original": "\\bbg-red-50\\b",
+          "replacement": "bg-error/10",
+          "count": 1
+        },
+        {
+          "description": "Fond warning",
+          "original": "\\bbg-amber-100\\b",
+          "replacement": "bg-warning/20",
+          "count": 1
+        },
+        {
+          "description": "Texte primaire",
+          "original": "\\btext-indigo-600\\b",
+          "replacement": "text-primary",
+          "count": 1
+        },
+        {
+          "description": "Texte primaire",
+          "original": "\\btext-indigo-700\\b",
+          "replacement": "text-primary",
+          "count": 2
+        },
+        {
+          "description": "Texte erreur",
+          "original": "\\btext-red-600\\b",
+          "replacement": "text-error",
+          "count": 1
+        },
+        {
+          "description": "Texte warning",
+          "original": "\\btext-amber-600\\b",
+          "replacement": "text-warning",
+          "count": 1
+        },
+        {
+          "description": "Texte warning",
+          "original": "\\btext-amber-700\\b",
+          "replacement": "text-warning",
+          "count": 1
+        },
+        {
+          "description": "Bouton primaire",
+          "original": "\\bbg-indigo-600\\b",
+          "replacement": "bg-primary",
+          "count": 2
+        },
+        {
+          "description": "Hover bouton primaire",
+          "original": "\\bhover:bg-indigo-700\\b",
+          "replacement": "hover:bg-primary-focus",
+          "count": 2
+        },
+        {
+          "description": "Séparation",
+          "original": "\\bdivide-gray-200\\b",
+          "replacement": "divide-base-300",
+          "count": 1
+        },
+        {
+          "description": "Séparation légère",
+          "original": "\\bdivide-gray-100\\b",
+          "replacement": "divide-base-200",
+          "count": 1
+        },
+        {
+          "description": "Ring focus",
+          "original": "\\bfocus:ring-indigo-500\\b",
+          "replacement": "focus:ring-primary",
+          "count": 13
+        },
+        {
+          "description": "Focus bordure",
+          "original": "\\bfocus:border-indigo-500\\b",
+          "replacement": "focus:border-primary",
+          "count": 13
+        }
+      ]
+    },
+    {
+      "file": "components\\fournisseurs\\FournisseurDetails.tsx",
+      "changes": 103,
+      "details": [
+        {
+          "description": "Fond principal",
+          "original": "\\bbg-white\\b",
+          "replacement": "bg-base-100",
+          "count": 8
+        },
+        {
+          "description": "Fond secondaire",
+          "original": "\\bbg-gray-50\\b",
+          "replacement": "bg-base-200",
+          "count": 9
+        },
+        {
+          "description": "Fond secondaire",
+          "original": "\\bbg-gray-100\\b",
+          "replacement": "bg-base-200",
+          "count": 5
+        },
+        {
+          "description": "Bordure standard",
+          "original": "\\bborder-gray-200\\b",
+          "replacement": "border-base-300",
+          "count": 2
+        },
+        {
+          "description": "Bordure légère",
+          "original": "\\bborder-gray-100\\b",
+          "replacement": "border-base-200",
+          "count": 13
+        },
+        {
+          "description": "Texte principal",
+          "original": "\\btext-gray-900\\b",
+          "replacement": "text-base-content",
+          "count": 4
+        },
+        {
+          "description": "Texte principal",
+          "original": "\\btext-gray-700\\b",
+          "replacement": "text-base-content",
+          "count": 4
+        },
+        {
+          "description": "Texte secondaire",
+          "original": "\\btext-gray-600\\b",
+          "replacement": "text-base-content/70",
+          "count": 2
+        },
+        {
+          "description": "Texte secondaire",
+          "original": "\\btext-gray-500\\b",
+          "replacement": "text-base-content/60",
+          "count": 9
+        },
+        {
+          "description": "Texte tertiaire",
+          "original": "\\btext-gray-400\\b",
+          "replacement": "text-base-content/50",
+          "count": 19
+        },
+        {
+          "description": "Texte faible",
+          "original": "\\btext-gray-300\\b",
+          "replacement": "text-base-content/40",
+          "count": 2
+        },
+        {
+          "description": "Fond primaire léger",
+          "original": "\\bbg-indigo-50\\b",
+          "replacement": "bg-primary/10",
+          "count": 2
+        },
+        {
+          "description": "Fond succès léger",
+          "original": "\\bbg-emerald-50\\b",
+          "replacement": "bg-success/10",
+          "count": 2
+        },
+        {
+          "description": "Fond erreur léger",
+          "original": "\\bbg-red-50\\b",
+          "replacement": "bg-error/10",
+          "count": 2
+        },
+        {
+          "description": "Fond warning léger",
+          "original": "\\bbg-amber-50\\b",
+          "replacement": "bg-warning/10",
+          "count": 2
+        },
+        {
+          "description": "Texte primaire",
+          "original": "\\btext-indigo-600\\b",
+          "replacement": "text-primary",
+          "count": 2
+        },
+        {
+          "description": "Texte primaire",
+          "original": "\\btext-indigo-700\\b",
+          "replacement": "text-primary",
+          "count": 1
+        },
+        {
+          "description": "Texte succès",
+          "original": "\\btext-emerald-600\\b",
+          "replacement": "text-success",
+          "count": 4
+        },
+        {
+          "description": "Texte erreur",
+          "original": "\\btext-red-600\\b",
+          "replacement": "text-error",
+          "count": 4
+        },
+        {
+          "description": "Texte warning",
+          "original": "\\btext-amber-600\\b",
+          "replacement": "text-warning",
+          "count": 2
+        },
+        {
+          "description": "Séparation légère",
+          "original": "\\bdivide-gray-100\\b",
+          "replacement": "divide-base-200",
+          "count": 2
+        },
+        {
+          "description": "Ring focus",
+          "original": "\\bfocus:ring-indigo-50\\b",
+          "replacement": "focus:ring-primary/20",
+          "count": 1
+        },
+        {
+          "description": "Focus bordure",
+          "original": "\\bfocus:border-indigo-500\\b",
+          "replacement": "focus:border-primary",
+          "count": 1
+        },
+        {
+          "description": "Opacité faible",
+          "original": "\\bopacity-30\\b",
+          "replacement": "text-base-content/30",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "file": "components\\creances\\CreancesTable.tsx",
+      "changes": 92,
+      "details": [
+        {
+          "description": "Fond principal",
+          "original": "\\bbg-white\\b",
+          "replacement": "bg-base-100",
+          "count": 3
+        },
+        {
+          "description": "Fond secondaire",
+          "original": "\\bbg-gray-50\\b",
+          "replacement": "bg-base-200",
+          "count": 16
+        },
+        {
+          "description": "Bordure standard",
+          "original": "\\bborder-gray-200\\b",
+          "replacement": "border-base-300",
+          "count": 12
+        },
+        {
+          "description": "Bordure légère",
+          "original": "\\bborder-gray-100\\b",
+          "replacement": "border-base-200",
+          "count": 1
+        },
+        {
+          "description": "Bordure",
+          "original": "\\bborder-gray-300\\b",
+          "replacement": "border-base-300",
+          "count": 2
+        },
+        {
+          "description": "Texte principal",
+          "original": "\\btext-gray-900\\b",
+          "replacement": "text-base-content",
+          "count": 3
+        },
+        {
+          "description": "Texte secondaire",
+          "original": "\\btext-gray-500\\b",
+          "replacement": "text-base-content/60",
+          "count": 4
+        },
+        {
+          "description": "Texte tertiaire",
+          "original": "\\btext-gray-400\\b",
+          "replacement": "text-base-content/50",
+          "count": 17
+        },
+        {
+          "description": "Texte faible",
+          "original": "\\btext-gray-300\\b",
+          "replacement": "text-base-content/40",
+          "count": 2
+        },
+        {
+          "description": "Fond primaire léger",
+          "original": "\\bbg-indigo-50\\b",
+          "replacement": "bg-primary/10",
+          "count": 4
+        },
+        {
+          "description": "Fond succès léger",
+          "original": "\\bbg-emerald-50\\b",
+          "replacement": "bg-success/10",
+          "count": 1
+        },
+        {
+          "description": "Fond warning léger",
+          "original": "\\bbg-amber-50\\b",
+          "replacement": "bg-warning/10",
+          "count": 2
+        },
+        {
+          "description": "Texte primaire",
+          "original": "\\btext-indigo-600\\b",
+          "replacement": "text-primary",
+          "count": 14
+        },
+        {
+          "description": "Texte succès",
+          "original": "\\btext-emerald-600\\b",
+          "replacement": "text-success",
+          "count": 3
+        },
+        {
+          "description": "Texte warning",
+          "original": "\\btext-amber-600\\b",
+          "replacement": "text-warning",
+          "count": 3
+        },
+        {
+          "description": "Séparation légère",
+          "original": "\\bdivide-gray-100\\b",
+          "replacement": "divide-base-200",
+          "count": 2
+        },
+        {
+          "description": "Ring focus",
+          "original": "\\bfocus:ring-indigo-500\\b",
+          "replacement": "focus:ring-primary",
+          "count": 2
+        },
+        {
+          "description": "Opacité faible",
+          "original": "\\bopacity-30\\b",
+          "replacement": "text-base-content/30",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "file": "components\\avoirs\\AvoirsForm.tsx",
+      "changes": 91,
+      "details": [
+        {
+          "description": "Fond principal",
+          "original": "\\bbg-white\\b",
+          "replacement": "bg-base-100",
+          "count": 12
+        },
+        {
+          "description": "Fond secondaire",
+          "original": "\\bbg-gray-50\\b",
+          "replacement": "bg-base-200",
+          "count": 9
+        },
+        {
+          "description": "Fond secondaire",
+          "original": "\\bbg-gray-100\\b",
+          "replacement": "bg-base-200",
+          "count": 4
+        },
+        {
+          "description": "Fond tertiaire",
+          "original": "\\bbg-gray-200\\b",
+          "replacement": "bg-base-300",
+          "count": 1
+        },
+        {
+          "description": "Bordure standard",
+          "original": "\\bborder-gray-200\\b",
+          "replacement": "border-base-300",
+          "count": 8
+        },
+        {
+          "description": "Bordure légère",
+          "original": "\\bborder-gray-100\\b",
+          "replacement": "border-base-200",
+          "count": 9
+        },
+        {
+          "description": "Texte principal",
+          "original": "\\btext-gray-900\\b",
+          "replacement": "text-base-content",
+          "count": 8
+        },
+        {
+          "description": "Texte secondaire",
+          "original": "\\btext-gray-600\\b",
+          "replacement": "text-base-content/70",
+          "count": 1
+        },
+        {
+          "description": "Texte secondaire",
+          "original": "\\btext-gray-500\\b",
+          "replacement": "text-base-content/60",
+          "count": 12
+        },
+        {
+          "description": "Texte tertiaire",
+          "original": "\\btext-gray-400\\b",
+          "replacement": "text-base-content/50",
+          "count": 3
+        },
+        {
+          "description": "Fond primaire léger",
+          "original": "\\bbg-indigo-50\\b",
+          "replacement": "bg-primary/10",
+          "count": 1
+        },
+        {
+          "description": "Fond erreur léger",
+          "original": "\\bbg-red-50\\b",
+          "replacement": "bg-error/10",
+          "count": 1
+        },
+        {
+          "description": "Texte primaire",
+          "original": "\\btext-indigo-600\\b",
+          "replacement": "text-primary",
+          "count": 3
+        },
+        {
+          "description": "Texte succès",
+          "original": "\\btext-emerald-600\\b",
+          "replacement": "text-success",
+          "count": 1
+        },
+        {
+          "description": "Texte erreur",
+          "original": "\\btext-red-600\\b",
+          "replacement": "text-error",
+          "count": 4
+        },
+        {
+          "description": "Bouton primaire",
+          "original": "\\bbg-indigo-600\\b",
+          "replacement": "bg-primary",
+          "count": 1
+        },
+        {
+          "description": "Hover bouton primaire",
+          "original": "\\bhover:bg-indigo-700\\b",
+          "replacement": "hover:bg-primary-focus",
+          "count": 1
+        },
+        {
+          "description": "Ring focus",
+          "original": "\\bfocus:ring-indigo-50\\b",
+          "replacement": "focus:ring-primary/20",
+          "count": 5
+        },
+        {
+          "description": "Focus bordure",
+          "original": "\\bfocus:border-indigo-500\\b",
+          "replacement": "focus:border-primary",
+          "count": 6
+        },
+        {
+          "description": "Opacité moyenne",
+          "original": "\\bopacity-50\\b",
+          "replacement": "text-base-content/50",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "file": "components\\UserSessions.tsx",
+      "changes": 91,
+      "details": [
+        {
+          "description": "Fond principal",
+          "original": "\\bbg-white\\b",
+          "replacement": "bg-base-100",
+          "count": 6
+        },
+        {
+          "description": "Fond secondaire",
+          "original": "\\bbg-gray-50\\b",
+          "replacement": "bg-base-200",
+          "count": 9
+        },
+        {
+          "description": "Fond tertiaire",
+          "original": "\\bbg-gray-200\\b",
+          "replacement": "bg-base-300",
+          "count": 2
+        },
+        {
+          "description": "Bordure standard",
+          "original": "\\bborder-gray-200\\b",
+          "replacement": "border-base-300",
+          "count": 9
+        },
+        {
+          "description": "Bordure légère",
+          "original": "\\bborder-gray-100\\b",
+          "replacement": "border-base-200",
+          "count": 1
+        },
+        {
+          "description": "Texte principal",
+          "original": "\\btext-gray-900\\b",
+          "replacement": "text-base-content",
+          "count": 4
+        },
+        {
+          "description": "Texte secondaire",
+          "original": "\\btext-gray-500\\b",
+          "replacement": "text-base-content/60",
+          "count": 19
+        },
+        {
+          "description": "Texte tertiaire",
+          "original": "\\btext-gray-400\\b",
+          "replacement": "text-base-content/50",
+          "count": 7
+        },
+        {
+          "description": "Fond primaire léger",
+          "original": "\\bbg-indigo-50\\b",
+          "replacement": "bg-primary/10",
+          "count": 1
+        },
+        {
+          "description": "Fond info léger",
+          "original": "\\bbg-blue-50\\b",
+          "replacement": "bg-info/10",
+          "count": 1
+        },
+        {
+          "description": "Fond succès léger",
+          "original": "\\bbg-emerald-50\\b",
+          "replacement": "bg-success/10",
+          "count": 1
+        },
+        {
+          "description": "Fond erreur léger",
+          "original": "\\bbg-red-50\\b",
+          "replacement": "bg-error/10",
+          "count": 1
+        },
+        {
+          "description": "Fond secondaire léger",
+          "original": "\\bbg-purple-50\\b",
+          "replacement": "bg-secondary/10",
+          "count": 1
+        },
+        {
+          "description": "Texte primaire",
+          "original": "\\btext-indigo-600\\b",
+          "replacement": "text-primary",
+          "count": 7
+        },
+        {
+          "description": "Texte info",
+          "original": "\\btext-blue-700\\b",
+          "replacement": "text-info",
+          "count": 1
+        },
+        {
+          "description": "Texte succès",
+          "original": "\\btext-emerald-600\\b",
+          "replacement": "text-success",
+          "count": 1
+        },
+        {
+          "description": "Texte succès",
+          "original": "\\btext-emerald-700\\b",
+          "replacement": "text-success",
+          "count": 1
+        },
+        {
+          "description": "Texte erreur",
+          "original": "\\btext-red-600\\b",
+          "replacement": "text-error",
+          "count": 1
+        },
+        {
+          "description": "Texte warning",
+          "original": "\\btext-amber-600\\b",
+          "replacement": "text-warning",
+          "count": 1
+        },
+        {
+          "description": "Bouton primaire",
+          "original": "\\bbg-indigo-600\\b",
+          "replacement": "bg-primary",
+          "count": 2
+        },
+        {
+          "description": "Hover bouton primaire",
+          "original": "\\bhover:bg-indigo-700\\b",
+          "replacement": "hover:bg-primary-focus",
+          "count": 2
+        },
+        {
+          "description": "Séparation légère",
+          "original": "\\bdivide-gray-100\\b",
+          "replacement": "divide-base-200",
+          "count": 2
+        },
+        {
+          "description": "Ring focus",
+          "original": "\\bfocus:ring-indigo-50\\b",
+          "replacement": "focus:ring-primary/20",
+          "count": 4
+        },
+        {
+          "description": "Focus bordure",
+          "original": "\\bfocus:border-indigo-500\\b",
+          "replacement": "focus:border-primary",
+          "count": 4
+        },
+        {
+          "description": "Opacité faible",
+          "original": "\\bopacity-30\\b",
+          "replacement": "text-base-content/30",
+          "count": 1
+        },
+        {
+          "description": "Opacité moyenne",
+          "original": "\\bopacity-50\\b",
+          "replacement": "text-base-content/50",
+          "count": 2
+        }
+      ]
+    },
+    {
+      "file": "components\\promis\\PromisTable.tsx",
+      "changes": 84,
+      "details": [
+        {
+          "description": "Fond principal",
+          "original": "\\bbg-white\\b",
+          "replacement": "bg-base-100",
+          "count": 2
+        },
+        {
+          "description": "Fond secondaire",
+          "original": "\\bbg-gray-50\\b",
+          "replacement": "bg-base-200",
+          "count": 1
+        },
+        {
+          "description": "Fond secondaire",
+          "original": "\\bbg-gray-100\\b",
+          "replacement": "bg-base-200",
+          "count": 14
+        },
+        {
+          "description": "Bordure standard",
+          "original": "\\bborder-gray-200\\b",
+          "replacement": "border-base-300",
+          "count": 15
+        },
+        {
+          "description": "Bordure légère",
+          "original": "\\bborder-gray-100\\b",
+          "replacement": "border-base-200",
+          "count": 1
+        },
+        {
+          "description": "Bordure",
+          "original": "\\bborder-gray-300\\b",
+          "replacement": "border-base-300",
+          "count": 1
+        },
+        {
+          "description": "Texte principal",
+          "original": "\\btext-gray-900\\b",
+          "replacement": "text-base-content",
+          "count": 3
+        },
+        {
+          "description": "Texte secondaire",
+          "original": "\\btext-gray-500\\b",
+          "replacement": "text-base-content/60",
+          "count": 8
+        },
+        {
+          "description": "Texte tertiaire",
+          "original": "\\btext-gray-400\\b",
+          "replacement": "text-base-content/50",
+          "count": 9
+        },
+        {
+          "description": "Fond primaire léger",
+          "original": "\\bbg-indigo-50\\b",
+          "replacement": "bg-primary/10",
+          "count": 2
+        },
+        {
+          "description": "Fond info léger",
+          "original": "\\bbg-blue-50\\b",
+          "replacement": "bg-info/10",
+          "count": 2
+        },
+        {
+          "description": "Fond succès léger",
+          "original": "\\bbg-emerald-50\\b",
+          "replacement": "bg-success/10",
+          "count": 5
+        },
+        {
+          "description": "Fond erreur léger",
+          "original": "\\bbg-red-50\\b",
+          "replacement": "bg-error/10",
+          "count": 3
+        },
+        {
+          "description": "Fond warning léger",
+          "original": "\\bbg-amber-50\\b",
+          "replacement": "bg-warning/10",
+          "count": 1
+        },
+        {
+          "description": "Texte primaire",
+          "original": "\\btext-indigo-600\\b",
+          "replacement": "text-primary",
+          "count": 3
+        },
+        {
+          "description": "Texte info",
+          "original": "\\btext-blue-600\\b",
+          "replacement": "text-info",
+          "count": 2
+        },
+        {
+          "description": "Texte succès",
+          "original": "\\btext-emerald-600\\b",
+          "replacement": "text-success",
+          "count": 6
+        },
+        {
+          "description": "Texte erreur",
+          "original": "\\btext-red-600\\b",
+          "replacement": "text-error",
+          "count": 3
+        },
+        {
+          "description": "Texte warning",
+          "original": "\\btext-amber-600\\b",
+          "replacement": "text-warning",
+          "count": 1
+        },
+        {
+          "description": "Ring focus",
+          "original": "\\bfocus:ring-indigo-500\\b",
+          "replacement": "focus:ring-primary",
+          "count": 1
+        },
+        {
+          "description": "Opacité moyenne",
+          "original": "\\bopacity-50\\b",
+          "replacement": "text-base-content/50",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "file": "components\\sales\\SalesTable.tsx",
+      "changes": 77,
+      "details": [
+        {
+          "description": "Fond principal",
+          "original": "\\bbg-white\\b",
+          "replacement": "bg-base-100",
+          "count": 1
+        },
+        {
+          "description": "Fond secondaire",
+          "original": "\\bbg-gray-50\\b",
+          "replacement": "bg-base-200",
+          "count": 14
+        },
+        {
+          "description": "Fond secondaire",
+          "original": "\\bbg-gray-100\\b",
+          "replacement": "bg-base-200",
+          "count": 1
+        },
+        {
+          "description": "Bordure standard",
+          "original": "\\bborder-gray-200\\b",
+          "replacement": "border-base-300",
+          "count": 14
+        },
+        {
+          "description": "Bordure légère",
+          "original": "\\bborder-gray-100\\b",
+          "replacement": "border-base-200",
+          "count": 1
+        },
+        {
+          "description": "Bordure",
+          "original": "\\bborder-gray-300\\b",
+          "replacement": "border-base-300",
+          "count": 2
+        },
+        {
+          "description": "Texte principal",
+          "original": "\\btext-gray-900\\b",
+          "replacement": "text-base-content",
+          "count": 2
+        },
+        {
+          "description": "Texte principal",
+          "original": "\\btext-gray-700\\b",
+          "replacement": "text-base-content",
+          "count": 2
+        },
+        {
+          "description": "Texte secondaire",
+          "original": "\\btext-gray-600\\b",
+          "replacement": "text-base-content/70",
+          "count": 1
+        },
+        {
+          "description": "Texte secondaire",
+          "original": "\\btext-gray-500\\b",
+          "replacement": "text-base-content/60",
+          "count": 6
+        },
+        {
+          "description": "Texte tertiaire",
+          "original": "\\btext-gray-400\\b",
+          "replacement": "text-base-content/50",
+          "count": 5
+        },
+        {
+          "description": "Texte faible",
+          "original": "\\btext-gray-300\\b",
+          "replacement": "text-base-content/40",
+          "count": 2
+        },
+        {
+          "description": "Fond primaire léger",
+          "original": "\\bbg-indigo-50\\b",
+          "replacement": "bg-primary/10",
+          "count": 3
+        },
+        {
+          "description": "Fond info léger",
+          "original": "\\bbg-blue-50\\b",
+          "replacement": "bg-info/10",
+          "count": 1
+        },
+        {
+          "description": "Fond succès léger",
+          "original": "\\bbg-emerald-50\\b",
+          "replacement": "bg-success/10",
+          "count": 1
+        },
+        {
+          "description": "Fond erreur léger",
+          "original": "\\bbg-red-50\\b",
+          "replacement": "bg-error/10",
+          "count": 3
+        },
+        {
+          "description": "Fond warning léger",
+          "original": "\\bbg-amber-50\\b",
+          "replacement": "bg-warning/10",
+          "count": 1
+        },
+        {
+          "description": "Texte primaire",
+          "original": "\\btext-indigo-600\\b",
+          "replacement": "text-primary",
+          "count": 4
+        },
+        {
+          "description": "Texte info",
+          "original": "\\btext-blue-600\\b",
+          "replacement": "text-info",
+          "count": 1
+        },
+        {
+          "description": "Texte succès",
+          "original": "\\btext-emerald-600\\b",
+          "replacement": "text-success",
+          "count": 1
+        },
+        {
+          "description": "Texte succès",
+          "original": "\\btext-emerald-700\\b",
+          "replacement": "text-success",
+          "count": 1
+        },
+        {
+          "description": "Texte erreur",
+          "original": "\\btext-red-600\\b",
+          "replacement": "text-error",
+          "count": 3
+        },
+        {
+          "description": "Texte erreur",
+          "original": "\\btext-red-700\\b",
+          "replacement": "text-error",
+          "count": 1
+        },
+        {
+          "description": "Texte warning",
+          "original": "\\btext-amber-600\\b",
+          "replacement": "text-warning",
+          "count": 1
+        },
+        {
+          "description": "Texte warning",
+          "original": "\\btext-amber-700\\b",
+          "replacement": "text-warning",
+          "count": 1
+        },
+        {
+          "description": "Séparation légère",
+          "original": "\\bdivide-gray-100\\b",
+          "replacement": "divide-base-200",
+          "count": 1
+        },
+        {
+          "description": "Ring focus",
+          "original": "\\bfocus:ring-indigo-500\\b",
+          "replacement": "focus:ring-primary",
+          "count": 2
+        },
+        {
+          "description": "Opacité faible",
+          "original": "\\bopacity-20\\b",
+          "replacement": "text-base-content/20",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "file": "components\\Corbeille.tsx",
+      "changes": 71,
+      "details": [
+        {
+          "description": "Fond principal",
+          "original": "\\bbg-white\\b",
+          "replacement": "bg-base-100",
+          "count": 4
+        },
+        {
+          "description": "Fond secondaire",
+          "original": "\\bbg-gray-50\\b",
+          "replacement": "bg-base-200",
+          "count": 6
+        },
+        {
+          "description": "Fond secondaire",
+          "original": "\\bbg-gray-100\\b",
+          "replacement": "bg-base-200",
+          "count": 4
+        },
+        {
+          "description": "Bordure standard",
+          "original": "\\bborder-gray-200\\b",
+          "replacement": "border-base-300",
+          "count": 3
+        },
+        {
+          "description": "Bordure légère",
+          "original": "\\bborder-gray-100\\b",
+          "replacement": "border-base-200",
+          "count": 6
+        },
+        {
+          "description": "Bordure",
+          "original": "\\bborder-gray-300\\b",
+          "replacement": "border-base-300",
+          "count": 2
+        },
+        {
+          "description": "Texte principal",
+          "original": "\\btext-gray-900\\b",
+          "replacement": "text-base-content",
+          "count": 7
+        },
+        {
+          "description": "Texte secondaire",
+          "original": "\\btext-gray-500\\b",
+          "replacement": "text-base-content/60",
+          "count": 5
+        },
+        {
+          "description": "Texte tertiaire",
+          "original": "\\btext-gray-400\\b",
+          "replacement": "text-base-content/50",
+          "count": 5
+        },
+        {
+          "description": "Texte faible",
+          "original": "\\btext-gray-300\\b",
+          "replacement": "text-base-content/40",
+          "count": 3
+        },
+        {
+          "description": "Texte secondaire",
+          "original": "\\btext-slate-600\\b",
+          "replacement": "text-base-content/70",
+          "count": 1
+        },
+        {
+          "description": "Texte secondaire",
+          "original": "\\btext-slate-500\\b",
+          "replacement": "text-base-content/60",
+          "count": 2
+        },
+        {
+          "description": "Fond primaire léger",
+          "original": "\\bbg-indigo-50\\b",
+          "replacement": "bg-primary/10",
+          "count": 2
+        },
+        {
+          "description": "Fond succès léger",
+          "original": "\\bbg-emerald-50\\b",
+          "replacement": "bg-success/10",
+          "count": 1
+        },
+        {
+          "description": "Fond erreur léger",
+          "original": "\\bbg-red-50\\b",
+          "replacement": "bg-error/10",
+          "count": 1
+        },
+        {
+          "description": "Texte primaire",
+          "original": "\\btext-indigo-600\\b",
+          "replacement": "text-primary",
+          "count": 5
+        },
+        {
+          "description": "Texte succès",
+          "original": "\\btext-emerald-600\\b",
+          "replacement": "text-success",
+          "count": 2
+        },
+        {
+          "description": "Texte warning",
+          "original": "\\btext-amber-600\\b",
+          "replacement": "text-warning",
+          "count": 1
+        },
+        {
+          "description": "Texte warning",
+          "original": "\\btext-orange-600\\b",
+          "replacement": "text-warning",
+          "count": 1
+        },
+        {
+          "description": "Bouton succès",
+          "original": "\\bbg-emerald-600\\b",
+          "replacement": "bg-success",
+          "count": 1
+        },
+        {
+          "description": "Hover bouton succès",
+          "original": "\\bhover:bg-emerald-700\\b",
+          "replacement": "hover:bg-success-focus",
+          "count": 1
+        },
+        {
+          "description": "Bouton erreur",
+          "original": "\\bbg-red-600\\b",
+          "replacement": "bg-error",
+          "count": 2
+        },
+        {
+          "description": "Hover bouton erreur",
+          "original": "\\bhover:bg-red-700\\b",
+          "replacement": "hover:bg-error-focus",
+          "count": 2
+        },
+        {
+          "description": "Ring focus",
+          "original": "\\bfocus:ring-indigo-50\\b",
+          "replacement": "focus:ring-primary/20",
+          "count": 1
+        },
+        {
+          "description": "Ring focus",
+          "original": "\\bfocus:ring-indigo-500\\b",
+          "replacement": "focus:ring-primary",
+          "count": 2
+        },
+        {
+          "description": "Focus bordure",
+          "original": "\\bfocus:border-indigo-500\\b",
+          "replacement": "focus:border-primary",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "file": "components\\avoirs\\AvoirsDetails.tsx",
+      "changes": 67,
+      "details": [
+        {
+          "description": "Fond principal",
+          "original": "\\bbg-white\\b",
+          "replacement": "bg-base-100",
+          "count": 4
+        },
+        {
+          "description": "Fond secondaire",
+          "original": "\\bbg-gray-50\\b",
+          "replacement": "bg-base-200",
+          "count": 8
+        },
+        {
+          "description": "Fond secondaire",
+          "original": "\\bbg-gray-100\\b",
+          "replacement": "bg-base-200",
+          "count": 6
+        },
+        {
+          "description": "Bordure standard",
+          "original": "\\bborder-gray-200\\b",
+          "replacement": "border-base-300",
+          "count": 6
+        },
+        {
+          "description": "Bordure légère",
+          "original": "\\bborder-gray-100\\b",
+          "replacement": "border-base-200",
+          "count": 4
+        },
+        {
+          "description": "Texte principal",
+          "original": "\\btext-gray-900\\b",
+          "replacement": "text-base-content",
+          "count": 3
+        },
+        {
+          "description": "Texte secondaire",
+          "original": "\\btext-gray-600\\b",
+          "replacement": "text-base-content/70",
+          "count": 1
+        },
+        {
+          "description": "Texte secondaire",
+          "original": "\\btext-gray-500\\b",
+          "replacement": "text-base-content/60",
+          "count": 16
+        },
+        {
+          "description": "Texte tertiaire",
+          "original": "\\btext-gray-400\\b",
+          "replacement": "text-base-content/50",
+          "count": 3
+        },
+        {
+          "description": "Fond primaire léger",
+          "original": "\\bbg-indigo-50\\b",
+          "replacement": "bg-primary/10",
+          "count": 1
+        },
+        {
+          "description": "Fond succès léger",
+          "original": "\\bbg-emerald-50\\b",
+          "replacement": "bg-success/10",
+          "count": 2
+        },
+        {
+          "description": "Fond erreur léger",
+          "original": "\\bbg-red-50\\b",
+          "replacement": "bg-error/10",
+          "count": 1
+        },
+        {
+          "description": "Fond erreur",
+          "original": "\\bbg-red-100\\b",
+          "replacement": "bg-error/20",
+          "count": 1
+        },
+        {
+          "description": "Fond warning léger",
+          "original": "\\bbg-amber-50\\b",
+          "replacement": "bg-warning/10",
+          "count": 1
+        },
+        {
+          "description": "Texte primaire",
+          "original": "\\btext-indigo-600\\b",
+          "replacement": "text-primary",
+          "count": 3
+        },
+        {
+          "description": "Texte primaire",
+          "original": "\\btext-indigo-700\\b",
+          "replacement": "text-primary",
+          "count": 1
+        },
+        {
+          "description": "Texte succès",
+          "original": "\\btext-emerald-600\\b",
+          "replacement": "text-success",
+          "count": 2
+        },
+        {
+          "description": "Texte erreur",
+          "original": "\\btext-red-700\\b",
+          "replacement": "text-error",
+          "count": 1
+        },
+        {
+          "description": "Texte warning",
+          "original": "\\btext-amber-600\\b",
+          "replacement": "text-warning",
+          "count": 1
+        },
+        {
+          "description": "Bouton succès",
+          "original": "\\bbg-emerald-600\\b",
+          "replacement": "bg-success",
+          "count": 1
+        },
+        {
+          "description": "Hover bouton succès",
+          "original": "\\bhover:bg-emerald-700\\b",
+          "replacement": "hover:bg-success-focus",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "file": "components\\common\\ConfigOptionManager.tsx",
+      "changes": 67,
+      "details": [
+        {
+          "description": "Fond principal",
+          "original": "\\bbg-white\\b",
+          "replacement": "bg-base-100",
+          "count": 7
+        },
+        {
+          "description": "Fond secondaire",
+          "original": "\\bbg-gray-50\\b",
+          "replacement": "bg-base-200",
+          "count": 2
+        },
+        {
+          "description": "Fond secondaire",
+          "original": "\\bbg-gray-100\\b",
+          "replacement": "bg-base-200",
+          "count": 1
+        },
+        {
+          "description": "Bordure standard",
+          "original": "\\bborder-gray-200\\b",
+          "replacement": "border-base-300",
+          "count": 7
+        },
+        {
+          "description": "Bordure légère",
+          "original": "\\bborder-gray-100\\b",
+          "replacement": "border-base-200",
+          "count": 3
+        },
+        {
+          "description": "Bordure",
+          "original": "\\bborder-gray-300\\b",
+          "replacement": "border-base-300",
+          "count": 1
+        },
+        {
+          "description": "Texte principal",
+          "original": "\\btext-gray-900\\b",
+          "replacement": "text-base-content",
+          "count": 5
+        },
+        {
+          "description": "Texte secondaire",
+          "original": "\\btext-gray-500\\b",
+          "replacement": "text-base-content/60",
+          "count": 5
+        },
+        {
+          "description": "Texte tertiaire",
+          "original": "\\btext-gray-400\\b",
+          "replacement": "text-base-content/50",
+          "count": 4
+        },
+        {
+          "description": "Fond primaire léger",
+          "original": "\\bbg-indigo-50\\b",
+          "replacement": "bg-primary/10",
+          "count": 2
+        },
+        {
+          "description": "Fond succès léger",
+          "original": "\\bbg-emerald-50\\b",
+          "replacement": "bg-success/10",
+          "count": 1
+        },
+        {
+          "description": "Fond erreur léger",
+          "original": "\\bbg-red-50\\b",
+          "replacement": "bg-error/10",
+          "count": 2
+        },
+        {
+          "description": "Texte primaire",
+          "original": "\\btext-indigo-600\\b",
+          "replacement": "text-primary",
+          "count": 4
+        },
+        {
+          "description": "Texte succès",
+          "original": "\\btext-emerald-600\\b",
+          "replacement": "text-success",
+          "count": 1
+        },
+        {
+          "description": "Texte erreur",
+          "original": "\\btext-red-600\\b",
+          "replacement": "text-error",
+          "count": 2
+        },
+        {
+          "description": "Bouton primaire",
+          "original": "\\bbg-indigo-600\\b",
+          "replacement": "bg-primary",
+          "count": 2
+        },
+        {
+          "description": "Hover bouton primaire",
+          "original": "\\bhover:bg-indigo-700\\b",
+          "replacement": "hover:bg-primary-focus",
+          "count": 2
+        },
+        {
+          "description": "Ring focus",
+          "original": "\\bfocus:ring-indigo-50\\b",
+          "replacement": "focus:ring-primary/20",
+          "count": 5
+        },
+        {
+          "description": "Ring focus",
+          "original": "\\bfocus:ring-indigo-500\\b",
+          "replacement": "focus:ring-primary",
+          "count": 1
+        },
+        {
+          "description": "Focus bordure",
+          "original": "\\bfocus:border-indigo-500\\b",
+          "replacement": "focus:border-primary",
+          "count": 5
+        },
+        {
+          "description": "Opacité faible",
+          "original": "\\bopacity-30\\b",
+          "replacement": "text-base-content/30",
+          "count": 2
+        },
+        {
+          "description": "Opacité moyenne",
+          "original": "\\bopacity-50\\b",
+          "replacement": "text-base-content/50",
+          "count": 3
+        }
+      ]
+    },
+    {
+      "file": "components\\fournisseurs\\FournisseursList.tsx",
+      "changes": 67,
+      "details": [
+        {
+          "description": "Fond principal",
+          "original": "\\bbg-white\\b",
+          "replacement": "bg-base-100",
+          "count": 5
+        },
+        {
+          "description": "Fond secondaire",
+          "original": "\\bbg-gray-50\\b",
+          "replacement": "bg-base-200",
+          "count": 2
+        },
+        {
+          "description": "Fond secondaire",
+          "original": "\\bbg-gray-100\\b",
+          "replacement": "bg-base-200",
+          "count": 10
+        },
+        {
+          "description": "Fond tertiaire",
+          "original": "\\bbg-gray-200\\b",
+          "replacement": "bg-base-300",
+          "count": 1
+        },
+        {
+          "description": "Bordure standard",
+          "original": "\\bborder-gray-200\\b",
+          "replacement": "border-base-300",
+          "count": 2
+        },
+        {
+          "description": "Bordure légère",
+          "original": "\\bborder-gray-100\\b",
+          "replacement": "border-base-200",
+          "count": 4
+        },
+        {
+          "description": "Bordure",
+          "original": "\\bborder-gray-300\\b",
+          "replacement": "border-base-300",
+          "count": 1
+        },
+        {
+          "description": "Texte principal",
+          "original": "\\btext-gray-900\\b",
+          "replacement": "text-base-content",
+          "count": 3
+        },
+        {
+          "description": "Texte secondaire",
+          "original": "\\btext-gray-600\\b",
+          "replacement": "text-base-content/70",
+          "count": 2
+        },
+        {
+          "description": "Texte secondaire",
+          "original": "\\btext-gray-500\\b",
+          "replacement": "text-base-content/60",
+          "count": 4
+        },
+        {
+          "description": "Texte tertiaire",
+          "original": "\\btext-gray-400\\b",
+          "replacement": "text-base-content/50",
+          "count": 9
+        },
+        {
+          "description": "Texte faible",
+          "original": "\\btext-gray-300\\b",
+          "replacement": "text-base-content/40",
+          "count": 1
+        },
+        {
+          "description": "Fond primaire léger",
+          "original": "\\bbg-indigo-50\\b",
+          "replacement": "bg-primary/10",
+          "count": 3
+        },
+        {
+          "description": "Fond succès léger",
+          "original": "\\bbg-emerald-50\\b",
+          "replacement": "bg-success/10",
+          "count": 1
+        },
+        {
+          "description": "Fond erreur léger",
+          "original": "\\bbg-red-50\\b",
+          "replacement": "bg-error/10",
+          "count": 2
+        },
+        {
+          "description": "Texte primaire",
+          "original": "\\btext-indigo-600\\b",
+          "replacement": "text-primary",
+          "count": 2
+        },
+        {
+          "description": "Texte primaire",
+          "original": "\\btext-indigo-700\\b",
+          "replacement": "text-primary",
+          "count": 1
+        },
+        {
+          "description": "Texte succès",
+          "original": "\\btext-emerald-600\\b",
+          "replacement": "text-success",
+          "count": 2
+        },
+        {
+          "description": "Texte erreur",
+          "original": "\\btext-red-600\\b",
+          "replacement": "text-error",
+          "count": 2
+        },
+        {
+          "description": "Bouton primaire",
+          "original": "\\bbg-indigo-600\\b",
+          "replacement": "bg-primary",
+          "count": 4
+        },
+        {
+          "description": "Hover bouton primaire",
+          "original": "\\bhover:bg-indigo-700\\b",
+          "replacement": "hover:bg-primary-focus",
+          "count": 2
+        },
+        {
+          "description": "Ring focus",
+          "original": "\\bfocus:ring-indigo-50\\b",
+          "replacement": "focus:ring-primary/20",
+          "count": 1
+        },
+        {
+          "description": "Focus bordure",
+          "original": "\\bfocus:border-indigo-500\\b",
+          "replacement": "focus:border-primary",
+          "count": 1
+        },
+        {
+          "description": "Opacité faible",
+          "original": "\\bopacity-30\\b",
+          "replacement": "text-base-content/30",
+          "count": 2
+        }
+      ]
+    },
+    {
+      "file": "components\\sales\\modals\\ProductDetailsModal.tsx",
+      "changes": 67,
+      "details": [
+        {
+          "description": "Fond principal",
+          "original": "\\bbg-white\\b",
+          "replacement": "bg-base-100",
+          "count": 1
+        },
+        {
+          "description": "Fond secondaire",
+          "original": "\\bbg-gray-50\\b",
+          "replacement": "bg-base-200",
+          "count": 5
+        },
+        {
+          "description": "Fond secondaire",
+          "original": "\\bbg-gray-100\\b",
+          "replacement": "bg-base-200",
+          "count": 4
+        },
+        {
+          "description": "Bordure standard",
+          "original": "\\bborder-gray-200\\b",
+          "replacement": "border-base-300",
+          "count": 4
+        },
+        {
+          "description": "Bordure légère",
+          "original": "\\bborder-gray-100\\b",
+          "replacement": "border-base-200",
+          "count": 8
+        },
+        {
+          "description": "Texte principal",
+          "original": "\\btext-gray-900\\b",
+          "replacement": "text-base-content",
+          "count": 2
+        },
+        {
+          "description": "Texte principal",
+          "original": "\\btext-gray-700\\b",
+          "replacement": "text-base-content",
+          "count": 7
+        },
+        {
+          "description": "Texte secondaire",
+          "original": "\\btext-gray-600\\b",
+          "replacement": "text-base-content/70",
+          "count": 6
+        },
+        {
+          "description": "Texte secondaire",
+          "original": "\\btext-gray-500\\b",
+          "replacement": "text-base-content/60",
+          "count": 5
+        },
+        {
+          "description": "Texte tertiaire",
+          "original": "\\btext-gray-400\\b",
+          "replacement": "text-base-content/50",
+          "count": 7
+        },
+        {
+          "description": "Fond primaire léger",
+          "original": "\\bbg-indigo-50\\b",
+          "replacement": "bg-primary/10",
+          "count": 1
+        },
+        {
+          "description": "Fond info léger",
+          "original": "\\bbg-blue-50\\b",
+          "replacement": "bg-info/10",
+          "count": 2
+        },
+        {
+          "description": "Fond succès léger",
+          "original": "\\bbg-emerald-50\\b",
+          "replacement": "bg-success/10",
+          "count": 1
+        },
+        {
+          "description": "Fond succès",
+          "original": "\\bbg-emerald-100\\b",
+          "replacement": "bg-success/20",
+          "count": 1
+        },
+        {
+          "description": "Fond erreur",
+          "original": "\\bbg-red-100\\b",
+          "replacement": "bg-error/20",
+          "count": 2
+        },
+        {
+          "description": "Fond warning léger",
+          "original": "\\bbg-orange-50\\b",
+          "replacement": "bg-warning/10",
+          "count": 1
+        },
+        {
+          "description": "Texte primaire",
+          "original": "\\btext-indigo-600\\b",
+          "replacement": "text-primary",
+          "count": 2
+        },
+        {
+          "description": "Texte info",
+          "original": "\\btext-blue-600\\b",
+          "replacement": "text-info",
+          "count": 2
+        },
+        {
+          "description": "Texte succès",
+          "original": "\\btext-emerald-700\\b",
+          "replacement": "text-success",
+          "count": 1
+        },
+        {
+          "description": "Texte erreur",
+          "original": "\\btext-red-600\\b",
+          "replacement": "text-error",
+          "count": 1
+        },
+        {
+          "description": "Texte erreur",
+          "original": "\\btext-red-700\\b",
+          "replacement": "text-error",
+          "count": 1
+        },
+        {
+          "description": "Texte warning",
+          "original": "\\btext-orange-600\\b",
+          "replacement": "text-warning",
+          "count": 2
+        },
+        {
+          "description": "Bouton info",
+          "original": "\\bbg-blue-600\\b",
+          "replacement": "bg-info",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "file": "components\\avoirs\\AvoirsTable.tsx",
+      "changes": 66,
+      "details": [
+        {
+          "description": "Fond secondaire",
+          "original": "\\bbg-gray-50\\b",
+          "replacement": "bg-base-200",
+          "count": 1
+        },
+        {
+          "description": "Fond secondaire",
+          "original": "\\bbg-gray-100\\b",
+          "replacement": "bg-base-200",
+          "count": 10
+        },
+        {
+          "description": "Bordure standard",
+          "original": "\\bborder-gray-200\\b",
+          "replacement": "border-base-300",
+          "count": 12
+        },
+        {
+          "description": "Bordure",
+          "original": "\\bborder-gray-300\\b",
+          "replacement": "border-base-300",
+          "count": 2
+        },
+        {
+          "description": "Texte principal",
+          "original": "\\btext-gray-900\\b",
+          "replacement": "text-base-content",
+          "count": 2
+        },
+        {
+          "description": "Texte secondaire",
+          "original": "\\btext-gray-500\\b",
+          "replacement": "text-base-content/60",
+          "count": 6
+        },
+        {
+          "description": "Texte tertiaire",
+          "original": "\\btext-gray-400\\b",
+          "replacement": "text-base-content/50",
+          "count": 8
+        },
+        {
+          "description": "Fond primaire léger",
+          "original": "\\bbg-indigo-50\\b",
+          "replacement": "bg-primary/10",
+          "count": 1
+        },
+        {
+          "description": "Fond info léger",
+          "original": "\\bbg-blue-50\\b",
+          "replacement": "bg-info/10",
+          "count": 1
+        },
+        {
+          "description": "Fond succès léger",
+          "original": "\\bbg-emerald-50\\b",
+          "replacement": "bg-success/10",
+          "count": 3
+        },
+        {
+          "description": "Fond erreur léger",
+          "original": "\\bbg-red-50\\b",
+          "replacement": "bg-error/10",
+          "count": 2
+        },
+        {
+          "description": "Fond warning léger",
+          "original": "\\bbg-amber-50\\b",
+          "replacement": "bg-warning/10",
+          "count": 2
+        },
+        {
+          "description": "Texte primaire",
+          "original": "\\btext-indigo-600\\b",
+          "replacement": "text-primary",
+          "count": 4
+        },
+        {
+          "description": "Texte info",
+          "original": "\\btext-blue-600\\b",
+          "replacement": "text-info",
+          "count": 1
+        },
+        {
+          "description": "Texte succès",
+          "original": "\\btext-emerald-600\\b",
+          "replacement": "text-success",
+          "count": 3
+        },
+        {
+          "description": "Texte erreur",
+          "original": "\\btext-red-600\\b",
+          "replacement": "text-error",
+          "count": 2
+        },
+        {
+          "description": "Texte warning",
+          "original": "\\btext-amber-600\\b",
+          "replacement": "text-warning",
+          "count": 2
+        },
+        {
+          "description": "Ring focus",
+          "original": "\\bfocus:ring-indigo-500\\b",
+          "replacement": "focus:ring-primary",
+          "count": 2
+        },
+        {
+          "description": "Opacité moyenne",
+          "original": "\\bopacity-50\\b",
+          "replacement": "text-base-content/50",
+          "count": 2
+        }
+      ]
+    },
+    {
+      "file": "components\\dashboard\\ExpirationAlertsWidget.tsx",
+      "changes": 62,
+      "details": [
+        {
+          "description": "Fond principal",
+          "original": "\\bbg-white\\b",
+          "replacement": "bg-base-100",
+          "count": 4
+        },
+        {
+          "description": "Fond secondaire",
+          "original": "\\bbg-gray-50\\b",
+          "replacement": "bg-base-200",
+          "count": 3
+        },
+        {
+          "description": "Fond secondaire",
+          "original": "\\bbg-gray-100\\b",
+          "replacement": "bg-base-200",
+          "count": 4
+        },
+        {
+          "description": "Bordure standard",
+          "original": "\\bborder-gray-200\\b",
+          "replacement": "border-base-300",
+          "count": 1
+        },
+        {
+          "description": "Bordure légère",
+          "original": "\\bborder-gray-100\\b",
+          "replacement": "border-base-200",
+          "count": 4
+        },
+        {
+          "description": "Bordure",
+          "original": "\\bborder-gray-300\\b",
+          "replacement": "border-base-300",
+          "count": 1
+        },
+        {
+          "description": "Texte principal",
+          "original": "\\btext-gray-800\\b",
+          "replacement": "text-base-content",
+          "count": 3
+        },
+        {
+          "description": "Texte principal",
+          "original": "\\btext-gray-700\\b",
+          "replacement": "text-base-content",
+          "count": 4
+        },
+        {
+          "description": "Texte secondaire",
+          "original": "\\btext-gray-600\\b",
+          "replacement": "text-base-content/70",
+          "count": 2
+        },
+        {
+          "description": "Texte secondaire",
+          "original": "\\btext-gray-500\\b",
+          "replacement": "text-base-content/60",
+          "count": 4
+        },
+        {
+          "description": "Texte tertiaire",
+          "original": "\\btext-gray-400\\b",
+          "replacement": "text-base-content/50",
+          "count": 4
+        },
+        {
+          "description": "Fond info léger",
+          "original": "\\bbg-blue-50\\b",
+          "replacement": "bg-info/10",
+          "count": 1
+        },
+        {
+          "description": "Fond info",
+          "original": "\\bbg-blue-100\\b",
+          "replacement": "bg-info/20",
+          "count": 1
+        },
+        {
+          "description": "Fond succès léger",
+          "original": "\\bbg-emerald-50\\b",
+          "replacement": "bg-success/10",
+          "count": 1
+        },
+        {
+          "description": "Fond succès",
+          "original": "\\bbg-emerald-100\\b",
+          "replacement": "bg-success/20",
+          "count": 1
+        },
+        {
+          "description": "Fond erreur léger",
+          "original": "\\bbg-red-50\\b",
+          "replacement": "bg-error/10",
+          "count": 2
+        },
+        {
+          "description": "Fond erreur",
+          "original": "\\bbg-red-100\\b",
+          "replacement": "bg-error/20",
+          "count": 3
+        },
+        {
+          "description": "Fond warning léger",
+          "original": "\\bbg-amber-50\\b",
+          "replacement": "bg-warning/10",
+          "count": 1
+        },
+        {
+          "description": "Fond warning",
+          "original": "\\bbg-amber-100\\b",
+          "replacement": "bg-warning/20",
+          "count": 3
+        },
+        {
+          "description": "Fond warning léger",
+          "original": "\\bbg-orange-50\\b",
+          "replacement": "bg-warning/10",
+          "count": 1
+        },
+        {
+          "description": "Fond warning",
+          "original": "\\bbg-orange-100\\b",
+          "replacement": "bg-warning/20",
+          "count": 3
+        },
+        {
+          "description": "Texte info",
+          "original": "\\btext-blue-700\\b",
+          "replacement": "text-info",
+          "count": 1
+        },
+        {
+          "description": "Texte succès",
+          "original": "\\btext-emerald-600\\b",
+          "replacement": "text-success",
+          "count": 1
+        },
+        {
+          "description": "Texte succès",
+          "original": "\\btext-emerald-700\\b",
+          "replacement": "text-success",
+          "count": 2
+        },
+        {
+          "description": "Texte erreur",
+          "original": "\\btext-red-600\\b",
+          "replacement": "text-error",
+          "count": 1
+        },
+        {
+          "description": "Texte erreur",
+          "original": "\\btext-red-700\\b",
+          "replacement": "text-error",
+          "count": 2
+        },
+        {
+          "description": "Texte warning",
+          "original": "\\btext-amber-700\\b",
+          "replacement": "text-warning",
+          "count": 2
+        },
+        {
+          "description": "Texte warning",
+          "original": "\\btext-orange-700\\b",
+          "replacement": "text-warning",
+          "count": 2
+        }
+      ]
+    },
+    {
+      "file": "components\\stock\\StockAnalysisTable.tsx",
+      "changes": 60,
+      "details": [
+        {
+          "description": "Fond principal",
+          "original": "\\bbg-white\\b",
+          "replacement": "bg-base-100",
+          "count": 1
+        },
+        {
+          "description": "Fond secondaire",
+          "original": "\\bbg-gray-50\\b",
+          "replacement": "bg-base-200",
+          "count": 3
+        },
+        {
+          "description": "Fond secondaire",
+          "original": "\\bbg-gray-100\\b",
+          "replacement": "bg-base-200",
+          "count": 1
+        },
+        {
+          "description": "Bordure standard",
+          "original": "\\bborder-gray-200\\b",
+          "replacement": "border-base-300",
+          "count": 2
+        },
+        {
+          "description": "Bordure",
+          "original": "\\bborder-gray-300\\b",
+          "replacement": "border-base-300",
+          "count": 2
+        },
+        {
+          "description": "Texte principal",
+          "original": "\\btext-gray-900\\b",
+          "replacement": "text-base-content",
+          "count": 1
+        },
+        {
+          "description": "Texte secondaire",
+          "original": "\\btext-gray-500\\b",
+          "replacement": "text-base-content/60",
+          "count": 5
+        },
+        {
+          "description": "Texte tertiaire",
+          "original": "\\btext-gray-400\\b",
+          "replacement": "text-base-content/50",
+          "count": 24
+        },
+        {
+          "description": "Fond primaire léger",
+          "original": "\\bbg-indigo-50\\b",
+          "replacement": "bg-primary/10",
+          "count": 1
+        },
+        {
+          "description": "Fond info léger",
+          "original": "\\bbg-blue-50\\b",
+          "replacement": "bg-info/10",
+          "count": 1
+        },
+        {
+          "description": "Fond erreur léger",
+          "original": "\\bbg-red-50\\b",
+          "replacement": "bg-error/10",
+          "count": 1
+        },
+        {
+          "description": "Fond warning léger",
+          "original": "\\bbg-amber-50\\b",
+          "replacement": "bg-warning/10",
+          "count": 2
+        },
+        {
+          "description": "Texte primaire",
+          "original": "\\btext-indigo-600\\b",
+          "replacement": "text-primary",
+          "count": 2
+        },
+        {
+          "description": "Texte info",
+          "original": "\\btext-blue-600\\b",
+          "replacement": "text-info",
+          "count": 2
+        },
+        {
+          "description": "Texte erreur",
+          "original": "\\btext-red-600\\b",
+          "replacement": "text-error",
+          "count": 7
+        },
+        {
+          "description": "Texte warning",
+          "original": "\\btext-amber-600\\b",
+          "replacement": "text-warning",
+          "count": 3
+        },
+        {
+          "description": "Ring focus",
+          "original": "\\bfocus:ring-indigo-500\\b",
+          "replacement": "focus:ring-primary",
+          "count": 2
+        }
+      ]
+    },
+    {
+      "file": "components\\clients\\ClientDepositModal.tsx",
+      "changes": 58,
+      "details": [
+        {
+          "description": "Fond principal",
+          "original": "\\bbg-white\\b",
+          "replacement": "bg-base-100",
+          "count": 6
+        },
+        {
+          "description": "Fond secondaire",
+          "original": "\\bbg-gray-50\\b",
+          "replacement": "bg-base-200",
+          "count": 1
+        },
+        {
+          "description": "Bordure standard",
+          "original": "\\bborder-gray-200\\b",
+          "replacement": "border-base-300",
+          "count": 5
+        },
+        {
+          "description": "Texte principal",
+          "original": "\\btext-gray-900\\b",
+          "replacement": "text-base-content",
+          "count": 20
+        },
+        {
+          "description": "Fond info",
+          "original": "\\bbg-blue-100\\b",
+          "replacement": "bg-info/20",
+          "count": 1
+        },
+        {
+          "description": "Fond succès",
+          "original": "\\bbg-emerald-100\\b",
+          "replacement": "bg-success/20",
+          "count": 1
+        },
+        {
+          "description": "Fond erreur",
+          "original": "\\bbg-red-100\\b",
+          "replacement": "bg-error/20",
+          "count": 1
+        },
+        {
+          "description": "Fond warning",
+          "original": "\\bbg-amber-100\\b",
+          "replacement": "bg-warning/20",
+          "count": 1
+        },
+        {
+          "description": "Texte primaire",
+          "original": "\\btext-indigo-600\\b",
+          "replacement": "text-primary",
+          "count": 4
+        },
+        {
+          "description": "Texte info",
+          "original": "\\btext-blue-700\\b",
+          "replacement": "text-info",
+          "count": 1
+        },
+        {
+          "description": "Texte succès",
+          "original": "\\btext-emerald-600\\b",
+          "replacement": "text-success",
+          "count": 1
+        },
+        {
+          "description": "Texte succès",
+          "original": "\\btext-emerald-700\\b",
+          "replacement": "text-success",
+          "count": 1
+        },
+        {
+          "description": "Texte erreur",
+          "original": "\\btext-red-600\\b",
+          "replacement": "text-error",
+          "count": 2
+        },
+        {
+          "description": "Texte erreur",
+          "original": "\\btext-red-700\\b",
+          "replacement": "text-error",
+          "count": 1
+        },
+        {
+          "description": "Texte warning",
+          "original": "\\btext-amber-700\\b",
+          "replacement": "text-warning",
+          "count": 1
+        },
+        {
+          "description": "Bouton primaire",
+          "original": "\\bbg-indigo-600\\b",
+          "replacement": "bg-primary",
+          "count": 1
+        },
+        {
+          "description": "Hover bouton primaire",
+          "original": "\\bhover:bg-indigo-700\\b",
+          "replacement": "hover:bg-primary-focus",
+          "count": 1
+        },
+        {
+          "description": "Bouton erreur",
+          "original": "\\bbg-red-600\\b",
+          "replacement": "bg-error",
+          "count": 1
+        },
+        {
+          "description": "Hover bouton erreur",
+          "original": "\\bhover:bg-red-700\\b",
+          "replacement": "hover:bg-error-focus",
+          "count": 1
+        },
+        {
+          "description": "Ring focus",
+          "original": "\\bfocus:ring-indigo-50\\b",
+          "replacement": "focus:ring-primary/20",
+          "count": 3
+        },
+        {
+          "description": "Focus bordure",
+          "original": "\\bfocus:border-indigo-500\\b",
+          "replacement": "focus:border-primary",
+          "count": 3
+        },
+        {
+          "description": "Opacité faible",
+          "original": "\\bopacity-20\\b",
+          "replacement": "text-base-content/20",
+          "count": 1
+        }
+      ]
+    }
+  ]
+}

@@ -107,7 +107,7 @@ export const ReceptionCommandeTemplate: React.FC<ReceptionCommandeTemplateProps>
                             <th className="py-1 px-2 text-center font-black">{t('orders.product_table.headers.cip')}</th>
                             <th className="py-1 px-2 text-center font-black">{t('orders.product_table.headers.stAnt')}</th>
                             <th className="py-1 px-2 text-center font-black">{t('orders.product_table.headers.qty')}</th>
-                            <th className="py-1 px-2 text-center font-black bg-slate-50/50">{t('orders.product_table.headers.ug')}</th>
+                            <th className="py-1 px-2 text-center font-black bg-base-200/50">{t('orders.product_table.headers.ug')}</th>
                             <th className="py-1 px-2 text-center font-black">{t('orders.product_table.headers.stock')}</th>
                             <th className="py-1 px-2 text-right font-black">{t('orders.product_table.headers.buy_price_ht')}</th>
                             <th className="py-1 px-3 text-right font-black">{t('orders.product_table.headers.total_ht')}</th>
@@ -134,7 +134,7 @@ export const ReceptionCommandeTemplate: React.FC<ReceptionCommandeTemplateProps>
                                     <td className="py-1 px-2 text-center font-mono text-[8.5px] text-base-content/60">{cip}</td>
                                     <td className="py-1 px-2 text-center font-black">{stAnt}</td>
                                     <td className="py-1 px-2 text-center font-black">{p.quantity}</td>
-                                    <td className="py-1 px-2 text-center font-bold text-base-content/40 bg-slate-50/20">{p.unites_gratuites || 0}</td>
+                                    <td className="py-1 px-2 text-center font-bold text-base-content/40 bg-base-200/20">{p.unites_gratuites || 0}</td>
                                     <td className="py-1 px-2 text-center font-black">{currentStock}</td>
                                     <td className="py-1 px-2 text-right text-base-content/80">{formatM(p.price)}{tvaLabel}</td>
                                     <td className="py-1 px-3 text-right font-black text-base-content">{formatM(lineTotal)}</td>

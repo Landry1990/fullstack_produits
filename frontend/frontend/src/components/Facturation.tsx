@@ -85,19 +85,19 @@ export default function Facturation() {
 
       {/* ── BANNIÈRE MODE MODIFICATION ── */}
       {hook.isModificationMode && hook.modificationInvoiceId && (
-        <div className="flex items-center gap-3 px-4 py-2.5 bg-amber-50 border-b border-amber-200 shrink-0">
-          <div className="p-1.5 bg-amber-100 text-amber-600 rounded-lg shrink-0">
+        <div className="flex items-center gap-3 px-4 py-2.5 bg-warning/10 border-b border-amber-200 shrink-0">
+          <div className="p-1.5 bg-warning/20 text-warning rounded-lg shrink-0">
             <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
             </svg>
           </div>
           <div className="flex-1 min-w-0">
             <p className="text-xs font-black text-amber-800 uppercase tracking-wide">{hook.t('facturation:modification_mode.title')}</p>
-            <div className="flex flex-wrap gap-3 text-[10px] text-amber-700 mt-0.5">
+            <div className="flex flex-wrap gap-3 text-[10px] text-warning mt-0.5">
               <span>{hook.t('facturation:modification_mode.original_total')}: <strong>{formatCurrency(Math.round(hook.originalTotalTtc))}</strong></span>
               <span>{hook.t('facturation:modification_mode.new_total')}: <strong>{formatCurrency(Math.round(hook.totals.totalTtc))}</strong></span>
               {hook.totals.totalTtc !== hook.originalTotalTtc && (
-                <span className={`font-black ${hook.totals.totalTtc > hook.originalTotalTtc ? 'text-emerald-700' : 'text-red-700'}`}>
+                <span className={`font-black ${hook.totals.totalTtc > hook.originalTotalTtc ? 'text-success' : 'text-error'}`}>
                   {hook.totals.totalTtc > hook.originalTotalTtc ? '+' : ''}{formatCurrency(Math.round(hook.totals.totalTtc - hook.originalTotalTtc))}
                   {hook.totals.totalTtc > hook.originalTotalTtc ? ` (${hook.t('facturation:modification_mode.to_collect')})` : ` (${hook.t('facturation:modification_mode.to_refund')})`}
                 </span>
@@ -105,7 +105,7 @@ export default function Facturation() {
             </div>
           </div>
           <button
-            className="btn btn-xs btn-ghost text-amber-700 shrink-0"
+            className="btn btn-xs btn-ghost text-warning shrink-0"
             onClick={() => {
               hook.setIsModificationMode(false)
               hook.setModificationInvoiceId(null)
@@ -191,7 +191,7 @@ export default function Facturation() {
           </div>
 
           {/* Zone vide — raccourcis */}
-          <div className="flex-1 hidden lg:flex flex-col justify-center items-center opacity-20 hover:opacity-60 transition-opacity duration-500">
+          <div className="flex-1 hidden lg:flex flex-col justify-center items-center text-base-content/20 hover:opacity-60 transition-opacity duration-500">
             <div className="w-full max-w-xs rounded-2xl border border-dashed border-base-300 p-6 flex flex-col items-center gap-5 text-center">
               <div className="size-12 rounded-xl bg-primary/10 flex items-center justify-center">
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">

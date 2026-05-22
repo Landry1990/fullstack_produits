@@ -164,7 +164,71 @@ class PharmacySettings(models.Model):
         default=40,
         help_text="Poids de la rotation dans le score de santé global (0-100)"
     )
-    
+
+    # --- Paramètres Rapport Automatique Mensuel ---
+    monthly_report_enabled = models.BooleanField(
+        default=True,
+        help_text="Activer le rapport automatique mensuel"
+    )
+    monthly_report_day = models.IntegerField(
+        default=1,
+        help_text="Jour du mois pour l'envoi du rapport (1-28)"
+    )
+    # Éléments du rapport (cases à cocher)
+    report_include_sales = models.BooleanField(
+        default=True,
+        help_text="Inclure les ventes du mois"
+    )
+    report_include_margin = models.BooleanField(
+        default=True,
+        help_text="Inclure les marges réalisées"
+    )
+    report_include_stock_health = models.BooleanField(
+        default=True,
+        help_text="Inclure le score de santé du stock"
+    )
+    report_include_ruptures = models.BooleanField(
+        default=True,
+        help_text="Inclure les ruptures de stock"
+    )
+    report_include_expiration = models.BooleanField(
+        default=True,
+        help_text="Inclure les alertes péremption"
+    )
+    report_include_top_products = models.BooleanField(
+        default=True,
+        help_text="Inclure le top 10 des produits vendus"
+    )
+    report_include_slow_moving = models.BooleanField(
+        default=True,
+        help_text="Inclure les produits à rotation lente"
+    )
+    report_include_debt = models.BooleanField(
+        default=True,
+        help_text="Inclire la dette clients et fournisseurs"
+    )
+    report_include_financial_summary = models.BooleanField(
+        default=True,
+        help_text="Inclure le résumé financier"
+    )
+    report_include_comparison = models.BooleanField(
+        default=False,
+        help_text="Inclure la comparaison avec le mois précédent"
+    )
+    report_recipients_email = models.TextField(
+        blank=True,
+        default="",
+        help_text="Emails destinataires (séparés par des virgules)"
+    )
+    report_send_whatsapp = models.BooleanField(
+        default=False,
+        help_text="Envoyer aussi via WhatsApp"
+    )
+    report_send_telegram = models.BooleanField(
+        default=False,
+        help_text="Envoyer aussi via Telegram"
+    )
+
     class Meta:
         verbose_name = "Paramètres Pharmacie"
         verbose_name_plural = "Paramètres Pharmacie"

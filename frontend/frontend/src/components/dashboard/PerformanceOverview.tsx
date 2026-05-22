@@ -120,7 +120,7 @@ export default function PerformanceOverview({
               <div className="absolute top-0 left-0 right-0 h-1 rounded-t-2xl" style={{ background: card.accent }} />
 
               <div className="flex items-start justify-between gap-2">
-                <p className="text-[10px] font-black uppercase tracking-widest text-gray-400 leading-tight">
+                <p className="text-[10px] font-black uppercase tracking-widest text-base-content/50 leading-tight">
                   {card.title}
                 </p>
                 <div className="size-9 rounded-xl flex items-center justify-center shrink-0" style={{ background: card.accent + '20', color: card.accent }}>
@@ -128,13 +128,13 @@ export default function PerformanceOverview({
                 </div>
               </div>
 
-              <p className={`text-xl sm:text-2xl font-black text-gray-900 tracking-tight leading-none ${card.highlight ? 'text-3xl sm:text-4xl' : ''}`}>
+              <p className={`text-xl sm:text-2xl font-black text-base-content tracking-tight leading-none ${card.highlight ? 'text-3xl sm:text-4xl' : ''}`}>
                 {card.value}
               </p>
 
               <div className="flex items-center gap-1.5 mt-auto">
                 <span className={`inline-flex items-center gap-0.5 text-[10px] font-black px-1.5 py-0.5 rounded ${
-                  card.isPositive ? 'bg-emerald-50 text-emerald-600' : 'bg-red-50 text-red-500'
+                  card.isPositive ? 'bg-success/20 text-success' : 'bg-error/20 text-error'
                 }`}>
                   {card.isPositive ? <ArrowUpRight className="size-2.5" /> : <ArrowDownRight className="size-2.5" />}
                   {card.sub}
@@ -144,7 +144,7 @@ export default function PerformanceOverview({
           );
 
           return (
-            <div key={i} className={`bg-white border border-gray-100 rounded-xl shadow-sm overflow-hidden transition-all ${card.link ? 'hover:shadow-md hover:-translate-y-0.5 cursor-pointer active:scale-[0.98]' : ''}`}>
+            <div key={i} className={`bg-base-100 border border-base-200 rounded-xl shadow-sm overflow-hidden transition-all ${card.link ? 'hover:shadow-md hover:-translate-y-0.5 cursor-pointer active:scale-[0.98]' : ''}`}>
               {card.link ? <Link to={card.link} className="block h-full">{inner}</Link> : inner}
             </div>
           );
@@ -154,22 +154,22 @@ export default function PerformanceOverview({
       {/* ── REAPPRO ALERT ──────────────────────────────────── */}
       {reapproStats && reapproStats.product_count > 0 && (
         <div
-          className="flex items-center justify-between p-4 sm:p-5 bg-blue-600 rounded-2xl shadow-lg shadow-blue-500/20 cursor-pointer hover:bg-blue-700 transition-all group"
+          className="flex items-center justify-between p-4 sm:p-5 bg-info rounded-2xl shadow-lg shadow-info/20 cursor-pointer hover:bg-info-focus transition-all group"
           onClick={() => navigate('/app/reappro-rayon')}
         >
           <div className="flex items-center gap-3 sm:gap-4 min-w-0">
-            <div className="size-10 sm:w-12 sm:h-12 bg-white/20 rounded-xl flex items-center justify-center shrink-0 border border-white/30">
-              <Package className="size-5 sm:w-6 sm:h-6 text-white" />
+            <div className="size-10 sm:w-12 sm:h-12 bg-info-content/20 rounded-xl flex items-center justify-center shrink-0 border border-info-content/30">
+              <Package className="size-5 sm:w-6 sm:h-6 text-info-content" />
             </div>
-            <div className="text-white min-w-0">
+            <div className="text-info-content min-w-0">
               <h3 className="text-xs sm:text-sm font-black uppercase tracking-wide leading-tight">{t('reappro.alert_title', { defaultValue: 'Réapprovisionnement rayon nécessaire' })}</h3>
               <p className="text-[10px] sm:text-xs font-bold opacity-75 mt-0.5 truncate">
                 {reapproStats.product_count} produits · +{reapproStats.total_units_suggested} unités à transférer
               </p>
             </div>
           </div>
-          <div className="size-8 rounded-full bg-white/10 flex items-center justify-center shrink-0 group-hover:translate-x-1 transition-transform border border-white/20 ml-3">
-            <ArrowRight className="size-4 text-white" />
+          <div className="size-8 rounded-full bg-info-content/10 flex items-center justify-center shrink-0 group-hover:translate-x-1 transition-transform border border-info-content/20 ml-3">
+            <ArrowRight className="size-4 text-info-content" />
           </div>
         </div>
       )}
@@ -178,14 +178,14 @@ export default function PerformanceOverview({
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-5">
 
         {/* Revenue Bar Chart */}
-        <div className="bg-white border border-gray-100 rounded-xl shadow-sm overflow-hidden flex flex-col">
-          <div className="flex items-center gap-3 px-5 pt-5 pb-4 border-b border-gray-100">
-            <div className="p-2 bg-emerald-50 text-emerald-600 rounded-lg">
+        <div className="bg-base-100 border border-base-200 rounded-xl shadow-sm overflow-hidden flex flex-col">
+          <div className="flex items-center gap-3 px-5 pt-5 pb-4 border-b border-base-200">
+            <div className="p-2 bg-success/10 text-success rounded-lg">
               <TrendingUp className="size-4" />
             </div>
             <div>
-              <h2 className="text-xs font-bold text-gray-900 tracking-tight uppercase">{t('charts.revenue_evolution')}</h2>
-              <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">{t('charts.last_7_days')}</p>
+              <h2 className="text-xs font-bold text-base-content tracking-tight uppercase">{t('charts.revenue_evolution')}</h2>
+              <p className="text-[10px] font-bold text-base-content/50 uppercase tracking-widest">{t('charts.last_7_days')}</p>
             </div>
           </div>
           <div className="p-4 sm:p-5 h-64 sm:h-72">
@@ -198,15 +198,15 @@ export default function PerformanceOverview({
                       <stop offset="100%" stopColor="#10b981" />
                     </linearGradient>
                   </defs>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f3f4f6" />
-                  <XAxis dataKey="jour" tick={{ fontSize: 11, fontWeight: 800, fill: '#6b7280' }} axisLine={false} tickLine={false} dy={8} />
-                  <YAxis yAxisId="ca" tick={{ fontSize: 10, fontWeight: 700, fill: '#9ca3af' }} axisLine={false} tickLine={false} tickFormatter={(v: number) => formatCurrencyLocal(v)} width={80} />
-                  <YAxis yAxisId="ventes" orientation="right" tick={{ fontSize: 10, fontWeight: 700, fill: '#f59e0b' }} axisLine={false} tickLine={false} width={30} />
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--bc) / 0.1)" />
+                  <XAxis dataKey="jour" tick={{ fontSize: 11, fontWeight: 800, fill: 'hsl(var(--bc) / 0.6)' }} axisLine={false} tickLine={false} dy={8} />
+                  <YAxis yAxisId="ca" tick={{ fontSize: 10, fontWeight: 700, fill: 'hsl(var(--bc) / 0.5)' }} axisLine={false} tickLine={false} tickFormatter={(v: number) => formatCurrencyLocal(v)} width={80} />
+                  <YAxis yAxisId="ventes" orientation="right" tick={{ fontSize: 10, fontWeight: 700, fill: 'hsl(var(--wa))' }} axisLine={false} tickLine={false} width={30} />
                   <Tooltip
                     formatter={(v: number, name: string) => name === 'montant' ? [formatCurrencyLocal(v), 'CA'] : [v, 'Ventes']}
-                    contentStyle={{ backgroundColor: '#fff', border: 'none', borderRadius: '12px', boxShadow: '0 10px 25px -5px rgba(0,0,0,.12)', padding: '10px 14px' }}
-                    itemStyle={{ fontSize: 12, fontWeight: 700 }}
-                    labelStyle={{ fontSize: 10, fontWeight: 900, color: '#9ca3af', marginBottom: 4 }}
+                    contentStyle={{ backgroundColor: 'hsl(var(--b1))', border: '1px solid hsl(var(--bc) / 0.1)', borderRadius: '12px', boxShadow: '0 10px 25px -5px rgba(0,0,0,.2)', padding: '10px 14px' }}
+                    itemStyle={{ fontSize: 12, fontWeight: 700, color: 'hsl(var(--bc))' }}
+                    labelStyle={{ fontSize: 10, fontWeight: 900, color: 'hsl(var(--bc) / 0.5)', marginBottom: 4 }}
                   />
                   <Legend wrapperStyle={{ fontSize: 10, fontWeight: 800, textTransform: 'uppercase', paddingTop: 8 }} />
                   <Line
@@ -216,8 +216,8 @@ export default function PerformanceOverview({
                     name="CA"
                     stroke="url(#revenueGradient)"
                     strokeWidth={3}
-                    dot={{ r: 5, fill: '#6366f1', strokeWidth: 2, stroke: '#fff' }}
-                    activeDot={{ r: 7, fill: '#10b981', strokeWidth: 2, stroke: '#fff' }}
+                    dot={{ r: 5, fill: '#6366f1', strokeWidth: 2, stroke: 'hsl(var(--b1))' }}
+                    activeDot={{ r: 7, fill: '#10b981', strokeWidth: 2, stroke: 'hsl(var(--b1))' }}
                     animationDuration={1200}
                   />
                   <Line
@@ -228,14 +228,14 @@ export default function PerformanceOverview({
                     stroke="#f59e0b"
                     strokeWidth={2}
                     strokeDasharray="5 3"
-                    dot={{ r: 4, fill: '#f59e0b', strokeWidth: 2, stroke: '#fff' }}
+                    dot={{ r: 4, fill: '#f59e0b', strokeWidth: 2, stroke: 'hsl(var(--b1))' }}
                     activeDot={{ r: 6, fill: '#f59e0b' }}
                     animationDuration={1200}
                   />
                 </LineChart>
               </ResponsiveContainer>
             ) : (
-              <div className="h-full flex items-center justify-center opacity-20">
+              <div className="h-full flex items-center justify-center text-base-content/20">
                 <TrendingUp className="size-12" />
               </div>
             )}
@@ -243,14 +243,14 @@ export default function PerformanceOverview({
         </div>
 
         {/* Hourly Traffic Chart */}
-        <div className="bg-white border border-gray-100 rounded-xl shadow-sm overflow-hidden flex flex-col">
-          <div className="flex items-center gap-3 px-5 pt-5 pb-4 border-b border-gray-100">
-            <div className="p-2 bg-indigo-50 text-indigo-600 rounded-lg">
+        <div className="bg-base-100 border border-base-200 rounded-xl shadow-sm overflow-hidden flex flex-col">
+          <div className="flex items-center gap-3 px-5 pt-5 pb-4 border-b border-base-200">
+            <div className="p-2 bg-primary/10 text-primary rounded-lg">
               <History className="size-4" />
             </div>
             <div>
-              <h2 className="text-xs font-bold text-gray-900 tracking-tight uppercase">{t('hourly_traffic_title')}</h2>
-              <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">{t('hourly_traffic_desc')}</p>
+              <h2 className="text-xs font-bold text-base-content tracking-tight uppercase">{t('hourly_traffic_title')}</h2>
+              <p className="text-[10px] font-bold text-base-content/50 uppercase tracking-widest">{t('hourly_traffic_desc')}</p>
             </div>
           </div>
           <div className="p-4 sm:p-5 h-64 sm:h-72">
@@ -263,20 +263,20 @@ export default function PerformanceOverview({
                       <stop offset="95%" stopColor="#6366f1" stopOpacity={0} />
                     </linearGradient>
                   </defs>
-                  <XAxis dataKey="hour" tick={{ fontSize: 10, fontWeight: 700, fill: '#9ca3af' }} axisLine={false} tickLine={false} />
-                  <YAxis tick={{ fontSize: 10, fontWeight: 700, fill: '#9ca3af' }} axisLine={false} tickLine={false} />
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f3f4f6" />
+                  <XAxis dataKey="hour" tick={{ fontSize: 10, fontWeight: 700, fill: 'hsl(var(--bc) / 0.5)' }} axisLine={false} tickLine={false} />
+                  <YAxis tick={{ fontSize: 10, fontWeight: 700, fill: 'hsl(var(--bc) / 0.5)' }} axisLine={false} tickLine={false} />
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--bc) / 0.1)" />
                   <Tooltip
-                    contentStyle={{ backgroundColor: '#fff', border: 'none', borderRadius: '12px', boxShadow: '0 10px 25px -5px rgba(0,0,0,.12)', padding: '10px 14px' }}
-                    itemStyle={{ fontSize: 12, fontWeight: 700 }}
-                    labelStyle={{ fontSize: 10, fontWeight: 900, color: '#9ca3af', marginBottom: 4 }}
+                    contentStyle={{ backgroundColor: 'hsl(var(--b1))', border: '1px solid hsl(var(--bc) / 0.1)', borderRadius: '12px', boxShadow: '0 10px 25px -5px rgba(0,0,0,.2)', padding: '10px 14px' }}
+                    itemStyle={{ fontSize: 12, fontWeight: 700, color: 'hsl(var(--bc))' }}
+                    labelStyle={{ fontSize: 10, fontWeight: 900, color: 'hsl(var(--bc) / 0.5)', marginBottom: 4 }}
                   />
                   <Area type="monotone" dataKey="sales_count" stroke="#6366f1" strokeWidth={2} strokeDasharray="5 5" fillOpacity={0} fill="#6366f1" name={t('dashboard.charts.avg_sales_label', { defaultValue: 'Moy. 30j' })} animationDuration={1200} />
                   <Area type="monotone" dataKey="today_sales_count" stroke="#10b981" strokeWidth={3} fillOpacity={1} fill="url(#colorTraffic)" name={t('dashboard.charts.today_sales_label', { defaultValue: "Aujourd'hui" })} animationDuration={1200} />
                 </AreaChart>
               </ResponsiveContainer>
             ) : (
-              <div className="h-full flex items-center justify-center opacity-20">
+              <div className="h-full flex items-center justify-center text-base-content/20">
                 <History className="size-12" />
               </div>
             )}
