@@ -255,9 +255,9 @@ export default function AnalyseABC() {
             <div className="stat-desc">{t('stock:abc.stats.period_info', { count: data.periode_mois })}</div>
           </div>
           
-          <div className="stat bg-red-50 rounded-lg shadow border border-red-200">
-            <div className="stat-title text-red-600">🔴 {t('stock:abc.stats.category_a')}</div>
-            <div className="stat-value text-red-600 text-2xl">{data.nb_produits_a}</div>
+          <div className="stat bg-error/10 rounded-lg shadow border border-red-200">
+            <div className="stat-title text-error">🔴 {t('stock:abc.stats.category_a')}</div>
+            <div className="stat-value text-error text-2xl">{data.nb_produits_a}</div>
             <div className="stat-desc text-red-500">{formatNumber(data.ca_categorie_a)} F ({data.ca_total > 0 ? Math.round(data.ca_categorie_a / data.ca_total * 100) : 0}%)</div>
           </div>
           
@@ -323,7 +323,7 @@ export default function AnalyseABC() {
                 </tr>
               ) : (
                 produitsFiltrés.map((p) => (
-                  <tr key={p.id} className={`hover ${p.en_rupture ? 'bg-red-50' : ''}`}>
+                  <tr key={p.id} className={`hover ${p.en_rupture ? 'bg-error/10' : ''}`}>
                     <td className="font-medium">
                       {p.nom}
                       {p.en_rupture && <span className="badge badge-error badge-xs ml-2">{t('stock:abc.table.shortage_badge')}</span>}

@@ -47,7 +47,7 @@ export default function ClientFormModal({
     required?: boolean;
   }) => (
     <div className="space-y-1.5">
-      <label className="flex items-center gap-1.5 text-xs font-medium text-gray-500">
+      <label className="flex items-center gap-1.5 text-xs font-medium text-base-content/60">
         <Icon className="size-3.5 text-indigo-500" />
         {label}
         {required && <span className="text-red-500">*</span>}
@@ -59,27 +59,27 @@ export default function ClientFormModal({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
       <div className="absolute inset-0 bg-gray-900/40 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative z-10 w-full max-w-3xl max-h-[92vh] flex flex-col bg-white rounded-xl shadow-2xl border border-gray-100 m-4">
+      <div className="relative z-10 w-full max-w-3xl max-h-[92vh] flex flex-col bg-base-100 rounded-xl shadow-2xl border border-base-200 m-4">
 
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-base-200">
           <div className="flex items-center gap-3">
-            <div className="p-2 bg-indigo-50 text-indigo-600 rounded-lg">
+            <div className="p-2 bg-primary/10 text-primary rounded-lg">
               <User className="size-5" />
             </div>
             <div>
-              <h2 className="text-lg font-bold text-gray-900 leading-tight">
+              <h2 className="text-lg font-bold text-base-content leading-tight">
                 {isEdit ? t('clients:actions.edit') : t('clients:actions.create')}
               </h2>
               {isEdit && data.id && (
-                <span className="text-[10px] text-gray-400 font-medium uppercase tracking-wider">
+                <span className="text-[10px] text-base-content/50 font-medium uppercase tracking-wider">
                   ID {data.id}
                 </span>
               )}
             </div>
           </div>
-          <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
-            <X className="size-5 text-gray-400" />
+          <button onClick={onClose} className="p-2 hover:bg-base-200 rounded-lg transition-colors">
+            <X className="size-5 text-base-content/50" />
           </button>
         </div>
 
@@ -95,8 +95,8 @@ export default function ClientFormModal({
                 onClick={() => setData({ ...data, client_type: type })}
                 className={`flex items-center gap-2 px-4 py-2.5 rounded-lg border text-sm font-medium transition-all ${
                   data.client_type === type
-                    ? 'border-indigo-500 bg-indigo-50 text-indigo-700'
-                    : 'border-gray-200 bg-white text-gray-600 hover:border-gray-300 hover:bg-gray-50'
+                    ? 'border-indigo-500 bg-primary/10 text-primary'
+                    : 'border-base-300 bg-base-100 text-base-content/70 hover:border-base-300 hover:bg-base-200'
                 }`}
               >
                 {type === 'PARTICULIER' ? <User className="size-4" /> : <Building2 className="size-4" />}
@@ -106,8 +106,8 @@ export default function ClientFormModal({
           </div>
 
           {/* Section: Informations générales */}
-          <div className="bg-white p-5 rounded-xl border border-gray-100 shadow-sm space-y-4">
-            <h3 className="text-xs font-semibold uppercase tracking-wider text-gray-400">
+          <div className="bg-base-100 p-5 rounded-xl border border-base-200 shadow-sm space-y-4">
+            <h3 className="text-xs font-semibold uppercase tracking-wider text-base-content/50">
               {t('clients:sections.general_info')}
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -116,7 +116,7 @@ export default function ClientFormModal({
                   value={data.name || ''}
                   onChange={(e) => setData({ ...data, name: e.target.value })}
                   required
-                  className="input input-bordered input-sm w-full h-10 rounded-lg focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/20"
+                  className="input-ref input-bordered input-sm w-full h-10 rounded-lg focus:border-primary focus:ring-1 focus:ring-primary/20"
                   placeholder="Nom complet"
                 />
               </Field>
@@ -125,7 +125,7 @@ export default function ClientFormModal({
                 <input
                   value={data.phone || ''}
                   onChange={(e) => setData({ ...data, phone: e.target.value })}
-                  className="input input-bordered input-sm w-full h-10 rounded-lg font-mono focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/20"
+                  className="input-ref input-bordered input-sm w-full h-10 rounded-lg font-mono focus:border-primary focus:ring-1 focus:ring-primary/20"
                   placeholder="+225 XX XX XX XX"
                 />
               </Field>
@@ -135,7 +135,7 @@ export default function ClientFormModal({
                   type="email"
                   value={data.email || ''}
                   onChange={(e) => setData({ ...data, email: e.target.value })}
-                  className="input input-bordered input-sm w-full h-10 rounded-lg focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/20"
+                  className="input-ref input-bordered input-sm w-full h-10 rounded-lg focus:border-primary focus:ring-1 focus:ring-primary/20"
                   placeholder="email@exemple.com"
                 />
               </Field>
@@ -144,7 +144,7 @@ export default function ClientFormModal({
                 <input
                   value={data.address || ''}
                   onChange={(e) => setData({ ...data, address: e.target.value })}
-                  className="input input-bordered input-sm w-full h-10 rounded-lg focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/20"
+                  className="input-ref input-bordered input-sm w-full h-10 rounded-lg focus:border-primary focus:ring-1 focus:ring-primary/20"
                   placeholder="Adresse complète"
                 />
               </Field>
@@ -153,8 +153,8 @@ export default function ClientFormModal({
 
           {/* Section: Informations professionnelles */}
           {isPro && (
-            <div className="bg-white p-5 rounded-xl border border-gray-100 shadow-sm space-y-4">
-              <h3 className="text-xs font-semibold uppercase tracking-wider text-gray-400">
+            <div className="bg-base-100 p-5 rounded-xl border border-base-200 shadow-sm space-y-4">
+              <h3 className="text-xs font-semibold uppercase tracking-wider text-base-content/50">
                 {t('clients:sections.pro_info')}
               </h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -162,7 +162,7 @@ export default function ClientFormModal({
                   <input
                     value={(data as any).niu || ''}
                     onChange={(e) => setData({ ...data, niu: e.target.value })}
-                    className="input input-bordered input-sm w-full h-10 rounded-lg focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/20"
+                    className="input-ref input-bordered input-sm w-full h-10 rounded-lg focus:border-primary focus:ring-1 focus:ring-primary/20"
                     placeholder="N° Identifiant Unique"
                   />
                 </Field>
@@ -170,7 +170,7 @@ export default function ClientFormModal({
                   <input
                     value={(data as any).registre_commerce || ''}
                     onChange={(e) => setData({ ...data, registre_commerce: e.target.value })}
-                    className="input input-bordered input-sm w-full h-10 rounded-lg focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/20"
+                    className="input-ref input-bordered input-sm w-full h-10 rounded-lg focus:border-primary focus:ring-1 focus:ring-primary/20"
                     placeholder="Registre du Commerce"
                   />
                 </Field>
@@ -179,18 +179,18 @@ export default function ClientFormModal({
           )}
 
           {/* Section: Paramètres */}
-          <div className="bg-white p-5 rounded-xl border border-gray-100 shadow-sm space-y-4">
-            <h3 className="text-xs font-semibold uppercase tracking-wider text-gray-400">
+          <div className="bg-base-100 p-5 rounded-xl border border-base-200 shadow-sm space-y-4">
+            <h3 className="text-xs font-semibold uppercase tracking-wider text-base-content/50">
               {t('clients:sections.settings')}
             </h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
               {/* Actif */}
-              <label className="flex items-center justify-between p-3 rounded-lg border border-gray-100 bg-gray-50 cursor-pointer hover:border-gray-200 transition-colors">
+              <label className="flex items-center justify-between p-3 rounded-lg border border-base-200 bg-base-200 cursor-pointer hover:border-base-300 transition-colors">
                 <div className="flex items-center gap-3">
-                  <div className={`p-1.5 rounded-md ${data.is_active !== false ? 'bg-green-100 text-green-700' : 'bg-gray-200 text-gray-400'}`}>
+                  <div className={`p-1.5 rounded-md ${data.is_active !== false ? 'bg-green-100 text-green-700' : 'bg-base-300 text-base-content/50'}`}>
                     <Activity className="size-4" />
                   </div>
-                  <span className="text-sm font-medium text-gray-700">{t('common:is_active')}</span>
+                  <span className="text-sm font-medium text-base-content">{t('common:is_active')}</span>
                 </div>
                 <input
                   type="checkbox"
@@ -201,15 +201,15 @@ export default function ClientFormModal({
               </label>
 
               {/* Fidélité */}
-              <label className="flex items-center justify-between p-3 rounded-lg border border-gray-100 bg-gray-50 cursor-pointer hover:border-gray-200 transition-colors">
+              <label className="flex items-center justify-between p-3 rounded-lg border border-base-200 bg-base-200 cursor-pointer hover:border-base-300 transition-colors">
                 <div className="flex items-center gap-3">
-                  <div className={`p-1.5 rounded-md ${data.is_loyalty_member ?? true ? 'bg-amber-100 text-amber-700' : 'bg-gray-200 text-gray-400'}`}>
+                  <div className={`p-1.5 rounded-md ${data.is_loyalty_member ?? true ? 'bg-warning/20 text-warning' : 'bg-base-300 text-base-content/50'}`}>
                     <Award className="size-4" />
                   </div>
                   <div>
-                    <span className="text-sm font-medium text-gray-700 block">{t('clients:fields.loyalty_member')}</span>
+                    <span className="text-sm font-medium text-base-content block">{t('clients:fields.loyalty_member')}</span>
                     {(data.is_loyalty_member ?? true) && (
-                      <span className="text-[10px] text-amber-600 font-medium">{data.points_fidelite || 0} pts</span>
+                      <span className="text-[10px] text-warning font-medium">{data.points_fidelite || 0} pts</span>
                     )}
                   </div>
                 </div>
@@ -223,12 +223,12 @@ export default function ClientFormModal({
 
               {/* Dépôt */}
               {!isPro && (
-                <label className="flex items-center justify-between p-3 rounded-lg border border-gray-100 bg-gray-50 cursor-pointer hover:border-gray-200 transition-colors">
+                <label className="flex items-center justify-between p-3 rounded-lg border border-base-200 bg-base-200 cursor-pointer hover:border-base-300 transition-colors">
                   <div className="flex items-center gap-3">
-                    <div className={`p-1.5 rounded-md ${data.is_deposit_enabled ? 'bg-indigo-100 text-indigo-700' : 'bg-gray-200 text-gray-400'}`}>
+                    <div className={`p-1.5 rounded-md ${data.is_deposit_enabled ? 'bg-primary/20 text-primary' : 'bg-base-300 text-base-content/50'}`}>
                       <CreditCard className="size-4" />
                     </div>
-                    <span className="text-sm font-medium text-gray-700">{t('clients:fields.is_deposit_enabled')}</span>
+                    <span className="text-sm font-medium text-base-content">{t('clients:fields.is_deposit_enabled')}</span>
                   </div>
                   <input
                     type="checkbox"
@@ -242,8 +242,8 @@ export default function ClientFormModal({
           </div>
 
           {/* Section: Conditions financières */}
-          <div className="bg-white p-5 rounded-xl border border-gray-100 shadow-sm space-y-4">
-            <h3 className="text-xs font-semibold uppercase tracking-wider text-gray-400">
+          <div className="bg-base-100 p-5 rounded-xl border border-base-200 shadow-sm space-y-4">
+            <h3 className="text-xs font-semibold uppercase tracking-wider text-base-content/50">
               {t('clients:sections.finance')}
             </h3>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -253,7 +253,7 @@ export default function ClientFormModal({
                   min={0} max={100}
                   value={data.remise_automatique || '0'}
                   onChange={(e) => setData({ ...data, remise_automatique: e.target.value })}
-                  className="input input-bordered input-sm w-full h-10 rounded-lg focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/20"
+                  className="input-ref input-bordered input-sm w-full h-10 rounded-lg focus:border-primary focus:ring-1 focus:ring-primary/20"
                 />
               </Field>
               {isPro && (
@@ -263,7 +263,7 @@ export default function ClientFormModal({
                       type="number"
                       value={data.plafond || '0'}
                       onChange={(e) => setData({ ...data, plafond: e.target.value })}
-                      className="input input-bordered input-sm w-full h-10 rounded-lg focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/20"
+                      className="input-ref input-bordered input-sm w-full h-10 rounded-lg focus:border-primary focus:ring-1 focus:ring-primary/20"
                     />
                   </Field>
                   <Field label={t('clients:finance.coverage') + ' (%)'} icon={ShieldCheck}>
@@ -272,7 +272,7 @@ export default function ClientFormModal({
                       min={0} max={100}
                       value={data.taux_couverture || '0'}
                       onChange={(e) => setData({ ...data, taux_couverture: e.target.value })}
-                      className="input input-bordered input-sm w-full h-10 rounded-lg focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/20"
+                      className="input-ref input-bordered input-sm w-full h-10 rounded-lg focus:border-primary focus:ring-1 focus:ring-primary/20"
                     />
                   </Field>
                   <Field label={t('clients:finance.majoration_pro') + ' (%)'} icon={ShieldCheck}>
@@ -281,7 +281,7 @@ export default function ClientFormModal({
                       min={0} max={100}
                       value={data.majoration_pro_pourcentage || '0'}
                       onChange={(e) => setData({ ...data, majoration_pro_pourcentage: e.target.value })}
-                      className="input input-bordered input-sm w-full h-10 rounded-lg focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/20"
+                      className="input-ref input-bordered input-sm w-full h-10 rounded-lg focus:border-primary focus:ring-1 focus:ring-primary/20"
                     />
                   </Field>
                 </>
@@ -291,8 +291,8 @@ export default function ClientFormModal({
 
           {/* Section: Ayants droit */}
           {isPro && (
-            <div className="bg-white p-5 rounded-xl border border-gray-100 shadow-sm space-y-4">
-              <h3 className="text-xs font-semibold uppercase tracking-wider text-gray-400">
+            <div className="bg-base-100 p-5 rounded-xl border border-base-200 shadow-sm space-y-4">
+              <h3 className="text-xs font-semibold uppercase tracking-wider text-base-content/50">
                 {t('clients:beneficiaries.title')}
               </h3>
               <div className="flex gap-2 items-end">
@@ -300,7 +300,7 @@ export default function ClientFormModal({
                   <input
                     value={tempAD.nom}
                     onChange={(e) => setTempAD({ ...tempAD, nom: e.target.value })}
-                    className="input input-bordered input-sm w-full h-9 rounded-lg focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/20"
+                    className="input-ref input-bordered input-sm w-full h-9 rounded-lg focus:border-primary focus:ring-1 focus:ring-primary/20"
                     placeholder={t('clients:beneficiaries.name_placeholder')}
                   />
                 </div>
@@ -308,7 +308,7 @@ export default function ClientFormModal({
                   <input
                     value={tempAD.matricule}
                     onChange={(e) => setTempAD({ ...tempAD, matricule: e.target.value })}
-                    className="input input-bordered input-sm w-full h-9 rounded-lg font-mono focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/20"
+                    className="input-ref input-bordered input-sm w-full h-9 rounded-lg font-mono focus:border-primary focus:ring-1 focus:ring-primary/20"
                     placeholder={t('clients:beneficiaries.id_placeholder')}
                   />
                 </div>
@@ -316,7 +316,7 @@ export default function ClientFormModal({
                   <input
                     value={tempAD.societe || ''}
                     onChange={(e) => setTempAD({ ...tempAD, societe: e.target.value })}
-                    className="input input-bordered input-sm w-full h-9 rounded-lg focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/20"
+                    className="input-ref input-bordered input-sm w-full h-9 rounded-lg focus:border-primary focus:ring-1 focus:ring-primary/20"
                     placeholder="Société"
                   />
                 </div>
@@ -324,34 +324,34 @@ export default function ClientFormModal({
                   type="button"
                   onClick={addAD}
                   disabled={!tempAD.nom || !tempAD.matricule}
-                  className="inline-flex items-center px-3 py-2 h-9 border border-transparent text-sm font-medium rounded-lg text-white bg-indigo-600 hover:bg-indigo-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors shrink-0"
+                  className="inline-flex items-center px-3 py-2 h-9 border border-transparent text-sm font-medium rounded-lg text-white bg-primary hover:bg-primary-focus disabled:opacity-40 disabled:cursor-not-allowed transition-colors shrink-0"
                 >
                   <Plus className="size-4" />
                 </button>
               </div>
 
               {data.ayants_droit && data.ayants_droit.length > 0 && (
-                <div className="rounded-xl overflow-hidden border border-gray-100">
-                  <table className="min-w-full divide-y divide-gray-200">
-                    <thead className="bg-gray-50">
+                <div className="rounded-xl overflow-hidden border border-base-200">
+                  <table className="min-w-full divide-y divide-base-300">
+                    <thead className="bg-base-200">
                       <tr>
-                        <th className="px-4 py-2 text-left text-[10px] font-semibold text-gray-500 uppercase tracking-wider">{t('common:name')}</th>
-                        <th className="px-4 py-2 text-left text-[10px] font-semibold text-gray-500 uppercase tracking-wider">{t('clients:beneficiaries.col_id')}</th>
-                        <th className="px-4 py-2 text-left text-[10px] font-semibold text-gray-500 uppercase tracking-wider">{t('clients:beneficiaries.company')}</th>
+                        <th className="px-4 py-2 text-left text-[10px] font-semibold text-base-content/60 uppercase tracking-wider">{t('common:name')}</th>
+                        <th className="px-4 py-2 text-left text-[10px] font-semibold text-base-content/60 uppercase tracking-wider">{t('clients:beneficiaries.col_id')}</th>
+                        <th className="px-4 py-2 text-left text-[10px] font-semibold text-base-content/60 uppercase tracking-wider">{t('clients:beneficiaries.company')}</th>
                         <th className="px-4 py-2 w-10"></th>
                       </tr>
                     </thead>
-                    <tbody className="bg-white divide-y divide-gray-100">
+                    <tbody className="bg-base-100 divide-y divide-base-200">
                       {data.ayants_droit.map((ad: AyantDroit, idx: number) => (
-                        <tr key={idx} className="hover:bg-gray-50 transition-colors">
-                          <td className="px-4 py-2.5 text-sm font-medium text-gray-900">{ad.nom}</td>
-                          <td className="px-4 py-2.5 text-sm font-mono text-gray-500">{ad.matricule}</td>
-                          <td className="px-4 py-2.5 text-sm text-gray-500">{ad.societe || '—'}</td>
+                        <tr key={idx} className="hover:bg-base-200 transition-colors">
+                          <td className="px-4 py-2.5 text-sm font-medium text-base-content">{ad.nom}</td>
+                          <td className="px-4 py-2.5 text-sm font-mono text-base-content/60">{ad.matricule}</td>
+                          <td className="px-4 py-2.5 text-sm text-base-content/60">{ad.societe || '—'}</td>
                           <td className="px-4 py-2.5">
                             <button
                               type="button"
                               onClick={() => removeAD(idx)}
-                              className="p-1 text-gray-300 hover:text-red-600 hover:bg-red-50 rounded-md transition-colors"
+                              className="p-1 text-base-content/40 hover:text-error hover:bg-error/10 rounded-md transition-colors"
                             >
                               <Trash2 className="size-3.5" />
                             </button>
@@ -367,11 +367,11 @@ export default function ClientFormModal({
         </form>
 
         {/* Footer */}
-        <div className="flex justify-end items-center gap-3 px-6 py-4 border-t border-gray-100 bg-gray-50/50 rounded-b-xl">
+        <div className="flex justify-end items-center gap-3 px-6 py-4 border-t border-base-200 bg-base-200/50 rounded-b-xl">
           <button
             type="button"
             onClick={onClose}
-            className="inline-flex items-center px-5 py-2 text-sm font-medium rounded-lg border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 transition-colors"
+            className="inline-flex items-center px-5 py-2 text-sm font-medium rounded-lg border border-base-300 bg-base-100 text-base-content hover:bg-base-200 transition-colors"
           >
             {t('common:cancel')}
           </button>
@@ -379,7 +379,7 @@ export default function ClientFormModal({
             type="submit"
             onClick={(e) => { e.preventDefault(); onSubmit(e as any); }}
             disabled={isSubmitting}
-            className="inline-flex items-center px-6 py-2 text-sm font-medium rounded-lg text-white bg-indigo-600 hover:bg-indigo-700 disabled:opacity-60 transition-colors gap-2"
+            className="inline-flex items-center px-6 py-2 text-sm font-medium rounded-lg text-white bg-primary hover:bg-primary-focus disabled:opacity-60 transition-colors gap-2"
           >
             {isSubmitting ? (
               <span className="inline-block size-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />

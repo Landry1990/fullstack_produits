@@ -67,12 +67,12 @@ export default function AnalyseTemporelle() {
             <div className="space-y-6">
               <div className="flex justify-between items-center bg-base-200/50 p-4 rounded-lg">
                 <div className="flex items-center gap-4">
-                  <div className="size-12 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center text-2xl">
+                  <div className="size-12 rounded-full bg-info/20 text-info flex items-center justify-center text-2xl">
                     ⚡
                   </div>
                   <div>
                     <h3 className="font-bold text-lg">{t('stock:temporal_analysis.peak_hour_title')}</h3>
-                    <p className="text-sm opacity-70">
+                    <p className="text-sm text-base-content/70">
                       {loadingHours ? t('common:loading') : 
                        peakHoursData?.peak_hour ? 
                        t('stock:temporal_analysis.peak_hour_summary', { 
@@ -155,7 +155,7 @@ export default function AnalyseTemporelle() {
                   </div>
                   <div>
                     <h3 className="font-bold text-lg">{t('stock:temporal_analysis.best_day_title')}</h3>
-                    <p className="text-sm opacity-70">
+                    <p className="text-sm text-base-content/70">
                       {loadingDays ? t('common:loading') : 
                        dailyData?.best_day ? 
                        t('stock:temporal_analysis.best_day_summary', {
@@ -235,12 +235,12 @@ export default function AnalyseTemporelle() {
             <div className="space-y-6">
               <div className="flex justify-between items-center bg-base-200/50 p-4 rounded-lg">
                 <div className="flex items-center gap-4">
-                  <div className="size-12 rounded-full bg-orange-100 text-orange-600 flex items-center justify-center text-2xl">
+                  <div className="size-12 rounded-full bg-warning/20 text-warning flex items-center justify-center text-2xl">
                     🍂
                   </div>
                   <div>
                     <h3 className="font-bold text-lg">{t('stock:temporal_analysis.seasonality_title')}</h3>
-                    <p className="text-sm opacity-70">
+                    <p className="text-sm text-base-content/70">
                       {loadingSeasons ? t('common:loading') : 
                        t('stock:temporal_analysis.seasonality_summary', {
                           months: seasonsMonths,
@@ -301,13 +301,13 @@ export default function AnalyseTemporelle() {
                             <tr key={prod.id} className="hover:bg-base-100">
                               <td className="font-medium">{prod.name}</td>
                               <td>
-                                <span className="badge badge-outline font-bold text-orange-600 border-orange-200 bg-orange-50">
+                                <span className="badge badge-outline font-bold text-warning border-orange-200 bg-warning/10">
                                   {prod.peak_month}
                                 </span>
                               </td>
                               <td className="text-right">{prod.peak_quantity}</td>
                               <td className="text-right">{prod.avg_monthly}</td>
-                              <td className="text-right font-bold text-orange-600">
+                              <td className="text-right font-bold text-warning">
                                 +{Math.round(prod.variation_pct)}%
                               </td>
                             </tr>

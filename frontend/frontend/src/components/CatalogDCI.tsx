@@ -63,7 +63,7 @@ export default function CatalogDCI() {
             Catalogue DCI
           </h2>
           <div className="relative">
-            <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none opacity-50">
+            <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none text-base-content/50">
               <Icons.Search />
             </div>
             <input
@@ -98,7 +98,7 @@ export default function CatalogDCI() {
             >
               <div className="flex flex-col">
                 <span className="font-bold text-sm leading-tight">{sub.nom}</span>
-                <span className={`text-[10px] uppercase tracking-wider font-semibold opacity-70 ${selectedSubstance?.id === sub.id ? 'text-primary-content' : 'text-primary'}`}>
+                <span className={`text-[10px] uppercase tracking-wider font-semibold text-base-content/70 ${selectedSubstance?.id === sub.id ? 'text-primary-content' : 'text-primary'}`}>
                   {sub.produits_count} produits liés
                 </span>
               </div>
@@ -109,7 +109,7 @@ export default function CatalogDCI() {
           ))}
           
           {!loadingSubstances && substancesData?.results.length === 0 && (
-            <div className="p-8 text-center opacity-50">
+            <div className="p-8 text-center text-base-content/50">
               <p className="text-sm">Aucune substance trouvée</p>
             </div>
           )}
@@ -122,7 +122,7 @@ export default function CatalogDCI() {
               disabled={!substancesData.previous}
               onClick={() => setPage(p => p - 1)}
             >Précédent</button>
-            <span className="text-xs font-bold opacity-50">Page {page}</span>
+            <span className="text-xs font-bold text-base-content/50">Page {page}</span>
             <button 
               className="btn btn-sm btn-ghost" 
               disabled={!substancesData.next}
@@ -205,7 +205,7 @@ export default function CatalogDCI() {
                     </div>
                   ))}
                   {produitsData?.results.length === 0 && (
-                    <div className="h-full flex flex-col items-center justify-center p-12 text-center opacity-30">
+                    <div className="h-full flex flex-col items-center justify-center p-12 text-center text-base-content/30">
                       <Icons.Box />
                       <p className="mt-4 font-bold">Aucun produit associé à cette DCI dans votre stock</p>
                     </div>
@@ -232,13 +232,13 @@ export default function CatalogDCI() {
                       <div key={ref.cis} className="p-4 rounded-2xl border border-base-200 hover:border-secondary/30 transition-all bg-base-200/5 group">
                         <div className="flex justify-between items-start mb-1">
                           <h4 className="font-bold text-[11px] uppercase group-hover:text-secondary transition-colors leading-tight">{ref.nom}</h4>
-                          <span className="text-[10px] font-mono bg-base-300 px-2 rounded-lg opacity-50">CIS: {ref.cis}</span>
+                          <span className="text-[10px] font-mono bg-base-300 px-2 rounded-lg text-base-content/50">CIS: {ref.cis}</span>
                         </div>
                         <p className="text-[10px] opacity-60 mb-2">{ref.forme}</p>
                       </div>
                     ))}
                     {refMedsData?.results.length === 0 && (
-                      <div className="h-full flex flex-col items-center justify-center p-12 text-center opacity-30">
+                      <div className="h-full flex flex-col items-center justify-center p-12 text-center text-base-content/30">
                         <Icons.Search />
                         <p className="mt-4 font-bold">Aucune référence trouvée dans la base nationale</p>
                       </div>
@@ -249,7 +249,7 @@ export default function CatalogDCI() {
             </div>
           </>
         ) : (
-          <div className="flex-1 flex flex-col items-center justify-center bg-base-100 rounded-3xl shadow-xl border border-base-200 opacity-20">
+          <div className="flex-1 flex flex-col items-center justify-center bg-base-100 rounded-3xl shadow-xl border border-base-200 text-base-content/20">
             <div className="scale-[3]">
               <Icons.Pill />
             </div>

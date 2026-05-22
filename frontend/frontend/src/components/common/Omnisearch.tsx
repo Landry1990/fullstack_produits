@@ -43,27 +43,55 @@ export default function Omnisearch() {
   const [commandes, setCommandes] = useState<Commande[]>([]);
   const [fournisseurs, setFournisseurs] = useState<Fournisseur[]>([]);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   // Toggle au clavier (Ctrl+K ou Cmd+K) + fermeture par Escape
   useEffect(() => {
     const down = (e: KeyboardEvent) => {
+      // Vérifier qu'on n'est pas dans un input/modal enfant pour éviter les conflits
+      const activeElement = document.activeElement;
+      const isInModal = activeElement?.closest('[role="dialog"]') !== null;
+      const isTyping = activeElement?.tagName === 'INPUT' || activeElement?.tagName === 'TEXTAREA';
+      
+      // Ctrl/Cmd+K pour ouvrir/fermer (seulement si pas en train de taper dans un autre input)
       if (e.code === 'KeyK' && (e.metaKey || e.ctrlKey)) {
         e.preventDefault();
-        setOpen((open) => !open);
+        // Si on est déjà dans l'omnisearch, on permet le toggle
+        if (!isInModal || open) {
+          setOpen((open) => !open);
+        }
       }
-      if (e.key === 'Escape') {
+      
+      // Escape pour fermer (mais pas si on est dans un modal enfant)
+      if (e.key === 'Escape' && open && !isInModal) {
         setOpen(false);
       }
     };
 
     document.addEventListener('keydown', down);
     return () => document.removeEventListener('keydown', down);
-  }, []);
+  }, [open]);
 
   // Détection des clics extérieurs gérée par cmdk en mode dialog ? cmdk 1.0.0 a un Command.Dialog natif
   // Sinon on construit un overlay
 
+  // Nettoyer les résultats quand on ferme l'omnisearch
   useEffect(() => {
+    if (!open) {
+      setProduits([]);
+      setClients([]);
+      setFactures([]);
+      setCommandes([]);
+      setFournisseurs([]);
+      setSearch('');
+      setActiveValue(undefined);
+      setError(null);
+    }
+  }, [open]);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    
     async function fetchData() {
       if (!debouncedSearch) {
         setProduits([]);
@@ -75,44 +103,82 @@ export default function Omnisearch() {
       }
 
       setLoading(true);
+      setError(null);
+      
       try {
-        const results = await omnisearchService.search(debouncedSearch);
-
-        setProduits(results.produits);
-        setClients(results.clients);
-        setFactures(results.factures);
-        setCommandes(results.commandes);
-        setFournisseurs(results.fournisseurs);
-      } catch (err) {
-        console.error('Erreur Omnisearch:', err);
+        const results = await omnisearchService.search(debouncedSearch, 5, controller.signal);
+        
+        if (!controller.signal.aborted) {
+          setProduits(results.produits);
+          setClients(results.clients);
+          setFactures(results.factures);
+          setCommandes(results.commandes);
+          setFournisseurs(results.fournisseurs);
+        }
+      } catch (err: any) {
+        if (err.name !== 'AbortError' && !controller.signal.aborted) {
+          console.error('Erreur Omnisearch:', err);
+          setError(t('omnisearch.error', 'Erreur de recherche'));
+        }
       } finally {
-        setLoading(false);
+        if (!controller.signal.aborted) {
+          setLoading(false);
+        }
       }
     }
 
     fetchData();
-  }, [debouncedSearch]);
+    return () => controller.abort();
+  }, [debouncedSearch, t]);
 
-  // Synchronisation auto de la sélection pour l'aperçu
+  // Synchronisation auto de la sélection - version corrigée
+  // Ne se déclenche que quand les résultats changent, pas quand search/activeValue changent
   useEffect(() => {
-    if (search && (produits.length > 0 || clients.length > 0 || factures.length > 0 || commandes.length > 0 || fournisseurs.length > 0)) {
-        // Reset au premier item seulement si l'actuel n'est plus dans le nouveau jeu de résultats
-        const isCurrentValid = 
-            (activeValue?.startsWith('prod-') && produits.some(p => `prod-${p.id}-${p.name.toLowerCase()}` === activeValue)) ||
-            (activeValue?.startsWith('client-') && clients.some(c => `client-${c.id}-${c.name.toLowerCase()}` === activeValue)) ||
-            (activeValue?.startsWith('facture-') && factures.some(f => `facture-${f.id}-${(f.numero_facture || '').toLowerCase()}` === activeValue)) ||
-            (activeValue?.startsWith('commande-') && commandes.some(o => `commande-${o.id}-${(o.fournisseur_nom || '').toLowerCase()}` === activeValue)) ||
-            (activeValue?.startsWith('fournisseur-') && fournisseurs.some(s => `fournisseur-${s.id}-${s.name.toLowerCase()}` === activeValue));
-        
-        if (!isCurrentValid) {
-            if (produits.length > 0) setActiveValue(`prod-${produits[0].id}-${produits[0].name.toLowerCase()}`);
-            else if (clients.length > 0) setActiveValue(`client-${clients[0].id}-${clients[0].name.toLowerCase()}`);
-            else if (factures.length > 0) setActiveValue(`facture-${factures[0].id}-${(factures[0].numero_facture || '').toLowerCase()}`);
-            else if (commandes.length > 0) setActiveValue(`commande-${commandes[0].id}-${(commandes[0].fournisseur_nom || '').toLowerCase()}`);
-            else if (fournisseurs.length > 0) setActiveValue(`fournisseur-${fournisseurs[0].id}-${fournisseurs[0].name.toLowerCase()}`);
-        }
+    if (!open || (!produits.length && !clients.length && !factures.length && !commandes.length && !fournisseurs.length)) {
+      setActiveValue(undefined);
+      return;
     }
-  }, [produits, clients, factures, commandes, fournisseurs, search, activeValue]);
+    
+    // Extraire l'ID et le type de la valeur active actuelle
+    const currentParts = activeValue?.split('-') || [];
+    const currentType = currentParts[0];
+    const currentId = currentParts[1];
+    
+    // Vérifier si l'item sélectionné existe encore dans les nouveaux résultats
+    let itemStillExists = false;
+    if (currentId) {
+      switch (currentType) {
+        case 'prod':
+          itemStillExists = produits.some(p => p.id.toString() === currentId);
+          break;
+        case 'client':
+          itemStillExists = clients.some(c => c.id.toString() === currentId);
+          break;
+        case 'facture':
+          itemStillExists = factures.some(f => f.id.toString() === currentId);
+          break;
+        case 'commande':
+          itemStillExists = commandes.some(o => o.id.toString() === currentId);
+          break;
+        case 'fournisseur':
+          itemStillExists = fournisseurs.some(s => s.id.toString() === currentId);
+          break;
+        default:
+          // Pour les actions et navigation, on garde la valeur
+          itemStillExists = !!activeValue?.startsWith('action-') || !!activeValue?.startsWith('nav-');
+      }
+    }
+    
+    // Reset seulement si l'item n'existe plus ET qu'on a des résultats
+    if (!itemStillExists) {
+      // Priorité: produits > clients > factures > commandes > fournisseurs
+      if (produits.length > 0) setActiveValue(`prod-${produits[0].id}`);
+      else if (clients.length > 0) setActiveValue(`client-${clients[0].id}`);
+      else if (factures.length > 0) setActiveValue(`facture-${factures[0].id}`);
+      else if (commandes.length > 0) setActiveValue(`commande-${commandes[0].id}`);
+      else if (fournisseurs.length > 0) setActiveValue(`fournisseur-${fournisseurs[0].id}`);
+    }
+  }, [produits, clients, factures, commandes, fournisseurs, open]); // ← Retirer search et activeValue des deps
 
   const onSelectLink = (path: string) => {
     setOpen(false);
@@ -212,7 +278,7 @@ export default function Omnisearch() {
             onKeyDown={(e) => { if (e.key === 'Escape') { e.preventDefault(); setOpen(false); } }}
         >
           <div className="flex items-center border-b border-base-200 px-6 bg-base-100/50 backdrop-blur-sm">
-            <Search className="size-6 text-primary mr-4 opacity-50" />
+            <Search className="size-6 text-primary mr-4 text-base-content/50" />
             <Command.Input 
               value={search} 
               onValueChange={setSearch} 
@@ -221,7 +287,7 @@ export default function Omnisearch() {
               placeholder={t('omnisearch.placeholder', 'Rechercher (produits, clients, navigation) …')} 
             />
             {loading && <span className="loading loading-spinner loading-sm text-primary"></span>}
-            <div className="ml-4 flex items-center gap-1.5 opacity-30 select-none">
+            <div className="ml-4 flex items-center gap-1.5 text-base-content/30 select-none">
                 <kbd className="kbd kbd-xs font-bold">ESC</kbd>
             </div>
           </div>
@@ -293,7 +359,7 @@ export default function Omnisearch() {
                         {produits.map((prod) => (
                         <Command.Item 
                             key={`prod-${prod.id}`}
-                            value={`prod-${prod.id}-${prod.name.toLowerCase()}`}
+                            value={`prod-${prod.id}`}
                             onSelect={() => onSelectProduit(prod.id!)}
                             className="flex items-center px-4 py-3 rounded-xl cursor-pointer hover:bg-base-200 text-base-content aria-selected:bg-primary/10 aria-selected:text-primary transition-all group"
                         >
@@ -319,7 +385,7 @@ export default function Omnisearch() {
                         {clients.map((client) => (
                         <Command.Item 
                             key={`client-${client.id}`}
-                            value={`client-${client.id}-${client.name.toLowerCase()}`}
+                            value={`client-${client.id}`}
                             onSelect={() => onSelectClient(client.id!)}
                             className="flex items-center px-4 py-3 rounded-xl cursor-pointer hover:bg-base-200 text-base-content aria-selected:bg-primary/10 aria-selected:text-primary transition-all group"
                         >
@@ -340,7 +406,7 @@ export default function Omnisearch() {
                         {factures.map((f) => (
                         <Command.Item 
                             key={`facture-${f.id}`}
-                            value={`facture-${f.id}-${(f.numero_facture || '').toLowerCase()}`}
+                            value={`facture-${f.id}`}
                             onSelect={() => onSelectFacture(f.id)}
                             className="flex items-center px-4 py-3 rounded-xl cursor-pointer hover:bg-base-200 text-base-content aria-selected:bg-primary/10 aria-selected:text-primary transition-all group"
                         >
@@ -364,7 +430,7 @@ export default function Omnisearch() {
                         {commandes.map((o) => (
                         <Command.Item 
                             key={`commande-${o.id}`}
-                            value={`commande-${o.id}-${(o.fournisseur_nom || '').toLowerCase()}`}
+                            value={`commande-${o.id}`}
                             onSelect={() => onSelectCommande(o.id)}
                             className="flex items-center px-4 py-3 rounded-xl cursor-pointer hover:bg-base-200 text-base-content aria-selected:bg-primary/10 aria-selected:text-primary transition-all group"
                         >
@@ -385,7 +451,7 @@ export default function Omnisearch() {
                         {fournisseurs.map((s) => (
                         <Command.Item 
                             key={`fournisseur-${s.id}`}
-                            value={`fournisseur-${s.id}-${s.name.toLowerCase()}`}
+                            value={`fournisseur-${s.id}`}
                             onSelect={() => onSelectFournisseur(s.id)}
                             className="flex items-center px-4 py-3 rounded-xl cursor-pointer hover:bg-base-200 text-base-content aria-selected:bg-primary/10 aria-selected:text-primary transition-all group"
                         >
@@ -440,7 +506,7 @@ export default function Omnisearch() {
                             </div>
                             <div className="p-4 bg-base-100 border border-base-200 rounded-2xl space-y-1">
                                 <div className="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest text-base-content/40">
-                                    <Layers className="size-3 opacity-50" /> {t('omnisearch.preview.stock_reserve')}
+                                    <Layers className="size-3 text-base-content/50" /> {t('omnisearch.preview.stock_reserve')}
                                 </div>
                                 <div className="text-2xl font-black text-base-content/60">
                                     {(selectedItem.data as ProduitModel).stock_reserve || 0}
@@ -679,7 +745,7 @@ export default function Omnisearch() {
                         </div>
                     </div>
                 ) : (
-                    <div className="flex-1 flex flex-col items-center justify-center p-8 text-center opacity-20 grayscale scale-95 transition-all">
+                    <div className="flex-1 flex flex-col items-center justify-center p-8 text-center text-base-content/20 grayscale scale-95 transition-all">
                         <div className="size-24 rounded-full border-4 border-dashed border-base-content/30 flex items-center justify-center mb-4">
                             <LayoutDashboard className="size-12" />
                         </div>

@@ -1,0 +1,5871 @@
+{
+  "totalFiles": 361,
+  "filesWithIssues": 132,
+  "totalIssues": 4319,
+  "topFiles": [
+    {
+      "file": "components\\settings\\PharmacySettingsForm.tsx",
+      "issues": 254,
+      "details": [
+        {
+          "pattern": "bg-white",
+          "severity": "high",
+          "count": 24,
+          "lines": [
+            168,
+            170,
+            192,
+            211,
+            236
+          ]
+        },
+        {
+          "pattern": "bg-gray-50",
+          "severity": "high",
+          "count": 15,
+          "lines": [
+            203,
+            637,
+            665,
+            680,
+            903
+          ]
+        },
+        {
+          "pattern": "bg-gray-100",
+          "severity": "high",
+          "count": 11,
+          "lines": [
+            658,
+            1009,
+            1027,
+            1045,
+            1063
+          ]
+        },
+        {
+          "pattern": "border-gray-200",
+          "severity": "high",
+          "count": 10,
+          "lines": [
+            153,
+            236,
+            254,
+            289,
+            303
+          ]
+        },
+        {
+          "pattern": "border-gray-100",
+          "severity": "high",
+          "count": 29,
+          "lines": [
+            170,
+            192,
+            211,
+            213,
+            270
+          ]
+        },
+        {
+          "pattern": "text-gray-900",
+          "severity": "high",
+          "count": 14,
+          "lines": [
+            173,
+            897,
+            907,
+            1002,
+            1020
+          ]
+        },
+        {
+          "pattern": "text-gray-700",
+          "severity": "high",
+          "count": 27,
+          "lines": [
+            230,
+            248,
+            283,
+            297,
+            309
+          ]
+        },
+        {
+          "pattern": "text-gray-600",
+          "severity": "high",
+          "count": 3,
+          "lines": [
+            658,
+            665,
+            1127
+          ]
+        },
+        {
+          "pattern": "text-gray-500",
+          "severity": "high",
+          "count": 46,
+          "lines": [
+            177,
+            192,
+            222,
+            230,
+            248
+          ]
+        },
+        {
+          "pattern": "text-gray-400",
+          "severity": "high",
+          "count": 15,
+          "lines": [
+            241,
+            259,
+            405,
+            423,
+            522
+          ]
+        },
+        {
+          "pattern": "bg-indigo-50",
+          "severity": "medium",
+          "count": 11,
+          "lines": [
+            215,
+            222,
+            274,
+            356,
+            386
+          ]
+        },
+        {
+          "pattern": "bg-emerald-50",
+          "severity": "medium",
+          "count": 1,
+          "lines": [
+            998
+          ]
+        },
+        {
+          "pattern": "bg-red-50",
+          "severity": "medium",
+          "count": 1,
+          "lines": [
+            665
+          ]
+        },
+        {
+          "pattern": "text-indigo-600",
+          "severity": "medium",
+          "count": 21,
+          "lines": [
+            174,
+            191,
+            192,
+            216,
+            223
+          ]
+        },
+        {
+          "pattern": "text-blue-600",
+          "severity": "medium",
+          "count": 4,
+          "lines": [
+            748,
+            832,
+            1055,
+            1181
+          ]
+        },
+        {
+          "pattern": "text-emerald-600",
+          "severity": "medium",
+          "count": 3,
+          "lines": [
+            999,
+            1019,
+            1163
+          ]
+        },
+        {
+          "pattern": "text-red-600",
+          "severity": "medium",
+          "count": 2,
+          "lines": [
+            665,
+            1073
+          ]
+        },
+        {
+          "pattern": "text-amber-600",
+          "severity": "medium",
+          "count": 1,
+          "lines": [
+            1091
+          ]
+        },
+        {
+          "pattern": "border-indigo-500",
+          "severity": "low",
+          "count": 9,
+          "lines": [
+            191,
+            192,
+            236,
+            254,
+            289
+          ]
+        },
+        {
+          "pattern": "focus:ring-indigo-50",
+          "severity": "low",
+          "count": 7,
+          "lines": [
+            236,
+            254,
+            289,
+            303,
+            315
+          ]
+        }
+      ]
+    },
+    {
+      "file": "components\\compta\\Comptabilite.tsx",
+      "issues": 181,
+      "details": [
+        {
+          "pattern": "bg-white",
+          "severity": "high",
+          "count": 21,
+          "lines": [
+            104,
+            141,
+            216,
+            225,
+            234
+          ]
+        },
+        {
+          "pattern": "bg-gray-50",
+          "severity": "high",
+          "count": 9,
+          "lines": [
+            90,
+            308,
+            319,
+            378,
+            390
+          ]
+        },
+        {
+          "pattern": "bg-gray-100",
+          "severity": "high",
+          "count": 10,
+          "lines": [
+            106,
+            122,
+            149,
+            366,
+            392
+          ]
+        },
+        {
+          "pattern": "border-gray-200",
+          "severity": "high",
+          "count": 34,
+          "lines": [
+            104,
+            106,
+            122,
+            141,
+            216
+          ]
+        },
+        {
+          "pattern": "border-gray-100",
+          "severity": "high",
+          "count": 3,
+          "lines": [
+            308,
+            378,
+            441
+          ]
+        },
+        {
+          "pattern": "text-gray-900",
+          "severity": "high",
+          "count": 10,
+          "lines": [
+            90,
+            109,
+            149,
+            399,
+            534
+          ]
+        },
+        {
+          "pattern": "text-gray-700",
+          "severity": "high",
+          "count": 1,
+          "lines": [
+            392
+          ]
+        },
+        {
+          "pattern": "text-gray-500",
+          "severity": "high",
+          "count": 23,
+          "lines": [
+            101,
+            149,
+            217,
+            226,
+            235
+          ]
+        },
+        {
+          "pattern": "text-gray-400",
+          "severity": "high",
+          "count": 8,
+          "lines": [
+            164,
+            330,
+            362,
+            412,
+            512
+          ]
+        },
+        {
+          "pattern": "bg-indigo-50",
+          "severity": "medium",
+          "count": 5,
+          "lines": [
+            263,
+            472,
+            529,
+            549,
+            673
+          ]
+        },
+        {
+          "pattern": "bg-emerald-50",
+          "severity": "medium",
+          "count": 1,
+          "lines": [
+            250
+          ]
+        },
+        {
+          "pattern": "bg-red-50",
+          "severity": "medium",
+          "count": 5,
+          "lines": [
+            254,
+            263,
+            492,
+            530,
+            569
+          ]
+        },
+        {
+          "pattern": "text-indigo-600",
+          "severity": "medium",
+          "count": 30,
+          "lines": [
+            94,
+            98,
+            107,
+            163,
+            218
+          ]
+        },
+        {
+          "pattern": "text-emerald-600",
+          "severity": "medium",
+          "count": 1,
+          "lines": [
+            251
+          ]
+        },
+        {
+          "pattern": "text-red-600",
+          "severity": "medium",
+          "count": 15,
+          "lines": [
+            236,
+            237,
+            255,
+            266,
+            324
+          ]
+        },
+        {
+          "pattern": "text-amber-600",
+          "severity": "medium",
+          "count": 4,
+          "lines": [
+            227,
+            228,
+            513,
+            690
+          ]
+        },
+        {
+          "pattern": "border-indigo-500",
+          "severity": "low",
+          "count": 1,
+          "lines": [
+            673
+          ]
+        }
+      ]
+    },
+    {
+      "file": "components\\Perimes.tsx",
+      "issues": 143,
+      "details": [
+        {
+          "pattern": "bg-white",
+          "severity": "high",
+          "count": 14,
+          "lines": [
+            350,
+            352,
+            472,
+            513,
+            570
+          ]
+        },
+        {
+          "pattern": "bg-gray-50",
+          "severity": "high",
+          "count": 9,
+          "lines": [
+            363,
+            388,
+            551,
+            596,
+            612
+          ]
+        },
+        {
+          "pattern": "bg-gray-100",
+          "severity": "high",
+          "count": 7,
+          "lines": [
+            482,
+            492,
+            502,
+            581,
+            609
+          ]
+        },
+        {
+          "pattern": "bg-gray-200",
+          "severity": "high",
+          "count": 5,
+          "lines": [
+            365,
+            372,
+            379,
+            388,
+            614
+          ]
+        },
+        {
+          "pattern": "border-gray-200",
+          "severity": "high",
+          "count": 16,
+          "lines": [
+            363,
+            416,
+            482,
+            492,
+            502
+          ]
+        },
+        {
+          "pattern": "border-gray-100",
+          "severity": "high",
+          "count": 10,
+          "lines": [
+            352,
+            472,
+            513,
+            570,
+            572
+          ]
+        },
+        {
+          "pattern": "text-gray-900",
+          "severity": "high",
+          "count": 11,
+          "lines": [
+            358,
+            481,
+            491,
+            501,
+            596
+          ]
+        },
+        {
+          "pattern": "text-gray-700",
+          "severity": "high",
+          "count": 6,
+          "lines": [
+            482,
+            492,
+            502,
+            581,
+            697
+          ]
+        },
+        {
+          "pattern": "text-gray-600",
+          "severity": "high",
+          "count": 2,
+          "lines": [
+            388,
+            551
+          ]
+        },
+        {
+          "pattern": "text-gray-500",
+          "severity": "high",
+          "count": 17,
+          "lines": [
+            430,
+            432,
+            446,
+            448,
+            462
+          ]
+        },
+        {
+          "pattern": "text-gray-400",
+          "severity": "high",
+          "count": 8,
+          "lines": [
+            359,
+            584,
+            613,
+            691,
+            744
+          ]
+        },
+        {
+          "pattern": "text-gray-300",
+          "severity": "medium",
+          "count": 3,
+          "lines": [
+            652,
+            706,
+            724
+          ]
+        },
+        {
+          "pattern": "bg-indigo-50",
+          "severity": "medium",
+          "count": 1,
+          "lines": [
+            679
+          ]
+        },
+        {
+          "pattern": "bg-emerald-50",
+          "severity": "medium",
+          "count": 1,
+          "lines": [
+            346
+          ]
+        },
+        {
+          "pattern": "bg-red-50",
+          "severity": "medium",
+          "count": 8,
+          "lines": [
+            344,
+            354,
+            399,
+            536,
+            588
+          ]
+        },
+        {
+          "pattern": "bg-amber-50",
+          "severity": "medium",
+          "count": 2,
+          "lines": [
+            345,
+            697
+          ]
+        },
+        {
+          "pattern": "text-indigo-600",
+          "severity": "medium",
+          "count": 3,
+          "lines": [
+            663,
+            683,
+            690
+          ]
+        },
+        {
+          "pattern": "text-blue-600",
+          "severity": "medium",
+          "count": 1,
+          "lines": [
+            463
+          ]
+        },
+        {
+          "pattern": "text-red-600",
+          "severity": "medium",
+          "count": 10,
+          "lines": [
+            354,
+            431,
+            541,
+            588,
+            605
+          ]
+        },
+        {
+          "pattern": "text-amber-600",
+          "severity": "medium",
+          "count": 3,
+          "lines": [
+            447,
+            542,
+            697
+          ]
+        },
+        {
+          "pattern": "border-indigo-500",
+          "severity": "low",
+          "count": 3,
+          "lines": [
+            627,
+            747,
+            756
+          ]
+        },
+        {
+          "pattern": "focus:ring-indigo-50",
+          "severity": "low",
+          "count": 3,
+          "lines": [
+            627,
+            747,
+            756
+          ]
+        }
+      ]
+    },
+    {
+      "file": "components\\common\\MessagingModal.tsx",
+      "issues": 134,
+      "details": [
+        {
+          "pattern": "bg-white",
+          "severity": "high",
+          "count": 17,
+          "lines": [
+            198,
+            265,
+            268,
+            288,
+            340
+          ]
+        },
+        {
+          "pattern": "bg-gray-50",
+          "severity": "high",
+          "count": 8,
+          "lines": [
+            200,
+            285,
+            348,
+            391,
+            453
+          ]
+        },
+        {
+          "pattern": "bg-gray-100",
+          "severity": "high",
+          "count": 12,
+          "lines": [
+            203,
+            215,
+            222,
+            229,
+            237
+          ]
+        },
+        {
+          "pattern": "bg-gray-200",
+          "severity": "high",
+          "count": 1,
+          "lines": [
+            408
+          ]
+        },
+        {
+          "pattern": "bg-gray-300",
+          "severity": "high",
+          "count": 2,
+          "lines": [
+            302,
+            402
+          ]
+        },
+        {
+          "pattern": "border-gray-200",
+          "severity": "high",
+          "count": 11,
+          "lines": [
+            200,
+            245,
+            285,
+            288,
+            290
+          ]
+        },
+        {
+          "pattern": "border-gray-100",
+          "severity": "high",
+          "count": 6,
+          "lines": [
+            268,
+            340,
+            381,
+            439,
+            497
+          ]
+        },
+        {
+          "pattern": "text-gray-900",
+          "severity": "high",
+          "count": 9,
+          "lines": [
+            269,
+            306,
+            341,
+            382,
+            406
+          ]
+        },
+        {
+          "pattern": "text-gray-700",
+          "severity": "high",
+          "count": 8,
+          "lines": [
+            203,
+            215,
+            222,
+            229,
+            237
+          ]
+        },
+        {
+          "pattern": "text-gray-600",
+          "severity": "high",
+          "count": 11,
+          "lines": [
+            295,
+            371,
+            395,
+            408,
+            417
+          ]
+        },
+        {
+          "pattern": "text-gray-500",
+          "severity": "high",
+          "count": 8,
+          "lines": [
+            289,
+            290,
+            296,
+            396,
+            458
+          ]
+        },
+        {
+          "pattern": "text-gray-400",
+          "severity": "high",
+          "count": 15,
+          "lines": [
+            280,
+            345,
+            351,
+            354,
+            359
+          ]
+        },
+        {
+          "pattern": "text-gray-300",
+          "severity": "medium",
+          "count": 1,
+          "lines": [
+            367
+          ]
+        },
+        {
+          "pattern": "bg-indigo-50",
+          "severity": "medium",
+          "count": 3,
+          "lines": [
+            285,
+            501,
+            580
+          ]
+        },
+        {
+          "pattern": "bg-indigo-100",
+          "severity": "medium",
+          "count": 1,
+          "lines": [
+            308
+          ]
+        },
+        {
+          "pattern": "bg-red-50",
+          "severity": "medium",
+          "count": 3,
+          "lines": [
+            290,
+            529,
+            623
+          ]
+        },
+        {
+          "pattern": "text-indigo-600",
+          "severity": "medium",
+          "count": 9,
+          "lines": [
+            289,
+            308,
+            352,
+            484,
+            501
+          ]
+        },
+        {
+          "pattern": "text-emerald-600",
+          "severity": "medium",
+          "count": 1,
+          "lines": [
+            364
+          ]
+        },
+        {
+          "pattern": "text-red-600",
+          "severity": "medium",
+          "count": 4,
+          "lines": [
+            290,
+            529,
+            583,
+            623
+          ]
+        },
+        {
+          "pattern": "text-amber-600",
+          "severity": "medium",
+          "count": 1,
+          "lines": [
+            463
+          ]
+        },
+        {
+          "pattern": "border-indigo-500",
+          "severity": "low",
+          "count": 3,
+          "lines": [
+            553,
+            566,
+            596
+          ]
+        }
+      ]
+    },
+    {
+      "file": "components\\Commandes\\OrderSchedulingModal.tsx",
+      "issues": 125,
+      "details": [
+        {
+          "pattern": "bg-white",
+          "severity": "high",
+          "count": 16,
+          "lines": [
+            337,
+            344,
+            354,
+            375,
+            378
+          ]
+        },
+        {
+          "pattern": "bg-gray-50",
+          "severity": "high",
+          "count": 12,
+          "lines": [
+            374,
+            422,
+            449,
+            456,
+            463
+          ]
+        },
+        {
+          "pattern": "bg-gray-100",
+          "severity": "high",
+          "count": 4,
+          "lines": [
+            358,
+            552,
+            559,
+            677
+          ]
+        },
+        {
+          "pattern": "border-gray-200",
+          "severity": "high",
+          "count": 14,
+          "lines": [
+            339,
+            354,
+            389,
+            408,
+            438
+          ]
+        },
+        {
+          "pattern": "border-gray-100",
+          "severity": "high",
+          "count": 6,
+          "lines": [
+            449,
+            456,
+            463,
+            549,
+            556
+          ]
+        },
+        {
+          "pattern": "text-gray-900",
+          "severity": "high",
+          "count": 12,
+          "lines": [
+            359,
+            394,
+            443,
+            453,
+            460
+          ]
+        },
+        {
+          "pattern": "text-gray-500",
+          "severity": "high",
+          "count": 2,
+          "lines": [
+            610,
+            677
+          ]
+        },
+        {
+          "pattern": "text-gray-400",
+          "severity": "high",
+          "count": 17,
+          "lines": [
+            356,
+            375,
+            378,
+            399,
+            408
+          ]
+        },
+        {
+          "pattern": "bg-indigo-50",
+          "severity": "medium",
+          "count": 8,
+          "lines": [
+            449,
+            456,
+            463,
+            556,
+            581
+          ]
+        },
+        {
+          "pattern": "bg-blue-50",
+          "severity": "medium",
+          "count": 1,
+          "lines": [
+            472
+          ]
+        },
+        {
+          "pattern": "bg-emerald-50",
+          "severity": "medium",
+          "count": 1,
+          "lines": [
+            549
+          ]
+        },
+        {
+          "pattern": "text-indigo-600",
+          "severity": "medium",
+          "count": 17,
+          "lines": [
+            305,
+            342,
+            344,
+            375,
+            378
+          ]
+        },
+        {
+          "pattern": "text-blue-600",
+          "severity": "medium",
+          "count": 1,
+          "lines": [
+            482
+          ]
+        },
+        {
+          "pattern": "bg-slate-50",
+          "severity": "high",
+          "count": 5,
+          "lines": [
+            339,
+            472,
+            531,
+            607,
+            674
+          ]
+        },
+        {
+          "pattern": "text-slate-700",
+          "severity": "high",
+          "count": 2,
+          "lines": [
+            475,
+            488
+          ]
+        },
+        {
+          "pattern": "text-slate-600",
+          "severity": "high",
+          "count": 1,
+          "lines": [
+            482
+          ]
+        },
+        {
+          "pattern": "text-slate-500",
+          "severity": "high",
+          "count": 2,
+          "lines": [
+            474,
+            492
+          ]
+        },
+        {
+          "pattern": "border-indigo-500",
+          "severity": "low",
+          "count": 4,
+          "lines": [
+            344,
+            408,
+            556,
+            572
+          ]
+        }
+      ]
+    },
+    {
+      "file": "components\\products\\ProductTabsContent.tsx",
+      "issues": 124,
+      "details": [
+        {
+          "pattern": "bg-white",
+          "severity": "high",
+          "count": 6,
+          "lines": [
+            82,
+            148,
+            188,
+            239,
+            287
+          ]
+        },
+        {
+          "pattern": "bg-gray-50",
+          "severity": "high",
+          "count": 13,
+          "lines": [
+            66,
+            160,
+            168,
+            203,
+            206
+          ]
+        },
+        {
+          "pattern": "bg-gray-100",
+          "severity": "high",
+          "count": 2,
+          "lines": [
+            74,
+            409
+          ]
+        },
+        {
+          "pattern": "border-gray-200",
+          "severity": "high",
+          "count": 11,
+          "lines": [
+            82,
+            148,
+            168,
+            188,
+            206
+          ]
+        },
+        {
+          "pattern": "border-gray-100",
+          "severity": "high",
+          "count": 16,
+          "lines": [
+            66,
+            399,
+            403,
+            407,
+            411
+          ]
+        },
+        {
+          "pattern": "text-gray-900",
+          "severity": "high",
+          "count": 1,
+          "lines": [
+            463
+          ]
+        },
+        {
+          "pattern": "text-gray-700",
+          "severity": "high",
+          "count": 4,
+          "lines": [
+            82,
+            206,
+            209,
+            384
+          ]
+        },
+        {
+          "pattern": "text-gray-600",
+          "severity": "high",
+          "count": 2,
+          "lines": [
+            168,
+            409
+          ]
+        },
+        {
+          "pattern": "text-gray-500",
+          "severity": "high",
+          "count": 7,
+          "lines": [
+            69,
+            74,
+            161,
+            204,
+            315
+          ]
+        },
+        {
+          "pattern": "text-gray-400",
+          "severity": "high",
+          "count": 29,
+          "lines": [
+            95,
+            98,
+            101,
+            141,
+            170
+          ]
+        },
+        {
+          "pattern": "text-gray-300",
+          "severity": "medium",
+          "count": 1,
+          "lines": [
+            219
+          ]
+        },
+        {
+          "pattern": "bg-indigo-50",
+          "severity": "medium",
+          "count": 1,
+          "lines": [
+            384
+          ]
+        },
+        {
+          "pattern": "bg-blue-50",
+          "severity": "medium",
+          "count": 1,
+          "lines": [
+            405
+          ]
+        },
+        {
+          "pattern": "bg-emerald-50",
+          "severity": "medium",
+          "count": 2,
+          "lines": [
+            74,
+            322
+          ]
+        },
+        {
+          "pattern": "bg-red-50",
+          "severity": "medium",
+          "count": 2,
+          "lines": [
+            74,
+            322
+          ]
+        },
+        {
+          "pattern": "bg-amber-50",
+          "severity": "medium",
+          "count": 2,
+          "lines": [
+            321,
+            417
+          ]
+        },
+        {
+          "pattern": "text-indigo-600",
+          "severity": "medium",
+          "count": 3,
+          "lines": [
+            243,
+            258,
+            330
+          ]
+        },
+        {
+          "pattern": "text-blue-600",
+          "severity": "medium",
+          "count": 7,
+          "lines": [
+            102,
+            164,
+            214,
+            245,
+            260
+          ]
+        },
+        {
+          "pattern": "text-emerald-600",
+          "severity": "medium",
+          "count": 6,
+          "lines": [
+            74,
+            96,
+            219,
+            342,
+            467
+          ]
+        },
+        {
+          "pattern": "text-red-600",
+          "severity": "medium",
+          "count": 4,
+          "lines": [
+            74,
+            99,
+            209,
+            342
+          ]
+        },
+        {
+          "pattern": "text-amber-600",
+          "severity": "medium",
+          "count": 2,
+          "lines": [
+            244,
+            259
+          ]
+        },
+        {
+          "pattern": "border-indigo-500",
+          "severity": "low",
+          "count": 1,
+          "lines": [
+            82
+          ]
+        },
+        {
+          "pattern": "focus:ring-indigo-50",
+          "severity": "low",
+          "count": 1,
+          "lines": [
+            82
+          ]
+        }
+      ]
+    },
+    {
+      "file": "components\\common\\CategoryManager.tsx",
+      "issues": 118,
+      "details": [
+        {
+          "pattern": "bg-white",
+          "severity": "high",
+          "count": 9,
+          "lines": [
+            311,
+            452,
+            513,
+            551,
+            594
+          ]
+        },
+        {
+          "pattern": "bg-gray-50",
+          "severity": "high",
+          "count": 21,
+          "lines": [
+            327,
+            351,
+            379,
+            387,
+            394
+          ]
+        },
+        {
+          "pattern": "bg-gray-100",
+          "severity": "high",
+          "count": 2,
+          "lines": [
+            369,
+            421
+          ]
+        },
+        {
+          "pattern": "border-gray-200",
+          "severity": "high",
+          "count": 10,
+          "lines": [
+            351,
+            358,
+            467,
+            499,
+            594
+          ]
+        },
+        {
+          "pattern": "border-gray-100",
+          "severity": "high",
+          "count": 8,
+          "lines": [
+            311,
+            312,
+            413,
+            452,
+            455
+          ]
+        },
+        {
+          "pattern": "text-gray-900",
+          "severity": "high",
+          "count": 6,
+          "lines": [
+            351,
+            566,
+            594,
+            606,
+            622
+          ]
+        },
+        {
+          "pattern": "text-gray-500",
+          "severity": "high",
+          "count": 18,
+          "lines": [
+            327,
+            379,
+            387,
+            394,
+            428
+          ]
+        },
+        {
+          "pattern": "text-gray-400",
+          "severity": "high",
+          "count": 4,
+          "lines": [
+            571,
+            591,
+            604,
+            620
+          ]
+        },
+        {
+          "pattern": "text-gray-300",
+          "severity": "medium",
+          "count": 2,
+          "lines": [
+            503,
+            683
+          ]
+        },
+        {
+          "pattern": "bg-indigo-50",
+          "severity": "medium",
+          "count": 5,
+          "lines": [
+            315,
+            387,
+            420,
+            674
+          ]
+        },
+        {
+          "pattern": "bg-indigo-100",
+          "severity": "medium",
+          "count": 2,
+          "lines": [
+            568,
+            674
+          ]
+        },
+        {
+          "pattern": "bg-blue-50",
+          "severity": "medium",
+          "count": 5,
+          "lines": [
+            327,
+            379,
+            428,
+            722
+          ]
+        },
+        {
+          "pattern": "bg-emerald-50",
+          "severity": "medium",
+          "count": 1,
+          "lines": [
+            473
+          ]
+        },
+        {
+          "pattern": "text-indigo-600",
+          "severity": "medium",
+          "count": 8,
+          "lines": [
+            315,
+            387,
+            420,
+            458,
+            514
+          ]
+        },
+        {
+          "pattern": "text-blue-600",
+          "severity": "medium",
+          "count": 4,
+          "lines": [
+            327,
+            379,
+            428,
+            719
+          ]
+        },
+        {
+          "pattern": "text-red-600",
+          "severity": "medium",
+          "count": 3,
+          "lines": [
+            488,
+            518,
+            527
+          ]
+        },
+        {
+          "pattern": "border-indigo-500",
+          "severity": "low",
+          "count": 5,
+          "lines": [
+            351,
+            594,
+            606,
+            622,
+            652
+          ]
+        },
+        {
+          "pattern": "focus:ring-indigo-50",
+          "severity": "low",
+          "count": 5,
+          "lines": [
+            351,
+            594,
+            606,
+            622,
+            652
+          ]
+        }
+      ]
+    },
+    {
+      "file": "components\\divers\\GestionDivers.tsx",
+      "issues": 111,
+      "details": [
+        {
+          "pattern": "bg-white",
+          "severity": "high",
+          "count": 18,
+          "lines": [
+            166,
+            212,
+            252,
+            263,
+            274
+          ]
+        },
+        {
+          "pattern": "bg-gray-50",
+          "severity": "high",
+          "count": 12,
+          "lines": [
+            172,
+            185,
+            198,
+            253,
+            289
+          ]
+        },
+        {
+          "pattern": "bg-gray-100",
+          "severity": "high",
+          "count": 3,
+          "lines": [
+            278,
+            366,
+            376
+          ]
+        },
+        {
+          "pattern": "bg-gray-200",
+          "severity": "high",
+          "count": 2,
+          "lines": [
+            366,
+            376
+          ]
+        },
+        {
+          "pattern": "border-gray-200",
+          "severity": "high",
+          "count": 1,
+          "lines": [
+            166
+          ]
+        },
+        {
+          "pattern": "border-gray-100",
+          "severity": "high",
+          "count": 13,
+          "lines": [
+            212,
+            252,
+            253,
+            322,
+            357
+          ]
+        },
+        {
+          "pattern": "text-gray-900",
+          "severity": "high",
+          "count": 7,
+          "lines": [
+            155,
+            296,
+            304,
+            403,
+            407
+          ]
+        },
+        {
+          "pattern": "text-gray-700",
+          "severity": "high",
+          "count": 6,
+          "lines": [
+            172,
+            185,
+            198,
+            359,
+            366
+          ]
+        },
+        {
+          "pattern": "text-gray-600",
+          "severity": "high",
+          "count": 6,
+          "lines": [
+            290,
+            307,
+            435,
+            438,
+            475
+          ]
+        },
+        {
+          "pattern": "text-gray-500",
+          "severity": "high",
+          "count": 26,
+          "lines": [
+            159,
+            172,
+            185,
+            198,
+            258
+          ]
+        },
+        {
+          "pattern": "text-gray-400",
+          "severity": "high",
+          "count": 3,
+          "lines": [
+            214,
+            222,
+            224
+          ]
+        },
+        {
+          "pattern": "text-gray-300",
+          "severity": "medium",
+          "count": 1,
+          "lines": [
+            493
+          ]
+        },
+        {
+          "pattern": "bg-indigo-50",
+          "severity": "medium",
+          "count": 3,
+          "lines": [
+            171,
+            184,
+            197
+          ]
+        },
+        {
+          "pattern": "text-indigo-600",
+          "severity": "medium",
+          "count": 8,
+          "lines": [
+            156,
+            171,
+            184,
+            197,
+            293
+          ]
+        },
+        {
+          "pattern": "border-indigo-500",
+          "severity": "low",
+          "count": 2,
+          "lines": [
+            219,
+            229
+          ]
+        }
+      ]
+    },
+    {
+      "file": "components\\GestionUtilisateurs.tsx",
+      "issues": 110,
+      "details": [
+        {
+          "pattern": "bg-white",
+          "severity": "high",
+          "count": 25,
+          "lines": [
+            607,
+            614,
+            631,
+            742,
+            743
+          ]
+        },
+        {
+          "pattern": "bg-gray-50",
+          "severity": "high",
+          "count": 11,
+          "lines": [
+            678,
+            681,
+            717,
+            724,
+            750
+          ]
+        },
+        {
+          "pattern": "bg-gray-100",
+          "severity": "high",
+          "count": 1,
+          "lines": [
+            604
+          ]
+        },
+        {
+          "pattern": "bg-gray-200",
+          "severity": "high",
+          "count": 1,
+          "lines": [
+            610
+          ]
+        },
+        {
+          "pattern": "bg-gray-300",
+          "severity": "high",
+          "count": 1,
+          "lines": [
+            835
+          ]
+        },
+        {
+          "pattern": "border-gray-200",
+          "severity": "high",
+          "count": 11,
+          "lines": [
+            678,
+            681,
+            743,
+            800,
+            820
+          ]
+        },
+        {
+          "pattern": "border-gray-100",
+          "severity": "high",
+          "count": 1,
+          "lines": [
+            912
+          ]
+        },
+        {
+          "pattern": "text-gray-700",
+          "severity": "high",
+          "count": 2,
+          "lines": [
+            607,
+            614
+          ]
+        },
+        {
+          "pattern": "text-gray-600",
+          "severity": "high",
+          "count": 6,
+          "lines": [
+            610,
+            678,
+            681,
+            717,
+            724
+          ]
+        },
+        {
+          "pattern": "text-gray-500",
+          "severity": "high",
+          "count": 6,
+          "lines": [
+            607,
+            614,
+            750,
+            797,
+            841
+          ]
+        },
+        {
+          "pattern": "bg-indigo-50",
+          "severity": "medium",
+          "count": 3,
+          "lines": [
+            745,
+            755,
+            813
+          ]
+        },
+        {
+          "pattern": "bg-blue-50",
+          "severity": "medium",
+          "count": 1,
+          "lines": [
+            898
+          ]
+        },
+        {
+          "pattern": "bg-emerald-50",
+          "severity": "medium",
+          "count": 3,
+          "lines": [
+            692,
+            707,
+            907
+          ]
+        },
+        {
+          "pattern": "bg-red-50",
+          "severity": "medium",
+          "count": 2,
+          "lines": [
+            643,
+            980
+          ]
+        },
+        {
+          "pattern": "bg-amber-50",
+          "severity": "medium",
+          "count": 1,
+          "lines": [
+            697
+          ]
+        },
+        {
+          "pattern": "bg-purple-50",
+          "severity": "medium",
+          "count": 1,
+          "lines": [
+            850
+          ]
+        },
+        {
+          "pattern": "text-indigo-600",
+          "severity": "medium",
+          "count": 7,
+          "lines": [
+            603,
+            607,
+            745,
+            756,
+            815
+          ]
+        },
+        {
+          "pattern": "text-emerald-600",
+          "severity": "medium",
+          "count": 4,
+          "lines": [
+            707,
+            908,
+            915,
+            921
+          ]
+        },
+        {
+          "pattern": "text-red-600",
+          "severity": "medium",
+          "count": 10,
+          "lines": [
+            596,
+            614,
+            617,
+            724,
+            981
+          ]
+        },
+        {
+          "pattern": "text-amber-600",
+          "severity": "medium",
+          "count": 6,
+          "lines": [
+            940,
+            1015,
+            1020,
+            1025,
+            1030
+          ]
+        },
+        {
+          "pattern": "border-indigo-500",
+          "severity": "low",
+          "count": 4,
+          "lines": [
+            755,
+            800,
+            820,
+            971
+          ]
+        },
+        {
+          "pattern": "focus:ring-indigo-50",
+          "severity": "low",
+          "count": 3,
+          "lines": [
+            800,
+            820,
+            971
+          ]
+        }
+      ]
+    },
+    {
+      "file": "components\\stock\\StockHealthDashboard.tsx",
+      "issues": 107,
+      "details": [
+        {
+          "pattern": "border-gray-200",
+          "severity": "high",
+          "count": 15,
+          "lines": [
+            31,
+            33,
+            34,
+            69,
+            90
+          ]
+        },
+        {
+          "pattern": "text-gray-900",
+          "severity": "high",
+          "count": 15,
+          "lines": [
+            115,
+            120,
+            124,
+            273,
+            277
+          ]
+        },
+        {
+          "pattern": "text-gray-700",
+          "severity": "high",
+          "count": 9,
+          "lines": [
+            128,
+            132,
+            136,
+            172,
+            225
+          ]
+        },
+        {
+          "pattern": "text-gray-500",
+          "severity": "high",
+          "count": 4,
+          "lines": [
+            273,
+            303,
+            333,
+            363
+          ]
+        },
+        {
+          "pattern": "text-gray-400",
+          "severity": "high",
+          "count": 10,
+          "lines": [
+            77,
+            83,
+            120,
+            143,
+            198
+          ]
+        },
+        {
+          "pattern": "bg-indigo-50",
+          "severity": "medium",
+          "count": 2,
+          "lines": [
+            77,
+            83
+          ]
+        },
+        {
+          "pattern": "bg-blue-50",
+          "severity": "medium",
+          "count": 3,
+          "lines": [
+            77,
+            83,
+            293
+          ]
+        },
+        {
+          "pattern": "bg-emerald-50",
+          "severity": "medium",
+          "count": 2,
+          "lines": [
+            263,
+            353
+          ]
+        },
+        {
+          "pattern": "bg-red-50",
+          "severity": "medium",
+          "count": 2,
+          "lines": [
+            158,
+            184
+          ]
+        },
+        {
+          "pattern": "bg-amber-50",
+          "severity": "medium",
+          "count": 19,
+          "lines": [
+            31,
+            33,
+            34,
+            69,
+            122
+          ]
+        },
+        {
+          "pattern": "text-indigo-600",
+          "severity": "medium",
+          "count": 3,
+          "lines": [
+            77,
+            83,
+            293
+          ]
+        },
+        {
+          "pattern": "text-emerald-600",
+          "severity": "medium",
+          "count": 4,
+          "lines": [
+            42,
+            69,
+            263,
+            353
+          ]
+        },
+        {
+          "pattern": "text-red-600",
+          "severity": "medium",
+          "count": 10,
+          "lines": [
+            44,
+            127,
+            156,
+            158,
+            162
+          ]
+        },
+        {
+          "pattern": "text-amber-600",
+          "severity": "medium",
+          "count": 8,
+          "lines": [
+            209,
+            211,
+            215,
+            220,
+            224
+          ]
+        },
+        {
+          "pattern": "border-indigo-500",
+          "severity": "low",
+          "count": 1,
+          "lines": [
+            291
+          ]
+        }
+      ]
+    },
+    {
+      "file": "components\\Clients.tsx",
+      "issues": 106,
+      "details": [
+        {
+          "pattern": "bg-white",
+          "severity": "high",
+          "count": 7,
+          "lines": [
+            353,
+            404,
+            467,
+            524,
+            548
+          ]
+        },
+        {
+          "pattern": "bg-gray-50",
+          "severity": "high",
+          "count": 12,
+          "lines": [
+            351,
+            404,
+            421,
+            464,
+            490
+          ]
+        },
+        {
+          "pattern": "bg-gray-100",
+          "severity": "high",
+          "count": 6,
+          "lines": [
+            382,
+            389,
+            432,
+            470,
+            506
+          ]
+        },
+        {
+          "pattern": "border-gray-200",
+          "severity": "high",
+          "count": 2,
+          "lines": [
+            404,
+            490
+          ]
+        },
+        {
+          "pattern": "border-gray-100",
+          "severity": "high",
+          "count": 11,
+          "lines": [
+            353,
+            354,
+            467,
+            524,
+            525
+          ]
+        },
+        {
+          "pattern": "text-gray-900",
+          "severity": "high",
+          "count": 5,
+          "lines": [
+            377,
+            404,
+            431,
+            479,
+            643
+          ]
+        },
+        {
+          "pattern": "text-gray-700",
+          "severity": "high",
+          "count": 4,
+          "lines": [
+            490,
+            532,
+            539,
+            591
+          ]
+        },
+        {
+          "pattern": "text-gray-600",
+          "severity": "high",
+          "count": 1,
+          "lines": [
+            473
+          ]
+        },
+        {
+          "pattern": "text-gray-500",
+          "severity": "high",
+          "count": 9,
+          "lines": [
+            432,
+            483,
+            540,
+            586,
+            634
+          ]
+        },
+        {
+          "pattern": "text-gray-400",
+          "severity": "high",
+          "count": 18,
+          "lines": [
+            382,
+            389,
+            402,
+            436,
+            506
+          ]
+        },
+        {
+          "pattern": "bg-indigo-50",
+          "severity": "medium",
+          "count": 9,
+          "lines": [
+            374,
+            382,
+            421,
+            439,
+            475
+          ]
+        },
+        {
+          "pattern": "bg-indigo-100",
+          "severity": "medium",
+          "count": 2,
+          "lines": [
+            498,
+            579
+          ]
+        },
+        {
+          "pattern": "bg-red-50",
+          "severity": "medium",
+          "count": 3,
+          "lines": [
+            362,
+            493,
+            615
+          ]
+        },
+        {
+          "pattern": "bg-amber-50",
+          "severity": "medium",
+          "count": 3,
+          "lines": [
+            432,
+            550,
+            555
+          ]
+        },
+        {
+          "pattern": "bg-orange-50",
+          "severity": "medium",
+          "count": 1,
+          "lines": [
+            602
+          ]
+        },
+        {
+          "pattern": "text-indigo-600",
+          "severity": "medium",
+          "count": 7,
+          "lines": [
+            374,
+            382,
+            424,
+            439,
+            475
+          ]
+        },
+        {
+          "pattern": "text-red-600",
+          "severity": "medium",
+          "count": 2,
+          "lines": [
+            362,
+            493
+          ]
+        },
+        {
+          "pattern": "text-amber-600",
+          "severity": "medium",
+          "count": 2,
+          "lines": [
+            550,
+            556
+          ]
+        },
+        {
+          "pattern": "border-indigo-500",
+          "severity": "low",
+          "count": 1,
+          "lines": [
+            404
+          ]
+        },
+        {
+          "pattern": "focus:ring-indigo-50",
+          "severity": "low",
+          "count": 1,
+          "lines": [
+            404
+          ]
+        }
+      ]
+    },
+    {
+      "file": "components\\ProduitFormModal.tsx",
+      "issues": 102,
+      "details": [
+        {
+          "pattern": "bg-white",
+          "severity": "high",
+          "count": 7,
+          "lines": [
+            168,
+            169,
+            170,
+            171,
+            176
+          ]
+        },
+        {
+          "pattern": "bg-gray-50",
+          "severity": "high",
+          "count": 7,
+          "lines": [
+            316,
+            323,
+            352,
+            373,
+            416
+          ]
+        },
+        {
+          "pattern": "bg-gray-100",
+          "severity": "high",
+          "count": 2,
+          "lines": [
+            185,
+            352
+          ]
+        },
+        {
+          "pattern": "border-gray-200",
+          "severity": "high",
+          "count": 10,
+          "lines": [
+            168,
+            169,
+            170,
+            171,
+            297
+          ]
+        },
+        {
+          "pattern": "border-gray-100",
+          "severity": "high",
+          "count": 6,
+          "lines": [
+            176,
+            178,
+            201,
+            309,
+            416
+          ]
+        },
+        {
+          "pattern": "text-gray-900",
+          "severity": "high",
+          "count": 5,
+          "lines": [
+            168,
+            169,
+            170,
+            171,
+            183
+          ]
+        },
+        {
+          "pattern": "text-gray-700",
+          "severity": "high",
+          "count": 5,
+          "lines": [
+            355,
+            367,
+            377,
+            421,
+            439
+          ]
+        },
+        {
+          "pattern": "text-gray-500",
+          "severity": "high",
+          "count": 27,
+          "lines": [
+            204,
+            210,
+            214,
+            231,
+            236
+          ]
+        },
+        {
+          "pattern": "text-gray-400",
+          "severity": "high",
+          "count": 6,
+          "lines": [
+            185,
+            201,
+            309,
+            356,
+            404
+          ]
+        },
+        {
+          "pattern": "bg-indigo-50",
+          "severity": "medium",
+          "count": 2,
+          "lines": [
+            180,
+            387
+          ]
+        },
+        {
+          "pattern": "bg-blue-50",
+          "severity": "medium",
+          "count": 2,
+          "lines": [
+            363
+          ]
+        },
+        {
+          "pattern": "bg-emerald-50",
+          "severity": "medium",
+          "count": 1,
+          "lines": [
+            416
+          ]
+        },
+        {
+          "pattern": "bg-red-50",
+          "severity": "medium",
+          "count": 2,
+          "lines": [
+            192,
+            297
+          ]
+        },
+        {
+          "pattern": "bg-amber-50",
+          "severity": "medium",
+          "count": 2,
+          "lines": [
+            373
+          ]
+        },
+        {
+          "pattern": "text-indigo-600",
+          "severity": "medium",
+          "count": 5,
+          "lines": [
+            322,
+            353,
+            365,
+            375,
+            419
+          ]
+        },
+        {
+          "pattern": "text-emerald-600",
+          "severity": "medium",
+          "count": 2,
+          "lines": [
+            339,
+            343
+          ]
+        },
+        {
+          "pattern": "text-red-600",
+          "severity": "medium",
+          "count": 3,
+          "lines": [
+            293,
+            339,
+            343
+          ]
+        },
+        {
+          "pattern": "border-indigo-500",
+          "severity": "low",
+          "count": 4,
+          "lines": [
+            168,
+            169,
+            170,
+            171
+          ]
+        },
+        {
+          "pattern": "focus:ring-indigo-50",
+          "severity": "low",
+          "count": 4,
+          "lines": [
+            168,
+            169,
+            170,
+            171
+          ]
+        }
+      ]
+    },
+    {
+      "file": "components\\fournisseurs\\FournisseurDetails.tsx",
+      "issues": 99,
+      "details": [
+        {
+          "pattern": "bg-white",
+          "severity": "high",
+          "count": 8,
+          "lines": [
+            24,
+            41,
+            42,
+            75,
+            103
+          ]
+        },
+        {
+          "pattern": "bg-gray-50",
+          "severity": "high",
+          "count": 9,
+          "lines": [
+            76,
+            104,
+            120,
+            126,
+            132
+          ]
+        },
+        {
+          "pattern": "bg-gray-100",
+          "severity": "high",
+          "count": 5,
+          "lines": [
+            26,
+            53,
+            64,
+            217,
+            248
+          ]
+        },
+        {
+          "pattern": "border-gray-200",
+          "severity": "high",
+          "count": 2,
+          "lines": [
+            134,
+            179
+          ]
+        },
+        {
+          "pattern": "border-gray-100",
+          "severity": "high",
+          "count": 13,
+          "lines": [
+            24,
+            41,
+            42,
+            75,
+            76
+          ]
+        },
+        {
+          "pattern": "text-gray-900",
+          "severity": "high",
+          "count": 4,
+          "lines": [
+            48,
+            92,
+            150,
+            179
+          ]
+        },
+        {
+          "pattern": "text-gray-700",
+          "severity": "high",
+          "count": 4,
+          "lines": [
+            85,
+            96,
+            222,
+            227
+          ]
+        },
+        {
+          "pattern": "text-gray-600",
+          "severity": "high",
+          "count": 2,
+          "lines": [
+            217,
+            248
+          ]
+        },
+        {
+          "pattern": "text-gray-500",
+          "severity": "high",
+          "count": 9,
+          "lines": [
+            31,
+            134,
+            204,
+            205,
+            206
+          ]
+        },
+        {
+          "pattern": "text-gray-400",
+          "severity": "high",
+          "count": 19,
+          "lines": [
+            32,
+            49,
+            53,
+            58,
+            64
+          ]
+        },
+        {
+          "pattern": "text-gray-300",
+          "severity": "medium",
+          "count": 2,
+          "lines": [
+            27,
+            192
+          ]
+        },
+        {
+          "pattern": "bg-indigo-50",
+          "severity": "medium",
+          "count": 2,
+          "lines": [
+            44,
+            110
+          ]
+        },
+        {
+          "pattern": "bg-emerald-50",
+          "severity": "medium",
+          "count": 2,
+          "lines": [
+            144,
+            258
+          ]
+        },
+        {
+          "pattern": "bg-red-50",
+          "severity": "medium",
+          "count": 2,
+          "lines": [
+            58,
+            255
+          ]
+        },
+        {
+          "pattern": "bg-amber-50",
+          "severity": "medium",
+          "count": 2,
+          "lines": [
+            64,
+            257
+          ]
+        },
+        {
+          "pattern": "text-indigo-600",
+          "severity": "medium",
+          "count": 2,
+          "lines": [
+            44,
+            110
+          ]
+        },
+        {
+          "pattern": "text-emerald-600",
+          "severity": "medium",
+          "count": 4,
+          "lines": [
+            122,
+            144,
+            240,
+            258
+          ]
+        },
+        {
+          "pattern": "text-red-600",
+          "severity": "medium",
+          "count": 4,
+          "lines": [
+            58,
+            122,
+            240,
+            255
+          ]
+        },
+        {
+          "pattern": "text-amber-600",
+          "severity": "medium",
+          "count": 2,
+          "lines": [
+            64,
+            257
+          ]
+        },
+        {
+          "pattern": "border-indigo-500",
+          "severity": "low",
+          "count": 1,
+          "lines": [
+            179
+          ]
+        },
+        {
+          "pattern": "focus:ring-indigo-50",
+          "severity": "low",
+          "count": 1,
+          "lines": [
+            179
+          ]
+        }
+      ]
+    },
+    {
+      "file": "components\\Commandes\\SuggestionCommandeModal.tsx",
+      "issues": 97,
+      "details": [
+        {
+          "pattern": "bg-white",
+          "severity": "high",
+          "count": 8,
+          "lines": [
+            220,
+            229,
+            260,
+            293,
+            318
+          ]
+        },
+        {
+          "pattern": "bg-gray-50",
+          "severity": "high",
+          "count": 15,
+          "lines": [
+            168,
+            173,
+            240,
+            271,
+            303
+          ]
+        },
+        {
+          "pattern": "bg-gray-100",
+          "severity": "high",
+          "count": 2,
+          "lines": [
+            426,
+            556
+          ]
+        },
+        {
+          "pattern": "border-gray-200",
+          "severity": "high",
+          "count": 9,
+          "lines": [
+            229,
+            260,
+            293,
+            327,
+            351
+          ]
+        },
+        {
+          "pattern": "border-gray-100",
+          "severity": "high",
+          "count": 5,
+          "lines": [
+            318,
+            452,
+            472,
+            475,
+            569
+          ]
+        },
+        {
+          "pattern": "text-gray-900",
+          "severity": "high",
+          "count": 12,
+          "lines": [
+            243,
+            274,
+            307,
+            344,
+            426
+          ]
+        },
+        {
+          "pattern": "text-gray-500",
+          "severity": "high",
+          "count": 12,
+          "lines": [
+            240,
+            245,
+            271,
+            276,
+            303
+          ]
+        },
+        {
+          "pattern": "text-gray-400",
+          "severity": "high",
+          "count": 11,
+          "lines": [
+            173,
+            322,
+            340,
+            355,
+            364
+          ]
+        },
+        {
+          "pattern": "bg-indigo-50",
+          "severity": "medium",
+          "count": 5,
+          "lines": [
+            228,
+            259,
+            292,
+            503
+          ]
+        },
+        {
+          "pattern": "text-indigo-600",
+          "severity": "medium",
+          "count": 13,
+          "lines": [
+            216,
+            249,
+            280,
+            311,
+            374
+          ]
+        },
+        {
+          "pattern": "text-red-600",
+          "severity": "medium",
+          "count": 1,
+          "lines": [
+            535
+          ]
+        },
+        {
+          "pattern": "border-indigo-500",
+          "severity": "low",
+          "count": 4,
+          "lines": [
+            327,
+            351,
+            395,
+            404
+          ]
+        }
+      ]
+    },
+    {
+      "file": "components\\Commandes\\CommandeDetails.tsx",
+      "issues": 96,
+      "details": [
+        {
+          "pattern": "bg-white",
+          "severity": "high",
+          "count": 8,
+          "lines": [
+            155,
+            229,
+            301,
+            369,
+            507
+          ]
+        },
+        {
+          "pattern": "bg-gray-50",
+          "severity": "high",
+          "count": 5,
+          "lines": [
+            155,
+            229,
+            509,
+            561,
+            685
+          ]
+        },
+        {
+          "pattern": "bg-gray-100",
+          "severity": "high",
+          "count": 2,
+          "lines": [
+            127,
+            143
+          ]
+        },
+        {
+          "pattern": "border-gray-200",
+          "severity": "high",
+          "count": 7,
+          "lines": [
+            155,
+            229,
+            391,
+            407,
+            423
+          ]
+        },
+        {
+          "pattern": "border-gray-100",
+          "severity": "high",
+          "count": 4,
+          "lines": [
+            301,
+            369,
+            507,
+            509
+          ]
+        },
+        {
+          "pattern": "text-gray-900",
+          "severity": "high",
+          "count": 8,
+          "lines": [
+            149,
+            307,
+            315,
+            323,
+            331
+          ]
+        },
+        {
+          "pattern": "text-gray-700",
+          "severity": "high",
+          "count": 4,
+          "lines": [
+            155,
+            229,
+            379,
+            511
+          ]
+        },
+        {
+          "pattern": "text-gray-600",
+          "severity": "high",
+          "count": 3,
+          "lines": [
+            483,
+            539,
+            731
+          ]
+        },
+        {
+          "pattern": "text-gray-500",
+          "severity": "high",
+          "count": 15,
+          "lines": [
+            127,
+            395,
+            555,
+            593,
+            599
+          ]
+        },
+        {
+          "pattern": "text-gray-400",
+          "severity": "high",
+          "count": 17,
+          "lines": [
+            143,
+            305,
+            313,
+            321,
+            329
+          ]
+        },
+        {
+          "pattern": "text-gray-300",
+          "severity": "medium",
+          "count": 1,
+          "lines": [
+            727
+          ]
+        },
+        {
+          "pattern": "bg-blue-50",
+          "severity": "medium",
+          "count": 1,
+          "lines": [
+            121
+          ]
+        },
+        {
+          "pattern": "bg-emerald-50",
+          "severity": "medium",
+          "count": 4,
+          "lines": [
+            125,
+            469,
+            611,
+            725
+          ]
+        },
+        {
+          "pattern": "bg-red-50",
+          "severity": "medium",
+          "count": 1,
+          "lines": [
+            215
+          ]
+        },
+        {
+          "pattern": "bg-amber-50",
+          "severity": "medium",
+          "count": 3,
+          "lines": [
+            123,
+            251,
+            273
+          ]
+        },
+        {
+          "pattern": "text-indigo-600",
+          "severity": "medium",
+          "count": 3,
+          "lines": [
+            409,
+            411,
+            737
+          ]
+        },
+        {
+          "pattern": "text-emerald-600",
+          "severity": "medium",
+          "count": 4,
+          "lines": [
+            427,
+            443,
+            717,
+            727
+          ]
+        },
+        {
+          "pattern": "text-red-600",
+          "severity": "medium",
+          "count": 3,
+          "lines": [
+            215,
+            717
+          ]
+        },
+        {
+          "pattern": "text-amber-600",
+          "severity": "medium",
+          "count": 2,
+          "lines": [
+            427,
+            443
+          ]
+        },
+        {
+          "pattern": "border-indigo-500",
+          "severity": "low",
+          "count": 1,
+          "lines": [
+            523
+          ]
+        }
+      ]
+    },
+    {
+      "file": "components\\avoirs\\AvoirsForm.tsx",
+      "issues": 89,
+      "details": [
+        {
+          "pattern": "bg-white",
+          "severity": "high",
+          "count": 12,
+          "lines": [
+            70,
+            103,
+            115,
+            130,
+            145
+          ]
+        },
+        {
+          "pattern": "bg-gray-50",
+          "severity": "high",
+          "count": 9,
+          "lines": [
+            75,
+            89,
+            162,
+            201,
+            254
+          ]
+        },
+        {
+          "pattern": "bg-gray-100",
+          "severity": "high",
+          "count": 4,
+          "lines": [
+            67,
+            228,
+            236,
+            282
+          ]
+        },
+        {
+          "pattern": "bg-gray-200",
+          "severity": "high",
+          "count": 1,
+          "lines": [
+            209
+          ]
+        },
+        {
+          "pattern": "bg-gray-300",
+          "severity": "high",
+          "count": 1,
+          "lines": [
+            209
+          ]
+        },
+        {
+          "pattern": "border-gray-200",
+          "severity": "high",
+          "count": 8,
+          "lines": [
+            70,
+            103,
+            115,
+            125,
+            162
+          ]
+        },
+        {
+          "pattern": "border-gray-100",
+          "severity": "high",
+          "count": 9,
+          "lines": [
+            104,
+            130,
+            134,
+            145,
+            194
+          ]
+        },
+        {
+          "pattern": "text-gray-900",
+          "severity": "high",
+          "count": 8,
+          "lines": [
+            75,
+            89,
+            115,
+            162,
+            201
+          ]
+        },
+        {
+          "pattern": "text-gray-600",
+          "severity": "high",
+          "count": 1,
+          "lines": [
+            321
+          ]
+        },
+        {
+          "pattern": "text-gray-500",
+          "severity": "high",
+          "count": 12,
+          "lines": [
+            75,
+            83,
+            89,
+            108,
+            138
+          ]
+        },
+        {
+          "pattern": "text-gray-400",
+          "severity": "high",
+          "count": 3,
+          "lines": [
+            112,
+            196,
+            253
+          ]
+        },
+        {
+          "pattern": "bg-indigo-50",
+          "severity": "medium",
+          "count": 1,
+          "lines": [
+            134
+          ]
+        },
+        {
+          "pattern": "bg-red-50",
+          "severity": "medium",
+          "count": 1,
+          "lines": [
+            321
+          ]
+        },
+        {
+          "pattern": "text-indigo-600",
+          "severity": "medium",
+          "count": 3,
+          "lines": [
+            290,
+            315,
+            345
+          ]
+        },
+        {
+          "pattern": "text-emerald-600",
+          "severity": "medium",
+          "count": 1,
+          "lines": [
+            237
+          ]
+        },
+        {
+          "pattern": "text-red-600",
+          "severity": "medium",
+          "count": 4,
+          "lines": [
+            109,
+            159,
+            237,
+            321
+          ]
+        },
+        {
+          "pattern": "border-indigo-500",
+          "severity": "low",
+          "count": 6,
+          "lines": [
+            115,
+            162,
+            180,
+            301,
+            310
+          ]
+        },
+        {
+          "pattern": "focus:ring-indigo-50",
+          "severity": "low",
+          "count": 5,
+          "lines": [
+            115,
+            162,
+            201,
+            301,
+            310
+          ]
+        }
+      ]
+    },
+    {
+      "file": "components\\creances\\CreancesTable.tsx",
+      "issues": 85,
+      "details": [
+        {
+          "pattern": "bg-white",
+          "severity": "high",
+          "count": 3,
+          "lines": [
+            65,
+            141,
+            142
+          ]
+        },
+        {
+          "pattern": "bg-gray-50",
+          "severity": "high",
+          "count": 16,
+          "lines": [
+            66,
+            78,
+            91,
+            106,
+            154
+          ]
+        },
+        {
+          "pattern": "border-gray-200",
+          "severity": "high",
+          "count": 12,
+          "lines": [
+            65,
+            154,
+            156,
+            165,
+            168
+          ]
+        },
+        {
+          "pattern": "border-gray-100",
+          "severity": "high",
+          "count": 1,
+          "lines": [
+            141
+          ]
+        },
+        {
+          "pattern": "text-gray-900",
+          "severity": "high",
+          "count": 3,
+          "lines": [
+            100,
+            109,
+            220
+          ]
+        },
+        {
+          "pattern": "text-gray-500",
+          "severity": "high",
+          "count": 4,
+          "lines": [
+            69,
+            106,
+            208,
+            219
+          ]
+        },
+        {
+          "pattern": "text-gray-400",
+          "severity": "high",
+          "count": 17,
+          "lines": [
+            55,
+            79,
+            80,
+            81,
+            82
+          ]
+        },
+        {
+          "pattern": "text-gray-300",
+          "severity": "medium",
+          "count": 2,
+          "lines": [
+            67,
+            211
+          ]
+        },
+        {
+          "pattern": "bg-indigo-50",
+          "severity": "medium",
+          "count": 4,
+          "lines": [
+            96,
+            121,
+            194,
+            238
+          ]
+        },
+        {
+          "pattern": "bg-emerald-50",
+          "severity": "medium",
+          "count": 1,
+          "lines": [
+            229
+          ]
+        },
+        {
+          "pattern": "bg-amber-50",
+          "severity": "medium",
+          "count": 2,
+          "lines": [
+            115,
+            229
+          ]
+        },
+        {
+          "pattern": "text-indigo-600",
+          "severity": "medium",
+          "count": 14,
+          "lines": [
+            54,
+            96,
+            100,
+            121,
+            159
+          ]
+        },
+        {
+          "pattern": "text-emerald-600",
+          "severity": "medium",
+          "count": 3,
+          "lines": [
+            111,
+            221,
+            229
+          ]
+        },
+        {
+          "pattern": "text-amber-600",
+          "severity": "medium",
+          "count": 3,
+          "lines": [
+            115,
+            223,
+            229
+          ]
+        }
+      ]
+    },
+    {
+      "file": "components\\clients\\ClientFormModal.tsx",
+      "issues": 82,
+      "details": [
+        {
+          "pattern": "bg-white",
+          "severity": "high",
+          "count": 9,
+          "lines": [
+            62,
+            99,
+            109,
+            156,
+            182
+          ]
+        },
+        {
+          "pattern": "bg-gray-50",
+          "severity": "high",
+          "count": 8,
+          "lines": [
+            99,
+            188,
+            204,
+            226,
+            336
+          ]
+        },
+        {
+          "pattern": "bg-gray-100",
+          "severity": "high",
+          "count": 1,
+          "lines": [
+            81
+          ]
+        },
+        {
+          "pattern": "bg-gray-200",
+          "severity": "high",
+          "count": 3,
+          "lines": [
+            190,
+            206,
+            228
+          ]
+        },
+        {
+          "pattern": "border-gray-200",
+          "severity": "high",
+          "count": 4,
+          "lines": [
+            99,
+            188,
+            204,
+            226
+          ]
+        },
+        {
+          "pattern": "border-gray-100",
+          "severity": "high",
+          "count": 12,
+          "lines": [
+            62,
+            65,
+            109,
+            156,
+            182
+          ]
+        },
+        {
+          "pattern": "text-gray-900",
+          "severity": "high",
+          "count": 2,
+          "lines": [
+            71,
+            347
+          ]
+        },
+        {
+          "pattern": "text-gray-700",
+          "severity": "high",
+          "count": 4,
+          "lines": [
+            193,
+            210,
+            231,
+            374
+          ]
+        },
+        {
+          "pattern": "text-gray-600",
+          "severity": "high",
+          "count": 1,
+          "lines": [
+            99
+          ]
+        },
+        {
+          "pattern": "text-gray-500",
+          "severity": "high",
+          "count": 6,
+          "lines": [
+            50,
+            338,
+            339,
+            340,
+            348
+          ]
+        },
+        {
+          "pattern": "text-gray-400",
+          "severity": "high",
+          "count": 10,
+          "lines": [
+            75,
+            82,
+            110,
+            157,
+            183
+          ]
+        },
+        {
+          "pattern": "text-gray-300",
+          "severity": "medium",
+          "count": 1,
+          "lines": [
+            354
+          ]
+        },
+        {
+          "pattern": "bg-indigo-50",
+          "severity": "medium",
+          "count": 2,
+          "lines": [
+            67,
+            98
+          ]
+        },
+        {
+          "pattern": "bg-indigo-100",
+          "severity": "medium",
+          "count": 1,
+          "lines": [
+            228
+          ]
+        },
+        {
+          "pattern": "bg-red-50",
+          "severity": "medium",
+          "count": 1,
+          "lines": [
+            354
+          ]
+        },
+        {
+          "pattern": "text-indigo-600",
+          "severity": "medium",
+          "count": 1,
+          "lines": [
+            67
+          ]
+        },
+        {
+          "pattern": "text-red-600",
+          "severity": "medium",
+          "count": 1,
+          "lines": [
+            354
+          ]
+        },
+        {
+          "pattern": "text-amber-600",
+          "severity": "medium",
+          "count": 1,
+          "lines": [
+            212
+          ]
+        },
+        {
+          "pattern": "border-indigo-500",
+          "severity": "low",
+          "count": 14,
+          "lines": [
+            98,
+            119,
+            128,
+            138,
+            147
+          ]
+        }
+      ]
+    },
+    {
+      "file": "components\\promis\\PromisTable.tsx",
+      "issues": 81,
+      "details": [
+        {
+          "pattern": "bg-white",
+          "severity": "high",
+          "count": 2,
+          "lines": [
+            288
+          ]
+        },
+        {
+          "pattern": "bg-gray-50",
+          "severity": "high",
+          "count": 1,
+          "lines": [
+            219
+          ]
+        },
+        {
+          "pattern": "bg-gray-100",
+          "severity": "high",
+          "count": 14,
+          "lines": [
+            54,
+            137,
+            153,
+            170,
+            171
+          ]
+        },
+        {
+          "pattern": "border-gray-200",
+          "severity": "high",
+          "count": 15,
+          "lines": [
+            82,
+            88,
+            137,
+            144,
+            170
+          ]
+        },
+        {
+          "pattern": "border-gray-100",
+          "severity": "high",
+          "count": 1,
+          "lines": [
+            288
+          ]
+        },
+        {
+          "pattern": "text-gray-900",
+          "severity": "high",
+          "count": 3,
+          "lines": [
+            217,
+            233,
+            250
+          ]
+        },
+        {
+          "pattern": "text-gray-500",
+          "severity": "high",
+          "count": 8,
+          "lines": [
+            137,
+            143,
+            152,
+            170,
+            234
+          ]
+        },
+        {
+          "pattern": "text-gray-400",
+          "severity": "high",
+          "count": 9,
+          "lines": [
+            36,
+            77,
+            206,
+            207,
+            208
+          ]
+        },
+        {
+          "pattern": "bg-indigo-50",
+          "severity": "medium",
+          "count": 2,
+          "lines": [
+            219,
+            290
+          ]
+        },
+        {
+          "pattern": "bg-blue-50",
+          "severity": "medium",
+          "count": 2,
+          "lines": [
+            61,
+            298
+          ]
+        },
+        {
+          "pattern": "bg-emerald-50",
+          "severity": "medium",
+          "count": 5,
+          "lines": [
+            42,
+            66,
+            81,
+            135,
+            304
+          ]
+        },
+        {
+          "pattern": "bg-red-50",
+          "severity": "medium",
+          "count": 3,
+          "lines": [
+            47,
+            87,
+            136
+          ]
+        },
+        {
+          "pattern": "bg-amber-50",
+          "severity": "medium",
+          "count": 1,
+          "lines": [
+            134
+          ]
+        },
+        {
+          "pattern": "text-indigo-600",
+          "severity": "medium",
+          "count": 3,
+          "lines": [
+            144,
+            175,
+            290
+          ]
+        },
+        {
+          "pattern": "text-blue-600",
+          "severity": "medium",
+          "count": 2,
+          "lines": [
+            61,
+            298
+          ]
+        },
+        {
+          "pattern": "text-emerald-600",
+          "severity": "medium",
+          "count": 6,
+          "lines": [
+            42,
+            66,
+            81,
+            135,
+            259
+          ]
+        },
+        {
+          "pattern": "text-red-600",
+          "severity": "medium",
+          "count": 3,
+          "lines": [
+            47,
+            87,
+            136
+          ]
+        },
+        {
+          "pattern": "text-amber-600",
+          "severity": "medium",
+          "count": 1,
+          "lines": [
+            134
+          ]
+        }
+      ]
+    },
+    {
+      "file": "components\\UserSessions.tsx",
+      "issues": 80,
+      "details": [
+        {
+          "pattern": "bg-white",
+          "severity": "high",
+          "count": 6,
+          "lines": [
+            158,
+            191,
+            206,
+            229,
+            244
+          ]
+        },
+        {
+          "pattern": "bg-gray-50",
+          "severity": "high",
+          "count": 9,
+          "lines": [
+            156,
+            165,
+            267,
+            293,
+            310
+          ]
+        },
+        {
+          "pattern": "bg-gray-200",
+          "severity": "high",
+          "count": 2,
+          "lines": [
+            167,
+            173
+          ]
+        },
+        {
+          "pattern": "border-gray-200",
+          "severity": "high",
+          "count": 9,
+          "lines": [
+            158,
+            191,
+            206,
+            219,
+            229
+          ]
+        },
+        {
+          "pattern": "border-gray-100",
+          "severity": "high",
+          "count": 1,
+          "lines": [
+            159
+          ]
+        },
+        {
+          "pattern": "text-gray-900",
+          "severity": "high",
+          "count": 4,
+          "lines": [
+            161,
+            302,
+            397,
+            403
+          ]
+        },
+        {
+          "pattern": "text-gray-500",
+          "severity": "high",
+          "count": 19,
+          "lines": [
+            162,
+            186,
+            203,
+            226,
+            241
+          ]
+        },
+        {
+          "pattern": "text-gray-400",
+          "severity": "high",
+          "count": 7,
+          "lines": [
+            282,
+            287,
+            303,
+            310,
+            338
+          ]
+        },
+        {
+          "pattern": "bg-indigo-50",
+          "severity": "medium",
+          "count": 1,
+          "lines": [
+            297
+          ]
+        },
+        {
+          "pattern": "bg-blue-50",
+          "severity": "medium",
+          "count": 1,
+          "lines": [
+            333
+          ]
+        },
+        {
+          "pattern": "bg-emerald-50",
+          "severity": "medium",
+          "count": 1,
+          "lines": [
+            326
+          ]
+        },
+        {
+          "pattern": "bg-red-50",
+          "severity": "medium",
+          "count": 1,
+          "lines": [
+            346
+          ]
+        },
+        {
+          "pattern": "bg-purple-50",
+          "severity": "medium",
+          "count": 1,
+          "lines": [
+            392
+          ]
+        },
+        {
+          "pattern": "text-indigo-600",
+          "severity": "medium",
+          "count": 7,
+          "lines": [
+            167,
+            173,
+            281,
+            297,
+            320
+          ]
+        },
+        {
+          "pattern": "text-emerald-600",
+          "severity": "medium",
+          "count": 1,
+          "lines": [
+            318
+          ]
+        },
+        {
+          "pattern": "text-red-600",
+          "severity": "medium",
+          "count": 1,
+          "lines": [
+            346
+          ]
+        },
+        {
+          "pattern": "text-amber-600",
+          "severity": "medium",
+          "count": 1,
+          "lines": [
+            319
+          ]
+        },
+        {
+          "pattern": "border-indigo-500",
+          "severity": "low",
+          "count": 4,
+          "lines": [
+            191,
+            206,
+            229,
+            244
+          ]
+        },
+        {
+          "pattern": "focus:ring-indigo-50",
+          "severity": "low",
+          "count": 4,
+          "lines": [
+            191,
+            206,
+            229,
+            244
+          ]
+        }
+      ]
+    },
+    {
+      "file": "components\\sales\\SalesTable.tsx",
+      "issues": 68,
+      "details": [
+        {
+          "pattern": "bg-white",
+          "severity": "high",
+          "count": 1,
+          "lines": [
+            269
+          ]
+        },
+        {
+          "pattern": "bg-gray-50",
+          "severity": "high",
+          "count": 14,
+          "lines": [
+            154,
+            165,
+            166,
+            201,
+            202
+          ]
+        },
+        {
+          "pattern": "bg-gray-100",
+          "severity": "high",
+          "count": 1,
+          "lines": [
+            119
+          ]
+        },
+        {
+          "pattern": "border-gray-200",
+          "severity": "high",
+          "count": 14,
+          "lines": [
+            119,
+            147,
+            154,
+            166,
+            201
+          ]
+        },
+        {
+          "pattern": "border-gray-100",
+          "severity": "high",
+          "count": 1,
+          "lines": [
+            49
+          ]
+        },
+        {
+          "pattern": "text-gray-900",
+          "severity": "high",
+          "count": 2,
+          "lines": [
+            231,
+            252
+          ]
+        },
+        {
+          "pattern": "text-gray-700",
+          "severity": "high",
+          "count": 2,
+          "lines": [
+            155,
+            269
+          ]
+        },
+        {
+          "pattern": "text-gray-600",
+          "severity": "high",
+          "count": 1,
+          "lines": [
+            264
+          ]
+        },
+        {
+          "pattern": "text-gray-500",
+          "severity": "high",
+          "count": 6,
+          "lines": [
+            38,
+            119,
+            148,
+            156,
+            165
+          ]
+        },
+        {
+          "pattern": "text-gray-400",
+          "severity": "high",
+          "count": 5,
+          "lines": [
+            37,
+            56,
+            146,
+            154,
+            256
+          ]
+        },
+        {
+          "pattern": "text-gray-300",
+          "severity": "medium",
+          "count": 2,
+          "lines": [
+            275,
+            283
+          ]
+        },
+        {
+          "pattern": "bg-indigo-50",
+          "severity": "medium",
+          "count": 3,
+          "lines": [
+            218,
+            248
+          ]
+        },
+        {
+          "pattern": "bg-blue-50",
+          "severity": "medium",
+          "count": 1,
+          "lines": [
+            248
+          ]
+        },
+        {
+          "pattern": "bg-emerald-50",
+          "severity": "medium",
+          "count": 1,
+          "lines": [
+            117
+          ]
+        },
+        {
+          "pattern": "bg-red-50",
+          "severity": "medium",
+          "count": 3,
+          "lines": [
+            50,
+            57,
+            118
+          ]
+        },
+        {
+          "pattern": "bg-amber-50",
+          "severity": "medium",
+          "count": 1,
+          "lines": [
+            120
+          ]
+        },
+        {
+          "pattern": "text-indigo-600",
+          "severity": "medium",
+          "count": 4,
+          "lines": [
+            170,
+            224,
+            248,
+            269
+          ]
+        },
+        {
+          "pattern": "text-blue-600",
+          "severity": "medium",
+          "count": 1,
+          "lines": [
+            248
+          ]
+        },
+        {
+          "pattern": "text-emerald-600",
+          "severity": "medium",
+          "count": 1,
+          "lines": [
+            277
+          ]
+        },
+        {
+          "pattern": "text-red-600",
+          "severity": "medium",
+          "count": 3,
+          "lines": [
+            50,
+            57,
+            288
+          ]
+        },
+        {
+          "pattern": "text-amber-600",
+          "severity": "medium",
+          "count": 1,
+          "lines": [
+            283
+          ]
+        }
+      ]
+    },
+    {
+      "file": "components\\sales\\modals\\ProductDetailsModal.tsx",
+      "issues": 67,
+      "details": [
+        {
+          "pattern": "bg-white",
+          "severity": "high",
+          "count": 1,
+          "lines": [
+            65
+          ]
+        },
+        {
+          "pattern": "bg-gray-50",
+          "severity": "high",
+          "count": 5,
+          "lines": [
+            67,
+            146,
+            171,
+            188,
+            256
+          ]
+        },
+        {
+          "pattern": "bg-gray-100",
+          "severity": "high",
+          "count": 4,
+          "lines": [
+            156,
+            213,
+            220,
+            237
+          ]
+        },
+        {
+          "pattern": "bg-gray-300",
+          "severity": "high",
+          "count": 6,
+          "lines": [
+            87,
+            92,
+            99,
+            107,
+            118
+          ]
+        },
+        {
+          "pattern": "border-gray-200",
+          "severity": "high",
+          "count": 4,
+          "lines": [
+            146,
+            259,
+            263,
+            268
+          ]
+        },
+        {
+          "pattern": "border-gray-100",
+          "severity": "high",
+          "count": 8,
+          "lines": [
+            65,
+            67,
+            173,
+            174,
+            175
+          ]
+        },
+        {
+          "pattern": "text-gray-900",
+          "severity": "high",
+          "count": 2,
+          "lines": [
+            70,
+            191
+          ]
+        },
+        {
+          "pattern": "text-gray-700",
+          "severity": "high",
+          "count": 7,
+          "lines": [
+            85,
+            95,
+            146,
+            220,
+            227
+          ]
+        },
+        {
+          "pattern": "text-gray-600",
+          "severity": "high",
+          "count": 6,
+          "lines": [
+            103,
+            113,
+            124,
+            135,
+            156
+          ]
+        },
+        {
+          "pattern": "text-gray-500",
+          "severity": "high",
+          "count": 5,
+          "lines": [
+            83,
+            141,
+            165,
+            171,
+            213
+          ]
+        },
+        {
+          "pattern": "text-gray-400",
+          "severity": "high",
+          "count": 7,
+          "lines": [
+            102,
+            112,
+            123,
+            156,
+            237
+          ]
+        },
+        {
+          "pattern": "bg-indigo-50",
+          "severity": "medium",
+          "count": 1,
+          "lines": [
+            195
+          ]
+        },
+        {
+          "pattern": "bg-blue-50",
+          "severity": "medium",
+          "count": 2,
+          "lines": [
+            203,
+            273
+          ]
+        },
+        {
+          "pattern": "bg-emerald-50",
+          "severity": "medium",
+          "count": 1,
+          "lines": [
+            238
+          ]
+        },
+        {
+          "pattern": "bg-orange-50",
+          "severity": "medium",
+          "count": 1,
+          "lines": [
+            208
+          ]
+        },
+        {
+          "pattern": "text-indigo-600",
+          "severity": "medium",
+          "count": 2,
+          "lines": [
+            195,
+            227
+          ]
+        },
+        {
+          "pattern": "text-blue-600",
+          "severity": "medium",
+          "count": 2,
+          "lines": [
+            203,
+            275
+          ]
+        },
+        {
+          "pattern": "text-red-600",
+          "severity": "medium",
+          "count": 1,
+          "lines": [
+            133
+          ]
+        },
+        {
+          "pattern": "text-orange-600",
+          "severity": "medium",
+          "count": 2,
+          "lines": [
+            208,
+            270
+          ]
+        }
+      ]
+    },
+    {
+      "file": "components\\avoirs\\AvoirsDetails.tsx",
+      "issues": 62,
+      "details": [
+        {
+          "pattern": "bg-white",
+          "severity": "high",
+          "count": 4,
+          "lines": [
+            73,
+            139,
+            165,
+            191
+          ]
+        },
+        {
+          "pattern": "bg-gray-50",
+          "severity": "high",
+          "count": 8,
+          "lines": [
+            77,
+            106,
+            157,
+            193,
+            208
+          ]
+        },
+        {
+          "pattern": "bg-gray-100",
+          "severity": "high",
+          "count": 6,
+          "lines": [
+            37,
+            70,
+            150,
+            242,
+            253
+          ]
+        },
+        {
+          "pattern": "border-gray-200",
+          "severity": "high",
+          "count": 6,
+          "lines": [
+            37,
+            73,
+            139,
+            150,
+            165
+          ]
+        },
+        {
+          "pattern": "border-gray-100",
+          "severity": "high",
+          "count": 4,
+          "lines": [
+            157,
+            173,
+            180,
+            193
+          ]
+        },
+        {
+          "pattern": "text-gray-900",
+          "severity": "high",
+          "count": 3,
+          "lines": [
+            77,
+            106,
+            242
+          ]
+        },
+        {
+          "pattern": "text-gray-600",
+          "severity": "high",
+          "count": 1,
+          "lines": [
+            208
+          ]
+        },
+        {
+          "pattern": "text-gray-500",
+          "severity": "high",
+          "count": 16,
+          "lines": [
+            37,
+            77,
+            91,
+            106,
+            140
+          ]
+        },
+        {
+          "pattern": "text-gray-400",
+          "severity": "high",
+          "count": 3,
+          "lines": [
+            167,
+            174,
+            242
+          ]
+        },
+        {
+          "pattern": "bg-indigo-50",
+          "severity": "medium",
+          "count": 1,
+          "lines": [
+            197
+          ]
+        },
+        {
+          "pattern": "bg-emerald-50",
+          "severity": "medium",
+          "count": 2,
+          "lines": [
+            36,
+            242
+          ]
+        },
+        {
+          "pattern": "bg-red-50",
+          "severity": "medium",
+          "count": 1,
+          "lines": [
+            115
+          ]
+        },
+        {
+          "pattern": "bg-amber-50",
+          "severity": "medium",
+          "count": 1,
+          "lines": [
+            31
+          ]
+        },
+        {
+          "pattern": "text-indigo-600",
+          "severity": "medium",
+          "count": 3,
+          "lines": [
+            181,
+            182,
+            268
+          ]
+        },
+        {
+          "pattern": "text-emerald-600",
+          "severity": "medium",
+          "count": 2,
+          "lines": [
+            36,
+            242
+          ]
+        },
+        {
+          "pattern": "text-amber-600",
+          "severity": "medium",
+          "count": 1,
+          "lines": [
+            31
+          ]
+        }
+      ]
+    },
+    {
+      "file": "components\\Corbeille.tsx",
+      "issues": 61,
+      "details": [
+        {
+          "pattern": "bg-white",
+          "severity": "high",
+          "count": 4,
+          "lines": [
+            316,
+            317,
+            333
+          ]
+        },
+        {
+          "pattern": "bg-gray-50",
+          "severity": "high",
+          "count": 6,
+          "lines": [
+            265,
+            283,
+            344,
+            377,
+            428
+          ]
+        },
+        {
+          "pattern": "bg-gray-100",
+          "severity": "high",
+          "count": 4,
+          "lines": [
+            221,
+            320,
+            395,
+            442
+          ]
+        },
+        {
+          "pattern": "border-gray-200",
+          "severity": "high",
+          "count": 3,
+          "lines": [
+            287,
+            344,
+            388
+          ]
+        },
+        {
+          "pattern": "border-gray-100",
+          "severity": "high",
+          "count": 6,
+          "lines": [
+            317,
+            333,
+            335,
+            408,
+            428
+          ]
+        },
+        {
+          "pattern": "text-gray-900",
+          "severity": "high",
+          "count": 7,
+          "lines": [
+            34,
+            221,
+            273,
+            324,
+            344
+          ]
+        },
+        {
+          "pattern": "text-gray-500",
+          "severity": "high",
+          "count": 5,
+          "lines": [
+            276,
+            283,
+            356,
+            377,
+            450
+          ]
+        },
+        {
+          "pattern": "text-gray-400",
+          "severity": "high",
+          "count": 5,
+          "lines": [
+            325,
+            394,
+            408,
+            455,
+            490
+          ]
+        },
+        {
+          "pattern": "text-gray-300",
+          "severity": "medium",
+          "count": 3,
+          "lines": [
+            338,
+            348,
+            493
+          ]
+        },
+        {
+          "pattern": "bg-indigo-50",
+          "severity": "medium",
+          "count": 2,
+          "lines": [
+            320,
+            429
+          ]
+        },
+        {
+          "pattern": "bg-emerald-50",
+          "severity": "medium",
+          "count": 1,
+          "lines": [
+            461
+          ]
+        },
+        {
+          "pattern": "bg-red-50",
+          "severity": "medium",
+          "count": 1,
+          "lines": [
+            470
+          ]
+        },
+        {
+          "pattern": "text-indigo-600",
+          "severity": "medium",
+          "count": 5,
+          "lines": [
+            211,
+            214,
+            283,
+            412,
+            435
+          ]
+        },
+        {
+          "pattern": "text-emerald-600",
+          "severity": "medium",
+          "count": 2,
+          "lines": [
+            212,
+            461
+          ]
+        },
+        {
+          "pattern": "text-amber-600",
+          "severity": "medium",
+          "count": 1,
+          "lines": [
+            213
+          ]
+        },
+        {
+          "pattern": "text-orange-600",
+          "severity": "medium",
+          "count": 1,
+          "lines": [
+            218
+          ]
+        },
+        {
+          "pattern": "text-slate-600",
+          "severity": "high",
+          "count": 1,
+          "lines": [
+            219
+          ]
+        },
+        {
+          "pattern": "text-slate-500",
+          "severity": "high",
+          "count": 2,
+          "lines": [
+            43,
+            204
+          ]
+        },
+        {
+          "pattern": "border-indigo-500",
+          "severity": "low",
+          "count": 1,
+          "lines": [
+            344
+          ]
+        },
+        {
+          "pattern": "focus:ring-indigo-50",
+          "severity": "low",
+          "count": 1,
+          "lines": [
+            344
+          ]
+        }
+      ]
+    },
+    {
+      "file": "components\\avoirs\\AvoirsTable.tsx",
+      "issues": 60,
+      "details": [
+        {
+          "pattern": "bg-gray-50",
+          "severity": "high",
+          "count": 1,
+          "lines": [
+            241
+          ]
+        },
+        {
+          "pattern": "bg-gray-100",
+          "severity": "high",
+          "count": 10,
+          "lines": [
+            128,
+            172,
+            192,
+            193,
+            227
+          ]
+        },
+        {
+          "pattern": "border-gray-200",
+          "severity": "high",
+          "count": 12,
+          "lines": [
+            72,
+            78,
+            128,
+            163,
+            192
+          ]
+        },
+        {
+          "pattern": "text-gray-900",
+          "severity": "high",
+          "count": 2,
+          "lines": [
+            237,
+            258
+          ]
+        },
+        {
+          "pattern": "text-gray-500",
+          "severity": "high",
+          "count": 6,
+          "lines": [
+            128,
+            162,
+            171,
+            192,
+            261
+          ]
+        },
+        {
+          "pattern": "text-gray-400",
+          "severity": "high",
+          "count": 8,
+          "lines": [
+            35,
+            67,
+            227,
+            228,
+            229
+          ]
+        },
+        {
+          "pattern": "bg-indigo-50",
+          "severity": "medium",
+          "count": 1,
+          "lines": [
+            241
+          ]
+        },
+        {
+          "pattern": "bg-blue-50",
+          "severity": "medium",
+          "count": 1,
+          "lines": [
+            39
+          ]
+        },
+        {
+          "pattern": "bg-emerald-50",
+          "severity": "medium",
+          "count": 3,
+          "lines": [
+            51,
+            71,
+            127
+          ]
+        },
+        {
+          "pattern": "bg-red-50",
+          "severity": "medium",
+          "count": 2,
+          "lines": [
+            56,
+            77
+          ]
+        },
+        {
+          "pattern": "bg-amber-50",
+          "severity": "medium",
+          "count": 2,
+          "lines": [
+            46,
+            122
+          ]
+        },
+        {
+          "pattern": "text-indigo-600",
+          "severity": "medium",
+          "count": 4,
+          "lines": [
+            163,
+            197,
+            249,
+            273
+          ]
+        },
+        {
+          "pattern": "text-blue-600",
+          "severity": "medium",
+          "count": 1,
+          "lines": [
+            39
+          ]
+        },
+        {
+          "pattern": "text-emerald-600",
+          "severity": "medium",
+          "count": 3,
+          "lines": [
+            51,
+            71,
+            127
+          ]
+        },
+        {
+          "pattern": "text-red-600",
+          "severity": "medium",
+          "count": 2,
+          "lines": [
+            56,
+            77
+          ]
+        },
+        {
+          "pattern": "text-amber-600",
+          "severity": "medium",
+          "count": 2,
+          "lines": [
+            46,
+            122
+          ]
+        }
+      ]
+    },
+    {
+      "file": "components\\common\\ConfigOptionManager.tsx",
+      "issues": 57,
+      "details": [
+        {
+          "pattern": "bg-white",
+          "severity": "high",
+          "count": 7,
+          "lines": [
+            122,
+            168,
+            175,
+            247,
+            260
+          ]
+        },
+        {
+          "pattern": "bg-gray-50",
+          "severity": "high",
+          "count": 2,
+          "lines": [
+            142,
+            304
+          ]
+        },
+        {
+          "pattern": "bg-gray-100",
+          "severity": "high",
+          "count": 1,
+          "lines": [
+            184
+          ]
+        },
+        {
+          "pattern": "border-gray-200",
+          "severity": "high",
+          "count": 7,
+          "lines": [
+            142,
+            164,
+            168,
+            247,
+            260
+          ]
+        },
+        {
+          "pattern": "border-gray-100",
+          "severity": "high",
+          "count": 3,
+          "lines": [
+            122,
+            175,
+            303
+          ]
+        },
+        {
+          "pattern": "text-gray-900",
+          "severity": "high",
+          "count": 5,
+          "lines": [
+            142,
+            247,
+            260,
+            272,
+            284
+          ]
+        },
+        {
+          "pattern": "text-gray-500",
+          "severity": "high",
+          "count": 5,
+          "lines": [
+            184,
+            188,
+            204,
+            299,
+            304
+          ]
+        },
+        {
+          "pattern": "text-gray-400",
+          "severity": "high",
+          "count": 4,
+          "lines": [
+            243,
+            257,
+            269,
+            281
+          ]
+        },
+        {
+          "pattern": "bg-indigo-50",
+          "severity": "medium",
+          "count": 2,
+          "lines": [
+            125,
+            188
+          ]
+        },
+        {
+          "pattern": "bg-emerald-50",
+          "severity": "medium",
+          "count": 1,
+          "lines": [
+            181
+          ]
+        },
+        {
+          "pattern": "bg-red-50",
+          "severity": "medium",
+          "count": 2,
+          "lines": [
+            181,
+            204
+          ]
+        },
+        {
+          "pattern": "text-indigo-600",
+          "severity": "medium",
+          "count": 4,
+          "lines": [
+            125,
+            188,
+            212,
+            295
+          ]
+        },
+        {
+          "pattern": "text-emerald-600",
+          "severity": "medium",
+          "count": 1,
+          "lines": [
+            181
+          ]
+        },
+        {
+          "pattern": "text-red-600",
+          "severity": "medium",
+          "count": 2,
+          "lines": [
+            181,
+            204
+          ]
+        },
+        {
+          "pattern": "border-indigo-500",
+          "severity": "low",
+          "count": 6,
+          "lines": [
+            142,
+            175,
+            247,
+            260,
+            272
+          ]
+        },
+        {
+          "pattern": "focus:ring-indigo-50",
+          "severity": "low",
+          "count": 5,
+          "lines": [
+            142,
+            247,
+            260,
+            272,
+            284
+          ]
+        }
+      ]
+    },
+    {
+      "file": "components\\fournisseurs\\FournisseursList.tsx",
+      "issues": 57,
+      "details": [
+        {
+          "pattern": "bg-white",
+          "severity": "high",
+          "count": 5,
+          "lines": [
+            31,
+            42,
+            44,
+            100,
+            208
+          ]
+        },
+        {
+          "pattern": "bg-gray-50",
+          "severity": "high",
+          "count": 2,
+          "lines": [
+            100,
+            137
+          ]
+        },
+        {
+          "pattern": "bg-gray-100",
+          "severity": "high",
+          "count": 10,
+          "lines": [
+            57,
+            76,
+            82,
+            85,
+            134
+          ]
+        },
+        {
+          "pattern": "bg-gray-200",
+          "severity": "high",
+          "count": 1,
+          "lines": [
+            156
+          ]
+        },
+        {
+          "pattern": "border-gray-200",
+          "severity": "high",
+          "count": 2,
+          "lines": [
+            100,
+            134
+          ]
+        },
+        {
+          "pattern": "border-gray-100",
+          "severity": "high",
+          "count": 4,
+          "lines": [
+            31,
+            33,
+            44,
+            208
+          ]
+        },
+        {
+          "pattern": "text-gray-900",
+          "severity": "high",
+          "count": 3,
+          "lines": [
+            70,
+            100,
+            164
+          ]
+        },
+        {
+          "pattern": "text-gray-600",
+          "severity": "high",
+          "count": 2,
+          "lines": [
+            210,
+            239
+          ]
+        },
+        {
+          "pattern": "text-gray-500",
+          "severity": "high",
+          "count": 4,
+          "lines": [
+            57,
+            156,
+            200,
+            230
+          ]
+        },
+        {
+          "pattern": "text-gray-400",
+          "severity": "high",
+          "count": 9,
+          "lines": [
+            45,
+            71,
+            76,
+            82,
+            85
+          ]
+        },
+        {
+          "pattern": "text-gray-300",
+          "severity": "medium",
+          "count": 1,
+          "lines": [
+            198
+          ]
+        },
+        {
+          "pattern": "bg-indigo-50",
+          "severity": "medium",
+          "count": 3,
+          "lines": [
+            66,
+            76,
+            132
+          ]
+        },
+        {
+          "pattern": "bg-emerald-50",
+          "severity": "medium",
+          "count": 1,
+          "lines": [
+            186
+          ]
+        },
+        {
+          "pattern": "bg-red-50",
+          "severity": "medium",
+          "count": 2,
+          "lines": [
+            49,
+            185
+          ]
+        },
+        {
+          "pattern": "text-indigo-600",
+          "severity": "medium",
+          "count": 2,
+          "lines": [
+            66,
+            76
+          ]
+        },
+        {
+          "pattern": "text-emerald-600",
+          "severity": "medium",
+          "count": 2,
+          "lines": [
+            148,
+            186
+          ]
+        },
+        {
+          "pattern": "text-red-600",
+          "severity": "medium",
+          "count": 2,
+          "lines": [
+            49,
+            185
+          ]
+        },
+        {
+          "pattern": "border-indigo-500",
+          "severity": "low",
+          "count": 1,
+          "lines": [
+            100
+          ]
+        },
+        {
+          "pattern": "focus:ring-indigo-50",
+          "severity": "low",
+          "count": 1,
+          "lines": [
+            100
+          ]
+        }
+      ]
+    },
+    {
+      "file": "components\\stock\\StockAnalysisTable.tsx",
+      "issues": 56,
+      "details": [
+        {
+          "pattern": "bg-white",
+          "severity": "high",
+          "count": 1,
+          "lines": [
+            82
+          ]
+        },
+        {
+          "pattern": "bg-gray-50",
+          "severity": "high",
+          "count": 3,
+          "lines": [
+            83,
+            96,
+            145
+          ]
+        },
+        {
+          "pattern": "bg-gray-100",
+          "severity": "high",
+          "count": 1,
+          "lines": [
+            164
+          ]
+        },
+        {
+          "pattern": "border-gray-200",
+          "severity": "high",
+          "count": 2,
+          "lines": [
+            82,
+            96
+          ]
+        },
+        {
+          "pattern": "text-gray-900",
+          "severity": "high",
+          "count": 1,
+          "lines": [
+            158
+          ]
+        },
+        {
+          "pattern": "text-gray-500",
+          "severity": "high",
+          "count": 5,
+          "lines": [
+            86,
+            171,
+            174,
+            182,
+            195
+          ]
+        },
+        {
+          "pattern": "text-gray-400",
+          "severity": "high",
+          "count": 24,
+          "lines": [
+            55,
+            65,
+            66,
+            67,
+            68
+          ]
+        },
+        {
+          "pattern": "bg-indigo-50",
+          "severity": "medium",
+          "count": 1,
+          "lines": [
+            145
+          ]
+        },
+        {
+          "pattern": "bg-blue-50",
+          "severity": "medium",
+          "count": 1,
+          "lines": [
+            42
+          ]
+        },
+        {
+          "pattern": "bg-red-50",
+          "severity": "medium",
+          "count": 1,
+          "lines": [
+            30
+          ]
+        },
+        {
+          "pattern": "bg-amber-50",
+          "severity": "medium",
+          "count": 2,
+          "lines": [
+            36,
+            178
+          ]
+        },
+        {
+          "pattern": "text-indigo-600",
+          "severity": "medium",
+          "count": 2,
+          "lines": [
+            101,
+            151
+          ]
+        },
+        {
+          "pattern": "text-blue-600",
+          "severity": "medium",
+          "count": 2,
+          "lines": [
+            42,
+            212
+          ]
+        },
+        {
+          "pattern": "text-red-600",
+          "severity": "medium",
+          "count": 7,
+          "lines": [
+            30,
+            175,
+            185,
+            197,
+            199
+          ]
+        },
+        {
+          "pattern": "text-amber-600",
+          "severity": "medium",
+          "count": 3,
+          "lines": [
+            36,
+            178,
+            212
+          ]
+        }
+      ]
+    },
+    {
+      "file": "components\\promis\\modals\\PromisFormModal.tsx",
+      "issues": 55,
+      "details": [
+        {
+          "pattern": "bg-white",
+          "severity": "high",
+          "count": 7,
+          "lines": [
+            117,
+            141,
+            165,
+            181,
+            206
+          ]
+        },
+        {
+          "pattern": "bg-gray-50",
+          "severity": "high",
+          "count": 2,
+          "lines": [
+            261,
+            269
+          ]
+        },
+        {
+          "pattern": "bg-gray-100",
+          "severity": "high",
+          "count": 3,
+          "lines": [
+            128,
+            192,
+            220
+          ]
+        },
+        {
+          "pattern": "bg-gray-200",
+          "severity": "high",
+          "count": 2,
+          "lines": [
+            128,
+            192
+          ]
+        },
+        {
+          "pattern": "border-gray-200",
+          "severity": "high",
+          "count": 6,
+          "lines": [
+            117,
+            165,
+            181,
+            237,
+            250
+          ]
+        },
+        {
+          "pattern": "border-gray-100",
+          "severity": "high",
+          "count": 5,
+          "lines": [
+            141,
+            147,
+            206,
+            213,
+            258
+          ]
+        },
+        {
+          "pattern": "text-gray-900",
+          "severity": "high",
+          "count": 5,
+          "lines": [
+            117,
+            165,
+            181,
+            237,
+            250
+          ]
+        },
+        {
+          "pattern": "text-gray-600",
+          "severity": "high",
+          "count": 2,
+          "lines": [
+            261,
+            269
+          ]
+        },
+        {
+          "pattern": "text-gray-500",
+          "severity": "high",
+          "count": 9,
+          "lines": [
+            110,
+            134,
+            151,
+            160,
+            174
+          ]
+        },
+        {
+          "pattern": "text-gray-400",
+          "severity": "high",
+          "count": 2,
+          "lines": [
+            114,
+            178
+          ]
+        },
+        {
+          "pattern": "bg-indigo-50",
+          "severity": "medium",
+          "count": 2,
+          "lines": [
+            147,
+            213
+          ]
+        },
+        {
+          "pattern": "border-indigo-500",
+          "severity": "low",
+          "count": 5,
+          "lines": [
+            117,
+            165,
+            181,
+            237,
+            250
+          ]
+        },
+        {
+          "pattern": "focus:ring-indigo-50",
+          "severity": "low",
+          "count": 5,
+          "lines": [
+            117,
+            165,
+            181,
+            237,
+            250
+          ]
+        }
+      ]
+    },
+    {
+      "file": "components\\fournisseurs\\SupplierDashboard.tsx",
+      "issues": 53,
+      "details": [
+        {
+          "pattern": "bg-white",
+          "severity": "high",
+          "count": 4,
+          "lines": [
+            103,
+            135,
+            195,
+            249
+          ]
+        },
+        {
+          "pattern": "bg-gray-50",
+          "severity": "high",
+          "count": 1,
+          "lines": [
+            271
+          ]
+        },
+        {
+          "pattern": "bg-gray-100",
+          "severity": "high",
+          "count": 3,
+          "lines": [
+            146,
+            262,
+            316
+          ]
+        },
+        {
+          "pattern": "border-gray-200",
+          "severity": "high",
+          "count": 4,
+          "lines": [
+            103,
+            135,
+            195,
+            249
+          ]
+        },
+        {
+          "pattern": "border-gray-100",
+          "severity": "high",
+          "count": 3,
+          "lines": [
+            136,
+            196,
+            250
+          ]
+        },
+        {
+          "pattern": "text-gray-900",
+          "severity": "high",
+          "count": 17,
+          "lines": [
+            46,
+            108,
+            116,
+            142,
+            143
+          ]
+        },
+        {
+          "pattern": "text-gray-500",
+          "severity": "high",
+          "count": 3,
+          "lines": [
+            146,
+            262,
+            316
+          ]
+        },
+        {
+          "pattern": "bg-indigo-50",
+          "severity": "medium",
+          "count": 1,
+          "lines": [
+            138
+          ]
+        },
+        {
+          "pattern": "bg-blue-50",
+          "severity": "medium",
+          "count": 1,
+          "lines": [
+            122
+          ]
+        },
+        {
+          "pattern": "bg-emerald-50",
+          "severity": "medium",
+          "count": 1,
+          "lines": [
+            310
+          ]
+        },
+        {
+          "pattern": "bg-red-50",
+          "severity": "medium",
+          "count": 2,
+          "lines": [
+            122,
+            308
+          ]
+        },
+        {
+          "pattern": "bg-amber-50",
+          "severity": "medium",
+          "count": 1,
+          "lines": [
+            309
+          ]
+        },
+        {
+          "pattern": "text-indigo-600",
+          "severity": "medium",
+          "count": 1,
+          "lines": [
+            138
+          ]
+        },
+        {
+          "pattern": "text-blue-600",
+          "severity": "medium",
+          "count": 1,
+          "lines": [
+            122
+          ]
+        },
+        {
+          "pattern": "text-emerald-600",
+          "severity": "medium",
+          "count": 2,
+          "lines": [
+            252,
+            310
+          ]
+        },
+        {
+          "pattern": "text-red-600",
+          "severity": "medium",
+          "count": 2,
+          "lines": [
+            122,
+            308
+          ]
+        },
+        {
+          "pattern": "text-amber-600",
+          "severity": "medium",
+          "count": 2,
+          "lines": [
+            197,
+            309
+          ]
+        },
+        {
+          "pattern": "bg-slate-50",
+          "severity": "high",
+          "count": 4,
+          "lines": [
+            136,
+            196,
+            250,
+            286
+          ]
+        }
+      ]
+    }
+  ],
+  "byDirectory": {
+    "components\\settings\\PharmacySettingsForm.tsx": 254,
+    "components\\compta\\Comptabilite.tsx": 181,
+    "components\\Perimes.tsx": 143,
+    "components\\common\\MessagingModal.tsx": 134,
+    "components\\Commandes\\OrderSchedulingModal.tsx": 125,
+    "components\\products\\ProductTabsContent.tsx": 124,
+    "components\\common\\CategoryManager.tsx": 118,
+    "components\\divers\\GestionDivers.tsx": 111,
+    "components\\GestionUtilisateurs.tsx": 110,
+    "components\\stock\\StockHealthDashboard.tsx": 107,
+    "components\\Clients.tsx": 106,
+    "components\\ProduitFormModal.tsx": 102,
+    "components\\fournisseurs\\FournisseurDetails.tsx": 99,
+    "components\\Commandes\\SuggestionCommandeModal.tsx": 97,
+    "components\\Commandes\\CommandeDetails.tsx": 96,
+    "components\\avoirs\\AvoirsForm.tsx": 89,
+    "components\\creances\\CreancesTable.tsx": 85,
+    "components\\clients\\ClientFormModal.tsx": 82,
+    "components\\promis\\PromisTable.tsx": 81,
+    "components\\UserSessions.tsx": 80,
+    "components\\sales\\SalesTable.tsx": 68,
+    "components\\sales\\modals\\ProductDetailsModal.tsx": 67,
+    "components\\avoirs\\AvoirsDetails.tsx": 62,
+    "components\\Corbeille.tsx": 61,
+    "components\\avoirs\\AvoirsTable.tsx": 60,
+    "components\\common\\ConfigOptionManager.tsx": 57,
+    "components\\fournisseurs\\FournisseursList.tsx": 57,
+    "components\\stock\\StockAnalysisTable.tsx": 56,
+    "components\\promis\\modals\\PromisFormModal.tsx": 55,
+    "components\\fournisseurs\\SupplierDashboard.tsx": 53,
+    "components\\clients\\ClientDepositModal.tsx": 47,
+    "components\\products\\modals\\StockAdjustmentModal.tsx": 45,
+    "components\\products\\ProductDetailPanel.tsx": 43,
+    "components\\dashboard\\ExpirationAlertsWidget.tsx": 38,
+    "components\\clients\\PurchaseHistoryDrawer.tsx": 37,
+    "components\\dashboard\\ObjectivesSettings.tsx": 37,
+    "components\\products\\ImportProductsModal.tsx": 37,
+    "components\\common\\UserHeader.tsx": 35,
+    "components\\products\\modals\\ProductEditModal.tsx": 35,
+    "components\\Commandes\\CommandeProductTable.tsx": 34,
+    "components\\creances\\modals\\CreanceDetailsModal.tsx": 34,
+    "components\\printing\\ReleveTemplate.tsx": 34,
+    "components\\fournisseurs\\FournisseurFormModals.tsx": 33,
+    "components\\products\\ProductTable.tsx": 33,
+    "components\\sales\\SalesFilters.tsx": 31,
+    "components\\printing\\StockValuationTemplate.tsx": 30,
+    "components\\dashboard\\StockIntelligence.tsx": 29,
+    "components\\Commandes\\ScheduledOrdersListModal.tsx": 27,
+    "components\\Produit.tsx": 26,
+    "components\\stock\\StockHealthSettingsModal.tsx": 24,
+    "components\\creances\\CreancesFilters.tsx": 23,
+    "components\\sales\\modals\\ClientNameModal.tsx": 22,
+    "components\\promis\\PromisFilters.tsx": 21,
+    "components\\sales\\SalesQuickStats.tsx": 21,
+    "components\\Commandes\\TransferCommandeModal.tsx": 20,
+    "components\\creances\\modals\\BulkPaiementModal.tsx": 20,
+    "components\\printing\\InventairePrintTemplate.tsx": 20,
+    "components\\sales\\TrancheHoraireStats.tsx": 20,
+    "components\\clients\\BulkDeleteWarningModal.tsx": 19,
+    "components\\clients\\ClientDeleteWarningModal.tsx": 19,
+    "components\\Fournisseurs.tsx": 18,
+    "components\\promis\\modals\\SmsModal.tsx": 18,
+    "components\\Creances.tsx": 17,
+    "components\\LicenceScreen.tsx": 17,
+    "components\\products\\BulkActionsBar.tsx": 17,
+    "components\\products\\ProductFilters.tsx": 17,
+    "components\\avoirs\\AvoirsFilters.tsx": 15,
+    "components\\Commandes\\MergeCommandesModal.tsx": 15,
+    "components\\dashboard\\ManagerKPIs.tsx": 14,
+    "components\\dashboard\\ObjectiveModal.tsx": 14,
+    "components\\stock\\StockAnalysisFilters.tsx": 14,
+    "components\\dashboard\\FinancialSummary.tsx": 13,
+    "components\\facturation\\PDAQueueBanner.tsx": 13,
+    "components\\DashboardManager.tsx": 12,
+    "components\\creances\\modals\\CreancePaiementModal.tsx": 11,
+    "components\\promis\\PromisQuickStats.tsx": 11,
+    "components\\stock\\StockAnalysisStats.tsx": 11,
+    "components\\clinical\\BMICalculator.tsx": 10,
+    "components\\dashboard\\ManagerObjectives.tsx": 10,
+    "components\\HelpTraining.tsx": 10,
+    "components\\ui\\Input.tsx": 10,
+    "components\\avoirs\\AvoirsQuickStats.tsx": 9,
+    "components\\avoirs\\modals\\AvoirsLotModal.tsx": 9,
+    "components\\Organisation.tsx": 9,
+    "components\\ui\\Select.tsx": 9,
+    "components\\Ventes.tsx": 9,
+    "components\\Avoirs.tsx": 8,
+    "components\\Commandes\\CommandeForm.tsx": 8,
+    "components\\creances\\CreancesQuickStats.tsx": 8,
+    "components\\dashboard\\ManagerAlerts.tsx": 8,
+    "components\\Promis.tsx": 8,
+    "components\\dashboard\\FinancialReports.tsx": 7,
+    "components\\printing\\InvoiceTemplate.tsx": 7,
+    "components\\Sidebar.tsx": 7,
+    "components\\SimplePrintLabelsModal.tsx": 7,
+    "components\\stock\\Ruptures.tsx": 7,
+    "components\\ui\\Checkbox.tsx": 7,
+    "components\\Commandes\\CommandeList.tsx": 6,
+    "components\\ZenithLogo.tsx": 6,
+    "components\\AnalyseTemporelle.tsx": 5,
+    "components\\FinanceFournisseurModal.tsx": 5,
+    "components\\AnalyseABC.tsx": 4,
+    "components\\BestCashierMetric.tsx": 4,
+    "components\\Commandes.tsx": 4,
+    "components\\common\\PremiumModal.tsx": 4,
+    "components\\LicenceExpirationBanner.tsx": 4,
+    "components\\sales\\modals\\RefundModal.tsx": 4,
+    "components\\sales\\SalesSessionStats.tsx": 4,
+    "components\\stock\\ReapproRayon.tsx": 4,
+    "components\\Dashboard.tsx": 3,
+    "components\\JournalAudit.tsx": 3,
+    "components\\PointageReleveModal.tsx": 3,
+    "components\\facturation\\CartTable.tsx": 2,
+    "components\\Facturation.tsx": 2,
+    "components\\GuideFinancier.tsx": 2,
+    "components\\Login.tsx": 2,
+    "components\\printing\\ReceptionCommandeTemplate.tsx": 2,
+    "components\\printing\\TicketTemplate.tsx": 2,
+    "components\\Promotions\\PromotionList.tsx": 2,
+    "components\\StatistiquesFournisseur.tsx": 2,
+    "components\\caisse\\JournalCaisseStats.tsx": 1,
+    "components\\dashboard\\VendeursWidget.tsx": 1,
+    "components\\EcheancierFournisseursModal.tsx": 1,
+    "components\\facturation\\PrescriptionScannerModal.tsx": 1,
+    "components\\HistoriqueAchats.tsx": 1,
+    "components\\inventaire\\editor\\InventaireProductSearch.tsx": 1,
+    "components\\LicenceNotifications.tsx": 1,
+    "components\\LotSelectionModal.tsx": 1,
+    "components\\printing\\PrintPage.tsx": 1,
+    "components\\RapportMensuel.tsx": 1,
+    "components\\StockAnalysis.tsx": 1,
+    "components\\ui\\Button.tsx": 1
+  }
+}

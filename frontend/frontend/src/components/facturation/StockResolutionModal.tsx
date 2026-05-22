@@ -154,7 +154,7 @@ export default function StockResolutionModal({
                     <td>
                         <div className="flex items-center gap-3">
                             <div className="size-8 rounded-lg bg-base-200 flex items-center justify-center">
-                                <Package className="size-4 opacity-30" />
+                                <Package className="size-4 text-base-content/30" />
                             </div>
                             <div className="flex flex-col">
                                 <span className="font-bold text-sm">{item.nom}</span>
@@ -214,7 +214,7 @@ export default function StockResolutionModal({
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="form-control w-full">
                         <label className="label py-1">
-                            <span className="label-text-alt font-bold uppercase text-base-content/40">{t('stock_resolution.client_name')} <span className="lowercase font-normal opacity-50">({t('stock_resolution.optional')})</span></span>
+                            <span className="label-text-alt font-bold uppercase text-base-content/40">{t('stock_resolution.client_name')} <span className="lowercase font-normal text-base-content/50">({t('stock_resolution.optional')})</span></span>
                         </label>
                         <input 
                             type="text" 

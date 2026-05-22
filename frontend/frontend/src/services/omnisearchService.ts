@@ -10,9 +10,10 @@ export interface GlobalSearchResponse {
 }
 
 const omnisearchService = {
-    search: async (query: string, limit: number = 5): Promise<GlobalSearchResponse> => {
+    search: async (query: string, limit: number = 5, signal?: AbortSignal): Promise<GlobalSearchResponse> => {
         const response = await api.get<GlobalSearchResponse>('omnisearch/', {
-            params: { q: query, limit }
+            params: { q: query, limit },
+            signal
         });
         return response.data;
     }

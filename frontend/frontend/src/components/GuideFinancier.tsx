@@ -21,7 +21,7 @@ const GuideFinancier: React.FC = () => {
       <div className="bg-gradient-to-r from-primary to-secondary rounded-xl p-8 text-white shadow-xl relative overflow-hidden">
         <div className="relative z-10">
           <div className="flex items-center gap-3 mb-4">
-            <div className="bg-white/20 p-2 rounded-xl backdrop-blur-md">
+            <div className="bg-base-100/20 p-2 rounded-xl backdrop-blur-md">
               <BookOpen className="size-6" />
             </div>
             <span className="text-sm font-bold uppercase tracking-widest opacity-80">Documentation</span>
@@ -124,7 +124,7 @@ const GuideFinancier: React.FC = () => {
                 <p className="text-sm mb-4">
                   {t('guide.sections.supplier_purchases.methodology_desc')}
                 </p>
-                <h4 className="text-xs font-bold uppercase tracking-widest opacity-50 mb-2">{t('guide.sections.supplier_purchases.calculation')}</h4>
+                <h4 className="text-xs font-bold uppercase tracking-widest text-base-content/50 mb-2">{t('guide.sections.supplier_purchases.calculation')}</h4>
                 <div className="mb-4 font-mono p-4 bg-base-300/30 rounded-xl text-center font-bold text-sm">
                   {t('guide.sections.supplier_purchases.formula')}
                 </div>
@@ -144,27 +144,27 @@ const GuideFinancier: React.FC = () => {
               <p className="text-sm text-base-content/80">
                 {t('guide.sections.scoring_performance.desc')}
               </p>
-              <h4 className="text-xs font-bold uppercase tracking-widest opacity-50">{t('guide.sections.scoring_performance.criteria')}</h4>
+              <h4 className="text-xs font-bold uppercase tracking-widest text-base-content/50">{t('guide.sections.scoring_performance.criteria')}</h4>
               <div className="grid grid-cols-1 gap-4">
                 <div className="flex gap-4 p-4 rounded-2xl bg-base-100 border border-base-200">
                   <div className="font-black text-2xl text-base-content/10">30%</div>
                   <div>
                     <h4 className="font-bold">{t('guide.sections.scoring_performance.volume')}</h4>
-                    <p className="text-xs opacity-70">{t('guide.sections.scoring_performance.volume_desc')}</p>
+                    <p className="text-xs text-base-content/70">{t('guide.sections.scoring_performance.volume_desc')}</p>
                   </div>
                 </div>
                 <div className="flex gap-4 p-4 rounded-2xl bg-base-100 border border-base-200">
                   <div className="font-black text-2xl text-base-content/10">30%</div>
                   <div>
                     <h4 className="font-bold">{t('guide.sections.scoring_performance.quality')}</h4>
-                    <p className="text-xs opacity-70">{t('guide.sections.scoring_performance.quality_desc')}</p>
+                    <p className="text-xs text-base-content/70">{t('guide.sections.scoring_performance.quality_desc')}</p>
                   </div>
                 </div>
                 <div className="flex gap-4 p-4 rounded-2xl bg-base-100 border border-base-200">
                   <div className="font-black text-2xl text-base-content/10">40%</div>
                   <div>
                     <h4 className="font-bold">{t('guide.sections.scoring_performance.regularity')}</h4>
-                    <p className="text-xs opacity-70">{t('guide.sections.scoring_performance.regularity_desc')}</p>
+                    <p className="text-xs text-base-content/70">{t('guide.sections.scoring_performance.regularity_desc')}</p>
                   </div>
                 </div>
               </div>
@@ -201,8 +201,8 @@ const GuideFinancier: React.FC = () => {
               </div>
 
               {/* Note sur les tableaux vides */}
-              <div className="bg-blue-50 border border-blue-100 rounded-2xl p-6 mt-8">
-                <h4 className="flex items-center gap-2 text-blue-700 font-bold mb-3 uppercase tracking-tighter text-xs">
+              <div className="bg-info/10 border border-blue-100 rounded-2xl p-6 mt-8">
+                <h4 className="flex items-center gap-2 text-info font-bold mb-3 uppercase tracking-tighter text-xs">
                   <Info className="size-4" /> {t('guide.sections.advanced_analysis.empty_table_title')}
                 </h4>
                 <p className="text-sm text-blue-800/80 mb-4">

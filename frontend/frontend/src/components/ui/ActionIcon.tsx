@@ -61,7 +61,7 @@ const ActionIcon: React.FC<ActionIconProps> = ({
         rounded-lg transition-all duration-200 flex items-center justify-center
         ${getSizeClass()}
         ${getVariantClass()}
-        ${disabled ? 'opacity-30 cursor-not-allowed' : 'active:scale-95'}
+        ${disabled ? 'text-base-content/30 cursor-not-allowed' : 'active:scale-95'}
         ${className}
       `}
       title={title}

@@ -43,7 +43,7 @@ export default function JournalCaisseFilters({ state }: Props) {
               onChange={(e) => setSearchQuery(e.target.value)}
               className="input input-sm input-bordered w-full pl-9 bg-base-200/50 border-base-300 focus:bg-base-100 transition-all text-sm"
             />
-            <Search className="size-4 absolute left-3 top-1/2 -translate-y-1/2 opacity-50 text-base-content" />
+            <Search className="size-4 absolute left-3 top-1/2 -translate-y-1/2 text-base-content/50 text-base-content" />
           </div>
 
           {/* Mode filter */}

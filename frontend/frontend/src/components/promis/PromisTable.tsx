@@ -33,37 +33,37 @@ const BulkActionsMenu: React.FC<BulkActionsMenuProps> = React.memo(({
         if (!p) return null;
         return (
             <>
-                <li className="menu-title px-4 py-2 text-xs font-bold uppercase tracking-widest text-gray-400">
+                <li className="menu-title px-4 py-2 text-xs font-bold uppercase tracking-widest text-base-content/50">
                     {t('common:single_selection')}
                 </li>
                 {p.status === 'ATT' && (
                     <>
                         <li>
-                            <a onClick={() => onDeliver(id)} className="flex items-center gap-3 py-3 hover:bg-emerald-50 text-emerald-600 font-medium">
+                            <a onClick={() => onDeliver(id)} className="flex items-center gap-3 py-3 hover:bg-success/10 text-success font-medium">
                                 <Check className="size-4" /> {t('stock:promis.actions.deliver')}
                             </a>
                         </li>
                         <li>
-                            <a onClick={() => onCancel(id)} className="flex items-center gap-3 py-3 hover:bg-red-50 text-red-600 font-medium">
+                            <a onClick={() => onCancel(id)} className="flex items-center gap-3 py-3 hover:bg-error/10 text-error font-medium">
                                 <X className="size-4" /> {t('stock:promis.actions.cancel')}
                             </a>
                         </li>
                     </>
                 )}
                 <li>
-                    <a onClick={() => onPrint(id)} className="flex items-center gap-3 py-3 hover:bg-gray-100">
+                    <a onClick={() => onPrint(id)} className="flex items-center gap-3 py-3 hover:bg-base-200">
                         <Printer className="size-4" /> {t('stock:promis.actions.print')}
                     </a>
                 </li>
                 {p.client_phone_display && (
                     <>
                         <li>
-                            <a onClick={() => onSms(p)} className="flex items-center gap-3 py-3 hover:bg-blue-50 text-blue-600">
+                            <a onClick={() => onSms(p)} className="flex items-center gap-3 py-3 hover:bg-info/10 text-info">
                                 <MessageCircle className="size-4" /> {t('stock:promis.actions.sms')}
                             </a>
                         </li>
                         <li>
-                            <a onClick={() => onWhatsApp(id)} className="flex items-center gap-3 py-3 hover:bg-emerald-50 text-emerald-600">
+                            <a onClick={() => onWhatsApp(id)} className="flex items-center gap-3 py-3 hover:bg-success/10 text-success">
                                 <svg className="size-4" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.414 0 .018 5.396.015 12.03c0 2.12.541 4.191 1.57 6.017L0 24l6.135-1.61a11.75 11.75 0 005.917 1.595h.004c6.637 0 12.032-5.396 12.035-12.032.002-3.218-1.248-6.242-3.517-8.511z"/></svg> {t('stock:promis.actions.whatsapp')}
                             </a>
                         </li>
@@ -74,18 +74,18 @@ const BulkActionsMenu: React.FC<BulkActionsMenuProps> = React.memo(({
     }
     return (
         <>
-            <li className="menu-title px-4 py-2 text-xs font-bold uppercase tracking-widest text-gray-400">
+            <li className="menu-title px-4 py-2 text-xs font-bold uppercase tracking-widest text-base-content/50">
                 {t('common:bulk_actions')}
             </li>
             <li>
-                <a onClick={onBulkDeliver} className={`flex items-center gap-3 py-3 hover:bg-emerald-50 text-emerald-600 font-medium ${bulkLoading ? 'disabled' : ''}`}>
-                    {bulkLoading ? <span className="inline-block size-3 border-2 border-gray-200 border-t-indigo-600 rounded-full animate-spin" /> : <Check className="size-4" />}
+                <a onClick={onBulkDeliver} className={`flex items-center gap-3 py-3 hover:bg-success/10 text-success font-medium ${bulkLoading ? 'disabled' : ''}`}>
+                    {bulkLoading ? <span className="inline-block size-3 border-2 border-base-300 border-t-indigo-600 rounded-full animate-spin" /> : <Check className="size-4" />}
                     {t('stock:promis.actions.deliver')}
                 </a>
             </li>
             <li>
-                <a onClick={onBulkCancel} className={`flex items-center gap-3 py-3 hover:bg-red-50 text-red-600 font-medium ${bulkLoading ? 'disabled' : ''}`}>
-                    {bulkLoading ? <span className="inline-block size-3 border-2 border-gray-200 border-t-indigo-600 rounded-full animate-spin" /> : <X className="size-4" />}
+                <a onClick={onBulkCancel} className={`flex items-center gap-3 py-3 hover:bg-error/10 text-error font-medium ${bulkLoading ? 'disabled' : ''}`}>
+                    {bulkLoading ? <span className="inline-block size-3 border-2 border-base-300 border-t-indigo-600 rounded-full animate-spin" /> : <X className="size-4" />}
                     {t('stock:promis.actions.cancel')}
                 </a>
             </li>
@@ -131,17 +131,17 @@ export const PromisTable: React.FC<PromisTableProps> = ({
 
     const getStatusStyle = (status: string) => {
         switch (status) {
-            case 'ATT': return 'bg-amber-50 text-amber-600 border-amber-200';
-            case 'DEL': return 'bg-emerald-50 text-emerald-600 border-emerald-200';
-            case 'ANN': return 'bg-red-50 text-red-600 border-red-500/20';
-            default: return 'bg-gray-100 text-gray-500 border-gray-200';
+            case 'ATT': return 'bg-warning/10 text-warning border-amber-200';
+            case 'DEL': return 'bg-success/10 text-success border-emerald-200';
+            case 'ANN': return 'bg-error/10 text-error border-red-500/20';
+            default: return 'bg-base-200 text-base-content/60 border-base-300';
         }
     };
 
     if (loading) {
         return (
-            <div className="flex flex-col items-center justify-center p-12 text-gray-500 gap-4">
-                <span className="inline-block size-4 border-2 border-gray-200 border-t-indigo-600 rounded-full animate-spin loading-md text-indigo-600" />
+            <div className="flex flex-col items-center justify-center p-12 text-base-content/60 gap-4">
+                <span className="inline-block size-4 border-2 border-base-300 border-t-indigo-600 rounded-full animate-spin loading-md text-primary" />
                 <p>{t('stock:promis.messages.loading')}</p>
             </div>
         );
@@ -149,9 +149,9 @@ export const PromisTable: React.FC<PromisTableProps> = ({
 
     if (promisList.length === 0) {
         return (
-            <div className="flex flex-col items-center justify-center p-12 text-gray-500 gap-4">
-                <div className="size-16 rounded-full bg-gray-100 flex items-center justify-center">
-                    <svg className="size-8 opacity-50" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <div className="flex flex-col items-center justify-center p-12 text-base-content/60 gap-4">
+                <div className="size-16 rounded-full bg-base-200 flex items-center justify-center">
+                    <svg className="size-8 text-base-content/50" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
                     </svg>
                 </div>
@@ -167,12 +167,12 @@ export const PromisTable: React.FC<PromisTableProps> = ({
         <div className="overflow-auto size-full relative">
             <table className="w-full text-sm border-separate border-spacing-0">
                 <thead>
-                    <tr className="bg-gray-100 text-gray-500 border-b border-gray-200">
-                        <th className="w-12 text-center rounded-tl-xl sticky top-0 z-30 bg-gray-100  border-b border-gray-200">
+                    <tr className="bg-base-200 text-base-content/60 border-b border-base-300">
+                        <th className="w-12 text-center rounded-tl-xl sticky top-0 z-30 bg-base-200  border-b border-base-300">
                             <label className="cursor-pointer flex items-center justify-center p-0">
                                 <input 
                                     type="checkbox" 
-                                    className="size-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 cursor-pointer" 
+                                    className="size-4 rounded border-base-300 text-primary focus:ring-primary cursor-pointer" 
                                     checked={allSelected}
                                     onChange={onToggleSelectAll}
                                     disabled={attPromisCount === 0}
@@ -203,20 +203,20 @@ export const PromisTable: React.FC<PromisTableProps> = ({
                             </SelectionHeader>
                         ) : (
                             <>
-                                <th className="sticky top-0 z-30 bg-gray-100  border-b border-gray-200 text-[10px] font-black uppercase tracking-widest text-gray-400 px-6 py-4">{t('stock:promis.table.date')}</th>
-                                <th className="sticky top-0 z-30 bg-gray-100  border-b border-gray-200 text-[10px] font-black uppercase tracking-widest text-gray-400 px-6 py-4">{t('stock:promis.table.client')}</th>
-                                <th className="sticky top-0 z-30 bg-gray-100  border-b border-gray-200 text-[10px] font-black uppercase tracking-widest text-gray-400 px-6 py-4">{t('stock:promis.table.phone')}</th>
-                                <th className="sticky top-0 z-30 bg-gray-100  border-b border-gray-200 text-[10px] font-black uppercase tracking-widest text-gray-400 px-6 py-4">{t('stock:promis.table.product')}</th>
-                                <th className="sticky top-0 z-30 bg-gray-100  border-b border-gray-200 text-[10px] font-black uppercase tracking-widest text-gray-400 px-6 py-4 text-center">{t('stock:promis.table.qty')}</th>
-                                <th className="sticky top-0 z-30 bg-gray-100  border-b border-gray-200 text-[10px] font-black uppercase tracking-widest text-gray-400 px-6 py-4 text-center">{t('stock:promis.table.status')}</th>
-                                <th className="sticky top-0 z-30 bg-gray-100  border-b border-gray-200 text-[10px] font-black uppercase tracking-widest text-gray-400 px-6 py-4 text-right pr-6">{t('stock:promis.table.actions')}</th>
+                                <th className="sticky top-0 z-30 bg-base-200  border-b border-base-300 text-[10px] font-black uppercase tracking-widest text-base-content/50 px-6 py-4">{t('stock:promis.table.date')}</th>
+                                <th className="sticky top-0 z-30 bg-base-200  border-b border-base-300 text-[10px] font-black uppercase tracking-widest text-base-content/50 px-6 py-4">{t('stock:promis.table.client')}</th>
+                                <th className="sticky top-0 z-30 bg-base-200  border-b border-base-300 text-[10px] font-black uppercase tracking-widest text-base-content/50 px-6 py-4">{t('stock:promis.table.phone')}</th>
+                                <th className="sticky top-0 z-30 bg-base-200  border-b border-base-300 text-[10px] font-black uppercase tracking-widest text-base-content/50 px-6 py-4">{t('stock:promis.table.product')}</th>
+                                <th className="sticky top-0 z-30 bg-base-200  border-b border-base-300 text-[10px] font-black uppercase tracking-widest text-base-content/50 px-6 py-4 text-center">{t('stock:promis.table.qty')}</th>
+                                <th className="sticky top-0 z-30 bg-base-200  border-b border-base-300 text-[10px] font-black uppercase tracking-widest text-base-content/50 px-6 py-4 text-center">{t('stock:promis.table.status')}</th>
+                                <th className="sticky top-0 z-30 bg-base-200  border-b border-base-300 text-[10px] font-black uppercase tracking-widest text-base-content/50 px-6 py-4 text-right pr-6">{t('stock:promis.table.actions')}</th>
                             </>
                         )}
                     </tr>
                 </thead>
-                <tbody className="text-gray-900 font-medium">
+                <tbody className="text-base-content font-medium">
                     {promisList.map(p => (
-                        <tr key={p.id} className={`hover:bg-gray-50 transition-colors group ${selectedIds.has(p.id) ? 'bg-indigo-50' : ''}`}>
+                        <tr key={p.id} className={`hover:bg-base-200 transition-colors group ${selectedIds.has(p.id) ? 'bg-primary/10' : ''}`}>
                             <td className="text-center">
                                 {p.status === 'ATT' && (
                                     <div className="flex justify-center">
@@ -230,24 +230,24 @@ export const PromisTable: React.FC<PromisTableProps> = ({
                             </td>
                             <td>
                                 <div className="flex flex-col">
-                                    <span className="font-semibold text-gray-900">{format(new Date(p.date_promis), 'dd/MM/yyyy', { locale: currentLocale })}</span>
-                                    <span className="text-xs text-gray-500">{format(new Date(p.date_promis), 'HH:mm', { locale: currentLocale })}</span>
+                                    <span className="font-semibold text-base-content">{format(new Date(p.date_promis), 'dd/MM/yyyy', { locale: currentLocale })}</span>
+                                    <span className="text-xs text-base-content/60">{format(new Date(p.date_promis), 'HH:mm', { locale: currentLocale })}</span>
                                 </div>
                             </td>
                             <td>
                                 <div className="font-medium">{p.client_display}</div>
                             </td>
                             <td>
-                                <div className="text-gray-500 font-mono text-xs">{p.client_phone_display || '-'}</div>
+                                <div className="text-base-content/60 font-mono text-xs">{p.client_phone_display || '-'}</div>
                             </td>
                             <td>
                                 <div className="max-w-[200px] truncate" title={p.produit_name}>
                                     <span className="font-semibold">{p.produit_name}</span>
                                 </div>
-                                {p.produit_cip && <div className="text-xs text-gray-500 font-mono mt-0.5">{p.produit_cip}</div>}
+                                {p.produit_cip && <div className="text-xs text-base-content/60 font-mono mt-0.5">{p.produit_cip}</div>}
                             </td>
                             <td className="text-center">
-                                <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-gray-100 text-gray-900 font-mono font-bold text-xs border border-gray-200">
+                                <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-base-200 text-base-content font-mono font-bold text-xs border border-base-300">
                                     {p.quantite}
                                 </span>
                             </td>
@@ -256,7 +256,7 @@ export const PromisTable: React.FC<PromisTableProps> = ({
                                     {p.status_display}
                                 </span>
                                 {p.status === 'DEL' && p.date_livraison && (
-                                    <div className="text-[10px] text-emerald-600 mt-1 opacity-80">
+                                    <div className="text-[10px] text-success mt-1 opacity-80">
                                         {t('stock:promis.messages.delivered_on', { date: format(new Date(p.date_livraison), 'dd/MM/yyyy', { locale: currentLocale }) })}
                                     </div>
                                 )}
@@ -282,12 +282,12 @@ export const PromisTable: React.FC<PromisTableProps> = ({
                                         )}
                                         
                                         <div className="relative inline-block">
-                                            <div tabIndex={0} role="button" className="p-1.5 text-gray-500 hover:bg-gray-100 rounded-lg transition-colors">
+                                            <div tabIndex={0} role="button" className="p-1.5 text-base-content/60 hover:bg-base-200 rounded-lg transition-colors">
                                                 <MoreVertical className="w-[18px] h-[18px]" />
                                             </div>
-                                            <ul tabIndex={0} className="absolute z-50 mt-1 bg-white rounded-lg shadow-lg border border-gray-200 min-w-[14rem] py-1 z-[1] flex flex-col gap-0.5 p-2 shadow-lg bg-white rounded-xl w-44 border border-gray-100">
+                                            <ul tabIndex={0} className="absolute z-50 mt-1 bg-base-100 rounded-lg shadow-lg border border-base-300 min-w-[14rem] py-1 z-[1] flex flex-col gap-0.5 p-2 shadow-lg bg-base-100 rounded-xl w-44 border border-base-200">
                                                 <li>
-                                                    <a onClick={() => onPrint(p.id)} className="flex items-center gap-2 hover:bg-indigo-50 hover:text-indigo-600">
+                                                    <a onClick={() => onPrint(p.id)} className="flex items-center gap-2 hover:bg-primary/10 hover:text-primary">
                                                         <Printer className="size-4" />
                                                         {t('stock:promis.actions.print')}
                                                     </a>
@@ -295,13 +295,13 @@ export const PromisTable: React.FC<PromisTableProps> = ({
                                                 {p.client_phone_display && (
                                                     <>
                                                         <li>
-                                                            <a onClick={() => onSms(p)} className="flex items-center gap-2 hover:bg-blue-50 hover:text-blue-600">
+                                                            <a onClick={() => onSms(p)} className="flex items-center gap-2 hover:bg-info/10 hover:text-info">
                                                                 <MessageCircle className="size-4" />
                                                                 {t('stock:promis.actions.sms')}
                                                             </a>
                                                         </li>
                                                         <li>
-                                                            <a onClick={() => onWhatsApp(p.id)} className="flex items-center gap-2 hover:bg-emerald-50 hover:text-emerald-600 font-bold">
+                                                            <a onClick={() => onWhatsApp(p.id)} className="flex items-center gap-2 hover:bg-success/10 hover:text-success font-bold">
                                                                 <svg className="size-4" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.414 0 .018 5.396.015 12.03c0 2.12.541 4.191 1.57 6.017L0 24l6.135-1.61a11.75 11.75 0 005.917 1.595h.004c6.637 0 12.032-5.396 12.035-12.032.002-3.218-1.248-6.242-3.517-8.511z"/></svg>
                                                                 {t('stock:promis.actions.whatsapp')}
                                                             </a>

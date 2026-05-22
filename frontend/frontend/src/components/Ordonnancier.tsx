@@ -223,7 +223,7 @@ const OrdonnancierPage: React.FC = () => {
                                         </td>
                                         <td>
                                             {formatDate(entry.date_delivrance)}
-                                            <div className="text-xs opacity-50">
+                                            <div className="text-xs text-base-content/50">
                                                 {formatDateTime(entry.date_delivrance).split(' ').slice(1).join(' ')}
                                             </div>
                                         </td>
@@ -234,7 +234,7 @@ const OrdonnancierPage: React.FC = () => {
                                                 {entry.lignes.map(ligne => (
                                                     <div key={ligne.id} className="text-sm">
                                                         <span className="font-semibold">{ligne.produit_nom}</span>
-                                                        <span className="opacity-70 mx-1">x{ligne.quantite}</span>
+                                                        <span className="text-base-content/70 mx-1">x{ligne.quantite}</span>
                                                         {ligne.surveillance_category !== 'NONE' && (
                                                             <span className={`badge badge-xs ${ligne.surveillance_category === 'RENFORCEE' ? 'badge-error' : 'badge-warning'}`}>
                                                                 {ligne.surveillance_category === 'RENFORCEE' ? t('table.surveillance_badges.renf') : t('table.surveillance_badges.std')}

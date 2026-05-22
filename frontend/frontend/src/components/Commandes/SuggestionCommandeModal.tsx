@@ -50,7 +50,7 @@ export default function SuggestionCommandeModal({
   });
   
   const [suggestions, setSuggestions] = useState<any[]>([]);
-  const [totalHt, setTotalHt] = useState<number>(0); // New state for total amount
+  const [totalHt, setTotalHt] = useState<number>(0); // New e for total amount
   const [loadingSuggestions, setLoadingSuggestions] = useState(false);
   const [stepSuggestion, setStepSuggestion] = useState<1 | 2>(1); // 1 = Config, 2 = Résultats
   const [selectedSuggestions, setSelectedSuggestions] = useState<Set<number>>(new Set());
@@ -165,12 +165,12 @@ export default function SuggestionCommandeModal({
   const footer = (
     <div className="flex justify-between items-center w-full">
         {stepSuggestion === 2 ? (
-            <button className="btn btn-ghost hover:bg-base-200" onClick={() => setStepSuggestion(1)}>
+            <button className="btn-ref btn-ghost hover:bg-base-200" onClick={() => setStepSuggestion(1)}>
                 <ChevronLeft className="size-4 mr-2" />
                 {t('orders:suggestion_modal.back_to_params')}
             </button>
         ) : (
-            <button className="btn btn-ghost hover:bg-base-200 text-base-content/40" onClick={onClose}>
+            <button className="btn-ref btn-ghost hover:bg-base-200 text-base-content/50" onClick={onClose}>
                 {t('orders:suggestion_modal.close')}
             </button>
         )}
@@ -178,12 +178,12 @@ export default function SuggestionCommandeModal({
         {stepSuggestion === 1 ? (
             <div className="flex gap-2">
                 <button 
-                    className="btn btn-primary px-8 shadow-lg shadow-primary/20"
+                    className="btn-ref btn-primary px-8 shadow-lg shadow-indigo-500/20"
                     onClick={fetchSuggestions}
                     disabled={loadingSuggestions}
                 >
                 {loadingSuggestions ? (
-                    <span className="loading loading-spinner loading-xs"></span>
+                    <span className="inline-block size-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
                 ) : (
                     <>
                         <Search className="size-4 mr-2" />
@@ -195,7 +195,7 @@ export default function SuggestionCommandeModal({
         ) : (
             <div className="flex gap-3">
                 <button 
-                    className="btn btn-primary px-8 shadow-lg shadow-primary/20" 
+                    className="btn-ref btn-primary px-8 shadow-lg shadow-indigo-500/20" 
                     onClick={handleApply}
                     disabled={selectedSuggestions.size === 0}
                 >
@@ -225,8 +225,8 @@ export default function SuggestionCommandeModal({
                         <label 
                             className={`relative flex flex-col p-4 cursor-pointer rounded-2xl border-2 transition-all ${
                                 suggestionParams.mode === 'simple' 
-                                ? 'border-primary bg-primary/5 shadow-md' 
-                                : 'border-base-200 bg-base-100 hover:border-primary/50'
+                                ? 'border-primary bg-primary/10 shadow-md' 
+                                : 'border-base-300 bg-base-100 hover:border-primary/50'
                             }`}
                         >
                             <input 
@@ -256,8 +256,8 @@ export default function SuggestionCommandeModal({
                         <label 
                             className={`relative flex flex-col p-4 cursor-pointer rounded-2xl border-2 transition-all ${
                                 suggestionParams.mode === 'optimise' 
-                                ? 'border-primary bg-primary/5 shadow-md' 
-                                : 'border-base-200 bg-base-100 hover:border-primary/50'
+                                ? 'border-primary bg-primary/10 shadow-md' 
+                                : 'border-base-300 bg-base-100 hover:border-primary/50'
                             }`}
                         >
                             <input 
@@ -289,8 +289,8 @@ export default function SuggestionCommandeModal({
                     <label 
                         className={`relative flex items-center gap-4 p-4 cursor-pointer rounded-2xl border-2 transition-all ${
                             suggestionParams.mode === 'ventes_horaire' 
-                            ? 'border-primary bg-primary/5 shadow-md' 
-                            : 'border-base-200 bg-base-100 hover:border-primary/50'
+                            ? 'border-primary bg-primary/10 shadow-md' 
+                            : 'border-base-300 bg-base-100 hover:border-primary/50'
                         }`}
                     >
                         <input 
@@ -315,16 +315,16 @@ export default function SuggestionCommandeModal({
                         )}
                     </label>
 
-                    <div className="bg-base-100 rounded-2xl p-6 border border-gray-100 shadow-sm space-y-6">
+                    <div className="bg-base-100 rounded-2xl p-6 border border-base-200 shadow-sm space-y-6">
                         {/* Supplier filter (always visible) */}
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div className="space-y-2">
-                                <label className="text-xs font-bold text-base-content/40 uppercase tracking-wider flex items-center gap-2">
+                                <label className="text-xs font-bold text-base-content/50 uppercase tracking-wider flex items-center gap-2">
                                     <Package className="size-3" />
                                     {t('orders:suggestion_modal.supplier_label')}
                                 </label>
                                 <select 
-                                    className="select select-bordered w-full bg-base-200/50 border-base-200 focus:border-primary rounded-xl"
+                                    className="select-ref select-bordered w-full bg-base-200/50 border-base-300 focus:border-primary rounded-xl"
                                     value={suggestionParams.fournisseurId}
                                     onChange={(e) => setSuggestionParams(prev => ({ ...prev, fournisseurId: e.target.value }))}
                                 >
@@ -337,10 +337,10 @@ export default function SuggestionCommandeModal({
 
                             {suggestionParams.mode !== 'ventes_horaire' && (
                                 <div className="space-y-2">
-                                    <label className="text-xs font-bold text-base-content/40 uppercase tracking-wider flex items-center gap-2">
+                                    <label className="text-xs font-bold text-base-content/50 uppercase tracking-wider flex items-center gap-2">
                                         <DollarSign className="size-3" />
                                         {t('orders:suggestion_modal.budget_label')}
-                                        <div className="tooltip" data-tip={t('orders:suggestion_modal.budget_tooltip')}>
+                                        <div className="group relative" title={t('orders:suggestion_modal.budget_tooltip')}>
                                             <Info className="size-3 text-base-content/30" />
                                         </div>
                                     </label>
@@ -348,11 +348,11 @@ export default function SuggestionCommandeModal({
                                         <input 
                                             type="number" 
                                             placeholder={t('orders:suggestion_modal.budget_placeholder')}
-                                            className="input input-bordered join-item w-full bg-base-200/50 border-base-200 focus:border-primary rounded-l-xl"
+                                            className="input-ref input-bordered join-item w-full bg-base-200/50 border-base-300 focus:border-primary rounded-l-xl"
                                             value={suggestionParams.budgetMax}
                                             onChange={(e) => setSuggestionParams(prev => ({ ...prev, budgetMax: e.target.value }))}
                                         />
-                                        <span className="join-item px-4 bg-base-200 border border-base-200 border-l-0 flex items-center font-bold text-base-content/40 rounded-r-xl">{t('common:currency_symbol', 'F')}</span>
+                                        <span className="join-item px-4 bg-base-200 border border-base-300 border-l-0 flex items-center font-bold text-base-content/50 rounded-r-xl">{t('common:currency_symbol', 'F')}</span>
                                     </div>
                                 </div>
                             )}
@@ -361,7 +361,7 @@ export default function SuggestionCommandeModal({
                         {/* Conditional: Period OR DateTime range */}
                         {suggestionParams.mode === 'ventes_horaire' ? (
                             <div className="space-y-3">
-                                <label className="text-xs font-bold text-base-content/40 uppercase tracking-wider flex items-center gap-2">
+                                <label className="text-xs font-bold text-base-content/50 uppercase tracking-wider flex items-center gap-2">
                                     <Clock className="size-3" />
                                     {t('orders:suggestion_modal.hourly_range_label')}
                                 </label>
@@ -392,7 +392,7 @@ export default function SuggestionCommandeModal({
                                         </div>
                                         <input 
                                             type="datetime-local" 
-                                            className="input input-bordered w-full bg-base-200/50 border-base-200 focus:border-primary rounded-xl"
+                                            className="input-ref input-bordered w-full bg-base-200/50 border-base-300 focus:border-primary rounded-xl"
                                             value={suggestionParams.dateDebut}
                                             onChange={(e) => setSuggestionParams(prev => ({ ...prev, dateDebut: e.target.value }))}
                                         />
@@ -401,7 +401,7 @@ export default function SuggestionCommandeModal({
                                         <span className="text-xs text-base-content/60">{t('orders:suggestion_modal.date_to')}</span>
                                         <input 
                                             type="datetime-local" 
-                                            className="input input-bordered w-full bg-base-200/50 border-base-200 focus:border-primary rounded-xl"
+                                            className="input-ref input-bordered w-full bg-base-200/50 border-base-300 focus:border-primary rounded-xl"
                                             value={suggestionParams.dateFin}
                                             onChange={(e) => setSuggestionParams(prev => ({ ...prev, dateFin: e.target.value }))}
                                         />
@@ -410,7 +410,7 @@ export default function SuggestionCommandeModal({
                             </div>
                         ) : (
                             <div className="space-y-3">
-                                <label className="text-xs font-bold text-base-content/40 uppercase tracking-wider flex items-center gap-2">
+                                <label className="text-xs font-bold text-base-content/50 uppercase tracking-wider flex items-center gap-2">
                                     <Calendar className="size-3" />
                                     {t('orders:suggestion_modal.period_label')}
                                 </label>
@@ -423,14 +423,14 @@ export default function SuggestionCommandeModal({
                                             className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
                                                 suggestionParams.periode === p.value
                                                 ? 'bg-primary text-white shadow-md'
-                                                : 'bg-base-200 text-base-content/80 hover:bg-base-300'
+                                                : 'bg-base-200 text-base-content/80 hover:bg-base-200'
                                             }`}
                                             onClick={() => setSuggestionParams(prev => ({ ...prev, periode: p.value }))}
                                         >
                                             {p.label}
                                         </button>
                                     ))}
-                                    <div className="flex items-center gap-2 px-3 py-1 bg-base-200/50 border border-base-200 rounded-full ml-auto">
+                                    <div className="flex items-center gap-2 px-3 py-1 bg-base-200/50 border border-base-300 rounded-full ml-auto">
                                        <input 
                                             type="number" 
                                             className="w-12 bg-transparent border-none focus:outline-none text-right font-bold text-primary"
@@ -439,7 +439,7 @@ export default function SuggestionCommandeModal({
                                             max={365}
                                             onChange={(e) => setSuggestionParams(prev => ({ ...prev, periode: parseInt(e.target.value) || 0 }))}
                                         />
-                                        <span className="text-xs text-base-content/40 pr-1">{t('orders:suggestion_modal.days_unit')}</span>
+                                        <span className="text-xs text-base-content/50 pr-1">{t('orders:suggestion_modal.days_unit')}</span>
                                     </div>
                                 </div>
                             </div>
@@ -449,7 +449,7 @@ export default function SuggestionCommandeModal({
             ) : (
                 /* STEP 2 : RÉSULTATS */
                 <div className="flex flex-col h-full gap-4 p-4 overflow-hidden">
-                    <div className="flex items-center justify-between gap-4 p-4 bg-base-100 rounded-2xl border border-gray-100 shadow-sm">
+                    <div className="flex items-center justify-between gap-4 p-4 bg-base-100 rounded-2xl border border-base-200 shadow-sm">
                         <div className="flex items-center gap-3">
                             <div className="size-10 rounded-full bg-primary/10 flex items-center justify-center text-primary">
                                 <Info className="size-5" />
@@ -460,7 +460,7 @@ export default function SuggestionCommandeModal({
                             </div>
                         </div>
                         <div className="bg-slate-900 text-white rounded-xl px-4 py-2 text-right">
-                            <div className="text-[10px] uppercase font-bold text-base-content/40 flex items-center gap-1 justify-end">
+                            <div className="text-[10px] uppercase font-bold text-base-content/50 flex items-center gap-1 justify-end">
                                 <DollarSign className="size-3" />
                                 {t('orders:suggestion_modal.total_estimated')}
                             </div>
@@ -469,14 +469,14 @@ export default function SuggestionCommandeModal({
                     </div>
 
                     {suggestions.length > 0 ? (
-                        <div className="flex-1 overflow-auto rounded-2xl border border-gray-100 bg-base-100">
-                            <table className="table table-pin-rows">
-                                <thead className="bg-gray-50/80 backdrop-blur-md">
-                                    <tr className="text-base-content/40 uppercase text-[10px] tracking-widest border-b border-gray-100">
+                        <div className="flex-1 overflow-auto rounded-2xl border border-base-200 bg-base-100">
+                            <table className="w-full">
+                                <thead className="bg-base-200/80 backdrop-blur-md">
+                                    <tr className="text-base-content/50 uppercase text-[10px] tracking-widest border-b border-base-200">
                                         <th className="bg-transparent">
                                             <input 
                                                 type="checkbox" 
-                                                className="checkbox checkbox-sm checkbox-primary rounded-md" 
+                                                className="size-4 rounded border-base-300 text-primary focus:ring-primary cursor-pointer" 
                                                 checked={selectedSuggestions.size === suggestions.length && suggestions.length > 0}
                                                 onChange={() => {
                                                     if (selectedSuggestions.size === suggestions.length) {
@@ -500,13 +500,13 @@ export default function SuggestionCommandeModal({
                                     {suggestions.map((item, index) => (
                                         <tr 
                                             key={index} 
-                                            className={`hover:bg-primary/5 transition-colors cursor-pointer group ${selectedSuggestions.has(index) ? 'bg-primary/5' : ''}`}
+                                            className={`hover:bg-primary/10 transition-colors cursor-pointer group ${selectedSuggestions.has(index) ? 'bg-primary/10' : ''}`}
                                             onClick={() => toggleSuggestionSelection(index)}
                                         >
                                             <td className="w-4">
                                                 <input 
                                                     type="checkbox" 
-                                                    className="checkbox checkbox-sm checkbox-primary rounded-md" 
+                                                    className="size-4 rounded border-base-300 text-primary focus:ring-primary cursor-pointer" 
                                                     checked={selectedSuggestions.has(index)}
                                                     onChange={(e) => {
                                                         e.stopPropagation();
@@ -519,20 +519,20 @@ export default function SuggestionCommandeModal({
                                                     <div className="font-bold text-base-content/90 flex items-center gap-2 flex-wrap">
                                                         {item.produit_nom}
                                                         {item.is_supplier_exclusive && (
-                                                            <span className="badge badge-sm badge-success text-[8px] font-bold text-white">{t('orders:suggestion_modal.exclusive_badge')}</span>
+                                                            <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[8px] font-bold bg-success/20 text-success">{t('orders:suggestion_modal.exclusive_badge')}</span>
                                                         )}
                                                         {item.promis_count > 0 && (
-                                                            <span className="badge badge-sm badge-warning text-[8px] font-bold text-white">{t('orders:suggestion_modal.promis_badge', { count: item.promis_count })}</span>
+                                                            <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[8px] font-bold bg-warning/20 text-warning">{t('orders:suggestion_modal.promis_badge', { count: item.promis_count })}</span>
                                                         )}
                                                         {item.en_rupture_fournisseur && (
-                                                            <span className="badge badge-sm badge-error text-[8px] font-bold text-white animate-pulse">{t('orders:suggestion_modal.rupture_badge')}</span>
+                                                            <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[8px] font-bold bg-error/20 text-error animate-pulse">{t('orders:suggestion_modal.rupture_badge')}</span>
                                                         )}
                                                     </div>
-                                                    <div className="text-xs text-base-content/40 font-mono tracking-tighter">REF: {item.produit_ref}</div>
+                                                    <div className="text-xs text-base-content/50 font-mono tracking-tighter">REF: {item.produit_ref}</div>
                                                 </div>
                                             </td>
                                             <td className="text-center">
-                                                <span className={`px-2 py-1 rounded text-xs font-bold ${item.stock_actuel <= 0 ? 'bg-red-100 text-red-600' : 'bg-base-200 text-base-content/80'}`}>
+                                                <span className={`px-2 py-1 rounded text-xs font-bold ${item.stock_actuel <= 0 ? 'bg-error/20 text-error' : 'bg-base-200 text-base-content/80'}`}>
                                                     {item.stock_actuel}
                                                 </span>
                                             </td>
@@ -542,7 +542,7 @@ export default function SuggestionCommandeModal({
                                             <td className="text-right">
                                                 <div className="flex flex-col items-end">
                                                     <span className="text-lg font-bold text-primary">{item.quantite_suggeree}</span>
-                                                    <span className="text-[10px] text-base-content/40">{formatPrice(item.prix_achat)} {t('common:currency_symbol', 'F')} / {t('common:units_short', 'u')}</span>
+                                                    <span className="text-[10px] text-base-content/50">{formatPrice(item.prix_achat)} {t('common:currency_symbol', 'F')} / {t('common:units_short', 'u')}</span>
                                                 </div>
                                             </td>
                                             <td className="text-right font-mono font-bold text-base-content/90">
@@ -551,11 +551,11 @@ export default function SuggestionCommandeModal({
                                             <td>
                                                 <div className="flex items-center gap-2">
                                                     {item.score_urgence > 50 ? (
-                                                        <div className="badge badge-error badge-xs animate-pulse">{t('orders:suggestion_modal.critical_badge')}</div>
+                                                        <div className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold bg-error/20 text-error animate-pulse">{t('orders:suggestion_modal.critical_badge')}</div>
                                                     ) : (
-                                                        <div className="badge badge-ghost badge-xs text-base-content/40 uppercase font-bold text-[8px]">{t('orders:suggestion_modal.standard_badge')}</div>
+                                                        <div className="inline-flex items-center px-1.5 py-0.5 rounded text-[8px] font-bold bg-base-200 text-base-content/60 uppercase">{t('orders:suggestion_modal.standard_badge')}</div>
                                                     )}
-                                                    <div className="tooltip tooltip-left" data-tip={item.raison}>
+                                                    <div className="group relative" title={item.raison}>
                                                         <ArrowUpRight className="size-4 text-base-content/30 group-hover:text-primary transition-colors" />
                                                     </div>
                                                 </div>
@@ -566,7 +566,7 @@ export default function SuggestionCommandeModal({
                             </table>
                         </div>
                     ) : (
-                        <div className="flex-1 flex flex-col items-center justify-center bg-base-100 rounded-2xl border-2 border-dashed border-gray-100 p-12 text-center">
+                        <div className="flex-1 flex flex-col items-center justify-center bg-base-100 rounded-2xl border-2 border-dashed border-base-200 p-12 text-center">
                             <div className="size-16 bg-base-200/50 rounded-full flex items-center justify-center mb-4">
                                 <Search className="size-8 text-base-content/30" />
                             </div>
@@ -574,7 +574,7 @@ export default function SuggestionCommandeModal({
                             <p className="text-base-content/60 max-w-sm mx-auto">
                                 {t('orders:suggestion_modal.no_results_desc')}
                             </p>
-                            <button className="btn btn-ghost btn-sm mt-4 text-primary" onClick={() => setStepSuggestion(1)}>
+                            <button className="btn-ref btn-ghost btn-sm mt-4 text-primary" onClick={() => setStepSuggestion(1)}>
                                 {t('orders:suggestion_modal.modify_params')}
                             </button>
                         </div>

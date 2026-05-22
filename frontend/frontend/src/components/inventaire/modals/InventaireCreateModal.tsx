@@ -81,7 +81,7 @@ const InventaireCreateModal: React.FC<InventaireCreateModalProps> = ({
                                     <div className={`font-bold text-sm ${action === 'VERIFY' ? 'text-primary' : 'text-base-content'}`}>{t('inventaire.create.action_verify')}</div>
                                     <div className="text-[11px] opacity-60 leading-tight mt-1">{t('inventaire.create.action_verify_desc')}</div>
                                 </div>
-                                <Settings2 className={`h-5 w-5 ml-auto opacity-10 group-hover:opacity-20 transition-opacity ${action === 'VERIFY' ? 'text-primary opacity-20' : ''}`} />
+                                <Settings2 className={`h-5 w-5 ml-auto opacity-10 group-hover:text-base-content/20 transition-opacity ${action === 'VERIFY' ? 'text-primary text-base-content/20' : ''}`} />
                             </label>
                             
                             <label className={`flex items-start p-4 rounded-xl border-2 cursor-pointer transition-all duration-200 group ${action === 'ENTRY' ? 'border-primary bg-primary/5 shadow-inner' : 'border-base-200 hover:border-base-300 bg-base-50'}`}>
@@ -97,7 +97,7 @@ const InventaireCreateModal: React.FC<InventaireCreateModalProps> = ({
                                     <div className={`font-bold text-sm ${action === 'ENTRY' ? 'text-primary' : 'text-base-content'}`}>{t('inventaire.create.action_entry')}</div>
                                     <div className="text-[11px] opacity-60 leading-tight mt-1">{t('inventaire.create.action_entry_desc')}</div>
                                 </div>
-                                <Edit3 className={`h-5 w-5 ml-auto opacity-10 group-hover:opacity-20 transition-opacity ${action === 'ENTRY' ? 'text-primary opacity-20' : ''}`} />
+                                <Edit3 className={`h-5 w-5 ml-auto opacity-10 group-hover:text-base-content/20 transition-opacity ${action === 'ENTRY' ? 'text-primary text-base-content/20' : ''}`} />
                             </label>
                         </div>
                     </div>
@@ -108,19 +108,19 @@ const InventaireCreateModal: React.FC<InventaireCreateModalProps> = ({
                             {t('inventaire.create.stock_type_title')}
                         </span>
                         <div className="grid grid-cols-3 gap-3">
-                            <label className={`flex flex-col items-center justify-center p-3 rounded-xl border-2 cursor-pointer transition-all duration-200 ${stockType === 'GLOBAL' ? 'border-primary bg-primary/5' : 'border-base-200 bg-base-50 opacity-70 hover:opacity-100'}`}>
+                            <label className={`flex flex-col items-center justify-center p-3 rounded-xl border-2 cursor-pointer transition-all duration-200 ${stockType === 'GLOBAL' ? 'border-primary bg-primary/5' : 'border-base-200 bg-base-50 text-base-content/70 hover:opacity-100'}`}>
                                 <Archive className={`h-5 w-5 mb-2 ${stockType === 'GLOBAL' ? 'text-primary' : 'text-base-content/40'}`} />
                                 <input type="radio" className="hidden" checked={stockType === 'GLOBAL'} onChange={() => setStockType('GLOBAL')} />
                                 <span className="text-xs font-bold text-center">{t('inventaire.create.stock_global')}</span>
                             </label>
                             
-                            <label className={`flex flex-col items-center justify-center p-3 rounded-xl border-2 cursor-pointer transition-all duration-200 ${stockType === 'RAYON' ? 'border-primary bg-primary/5' : 'border-base-200 bg-base-50 opacity-70 hover:opacity-100'}`}>
+                            <label className={`flex flex-col items-center justify-center p-3 rounded-xl border-2 cursor-pointer transition-all duration-200 ${stockType === 'RAYON' ? 'border-primary bg-primary/5' : 'border-base-200 bg-base-50 text-base-content/70 hover:opacity-100'}`}>
                                 <Store className={`h-5 w-5 mb-2 ${stockType === 'RAYON' ? 'text-primary' : 'text-base-content/40'}`} />
                                 <input type="radio" className="hidden" checked={stockType === 'RAYON'} onChange={() => setStockType('RAYON')} />
                                 <span className="text-xs font-bold text-center">{t('inventaire.create.stock_rayon')}</span>
                             </label>
                             
-                            <label className={`flex flex-col items-center justify-center p-3 rounded-xl border-2 cursor-pointer transition-all duration-200 ${stockType === 'RESERVE' ? 'border-primary bg-primary/5' : 'border-base-200 bg-base-50 opacity-70 hover:opacity-100'}`}>
+                            <label className={`flex flex-col items-center justify-center p-3 rounded-xl border-2 cursor-pointer transition-all duration-200 ${stockType === 'RESERVE' ? 'border-primary bg-primary/5' : 'border-base-200 bg-base-50 text-base-content/70 hover:opacity-100'}`}>
                                 <Warehouse className={`h-5 w-5 mb-2 ${stockType === 'RESERVE' ? 'text-primary' : 'text-base-content/40'}`} />
                                 <input type="radio" className="hidden" checked={stockType === 'RESERVE'} onChange={() => setStockType('RESERVE')} />
                                 <span className="text-xs font-bold text-center">{t('inventaire.create.stock_reserve')}</span>

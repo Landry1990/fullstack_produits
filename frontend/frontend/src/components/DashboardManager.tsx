@@ -28,9 +28,9 @@ export default function DashboardManager() {
 
     if (statsLoading) {
         return (
-            <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center gap-3">
-                <div className="size-10 border-2 border-gray-200 border-t-indigo-600 rounded-full animate-spin"></div>
-                <p className="text-sm font-medium text-gray-400 uppercase tracking-widest animate-pulse">
+            <div className="min-h-screen bg-base-200 flex flex-col items-center justify-center gap-3">
+                <div className="size-10 border-2 border-base-300 border-t-indigo-600 rounded-full animate-spin"></div>
+                <p className="text-sm font-medium text-base-content/50 uppercase tracking-widest animate-pulse">
                     {t('manager_dashboard.loading', 'Chargement du tableau de bord...')}
                 </p>
             </div>
@@ -44,19 +44,19 @@ export default function DashboardManager() {
     };
 
     return (
-        <div className="min-h-screen bg-gray-50 p-6 space-y-5 font-sans">
+        <div className="min-h-screen bg-base-200 p-6 space-y-5 font-sans">
             <Toaster position="top-right" />
 
             <div className="max-w-[1600px] mx-auto space-y-5">
                 {/* Header Section */}
-                <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-                    <div className="p-5 border-b border-gray-100 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                <div className="bg-base-100 rounded-xl shadow-sm border border-base-200 overflow-hidden">
+                    <div className="p-5 border-b border-base-200 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                         <div>
-                            <h1 className="text-xl font-bold text-gray-900 tracking-tight">
+                            <h1 className="text-xl font-bold text-base-content tracking-tight">
                                 {t('manager_dashboard.title', 'Tableau de Bord')}
-                                <span className="text-indigo-600 ml-2 uppercase text-lg font-black">{t('manager_dashboard.manager', 'Manager')}</span>
+                                <span className="text-primary ml-2 uppercase text-lg font-black">{t('manager_dashboard.manager', 'Manager')}</span>
                             </h1>
-                            <p className="text-gray-500 text-sm mt-1">
+                            <p className="text-base-content/60 text-sm mt-1">
                                 {t('manager_dashboard.subtitle', 'Suivi de la Marge Brute et couverture des charges')}
                             </p>
                         </div>
@@ -64,14 +64,14 @@ export default function DashboardManager() {
                         <div className="flex items-center gap-2">
                             <button
                                 onClick={() => setIsSettingsModalOpen(true)}
-                                className="p-2.5 rounded-lg hover:bg-gray-100 transition-colors text-gray-500"
+                                className="p-2.5 rounded-lg hover:bg-base-200 transition-colors text-base-content/60"
                                 title={t('manager_dashboard.settings_tooltip')}
                             >
                                 <Settings className="size-5" />
                             </button>
                             <button
                                 onClick={() => actions.openObjectiveModal()}
-                                className="inline-flex items-center gap-2 px-4 py-2.5 bg-indigo-600 text-white rounded-lg font-bold text-sm hover:bg-indigo-700 transition-colors shadow-sm"
+                                className="inline-flex items-center gap-2 px-4 py-2.5 bg-primary text-white rounded-lg font-bold text-sm hover:bg-primary-focus transition-colors shadow-sm"
                             >
                                 <PlusCircle className="size-5" />
                                 <span className="hidden sm:inline">

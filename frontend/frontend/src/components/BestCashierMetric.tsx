@@ -83,7 +83,7 @@ const BestCashierMetric: React.FC<BestCashierMetricProps> = ({ month, year, user
                 
                 <div className="relative z-10">
                     <div className="flex items-center gap-2 mb-4">
-                        <div className="bg-white/20 p-2 rounded-xl border border-white/30 backdrop-blur-sm">
+                        <div className="bg-base-100/20 p-2 rounded-xl border border-white/30 backdrop-blur-sm">
                              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-yellow-300"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></svg>
                         </div>
                         <h3 className="font-black text-lg uppercase tracking-widest">{t('performance.best_cashier')}</h3>
@@ -91,14 +91,14 @@ const BestCashierMetric: React.FC<BestCashierMetricProps> = ({ month, year, user
 
                     <div className="flex items-center gap-5 mb-6 pt-2">
                         <div className="avatar placeholder">
-                            <div className="bg-white/30 text-white rounded-2xl size-20 flex items-center justify-center text-3xl font-black border-2 border-white/50 shadow-inner">
+                            <div className="bg-base-100/30 text-white rounded-2xl size-20 flex items-center justify-center text-3xl font-black border-2 border-white/50 shadow-inner">
                                 <span>{winner.username.charAt(0).toUpperCase()}</span>
                             </div>
                         </div>
                         <div className="min-w-0">
                             <div className="text-2xl font-black leading-tight truncate drop-shadow-sm">{winner.full_name}</div>
                             <div className="text-white/70 text-sm font-bold flex items-center gap-1">
-                                <span className="opacity-50">@</span>{winner.username}
+                                <span className="text-base-content/50">@</span>{winner.username}
                             </div>
                         </div>
                     </div>
@@ -108,13 +108,13 @@ const BestCashierMetric: React.FC<BestCashierMetricProps> = ({ month, year, user
                             <span className="text-white/80 text-xs font-bold uppercase tracking-wider">{t('performance.rigor_score')}</span>
                             <span className="text-2xl font-black text-yellow-300 drop-shadow-md">{formatCurrency(winner.moyenne_ecart_absolu)}</span>
                         </div>
-                        <div className="flex justify-between items-center bg-white/10 p-2 px-3 rounded-lg border border-white/5">
+                        <div className="flex justify-between items-center bg-base-100/10 p-2 px-3 rounded-lg border border-white/5">
                             <span className="text-white/80 text-[10px] font-bold uppercase tracking-wider">{t('performance.avg_trend')}</span>
                             <span className="font-black text-xs">
                                 {winner.moyenne_ecart_algebrique > 0 ? '+' : ''}{formatCurrency(winner.moyenne_ecart_algebrique)}
                             </span>
                         </div>
-                        <div className="flex justify-between items-center bg-white/10 p-3 rounded-xl border border-white/5">
+                        <div className="flex justify-between items-center bg-base-100/10 p-3 rounded-xl border border-white/5">
                             <span className="text-white/80 text-xs font-bold uppercase tracking-wider">{t('performance.total_closures')}</span>
                             <span className="font-black text-lg">{winner.nombre_clotures}</span>
                         </div>
@@ -155,7 +155,7 @@ const BestCashierMetric: React.FC<BestCashierMetricProps> = ({ month, year, user
                                         ) : index === 1 ? (
                                             <div className="badge bg-slate-300 border-none text-base-content/90 font-black px-3 h-7 italic shadow-sm">{t('performance.badges.2nd')}</div>
                                         ) : index === 2 ? (
-                                             <div className="badge bg-amber-600 border-none text-amber-50 font-black px-3 h-7 italic shadow-sm">{t('performance.badges.3rd')}</div>
+                                             <div className="badge bg-warning border-none text-amber-50 font-black px-3 h-7 italic shadow-sm">{t('performance.badges.3rd')}</div>
                                         ) : (
                                             <span className="text-base-content/30 font-black pl-2 font-mono">{index + 1}</span>
                                         )}
@@ -163,7 +163,7 @@ const BestCashierMetric: React.FC<BestCashierMetricProps> = ({ month, year, user
                                     <td className="px-6 py-4">
                                         <div className="flex flex-col">
                                             <span className="font-bold text-base-content group-hover:text-primary transition-colors">{perf.full_name}</span>
-                                            <span className="text-[10px] font-bold opacity-30 uppercase tracking-tighter cursor-default">@{perf.username}</span>
+                                            <span className="text-[10px] font-bold text-base-content/30 uppercase tracking-tighter cursor-default">@{perf.username}</span>
                                         </div>
                                     </td>
                                     <td className="px-6 py-4 text-center">

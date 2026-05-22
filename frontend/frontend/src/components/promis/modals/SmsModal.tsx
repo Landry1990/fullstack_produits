@@ -64,7 +64,7 @@ export const SmsModal: React.FC<SmsModalProps> = ({
         >
             <form onSubmit={handleSendSms} className="space-y-5">
                 <div className="space-y-1.5">
-                    <label className="block text-sm font-medium text-gray-500 mb-1">
+                    <label className="block text-sm font-medium text-base-content/60 mb-1">
                         <span className="flex items-center gap-2">
                             <Phone className="size-4" />
                             {t('stock:promis.modal.sms_number')}
@@ -72,28 +72,28 @@ export const SmsModal: React.FC<SmsModalProps> = ({
                     </label>
                     <input 
                         type="text" 
-                        className="w-full rounded-lg border border-gray-200 bg-white px-3 text-sm font-medium text-gray-900 focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-50 transition-all bg-gray-50 font-mono text-gray-500"
+                        className="w-full rounded-lg border border-base-300 bg-base-100 px-3 text-sm font-medium text-base-content focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all bg-base-200 font-mono text-base-content/60"
                         value={promis?.client_phone_display || ''}
                         readOnly
                     />
                 </div>
                 
                 <div className="space-y-1.5">
-                    <label className="block text-sm font-medium text-gray-500 mb-1">
+                    <label className="block text-sm font-medium text-base-content/60 mb-1">
                         {t('stock:promis.modal.sms_message')}
                     </label>
                     <textarea 
-                        className="w-full rounded-lg border border-gray-200 bg-white p-3 text-base font-medium text-gray-900 focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-50 transition-all h-32"
+                        className="w-full rounded-lg border border-base-300 bg-base-100 p-3 text-base font-medium text-base-content focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all h-32"
                         value={message}
                         onChange={(e) => setMessage(e.target.value)}
                         required
                     />
                 </div>
 
-                <div className="flex items-center justify-end gap-3 pt-4 border-t border-gray-100 mt-6">
+                <div className="flex items-center justify-end gap-3 pt-4 border-t border-base-200 mt-6">
                     <button 
                         type="button" 
-                        className="inline-flex items-center gap-1.5 px-3 py-1.5 text-gray-600 hover:bg-gray-50 rounded-lg text-sm font-medium transition-colors btn-ghost" 
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 text-base-content/70 hover:bg-base-200 rounded-lg text-sm font-medium transition-colors btn-ghost" 
                         onClick={onClose}
                         disabled={sendingSms}
                     >
@@ -101,10 +101,10 @@ export const SmsModal: React.FC<SmsModalProps> = ({
                     </button>
                     <button 
                         type="submit" 
-                        className="inline-flex items-center justify-center gap-2 h-9 px-6 bg-blue-600 text-white rounded-lg text-sm font-bold hover:bg-blue-700 hover:shadow-md transition-all shadow-sm"
+                        className="inline-flex items-center justify-center gap-2 h-9 px-6 bg-info text-white rounded-lg text-sm font-bold hover:bg-info-focus hover:shadow-md transition-all shadow-sm"
                         disabled={sendingSms}
                     >
-                        {sendingSms ? <span className="inline-block size-4 border-2 border-gray-200 border-t-indigo-600 rounded-full animate-spin"/> : <Send className="size-4" />}
+                        {sendingSms ? <span className="inline-block size-4 border-2 border-base-300 border-t-indigo-600 rounded-full animate-spin"/> : <Send className="size-4" />}
                         {t('stock:promis.actions.sms_send')}
                     </button>
                 </div>

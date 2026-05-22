@@ -137,15 +137,15 @@ export default function CommandeForm({
 }: CommandeFormProps) {
     const { t } = useTranslation(['orders', 'common']);
  
-    const htColor = (orderTotals?.totalTTC || 0) > 0 ? 'text-gray-700' : 'text-gray-300';
-    const marginColor = (Number(orderTotals?.globalMargin || 0)) >= 1.34 ? 'text-emerald-600' : 'text-amber-600';
+    const htColor = (orderTotals?.totalTTC || 0) > 0 ? 'text-base-content' : 'text-base-content/30';
+    const marginColor = (Number(orderTotals?.globalMargin || 0)) >= 1.34 ? 'text-success' : 'text-warning';
     return (
-        <div className="flex flex-col h-full overflow-hidden bg-gray-50">
-          <div className="flex items-center justify-between px-4 py-3 shrink-0 bg-white border-b border-gray-100">
+        <div className="flex flex-col h-full overflow-hidden bg-base-200">
+          <div className="flex items-center justify-between px-4 py-3 shrink-0 bg-base-100 border-b border-base-200">
              <div className="flex items-center gap-3">
                 <button
                   onClick={handleBackToList}
-                  className="p-2 text-gray-400 hover:bg-gray-100 rounded-lg transition-colors"
+                  className="p-2 text-base-content/50 hover:bg-base-200 rounded-lg transition-colors"
                   title={t('orders:form.back_to_list')}
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -153,15 +153,15 @@ export default function CommandeForm({
                   </svg>
                 </button>
                 <div>
-                  <h3 className="font-bold text-base text-gray-900">
+                  <h3 className="font-bold text-base text-base-content">
                       {viewMode === 'EDIT' && selectedCommande
                         ? t('orders:form.edit_title', { id: selectedCommande.numero_facture || selectedCommande.id })
                         : t('orders:form.new_title')}
                   </h3>
-                  <div className="flex gap-4 text-xs text-gray-400 mt-1">
-                    <span className="flex items-center gap-1"><kbd className="px-1.5 py-0.5 bg-gray-100 rounded text-[10px] font-sans border border-gray-200">F2</kbd> {t('orders:form.shortcuts.search')}</span>
-                    <span className="flex items-center gap-1"><kbd className="px-1.5 py-0.5 bg-gray-100 rounded text-[10px] font-sans border border-gray-200">F4</kbd> {t('orders:form.shortcuts.provider')}</span>
-                    <span className="flex items-center gap-1"><kbd className="px-1.5 py-0.5 bg-gray-100 rounded text-[10px] font-sans border border-gray-200">Ctrl+A</kbd> {t('orders:form.shortcuts.select_all')}</span>
+                  <div className="flex gap-4 text-xs text-base-content/50 mt-1">
+                    <span className="flex items-center gap-1"><kbd className="px-1.5 py-0.5 bg-base-200 rounded text-[10px] font-sans border border-base-300">F2</kbd> {t('orders:form.shortcuts.search')}</span>
+                    <span className="flex items-center gap-1"><kbd className="px-1.5 py-0.5 bg-base-200 rounded text-[10px] font-sans border border-base-300">F4</kbd> {t('orders:form.shortcuts.provider')}</span>
+                    <span className="flex items-center gap-1"><kbd className="px-1.5 py-0.5 bg-base-200 rounded text-[10px] font-sans border border-base-300">Ctrl+A</kbd> {t('orders:form.shortcuts.select_all')}</span>
                   </div>
                 </div>
             </div>
@@ -175,14 +175,14 @@ export default function CommandeForm({
 
             {/* Section supérieure compacte */}
             <div className="shrink-0 space-y-2 mb-2">
-              <div className="bg-white rounded-xl p-3 shadow-sm border border-gray-100">
+              <div className="bg-base-100 rounded-xl p-3 shadow-sm border border-base-200">
                 <div className="flex flex-wrap items-end gap-2">
                   {/* Fournisseur */}
                   <div className="flex-1 min-w-[150px]">
-                    <label className="block text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-1">{t('orders:form.provider_label')}</label>
+                    <label className="block text-[10px] font-semibold text-base-content/50 uppercase tracking-wider mb-1">{t('orders:form.provider_label')}</label>
                     <select
                       ref={fournisseurSelectRef}
-                      className="select select-bordered select-sm w-full bg-gray-50 h-9 rounded-lg border-gray-200 focus:border-indigo-500 text-sm"
+                      className="select-ref select-bordered select-sm w-full bg-base-200 h-9 rounded-lg border-base-300 focus:border-primary text-sm"
                       value={newCommandeFournisseurId}
                       onChange={(e) => setNewCommandeFournisseurId(e.target.value)}
                     >
@@ -193,11 +193,11 @@ export default function CommandeForm({
 
                   {/* Facture */}
                   <div className="w-28">
-                    <label className="block text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-1">{t('orders:form.invoice_label')}</label>
+                    <label className="block text-[10px] font-semibold text-base-content/50 uppercase tracking-wider mb-1">{t('orders:form.invoice_label')}</label>
                     <input
                       type="text"
                       placeholder={t('orders:form.invoice_placeholder')}
-                      className="input input-bordered input-sm w-full bg-gray-50 h-9 rounded-lg border-gray-200 focus:border-indigo-500 text-sm"
+                      className="input-ref input-bordered input-sm w-full bg-base-200 h-9 rounded-lg border-base-300 focus:border-primary text-sm"
                       value={numeroFacture}
                       onChange={(e) => setNumeroFacture(e.target.value.toUpperCase())}
                     />
@@ -205,26 +205,26 @@ export default function CommandeForm({
 
                   {/* Recherche produit */}
                   <div className="flex-[3] min-w-[300px] relative">
-                    <label className="block text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-1">🔍 {t('orders:form.search_placeholder')}</label>
+                    <label className="block text-[10px] font-semibold text-base-content/50 uppercase tracking-wider mb-1">🔍 {t('orders:form.search_placeholder')}</label>
                     <div className="relative">
                       <input
                         ref={searchInputRef}
                         type="text"
                         placeholder={t('orders:form.search_placeholder')}
-                        className="input input-bordered w-full pl-9 h-9 bg-white rounded-lg border-gray-200 focus:border-indigo-500 text-sm"
+                        className="input-ref input-bordered w-full pl-9 h-9 bg-base-100 rounded-lg border-base-300 focus:border-primary text-sm"
                         value={searchProduitQuery}
                         onChange={(e) => setSearchProduitQuery(e.target.value)}
                         onKeyDown={handleSearchKeyDown}
                       />
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 absolute left-3 top-1/2 -translate-y-1/2 text-base-content/50" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                       </svg>
 
                       {/* Dropdown résultats */}
                       {searchProduitQuery && (
-                        <div className="absolute left-0 right-0 top-full mt-1 bg-white rounded-xl shadow-xl border border-gray-100 max-h-96 overflow-y-auto z-50">
+                        <div className="absolute left-0 right-0 top-full mt-1 bg-base-100 rounded-xl shadow-xl border border-base-200 max-h-96 overflow-y-auto z-50">
                           {filteredProduits.length === 0 ? (
-                            <div className="text-center py-4 text-gray-400 text-sm">
+                            <div className="text-center py-4 text-base-content/50 text-sm">
                               {t('orders:form.no_product_found')}
                             </div>
                           ) : (
@@ -239,12 +239,12 @@ export default function CommandeForm({
                                   style={itemProps.style}
                                   className={`
                                     group flex items-center justify-between p-2 rounded-lg cursor-pointer transition-all
-                                    ${itemProps.className ? 'bg-indigo-50' : 'hover:bg-gray-50'}
+                                    ${itemProps.className ? 'bg-primary/10' : 'hover:bg-base-200'}
                                   `}
                                 >
                                   <div className="flex-1 min-w-0">
-                                    <div className="font-semibold truncate text-sm text-gray-900">{p.name}</div>
-                                    <div className="text-[10px] flex gap-2 mt-0.5 text-gray-500">
+                                    <div className="font-semibold truncate text-sm text-base-content">{p.name}</div>
+                                    <div className="text-[10px] flex gap-2 mt-0.5 text-base-content/60">
                                       <span>Stock: {p.stock}</span>
                                       <span>Prix: {p.selling_price} F</span>
                                     </div>
@@ -261,14 +261,14 @@ export default function CommandeForm({
 
                   {/* Paramètres Commande Directe */}
                   {commandeType === 'DIR' && (
-                    <div className="flex items-center gap-2 border-l border-gray-200 pl-3">
+                    <div className="flex items-center gap-2 border-l border-base-300 pl-3">
                         <div className="flex flex-col">
-                          <span className="text-[9px] font-semibold text-blue-600 uppercase">Taux</span>
-                          <input type="number" step="0.001" className="input input-bordered input-xs w-16 h-7 rounded-md border-gray-200 focus:border-blue-400" value={tauxChange} onChange={(e) => setTauxChange(e.target.value)} />
+                          <span className="text-[9px] font-semibold text-info uppercase">Taux</span>
+                          <input type="number" step="0.001" className="input-ref input-bordered input-xs w-16 h-7 rounded-md border-base-300 focus:border-info" value={tauxChange} onChange={(e) => setTauxChange(e.target.value)} />
                         </div>
                         <div className="flex flex-col">
-                          <span className="text-[9px] font-semibold text-blue-600 uppercase">Coeff</span>
-                          <input type="number" step="0.01" className="input input-bordered input-xs w-12 h-7 rounded-md border-gray-200 focus:border-blue-400" value={fraisCoefficient} onChange={(e) => setFraisCoefficient(e.target.value)} />
+                          <span className="text-[9px] font-semibold text-info uppercase">Coeff</span>
+                          <input type="number" step="0.01" className="input-ref input-bordered input-xs w-12 h-7 rounded-md border-base-300 focus:border-info" value={fraisCoefficient} onChange={(e) => setFraisCoefficient(e.target.value)} />
                         </div>
                     </div>
                   )}
@@ -276,18 +276,18 @@ export default function CommandeForm({
                   {/* Boutons d'action compacts */}
                   <div className="flex gap-1 pb-0.5">
                     <div className="dropdown dropdown-end">
-                      <div tabIndex={0} role="button" className="p-2 text-gray-500 hover:bg-gray-100 rounded-lg transition-colors cursor-pointer" title={t('orders:form.export_btn')}>
+                      <div tabIndex={0} role="button" className="p-2 text-base-content/60 hover:bg-base-200 rounded-lg transition-colors cursor-pointer" title={t('orders:form.export_btn')}>
                         📤
                       </div>
-                      <ul tabIndex={0} className="dropdown-content z-[1] menu p-2 shadow-xl bg-white rounded-lg w-52 border border-gray-100 mt-1">
-                        <li><a onClick={() => handleCsvExport('UBIPHARM')} className="text-sm text-gray-700 hover:bg-gray-50 py-2">{t('orders:form.export_options.ubipharm', 'Ubipharm (CIP1)')}</a></li>
-                        <li><a onClick={() => handleCsvExport('LABOREX')} className="text-sm text-gray-700 hover:bg-gray-50 py-2">{t('orders:form.export_options.laborex', 'Laborex (CIP2)')}</a></li>
+                      <ul tabIndex={0} className="dropdown-content z-[1] p-2 shadow-xl bg-base-100 rounded-lg w-52 border border-base-200 mt-1">
+                        <li><a onClick={() => handleCsvExport('UBIPHARM')} className="text-sm text-base-content hover:bg-base-200 py-2">{t('orders:form.export_options.ubipharm', 'Ubipharm (CIP1)')}</a></li>
+                        <li><a onClick={() => handleCsvExport('LABOREX')} className="text-sm text-base-content hover:bg-base-200 py-2">{t('orders:form.export_options.laborex', 'Laborex (CIP2)')}</a></li>
                       </ul>
                     </div>
-                    <button type="button" className="p-2 text-gray-500 hover:bg-gray-100 rounded-lg transition-colors" onClick={() => fileInputRef.current?.click()} title={t('orders:import_btn')}>
+                    <button type="button" className="p-2 text-base-content/60 hover:bg-base-200 rounded-lg transition-colors" onClick={() => fileInputRef.current?.click()} title={t('orders:import_btn')}>
                       📂
                     </button>
-                    <button type="button" className="p-2 text-gray-500 hover:bg-gray-100 rounded-lg transition-colors" onClick={() => setIsCreateProduitModalOpen(true)} title={t('orders:new_product_btn')}>
+                    <button type="button" className="p-2 text-base-content/60 hover:bg-base-200 rounded-lg transition-colors" onClick={() => setIsCreateProduitModalOpen(true)} title={t('orders:new_product_btn')}>
                       ➕
                     </button>
 
@@ -300,7 +300,7 @@ export default function CommandeForm({
                     />
 
                     {selectedCommande?.status === 'CLOT' && onCreateAvoir && (
-                         <button type="button" className="p-2 text-amber-600 hover:bg-amber-50 rounded-lg transition-colors" onClick={onCreateAvoir} title={t('orders:messages.create_credit_note_help')}>
+                         <button type="button" className="p-2 text-warning hover:bg-warning/10 rounded-lg transition-colors" onClick={onCreateAvoir} title={t('orders:messages.create_credit_note_help')}>
                             🔄
                          </button>
                     )}
@@ -332,35 +332,35 @@ export default function CommandeForm({
                 onSortProduits={onSortProduits}
             />
 
-            <div className="mt-4 flex flex-wrap justify-between items-end gap-4 shrink-0 bg-white p-3 rounded-xl border border-gray-100 shadow-sm">
+            <div className="mt-4 flex flex-wrap justify-between items-end gap-4 shrink-0 bg-base-100 p-3 rounded-xl border border-base-200 shadow-sm">
                 <div className="flex flex-wrap gap-4 items-center">
                     {/* HT (Achat) */}
                     <div className="flex flex-col">
-                        <span className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider">{t('orders:product_table.total_ht', 'HT (ACHAT)')}</span>
+                        <span className="text-[10px] font-semibold text-base-content/50 uppercase tracking-wider">{t('orders:product_table.total_ht', 'HT (ACHAT)')}</span>
                         <span className={`text-sm font-mono font-semibold ${htColor}`}>{formatCurrency(orderTotals?.totalBuyHT || 0)}</span>
                     </div>
 
                     {/* TVA */}
-                    <div className="flex flex-col border-l pl-4 border-gray-200">
-                        <span className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider">{t('orders:product_table.total_tva', 'TVA (VENTE)')}</span>
-                        <span className="text-sm font-mono font-semibold text-gray-500">{formatCurrency(orderTotals?.totalTVA || 0)}</span>
+                    <div className="flex flex-col border-l pl-4 border-base-200">
+                        <span className="text-[10px] font-semibold text-base-content/50 uppercase tracking-wider">{t('orders:product_table.total_tva', 'TVA (VENTE)')}</span>
+                        <span className="text-sm font-mono font-semibold text-base-content/60">{formatCurrency(orderTotals?.totalTVA || 0)}</span>
                     </div>
 
                     {/* TTC (Vente) */}
-                    <div className="flex flex-col border-l pl-4 border-gray-200">
-                        <span className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider">{t('orders:product_table.total_ttc', 'TTC (VENTE)')}</span>
-                         <span className="text-base md:text-lg font-mono font-bold text-indigo-600">{formatCurrency(orderTotals?.totalTTC || 0)}</span>
+                    <div className="flex flex-col border-l pl-4 border-base-200">
+                        <span className="text-[10px] font-semibold text-base-content/50 uppercase tracking-wider">{t('orders:product_table.total_ttc', 'TTC (VENTE)')}</span>
+                         <span className="text-base md:text-lg font-mono font-bold text-primary">{formatCurrency(orderTotals?.totalTTC || 0)}</span>
                     </div>
 
                     {/* Montant Marge */}
-                    <div className="flex flex-col border-l pl-4 border-gray-200">
-                        <span className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider">💰 {t('orders:product_table.info_row.margin_value', 'MONTANT MARGE')}</span>
+                    <div className="flex flex-col border-l pl-4 border-base-200">
+                        <span className="text-[10px] font-semibold text-base-content/50 uppercase tracking-wider">💰 {t('orders:product_table.info_row.margin_value', 'MONTANT MARGE')}</span>
                         <span className={`text-sm font-mono font-semibold ${marginColor}`}>{formatCurrency(orderTotals?.totalMarginValue || 0)}</span>
                     </div>
 
                     {/* Coefficient & Pourcentage */}
-                    <div className="flex flex-col border-l pl-4 border-gray-200">
-                        <span className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider">📦 {t('orders:product_table.headers.margin', 'COEFF / %')}</span>
+                    <div className="flex flex-col border-l pl-4 border-base-200">
+                        <span className="text-[10px] font-semibold text-base-content/50 uppercase tracking-wider">📦 {t('orders:product_table.headers.margin', 'COEFF / %')}</span>
                         <div className="flex items-baseline gap-1">
                             <span className={`text-lg font-mono font-bold ${marginColor}`}>x{orderTotals?.globalMargin || '1.0000'}</span>
                             <span className={`text-[10px] font-semibold ${marginColor}`}>({orderTotals?.globalMarginPercent || '0.00'}%)</span>
@@ -373,7 +373,7 @@ export default function CommandeForm({
                 {viewMode === 'EDIT' && onMettreEnAttente && selectedCommande?.status !== 'CLOT' && (
                   <button
                     type="button"
-                    className={`inline-flex items-center gap-1 px-3 py-2 text-sm font-medium rounded-lg text-white transition-colors ${selectedCommande?.status === 'ATT' ? 'bg-blue-600 hover:bg-blue-700' : 'bg-amber-600 hover:bg-amber-700'}`}
+                    className={`inline-flex items-center gap-1 px-3 py-2 text-sm font-medium rounded-lg text-primary-content transition-colors ${selectedCommande?.status === 'ATT' ? 'bg-info hover:bg-info-focus' : 'bg-warning hover:bg-warning-focus'}`}
                     onClick={onMettreEnAttente}
                     disabled={saving || executingAction}
                   >
@@ -384,7 +384,7 @@ export default function CommandeForm({
                 {viewMode === 'EDIT' && onCloture && selectedCommande?.status !== 'CLOT' && (
                   <button
                     type="button"
-                    className="inline-flex items-center gap-1 px-3 py-2 text-sm font-medium rounded-lg text-white bg-emerald-600 hover:bg-emerald-700 transition-colors"
+                    className="inline-flex items-center gap-1 px-3 py-2 text-sm font-medium rounded-lg text-success-content bg-success hover:bg-success-focus transition-colors"
                     onClick={onCloture}
                     disabled={saving || executingAction}
                   >
@@ -393,7 +393,7 @@ export default function CommandeForm({
                 )}
                 <button
                   type="submit"
-                  className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg text-white bg-indigo-600 hover:bg-indigo-700 disabled:opacity-60 transition-colors"
+                  className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg text-primary-content bg-primary hover:bg-primary-focus disabled:opacity-60 transition-colors"
                   disabled={saving || !newCommandeFournisseurId}
                 >
                   {!saving && <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" /></svg>}

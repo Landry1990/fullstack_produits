@@ -97,7 +97,7 @@ const LicenceScreen = () => {
                         <Lock className="size-10 text-red-400" />
                     </div>
                     <h1 className="text-3xl font-bold text-white mb-2">{t('licence.locked_title')}</h1>
-                    <p className="text-slate-400">
+                    <p className="text-base-content/50">
                         {status?.message || t('licence.locked_message')}
                     </p>
                 </div>
@@ -110,7 +110,7 @@ const LicenceScreen = () => {
                             <h3 className="text-sm font-medium text-slate-300 mb-1">
                                 Empreinte Matérielle de cette machine
                             </h3>
-                            <p className="text-xs text-slate-500 mb-3">
+                            <p className="text-xs text-base-content/60 mb-3">
                                 Transmettez ce code à votre administrateur pour lier votre licence à cet ordinateur.
                             </p>
                             <div className="flex items-center gap-2">
@@ -120,7 +120,7 @@ const LicenceScreen = () => {
                                 <button
                                     type="button"
                                     onClick={handleCopy}
-                                    className="p-2 text-slate-400 hover:text-white bg-slate-800 hover:bg-slate-700 rounded-lg transition-colors"
+                                    className="p-2 text-base-content/50 hover:text-white bg-slate-800 hover:bg-slate-700 rounded-lg transition-colors"
                                     title="Copier l'ID"
                                 >
                                     <Copy className="size-5" />
@@ -153,32 +153,32 @@ const LicenceScreen = () => {
                             
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div className="flex items-center gap-3">
-                                    <Hospital className="size-5 text-slate-500" />
+                                    <Hospital className="size-5 text-base-content/60" />
                                     <div>
-                                        <p className="text-[10px] text-slate-500 uppercase font-bold">{t('licence.pharmacy')}</p>
+                                        <p className="text-[10px] text-base-content/60 uppercase font-bold">{t('licence.pharmacy')}</p>
                                         <p className="text-white text-sm">{previewData.pharmacie_nom}</p>
                                     </div>
                                 </div>
                                 <div className="flex items-center gap-3">
-                                    <UserCheck className="size-5 text-slate-500" />
+                                    <UserCheck className="size-5 text-base-content/60" />
                                     <div>
-                                        <p className="text-[10px] text-slate-500 uppercase font-bold">{t('licence.pharmacist')}</p>
+                                        <p className="text-[10px] text-base-content/60 uppercase font-bold">{t('licence.pharmacist')}</p>
                                         <p className="text-white text-sm">{previewData.pharmacien_nom}</p>
                                     </div>
                                 </div>
                                 <div className="flex items-center gap-3">
-                                    <ShieldAlert className="size-5 text-slate-500" />
+                                    <ShieldAlert className="size-5 text-base-content/60" />
                                     <div>
-                                        <p className="text-[10px] text-slate-500 uppercase font-bold">{t('licence.plan')}</p>
+                                        <p className="text-[10px] text-base-content/60 uppercase font-bold">{t('licence.plan')}</p>
                                         <p className={`text-sm font-bold ${previewData.plan === 'PREMIUM' ? 'text-amber-400' : 'text-blue-400'}`}>
                                             {previewData.plan}
                                         </p>
                                     </div>
                                 </div>
                                 <div className="flex items-center gap-3">
-                                    <Calendar className="size-5 text-slate-500" />
+                                    <Calendar className="size-5 text-base-content/60" />
                                     <div>
-                                        <p className="text-[10px] text-slate-500 uppercase font-bold">{t('licence.expires')}</p>
+                                        <p className="text-[10px] text-base-content/60 uppercase font-bold">{t('licence.expires')}</p>
                                         <p className="text-white text-sm">
                                             {new Date(previewData.exp * 1000).toLocaleDateString()}
                                         </p>
@@ -206,7 +206,7 @@ const LicenceScreen = () => {
                             </button>
                             <button
                                 onClick={() => { setPreviewData(null); setCle(''); }}
-                                className="w-full py-3 text-slate-400 hover:text-white text-xs transition-colors"
+                                className="w-full py-3 text-base-content/50 hover:text-white text-xs transition-colors"
                             >
                                 Annuler et choisir un autre fichier
                             </button>
@@ -239,7 +239,7 @@ const LicenceScreen = () => {
                                                 <p className="text-sm font-medium text-white mb-1">
                                                     Cliquez pour importer votre fichier
                                                 </p>
-                                                <p className="text-xs text-slate-500">
+                                                <p className="text-xs text-base-content/60">
                                                     Format supporté : .lic
                                                 </p>
                                             </div>
@@ -251,7 +251,7 @@ const LicenceScreen = () => {
                     </div>
                 )}
 
-                <div className="mt-8 text-center text-xs text-slate-500">
+                <div className="mt-8 text-center text-xs text-base-content/60">
                     <p>{t('licence.protected_by')}</p>
                 </div>
             </div>

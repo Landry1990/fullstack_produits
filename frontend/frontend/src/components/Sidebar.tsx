@@ -295,7 +295,7 @@ export default function Sidebar() {
       {/* Mobile toggle button */}
       <button
         onClick={toggleSidebar}
-        className="fixed top-3 left-3 z-50 lg:hidden size-9 rounded-xl bg-neutral text-white flex items-center justify-center shadow-lg"
+        className="fixed top-3 left-3 z-50 lg:hidden size-9 rounded-xl bg-gray-900 text-white flex items-center justify-center shadow-lg"
         aria-label="Toggle menu"
       >
         {isOpen ? <X className="size-4" /> : <Menu className="size-4" />}
@@ -333,7 +333,7 @@ export default function Sidebar() {
           {/* Collapse button desktop */}
           <button
             onClick={toggleCollapse}
-            className="hidden lg:flex shrink-0 size-6 rounded-lg bg-white/5 hover:bg-white/15 text-white/40 hover:text-white items-center justify-center transition-all"
+            className="hidden lg:flex shrink-0 size-6 rounded-lg bg-base-100/5 hover:bg-base-100/15 text-white/40 hover:text-white items-center justify-center transition-all"
             title={isCollapsed ? 'Déplier' : 'Replier'}
           >
             {isCollapsed ? <ChevronRight className="size-3.5" /> : <ChevronLeft className="size-3.5" />}
@@ -352,15 +352,15 @@ export default function Sidebar() {
                 return (
                   <li key={item.key}>
                     {isCollapsed ? (
-                      <div className="dropdown dropdown-right w-full">
-                        <div tabIndex={0} role="button"
+                      <div className="relative group w-full">
+                        <div
                           className={`flex items-center justify-center w-full h-10 rounded-xl cursor-pointer transition-all
-                            ${isParentOfActive ? 'bg-emerald-500/15 text-emerald-400' : 'text-white/50 hover:text-white hover:bg-white/5'}`}
+                            ${isParentOfActive ? 'bg-emerald-500/15 text-emerald-400' : 'text-white/50 hover:text-white hover:bg-base-100/5'}`}
                           title={item.label}
                         >
                           <span className="size-5">{item.icon}</span>
                         </div>
-                        <ul tabIndex={0} className="dropdown-content z-[100] menu p-2 shadow-2xl bg-[#1a2235] border border-white/10 rounded-2xl w-52 ml-2">
+                        <ul className="absolute left-full top-0 z-[100] p-2 shadow-2xl bg-[#1a2235] border border-white/10 rounded-2xl w-52 ml-2 invisible group-hover:visible opacity-0 group-hover:opacity-100 transition-all duration-200">
                           <li className="px-3 py-1.5">
                             <span className="text-[10px] font-black text-emerald-400 uppercase tracking-widest">{item.label}</span>
                           </li>
@@ -368,7 +368,7 @@ export default function Sidebar() {
                             <li key={sub.path}>
                               <NavLink to={sub.path} onClick={closeSidebar}
                                 className={({ isActive }) =>
-                                  `rounded-xl text-xs py-2 px-3 transition-all ${isActive ? 'bg-emerald-500/15 text-emerald-300 font-bold' : 'text-white/60 hover:text-white hover:bg-white/5'}`
+                                  `rounded-xl text-xs py-2 px-3 transition-all ${isActive ? 'bg-emerald-500/15 text-emerald-300 font-bold' : 'text-white/60 hover:text-white hover:bg-base-100/5'}`
                                 }
                               >
                                 {sub.label}
@@ -385,7 +385,7 @@ export default function Sidebar() {
                           className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl cursor-pointer transition-all duration-200 group
                             ${isMenuOpen || isParentOfActive
                               ? 'bg-emerald-500/15 text-emerald-300'
-                              : 'text-white/50 hover:text-white/90 hover:bg-white/5'
+                              : 'text-white/50 hover:text-white/90 hover:bg-base-100/5'
                             }`}
                         >
                           <span className={`size-5 shrink-0 transition-colors ${isMenuOpen || isParentOfActive ? 'text-emerald-400' : ''}`}>
@@ -407,7 +407,7 @@ export default function Sidebar() {
                                     `flex items-center justify-between px-3 py-2 rounded-lg text-[13px] transition-all
                                     ${isActive
                                       ? 'bg-emerald-500/20 text-emerald-300 font-bold'
-                                      : 'text-white/45 hover:text-white/90 hover:bg-white/5 font-medium'
+                                      : 'text-white/45 hover:text-white/90 hover:bg-base-100/5 font-medium'
                                     }`
                                   }
                                 >
@@ -439,7 +439,7 @@ export default function Sidebar() {
                       `flex items-center ${isCollapsed ? 'justify-center w-full h-10' : 'gap-3 px-3 py-2.5'} rounded-xl transition-all duration-200
                       ${isActive
                         ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-500/30 font-bold'
-                        : 'text-white/50 hover:text-white/90 hover:bg-white/5'
+                        : 'text-white/50 hover:text-white/90 hover:bg-base-100/5'
                       }`
                     }
                   >

@@ -305,11 +305,11 @@ export default function CategoryManager({
   }, [categories, hasHierarchy]);
 
   return (
-    <div className="flex flex-col lg:flex-row h-[calc(100vh-140px)] gap-6 animate-in fade-in duration-500">
+    <div className="flex flex-col lg:flex-row h-[calc(100vh-140px)] gap-6 ">
       
       {/* Sidebar: Category List */}
       <div className="w-full lg:w-96 flex flex-col bg-base-100 rounded-3xl shadow-xl border border-base-200 overflow-hidden">
-        <div className="p-6 border-b border-base-100 bg-gradient-to-br from-base-50 to-transparent">
+        <div className="p-6 border-b border-base-200 bg-gradient-to-br from-gray-50 to-transparent">
            <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-3">
                  <div className="p-2 bg-primary/10 rounded-xl text-primary">
@@ -324,7 +324,7 @@ export default function CategoryManager({
               <div className="flex gap-2">
                  {type === 'rayon' && (
                     <button 
-                      className="btn btn-ghost btn-xs btn-square text-info"
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 text-base-content/60 hover:bg-base-200 rounded-lg text-sm font-medium transition-colors size-7 rounded-md text-info hover:bg-info/10 transition-colors inline-flex items-center justify-center"
                       onClick={() => openPrintModal(-1, t('stock:organisation.category_manager.no_rayon'))}
                       title={t('stock:organisation.category_manager.print_no_rayon_title')}
                     >
@@ -332,7 +332,7 @@ export default function CategoryManager({
                     </button>
                  )}
                  <button 
-                   className="btn btn-primary btn-sm btn-circle shadow-lg shadow-primary/20"
+                   className="inline-flex items-center justify-center size-8 bg-primary text-white rounded-full text-sm font-bold hover:bg-primary-focus transition-colors shadow-lg shadow-indigo-500/20"
                    onClick={() => {
                      setEditingCategory(null);
                      setFormData({ name: '', description: '', parent: '' });
@@ -344,18 +344,18 @@ export default function CategoryManager({
               </div>
            </div>
            <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 opacity-30" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-base-content/30" />
               <input 
                 type="text" 
                 placeholder={t('stock:organisation.category_manager.search', { type })}
-                className="input input-sm w-full pl-10 bg-base-200/50 border-none rounded-xl focus:ring-2 focus:ring-primary/20"
+                className="w-full rounded-xl border border-base-300 bg-base-200 pl-10 h-8 text-sm font-medium text-base-content focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
               />
            </div>
         </div>
 
         <div className="flex-1 overflow-y-auto p-4 space-y-2">
            {loading ? (
-              <div className="flex justify-center p-8"><span className="loading loading-dots text-primary"></span></div>
+              <div className="flex justify-center p-8"><span className="inline-block size-6 border-2 border-base-300 border-t-indigo-600 rounded-full animate-spin"></span></div>
            ) : hierarchy.length === 0 ? (
               <div className="text-center p-8 opacity-40 italic text-sm">{t('stock:organisation.category_manager.no_items', { type })}</div>
            ) : (
@@ -365,18 +365,18 @@ export default function CategoryManager({
                     onClick={() => setSelectedCategory(cat)}
                     className={`w-full flex items-center justify-between p-3 rounded-2xl transition-all group ${
                       selectedCategory?.id === cat.id 
-                      ? 'bg-primary text-primary-content shadow-lg shadow-primary/30' 
+                      ? 'bg-primary text-white shadow-lg shadow-indigo-500/30' 
                       : 'hover:bg-base-200'
                     }`}
                   >
                     <div className="flex items-center gap-3 overflow-hidden">
-                       <LayoutGrid size={16} className={selectedCategory?.id === cat.id ? 'opacity-100' : 'opacity-40'} />
+                       <LayoutGrid size={16} className={selectedCategory?.id === cat.id ? '' : 'opacity-40'} />
                        <span className="font-medium truncate">{getCategoryName(cat)}</span>
                     </div>
-                    <div className={`flex gap-1 items-center transition-opacity ${selectedCategory?.id === cat.id ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}>
+                    <div className={`flex gap-1 items-center transition-opacity ${selectedCategory?.id === cat.id ? '' : 'opacity-0 group-hover:'}`}>
                        {type === 'rayon' && (
                           <button 
-                            className={`btn btn-xs btn-square ${selectedCategory?.id === cat.id ? 'btn-ghost' : 'btn-info btn-outline border-none'}`}
+                            className={`inline-flex items-center justify-center size-7 rounded-md text-base-content/60 hover:bg-base-200 transition-colors ${selectedCategory?.id === cat.id ? 'text-base-content/60 hover:bg-base-200' : 'text-info hover:bg-info/10 bg-info/10 rounded-md border-0'}`}
                             onClick={(e) => { e.stopPropagation(); openPrintModal(cat.id, getCategoryName(cat)); }}
                             title={t('stock:organisation.category_manager.print_stock_title')}
                           >
@@ -384,14 +384,14 @@ export default function CategoryManager({
                           </button>
                        )}
                        <button 
-                         className={`btn btn-xs btn-square ${selectedCategory?.id === cat.id ? 'btn-ghost' : 'btn-primary btn-outline border-none'}`}
+                         className={`inline-flex items-center justify-center size-7 rounded-md text-base-content/60 hover:bg-base-200 transition-colors ${selectedCategory?.id === cat.id ? 'text-base-content/60 hover:bg-base-200' : 'text-primary hover:bg-primary/10 bg-primary/10 rounded-md border-0'}`}
                          onClick={(e) => { e.stopPropagation(); setOrganizerTarget({id: cat.id, name: getCategoryName(cat)}); setIsOrganizerOpen(true); }}
                          title={t('stock:organisation.smart_organizer.title')}
                        >
                          <Sparkles size={12} />
                        </button>
                        <button 
-                         className="btn btn-xs btn-ghost btn-square"
+                         className="inline-flex items-center gap-1 px-2 py-1 text-base-content/60 hover:bg-base-200 rounded-md text-xs font-medium transition-colors inline-flex items-center justify-center"
                          onClick={(e) => {
                            e.stopPropagation();
                            setEditingCategory(cat);
@@ -418,21 +418,21 @@ export default function CategoryManager({
                           className={`w-full flex items-center justify-between p-2 rounded-xl transition-all group text-sm ${
                             selectedCategory?.id === child.id 
                             ? 'bg-primary/10 text-primary' 
-                            : 'hover:bg-base-200 opacity-70 hover:opacity-100'
+                            : 'hover:bg-base-200 text-base-content/70 hover:'
                           }`}
                         >
                           <span className="truncate">↳ {getCategoryName(child)}</span>
-                          <div className={`flex gap-1 items-center transition-opacity ${selectedCategory?.id === child.id ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}>
+                          <div className={`flex gap-1 items-center transition-opacity ${selectedCategory?.id === child.id ? '' : 'opacity-0 group-hover:'}`}>
                              {type === 'rayon' && (
                                 <button 
-                                  className="btn btn-xs btn-ghost btn-square text-info"
+                                  className="inline-flex items-center gap-1 px-2 py-1 text-base-content/60 hover:bg-base-200 rounded-md text-xs font-medium transition-colors text-info hover:bg-info/10 inline-flex items-center justify-center"
                                   onClick={(e) => { e.stopPropagation(); openPrintModal(child.id, getCategoryName(child)); }}
                                 >
                                   <Printer size={10} />
                                 </button>
                              )}
                              <button 
-                               className="btn btn-xs btn-ghost btn-square"
+                               className="inline-flex items-center gap-1 px-2 py-1 text-base-content/60 hover:bg-base-200 rounded-md text-xs font-medium transition-colors inline-flex items-center justify-center"
                                onClick={(e) => { e.stopPropagation(); setOrganizerTarget({id: child.id, name: getCategoryName(child)}); setIsOrganizerOpen(true); }}
                              >
                                <Sparkles size={10} />
@@ -452,7 +452,7 @@ export default function CategoryManager({
       <div className="flex-1 flex flex-col bg-base-100 rounded-3xl shadow-xl border border-base-200 overflow-hidden">
          {selectedCategory ? (
             <>
-               <div className="p-8 border-b border-base-100 bg-gradient-to-r from-base-50 to-transparent">
+               <div className="p-8 border-b border-base-200 bg-gradient-to-r from-gray-50 to-transparent">
                   <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                      <div>
                         <div className="flex items-center gap-2 text-xs font-bold text-primary uppercase tracking-widest mb-1">
@@ -464,13 +464,13 @@ export default function CategoryManager({
                            <p className="mt-2 text-base-content/60 max-w-2xl">{selectedCategory.description}</p>
                         )}
                         {selectedCategory.parent_name && (
-                           <div className="mt-2 badge badge-outline opacity-50">{t('stock:organisation.category_manager.parent_label')}: {selectedCategory.parent_name}</div>
+                           <div className="mt-2 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold border border-base-300 text-base-content/60 text-base-content/50">{t('stock:organisation.category_manager.parent_label')}: {selectedCategory.parent_name}</div>
                         )}
                      </div>
                      <div className="flex gap-2">
                         <button 
                            onClick={handleExportExcel}
-                           className="btn btn-outline btn-success rounded-2xl px-4 gap-2"
+                           className="inline-flex items-center gap-2 px-4 py-2 rounded-2xl border border-emerald-200 bg-success/10 text-success text-sm font-bold hover:bg-success/20 transition-all"
                            title={t('common:export_csv_title')}
                         >
                            <Download size={18} />
@@ -478,14 +478,14 @@ export default function CategoryManager({
                         </button>
                         <button 
                           onClick={() => setIsAddProductModalOpen(true)}
-                          className="btn btn-primary rounded-2xl px-6 gap-2 shadow-lg shadow-primary/20"
+                          className="inline-flex items-center gap-2 px-6 py-2 bg-primary text-white rounded-2xl text-sm font-bold hover:bg-primary-focus transition-colors shadow-lg shadow-indigo-500/20"
                         >
                           <Plus size={18} />
                           {t('stock:organisation.category_manager.add_products_btn')}
                         </button>
                         <button 
                            onClick={() => handleDelete(selectedCategory.id)}
-                           className="btn btn-ghost text-error rounded-2xl"
+                           className="inline-flex items-center gap-1.5 px-3 py-1.5 text-base-content/60 hover:bg-base-200 rounded-lg text-sm font-medium transition-colors text-error rounded-2xl"
                         >
                            <Trash2 size={18} />
                         </button>
@@ -496,11 +496,11 @@ export default function CategoryManager({
                <div className="flex-1 overflow-y-auto p-4">
                   {productsLoading ? (
                      <div className="flex flex-col items-center justify-center h-64 gap-4">
-                        <span className="loading loading-spinner loading-lg text-primary"></span>
-                        <p className="text-sm font-medium opacity-50">{t('common:loading')}</p>
+                        <span className="inline-block size-8 border-2 border-base-300 border-t-indigo-600 rounded-full animate-spin"></span>
+                        <p className="text-sm font-medium text-base-content/50">{t('common:loading')}</p>
                      </div>
                   ) : products.length === 0 ? (
-                     <div className="flex flex-col items-center justify-center h-64 text-base-content/20">
+                     <div className="flex flex-col items-center justify-center h-64 text-base-content/40">
                         <Package size={64} strokeWidth={1} className="mb-4" />
                         <p className="text-lg font-bold">{t('stock:organisation.category_manager.no_items', { type: 'produit' })}</p>
                         <p className="text-sm">{t('stock:organisation.category_manager.select_item_hint')}</p>
@@ -508,14 +508,14 @@ export default function CategoryManager({
                   ) : (
                      <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
                         {products.map(p => (
-                           <div key={p.id} className="bg-base-200/30 border border-base-100 p-4 rounded-2xl flex items-center justify-between group hover:bg-base-200/50 transition-all">
+                           <div key={p.id} className="bg-base-200 border border-base-200 p-4 rounded-2xl flex items-center justify-between group hover:bg-base-200 transition-all">
                               <div className="flex items-center gap-4 overflow-hidden">
                                  <div className="size-12 bg-base-100 rounded-xl flex items-center justify-center shadow-sm">
                                     <Package size={20} className="text-primary/40" />
                                  </div>
                                  <div className="overflow-hidden">
                                     <h4 className="font-bold truncate">{p.name}</h4>
-                                    <p className="text-xs opacity-50 font-mono">{p.cip1} • Stock: <span className={p.stock <= p.stock_alert ? 'text-error font-bold' : ''}>{p.stock}</span></p>
+                                    <p className="text-xs text-base-content/50 font-mono">{p.cip1} • Stock: <span className={p.stock <= p.stock_alert ? 'text-error font-bold' : ''}>{p.stock}</span></p>
                                  </div>
                               </div>
                               <div className="flex items-center gap-3">
@@ -524,7 +524,7 @@ export default function CategoryManager({
                                  </div>
                                  <button 
                                    onClick={() => handleRemoveProduct(p)}
-                                   className="btn btn-circle btn-ghost btn-xs text-error opacity-0 group-hover:opacity-100 transition-opacity"
+                                   className="inline-flex items-center justify-center size-8 rounded-full text-base-content/60 hover:bg-base-200 transition-colors btn-xs text-error opacity-0 group-hover: transition-opacity"
                                  >
                                     ✕
                                  </button>
@@ -536,13 +536,13 @@ export default function CategoryManager({
                  </div>
 
                  {totalPages > 1 && (
-                    <div className="p-4 border-t border-base-100 bg-base-50/50 flex items-center justify-between">
-                       <div className="text-xs font-medium opacity-50">
+                    <div className="p-4 border-t border-base-200 bg-base-200 flex items-center justify-between">
+                       <div className="text-xs font-medium text-base-content/50">
                           {t('common:pagination_info', { page: currentPage, total: totalPages, count: totalCount, label: t('common:items') })}
                        </div>
                        <div className="flex items-center gap-2">
                           <button
-                             className="btn btn-sm btn-circle btn-ghost"
+                             className="inline-flex items-center justify-center size-8 rounded-full text-base-content/60 hover:bg-base-200 transition-colors"
                              disabled={currentPage === 1}
                              onClick={() => fetchProducts(selectedCategory.id, currentPage - 1)}
                           >
@@ -552,7 +552,7 @@ export default function CategoryManager({
                              {t('common:pagination.page_of', { page: currentPage, count: totalPages })}
                           </div>
                           <button
-                             className="btn btn-sm btn-circle btn-ghost"
+                             className="inline-flex items-center justify-center size-8 rounded-full text-base-content/60 hover:bg-base-200 transition-colors"
                              disabled={currentPage === totalPages}
                              onClick={() => fetchProducts(selectedCategory.id, currentPage + 1)}
                           >
@@ -568,7 +568,7 @@ export default function CategoryManager({
                   <div className="absolute inset-0 bg-primary/20 blur-3xl rounded-full scale-150 animate-pulse"></div>
                   <LayoutGrid size={120} strokeWidth={1} className="relative" />
                </div>
-               <h3 className="text-2xl font-black mb-2 text-base-content/30 tracking-tight">{t('stock:organisation.category_manager.select_item', { type })}</h3>
+               <h3 className="text-2xl font-black mb-2 text-base-content/50 tracking-tight">{t('stock:organisation.category_manager.select_item', { type })}</h3>
                <p className="text-sm font-medium opacity-40">{t('stock:organisation.category_manager.select_item_hint')}</p>
             </div>
          )}
@@ -588,10 +588,10 @@ export default function CategoryManager({
       >
         <form onSubmit={handleSubmit} className="p-6 space-y-5">
            <div>
-              <label className="block text-xs font-bold uppercase tracking-wider text-base-content/40 mb-2">{t('stock:organisation.category_manager.name_label', { type })}</label>
+              <label className="block text-xs font-bold uppercase tracking-wider text-base-content/50 mb-2">{t('stock:organisation.category_manager.name_label', { type })}</label>
               <input 
                 type="text" 
-                className="input input-bordered w-full h-12 rounded-xl focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all font-medium" 
+                className="w-full rounded-xl border border-base-300 bg-base-100 px-3 h-12 text-sm font-medium text-base-content focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all" 
                 value={formData.name}
                 onChange={e => setFormData({...formData, name: e.target.value})}
                 required
@@ -601,9 +601,9 @@ export default function CategoryManager({
 
             {hasHierarchy && (
                <div>
-                  <label className="block text-xs font-bold uppercase tracking-wider text-base-content/40 mb-2">{t('stock:organisation.category_manager.parent_label')}</label>
+                  <label className="block text-xs font-bold uppercase tracking-wider text-base-content/50 mb-2">{t('stock:organisation.category_manager.parent_label')}</label>
                   <select 
-                    className="select select-bordered w-full h-12 rounded-xl focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
+                    className="w-full rounded-xl border border-base-300 bg-base-100 h-12 px-3 text-sm font-medium text-base-content focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
                     value={formData.parent}
                     onChange={e => setFormData({...formData, parent: e.target.value})}
                   >
@@ -617,9 +617,9 @@ export default function CategoryManager({
 
             {hasDescription && (
                <div>
-                  <label className="block text-xs font-bold uppercase tracking-wider text-base-content/40 mb-2">{t('stock:organisation.category_manager.description_label')}</label>
+                  <label className="block text-xs font-bold uppercase tracking-wider text-base-content/50 mb-2">{t('stock:organisation.category_manager.description_label')}</label>
                   <textarea 
-                    className="textarea textarea-bordered w-full rounded-xl focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
+                    className="w-full rounded-xl border border-base-300 bg-base-100 p-3 text-sm font-medium text-base-content focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
                     value={formData.description}
                     onChange={e => setFormData({...formData, description: e.target.value})}
                     rows={3}
@@ -628,8 +628,8 @@ export default function CategoryManager({
             )}
 
             <div className="flex justify-end gap-3 pt-4">
-               <button type="button" className="btn btn-ghost rounded-xl px-6" onClick={() => setIsModalOpen(false)}>{t('stock:organisation.category_manager.cancel')}</button>
-               <button type="submit" className="btn btn-primary rounded-xl px-10 shadow-lg shadow-primary/20">{t('stock:organisation.category_manager.save')}</button>
+               <button type="button" className="inline-flex items-center gap-1.5 px-6 py-2 text-base-content/60 hover:bg-base-200 rounded-xl text-sm font-medium transition-colors" onClick={() => setIsModalOpen(false)}>{t('stock:organisation.category_manager.cancel')}</button>
+               <button type="submit" className="inline-flex items-center justify-center px-10 py-2 bg-primary text-white rounded-xl text-sm font-bold hover:bg-primary-focus transition-colors shadow-lg shadow-indigo-500/20">{t('stock:organisation.category_manager.save')}</button>
             </div>
         </form>
       </PremiumModal>
@@ -645,21 +645,21 @@ export default function CategoryManager({
       >
         <div className="p-6 flex flex-col h-[600px]">
            <div className="relative mb-6">
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 size-5 opacity-30" />
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 size-5 text-base-content/30" />
               <input 
                 type="text" 
                 placeholder={t('stock:organisation.category_manager.search_products_placeholder')} 
-                className="input input-bordered w-full pl-12 h-14 rounded-2xl shadow-inner bg-base-200/30 border-none focus:ring-2 focus:ring-primary/20"
+                className="w-full rounded-lg border border-base-300 bg-base-100 px-3 text-sm font-medium text-base-content focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all pl-12 h-14 rounded-2xl shadow-inner bg-base-200 border-none focus:ring-2 focus:ring-primary/20"
                 value={productSearchTerm}
                 onChange={e => handleSearchProducts(e.target.value)}
                 autoFocus
               />
            </div>
 
-           <div className="flex-1 overflow-auto bg-base-200/50 rounded-2xl p-4 border border-base-300 shadow-inner">
+           <div className="flex-1 overflow-auto bg-base-200 rounded-2xl p-4 border border-base-300 shadow-inner">
                {isSearching ? (
                   <div className="flex flex-col items-center justify-center h-full gap-4 text-primary">
-                     <span className="loading loading-spinner loading-lg"></span>
+                     <span className="inline-block size-8 border-2 border-base-300 border-t-indigo-600 rounded-full animate-spin"></span>
                      <p className="text-sm font-bold">{t('common:loading')}</p>
                   </div>
                ) : searchResults.length > 0 ? (
@@ -668,10 +668,10 @@ export default function CategoryManager({
                         <div key={p.id} className="bg-base-100 rounded-2xl p-4 flex items-center justify-between shadow-sm hover:shadow-md transition-shadow">
                            <div className="overflow-hidden">
                               <h5 className="font-bold truncate">{p.name}</h5>
-                              <p className="text-xs opacity-50">{p.cip1}</p>
+                              <p className="text-xs text-base-content/50">{p.cip1}</p>
                            </div>
                            <button 
-                             className="btn btn-sm btn-circle btn-primary btn-outline"
+                             className="inline-flex items-center justify-center size-8 rounded-full border border-indigo-200 bg-primary/10 text-primary hover:bg-primary/20 transition-colors"
                              onClick={() => handleAddProduct(p)}
                            >
                              <Plus size={16} />
@@ -680,7 +680,7 @@ export default function CategoryManager({
                      ))}
                   </div>
                ) : (
-                  <div className="flex flex-col items-center justify-center h-full text-base-content/20 italic">
+                  <div className="flex flex-col items-center justify-center h-full text-base-content/40 italic">
                      <Search size={48} className="mb-2" />
                      {productSearchTerm.length < 2 ? t('common:messages.hint_min_char') : t('common:no_results_found')}
                   </div>
@@ -688,7 +688,7 @@ export default function CategoryManager({
            </div>
 
            <div className="mt-8 flex justify-end">
-              <button className="btn btn-ghost px-12 rounded-xl" onClick={() => setIsAddProductModalOpen(false)}>{t('common:buttons.done')}</button>
+              <button className="inline-flex items-center gap-1.5 px-3 py-1.5 text-base-content/60 hover:bg-base-200 rounded-lg text-sm font-medium transition-colors px-12 rounded-xl" onClick={() => setIsAddProductModalOpen(false)}>{t('common:buttons.done')}</button>
            </div>
         </div>
       </PremiumModal>
@@ -719,26 +719,26 @@ export default function CategoryManager({
         icon={<Printer className="h-5 w-5 text-info" />}
       >
         <div className="p-6 space-y-6">
-           <div className="bg-info/5 p-4 rounded-2xl border border-info/10">
+           <div className="bg-info/10 p-4 rounded-2xl border border-blue-100">
               <p className="text-sm">{t('stock:organisation.category_manager.print_help')}</p>
            </div>
            
-           <div className="form-control">
-              <label className="label cursor-pointer justify-start gap-4 p-0">
+           <div className="space-y-1.5">
+              <label className="flex items-center gap-3 cursor-pointer p-0">
                  <input 
                    type="checkbox" 
-                   className="checkbox checkbox-primary rounded-lg"
+                   className="size-5 rounded border-base-300 text-primary focus:ring-primary cursor-pointer"
                    checked={excludeZeroStock}
                    onChange={e => setExcludeZeroStock(e.target.checked)}
                  />
-                 <span className="label-text font-bold text-base-content/70">{t('stock:organisation.category_manager.exclude_zero_stock')}</span>
+                 <span className="text-sm font-bold text-base-content/60">{t('stock:organisation.category_manager.exclude_zero_stock')}</span>
               </label>
            </div>
 
            <div className="flex justify-end gap-3 pt-4">
-              <button className="btn btn-ghost px-6 rounded-xl" onClick={() => setIsPrintModalOpen(false)}>{t('stock:organisation.category_manager.cancel')}</button>
+              <button className="inline-flex items-center gap-1.5 px-6 py-2 text-base-content/60 hover:bg-base-200 rounded-xl text-sm font-medium transition-colors" onClick={() => setIsPrintModalOpen(false)}>{t('stock:organisation.category_manager.cancel')}</button>
               <button 
-                className="btn btn-info px-10 rounded-xl text-white shadow-lg shadow-info/20 gap-2"
+                className="inline-flex items-center gap-2 px-10 py-2.5 bg-info text-white rounded-xl text-sm font-bold hover:bg-info-focus transition-colors shadow-lg shadow-blue-500/20"
                 onClick={handleConfirmPrint}
               >
                 <Printer size={18} />

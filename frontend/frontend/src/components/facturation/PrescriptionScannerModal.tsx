@@ -264,7 +264,7 @@ const PrescriptionScannerModal: React.FC<PrescriptionScannerModalProps> = ({
                     <button className="btn btn-circle btn-primary btn-lg shadow-lg" onClick={capturePhoto}>
                       <div className="size-4 rounded-full border-2 border-white" />
                     </button>
-                    <button className="btn btn-circle btn-ghost bg-white/20 backdrop-blur-md text-white" onClick={stopCamera}>
+                    <button className="btn btn-circle btn-ghost bg-base-100/20 backdrop-blur-md text-white" onClick={stopCamera}>
                       <Trash2 className="size-5" />
                     </button>
                   </div>
@@ -317,7 +317,7 @@ const PrescriptionScannerModal: React.FC<PrescriptionScannerModalProps> = ({
 
                 <div className="flex-1 overflow-y-auto p-4 space-y-3">
                   {matchResults.length === 0 ? (
-                    <div className="h-full flex flex-col items-center justify-center p-8 text-center text-base-content/40 opacity-50 italic">
+                    <div className="h-full flex flex-col items-center justify-center p-8 text-center text-base-content/40 text-base-content/50 italic">
                       <AlertCircle className="size-12 mb-4 stroke-1" />
                       <p>Les produits détectés apparaîtront ici après l'analyse.</p>
                     </div>
@@ -338,7 +338,7 @@ const PrescriptionScannerModal: React.FC<PrescriptionScannerModalProps> = ({
                                 onClick={() => handleSelectProduct(idx, product)}
                             >
                                 <span className="truncate flex-1 font-bold">{product.name}</span>
-                                <span className="ml-2 text-[10px] opacity-70">{product.selling_price} F</span>
+                                <span className="ml-2 text-[10px] text-base-content/70">{product.selling_price} F</span>
                             </button>
                           ))}
                           

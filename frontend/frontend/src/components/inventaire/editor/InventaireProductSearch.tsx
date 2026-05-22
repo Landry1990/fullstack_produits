@@ -90,7 +90,7 @@ export const InventaireProductSearch: React.FC<InventaireProductSearchProps> = (
                         <span className="loading loading-spinner text-primary"></span>
                     ) : (
                         <div className="flex flex-col items-center gap-1">
-                            <Search className="h-6 w-6 opacity-20" />
+                            <Search className="h-6 w-6 text-base-content/20" />
                             <p className="text-sm">{t('inventaire.detail.no_result')}</p>
                         </div>
                     )}
@@ -111,13 +111,13 @@ export const InventaireProductSearch: React.FC<InventaireProductSearchProps> = (
                         >
                           <div className="flex-1 min-w-0">
                             <div className="font-bold text-sm truncate">{p.name}</div>
-                            <div className={`text-[10px] flex gap-2 mt-0.5 opacity-70 ${idx === selectedItemIndex ? 'text-primary-content/80' : 'text-base-content/60'}`}>
+                            <div className={`text-[10px] flex gap-2 mt-0.5 text-base-content/70 ${idx === selectedItemIndex ? 'text-primary-content/80' : 'text-base-content/60'}`}>
                               <span className="font-mono">{p.cip1}</span>
-                              {p.rayon_name && <span className="opacity-50">• {p.rayon_name}</span>}
+                              {p.rayon_name && <span className="text-base-content/50">• {p.rayon_name}</span>}
                             </div>
                           </div>
                           <div className="flex items-center gap-3">
-                            <span className={`px-2 py-0.5 rounded-md text-[10px] font-bold border ${idx === selectedItemIndex ? 'bg-white/20 border-white/20' : (p.stock ?? 0) > 0 ? 'bg-success/10 text-success border-success/20' : 'bg-error/10 text-error border-error/20'}`}>
+                            <span className={`px-2 py-0.5 rounded-md text-[10px] font-bold border ${idx === selectedItemIndex ? 'bg-base-100/20 border-white/20' : (p.stock ?? 0) > 0 ? 'bg-success/10 text-success border-success/20' : 'bg-error/10 text-error border-error/20'}`}>
                                 {p.stock ?? 0} {t('common:units_short')}
                             </span>
                           </div>
@@ -227,7 +227,7 @@ export const InventaireProductSearch: React.FC<InventaireProductSearchProps> = (
                                  <div className={`flex items-center gap-4 p-4 rounded-xl border transition-all ${selectedLotIndex === availableLots.length ? 'bg-secondary/5 border-secondary shadow-sm' : 'bg-base-100 border-base-300'}`}>
                                     <div className="flex-1">
                                         <div className="font-bold text-sm">{t('inventaire.lot_modal.btn_global')}</div>
-                                        <div className="text-[10px] opacity-50">{t('inventaire.lot_modal.desc_global')}</div>
+                                        <div className="text-[10px] text-base-content/50">{t('inventaire.lot_modal.desc_global')}</div>
                                     </div>
                                     <div className="w-24">
                                         <input 
@@ -261,7 +261,7 @@ export const InventaireProductSearch: React.FC<InventaireProductSearchProps> = (
                                         <div className="font-bold text-sm group-hover:text-primary transition-colors">{t('inventaire.lot_modal.btn_new')}</div>
                                         <div className="text-[10px] opacity-40">{t('inventaire.lot_modal.desc_new')}</div>
                                     </div>
-                                    <Plus className="h-4 w-4 opacity-30 group-hover:opacity-100 group-hover:text-primary transition-all" />
+                                    <Plus className="h-4 w-4 text-base-content/30 group-hover:opacity-100 group-hover:text-primary transition-all" />
                                 </button>
                             </div>
                         </div>

@@ -129,7 +129,7 @@ export default function ReapproHistory() {
                 ) : filteredHistory.length === 0 ? (
                     <tr>
                         <td colSpan={6} className="py-24 text-center">
-                            <div className="flex flex-col items-center justify-center opacity-20">
+                            <div className="flex flex-col items-center justify-center text-base-content/20">
                                 <History className="size-16 mb-4" />
                                 <h3 className="text-xl font-black uppercase tracking-tight">Aucun historique trouvé</h3>
                             </div>
@@ -139,7 +139,7 @@ export default function ReapproHistory() {
                     filteredHistory.map((session: any) => (
                         <tr key={session.id} className="hover:bg-base-200/30 transition-all border-b border-base-200/50 group">
                             <td>
-                                <span className="bg-purple-100 text-purple-700 px-3 py-1 rounded-lg text-[10px] font-black">
+                                <span className="bg-secondary/20 text-purple-700 px-3 py-1 rounded-lg text-[10px] font-black">
                                     #{session.id}
                                 </span>
                             </td>

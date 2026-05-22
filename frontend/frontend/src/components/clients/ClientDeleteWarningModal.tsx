@@ -49,7 +49,7 @@ export default function ClientDeleteWarningModal({
             </div>
             <button
               onClick={onClose}
-              className="btn btn-ghost btn-circle btn-sm"
+              className="btn-ref btn-ghost btn-circle btn-sm"
             >
               <X className="size-5" />
             </button>
@@ -66,14 +66,14 @@ export default function ClientDeleteWarningModal({
 
           {/* Stats */}
           <div className="grid grid-cols-2 gap-4">
-            <div className="bg-error/5 border border-error/20 rounded-xl p-4">
+            <div className="bg-error/10 border border-red-200 rounded-xl p-4">
               <div className="flex items-center gap-2 text-error mb-2">
                 <FileText className="size-5" />
                 <span className="font-bold text-sm">Factures impayées</span>
               </div>
               <p className="text-3xl font-black text-error">{invoiceCount}</p>
             </div>
-            <div className="bg-error/5 border border-error/20 rounded-xl p-4">
+            <div className="bg-error/10 border border-red-200 rounded-xl p-4">
               <div className="flex items-center gap-2 text-error mb-2">
                 <DollarSign className="size-5" />
                 <span className="font-bold text-sm">Montant total dû</span>
@@ -119,7 +119,7 @@ export default function ClientDeleteWarningModal({
           )}
 
           {/* Warning message */}
-          <div className="bg-info/10 border border-info/20 rounded-xl p-4">
+          <div className="bg-info/10 border border-blue-200 rounded-xl p-4">
             <p className="text-sm text-info font-medium">
               <span className="font-bold">Action requise :</span> Veuillez régler toutes les factures avant de pouvoir supprimer ce client.
             </p>
@@ -127,10 +127,10 @@ export default function ClientDeleteWarningModal({
         </div>
 
         {/* Footer */}
-        <div className="p-6 border-t border-base-200 bg-base-50/50">
+        <div className="p-6 border-t border-base-300 bg-base-200/50">
           <button
             onClick={onClose}
-            className="btn btn-warning w-full gap-2 font-black"
+            className="inline-flex items-center justify-center w-full gap-2 px-4 py-2.5 bg-amber-500 text-white rounded-xl text-sm font-bold hover:bg-warning transition-colors"
           >
             <X className="size-4" />
             J'ai compris

@@ -43,4 +43,7 @@ export type {
     UseSaleCompletionReturn
 } from './useSaleCompletion';
 
+// PDA WebSocket hook for cashier queue
+export { useCashierWebSocket } from './useCashierWebSocket';
+
 export type { PaymentDetails, TotalsData, AyantDroit as AyantDroitData, SaleCompletionParams, SaleCompletionResult } from '../types';

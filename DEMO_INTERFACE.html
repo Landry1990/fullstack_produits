@@ -1,0 +1,669 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🧪 Démo PDA WebSocket - Interface</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #0f172a;
+            color: white;
+            padding: 20px;
+        }
+        .container { max-width: 1400px; margin: 0 auto; }
+        h1 { text-align: center; margin-bottom: 30px; color: #6366f1; }
+        
+        .devices {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+        }
+        
+        @media (max-width: 900px) {
+            .devices { grid-template-columns: 1fr; }
+        }
+        
+        .device {
+            background: #1e293b;
+            border-radius: 20px;
+            padding: 20px;
+            border: 2px solid #334155;
+        }
+        
+        .device-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #334155;
+        }
+        
+        .device-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+        }
+        
+        .pda-icon { background: #6366f1; }
+        .caisse-icon { background: #22c55e; }
+        
+        .status {
+            margin-left: auto;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        
+        .status-connected { background: #22c55e; color: white; }
+        .status-offline { background: #ef4444; color: white; }
+        
+        /* PDA Screen */
+        .pda-screen {
+            background: #0f172a;
+            border-radius: 15px;
+            padding: 15px;
+            min-height: 400px;
+        }
+        
+        .mode-toggle {
+            display: flex;
+            background: #1e293b;
+            border-radius: 10px;
+            padding: 4px;
+            margin-bottom: 15px;
+        }
+        
+        .mode-btn {
+            flex: 1;
+            padding: 10px;
+            border: none;
+            border-radius: 8px;
+            background: transparent;
+            color: #94a3b8;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+        
+        .mode-btn.active {
+            background: #6366f1;
+            color: white;
+        }
+        
+        .cart-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px;
+            background: #1e293b;
+            border-radius: 10px;
+            margin-bottom: 10px;
+        }
+        
+        .item-icon {
+            width: 40px;
+            height: 40px;
+            background: #6366f1;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .item-details { flex: 1; }
+        .item-name { font-weight: 600; }
+        .item-price { color: #94a3b8; font-size: 14px; }
+        .item-qty { 
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: #0f172a;
+            padding: 4px 12px;
+            border-radius: 20px;
+        }
+        
+        .qty-btn {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            border: none;
+            background: #6366f1;
+            color: white;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        
+        .add-product-btn {
+            width: 100%;
+            padding: 15px;
+            background: #334155;
+            border: 2px dashed #6366f1;
+            border-radius: 10px;
+            color: #6366f1;
+            cursor: pointer;
+            margin-bottom: 15px;
+            font-weight: 600;
+        }
+        
+        .add-product-btn:hover {
+            background: #6366f1;
+            color: white;
+        }
+        
+        .total-section {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px;
+            background: #1e293b;
+            border-radius: 10px;
+            margin-bottom: 15px;
+        }
+        
+        .total-amount {
+            font-size: 24px;
+            font-weight: 700;
+            color: #22c55e;
+        }
+        
+        .action-btn {
+            width: 100%;
+            padding: 15px;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .send-btn {
+            background: #6366f1;
+            color: white;
+        }
+        
+        .send-btn:hover { background: #4f46e5; }
+        .send-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+        
+        /* Caisse Screen */
+        .caisse-screen {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            min-height: 400px;
+            color: #1e293b;
+        }
+        
+        .queue-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        
+        .queue-title {
+            font-size: 18px;
+            font-weight: 700;
+        }
+        
+        .queue-count {
+            background: #6366f1;
+            color: white;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-weight: 600;
+        }
+        
+        .pda-notification {
+            background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 15px;
+            margin-bottom: 15px;
+            animation: slideIn 0.5s ease;
+        }
+        
+        @keyframes slideIn {
+            from { transform: translateX(-100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        
+        .pda-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+        
+        .pda-id {
+            font-weight: 700;
+            font-size: 14px;
+        }
+        
+        .pda-items {
+            font-size: 13px;
+            opacity: 0.9;
+            margin-bottom: 15px;
+        }
+        
+        .pda-total {
+            font-size: 20px;
+            font-weight: 700;
+            margin-bottom: 15px;
+        }
+        
+        .pda-actions {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .pda-btn {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .btn-ignore {
+            background: rgba(255,255,255,0.2);
+            color: white;
+        }
+        
+        .btn-load {
+            background: white;
+            color: #6366f1;
+        }
+        
+        .cart-loaded {
+            background: #f8fafc;
+            border: 2px solid #e2e8f0;
+            border-radius: 10px;
+            padding: 15px;
+            margin-top: 20px;
+        }
+        
+        .cart-loaded h3 {
+            margin-bottom: 10px;
+            color: #6366f1;
+        }
+        
+        .validate-caisse-btn {
+            width: 100%;
+            padding: 15px;
+            background: #22c55e;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 700;
+            cursor: pointer;
+            margin-top: 15px;
+        }
+        
+        .empty-queue {
+            text-align: center;
+            padding: 60px 20px;
+            color: #94a3b8;
+        }
+        
+        .empty-icon {
+            font-size: 64px;
+            margin-bottom: 20px;
+        }
+        
+        .logs {
+            margin-top: 30px;
+            background: #0f172a;
+            border-radius: 10px;
+            padding: 15px;
+            font-family: monospace;
+            font-size: 12px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        
+        .log-entry {
+            padding: 4px 0;
+            border-bottom: 1px solid #334155;
+        }
+        
+        .log-time { color: #94a3b8; }
+        .log-pda { color: #6366f1; }
+        .log-caisse { color: #22c55e; }
+        .log-error { color: #ef4444; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 Démo PDA WebSocket - Interface de Test</h1>
+        
+        <div class="devices">
+            <!-- PDA Device -->
+            <div class="device">
+                <div class="device-header">
+                    <div class="device-icon pda-icon">📱</div>
+                    <div>
+                        <div style="font-weight: 700;">PDA Mobile</div>
+                        <div style="font-size: 12px; color: #94a3b8;">Mode: <span id="pda-mode-text">Envoi Caisse</span></div>
+                    </div>
+                    <div class="status status-connected" id="pda-status">Connecté</div>
+                </div>
+                
+                <div class="pda-screen">
+                    <!-- Mode Toggle -->
+                    <div class="mode-toggle">
+                        <button class="mode-btn active" onclick="setMode('cashier')" id="btn-cashier">
+                            🏪 Envoi Caisse
+                        </button>
+                        <button class="mode-btn" onclick="setMode('autonomous')" id="btn-autonomous">
+                            💳 Paiement PDA
+                        </button>
+                    </div>
+                    
+                    <!-- Add Product -->
+                    <button class="add-product-btn" onclick="addRandomProduct()">
+                        ➕ Ajouter un produit (simuler scan)
+                    </button>
+                    
+                    <!-- Cart Items -->
+                    <div id="cart-items">
+                        <div style="text-align: center; padding: 40px; color: #64748b;">
+                            🛒 Panier vide<br>
+                            <small>Clique "Ajouter un produit"</small>
+                        </div>
+                    </div>
+                    
+                    <!-- Total -->
+                    <div class="total-section" id="total-section" style="display: none;">
+                        <span>Total</span>
+                        <span class="total-amount" id="total-amount">0 FCFA</span>
+                    </div>
+                    
+                    <!-- Action Button -->
+                    <button class="action-btn send-btn" id="send-btn" onclick="sendToCashier()" disabled>
+                        📤 Envoyer à la caisse
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Caisse Device -->
+            <div class="device">
+                <div class="device-header">
+                    <div class="device-icon caisse-icon">🖥️</div>
+                    <div>
+                        <div style="font-weight: 700;">Caisse Centrale</div>
+                        <div style="font-size: 12px; color: #94a3b8;">Web - Facturation</div>
+                    </div>
+                    <div class="status status-connected">En ligne</div>
+                </div>
+                
+                <div class="caisse-screen">
+                    <div class="queue-header">
+                        <div class="queue-title">📥 File d'attente PDA</div>
+                        <div class="queue-count" id="queue-count">0</div>
+                    </div>
+                    
+                    <div id="queue-container">
+                        <div class="empty-queue">
+                            <div class="empty-icon">📭</div>
+                            <div>Aucune vente en attente</div>
+                            <div style="font-size: 14px; margin-top: 10px;">
+                                Envoie une vente depuis le PDA 👈
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div id="loaded-cart" style="display: none;">
+                        <div class="cart-loaded">
+                            <h3>🛒 Panier chargé</h3>
+                            <div id="loaded-items"></div>
+                            <button class="validate-caisse-btn" onclick="validateSale()">
+                                ✅ Valider la vente
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Logs -->
+        <div class="logs" id="logs">
+            <div class="log-entry"><span class="log-time">[00:00:00]</span> Système prêt - WebSocket simulé</div>
+        </div>
+    </div>
+
+    <script>
+        // État
+        let cart = [];
+        let mode = 'cashier';
+        let pendingSales = [];
+        let loadedSale = null;
+        
+        // Log function
+        function log(message, type = 'info') {
+            const logs = document.getElementById('logs');
+            const time = new Date().toLocaleTimeString('fr-FR');
+            const colorClass = type === 'pda' ? 'log-pda' : type === 'caisse' ? 'log-caisse' : '';
+            logs.innerHTML += `<div class="log-entry"><span class="log-time">[${time}]</span> <span class="${colorClass}">${message}</span></div>`;
+            logs.scrollTop = logs.scrollHeight;
+        }
+        
+        // Mode toggle
+        function setMode(newMode) {
+            mode = newMode;
+            document.getElementById('btn-cashier').classList.toggle('active', mode === 'cashier');
+            document.getElementById('btn-autonomous').classList.toggle('active', mode === 'autonomous');
+            document.getElementById('pda-mode-text').textContent = mode === 'cashier' ? 'Envoi Caisse' : 'Paiement PDA';
+            
+            const sendBtn = document.getElementById('send-btn');
+            if (mode === 'cashier') {
+                sendBtn.innerHTML = '📤 Envoyer à la caisse';
+            } else {
+                sendBtn.innerHTML = '💳 Payer maintenant';
+            }
+            
+            log(`Mode changé: ${mode}`, 'pda');
+        }
+        
+        // Add product
+        function addRandomProduct() {
+            const products = [
+                { name: 'Doliprane 500mg', price: 1500 },
+                { name: 'Vitamine C', price: 2500 },
+                { name: 'Gel antibactérien', price: 1800 },
+                { name: 'Masque chirurgical x50', price: 5000 },
+                { name: 'Thermomètre digital', price: 8500 },
+            ];
+            
+            const product = products[Math.floor(Math.random() * products.length)];
+            const existing = cart.find(item => item.name === product.name);
+            
+            if (existing) {
+                existing.qty++;
+            } else {
+                cart.push({ ...product, qty: 1 });
+            }
+            
+            renderCart();
+            log(`Produit ajouté: ${product.name}`, 'pda');
+        }
+        
+        // Render cart
+        function renderCart() {
+            const container = document.getElementById('cart-items');
+            const totalSection = document.getElementById('total-section');
+            const sendBtn = document.getElementById('send-btn');
+            
+            if (cart.length === 0) {
+                container.innerHTML = `
+                    <div style="text-align: center; padding: 40px; color: #64748b;">
+                        🛒 Panier vide<br>
+                        <small>Clique "Ajouter un produit"</small>
+                    </div>
+                `;
+                totalSection.style.display = 'none';
+                sendBtn.disabled = true;
+                return;
+            }
+            
+            let total = 0;
+            container.innerHTML = cart.map((item, index) => {
+                total += item.price * item.qty;
+                return `
+                    <div class="cart-item">
+                        <div class="item-icon">📦</div>
+                        <div class="item-details">
+                            <div class="item-name">${item.name}</div>
+                            <div class="item-price">${item.price.toLocaleString()} FCFA</div>
+                        </div>
+                        <div class="item-qty">
+                            <button class="qty-btn" onclick="changeQty(${index}, -1)">-</button>
+                            <span>${item.qty}</span>
+                            <button class="qty-btn" onclick="changeQty(${index}, 1)">+</button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+            
+            totalSection.style.display = 'flex';
+            document.getElementById('total-amount').textContent = total.toLocaleString() + ' FCFA';
+            sendBtn.disabled = false;
+        }
+        
+        // Change quantity
+        function changeQty(index, delta) {
+            cart[index].qty += delta;
+            if (cart[index].qty <= 0) {
+                cart.splice(index, 1);
+            }
+            renderCart();
+        }
+        
+        // Send to cashier
+        function sendToCashier() {
+            if (cart.length === 0) return;
+            
+            const total = cart.reduce((sum, item) => sum + item.price * item.qty, 0);
+            const sale = {
+                id: Date.now().toString(),
+                pdaId: 'PDA-' + Math.random().toString(36).substr(2, 6).toUpperCase(),
+                items: [...cart],
+                total: total,
+                timestamp: new Date().toLocaleTimeString('fr-FR'),
+                status: 'pending'
+            };
+            
+            pendingSales.push(sale);
+            
+            // Clear PDA cart
+            cart = [];
+            renderCart();
+            
+            // Update queue display
+            renderQueue();
+            
+            log(`📤 Vente envoyée: ${sale.pdaId} - ${total.toLocaleString()} FCFA`, 'pda');
+            log(`📥 Notification reçue de ${sale.pdaId}`, 'caisse');
+            
+            alert('✅ Vente envoyée à la caisse !\nAttends la validation...');
+        }
+        
+        // Render queue
+        function renderQueue() {
+            const container = document.getElementById('queue-container');
+            const countBadge = document.getElementById('queue-count');
+            
+            countBadge.textContent = pendingSales.length;
+            
+            if (pendingSales.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-queue">
+                        <div class="empty-icon">📭</div>
+                        <div>Aucune vente en attente</div>
+                    </div>
+                `;
+                return;
+            }
+            
+            container.innerHTML = pendingSales.map(sale => `
+                <div class="pda-notification" id="sale-${sale.id}">
+                    <div class="pda-header">
+                        📱 <span class="pda-id">${sale.pdaId}</span>
+                        <span style="margin-left: auto; font-size: 12px;">${sale.timestamp}</span>
+                    </div>
+                    <div class="pda-items">${sale.items.length} article(s)</div>
+                    <div class="pda-total">${sale.total.toLocaleString()} FCFA</div>
+                    <div class="pda-actions">
+                        <button class="pda-btn btn-ignore" onclick="ignoreSale('${sale.id}')">Ignorer</button>
+                        <button class="pda-btn btn-load" onclick="loadSale('${sale.id}')">Charger →</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+        
+        // Ignore sale
+        function ignoreSale(id) {
+            pendingSales = pendingSales.filter(s => s.id !== id);
+            renderQueue();
+            log(`Vente ignorée`, 'caisse');
+        }
+        
+        // Load sale
+        function loadSale(id) {
+            loadedSale = pendingSales.find(s => s.id === id);
+            if (!loadedSale) return;
+            
+            const container = document.getElementById('loaded-items');
+            document.getElementById('loaded-cart').style.display = 'block';
+            
+            container.innerHTML = loadedSale.items.map(item => `
+                <div style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #e2e8f0;">
+                    <span>${item.name} x${item.qty}</span>
+                    <span style="font-weight: 600;">${(item.price * item.qty).toLocaleString()} FCFA</span>
+                </div>
+            `).join('') + `
+                <div style="display: flex; justify-content: space-between; padding: 15px 0; font-size: 20px; font-weight: 700; color: #6366f1;">
+                    <span>TOTAL</span>
+                    <span>${loadedSale.total.toLocaleString()} FCFA</span>
+                </div>
+            `;
+            
+            log(`Panier chargé: ${loadedSale.pdaId}`, 'caisse');
+        }
+        
+        // Validate sale
+        function validateSale() {
+            if (!loadedSale) return;
+            
+            // Remove from pending
+            pendingSales = pendingSales.filter(s => s.id !== loadedSale.id);
+            renderQueue();
+            
+            // Hide loaded cart
+            document.getElementById('loaded-cart').style.display = 'none';
+            
+            log(`✅ Vente validée: Ticket TCK-2024-${Math.random().toString(36).substr(2, 6).toUpperCase()}`, 'caisse');
+            log(`📨 Confirmation envoyée au PDA`, 'caisse');
+            
+            setTimeout(() => {
+                alert(`✅ Vente validée !\n\nTicket: TCK-2024-${Math.random().toString(36).substr(2, 6).toUpperCase()}\nTotal: ${loadedSale.total.toLocaleString()} FCFA\n\nLe PDA a été notifié.`);
+                loadedSale = null;
+            }, 500);
+        }
+        
+        // Initial log
+        log('🚀 Démo prête - Clique "Ajouter un produit" sur le PDA');
+    </script>
+</body>
+</html>

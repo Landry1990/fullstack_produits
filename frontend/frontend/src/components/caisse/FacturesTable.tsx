@@ -182,7 +182,7 @@ export const FacturesTable: React.FC<FacturesTableProps> = ({
                   <td className="text-right font-mono font-bold text-lg">
                     {montantAPayer} {t('common:currency_symbol', 'F')}
                     {couponPourCetteFacture && (
-                      <div className="text-xs font-normal text-success line-through opacity-70 flex items-center justify-end gap-1">
+                      <div className="text-xs font-normal text-success line-through text-base-content/70 flex items-center justify-end gap-1">
                         {hasTiersPayant ? Number(facture.part_client) : Number(facture.total_ttc)} {t('common:currency_symbol', 'F')}
                          <button 
                           onClick={(e) => { 

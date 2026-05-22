@@ -183,7 +183,7 @@ const CartRow = React.memo(({
                      }
                    }}
                    disabled={!canModifyPrice}
-                   className={`w-16 bg-transparent text-left font-bold border-none focus:outline-none focus:text-base-content ${!canModifyPrice ? 'opacity-70 cursor-not-allowed text-base-content/50' : 'text-base-content/80'}`}
+                   className={`w-16 bg-transparent text-left font-bold border-none focus:outline-none focus:text-base-content ${!canModifyPrice ? 'text-base-content/70 cursor-not-allowed text-base-content/50' : 'text-base-content/80'}`}
                    title={!canModifyPrice ? t('facturation:messages.price_modification_forbidden') : t('facturation:cart.edit_price')}
                 />
              </div>
@@ -230,7 +230,7 @@ const CartRow = React.memo(({
     <tr
       className={`hover:bg-base-50/50 group border-b border-base-100 last:border-0 cursor-pointer transition-colors duration-150 
         ${index === selectedIndex ? '!bg-primary/10 border-l-4 border-l-primary shadow-sm' : ''}
-        ${isReturn ? 'bg-red-50 text-red-600 font-semibold' : ''}`}
+        ${isReturn ? 'bg-error/10 text-error font-semibold' : ''}`}
       ref={index === selectedIndex ? (el) => el?.scrollIntoView({ behavior: 'smooth', block: 'nearest' }) : null}
       onClick={() => onSelectLine?.(index)}
     >
@@ -297,7 +297,7 @@ const CartRow = React.memo(({
               onReturnFocus()
             }
           }}
-          className={`input input-ghost input-xs sm:input-sm w-full text-right focus:bg-base-100 focus:text-primary min-h-[32px] sm:min-h-0 ${!canModifyPrice ? 'opacity-70 cursor-not-allowed' : ''}`}
+          className={`input input-ghost input-xs sm:input-sm w-full text-right focus:bg-base-100 focus:text-primary min-h-[32px] sm:min-h-0 ${!canModifyPrice ? 'text-base-content/70 cursor-not-allowed' : ''}`}
           disabled={!canModifyPrice}
           title={!canModifyPrice ? t('facturation:messages.price_modification_forbidden') : ""}
         />
@@ -376,7 +376,7 @@ const CartTable = React.memo(({
   if (lignesFacture.length === 0) {
     return (
       <div className={`h-full flex flex-col items-center justify-center gap-4 min-h-[200px] text-base-content/30`}>
-        <svg xmlns="http://www.w3.org/2000/svg" className="h-16 w-16 opacity-20" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <svg xmlns="http://www.w3.org/2000/svg" className="h-16 w-16 text-base-content/20" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
         </svg>
         <p className="font-light">{t('facturation:cart.empty')}</p>

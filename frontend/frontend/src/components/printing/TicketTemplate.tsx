@@ -57,7 +57,7 @@ export const TicketTemplate = ({ ticket, settings, ref }: TicketTemplateProps) =
     <div 
       ref={ref} 
       data-theme="light"
-      className="p-1 bg-white text-black font-sans text-[10px] leading-tight print:p-0" 
+      className="p-1 bg-base-100 text-black font-sans text-[10px] leading-tight print:p-0" 
       style={{ 
         width: `${ticketWidth}mm`, 
         maxWidth: `${ticketWidth}mm`,
@@ -251,7 +251,7 @@ export const TicketTemplate = ({ ticket, settings, ref }: TicketTemplateProps) =
         </div>
         
         {facture?.numero_facture && (
-             <div className="inline-block px-2 bg-white text-center">
+             <div className="inline-block px-2 bg-base-100 text-center">
                 <Barcode 
                     value={facture.numero_facture} 
                     height={35} 

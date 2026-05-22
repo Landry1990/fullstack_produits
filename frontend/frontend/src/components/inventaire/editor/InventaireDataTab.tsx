@@ -182,7 +182,7 @@ export const InventaireDataTab: React.FC<InventaireDataTabProps> = ({
                                         <div className="font-bold text-sm text-base-content truncate pr-2" title={l.produit_nom || (l.produit as any).name}>
                                             {l.produit_nom || (l.produit as any).name}
                                         </div>
-                                        <div className="text-xs font-mono opacity-50 flex gap-2 items-center leading-none mt-1">
+                                        <div className="text-xs font-mono text-base-content/50 flex gap-2 items-center leading-none mt-1">
                                             <span>{l.produit_cip || (l.produit as any).cip1}</span>
                                             {(l as any).lot_numero && (
                                                 <span className="text-primary font-bold">{t('inventaire.detail.lot_label')} {(l as any).lot_numero}</span>
@@ -202,7 +202,7 @@ export const InventaireDataTab: React.FC<InventaireDataTabProps> = ({
                                     {/* Stock Théorique */}
                                     <div className="col-span-1.5 flex justify-center">
                                         <div className="bg-base-100 px-2 py-0.5 rounded border border-base-200 min-w-[45px] text-center">
-                                            <span className="font-mono font-bold text-xs opacity-50">{l.stock_theorique}</span>
+                                            <span className="font-mono font-bold text-xs text-base-content/50">{l.stock_theorique}</span>
                                         </div>
                                     </div>
 

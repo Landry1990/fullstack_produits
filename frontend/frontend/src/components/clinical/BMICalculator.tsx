@@ -122,8 +122,8 @@ const BMICalculator: React.FC = () => {
             <Calculator className="size-5 md:w-6 md:h-6" />
           </div>
           <div>
-            <h2 className="text-xl md:text-2xl font-black text-slate-900 dark:text-white tracking-tight">{t('bmi.title')}</h2>
-            <p className="text-slate-500 dark:text-white/50 text-[10px] md:text-sm font-medium">{t('bmi.subtitle')}</p>
+            <h2 className="text-xl md:text-2xl font-black text-base-content dark:text-white tracking-tight">{t('bmi.title')}</h2>
+            <p className="text-base-content/60 dark:text-white/50 text-[10px] md:text-sm font-medium">{t('bmi.subtitle')}</p>
           </div>
         </div>
 
@@ -131,14 +131,14 @@ const BMICalculator: React.FC = () => {
         <div className="flex bg-base-200 p-1 rounded-xl md:rounded-2xl border border-base-300">
           <button
             onClick={() => setActiveTab('adult')}
-            className={`flex items-center gap-2 px-4 py-2 rounded-lg md:rounded-xl text-xs md:text-sm font-bold transition-all ${activeTab === 'adult' ? 'bg-white dark:bg-slate-800 text-emerald-500 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+            className={`flex items-center gap-2 px-4 py-2 rounded-lg md:rounded-xl text-xs md:text-sm font-bold transition-all ${activeTab === 'adult' ? 'bg-base-100 dark:bg-slate-800 text-emerald-500 shadow-sm' : 'text-base-content/60 hover:text-base-content'}`}
           >
             <User className="size-4" />
             {t('bmi.tab_adult')}
           </button>
           <button
             onClick={() => setActiveTab('child')}
-            className={`flex items-center gap-2 px-4 py-2 rounded-lg md:rounded-xl text-xs md:text-sm font-bold transition-all ${activeTab === 'child' ? 'bg-white dark:bg-slate-800 text-emerald-500 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+            className={`flex items-center gap-2 px-4 py-2 rounded-lg md:rounded-xl text-xs md:text-sm font-bold transition-all ${activeTab === 'child' ? 'bg-base-100 dark:bg-slate-800 text-emerald-500 shadow-sm' : 'text-base-content/60 hover:text-base-content'}`}
           >
             <Baby className="size-4" />
             {t('bmi.tab_child')}
@@ -227,12 +227,12 @@ const BMICalculator: React.FC = () => {
             result ? (
               <div className={`flex-1 rounded-2xl md:rounded-3xl border p-6 md:p-8 flex flex-col items-center justify-center text-center transition-all duration-500 shadow-lg ${result.color}`}>
                 <div className="text-5xl md:text-[64px] font-black leading-none mb-2 tracking-tighter">{result.value}</div>
-                <div className="text-[10px] font-black uppercase tracking-[0.2em] mb-4 opacity-70">{t('bmi.your_bmi')}</div>
-                <div className="h-px w-10 md:w-12 bg-current opacity-20 mb-4 md:mb-6"></div>
+                <div className="text-[10px] font-black uppercase tracking-[0.2em] mb-4 text-base-content/70">{t('bmi.your_bmi')}</div>
+                <div className="h-px w-10 md:w-12 bg-current text-base-content/20 mb-4 md:mb-6"></div>
                 <div className="text-lg md:text-xl font-bold mb-2 md:mb-3">{result.category}</div>
                 <p className="text-xs md:text-sm font-medium opacity-80 leading-relaxed max-w-[280px]">{result.description}</p>
                 <div className="mt-6 md:mt-8 w-full">
-                  <div className="h-1.5 md:h-2 w-full bg-white/10 rounded-full overflow-hidden flex">
+                  <div className="h-1.5 md:h-2 w-full bg-base-100/10 rounded-full overflow-hidden flex">
                     {bmiRanges.map((range, idx) => (
                       <div 
                         key={idx} 
@@ -261,7 +261,7 @@ const BMICalculator: React.FC = () => {
                 <div className="text-[10px] font-black uppercase tracking-[0.2em] mb-4 text-emerald-500/60">{t('bmi.estimated_weight')}</div>
                 <div className="h-px w-10 md:w-12 bg-emerald-500/20 mb-4 md:mb-6"></div>
                 <div className="p-4 bg-emerald-500/10 rounded-2xl border border-emerald-500/10">
-                  <p className="text-xs md:text-sm font-bold text-emerald-600">
+                  <p className="text-xs md:text-sm font-bold text-success">
                     {age} {ageUnit === 'years' ? t('bmi.age_unit_years') : t('bmi.age_unit_months')}
                   </p>
                 </div>

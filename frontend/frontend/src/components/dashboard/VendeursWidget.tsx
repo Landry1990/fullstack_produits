@@ -132,7 +132,7 @@ export default function VendeursWidget({ formatCurrencyLocal }: VendeursWidgetPr
                                         <p className={`font-black text-center leading-tight text-base-content truncate w-full text-center ${isFirst ? 'text-sm' : 'text-xs'}`}>
                                             {v.vendeur.split(' ')[0]}
                                         </p>
-                                        <p className={`font-black text-amber-600 dark:text-amber-400 mt-0.5 ${isFirst ? 'text-sm' : 'text-xs'}`}>
+                                        <p className={`font-black text-warning dark:text-amber-400 mt-0.5 ${isFirst ? 'text-sm' : 'text-xs'}`}>
                                             {formatCurrencyLocal(v.chiffre_affaires)}
                                         </p>
                                         <p className="text-[10px] text-base-content/40 font-medium">{v.nbre_ventes} ventes</p>

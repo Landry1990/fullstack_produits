@@ -30,7 +30,7 @@ const StatsList = memo(({ title, data, type, t }: StatsListProps) => {
             </div>
             <div className="p-0 flex-1 overflow-y-auto max-h-[500px]">
                 {!data || data.length === 0 ? (
-                    <div className="flex flex-col items-center justify-center h-full py-12 gap-3 opacity-20">
+                    <div className="flex flex-col items-center justify-center h-full py-12 gap-3 text-base-content/20">
                         <PieChart className="h-10 w-10" />
                         <p className="text-sm font-medium">{t('inventaire.analysis.no_data', { defaultValue: 'Aucune donnée' })}</p>
                     </div>

@@ -141,16 +141,16 @@ export default function Dashboard() {
 
   if (loading) {
     return (
-      <div className="p-6 flex justify-center items-center h-96">
-        <div className="size-10 border-2 border-gray-200 border-t-indigo-600 rounded-full animate-spin"></div>
+      <div className="p-6 flex justify-center items-center h-96 bg-base-100">
+        <div className="size-10 border-2 border-base-300 border-t-primary rounded-full animate-spin"></div>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="p-6">
-        <div className="bg-red-50 border border-red-100 rounded-xl p-4 flex items-center gap-3 text-red-700">
+      <div className="p-6 bg-base-100">
+        <div className="bg-error/10 border border-error/20 rounded-xl p-4 flex items-center gap-3 text-error">
           <AlertTriangle className="size-6" />
           <span className="font-bold text-sm tracking-tight">{error}</span>
         </div>
@@ -159,35 +159,35 @@ export default function Dashboard() {
   }
 
   const tabConfig = [
-    { key: 'overview', label: t('tabs.overview', { defaultValue: 'Performance' }), icon: TrendingUp, color: 'text-emerald-600', activeBg: 'bg-emerald-500' },
-    { key: 'stock',    label: t('tabs.stock',    { defaultValue: 'Stock' }),        icon: Package,    color: 'text-amber-600',   activeBg: 'bg-amber-500'   },
-    { key: 'finance',  label: t('tabs.finance',  { defaultValue: 'Finance' }),      icon: Wallet,     color: 'text-indigo-600',  activeBg: 'bg-indigo-500'  },
+    { key: 'overview', label: t('tabs.overview', { defaultValue: 'Performance' }), icon: TrendingUp, color: 'text-success', activeBg: 'bg-emerald-500' },
+    { key: 'stock',    label: t('tabs.stock',    { defaultValue: 'Stock' }),        icon: Package,    color: 'text-warning',   activeBg: 'bg-amber-500'   },
+    { key: 'finance',  label: t('tabs.finance',  { defaultValue: 'Finance' }),      icon: Wallet,     color: 'text-primary',  activeBg: 'bg-indigo-500'  },
   ] as const;
 
   return (
-    <div className="min-h-screen bg-gray-50 font-sans">
+    <div className="min-h-screen bg-base-100 font-sans">
       {/* ── HEADER ─────────────────────────────────────────── */}
-      <div className="sticky top-0 z-30 bg-white border-b border-gray-100 px-4 sm:px-6 py-3">
+      <div className="sticky top-0 z-30 bg-base-100 border-b border-base-200 px-4 sm:px-6 py-3">
         <div className="flex items-center justify-between gap-3">
 
           {/* Left: title + date */}
           <div className="flex items-center gap-3 min-w-0">
-            <div className="p-2 bg-indigo-50 text-indigo-600 rounded-lg shrink-0">
+            <div className="p-2 bg-primary/10 text-primary rounded-lg shrink-0">
               <LayoutDashboard className="size-5" />
             </div>
             <div className="min-w-0">
-              <h1 className="text-base font-bold text-gray-900 tracking-tight leading-none truncate">
+              <h1 className="text-base font-bold text-base-content tracking-tight leading-none truncate">
                 {licence?.pharmacie_nom || t('title')}
               </h1>
               <div className="flex items-center gap-2 mt-0.5">
-                <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-widest hidden sm:block">
+                <p className="text-[10px] font-semibold text-base-content/50 uppercase tracking-widest hidden sm:block">
                   {licence?.pharmacien_nom || getServerDate().toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })}
                 </p>
                 {daysRemaining !== null && (
                   <div className={`px-1.5 py-0.5 rounded text-[9px] font-black uppercase tracking-tighter ${
-                    daysRemaining <= 7 ? 'bg-red-500/10 text-red-500' : 
-                    daysRemaining <= 30 ? 'bg-amber-500/10 text-amber-500' : 
-                    'bg-emerald-500/10 text-emerald-500'
+                    daysRemaining <= 7 ? 'bg-error/20 text-error' : 
+                    daysRemaining <= 30 ? 'bg-warning/20 text-warning' : 
+                    'bg-success/20 text-success'
                   }`}>
                     {daysRemaining} JOURS RESTANTS
                   </div>
@@ -198,34 +198,34 @@ export default function Dashboard() {
 
           {/* Right: actions */}
           <div className="flex items-center gap-2 shrink-0">
-            <Link to="/app/facturation" className="inline-flex items-center gap-1.5 px-4 py-2 bg-indigo-600 text-white rounded-lg text-xs font-bold hover:bg-indigo-700 transition-colors shadow-sm">
+            <Link to="/app/facturation" className="inline-flex items-center gap-1.5 px-4 py-2 bg-primary text-primary-content rounded-lg text-xs font-bold hover:bg-primary-focus transition-colors shadow-sm">
               <Plus className="size-3.5" />
               <span className="hidden sm:inline">{t('actions.new_invoice')}</span>
               <span className="sm:hidden">Vente</span>
             </Link>
             <button
-              className="p-2 rounded-lg text-gray-400 hover:bg-gray-100 hover:text-indigo-600 transition-colors"
+              className="p-2 rounded-lg text-base-content/50 hover:bg-base-200 hover:text-primary transition-colors"
               onClick={handleRefreshAll}
               disabled={loading}
               title={t('common:actions.refresh')}
             >
-              {loading ? <span className="inline-block size-4 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin" /> : <RefreshCw className="size-4" />}
+              {loading ? <span className="inline-block size-4 border-2 border-primary border-t-transparent rounded-full animate-spin" /> : <RefreshCw className="size-4" />}
             </button>
             <button
-              className={`p-2 rounded-lg transition-colors ${sendingReport ? 'text-gray-300' : 'text-sky-500 hover:bg-sky-50'}`}
+              className={`p-2 rounded-lg transition-colors ${sendingReport ? 'text-base-content/30' : 'text-info hover:bg-info/10'}`}
               onClick={handleSendTelegramReport}
               disabled={sendingReport}
               title={t('common:telegram.flash_report')}
             >
-              {sendingReport ? <span className="inline-block size-4 border-2 border-gray-300 border-t-transparent rounded-full animate-spin" /> : <MessageCircle className="size-4" />}
+              {sendingReport ? <span className="inline-block size-4 border-2 border-base-content/30 border-t-transparent rounded-full animate-spin" /> : <MessageCircle className="size-4" />}
             </button>
             <button
-              className={`p-2 rounded-lg transition-colors ${sendingInventaire ? 'text-gray-300' : 'text-sky-500 hover:bg-sky-50'}`}
+              className={`p-2 rounded-lg transition-colors ${sendingInventaire ? 'text-base-content/30' : 'text-info hover:bg-info/10'}`}
               onClick={handleSendTelegramInventaire}
               disabled={sendingInventaire}
               title={t('common:telegram.inventory_report')}
             >
-              {sendingInventaire ? <span className="inline-block size-4 border-2 border-gray-300 border-t-transparent rounded-full animate-spin" /> : <Package className="size-4" />}
+              {sendingInventaire ? <span className="inline-block size-4 border-2 border-base-content/30 border-t-transparent rounded-full animate-spin" /> : <Package className="size-4" />}
             </button>
           </div>
         </div>
@@ -238,8 +238,8 @@ export default function Dashboard() {
               onClick={() => setActiveTab(key as typeof activeTab)}
               className={`flex items-center gap-2 px-4 py-2 rounded-t-xl text-[11px] font-black uppercase tracking-widest transition-all border-b-2 ${
                 activeTab === key
-                  ? `${activeBg} text-white border-transparent shadow-sm`
-                  : 'bg-gray-50 text-gray-400 border-transparent hover:text-gray-700 hover:bg-gray-100'
+                  ? `${activeBg} text-primary-content border-transparent shadow-sm`
+                  : 'bg-base-200 text-base-content/50 border-transparent hover:text-base-content hover:bg-base-300'
               }`}
             >
               <Icon className="size-3.5" />

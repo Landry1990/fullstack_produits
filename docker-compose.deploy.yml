@@ -1,0 +1,71 @@
+# Docker Compose - Production Deploy
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  db:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_DB: fullstack_db
+      POSTGRES_USER: fullstack_user
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-fullstack_password}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U fullstack_user -d fullstack_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Redis Cache + WebSocket Channel Layer
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+
+  # Backend Django (HTTP API avec Gunicorn)
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    # Utilise l'entrypoint.sh par défaut qui démarre Gunicorn
+    environment:
+      - DJANGO_DEBUG=False
+      - DJANGO_SECRET_KEY=${SECRET_KEY:-change-me-in-production}
+      - DJANGO_ALLOWED_HOSTS=localhost,127.0.0.1,backend,*
+      - CORS_ALLOW_ALL=True
+      - DB_ENGINE=django.db.backends.postgresql
+      - DB_NAME=pharma_db
+      - DB_USER=pharma_admin
+      - DB_PASSWORD=pharma_secure_password
+      - DB_HOST=db
+      - DB_PORT=5432
+      - REDIS_URL=redis://redis:6379/0
+    ports:
+      - "8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    volumes:
+      - static_volume:/app/staticfiles
+
+  # Frontend React (Nginx)
+  frontend:
+    build:
+      context: ./frontend/frontend
+      dockerfile: Dockerfile.prod
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+
+volumes:
+  postgres_data:
+  redis_data:
+  static_volume:

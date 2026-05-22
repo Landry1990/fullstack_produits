@@ -99,18 +99,18 @@ export default function ScheduledOrdersListModal({
             maxWidth="max-w-4xl"
             footer={
                 <div className="flex justify-between items-center w-full">
-                    <button className="btn btn-ghost" onClick={onClose}>Fermer</button>
-                    <button className="btn btn-primary shadow-lg shadow-primary/20" onClick={onCreateSchedule}>
+                    <button className="btn-ref btn-ghost" onClick={onClose}>Fermer</button>
+                    <button className="btn-ref btn-primary shadow-lg shadow-indigo-500/20" onClick={onCreateSchedule}>
                         <Plus className="size-4 mr-2" />
                         Nouveau Planning
                     </button>
                 </div>
             }
         >
-            <div className="p-6 bg-slate-50 min-h-[400px]">
+            <div className="p-6 bg-base-200 min-h-[400px]">
                 {loading ? (
                     <div className="flex flex-col items-center justify-center py-20 gap-4">
-                        <span className="loading loading-spinner loading-lg text-primary"></span>
+                        <span className="inline-block size-8 border-2 border-base-300 border-t-indigo-600 rounded-full animate-spin"></span>
                         <span className="text-sm font-bold opacity-40">Chargement des plannings...</span>
                     </div>
                 ) : schedules.length === 0 ? (
@@ -122,14 +122,14 @@ export default function ScheduledOrdersListModal({
                             <h3 className="text-lg font-bold">Aucun planning configuré</h3>
                             <p className="text-sm text-base-content/50 max-w-xs mx-auto">Commencez par créer votre premier planning pour automatiser vos suggestions de commande.</p>
                         </div>
-                        <button className="btn btn-primary btn-sm rounded-xl" onClick={onCreateSchedule}>
+                        <button className="inline-flex items-center justify-center gap-2 px-4 py-2 bg-primary text-white text-sm font-bold rounded-xl hover:bg-primary-focus transition-colors" onClick={onCreateSchedule}>
                             Créer un planning
                         </button>
                     </div>
                 ) : (
                     <div className="overflow-x-auto">
-                        <table className="table table-sm w-full bg-white rounded-2xl shadow-sm border border-base-200 overflow-hidden">
-                            <thead className="bg-slate-100/50">
+                        <table className="w-full bg-base-100 rounded-2xl shadow-sm border border-base-300 overflow-hidden text-sm">
+                            <thead className="bg-base-200/50">
                                 <tr>
                                     <th className="text-[10px] font-black uppercase tracking-widest text-primary/60 py-4 pl-6">Fournisseur</th>
                                     <th className="text-[10px] font-black uppercase tracking-widest text-primary/60 py-4">Programmation</th>
@@ -138,11 +138,11 @@ export default function ScheduledOrdersListModal({
                                     <th className="text-[10px] font-black uppercase tracking-widest text-primary/60 py-4 pr-6 text-right">Actions</th>
                                 </tr>
                             </thead>
-                            <tbody className="divide-y divide-base-100">
+                            <tbody className="divide-y divide-base-200">
                                 {schedules.map(schedule => {
                                     const fournisseur = fournisseurs.find(f => f.id === schedule.fournisseur)
                                     return (
-                                        <tr key={schedule.id} className="hover:bg-slate-50/80 transition-colors group">
+                                        <tr key={schedule.id} className="hover:bg-base-200/80 transition-colors group">
                                             <td className="py-4 pl-6">
                                                 <div className="flex items-center gap-3">
                                                     <div className="p-1.5 bg-primary/10 text-primary rounded-lg">
@@ -157,43 +157,43 @@ export default function ScheduledOrdersListModal({
                                                         <Clock className="size-3 text-primary" />
                                                         {schedule.time}
                                                     </span>
-                                                    <span className="text-[10px] text-base-content/40 font-medium">
+                                                    <span className="text-[10px] text-base-content/50 font-medium">
                                                         {getDayLabels(schedule.active_days)}
                                                     </span>
                                                 </div>
                                             </td>
                                             <td className="py-4">
-                                                <span className={`badge badge-outline border-primary/20 text-primary text-[9px] font-black uppercase px-2`}>
+                                                <span className={`inline-flex items-center border border-indigo-200 text-primary text-[9px] font-black uppercase px-2 rounded-full`}>
                                                     {schedule.execution_mode === 'OPTIMISE' ? 'Intelligent' : 'Statique'}
                                                 </span>
                                             </td>
                                             <td className="py-4">
-                                                <div className={`badge ${schedule.is_active ? 'badge-success text-white' : 'badge-ghost opacity-50'} badge-xs font-black text-[9px] uppercase px-2`}>
+                                                <div className={`inline-flex items-center rounded-full text-[9px] font-black uppercase px-2 py-0.5 ${schedule.is_active ? 'bg-success/20 text-success' : 'bg-base-200 text-base-content/50'}`}>
                                                     {schedule.is_active ? 'Actif' : 'Off'}
                                                 </div>
                                             </td>
                                             <td className="py-4 pr-6 text-right">
                                                 <div className="flex justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                                                     <button
-                                                        className="btn btn-ghost btn-xs text-warning hover:bg-warning/10 rounded-lg px-2 gap-1 font-bold"
+                                                        className="inline-flex items-center gap-1 px-2 py-1 text-xs font-bold text-warning hover:bg-warning/10 rounded-lg transition-colors"
                                                         onClick={() => handleTriggerNow(schedule)}
                                                         disabled={triggeringId === schedule.id}
                                                         title="Lancer maintenant"
                                                     >
                                                         {triggeringId === schedule.id
-                                                            ? <span className="loading loading-spinner loading-xs" />
+                                                            ? <span className="inline-block size-3 border-2 border-amber-600/30 border-t-amber-600 rounded-full animate-spin" />
                                                             : <Zap className="size-3.5" />}
                                                         Lancer
                                                     </button>
                                                     <button 
-                                                        className="btn btn-ghost btn-xs text-primary hover:bg-primary/10 rounded-lg p-1"
+                                                        className="btn-ref btn-ghost btn-xs text-primary hover:bg-primary/10 rounded-lg p-1"
                                                         onClick={() => onEditSchedule(schedule)}
                                                         title="Modifier"
                                                     >
                                                         <Edit className="size-3.5" />
                                                     </button>
                                                     <button 
-                                                        className="btn btn-ghost btn-xs text-error hover:bg-error/10 rounded-lg p-1"
+                                                        className="btn-ref btn-ghost btn-xs text-error hover:bg-error/10 rounded-lg p-1"
                                                         onClick={() => schedule.id && handleDelete(schedule.id)}
                                                         title="Supprimer"
                                                     >

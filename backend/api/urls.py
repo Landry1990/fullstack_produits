@@ -1,5 +1,16 @@
+from django.http import JsonResponse
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
+
+# Health check endpoint for Docker monitoring
+def health_check(request):
+    """Simple health check endpoint for Docker/container monitoring."""
+    return JsonResponse({
+        "status": "healthy",
+        "service": "pharma-backend",
+        "version": "1.0.0"
+    })
+
 from .views import (
     ProduitViewSet, CategorieViewSet, FournisseurViewSet, ClientViewSet,
     CommandeViewSet, CommandeProduitViewSet, FactureViewSet, FactureProduitViewSet, CaisseViewSet,
@@ -44,6 +55,7 @@ from .views.licence import LicenceStatusView, LicenceNotificationsView
 from .views.margin_views import MarginViewSet
 from .views.meds_reference import MedicamentReferenceViewSet
 from .views.dci_admin import DCIAdminViewSet
+from .views.debug_score import DebugStockScoreView
 
 # Create a router and register our viewsets with it.
 router = DefaultRouter()
@@ -145,5 +157,7 @@ urlpatterns = [
     path('version/', app_version, name='app-version'),
     path('licence/', LicenceStatusView.as_view(), name='licence-status'),
     path('licence/notifications/', LicenceNotificationsView.as_view(), name='licence-notifications'),
+    path('debug/score/', DebugStockScoreView.as_view(), name='debug-score'),
+    path('health/', health_check, name='health-check'),
     path('', include(router.urls)),
 ]

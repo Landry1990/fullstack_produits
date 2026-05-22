@@ -496,7 +496,7 @@ export default function HistoriqueClotures() {
                   <tr>
                     <td colSpan={6} className="h-64 text-center text-base-content/50">
                       <div className="flex flex-col items-center justify-center gap-3">
-                        <Banknote className="size-12 opacity-20" />
+                        <Banknote className="size-12 text-base-content/20" />
                         <p className="text-lg">{t('table.no_cloture')}</p>
                         <p className="text-sm">{t('table.no_cloture_desc')}</p>
                       </div>
@@ -516,7 +516,7 @@ export default function HistoriqueClotures() {
                       </td>
                       {isMultiCaisse && (
                          <td className="py-3">
-                           <div className="badge badge-sm badge-outline font-bold opacity-70">
+                           <div className="badge badge-sm badge-outline font-bold text-base-content/70">
                              {(cloture as any).poste_caisse_nom || '-'}
                            </div>
                          </td>

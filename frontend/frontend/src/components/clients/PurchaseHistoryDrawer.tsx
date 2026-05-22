@@ -55,11 +55,11 @@ export default function PurchaseHistoryDrawer({
 
   return (
     <div className={`fixed inset-0 z-[100] transition-opacity duration-300 ${isOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}>
-      <div className="absolute inset-0 bg-base-content/20 backdrop-blur-sm" onClick={onClose} />
+      <div className="absolute inset-0 bg-gray-900/20 backdrop-blur-sm" onClick={onClose} />
       
       <div className={`absolute right-0 top-0 bottom-0 w-full max-w-xl bg-base-100 shadow-2xl transition-transform duration-500 transform ${isOpen ? 'translate-x-0' : 'translate-x-full'} flex flex-col`}>
         {/* Header */}
-        <div className="p-6 border-b border-base-200 bg-base-50/80 backdrop-blur-md flex justify-between items-center shrink-0">
+        <div className="p-6 border-b border-base-300 bg-base-200/80 backdrop-blur-md flex justify-between items-center shrink-0">
           <div className="flex items-center gap-3">
              <div className="p-2.5 bg-primary/10 text-primary rounded-2xl">
                <HistoryIcon className="size-6" />
@@ -69,7 +69,7 @@ export default function PurchaseHistoryDrawer({
                <p className="text-xs font-semibold text-base-content/40 uppercase tracking-widest">{data?.client_name}</p>
              </div>
           </div>
-          <button onClick={onClose} className="btn btn-sm btn-circle btn-ghost transition-all hover:rotate-90">
+          <button onClick={onClose} className="inline-flex items-center justify-center size-8 rounded-full text-base-content/60 hover:bg-base-200 transition-all hover:rotate-90">
             <X className="size-5"/>
           </button>
         </div>
@@ -78,24 +78,24 @@ export default function PurchaseHistoryDrawer({
         <div className="flex-1 overflow-y-auto p-6 space-y-6">
            {loading ? (
              <div className="flex flex-col items-center justify-center h-full gap-4 opacity-40">
-                <span className="loading loading-spinner loading-lg text-primary"></span>
+                <span className="inline-block size-8 border-2 border-base-300 border-t-indigo-600 rounded-full animate-spin"></span>
                 <p className="text-xs font-black uppercase tracking-widest">{t('common:loading')}</p>
              </div>
            ) : data && data.factures.length > 0 ? (
              <>
                {/* Stats Summary */}
                <div className="grid grid-cols-2 gap-4 animate-in fade-in slide-in-from-top-4 duration-300">
-                   <div className="bg-primary/5 p-4 rounded-3xl border border-primary/10 flex flex-col gap-1">
-                      <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-primary/40">
+                   <div className="bg-primary/10 p-4 rounded-3xl border border-indigo-500/10 flex flex-col gap-1">
+                      <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-indigo-500/40">
                          <ShoppingBag className="size-3" /> {t('clients:history.total_visits')}
                       </div>
                       <div className="text-2xl font-black text-primary">{data.total_factures}</div>
                    </div>
-                   <div className="bg-secondary/5 p-4 rounded-3xl border border-secondary/10 flex flex-col gap-1">
-                      <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-secondary/40">
+                   <div className="bg-info/10 p-4 rounded-3xl border border-blue-500/10 flex flex-col gap-1">
+                      <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-blue-500/40">
                          <TrendingUp className="size-3" /> {t('clients:history.loyalty')}
                       </div>
-                      <div className="text-2xl font-black text-secondary">{Math.floor(data.total_factures * 1.5)} {t('clients:units.pts')}</div>
+                      <div className="text-2xl font-black text-info">{Math.floor(data.total_factures * 1.5)} {t('clients:units.pts')}</div>
                    </div>
                </div>
 
@@ -104,14 +104,14 @@ export default function PurchaseHistoryDrawer({
                   {data.factures.map((facture) => (
                     <div 
                       key={facture.id} 
-                      className={`group border border-base-200 rounded-3xl transition-all duration-300 ${expandedInvoice === facture.id ? 'bg-base-200/30 ring-1 ring-primary/20' : 'bg-base-100 hover:border-primary/30'}`}
+                      className={`group border border-base-300 rounded-3xl transition-all duration-300 ${expandedInvoice === facture.id ? 'bg-base-200/30 ring-1 ring-indigo-500/20' : 'bg-base-100 hover:border-indigo-500/30'}`}
                     >
                        <div 
                          className="p-4 flex items-center justify-between cursor-pointer"
                          onClick={() => setExpandedInvoice(expandedInvoice === facture.id ? null : facture.id)}
                        >
                           <div className="flex items-center gap-4">
-                             <div className={`size-10 rounded-2xl flex items-center justify-center transition-colors ${expandedInvoice === facture.id ? 'bg-primary text-white shadow-lg shadow-primary/20' : 'bg-base-200 text-base-content/40 group-hover:bg-primary/10 group-hover:text-primary'}`}>
+                             <div className={`size-10 rounded-2xl flex items-center justify-center transition-colors ${expandedInvoice === facture.id ? 'bg-primary text-white shadow-lg shadow-indigo-500/20' : 'bg-base-200 text-base-content/40 group-hover:bg-primary/10 group-hover:text-primary'}`}>
                                 <PackageCheck className="size-5" />
                              </div>
                              <div>
@@ -124,7 +124,7 @@ export default function PurchaseHistoryDrawer({
                           <div className="flex items-center gap-4">
                              <div className="text-right">
                                 <div className="text-sm font-black text-base-content">{formatCurrency(facture.total_ttc)}</div>
-                                <div className={`text-[9px] font-black uppercase px-1.5 py-0.5 rounded leading-none mt-0.5 ${facture.status === 'VALIDEE' ? 'bg-success/10 text-success' : 'bg-warning/10 text-warning'}`}>
+                                <div className={`text-[9px] font-black uppercase px-1.5 py-0.5 rounded leading-none mt-0.5 ${facture.status === 'VALIDEE' ? 'bg-success/20 text-success' : 'bg-warning/20 text-warning'}`}>
                                    {facture.status === 'VALIDEE' ? t('clients:history.status_validee') : facture.status}
                                 </div>
                              </div>
@@ -135,9 +135,9 @@ export default function PurchaseHistoryDrawer({
                        {/* Expanded Details */}
                        {expandedInvoice === facture.id && (
                           <div className="px-4 pb-4 animate-in slide-in-from-top-2 duration-300">
-                             <div className="bg-base-100 rounded-2xl border border-base-200/50 overflow-hidden shadow-sm">
-                                <table className="table table-xs w-full">
-                                   <thead className="bg-base-50">
+                             <div className="bg-base-100 rounded-2xl border border-base-300/50 overflow-hidden shadow-sm">
+                                <table className="w-full text-xs">
+                                   <thead className="bg-base-200">
                                       <tr>
                                          <th className="py-2 text-[9px] uppercase font-black tracking-widest text-base-content/40">{t('common:product')}</th>
                                          <th className="py-2 text-[9px] uppercase font-black tracking-widest text-base-content/40 text-center">{t('clients:history.quantity_short')}</th>
@@ -146,7 +146,7 @@ export default function PurchaseHistoryDrawer({
                                    </thead>
                                    <tbody>
                                       {facture.produits.map((prod, idx) => (
-                                         <tr key={idx} className="border-b border-base-200/30 last:border-0 hover:bg-base-50/50">
+                                         <tr key={idx} className="border-b border-base-300/30 last:border-0 hover:bg-base-200/50">
                                             <td className="py-2.5 px-3">
                                                <div className="text-xs font-bold leading-tight line-clamp-1">{prod.nom}</div>
                                                <div className="text-[9px] opacity-40 font-mono tracking-tighter">{prod.prix_unitaire} {t('clients:units.per_unit')}</div>
