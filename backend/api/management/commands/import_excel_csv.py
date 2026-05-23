@@ -16,6 +16,11 @@ from django.utils import timezone
 from django.core.management.base import BaseCommand, CommandError
 from django.db import transaction
 from api.models import Produit, Fournisseur, Forme, Groupe, Rayon
+try:
+    import pandas as pd
+    PANDAS_AVAILABLE = True
+except ImportError:
+    PANDAS_AVAILABLE = False
 
 
 class Command(BaseCommand):
@@ -62,6 +67,10 @@ class Command(BaseCommand):
             f"   • Mis à jour: {stats['updated']}\n"
             f"   • Erreurs: {stats['errors']}"
         ))
+        
+        # Générer le rapport
+        if not options['dry_run']:
+            self.generate_report(stats, filepath)
 
     def read_excel(self, filepath, sheet_index, skip_header):
         """Lit un fichier Excel avec pandas"""
@@ -109,25 +118,28 @@ class Command(BaseCommand):
         return data if isinstance(data, list) else [data]
 
     def import_data(self, data, dry_run):
-        """Importe les données dans la base"""
-        stats = {'created': 0, 'updated': 0, 'errors': 0}
+        """Importe les données dans la base - une transaction par ligne"""
+        stats = {'created': 0, 'updated': 0, 'errors': 0, 'success_rows': [], 'error_rows': []}
         
-        with transaction.atomic():
-            for idx, row in enumerate(data, 1):
-                try:
+        for idx, row in enumerate(data, 1):
+            try:
+                with transaction.atomic():
                     result = self.process_row(row, dry_run)
-                    if result == 'created':
-                        stats['created'] += 1
-                    elif result == 'updated':
-                        stats['updated'] += 1
-                        
-                    # Afficher progression
-                    if idx % 100 == 0:
-                        self.stdout.write(f"   ... {idx}/{len(data)}")
-                        
-                except Exception as e:
-                    stats['errors'] += 1
-                    self.stdout.write(self.style.ERROR(f"   ❌ Ligne {idx}: {e}"))
+                if result == 'created':
+                    stats['created'] += 1
+                    stats['success_rows'].append({'ligne': idx, 'statut': 'Créé', **{str(k): v for k, v in row.items()}})
+                elif result == 'updated':
+                    stats['updated'] += 1
+                    stats['success_rows'].append({'ligne': idx, 'statut': 'Mis à jour', **{str(k): v for k, v in row.items()}})
+                    
+                # Afficher progression
+                if idx % 100 == 0:
+                    self.stdout.write(f"   ... {idx}/{len(data)}")
+                    
+            except Exception as e:
+                stats['errors'] += 1
+                stats['error_rows'].append({'ligne': idx, 'erreur': str(e), **{str(k): v for k, v in row.items()}})
+                self.stdout.write(self.style.ERROR(f"   ❌ Ligne {idx}: {e}"))
         
         return stats
 
@@ -230,6 +242,64 @@ class Command(BaseCommand):
             defaults['cip1'] = code or ''
             Produit.objects.create(**defaults)
             return 'created'
+
+    def generate_report(self, stats, source_filepath):
+        """Génère un rapport texte + Excel (si pandas dispo) avec succès et échecs"""
+        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+        reports_dir = Path('/app/rapports')
+        reports_dir.mkdir(parents=True, exist_ok=True)
+
+        # --- Rapport texte (toujours généré) ---
+        txt_path = reports_dir / f"rapport_import_{timestamp}.txt"
+        total = stats['created'] + stats['updated'] + stats['errors']
+        with open(str(txt_path), 'w', encoding='utf-8') as f:
+            f.write(f"RAPPORT D'IMPORT — {datetime.now().strftime('%d/%m/%Y %H:%M:%S')}\n")
+            f.write("=" * 60 + "\n")
+            f.write(f"  Total traité   : {total}\n")
+            f.write(f"  Créés          : {stats['created']}\n")
+            f.write(f"  Mis à jour     : {stats['updated']}\n")
+            f.write(f"  Échecs         : {stats['errors']}\n")
+            f.write("=" * 60 + "\n\n")
+
+            if stats['error_rows']:
+                f.write(f"LIGNES EN ÉCHEC ({len(stats['error_rows'])}):\n")
+                f.write("-" * 60 + "\n")
+                for row in stats['error_rows']:
+                    f.write(f"  Ligne {row.get('ligne','?')} — {row.get('erreur','?')}\n")
+                    nom = row.get('nom') or row.get('name') or row.get('designation') or ''
+                    code = row.get('code') or row.get('cip') or row.get('cip1') or ''
+                    if nom or code:
+                        f.write(f"    Produit: {nom} | Code: {code}\n")
+            else:
+                f.write("Aucun échec.\n")
+
+        import sys
+        print(f"\n📄 Rapport texte : {txt_path}", file=sys.stderr, flush=True)
+        self.stdout.write(self.style.SUCCESS(f"\n📄 Rapport texte : {txt_path}"))
+
+        # --- Rapport Excel (si pandas dispo) ---
+        if not PANDAS_AVAILABLE:
+            return
+
+        try:
+            xlsx_path = reports_dir / f"rapport_import_{timestamp}.xlsx"
+            with pd.ExcelWriter(str(xlsx_path), engine='openpyxl') as writer:
+                pd.DataFrame({
+                    'Indicateur': ['Total traité', 'Créés', 'Mis à jour', 'Échecs'],
+                    'Valeur': [total, stats['created'], stats['updated'], stats['errors']]
+                }).to_excel(writer, sheet_name='Résumé', index=False)
+
+                success_df = pd.DataFrame(stats['success_rows']) if stats['success_rows'] \
+                    else pd.DataFrame([{'info': 'Aucun enregistrement'}])
+                success_df.to_excel(writer, sheet_name='Succès', index=False)
+
+                error_df = pd.DataFrame(stats['error_rows']) if stats['error_rows'] \
+                    else pd.DataFrame([{'info': 'Aucun échec'}])
+                error_df.to_excel(writer, sheet_name='Échecs', index=False)
+
+            self.stdout.write(self.style.SUCCESS(f"📊 Rapport Excel  : {xlsx_path}"))
+        except Exception as e:
+            self.stdout.write(self.style.WARNING(f"⚠ Rapport Excel non généré: {e}"))
 
     def get_value(self, row, keys):
         """Récupère la première valeur trouvée parmi les clés"""

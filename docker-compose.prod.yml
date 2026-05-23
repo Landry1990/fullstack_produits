@@ -3,7 +3,7 @@ services:
   db:
     image: postgres:15-alpine
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - fullstack_postgres_data_protected:/var/lib/postgresql/data
     environment:
       - POSTGRES_DB=${DB_NAME:-fullstack_db}
       - POSTGRES_USER=${DB_USER:-fullstack_user}
@@ -128,7 +128,8 @@ networks:
     driver: bridge
 
 volumes:
-  postgres_data:
+  fullstack_postgres_data_protected:
+    external: true
   static_volume:
   media_volume:
   redis_data:
