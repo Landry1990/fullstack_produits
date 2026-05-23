@@ -1,113 +1,98 @@
-/**
- * Écran d'authentification
- * Login avec gestion des erreurs réseau typées
- */
 import React, { useState } from 'react';
 import {
-  View,
-  Text,
-  StyleSheet,
-  TextInput,
-  TouchableOpacity,
-  ActivityIndicator,
-  KeyboardAvoidingView,
-  Platform,
+  View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, ActivityIndicator,
 } from 'react-native';
-import { authService } from '../services';
 import { useAuthStore } from '../stores';
+import { login } from '../services';
 
-export function LoginScreen() {
+export function LoginScreen({ onLoginSuccess }: { onLoginSuccess: () => void }) {
+  const { serverUrl, setServerUrl, setAuth } = useAuthStore();
+  const [url, setUrl] = useState(serverUrl);
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  const { setAuthenticated } = useAuthStore();
+  const [loading, setLoading] = useState(false);
 
   const handleLogin = async () => {
-    if (!username.trim() || !password.trim()) {
-      setError('Veuillez remplir tous les champs');
+    if (!url || !username || !password) {
+      Alert.alert('Erreur', 'Tous les champs sont requis');
       return;
     }
 
-    setIsLoading(true);
-    setError(null);
-
-    const result = await authService.login({
-      username: username.trim(),
-      password,
-    });
-
-    if (result.success) {
-      const token = await authService.getCurrentUser(); // On utilise ceci juste pour avoir le token, bien que authService.login le gère en interne via SecureStore.
-      // Le token n'est pas renvoyé par result dans notre structure simplifiée plus haut, mais setAuthenticated l'attend.
-      // Correction : login() renvoie { success: true, user } et a déjà stocké le token.
-      // On va juste setAuthenticated avec un pseudo-token ou récupérer le vrai si on en a besoin.
-      // Simplifions : authService.login devrait retourner le token. Pour l'instant on met un token placeholder dans le store si on ne l'a pas sous la main.
-      setAuthenticated(result.user, 'token_hidden');
-    } else {
-      setError(result.error.message);
+    setLoading(true);
+    try {
+      let cleanUrl = url.trim().replace(/\/$/, '');
+      // Auto-correction : si le port est 80 (nginx), corriger en 8000 (Django)
+      if (cleanUrl.match(/:80$/)) {
+        cleanUrl = cleanUrl.replace(/:80$/, ':8000');
+        console.log('[Login] Port corrigé:', cleanUrl);
+      }
+      // Si aucun port spécifié, ajouter :8000 par défaut
+      if (!cleanUrl.match(/:\d+$/)) {
+        cleanUrl = `${cleanUrl}:8000`;
+        console.log('[Login] Port ajouté:', cleanUrl);
+      }
+      console.log('[Login] Tentative connexion vers:', cleanUrl);
+      setServerUrl(cleanUrl);
+      const token = await login(cleanUrl, username, password);
+      console.log('[Login] Connexion réussie');
+      setAuth(token, username);
+      onLoginSuccess();
+    } catch (err: any) {
+      console.error('[Login] Erreur:', err);
+      const msg = err?.response?.data?.detail || err?.message || 'Impossible de se connecter';
+      Alert.alert('Erreur de connexion', msg);
+    } finally {
+      setLoading(false);
     }
-
-    setIsLoading(false);
   };
 
   return (
-    <KeyboardAvoidingView
-      style={styles.container}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-    >
-      <View style={styles.formContainer}>
-        <View style={styles.header}>
-          <Text style={styles.title}>Connexion</Text>
-          <Text style={styles.subtitle}>Terminal de Vente Mobile</Text>
-        </View>
+    <View style={styles.container}>
+      <View style={styles.card}>
+        <Text style={styles.title}>Connexion</Text>
+        <Text style={styles.subtitle}>Tablette Facturation</Text>
 
-        <View style={styles.inputGroup}>
-          <Text style={styles.label}>Nom d'utilisateur</Text>
-          <TextInput
-            style={styles.input}
-            value={username}
-            onChangeText={setUsername}
-            placeholder="Ex: vendeur1"
-            placeholderTextColor="#475569"
-            autoCapitalize="none"
-            editable={!isLoading}
-          />
-        </View>
+        <TextInput
+          style={styles.input}
+          placeholder="http://192.168.1.181:8000"
+          placeholderTextColor="#64748b"
+          value={url}
+          onChangeText={setUrl}
+          autoCapitalize="none"
+          keyboardType="default"
+        />
 
-        <View style={styles.inputGroup}>
-          <Text style={styles.label}>Mot de passe</Text>
-          <TextInput
-            style={styles.input}
-            value={password}
-            onChangeText={setPassword}
-            placeholder="••••••••"
-            placeholderTextColor="#475569"
-            secureTextEntry
-            editable={!isLoading}
-          />
-        </View>
+        <TextInput
+          style={styles.input}
+          placeholder="Nom d'utilisateur"
+          placeholderTextColor="#64748b"
+          value={username}
+          onChangeText={setUsername}
+          autoCapitalize="none"
+        />
 
-        {error && (
-          <View style={styles.errorContainer}>
-            <Text style={styles.errorText}>⚠ {error}</Text>
-          </View>
-        )}
+        <TextInput
+          style={styles.input}
+          placeholder="Mot de passe"
+          placeholderTextColor="#64748b"
+          value={password}
+          onChangeText={setPassword}
+          secureTextEntry
+        />
 
         <TouchableOpacity
-          style={[styles.loginButton, isLoading && styles.disabled]}
+          style={[styles.button, loading && styles.buttonDisabled]}
           onPress={handleLogin}
-          disabled={isLoading}
+          disabled={loading}
         >
-          {isLoading ? (
+          {loading ? (
             <ActivityIndicator color="#fff" />
           ) : (
-            <Text style={styles.loginButtonText}>Se connecter</Text>
+            <Text style={styles.buttonText}>Se connecter</Text>
           )}
         </TouchableOpacity>
       </View>
-    </KeyboardAvoidingView>
+    </View>
   );
 }
 
@@ -116,67 +101,36 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#0f172a',
     justifyContent: 'center',
+    alignItems: 'center',
+    padding: 24,
   },
-  formContainer: {
-    paddingHorizontal: 24,
-    gap: 16,
+  card: {
+    backgroundColor: '#1e293b',
+    borderRadius: 16,
+    padding: 24,
+    width: '100%',
+    maxWidth: 400,
   },
-  header: {
-    marginBottom: 24,
-  },
-  title: {
-    fontSize: 32,
-    fontWeight: '800',
-    color: '#f1f5f9',
-    marginBottom: 8,
-  },
-  subtitle: {
-    fontSize: 16,
-    color: '#34d399',
-    fontWeight: '500',
-  },
-  inputGroup: {
-    gap: 8,
-  },
-  label: {
-    fontSize: 14,
-    color: '#94a3b8',
-    fontWeight: '600',
-    marginLeft: 4,
-  },
+  title: { fontSize: 24, fontWeight: '700', color: '#f1f5f9', marginBottom: 4 },
+  subtitle: { fontSize: 14, color: '#64748b', marginBottom: 24 },
   input: {
-    backgroundColor: 'rgba(255, 255, 255, 0.05)',
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.1)',
-    borderRadius: 12,
-    padding: 16,
-    fontSize: 16,
+    backgroundColor: '#0f172a',
+    borderRadius: 8,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    marginBottom: 12,
     color: '#f1f5f9',
+    fontSize: 15,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.1)',
   },
-  errorContainer: {
-    backgroundColor: 'rgba(239, 68, 68, 0.15)',
-    padding: 12,
-    borderRadius: 10,
+  button: {
+    backgroundColor: '#6366f1',
+    borderRadius: 8,
+    paddingVertical: 14,
+    alignItems: 'center',
     marginTop: 8,
   },
-  errorText: {
-    color: '#ef4444',
-    fontSize: 14,
-    fontWeight: '500',
-  },
-  loginButton: {
-    backgroundColor: '#10b981',
-    borderRadius: 12,
-    paddingVertical: 16,
-    alignItems: 'center',
-    marginTop: 16,
-  },
-  loginButtonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '700',
-  },
-  disabled: {
-    opacity: 0.7,
-  },
+  buttonDisabled: { opacity: 0.6 },
+  buttonText: { color: '#fff', fontSize: 16, fontWeight: '600' },
 });

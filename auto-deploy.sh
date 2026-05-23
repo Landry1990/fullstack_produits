@@ -33,10 +33,19 @@ err()  { echo -e "${RED}$1${NC}"; }
 gray() { echo -e "${GRAY}$1${NC}"; }
 
 # Parse args
-for arg in "$@"; do
-    case "$arg" in
-        --branch)    next=$((i+1)); BRANCH="${!next:-main}" ;;
-        --skip-backup) SKIP_BACKUP=true ;;
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        --branch)
+            BRANCH="$2"
+            shift 2
+            ;;
+        --skip-backup)
+            SKIP_BACKUP=true
+            shift
+            ;;
+        *)
+            shift
+            ;;
     esac
 done
 
@@ -173,4 +182,10 @@ info "════════════════════════�
 echo ""
 gray "  Backend:  $backend_status / $backend_health"
 gray "  Frontend: $frontend_status / $frontend_health"
+echo ""
+
+# Nettoyage des images orphelines pour éviter la saturation du disque chez le client
+info "🧹 Nettoyage des images Docker orphelines (dangling)..."
+docker image prune -f >/dev/null 2>&1 || true
+log "  ✅ Nettoyage terminé !"
 echo ""

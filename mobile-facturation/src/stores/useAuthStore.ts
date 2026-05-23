@@ -1,28 +1,28 @@
-/**
- * Store Zustand — État d'authentification
- */
 import { create } from 'zustand';
-import type { LoginResponse } from '../types';
 
 interface AuthState {
-  isAuthenticated: boolean;
-  user: LoginResponse['user'] | null;
   token: string | null;
+  username: string | null;
+  serverUrl: string;
+  isAuthenticated: boolean;
 
-  setAuthenticated: (user: LoginResponse['user'], token: string) => void;
-  setUnauthenticated: () => void;
+  setAuth: (token: string, username: string) => void;
+  setServerUrl: (url: string) => void;
+  logout: () => void;
 }
 
 export const useAuthStore = create<AuthState>((set) => ({
-  isAuthenticated: false,
-  user: null,
   token: null,
+  username: null,
+  serverUrl: 'http://192.168.1.181:8000',
+  isAuthenticated: false,
 
-  setAuthenticated: (user, token) => {
-    set({ isAuthenticated: true, user, token });
-  },
+  setAuth: (token, username) =>
+    set({ token, username, isAuthenticated: true }),
 
-  setUnauthenticated: () => {
-    set({ isAuthenticated: false, user: null, token: null });
-  },
+  setServerUrl: (url) =>
+    set({ serverUrl: url.replace(/\/$/, '') }),
+
+  logout: () =>
+    set({ token: null, username: null, isAuthenticated: false }),
 }));

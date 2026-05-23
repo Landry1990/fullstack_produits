@@ -172,7 +172,7 @@ export default function ImportProductsModal({ onClose, onSuccess }: ImportProduc
                 <div>
                   <h3 className="font-semibold text-base-content">{t('products:import.success_title')}</h3>
                   <div className="text-sm text-base-content/70 mt-1">
-                    <p>{t('products:import.created', { count: result.imported })}</p>
+                    <p>{t('products:import.created', { count: result.imported !== undefined ? result.imported : (result as any).created || 0 })}</p>
                     <p>{t('products:import.updated', { count: result.updated })}</p>
                   </div>
                 </div>

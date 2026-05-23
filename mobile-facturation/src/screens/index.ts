@@ -1,9 +1,3 @@
-export { ServerSetupScreen } from './ServerSetupScreen';
 export { LoginScreen } from './LoginScreen';
-export { HomeScreen } from './HomeScreen';
-export { SaleScreen } from './SaleScreen';
-export { CartScreenV2 } from './CartScreenV2';
-export { InvoiceListScreen } from './InvoiceListScreen';
-export { InvoiceDetailScreen } from './InvoiceDetailScreen';
-export { ClientSelectScreen } from './ClientSelectScreen';
-export { PendingSalesScreen } from './PendingSalesScreen';
+export { FacturationScreen } from './FacturationScreen';
+export { HistoriqueScreen } from './HistoriqueScreen';

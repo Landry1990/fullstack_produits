@@ -10,9 +10,15 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 INTERVAL="hourly"
 
 # Parse args
-for arg in "$@"; do
-    case "$arg" in
-        --interval) next=$((i+1)); INTERVAL="${!next:-hourly}" ;;
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        --interval)
+            INTERVAL="$2"
+            shift 2
+            ;;
+        *)
+            shift
+            ;;
     esac
 done
 
