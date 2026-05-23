@@ -3,7 +3,8 @@ import api from '../services/api';
 import {
   Trash2, Download, Eye, ShieldAlert, AlertTriangle,
   CheckSquare, Square, Calendar, Loader2,
-  Wrench, ChevronDown, ChevronUp, Database, Clock, Save, Upload
+  Wrench, ChevronDown, ChevronUp, Database, Clock, Save, Upload,
+  Package, FileUp, FileDown, RefreshCw
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
@@ -90,6 +91,20 @@ export default function Maintenance() {
   const [restoreStep, setRestoreStep] = useState('');
   const [showRestoreConfirm, setShowRestoreConfirm] = useState(false);
   
+  // Produits States
+  const [produitsCount, setProduitsCount] = useState<number | null>(null);
+  const [importFile, setImportFile] = useState<File | null>(null);
+  const [importing, setImporting] = useState(false);
+  const [importResult, setImportResult] = useState<any>(null);
+  const [importProgress, setImportProgress] = useState(0);
+  const [importMessage, setImportMessage] = useState('');
+  const [importJobId, setImportJobId] = useState<string | null>(null);
+  const [showPurgeModal, setShowPurgeModal] = useState(false);
+  const [purgePassword, setPurgePassword] = useState('');
+  const [purgeSansVentes, setPurgeSansVentes] = useState(true);
+  const [purging2, setPurging2] = useState(false);
+  const [purgeResult, setPurgeResult] = useState<any>(null);
+
   // Code Source States
   const [codeBackupLoading, setCodeBackupLoading] = useState(false);
   const [codeRestoreFile, setCodeRestoreFile] = useState<File | null>(null);
@@ -104,7 +119,94 @@ export default function Maintenance() {
     api.get('pharmacy-settings/')
       .then(res => setPharmacySettings(res.data))
       .catch(() => console.error('Error loading pharmacy settings'));
+
+    api.get('maintenance/produits_count/')
+      .then(res => setProduitsCount(res.data.count))
+      .catch(() => {});
   }, []);
+
+  const handleImportProduits = async () => {
+    if (!importFile) { toast.error('Sélectionnez un fichier Excel'); return; }
+    setImporting(true);
+    setImportResult(null);
+    setImportProgress(0);
+    setImportMessage('Envoi du fichier...');
+    const formData = new FormData();
+    formData.append('file', importFile);
+    try {
+      const res = await api.post('maintenance/import_produits/', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+        timeout: 30000,
+      });
+      const jobId = res.data.job_id;
+      setImportJobId(jobId);
+      setImportMessage('Import démarré en arrière-plan...');
+
+      // Polling toutes les 2 secondes
+      const poll = setInterval(async () => {
+        try {
+          const status = await api.get(`maintenance/import_status/?job_id=${jobId}`);
+          const d = status.data;
+          setImportProgress(d.progress || 0);
+          setImportMessage(d.message || '');
+
+          if (d.status === 'done') {
+            clearInterval(poll);
+            setImporting(false);
+            setImportResult(d);
+            setImportJobId(null);
+            toast.success(d.message);
+            api.get('maintenance/produits_count/').then(r => setProduitsCount(r.data.count)).catch(() => {});
+          } else if (d.status === 'error') {
+            clearInterval(poll);
+            setImporting(false);
+            setImportJobId(null);
+            toast.error(d.message);
+          }
+        } catch {
+          clearInterval(poll);
+          setImporting(false);
+          setImportJobId(null);
+        }
+      }, 2000);
+
+    } catch (err: any) {
+      toast.error(err.response?.data?.detail || 'Erreur lors du lancement de l\'import');
+      setImporting(false);
+    }
+  };
+
+  const handlePurgeProduits = async () => {
+    if (!purgePassword) { toast.error('Mot de passe requis'); return; }
+    setPurging2(true);
+    try {
+      const res = await api.post('maintenance/purge_produits/', {
+        password: purgePassword,
+        sans_ventes: purgeSansVentes,
+      });
+      setPurgeResult(res.data);
+      setShowPurgeModal(false);
+      setPurgePassword('');
+      toast.success(res.data.message);
+      api.get('maintenance/produits_count/').then(r => setProduitsCount(r.data.count)).catch(() => {});
+    } catch (err: any) {
+      toast.error(err.response?.data?.detail || 'Erreur lors de la purge');
+    } finally {
+      setPurging2(false);
+    }
+  };
+
+  const downloadRapport = (filename: string) => {
+    api.get(`maintenance/download_rapport/?file=${filename}`, { responseType: 'blob' })
+      .then(res => {
+        const url = window.URL.createObjectURL(new Blob([res.data]));
+        const a = document.createElement('a'); a.href = url;
+        a.setAttribute('download', filename);
+        document.body.appendChild(a); a.click(); a.remove();
+        window.URL.revokeObjectURL(url);
+      })
+      .catch(() => toast.error('Erreur téléchargement rapport'));
+  };
 
   const toggleTable = (key: string) => {
     setSelectedTables(prev => {
@@ -572,6 +674,127 @@ export default function Maintenance() {
             </div>
           </div>
 
+          {/* Gestion des Produits */}
+          <div className="card bg-base-100 shadow-xl border border-indigo-500/20">
+            <div className="card-body gap-4">
+              <h2 className="card-title text-lg flex items-center gap-2">
+                <Package className="size-5 text-indigo-500" />
+                Gestion des Produits
+              </h2>
+
+              {/* Compteur */}
+              <div className="flex items-center justify-between bg-base-200/50 rounded-lg px-4 py-2">
+                <span className="text-sm text-base-content/60">Produits en base</span>
+                <div className="flex items-center gap-2">
+                  <span className="font-bold text-lg text-indigo-500">
+                    {produitsCount === null ? '...' : produitsCount.toLocaleString()}
+                  </span>
+                  <button className="btn btn-ghost btn-xs" onClick={() => api.get('maintenance/produits_count/').then(r => setProduitsCount(r.data.count)).catch(() => {})}>
+                    <RefreshCw className="size-3" />
+                  </button>
+                </div>
+              </div>
+
+              <div className="divider my-0 text-xs">IMPORT</div>
+
+              {/* Import Excel */}
+              <div className="space-y-2">
+                <p className="text-xs text-base-content/60">Importez un fichier Excel (.xlsx) ou CSV pour créer/mettre à jour les produits.</p>
+                <div className="form-control w-full">
+                  <input
+                    type="file"
+                    accept=".xlsx,.xls,.csv"
+                    className="file-input file-input-bordered file-input-sm w-full"
+                    onChange={e => { setImportFile(e.target.files?.[0] || null); setImportResult(null); }}
+                  />
+                </div>
+                <button
+                  className="btn btn-primary btn-sm w-full gap-2"
+                  onClick={handleImportProduits}
+                  disabled={importing || !importFile}
+                >
+                  {importing ? <Loader2 className="size-4 animate-spin" /> : <FileUp className="size-4" />}
+                  {importing ? 'Import en cours...' : 'Importer'}
+                </button>
+
+                {importing && (
+                  <div className="space-y-1 animate-in fade-in duration-300">
+                    <div className="flex justify-between text-xs text-base-content/60">
+                      <span className="italic">{importMessage}</span>
+                      <span className="font-bold text-indigo-500">{importProgress}%</span>
+                    </div>
+                    <progress className="progress progress-primary w-full h-2" value={importProgress} max="100" />
+                  </div>
+                )}
+
+                {/* Résultat import */}
+                {importResult && (
+                  <div className="bg-base-200 rounded-lg p-3 space-y-1 text-sm">
+                    <div className="flex justify-between">
+                      <span className="text-base-content/60">Créés</span>
+                      <span className="font-bold text-success">{importResult.created}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-base-content/60">Mis à jour</span>
+                      <span className="font-bold text-info">{importResult.updated}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-base-content/60">Erreurs</span>
+                      <span className={`font-bold ${importResult.errors > 0 ? 'text-error' : 'text-base-content/40'}`}>{importResult.errors}</span>
+                    </div>
+                    {importResult.rapport_xlsx && (
+                      <button
+                        className="btn btn-xs btn-outline btn-success w-full gap-1 mt-2"
+                        onClick={() => downloadRapport(importResult.rapport_xlsx)}
+                      >
+                        <FileDown className="size-3" /> Télécharger le rapport Excel
+                      </button>
+                    )}
+                    {importResult.rapport_txt && (
+                      <button
+                        className="btn btn-xs btn-outline w-full gap-1"
+                        onClick={() => downloadRapport(importResult.rapport_txt)}
+                      >
+                        <FileDown className="size-3" /> Télécharger le rapport texte
+                      </button>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              <div className="divider my-0 text-xs">PURGE</div>
+
+              {/* Purge */}
+              {purgeResult && (
+                <div className="bg-success/10 border border-success/30 rounded-lg p-3 text-sm">
+                  <p className="font-bold text-success">✅ {purgeResult.deleted} produit(s) supprimé(s)</p>
+                  {purgeResult.conserves > 0 && (
+                    <p className="text-xs text-base-content/60">{purgeResult.conserves} conservé(s) car liés à des ventes</p>
+                  )}
+                </div>
+              )}
+              <div className="space-y-1">
+                <p className="text-xs text-base-content/60">Supprime tous les produits (utile si mauvais fichier importé).</p>
+                <label className="flex items-center gap-2 text-xs cursor-pointer">
+                  <input
+                    type="checkbox"
+                    className="checkbox checkbox-xs checkbox-warning"
+                    checked={purgeSansVentes}
+                    onChange={e => setPurgeSansVentes(e.target.checked)}
+                  />
+                  Conserver les produits liés à des ventes
+                </label>
+                <button
+                  className="btn btn-error btn-sm w-full gap-2"
+                  onClick={() => { setPurgeResult(null); setShowPurgeModal(true); }}
+                >
+                  <Trash2 className="size-4" />
+                  Purger les produits
+                </button>
+              </div>
+            </div>
+          </div>
+
           {/* Backup Section */}
           <div className="card bg-base-100 shadow-xl border border-primary/20">
             <div className="card-body gap-4">
@@ -972,6 +1195,62 @@ export default function Maintenance() {
             </div>
           </div>
           <div className="modal-backdrop" onClick={() => { setShowRestoreConfirm(false); setRestorePassword(''); }}></div>
+        </div>
+      )}
+
+      {/* Modal Purge Produits */}
+      {showPurgeModal && (
+        <div className="modal modal-open">
+          <div className="modal-box max-w-md">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="p-2 rounded-full bg-error/20">
+                <Trash2 className="size-6 text-error" />
+              </div>
+              <h3 className="font-bold text-lg">Purger les produits</h3>
+            </div>
+
+            <div className="alert alert-error mb-4">
+              <AlertTriangle className="size-5" />
+              <div>
+                <p className="font-bold">Opération irréversible</p>
+                <p className="text-sm">
+                  {purgeSansVentes
+                    ? 'Tous les produits NON liés à des ventes seront supprimés.'
+                    : 'TOUS les produits seront supprimés.'}
+                </p>
+              </div>
+            </div>
+
+            <div className="form-control mb-4">
+              <label className="label">
+                <span className="label-text text-sm font-semibold">Confirmez votre mot de passe</span>
+              </label>
+              <input
+                type="password"
+                className="input input-bordered"
+                placeholder="Mot de passe admin"
+                value={purgePassword}
+                onChange={e => setPurgePassword(e.target.value)}
+                onKeyDown={e => { if (e.key === 'Enter') handlePurgeProduits(); }}
+                autoFocus
+              />
+            </div>
+
+            <div className="modal-action">
+              <button className="btn btn-ghost" onClick={() => { setShowPurgeModal(false); setPurgePassword(''); }}>
+                Annuler
+              </button>
+              <button
+                className="btn btn-error gap-2"
+                onClick={handlePurgeProduits}
+                disabled={purging2 || !purgePassword}
+              >
+                {purging2 ? <Loader2 className="size-4 animate-spin" /> : <Trash2 className="size-4" />}
+                Confirmer la purge
+              </button>
+            </div>
+          </div>
+          <div className="modal-backdrop" onClick={() => { setShowPurgeModal(false); setPurgePassword(''); }}></div>
         </div>
       )}
     </div>

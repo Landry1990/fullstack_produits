@@ -5,8 +5,10 @@ Superadmin-only tool to preview, export and purge old transactional data.
 """
 import csv
 import io
+import os
 import zipfile
 from datetime import datetime
+from io import StringIO
 
 from django.db import transaction
 from django.http import HttpResponse
@@ -454,3 +456,205 @@ class PurgeViewSet(ViewSet):
             if os.path.exists(tmp_path):
                 os.unlink(tmp_path)
             return Response({'detail': f'Erreur lors de la restauration: {str(e)}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+    @action(detail=False, methods=['get'])
+    def produits_count(self, request):
+        """Retourne le nombre de produits en base."""
+        from api.models import Produit
+        return Response({'count': Produit.objects.count()})
+
+    @action(detail=False, methods=['post'])
+    def import_produits(self, request):
+        """
+        Lance l'import en tâche de fond (thread séparé).
+        Retourne immédiatement un job_id pour suivre la progression.
+        """
+        import tempfile, threading, uuid, json, glob, re
+        from django.core.cache import cache
+
+        # Vérifier qu'un import n'est pas déjà en cours
+        running = cache.get('import_produits_running')
+        if running:
+            return Response({'detail': 'Un import est déjà en cours. Attendez la fin avant de relancer.'}, status=status.HTTP_409_CONFLICT)
+
+        file_obj = request.FILES.get('file')
+        if not file_obj:
+            return Response({'detail': 'Aucun fichier fourni.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        suffix = os.path.splitext(file_obj.name)[1].lower()
+        if suffix not in ['.xlsx', '.xls', '.csv']:
+            return Response({'detail': 'Format non supporté. Utilisez .xlsx, .xls ou .csv'}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Sauvegarder le fichier dans un endroit persistant
+        os.makedirs('/app/rapports', exist_ok=True)
+        job_id = str(uuid.uuid4())[:8]
+        tmp_path = f'/app/rapports/import_tmp_{job_id}{suffix}'
+        with open(tmp_path, 'wb') as f:
+            for chunk in file_obj.chunks():
+                f.write(chunk)
+
+        # Initialiser l'état dans le cache
+        cache.set(f'import_{job_id}', {
+            'status': 'running',
+            'progress': 0,
+            'current': 0,
+            'total': 0,
+            'created': 0,
+            'updated': 0,
+            'errors': 0,
+            'message': 'Démarrage...',
+            'rapport_xlsx': None,
+            'rapport_txt': None,
+        }, timeout=3600)
+        cache.set('import_produits_running', job_id, timeout=3600)
+
+        def run_import():
+            try:
+                from django.core.cache import cache as c
+
+                # Buffer qui intercepte chaque ligne et met à jour le cache
+                class ProgressBuffer:
+                    def __init__(self):
+                        self._buf = []
+                    def write(self, msg, style_func=None, ending=None):
+                        self._buf.append(str(msg))
+                        state = c.get(f'import_{job_id}') or {}
+                        m = re.search(r'(\d+)/(\d+)', str(msg))
+                        if m:
+                            cur, tot = int(m.group(1)), int(m.group(2))
+                            state['current'] = cur
+                            state['total'] = tot
+                            state['progress'] = int(cur / tot * 100) if tot else 0
+                            state['message'] = f'{cur}/{tot} produits traités...'
+                            c.set(f'import_{job_id}', state, timeout=3600)
+                    def flush(self):
+                        pass
+                    def getvalue(self):
+                        return '\n'.join(self._buf)
+
+                buf = ProgressBuffer()
+                call_command('import_excel_csv', file=tmp_path, stdout=buf)
+                output = buf.getvalue()
+
+                created = updated = errors = 0
+                m = re.search(r'Créés\s*:\s*(\d+)', output)
+                if m: created = int(m.group(1))
+                m = re.search(r'Mis à jour\s*:\s*(\d+)', output)
+                if m: updated = int(m.group(1))
+                m = re.search(r'Erreurs\s*:\s*(\d+)', output)
+                if m: errors = int(m.group(1))
+
+                rapport_xlsx = rapport_txt = None
+                rapports = sorted(glob.glob('/app/rapports/rapport_import_*.xlsx'), reverse=True)
+                if rapports: rapport_xlsx = os.path.basename(rapports[0])
+                rapports_txt = sorted(glob.glob('/app/rapports/rapport_import_*.txt'), reverse=True)
+                if rapports_txt: rapport_txt = os.path.basename(rapports_txt[0])
+
+                c.set(f'import_{job_id}', {
+                    'status': 'done',
+                    'progress': 100,
+                    'created': created,
+                    'updated': updated,
+                    'errors': errors,
+                    'rapport_xlsx': rapport_xlsx,
+                    'rapport_txt': rapport_txt,
+                    'message': f'Terminé : {created} créés, {updated} mis à jour, {errors} erreurs.',
+                }, timeout=3600)
+
+            except Exception as e:
+                from django.core.cache import cache as c
+                c.set(f'import_{job_id}', {
+                    'status': 'error',
+                    'progress': 0,
+                    'message': f'Erreur : {str(e)}',
+                    'created': 0, 'updated': 0, 'errors': 0,
+                    'rapport_xlsx': None, 'rapport_txt': None,
+                }, timeout=3600)
+            finally:
+                from django.core.cache import cache as c
+                c.delete('import_produits_running')
+                if os.path.exists(tmp_path):
+                    os.unlink(tmp_path)
+
+        t = threading.Thread(target=run_import, daemon=True)
+        t.start()
+
+        return Response({'job_id': job_id, 'message': 'Import lancé en arrière-plan.'}, status=status.HTTP_202_ACCEPTED)
+
+    @action(detail=False, methods=['get'])
+    def import_status(self, request):
+        """Retourne l'état d'avancement d'un import en cours."""
+        from django.core.cache import cache
+        job_id = request.query_params.get('job_id', '')
+        if not job_id:
+            # Retourner l'import en cours s'il y en a un
+            running_id = cache.get('import_produits_running')
+            if running_id:
+                job_id = running_id
+            else:
+                return Response({'status': 'idle'})
+
+        state = cache.get(f'import_{job_id}')
+        if not state:
+            return Response({'status': 'not_found'}, status=status.HTTP_404_NOT_FOUND)
+        return Response({**state, 'job_id': job_id})
+
+    @action(detail=False, methods=['post'])
+    def purge_produits(self, request):
+        """
+        Purge les produits.
+        Body: { password: str, sans_ventes: bool }
+        """
+        from api.models import Produit
+        from django.contrib.auth import authenticate
+
+        password = request.data.get('password', '')
+        sans_ventes = request.data.get('sans_ventes', False)
+
+        if not password:
+            return Response({'detail': 'Mot de passe requis.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        user = authenticate(username=request.user.username, password=password)
+        if not user:
+            return Response({'detail': 'Mot de passe incorrect.'}, status=status.HTTP_403_FORBIDDEN)
+
+        qs = Produit.objects.all()
+        conserves = 0
+
+        if sans_ventes:
+            ids_lies = set()
+            try:
+                from api.models import FactureProduit
+                ids_lies |= set(FactureProduit.objects.values_list('produit_id', flat=True).distinct())
+            except Exception:
+                pass
+            try:
+                from api.models import CommandeProduit
+                ids_lies |= set(CommandeProduit.objects.values_list('produit_id', flat=True).distinct())
+            except Exception:
+                pass
+            conserves = len(ids_lies)
+            qs = qs.exclude(id__in=ids_lies)
+
+        total_avant = Produit.objects.count()
+        deleted, _ = qs.delete()
+
+        return Response({
+            'deleted': deleted,
+            'conserves': conserves,
+            'total_avant': total_avant,
+            'message': f'{deleted} produit(s) supprimé(s). {conserves} conservé(s) (liés à des ventes).',
+        })
+
+    @action(detail=False, methods=['get'])
+    def download_rapport(self, request):
+        """Télécharge un rapport d'import."""
+        import glob
+        from django.http import FileResponse
+        filename = request.query_params.get('file', '')
+        if not filename or '/' in filename or '..' in filename:
+            return Response({'detail': 'Fichier invalide.'}, status=status.HTTP_400_BAD_REQUEST)
+        path = f'/app/rapports/{filename}'
+        if not os.path.exists(path):
+            return Response({'detail': 'Fichier non trouvé.'}, status=status.HTTP_404_NOT_FOUND)
+        return FileResponse(open(path, 'rb'), as_attachment=True, filename=filename)
