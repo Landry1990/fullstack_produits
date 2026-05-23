@@ -107,21 +107,79 @@ else:
     print('⚠ Aucune sauvegarde — pensez à sauvegarder')
 "
 
-# ── 6. Créer un superuser par défaut si aucun n'existe ──
+# ── 6. Garantir le compte admin par défaut ──
 echo ""
-echo "👤 Vérification du superuser..."
+echo "👤 Vérification du compte admin..."
 python -c "
-import os
-import django
-from django.utils import timezone
+import os, django
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'backend.settings')
 django.setup()
+
 from django.contrib.auth.models import User
-if not User.objects.filter(is_superuser=True).exists():
-    User.objects.create_superuser('admin', 'admin@pharmacie.local', 'admin123', last_login=timezone.now())
-    print('✓ Superuser créé: admin / admin123')
+from api.models import Profile
+
+username = os.getenv('DEFAULT_ADMIN_USER', 'admin')
+password = os.getenv('DEFAULT_ADMIN_PASSWORD', 'admin123')
+email    = os.getenv('DEFAULT_ADMIN_EMAIL', 'admin@pharmacie.local')
+
+user, created = User.objects.get_or_create(
+    username=username,
+    defaults={
+        'email': email,
+        'first_name': 'Administrateur',
+        'last_name': 'Principal',
+        'is_superuser': True,
+        'is_staff': True,
+        'is_active': True,
+    }
+)
+
+if created:
+    user.set_password(password)
+    user.save()
+    print(f'✓ Compte admin créé: {username} / {password}')
 else:
-    print('✓ Superuser existant')
+    # S'assurer qu'il reste superuser et actif
+    changed = False
+    if not user.is_superuser:
+        user.is_superuser = True
+        changed = True
+    if not user.is_staff:
+        user.is_staff = True
+        changed = True
+    if not user.is_active:
+        user.is_active = True
+        changed = True
+    if changed:
+        user.save()
+        print(f'✓ Privilèges admin restaurés pour {username}')
+    else:
+        print(f'✓ Compte admin {username} OK')
+
+# Garantir le Profile avec tous les droits
+profile, p_created = Profile.objects.get_or_create(user=user)
+if p_created or profile.role != 'PHARMACIEN':
+    profile.role = 'PHARMACIEN'
+    profile.allowed_menus = []
+    profile.can_do_returns = True
+    profile.can_sell_negative_stock = True
+    profile.can_cash_out = True
+    profile.can_delete_product = True
+    profile.can_adjust_stock = True
+    profile.can_delete_fournisseur = True
+    profile.can_delete_commande = True
+    profile.can_close_commande = True
+    profile.can_generate_coupon = True
+    profile.can_cancel_invoice = True
+    profile.can_modify_invoice = True
+    profile.can_cancel_promis = True
+    profile.can_manage_perimes = True
+    profile.can_manage_avoirs = True
+    profile.can_validate_zero_amount = True
+    profile.can_modify_price = True
+    profile.max_discount_rate = 100
+    profile.save()
+    print('✓ Profile admin configuré (PHARMACIEN, tous droits)')
 "
 
 # ── 6b. Garantir l'existence du compte de secours ──
@@ -153,16 +211,15 @@ else:
     }
 fi
 
-# ── 8. Démarrage Gunicorn avec gestion propre des signaux ──
+# ── 8. Démarrage Daphne (ASGI) pour supporter WebSocket ──
 echo ""
-echo "🔥 Démarrage de Gunicorn..."
+echo "🔥 Démarrage de Daphne (ASGI) pour HTTP + WebSocket..."
 echo "══════════════════════════════════════════════"
 echo ""
 
-exec gunicorn \
-    --config gunicorn.conf.py \
-    --bind 0.0.0.0:8000 \
-    --access-logfile - \
-    --error-logfile - \
-    --capture-output \
-    backend.wsgi:application
+exec daphne \
+    --bind 0.0.0.0 \
+    --port 8000 \
+    --access-log - \
+    -v 2 \
+    backend.asgi:application

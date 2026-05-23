@@ -25,9 +25,8 @@ DEBUG = os.getenv('DJANGO_DEBUG', 'False').lower() == 'true'
 # Enable Django Silk profiler (default: False in production/pre-prod)
 ENABLE_SILK = os.getenv('ENABLE_SILK', 'False').lower() == 'true'
 
-_hosts = os.getenv('DJANGO_ALLOWED_HOSTS', 'localhost,127.0.0.1,backend,frontend').split(',')
-ALLOWED_HOSTS = [h.strip() for h in _hosts if h.strip() and h.strip() != '*']
-# '*' in ALLOWED_HOSTS disables Host header validation — never use in production
+_hosts = os.getenv('DJANGO_ALLOWED_HOSTS', 'localhost,127.0.0.1,0.0.0.0,[::],backend,frontend').split(',')
+ALLOWED_HOSTS = [h.strip() for h in _hosts if h.strip()]
 
 # Support pour les proxys comme Nginx/ngrok
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')

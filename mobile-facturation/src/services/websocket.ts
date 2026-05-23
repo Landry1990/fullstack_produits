@@ -1,151 +1,110 @@
-/**
- * Service WebSocket pour les notifications temps réel
- * Écoute les événements du serveur central (stock updates, alertes…)
- */
+import { useAuthStore } from '../stores';
+import type { CashierPayload } from '../types';
 
-type WSEventType = 'stock_update' | 'price_update' | 'server_message' | 'force_sync';
+type WSStatus = 'disconnected' | 'connecting' | 'connected' | 'error';
+type StatusListener = (status: WSStatus) => void;
+type MessageListener = (data: Record<string, unknown>) => void;
 
-interface WSMessage {
-  type: WSEventType;
-  payload: unknown;
-  timestamp: string;
-}
-
-type WSEventHandler = (message: WSMessage) => void;
-
-class WebSocketService {
+class PDAWebSocket {
   private ws: WebSocket | null = null;
-  private url: string = '';
-  private handlers: Map<WSEventType, WSEventHandler[]> = new Map();
-  private reconnectAttempts: number = 0;
-  private maxReconnectAttempts: number = 10;
   private reconnectTimer: ReturnType<typeof setTimeout> | null = null;
-  private isManualClose: boolean = false;
+  private reconnectDelay = 3000;
+  private maxReconnectDelay = 30000;
+  private shouldReconnect = false;
+  private pdaId: string;
 
-  /**
-   * Connecte au serveur WebSocket
-   * @param serverUrl URL de base du serveur (ex: http://192.168.1.100:8000)
-   */
-  connect(serverUrl: string): void {
-    // Convertir HTTP en WS
-    this.url = serverUrl
-      .replace('http://', 'ws://')
-      .replace('https://', 'wss://');
-    this.url = `${this.url}/ws/mobile/`;
+  private statusListeners: Set<StatusListener> = new Set();
+  private messageListeners: Set<MessageListener> = new Set();
 
-    this.isManualClose = false;
-    this.createConnection();
+  constructor() {
+    this.pdaId = `TAB-${Date.now().toString(36).toUpperCase().slice(-6)}`;
   }
 
-  /**
-   * Déconnecte proprement
-   */
-  disconnect(): void {
-    this.isManualClose = true;
-    this.clearReconnectTimer();
-
-    if (this.ws) {
-      this.ws.close(1000, 'Déconnexion manuelle');
-      this.ws = null;
+  get status(): WSStatus {
+    if (!this.ws) return 'disconnected';
+    switch (this.ws.readyState) {
+      case WebSocket.CONNECTING: return 'connecting';
+      case WebSocket.OPEN: return 'connected';
+      default: return 'disconnected';
     }
   }
 
-  /**
-   * Enregistre un handler pour un type d'événement
-   */
-  on(eventType: WSEventType, handler: WSEventHandler): () => void {
-    const existing = this.handlers.get(eventType) || [];
-    existing.push(handler);
-    this.handlers.set(eventType, existing);
+  get id(): string { return this.pdaId; }
 
-    // Retourne une fonction de désinscription
-    return () => {
-      const handlers = this.handlers.get(eventType) || [];
-      this.handlers.set(
-        eventType,
-        handlers.filter((h) => h !== handler)
-      );
+  connect() {
+    if (this.ws?.readyState === WebSocket.OPEN) return;
+    this.shouldReconnect = true;
+    this.doConnect();
+  }
+
+  disconnect() {
+    this.shouldReconnect = false;
+    if (this.reconnectTimer) clearTimeout(this.reconnectTimer);
+    this.ws?.close(1000);
+    this.ws = null;
+    this.emit('disconnected');
+  }
+
+  private doConnect() {
+    const { serverUrl } = useAuthStore.getState();
+    const wsUrl = serverUrl.replace(/^http/, 'ws');
+    const url = `${wsUrl}/ws/pda/?pda_id=${this.pdaId}`;
+
+    this.emit('connecting');
+    this.ws = new WebSocket(url);
+
+    this.ws.onopen = () => {
+      this.reconnectDelay = 3000;
+      this.emit('connected');
+    };
+
+    this.ws.onmessage = (e) => {
+      try {
+        const data = JSON.parse(e.data);
+        this.messageListeners.forEach((l) => l(data));
+      } catch {}
+    };
+
+    this.ws.onerror = () => {
+      this.emit('error');
+    };
+
+    this.ws.onclose = (e) => {
+      this.emit('disconnected');
+      if (this.shouldReconnect && e.code !== 1000) {
+        this.reconnectTimer = setTimeout(() => {
+          this.reconnectDelay = Math.min(this.reconnectDelay * 2, this.maxReconnectDelay);
+          this.doConnect();
+        }, this.reconnectDelay);
+      }
     };
   }
 
-  /**
-   * Vérifie si le WebSocket est connecté
-   */
-  get isConnected(): boolean {
-    return this.ws?.readyState === WebSocket.OPEN;
+  send(payload: CashierPayload): boolean {
+    if (this.ws?.readyState !== WebSocket.OPEN) return false;
+    this.ws.send(JSON.stringify(payload));
+    return true;
   }
 
-  // ─── Connexion interne ─────────────────────────────────
-
-  private createConnection(): void {
-    try {
-      this.ws = new WebSocket(this.url);
-
-      this.ws.onopen = () => {
-        console.log('[WS] Connecté au serveur');
-        this.reconnectAttempts = 0;
-      };
-
-      this.ws.onmessage = (event) => {
-        try {
-          const message: WSMessage = JSON.parse(event.data as string);
-          this.dispatchEvent(message);
-        } catch (error) {
-          console.warn('[WS] Message non-JSON reçu:', event.data);
-        }
-      };
-
-      this.ws.onerror = (error) => {
-        console.warn('[WS] Erreur:', error);
-      };
-
-      this.ws.onclose = (event) => {
-        console.log(`[WS] Déconnecté (code: ${event.code})`);
-        if (!this.isManualClose) {
-          this.scheduleReconnect();
-        }
-      };
-    } catch (error) {
-      console.error('[WS] Erreur création connexion:', error);
-      this.scheduleReconnect();
+  ping() {
+    if (this.ws?.readyState === WebSocket.OPEN) {
+      this.ws.send(JSON.stringify({ type: 'ping' }));
     }
   }
 
-  private dispatchEvent(message: WSMessage): void {
-    const handlers = this.handlers.get(message.type) || [];
-    for (const handler of handlers) {
-      try {
-        handler(message);
-      } catch (error) {
-        console.error(`[WS] Erreur handler ${message.type}:`, error);
-      }
-    }
+  onStatus(listener: StatusListener) {
+    this.statusListeners.add(listener);
+    return () => this.statusListeners.delete(listener);
   }
 
-  private scheduleReconnect(): void {
-    if (this.reconnectAttempts >= this.maxReconnectAttempts) {
-      console.warn('[WS] Nombre max de tentatives atteint, arrêt reconnexion');
-      return;
-    }
-
-    // Backoff exponentiel : 1s, 2s, 4s, 8s… max 30s
-    const delay = Math.min(1000 * Math.pow(2, this.reconnectAttempts), 30000);
-    this.reconnectAttempts++;
-
-    console.log(`[WS] Reconnexion dans ${delay / 1000}s (tentative ${this.reconnectAttempts})`);
-
-    this.reconnectTimer = setTimeout(() => {
-      this.createConnection();
-    }, delay);
+  onMessage(listener: MessageListener) {
+    this.messageListeners.add(listener);
+    return () => this.messageListeners.delete(listener);
   }
 
-  private clearReconnectTimer(): void {
-    if (this.reconnectTimer) {
-      clearTimeout(this.reconnectTimer);
-      this.reconnectTimer = null;
-    }
+  private emit(status: WSStatus) {
+    this.statusListeners.forEach((l) => l(status));
   }
 }
 
-/** Instance singleton du service WebSocket */
-export const websocketService = new WebSocketService();
+export const pdaWS = new PDAWebSocket();
