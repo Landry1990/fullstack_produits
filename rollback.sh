@@ -74,13 +74,13 @@ fi
 # 1. Stop containers
 warn ""
 warn "🛑 Arret des conteneurs..."
-docker-compose -f "$SCRIPT_DIR/docker-compose.prod.yml" stop backend frontend 2>/dev/null || true
+docker compose -f "$SCRIPT_DIR/docker-compose.prod.yml" stop backend frontend 2>/dev/null || true
 
 # 2. Rollback Backend
 if [[ -n "$backend_previous" ]]; then
     warn "🔙 Rollback BACKEND..."
     docker tag fullstack_produits-backend:previous fullstack_produits-backend:latest
-    docker-compose -f "$SCRIPT_DIR/docker-compose.prod.yml" up -d --no-deps --force-recreate backend >/dev/null 2>&1
+    docker compose -f "$SCRIPT_DIR/docker-compose.prod.yml" up -d --no-deps --force-recreate backend >/dev/null 2>&1
     log "   ✅ Backend restaure"
 fi
 
@@ -88,7 +88,7 @@ fi
 if [[ -n "$frontend_previous" ]]; then
     warn "🔙 Rollback FRONTEND..."
     docker tag fullstack_produits-frontend:previous fullstack_produits-frontend:latest
-    docker-compose -f "$SCRIPT_DIR/docker-compose.prod.yml" up -d --no-deps --force-recreate frontend >/dev/null 2>&1
+    docker compose -f "$SCRIPT_DIR/docker-compose.prod.yml" up -d --no-deps --force-recreate frontend >/dev/null 2>&1
     log "   ✅ Frontend restaure"
 fi
 
@@ -98,7 +98,7 @@ if [[ "$INCLUDE_DB" == "true" && -n "$last_backup" ]]; then
     warn "🗄️  Restauration DATABASE..."
     warn "   Backup: $last_backup"
 
-    docker-compose -f "$SCRIPT_DIR/docker-compose.prod.yml" stop backend 2>/dev/null || true
+    docker compose -f "$SCRIPT_DIR/docker-compose.prod.yml" stop backend 2>/dev/null || true
 
     DB_USER="${DB_USER:-fullstack_user}"
     DB_NAME="${DB_NAME:-fullstack_db}"
@@ -107,7 +107,7 @@ if [[ "$INCLUDE_DB" == "true" && -n "$last_backup" ]]; then
     cat "$last_backup" | docker exec -i fullstack_produits-db-1 psql -U "$DB_USER" -d "$DB_NAME" 2>/dev/null || true
 
     log "   ✅ Database restauree"
-    docker-compose -f "$SCRIPT_DIR/docker-compose.prod.yml" up -d backend >/dev/null 2>&1
+    docker compose -f "$SCRIPT_DIR/docker-compose.prod.yml" up -d backend >/dev/null 2>&1
 fi
 
 # 5. Healthcheck

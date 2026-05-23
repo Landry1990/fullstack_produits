@@ -90,15 +90,16 @@ if [ -f .env ]; then
 else
     SECRET_KEY=$(python3 -c "import secrets; print(secrets.token_urlsafe(50))")
     DEPLOY_SECRET=$(python3 -c "import secrets; print(secrets.token_urlsafe(32))")
+    DB_PASS=$(python3 -c "import secrets; print(secrets.token_urlsafe(24))")
     cat > .env <<EOF
 # Base de données
 DB_NAME=pharma_db
 DB_USER=pharma_user
-DB_PASSWORD=$(python3 -c "import secrets; print(secrets.token_urlsafe(24))")
+DB_PASSWORD=$DB_PASS
 
 # Django
 DJANGO_SECRET_KEY=$SECRET_KEY
-DJANGO_ALLOWED_HOSTS=localhost,127.0.0.1,backend,frontend
+DJANGO_ALLOWED_HOSTS=localhost,127.0.0.1,backend,frontend,*
 DJANGO_DEBUG=False
 
 # Frontend
@@ -107,16 +108,21 @@ FRONTEND_PORT=80
 # CORS
 CORS_ALLOWED_ORIGINS=http://localhost,http://frontend
 CSRF_TRUSTED_ORIGINS=http://localhost,http://frontend
-CORS_ALLOW_ALL=false
+CORS_ALLOW_ALL=true
 
 # Cache
 REDIS_URL=redis://redis:6379/0
 
+# Admin par défaut (créé automatiquement au 1er démarrage)
+DEFAULT_ADMIN_USER=admin
+DEFAULT_ADMIN_PASSWORD=admin123
+DEFAULT_ADMIN_EMAIL=admin@pharmacie.local
+
 # Webhook
 DEPLOY_SECRET=$DEPLOY_SECRET
 
-# Ngrok (optionnel)
-# NGROK_AUTHTOKEN=ton_token_ngrok
+# Ngrok (optionnel — décommentez et ajoutez votre token)
+# NGROK_AUTHTOKEN=
 EOF
     ok ".env créé avec clés auto-générées"
     echo -e "${YELLOW}  → IMPORTANT : Copiez ces valeurs dans un endroit sûr :${NC}"
@@ -126,7 +132,7 @@ fi
 
 # ── 6. Permissions ────────────────────────────────────
 step "6. Permissions des scripts"
-chmod +x auto-deploy.sh deploy.sh rollback.sh backup-db.sh watchdog.sh start-watchdog.sh 2>/dev/null || true
+chmod +x auto-deploy.sh deploy.sh rollback.sh backup-db.sh watchdog.sh start-watchdog.sh setup-cron.sh 2>/dev/null || true
 chmod +x webhook-deploy.py 2>/dev/null || true
 mkdir -p logs backups
 ok "Scripts prêts"
@@ -135,13 +141,13 @@ ok "Scripts prêts"
 step "7. Construction & démarrage des conteneurs"
 sudo docker compose -f docker-compose.prod.yml pull 2>/dev/null || true
 sudo docker compose -f docker-compose.prod.yml build --quiet 2>/dev/null || sudo docker compose -f docker-compose.prod.yml build
-sudo docker compose -f docker-compose.prod.yml up -d
+sudo docker compose -f docker-compose.prod.yml up -d --remove-orphans
 ok "Conteneurs démarrés"
 
-# ── 8. Attendre la DB ─────────────────────────────────
-step "8. Attente de la base de données (max 60s)"
-RETRIES=30
-until sudo docker exec "${ZENITH_DIR##*/}-backend-1" python -c "
+# ── 8. Attendre que le backend soit prêt ──────────────
+step "8. Attente du backend (max 120s)"
+RETRIES=40
+until sudo docker compose -f docker-compose.prod.yml exec -T backend python -c "
 import django, os
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'backend.settings')
 django.setup()
@@ -151,33 +157,31 @@ print('DB ready')
 " 2>/dev/null; do
     RETRIES=$((RETRIES - 1))
     if [ $RETRIES -le 0 ]; then
-        err "La base de données n'est pas accessible après 60s"
-        err "Vérifiez : sudo docker logs ${ZENITH_DIR##*/}-db-1 --tail 50"
+        err "Le backend n'est pas accessible après 120s"
+        err "Vérifiez : sudo docker compose -f docker-compose.prod.yml logs backend --tail 50"
         exit 1
     fi
-    sleep 2
+    sleep 3
 done
-ok "Base de données prête"
+ok "Backend et base de données prêts"
 
-# ── 9. Migrations + superuser ─────────────────────────
-step "9. Migrations Django et superutilisateur"
-sudo docker exec "${ZENITH_DIR##*/}-backend-1" python manage.py migrate --noinput
-ok "Migrations appliquées"
-
-# Créer superuser si inexistant
-sudo docker exec "${ZENITH_DIR##*/}-backend-1" python -c "
+# ── 9. Vérification du superuser ──────────────────────
+step "9. Vérification du superutilisateur"
+# Le entrypoint.sh du backend crée automatiquement l'admin
+# avec profil pharmacien complet via DEFAULT_ADMIN_* du .env.
+# On vérifie simplement qu'il existe.
+sudo docker compose -f docker-compose.prod.yml exec -T backend python -c "
 import os, django
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'backend.settings')
 django.setup()
 from django.contrib.auth.models import User
-from django.utils import timezone
-if not User.objects.filter(is_superuser=True).exists():
-    User.objects.create_superuser('admin', 'admin@pharmacie.local', 'admin123', last_login=timezone.now())
-    print('CREATED: admin / admin123')
+admin = User.objects.filter(is_superuser=True).first()
+if admin:
+    print(f'OK: superuser \"{admin.username}\" existe')
 else:
-    print('EXISTING: superuser déjà présent')
-" 2>/dev/null || true
-ok "Superutilisateur : admin / admin123 (à changer !)"
+    print('WARN: aucun superuser trouvé — vérifiez les logs backend')
+" 2>/dev/null || warn "Impossible de vérifier le superuser"
+ok "Superutilisateur : admin / admin123 (changez le mot de passe !)"
 
 # ── 10. Services systemd ──────────────────────────────
 step "10. Installation des services auto-démarrage"

@@ -1,81 +1,55 @@
-/**
- * Composant — Ligne d'article dans le panier
- */
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
-import type { LigneFacture, Product } from '../types';
-import { formatPrice } from '../utils';
+import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import type { CartLine } from '../types';
 
-interface CartItemRowProps {
-  item: LigneFacture;
-  onIncrement: (productId: number) => void;
-  onDecrement: (productId: number) => void;
-  onRemove: (productId: number) => void;
-  onOpenLotModal?: (product: Product, currentLotId: number | null) => void;
+interface Props {
+  line: CartLine;
+  onIncrement: () => void;
+  onDecrement: () => void;
+  onRemove: () => void;
+  onOpenLot: () => void;
 }
 
-export function CartItemRow({ item, onIncrement, onDecrement, onRemove, onOpenLotModal }: CartItemRowProps) {
-  const produit = item.produit;
-  const quantite = item.quantite;
-  const prixUnitaire = parseFloat(item.prix_unitaire || '0');
-  const totalTTC = parseFloat(item.total_ttc || '0');
-  
-  const handleLotPress = () => {
-    if (onOpenLotModal) {
-      onOpenLotModal(produit, item.lotId || null);
-    }
-  };
+export function CartItemRow({ line, onIncrement, onDecrement, onRemove, onOpenLot }: Props) {
+  const prix = line.prix_unitaire.toLocaleString('fr-FR', { minimumFractionDigits: 0 });
+  const total = line.total_ttc.toLocaleString('fr-FR', { minimumFractionDigits: 0 });
 
   return (
-    <View style={styles.container}>
+    <View style={styles.row}>
+      {/* Infos produit */}
       <View style={styles.info}>
         <Text style={styles.designation} numberOfLines={1}>
-          {produit.designation}
+          {line.product.designation}
         </Text>
-        <View style={styles.lotRow}>
-          <Text style={styles.unitPrice}>
-            {formatPrice(prixUnitaire)} / unité
-          </Text>
-          {onOpenLotModal && (
-            <TouchableOpacity 
-              style={[styles.lotBadge, item.lotId ? styles.lotBadgeSelected : undefined]}
-              onPress={handleLotPress}
-            >
-              <Text style={[styles.lotText, item.lotId ? styles.lotTextSelected : undefined]}>
-                {item.lotId ? item.lotText || 'LOT' : 'AUTO'}
-              </Text>
-            </TouchableOpacity>
+        <View style={styles.subRow}>
+          <Text style={styles.prix}>{prix} F</Text>
+          {line.remise > 0 && (
+            <Text style={styles.remise}>-{line.remise}%</Text>
           )}
+          <TouchableOpacity style={[styles.lotBadge, line.lotId ? styles.lotBadgeActive : null]} onPress={onOpenLot}>
+            <Text style={[styles.lotText, line.lotId ? styles.lotTextActive : null]}>
+              {line.lotId ? (line.lotText || 'LOT') : 'AUTO'}
+            </Text>
+          </TouchableOpacity>
         </View>
       </View>
 
-      <View style={styles.quantityContainer}>
-        <TouchableOpacity
-          style={styles.qtyButton}
-          onPress={() => onDecrement(produit.id)}
-          activeOpacity={0.6}
-        >
-          <Text style={styles.qtyButtonText}>−</Text>
+      {/* Quantité */}
+      <View style={styles.qty}>
+        <TouchableOpacity style={styles.qtyBtn} onPress={onDecrement}>
+          <Text style={styles.qtyBtnText}>−</Text>
         </TouchableOpacity>
-
-        <Text style={styles.quantity}>{quantite}</Text>
-
-        <TouchableOpacity
-          style={styles.qtyButton}
-          onPress={() => onIncrement(produit.id)}
-          activeOpacity={0.6}
-        >
-          <Text style={styles.qtyButtonText}>+</Text>
+        <Text style={styles.qtyVal}>{line.quantite}</Text>
+        <TouchableOpacity style={styles.qtyBtn} onPress={onIncrement}>
+          <Text style={styles.qtyBtnText}>+</Text>
         </TouchableOpacity>
       </View>
 
-      <View style={styles.subtotalContainer}>
-        <Text style={styles.subtotal}>{formatPrice(totalTTC)}</Text>
-        <TouchableOpacity
-          onPress={() => onRemove(produit.id)}
-          hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-        >
-          <Text style={styles.removeText}>✕</Text>
+      {/* Total + supprimer */}
+      <View style={styles.totalCol}>
+        <Text style={styles.total}>{total} F</Text>
+        <TouchableOpacity onPress={onRemove} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
+          <Text style={styles.remove}>✕</Text>
         </TouchableOpacity>
       </View>
     </View>
@@ -83,95 +57,48 @@ export function CartItemRow({ item, onIncrement, onDecrement, onRemove, onOpenLo
 }
 
 const styles = StyleSheet.create({
-  container: {
+  row: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(255, 255, 255, 0.05)',
-    borderRadius: 10,
-    padding: 12,
-    marginHorizontal: 16,
-    marginVertical: 3,
+    backgroundColor: 'rgba(255,255,255,0.04)',
+    borderRadius: 8,
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+    marginBottom: 4,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.06)',
+    borderColor: 'rgba(255,255,255,0.06)',
   },
-  info: {
-    flex: 1,
-    gap: 2,
-  },
-  designation: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#f1f5f9',
-  },
-  lotRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    marginTop: 2,
-  },
+  info: { flex: 1, gap: 4 },
+  designation: { fontSize: 13, fontWeight: '600', color: '#f1f5f9' },
+  subRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  prix: { fontSize: 11, color: '#94a3b8' },
+  remise: { fontSize: 11, color: '#f59e0b', fontWeight: '700' },
   lotBadge: {
-    paddingHorizontal: 8,
+    paddingHorizontal: 6,
     paddingVertical: 2,
     borderRadius: 4,
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    backgroundColor: 'rgba(255,255,255,0.08)',
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.2)',
+    borderColor: 'rgba(255,255,255,0.15)',
   },
-  lotBadgeSelected: {
-    backgroundColor: 'rgba(16, 185, 129, 0.2)',
+  lotBadgeActive: {
+    backgroundColor: 'rgba(16,185,129,0.15)',
     borderColor: '#10b981',
   },
-  lotText: {
-    fontSize: 10,
-    fontWeight: '700',
-    color: '#64748b',
-    textTransform: 'uppercase',
-  },
-  lotTextSelected: {
-    color: '#10b981',
-  },
-  unitPrice: {
-    fontSize: 11,
-    color: '#64748b',
-  },
-  quantityContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    marginHorizontal: 10,
-  },
-  qtyButton: {
-    width: 30,
-    height: 30,
-    borderRadius: 8,
-    backgroundColor: 'rgba(16, 185, 129, 0.2)',
+  lotText: { fontSize: 10, fontWeight: '700', color: '#64748b' },
+  lotTextActive: { color: '#10b981' },
+  qty: { flexDirection: 'row', alignItems: 'center', gap: 6, marginHorizontal: 8 },
+  qtyBtn: {
+    width: 28,
+    height: 28,
+    borderRadius: 6,
+    backgroundColor: 'rgba(99,102,241,0.2)',
     justifyContent: 'center',
     alignItems: 'center',
   },
-  qtyButtonText: {
-    fontSize: 18,
-    color: '#34d399',
-    fontWeight: '700',
-  },
-  quantity: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: '#f1f5f9',
-    minWidth: 24,
-    textAlign: 'center',
-  },
-  subtotalContainer: {
-    alignItems: 'flex-end',
-    gap: 4,
-  },
-  subtotal: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: '#10b981',
-  },
-  removeText: {
-    fontSize: 14,
-    color: '#ef4444',
-    fontWeight: '600',
-  },
+  qtyBtnText: { fontSize: 16, color: '#818cf8', fontWeight: '700' },
+  qtyVal: { fontSize: 15, fontWeight: '700', color: '#f1f5f9', minWidth: 22, textAlign: 'center' },
+  totalCol: { alignItems: 'flex-end', gap: 4 },
+  total: { fontSize: 13, fontWeight: '700', color: '#10b981' },
+  remove: { fontSize: 13, color: '#ef4444', fontWeight: '600' },
 });
