@@ -215,7 +215,7 @@ export default function Facturation() {
         </div>
 
         {/* RIGHT : Panier */}
-        <aside className="w-full lg:w-[400px] xl:w-[440px] pos-checkout flex flex-col z-10 border-t lg:border-t-0 overflow-hidden flex-1 lg:flex-none min-h-[55vh] sm:min-h-[60vh] lg:min-h-0 lg:h-full">
+        <aside className="w-full lg:w-[400px] xl:w-[440px] pos-checkout flex flex-col z-10 border-t lg:border-t-0 overflow-hidden flex-1 lg:flex-none lg:min-h-0 lg:h-full">
 
           {/* Panier header */}
           <div className="px-4 py-3 bg-base-200/50 border-b border-base-300 flex items-center justify-between shrink-0">
@@ -252,7 +252,7 @@ export default function Facturation() {
           </div>
 
           {/* Totaux + actions - FIXE EN BAS */}
-          <div className="shrink-0 p-3 sm:p-4 border-t border-base-300 bg-base-200/50">
+          <div className="shrink-0 p-3 border-t border-base-300 bg-base-200/50">
             <TotalsSection
               totalHT={hook.totals.totalHt}
               remiseGlobale={hook.ui.remiseGlobale}

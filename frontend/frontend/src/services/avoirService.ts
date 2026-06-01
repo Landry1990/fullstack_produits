@@ -27,8 +27,13 @@ const avoirService = {
         await api.delete(`avoirs/${id}/`);
     },
 
-    valider: async (id: number, data: { validated_by_id: number; password: string }): Promise<Avoir> => {
-        const response = await api.post(`avoirs/${id}/valider/`, data);
+    valider: async (id: number): Promise<Avoir> => {
+        const response = await api.post(`avoirs/${id}/valider/`);
+        return response.data.avoir;
+    },
+
+    dechargerStock: async (id: number, data: { validated_by_id: number; password: string }): Promise<Avoir> => {
+        const response = await api.post(`avoirs/${id}/decharger_stock/`, data);
         return response.data.avoir;
     },
 

@@ -82,8 +82,8 @@ export default function UserHeader() {
 
   return (
     <>
-      <header className="absolute top-0 left-0 right-0 z-40 flex items-center justify-end pointer-events-none pl-12 lg:pl-0">
-        <div className="flex items-center gap-4 bg-base-100/90 backdrop-blur-md p-1.5 rounded-xl shadow-lg border border-base-300 pointer-events-auto scale-90 origin-top-right translate-y-0 -translate-x-0">
+      <header className="flex items-center justify-end w-full">
+        <div className="flex items-center gap-2">
           
           {/* Notifications / Messages Bell */}
           <button 
@@ -91,7 +91,7 @@ export default function UserHeader() {
             className="relative p-2 rounded-full hover:bg-primary/10 transition-colors"
             title="Messagerie Interne"
           >
-            <Bell size={20} className="text-base-content/70" />
+            <Bell size={16} className="text-base-content/70" />
             {unreadCount > 0 && (
               <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] font-bold size-5 flex items-center justify-center rounded-full animate-pulse">
                 {unreadCount}
@@ -105,10 +105,10 @@ export default function UserHeader() {
             className="p-2 rounded-full hover:bg-primary/10 transition-colors"
             title="Feedback"
           >
-            <MessageCircle size={20} className="text-base-content/70" />
+            <MessageCircle size={16} className="text-base-content/70" />
           </button>
 
-          <div className="h-8 w-[1px] bg-gray-300 mx-1"></div>
+          <div className="h-6 w-[1px] bg-gray-300 mx-0.5"></div>
 
           {/* User Profile Area */}
           <div 
@@ -118,8 +118,8 @@ export default function UserHeader() {
               setIsMenuOpen(!isMenuOpen);
             }}
           >
-            <button className="flex items-center gap-3 px-2 py-1 rounded-xl hover:bg-base-200 transition-all group">
-              <div className="size-10 rounded-full bg-primary text-white flex items-center justify-center font-bold text-lg shadow-md ring-2 ring-gray-200 overflow-hidden">
+            <button className="flex items-center gap-2 px-1.5 py-0.5 rounded-lg hover:bg-base-200 transition-all group">
+              <div className="size-7 rounded-full bg-primary text-white flex items-center justify-center font-bold text-sm shadow-md ring-2 ring-gray-200 overflow-hidden">
                 {user.username.charAt(0).toUpperCase()}
               </div>
               <div className="hidden sm:block text-left mr-1">

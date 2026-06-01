@@ -39,9 +39,9 @@ export default function TotalsSection({
     const mainTotal = tauxCouverture > 0 ? partPatient : totalTTC
 
     return (
-      <div className="flex flex-col gap-3">
+      <div className="flex flex-col gap-2">
         {/* Subtotal & Discount row */}
-        <div className="flex justify-between items-end border-b border-base-300 pb-3">
+        <div className="flex justify-between items-end border-b border-base-300 pb-2">
           <div className="flex flex-col">
             <span className="text-[10px] text-base-content/40 font-bold uppercase tracking-widest">{t('facturation:totals.subtotal')}</span>
             <span className="text-sm font-bold text-base-content/70">{formatCurrency(Math.round(totalHT))}</span>
@@ -87,12 +87,12 @@ export default function TotalsSection({
 
         {/* Main Grand Total */}
         <div className="relative overflow-hidden group">
-          <div className="flex flex-col items-end p-4 rounded-xl bg-base-200/50 border border-base-300 shadow-sm">
-             <span className="text-[11px] text-primary/60 font-black uppercase tracking-[0.2em] mb-1">
+          <div className="flex flex-col items-end p-3 rounded-xl bg-base-200/50 border border-base-300 shadow-sm">
+             <span className="text-[10px] text-primary/60 font-black uppercase tracking-[0.2em] mb-0.5">
                 {tauxCouverture > 0 ? t('facturation:totals.part_patient') : t('facturation:totals.total_ttc')}
              </span>
              <div className="flex items-baseline gap-2">
-                <span className="text-5xl font-black text-base-content tracking-tighter">
+                <span className="text-4xl font-black text-base-content tracking-tighter">
                    {formatCurrency(Math.round(mainTotal))}
                 </span>
              </div>

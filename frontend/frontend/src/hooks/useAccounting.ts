@@ -170,6 +170,42 @@ export const useAccounting = () => {
         }
     });
 
+    const createCompte = useMutation({
+        mutationFn: (data: Omit<Compte, 'id'>) => api.post('compta/comptes/', data),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['accounting', 'comptes'] });
+            toast.success('Compte créé avec succès');
+        },
+        onError: (error: any) => {
+            const msg = error.response?.data?.numero?.[0] || error.response?.data?.detail || 'Erreur lors de la création';
+            toast.error(msg);
+        }
+    });
+
+    const updateCompte = useMutation({
+        mutationFn: ({ id, ...data }: Compte) => api.patch(`compta/comptes/${id}/`, data),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['accounting', 'comptes'] });
+            toast.success('Compte modifié avec succès');
+        },
+        onError: (error: any) => {
+            const msg = error.response?.data?.numero?.[0] || error.response?.data?.detail || 'Erreur lors de la modification';
+            toast.error(msg);
+        }
+    });
+
+    const deleteCompte = useMutation({
+        mutationFn: (id: number) => api.delete(`compta/comptes/${id}/`),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['accounting', 'comptes'] });
+            toast.success('Compte supprimé');
+        },
+        onError: (error: any) => {
+            const msg = error.response?.data?.detail || 'Impossible de supprimer ce compte (des écritures y sont liées)';
+            toast.error(msg);
+        }
+    });
+
     return {
         comptes,
         journaux,
@@ -195,7 +231,10 @@ export const useAccounting = () => {
         setDateRange: useCallback((range: { start: string; end: string }) => setDateRange(range), []),
         actions: useMemo(() => ({
             createEcriture,
-            initializeHistory
-        }), [createEcriture, initializeHistory])
+            initializeHistory,
+            createCompte,
+            updateCompte,
+            deleteCompte
+        }), [createEcriture, initializeHistory, createCompte, updateCompte, deleteCompte])
     };
 };

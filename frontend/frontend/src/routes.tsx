@@ -13,28 +13,29 @@ function lazyWithRetry<T extends ComponentType<any>>(
   retries = MAX_RETRIES
 ): React.LazyExoticComponent<T> {
   return lazy(() => 
-    new Promise((resolve, reject) => {
+    new Promise<{ default: T }>((resolve, reject) => {
       const timeoutId = setTimeout(() => {
         reject(new Error('Timeout: Le chargement du module a pris trop de temps'));
       }, LOAD_TIMEOUT);
 
-      factory()
-        .then((module) => {
-          clearTimeout(timeoutId);
-          resolve(module);
-        })
-        .catch((error) => {
-          clearTimeout(timeoutId);
-          if (retries > 0) {
-            console.warn(`Retry loading component, ${retries} attempts left`);
-            // Retry with delay
-            setTimeout(() => {
-              resolve(lazyWithRetry(factory, retries - 1) as any);
-            }, 1000);
-          } else {
-            reject(error);
-          }
-        });
+      const attempt = (attemptsLeft: number) => {
+        factory()
+          .then((module) => {
+            clearTimeout(timeoutId);
+            resolve(module);
+          })
+          .catch((error) => {
+            if (attemptsLeft > 0) {
+              console.warn(`Retry loading component, ${attemptsLeft} attempts left`);
+              setTimeout(() => attempt(attemptsLeft - 1), 1000);
+            } else {
+              clearTimeout(timeoutId);
+              reject(error);
+            }
+          });
+      };
+
+      attempt(retries);
     })
   );
 }
@@ -113,6 +114,7 @@ const Changelog = lazyWithRetry(() => import('./components/Changelog'));
 const Corbeille = lazyWithRetry(() => import('./components/Corbeille'));
 const ImportDCIPage = lazyWithRetry(() => import('./components/ImportDCIPage'));
 const Comptabilite = lazyWithRetry(() => import('./components/compta/Comptabilite'));
+const SystemAdmin = lazyWithRetry(() => import('./components/SystemAdmin'));
 
 // ── Helper to reduce boilerplate ──
 const perm = (permission: string | string[], Component: React.ComponentType<any>, props?: Record<string, any>) => ({
@@ -235,8 +237,9 @@ export const router = createBrowserRouter([
           { path: 'user-sessions', ...admin(UserSessions) },
           { path: 'journal-audit', ...admin(JournalAudit) },
           { path: 'import-dci', ...admin(ImportDCIPage) },
-          { path: 'maintenance', ...admin(Maintenance) },
-          { path: 'corbeille', ...admin(Corbeille) },
+          { path: 'maintenance', ...perm('maintenance', Maintenance) },
+          { path: 'systeme', ...admin(SystemAdmin) },
+          { path: 'corbeille', ...perm('corbeille', Corbeille) },
 
           // ── Paramètres ──
           { path: 'pharmacy-settings', ...perm('settings_pharmacie', PharmacySettingsForm) },

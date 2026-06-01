@@ -309,23 +309,16 @@ class Produit(models.Model):
             from django.core.exceptions import ValidationError
             raise ValidationError("Un produit ne peut être exclusif sans fournisseur attribué.")
 
-        # Calcul automatique des marges (Basé sur le TTC comme demandé par l'utilisateur pour l'affichage produit)
+        # Calcul automatique des marges — centralisé via MarginService
         if self.cost_price and self.selling_price:
             try:
-                cp = Decimal(str(self.cost_price))
-                sp = Decimal(str(self.selling_price))
-                
-                if cp > 0:
-                    # Taux de marge (Coefficient TTC/HT)
-                    self.taux_marge = sp / cp
-                else:
-                    self.taux_marge = Decimal('0.00')
-                    
-                if sp > 0:
-                    # Pourcentage de marge sur TTC (Demande utilisateur)
-                    self.pourcentage_marge = ((sp - cp) / sp) * 100
-                else:
-                    self.pourcentage_marge = Decimal('0.00')
+                from api.services.margin_service import MarginService
+                margins = MarginService.calculate_product_margin(
+                    Decimal(str(self.cost_price)),
+                    Decimal(str(self.selling_price))
+                )
+                self.taux_marge = margins['taux_marge']
+                self.pourcentage_marge = margins['pourcentage_marge']
             except (ValueError, TypeError, ZeroDivisionError):
                 pass
         super().save(*args, **kwargs)

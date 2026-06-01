@@ -35,8 +35,8 @@ export interface PageInitResponse {
 }
 
 export interface SalesFilters {
-    date__gte: string;
-    date__lte: string;
+    date__gte?: string;
+    date__lte?: string;
     page: number;
     page_size: number;
     status?: string;

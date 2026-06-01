@@ -33,7 +33,7 @@ interface CommandeFormProps {
     handleSaveCommande: (e: FormEvent<HTMLFormElement>) => void;
     
     // CSV / Tools
-    handleCsvExport: (wholesaler: 'UBIPHARM' | 'LABOREX') => void;
+    handleCsvExport: (wholesaler: 'UBIPHARM' | 'LABOREX_CIP3') => void;
     handleCsvImport: (e: React.ChangeEvent<HTMLInputElement>) => void;
     fileInputRef: RefObject<HTMLInputElement>;
     setIsCreateProduitModalOpen: (isOpen: boolean) => void;
@@ -279,9 +279,13 @@ export default function CommandeForm({
                       <div tabIndex={0} role="button" className="p-2 text-base-content/60 hover:bg-base-200 rounded-lg transition-colors cursor-pointer" title={t('orders:form.export_btn')}>
                         📤
                       </div>
-                      <ul tabIndex={0} className="dropdown-content z-[1] p-2 shadow-xl bg-base-100 rounded-lg w-52 border border-base-200 mt-1">
-                        <li><a onClick={() => handleCsvExport('UBIPHARM')} className="text-sm text-base-content hover:bg-base-200 py-2">{t('orders:form.export_options.ubipharm', 'Ubipharm (CIP1)')}</a></li>
-                        <li><a onClick={() => handleCsvExport('LABOREX')} className="text-sm text-base-content hover:bg-base-200 py-2">{t('orders:form.export_options.laborex', 'Laborex (CIP2)')}</a></li>
+                      <ul tabIndex={0} className="dropdown-content z-[1] p-2 shadow-xl bg-base-100 rounded-lg w-56 border border-base-200 mt-1">
+                        <li><a onClick={() => handleCsvExport('UBIPHARM')} className="flex items-center gap-2 text-sm text-base-content hover:bg-base-200 rounded-lg px-2 py-2 cursor-pointer">
+                          <span className="font-mono text-xs bg-primary/10 text-primary px-1.5 py-0.5 rounded">CIP1</span> Fournisseur Principal
+                        </a></li>
+                        <li><a onClick={() => handleCsvExport('LABOREX_CIP3')} className="flex items-center gap-2 text-sm text-base-content hover:bg-base-200 rounded-lg px-2 py-2 cursor-pointer">
+                          <span className="font-mono text-xs bg-warning/10 text-warning px-1.5 py-0.5 rounded">CIP3</span> Fournisseur Secondaire
+                        </a></li>
                       </ul>
                     </div>
                     <button type="button" className="p-2 text-base-content/60 hover:bg-base-200 rounded-lg transition-colors" onClick={() => fileInputRef.current?.click()} title={t('orders:import_btn')}>
