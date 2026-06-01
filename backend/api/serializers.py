@@ -282,6 +282,11 @@ class FournisseurSerializer(serializers.ModelSerializer):
         fields = '__all__'
         read_only_fields = ['is_active', 'created_at', 'updated_at']
 
+    def validate_email(self, value):
+        if value == "":
+            return None
+        return value
+
     def get_solde_dette(self, obj):
         solde = getattr(obj, 'solde_dette_annotated', None)
         if solde is not None:
@@ -536,6 +541,27 @@ class CommandeProduitSerializer(serializers.ModelSerializer):
         model = CommandeProduit
         fields = '__all__'
         read_only_fields = ['created_at', 'updated_at', 'total_quantity', 'effective_cost']
+
+    def validate(self, data):
+        # Allow instance prices if not provided in data
+        price_cost = data.get('price_cost')
+        selling_price = data.get('selling_price')
+        
+        # If updating partial, fallback to existing
+        if self.instance:
+            if price_cost is None:
+                price_cost = self.instance.price_cost
+            if selling_price is None:
+                selling_price = self.instance.selling_price
+                
+        if selling_price is not None and price_cost is not None:
+            if selling_price < price_cost:
+                produit = data.get('produit')
+                produit_name = produit.name if produit else 'Inconnu'
+                raise serializers.ValidationError(
+                    f"Marge négative détectée sur le produit {produit_name} (Achat: {price_cost}F, Vente: {selling_price}F). Veuillez corriger le prix d'achat ou de vente."
+                )
+        return data
 
     def to_representation(self, instance):
         repr = super().to_representation(instance)
@@ -933,6 +959,26 @@ class StockLotSerializer(serializers.ModelSerializer):
         model = StockLot
         fields = '__all__'
         read_only_fields = ['created_at', 'updated_at']
+
+    def validate(self, data):
+        # Allow instance prices if not provided in data
+        price_cost = data.get('price_cost')
+        selling_price = data.get('selling_price')
+        
+        if self.instance:
+            if price_cost is None:
+                price_cost = self.instance.price_cost
+            if selling_price is None:
+                selling_price = self.instance.selling_price
+                
+        if selling_price is not None and price_cost is not None:
+            if selling_price < price_cost:
+                produit = data.get('produit')
+                produit_name = produit.name if produit else data.get('produit_nom', 'Inconnu')
+                raise serializers.ValidationError(
+                    f"Marge négative détectée sur le lot pour {produit_name} (Achat: {price_cost}F, Vente: {selling_price}F). Veuillez corriger les prix."
+                )
+        return data
 
     def get_produit_nom(self, obj):
         return obj.produit.name if obj.produit else obj.produit_nom

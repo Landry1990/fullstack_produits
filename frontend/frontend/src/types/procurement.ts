@@ -3,9 +3,9 @@ import type { ProduitModel } from './catalog';
 export interface Fournisseur {
     id: number
     name: string
-    address: string
+    address?: string
     phone: string
-    email: string
+    email?: string
     solde_dette?: string
     is_active?: boolean
     type_reglement?: 'FACTURE' | 'RELEVE'

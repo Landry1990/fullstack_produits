@@ -1,5 +1,6 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { useSalesData } from '../hooks/useSalesData';
 import { useInvoiceActions } from '../hooks/useInvoiceActions';
 
@@ -19,6 +20,8 @@ import { Receipt } from 'lucide-react';
 const Ventes: React.FC = () => {
     const { t } = useTranslation(['sales', 'common']);
     const { settings } = usePharmacySettings();
+    const location = useLocation();
+    const navigate = useNavigate();
     
     // Hooks
     const { 
@@ -44,6 +47,18 @@ const Ventes: React.FC = () => {
 
     const [showQuickStats, setShowQuickStats] = React.useState(false);
     const [trancheStats, setTrancheStats] = React.useState<any>(null);
+
+    // Handle incoming redirect from Omnisearch
+    useEffect(() => {
+        if (location.state?.selectedFactureId && filteredFactures.length > 0) {
+            const fid = location.state.selectedFactureId;
+            const found = filteredFactures.find((f: any) => f.id === fid);
+            if (found) {
+                actions.handleViewProducts(found);
+                navigate(location.pathname, { replace: true, state: {} });
+            }
+        }
+    }, [location.state, filteredFactures, actions, navigate]);
     
     return (
         <div className="min-h-screen bg-base-200 font-sans">

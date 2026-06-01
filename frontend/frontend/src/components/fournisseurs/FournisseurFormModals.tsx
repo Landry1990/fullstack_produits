@@ -105,14 +105,13 @@ export default function FournisseurFormModals({ hook }: Props) {
                   />
                 </Field>
               </div>
-              <Field label={t('providers:form.email')} required>
+              <Field label={t('providers:form.email')}>
                 <input
                   type="email"
                   placeholder={t('providers:form.email_placeholder')}
                   value={data.email}
                   onChange={e => setData((f: any) => ({...f, email: e.target.value}))}
                   className="input-ref input-bordered input-sm w-full h-10 rounded-lg focus:border-primary focus:ring-1 focus:ring-primary/20"
-                  required
                   disabled={isSubmitting}
                 />
               </Field>
@@ -177,13 +176,12 @@ export default function FournisseurFormModals({ hook }: Props) {
             </Section>
 
             <Section title={t('providers:form.address_section')}>
-              <Field label={t('providers:form.address')} required>
+              <Field label={t('providers:form.address')}>
                 <textarea
                   placeholder={t('providers:form.address_placeholder')}
                   value={data.address}
                   onChange={e => setData((f: any) => ({...f, address: e.target.value}))}
                   className="textarea-ref textarea-bordered textarea-sm w-full h-24 rounded-lg resize-none focus:border-primary focus:ring-1 focus:ring-primary/20"
-                  required
                   disabled={isSubmitting}
                 />
               </Field>
