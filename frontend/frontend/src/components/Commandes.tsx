@@ -41,8 +41,23 @@ export default function Commandes({ forcedType }: CommandesProps) {
     } else if (location.state?.action === 'OPEN_SUGGESTIONS') {
       state.setIsSuggestionModalOpen(true);
       navigate(pathname, { replace: true, state: {} });
+    } else if (location.state?.selectedCommandeId && listProps.sortedCommandes.length > 0) {
+      const cid = location.state.selectedCommandeId;
+      const found = listProps.sortedCommandes.find((c: any) => c.id === cid);
+      if (found) {
+        listProps.onViewDetails(found);
+        navigate(pathname, { replace: true, state: {} });
+      }
+    } else if (location.state?.selectedFournisseurId && listProps.sortedCommandes.length > 0) {
+      const fid = location.state.selectedFournisseurId;
+      // Filtrer les commandes par fournisseur
+      const supplierOrders = listProps.sortedCommandes.filter((c: any) => c.fournisseur === fid || c.fournisseur_id === fid);
+      if (supplierOrders.length > 0) {
+        listProps.onViewDetails(supplierOrders[0]);
+        navigate(pathname, { replace: true, state: {} });
+      }
     }
-  }, [listProps, navigate, state]);
+  }, [listProps, navigate, state, location.state]);
 
   useEffect(() => {
     if (state.viewMode !== 'LIST') {

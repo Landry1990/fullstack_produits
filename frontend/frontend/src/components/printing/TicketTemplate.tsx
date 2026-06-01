@@ -59,7 +59,7 @@ export const TicketTemplate = ({ ticket, settings, ref }: TicketTemplateProps) =
       data-theme="light"
       className="p-1 bg-base-100 text-black font-sans text-[10px] leading-tight print:p-0" 
       style={{ 
-        width: `${ticketWidth}mm`, 
+        width: '100%', 
         maxWidth: `${ticketWidth}mm`,
         margin: '0 auto',
         overflow: 'hidden',

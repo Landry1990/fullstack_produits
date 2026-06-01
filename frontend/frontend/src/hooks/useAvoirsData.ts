@@ -389,6 +389,8 @@ export function useAvoirsData(): UseAvoirsDataReturn {
 
     const handleToggleCloture = async (ligneId: number, currentStatus: boolean | undefined) => {
         const newStatus = !currentStatus;
+        const currentAvoirId = selectedAvoir?.id;
+
         const updateState = (status: boolean) => {
             setSelectedAvoir(prev => {
                 if (!prev) return null;
@@ -397,15 +399,17 @@ export function useAvoirsData(): UseAvoirsDataReturn {
                     produits: prev.produits?.map(p => p.id === ligneId ? { ...p, est_cloture: status } : p) || []
                 };
             });
-            setAvoirs(prev => prev.map(a => {
-                if (a.id === selectedAvoir?.id) {
-                    return {
-                        ...a,
-                        produits: a.produits?.map(p => p.id === ligneId ? { ...p, est_cloture: status } : p)
-                    };
-                }
-                return a;
-            }));
+            if (currentAvoirId !== undefined) {
+                setAvoirs(prev => prev.map(a => {
+                    if (a.id === currentAvoirId) {
+                        return {
+                            ...a,
+                            produits: a.produits?.map(p => p.id === ligneId ? { ...p, est_cloture: status } : p)
+                        };
+                    }
+                    return a;
+                }));
+            }
         };
 
         updateState(newStatus);
@@ -422,6 +426,7 @@ export function useAvoirsData(): UseAvoirsDataReturn {
         if (!selectedAvoir || !selectedAvoir.produits) return;
         const allClosed = selectedAvoir.produits.every(p => p.est_cloture);
         const targetStatus = !allClosed;
+        const currentAvoirId = selectedAvoir.id;
 
         // Optimistic Update
         const originalProduits = [...selectedAvoir.produits];
@@ -434,7 +439,7 @@ export function useAvoirsData(): UseAvoirsDataReturn {
                 };
             });
             setAvoirs(prev => prev.map(a => {
-                if (a.id === selectedAvoir?.id) {
+                if (a.id === currentAvoirId) {
                     return {
                         ...a,
                         produits: a.produits?.map(p => ({ ...p, est_cloture: status }))

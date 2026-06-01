@@ -149,8 +149,8 @@ const GestionDivers: React.FC<{ defaultTab?: 'ca' | 'commandes' | 'stock' }> = (
   const totalPages = Math.ceil(totalCount / pageSize);
 
   return (
-    <div className="p-6 max-w-[1600px] mx-auto">
-      <div className="flex justify-between items-center mb-8">
+    <div className="p-4 h-full flex flex-col">
+      <div className="flex justify-between items-center mb-4">
         <div>
           <h1 className="text-3xl font-bold text-base-content flex items-center">
             <Package className="h-8 w-8 mr-3 text-primary" />
@@ -163,7 +163,7 @@ const GestionDivers: React.FC<{ defaultTab?: 'ca' | 'commandes' | 'stock' }> = (
       </div>
 
       {/* Tabs */}
-      <div className="flex border-b border-base-300 mb-6 bg-base-100 rounded-t-xl overflow-hidden shadow-sm">
+      <div className="flex border-b border-base-300 mb-4 bg-base-100 rounded-t-xl overflow-hidden shadow-sm shrink-0">
         <button
           onClick={() => setActiveTab('ca')}
           className={`flex-1 py-4 px-6 text-center font-medium transition-all ${
@@ -206,7 +206,7 @@ const GestionDivers: React.FC<{ defaultTab?: 'ca' | 'commandes' | 'stock' }> = (
       </div>
 
       {activeTab === 'ca' && (
-        <div className="space-y-6 animate-fadeIn">
+        <div className="flex-1 flex flex-col min-h-0 gap-4 animate-fadeIn">
           {/* Filters & Summary */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="md:col-span-2 bg-base-100 p-6 rounded-xl shadow-sm border border-base-200 flex flex-wrap items-center gap-4">
@@ -249,7 +249,7 @@ const GestionDivers: React.FC<{ defaultTab?: 'ca' | 'commandes' | 'stock' }> = (
           </div>
 
           {/* Data Table */}
-          <div className="bg-base-100 rounded-xl shadow-sm border border-base-200 overflow-hidden">
+          <div className="flex-1 flex flex-col min-h-0 bg-base-100 rounded-xl shadow-sm border border-base-200 overflow-hidden">
             <div className="px-6 py-4 border-b border-base-200 bg-base-200 flex justify-between items-center">
               <h3 className="font-semibold text-base-content flex items-center">
                 <ClipboardList className="h-5 w-5 mr-2 text-indigo-500" />
@@ -258,7 +258,7 @@ const GestionDivers: React.FC<{ defaultTab?: 'ca' | 'commandes' | 'stock' }> = (
               <span className="text-xs text-base-content/60">{t('divers.transactions_found', {count: totalCount})}</span>
             </div>
             
-            <div className="overflow-x-auto">
+            <div className="flex-1 overflow-auto">
               <table className="min-w-full divide-y divide-base-300">
                 <thead className="bg-base-100">
                   <tr>
@@ -346,13 +346,13 @@ const GestionDivers: React.FC<{ defaultTab?: 'ca' | 'commandes' | 'stock' }> = (
       )}
 
       {activeTab === 'commandes' && (
-        <div className="animate-fadeIn h-[calc(100vh-200px)]">
+        <div className="flex-1 min-h-0 animate-fadeIn">
           <Commandes forcedType="DIV" />
         </div>
       )}
 
       {activeTab === 'stock' && (
-        <div className="space-y-6 animate-fadeIn">
+        <div className="flex-1 min-h-0 overflow-auto space-y-6 animate-fadeIn">
           {/* Valorisation Selector */}
           <div className="bg-base-100 p-6 rounded-xl shadow-sm border border-base-200">
             <div className="flex items-center gap-4">

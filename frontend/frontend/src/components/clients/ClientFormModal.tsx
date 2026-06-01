@@ -16,6 +16,26 @@ interface ClientFormModalProps {
   isEdit?: boolean;
 }
 
+function Field({
+  label, icon: Icon, children, required
+}: {
+  label: string;
+  icon: React.ElementType;
+  children: React.ReactNode;
+  required?: boolean;
+}) {
+  return (
+    <div className="space-y-1.5">
+      <label className="flex items-center gap-1.5 text-xs font-medium text-base-content/60">
+        <Icon className="size-3.5 text-indigo-500" />
+        {label}
+        {required && <span className="text-red-500">*</span>}
+      </label>
+      {children}
+    </div>
+  );
+}
+
 export default function ClientFormModal({
   isOpen, onClose, onSubmit, data, setData, isSubmitting, isEdit = false
 }: ClientFormModalProps) {
@@ -37,24 +57,6 @@ export default function ClientFormModal({
     updated.splice(index, 1);
     setData({ ...data, ayants_droit: updated });
   };
-
-  const Field = ({
-    label, icon: Icon, children, required
-  }: {
-    label: string;
-    icon: React.ElementType;
-    children: React.ReactNode;
-    required?: boolean;
-  }) => (
-    <div className="space-y-1.5">
-      <label className="flex items-center gap-1.5 text-xs font-medium text-base-content/60">
-        <Icon className="size-3.5 text-indigo-500" />
-        {label}
-        {required && <span className="text-red-500">*</span>}
-      </label>
-      {children}
-    </div>
-  );
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
@@ -132,7 +134,7 @@ export default function ClientFormModal({
 
               <Field label={t('common:email')} icon={Mail}>
                 <input
-                  type="email"
+                  type="text"
                   value={data.email || ''}
                   onChange={(e) => setData({ ...data, email: e.target.value })}
                   className="input-ref input-bordered input-sm w-full h-10 rounded-lg focus:border-primary focus:ring-1 focus:ring-primary/20"

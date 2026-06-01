@@ -49,6 +49,7 @@ from .views.code_backup import CodeBackupViewSet
 from .views.stocks.ruptures import RuptureFournisseurViewSet
 from .views.omnisearch import GlobalSearchView
 from .views.stocks.reappro_history import ReapproSessionViewSet
+from .views.feedback import FeedbackListView, FeedbackDetailView
 from .views.version import app_version
 from .views.corbeille import CorbeilleViewSet
 from .views.licence import LicenceStatusView, LicenceNotificationsView
@@ -147,6 +148,8 @@ urlpatterns = [
     path('generer-suggestions/', generer_suggestions_commande, name='generer-suggestions'),
     path('produits/etat-inventaire/pdf/', EtatInventairePDFView.as_view(), name='etat-inventaire-pdf'),
     path('omnisearch/', GlobalSearchView.as_view(), name='global-search'),
+    path('feedback/', FeedbackListView.as_view(), name='feedback-list'),
+    path('feedback/<int:pk>/', FeedbackDetailView.as_view(), name='feedback-detail'),
     path('whatsapp/test/', WhatsAppTestView.as_view(), name='whatsapp-test'),
     path('telegram/test/', TelegramTestView.as_view(), name='telegram-test'),
     path('telegram/get-chat-id/', TelegramGetChatIdView.as_view(), name='telegram-get-chat-id'),

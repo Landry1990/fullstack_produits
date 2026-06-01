@@ -239,13 +239,15 @@ export default function GestionUtilisateurs() {
 
   const handleCopyPermissions = (sourceUserId: number | '') => {
     if (!sourceUserId) return;
-    
+
     const sourceUser = users.find(u => u.id === sourceUserId);
     if (!sourceUser) return;
 
+    const role = sourceUser.profile?.role || (sourceUser.is_superuser ? 'PHARMACIEN' : 'VENDEUR');
+
     setFormData(prev => ({
       ...prev,
-      role: sourceUser.profile?.role || (sourceUser.is_superuser ? 'PHARMACIEN' : 'VENDEUR'),
+      role: role,
       is_superuser: sourceUser.is_superuser,
       allowed_menus: sourceUser.profile?.allowed_menus || [],
       can_do_returns: sourceUser.profile?.can_do_returns || false,
@@ -266,13 +268,13 @@ export default function GestionUtilisateurs() {
       can_modify_invoice: sourceUser.profile?.can_modify_invoice || false,
       max_discount_rate: Number(sourceUser.profile?.max_discount_rate || 0),
     }));
-    
+
     toast.success(t('messages.permissions_copied', { username: sourceUser.username, defaultValue: `Droits copiés de ${sourceUser.username}` }));
   };
 
-  const handleRoleChange = (role: string) => {
+  const handleRoleChange = (role: string, preserveMenus: boolean = false) => {
     let updates: any = { role };
-    
+
     if (role === 'PHARMACIEN') {
       updates.is_superuser = true;
       updates.can_cash_out = true;
@@ -292,7 +294,7 @@ export default function GestionUtilisateurs() {
       updates.can_modify_price = true;
       updates.can_modify_invoice = true;
       updates.max_discount_rate = 100;
-      updates.allowed_menus = getAllMenuKeys();
+      if (!preserveMenus) updates.allowed_menus = getAllMenuKeys();
     } else if (role === 'CAISSIER') {
       updates.is_superuser = false;
       updates.can_cash_out = true;
@@ -305,7 +307,7 @@ export default function GestionUtilisateurs() {
       updates.can_close_commande = false;
       updates.can_generate_coupon = false;
       updates.can_modify_invoice = true;
-      updates.allowed_menus = ['ventes_consultation', 'ventes_historique', 'ventes_journal', 'caisse', 'facturation', 'clients', 'produits', 'vitrine'];
+      if (!preserveMenus) updates.allowed_menus = ['ventes_consultation', 'ventes_historique', 'ventes_journal', 'caisse', 'facturation', 'clients', 'produits', 'vitrine'];
     } else if (role === 'VENDEUR') {
       updates.is_superuser = false;
       updates.can_cash_out = false;
@@ -325,7 +327,7 @@ export default function GestionUtilisateurs() {
       updates.can_modify_price = false;
       updates.can_modify_invoice = false;
       updates.max_discount_rate = 0;
-      updates.allowed_menus = ['facturation', 'caisse', 'produits', 'vitrine', 'clients', 'inventaire_organisation'];
+      if (!preserveMenus) updates.allowed_menus = ['facturation', 'caisse', 'produits', 'vitrine', 'clients', 'inventaire_organisation'];
     } else if (role === 'COMPTABLE') {
       updates.is_superuser = false;
       updates.can_cash_out = false;
@@ -345,7 +347,7 @@ export default function GestionUtilisateurs() {
       updates.can_modify_price = false;
       updates.can_modify_invoice = false;
       updates.max_discount_rate = 0;
-      updates.allowed_menus = ['compta', 'compta_dashboard', 'compta_grand_livre', 'compta_balance', 'compta_resultat', 'compta_charges', 'compta_plan'];
+      if (!preserveMenus) updates.allowed_menus = ['compta', 'compta_dashboard', 'compta_grand_livre', 'compta_balance', 'compta_resultat', 'compta_charges', 'compta_plan'];
     }
 
     setFormData(prev => ({ ...prev, ...updates }));
@@ -396,7 +398,7 @@ export default function GestionUtilisateurs() {
         role: 'VENDEUR',
         is_superuser: false,
         is_active: true,
-        allowed_menus: ['facturation', 'produits', 'vitrine'],
+        allowed_menus: ['facturation', 'caisse', 'produits', 'vitrine', 'clients', 'inventaire_organisation'],
         can_do_returns: false,
         can_sell_negative_stock: false,
         can_cash_out: false,
@@ -415,7 +417,6 @@ export default function GestionUtilisateurs() {
         can_modify_invoice: false,
         max_discount_rate: 0,
       });
-      handleRoleChange('VENDEUR');
     }
     setModalOpen(true);
   };
@@ -823,7 +824,7 @@ export default function GestionUtilisateurs() {
                       >
                         <option value="">{t('form.select_user', 'Sélectionner un utilisateur...')}</option>
                         {users.filter(u => u.is_active).map(user => (
-                          <option key={user.id} value={user.id}>
+                          <option key={user.id} value={String(user.id)}>
                             {user.username} ({user.profile?.role || (user.is_superuser ? 'PHARMACIEN' : 'VENDEUR')})
                           </option>
                         ))}
