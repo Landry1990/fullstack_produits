@@ -81,7 +81,8 @@ html {
 
 body {
   font-family: var(--font-sans);
-  letter-spacing: -0.01em; 
+  letter-spacing: -0.01em;
+  background-color: #0c0f14;
 }
 
 /* Appwrite-like Headings */
@@ -618,3 +619,89 @@ textarea:focus {
 .stagger-2 { animation-delay: 200ms; }
 .stagger-3 { animation-delay: 300ms; }
 .stagger-4 { animation-delay: 400ms; }
+
+/* ──────────────────────────────────────────────────
+   IMPRESSION — Rapport Mensuel sans couleurs de fond
+   Économie d'encre : suppression de tous les dégradés,
+   fonds colorés et ombres. Texte noir sur fond blanc.
+────────────────────────────────────────────────── */
+@media print {
+  /* Forcer fond blanc + texte noir sur tout */
+  * {
+    background: white !important;
+    background-image: none !important;
+    color: black !important;
+    box-shadow: none !important;
+    text-shadow: none !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  /* Masquer sidebar, header, boutons d'action */
+  aside,
+  nav,
+  header,
+  .btn,
+  button {
+    display: none !important;
+  }
+
+  /* Tableaux : garder les bordures pour la lisibilité */
+  table {
+    border-collapse: collapse !important;
+    width: 100% !important;
+  }
+
+  th, td {
+    border: 1px solid #aaa !important;
+    padding: 4px 6px !important;
+    color: black !important;
+    background: white !important;
+  }
+
+  thead th {
+    background: #eee !important;
+    font-weight: bold !important;
+  }
+
+  tfoot td {
+    background: #f5f5f5 !important;
+    font-weight: bold !important;
+  }
+
+  /* KPI cards : bordure fine à la place du fond coloré */
+  .stat {
+    border: 1px solid #ccc !important;
+    border-radius: 4px !important;
+    padding: 8px !important;
+  }
+
+  .stat-title,
+  .stat-value,
+  .stat-desc {
+    color: black !important;
+  }
+
+  /* Cartes sans ombre */
+  .card {
+    border: 1px solid #ccc !important;
+    break-inside: avoid;
+  }
+
+  /* Badges sobres */
+  .badge {
+    border: 1px solid #aaa !important;
+  }
+
+  /* Progress bar : remplacer par texte */
+  progress {
+    display: none !important;
+  }
+
+  /* Masquer les éléments non utiles à l'impression */
+  .animate-pulse,
+  .loading,
+  .tabs {
+    display: none !important;
+  }
+}

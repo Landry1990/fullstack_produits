@@ -349,7 +349,7 @@ class SalesService:
                             item.date_expiration = available[0].date_expiration
                         items_to_update.append(item)
             elif item.quantity < 0:
-                target_lot = locked_lots_dict.get(item.stock_lot_id) or (StockLot.objects.filter(produit=produit).order_by('-created_at').first() if produit.use_lot_management else None)
+                target_lot = lots_map.get(item.stock_lot_id) or (StockLot.objects.filter(produit=produit).order_by('-created_at').first() if produit.use_lot_management else None)
                 if target_lot:
                     target_lot.quantity_remaining -= item.quantity # item.quantity is negative
                     restoring_qty = -item.quantity
@@ -577,16 +577,18 @@ class SalesService:
             if quantity > 0:
                 quantity_to_allocate = quantity
                 if lot_id:
-                    target_lot = StockLot.objects.select_for_update().get(id=lot_id)
+                    target_lot = StockLot.objects.get(id=lot_id)
                     FactureProduitAllocation.objects.create(
                         facture_produit=fp, stock_lot=target_lot, quantity=quantity_to_allocate,
                         cost_price=target_lot.price_cost, selling_price=selling_price
                     )
-                    target_lot.quantity_remaining -= quantity_to_allocate
-                    if target_lot.quantity_free_remaining > 0: target_lot.quantity_free_remaining -= min(quantity_to_allocate, target_lot.quantity_free_remaining)
-                    target_lot.save()
+                    StockLot.objects.filter(pk=target_lot.pk).update(
+                        quantity_remaining=F('quantity_remaining') - quantity_to_allocate,
+                        quantity_free_remaining=F('quantity_free_remaining') - min(quantity_to_allocate, target_lot.quantity_free_remaining),
+                        version=F('version') + 1
+                    )
                 else:
-                    available_lots = StockLot.objects.select_for_update().filter(produit_id=produit_id, quantity_remaining__gt=0).order_by(F('date_expiration').asc(nulls_last=True), 'date_reception')
+                    available_lots = StockLot.objects.filter(produit_id=produit_id, quantity_remaining__gt=0).order_by(F('date_expiration').asc(nulls_last=True), 'date_reception')
                     for lot in available_lots:
                         if quantity_to_allocate <= 0: break
                         qty_from_lot = min(lot.quantity_remaining, quantity_to_allocate)

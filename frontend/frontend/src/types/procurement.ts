@@ -94,6 +94,7 @@ export interface LigneAvoir {
     price: string
     lot: string
     date_expiration: string
+    motif?: string
     total: string
     est_cloture?: boolean
 }
@@ -115,6 +116,9 @@ export interface Avoir {
     updated_at: string
     total_ht: string
     produits: LigneAvoir[]
+    stock_decharge?: boolean
+    stock_decharge_at?: string
+    stock_decharge_by?: number
 }
 
 export interface OrderSchedule {

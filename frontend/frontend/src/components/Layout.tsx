@@ -1,3 +1,4 @@
+import { Suspense } from 'react'
 import { Outlet } from 'react-router-dom'
 import Sidebar from './Sidebar'
 import UserHeader from './common/UserHeader'
@@ -9,17 +10,27 @@ function LayoutContent() {
   const { isZenithMode, isMidnightTheme } = useSidebar()
 
   return (
-    <div className={`flex flex-col min-h-screen ${isZenithMode ? 'bg-base-100' : 'bg-base-200'} ${isMidnightTheme ? 'theme-midnight' : ''} transition-colors duration-300 relative`}>
+    <div className={`flex flex-col h-dvh ${isZenithMode ? 'bg-base-100' : 'bg-base-200'} ${isMidnightTheme ? 'theme-midnight' : ''} transition-colors duration-300 relative overflow-hidden`}>
       <LicenceExpirationBanner />
       <div className="flex flex-1 relative overflow-hidden">
         <Omnisearch />
         {!isZenithMode && <Sidebar />}
         
-        <main className={`flex-1 overflow-x-hidden overflow-y-auto h-screen ${isZenithMode ? 'p-0' : 'px-3 py-3 sm:px-4 sm:py-4 lg:px-6 lg:py-6'} transition-all duration-300 relative`}>
-        <div className={`h-full flex flex-col max-size-full relative ${!isZenithMode ? 'pt-12 sm:pt-14' : ''}`}>
-          {!isZenithMode && <UserHeader />}
-          {/* Outlet render direct - Suspense deja dans App.tsx */}
-          <Outlet />
+        <main className={`flex-1 overflow-x-hidden overflow-y-auto flex flex-col transition-all duration-300 min-h-0`}>
+          {!isZenithMode && (
+            <div className="sticky top-0 z-40 flex items-center justify-end bg-base-200/80 backdrop-blur-md border-b border-base-300/50 px-3 py-1">
+              <UserHeader />
+            </div>
+          )}
+        <div className={`flex-1 flex flex-col max-size-full ${!isZenithMode ? 'px-2 py-2 sm:px-3 sm:py-3 lg:px-4 lg:py-4 xl:px-6 xl:py-5' : ''}`}>
+          {/* Outlet render direct - Suspense pour les composants lazy-loaded */}
+          <Suspense fallback={
+            <div className="flex-1 flex items-center justify-center">
+              <span className="loading loading-spinner loading-lg text-primary"></span>
+            </div>
+          }>
+            <Outlet />
+          </Suspense>
         </div>
       </main>
     </div>

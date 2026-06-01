@@ -20,11 +20,37 @@ export const buildBackendUrl = (path: string) => {
     return BACKEND_BASE_URL ? `${BACKEND_BASE_URL}${normalizedPath}` : normalizedPath;
 };
 
+const TIMEOUT_MS = 15000;
+const MAX_RETRIES = 3;
+const RETRY_DELAY_MS = 1000;
+
 const api = axios.create({
     baseURL: API_BASE_URL,
+    timeout: TIMEOUT_MS,
 });
 
+const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+
+const isNetworkError = (error: any): boolean => {
+    return !error.response && (error.code === 'ERR_NETWORK' || error.code === 'ECONNABORTED' || error.message === 'Network Error');
+};
+
+const isRetryableRequest = (error: any): boolean => {
+    const method = error.config?.method?.toUpperCase();
+    return method === 'GET' && isNetworkError(error);
+};
+
 let hasShownExpiredToast = false;
+let hasShownOfflineToast = false;
+
+window.addEventListener('online', () => {
+    hasShownOfflineToast = false;
+    toast.success('Connexion rétablie.', { id: 'back-online', duration: 3000 });
+});
+
+window.addEventListener('offline', () => {
+    toast.error('Connexion perdue. Vérifiez le réseau.', { id: 'offline-warning', duration: 0 });
+});
 
 export const resetSessionExpiredFlag = () => {
     hasShownExpiredToast = false;
@@ -56,10 +82,30 @@ api.interceptors.request.use(
     (error) => Promise.reject(error)
 );
 
-// Response Interceptor: Handle Global Errors
+// Response Interceptor: Handle Global Errors + Retry réseau
 api.interceptors.response.use(
     (response) => response,
-    (error) => {
+    async (error) => {
+        const config = error.config;
+
+        // Retry automatique sur les GET en cas de coupure réseau
+        if (isRetryableRequest(error) && config) {
+            config._retryCount = (config._retryCount || 0) + 1;
+            if (config._retryCount <= MAX_RETRIES) {
+                await sleep(RETRY_DELAY_MS * config._retryCount);
+                return api(config);
+            }
+        }
+
+        if (isNetworkError(error) && !hasShownOfflineToast) {
+            hasShownOfflineToast = true;
+            toast.error('Serveur injoignable. Vérifiez la connexion au serveur.', {
+                id: 'network-error',
+                duration: 8000,
+            });
+            return Promise.reject(error);
+        }
+
         const status = error.response?.status;
         const requestUrl = String(error.config?.url ?? '');
 
@@ -97,5 +143,6 @@ api.interceptors.response.use(
         return Promise.reject(error);
     }
 );
+
 
 export default api;

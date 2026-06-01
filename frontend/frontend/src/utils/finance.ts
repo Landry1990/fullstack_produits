@@ -122,7 +122,7 @@ export const calculateFactureTotals = (
         partPatient: Number.isFinite(partPatient) ? partPatient : 0,
         totalBuyHT: Number.isFinite(cartStats.totalBuyHT) ? cartStats.totalBuyHT : 0,
         totalMarginValue: Number.isFinite(finalTTC - cartStats.totalBuyHT) ? (finalTTC - cartStats.totalBuyHT) : 0,
-        globalMargin: cartStats.totalBuyHT > 0 ? (finalTTC / cartStats.totalBuyHT).toFixed(4) : '1.0000',
+        globalMargin: cartStats.totalBuyHT > 0 ? (finalTTC / cartStats.totalBuyHT).toFixed(2) : '1.00',
         globalMarginPercent: cartStats.totalBuyHT > 0 ? ((finalTTC / cartStats.totalBuyHT - 1) * 100).toFixed(2) : '0.00'
     };
 

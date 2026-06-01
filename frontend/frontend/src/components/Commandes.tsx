@@ -104,19 +104,19 @@ export default function Commandes({ forcedType }: CommandesProps) {
       )}
 
       {state.viewMode === 'LIST' && (
-        <div className="flex-1 min-h-0 overflow-hidden">
+        <div className="flex-1 min-h-0 overflow-hidden flex flex-col">
           <CommandeList {...listProps} onOpenScheduledList={() => setIsScheduledListOpen(true)} />
         </div>
       )}
 
       {state.viewMode === 'DETAILS' && state.selectedCommande && (
-        <div className="flex-1 min-h-0 overflow-hidden">
+        <div className="flex-1 min-h-0 overflow-hidden flex flex-col">
           <CommandeDetails {...(detailsProps as any)} />
         </div>
       )}
 
       {(state.viewMode === 'CREATE' || state.viewMode === 'EDIT') && (
-        <div className="flex-1 min-h-0 overflow-hidden">
+        <div className="flex-1 min-h-0 overflow-hidden flex flex-col">
           <CommandeForm {...(formProps as any)} />
         </div>
       )}

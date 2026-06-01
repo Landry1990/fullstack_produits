@@ -6,6 +6,7 @@ import { useLicence } from '../../context/LicenceContext';
 import InvoiceTemplate, { type InvoiceData, type PharmacySettings } from './InvoiceTemplate';
 import InventairePrintTemplate from './InventairePrintTemplate';
 import StockValuationTemplate, { type StockValuationData } from './StockValuationTemplate';
+import AvoirPrintTemplate from './AvoirPrintTemplate';
 
 const PrintPage: React.FC = () => {
     const { id } = useParams<{ id: string }>();
@@ -21,6 +22,7 @@ const PrintPage: React.FC = () => {
 
     const [inventoryData, setInventoryData] = useState<any>(null);
     const [stockValuationData, setStockValuationData] = useState<StockValuationData | null>(null);
+    const [avoirData, setAvoirData] = useState<any | null>(null);
 
     useEffect(() => {
         const fetchData = async () => {
@@ -75,6 +77,9 @@ const PrintPage: React.FC = () => {
                     const groupBy = searchParams.get('group_by') || '';
                     const res = await api.get(`rapports/valeur_stock_json/?valorisation=${valorisation}&group_by=${groupBy}`);
                     setStockValuationData(res.data);
+                } else if (type === 'AVOIR') {
+                    const res = await api.get(`avoirs/${id}/print_data/`);
+                    setAvoirData(res.data.avoir);
                 } else {
                     // Default to Invoice
                     const invoiceRes = await api.get(`factures/${id}/print_data/`);
@@ -130,7 +135,7 @@ const PrintPage: React.FC = () => {
 
     if (loading) return <div className="flex items-center justify-center h-screen">Chargement du document...</div>;
     if (error) return <div className="flex items-center justify-center h-screen text-error font-bold">{error}</div>;
-    if (!settings || (!invoiceData && !inventoryData && !stockValuationData)) return <div>Données incomplètes</div>;
+    if (!settings || (!invoiceData && !inventoryData && !stockValuationData && !avoirData)) return <div>Données incomplètes</div>;
 
     return (
         <div className="print-page bg-base-200 min-h-screen p-8">
@@ -169,6 +174,11 @@ const PrintPage: React.FC = () => {
                 <InventairePrintTemplate 
                     settings={settings} 
                     data={inventoryData} 
+                />
+            ) : avoirData ? (
+                <AvoirPrintTemplate
+                    settings={settings}
+                    data={avoirData}
                 />
             ) : invoiceData ? (
                 <InvoiceTemplate 

@@ -35,7 +35,7 @@ function SidebarActions({
   const { t } = useTranslation(['facturation', 'common'])
 
   return (
-    <div className="flex flex-col gap-3">
+    <div className="flex flex-col gap-2">
       {/* Modes Bar */}
       <div className="flex items-center justify-between gap-2 px-1">
           <label className="flex items-center gap-2 cursor-pointer group">
@@ -58,17 +58,8 @@ function SidebarActions({
           </label>
       </div>
 
-      {/* Scanner Action */}
-      <button 
-        onClick={onScanOrdonnance}
-        className="btn btn-sm bg-primary/10 border-primary/20 hover:bg-primary/20 text-primary text-xs font-bold uppercase tracking-wider w-full flex items-center gap-2"
-      >
-        <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
-        Scanner Ordonnance
-      </button>
-
-      {/* Action Grid (Secondary Actions) */}
-      <div className="grid grid-cols-2 gap-2">
+      {/* Action Grid (3 colonnes compactes) */}
+      <div className="grid grid-cols-3 gap-1.5">
           <button 
             onClick={onProforma} 
             disabled={!isValid || loading}
@@ -83,23 +74,30 @@ function SidebarActions({
           >
             {t('facturation:actions.suspend_short')}
           </button>
+          <button 
+            onClick={onScanOrdonnance}
+            className="btn btn-sm bg-primary/10 border-primary/20 hover:bg-primary/20 text-primary"
+            title="Scanner Ordonnance"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+          </button>
       </div>
 
       {/* Primary Payment Action */}
       <button
         onClick={onPayment}
         disabled={!isValid || loading}
-        className="btn btn-lg btn-primary w-full shadow-2xl shadow-primary/20 group relative overflow-hidden"
+        className="btn btn-md btn-primary w-full shadow-xl shadow-primary/20 group relative overflow-hidden"
       >
-        <div className="flex items-center justify-center gap-3">
+        <div className="flex items-center justify-center gap-2">
           {loading ? (
-            <span className="loading loading-spinner"></span>
+            <span className="loading loading-spinner loading-sm"></span>
           ) : (
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a1 1 0 11-2 0 1 1 0 012 0z" />
             </svg>
           )}
-          <span className="text-xl font-black uppercase tracking-widest">{t('facturation:actions.pay')}</span>
+          <span className="text-base font-black uppercase tracking-widest">{t('facturation:actions.pay')}</span>
         </div>
         <kbd className="absolute right-4 kbd kbd-sm bg-primary-focus border-none text-white/60">F9</kbd>
       </button>

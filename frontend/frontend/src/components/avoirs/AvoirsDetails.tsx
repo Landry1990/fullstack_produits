@@ -1,7 +1,7 @@
 import { format } from 'date-fns';
 import { fr, enUS } from 'date-fns/locale';
 import { useTranslation } from 'react-i18next';
-import { ArrowLeft, CheckCircle2, Lock, Unlock, Printer } from 'lucide-react';
+import { ArrowLeft, CheckCircle2, Lock, Unlock, Printer, PackageX, CheckCheck } from 'lucide-react';
 import type { UseAvoirsDataReturn } from '../../hooks/useAvoirsData';
 import { formatCurrency } from '../../utils/formatters';
 
@@ -17,6 +17,7 @@ export const AvoirsDetails: React.FC<AvoirsDetailsProps> = ({ data }) => {
         handleDelete,
         handleToggleCloture,
         handleToggleAllCloture,
+        handleDechargerStock,
         savingValidation
     } = data;
     const { t, i18n } = useTranslation(['stock', 'common']);
@@ -101,13 +102,38 @@ export const AvoirsDetails: React.FC<AvoirsDetailsProps> = ({ data }) => {
                 </div>
                 
                 <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
-                    <button 
-                        onClick={() => window.print()} 
+                    <button
+                        onClick={() => {
+                            const w = 1000, h = 800;
+                            window.open(
+                                `/app/print-invoice/${selectedAvoir.id}?type=AVOIR`,
+                                'PrintAvoir',
+                                `width=${w},height=${h},top=${(screen.height-h)/2},left=${(screen.width-w)/2},resizable=yes,scrollbars=yes`
+                            );
+                        }}
                         className="inline-flex items-center justify-center h-9 px-3 text-base-content/60 hover:text-base-content hover:bg-base-200 rounded-lg text-sm font-medium transition-colors gap-2"
                     >
                         <Printer className="size-4" />
                         <span className="hidden sm:inline">{t('stock:avoirs.details.print')}</span>
                     </button>
+
+                    {/* Bouton Décharger Stock — visible si non déchargé, indépendant du statut */}
+                    {!selectedAvoir.stock_decharge ? (
+                        <button
+                            className="inline-flex items-center justify-center gap-2 h-9 px-4 bg-orange-500 hover:bg-orange-600 text-white rounded-lg text-sm font-bold transition-colors shadow-sm"
+                            onClick={() => handleDechargerStock(selectedAvoir)}
+                            disabled={savingValidation}
+                            title="Retirer physiquement ces quantités du stock et enregistrer les mouvements"
+                        >
+                            <PackageX className="size-4" />
+                            Décharger Stock
+                        </button>
+                    ) : (
+                        <div className="inline-flex items-center gap-2 h-9 px-3 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-700 text-sm font-medium">
+                            <CheckCheck className="size-4" />
+                            Stock déchargé
+                        </div>
+                    )}
 
                     {(selectedAvoir.status?.toUpperCase() === 'BROUILLON' || selectedAvoir.status?.toUpperCase() === 'BRO') && (
                         <>
@@ -228,6 +254,7 @@ export const AvoirsDetails: React.FC<AvoirsDetailsProps> = ({ data }) => {
                                         <th className="w-12 text-center">{t('stock:avoirs.table.status')}</th>
                                         <th>{t('stock:avoirs.form.table_product')}</th>
                                         <th>{t('stock:avoirs.form.table_lot')}</th>
+                                        <th>Motif</th>
                                         <th className="text-center">{t('stock:avoirs.form.table_qty')}</th>
                                         <th className="text-right">{t('stock:avoirs.form.table_price')}</th>
                                         <th className="text-right">{t('stock:avoirs.form.table_total')}</th>
@@ -257,6 +284,13 @@ export const AvoirsDetails: React.FC<AvoirsDetailsProps> = ({ data }) => {
                                                     {ligne.date_expiration ? format(new Date(ligne.date_expiration), 'dd/MM/yyyy', { locale: i18n.language === 'fr' ? fr : enUS }) : t('stock:avoirs.form.no_date')}
                                                 </div>
                                             </td>
+                                            <td>
+                                                {ligne.motif ? (
+                                                    <span className="inline-block text-xs bg-primary/10 text-primary px-2 py-0.5 rounded-full font-medium">{ligne.motif}</span>
+                                                ) : (
+                                                    <span className="text-xs text-base-content/30 italic">—</span>
+                                                )}
+                                            </td>
                                             <td className="text-center">
                                                 <span className="font-bold text-base bg-base-200 px-3 py-1 rounded-lg">
                                                     {ligne.quantity}
@@ -273,7 +307,7 @@ export const AvoirsDetails: React.FC<AvoirsDetailsProps> = ({ data }) => {
                                     
                                     {(!selectedAvoir.produits || selectedAvoir.produits.length === 0) && (
                                         <tr>
-                                            <td colSpan={6} className="text-center py-8 text-base-content/60">
+                                            <td colSpan={7} className="text-center py-8 text-base-content/60">
                                                 {t('stock:avoirs.details.no_lines')}
                                             </td>
                                         </tr>

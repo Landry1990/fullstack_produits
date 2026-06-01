@@ -45,6 +45,7 @@ from .views.objectifs import ObjectifViewSet
 from .views.configuration_objectifs import ConfigurationObjectifsViewSet
 from .views.temporal_analysis import TemporalAnalysisViewSet
 from .views.purge import PurgeViewSet
+from .views.system_admin import SystemAdminViewSet
 from .views.code_backup import CodeBackupViewSet
 from .views.stocks.ruptures import RuptureFournisseurViewSet
 from .views.omnisearch import GlobalSearchView
@@ -112,6 +113,7 @@ router.register(r'configuration-objectifs', ConfigurationObjectifsViewSet, basen
 router.register(r'temporal-analysis', TemporalAnalysisViewSet, basename='temporal-analysis')
 router.register(r'tva', TVAViewSet, basename='tva')
 router.register(r'maintenance', PurgeViewSet, basename='maintenance')
+router.register(r'system-admin', SystemAdminViewSet, basename='system-admin')
 router.register(r'code-backup', CodeBackupViewSet, basename='code-backup')
 router.register(r'user-sessions', UserDailySessionViewSet, basename='user-session')
 router.register(r'ruptures-fournisseurs', RuptureFournisseurViewSet, basename='rupture-fournisseur')

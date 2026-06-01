@@ -161,6 +161,7 @@ export default function Sidebar() {
         // { path: '/app/invoice-settings', label: t('parametres.facture'), key: 'settings_facture' }, (removed)
         { path: '/app/pharmacy-settings', label: t('parametres.pharmacie'), key: 'settings_pharmacie' },
         { path: '/app/telegram-history', label: t('parametres.telegram', 'Historique Telegram'), key: 'settings_telegram' },
+        { path: '/app/systeme', label: 'Administration Système', key: 'settings_systeme' },
       ]
     },
     { path: '/app/aide-formation', label: t('aide_formation'), key: 'aide_formation', icon: (
@@ -255,6 +256,8 @@ export default function Sidebar() {
       return filteredSubmenus.length > 0 ? [{ ...item, submenus: filteredSubmenus }] : [];
     }
     
+    const adminOnlyKeys = ['utilisateurs', 'user_sessions', 'audit', 'import_dci', 'maintenance', 'corbeille'];
+    if (adminOnlyKeys.includes(item.key)) return [];
     if (item.key === 'changelog') return [item];
     return (hasExplicitParent || hasLegacyCategory || allowed.includes(item.key)) ? [item] : [];
   });
@@ -310,19 +313,20 @@ export default function Sidebar() {
       )}
 
       <aside
-        className={`pharma-sidebar flex flex-col h-screen fixed lg:sticky top-0 z-50 transition-all duration-300 ease-in-out
-          ${isCollapsed ? 'w-[72px]' : 'w-[268px]'}
+        className={`pharma-sidebar flex flex-col fixed lg:sticky top-0 z-50 transition-all duration-300 ease-in-out
+          ${isCollapsed ? 'w-[60px]' : 'w-screen lg:w-[220px] xl:w-[252px]'}
           ${isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
         `}
+        style={{ height: '100dvh', minHeight: '100dvh' }}
       >
         {/* ── HEADER ── */}
-        <div className={`flex items-center gap-3 px-4 py-5 border-b border-white/5 ${isCollapsed ? 'justify-center' : ''}`}>
+        <div className={`flex items-center gap-3 px-3 py-3 border-b border-white/5 ${isCollapsed ? 'justify-center' : ''}`}>
           <div className="shrink-0">
-            <ZenithLogo variant={1} size={isCollapsed ? 30 : 38} />
+            <ZenithLogo variant={1} size={isCollapsed ? 26 : 32} />
           </div>
           {!isCollapsed && (
             <div className="min-w-0 flex-1">
-              <h1 className="text-base font-black text-white tracking-widest uppercase leading-none truncate">
+              <h1 className="text-sm font-black text-white tracking-widest uppercase leading-none truncate">
                 {licence?.pharmacie_nom || 'Zenith'}
               </h1>
               <p className="text-[9px] font-bold text-emerald-400/70 uppercase tracking-[0.2em] mt-0.5 truncate">
@@ -341,8 +345,8 @@ export default function Sidebar() {
         </div>
 
         {/* ── NAV ── */}
-        <nav className="flex-1 overflow-y-auto py-3 custom-scrollbar">
-          <ul className={`flex flex-col gap-1.5 ${isCollapsed ? 'px-2' : 'px-3'}`}>
+        <nav className="flex-1 overflow-y-auto py-1.5 custom-scrollbar">
+          <ul className={`flex flex-col gap-0.5 ${isCollapsed ? 'px-1.5' : 'px-2'}`}>
             {menuItems.map((item) => {
               const hasSubmenus = !!item.submenus;
               const isParentOfActive = item.submenus?.some(sub => location.pathname.startsWith(sub.path));
@@ -354,11 +358,11 @@ export default function Sidebar() {
                     {isCollapsed ? (
                       <div className="relative group w-full">
                         <div
-                          className={`flex items-center justify-center w-full h-10 rounded-xl cursor-pointer transition-all
+                          className={`flex items-center justify-center w-full h-8 rounded-xl cursor-pointer transition-all
                             ${isParentOfActive ? 'bg-emerald-500/15 text-emerald-400' : 'text-white/50 hover:text-white hover:bg-base-100/5'}`}
                           title={item.label}
                         >
-                          <span className="size-5">{item.icon}</span>
+                          <span className="size-4">{item.icon}</span>
                         </div>
                         <ul className="absolute left-full top-0 z-[100] p-2 shadow-2xl bg-[#1a2235] border border-white/10 rounded-2xl w-52 ml-2 invisible group-hover:visible opacity-0 group-hover:opacity-100 transition-all duration-200">
                           <li className="px-3 py-1.5">
@@ -382,29 +386,29 @@ export default function Sidebar() {
                         {/* Parent button */}
                         <button
                           onClick={() => toggleMenu(item.key)}
-                          className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl cursor-pointer transition-all duration-200 group
+                          className={`w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg cursor-pointer transition-all duration-200 group
                             ${isMenuOpen || isParentOfActive
                               ? 'bg-emerald-500/15 text-emerald-300'
                               : 'text-white/50 hover:text-white/90 hover:bg-base-100/5'
                             }`}
                         >
-                          <span className={`size-5 shrink-0 transition-colors ${isMenuOpen || isParentOfActive ? 'text-emerald-400' : ''}`}>
+                          <span className={`size-4 shrink-0 transition-colors ${isMenuOpen || isParentOfActive ? 'text-emerald-400' : ''}`}>
                             {item.icon}
                           </span>
-                          <span className="flex-1 text-left text-[15px] font-semibold tracking-tight truncate">{item.label}</span>
-                          <ChevronDown className={`size-3.5 shrink-0 transition-transform duration-200 ${isMenuOpen ? 'rotate-180' : ''}`} />
+                          <span className="flex-1 text-left text-[12px] xl:text-[13px] font-semibold tracking-tight truncate">{item.label}</span>
+                          <ChevronDown className={`size-3 shrink-0 transition-transform duration-200 ${isMenuOpen ? 'rotate-180' : ''}`} />
                         </button>
 
                         {/* Submenus with vertical connector */}
                         <div className={`overflow-hidden transition-all duration-250 ease-in-out ${isMenuOpen ? 'max-h-[600px] opacity-100 mt-0.5' : 'max-h-0 opacity-0'}`}>
-                          <ul className="relative ml-4 pl-3 border-l border-white/10 flex flex-col gap-1 py-1">
+                          <ul className="relative ml-3 pl-2.5 border-l border-white/10 flex flex-col gap-0.5 py-0.5">
                             {item.submenus?.map((sub) => (
                               <li key={sub.path}>
                                 <NavLink
                                   to={sub.path}
                                   onClick={closeSidebar}
                                   className={({ isActive }) =>
-                                    `flex items-center justify-between px-3 py-2 rounded-lg text-[13px] transition-all
+                                    `flex items-center justify-between px-2.5 py-1 rounded-lg text-[11px] xl:text-[12px] transition-all
                                     ${isActive
                                       ? 'bg-emerald-500/20 text-emerald-300 font-bold'
                                       : 'text-white/45 hover:text-white/90 hover:bg-base-100/5 font-medium'
@@ -436,15 +440,15 @@ export default function Sidebar() {
                     onClick={closeSidebar}
                     title={isCollapsed ? item.label : undefined}
                     className={({ isActive }) =>
-                      `flex items-center ${isCollapsed ? 'justify-center w-full h-10' : 'gap-3 px-3 py-2.5'} rounded-xl transition-all duration-200
+                      `flex items-center ${isCollapsed ? 'justify-center w-full h-8' : 'gap-2 px-2.5 py-1.5'} rounded-lg transition-all duration-200
                       ${isActive
                         ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-500/30 font-bold'
                         : 'text-white/50 hover:text-white/90 hover:bg-base-100/5'
                       }`
                     }
                   >
-                    <span className="size-5 shrink-0">{item.icon}</span>
-                    {!isCollapsed && <span className="text-[15px] font-semibold tracking-tight truncate">{item.label}</span>}
+                    <span className="size-4 shrink-0">{item.icon}</span>
+                    {!isCollapsed && <span className="text-[12px] xl:text-[13px] font-semibold tracking-tight truncate">{item.label}</span>}
                   </NavLink>
                 </li>
               );
@@ -452,7 +456,13 @@ export default function Sidebar() {
           </ul>
         </nav>
 
-        {/* FOOTER utilisateur retiré car présent ailleurs */}
+        {/* Spacer pour remplir le bas */}
+        <div className="shrink-0 px-3 py-3 border-t border-white/5">
+          <div className="flex items-center gap-2 opacity-20">
+            <div className="size-1.5 rounded-full bg-emerald-400"></div>
+            <span className="text-[9px] font-bold text-white uppercase tracking-widest truncate">Zenith OS</span>
+          </div>
+        </div>
       </aside>
     </>
   );
