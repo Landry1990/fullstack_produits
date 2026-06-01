@@ -406,11 +406,11 @@ export default function CommandeProductTable({
 
             ) : (
 
-                <table className="table w-full relative text-xs">
+                <table className="table w-full relative text-sm">
 
                 <thead className="sticky top-0 z-30">
 
-                    <tr className="!bg-base-200 text-[10px] uppercase tracking-wider text-base-content/80 font-bold border-b-2 border-base-300">
+                    <tr className="!bg-base-200 text-[11px] uppercase tracking-wider text-base-content/80 font-bold border-b-2 border-base-300">
 
                     <th className="!bg-base-200 w-8 px-2">
 
@@ -445,6 +445,8 @@ export default function CommandeProductTable({
                     )}
 
                     <th className="!bg-base-200 text-right w-20 font-bold border-l border-base-300/30">{t('orders:product_table.headers.buy_price_ht')}</th>
+
+                    <th className="!bg-base-200 text-right w-24 font-bold text-primary border-l border-base-300/30">Montant</th>
 
                     <th className="!bg-base-200 text-right w-14 font-bold">{t('orders:product_table.headers.tva')}</th>
 
@@ -584,7 +586,7 @@ export default function CommandeProductTable({
 
                             <td className="pl-2 py-0.5 min-w-[350px]">
 
-                            <div className="font-medium text-xs">
+                            <div className="font-medium text-sm">
 
                                 <div className="flex items-center gap-1">
 
@@ -624,7 +626,7 @@ export default function CommandeProductTable({
 
                         <td className="pl-2 py-0.5">
 
-                            <span className="text-xs font-mono font-bold text-base-content/80">
+                            <span className="text-sm font-mono font-bold text-base-content/80">
 
                                 {(() => {
 
@@ -662,7 +664,7 @@ export default function CommandeProductTable({
 
                                 return (
 
-                                    <span className={`text-[10px] font-bold px-1 rounded ${currentStock <= 0 ? 'text-error bg-error/10' : 'text-warning'}`}>
+                                    <span className={`text-xs font-bold px-1 rounded ${currentStock <= 0 ? 'text-error bg-error/10' : 'text-warning'}`}>
 
                                         {currentStock}
 
@@ -813,6 +815,22 @@ export default function CommandeProductTable({
                             tabIndex={!fieldsConfig[2].editable ? -1 : 0}
 
                         />
+
+                        </td>
+
+                        {/* Montant = qty × price (UG non inclus) */}
+
+                        <td className="text-right py-0.5 font-bold text-primary font-mono">
+
+                            {(() => {
+
+                                const qty = Number(p.quantity || 0);
+
+                                const price = Number(p.price || 0);
+
+                                return (qty * price).toLocaleString('fr-FR', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+
+                            })()}
 
                         </td>
 

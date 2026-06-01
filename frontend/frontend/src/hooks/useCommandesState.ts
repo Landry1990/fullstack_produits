@@ -1108,12 +1108,12 @@ export function useCommandesState(forcedType?: 'LOC' | 'DIR' | 'DIV') {
           }
         }
         
-        // Parser les colonnes : CIP;Libellé;Qté;UG;Qté livrée;Prix cession;Prix public
+        // Parser les colonnes : CIP;Libellé;Qté commandée;UG;Qté livrée;Prix cession;Prix public
         const cols = line.split(';');
         const cip = cols[0];
         if (!cip) return;
 
-        const qty = normalizeNumberInput(cols[2]) || 1;              // Colonne 3: Qté commandée
+        const qty = normalizeNumberInput(cols[4]) || 1;              // Colonne 5: Qté livrée (Qté commandée ignorée)
         const ug = normalizeNumberInput(cols[3]) || 0;              // Colonne 4: Qté UG
         const prixCession = parseCsvPrice(cols[5]);                    // Colonne 6: Prix cession
         const prixPublic = parseCsvPrice(cols[6]);                   // Colonne 7: Prix public

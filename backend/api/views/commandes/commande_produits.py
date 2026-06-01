@@ -74,6 +74,7 @@ class CommandeProduitViewSet(viewsets.ModelViewSet):
         
         items_to_create = []
         items_to_update = []
+        warnings_list = []
         
         # Helper to convert values to Decimal safely
         def to_decimal(val, default=0):
@@ -125,7 +126,6 @@ class CommandeProduitViewSet(viewsets.ModelViewSet):
         # Get product TVAs for fallback
         product_ids_in_payload = {p.get('produit') for p in produits_data if p.get('produit')}
         product_tva_map = {p.id: p.tva for p in Produit.objects.filter(id__in=product_ids_in_payload)}
-
         # Fetch existing items for this order to know what to update vs create
         existing_qs = CommandeProduit.objects.filter(commande=commande)
         existing_items = {item.id: item for item in existing_qs}
@@ -150,6 +150,15 @@ class CommandeProduitViewSet(viewsets.ModelViewSet):
                 'lot': lot,
                 'date_expiration': parse_expiration(p.get('date_expiration')),
             }
+
+            # Contrôle de Marge
+            if data['selling_price'] < data['price_cost']:
+                produit_name = p.get('produit_nom') or 'Inconnu'
+                error_msg = f"Marge négative détectée sur le produit {produit_name} (Achat: {data['price_cost']}F, Vente: {data['selling_price']}F). Veuillez corriger le prix d'achat ou de vente."
+                return Response({'error': error_msg}, status=status.HTTP_400_BAD_REQUEST)
+            elif data['selling_price'] == data['price_cost'] and data['price_cost'] > 0:
+                produit_name = p.get('produit_nom') or 'Inconnu'
+                warnings_list.append(f"Attention : Marge nulle (0F) sur {produit_name}.")
 
             if item_id and item_id in existing_ids:
                 payload_ids.add(item_id)
@@ -212,5 +221,6 @@ class CommandeProduitViewSet(viewsets.ModelViewSet):
             'status': 'success',
             'created': len(items_to_create),
             'updated': len(items_to_update),
-            'deleted': deleted_count
+            'deleted': deleted_count,
+            'warnings': warnings_list
         })

@@ -25,7 +25,7 @@ import {
 } from 'lucide-react';
 import { useDebounce } from 'use-debounce';
 
-import omnisearchService from '../../services/omnisearchService';
+import omnisearchService, { type GlobalSearchResponse } from '../../services/omnisearchService';
 import type { ProduitModel, Client, Facture, Commande, Fournisseur } from '../../types';
 import { formatDate } from '../../utils/dateUtils';
 
@@ -33,7 +33,7 @@ export default function Omnisearch() {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState('');
   const [activeValue, setActiveValue] = useState<string | undefined>(undefined);
-  const [debouncedSearch] = useDebounce(search, 300);
+  const [debouncedSearch] = useDebounce(search, 200); // Optimisé: 300ms → 200ms
   const { t } = useTranslation('common');
   const navigate = useNavigate();
 
@@ -44,6 +44,9 @@ export default function Omnisearch() {
   const [fournisseurs, setFournisseurs] = useState<Fournisseur[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Cache frontend simple pour éviter les requêtes dupliquées
+  const [searchCache, setSearchCache] = useState<Map<string, GlobalSearchResponse>>(new Map());
 
   // Toggle au clavier (Ctrl+K ou Cmd+K) + fermeture par Escape
   useEffect(() => {
@@ -102,6 +105,20 @@ export default function Omnisearch() {
         return;
       }
 
+      // Vérifier le cache frontend
+      const cacheKey = debouncedSearch.toLowerCase();
+      if (searchCache.has(cacheKey)) {
+        const cached = searchCache.get(cacheKey);
+        if (cached) {
+          setProduits(cached.produits);
+          setClients(cached.clients);
+          setFactures(cached.factures);
+          setCommandes(cached.commandes);
+          setFournisseurs(cached.fournisseurs);
+          return;
+        }
+      }
+
       setLoading(true);
       setError(null);
       
@@ -114,6 +131,20 @@ export default function Omnisearch() {
           setFactures(results.factures);
           setCommandes(results.commandes);
           setFournisseurs(results.fournisseurs);
+          
+          // Mettre en cache le résultat (limiter à 50 entrées)
+          setSearchCache(prev => {
+            const newCache = new Map(prev);
+            newCache.set(cacheKey, results);
+            // Garder seulement les 50 dernières recherches
+            if (newCache.size > 50) {
+              const firstKey = newCache.keys().next().value;
+              if (firstKey) {
+                newCache.delete(firstKey);
+              }
+            }
+            return newCache;
+          });
         }
       } catch (err: any) {
         if (err.name !== 'AbortError' && !controller.signal.aborted) {
@@ -129,7 +160,7 @@ export default function Omnisearch() {
 
     fetchData();
     return () => controller.abort();
-  }, [debouncedSearch, t]);
+  }, [debouncedSearch, t, searchCache]);
 
   // Synchronisation auto de la sélection - version corrigée
   // Ne se déclenche que quand les résultats changent, pas quand search/activeValue changent

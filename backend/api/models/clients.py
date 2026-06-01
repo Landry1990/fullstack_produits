@@ -15,13 +15,13 @@ class Fournisseur(models.Model):
     """Model representing a supplier."""
     id = models.AutoField(primary_key=True)
     name = models.CharField(max_length=100)
-    address = models.TextField()
+    address = models.TextField(blank=True, null=True)
     phone_regex = RegexValidator(
         regex=r'^\+?1?\d{9,15}$',
         message="Le numéro de téléphone doit être au format: '+999999999'. Jusqu'à 15 chiffres autorisés."
     )
     phone = models.CharField(validators=[phone_regex], max_length=17, unique=True)
-    email = models.EmailField(unique=True)
+    email = models.EmailField(unique=True, blank=True, null=True)
     is_active = models.BooleanField(
         default=True, 
         help_text="Fournisseur actif (visible dans les recherches)"

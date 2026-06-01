@@ -30,14 +30,20 @@ export default function TicketPreviewModal({
     const styleTags = Array.from(document.querySelectorAll('style, link[rel="stylesheet"]'))
       .map(node => node.outerHTML)
       .join('\n');
+
+    // Get the current theme from the parent document
+    const currentTheme = document.documentElement.getAttribute('data-theme') || 'light';
     
     const win = window.open('', '', 'height=800,width=600');
     if (win) {
       win.document.write(`<!DOCTYPE html>
-<html>
+<html data-theme="light" lang="fr">
 <head>
   <title>Ticket de Caisse</title>
   <base href="${window.location.origin}/">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Poppins:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
   ${styleTags}
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -51,6 +57,7 @@ export default function TicketPreviewModal({
         margin: 0 !important; 
         padding: 0 !important; 
         background: white !important;
+        color: black !important;
         -webkit-print-color-adjust: exact;
         print-color-adjust: exact;
       }
@@ -60,7 +67,8 @@ export default function TicketPreviewModal({
       max-width: ${ticketWidth}mm;
       margin: 0 auto;
       padding: 0;
-      background: white;
+      background: white !important;
+      color: black !important;
       font-family: 'Inter', 'Poppins', sans-serif;
       overflow: hidden;
     }
@@ -69,22 +77,33 @@ export default function TicketPreviewModal({
       max-width: ${ticketWidth}mm;
       overflow: hidden;
     }
+    /* Force ticket styles to ensure print fidelity */
     #ticket-preview {
       width: ${ticketWidth}mm !important;
       max-width: ${ticketWidth}mm !important;
       min-width: 0 !important;
       margin: 0 !important;
       padding: 2mm !important;
-      background: white;
-      color: black;
+      background: white !important;
+      color: black !important;
       box-shadow: none !important;
       outline: none !important;
       overflow: hidden;
       word-break: break-word;
       overflow-wrap: break-word;
     }
+    #ticket-preview * {
+      color: black !important;
+    }
     #ticket-preview table { table-layout: fixed; width: 100% !important; }
     #ticket-preview td, #ticket-preview th { overflow: hidden; text-overflow: ellipsis; }
+    /* Override DaisyUI theme variables as fallback */
+    :root, [data-theme="light"] {
+      --b1: 100% 0 0;
+      --bc: 0% 0 0;
+      --p: 49.12% 0.3096 275.75;
+      --pc: 89.824% 0.06192 275.75;
+    }
   </style>
 </head>
 <body>
@@ -93,18 +112,16 @@ export default function TicketPreviewModal({
   </div>
   <script>
     window.onload = () => {
+        const doPrint = () => {
+            window.print();
+            window.close();
+        };
         if (document.fonts) {
             document.fonts.ready.then(() => {
-                setTimeout(() => {
-                    window.print();
-                    window.close();
-                }, 300);
+                setTimeout(doPrint, 500);
             });
         } else {
-            setTimeout(() => {
-                window.print();
-                window.close();
-            }, 800);
+            setTimeout(doPrint, 1500);
         }
     };
   </script>

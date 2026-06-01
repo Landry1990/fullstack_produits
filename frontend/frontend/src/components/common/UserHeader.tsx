@@ -5,7 +5,8 @@ import { useSidebar } from '../../context/SidebarContext';
 import { useTranslation } from 'react-i18next';
 import communicationService from '../../services/communicationService';
 import MessagingModal from './MessagingModal';
-import { Bell, ChevronDown, LogOut, Moon, Sun, MessageSquare, User as UserIcon } from 'lucide-react';
+import FeedbackModal from './FeedbackModal';
+import { Bell, ChevronDown, LogOut, Moon, Sun, MessageSquare, User as UserIcon, MessageCircle } from 'lucide-react';
 import { playNotificationSound } from '../../utils/audio';
 
 export default function UserHeader() {
@@ -14,6 +15,7 @@ export default function UserHeader() {
   const { isMidnightTheme, toggleMidnightTheme } = useSidebar();
   const [unreadCount, setUnreadCount] = useState(0);
   const [isMessagingOpen, setIsMessagingOpen] = useState(false);
+  const [isFeedbackOpen, setIsFeedbackOpen] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const prevUnreadCount = useRef<number>(0);
 
@@ -95,6 +97,15 @@ export default function UserHeader() {
                 {unreadCount}
               </span>
             )}
+          </button>
+
+          {/* Feedback Button */}
+          <button 
+            onClick={() => setIsFeedbackOpen(true)}
+            className="p-2 rounded-full hover:bg-primary/10 transition-colors"
+            title="Feedback"
+          >
+            <MessageCircle size={20} className="text-base-content/70" />
           </button>
 
           <div className="h-8 w-[1px] bg-gray-300 mx-1"></div>
@@ -202,6 +213,11 @@ export default function UserHeader() {
           fetchUnread();
         }}
         currentUser={user}
+      />
+
+      <FeedbackModal 
+        isOpen={isFeedbackOpen}
+        onClose={() => setIsFeedbackOpen(false)}
       />
     </>
   );

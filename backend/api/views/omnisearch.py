@@ -3,6 +3,7 @@ from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from django.db.models import Q, Count, Sum, F, DecimalField
 from django.db.models.functions import Coalesce
+from django.core.cache import cache
 
 from ..models import Produit, Client, Facture, Commande, Fournisseur, CommandeProduit
 from ..models.paiements import PaiementFournisseur
@@ -28,6 +29,13 @@ class GlobalSearchView(APIView):
                 'commandes': [],
                 'fournisseurs': []
             })
+
+        # Cache key based on query and limit
+        cache_key = f'omnisearch:{query}:{limit}'
+        cached_data = cache.get(cache_key)
+        
+        if cached_data:
+            return Response(cached_data)
 
         # 1. PRODUITS
         produits = Produit.objects.filter(is_active=True).filter(
@@ -90,10 +98,15 @@ class GlobalSearchView(APIView):
             Q(phone__icontains=query)
         )[:limit]
 
-        return Response({
+        response_data = {
             'produits': ProduitListSerializer(produits, many=True).data,
             'clients': ClientListSerializer(clients, many=True).data,
             'factures': FactureOmnisearchSerializer(factures, many=True).data,
             'commandes': CommandeOmnisearchSerializer(commandes, many=True).data,
             'fournisseurs': FournisseurSerializer(fournisseurs, many=True).data,
-        })
+        }
+        
+        # Cache the result for 5 minutes (300 seconds)
+        cache.set(cache_key, response_data, timeout=300)
+        
+        return Response(response_data)

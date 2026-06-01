@@ -22,8 +22,8 @@ services:
   # Cache Redis (pour Django Cache + Channels)
   redis:
     image: redis:7-alpine
-    ports:
-      - "6379:6379"
+    # ports:
+    #   - "6380:6379" # Commenté pour éviter les conflits de ports sur la machine hôte (le backend communique en interne via le réseau Docker)
     volumes:
       - redis_data:/data
     networks:
@@ -35,8 +35,7 @@ services:
       context: ./backend
       dockerfile: Dockerfile
     command: >
-      sh -c "pip install channels channels-redis daphne &&
-             python manage.py migrate &&
+      sh -c "python manage.py migrate &&
              python manage.py collectstatic --noinput &&
              daphne -b 0.0.0.0 -p 8000 backend.asgi:application"
     volumes:
@@ -71,11 +70,6 @@ services:
     build:
       context: ./frontend/frontend
       dockerfile: Dockerfile.dev
-    # Si pas de Dockerfile.dev, utiliser node directement
-    image: node:20-alpine
-    working_dir: /app
-    command: >
-      sh -c "npm install && npm run dev -- --host 0.0.0.0"
     volumes:
       - ./frontend/frontend:/app
       - /app/node_modules
