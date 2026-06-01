@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { 
   BookOpen, Play, Search, ShoppingCart, Package,
-  TrendingUp, Users, Settings, Truck, Clock, ChevronRight, Keyboard
+  TrendingUp, Users, Settings, Truck, Clock, ChevronRight, Keyboard, Lightbulb, Printer, Activity
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
@@ -189,6 +189,78 @@ const HelpTraining = () => {
                       <kbd className={`kbd kbd-xs text-[10px] ${s.highlight ? 'bg-primary text-white border-primary' : ''}`}>{s.key}</kbd>
                     </div>
                   ))}
+                </div>
+              </div>
+
+              {/* Astuces pratiques */}
+              <div className="mt-4 pt-4 border-t border-base-200">
+                <div className="flex items-center gap-2 px-2 mb-3">
+                  <Lightbulb className="size-4 text-amber-400" />
+                  <span className="text-[10px] font-black uppercase tracking-widest text-base-content/30">Astuces</span>
+                </div>
+                <div className="space-y-2">
+
+                  {/* Astuce score santé stock */}
+                  <div className="px-2 py-2.5 rounded-xl bg-emerald-50 border border-emerald-200">
+                    <div className="flex items-start gap-2">
+                      <Activity className="size-3.5 text-emerald-500 mt-0.5 shrink-0" />
+                      <div>
+                        <p className="text-[11px] font-bold text-emerald-700 leading-tight mb-1">
+                          Score de Santé du Stock (Pilotage Expert)
+                        </p>
+                        <p className="text-[10px] text-emerald-700/70 leading-snug mb-1.5">
+                          Le score est calculé automatiquement sur <strong>5 critères</strong>, chacun avec un poids différent :
+                        </p>
+                        <div className="space-y-1">
+                          <div className="flex items-center gap-1.5">
+                            <span className="font-mono text-[10px] font-bold bg-emerald-100 text-emerald-700 px-1.5 py-0.5 rounded w-8 text-center">30</span>
+                            <span className="text-[10px] text-emerald-700/80"><strong>Disponibilité</strong> — peu de ruptures de stock</span>
+                          </div>
+                          <div className="flex items-center gap-1.5">
+                            <span className="font-mono text-[10px] font-bold bg-emerald-100 text-emerald-700 px-1.5 py-0.5 rounded w-8 text-center">25</span>
+                            <span className="text-[10px] text-emerald-700/80"><strong>Fluidité</strong> — pas de stock dormant sur produits actifs</span>
+                          </div>
+                          <div className="flex items-center gap-1.5">
+                            <span className="font-mono text-[10px] font-bold bg-emerald-100 text-emerald-700 px-1.5 py-0.5 rounded w-8 text-center">20</span>
+                            <span className="text-[10px] text-emerald-700/80"><strong>Couverture</strong> — stock entre 15 et 90 jours de ventes</span>
+                          </div>
+                          <div className="flex items-center gap-1.5">
+                            <span className="font-mono text-[10px] font-bold bg-emerald-100 text-emerald-700 px-1.5 py-0.5 rounded w-8 text-center">15</span>
+                            <span className="text-[10px] text-emerald-700/80"><strong>Activité</strong> — produits vendus dans les 30 derniers jours</span>
+                          </div>
+                          <div className="flex items-center gap-1.5">
+                            <span className="font-mono text-[10px] font-bold bg-emerald-100 text-emerald-700 px-1.5 py-0.5 rounded w-8 text-center">10</span>
+                            <span className="text-[10px] text-emerald-700/80"><strong>Immobilisation</strong> — peu de capital bloqué en stock mort</span>
+                          </div>
+                        </div>
+                        <div className="mt-2 pt-1.5 border-t border-emerald-200 flex gap-2 flex-wrap">
+                          <span className="text-[10px] bg-emerald-500 text-white px-1.5 py-0.5 rounded font-bold">&ge; 80% Bon</span>
+                          <span className="text-[10px] bg-amber-400 text-white px-1.5 py-0.5 rounded font-bold">50–79% Moyen</span>
+                          <span className="text-[10px] bg-red-400 text-white px-1.5 py-0.5 rounded font-bold">&lt; 50% Critique</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Astuce impression rapport mensuel */}
+                  <div className="px-2 py-2.5 rounded-xl bg-amber-50 border border-amber-200">
+                    <div className="flex items-start gap-2">
+                      <Printer className="size-3.5 text-amber-500 mt-0.5 shrink-0" />
+                      <div>
+                        <p className="text-[11px] font-bold text-amber-700 leading-tight mb-1">
+                          Impression Rapport Mensuel
+                        </p>
+                        <p className="text-[10px] text-amber-600/80 leading-snug">
+                          Pour économiser l'encre, utiliser le bouton <strong>«&nbsp;PDF&nbsp;»</strong> plutôt que Ctrl+P.
+                          Le PDF est généré en noir et blanc sans fonds colorés.
+                        </p>
+                        <p className="text-[10px] text-amber-600/80 leading-snug mt-1">
+                          Si vous imprimez depuis le navigateur&nbsp;: décocher <strong>«&nbsp;Graphiques en arrière-plan&nbsp;»</strong> dans les options d'impression.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
                 </div>
               </div>
             </div>

@@ -34,11 +34,14 @@ export const useSalesData = () => {
     // Helper to build filter params
     const buildParams = useCallback((page: number): SalesFilters => {
         const params: SalesFilters = {
-            date__gte: startDate,
-            date__lte: `${endDate}T23:59:59`,
             page: page,
             page_size: PAGE_SIZE
         };
+        // Si recherche active : on cherche sur toute la table (pas de filtre date)
+        if (!searchTerm) {
+            params.date__gte = startDate;
+            params.date__lte = `${endDate}T23:59:59`;
+        }
         if (statusFilter !== 'ALL') params.status = statusFilter;
         if (sellerFilter) params.created_by = sellerFilter;
         if (searchTerm) params.search = searchTerm;

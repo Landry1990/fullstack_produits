@@ -55,7 +55,7 @@ export const SalesFilters: React.FC<SalesFiltersProps> = ({ filters, onDeleteDra
                 </div>
 
                 {/* Date Range */}
-                <div className="flex items-center gap-2 bg-base-100 p-1.5 rounded-lg border border-base-300 px-3">
+                <div className={`flex items-center gap-2 bg-base-100 p-1.5 rounded-lg border px-3 transition-all ${searchTerm ? 'border-amber-300 opacity-40 pointer-events-none' : 'border-base-300'}`}>
                     <Calendar className="h-5 w-5 text-base-content/60" />
                     <input
                         type="date"

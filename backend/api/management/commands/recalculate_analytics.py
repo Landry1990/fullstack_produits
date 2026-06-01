@@ -2,6 +2,7 @@ from django.core.management.base import BaseCommand
 from django.db.models import Sum, Q
 from django.utils import timezone
 from api.models import Produit, Facture
+from api.services.margin_service import MarginService
 from decimal import Decimal
 
 class Command(BaseCommand):
@@ -22,19 +23,15 @@ class Command(BaseCommand):
         count = 0
         
         for p in produits:
-            # 1. Recalculate Margins (Coefficient)
+            # 1. Recalculate Margins — centralisé via MarginService
             if p.cost_price and p.selling_price:
                 try:
-                    cp = Decimal(str(p.cost_price))
-                    sp = Decimal(str(p.selling_price))
-                    if cp > 0:
-                        p.taux_marge = sp / cp
-                    else:
-                        p.taux_marge = Decimal('0.00')
-                    if sp > 0:
-                        p.pourcentage_marge = ((sp - cp) / sp) * 100
-                    else:
-                        p.pourcentage_marge = Decimal('0.00')
+                    margins = MarginService.calculate_product_margin(
+                        Decimal(str(p.cost_price)),
+                        Decimal(str(p.selling_price))
+                    )
+                    p.taux_marge = margins['taux_marge']
+                    p.pourcentage_marge = margins['pourcentage_marge']
                 except (ValueError, TypeError):
                     pass
 

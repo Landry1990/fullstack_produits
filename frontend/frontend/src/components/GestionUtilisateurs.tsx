@@ -143,11 +143,6 @@ const MENU_HIERARCHY = [
   },
   { key: 'aide_formation', labelKey: 'sidebar:aide_formation' },
   { key: 'changelog', labelKey: 'sidebar:changelog' },
-  { key: 'utilisateurs', labelKey: 'sidebar:utilisateurs' },
-  { key: 'user_sessions', labelKey: 'sidebar:user_sessions_sidebar' },
-  { key: 'audit', labelKey: 'sidebar:audit' },
-  { key: 'maintenance', labelKey: 'sidebar:maintenance' },
-  { key: 'corbeille', labelKey: 'sidebar:corbeille' },
   { key: 'perimes', labelKey: 'sidebar:stock.perimes.title' },
   { key: 'commandes', labelKey: 'sidebar:commandes.title' }
 ];
@@ -177,7 +172,7 @@ export default function GestionUtilisateurs() {
   const [, setLoading] = useState(true);
   const [modalOpen, setModalOpen] = useState(false);
   const [editingUser, setEditingUser] = useState<User | null>(null);
-  const { user: currentUser } = useAuth();
+  const { user: currentUser, login } = useAuth();
 
   // Sudo Mode State
   const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
@@ -359,6 +354,8 @@ export default function GestionUtilisateurs() {
 
     if (user) {
       setEditingUser(user);
+      const adminKeys = ['utilisateurs', 'user_sessions', 'audit', 'import_dci', 'maintenance', 'corbeille'];
+      const cleanedMenus = (user.profile?.allowed_menus || []).filter(k => !adminKeys.includes(k));
       setFormData({
         username: user.username,
         email: user.email,
@@ -368,7 +365,7 @@ export default function GestionUtilisateurs() {
         role: user.profile?.role || (user.is_superuser ? 'PHARMACIEN' : 'VENDEUR'),
         is_superuser: user.is_superuser,
         is_active: user.is_active,
-        allowed_menus: user.profile?.allowed_menus || [],
+        allowed_menus: cleanedMenus,
         can_do_returns: user.profile?.can_do_returns || false,
         can_sell_negative_stock: user.profile?.can_sell_negative_stock || false,
         can_cash_out: user.profile?.can_cash_out ?? false,
@@ -573,11 +570,17 @@ export default function GestionUtilisateurs() {
       }
 
       if (editingUser) {
-        const updatedUser = { ...editingUser, ...payload, profile: { ...editingUser.profile, ...payload.profile } };
-        // We set the whole object from the response if possible, but for now we update local state
-        setUsers(prev => prev.map(u => u.id === editingUser.id ? ({} as any) : u)); // Placeholder to force refresh if needed, but better below
         const { data: finalUser } = await api.patch(`users/${editingUser.id}/`, payload);
         setUsers(prev => prev.map(u => u.id === finalUser.id ? finalUser : u));
+        // Si c'est l'utilisateur courant, rafraîchir ses droits dans la session active
+        if (currentUser && editingUser.id === (currentUser as any).id) {
+          const updatedSession = {
+            ...(currentUser as any),
+            allowed_menus: payload.profile.allowed_menus,
+            ...payload.profile,
+          };
+          login(updatedSession);
+        }
         toast.success(t('messages.updated'));
       } else {
         const { data: newUser } = await api.post('users/', payload);

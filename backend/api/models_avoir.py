@@ -89,6 +89,7 @@ class LigneAvoir(models.Model):
     price = models.DecimalField(max_digits=10, decimal_places=2, help_text="Prix de retour")
     lot = models.CharField(max_length=100, blank=True)
     date_expiration = models.DateField(null=True, blank=True)
+    motif = models.CharField(max_length=200, blank=True, help_text="Motif spécifique de retour pour cette ligne")
     
     class Meta:
         verbose_name = "Ligne d'avoir"

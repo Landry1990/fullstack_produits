@@ -61,6 +61,7 @@ export interface UseAvoirsDataReturn {
     handleValidate: (avoir: Avoir) => Promise<void>;
     handleToggleCloture: (ligneId: number, currentStatus: boolean | undefined) => Promise<void>;
     handleToggleAllCloture: () => Promise<void>;
+    handleDechargerStock: (avoir: Avoir) => Promise<void>;
 
     // Products & Lots Management (Form View)
     selectProduct: (product: ProduitModel) => void;
@@ -270,6 +271,7 @@ export function useAvoirsData(): UseAvoirsDataReturn {
             lot: p.lot || '',
             stock_lot: p.stock_lot || undefined,
             date_expiration: p.date_expiration || '',
+            motif: p.motif || '',
             total: p.total || (Number(p.quantity) * Number(p.price)).toString()
         }));
 
@@ -332,7 +334,8 @@ export function useAvoirsData(): UseAvoirsDataReturn {
                     quantity: ligne.quantity,
                     price: ligne.price,
                     lot: ligne.lot,
-                    date_expiration: ligne.date_expiration || undefined
+                    date_expiration: ligne.date_expiration || undefined,
+                    motif: ligne.motif || ''
                 });
             });
 
@@ -366,24 +369,41 @@ export function useAvoirsData(): UseAvoirsDataReturn {
     };
 
     const handleValidate = async (avoir: Avoir) => {
+        if (!confirm(`Valider l'avoir ${avoir.numero} ? Le statut passera à "Validé".`)) return;
+        try {
+            setSavingValidation(true);
+            const updated = await avoirService.valider(avoir.id);
+            toast.success(t('avoirs.toasts.validate_success'));
+            setAvoirs(avoirs.map(a => a.id === avoir.id ? updated : a));
+            if (viewMode === 'DETAILS') setSelectedAvoir(updated);
+        } catch (err: unknown) {
+            const error = err as { response?: { data?: { error?: string } }; message?: string };
+            toast.error(t('avoirs.toasts.validate_error') + ': ' + (error.response?.data?.error || error.message || 'Erreur inconnue'));
+        } finally {
+            setSavingValidation(false);
+        }
+    };
+
+    const handleDechargerStock = async (avoir: Avoir) => {
         requireSudo(async (validatorId, password) => {
             try {
-                const updated = await avoirService.valider(avoir.id, {
+                setLoading(true);
+                const updated = await avoirService.dechargerStock(avoir.id, {
                     validated_by_id: validatorId,
                     password: password
                 });
-                toast.success(t('avoirs.toasts.validate_success'));
+                toast.success('Stock déchargé avec succès. Les mouvements ont été enregistrés.');
                 setAvoirs(avoirs.map(a => a.id === avoir.id ? updated : a));
-                if (viewMode === 'DETAILS') setViewMode('LIST');
+                setSelectedAvoir(updated);
             } catch (err: unknown) {
                 const error = err as { response?: { data?: { error?: string } }; message?: string };
-                toast.error(t('avoirs.toasts.validate_error') + ': ' + (error.response?.data?.error || error.message || 'Erreur inconnue'));
+                toast.error('Erreur : ' + (error.response?.data?.error || error.message || 'Erreur inconnue'));
             } finally {
-                setSavingValidation(false);
+                setLoading(false);
             }
         }, {
-            title: t('avoirs.modals.sudo_validate_title', { numero: avoir.numero }),
-            message: t('avoirs.modals.sudo_validate_message', { numero: avoir.numero })
+            title: `Décharger stock — ${avoir.numero}`,
+            message: `Cette action va retirer physiquement ${avoir.produits?.length || 0} produit(s) du stock et enregistrer les mouvements. Action irréversible.`
         });
     };
 
@@ -584,28 +604,19 @@ export function useAvoirsData(): UseAvoirsDataReturn {
     const handleBulkValidate = async () => {
         const count = selectedIds.size;
         if (count === 0) return;
+        if (!confirm(`Valider ${count} avoir(s) sélectionné(s) ?`)) return;
 
-        requireSudo(async (validatorId, password) => {
-            setBulkLoading(true);
-            try {
-                await Promise.all(Array.from(selectedIds).map(id =>
-                    avoirService.valider(id, {
-                        validated_by_id: validatorId,
-                        password: password
-                    })
-                ));
-                toast.success(t('avoirs.toasts.bulk_validate_success', { count }));
-                setSelectedIds(new Set());
-                fetchAvoirs();
-            } catch (err) {
-                toast.error(t('avoirs.toasts.bulk_validate_error'));
-            } finally {
-                setBulkLoading(false);
-            }
-        }, {
-            title: t('avoirs.modals.sudo_bulk_validate_title', { count }),
-            message: t('avoirs.modals.sudo_bulk_validate_message', { count })
-        });
+        setBulkLoading(true);
+        try {
+            await Promise.all(Array.from(selectedIds).map(id => avoirService.valider(id)));
+            toast.success(t('avoirs.toasts.bulk_validate_success', { count }));
+            setSelectedIds(new Set());
+            fetchAvoirs();
+        } catch (err) {
+            toast.error(t('avoirs.toasts.bulk_validate_error'));
+        } finally {
+            setBulkLoading(false);
+        }
     };
 
     return {
@@ -646,6 +657,7 @@ export function useAvoirsData(): UseAvoirsDataReturn {
         handleValidate,
         handleToggleCloture,
         handleToggleAllCloture,
+        handleDechargerStock,
         selectProduct,
         updateLine,
         removeLine,

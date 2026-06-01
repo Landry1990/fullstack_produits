@@ -420,7 +420,7 @@ export function useCommandesState(forcedType?: 'LOC' | 'DIR' | 'DIV') {
       totalTTC,
       totalBuyHT,
       totalMarginValue,
-      globalMargin: globalMargin.toFixed(4),
+      globalMargin: globalMargin.toFixed(2),
       globalMarginPercent: globalMarginPercent.toFixed(2)
     };
   }, [commandeProduits, selectedCommande]);
@@ -1236,46 +1236,47 @@ export function useCommandesState(forcedType?: 'LOC' | 'DIR' | 'DIV') {
     reader.readAsText(file);
   };
 
-  const handleCsvExport = (wholesaler: 'UBIPHARM' | 'LABOREX') => {
+  const handleCsvExport = (wholesaler: 'UBIPHARM' | 'LABOREX' | 'LABOREX_CIP3') => {
     if (commandeProduits.length === 0) {
       toast(t('orders:messages.csv_empty_order'), { icon: '⚠️' });
       return;
     }
 
-    let csvContent = ""; 
+    const cipLabel = wholesaler === 'UBIPHARM' ? 'CIP1' : wholesaler === 'LABOREX' ? 'CIP2' : 'CIP3';
+    const dateStr = new Date().toISOString().slice(0, 10);
+
+    let csvContent = "";
     let exportedCount = 0;
-    let skippedCount = 0;
+    const skippedProducts: { nom: string; qty: number }[] = [];
 
     commandeProduits.forEach(item => {
         const product = typeof item.produit === 'object' ? item.produit : produitsList.find(p => p.id === item.produit);
+        const nom = (typeof item.produit === 'object' ? item.produit?.name : product?.name) || `Produit #${item.produit}`;
+        const qty = item.quantity || 0;
+
         if (!product) {
-            skippedCount++;
+            skippedProducts.push({ nom, qty });
             return;
         }
 
         let code = '';
-        if (wholesaler === 'UBIPHARM') code = product.cip1 || '';
-        else if (wholesaler === 'LABOREX') code = product.cip2 || '';
+        if (wholesaler === 'UBIPHARM')           code = product.cip1 || '';
+        else if (wholesaler === 'LABOREX')       code = product.cip2 || '';
+        else if (wholesaler === 'LABOREX_CIP3')  code = product.cip3 || product.cip2 || '';
 
         if (code) {
-            const qty = item.quantity || 0;
             csvContent += `${code};${qty}\n`;
             exportedCount++;
         } else {
-            skippedCount++;
+            skippedProducts.push({ nom: product.name || nom, qty });
         }
     });
 
-    if (exportedCount === 0) {
-        toast.error(t('orders:messages.csv_no_code', { wholesaler }));
-        return;
-    }
-
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const link = document.createElement("a");
-    if (link.download !== undefined) {
+    // Télécharger le CSV si au moins 1 produit exportable
+    if (exportedCount > 0) {
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement("a");
         const url = URL.createObjectURL(blob);
-        const dateStr = new Date().toISOString().slice(0,10);
         link.setAttribute("href", url);
         link.setAttribute("download", `commande_${wholesaler}_${dateStr}.csv`);
         link.style.visibility = 'hidden';
@@ -1284,8 +1285,31 @@ export function useCommandesState(forcedType?: 'LOC' | 'DIR' | 'DIV') {
         document.body.removeChild(link);
     }
 
-    if (skippedCount > 0) {
-        alert(t('orders:messages.csv_export_skipped', { exported: exportedCount, skipped: skippedCount, wholesaler }));
+    // Générer un fichier .txt listant les produits sans CIP
+    if (skippedProducts.length > 0) {
+        const lines = [
+            `Produits non exportés vers ${wholesaler} (code ${cipLabel} manquant)`,
+            `Date : ${dateStr}`,
+            ``,
+            ...skippedProducts.map(p => `- ${p.nom}  (Qté : ${p.qty})`)
+        ];
+        const txtBlob = new Blob([lines.join('\n')], { type: 'text/plain;charset=utf-8;' });
+        const txtLink = document.createElement("a");
+        const txtUrl = URL.createObjectURL(txtBlob);
+        txtLink.setAttribute("href", txtUrl);
+        txtLink.setAttribute("download", `produits_sans_${cipLabel}_${dateStr}.txt`);
+        txtLink.style.visibility = 'hidden';
+        document.body.appendChild(txtLink);
+        txtLink.click();
+        document.body.removeChild(txtLink);
+
+        if (exportedCount === 0) {
+            toast(`Aucun produit exporté — ${skippedProducts.length} produit(s) sans code ${cipLabel} listés dans le fichier téléchargé.`, { icon: '⚠️' });
+        } else {
+            toast(`${exportedCount} exporté(s), ${skippedProducts.length} sans ${cipLabel} → liste téléchargée`, { icon: '⚠️' });
+        }
+    } else if (exportedCount > 0) {
+        toast.success(`${exportedCount} produit(s) exportés vers ${wholesaler}`);
     }
   };
 

@@ -34,6 +34,7 @@ from .promotions import PromotionViewSet
 from .configuration_objectifs import ConfigurationObjectifsViewSet
 from .temporal_analysis import TemporalAnalysisViewSet
 from .purge import PurgeViewSet
+from .system_admin import SystemAdminViewSet
 
 # Import from modular rapports
 from .rapports import RapportViewSet
@@ -60,5 +61,5 @@ __all__ = [
     'HistoriqueVentesViewSet', 'HistoriqueAchatsViewSet', 'ProductImportView',
     'RapportViewSet', 'OrdonnancierViewSet', 'FormeViewSet', 'CouponMonnaieViewSet',
     'PromotionViewSet', 'TemporalAnalysisViewSet', 'TVAViewSet',
-    'PurgeViewSet', 'UserDailySessionViewSet',
+    'PurgeViewSet', 'UserDailySessionViewSet', 'SystemAdminViewSet',
 ]

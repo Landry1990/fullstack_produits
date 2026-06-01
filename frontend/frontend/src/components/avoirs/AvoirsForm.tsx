@@ -67,7 +67,7 @@ export const AvoirsForm: React.FC<AvoirsFormProps> = ({ data }) => {
         <form onSubmit={handleSave} className="min-h-screen bg-base-200 p-4 md:p-6 space-y-6">
             
             {/* Header / Actions */}
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-base-100 p-4 rounded-2xl shadow-sm border border-base-300 relative z-[60]">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-base-100 p-4 rounded-2xl shadow-sm border border-base-300 relative z-[50]">
                 <div className="flex items-center gap-3">
                     <button 
                         type="button" 
@@ -89,7 +89,12 @@ export const AvoirsForm: React.FC<AvoirsFormProps> = ({ data }) => {
                     <button type="button" className="inline-flex items-center justify-center h-9 px-3 text-base-content/60 hover:text-base-content hover:bg-base-200 rounded-lg text-sm font-medium transition-colors" onClick={handleBackToList}>
                         {t('stock:avoirs.form.cancel')}
                     </button>
-                    <button type="submit" className="inline-flex items-center justify-center h-9 px-4 bg-primary text-white rounded-lg text-sm font-bold hover:bg-primary-focus transition-colors shadow-sm" disabled={loading}>
+                    <button
+                        type="submit"
+                        className="inline-flex items-center justify-center h-9 px-4 bg-primary text-white rounded-lg text-sm font-bold hover:bg-primary-focus transition-colors shadow-sm"
+                        disabled={loading}
+                        onClick={() => setShowFournisseurList(false)}
+                    >
                         <Save className="size-4 mr-2" />
                         {loading ? t('stock:avoirs.form.saving') : t('stock:avoirs.form.save_draft')}
                     </button>
@@ -149,26 +154,8 @@ export const AvoirsForm: React.FC<AvoirsFormProps> = ({ data }) => {
 
                             {/* Backdrop pour fermer la liste */}
                             {showFournisseurList && (
-                                <div className="fixed inset-0 z-40" onClick={() => setShowFournisseurList(false)} />
+                                <div className="fixed inset-0 z-[45]" onClick={() => setShowFournisseurList(false)} style={{ pointerEvents: 'auto' }} />
                             )}
-                        </div>
-
-                        {/* Type Avoir */}
-                        <div className="space-y-1.5">
-                            <label className="block text-sm font-medium text-base-content/60 mb-1">
-                                {t('stock:avoirs.form.type_label')} <span className="text-error">*</span>
-                            </label>
-                            <select 
-                                className="w-full rounded-lg border border-base-300 bg-base-200 py-2 px-3 text-sm font-medium text-base-content focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
-                                value={typeAvoir}
-                                onChange={(e) => setTypeAvoir(e.target.value)}
-                            >
-                                <option value="PERIME">{t('stock:avoirs.types.perime')}</option>
-                                <option value="AVARIE">{t('stock:avoirs.types.avarie', 'Avarie')}</option>
-                                <option value="ERREUR">{t('stock:avoirs.types.erreur_livraison', 'Erreur de livraison')}</option>
-                                <option value="NON_FACTURE">{t('stock:avoirs.types.non_facture', 'Non facturé')}</option>
-                                <option value="AUTRE">{t('stock:avoirs.types.autre')}</option>
-                            </select>
                         </div>
 
                         {/* Observations */}
@@ -262,6 +249,7 @@ export const AvoirsForm: React.FC<AvoirsFormProps> = ({ data }) => {
                                         <tr>
                                             <th>{t('stock:avoirs.form.table_product')}</th>
                                             <th className="w-32">{t('stock:avoirs.form.table_lot')}</th>
+                                            <th className="w-40">Motif</th>
                                             <th className="w-24 text-center">{t('stock:avoirs.form.table_qty')}</th>
                                             <th className="w-32 text-right">{t('stock:avoirs.form.table_price')}</th>
                                             <th className="w-32 text-right">{t('stock:avoirs.form.table_total')}</th>
@@ -293,6 +281,15 @@ export const AvoirsForm: React.FC<AvoirsFormProps> = ({ data }) => {
                                                                 {t('stock:avoirs.form.select_lot')}
                                                             </button>
                                                         </div>
+                                                    </td>
+                                                    <td>
+                                                        <input
+                                                            type="text"
+                                                            placeholder="Ex: lot endommagé..."
+                                                            className="w-full rounded-lg border border-base-300 bg-base-100 h-8 px-3 text-sm text-base-content focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
+                                                            value={ligne.motif || ''}
+                                                            onChange={(e) => updateLine(index, 'motif', e.target.value)}
+                                                        />
                                                     </td>
                                                     <td>
                                                         <input 

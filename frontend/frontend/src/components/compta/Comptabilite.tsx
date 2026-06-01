@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback, useMemo, Suspense } from 'react';
 import { useAccounting } from '../../hooks/useAccounting';
+import api from '../../services/api';
 import { 
     LayoutDashboard, 
     BookOpen, 
@@ -197,7 +198,7 @@ export default function Comptabilite({ defaultTab = 'dashboard' }: ComptabiliteP
                         {activeTab === 'balance' && <BalanceTab balance={balance?.comptes || []} t={t} />}
                         {activeTab === 'bilan' && <BilanTab bilan={bilan} t={t} />}
                         {activeTab === 'resultat' && <ResultatTab resultat={resultat} t={t} />}
-                        {activeTab === 'plan' && <PlanTab comptes={comptes} />}
+                        {activeTab === 'plan' && <PlanTab comptes={comptes} actions={actions} />}
                         {activeTab === 'charges' && <ChargesTab actions={actions} comptes={comptes} journaux={journaux} t={t} />}
                     </Suspense>
                 </div>
@@ -519,25 +520,243 @@ function BilanTab({ bilan, t }: any) {
     );
 }
 
-function PlanTab({ comptes }: any) {
+const TYPE_STYLES: Record<string, string> = {
+    PRODUIT: 'bg-primary/10 text-primary border-primary/20',
+    CHARGE:  'bg-error/10 text-error border-error/20',
+    ACTIF:   'bg-info/10 text-info border-info/20',
+    PASSIF:  'bg-warning/10 text-warning border-warning/20',
+};
+
+const EMPTY_FORM = { numero: '', libelle: '', type: 'ACTIF' as const, is_active: true };
+
+function PlanTab({ comptes, actions }: any) {
+    const [search, setSearch] = useState('');
+    const [filterType, setFilterType] = useState('');
+    const [modalOpen, setModalOpen] = useState(false);
+    const [editTarget, setEditTarget] = useState<any>(null);
+    const [form, setForm] = useState({ ...EMPTY_FORM });
+    const [confirmDelete, setConfirmDelete] = useState<any>(null);
+
+    const openAdd = () => { setForm({ ...EMPTY_FORM }); setEditTarget(null); setModalOpen(true); };
+    const openEdit = (c: any) => { setForm({ numero: c.numero, libelle: c.libelle, type: c.type, is_active: c.is_active }); setEditTarget(c); setModalOpen(true); };
+    const closeModal = () => { setModalOpen(false); setEditTarget(null); };
+
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (editTarget) {
+            await actions.updateCompte.mutateAsync({ id: editTarget.id, ...form });
+        } else {
+            await actions.createCompte.mutateAsync(form);
+        }
+        closeModal();
+    };
+
+    const handleDelete = async () => {
+        await actions.deleteCompte.mutateAsync(confirmDelete.id);
+        setConfirmDelete(null);
+    };
+
+    const filtered = (comptes || []).filter((c: any) => {
+        const q = search.toLowerCase();
+        const matchSearch = !q || c.numero.includes(q) || c.libelle.toLowerCase().includes(q);
+        const matchType = !filterType || c.type === filterType;
+        return matchSearch && matchType;
+    });
+
+    const grouped: Record<string, any[]> = {};
+    filtered.forEach((c: any) => {
+        if (!grouped[c.type]) grouped[c.type] = [];
+        grouped[c.type].push(c);
+    });
+
     return (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {comptes?.map((c: any) => (
-                <div key={c.numero} className="bg-base-100 p-4 rounded-xl border border-base-300 flex flex-row items-center justify-between group hover:border-indigo-200 transition-all shadow-sm">
-                    <div>
-                        <span className={`text-xs font-medium px-2 py-1 rounded-md mb-1 inline-block
-                            ${c.type === 'PRODUIT' ? 'bg-primary/10 text-primary' : 
-                              c.type === 'CHARGE' ? 'bg-error/10 text-error' : 'bg-base-300 text-base-content/60'}`}>
-                            {c.type}
-                        </span>
-                        <h4 className="font-medium text-sm text-base-content/60">{c.libelle}</h4>
-                        <p className="text-xl font-semibold text-base-content font-mono">{c.numero}</p>
+        <div className="space-y-4">
+            {/* Toolbar */}
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
+                <div className="relative flex-1 w-full">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-base-content/30" />
+                    <input
+                        type="text"
+                        placeholder="Rechercher un compte (numéro ou libellé)…"
+                        className="input input-bordered w-full pl-9 text-sm h-9"
+                        value={search}
+                        onChange={e => setSearch(e.target.value)}
+                    />
+                </div>
+                <select
+                    className="select select-bordered select-sm h-9"
+                    value={filterType}
+                    onChange={e => setFilterType(e.target.value)}
+                >
+                    <option value="">Tous les types</option>
+                    <option value="ACTIF">Actif</option>
+                    <option value="PASSIF">Passif</option>
+                    <option value="CHARGE">Charge</option>
+                    <option value="PRODUIT">Produit</option>
+                </select>
+                <button onClick={openAdd} className="btn btn-primary btn-sm gap-1.5 shrink-0">
+                    <PlusCircle className="size-4" /> Nouveau compte
+                </button>
+            </div>
+
+            {/* Stats */}
+            <div className="flex gap-3 flex-wrap text-xs text-base-content/50">
+                <span className="font-medium">{filtered.length} compte(s)</span>
+                {Object.entries(grouped).map(([type, items]) => (
+                    <span key={type} className={`px-2 py-0.5 rounded-full border font-semibold ${TYPE_STYLES[type]}`}>
+                        {type} ({items.length})
+                    </span>
+                ))}
+            </div>
+
+            {/* Grouped list */}
+            {Object.entries(grouped).map(([type, items]) => (
+                <div key={type}>
+                    <div className={`flex items-center gap-2 px-3 py-1.5 rounded-lg mb-2 border text-xs font-black uppercase tracking-wider ${TYPE_STYLES[type]}`}>
+                        {type}
+                        <span className="ml-auto font-normal opacity-60">{items.length} compte(s)</span>
                     </div>
-                    <div className="size-8 rounded-full bg-base-200 flex items-center justify-center opacity-0 group-hover: transition-all">
-                        <ChevronRight className="size-4 text-primary" />
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
+                        {items.map((c: any) => (
+                            <div key={c.id} className={`bg-base-100 p-3 rounded-xl border border-base-300 flex items-center justify-between group hover:shadow-sm transition-all ${!c.is_active ? 'opacity-50' : ''}`}>
+                                <div className="min-w-0">
+                                    <p className="font-mono text-base font-bold text-base-content">{c.numero}</p>
+                                    <p className="text-xs text-base-content/60 truncate">{c.libelle}</p>
+                                    {!c.is_active && <span className="text-[10px] text-error font-bold">INACTIF</span>}
+                                </div>
+                                <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0 ml-2">
+                                    <button
+                                        onClick={() => openEdit(c)}
+                                        className="btn btn-ghost btn-xs"
+                                        title="Modifier"
+                                    >
+                                        <FileText className="size-3.5 text-primary" />
+                                    </button>
+                                    <button
+                                        onClick={() => setConfirmDelete(c)}
+                                        className="btn btn-ghost btn-xs"
+                                        title="Supprimer"
+                                    >
+                                        <ArrowDownRight className="size-3.5 text-error" />
+                                    </button>
+                                </div>
+                            </div>
+                        ))}
                     </div>
                 </div>
             ))}
+
+            {filtered.length === 0 && (
+                <div className="flex flex-col items-center py-16 text-base-content/30">
+                    <Settings className="size-10 mb-3" />
+                    <p className="font-bold">Aucun compte trouvé</p>
+                </div>
+            )}
+
+            {/* Modal ajout / modification */}
+            {modalOpen && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
+                    <div className="bg-base-100 rounded-2xl shadow-xl w-full max-w-md border border-base-300">
+                        <div className="p-5 border-b border-base-200 flex items-center justify-between">
+                            <h3 className="font-bold text-base-content">
+                                {editTarget ? 'Modifier le compte' : 'Nouveau compte'}
+                            </h3>
+                            <button onClick={closeModal} className="btn btn-ghost btn-xs btn-circle">✕</button>
+                        </div>
+                        <form onSubmit={handleSubmit} className="p-5 space-y-4">
+                            <div>
+                                <label className="block text-xs font-semibold text-base-content/50 uppercase tracking-wider mb-1">Numéro de compte *</label>
+                                <input
+                                    type="text"
+                                    className="input input-bordered w-full font-mono"
+                                    placeholder="Ex: 701200"
+                                    value={form.numero}
+                                    onChange={e => setForm({ ...form, numero: e.target.value })}
+                                    required
+                                    disabled={!!editTarget}
+                                />
+                                {editTarget && <p className="text-[10px] text-base-content/40 mt-1">Le numéro ne peut pas être modifié.</p>}
+                            </div>
+                            <div>
+                                <label className="block text-xs font-semibold text-base-content/50 uppercase tracking-wider mb-1">Libellé *</label>
+                                <input
+                                    type="text"
+                                    className="input input-bordered w-full"
+                                    placeholder="Ex: Ventes de médicaments"
+                                    value={form.libelle}
+                                    onChange={e => setForm({ ...form, libelle: e.target.value })}
+                                    required
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-xs font-semibold text-base-content/50 uppercase tracking-wider mb-1">Type *</label>
+                                <select
+                                    className="select select-bordered w-full"
+                                    value={form.type}
+                                    onChange={e => setForm({ ...form, type: e.target.value as any })}
+                                    required
+                                >
+                                    <option value="ACTIF">Actif</option>
+                                    <option value="PASSIF">Passif</option>
+                                    <option value="CHARGE">Charge</option>
+                                    <option value="PRODUIT">Produit</option>
+                                </select>
+                            </div>
+                            <div className="flex items-center gap-3">
+                                <input
+                                    type="checkbox"
+                                    id="is_active"
+                                    className="checkbox checkbox-sm checkbox-primary"
+                                    checked={form.is_active}
+                                    onChange={e => setForm({ ...form, is_active: e.target.checked })}
+                                />
+                                <label htmlFor="is_active" className="text-sm font-medium cursor-pointer">Compte actif</label>
+                            </div>
+                            <div className="flex gap-2 pt-2">
+                                <button type="button" onClick={closeModal} className="btn btn-ghost flex-1">Annuler</button>
+                                <button
+                                    type="submit"
+                                    className="btn btn-primary flex-1"
+                                    disabled={actions.createCompte?.isPending || actions.updateCompte?.isPending}
+                                >
+                                    {(actions.createCompte?.isPending || actions.updateCompte?.isPending)
+                                        ? <span className="loading loading-spinner loading-xs" />
+                                        : editTarget ? 'Enregistrer' : 'Créer'
+                                    }
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
+
+            {/* Modal confirmation suppression */}
+            {confirmDelete && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
+                    <div className="bg-base-100 rounded-2xl shadow-xl w-full max-w-sm border border-error/30 p-6 text-center space-y-4">
+                        <div className="size-12 bg-error/10 rounded-full flex items-center justify-center mx-auto">
+                            <ArrowDownRight className="size-6 text-error" />
+                        </div>
+                        <div>
+                            <p className="font-bold text-base-content">Supprimer ce compte ?</p>
+                            <p className="text-sm text-base-content/60 mt-1">
+                                <span className="font-mono font-bold">{confirmDelete.numero}</span> — {confirmDelete.libelle}
+                            </p>
+                            <p className="text-xs text-error/70 mt-2">Impossible si des écritures y sont rattachées.</p>
+                        </div>
+                        <div className="flex gap-2">
+                            <button onClick={() => setConfirmDelete(null)} className="btn btn-ghost flex-1">Annuler</button>
+                            <button
+                                onClick={handleDelete}
+                                className="btn btn-error flex-1"
+                                disabled={actions.deleteCompte?.isPending}
+                            >
+                                {actions.deleteCompte?.isPending ? <span className="loading loading-spinner loading-xs" /> : 'Supprimer'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }
@@ -611,29 +830,58 @@ function ChargesTab({ actions, comptes, journaux, t }: any) {
         { id: 'autre', compte: 'autre', label: 'Autre charge...', icon: '⚙️' },
     ];
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        
-        let targetCompteNumero = formData.typeCharge === 'autre' ? formData.comptePersonnalise : formData.typeCharge;
-        
-        const chargeCompte = comptes.find((c: any) => c.numero === targetCompteNumero);
-        const tresoCompte = comptes.find((c: any) => c.numero === formData.modePaiement);
 
+        const targetCompteNumero = formData.typeCharge === 'autre' ? formData.comptePersonnalise : formData.typeCharge;
+
+        // Résolution du compte de charge — création automatique si absent
+        const catInfo = categoriesOHADA.find(c => c.compte === targetCompteNumero);
+        let chargeCompte = comptes?.find((c: any) => c.numero === targetCompteNumero);
+        if (!chargeCompte && catInfo && catInfo.compte !== 'autre') {
+            try {
+                const res = await actions.createCompte.mutateAsync({
+                    numero: catInfo.compte,
+                    libelle: catInfo.label.replace(/\s*\(.*\)/, '').trim(),
+                    type: 'CHARGE' as const,
+                    is_active: true
+                });
+                chargeCompte = res.data;
+            } catch { return; }
+        }
         if (!chargeCompte) {
-            alert("Erreur: Compte de charge introuvable. Veuillez vérifier votre plan comptable.");
+            alert("Compte de charge introuvable. Créez-le d'abord dans le Plan Comptable.");
             return;
         }
+
+        // Résolution du compte de trésorerie — création automatique si absent
+        const tresoMeta = formData.modePaiement === '571100'
+            ? { libelle: 'Caisse', type: 'ACTIF' as const }
+            : { libelle: 'Banque', type: 'ACTIF' as const };
+        let tresoCompte = comptes?.find((c: any) => c.numero === formData.modePaiement);
         if (!tresoCompte) {
-            alert("Erreur: Compte de trésorerie introuvable.");
-            return;
+            try {
+                const res = await actions.createCompte.mutateAsync({
+                    numero: formData.modePaiement,
+                    ...tresoMeta,
+                    is_active: true
+                });
+                tresoCompte = res.data;
+            } catch { return; }
         }
 
+        // Résolution du journal — création automatique si absent
         const journalCode = formData.modePaiement === '571100' ? 'CA' : 'BQ';
-        const targetJournal = journaux?.find((j: any) => j.code === journalCode);
-
+        const journalNom  = formData.modePaiement === '571100' ? 'Caisse' : 'Banque';
+        let targetJournal = journaux?.find((j: any) => j.code === journalCode);
         if (!targetJournal) {
-            alert(`Erreur: Journal '${journalCode}' introuvable. Veuillez vérifier votre configuration comptable.`);
-            return;
+            try {
+                const res = await api.post('compta/journaux/', { code: journalCode, nom: journalNom });
+                targetJournal = res.data;
+            } catch {
+                alert(`Erreur: impossible de créer le journal '${journalCode}'.`);
+                return;
+            }
         }
 
         actions.createEcriture.mutate({
@@ -643,10 +891,10 @@ function ChargesTab({ actions, comptes, journaux, t }: any) {
             libelle: formData.libelle,
             lignes: [
                 { compte: chargeCompte.id, debit: parseFloat(formData.montant), credit: 0, libelle_ligne: formData.libelle },
-                { compte: tresoCompte.id, debit: 0, credit: parseFloat(formData.montant), libelle_ligne: formData.libelle }
+                { compte: tresoCompte.id,  debit: 0, credit: parseFloat(formData.montant), libelle_ligne: formData.libelle }
             ]
         });
-        
+
         setFormData({ ...formData, libelle: '', montant: '' });
     };
 

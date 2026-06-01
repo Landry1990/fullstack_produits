@@ -195,7 +195,7 @@ export default function MessagingModal({ isOpen, onClose, currentUser, onMessage
       icon={<MessageSquare className="text-primary" />}
       maxWidth="max-w-4xl"
     >
-      <div className="flex flex-col md:flex-row h-[75vh] md:h-[500px] max-h-[700px] min-h-[400px] overflow-hidden bg-base-100">
+      <div className="flex flex-col md:flex-row h-[420px] overflow-hidden bg-base-100">
         {/* Navigation Tabs (Sidebar on Desktop, Top Bar on Mobile) */}
         <div className="w-full md:w-60 border-b md:border-b-0 md:border-r border-base-300 bg-base-200 p-2 flex flex-row md:flex-col gap-1 overflow-x-auto md:overflow-y-auto no-scrollbar shrink-0">
           <button 
