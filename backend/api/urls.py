@@ -25,7 +25,7 @@ from .views import (
     AuditLogViewSet, LoyaltySettingViewSet, UserViewSet, CustomAuthToken,
     CategoriesListView, CategoriesDetailView, PromisViewSet,
     PromotionViewSet, TVAViewSet, UserDailySessionViewSet,
-    DepotClientViewSet, PosteCaisseViewSet, OrderScheduleViewSet
+    DepotClientViewSet, PosteCaisseViewSet, SessionCaisseViewSet, OrderScheduleViewSet
 )
 from .views.comptabilite import (
     CompteComptableViewSet, JournalComptableViewSet, EcritureComptableViewSet, ExerciceComptableViewSet
@@ -122,6 +122,7 @@ router.register(r'internal-messages', InternalMessageViewSet, basename='internal
 router.register(r'message-templates', MessageTemplateViewSet, basename='messagetemplate')
 router.register(r'reappro-sessions', ReapproSessionViewSet, basename='reapprosession')
 router.register(r'postes-caisses', PosteCaisseViewSet, basename='postecaisse')
+router.register(r'sessions-caisses', SessionCaisseViewSet, basename='sessioncaisse')
 router.register(r'corbeille', CorbeilleViewSet, basename='corbeille')
 router.register(r'margins', MarginViewSet, basename='margin')
 router.register(r'med-ref', MedicamentReferenceViewSet, basename='medreference')

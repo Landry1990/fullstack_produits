@@ -172,8 +172,7 @@ export function useFacturationUI() {
 
     const openPaymentModal = useCallback((facture?: Facture) => {
         if (facture) setFacturePourPaiement(facture)
-        // Réinitialiser les états de paiement pour éviter la persistance de données
-        setMontantPaye('')
+        // Réinitialiser les états de paiement sauf montantPaye (pré-rempli par l'appelant)
         setPaiements([])
         setModePaiement('especes')
         setReference('')

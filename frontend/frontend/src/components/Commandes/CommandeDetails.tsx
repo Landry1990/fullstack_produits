@@ -212,11 +212,11 @@ const CommandeDetails: React.FC<CommandeDetailsProps> = ({
 
           <button
 
-            className="inline-flex items-center px-3 py-1.5 text-sm font-medium rounded-lg border border-red-200 text-error hover:bg-error/10 transition-colors"
+            className="inline-flex items-center px-3 py-1.5 text-sm font-medium rounded-lg border border-red-200 text-error hover:bg-error/10 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
 
             onClick={onDelete}
 
-            disabled={executingAction}
+            disabled={selectedCommande.status === 'CLOT' || executingAction}
 
           >
 

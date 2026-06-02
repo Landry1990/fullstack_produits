@@ -25,7 +25,11 @@ class PosteCaisse(models.Model):
         related_name='postes_caisses_ouverts'
     )
     date_ouverture = models.DateTimeField(null=True, blank=True)
-    
+    fond_de_caisse = models.DecimalField(
+        max_digits=12, decimal_places=2, null=True, blank=True,
+        help_text="Fond de caisse initial saisi à l'ouverture"
+    )
+
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -36,6 +40,37 @@ class PosteCaisse(models.Model):
 
     def __str__(self):
         return f"{self.nom} ({'Ouverte' if self.est_ouvert else 'Fermée'})"
+
+
+class SessionCaisse(models.Model):
+    """Session d'ouverture/fermeture d'un poste de caisse."""
+    poste = models.ForeignKey(
+        PosteCaisse, on_delete=models.CASCADE, related_name='sessions'
+    )
+    ouvert_par = models.ForeignKey(
+        User, on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='sessions_caisses'
+    )
+    fond_de_caisse = models.DecimalField(
+        max_digits=12, decimal_places=2, null=True, blank=True
+    )
+    date_ouverture = models.DateTimeField(default=timezone.now)
+    date_fermeture = models.DateTimeField(null=True, blank=True)
+    montant_total_encaisse = models.DecimalField(
+        max_digits=12, decimal_places=2, null=True, blank=True
+    )
+    est_active = models.BooleanField(default=True)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = "Session de Caisse"
+        verbose_name_plural = "Sessions de Caisse"
+        ordering = ['-date_ouverture']
+
+    def __str__(self):
+        return f"Session {self.poste.nom} — {self.ouvert_par} ({self.date_ouverture.strftime('%d/%m %H:%M')})"
 
 
 class Facture(models.Model):

@@ -3,7 +3,7 @@ from .facture_produits import FactureProduitViewSet
 from .caisse import CaisseViewSet, ClotureCaisseViewSet
 from .creances import CreanceViewSet
 from .mouvements import MouvementCaisseViewSet
-from .caisse_poste import PosteCaisseViewSet
+from .caisse_poste import PosteCaisseViewSet, SessionCaisseViewSet
 
 __all__ = [
     'FactureViewSet',
@@ -13,4 +13,5 @@ __all__ = [
     'CreanceViewSet',
     'MouvementCaisseViewSet',
     'PosteCaisseViewSet',
+    'SessionCaisseViewSet',
 ]
