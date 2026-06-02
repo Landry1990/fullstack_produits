@@ -74,12 +74,11 @@ export default function PaymentModal({
     // Refs for keyboard-driven flow
     const submitBtnRef = useRef<HTMLButtonElement>(null);
 
-    // Cleanup unused effect for validator selection
+    // Focus on submit button when modal opens
     useEffect(() => {
         if (isOpen) {
-            // Focus on input after modal renders
             const timeoutId = setTimeout(() => {
-                paymentInputRef.current?.focus();
+                submitBtnRef.current?.focus();
             }, 150);
             return () => clearTimeout(timeoutId);
         }
@@ -215,51 +214,14 @@ export default function PaymentModal({
                                 </div>
                             )}
 
-                        <div className="flex gap-2 items-end">
-                            <div className="flex-1">
-                                <label className="label py-0"> <span className="label-text text-xs">{t('facturation:payment.mode_label')}</span> </label>
-                                <div className="text-sm font-medium py-1.5 px-2 bg-base-100 border border-base-200 rounded text-base-content/70">
-                                    {t('facturation:payment.caisse_centrale')}
-                                </div>
-                            </div>
-                            <div className="flex-1">
-                                <label className="label py-0"> <span className="label-text text-xs">{t('facturation:payment.amount_label')}</span> </label>
-                                <input 
-                                    type="number" 
-                                    className="input input-sm input-bordered w-full" 
-                                    value={montantPaye}
-                                    placeholder={paiements.length === 0 ? totals.partPatient.toString() : ''}
-                                    onChange={(e) => setMontantPaye(e.target.value)}
-                                    // Auto-add on enter
-                                    onKeyDown={(e) => {
-                                        if (e.key === 'Enter') {
-                                            e.preventDefault()
-                                            if (montantPaye && Number(montantPaye) !== 0) {
-                                                setPaiements(prev => [...prev, { mode: modePaiement as any, montant: Number(montantPaye) }])
-                                                // Calc rest
-                                                const dejaAlloue = paiements.reduce((acc, p) => acc + p.montant, 0) + Number(montantPaye)
-                                                const reste = totals.partPatient - dejaAlloue
-                                                setMontantPaye(reste !== 0 ? reste.toString() : '')
-                                            }
-                                        }
-                                    }}
-                                />
-                            </div>
-                            <button 
-                                type="button"
-                                className="btn btn-sm btn-square btn-ghost border border-base-300"
-                                onClick={() => {
-                                    if (montantPaye && Number(montantPaye) !== 0) {
-                                        setPaiements(prev => [...prev, { mode: modePaiement as any, montant: Number(montantPaye) }])
-                                        const dejaAlloue = paiements.reduce((acc, p) => acc + p.montant, 0) + Number(montantPaye)
-                                        const reste = totals.partPatient - dejaAlloue
-                                        setMontantPaye(reste !== 0 ? reste.toString() : '')
-                                    }
-                                }}
-                                title={t('facturation:payment.add_btn')}
-                            >
-                                ＋
-                            </button>
+                        <div className="form-control w-full">
+                            <label className="label py-1"><span className="label-text text-xs uppercase font-bold text-base-content/50">{t('facturation:payment.amount_label')}</span></label>
+                            <input 
+                                type="number" 
+                                className="input input-bordered w-full font-light text-2xl text-center focus:border-primary focus:ring-2 focus:ring-primary/20"
+                                value={montantPaye}
+                                onChange={(e) => setMontantPaye(e.target.value)}
+                            />
                         </div>
                       </div>
                     </div>
@@ -305,97 +267,31 @@ export default function PaymentModal({
                     </div>
                   )}
 
-                  <div className="flex items-end gap-2">
-                      <div className="form-control flex-1">
-                        <label className="label py-1"><span className="label-text text-xs uppercase font-bold text-base-content/50">{t('facturation:payment.amount_label')}</span></label>
-                        <input
-                          ref={paymentInputRef}
-                          type="number"
-                          step="0.01"
-                          value={montantPaye}
-                          onChange={(e) => setMontantPaye(e.target.value)}
-                          onKeyDown={(e) => {
-                              if (e.key === 'Enter') {
-                                  e.preventDefault()
-                                  if (montantPaye && Number(montantPaye) !== 0) {
-                                      setPaiements([...paiements, { mode: modePaiement as any, montant: Number(montantPaye) }])
-                                      // Calculer le reste à payer pour la prochaine entrée
-                                      const totalAPayer = isNewSale 
-                                        ? (totals.tauxCouverture > 0 
-                                            ? totals.partPatient 
-                                            : (totals.totalTtc - (totals.couponMontant || 0) - (totals.loyaltyDeduction || 0)))
-                                        : (facturePourPaiement?.total_ttc ? Number(facturePourPaiement.total_ttc) : 0)
-                                      
-                                      const dejaVerse = paiements.reduce((acc, p) => acc + p.montant, 0) + Number(montantPaye)
-                                      const reste = totalAPayer - dejaVerse
-                                      setMontantPaye(reste !== 0 ? reste.toString() : '')
-                                  }
-                              }
-                          }}
-                          className="input input-bordered w-full font-light text-2xl text-center focus:border-primary focus:ring-2 focus:ring-primary/20"
-                          placeholder={t('facturation:payment.amount_label')}
-                        />
-                      </div>
-                      <button
-                        type="button"
-                        className="btn btn-primary h-[3rem]" // Match input height roughly
-                        disabled={!montantPaye || Number(montantPaye) === 0}
-                        onClick={() => {
-                            if (montantPaye && Number(montantPaye) !== 0) {
-                                setPaiements([...paiements, { mode: modePaiement as any, montant: Number(montantPaye) }])
-                                const totalAPayer = isNewSale 
-                                    ? (totals.tauxCouverture > 0 
-                                        ? totals.partPatient 
-                                        : (totals.totalTtc - (totals.couponMontant || 0) - (totals.loyaltyDeduction || 0)))
-                                    : (facturePourPaiement?.total_ttc ? Number(facturePourPaiement.total_ttc) : 0)
-                                
-                                const dejaVerse = paiements.reduce((acc, p) => acc + p.montant, 0) + Number(montantPaye)
-                                const reste = totalAPayer - dejaVerse
-                                setMontantPaye(reste !== 0 ? reste.toString() : '')
-                            }
-                        }}
-                      >
-                        {t('facturation:payment.add_btn')}
-                      </button>
+                  <div className="form-control w-full">
+                    <label className="label py-1"><span className="label-text text-xs uppercase font-bold text-base-content/50">{t('facturation:payment.amount_label')}</span></label>
+                    <input
+                      ref={paymentInputRef}
+                      type="number"
+                      step="0.01"
+                      value={montantPaye}
+                      onChange={(e) => setMontantPaye(e.target.value)}
+                      className="input input-bordered w-full font-light text-2xl text-center focus:border-primary focus:ring-2 focus:ring-primary/20"
+                      placeholder={t('facturation:payment.amount_label')}
+                    />
                   </div>
                 </>
               )}
 
-              {(() => {
-                const totalAPayer = isNewSale 
-                    ? (totals.tauxCouverture > 0 
-                        ? totals.partPatient 
-                        : ((totals.totalTtc || 0) - (totals.couponMontant || 0) - (totals.loyaltyDeduction || 0)))
-                    : (facturePourPaiement?.total_ttc ? Number(facturePourPaiement.total_ttc) : 0)
-                
-                const totalVerse = paiements.reduce((acc, p) => acc + p.montant, 0) + (paiements.length === 0 && Number(montantPaye) > 0 ? Number(montantPaye) : 0)
-                const rendu = totalVerse - totalAPayer
-                
-                return (
-                  <div className="pt-4 border-t border-base-200 mt-2">
-                    <div className="flex justify-between items-center mb-4">
-                        <div className="text-sm">
-                            {rendu >= 0 
-                                ? <span className="text-success font-bold">{t('facturation:payment.change_due_label')} {formatCurrency(Math.round(rendu))}</span>
-                                : <span className="text-error font-bold">{t('facturation:payment.remaining_due_label')} {formatCurrency(Math.round(Math.abs(rendu)))}</span>
-                            }
-                        </div>
-                        <div className="text-xl font-bold">
-                            {t('facturation:payment.total_label')} {formatCurrency(Math.round(totalVerse))} / {formatCurrency(Math.round(totalAPayer))}
-                        </div>
-                    </div>
-                    
-                    <button 
-                        ref={submitBtnRef}
-                        type="submit" 
-                        disabled={loading || (isNewSale && rendu < -1 && !selectedClient) || (isMultiCaisse && !centralizedCashRegister && isNewSale && !selectedPosteCaisseId)}
-                        className={`btn btn-primary w-full gap-2 ${loading ? 'loading' : ''}`}
-                    >
-                        {loading ? t('facturation:payment.status.processing') : isNewSale ? t('facturation:payment.validate_sale') : t('facturation:payment.register_payment')}
-                    </button>
-                  </div>
-                )
-              })()}
+              <div className="pt-4 border-t border-base-200 mt-2">
+                <button 
+                    ref={submitBtnRef}
+                    type="submit" 
+                    disabled={loading || (isNewSale && !montantPaye) || (isMultiCaisse && !centralizedCashRegister && isNewSale && !selectedPosteCaisseId)}
+                    className={`btn btn-primary w-full gap-2 ${loading ? 'loading' : ''}`}
+                >
+                    {loading ? t('facturation:payment.status.processing') : isNewSale ? t('facturation:payment.validate_sale') : t('facturation:payment.register_payment')}
+                </button>
+              </div>
             </form>
           ) : (
             <div className="p-8 text-center text-base-content/50">

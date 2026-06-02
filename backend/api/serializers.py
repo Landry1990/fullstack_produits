@@ -13,7 +13,7 @@ from .models import (
     Groupe, SmsLog, SmsTemplate, PaiementFournisseur, ConfigurationOption,
     Promotion, PromotionPackItem, ObjectifCommercial, ConfigurationObjectifs, TVA,
     WhatsAppLog, TelegramLog, RuptureFournisseur, DepotClient, InternalMessage, MessageTemplate,
-    ReapproSession, PosteCaisse, OrderSchedule,
+    ReapproSession, PosteCaisse, SessionCaisse, OrderSchedule,
     Substance, MedicamentReference,
     CompteComptable, JournalComptable, EcritureComptable, LigneEcriture, ExerciceComptable
 )
@@ -150,9 +150,30 @@ class PharmacySettingsSerializer(serializers.ModelSerializer):
 
 class PosteCaisseSerializer(serializers.ModelSerializer):
     ouvert_par_name = serializers.CharField(source='ouvert_par.username', read_only=True)
-    
+    session_active = serializers.SerializerMethodField()
+
     class Meta:
         model = PosteCaisse
+        fields = '__all__'
+        read_only_fields = ['created_at', 'updated_at']
+
+    def get_session_active(self, obj):
+        session = obj.sessions.filter(est_active=True).first()
+        if session:
+            return {
+                'id': session.id,
+                'fond_de_caisse': str(session.fond_de_caisse) if session.fond_de_caisse else None,
+                'date_ouverture': session.date_ouverture,
+                'ouvert_par_name': session.ouvert_par.username if session.ouvert_par else None,
+            }
+        return None
+
+class SessionCaisseSerializer(serializers.ModelSerializer):
+    poste_nom = serializers.CharField(source='poste.nom', read_only=True)
+    ouvert_par_name = serializers.CharField(source='ouvert_par.username', read_only=True)
+
+    class Meta:
+        model = SessionCaisse
         fields = '__all__'
         read_only_fields = ['created_at', 'updated_at']
 

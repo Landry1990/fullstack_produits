@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
-import api from '../services/api'
+import { cashSessionService } from '../services/cashSessionService'
 import type { PosteCaisse } from '../types'
 
 export interface UseMultiCaisseOptions {
@@ -15,6 +15,8 @@ export interface UseMultiCaisseReturn {
     selectedPosteCaisseId: number | null
     setSelectedPosteCaisseId: (v: number | null) => void
     multiCaisseLoading: boolean
+    myActivePoste: PosteCaisse | null
+    refreshPostes: () => Promise<void>
 }
 
 export function useMultiCaisse(_options: UseMultiCaisseOptions = {}): UseMultiCaisseReturn {
@@ -23,74 +25,52 @@ export function useMultiCaisse(_options: UseMultiCaisseOptions = {}): UseMultiCa
     const [postesCaisses, setPostesCaisses] = useState<PosteCaisse[]>([])
     const [selectedPosteCaisseId, setSelectedPosteCaisseId] = useState<number | null>(null)
     const [multiCaisseLoading, setMultiCaisseLoading] = useState(false)
+    const [myActivePoste, setMyActivePoste] = useState<PosteCaisse | null>(null)
 
-    const handleApiError = useCallback((err: unknown, msg: string) => {
-        console.error(msg, err)
-    }, [])
+    const refreshPostes = useCallback(async () => {
+        setMultiCaisseLoading(true)
+        try {
+            const [activePostes, myPostes] = await Promise.all([
+                cashSessionService.getActivePostes().catch(() => []),
+                cashSessionService.getMyActiveSessions().catch(() => [])
+            ])
 
-    // Initial settings fetch
-    useEffect(() => {
-        const controller = new AbortController()
-        const fetchSettings = async () => {
-            setMultiCaisseLoading(true)
-            try {
-                const [settingsRes, postesRes] = await Promise.all([
-                    api.get('invoice-settings/', { signal: controller.signal }),
-                    api.get('postes-caisses/active/', { signal: controller.signal }).catch(() => ({ data: [] }))
-                ])
+            setPostesCaisses(activePostes)
+            setMyActivePoste(myPostes.length > 0 ? myPostes[0] : null)
 
-                setCentralizedCashRegister(settingsRes.data?.centralized_cash_register ?? true)
-                setIsMultiCaisse(settingsRes.data?.is_multi_caisse ?? false)
+            // Multicaisse auto-détecté : > 1 poste actif
+            const hasMulti = activePostes.length > 1
+            setIsMultiCaisse(hasMulti)
 
-                if (settingsRes.data?.is_multi_caisse) {
-                    const postesList = postesRes.data?.results || postesRes.data || []
-                    setPostesCaisses(postesList)
-                    // Auto-select the first register if there is only one open
-                    if (postesList.length === 1) {
-                        setSelectedPosteCaisseId(postesList[0].id)
-                    }
-                }
-            } catch (err) {
-                if (err instanceof Error && err.name !== 'CanceledError') handleApiError(err, 'Erreur lors du chargement des paramètres.')
-            } finally {
-                setMultiCaisseLoading(false)
+            // Auto-select si un seul poste actif
+            if (activePostes.length === 1 && !selectedPosteCaisseId) {
+                setSelectedPosteCaisseId(activePostes[0].id)
             }
+        } catch (err) {
+            console.error('Erreur chargement postes caisses:', err)
+        } finally {
+            setMultiCaisseLoading(false)
         }
-        fetchSettings()
-        return () => controller.abort()
-    }, [handleApiError])
-
-    // Polling for multi-caisse updates
-    useEffect(() => {
-        const fetchMultiCaisseSettings = async () => {
-            try {
-                const { data } = await api.get('invoice-settings/')
-                setIsMultiCaisse(data.is_multi_caisse)
-                setCentralizedCashRegister(data.centralized_cash_register)
-
-                if (data.is_multi_caisse && data.centralized_cash_register) {
-                    const { data: postes } = await api.get('postes-caisses/active/')
-                    setPostesCaisses(postes)
-
-                    // Auto-select if only one is active and none selected
-                    if (postes.length === 1 && !selectedPosteCaisseId) {
-                        setSelectedPosteCaisseId(postes[0].id)
-                    }
-                }
-            } catch (error) {
-                console.error("Error fetching multi-caisse settings:", error)
-            }
-        }
-
-        const interval = setInterval(fetchMultiCaisseSettings, 30000) // Refresh every 30s
-        return () => clearInterval(interval)
     }, [selectedPosteCaisseId])
+
+    // Initial fetch
+    useEffect(() => {
+        refreshPostes()
+    }, [refreshPostes])
+
+    // Polling toutes les 30s
+    useEffect(() => {
+        const interval = setInterval(refreshPostes, 30000)
+        return () => clearInterval(interval)
+    }, [refreshPostes])
 
     return {
         isMultiCaisse, setIsMultiCaisse,
         centralizedCashRegister, setCentralizedCashRegister,
         postesCaisses, setPostesCaisses,
         selectedPosteCaisseId, setSelectedPosteCaisseId,
-        multiCaisseLoading
+        multiCaisseLoading,
+        myActivePoste,
+        refreshPostes
     }
 }
