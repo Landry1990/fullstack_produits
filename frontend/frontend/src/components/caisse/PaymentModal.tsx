@@ -26,6 +26,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
   const [modePaiement, setModePaiement] = useState('especes')
   const [paiements, setPaiements] = useState<{ mode: string; montant: number }[]>([])
   const montantInputRef = useRef<HTMLInputElement>(null)
+  const modeBtnRefs = useRef<(HTMLButtonElement | null)[]>([])
   const validateBtnRef = useRef<HTMLButtonElement>(null)
 
   // Computed values
@@ -117,6 +118,34 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
     }
   }
 
+  const focusFirstModeBtn = () => {
+    modeBtnRefs.current[0]?.focus()
+  }
+
+  const handleModeKeyDown = (e: React.KeyboardEvent, index: number) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault()
+      setModePaiement(paymentModes[index].value)
+      handleAddPayment()
+      return
+    }
+    if (e.key === 'ArrowRight') {
+      e.preventDefault()
+      const nextIndex = (index + 1) % paymentModes.length
+      modeBtnRefs.current[nextIndex]?.focus()
+    }
+    if (e.key === 'ArrowLeft') {
+      e.preventDefault()
+      const prevIndex = (index - 1 + paymentModes.length) % paymentModes.length
+      modeBtnRefs.current[prevIndex]?.focus()
+    }
+    if (e.key === 'Escape') {
+      e.preventDefault()
+      montantInputRef.current?.focus()
+      montantInputRef.current?.select()
+    }
+  }
+
   const handleRemovePayment = (idx: number) => {
     const newPaiements = paiements.filter((_, i) => i !== idx)
     setPaiements(newPaiements)
@@ -195,22 +224,8 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
             )}
           </div>
 
-          {/* Ligne de saisie : Mode + Montant + Ajouter */}
+          {/* Ligne de saisie : Montant + boutons Mode + Ajouter */}
           <div className="flex gap-2 items-end">
-            <div className="form-control flex-1">
-              <label className="label py-1">
-                <span className="label-text text-xs font-semibold">{t('payment.mode')}</span>
-              </label>
-              <select
-                className="select select-bordered select-sm w-full"
-                value={modePaiement}
-                onChange={(e) => setModePaiement(e.target.value)}
-              >
-                {paymentModes.map(m => (
-                  <option key={m.value} value={m.value}>{m.label}</option>
-                ))}
-              </select>
-            </div>
             <div className="form-control flex-1">
               <label className="label py-1">
                 <span className="label-text text-xs font-semibold">{t('payment.amount')}</span>
@@ -224,7 +239,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
                 onKeyDown={(e) => {
                   if (e.key === 'Enter') {
                     e.preventDefault()
-                    handleAddPayment()
+                    focusFirstModeBtn()
                   }
                 }}
                 placeholder="0"
@@ -232,12 +247,42 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
             </div>
             <button
               type="button"
-              className="btn btn-sm btn-primary"
+              className="btn btn-sm btn-primary mb-0"
               onClick={handleAddPayment}
               disabled={!montantPaye || Number(montantPaye) === 0}
+              title="Entrée dans le montant ou clic"
             >
               +
             </button>
+          </div>
+
+          {/* Modes de paiement en boutons */}
+          <div className="form-control">
+            <label className="label py-1">
+              <span className="label-text text-xs font-semibold">{t('payment.mode')}</span>
+            </label>
+            <div className="flex flex-wrap gap-1">
+              {paymentModes.map((m, idx) => (
+                <button
+                  key={m.value}
+                  ref={(el) => { modeBtnRefs.current[idx] = el }}
+                  type="button"
+                  className={`px-2 py-1 text-xs font-medium rounded-md border transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-1 ${
+                    modePaiement === m.value
+                      ? 'bg-primary text-white border-primary'
+                      : 'bg-base-100 text-base-content border-base-300 hover:bg-base-200'
+                  }`}
+                  onClick={() => {
+                    setModePaiement(m.value)
+                    handleAddPayment()
+                  }}
+                  onKeyDown={(e) => handleModeKeyDown(e, idx)}
+                  title={`${m.label} — ←→ pour naviguer, Entrée pour valider, Échap pour retour`}
+                >
+                  {m.label}
+                </button>
+              ))}
+            </div>
           </div>
 
           {/* Liste des paiements enregistrés */}

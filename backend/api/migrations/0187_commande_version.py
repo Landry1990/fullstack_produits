@@ -4,7 +4,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('api', '0186_alter_fournisseur_address_alter_fournisseur_email_and_more'),
+        ('api', '0185_pharmacysettings_monthly_report_day_and_more'),
     ]
 
     operations = [

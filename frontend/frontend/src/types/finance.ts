@@ -10,6 +10,13 @@ export interface PosteCaisse {
     ouvert_par?: number;
     ouvert_par_name?: string;
     date_ouverture?: string;
+    fond_de_caisse?: string | null;
+    session_active?: {
+        id: number;
+        fond_de_caisse: string | null;
+        date_ouverture: string;
+        ouvert_par_name: string | null;
+    } | null;
 }
 
 export interface FactureProduit {

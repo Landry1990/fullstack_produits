@@ -15,7 +15,10 @@ import { useTranslation } from 'react-i18next'
 import { getApiErrorDetail } from '../utils/errorHandling'
 import PremiumModal from './common/PremiumModal'
 import { TicketTemplate } from './printing/TicketTemplate'
-import { RefreshCw, Ticket, Banknote, Clock, Keyboard, Monitor } from 'lucide-react'
+import { RefreshCw, Ticket, Banknote, Clock, Keyboard, Monitor, Unlock, Lock } from 'lucide-react'
+import { OpenCashSessionModal } from './caisse/OpenCashSessionModal'
+import { cashSessionService } from '../services/cashSessionService'
+import type { PosteCaisse } from '../types'
 
 // TicketTemplate is used for preview and print
 
@@ -52,10 +55,12 @@ export default function CaisseCentralisee() {
   // État pour la navigation clavier (mouse killing)
   const [selectedRowIndex, setSelectedRowIndex] = useState<number>(0)
   
-  // États pour le multi-caisse
+  // États pour le multi-caisse et sessions
   const [postesCaisses, setPostesCaisses] = useState<any[]>([])
   const [selectedPosteCaisseId, setSelectedPosteCaisseId] = useState<string>('all')
   const [isMultiCaisse, setIsMultiCaisse] = useState(false)
+  const [myActivePoste, setMyActivePoste] = useState<PosteCaisse | null>(null)
+  const [showOpenSessionModal, setShowOpenSessionModal] = useState(false)
 
   // Fonction pour récupérer les factures en attente
   const fetchFacturesEnAttente = useCallback(async () => {
@@ -136,13 +141,15 @@ export default function CaisseCentralisee() {
   useEffect(() => {
     const initPage = async () => {
       try {
-        const [settingsRes, postesRes] = await Promise.all([
+        const [settingsRes, postesRes, myActive] = await Promise.all([
           api.get('invoice-settings/'),
-          api.get('postes-caisses/')
+          api.get('postes-caisses/'),
+          cashSessionService.getMyActiveSessions().catch(() => [])
         ])
-        
+
         setIsMultiCaisse(settingsRes.data?.is_multi_caisse ?? false)
         setPostesCaisses(postesRes.data.results || postesRes.data || [])
+        setMyActivePoste(myActive.length > 0 ? myActive[0] : null)
       } catch (err) {
         console.error('Erreur initialisation CaisseCentralisee:', err)
       }
@@ -226,6 +233,18 @@ export default function CaisseCentralisee() {
   )
 
   // Ouvrir la modale de paiement (useCallback pour les raccourcis clavier)
+  const handleCloseSession = async () => {
+    if (!myActivePoste) return
+    if (!window.confirm(t('cash_session.confirm_close', { defaultValue: 'Fermer votre caisse ?' }))) return
+    try {
+      await cashSessionService.closePoste(myActivePoste.id)
+      toast.success(t('cash_session.closed', { defaultValue: 'Caisse fermée' }))
+      setMyActivePoste(null)
+    } catch (err: any) {
+      toast.error(err.response?.data?.detail || t('cash_session.close_error', { defaultValue: 'Erreur fermeture' }))
+    }
+  }
+
   const handleEncaisser = useCallback((facture: Facture) => {
     setSelectedFacture(facture)
     setIsPaymentModalOpen(true)
@@ -698,6 +717,30 @@ export default function CaisseCentralisee() {
           )}
 
           <div className="flex items-center gap-3 flex-wrap">
+            {/* Session de caisse */}
+            {myActivePoste ? (
+              <button
+                onClick={handleCloseSession}
+                className="btn btn-sm gap-2 btn-warning"
+                title={t('cash_session.close_title', { defaultValue: 'Fermer ma caisse' })}
+              >
+                <Lock className="size-4" />
+                <span className="hidden sm:inline">{myActivePoste.nom}</span>
+                {myActivePoste.fond_de_caisse && (
+                  <span className="text-[10px] opacity-70">({Number(myActivePoste.fond_de_caisse).toLocaleString()} F)</span>
+                )}
+              </button>
+            ) : (
+              <button
+                onClick={() => setShowOpenSessionModal(true)}
+                className="btn btn-sm gap-2 btn-success"
+                title={t('cash_session.open_title', { defaultValue: 'Ouvrir ma caisse' })}
+              >
+                <Unlock className="size-4" />
+                <span className="hidden sm:inline">{t('cash_session.open_short', { defaultValue: 'Ouvrir caisse' })}</span>
+              </button>
+            )}
+
             <div className="flex items-center gap-1.5 text-xs text-primary bg-primary/10 px-3 py-1.5 rounded-full font-medium">
               <RefreshCw className="size-3.5 animate-spin" />
               {t('auto_refresh')}
@@ -1298,6 +1341,16 @@ export default function CaisseCentralisee() {
             )}
         </div>
       </PremiumModal>
+
+      {/* Modal Ouvrir Caisse */}
+      <OpenCashSessionModal
+        isOpen={showOpenSessionModal}
+        onClose={() => setShowOpenSessionModal(false)}
+        onSessionOpened={async () => {
+          const myActive = await cashSessionService.getMyActiveSessions().catch(() => [])
+          setMyActivePoste(myActive.length > 0 ? myActive[0] : null)
+        }}
+      />
     </div>
   )
 }
