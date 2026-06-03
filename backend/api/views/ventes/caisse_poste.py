@@ -20,12 +20,34 @@ class PosteCaisseViewSet(viewsets.ModelViewSet):
 
     @action(detail=True, methods=['post'])
     def ouvrir(self, request, pk=None):
-        """Ouvre un poste de caisse et crée une session."""
+        """Ouvre un poste de caisse et crée une session. Ferme les anciennes sessions de l'utilisateur."""
         poste = self.get_object()
         if poste.est_ouvert:
             return Response({
                 "detail": f"Le poste {poste.nom} est déjà ouvert par {poste.ouvert_par.username if poste.ouvert_par else 'un utilisateur'}."
             }, status=status.HTTP_400_BAD_REQUEST)
+
+        # Fermer automatiquement les anciennes sessions de l'utilisateur
+        anciennes_sessions = SessionCaisse.objects.filter(
+            ouvert_par=request.user,
+            est_active=True
+        )
+        for session in anciennes_sessions:
+            # Calculer le montant encaissé
+            montant_encaisse = Caisse.objects.filter(
+                facture__poste_caisse=session.poste,
+                date_paiement__gte=session.date_ouverture
+            ).aggregate(total=Sum('montant'))['total'] or Decimal('0')
+            
+            session.est_active = False
+            session.date_fermeture = timezone.now()
+            session.montant_total_encaisse = montant_encaisse
+            session.save()
+            
+            # Fermer aussi le poste associé
+            session.poste.est_ouvert = False
+            session.poste.ouvert_par = None
+            session.poste.save()
 
         fond = request.data.get('fond_de_caisse')
         fond_decimal = Decimal(fond) if fond else None
@@ -64,7 +86,7 @@ class PosteCaisseViewSet(viewsets.ModelViewSet):
         if session:
             montant_encaisse = Caisse.objects.filter(
                 facture__poste_caisse=poste,
-                created_at__gte=session.date_ouverture
+                date_paiement__gte=session.date_ouverture
             ).aggregate(total=Sum('montant'))['total'] or Decimal('0')
 
             session.est_active = False
@@ -77,7 +99,41 @@ class PosteCaisseViewSet(viewsets.ModelViewSet):
         poste.fond_de_caisse = None
         poste.save()
 
-        return Response(self.get_serializer(poste).data)
+        # Vérifier si on doit masquer les montants (option de sécurité pour certains pharmacies)
+        from api.models import PharmacySettings
+        pharmacy_settings = PharmacySettings.objects.first()
+        pharmacy_hide_setting = pharmacy_settings.hide_cash_totals if pharmacy_settings else False
+        
+        # Priorité : 1) Paramètre de requête, 2) Paramètre de la pharmacie
+        hide_amounts = request.data.get('hide_amounts', pharmacy_hide_setting)
+
+        # Générer le rapport de clôture
+        rapport = {
+            'detail': f'Caisse {poste.nom} fermée avec succès',
+            'poste': {
+                'id': poste.id,
+                'nom': poste.nom,
+                'code': poste.code
+            },
+            'session': {
+                'date_ouverture': session.date_ouverture if session else None,
+                'date_fermeture': timezone.now(),
+                'fond_de_caisse': float(session.fond_de_caisse) if session and session.fond_de_caisse else 0,
+                'montant_encaisse': float(montant_encaisse) if not hide_amounts else None,
+                'montant_theorique': float((session.fond_de_caisse or Decimal('0')) + montant_encaisse) if session else float(montant_encaisse) if not hide_amounts else None,
+                'montant_masque': hide_amounts
+            },
+            'transactions': {
+                'total': Caisse.objects.filter(
+                    facture__poste_caisse=poste,
+                    date_paiement__gte=session.date_ouverture if session else timezone.now()
+                ).count(),
+                'montant_total': float(montant_encaisse) if not hide_amounts else None
+            },
+            'hide_amounts': hide_amounts
+        }
+
+        return Response(rapport)
 
     @action(detail=False, methods=['get'])
     def active(self, request):
@@ -86,12 +142,42 @@ class PosteCaisseViewSet(viewsets.ModelViewSet):
         serializer = self.get_serializer(active_postes, many=True)
         return Response(serializer.data)
 
-    @action(detail=False, methods=['get'])
+    @action(detail=False, methods=['get'], url_path='mes_actives')
     def mes_actives(self, request):
         """Retourne les postes ouverts par l'utilisateur courant."""
         mes_postes = self.get_queryset().filter(est_ouvert=True, ouvert_par=request.user)
         serializer = self.get_serializer(mes_postes, many=True)
         return Response(serializer.data)
+
+    @action(detail=True, methods=['post'], url_path='forcer-fermeture')
+    def forcer_fermeture(self, request, pk=None):
+        """Force la fermeture d'un poste de caisse bloqué (session crashée)."""
+        poste = self.get_object()
+        
+        # Forcer la fermeture de toutes les sessions actives
+        sessions_actives = poste.sessions.filter(est_active=True)
+        for session in sessions_actives:
+            # Calculer le montant encaissé
+            montant_encaisse = Caisse.objects.filter(
+                facture__poste_caisse=poste,
+                date_paiement__gte=session.date_ouverture
+            ).aggregate(total=Sum('montant'))['total'] or Decimal('0')
+            
+            session.est_active = False
+            session.date_fermeture = timezone.now()
+            session.montant_total_encaisse = montant_encaisse
+            session.save()
+        
+        # Forcer la fermeture du poste
+        poste.est_ouvert = False
+        poste.ouvert_par = None
+        poste.fond_de_caisse = None
+        poste.save()
+        
+        return Response({
+            'detail': f'Le poste {poste.nom} a été fermé forcément.',
+            'sessions_fermees': sessions_actives.count()
+        })
 
 
 class SessionCaisseViewSet(viewsets.ReadOnlyModelViewSet):

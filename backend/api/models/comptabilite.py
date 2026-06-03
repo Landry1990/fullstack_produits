@@ -107,30 +107,26 @@ class EcritureComptable(models.Model):
     
     def _generer_numero_piece(self):
         """Génère un numéro de pièce unique selon le format OHADA: EX{année}-{journal}-{séquence}"""
+        from django.db.models import Max, Value, IntegerField
+        from django.db.models.functions import Cast, Substr, Length
+        
         exercice_nom = self.exercice.nom.replace(' ', '').replace('.', '')[:6]  # EX2026
         journal_code = self.journal.code  # VT, AC, CA, BQ...
-        
-        # Trouver le numéro de séquence le plus élevé pour ce journal et exercice
         prefix = f"{exercice_nom}-{journal_code}-"
-        last_piece = EcritureComptable.objects.filter(
+        
+        # Utiliser une annotation pour extraire la partie numérique et trouver le max
+        # Format: EX2026-CA-00015 -> extraire 00015 -> 15
+        max_seq = EcritureComptable.objects.filter(
             exercice=self.exercice,
             journal=self.journal,
             numero_piece__startswith=prefix
-        ).order_by('-numero_piece').first()
+        ).annotate(
+            seq_str=Substr('numero_piece', len(prefix) + 1, 10)  # Extraire après le dernier -
+        ).aggregate(
+            max_seq=Max(Cast('seq_str', output_field=IntegerField()))
+        )['max_seq']
         
-        if last_piece:
-            try:
-                # Extraire la séquence numérique (ex: 00015 -> 15)
-                last_seq = int(last_piece.numero_piece.split('-')[-1])
-                next_seq = last_seq + 1
-            except (ValueError, IndexError):
-                # Fallback sur le count si le format est bizarre
-                next_seq = EcritureComptable.objects.filter(
-                    exercice=self.exercice,
-                    journal=self.journal
-                ).count() + 1
-        else:
-            next_seq = 1
+        next_seq = (max_seq or 0) + 1
         
         sequence = str(next_seq).zfill(5)  # 00001, 00002...
         return f"{prefix}{sequence}"

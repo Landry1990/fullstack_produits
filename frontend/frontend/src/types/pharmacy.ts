@@ -28,4 +28,6 @@ export interface PharmacySettings {
     whatsapp_phone_id?: string
     whatsapp_business_id?: string
     pharmacist_whatsapp_number?: string
+    auto_logout_timeout?: number
+    hide_cash_totals?: boolean
 }

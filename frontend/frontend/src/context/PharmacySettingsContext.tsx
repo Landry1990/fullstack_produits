@@ -53,6 +53,8 @@ export interface PharmacySettings {
   report_recipients_email?: string;
   report_send_whatsapp?: boolean;
   report_send_telegram?: boolean;
+  // Sécurité Caisse
+  hide_cash_totals?: boolean;
 }
 
 const DEFAULT_SETTINGS: PharmacySettings = {
@@ -76,6 +78,7 @@ const DEFAULT_SETTINGS: PharmacySettings = {
   currency_symbol: 'FCFA',
   locale: 'fr-FR',
   auto_logout_timeout: 15,
+  hide_cash_totals: false,
   availability_weight: 60,
   rotation_weight: 40,
   whatsapp_enabled: false,

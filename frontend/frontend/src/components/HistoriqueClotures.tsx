@@ -10,6 +10,7 @@ import { format } from 'date-fns'
 import { formatCurrency, normalizeNumberInput } from '../utils/formatters'
 import { useTranslation } from 'react-i18next'
 import { usePharmacySettings } from '../hooks/usePharmacySettings'
+import { useAuth } from '../context/AuthContext'
 
 registerLocale('fr', fr)
 
@@ -19,7 +20,11 @@ import {
   Banknote,
   Eye,
   Printer,
-  Monitor
+  Monitor,
+  Clock,
+  PlayCircle,
+  StopCircle,
+  X
 } from 'lucide-react'
 
 interface ClotureCaisse {
@@ -41,13 +46,39 @@ interface ClotureCaisse {
   observation: string | null
 }
 
+interface SessionCaisse {
+  id: number
+  poste: number
+  poste_nom: string
+  ouvert_par: number | null
+  ouvert_par_name: string
+  fond_de_caisse: string | null
+  date_ouverture: string
+  date_fermeture: string | null
+  montant_total_encaisse: string | null
+  est_active: boolean
+  ventilation_paiements: Record<string, number>
+}
+
 export default function HistoriqueClotures() {
   const { t } = useTranslation(['cash_closings', 'common'])
   const { settings: pharmacySettings } = usePharmacySettings()
+  const { user: currentUser } = useAuth()
   const currentLocale = t('common:locale', { defaultValue: 'fr-FR' })
   const currencySymbol = t(['common:currency_symbol', 'currency_symbol'], 'F')
   const [clotures, setClotures] = useState<ClotureCaisse[]>([])
   const [loading, setLoading] = useState(false)
+  
+  // Onglet actif: 'clotures' | 'sessions'
+  const [activeTab, setActiveTab] = useState<'clotures' | 'sessions'>('clotures')
+  
+  // Permission pour voir les sessions
+  const [canViewSessions, setCanViewSessions] = useState(false)
+  
+  // Sessions de caisse
+  const [sessions, setSessions] = useState<SessionCaisse[]>([])
+  const [sessionsLoading, setSessionsLoading] = useState(false)
+  const [selectedSession, setSelectedSession] = useState<SessionCaisse | null>(null)
   
   // Utilisateurs pour le filtrage
   const [users, setUsers] = useState<any[]>([])
@@ -86,19 +117,25 @@ export default function HistoriqueClotures() {
   const [showMetric, setShowMetric] = useState(false)
 
 
-  // Récupérer les données initiales (utilisateurs, réglages, postes)
+  // Récupérer les données initiales (utilisateurs, réglages, postes, permissions)
   useEffect(() => {
     const initPage = async () => {
       try {
-        const [usersRes, settingsRes, postesRes] = await Promise.all([
+        const [usersRes, settingsRes, postesRes, meRes] = await Promise.all([
           api.get('caisse/page_init/'),
           api.get('invoice-settings/'),
-          api.get('postes-caisses/')
+          api.get('postes-caisses/'),
+          api.get('users/me/')
         ])
         
         setUsers(usersRes.data.users || [])
         setIsMultiCaisse(settingsRes.data.is_multi_caisse ?? false)
         setPostesCaisses(postesRes.data.results || postesRes.data || [])
+        
+        // Vérifier la permission can_view_cash_sessions
+        const profile = meRes.data?.profile
+        const isSuperuser = meRes.data?.is_superuser || currentUser?.is_superuser
+        setCanViewSessions(isSuperuser || profile?.can_view_cash_sessions || false)
       } catch (err) {
         console.error('Erreur initialisation HistoriqueClotures:', err)
       }
@@ -160,6 +197,28 @@ export default function HistoriqueClotures() {
     setSelectedPosteCaisse('')
     setCurrentPage(1)
   }
+
+  // Fetch des sessions de caisse
+  const fetchSessions = useCallback(async () => {
+    setSessionsLoading(true)
+    try {
+      const response = await api.get('sessions-caisses/')
+      const data = Array.isArray(response.data) ? response.data : (response.data.results || [])
+      setSessions(data)
+    } catch (err) {
+      console.error('Erreur chargement sessions:', err)
+      toast.error('Erreur lors du chargement des sessions de caisse')
+    } finally {
+      setSessionsLoading(false)
+    }
+  }, [])
+
+  // Charger les sessions quand l'onglet est activé
+  useEffect(() => {
+    if (activeTab === 'sessions' && canViewSessions) {
+      fetchSessions()
+    }
+  }, [activeTab, canViewSessions, fetchSessions])
 
   const totalPages = Math.ceil(totalItems / pageSize)
 
@@ -243,6 +302,39 @@ export default function HistoriqueClotures() {
             <p className="text-base-content/60 mt-1 pl-12 text-sm">
               {t('description')}
             </p>
+            
+            {/* Tab Selector */}
+            {canViewSessions && (
+              <div className="flex gap-1 mt-4 ml-12 bg-base-200 rounded-lg p-1 w-fit">
+                <button
+                  onClick={() => setActiveTab('clotures')}
+                  className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-bold transition-all ${
+                    activeTab === 'clotures'
+                      ? 'bg-base-100 text-primary shadow-sm'
+                      : 'text-base-content/60 hover:text-base-content'
+                  }`}
+                >
+                  <Banknote className="size-4" />
+                  Clôtures de caisse
+                </button>
+                <button
+                  onClick={() => setActiveTab('sessions')}
+                  className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-bold transition-all ${
+                    activeTab === 'sessions'
+                      ? 'bg-base-100 text-primary shadow-sm'
+                      : 'text-base-content/60 hover:text-base-content'
+                  }`}
+                >
+                  <Clock className="size-4" />
+                  Sessions de caisse
+                  {sessions.filter(s => s.est_active).length > 0 && (
+                    <span className="ml-1 px-1.5 py-0.5 text-[10px] font-bold rounded-full bg-success/20 text-success animate-pulse">
+                      {sessions.filter(s => s.est_active).length} active{sessions.filter(s => s.est_active).length > 1 ? 's' : ''}
+                    </span>
+                  )}
+                </button>
+              </div>
+            )}
           </div>
 
           <div className="flex flex-wrap lg:flex-nowrap gap-3 items-end w-full lg:w-auto">
@@ -359,6 +451,140 @@ export default function HistoriqueClotures() {
           </div>
         </div>
       </div>
+
+      {/* Contenu conditionnel selon l'onglet */}
+      {activeTab === 'sessions' && canViewSessions ? (
+        /* ========== ONGLET SESSIONS DE CAISSE ========== */
+        <div className="flex-1 px-3 sm:px-6 py-4 sm:py-6 overflow-auto">
+          {/* Active Sessions Banner */}
+          {sessions.filter(s => s.est_active).length > 0 && (
+            <div className="mb-4 p-4 bg-success/10 border border-success/30 rounded-xl">
+              <h3 className="font-bold text-success text-sm uppercase tracking-wider flex items-center gap-2 mb-3">
+                <PlayCircle className="size-4 animate-pulse" />
+                Sessions actives en cours
+              </h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                {sessions.filter(s => s.est_active).map(session => (
+                  <div key={session.id} className="bg-base-100 rounded-lg p-4 border border-success/20 shadow-sm">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="font-bold text-sm">{session.poste_nom}</span>
+                      <span className="badge badge-sm badge-success gap-1 font-bold">
+                        <span className="size-1.5 rounded-full bg-success animate-pulse"></span>
+                        En cours
+                      </span>
+                    </div>
+                    <div className="text-xs text-base-content/60 space-y-1">
+                      <div>👤 {session.ouvert_par_name}</div>
+                      <div>🕐 Ouvert le {formatDate(session.date_ouverture)}</div>
+                      {session.fond_de_caisse && <div>💰 Fond: {formatMoney(session.fond_de_caisse)}</div>}
+                    </div>
+                    <button
+                      onClick={() => setSelectedSession(session)}
+                      className="btn btn-xs btn-ghost btn-block text-primary mt-2"
+                    >
+                      <Eye className="size-3" /> Voir détails
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Sessions Table */}
+          <div className="bg-base-100 border border-base-200 rounded-xl shadow-sm overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="table table-sm w-full">
+                <thead className="bg-base-200 sticky top-0 z-10">
+                  <tr>
+                    <th className="py-4 text-xs tracking-wider uppercase">Statut</th>
+                    <th className="py-4 text-xs tracking-wider uppercase">Poste</th>
+                    <th className="py-4 text-xs tracking-wider uppercase">Caissier</th>
+                    <th className="py-4 text-xs tracking-wider uppercase">Ouverture</th>
+                    <th className="py-4 text-xs tracking-wider uppercase">Fermeture</th>
+                    <th className="text-right py-4 text-xs tracking-wider uppercase">Fond de caisse</th>
+                    <th className="text-right py-4 text-xs tracking-wider uppercase">Total encaissé</th>
+                    <th className="text-center py-4 text-xs tracking-wider uppercase">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {sessionsLoading ? (
+                    <tr>
+                      <td colSpan={8} className="h-64 text-center">
+                        <span className="loading loading-spinner loading-lg text-primary"></span>
+                      </td>
+                    </tr>
+                  ) : sessions.length === 0 ? (
+                    <tr>
+                      <td colSpan={8} className="h-64 text-center text-base-content/50">
+                        <div className="flex flex-col items-center justify-center gap-3">
+                          <Clock className="size-12 text-base-content/20" />
+                          <p className="text-lg">Aucune session de caisse</p>
+                          <p className="text-sm">Les sessions apparaîtront ici après l'ouverture d'un poste de caisse.</p>
+                        </div>
+                      </td>
+                    </tr>
+                  ) : (
+                    sessions.map(session => {
+                      const totalVentilation = Object.values(session.ventilation_paiements || {}).reduce((s, v) => s + v, 0)
+                      return (
+                        <tr key={session.id} className={`hover:bg-base-200/30 transition-colors ${session.est_active ? 'bg-success/5' : ''}`}>
+                          <td className="py-3">
+                            {session.est_active ? (
+                              <span className="badge badge-sm badge-success gap-1 font-bold">
+                                <PlayCircle className="size-3" />
+                                Active
+                              </span>
+                            ) : (
+                              <span className="badge badge-sm badge-ghost gap-1 font-bold">
+                                <StopCircle className="size-3" />
+                                Fermée
+                              </span>
+                            )}
+                          </td>
+                          <td className="py-3">
+                            <div className="flex items-center gap-2">
+                              <Monitor className="size-4 text-base-content/40" />
+                              <span className="font-bold text-sm">{session.poste_nom}</span>
+                            </div>
+                          </td>
+                          <td className="py-3 font-medium">{session.ouvert_par_name}</td>
+                          <td className="py-3">
+                            <div className="font-semibold text-sm">{formatDate(session.date_ouverture)}</div>
+                          </td>
+                          <td className="py-3">
+                            {session.date_fermeture ? (
+                              <div className="font-semibold text-sm">{formatDate(session.date_fermeture)}</div>
+                            ) : (
+                              <span className="text-success font-bold text-xs animate-pulse">— En cours —</span>
+                            )}
+                          </td>
+                          <td className="text-right py-3 font-medium text-base-content/80">
+                            {session.fond_de_caisse ? formatMoney(session.fond_de_caisse) : '-'}
+                          </td>
+                          <td className="text-right py-3 font-bold text-primary">
+                            {formatMoney(totalVentilation)}
+                          </td>
+                          <td className="text-center py-3">
+                            <button
+                              onClick={() => setSelectedSession(session)}
+                              className="btn btn-sm btn-ghost btn-square text-primary"
+                              title="Voir le détail"
+                            >
+                              <Eye className="size-5" />
+                            </button>
+                          </td>
+                        </tr>
+                      )
+                    })
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      ) : (
+        /* ========== ONGLET CLÔTURES (existant) ========== */
+        <>
 
       {/* Best Cashier Ranking Section */}
       <div className="px-3 sm:px-6 pt-4 sm:pt-6">
@@ -732,7 +958,96 @@ export default function HistoriqueClotures() {
           <div className="modal-backdrop" onClick={() => setSelectedCloture(null)}></div>
         </dialog>
       )}
+        </>
+      )}
+
+      {/* Modal Détail Session de Caisse */}
+      {selectedSession && (
+        <dialog className="modal modal-open bg-black/40 backdrop-blur-sm">
+          <div className="modal-box max-w-lg p-0 overflow-hidden">
+            <div className={`p-6 ${selectedSession.est_active ? 'bg-success text-success-content' : 'bg-primary text-primary-content'}`}>
+              <h3 className="font-bold text-xl flex items-center gap-3">
+                <Clock className="size-6" />
+                Détail de la session
+              </h3>
+              <p className="opacity-80 text-sm mt-1">
+                {selectedSession.poste_nom} — {selectedSession.ouvert_par_name}
+              </p>
+            </div>
+
+            <div className="p-6 space-y-5">
+              {/* Infos session */}
+              <div className="grid grid-cols-2 gap-4">
+                <div className="bg-base-100 p-4 rounded-xl border border-base-200">
+                  <div className="text-xs uppercase font-bold text-base-content/50 mb-1">Ouverture</div>
+                  <div className="font-mono text-sm font-bold">{formatDate(selectedSession.date_ouverture)}</div>
+                </div>
+                <div className={`p-4 rounded-xl border ${selectedSession.est_active ? 'bg-success/10 border-success/30' : 'bg-base-100 border-base-200'}`}>
+                  <div className="text-xs uppercase font-bold text-base-content/50 mb-1">Fermeture</div>
+                  {selectedSession.date_fermeture ? (
+                    <div className="font-mono text-sm font-bold">{formatDate(selectedSession.date_fermeture)}</div>
+                  ) : (
+                    <div className="text-success font-bold text-sm animate-pulse">En cours...</div>
+                  )}
+                </div>
+              </div>
+
+              {selectedSession.fond_de_caisse && (
+                <div className="bg-base-100 p-4 rounded-xl border border-base-200 flex justify-between items-center">
+                  <span className="text-xs uppercase font-bold text-base-content/50">Fond de caisse</span>
+                  <span className="font-bold text-lg">{formatMoney(selectedSession.fond_de_caisse)}</span>
+                </div>
+              )}
+
+              {/* Ventilation paiements */}
+              <div className="space-y-3">
+                <h4 className="font-bold uppercase tracking-wider text-xs text-base-content/50 border-b border-base-200 pb-2">
+                  Ventilation des paiements
+                </h4>
+                {Object.keys(selectedSession.ventilation_paiements || {}).length > 0 ? (
+                  <div className="space-y-2">
+                    {Object.entries(selectedSession.ventilation_paiements).map(([mode, montant]) => (
+                      <div key={mode} className="flex justify-between items-center p-3 bg-base-100 rounded-lg border border-base-200 hover:border-primary/30 transition-colors">
+                        <span className="flex items-center gap-2 font-medium text-sm">
+                          {mode === 'especes' && '💵'}
+                          {mode === 'carte' && '💳'}
+                          {mode === 'cheque' && '📝'}
+                          {mode === 'virement' && '🏦'}
+                          {mode === 'coupon' && '🎟️'}
+                          {(mode === 'om' || mode === 'momo') && '📱'}
+                          {getModeLabel(mode)}
+                        </span>
+                        <span className="font-bold text-primary">{formatMoney(montant)}</span>
+                      </div>
+                    ))}
+                    <div className="flex justify-between items-center p-3 bg-primary/10 rounded-lg border border-primary/20 mt-2">
+                      <span className="font-bold text-sm uppercase tracking-wider">Total encaissé</span>
+                      <span className="font-bold text-xl text-primary">
+                        {formatMoney(Object.values(selectedSession.ventilation_paiements).reduce((s, v) => s + v, 0))}
+                      </span>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="text-center py-8 text-base-content/40">
+                    <Banknote className="size-8 mx-auto mb-2 opacity-30" />
+                    <p className="text-sm">Aucun paiement enregistré pour cette session</p>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div className="modal-action border-t border-base-200 p-4 bg-base-50 m-0">
+              <button
+                onClick={() => setSelectedSession(null)}
+                className="btn btn-ghost"
+              >
+                Fermer
+              </button>
+            </div>
+          </div>
+          <div className="modal-backdrop" onClick={() => setSelectedSession(null)}></div>
+        </dialog>
+      )}
     </div>
   )
 }
-

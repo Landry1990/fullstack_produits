@@ -1179,13 +1179,25 @@ export function useCommandesState(forcedType?: 'LOC' | 'DIR' | 'DIV') {
             if (existingIndex !== -1) {
                 const currentQty = normalizeNumberInput(String(currentList[existingIndex].quantity || 0));
                 const currentUg = normalizeNumberInput(String(currentList[existingIndex].unites_gratuites || 0));
+                const currentItem = currentList[existingIndex];
+                // Si le produit existant a un prix à 0 et qu'on a un prix système, utiliser le prix système
+                const currentPrice = normalizeNumberInput(String(currentItem.price || 0));
+                const currentPriceCost = normalizeNumberInput(String(currentItem.price_cost || 0));
+                const currentSellingPrice = normalizeNumberInput(String(currentItem.selling_price || 0));
+                
+                // Prix d'achat : CSV > Système > Actuel (si déjà défini et > 0)
+                const updatedPrice = prixCession || (currentPrice > 0 ? String(currentPrice) : priceFromSystem);
+                const updatedPriceCost = prixCession || (currentPriceCost > 0 ? String(currentPriceCost) : priceFromSystem);
+                // Prix de vente : CSV > Système > Actuel (si déjà défini et > 0)
+                const updatedSellingPrice = prixPublic || (currentSellingPrice > 0 ? String(currentSellingPrice) : (product.selling_price || '0'));
+                
                 currentList[existingIndex] = {
-                    ...currentList[existingIndex],
+                    ...currentItem,
                     quantity: currentQty + qty,
                     unites_gratuites: currentUg + ug,
-                    // Mettre à jour les prix si fournis dans CSV
-                    ...(prixCession && { price: finalPrice, price_cost: finalPriceCost }),
-                    ...(prixPublic && { selling_price: finalSellingPrice }),
+                    price: updatedPrice,
+                    price_cost: updatedPriceCost,
+                    selling_price: updatedSellingPrice,
                 };
             } else {
                 const newCommandeProduit: CommandeProduit = {

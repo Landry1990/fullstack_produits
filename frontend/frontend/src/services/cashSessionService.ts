@@ -45,8 +45,10 @@ export const cashSessionService = {
     return data
   },
 
-  async closePoste(posteId: number): Promise<PosteCaisse> {
-    const { data } = await api.post(`postes-caisses/${posteId}/fermer/`)
+  async closePoste(posteId: number, hideAmounts: boolean = false): Promise<any> {
+    const { data } = await api.post(`postes-caisses/${posteId}/fermer/`, {
+      hide_amounts: hideAmounts
+    })
     return data
   },
 

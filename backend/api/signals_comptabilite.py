@@ -85,103 +85,124 @@ def generer_ecriture_paiement_fournisseur(sender, instance, created, **kwargs):
         )
         LigneEcriture.objects.create(ecriture=ecriture, compte=compte_treso, credit=instance.montant)
 
+import logging
+
+logger = logging.getLogger(__name__)
+
+
 @receiver(post_save, sender=Facture)
 def generer_ecriture_vente(sender, instance, created, **kwargs):
-    """Génère les écritures de vente automatiquement (Journal VT)."""
+    """Génère les écritures de vente automatiquement (Journal VT) - TOLÉRANT AUX ERREURS."""
     # Exclure les factures contenant des produits divers
-    if instance.produits.filter(allocations__stock_lot__is_divers=True).exists():
-        return
+    try:
+        if instance.produits.filter(allocations__stock_lot__is_divers=True).exists():
+            return
 
-    if instance.status in [Facture.Status.VALIDEE, Facture.Status.PAYEE] and instance.is_active:
-        with transaction.atomic():
-            journal, _ = JournalComptable.objects.get_or_create(code='VT', defaults={'nom': 'Ventes'})
-            
-            ecriture, created_ecr = EcritureComptable.objects.get_or_create(
-                facture=instance,
-                defaults={
-                    'date': instance.date.date(),
-                    'journal': journal,
-                    'exercice': get_exercice_courant(),
-                    'reference': instance.numero_facture or f"F{instance.id}",
-                    'libelle': f"Vente Facture {instance.numero_facture or instance.id}"
-                }
-            )
-            
-            # Mise à jour si déjà existant
-            if not created_ecr:
-                ecriture.date = instance.date.date()
-                ecriture.reference = instance.numero_facture or f"F{instance.id}"
-                if not ecriture.exercice_id:
-                    ecriture.exercice = get_exercice_courant()
-                ecriture.save()
-            
-            ecriture.lignes.all().delete()
-            
-            # Débit Client (411100) - TTC
-            compte_client, _ = CompteComptable.objects.get_or_create(
-                numero='411100', defaults={'libelle': 'Clients', 'type': 'ACTIF'}
-            )
-            LigneEcriture.objects.create(ecriture=ecriture, compte=compte_client, debit=instance.total_ttc)
-            
-            # Crédit Ventes (701100) - HT
-            compte_ventes, _ = CompteComptable.objects.get_or_create(
-                numero='701100', defaults={'libelle': 'Ventes de marchandises', 'type': 'PRODUIT'}
-            )
-            LigneEcriture.objects.create(ecriture=ecriture, compte=compte_ventes, credit=instance.total_ht)
-            
-            # Crédit TVA Collectée (443100)
-            if instance.total_tva > 0:
-                compte_tva, _ = CompteComptable.objects.get_or_create(
-                    numero='443100', defaults={'libelle': 'TVA Collectée', 'type': 'PASSIF'}
+        if instance.status in [Facture.Status.VALIDEE, Facture.Status.PAYEE] and instance.is_active:
+            with transaction.atomic():
+                journal, _ = JournalComptable.objects.get_or_create(code='VT', defaults={'nom': 'Ventes'})
+                
+                ecriture, created_ecr = EcritureComptable.objects.get_or_create(
+                    facture=instance,
+                    defaults={
+                        'date': instance.date.date(),
+                        'journal': journal,
+                        'exercice': get_exercice_courant(),
+                        'reference': instance.numero_facture or f"F{instance.id}",
+                        'libelle': f"Vente Facture {instance.numero_facture or instance.id}"
+                    }
                 )
-                LigneEcriture.objects.create(ecriture=ecriture, compte=compte_tva, credit=instance.total_tva)
+                
+                # Mise à jour si déjà existant
+                if not created_ecr:
+                    ecriture.date = instance.date.date()
+                    ecriture.reference = instance.numero_facture or f"F{instance.id}"
+                    if not ecriture.exercice_id:
+                        ecriture.exercice = get_exercice_courant()
+                    ecriture.save()
+                
+                ecriture.lignes.all().delete()
+                
+                # Débit Client (411100) - TTC
+                compte_client, _ = CompteComptable.objects.get_or_create(
+                    numero='411100', defaults={'libelle': 'Clients', 'type': 'ACTIF'}
+                )
+                LigneEcriture.objects.create(ecriture=ecriture, compte=compte_client, debit=instance.total_ttc)
+                
+                # Crédit Ventes (701100) - HT
+                compte_ventes, _ = CompteComptable.objects.get_or_create(
+                    numero='701100', defaults={'libelle': 'Ventes de marchandises', 'type': 'PRODUIT'}
+                )
+                LigneEcriture.objects.create(ecriture=ecriture, compte=compte_ventes, credit=instance.total_ht)
+                
+                # Crédit TVA Collectée (443100)
+                if instance.total_tva > 0:
+                    compte_tva, _ = CompteComptable.objects.get_or_create(
+                        numero='443100', defaults={'libelle': 'TVA Collectée', 'type': 'PASSIF'}
+                    )
+                    LigneEcriture.objects.create(ecriture=ecriture, compte=compte_tva, credit=instance.total_tva)
+                    
+                logger.info(f"[COMPTA] Écriture vente créée pour facture {instance.id}")
+                
+    except Exception as e:
+        # IMPORTANT : Ne jamais bloquer la vente ! Logger l'erreur pour correction manuelle
+        logger.error(f"[COMPTA] ERREUR création écriture vente pour facture {instance.id}: {str(e)}")
+        logger.error(f"[COMPTA] L'écriture devra être créée manuellement ou via la commande de régénération")
 
 
 @receiver(post_save, sender=Caisse)
 def generer_ecriture_paiement(sender, instance, created, **kwargs):
-    """Génère les écritures de règlement (Journal CA ou BQ)."""
-    if instance.facture and instance.facture.produits.filter(allocations__stock_lot__is_divers=True).exists():
-        return
+    """Génère les écritures de règlement (Journal CA ou BQ) - TOLÉRANT AUX ERREURS."""
+    try:
+        if instance.facture and instance.facture.produits.filter(allocations__stock_lot__is_divers=True).exists():
+            return
 
-    if instance.statut == 'completee':
-        with transaction.atomic():
-            is_cash = instance.mode_paiement == 'especes'
-            code_j = 'CA' if is_cash else 'BQ'
-            nom_j = 'Caisse' if is_cash else 'Banque'
-            journal, _ = JournalComptable.objects.get_or_create(code=code_j, defaults={'nom': nom_j})
-            
-            ecriture, created_ecr = EcritureComptable.objects.get_or_create(
-                paiement=instance,
-                defaults={
-                    'date': instance.date_paiement.date(),
-                    'journal': journal,
-                    'exercice': get_exercice_courant(),
-                    'reference': instance.facture.numero_facture or f"F{instance.facture.id}",
-                    'libelle': f"Règlement {instance.get_mode_paiement_display()} Fact {instance.facture.numero_facture or instance.facture.id}"
-                }
-            )
-            
-            if not created_ecr:
-                ecriture.date = instance.date_paiement.date()
-                if not ecriture.exercice_id:
-                    ecriture.exercice = get_exercice_courant()
-                ecriture.save()
-            
-            ecriture.lignes.all().delete()
-            
-            # Débit Trésorerie
-            compte_t = '571100' if is_cash else '521100'
-            lib_t = 'Caisse' if is_cash else 'Banque'
-            compte_treso, _ = CompteComptable.objects.get_or_create(
-                numero=compte_t, defaults={'libelle': lib_t, 'type': 'ACTIF'}
-            )
-            LigneEcriture.objects.create(ecriture=ecriture, compte=compte_treso, debit=instance.montant)
-            
-            # Crédit Client
-            compte_client, _ = CompteComptable.objects.get_or_create(
-                numero='411100', defaults={'libelle': 'Clients', 'type': 'ACTIF'}
-            )
-            LigneEcriture.objects.create(ecriture=ecriture, compte=compte_client, credit=instance.montant)
+        if instance.statut == 'completee':
+            with transaction.atomic():
+                is_cash = instance.mode_paiement == 'especes'
+                code_j = 'CA' if is_cash else 'BQ'
+                nom_j = 'Caisse' if is_cash else 'Banque'
+                journal, _ = JournalComptable.objects.get_or_create(code=code_j, defaults={'nom': nom_j})
+                
+                ecriture, created_ecr = EcritureComptable.objects.get_or_create(
+                    paiement=instance,
+                    defaults={
+                        'date': instance.date_paiement.date(),
+                        'journal': journal,
+                        'exercice': get_exercice_courant(),
+                        'reference': instance.facture.numero_facture or f"F{instance.facture.id}",
+                        'libelle': f"Règlement {instance.get_mode_paiement_display()} Fact {instance.facture.numero_facture or instance.facture.id}"
+                    }
+                )
+                
+                if not created_ecr:
+                    ecriture.date = instance.date_paiement.date()
+                    if not ecriture.exercice_id:
+                        ecriture.exercice = get_exercice_courant()
+                    ecriture.save()
+                
+                ecriture.lignes.all().delete()
+                
+                # Débit Trésorerie
+                compte_t = '571100' if is_cash else '521100'
+                lib_t = 'Caisse' if is_cash else 'Banque'
+                compte_treso, _ = CompteComptable.objects.get_or_create(
+                    numero=compte_t, defaults={'libelle': lib_t, 'type': 'ACTIF'}
+                )
+                LigneEcriture.objects.create(ecriture=ecriture, compte=compte_treso, debit=instance.montant)
+                
+                # Crédit Client
+                compte_client, _ = CompteComptable.objects.get_or_create(
+                    numero='411100', defaults={'libelle': 'Clients', 'type': 'ACTIF'}
+                )
+                LigneEcriture.objects.create(ecriture=ecriture, compte=compte_client, credit=instance.montant)
+                
+                logger.info(f"[COMPTA] Écriture paiement créée pour caisse {instance.id}")
+                
+    except Exception as e:
+        # IMPORTANT : Ne jamais bloquer le paiement ! Logger l'erreur pour correction manuelle
+        logger.error(f"[COMPTA] ERREUR création écriture paiement pour caisse {instance.id}: {str(e)}")
+        logger.error(f"[COMPTA] L'écriture devra être créée manuellement ou via la commande de régénération")
 
 
 @receiver(post_save, sender=Commande)

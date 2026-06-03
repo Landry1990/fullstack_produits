@@ -32,6 +32,7 @@ class Profile(models.Model):
     can_manage_perimes = models.BooleanField(default=False, verbose_name="Gérer les produits périmés")
     can_manage_avoirs = models.BooleanField(default=False, verbose_name="Gérer les avoirs fournisseurs")
     can_validate_zero_amount = models.BooleanField(default=False, verbose_name="Valider des ventes à montant nul ou négatif")
+    can_view_cash_sessions = models.BooleanField(default=False, verbose_name="Voir l'historique des sessions de caisse")
 
     # Price & Discount Control
     can_modify_price = models.BooleanField(default=False, verbose_name="Modifier le prix de vente")
