@@ -45,6 +45,38 @@ class SalesService:
         if not isinstance(produits_data, list) or not produits_data:
             raise ValueError("La liste des produits ne peut pas être vide.")
 
+        # Vérification session caisse active obligatoire
+        from ..models import SessionCaisse
+        poste_caisse_id = data.get('poste_caisse_id')
+        
+        if poste_caisse_id:
+            # Vérifier que le poste est ouvert et a une session active
+            session_active = SessionCaisse.objects.filter(
+                poste_id=poste_caisse_id,
+                est_active=True
+            ).first()
+            
+            if not session_active:
+                raise ValueError(
+                    "Aucune session de caisse active trouvée pour ce poste. "
+                    "Veuillez ouvrir une caisse avant de réaliser une vente."
+                )
+        else:
+            # Mode non-centralisé - vérifier si l'utilisateur a une session active
+            session_active = SessionCaisse.objects.filter(
+                ouvert_par=user,
+                est_active=True
+            ).first()
+            
+            if not session_active:
+                raise ValueError(
+                    "Vous n'avez aucune session de caisse active. "
+                    "Veuillez ouvrir une caisse avant de réaliser une vente."
+                )
+            
+            # Utiliser le poste de la session active
+            poste_caisse_id = session_active.poste_id
+
         # Validate each product entry before touching the DB
         valid_product_ids = set(
             Produit.objects.filter(

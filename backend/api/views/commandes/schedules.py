@@ -5,6 +5,7 @@ from django.utils import timezone
 from ...models import OrderSchedule
 from ...serializers import OrderScheduleSerializer
 from ...services.auto_order import run_suggestions_for_schedule, create_order_from_suggestions
+from ...centralized_configs import StandardResultsSetPagination
 import logging
 
 logger = logging.getLogger(__name__)
@@ -15,6 +16,7 @@ class OrderScheduleViewSet(viewsets.ModelViewSet):
     queryset = OrderSchedule.objects.all().order_by('-created_at')
     serializer_class = OrderScheduleSerializer
     permission_classes = [permissions.IsAuthenticated]
+    pagination_class = StandardResultsSetPagination
 
     def get_queryset(self):
         queryset = super().get_queryset()

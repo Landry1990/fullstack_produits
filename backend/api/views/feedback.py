@@ -42,8 +42,11 @@ class FeedbackListView(APIView):
         if serializer.is_valid():
             feedback = serializer.save(user=request.user)
             # Send email notification
-            email_service.send_feedback_notification(feedback)
-            return Response(serializer.data, status=201)
+            email_sent = email_service.send_feedback_notification(feedback)
+            return Response({
+                **dict(serializer.data),
+                'email_sent': email_sent,
+            }, status=201)
         return Response(serializer.errors, status=400)
 
 

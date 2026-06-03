@@ -25,7 +25,8 @@ import {
   PackageX,
   Clock,
   DollarSign,
-  Users
+  Users,
+  Lock
 } from 'lucide-react'
 
 type TabId = 'general' | 'printing' | 'stocks' | 'tva' | 'notifications' | 'reports'
@@ -575,6 +576,39 @@ export default function PharmacySettingsForm() {
                                 <ChevronRight className="size-3" /> {t('hints.auto_logout')}
                             </span>
                           </label>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Section: Paramètres Caisse (Sécurité) */}
+                <div className="card bg-base-100 shadow-xl shadow-base-content/5 border border-base-200 overflow-hidden rounded-2xl">
+                  <div className="p-0">
+                    <div className="px-8 py-5 border-b border-base-200 bg-base-50/50">
+                      <h2 className="font-bold text-xl flex items-center gap-3">
+                        <div className="p-2 bg-warning/10 rounded-lg">
+                          <Lock className="h-5 w-5 text-warning" />
+                        </div>
+                        {t('sections.cash_security', { defaultValue: 'Sécurité Caisse' })}
+                      </h2>
+                    </div>
+                    <div className="p-8 space-y-6">
+                      <div className="flex items-start gap-4">
+                        <input
+                          type="checkbox"
+                          id="hide_cash_totals"
+                          checked={formData.hide_cash_totals || false}
+                          onChange={(e) => handleChange('hide_cash_totals', e.target.checked)}
+                          className="checkbox checkbox-warning mt-1"
+                        />
+                        <div className="flex-1">
+                          <label htmlFor="hide_cash_totals" className="font-medium text-base-content cursor-pointer">
+                            {t('labels.hide_cash_totals', { defaultValue: 'Masquer les montants dans le rapport de clôture' })}
+                          </label>
+                          <p className="text-sm text-base-content/60 mt-1">
+                            {t('hints.hide_cash_totals', { defaultValue: 'Les caissières ne verront pas les montants (fond, encaissement, total) lors de la fermeture de caisse. Utile pour éviter les ajustements malveillants.' })}
+                          </p>
                         </div>
                       </div>
                     </div>

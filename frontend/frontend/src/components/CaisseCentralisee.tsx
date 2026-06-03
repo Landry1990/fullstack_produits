@@ -61,6 +61,9 @@ export default function CaisseCentralisee() {
   const [isMultiCaisse, setIsMultiCaisse] = useState(false)
   const [myActivePoste, setMyActivePoste] = useState<PosteCaisse | null>(null)
   const [showOpenSessionModal, setShowOpenSessionModal] = useState(false)
+  const [closingReport, setClosingReport] = useState<any>(null)
+  const [showClosingReport, setShowClosingReport] = useState(false)
+  const [hideAmounts, setHideAmounts] = useState(false) // Mode sécurité: masquer les montants aux caissiers
 
   // Fonction pour récupérer les factures en attente
   const fetchFacturesEnAttente = useCallback(async () => {
@@ -142,16 +145,26 @@ export default function CaisseCentralisee() {
     const initPage = async () => {
       try {
         const [settingsRes, postesRes, myActive] = await Promise.all([
-          api.get('invoice-settings/'),
-          api.get('postes-caisses/'),
+          api.get('parametres/').catch(() => ({ data: {} })),
+          api.get('postes-caisses/').catch(() => ({ data: { results: [] } })),
           cashSessionService.getMyActiveSessions().catch(() => [])
         ])
-
-        setIsMultiCaisse(settingsRes.data?.is_multi_caisse ?? false)
-        setPostesCaisses(postesRes.data.results || postesRes.data || [])
+        
+        // Charger le paramètre de sécurité caisse
+        const settings = settingsRes.data
+        if (settings.hide_cash_totals) {
+          setHideAmounts(true)
+        }
+        
+        const postesList = postesRes.data.results || postesRes.data || []
+        setPostesCaisses(postesList)
         setMyActivePoste(myActive.length > 0 ? myActive[0] : null)
+        
+        // Détecter si on est en mode multi-caisse
+        const hasMultipleActive = postesList.filter((p: PosteCaisse) => p.est_ouvert).length > 1
+        setIsMultiCaisse(hasMultipleActive)
       } catch (err) {
-        console.error('Erreur initialisation CaisseCentralisee:', err)
+        console.error('Erreur initialisation page:', err)
       }
     }
     initPage()
@@ -237,8 +250,9 @@ export default function CaisseCentralisee() {
     if (!myActivePoste) return
     if (!window.confirm(t('cash_session.confirm_close', { defaultValue: 'Fermer votre caisse ?' }))) return
     try {
-      await cashSessionService.closePoste(myActivePoste.id)
-      toast.success(t('cash_session.closed', { defaultValue: 'Caisse fermée' }))
+      const { data } = await cashSessionService.closePoste(myActivePoste.id, hideAmounts)
+      setClosingReport(data)
+      setShowClosingReport(true)
       setMyActivePoste(null)
     } catch (err: any) {
       toast.error(err.response?.data?.detail || t('cash_session.close_error', { defaultValue: 'Erreur fermeture' }))
@@ -717,15 +731,28 @@ export default function CaisseCentralisee() {
           )}
 
           <div className="flex items-center gap-3 flex-wrap">
-            {/* Session de caisse */}
+            {/* Toggle Mode Sécurité (masquer les montants) */}
+            {myActivePoste && (
+              <label className="flex items-center gap-2 cursor-pointer btn btn-ghost btn-sm" title={t('cash_session.security_mode', { defaultValue: 'Mode sécurité: masquer les montants aux caissiers' })}>
+                <input
+                  type="checkbox"
+                  checked={hideAmounts}
+                  onChange={(e) => setHideAmounts(e.target.checked)}
+                  className="checkbox checkbox-xs checkbox-warning"
+                />
+                <span className="text-xs hidden sm:inline">🔒 {t('cash_session.hide_amounts', { defaultValue: 'Masquer montants' })}</span>
+              </label>
+            )}
+
+            {/* Session de caisse - Bouton principal pour la caissière */}
             {myActivePoste ? (
               <button
                 onClick={handleCloseSession}
-                className="btn btn-sm gap-2 btn-warning"
+                className="btn btn-sm gap-2 btn-warning shadow-sm"
                 title={t('cash_session.close_title', { defaultValue: 'Fermer ma caisse' })}
               >
                 <Lock className="size-4" />
-                <span className="hidden sm:inline">{myActivePoste.nom}</span>
+                <span className="hidden sm:inline">🔴 {myActivePoste.nom} - Fermer</span>
                 {myActivePoste.fond_de_caisse && (
                   <span className="text-[10px] opacity-70">({Number(myActivePoste.fond_de_caisse).toLocaleString()} F)</span>
                 )}
@@ -733,7 +760,7 @@ export default function CaisseCentralisee() {
             ) : (
               <button
                 onClick={() => setShowOpenSessionModal(true)}
-                className="btn btn-sm gap-2 btn-success"
+                className="btn btn-sm gap-2 btn-success shadow-sm"
                 title={t('cash_session.open_title', { defaultValue: 'Ouvrir ma caisse' })}
               >
                 <Unlock className="size-4" />
@@ -1351,6 +1378,91 @@ export default function CaisseCentralisee() {
           setMyActivePoste(myActive.length > 0 ? myActive[0] : null)
         }}
       />
+
+      {/* Modal Rapport de Clôture */}
+      <PremiumModal
+        isOpen={showClosingReport}
+        onClose={() => setShowClosingReport(false)}
+        title={t('cash_session.closing_report', { defaultValue: 'Rapport de Clôture' })}
+        icon={<Ticket className="text-primary size-5" />}
+        footer={
+          <div className="flex justify-end w-full">
+            <button 
+              className="btn btn-primary btn-sm" 
+              onClick={() => setShowClosingReport(false)}
+            >
+              {t('common:actions.close', { defaultValue: 'Fermer' })}
+            </button>
+          </div>
+        }
+      >
+        {closingReport && (
+          <div className="p-5 space-y-4">
+            {/* En-tête */}
+            <div className="text-center border-b border-base-300 pb-4">
+              <h3 className="font-bold text-lg">{closingReport.poste?.nom}</h3>
+              <p className="text-sm text-base-content/60">
+                {new Date(closingReport.session?.date_fermeture).toLocaleString('fr-FR')}
+              </p>
+            </div>
+
+            {/* Stats - masquées si sécurité activée */}
+            {!closingReport.hide_amounts ? (
+              <>
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="bg-base-100 p-3 rounded-lg border border-base-300">
+                    <p className="text-[10px] uppercase text-base-content/50">{t('cash_session.fond_initial', { defaultValue: 'Fond Initial' })}</p>
+                    <p className="font-mono font-bold text-lg">
+                      {closingReport.session?.fond_de_caisse?.toLocaleString('fr-FR')} F
+                    </p>
+                  </div>
+                  <div className="bg-success/10 p-3 rounded-lg border border-success/20">
+                    <p className="text-[10px] uppercase text-success">{t('cash_session.encaisse', { defaultValue: 'Encaissé' })}</p>
+                    <p className="font-mono font-bold text-lg text-success">
+                      {closingReport.session?.montant_encaisse?.toLocaleString('fr-FR')} F
+                    </p>
+                  </div>
+                </div>
+
+                {/* Total théorique */}
+                <div className="bg-primary/5 p-4 rounded-lg border border-primary/20">
+                  <p className="text-[10px] uppercase text-primary font-semibold mb-1">
+                    {t('cash_session.total_theorique', { defaultValue: 'Total Théorique en Caisse' })}
+                  </p>
+                  <p className="font-mono font-bold text-2xl text-primary">
+                    {closingReport.session?.montant_theorique?.toLocaleString('fr-FR')} F
+                  </p>
+                </div>
+              </>
+            ) : (
+              /* Mode sécurité - montants masqués */
+              <div className="bg-warning/10 p-4 rounded-lg border border-warning/30 text-center">
+                <p className="text-warning text-sm font-medium mb-2">🔒 Mode Sécurité</p>
+                <p className="text-base-content/60 text-xs">
+                  Les montants sont masqués pour des raisons de sécurité.
+                  Consultez le pharmacien pour les détails financiers.
+                </p>
+                <div className="mt-3 space-y-2">
+                  <div className="bg-base-100 p-2 rounded border border-base-300">
+                    <span className="text-2xl font-mono">*** *** F</span>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Transactions */}
+            <div className="flex justify-between items-center text-sm">
+              <span className="text-base-content/60">{t('cash_session.transactions', { defaultValue: 'Transactions' })}</span>
+              <span className="font-bold">{closingReport.transactions?.total || 0}</span>
+            </div>
+
+            {/* Message de confirmation */}
+            <div className="text-center pt-2">
+              <p className="text-sm text-success font-medium">✓ {closingReport.detail}</p>
+            </div>
+          </div>
+        )}
+      </PremiumModal>
     </div>
   )
 }
