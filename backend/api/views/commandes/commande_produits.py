@@ -10,6 +10,7 @@ import calendar
 
 from ...models import Commande, CommandeProduit, StockLot, Produit
 from ...serializers import CommandeProduitSerializer
+from ...centralized_configs import StandardResultsSetPagination
 import logging
 
 logger = logging.getLogger(__name__)
@@ -21,6 +22,7 @@ class CommandeProduitViewSet(viewsets.ModelViewSet):
     serializer_class = CommandeProduitSerializer
     filter_backends = (DjangoFilterBackend,)
     filterset_fields = ['produit']
+    pagination_class = StandardResultsSetPagination
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
@@ -152,10 +154,12 @@ class CommandeProduitViewSet(viewsets.ModelViewSet):
             }
 
             # Contrôle de Marge
-            if data['selling_price'] < data['price_cost']:
+            if data['selling_price'] < data['price_cost'] and data['selling_price'] > 0:
                 produit_name = p.get('produit_nom') or 'Inconnu'
-                error_msg = f"Marge négative détectée sur le produit {produit_name} (Achat: {data['price_cost']}F, Vente: {data['selling_price']}F). Veuillez corriger le prix d'achat ou de vente."
-                return Response({'error': error_msg}, status=status.HTTP_400_BAD_REQUEST)
+                warnings_list.append(f"Marge négative détectée sur le produit {produit_name} (Achat: {data['price_cost']}F, Vente: {data['selling_price']}F).")
+            elif data['selling_price'] == 0:
+                produit_name = p.get('produit_nom') or 'Inconnu'
+                warnings_list.append(f"Prix de vente non défini pour le produit {produit_name}.")
             elif data['selling_price'] == data['price_cost'] and data['price_cost'] > 0:
                 produit_name = p.get('produit_nom') or 'Inconnu'
                 warnings_list.append(f"Attention : Marge nulle (0F) sur {produit_name}.")

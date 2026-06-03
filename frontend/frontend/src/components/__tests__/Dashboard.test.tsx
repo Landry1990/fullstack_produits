@@ -214,7 +214,8 @@ describe('Dashboard Component', () => {
         
         const { container } = renderWithProviders(<Dashboard />);
         
-        const spinner = container.querySelector('.loading-spinner');
+        // Le spinner utilise maintenant des classes Tailwind : animate-spin avec border-t-primary
+        const spinner = container.querySelector('.animate-spin');
         expect(spinner).toBeInTheDocument();
     });
 

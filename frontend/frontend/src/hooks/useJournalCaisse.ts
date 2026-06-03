@@ -107,6 +107,20 @@ export function useJournalCaisse() {
     return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}`;
   };
 
+  // Pour la date de fin, on arrondit à la seconde supérieure pour inclure toutes les transactions
+  const formatLocalISOStringEnd = (date: Date): string => {
+    // Ajouter 1 seconde pour éviter d'exclure la dernière transaction (bug des millisecondes)
+    const adjustedDate = new Date(date.getTime() + 1000);
+    const pad = (num: number) => num.toString().padStart(2, '0');
+    const year = adjustedDate.getFullYear();
+    const month = pad(adjustedDate.getMonth() + 1);
+    const day = pad(adjustedDate.getDate());
+    const hours = pad(adjustedDate.getHours());
+    const minutes = pad(adjustedDate.getMinutes());
+    const seconds = pad(adjustedDate.getSeconds());
+    return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}`;
+  };
+
   const processTransactionsData = useCallback((data: { results?: CaisseTransaction[]; count?: number } | CaisseTransaction[]) => {
     if (Array.isArray(data)) {
       setTransactions(data);
@@ -129,7 +143,7 @@ export function useJournalCaisse() {
       };
       if (selectedUser) params.user = selectedUser;
       if (dateDebut) params.date_debut = formatLocalISOString(dateDebut);
-      if (dateFin) params.date_fin = formatLocalISOString(dateFin);
+      if (dateFin) params.date_fin = formatLocalISOStringEnd(dateFin);
 
       const response = await api.get('caisse/page_init/', { params, signal });
       const { transactions: txData, mouvements: mouvData, totals: totalsData, users: usersData } = response.data;
@@ -248,7 +262,7 @@ export function useJournalCaisse() {
       params.append('page_size', PAGE_SIZE.toString());
       if (selectedUser) params.append('user', selectedUser);
       if (dateDebut) params.append('date_debut', formatLocalISOString(dateDebut));
-      if (dateFin) params.append('date_fin', formatLocalISOString(dateFin));
+      if (dateFin) params.append('date_fin', formatLocalISOStringEnd(dateFin));
       
       const response = await api.get('caisse/', { params, signal });
       processTransactionsData(response.data);
@@ -376,7 +390,7 @@ export function useJournalCaisse() {
       
       const modalTotals = {
           start_date: dateDebut ? formatLocalISOString(dateDebut) : currentTotals?.start_date || null,
-          end_date: dateFin ? formatLocalISOString(dateFin) : null,
+          end_date: dateFin ? formatLocalISOStringEnd(dateFin) : null,
           total_theorique: currentTotals.total_theorique ?? currentTotals.total,
           total_ventes: currentTotals.total_ventes ?? currentTotals.ventes,
           total_ca_pharmacie: currentTotals.total_ca_pharmacie,

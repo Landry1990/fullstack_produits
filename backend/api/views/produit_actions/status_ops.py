@@ -46,7 +46,10 @@ class ProduitStatusMixin:
 
     @action(detail=False, methods=['get'])
     def for_import(self, request):
-        produits = Produit.objects.all().order_by('name').values('id', 'name', 'cip1', 'stock', 'selling_price', 'is_active')
+        produits = Produit.objects.all().order_by('name').values(
+            'id', 'name', 'cip1', 'cip2', 'cip3', 'stock', 'selling_price',
+            'cost_price', 'tva', 'taux_marge', 'is_active'
+        )
         return Response(list(produits))
 
     @action(detail=False, methods=['get'], url_path='by-cip/(?P<cip>[^/.]+)')

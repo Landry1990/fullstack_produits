@@ -42,6 +42,9 @@ services:
       - ./backend:/app
       - static_volume:/app/staticfiles
       - media_volume:/app/media
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./backup-db.sh:/backup-db.sh
+      - ./backups:/backups
     environment:
       - DJANGO_DEBUG=True
       - DJANGO_SECRET_KEY=dev-secret-key-change-in-production
@@ -69,14 +72,9 @@ services:
   frontend:
     build:
       context: ./frontend/frontend
-      dockerfile: Dockerfile.dev
-    volumes:
-      - ./frontend/frontend:/app
-      - /app/node_modules
-    environment:
-      - VITE_API_URL=http://localhost:8000
+      dockerfile: Dockerfile.prod
     ports:
-      - "5173:5173"
+      - "80:80"
     depends_on:
       - backend
     networks:

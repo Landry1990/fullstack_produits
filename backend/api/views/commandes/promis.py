@@ -22,7 +22,7 @@ class PromisViewSet(MultiTermSearchMixin, viewsets.ModelViewSet):
     """
     API endpoint for managing Promis (products promised to clients).
     """
-    queryset = Promis.objects.filter(is_active=True).select_related('client', 'produit', 'facture', 'created_by').all()
+    queryset = Promis.objects.filter(is_active=True).select_related('client', 'produit', 'facture', 'created_by')
     serializer_class = PromisSerializer
     permission_classes = [IsAuthenticated]
     pagination_class = StandardResultsSetPagination

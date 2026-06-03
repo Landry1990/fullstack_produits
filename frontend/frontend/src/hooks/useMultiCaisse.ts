@@ -36,15 +36,23 @@ export function useMultiCaisse(_options: UseMultiCaisseOptions = {}): UseMultiCa
             ])
 
             setPostesCaisses(activePostes)
-            setMyActivePoste(myPostes.length > 0 ? myPostes[0] : null)
+            const myPoste = myPostes.length > 0 ? myPostes[0] : null
+            setMyActivePoste(myPoste)
 
             // Multicaisse auto-détecté : > 1 poste actif
             const hasMulti = activePostes.length > 1
             setIsMultiCaisse(hasMulti)
 
-            // Auto-select si un seul poste actif
-            if (activePostes.length === 1 && !selectedPosteCaisseId) {
-                setSelectedPosteCaisseId(activePostes[0].id)
+            // Auto-select la caisse de l'utilisateur si ouverte, sinon le seul poste actif
+            if (!selectedPosteCaisseId) {
+                if (myPoste) {
+                    // L'utilisateur a sa propre caisse ouverte → la pré-sélectionner
+                    setSelectedPosteCaisseId(myPoste.id)
+                } else if (activePostes.length === 1) {
+                    // Un seul poste ouvert (pas le sien) → le sélectionner
+                    setSelectedPosteCaisseId(activePostes[0].id)
+                }
+                // Si multi-postes et pas la sienne → laisser l'utilisateur choisir
             }
         } catch (err) {
             console.error('Erreur chargement postes caisses:', err)

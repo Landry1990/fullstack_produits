@@ -11,6 +11,7 @@ RUN apt-get update && apt-get install -y \
     gcc \
     curl \
     tzdata \
+    docker.io \
     && rm -rf /var/lib/apt/lists/*
 
 # Définir le fuseau horaire local (Africa/Douala = UTC+1)

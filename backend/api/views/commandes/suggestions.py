@@ -94,8 +94,9 @@ def calculer_reapprovisionnement_simple(periode, fournisseur_id=None, budget_max
     date_debut = timezone.now() - timedelta(days=periode)
     from django.db.models import Sum, Q
     
-    # Récupérer tous les produits
-    produits = Produit.objects.select_related('fournisseur').all()
+    # Récupérer les produits actifs uniquement (pas les inactifs/supprimés)
+    # Limiter à 5000 produits max pour éviter les timeouts
+    produits = Produit.objects.filter(is_active=True).select_related('fournisseur')[:5000]
     fournisseur_obj = None
     if fournisseur_id:
         from ...models import Fournisseur, StockLot
@@ -222,18 +223,21 @@ def calculer_optimisation_intelligente(periode, fournisseur_id=None, budget_max=
     date_mi_periode = timezone.now() - timedelta(days=periode_analyse // 2)
     from django.db.models import Sum, Q
 
-    produits = Produit.objects.select_related('fournisseur').all()
+    # Produits actifs uniquement, filtrer par fournisseur si spécifié
+    from django.db.models import Q
+    produits_qs = Produit.objects.filter(is_active=True)
+    
     fournisseur_obj = None
     if fournisseur_id:
         from ...models import Fournisseur, StockLot
-        from django.db.models import Q
         fournisseur_obj = Fournisseur.objects.filter(id=fournisseur_id).first()
-        lots_produit_ids = set(StockLot.objects.filter(fournisseur_id=fournisseur_id).values_list('produit_id', flat=True))
-        produits = produits.filter(
+        lots_produit_ids = list(StockLot.objects.filter(fournisseur_id=fournisseur_id).values_list('produit_id', flat=True))
+        produits_qs = produits_qs.filter(
             Q(fournisseur_id=fournisseur_id) | Q(id__in=lots_produit_ids)
         )
-        
-    produits = produits.annotate(
+    
+    # Annoter puis limiter pour éviter les timeouts
+    produits = produits_qs.select_related('fournisseur').annotate(
         ventes_total_annotation=Sum('factureproduit__quantity', filter=Q(
             factureproduit__facture__date__gte=date_debut,
             factureproduit__facture__status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE]

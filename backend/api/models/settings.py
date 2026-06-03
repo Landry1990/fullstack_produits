@@ -105,6 +105,12 @@ class PharmacySettings(models.Model):
         help_text="Délai d'inactivité avant déconnexion automatique (en minutes, 0 pour désactiver)"
     )
     
+    # --- Paramètres Caisse (Sécurité) ---
+    hide_cash_totals = models.BooleanField(
+        default=False,
+        help_text="Masquer les montants dans le rapport de clôture de caisse (mode sécurité)"
+    )
+    
     # --- Paramètres Impression & Affichage ---
     ticket_paper_width = models.IntegerField(
         default=80,

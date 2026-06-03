@@ -110,7 +110,7 @@ class ProfileSerializer(serializers.ModelSerializer):
             'allowed_menus', 'can_do_returns', 'can_sell_negative_stock', 'can_cash_out', 'role',
             'can_delete_product', 'can_adjust_stock', 'can_delete_fournisseur', 'can_delete_commande', 'can_close_commande',
             'can_modify_price', 'max_discount_rate', 'can_cancel_invoice', 'can_modify_invoice',
-            'can_cancel_promis', 'can_manage_perimes', 'can_manage_avoirs', 'can_validate_zero_amount'
+            'can_cancel_promis', 'can_manage_perimes', 'can_manage_avoirs', 'can_validate_zero_amount', 'can_view_cash_sessions'
         ]
 
 class InvoiceSettingsSerializer(serializers.ModelSerializer):
@@ -171,11 +171,33 @@ class PosteCaisseSerializer(serializers.ModelSerializer):
 class SessionCaisseSerializer(serializers.ModelSerializer):
     poste_nom = serializers.CharField(source='poste.nom', read_only=True)
     ouvert_par_name = serializers.CharField(source='ouvert_par.username', read_only=True)
+    ventilation_paiements = serializers.SerializerMethodField()
 
     class Meta:
         model = SessionCaisse
         fields = '__all__'
         read_only_fields = ['created_at', 'updated_at']
+
+    def get_ventilation_paiements(self, obj):
+        from django.utils import timezone
+        from .models import Caisse
+        
+        start_date = obj.date_ouverture
+        end_date = obj.date_fermeture or timezone.now()
+        
+        queryset = Caisse.objects.filter(
+            facture__poste_caisse=obj.poste,
+            date_paiement__gte=start_date,
+            date_paiement__lte=end_date
+        ).values('mode_paiement').annotate(total=Sum('montant'))
+        
+        breakdown = {}
+        for item in queryset:
+            mode = item['mode_paiement']
+            total = item['total'] or Decimal('0.00')
+            breakdown[mode] = float(total)
+            
+        return breakdown
 
 class TVASerializer(serializers.ModelSerializer):
     class Meta:
@@ -225,6 +247,7 @@ class UserSerializer(serializers.ModelSerializer):
             profile.can_manage_perimes = profile_data.get('can_manage_perimes', False)
             profile.can_manage_avoirs = profile_data.get('can_manage_avoirs', False)
             profile.can_validate_zero_amount = profile_data.get('can_validate_zero_amount', False)
+            profile.can_view_cash_sessions = profile_data.get('can_view_cash_sessions', False)
             profile.role = profile_data.get('role', 'VENDEUR')
             profile.save()
             
@@ -269,6 +292,7 @@ class UserSerializer(serializers.ModelSerializer):
             profile.can_manage_avoirs = profile_data.get('can_manage_avoirs', profile.can_manage_avoirs)
             profile.can_modify_price = profile_data.get('can_modify_price', profile.can_modify_price)
             profile.can_validate_zero_amount = profile_data.get('can_validate_zero_amount', profile.can_validate_zero_amount)
+            profile.can_view_cash_sessions = profile_data.get('can_view_cash_sessions', profile.can_view_cash_sessions)
             profile.max_discount_rate = profile_data.get('max_discount_rate', profile.max_discount_rate)
             profile.role = profile_data.get('role', profile.role)
             profile.save()

@@ -150,17 +150,33 @@ export default function PaymentModal({
                                 Envoyer Vers (Poste de Caisse)
                             </span>
                         </label>
-                        <div className="grid grid-cols-2 gap-2">
-                            {postesCaissesActive.map((poste) => (
-                                <button
-                                    key={poste.id}
-                                    type="button"
-                                    onClick={() => setSelectedPosteCaisseId?.(poste.id)}
-                                    className={`btn btn-sm text-[10px] font-bold uppercase transition-all duration-200 border-2 ${selectedPosteCaisseId === poste.id ? 'btn-primary border-primary shadow-lg shadow-primary/20 scale-105' : 'btn-ghost border-base-300'}`}
-                                >
-                                    {poste.nom}
-                                </button>
-                            ))}
+                        <div className="grid grid-cols-1 gap-2">
+                            {postesCaissesActive.map((poste) => {
+                                // Récupérer le nom du caissier qui a ouvert la session
+                                const caissierName = poste.session_active?.ouvert_par_name 
+                                    || poste.ouvert_par_name 
+                                    || poste.ouvert_par?.username
+                                    || 'Inconnu';
+                                
+                                return (
+                                    <button
+                                        key={poste.id}
+                                        type="button"
+                                        onClick={() => setSelectedPosteCaisseId?.(poste.id)}
+                                        className={`btn btn-sm justify-start text-left transition-all duration-200 border-2 ${selectedPosteCaisseId === poste.id ? 'btn-primary border-primary shadow-lg shadow-primary/20 scale-[1.02]' : 'btn-ghost border-base-300'}`}
+                                    >
+                                        <div className="flex flex-col items-start">
+                                            <span className="font-bold text-xs uppercase">{poste.nom}</span>
+                                            <span className="text-[10px] opacity-70 flex items-center gap-1">
+                                                <svg xmlns="http://www.w3.org/2000/svg" className="h-2.5 w-2.5" viewBox="0 0 20 20" fill="currentColor">
+                                                    <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
+                                                </svg>
+                                                {caissierName}
+                                            </span>
+                                        </div>
+                                    </button>
+                                );
+                            })}
                         </div>
                         {!selectedPosteCaisseId && (
                             <p className="text-[10px] text-error font-medium mt-2 italic flex items-center gap-1">

@@ -47,8 +47,11 @@ export default function FeedbackModal({ isOpen, onClose }: FeedbackModalProps) {
 
     setLoading(true);
     try {
-      await feedbackService.create(formData);
+      const result = await feedbackService.create(formData);
       toast.success(t('feedback.success', 'Feedback envoyé avec succès'));
+      if (result.email_sent === false) {
+        toast.error(t('feedback.email_failed', "L'email de notification n'a pas pu être envoyé — vérifiez la configuration SMTP"), { duration: 6000 });
+      }
       setFormData({
         category: 'OTHER',
         priority: 'MEDIUM',

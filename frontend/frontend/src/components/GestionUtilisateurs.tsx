@@ -38,6 +38,7 @@ interface User {
     can_validate_zero_amount?: boolean;
     can_modify_price?: boolean;
     can_modify_invoice?: boolean;
+    can_view_cash_sessions?: boolean;
     max_discount_rate?: string | number;
   };
 }
@@ -158,6 +159,22 @@ const getAllMenuKeys = () => {
     return keys;
 };
 
+const getMenuLabel = (key: string, t: any): string => {
+  for (const menu of MENU_HIERARCHY) {
+    if (menu.key === key) {
+      return t(menu.labelKey, { defaultValue: key });
+    }
+    if (menu.submenus) {
+      for (const sub of menu.submenus) {
+        if (sub.key === key) {
+          return t(sub.labelKey, { defaultValue: key });
+        }
+      }
+    }
+  }
+  return key;
+};
+
 const ROLES = [
   { value: 'PHARMACIEN', labelKey: 'roles.pharmacist' },
   { value: 'COMPTABLE', labelKey: 'roles.accountant' },
@@ -212,6 +229,7 @@ export default function GestionUtilisateurs() {
     can_validate_zero_amount: false,
     can_modify_price: false,
     can_modify_invoice: false,
+    can_view_cash_sessions: false,
     max_discount_rate: 0,
   });
 
@@ -261,6 +279,7 @@ export default function GestionUtilisateurs() {
       can_validate_zero_amount: sourceUser.profile?.can_validate_zero_amount || false,
       can_modify_price: sourceUser.profile?.can_modify_price || false,
       can_modify_invoice: sourceUser.profile?.can_modify_invoice || false,
+      can_view_cash_sessions: sourceUser.profile?.can_view_cash_sessions || false,
       max_discount_rate: Number(sourceUser.profile?.max_discount_rate || 0),
     }));
 
@@ -288,6 +307,7 @@ export default function GestionUtilisateurs() {
       updates.can_validate_zero_amount = true;
       updates.can_modify_price = true;
       updates.can_modify_invoice = true;
+      updates.can_view_cash_sessions = true;
       updates.max_discount_rate = 100;
       if (!preserveMenus) updates.allowed_menus = getAllMenuKeys();
     } else if (role === 'CAISSIER') {
@@ -382,6 +402,7 @@ export default function GestionUtilisateurs() {
         can_validate_zero_amount: user.profile?.can_validate_zero_amount || false,
         can_modify_price: user.profile?.can_modify_price || false,
         can_modify_invoice: user.profile?.can_modify_invoice || false,
+        can_view_cash_sessions: user.profile?.can_view_cash_sessions || false,
         max_discount_rate: Number(user.profile?.max_discount_rate || 0),
       });
     } else {
@@ -412,6 +433,7 @@ export default function GestionUtilisateurs() {
         can_validate_zero_amount: false,
         can_modify_price: false,
         can_modify_invoice: false,
+        can_view_cash_sessions: false,
         max_discount_rate: 0,
       });
     }
@@ -556,6 +578,7 @@ export default function GestionUtilisateurs() {
           can_validate_zero_amount: formData.can_validate_zero_amount,
           can_modify_price: formData.can_modify_price,
           can_modify_invoice: formData.can_modify_invoice,
+          can_view_cash_sessions: formData.can_view_cash_sessions,
           max_discount_rate: formData.max_discount_rate
         }
       };
@@ -677,16 +700,50 @@ export default function GestionUtilisateurs() {
                             ? t('roles.cashier') 
                             : t('roles.seller')}
                     </span>
-                    <div className="flex flex-wrap gap-1 mt-1">
+                    <div className="flex flex-wrap gap-1 mt-1 max-w-md">
                       {user.is_superuser ? (
-                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-base-200 text-base-content/70 border border-base-300">{t('badges.full_access')}</span>
-                      ) : (
-                        user.profile?.allowed_menus.map(menu => (
-                          <span key={menu} className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-base-200 text-base-content/70 border border-base-300 text-base-content/70">
-                            {menu}
-                          </span>
-                        ))
-                      )}
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-primary/10 text-primary border border-primary/20">{t('badges.full_access')}</span>
+                      ) : (() => {
+                        const allowedMenus = user.profile?.allowed_menus || [];
+                        const allKeys = getAllMenuKeys();
+                        // If they have all keys (or all but a few), show full access
+                        const isFullAccess = allowedMenus.length >= allKeys.length - 2;
+                        
+                        if (isFullAccess && allowedMenus.length > 0) {
+                          return (
+                            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-primary/10 text-primary border border-primary/20">
+                              {t('badges.full_access', 'Accès complet')}
+                            </span>
+                          );
+                        }
+                        
+                        const limit = 4;
+                        const visibleMenus = allowedMenus.slice(0, limit);
+                        const hiddenCount = allowedMenus.length - limit;
+                        
+                        return (
+                          <>
+                            {visibleMenus.map(menu => (
+                              <span key={menu} className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-base-200 text-base-content/70 border border-base-300">
+                                {getMenuLabel(menu, t)}
+                              </span>
+                            ))}
+                            {hiddenCount > 0 && (
+                              <span 
+                                className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-base-300 text-base-content/80 border border-base-400 cursor-help"
+                                title={allowedMenus.slice(limit).map(m => getMenuLabel(m, t)).join(', ')}
+                              >
+                                +{hiddenCount} {t('common:others', 'autres')}
+                              </span>
+                            )}
+                            {allowedMenus.length === 0 && (
+                              <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-error/10 text-error border border-error/20">
+                                Aucun accès
+                              </span>
+                            )}
+                          </>
+                        );
+                      })()}
                     </div>
                   </div>
                 </td>
@@ -962,6 +1019,13 @@ export default function GestionUtilisateurs() {
                           checked={formData.can_modify_invoice} 
                           onChange={checked => setFormData({...formData, can_modify_invoice: checked})} 
                           label={t('permissions.modify_invoice')} 
+                          className="p-2 bg-base-100/50 rounded-lg"
+                        />
+                        <Checkbox 
+                          size="xs"
+                          checked={formData.can_view_cash_sessions} 
+                          onChange={checked => setFormData({...formData, can_view_cash_sessions: checked})} 
+                          label={t('permissions.view_cash_sessions', 'Voir les sessions de caisse')} 
                           className="p-2 bg-base-100/50 rounded-lg"
                         />
                       </div>
