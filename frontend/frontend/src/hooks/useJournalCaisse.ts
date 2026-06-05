@@ -80,6 +80,8 @@ export function useJournalCaisse() {
     user?: string
   } | null>(null);
   const [actualAmount, setActualAmount] = useState<string>('');
+  const [manualMovements, setManualMovements] = useState<{ id: number; motif: string; montant: number; type: 'ENTREE' | 'SORTIE' }[]>([]);
+  const [fondDeCaisse, setFondDeCaisse] = useState<number>(0);
 
   const toggleReleve = (releveId: number) => {
     setExpandedReleves(prev => {
@@ -411,6 +413,8 @@ export function useJournalCaisse() {
       
       setClosingTotals(modalTotals);
       setActualAmount('');
+      setManualMovements([]);
+      setFondDeCaisse((currentTotals.details?.__meta__?.fond_de_caisse as number) || 0);
       setIsClosingModalOpen(true);
   };
 
@@ -561,18 +565,21 @@ export function useJournalCaisse() {
         montant_reel: normalizeNumberInput(actualAmount),
         date_debut: dateDebut ? formatLocalISOString(dateDebut) : null,
         date_fin: dateFin ? formatLocalISOString(dateFin) : null,
-        user_id: selectedUser
+        user_id: selectedUser,
+        mouvements_manuels: manualMovements.map(m => ({ motif: m.motif, montant: m.montant, type: m.type }))
       });
       
       toast.success(t('messages.close_success'));
       const completeData = response.data.cloture;
-      setClosingTotals(completeData);
-      
-      setTimeout(() => {
-          handleImprimerCloture(completeData);
-      }, 500);
+      if (completeData) {
+        setClosingTotals(completeData);
+        setTimeout(() => {
+            handleImprimerCloture(completeData);
+        }, 500);
+      }
       
       setIsClosingModalOpen(false);
+      setManualMovements([]);
       fetchData();
     } catch (err) {
       console.error('Erreur clôture:', err);
@@ -616,6 +623,8 @@ export function useJournalCaisse() {
     closingTotals,
     actualAmount,
     isMovementModalOpen,
+    manualMovements,
+    fondDeCaisse,
 
     // Setters
     setSearchQuery,
@@ -628,6 +637,8 @@ export function useJournalCaisse() {
     setIsClosingModalOpen,
     setActualAmount,
     setIsMovementModalOpen,
+    setManualMovements,
+    setFondDeCaisse,
 
     // Derived
     filteredItems,

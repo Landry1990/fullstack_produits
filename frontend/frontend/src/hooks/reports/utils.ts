@@ -59,8 +59,12 @@ export const COLUMN_LABELS: Record<string, string> = {
 };
 
 export const formatColumnHeader = (col: string, t?: any): string => {
+    if (t) {
+        const translated = t(`reports.column_labels.${col}`, { defaultValue: COLUMN_LABELS[col] });
+        if (translated) return translated;
+    }
     if (COLUMN_LABELS[col]) return COLUMN_LABELS[col];
-    
+
     const match = col.match(/^(\d{4})_(.*)$/);
     if (match && t) {
         const year = match[1];

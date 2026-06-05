@@ -70,6 +70,7 @@ interface CommandeFormProps {
     onCreateAvoir?: () => void; // Optional handler for creating credit note
     commandeSortBy?: 'chrono' | 'stock' | 'name' | 'qty';
     onSortProduits?: (sortBy: 'chrono' | 'stock' | 'name' | 'qty') => void;
+    onViewProductDetails?: (produitId: number) => void;
     // Actions rapides depuis le formulaire
     onCloture?: () => void;
     onMettreEnAttente?: () => void;
@@ -130,6 +131,7 @@ export default function CommandeForm({
     onCreateAvoir,
     commandeSortBy,
     onSortProduits,
+    onViewProductDetails,
     onCloture,
     onMettreEnAttente,
     executingAction,
@@ -162,6 +164,7 @@ export default function CommandeForm({
                     <span className="flex items-center gap-1"><kbd className="px-1.5 py-0.5 bg-base-200 rounded text-[10px] font-sans border border-base-300">F2</kbd> {t('orders:form.shortcuts.search')}</span>
                     <span className="flex items-center gap-1"><kbd className="px-1.5 py-0.5 bg-base-200 rounded text-[10px] font-sans border border-base-300">F4</kbd> {t('orders:form.shortcuts.provider')}</span>
                     <span className="flex items-center gap-1"><kbd className="px-1.5 py-0.5 bg-base-200 rounded text-[10px] font-sans border border-base-300">Ctrl+A</kbd> {t('orders:form.shortcuts.select_all')}</span>
+                    <span className="flex items-center gap-1"><kbd className="px-1.5 py-0.5 bg-base-200 rounded text-[10px] font-sans border border-base-300">Shift+Entrée</kbd> Détails produit</span>
                   </div>
                 </div>
             </div>
@@ -169,7 +172,7 @@ export default function CommandeForm({
 
 
           <form
-            className="flex-1 flex flex-col min-h-0 p-4"
+            className="flex-1 flex flex-col min-h-0 p-4 overflow-hidden"
             onSubmit={handleSaveCommande}
           >
 
@@ -314,7 +317,8 @@ export default function CommandeForm({
             </div>
             </div>
 
-            {/* Tableau des produits */}
+            {/* Tableau des produits - flex-1 + min-h-0 pour que seul le tableau défile */}
+            <div className="flex-1 min-h-0 flex flex-col overflow-hidden">
             <CommandeProductTable
                 commandeProduits={commandeProduits}
                 produitsList={produitsList}
@@ -332,11 +336,13 @@ export default function CommandeForm({
                 updateCommandeProduitField={updateCommandeProduitField}
                 handleTableFieldKeyDown={handleTableFieldKeyDown}
                 onRemoveProduct={onRemoveProduct}
+                onViewProductDetails={onViewProductDetails}
                 commandeSortBy={commandeSortBy}
                 onSortProduits={onSortProduits}
             />
+            </div>
 
-            <div className="mt-4 flex flex-wrap justify-between items-end gap-4 shrink-0 bg-base-100 p-3 rounded-xl border border-base-200 shadow-sm">
+            <div className="mt-2 flex flex-wrap justify-between items-end gap-4 shrink-0 bg-base-100 p-3 rounded-xl border border-base-200 shadow-sm">
                 <div className="flex flex-wrap gap-4 items-center">
                     {/* HT (Achat) */}
                     <div className="flex flex-col">

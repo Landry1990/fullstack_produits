@@ -198,7 +198,7 @@ export default function Comptabilite({ defaultTab = 'dashboard' }: ComptabiliteP
                         {activeTab === 'balance' && <BalanceTab balance={balance?.comptes || []} t={t} />}
                         {activeTab === 'bilan' && <BilanTab bilan={bilan} t={t} />}
                         {activeTab === 'resultat' && <ResultatTab resultat={resultat} t={t} />}
-                        {activeTab === 'plan' && <PlanTab comptes={comptes} actions={actions} />}
+                        {activeTab === 'plan' && <PlanTab comptes={comptes} actions={actions} t={t} />}
                         {activeTab === 'charges' && <ChargesTab actions={actions} comptes={comptes} journaux={journaux} t={t} />}
                     </Suspense>
                 </div>
@@ -411,7 +411,7 @@ function GrandLivreTab({ ecritures, count, page, setPage, search, setSearch, loc
                         {ecritures.length === 0 && (
                             <tr>
                                 <td colSpan={6} className="py-10 text-center text-base-content/50 text-sm">
-                                    Aucune écriture trouvée
+                                    {t('ledger.no_entry_found')}
                                 </td>
                             </tr>
                         )}
@@ -529,7 +529,7 @@ const TYPE_STYLES: Record<string, string> = {
 
 const EMPTY_FORM = { numero: '', libelle: '', type: 'ACTIF' as const, is_active: true };
 
-function PlanTab({ comptes, actions }: any) {
+function PlanTab({ comptes, actions, t }: any) {
     const [search, setSearch] = useState('');
     const [filterType, setFilterType] = useState('');
     const [modalOpen, setModalOpen] = useState(false);
@@ -577,7 +577,7 @@ function PlanTab({ comptes, actions }: any) {
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-base-content/30" />
                     <input
                         type="text"
-                        placeholder="Rechercher un compte (numéro ou libellé)…"
+                        placeholder={t('plan.search_placeholder')}
                         className="input input-bordered w-full pl-9 text-sm h-9"
                         value={search}
                         onChange={e => setSearch(e.target.value)}
@@ -588,20 +588,20 @@ function PlanTab({ comptes, actions }: any) {
                     value={filterType}
                     onChange={e => setFilterType(e.target.value)}
                 >
-                    <option value="">Tous les types</option>
-                    <option value="ACTIF">Actif</option>
-                    <option value="PASSIF">Passif</option>
-                    <option value="CHARGE">Charge</option>
-                    <option value="PRODUIT">Produit</option>
+                    <option value="">{t('plan.filter_all_types')}</option>
+                    <option value="ACTIF">{t('plan.filter_actif')}</option>
+                    <option value="PASSIF">{t('plan.filter_passif')}</option>
+                    <option value="CHARGE">{t('plan.filter_charge')}</option>
+                    <option value="PRODUIT">{t('plan.filter_produit')}</option>
                 </select>
                 <button onClick={openAdd} className="btn btn-primary btn-sm gap-1.5 shrink-0">
-                    <PlusCircle className="size-4" /> Nouveau compte
+                    <PlusCircle className="size-4" /> {t('plan.new_account')}
                 </button>
             </div>
 
             {/* Stats */}
             <div className="flex gap-3 flex-wrap text-xs text-base-content/50">
-                <span className="font-medium">{filtered.length} compte(s)</span>
+                <span className="font-medium">{t('plan.accounts_count', { count: filtered.length })}</span>
                 {Object.entries(grouped).map(([type, items]) => (
                     <span key={type} className={`px-2 py-0.5 rounded-full border font-semibold ${TYPE_STYLES[type]}`}>
                         {type} ({items.length})
@@ -614,7 +614,7 @@ function PlanTab({ comptes, actions }: any) {
                 <div key={type}>
                     <div className={`flex items-center gap-2 px-3 py-1.5 rounded-lg mb-2 border text-xs font-black uppercase tracking-wider ${TYPE_STYLES[type]}`}>
                         {type}
-                        <span className="ml-auto font-normal opacity-60">{items.length} compte(s)</span>
+                        <span className="ml-auto font-normal opacity-60">{t('plan.group_count', { count: items.length })}</span>
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
                         {items.map((c: any) => (
@@ -622,20 +622,20 @@ function PlanTab({ comptes, actions }: any) {
                                 <div className="min-w-0">
                                     <p className="font-mono text-base font-bold text-base-content">{c.numero}</p>
                                     <p className="text-xs text-base-content/60 truncate">{c.libelle}</p>
-                                    {!c.is_active && <span className="text-[10px] text-error font-bold">INACTIF</span>}
+                                    {!c.is_active && <span className="text-[10px] text-error font-bold">{t('plan.inactive')}</span>}
                                 </div>
                                 <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0 ml-2">
                                     <button
                                         onClick={() => openEdit(c)}
                                         className="btn btn-ghost btn-xs"
-                                        title="Modifier"
+                                        title={t('plan.edit_title')}
                                     >
                                         <FileText className="size-3.5 text-primary" />
                                     </button>
                                     <button
                                         onClick={() => setConfirmDelete(c)}
                                         className="btn btn-ghost btn-xs"
-                                        title="Supprimer"
+                                        title={t('plan.delete_title')}
                                     >
                                         <ArrowDownRight className="size-3.5 text-error" />
                                     </button>
@@ -649,7 +649,7 @@ function PlanTab({ comptes, actions }: any) {
             {filtered.length === 0 && (
                 <div className="flex flex-col items-center py-16 text-base-content/30">
                     <Settings className="size-10 mb-3" />
-                    <p className="font-bold">Aucun compte trouvé</p>
+                    <p className="font-bold">{t('plan.no_account_found')}</p>
                 </div>
             )}
 
@@ -659,47 +659,47 @@ function PlanTab({ comptes, actions }: any) {
                     <div className="bg-base-100 rounded-2xl shadow-xl w-full max-w-md border border-base-300">
                         <div className="p-5 border-b border-base-200 flex items-center justify-between">
                             <h3 className="font-bold text-base-content">
-                                {editTarget ? 'Modifier le compte' : 'Nouveau compte'}
+                                {editTarget ? t('plan.modal.edit') : t('plan.modal.new')}
                             </h3>
                             <button onClick={closeModal} className="btn btn-ghost btn-xs btn-circle">✕</button>
                         </div>
                         <form onSubmit={handleSubmit} className="p-5 space-y-4">
                             <div>
-                                <label className="block text-xs font-semibold text-base-content/50 uppercase tracking-wider mb-1">Numéro de compte *</label>
+                                <label className="block text-xs font-semibold text-base-content/50 uppercase tracking-wider mb-1">{t('plan.modal.number_label')}</label>
                                 <input
                                     type="text"
                                     className="input input-bordered w-full font-mono"
-                                    placeholder="Ex: 701200"
+                                    placeholder={t('plan.modal.number_placeholder')}
                                     value={form.numero}
                                     onChange={e => setForm({ ...form, numero: e.target.value })}
                                     required
                                     disabled={!!editTarget}
                                 />
-                                {editTarget && <p className="text-[10px] text-base-content/40 mt-1">Le numéro ne peut pas être modifié.</p>}
+                                {editTarget && <p className="text-[10px] text-base-content/40 mt-1">{t('plan.modal.number_locked')}</p>}
                             </div>
                             <div>
-                                <label className="block text-xs font-semibold text-base-content/50 uppercase tracking-wider mb-1">Libellé *</label>
+                                <label className="block text-xs font-semibold text-base-content/50 uppercase tracking-wider mb-1">{t('plan.modal.label_label')}</label>
                                 <input
                                     type="text"
                                     className="input input-bordered w-full"
-                                    placeholder="Ex: Ventes de médicaments"
+                                    placeholder={t('plan.modal.label_placeholder')}
                                     value={form.libelle}
                                     onChange={e => setForm({ ...form, libelle: e.target.value })}
                                     required
                                 />
                             </div>
                             <div>
-                                <label className="block text-xs font-semibold text-base-content/50 uppercase tracking-wider mb-1">Type *</label>
+                                <label className="block text-xs font-semibold text-base-content/50 uppercase tracking-wider mb-1">{t('plan.modal.type_label')}</label>
                                 <select
                                     className="select select-bordered w-full"
                                     value={form.type}
                                     onChange={e => setForm({ ...form, type: e.target.value as any })}
                                     required
                                 >
-                                    <option value="ACTIF">Actif</option>
-                                    <option value="PASSIF">Passif</option>
-                                    <option value="CHARGE">Charge</option>
-                                    <option value="PRODUIT">Produit</option>
+                                    <option value="ACTIF">{t('plan.filter_actif')}</option>
+                                    <option value="PASSIF">{t('plan.filter_passif')}</option>
+                                    <option value="CHARGE">{t('plan.filter_charge')}</option>
+                                    <option value="PRODUIT">{t('plan.filter_produit')}</option>
                                 </select>
                             </div>
                             <div className="flex items-center gap-3">
@@ -710,10 +710,10 @@ function PlanTab({ comptes, actions }: any) {
                                     checked={form.is_active}
                                     onChange={e => setForm({ ...form, is_active: e.target.checked })}
                                 />
-                                <label htmlFor="is_active" className="text-sm font-medium cursor-pointer">Compte actif</label>
+                                <label htmlFor="is_active" className="text-sm font-medium cursor-pointer">{t('plan.modal.active_label')}</label>
                             </div>
                             <div className="flex gap-2 pt-2">
-                                <button type="button" onClick={closeModal} className="btn btn-ghost flex-1">Annuler</button>
+                                <button type="button" onClick={closeModal} className="btn btn-ghost flex-1">{t('plan.modal.cancel')}</button>
                                 <button
                                     type="submit"
                                     className="btn btn-primary flex-1"
@@ -721,7 +721,7 @@ function PlanTab({ comptes, actions }: any) {
                                 >
                                     {(actions.createCompte?.isPending || actions.updateCompte?.isPending)
                                         ? <span className="loading loading-spinner loading-xs" />
-                                        : editTarget ? 'Enregistrer' : 'Créer'
+                                        : editTarget ? t('plan.modal.save') : t('plan.modal.create')
                                     }
                                 </button>
                             </div>
@@ -738,20 +738,20 @@ function PlanTab({ comptes, actions }: any) {
                             <ArrowDownRight className="size-6 text-error" />
                         </div>
                         <div>
-                            <p className="font-bold text-base-content">Supprimer ce compte ?</p>
+                            <p className="font-bold text-base-content">{t('plan.delete.title')}</p>
                             <p className="text-sm text-base-content/60 mt-1">
                                 <span className="font-mono font-bold">{confirmDelete.numero}</span> — {confirmDelete.libelle}
                             </p>
-                            <p className="text-xs text-error/70 mt-2">Impossible si des écritures y sont rattachées.</p>
+                            <p className="text-xs text-error/70 mt-2">{t('plan.delete.warning')}</p>
                         </div>
                         <div className="flex gap-2">
-                            <button onClick={() => setConfirmDelete(null)} className="btn btn-ghost flex-1">Annuler</button>
+                            <button onClick={() => setConfirmDelete(null)} className="btn btn-ghost flex-1">{t('plan.delete.cancel')}</button>
                             <button
                                 onClick={handleDelete}
                                 className="btn btn-error flex-1"
                                 disabled={actions.deleteCompte?.isPending}
                             >
-                                {actions.deleteCompte?.isPending ? <span className="loading loading-spinner loading-xs" /> : 'Supprimer'}
+                                {actions.deleteCompte?.isPending ? <span className="loading loading-spinner loading-xs" /> : t('plan.delete.confirm')}
                             </button>
                         </div>
                     </div>
@@ -850,14 +850,14 @@ function ChargesTab({ actions, comptes, journaux, t }: any) {
             } catch { return; }
         }
         if (!chargeCompte) {
-            alert("Compte de charge introuvable. Créez-le d'abord dans le Plan Comptable.");
+            alert(t('charges_simple.account_not_found'));
             return;
         }
 
         // Résolution du compte de trésorerie — création automatique si absent
         const tresoMeta = formData.modePaiement === '571100'
-            ? { libelle: 'Caisse', type: 'ACTIF' as const }
-            : { libelle: 'Banque', type: 'ACTIF' as const };
+            ? { libelle: t('charges_simple.cash_account'), type: 'ACTIF' as const }
+            : { libelle: t('charges_simple.bank_account'), type: 'ACTIF' as const };
         let tresoCompte = comptes?.find((c: any) => c.numero === formData.modePaiement);
         if (!tresoCompte) {
             try {
@@ -872,14 +872,14 @@ function ChargesTab({ actions, comptes, journaux, t }: any) {
 
         // Résolution du journal — création automatique si absent
         const journalCode = formData.modePaiement === '571100' ? 'CA' : 'BQ';
-        const journalNom  = formData.modePaiement === '571100' ? 'Caisse' : 'Banque';
+        const journalNom  = formData.modePaiement === '571100' ? t('charges_simple.cash_account') : t('charges_simple.bank_account');
         let targetJournal = journaux?.find((j: any) => j.code === journalCode);
         if (!targetJournal) {
             try {
                 const res = await api.post('compta/journaux/', { code: journalCode, nom: journalNom });
                 targetJournal = res.data;
             } catch {
-                alert(`Erreur: impossible de créer le journal '${journalCode}'.`);
+                alert(t('charges_simple.journal_error', { journalCode }));
                 return;
             }
         }
@@ -903,14 +903,14 @@ function ChargesTab({ actions, comptes, journaux, t }: any) {
     return (
         <div className="max-w-4xl mx-auto">
             <div className="text-center mb-8">
-                <h3 className="text-2xl font-semibold text-primary mb-2">Saisie Simplifiée des Charges</h3>
-                <p className="text-base-content/60 text-sm">Enregistrez vos dépenses courantes. Elles seront automatiquement intégrées au compte de résultat.</p>
+                <h3 className="text-2xl font-semibold text-primary mb-2">{t('charges_simple.title')}</h3>
+                <p className="text-base-content/60 text-sm">{t('charges_simple.subtitle')}</p>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 {/* Sélecteur visuel de catégories */}
                 <div className="md:col-span-1 space-y-2">
-                    <p className="text-xs font-medium text-base-content/50 uppercase tracking-wide mb-3">Catégorie de dépense</p>
+                    <p className="text-xs font-medium text-base-content/50 uppercase tracking-wide mb-3">{t('charges_simple.category')}</p>
                     {categoriesOHADA.map(cat => (
                         <button
                             key={cat.id}
@@ -923,7 +923,7 @@ function ChargesTab({ actions, comptes, journaux, t }: any) {
                         >
                             <span className="text-xl grayscale group-hover:grayscale-0 transition-all">{cat.icon}</span>
                             <span className={`font-medium text-sm ${formData.typeCharge === cat.compte ? 'text-primary' : 'text-base-content'}`}>
-                                {cat.label}
+                                {t(`ohada_categories.${cat.id}`, { defaultValue: cat.label })}
                             </span>
                         </button>
                     ))}
@@ -935,14 +935,14 @@ function ChargesTab({ actions, comptes, journaux, t }: any) {
                         
                         {formData.typeCharge === 'autre' && (
                             <div className="bg-warning/10 p-4 rounded-xl border border-warning/20 mb-4 animate-fade-in">
-                                <label className="block text-xs font-medium text-warning uppercase tracking-wide mb-2">Sélectionnez le compte exact</label>
+                                <label className="block text-xs font-medium text-warning uppercase tracking-wide mb-2">{t('charges_simple.select_account')}</label>
                                 <select 
                                     className="select select-bordered w-full bg-base-100 border-warning/30 rounded-lg py-2 font-medium text-base-content"
                                     value={formData.comptePersonnalise}
                                     onChange={(e) => setFormData({...formData, comptePersonnalise: e.target.value})}
                                     required
                                 >
-                                    <option value="">Sélectionnez un compte...</option>
+                                    <option value="">{t('charges_simple.select_account_placeholder')}</option>
                                     {chargeAccounts?.map((c: any) => (
                                         <option key={c.numero} value={c.numero}>{c.numero} - {c.libelle}</option>
                                     ))}
@@ -952,15 +952,15 @@ function ChargesTab({ actions, comptes, journaux, t }: any) {
 
                         <div className="grid grid-cols-2 gap-4">
                             <div className="col-span-2 md:col-span-1">
-                                <label className="block text-xs font-medium text-base-content/60 uppercase tracking-wide mb-2">Moyen de Paiement</label>
+                                <label className="block text-xs font-medium text-base-content/60 uppercase tracking-wide mb-2">{t('charges_simple.payment_method')}</label>
                                 <select 
                                     className="select select-bordered w-full bg-base-200 border-base-300 rounded-lg py-2.5 font-medium text-base-content focus:ring-primary"
                                     value={formData.modePaiement}
                                     onChange={(e) => setFormData({...formData, modePaiement: e.target.value})}
                                     required
                                 >
-                                    <option value="571100">💵 Espèces (Caisse)</option>
-                                    <option value="521100">🏦 Virement / Chèque (Banque)</option>
+                                    <option value="571100">{t('charges_simple.payment_cash')}</option>
+                                    <option value="521100">{t('charges_simple.payment_bank')}</option>
                                 </select>
                             </div>
                             <div className="col-span-2 md:col-span-1">
@@ -976,10 +976,10 @@ function ChargesTab({ actions, comptes, journaux, t }: any) {
                         </div>
 
                         <div>
-                            <label className="block text-xs font-medium text-base-content/60 uppercase tracking-wide mb-2">Motif (Libellé)</label>
+                            <label className="block text-xs font-medium text-base-content/60 uppercase tracking-wide mb-2">{t('charges_simple.label')}</label>
                             <input 
                                 type="text" 
-                                placeholder="Ex: Paiement facture ENEO Avril..."
+                                placeholder={t('charges_simple.label_placeholder')}
                                 className="input input-bordered w-full bg-base-200 border-base-300 rounded-lg py-3 px-4 font-medium text-base-content focus:ring-primary"
                                 value={formData.libelle}
                                 onChange={(e) => setFormData({...formData, libelle: e.target.value})}
@@ -988,17 +988,17 @@ function ChargesTab({ actions, comptes, journaux, t }: any) {
                         </div>
 
                         <div>
-                            <label className="block text-xs font-medium text-base-content/60 uppercase tracking-wide mb-2">Montant (FCFA)</label>
+                            <label className="block text-xs font-medium text-base-content/60 uppercase tracking-wide mb-2">{t('charges_simple.amount')}</label>
                             <div className="relative">
                                 <input 
                                     type="number" 
-                                    placeholder="0"
+                                    placeholder={t('charges_simple.amount_placeholder')}
                                     className="input input-bordered w-full bg-base-200 border-base-300 rounded-lg py-4 px-4 text-2xl font-semibold text-primary focus:ring-primary pr-16 text-right"
                                     value={formData.montant}
                                     onChange={(e) => setFormData({...formData, montant: e.target.value})}
                                     required
                                 />
-                                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-primary font-semibold text-lg text-base-content/50">FCFA</span>
+                                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-primary font-semibold text-lg text-base-content/50">{t('charges_simple.currency')}</span>
                             </div>
                         </div>
 
@@ -1007,11 +1007,11 @@ function ChargesTab({ actions, comptes, journaux, t }: any) {
                             className="inline-flex items-center justify-center w-full px-4 py-3 bg-primary text-white rounded-lg text-sm font-bold hover:bg-primary-focus transition-colors shadow-sm py-3 rounded-lg font-medium text-sm transition-all hover:shadow-md"
                             disabled={actions.createEcriture.isPending || !formData.typeCharge}
                         >
-                            {actions.createEcriture.isPending ? t('charges.saving') : "Enregistrer la dépense"}
+                            {actions.createEcriture.isPending ? t('charges.saving') : t('charges_simple.submit')}
                         </button>
                         
                         {!formData.typeCharge && (
-                            <p className="text-center text-error text-xs font-medium mt-2">Veuillez sélectionner une catégorie de dépense à gauche.</p>
+                            <p className="text-center text-error text-xs font-medium mt-2">{t('charges_simple.select_category_warning')}</p>
                         )}
                     </form>
                 </div>

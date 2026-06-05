@@ -16,16 +16,42 @@ class RapportBaseMixin:
         ).prefetch_related('produits', 'produits__produit', 'paiements')
 
     def _calculate_ca_stats(self, factures):
-        ca_stats = factures.aggregate(
-            ca_ttc=Coalesce(Sum('total_ttc'), Decimal('0.00')),
-            ca_ht=Coalesce(Sum('total_ht'), Decimal('0.00')),
+        from django.db.models import OuterRef, Subquery
+
+        # Sous-requête pour calculer le montant des produits is_divers par facture
+        divers_total_sub = FactureProduitAllocation.objects.filter(
+            facture_produit__facture=OuterRef('pk'),
+            stock_lot__is_divers=True
+        ).values('facture_produit__facture').annotate(
+            total_divers=Coalesce(
+                Sum(F('selling_price') * F('quantity'), output_field=DecimalField()),
+                Decimal('0.00')
+            )
+        ).values('total_divers')
+
+        # Agréger les factures en excluant le montant is_divers
+        factures_annotated = factures.annotate(
+            divers_amount=Coalesce(
+                Subquery(divers_total_sub, output_field=DecimalField()),
+                Decimal('0.00')
+            ),
+            adjusted_ttc=F('total_ttc') - F('divers_amount'),
+            adjusted_ht=F('total_ht') - F('divers_amount')
+        )
+
+        ca_stats = factures_annotated.aggregate(
+            ca_ttc=Coalesce(Sum('adjusted_ttc'), Decimal('0.00')),
+            ca_ht=Coalesce(Sum('adjusted_ht'), Decimal('0.00')),
             total_remises_global=Coalesce(Sum('remise'), Decimal('0.00')),
             total_remises_fidelite=Coalesce(Sum('montant_fidelite'), Decimal('0.00')),
             part_client=Coalesce(Sum('part_client'), Decimal('0.00'))
         )
-        
+
+        # Les remises lignes ne concernent que les produits non is_divers
         prod_stats = FactureProduit.objects.filter(
             facture__in=factures
+        ).exclude(
+            allocations__stock_lot__is_divers=True
         ).aggregate(
             total_remises_lignes=Coalesce(Sum(F('discount') * F('quantity'), output_field=DecimalField()), Decimal('0.00'))
         )
@@ -34,8 +60,8 @@ class RapportBaseMixin:
             'ca_ttc': ca_stats['ca_ttc'],
             'ca_ht': ca_stats['ca_ht'],
             'total_remises': (
-                ca_stats['total_remises_global'] + 
-                ca_stats['total_remises_fidelite'] + 
+                ca_stats['total_remises_global'] +
+                ca_stats['total_remises_fidelite'] +
                 prod_stats['total_remises_lignes']
             ),
             'total_remises_detail': {
@@ -49,15 +75,37 @@ class RapportBaseMixin:
         }
 
     def _calculate_margin(self, factures):
+        from django.db.models import OuterRef, Subquery
+
+        # Exclure les allocations is_divers du coût d'achat
         allocations = FactureProduitAllocation.objects.filter(
             facture_produit__facture__in=factures
-        )
+        ).exclude(stock_lot__is_divers=True)
         cout_achat_total = allocations.aggregate(
             total=Coalesce(Sum(F('cost_price') * F('quantity'), output_field=DecimalField()), Decimal('0.00'))
         )['total']
-        ca_ht_total = factures.aggregate(
-            total=Coalesce(Sum('total_ht'), Decimal('0.00'))
+
+        # Sous-requête pour exclure is_divers du CA HT
+        divers_total_sub = FactureProduitAllocation.objects.filter(
+            facture_produit__facture=OuterRef('pk'),
+            stock_lot__is_divers=True
+        ).values('facture_produit__facture').annotate(
+            total_divers=Coalesce(
+                Sum(F('selling_price') * F('quantity'), output_field=DecimalField()),
+                Decimal('0.00')
+            )
+        ).values('total_divers')
+
+        ca_ht_total = factures.annotate(
+            divers_amount=Coalesce(
+                Subquery(divers_total_sub, output_field=DecimalField()),
+                Decimal('0.00')
+            ),
+            adjusted_ht=F('total_ht') - F('divers_amount')
+        ).aggregate(
+            total=Coalesce(Sum('adjusted_ht'), Decimal('0.00'))
         )['total']
+
         marge_brute = ca_ht_total - cout_achat_total
         marge_pct = (marge_brute / ca_ht_total * 100) if ca_ht_total > 0 else Decimal('0.00')
         return {
@@ -125,10 +173,9 @@ class RapportBaseMixin:
         }
 
     def _calculate_creances(self):
-        # Sous-requête pour calculer le total TTC des produits NON is_divers par facture
+        # Sous-requête pour calculer le montant des produits is_divers par facture
         from django.db.models import OuterRef, Subquery
 
-        # Calculer le montant des produits is_divers par facture pour l'ajuster
         divers_total_sub = FactureProduitAllocation.objects.filter(
             facture_produit__facture=OuterRef('pk'),
             stock_lot__is_divers=True
@@ -160,7 +207,11 @@ class RapportBaseMixin:
 
     def _calculate_ca_par_tva(self, factures):
         ca_par_tva_stats = {}
-        lignes = FactureProduit.objects.filter(facture__in=factures).values(
+        lignes = FactureProduit.objects.filter(
+            facture__in=factures
+        ).exclude(
+            allocations__stock_lot__is_divers=True
+        ).values(
             'tva', 'facture__id', 'facture__remise'
         ).annotate(
             ligne_brut_ttc=Sum(F('quantity') * (F('selling_price') - Coalesce(F('discount'), Value(0, output_field=DecimalField()))), output_field=DecimalField())
@@ -210,8 +261,30 @@ class RapportBaseMixin:
         return sorted(achats_stats.values(), key=lambda x: x['montant_total'], reverse=True)
 
     def _calculate_clients_pro(self, factures):
+        from django.db.models import OuterRef, Subquery
+
         pro_factures = factures.filter(client__client_type='PROFESSIONNEL')
-        billing_stats = pro_factures.values('client__id', 'client__name').annotate(total_billed=Sum('total_ttc'), nb_factures=Count('id'))
+
+        # Sous-requête pour exclure is_divers du CA des clients pro
+        divers_total_sub = FactureProduitAllocation.objects.filter(
+            facture_produit__facture=OuterRef('pk'),
+            stock_lot__is_divers=True
+        ).values('facture_produit__facture').annotate(
+            total_divers=Coalesce(
+                Sum(F('selling_price') * F('quantity'), output_field=DecimalField()),
+                Decimal('0.00')
+            )
+        ).values('total_divers')
+
+        pro_factures_annotated = pro_factures.annotate(
+            divers_amount=Coalesce(
+                Subquery(divers_total_sub, output_field=DecimalField()),
+                Decimal('0.00')
+            ),
+            adjusted_ttc=F('total_ttc') - F('divers_amount')
+        )
+
+        billing_stats = pro_factures_annotated.values('client__id', 'client__name').annotate(total_billed=Sum('adjusted_ttc'), nb_factures=Count('id'))
         payments_map = {p['facture__client__id']: p['total_paid'] for p in Caisse.objects.filter(facture__in=pro_factures, statut='completee').exclude(mode_paiement='en_compte').values('facture__client__id').annotate(total_paid=Sum('montant'))}
         
         results = []

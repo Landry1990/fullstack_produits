@@ -478,7 +478,7 @@ export default function Produit() {
         </div>
       </div>
 
-      <div className="flex-1 p-4 space-y-4 min-h-0 overflow-hidden">
+      <div className="flex-1 p-4 min-h-0 overflow-hidden flex flex-col gap-4">
       {error && (
         <div className="px-4 py-3 bg-error/10 border border-red-200 rounded-lg text-error text-sm">
           {error}
@@ -486,7 +486,7 @@ export default function Produit() {
       )}
 
       {/* Main Content Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 h-full min-h-0 w-full">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 h-full min-h-0 w-full overflow-hidden">
         {/* Left Panel: List & Actions */}
         <div className="lg:col-span-12 xl:col-span-5 bg-base-100 rounded-xl shadow-sm border border-base-200 flex flex-col overflow-hidden h-full">
           <div className="shrink-0">

@@ -42,7 +42,8 @@
             "debit": "Débit",
             "credit": "Crédit"
         },
-        "items_label": "{{label}}"
+        "items_label": "{{label}}",
+        "no_entry_found": "Aucune écriture trouvée"
     },
     "balance": {
         "cols": {
@@ -95,5 +96,70 @@
         "subtitle": "Comparaison Produits vs Charges",
         "produits_label": "Produits",
         "charges_label": "Charges"
+    },
+    "plan": {
+        "search_placeholder": "Rechercher un compte (numéro ou libellé)…",
+        "filter_all_types": "Tous les types",
+        "filter_actif": "Actif",
+        "filter_passif": "Passif",
+        "filter_charge": "Charge",
+        "filter_produit": "Produit",
+        "new_account": "Nouveau compte",
+        "accounts_count": "{{count}} compte(s)",
+        "group_count": "{{count}} compte(s)",
+        "inactive": "INACTIF",
+        "edit_title": "Modifier",
+        "delete_title": "Supprimer",
+        "no_account_found": "Aucun compte trouvé",
+        "modal": {
+            "edit": "Modifier le compte",
+            "new": "Nouveau compte",
+            "number_label": "Numéro de compte *",
+            "number_placeholder": "Ex: 701200",
+            "number_locked": "Le numéro ne peut pas être modifié.",
+            "label_label": "Libellé *",
+            "label_placeholder": "Ex: Ventes de médicaments",
+            "type_label": "Type *",
+            "active_label": "Compte actif",
+            "cancel": "Annuler",
+            "save": "Enregistrer",
+            "create": "Créer"
+        },
+        "delete": {
+            "title": "Supprimer ce compte ?",
+            "warning": "Impossible si des écritures y sont rattachées.",
+            "cancel": "Annuler",
+            "confirm": "Supprimer"
+        }
+    },
+    "charges_simple": {
+        "title": "Saisie Simplifiée des Charges",
+        "subtitle": "Enregistrez vos dépenses courantes. Elles seront automatiquement intégrées au compte de résultat.",
+        "category": "Catégorie de dépense",
+        "select_account": "Sélectionnez le compte exact",
+        "select_account_placeholder": "Sélectionnez un compte...",
+        "payment_method": "Moyen de Paiement",
+        "payment_cash": "💵 Espèces (Caisse)",
+        "payment_bank": "🏦 Virement / Chèque (Banque)",
+        "label": "Motif (Libellé)",
+        "label_placeholder": "Ex: Paiement facture ENEO Avril...",
+        "amount": "Montant (FCFA)",
+        "amount_placeholder": "0",
+        "currency": "FCFA",
+        "submit": "Enregistrer la dépense",
+        "select_category_warning": "Veuillez sélectionner une catégorie de dépense à gauche.",
+        "account_not_found": "Compte de charge introuvable. Créez-le d'abord dans le Plan Comptable.",
+        "journal_error": "Erreur: impossible de créer le journal {{journalCode}}.",
+        "cash_account": "Caisse",
+        "bank_account": "Banque"
+    },
+    "ohada_categories": {
+        "loyer": "Loyer (Bail)",
+        "energie": "Eau & Électricité (ENEO/CAMWATER)",
+        "salaires": "Salaires du personnel",
+        "impots": "Impôts et Taxes",
+        "internet": "Internet & Téléphone",
+        "fournitures": "Fournitures de bureau",
+        "autre": "Autre charge..."
     }
 }

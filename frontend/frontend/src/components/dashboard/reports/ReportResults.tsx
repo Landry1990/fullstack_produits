@@ -150,7 +150,7 @@ export const ReportResults: React.FC<ReportResultsProps> = ({
                     {isMargesReport && (
                         <div className="flex items-center gap-2 px-6 py-3 border-b border-base-200 bg-base-50">
                             <AlertTriangle className="size-3.5 text-warning shrink-0" />
-                            <span className="text-[10px] font-black uppercase tracking-widest text-base-content/40 mr-2">Filtre marge :</span>
+                            <span className="text-[10px] font-black uppercase tracking-widest text-base-content/40 mr-2">{t('reports.results.filter_margin', { defaultValue: 'Filtre marge :' })}</span>
                             {(['all', 'negative', 'low'] as const).map(f => (
                                 <button
                                     key={f}
@@ -161,11 +161,11 @@ export const ReportResults: React.FC<ReportResultsProps> = ({
                                             : 'btn-ghost border border-base-300'
                                     }`}
                                 >
-                                    {f === 'all' ? 'Toutes' : f === 'negative' ? '⚠ Négatives' : '< 25%'}
+                                    {f === 'all' ? t('reports.results.filter_all', { defaultValue: 'Toutes' }) : f === 'negative' ? '⚠ ' + t('reports.results.filter_negative', { defaultValue: 'Négatives' }) : t('reports.results.filter_low', { defaultValue: '< 25%' })}
                                 </button>
                             ))}
                             <span className="ml-auto text-[10px] text-base-content/40 font-bold">
-                                {filteredResults.length} / {results.length} lignes
+                                {t('reports.results.lines_count', { filtered: filteredResults.length, total: results.length, defaultValue: `${filteredResults.length} / ${results.length} lignes` })}
                             </span>
                         </div>
                     )}
@@ -230,7 +230,7 @@ export const ReportResults: React.FC<ReportResultsProps> = ({
                                                     <td key={col} className="py-4 px-4 text-right text-sm">
                                                         <div className="flex flex-col">
                                                             <span>{formatValue(col, avg, t)}</span>
-                                                            <span className="text-[9px] opacity-40 uppercase tracking-wider">moyenne</span>
+                                                            <span className="text-[9px] opacity-40 uppercase tracking-wider">{t('reports.results.footer_avg_label', { defaultValue: 'moyenne' })}</span>
                                                         </div>
                                                     </td>
                                                 );
@@ -251,7 +251,7 @@ export const ReportResults: React.FC<ReportResultsProps> = ({
                                                         <td key={col} className="py-4 px-4 text-right text-sm">
                                                             <div className="flex flex-col">
                                                                 <span>{tauxGlobal.toFixed(1)} %</span>
-                                                                <span className="text-[9px] opacity-40 uppercase tracking-wider">global</span>
+                                                                <span className="text-[9px] opacity-40 uppercase tracking-wider">{t('reports.results.footer_global_label', { defaultValue: 'global' })}</span>
                                                             </div>
                                                         </td>
                                                     );

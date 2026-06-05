@@ -4,12 +4,62 @@ from rest_framework.routers import DefaultRouter
 
 # Health check endpoint for Docker monitoring
 def health_check(request):
-    """Simple health check endpoint for Docker/container monitoring."""
-    return JsonResponse({
-        "status": "healthy",
+    """
+    Health check complet : DB, Redis (si configuré), espace disque.
+    Retourne 200 si tout est OK, 503 si un composant critique est down.
+    """
+    from django.db import connection
+    from django.core.cache import cache
+    import shutil
+
+    checks = {}
+    status_code = 200
+
+    # 1. Database
+    try:
+        with connection.cursor() as cursor:
+            cursor.execute("SELECT 1")
+            cursor.fetchone()
+        checks['database'] = {'status': 'ok'}
+    except Exception as e:
+        checks['database'] = {'status': 'error', 'detail': str(e)}
+        status_code = 503
+
+    # 2. Redis / Cache
+    try:
+        cache.set('health_check', 'ok', timeout=5)
+        val = cache.get('health_check')
+        if val == 'ok':
+            checks['cache'] = {'status': 'ok', 'backend': str(cache.__class__.__name__)}
+        else:
+            checks['cache'] = {'status': 'error', 'detail': 'valeur inattendue'}
+            status_code = 503
+    except Exception as e:
+        checks['cache'] = {'status': 'unavailable', 'detail': str(e)}
+        # Pas critique si pas configuré
+
+    # 3. Espace disque (alerte si < 1GB)
+    try:
+        total, used, free = shutil.disk_usage('.')
+        free_gb = free / (1024 ** 3)
+        disk_status = 'ok' if free_gb > 1.0 else 'warning'
+        if disk_status == 'warning':
+            status_code = 503
+        checks['disk'] = {
+            'status': disk_status,
+            'free_gb': round(free_gb, 2),
+            'total_gb': round(total / (1024 ** 3), 2)
+        }
+    except Exception as e:
+        checks['disk'] = {'status': 'error', 'detail': str(e)}
+
+    response_data = {
+        "status": "healthy" if status_code == 200 else "unhealthy",
         "service": "pharma-backend",
-        "version": "1.0.0"
-    })
+        "version": "1.0.0",
+        "checks": checks,
+    }
+    return JsonResponse(response_data, status=status_code)
 
 from .views import (
     ProduitViewSet, CategorieViewSet, FournisseurViewSet, ClientViewSet,

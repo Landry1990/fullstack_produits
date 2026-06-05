@@ -226,7 +226,7 @@ export function useCommandesState(forcedType?: 'LOC' | 'DIR' | 'DIV') {
     searchQuery: searchProduitQuery,
     setSearchQuery: setSearchProduitQuery,
     refetch: refetchProduits
-  } = useProductSearch({ minSearchLength: 2, debounceMs: 200 })
+  } = useProductSearch({ minSearchLength: 2, debounceMs: 400 })
   
   const searchInputRef = useRef<HTMLInputElement>(null);
   const fournisseurSelectRef = useRef<HTMLSelectElement>(null);
@@ -1408,7 +1408,7 @@ export function useCommandesState(forcedType?: 'LOC' | 'DIR' | 'DIV') {
     setCommandeType(type);
     
     if (type === 'DIR') {
-        setTauxChange('655.957');
+        setTauxChange(pharmacySettings?.taux_change_actif || '655.957');
         setFraisCoefficient(pharmacySettings?.coefficient_direct_commande || '1.35');
     }
 
@@ -1422,7 +1422,7 @@ export function useCommandesState(forcedType?: 'LOC' | 'DIR' | 'DIV') {
     setCommandeType((commande.type as 'LOC' | 'DIR') || 'LOC');
     
     if (commande.type === 'DIR') {
-        setTauxChange(commande.taux_change || '655.957');
+        setTauxChange(commande.taux_change || pharmacySettings?.taux_change_actif || '655.957');
         setFraisCoefficient(commande.frais_coefficient || pharmacySettings?.coefficient_direct_commande || '1.0');
     }
     

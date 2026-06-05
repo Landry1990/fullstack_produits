@@ -107,35 +107,35 @@ export default function ScheduledOrdersListModal({
                 </div>
             }
         >
-            <div className="p-6 bg-base-200 min-h-[400px]">
+            <div className="p-3 bg-base-200 min-h-[280px]">
                 {loading ? (
-                    <div className="flex flex-col items-center justify-center py-20 gap-4">
-                        <span className="inline-block size-8 border-2 border-base-300 border-t-indigo-600 rounded-full animate-spin"></span>
-                        <span className="text-sm font-bold opacity-40">Chargement des plannings...</span>
+                    <div className="flex flex-col items-center justify-center py-12 gap-3">
+                        <span className="inline-block size-6 border-2 border-base-300 border-t-indigo-600 rounded-full animate-spin"></span>
+                        <span className="text-xs font-bold opacity-40">Chargement des plannings...</span>
                     </div>
                 ) : schedules.length === 0 ? (
-                    <div className="flex flex-col items-center justify-center py-20 text-center space-y-4">
-                        <div className="size-20 bg-base-200 rounded-full flex items-center justify-center text-base-content/20">
-                            <Calendar className="size-10" />
+                    <div className="flex flex-col items-center justify-center py-12 text-center space-y-3">
+                        <div className="size-14 bg-base-200 rounded-full flex items-center justify-center text-base-content/20">
+                            <Calendar className="size-7" />
                         </div>
                         <div className="space-y-1">
-                            <h3 className="text-lg font-bold">Aucun planning configuré</h3>
-                            <p className="text-sm text-base-content/50 max-w-xs mx-auto">Commencez par créer votre premier planning pour automatiser vos suggestions de commande.</p>
+                            <h3 className="text-sm font-bold">Aucun planning configuré</h3>
+                            <p className="text-xs text-base-content/50 max-w-xs mx-auto">Commencez par créer votre premier planning pour automatiser vos suggestions de commande.</p>
                         </div>
-                        <button className="inline-flex items-center justify-center gap-2 px-4 py-2 bg-primary text-white text-sm font-bold rounded-xl hover:bg-primary-focus transition-colors" onClick={onCreateSchedule}>
+                        <button className="inline-flex items-center justify-center gap-2 px-3 py-1.5 bg-primary text-white text-xs font-bold rounded-xl hover:bg-primary-focus transition-colors" onClick={onCreateSchedule}>
                             Créer un planning
                         </button>
                     </div>
                 ) : (
                     <div className="overflow-x-auto">
-                        <table className="w-full bg-base-100 rounded-2xl shadow-sm border border-base-300 overflow-hidden text-sm">
+                        <table className="w-full bg-base-100 rounded-2xl shadow-sm border border-base-300 overflow-hidden text-xs">
                             <thead className="bg-base-200/50">
                                 <tr>
-                                    <th className="text-[10px] font-black uppercase tracking-widest text-primary/60 py-4 pl-6">Fournisseur</th>
-                                    <th className="text-[10px] font-black uppercase tracking-widest text-primary/60 py-4">Programmation</th>
-                                    <th className="text-[10px] font-black uppercase tracking-widest text-primary/60 py-4">Mode</th>
-                                    <th className="text-[10px] font-black uppercase tracking-widest text-primary/60 py-4">Statut</th>
-                                    <th className="text-[10px] font-black uppercase tracking-widest text-primary/60 py-4 pr-6 text-right">Actions</th>
+                                    <th className="text-[9px] font-black uppercase tracking-wider text-primary/60 py-2 pl-4">Fournisseur</th>
+                                    <th className="text-[9px] font-black uppercase tracking-wider text-primary/60 py-2">Programmation</th>
+                                    <th className="text-[9px] font-black uppercase tracking-wider text-primary/60 py-2">Mode</th>
+                                    <th className="text-[9px] font-black uppercase tracking-wider text-primary/60 py-2">Statut</th>
+                                    <th className="text-[9px] font-black uppercase tracking-wider text-primary/60 py-2 pr-4 text-right">Actions</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-base-200">
@@ -143,61 +143,76 @@ export default function ScheduledOrdersListModal({
                                     const fournisseur = fournisseurs.find(f => f.id === schedule.fournisseur)
                                     return (
                                         <tr key={schedule.id} className="hover:bg-base-200/80 transition-colors group">
-                                            <td className="py-4 pl-6">
-                                                <div className="flex items-center gap-3">
-                                                    <div className="p-1.5 bg-primary/10 text-primary rounded-lg">
-                                                        <Package className="size-3.5" />
+                                            <td className="py-2 pl-4">
+                                                <div className="flex items-center gap-2">
+                                                    <div className="p-1 bg-primary/10 text-primary rounded-md">
+                                                        <Package className="size-3" />
                                                     </div>
-                                                    <span className="font-bold text-sm text-base-content">{fournisseur?.name || "Inconnu"}</span>
+                                                    <span className="font-bold text-xs text-base-content">{fournisseur?.name || "Inconnu"}</span>
                                                 </div>
                                             </td>
-                                            <td className="py-4">
-                                                <div className="flex flex-col">
-                                                    <span className="text-xs font-bold text-base-content/80 flex items-center gap-1">
+                                            <td className="py-2">
+                                                <div className="flex flex-col gap-0.5">
+                                                    <span className="text-[10px] font-bold text-base-content/80 flex items-center gap-1">
                                                         <Clock className="size-3 text-primary" />
                                                         {schedule.time}
                                                     </span>
-                                                    <span className="text-[10px] text-base-content/50 font-medium">
+                                                    <span className="text-[9px] text-base-content/50 font-medium">
                                                         {getDayLabels(schedule.active_days)}
+                                                    </span>
+                                                    {schedule.active_month_days && schedule.active_month_days.length > 0 && (
+                                                        <span className="text-[9px] text-rose-600 font-bold">
+                                                            Mois: {schedule.active_month_days.join(', ')}
+                                                        </span>
+                                                    )}
+                                                </div>
+                                            </td>
+                                            <td className="py-2">
+                                                <div className="flex flex-col gap-0.5">
+                                                    <span className={`inline-flex items-center border border-indigo-200 text-primary text-[9px] font-black uppercase px-1.5 rounded-full w-fit`}>
+                                                        {schedule.execution_mode === 'OPTIMISE' ? 'Intelligent' : schedule.execution_mode === 'CUMULATIF' ? 'Cumulatif' : 'Simple'}
+                                                    </span>
+                                                    {schedule.execution_mode === 'OPTIMISE' && (
+                                                        <span className="text-[9px] text-purple-600 font-bold leading-tight">
+                                                            Autonomie: {schedule.delai_couverture_jours || 30}j
+                                                        </span>
+                                                    )}
+                                                    <span className="text-[9px] text-base-content/40 font-medium leading-tight">
+                                                        Analyse: {schedule.analysis_period_days}j
                                                     </span>
                                                 </div>
                                             </td>
-                                            <td className="py-4">
-                                                <span className={`inline-flex items-center border border-indigo-200 text-primary text-[9px] font-black uppercase px-2 rounded-full`}>
-                                                    {schedule.execution_mode === 'OPTIMISE' ? 'Intelligent' : 'Statique'}
-                                                </span>
-                                            </td>
-                                            <td className="py-4">
+                                            <td className="py-2">
                                                 <div className={`inline-flex items-center rounded-full text-[9px] font-black uppercase px-2 py-0.5 ${schedule.is_active ? 'bg-success/20 text-success' : 'bg-base-200 text-base-content/50'}`}>
                                                     {schedule.is_active ? 'Actif' : 'Off'}
                                                 </div>
                                             </td>
-                                            <td className="py-4 pr-6 text-right">
+                                            <td className="py-2 pr-4 text-right">
                                                 <div className="flex justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                                                     <button
-                                                        className="inline-flex items-center gap-1 px-2 py-1 text-xs font-bold text-warning hover:bg-warning/10 rounded-lg transition-colors"
+                                                        className="inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-bold text-warning hover:bg-warning/10 rounded-lg transition-colors"
                                                         onClick={() => handleTriggerNow(schedule)}
                                                         disabled={triggeringId === schedule.id}
                                                         title="Lancer maintenant"
                                                     >
                                                         {triggeringId === schedule.id
                                                             ? <span className="inline-block size-3 border-2 border-amber-600/30 border-t-amber-600 rounded-full animate-spin" />
-                                                            : <Zap className="size-3.5" />}
+                                                            : <Zap className="size-3" />}
                                                         Lancer
                                                     </button>
-                                                    <button 
+                                                    <button
                                                         className="btn-ref btn-ghost btn-xs text-primary hover:bg-primary/10 rounded-lg p-1"
                                                         onClick={() => onEditSchedule(schedule)}
                                                         title="Modifier"
                                                     >
-                                                        <Edit className="size-3.5" />
+                                                        <Edit className="size-3" />
                                                     </button>
-                                                    <button 
+                                                    <button
                                                         className="btn-ref btn-ghost btn-xs text-error hover:bg-error/10 rounded-lg p-1"
                                                         onClick={() => schedule.id && handleDelete(schedule.id)}
                                                         title="Supprimer"
                                                     >
-                                                        <Trash2 className="size-3.5" />
+                                                        <Trash2 className="size-3" />
                                                     </button>
                                                 </div>
                                             </td>

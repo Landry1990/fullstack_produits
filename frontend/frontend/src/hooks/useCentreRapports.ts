@@ -106,7 +106,7 @@ export function useCentreRapports() {
                 const clientList = data.results || data;
                 setClients(clientList);
             } catch (err) {
-                if (err instanceof Error && err.name !== 'CanceledError') console.error('Erreur chargement clients:', err);
+                if (err instanceof Error && err.name !== 'CanceledError') console.error(t('reports.err_load_clients', { defaultValue: 'Erreur chargement clients:' }), err);
             }
         };
         loadClients();
@@ -116,7 +116,7 @@ export function useCentreRapports() {
                 const { data } = await api.get('rapports/suppliers_with_stock/', { signal });
                 setSuppliers(data);
             } catch (err) {
-                if (err instanceof Error && err.name !== 'CanceledError') console.error('Erreur chargement fournisseurs:', err);
+                if (err instanceof Error && err.name !== 'CanceledError') console.error(t('reports.err_load_suppliers', { defaultValue: 'Erreur chargement fournisseurs:' }), err);
             }
         };
         loadSuppliers();
@@ -126,7 +126,7 @@ export function useCentreRapports() {
                 const { data } = await api.get('users/', { signal });
                 setUsers(data.results || data);
             } catch (err) {
-                if (err instanceof Error && err.name !== 'CanceledError') console.error('Erreur chargement utilisateurs:', err);
+                if (err instanceof Error && err.name !== 'CanceledError') console.error(t('reports.err_load_users', { defaultValue: 'Erreur chargement utilisateurs:' }), err);
             }
         };
         loadUsers();
@@ -136,7 +136,7 @@ export function useCentreRapports() {
                 const { data } = await api.get('familles/', { signal });
                 setFamilles(data.results || data);
             } catch (err) {
-                if (err instanceof Error && err.name !== 'CanceledError') console.error('Erreur chargement familles:', err);
+                if (err instanceof Error && err.name !== 'CanceledError') console.error(t('reports.err_load_families', { defaultValue: 'Erreur chargement familles:' }), err);
             }
         };
         loadFamilles();
@@ -212,7 +212,7 @@ export function useCentreRapports() {
         const updated = [...presets, newPreset];
         setPresets(updated);
         localStorage.setItem('report_presets:v1', JSON.stringify(updated));
-        toast.success('Configuration enregistrée !');
+        toast.success(t('reports.preset_saved', { defaultValue: 'Configuration enregistrée !' }));
     }, [selectedQuery, params, presets]);
 
     const deletePreset = useCallback((id: string) => {
@@ -226,7 +226,7 @@ export function useCentreRapports() {
         if (query) {
             setSelectedQuery(query);
             setParams(preset.params);
-            toast.success(`Chargement de : ${preset.name}`);
+            toast.success(t('reports.preset_loaded', { name: preset.name, defaultValue: `Chargement de : ${preset.name}` }));
         }
     }, []);
 
@@ -316,7 +316,7 @@ export function useCentreRapports() {
                 const groupBy = params.group_by || '';
                 const printUrl = `/app/printing/0?type=STOCK_VALUATION&valorisation=${valorisation}&group_by=${groupBy}`;
                 window.open(printUrl, '_blank');
-                setResults({ status: 'success', filename: 'Impression lancée' });
+                setResults({ status: 'success', filename: t('reports.results.print_launched', { defaultValue: 'Impression lancée' }) });
                 setLoading(false);
                 return;
             }
@@ -338,11 +338,11 @@ export function useCentreRapports() {
                 setPagination(null);
             }
 
-            if (!urlOverride) toast.success(`Requête "${selectedQuery.name}" exécutée`);
+            if (!urlOverride) toast.success(t('reports.results.execute_success', { name: selectedQuery.name, defaultValue: `Requête "${selectedQuery.name}" exécutée` }));
         } catch (err) {
             console.error('Erreur requête:', err);
-            setError(getApiErrorDetail(err, err instanceof Error ? err.message : 'Erreur lors de l\'exécution de la requête'));
-            toast.error('Erreur lors de l\'exécution');
+            setError(getApiErrorDetail(err, err instanceof Error ? err.message : t('reports.results.error_execution', { defaultValue: 'Erreur lors de l\'exécution de la requête' })));
+            toast.error(t('reports.results.error_execution_toast', { defaultValue: 'Erreur lors de l\'exécution' }));
         } finally {
             setLoading(false);
         }
@@ -417,11 +417,11 @@ export function useCentreRapports() {
             columns.forEach((col, idx) => {
                 const header = formatColumnHeader(col, t);
                 if (idx === 0) {
-                    footerRow[header] = 'TOTAL / MOYENNE';
+                    footerRow[header] = t('reports.footer_total_avg', { defaultValue: 'TOTAL / MOYENNE' });
                 } else if (isAverageColumn(col)) {
                     const total = results.reduce((sum: number, r: any) => sum + (Number(r[col]) || 0), 0);
                     const avg = results.length > 0 ? total / results.length : 0;
-                    footerRow[header] = `${Math.round(avg)} (Moy)`;
+                    footerRow[header] = `${Math.round(avg)} ${t('reports.footer_avg_suffix', { defaultValue: '(Moy)' })}`;
                 } else if (isSummableColumn(col)) {
                     const total = results.reduce((sum: number, r: any) => sum + (Number(r[col]) || 0), 0);
                     footerRow[header] = Math.round(total);
@@ -431,13 +431,13 @@ export function useCentreRapports() {
                         const totalMtVente = results.reduce((sum: number, r: any) => sum + (Number(r['mt_vente']) || 0), 0);
                         const totalMarge   = results.reduce((sum: number, r: any) => sum + (Number(r['marge']) || 0), 0);
                         if (totalMtVente > 0) {
-                            finalVal = ((totalMarge / totalMtVente) * 100).toFixed(1) + ' % (Global)';
+                            finalVal = ((totalMarge / totalMtVente) * 100).toFixed(1) + t('reports.footer_pct_global', { defaultValue: ' % (Global)' });
                         }
                     }
                     if (!finalVal) {
                         const total = results.reduce((sum: number, r: any) => sum + (Number(r[col]) || 0), 0);
                         const avg = results.length > 0 ? (total / results.length) : 0;
-                        finalVal = avg.toFixed(1) + ' % (Moy)';
+                        finalVal = avg.toFixed(1) + t('reports.footer_pct_avg', { defaultValue: ' % (Moy)' });
                     }
                     footerRow[header] = finalVal;
                 } else {
