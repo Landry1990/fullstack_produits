@@ -194,3 +194,74 @@ class SystemAdminViewSet(ViewSet):
             'results': results,
             'message': 'Politique de redémarrage appliquée' if all_ok else 'Erreurs partielles',
         }, status=status.HTTP_200_OK if all_ok else status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+    @action(detail=False, methods=['post'])
+    def restore(self, request):
+        """Restaure la base de données depuis un backup existant ou un fichier uploadé."""
+        from django.core.management import call_command
+        from io import StringIO
+        import tempfile
+        import shutil
+
+        # Récupérer le fichier soit par nom, soit par upload
+        uploaded_file = request.FILES.get('file')
+        filename = request.data.get('filename')
+
+        backup_path = None
+        temp_path = None
+
+        try:
+            if uploaded_file:
+                # Sauvegarder le fichier uploadé temporairement
+                suffix = '.sql.gz' if uploaded_file.name.endswith('.gz') else '.sql'
+                with tempfile.NamedTemporaryFile(suffix=suffix, delete=False) as tmp:
+                    for chunk in uploaded_file.chunks():
+                        tmp.write(chunk)
+                    temp_path = tmp.name
+                backup_path = temp_path
+            elif filename:
+                backup_dir = _get_backup_dir()
+                backup_path = backup_dir / filename
+                if not backup_path.exists():
+                    return Response(
+                        {'detail': f'Fichier introuvable: {filename}'},
+                        status=status.HTTP_404_NOT_FOUND
+                    )
+            else:
+                return Response(
+                    {'detail': 'Fournissez un fichier (file) ou un nom de backup (filename)'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+            # Capturer la sortie de la commande
+            out = StringIO()
+            err = StringIO()
+
+            call_command(
+                'restore_database',
+                str(backup_path),
+                '--no-confirm',
+                stdout=out,
+                stderr=err
+            )
+
+            output = out.getvalue()
+            errors = err.getvalue()
+
+            success = 'successfully' in output.lower() or 'restored successfully' in output.lower()
+
+            return Response({
+                'success': success,
+                'output': output,
+                'error': errors,
+                'message': 'Restauration terminée' if success else 'Erreur pendant la restauration',
+            }, status=status.HTTP_200_OK if success else status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+        except Exception as e:
+            return Response(
+                {'detail': f'Erreur: {str(e)}'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+        finally:
+            if temp_path and os.path.exists(temp_path):
+                os.unlink(temp_path)

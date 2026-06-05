@@ -386,6 +386,7 @@ export function useCommandesState(forcedType?: 'LOC' | 'DIR' | 'DIV') {
     let totalTVA = 0;
     let totalTTC = 0;
     let totalBuyHT = 0;
+    let totalBuyTTC = 0;
     let totalSellHT = 0;
     
     // On prend soit la liste éditable, soit les produits de la commande sélectionnée
@@ -400,11 +401,13 @@ export function useCommandesState(forcedType?: 'LOC' | 'DIR' | 'DIV') {
       const tvaRate = normalizeNumberInput(String(item.tva || 0));
 
       const lineBuyHT = qty * buyPriceHT;
+      const lineBuyTTC = lineBuyHT * (1 + tvaRate / 100);
       const lineSellTTC = qty * sellPriceTTC;
       const lineSellHT = lineSellTTC / (1 + tvaRate / 100);
       const lineTVA = lineSellTTC - lineSellHT;
 
       totalBuyHT += lineBuyHT;
+      totalBuyTTC += lineBuyTTC;
       totalSellHT += lineSellHT;
       totalTVA += lineTVA;
       totalTTC += lineSellTTC;
@@ -419,6 +422,7 @@ export function useCommandesState(forcedType?: 'LOC' | 'DIR' | 'DIV') {
       totalTVA,
       totalTTC,
       totalBuyHT,
+      totalBuyTTC,
       totalMarginValue,
       globalMargin: globalMargin.toFixed(2),
       globalMarginPercent: globalMarginPercent.toFixed(2)
