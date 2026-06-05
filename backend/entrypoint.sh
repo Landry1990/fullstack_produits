@@ -244,7 +244,13 @@ else:
     }
 fi
 
-# ── 8. Démarrage Daphne (ASGI) pour supporter WebSocket ──
+# ── 8. Lancer le scheduler de backup automatique ──
+echo ""
+echo "⏰ Démarrage du scheduler de backup automatique..."
+python -u /app/backup_scheduler.py > /app/logs/backup_scheduler.log 2>&1 &
+echo "✓ Scheduler de backup lancé (PID: $!)"
+
+# ── 9. Démarrage Daphne (ASGI) pour supporter WebSocket ──
 echo ""
 echo "🔥 Démarrage de Daphne (ASGI) pour HTTP + WebSocket..."
 echo "══════════════════════════════════════════════"
