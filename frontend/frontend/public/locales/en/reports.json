@@ -100,6 +100,22 @@
             "name": "Aged Receivables Summary",
             "description": "Total debts grouped by client"
         },
+        "top_selling_products": {
+            "name": "Top Selling Products",
+            "description": "Analysis of revenue, quantity and margin per product"
+        },
+        "detail_marges_lots": {
+            "name": "Margin Detail by Lot",
+            "description": "Detailed sales with lot, purchase cost and exact margin"
+        },
+        "rapport_dynamique": {
+            "name": "Custom Report Builder",
+            "description": "Choose your columns and create your own sales table"
+        },
+        "export_sage": {
+            "name": "Sage i7 Accounting Export",
+            "description": "Generates a CSV file compatible with Sage 100/i7 (Journals VT, CA, BQ)"
+        },
         "recap_valeur_stock_pdf": {
             "name": "Stock Value Summary (PDF)",
             "description": "Total Excl. Tax, VAT, Total Incl. Tax and breakdown by rate (PDF Format)"
@@ -141,6 +157,8 @@
         "expiring_within_days": "Days before expiry",
         "jours_sans_vente": "Days without sale",
         "stock_lt": "Stock less than",
+        "stock_gt": "Stock greater than",
+        "rotation_moyenne": "Average rotation (=)",
         "ordering": "Sort",
         "tva_gt": "VAT greater than (%)",
         "min_value": "Min Value (F)",
@@ -150,7 +168,15 @@
         "client_id": "Customer",
         "seuil": "Threshold (%)",
         "nb_jours": "Number of days",
-        "exclude_zero": "Exclude zero stocks"
+        "exclude_zero": "Exclude zero stocks",
+        "page_size": "Lines per page",
+        "source": "Data source",
+        "vendeur_id": "Seller",
+        "famille_id": "Family",
+        "fields": "Columns to include",
+        "group_by": "Group by",
+        "sort_by": "Sort by",
+        "sort_order": "Sort order"
     },
     "results": {
         "title": "Results",
@@ -164,6 +190,16 @@
         "export_no_result": "Nothing to export",
         "export_unsupported": "Unsupported format for export",
         "export_success": "Export downloaded: {{filename}}",
+        "print_launched": "Print launched",
+        "error_execution_toast": "Error during execution",
+        "export_success_short": "Report Generated",
+        "filter_margin": "Margin Filter:",
+        "filter_all": "All",
+        "filter_negative": "Negative",
+        "filter_low": "< 25%",
+        "lines_count": "{{filtered}} / {{total}} lines",
+        "footer_avg_label": "average",
+        "footer_global_label": "global",
         "sources": {
             "CAISSE_CENTRALE": "Central Cashier",
             "VENTES": "Sales",
@@ -205,6 +241,14 @@
         "select_columns": "Choose columns",
         "table_composition": "Table Composition",
         "check_all": "Select All",
+        "logic_and": "AND",
+        "logic_or": "OR",
+        "value_placeholder": "Value...",
+        "no_value": "No value",
+        "operators": {
+            "isnull": "Empty",
+            "notnull": "Not empty"
+        },
         "fields": {
             "quantite": "Quantity / Stock",
             "total_ht": "Total (Excl. Tax)",
@@ -214,6 +258,137 @@
             "tva": "VAT (%)",
             "cip": "CIP Code",
             "stock_minimum": "Min Stock"
+        }
+    },
+    "column_labels": {
+        "rang": "#",
+        "client_id": "ID",
+        "client_name": "Customer",
+        "client_type": "Type",
+        "nb_ventes": "Nb Sales",
+        "chiffre_affaires": "Revenue (Incl. Tax)",
+        "panier_moyen": "Avg. Basket",
+        "name": "Name",
+        "nom_produit": "Product",
+        "cip": "CIP",
+        "total_montant": "Total Amount",
+        "stock": "Stock",
+        "rayon": "Shelf",
+        "fournisseur": "Supplier",
+        "mode_paiement": "Pay. Mode",
+        "reference": "Reference",
+        "valeur": "Value",
+        "pmp": "PMP",
+        "vendeur": "Seller",
+        "nbre_ventes": "Nb Sales",
+        "total": "Total",
+        "status": "Status",
+        "dernier_vente": "Last Sale",
+        "date_annulation": "Cancellation Date",
+        "numero_facture": "Invoice",
+        "quantite_annulee": "Qty Canceled",
+        "lot": "Batch",
+        "stock_actuel": "Current Stock",
+        "annule_par": "Canceled By",
+        "motif": "Reason",
+        "source": "Source",
+        "remise_globale": "Global Disc.",
+        "remise_lignes": "Line Disc.",
+        "remise_fidelite": "Loyalty",
+        "total_remise": "Total Disc.",
+        "ratio_remise_pct": "% / Revenue",
+        "ratio_pct": "%",
+        "numero": "Invoice",
+        "date": "Date",
+        "client": "Customer",
+        "ayant_droit_details": "Beneficiary",
+        "montant_paye": "Already Paid",
+        "reste_a_payer": "Balance Due",
+        "solde_du": "Balance Due",
+        "total_facture": "Total Invoiced",
+        "nb_factures": "Nb Invoices",
+        "status_display": "Status",
+        "qty": "Qty",
+        "catttc": "Revenue (Incl. Tax) (F)",
+        "marge": "Gross Margin (F)",
+        "taux_marge": "Margin Rate (%)",
+        "prix_vente_net": "Net Selling Price",
+        "cout_achat": "Purchase Cost",
+        "cip1": "CIP1"
+    },
+    "preset_saved": "Configuration saved!",
+    "preset_loaded": "Loading: {{name}}",
+    "preset_prompt_name": "Name of this configuration?",
+    "preset_save_btn": "Save",
+    "my_configs": "My Configurations:",
+    "select_columns_hint": "Select the columns to display",
+    "err_parse_conditions": "Error parsing conditions:",
+    "footer_total_avg": "TOTAL / AVERAGE",
+    "footer_avg_suffix": "(Avg)",
+    "footer_pct_global": "% (Global)",
+    "footer_pct_avg": "% (Avg)",
+    "err_load_clients": "Error loading clients",
+    "err_load_suppliers": "Error loading suppliers",
+    "err_load_users": "Error loading users",
+    "err_load_families": "Error loading families",
+    "query_options": {
+        "recap_valeur_stock_pdf": {
+            "valorisation": {
+                "ACHAT": "Purchase Price (PMP)",
+                "VENTE": "Selling Price"
+            },
+            "group_by": {
+                "": "None (Global)",
+                "rayon": "Department",
+                "forme": "Form",
+                "groupe": "Group"
+            }
+        },
+        "export_sage": {
+            "valorisation": {
+                "ACHAT": "Purchase Price (PMP)",
+                "VENTE": "Selling Price"
+            }
+        },
+        "rapport_dynamique": {
+            "source": {
+                "ventes": "Sales (Invoices)",
+                "achats": "Purchases (Orders)",
+                "stock": "Stock Status (Lots)",
+                "produits": "Products"
+            },
+            "group_by": {
+                "": "— No grouping —",
+                "Produit": "Product",
+                "Famille": "Family"
+            },
+            "sort_by": {
+                "": "— Default —",
+                "Total HT": "Total (Excl. Tax)",
+                "Marge Brute": "Gross Margin"
+            },
+            "sort_order": {
+                "desc": "Descending (↓)",
+                "asc": "Ascending (↑)"
+            },
+            "fields": {
+                "date": "Date / Reception",
+                "facture": "Invoice / Order No.",
+                "client": "Customer / Supplier",
+                "vendeur": "Seller",
+                "fournisseur": "Supplier",
+                "produit": "Product",
+                "cip": "CIP Code",
+                "lot": "Batch",
+                "quantite": "Quantity / Stock",
+                "prix_vente": "Selling Price",
+                "cout_achat": "Purchase Cost / PMP",
+                "total_ht": "Total (Excl. Tax) / Value",
+                "marge": "Gross Margin",
+                "pourcentage_marge": "Margin (%)",
+                "tva": "VAT (%)",
+                "stock_minimum": "Min Stock"
+            }
         }
     }
 }

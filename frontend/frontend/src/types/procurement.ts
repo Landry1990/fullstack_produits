@@ -12,6 +12,8 @@ export interface Fournisseur {
     delai_paiement_jours?: number
     periode_releve_jours?: number
     is_divers?: boolean
+    delai_livraison_jours?: number
+    marge_retard_jours?: number
 }
 
 export interface AchatProduit {
@@ -125,6 +127,7 @@ export interface OrderSchedule {
     id?: number;
     fournisseur: number;
     active_days: number[];
+    active_month_days: number[];
     frequency_weeks: number;
     start_date: string;
     time: string;
@@ -145,6 +148,7 @@ export interface OrderSchedule {
     condition_logic: 'AND' | 'OR';
     execution_mode: 'SIMPLE' | 'OPTIMISE' | 'CUMULATIF';
     analysis_period_days: number;
+    delai_couverture_jours: number;
     last_run?: string;
     created_at?: string;
 }

@@ -30,6 +30,8 @@ export const useCommande = (id: number | null) => {
         queryKey: ['commande', id],
         queryFn: () => id ? commandeService.getById(id) : null,
         enabled: !!id,
+        staleTime: 1000 * 60 * 2, // 2 min
+        gcTime: 1000 * 60 * 5,
     });
 };
 

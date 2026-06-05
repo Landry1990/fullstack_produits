@@ -113,6 +113,14 @@
             "name": "Produits les plus vendus",
             "description": "Analyse du CA, quantité et marge par produit"
         },
+        "detail_marges_lots": {
+            "name": "Détail des Marges par Lot",
+            "description": "Ventes détaillées avec lot, coût d'achat et marge exacte"
+        },
+        "rapport_dynamique": {
+            "name": "Constructeur de Rapport à la Carte",
+            "description": "Choisissez vos colonnes et créez votre propre tableau de vente"
+        },
         "recap_valeur_stock_pdf": {
             "name": "Récapitulatif Valeur Stock (PDF)",
             "description": "Valeur totale HT, TVA, TTC et répartition détaillée par taux (Format PDF)"
@@ -158,6 +166,8 @@
         "expiring_within_days": "Jours avant péremption",
         "jours_sans_vente": "Jours sans vente",
         "stock_lt": "Stock inférieur à",
+        "stock_gt": "Stock supérieur à",
+        "rotation_moyenne": "Rotation moyenne (=)",
         "ordering": "Tri",
         "tva_gt": "TVA supérieure à (%)",
         "min_value": "Valeur Min (F)",
@@ -169,7 +179,15 @@
         "nb_jours": "Nombre de jours",
         "exclude_zero": "Exclure les stocks 0",
         "fournisseur_id": "Fournisseur",
-        "valorisation": "Type de valorisation"
+        "valorisation": "Type de valorisation",
+        "page_size": "Lignes par page",
+        "source": "Source de données",
+        "vendeur_id": "Vendeur",
+        "famille_id": "Famille",
+        "fields": "Colonnes à inclure",
+        "group_by": "Grouper par",
+        "sort_by": "Trier par",
+        "sort_order": "Ordre de tri"
     },
     "results": {
         "title": "Résultats",
@@ -183,6 +201,16 @@
         "export_no_result": "Rien à exporter",
         "export_unsupported": "Format non supporté pour l'export",
         "export_success": "Export téléchargé : {{filename}}",
+        "print_launched": "Impression lancée",
+        "error_execution_toast": "Erreur lors de l'exécution",
+        "export_success_short": "Rapport Généré",
+        "filter_margin": "Filtre marge :",
+        "filter_all": "Toutes",
+        "filter_negative": "Négatives",
+        "filter_low": "< 25%",
+        "lines_count": "{{filtered}} / {{total}} lignes",
+        "footer_avg_label": "moyenne",
+        "footer_global_label": "global",
         "sources": {
             "CAISSE_CENTRALE": "Caisse Centrale",
             "VENTES": "Ventes",
@@ -224,6 +252,14 @@
         "select_columns": "Choisir les colonnes",
         "table_composition": "Composition du tableau",
         "check_all": "Tout cocher",
+        "logic_and": "ET",
+        "logic_or": "OU",
+        "value_placeholder": "Valeur...",
+        "no_value": "Aucune valeur",
+        "operators": {
+            "isnull": "Vide",
+            "notnull": "Non vide"
+        },
         "fields": {
             "quantite": "Quantité / Stock",
             "total_ht": "Total HT / Valeur",
@@ -233,6 +269,137 @@
             "tva": "TVA (%)",
             "cip": "Code CIP",
             "stock_minimum": "Stock Min"
+        }
+    },
+    "column_labels": {
+        "rang": "#",
+        "client_id": "ID",
+        "client_name": "Client",
+        "client_type": "Type",
+        "nb_ventes": "Nb Ventes",
+        "chiffre_affaires": "CA TTC",
+        "panier_moyen": "Panier Moy.",
+        "name": "Nom",
+        "nom_produit": "Produit",
+        "cip": "CIP",
+        "total_montant": "Montant Total",
+        "stock": "Stock",
+        "rayon": "Rayon",
+        "fournisseur": "Fournisseur",
+        "mode_paiement": "Mode Règl.",
+        "reference": "Référence",
+        "valeur": "Valeur",
+        "pmp": "PMP",
+        "vendeur": "Vendeur",
+        "nbre_ventes": "Nb Ventes",
+        "total": "Total",
+        "status": "Statut",
+        "dernier_vente": "Dernière Vente",
+        "date_annulation": "Date Annulation",
+        "numero_facture": "Facture",
+        "quantite_annulee": "Qté Annulée",
+        "lot": "Lot",
+        "stock_actuel": "Stock Actuel",
+        "annule_par": "Annulé Par",
+        "motif": "Motif",
+        "source": "Source",
+        "remise_globale": "Remise Glob.",
+        "remise_lignes": "Remise Lignes",
+        "remise_fidelite": "Fidélité",
+        "total_remise": "Total Remise",
+        "ratio_remise_pct": "% / CA",
+        "ratio_pct": "%",
+        "numero": "Facture",
+        "date": "Date",
+        "client": "Client",
+        "ayant_droit_details": "Bénéficiaire",
+        "montant_paye": "Déjà Réglé",
+        "reste_a_payer": "Solde Dû",
+        "solde_du": "Solde Dû",
+        "total_facture": "Total Facturé",
+        "nb_factures": "Nb Factures",
+        "status_display": "Statut",
+        "qty": "Qté",
+        "catttc": "CA TTC (F)",
+        "marge": "Marge Brute (F)",
+        "taux_marge": "Taux Marge (%)",
+        "prix_vente_net": "Prix Vente Net",
+        "cout_achat": "Coût Achat",
+        "cip1": "CIP1"
+    },
+    "preset_saved": "Configuration enregistrée !",
+    "preset_loaded": "Chargement de : {{name}}",
+    "preset_prompt_name": "Nom de cette configuration ?",
+    "preset_save_btn": "Sauvegarder",
+    "my_configs": "Mes Configurations :",
+    "select_columns_hint": "Sélectionnez les colonnes à afficher",
+    "err_parse_conditions": "Erreur de parsing des conditions :",
+    "footer_total_avg": "TOTAL / MOYENNE",
+    "footer_avg_suffix": "(Moy)",
+    "footer_pct_global": "% (Global)",
+    "footer_pct_avg": "% (Moy)",
+    "err_load_clients": "Erreur chargement clients",
+    "err_load_suppliers": "Erreur chargement fournisseurs",
+    "err_load_users": "Erreur chargement utilisateurs",
+    "err_load_families": "Erreur chargement familles",
+    "query_options": {
+        "recap_valeur_stock_pdf": {
+            "valorisation": {
+                "ACHAT": "Prix d'Achat (PMP)",
+                "VENTE": "Prix de Vente"
+            },
+            "group_by": {
+                "": "Aucun (Global)",
+                "rayon": "Rayon",
+                "forme": "Forme",
+                "groupe": "Groupe"
+            }
+        },
+        "export_sage": {
+            "valorisation": {
+                "ACHAT": "Prix d'Achat (PMP)",
+                "VENTE": "Prix de Vente"
+            }
+        },
+        "rapport_dynamique": {
+            "source": {
+                "ventes": "Ventes (Factures)",
+                "achats": "Achats (Commandes)",
+                "stock": "État du Stock (Lots)",
+                "produits": "Produits"
+            },
+            "group_by": {
+                "": "— Aucun groupement —",
+                "Produit": "Produit",
+                "Famille": "Famille"
+            },
+            "sort_by": {
+                "": "— Défaut —",
+                "Total HT": "Total HT",
+                "Marge Brute": "Marge Brute"
+            },
+            "sort_order": {
+                "desc": "Décroissant (↓)",
+                "asc": "Croissant (↑)"
+            },
+            "fields": {
+                "date": "Date / Réception",
+                "facture": "N° Facture / Commande",
+                "client": "Client / Fournisseur",
+                "vendeur": "Vendeur",
+                "fournisseur": "Fournisseur",
+                "produit": "Produit",
+                "cip": "Code CIP",
+                "lot": "Lot",
+                "quantite": "Quantité / Stock",
+                "prix_vente": "Prix Vente",
+                "cout_achat": "Coût Achat / PMP",
+                "total_ht": "Total HT / Valeur",
+                "marge": "Marge Brute",
+                "pourcentage_marge": "Marge (%)",
+                "tva": "TVA (%)",
+                "stock_minimum": "Stock Min"
+            }
         }
     }
 }

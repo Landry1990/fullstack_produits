@@ -54,6 +54,7 @@ export const InventaireEditor: React.FC<InventaireEditorProps> = ({
         description, setDescription,
         saving, autoSaving, isReadOnly,
         selectedLines, toggleSelectAll, toggleSelectLine,
+        dirtyLineIds,
         handleSaveHeader, handleManualSave,
         handleUpdateQuantity, handleDeleteLine, handleBulkDelete,
         handleOpenValidateModal, handleImportCSV, importing,
@@ -267,6 +268,7 @@ export const InventaireEditor: React.FC<InventaireEditorProps> = ({
                         selectedLines={selectedLines}
                         toggleSelectAll={toggleSelectAll}
                         toggleSelectLine={toggleSelectLine}
+                        dirtyLineIds={dirtyLineIds}
                         handleUpdateQuantity={handleUpdateQuantity}
                         handleDeleteLine={handleDeleteLine}
                         handleBulkDelete={handleBulkDelete}

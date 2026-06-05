@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import api from '../../services/api';
 import { toast } from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
@@ -26,6 +26,11 @@ export const useInventaireEditor = (
     // Line selection and bulk actions
     const [selectedLines, setSelectedLines] = useState<Set<number>>(new Set());
 
+    // Auto-save: track lines with unsaved quantity changes
+    const [dirtyLineIds, setDirtyLineIds] = useState<Set<number>>(new Set());
+    const pendingChangesRef = useRef<Map<number, number>>(new Map());
+    const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
     const isReadOnly = activeInventaire?.status === 'VALIDEE';
 
     const handleCreate = async () => {
@@ -42,6 +47,14 @@ export const useInventaireEditor = (
     }) => {
         try {
             setSaving(true);
+            // Reset dirty tracking
+            pendingChangesRef.current = new Map();
+            setDirtyLineIds(new Set());
+            if (debounceTimerRef.current) {
+                clearTimeout(debounceTimerRef.current);
+                debounceTimerRef.current = null;
+            }
+
             // 1. Create the inventory header
             const response = await api.post('inventaires/', {
                 date: new Date().toISOString().split('T')[0],
@@ -87,6 +100,14 @@ export const useInventaireEditor = (
     };
 
     const handleEdit = async (inv: Inventaire) => {
+        // Reset dirty tracking
+        pendingChangesRef.current = new Map();
+        setDirtyLineIds(new Set());
+        if (debounceTimerRef.current) {
+            clearTimeout(debounceTimerRef.current);
+            debounceTimerRef.current = null;
+        }
+
         setActiveInventaire(inv);
         setDateInventaire(inv.date);
         setDescription(inv.description || '');
@@ -121,7 +142,37 @@ export const useInventaireEditor = (
     };
 
 
-    const handleUpdateQuantity = async (lineId: number, newQty: number) => {
+    const flushPendingChanges = useCallback(async () => {
+        const pending = pendingChangesRef.current;
+        if (pending.size === 0 || !activeInventaire) return;
+
+        setAutoSaving(true);
+        const updates = Array.from(pending.entries());
+        pendingChangesRef.current = new Map();
+
+        try {
+            // Send all pending updates in parallel
+            await Promise.all(
+                updates.map(([lineId, qty]) =>
+                    api.patch(`lignes-inventaire/${lineId}/`, { quantite_physique: qty })
+                )
+            );
+            // Clear dirty flags for successfully saved lines
+            setDirtyLineIds(prev => {
+                const next = new Set(prev);
+                updates.forEach(([id]) => next.delete(id));
+                return next;
+            });
+        } catch (err) {
+            console.error("Auto-save batch error:", err);
+            // Re-queue failed changes? For simplicity, keep them cleared and rely on manual save if needed.
+            // Alternatively, could re-add to pending, but that might cause infinite loops.
+        } finally {
+            setAutoSaving(false);
+        }
+    }, [activeInventaire]);
+
+    const handleUpdateQuantity = (lineId: number, newQty: number) => {
         // Optimistic update
         setLignes(prev => prev.map(l => {
             if (l.id === lineId) {
@@ -134,12 +185,17 @@ export const useInventaireEditor = (
         const line = lignes.find(l => l.id === lineId);
         if (line?.isLocalOnly) return;
 
-        try {
-            await api.patch(`lignes-inventaire/${lineId}/`, { quantite_physique: newQty });
-        } catch (err) {
-            console.error("Erreur update quantite", err);
-            // Optionally, revert pessimistic update on error by fetching again
+        // Track pending change for auto-save debounce
+        pendingChangesRef.current.set(lineId, newQty);
+        setDirtyLineIds(prev => new Set(prev).add(lineId));
+
+        // Reset debounce timer
+        if (debounceTimerRef.current) {
+            clearTimeout(debounceTimerRef.current);
         }
+        debounceTimerRef.current = setTimeout(() => {
+            flushPendingChanges();
+        }, 1500);
     };
 
     const handleDeleteLine = async (lineId: number) => {
@@ -157,6 +213,13 @@ export const useInventaireEditor = (
                 await api.delete(`lignes-inventaire/${lineId}/`);
             }
             setLignes(prev => prev.filter(l => l.id !== lineId));
+            // Clean up dirty tracking
+            pendingChangesRef.current.delete(lineId);
+            setDirtyLineIds(prev => {
+                const next = new Set(prev);
+                next.delete(lineId);
+                return next;
+            });
         } catch (err) {
             console.error("Erreur suppression ligne", err);
             toast.error(t('inventaire.lines.delete_error'));
@@ -251,6 +314,27 @@ export const useInventaireEditor = (
     const handleOpenValidateModal = async () => {
         if (!activeInventaire) return;
 
+        // Cancel any pending debounce and flush changes
+        if (debounceTimerRef.current) {
+            clearTimeout(debounceTimerRef.current);
+            debounceTimerRef.current = null;
+        }
+
+        // Flush pending quantity changes first
+        if (pendingChangesRef.current.size > 0) {
+            setSaving(true);
+            try {
+                await flushPendingChanges();
+            } catch (err) {
+                console.error("Flush before validate failed", err);
+                toast.error(t('inventaire.detail.save_error'));
+                setSaving(false);
+                return;
+            } finally {
+                setSaving(false);
+            }
+        }
+
         // Auto-save local lines before validation
         const linesToSync = lignes.filter(l => l.isLocalOnly);
         if (linesToSync.length > 0) {
@@ -293,14 +377,23 @@ export const useInventaireEditor = (
         if (!activeInventaire) return;
         setSaving(true);
         try {
-            // 1. Save Header
+            // Cancel any pending debounce
+            if (debounceTimerRef.current) {
+                clearTimeout(debounceTimerRef.current);
+                debounceTimerRef.current = null;
+            }
+
+            // 1. Flush pending quantity changes first
+            await flushPendingChanges();
+
+            // 2. Save Header
             await api.patch(`inventaires/${activeInventaire.id}/`, {
                 date: dateInventaire,
                 description
             });
             setActiveInventaire(prev => prev ? { ...prev, date: dateInventaire, description } : null);
 
-            // 2. Sync Lines
+            // 3. Sync Lines
             const linesToSync = lignes.filter(l => l.isLocalOnly);
             if (linesToSync.length > 0) {
                 const payload = {
@@ -474,17 +567,30 @@ export const useInventaireEditor = (
         reader.readAsText(file);
     };
 
-    const autoSaveInvRef = useRef({ activeInventaire, lignes, saving });
+    const autoSaveInvRef = useRef({ activeInventaire, lignes, saving, flushPendingChanges });
     useEffect(() => {
-        autoSaveInvRef.current = { activeInventaire, lignes, saving };
+        autoSaveInvRef.current = { activeInventaire, lignes, saving, flushPendingChanges };
     });
+
+    // Cleanup debounce timer on unmount
+    useEffect(() => {
+        return () => {
+            if (debounceTimerRef.current) {
+                clearTimeout(debounceTimerRef.current);
+            }
+        };
+    }, []);
 
     useEffect(() => {
         const interval = setInterval(async () => {
-            const { activeInventaire: inv, lignes: currentLignes, saving: isSaving } = autoSaveInvRef.current;
+            const { activeInventaire: inv, lignes: currentLignes, saving: isSaving, flushPendingChanges: flush } = autoSaveInvRef.current;
             if (!inv || isSaving) return;
             if (inv.status === 'VALIDEE') return;
 
+            // 1. Flush pending quantity changes first
+            await flush();
+
+            // 2. Sync local-only lines
             const linesToSync = currentLignes.filter(l => l.isLocalOnly);
             if (linesToSync.length === 0) return;
 
@@ -521,6 +627,7 @@ export const useInventaireEditor = (
         autoSaving,
         isReadOnly, importing,
         selectedLines, setSelectedLines,
+        dirtyLineIds,
         handleCreate, handleEdit, handleCreateWithOptions,
         handleSaveHeader, handleManualSave, handleImportCSV,
         handleUpdateQuantity, handleDeleteLine,

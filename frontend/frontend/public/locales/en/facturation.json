@@ -2,7 +2,11 @@
     "title": "Sales & Invoicing",
     "shortcuts": {
         "search": "Search (F2)",
-        "pay": "Validate (F9)"
+        "pay": "Validate (F9)",
+        "validate": "Validate",
+        "search_enter": "Search",
+        "cancel": "Cancel",
+        "pending": "Pending"
     },
     "cart": {
         "title": "Sales Cart",
@@ -120,6 +124,7 @@
         "en_compte_auto": "On account (automatic)",
         "payment_mode_label": "Payment mode",
         "add_btn": "Add",
+        "sudo_title": "Validation Required",
         "sudo_mode": {
             "validate_by": "Validated by",
             "password": "Password (Sudo)",
@@ -148,7 +153,10 @@
         "register_payment": "Register Payment",
         "status": {
             "processing": "Processing..."
-        }
+        },
+        "send_to_cash_register": "Send To (Cash Register)",
+        "unknown_cashier": "Unknown",
+        "select_active_cash_register": "Please select an active cash register"
     },
     "pending_sales": {
         "title": "Pending Sales",

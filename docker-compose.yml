@@ -4,7 +4,7 @@ services:
   db:
     image: postgres:15-alpine
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - ./postgres_data:/var/lib/postgresql/data
     environment:
       - POSTGRES_DB=fullstack_db
       - POSTGRES_USER=fullstack_user
@@ -85,7 +85,6 @@ networks:
     driver: bridge
 
 volumes:
-  postgres_data:
   redis_data:
   static_volume:
   media_volume:

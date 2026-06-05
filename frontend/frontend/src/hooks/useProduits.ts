@@ -23,6 +23,8 @@ export const useProduit = (id: number | null) => {
             return produitService.getById(id);
         },
         enabled: !!id,
+        staleTime: 1000 * 60 * 5, // 5 min — évite de recharger à chaque ouverture du modal
+        gcTime: 1000 * 60 * 10,
     });
 };
 
@@ -65,6 +67,8 @@ export const useProduitAchats = (produitId: number | null) => {
         queryKey: ['produit-achats', produitId],
         queryFn: () => produitId ? produitService.getAchats(produitId) : Promise.resolve([]),
         enabled: !!produitId,
+        staleTime: 1000 * 60 * 5,
+        gcTime: 1000 * 60 * 10,
     });
 };
 
@@ -73,6 +77,8 @@ export const useProduitLots = (produitId: number | null) => {
         queryKey: ['produit-lots', produitId],
         queryFn: () => produitId ? produitService.getLots(produitId) : Promise.resolve([]),
         enabled: !!produitId,
+        staleTime: 1000 * 60 * 5,
+        gcTime: 1000 * 60 * 10,
     });
 };
 
@@ -81,6 +87,8 @@ export const useProduitAdjustments = (produitId: number | null) => {
         queryKey: ['produit-adjustments', produitId],
         queryFn: () => produitId ? produitService.getAdjustments(produitId) : Promise.resolve([]),
         enabled: !!produitId,
+        staleTime: 1000 * 60 * 5,
+        gcTime: 1000 * 60 * 10,
     });
 };
 
@@ -89,6 +97,8 @@ export const useProduitStats = (produitId: number | null) => {
         queryKey: ['produit-stats', produitId],
         queryFn: () => produitId ? produitService.getStats(produitId) : Promise.resolve([]),
         enabled: !!produitId,
+        staleTime: 1000 * 60 * 5,
+        gcTime: 1000 * 60 * 10,
     });
 };
 
@@ -97,6 +107,8 @@ export const useProduitHistory = (produitId: number | null, activeTab: string) =
         queryKey: ['produit-history', produitId, activeTab],
         queryFn: () => produitId ? produitService.getHistory(produitId) : Promise.resolve([]),
         enabled: !!produitId && activeTab === 'mvmts',
+        staleTime: 1000 * 60 * 5,
+        gcTime: 1000 * 60 * 10,
     });
 };
 

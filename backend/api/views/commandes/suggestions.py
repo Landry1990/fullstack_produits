@@ -47,7 +47,8 @@ def generer_suggestions_commande(request):
         suggestions, total_ht = calculer_optimisation_intelligente(
             periode=periode,
             fournisseur_id=fournisseur_id,
-            budget_max=budget_max
+            budget_max=budget_max,
+            delai_couverture=periode,
         )
     
     # ── Enrichir avec indicateurs Promis & Rupture Fournisseur ──
@@ -211,12 +212,15 @@ def calculer_reapprovisionnement_simple(periode, fournisseur_id=None, budget_max
     return suggestions, round(total_ht, 2)
 
 
-def calculer_optimisation_intelligente(periode, fournisseur_id=None, budget_max=None):
+def calculer_optimisation_intelligente(periode, fournisseur_id=None, budget_max=None, delai_couverture=None):
     """
     Calcul optimisé avec rotation, tendances, stock.
-    Stock cible = période sélectionnée (en jours de consommation).
+    Stock cible = délai de couverture (en jours de consommation).
+    Le délai de couverture est paramétrable par commande/schedule (pas figé sur le fournisseur).
     Si budget_max est fourni, on priorise les produits à plus fortes ventes.
     """
+    # Défaut : delai_couverture = periode si non spécifié
+    delai_couverture = delai_couverture or periode
     # Utiliser une période d'analyse plus longue (30j minimum) pour des stats fiables
     periode_analyse = max(periode, 30)
     date_debut = timezone.now() - timedelta(days=periode_analyse)
@@ -236,6 +240,11 @@ def calculer_optimisation_intelligente(periode, fournisseur_id=None, budget_max=
             Q(fournisseur_id=fournisseur_id) | Q(id__in=lots_produit_ids)
         )
     
+    # Dates pour le moteur de réapprovisionnement (90j, 4 semaines, 8 semaines)
+    date_90j = timezone.now() - timedelta(days=90)
+    date_4s = timezone.now() - timedelta(days=28)
+    date_8s = timezone.now() - timedelta(days=56)
+
     # Annoter puis limiter pour éviter les timeouts
     produits = produits_qs.select_related('fournisseur').annotate(
         ventes_total_annotation=Sum('factureproduit__quantity', filter=Q(
@@ -244,6 +253,19 @@ def calculer_optimisation_intelligente(periode, fournisseur_id=None, budget_max=
         )),
         ventes_recentes_annotation=Sum('factureproduit__quantity', filter=Q(
             factureproduit__facture__date__gte=date_mi_periode,
+            factureproduit__facture__status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE]
+        )),
+        ventes_90j_annotation=Sum('factureproduit__quantity', filter=Q(
+            factureproduit__facture__date__gte=date_90j,
+            factureproduit__facture__status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE]
+        )),
+        ventes_4s_annotation=Sum('factureproduit__quantity', filter=Q(
+            factureproduit__facture__date__gte=date_4s,
+            factureproduit__facture__status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE]
+        )),
+        ventes_8s_4s_annotation=Sum('factureproduit__quantity', filter=Q(
+            factureproduit__facture__date__gte=date_8s,
+            factureproduit__facture__date__lt=date_4s,
             factureproduit__facture__status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE]
         ))
     )
@@ -263,125 +285,85 @@ def calculer_optimisation_intelligente(periode, fournisseur_id=None, budget_max=
     suggestions = []
     
     for produit in produits:
-        # 1. Ventes totales sur période d'analyse
+        # ── 1. Données brutes ──
         ventes_total = produit.ventes_total_annotation or 0
-        
-        # 3. Stock actuel et seuils
+        ventes_90j = produit.ventes_90j_annotation or 0
+        ventes_4s = produit.ventes_4s_annotation or 0
+        ventes_8s_4s = produit.ventes_8s_4s_annotation or 0
+
         stock_actuel = int(produit.stock or 0)
-        stock_alert = int(produit.stock_alert or 0)
-        stock_min = int(produit.stock_minimum or 0)
-        stock_max = int(produit.stock_maximum or 0)
-        
-        stock_moyen_temp = max(stock_actuel, 1)
-        rotation_periode = float(ventes_total) / stock_moyen_temp
-        rotation_historique = float(produit.rotation_moyenne or 0)
-        rotation_effective = rotation_periode if ventes_total > 0 else rotation_historique
-        
-        en_rupture = (stock_actuel <= 0) and (rotation_effective > 1)
-        en_alerte = (stock_alert > 0 and stock_actuel <= stock_alert) or (stock_min > 0 and stock_actuel <= stock_min)
-        
-        if ventes_total == 0 and not en_rupture and not en_alerte:
-            continue
-            
-        if ventes_total == 0:
-            # Produit sans ventes récentes mais en rupture ou alerte
-            conso_jour = 0.0
-            couverture_jours = 0
-            rotation = 0.0
-            tendance = 1.0
-            niveau_rotation = 'normale'
-            
-            if stock_max > 0:
-                stock_cible = stock_max
-            elif stock_alert > 0:
-                stock_cible = stock_alert * 1.5
-            elif stock_min > 0:
-                stock_cible = stock_min * 1.5
-            else:
-                stock_cible = 5  # Quantité par défaut pour rupture sans configuration
-                
-            qte_base = max(0, stock_cible - stock_actuel)
-            qte_finale = int(round(qte_base))
-            
-            urgence = 'urgent' if en_rupture else 'bientot'
-            score_urgence = 80 if en_rupture else 50
-            raison = "Rupture de stock (aucune vente récente)." if en_rupture else "Alerte de stock (aucune vente récente)."
+
+        # ── 2. Paramètres logistiques du fournisseur ──
+        fournisseur = produit.fournisseur
+        delai_livraison = getattr(fournisseur, 'delai_livraison_jours', 7) or 7
+        marge_retard = getattr(fournisseur, 'marge_retard_jours', 2) or 2
+        # delai_couverture vient du paramètre de la commande/schedule, pas du fournisseur
+
+        # ── 3. VMD ajustée ──
+        vmd_historique = float(ventes_90j) / 90.0
+
+        # Tendance court terme (4 dernières semaines vs 4 semaines précédentes)
+        if ventes_8s_4s > 0:
+            tendance_court_terme = ventes_4s / ventes_8s_4s
         else:
-            # 2. Consommation journalière moyenne
-            conso_jour = float(ventes_total) / periode_analyse
-            
-            # 4. Couverture actuelle en jours
-            if conso_jour > 0:
-                couverture_jours = stock_actuel / conso_jour
-            else:
-                couverture_jours = 999
-            
-            # 5. Rotation (ventes / stock moyen)
-            stock_moyen = max(stock_actuel, 1)
-            rotation = float(ventes_total) / stock_moyen
-            
-            # 6. Tendance (période récente vs ancienne)
-            ventes_recentes = produit.ventes_recentes_annotation or 0
-            
-            ventes_anciennes = ventes_total - ventes_recentes
-            if ventes_anciennes > 0:
-                tendance = ventes_recentes / ventes_anciennes
-            else:
-                tendance = 1.0 if ventes_recentes > 0 else 0
-            
-            # 7. Stock cible = consommation journalière × période demandée
-            stock_cible = conso_jour * periode
-            qte_base = max(0, stock_cible - stock_actuel)
-            
-            # Ajustement selon rotation
-            if rotation > 3:  # Haute rotation
-                qte_base *= 1.2
-                niveau_rotation = 'haute'
-            elif rotation < 1:  # Faible rotation
-                qte_base *= 0.8
-                niveau_rotation = 'faible'
-            else:
-                niveau_rotation = 'normale'
-            
-            # Ajustement selon tendance
-            qte_base *= min(tendance, 2.0)  # Plafonner à 2x pour éviter les excès
-            
-            qte_finale = int(round(qte_base))
-            
-            # Déterminer urgence selon la couverture vs période demandée
-            ratio_couverture = couverture_jours / periode if periode > 0 else 999
-            if ratio_couverture < 0.25:  # Moins de 25% de la période couverte
-                urgence = 'urgent'
-                score_urgence = 80
-            elif ratio_couverture < 0.5:  # Moins de 50%
-                urgence = 'bientot'
-                score_urgence = 50
-            else:
-                urgence = 'normal'
-                score_urgence = 20
-                
-            # Surcharge urgence si alerte/rupture
-            if en_rupture:
-                urgence = 'urgent'
-                score_urgence = max(score_urgence, 90)
-            elif en_alerte:
-                urgence = 'urgent' if urgence == 'normal' else urgence
-                score_urgence = max(score_urgence, 70)
-            
-            # Construire la raison
-            raison = f"Couverture: {int(couverture_jours)}j/{periode}j. "
-            if niveau_rotation == 'haute':
-                raison += "Rotation élevée (+20%). "
-            elif niveau_rotation == 'faible':
-                raison += "Rotation faible (-20%). "
-            if tendance > 1.2:
-                raison += f"Tendance hausse (+{int((tendance-1)*100)}%). "
-            elif tendance < 0.8:
-                raison += f"Tendance baisse ({int((tendance-1)*100)}%). "
+            tendance_court_terme = 1.0 if ventes_4s > 0 else 0.0
+
+        # Saisonnalité : placeholder (à enrichir quand on aura assez d'historique N-1/N-2)
+        indice_saisonnalite = 1.0
+
+        k_ajustement = tendance_court_terme * indice_saisonnalite
+        # Plafonner K pour éviter les excès
+        k_ajustement = max(0.5, min(k_ajustement, 2.0))
+
+        vmd_ajustee = vmd_historique * k_ajustement
+
+        # ── 4. Seuils dynamiques ──
+        stock_securite = vmd_ajustee * marge_retard
+        stock_minimum = (vmd_ajustee * delai_livraison) + stock_securite
+        stock_maximum = stock_minimum + (vmd_ajustee * delai_couverture)
+
+        # ── 5. Décision de commande ──
+        en_rupture = stock_actuel <= 0
+        en_alerte = stock_actuel <= stock_minimum
+
+        if ventes_90j == 0 and not en_rupture and not en_alerte:
+            continue
+
+        if en_rupture or en_alerte:
+            stock_objectif = stock_maximum
+            besoin_net = max(0, stock_objectif - stock_actuel)
+            qte_finale = int(round(besoin_net))
+
+            urgence = 'urgent'
+            score_urgence = 90 if en_rupture else 70
+            raison = (
+                f"Stock={stock_actuel} ≤ SeuilMin={stock_minimum:.1f}. "
+                f"Objectif={stock_maximum:.1f}. "
+                f"VMD={vmd_ajustee:.2f}u/j. "
+                f"Sécurité={stock_securite:.1f}j. "
+            )
             if en_rupture:
                 raison += "RUPTURE."
-            elif en_alerte:
+            else:
                 raison += "ALERTE STOCK."
+        else:
+            qte_finale = 0
+            urgence = 'normal'
+            score_urgence = 20
+            raison = (
+                f"Stock={stock_actuel} > SeuilMin={stock_minimum:.1f}. "
+                f"Couverture sécurisée."
+            )
+
+        # ── 6. Métriques de retour ──
+        conso_jour = vmd_ajustee
+        couverture_jours = int(stock_actuel / conso_jour) if conso_jour > 0 else 999
+        niveau_rotation = 'normale'
+        if vmd_historique > 0:
+            if k_ajustement > 1.3:
+                niveau_rotation = 'haute'
+            elif k_ajustement < 0.7:
+                niveau_rotation = 'faible'
         
         # Calculer montant HT
         # Prioriser le prix du fournisseur spécifique si disponible
@@ -406,7 +388,7 @@ def calculer_optimisation_intelligente(periode, fournisseur_id=None, budget_max=
                 'tva': str(produit.tva or '0'),
                 'taux_marge': str(produit.taux_marge or '1.3'),
                 'rotation': niveau_rotation,
-                'tendance': round(tendance, 2),
+                'tendance': round(tendance_court_terme, 2),
                 'urgence': urgence,
                 'score_urgence': score_urgence,
                 'couverture_jours': int(couverture_jours),

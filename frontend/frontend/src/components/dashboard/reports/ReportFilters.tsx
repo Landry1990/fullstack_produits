@@ -95,7 +95,7 @@ export const ReportFilters: React.FC<ReportFiltersProps> = ({
             if (!conds) return [];
             return typeof conds === 'string' ? JSON.parse(conds) : conds;
         } catch (e) {
-            console.error("Erreur de parsing des conditions:", e);
+            console.error(t('reports.err_parse_conditions', { defaultValue: 'Erreur de parsing des conditions:' }), e);
             return [];
         }
     };
@@ -108,7 +108,7 @@ export const ReportFilters: React.FC<ReportFiltersProps> = ({
             <div className="flex flex-wrap items-center gap-3 border-b border-base-200 pb-4">
                 <div className="flex items-center gap-2 text-xs font-black uppercase tracking-widest text-base-content/40">
                     <History className="size-3" />
-                    Mes Configurations :
+                    {t('reports.my_configs', { defaultValue: 'Mes Configurations :' })}
                 </div>
                 {presetList.filter(p => p.queryId === selectedQuery.id).map(preset => (
                     <div key={preset.id} className="group flex items-center gap-1">
@@ -128,13 +128,13 @@ export const ReportFilters: React.FC<ReportFiltersProps> = ({
                 ))}
                 <button 
                     onClick={() => {
-                        const name = prompt('Nom de cette configuration ?');
+                        const name = prompt(t('reports.preset_prompt_name', { defaultValue: 'Nom de cette configuration ?' }));
                         if (name) presets.save(name);
                     }}
                     className="btn btn-xs btn-primary btn-outline rounded-full gap-2"
                 >
                     <Save className="size-3" />
-                    Sauvegarder
+                    {t('reports.preset_save_btn', { defaultValue: 'Sauvegarder' })}
                 </button>
             </div>
 
@@ -425,7 +425,9 @@ export const ReportFilters: React.FC<ReportFiltersProps> = ({
                                 className="select select-bordered select-md w-full rounded-xl font-bold bg-base-200/50"
                             >
                                 {param.options.map(opt => (
-                                    <option key={opt.value} value={opt.value}>{opt.label}</option>
+                                    <option key={opt.value} value={opt.value}>
+                                        {t(`reports.query_options.${selectedQuery.id}.${param.key}.${opt.value}`, { defaultValue: opt.label })}
+                                    </option>
                                 ))}
                             </select>
                         )}
@@ -439,7 +441,7 @@ export const ReportFilters: React.FC<ReportFiltersProps> = ({
                                     className="checkbox checkbox-primary checkbox-sm rounded-lg"
                                 />
                                 <span className="text-xs font-bold uppercase tracking-tight text-base-content/70">
-                                    {t(`params.${param.key}_active`, { defaultValue: 'Activé' })}
+                                    {t(`params.${param.key}_active`, { defaultValue: t('common:active', { defaultValue: 'Activé' }) })}
                                 </span>
                             </div>
                         )}
@@ -626,7 +628,7 @@ export const ReportFilters: React.FC<ReportFiltersProps> = ({
                                                             className="checkbox checkbox-primary checkbox-xs rounded-md"
                                                         />
                                                         <span className={`text-[11px] font-bold uppercase tracking-tight ${isChecked ? 'text-primary' : 'text-base-content/60'}`}>
-                                                            {opt.label}
+                                                            {t(`reports.query_options.${selectedQuery.id}.${param.key}.${opt.value}`, { defaultValue: opt.label })}
                                                         </span>
                                                     </label>
                                                 );
@@ -634,7 +636,7 @@ export const ReportFilters: React.FC<ReportFiltersProps> = ({
                                         </div>
                                         <div className="mt-4 pt-4 border-t border-base-200 flex justify-between items-center">
                                             <div className="text-[9px] font-bold uppercase text-base-content/30 italic">
-                                                * Sélectionnez les colonnes à afficher
+                                                * {t('reports.select_columns_hint', { defaultValue: 'Sélectionnez les colonnes à afficher' })}
                                             </div>
                                             <button 
                                                 className="btn btn-ghost btn-xs text-primary"

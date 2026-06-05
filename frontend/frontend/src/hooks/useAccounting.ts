@@ -76,12 +76,16 @@ export const useAccounting = () => {
     // Queries
     const { data: comptes, isLoading: loadingComptes } = useQuery<Compte[]>({
         queryKey: ['accounting', 'comptes'],
-        queryFn: async () => (await api.get('compta/comptes/')).data.results || (await api.get('compta/comptes/')).data
+        queryFn: async () => (await api.get('compta/comptes/')).data.results || (await api.get('compta/comptes/')).data,
+        staleTime: 1000 * 60 * 10, // 10 min
+        gcTime: 1000 * 60 * 30,
     });
 
     const { data: journaux } = useQuery({
         queryKey: ['accounting', 'journaux'],
-        queryFn: async () => (await api.get('compta/journaux/')).data.results || (await api.get('compta/journaux/')).data
+        queryFn: async () => (await api.get('compta/journaux/')).data.results || (await api.get('compta/journaux/')).data,
+        staleTime: 1000 * 60 * 10,
+        gcTime: 1000 * 60 * 30,
     });
 
     const { data: exercices } = useQuery<Exercice[]>({
@@ -89,7 +93,9 @@ export const useAccounting = () => {
         queryFn: async () => {
             const data = (await api.get('compta/exercices/')).data.results || (await api.get('compta/exercices/')).data;
             return data;
-        }
+        },
+        staleTime: 1000 * 60 * 10,
+        gcTime: 1000 * 60 * 30,
     });
 
     // Handle initialization of currentExercice safely in useEffect
@@ -108,7 +114,9 @@ export const useAccounting = () => {
         queryFn: async () => (await api.get('compta/ecritures/balance/', { 
             params: { date_debut: dateRange.start, date_fin: dateRange.end } 
         })).data,
-        placeholderData: (previousData) => previousData
+        placeholderData: (previousData) => previousData,
+        staleTime: 1000 * 60 * 2, // 2 min
+        gcTime: 1000 * 60 * 5,
     });
 
     const { data: resultat, isLoading: loadingResultat, isFetching: fetchingResultat } = useQuery({
@@ -116,7 +124,9 @@ export const useAccounting = () => {
         queryFn: async () => (await api.get('compta/ecritures/compte_resultat/', { 
             params: { date_debut: dateRange.start, date_fin: dateRange.end } 
         })).data,
-        placeholderData: (previousData) => previousData
+        placeholderData: (previousData) => previousData,
+        staleTime: 1000 * 60 * 2,
+        gcTime: 1000 * 60 * 5,
     });
 
     const { data: bilan, isLoading: loadingBilan, isFetching: fetchingBilan } = useQuery({
@@ -124,7 +134,9 @@ export const useAccounting = () => {
         queryFn: async () => (await api.get('compta/ecritures/bilan/', { 
             params: { date_fin: dateRange.end } 
         })).data,
-        placeholderData: (previousData) => previousData
+        placeholderData: (previousData) => previousData,
+        staleTime: 1000 * 60 * 2,
+        gcTime: 1000 * 60 * 5,
     });
 
     const { data: ecrituresData, isLoading: loadingEcritures, isFetching: fetchingEcritures } = useQuery<PaginatedResponse<Ecriture>>({
@@ -139,7 +151,9 @@ export const useAccounting = () => {
                 page_size: ecrituresPageSize
             } 
         })).data,
-        placeholderData: (previousData) => previousData
+        placeholderData: (previousData) => previousData,
+        staleTime: 1000 * 60 * 2,
+        gcTime: 1000 * 60 * 5,
     });
 
     // Mutations

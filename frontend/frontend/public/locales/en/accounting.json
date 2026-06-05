@@ -39,7 +39,8 @@
             "label": "Label",
             "debit": "Debit",
             "credit": "Credit"
-        }
+        },
+        "no_entry_found": "No entry found"
     },
     "balance": {
         "cols": {
@@ -92,5 +93,70 @@
         "subtitle": "Products vs Expenses Comparison",
         "produits_label": "Products",
         "charges_label": "Expenses"
+    },
+    "plan": {
+        "search_placeholder": "Search for an account (number or label)...",
+        "filter_all_types": "All types",
+        "filter_actif": "Asset",
+        "filter_passif": "Liability",
+        "filter_charge": "Expense",
+        "filter_produit": "Revenue",
+        "new_account": "New account",
+        "accounts_count": "{{count}} account(s)",
+        "group_count": "{{count}} account(s)",
+        "inactive": "INACTIVE",
+        "edit_title": "Edit",
+        "delete_title": "Delete",
+        "no_account_found": "No account found",
+        "modal": {
+            "edit": "Edit Account",
+            "new": "New Account",
+            "number_label": "Account Number *",
+            "number_placeholder": "Ex: 701200",
+            "number_locked": "The number cannot be changed.",
+            "label_label": "Label *",
+            "label_placeholder": "Ex: Medicine sales",
+            "type_label": "Type *",
+            "active_label": "Active account",
+            "cancel": "Cancel",
+            "save": "Save",
+            "create": "Create"
+        },
+        "delete": {
+            "title": "Delete this account?",
+            "warning": "Impossible if entries are attached.",
+            "cancel": "Cancel",
+            "confirm": "Delete"
+        }
+    },
+    "charges_simple": {
+        "title": "Simple Expense Entry",
+        "subtitle": "Record your daily expenses. They will be automatically integrated into the income statement.",
+        "category": "Expense category",
+        "select_account": "Select the exact account",
+        "select_account_placeholder": "Select an account...",
+        "payment_method": "Payment Method",
+        "payment_cash": "💵 Cash (Cashier)",
+        "payment_bank": "🏦 Transfer / Check (Bank)",
+        "label": "Purpose (Label)",
+        "label_placeholder": "Ex: ENEO bill payment April...",
+        "amount": "Amount (FCFA)",
+        "amount_placeholder": "0",
+        "currency": "FCFA",
+        "submit": "Save Expense",
+        "select_category_warning": "Please select an expense category on the left.",
+        "account_not_found": "Expense account not found. Create it first in the Chart of Accounts.",
+        "journal_error": "Error: unable to create journal {{journalCode}}.",
+        "cash_account": "Cash",
+        "bank_account": "Bank"
+    },
+    "ohada_categories": {
+        "loyer": "Rent (Lease)",
+        "energie": "Water & Electricity",
+        "salaires": "Staff Salaries",
+        "impots": "Taxes and Duties",
+        "internet": "Internet & Phone",
+        "fournitures": "Office Supplies",
+        "autre": "Other expense..."
     }
 }

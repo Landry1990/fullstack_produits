@@ -49,6 +49,15 @@ class Fournisseur(models.Model):
         default=10,
         help_text="Durée en jours d'une tranche de relevé (ex: 10 = du 1-10, 11-20, 21-31). Utilisé uniquement si type_reglement=RELEVE."
     )
+    # ── Paramètres logistiques pour le moteur de réapprovisionnement ──
+    delai_livraison_jours = models.IntegerField(
+        default=7,
+        help_text="Délai moyen entre validation de la commande et réception physique (jours)."
+    )
+    marge_retard_jours = models.IntegerField(
+        default=2,
+        help_text="Marge de sécurité pour les retards de livraison fréquents (jours)."
+    )
 
     def __str__(self):
         return self.name
@@ -88,7 +97,9 @@ class Fournisseur(models.Model):
         )['total'] or Decimal('0.00')
             
         # 2. Total des paiements effectués
-        total_paye = self.paiements_effectues.aggregate(
+        total_paye = PaiementFournisseur.objects.filter(
+            fournisseur=self
+        ).aggregate(
             total=Sum('montant', output_field=DecimalField())
         )['total'] or Decimal('0.00')
         
@@ -218,8 +229,9 @@ class Client(models.Model):
             return self.solde_factures or Decimal('0.00')
         
         # Priorité 2: Annotation si disponible (QuerySet optimisé)
-        if hasattr(self, 'current_debt_annotated'):
-            return self.current_debt_annotated or Decimal('0.00')
+        annotated = getattr(self, 'current_debt_annotated', None)
+        if annotated is not None:
+            return annotated or Decimal('0.00')
         
         # Fallback: Calcul complet (lent, éviter en production)
         debt_info = self._compute_debt_from_factures()
