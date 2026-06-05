@@ -154,17 +154,25 @@ class PharmacySettings(models.Model):
 
     # --- Paramètres de Sauvegarde ---
     backup_enabled = models.BooleanField(
-        default=True, 
-        help_text="Activer la sauvegarde automatique quotidienne"
+        default=True,
+        help_text="Activer la sauvegarde automatique"
     )
     backup_time = models.TimeField(
-        default="02:00:00", 
+        default="02:00:00",
         help_text="Heure de la sauvegarde automatique (ex: 02:00)"
     )
+    backup_interval_minutes = models.IntegerField(
+        default=1440,
+        help_text="Intervalle entre deux sauvegardes automatiques (en minutes, ex: 60=toutes les heures, 1440=quotidien, 10080=hebdomadaire)"
+    )
+    backup_retention_count = models.IntegerField(
+        default=30,
+        help_text="Nombre maximal de sauvegardes à conserver"
+    )
     secondary_backup_path = models.CharField(
-        max_length=500, 
-        blank=True, 
-        default="", 
+        max_length=500,
+        blank=True,
+        default="",
         help_text="Chemin secondaire (ex: E:\\Backups_Pharmacie) pour double sauvegarde"
     )
 

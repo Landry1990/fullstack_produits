@@ -3,7 +3,7 @@ import api from '../services/api';
 import {
   Server, Database, RefreshCw, Play, ShieldCheck, ShieldAlert,
   HardDrive, Clock, CheckCircle2, XCircle, AlertTriangle, Download,
-  RotateCcw, Wifi, WifiOff
+  RotateCcw, Wifi, WifiOff, Upload, Trash2
 } from 'lucide-react';
 
 type TabId = 'sante' | 'sauvegardes';
@@ -58,6 +58,23 @@ export default function SystemAdmin() {
   const [fixingRestart, setFixingRestart] = useState(false);
   const [backupOutput, setBackupOutput] = useState<string | null>(null);
   const [backupError, setBackupError] = useState<string | null>(null);
+  const [restoring, setRestoring] = useState(false);
+  const [restoreFile, setRestoreFile] = useState<File | null>(null);
+  const [restoreOutput, setRestoreOutput] = useState<string | null>(null);
+  const [restoreError, setRestoreError] = useState<string | null>(null);
+  const [showRestoreConfirm, setShowRestoreConfirm] = useState(false);
+  const [restoreTarget, setRestoreTarget] = useState<string | null>(null);
+
+  // Backup settings configuration
+  const [backupSettings, setBackupSettings] = useState<{
+    backup_enabled: boolean;
+    backup_time: string;
+    backup_interval_minutes: number;
+    backup_retention_count: number;
+    secondary_backup_path: string;
+  } | null>(null);
+  const [loadingBackupSettings, setLoadingBackupSettings] = useState(false);
+  const [savingBackupSettings, setSavingBackupSettings] = useState(false);
 
   const fetchStatus = useCallback(async () => {
     setLoadingStatus(true);
@@ -86,8 +103,49 @@ export default function SystemAdmin() {
   useEffect(() => { fetchStatus(); }, [fetchStatus]);
 
   useEffect(() => {
-    if (activeTab === 'sauvegardes') fetchBackups();
+    if (activeTab === 'sauvegardes') {
+      fetchBackups();
+      fetchBackupSettings();
+    }
   }, [activeTab, fetchBackups]);
+
+  const fetchBackupSettings = useCallback(async () => {
+    setLoadingBackupSettings(true);
+    try {
+      const res = await api.get('/pharmacy-settings/');
+      setBackupSettings({
+        backup_enabled: res.data.backup_enabled ?? true,
+        backup_time: (res.data.backup_time || '02:00:00').substring(0, 5),
+        backup_interval_minutes: res.data.backup_interval_minutes ?? 1440,
+        backup_retention_count: res.data.backup_retention_count ?? 30,
+        secondary_backup_path: res.data.secondary_backup_path || '',
+      });
+    } catch {
+      setBackupSettings(null);
+    } finally {
+      setLoadingBackupSettings(false);
+    }
+  }, []);
+
+  const saveBackupSettings = async () => {
+    if (!backupSettings) return;
+    setSavingBackupSettings(true);
+    try {
+      await api.put('/pharmacy-settings/', {
+        backup_enabled: backupSettings.backup_enabled,
+        backup_time: backupSettings.backup_time,
+        backup_interval_minutes: backupSettings.backup_interval_minutes,
+        backup_retention_count: backupSettings.backup_retention_count,
+        secondary_backup_path: backupSettings.secondary_backup_path,
+      });
+      setBackupOutput('Paramètres de sauvegarde enregistrés');
+      fetchStatus();
+    } catch (e: any) {
+      setBackupError(e?.response?.data?.detail || 'Erreur lors de la sauvegarde des paramètres');
+    } finally {
+      setSavingBackupSettings(false);
+    }
+  };
 
   const handleRunBackup = async () => {
     setRunningBackup(true);
@@ -103,6 +161,35 @@ export default function SystemAdmin() {
       setBackupError(e?.response?.data?.detail || 'Erreur lors du backup');
     } finally {
       setRunningBackup(false);
+    }
+  };
+
+  const handleRestore = async () => {
+    if (!restoreTarget && !restoreFile) return;
+    setRestoring(true);
+    setRestoreOutput(null);
+    setRestoreError(null);
+    setShowRestoreConfirm(false);
+    try {
+      const formData = new FormData();
+      if (restoreFile) {
+        formData.append('file', restoreFile);
+      } else if (restoreTarget) {
+        formData.append('filename', restoreTarget);
+      }
+      const res = await api.post('/system-admin/restore/', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
+      setRestoreOutput(res.data.output || res.data.message);
+      if (!res.data.success) setRestoreError(res.data.error || 'Erreur inconnue');
+      else {
+        setRestoreFile(null);
+        setRestoreTarget(null);
+      }
+    } catch (e: any) {
+      setRestoreError(e?.response?.data?.detail || 'Erreur lors de la restauration');
+    } finally {
+      setRestoring(false);
     }
   };
 
@@ -364,9 +451,138 @@ export default function SystemAdmin() {
               </div>
             )}
 
+            {/* Configuration des sauvegardes */}
+            <div className="bg-white rounded-xl border border-gray-100 shadow-sm px-5 py-4">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-xs font-bold uppercase tracking-wider text-gray-400 flex items-center gap-2">
+                  <HardDrive className="w-4 h-4" />
+                  Configuration des sauvegardes
+                </h3>
+                {loadingBackupSettings && <RefreshCw className="w-4 h-4 animate-spin text-gray-400" />}
+              </div>
+
+              {backupSettings ? (
+                <div className="space-y-4">
+                  {/* Activer backup auto */}
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-semibold text-gray-700">Sauvegarde automatique</p>
+                      <p className="text-xs text-gray-400">Lancer les backups sans intervention manuelle</p>
+                    </div>
+                    <label className="relative inline-flex items-center cursor-pointer">
+                      <input
+                        type="checkbox"
+                        className="sr-only peer"
+                        checked={backupSettings.backup_enabled}
+                        onChange={(e) => setBackupSettings({ ...backupSettings, backup_enabled: e.target.checked })}
+                      />
+                      <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-indigo-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
+                    </label>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    {/* Heure de backup */}
+                    <div>
+                      <label className="block text-xs font-semibold text-gray-500 mb-1">Heure de déclenchement</label>
+                      <input
+                        type="time"
+                        value={backupSettings.backup_time}
+                        onChange={(e) => setBackupSettings({ ...backupSettings, backup_time: e.target.value })}
+                        className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                      />
+                    </div>
+
+                    {/* Intervalle */}
+                    <div>
+                      <label className="block text-xs font-semibold text-gray-500 mb-1">Intervalle</label>
+                      <select
+                        value={backupSettings.backup_interval_minutes}
+                        onChange={(e) => setBackupSettings({ ...backupSettings, backup_interval_minutes: Number(e.target.value) })}
+                        className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent bg-white"
+                      >
+                        <option value={60}>Toutes les heures</option>
+                        <option value={360}>Toutes les 6 heures</option>
+                        <option value={720}>Toutes les 12 heures</option>
+                        <option value={1440}>Quotidien</option>
+                        <option value={10080}>Hebdomadaire</option>
+                      </select>
+                    </div>
+
+                    {/* Rétention */}
+                    <div>
+                      <label className="block text-xs font-semibold text-gray-500 mb-1">Backups à conserver</label>
+                      <input
+                        type="number"
+                        min={1}
+                        max={365}
+                        value={backupSettings.backup_retention_count}
+                        onChange={(e) => setBackupSettings({ ...backupSettings, backup_retention_count: Math.max(1, Number(e.target.value)) })}
+                        className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Chemin secondaire */}
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-500 mb-1">Chemin de sauvegarde secondaire (optionnel)</label>
+                    <input
+                      type="text"
+                      placeholder="Ex: E:\Backups_Pharma"
+                      value={backupSettings.secondary_backup_path}
+                      onChange={(e) => setBackupSettings({ ...backupSettings, secondary_backup_path: e.target.value })}
+                      className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                    />
+                  </div>
+
+                  <div className="flex justify-end">
+                    <button
+                      onClick={saveBackupSettings}
+                      disabled={savingBackupSettings}
+                      className="flex items-center gap-2 px-4 py-2 text-sm font-semibold bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-all disabled:opacity-60"
+                    >
+                      {savingBackupSettings ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <CheckCircle2 className="w-3.5 h-3.5" />}
+                      {savingBackupSettings ? 'Enregistrement...' : 'Enregistrer'}
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <p className="text-sm text-gray-400">Chargement des paramètres...</p>
+              )}
+            </div>
+
+            {/* Restauration depuis upload */}
+            <div className="bg-white rounded-xl border border-gray-100 shadow-sm px-5 py-4">
+              <div className="flex items-center justify-between mb-3">
+                <div>
+                  <p className="text-sm font-semibold text-gray-700 flex items-center gap-2">
+                    <Upload className="w-4 h-4 text-indigo-600" />
+                    Restaurer depuis un fichier
+                  </p>
+                  <p className="text-xs text-gray-400 mt-0.5">Uploader un backup externe (.sql.gz) pour le restaurer.</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-3">
+                <input
+                  type="file"
+                  accept=".sql.gz,.sql"
+                  onChange={(e) => setRestoreFile(e.target.files?.[0] || null)}
+                  className="text-xs text-gray-600 flex-1"
+                />
+                <button
+                  onClick={() => { if (restoreFile) { setRestoreTarget(null); setShowRestoreConfirm(true); } }}
+                  disabled={restoring || !restoreFile}
+                  className="flex items-center gap-2 px-3 py-1.5 text-sm font-semibold bg-red-600 text-white rounded-lg hover:bg-red-700 transition-all disabled:opacity-60"
+                >
+                  <RotateCcw className={`w-3.5 h-3.5 ${restoring ? 'animate-spin' : ''}`} />
+                  {restoring ? 'Restauration...' : 'Restaurer'}
+                </button>
+              </div>
+            </div>
+
+            {/* Restauration depuis backup existant */}
             <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
-              <div className="px-5 py-4 border-b border-gray-100">
-                <h2 className="text-xs font-bold uppercase tracking-wider text-gray-400">Fichiers de sauvegarde</h2>
+              <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
+                <h2 className="text-xs font-bold uppercase tracking-wider text-gray-400">Fichiers de sauvegarde — Cliquer sur « Restaurer » pour revenir à cet état</h2>
               </div>
 
               {loadingBackups ? (
@@ -412,18 +628,79 @@ export default function SystemAdmin() {
                           )}
                         </div>
                       </div>
-                      <span className={`shrink-0 text-xs font-semibold px-2 py-1 rounded-full ${
-                        backup.age_hours < 2 ? 'bg-emerald-50 text-emerald-600'
-                        : backup.age_hours < 24 ? 'bg-amber-50 text-amber-600'
-                        : 'bg-red-50 text-red-600'
-                      }`}>
-                        {backup.age_hours < 1 ? '< 1h' : `${backup.age_hours}h`}
-                      </span>
+                      <div className="flex items-center gap-2 shrink-0">
+                        <span className={`text-xs font-semibold px-2 py-1 rounded-full ${
+                          backup.age_hours < 2 ? 'bg-emerald-50 text-emerald-600'
+                          : backup.age_hours < 24 ? 'bg-amber-50 text-amber-600'
+                          : 'bg-red-50 text-red-600'
+                        }`}>
+                          {backup.age_hours < 1 ? '< 1h' : `${backup.age_hours}h`}
+                        </span>
+                        <button
+                          onClick={() => { setRestoreFile(null); setRestoreTarget(backup.filename); setShowRestoreConfirm(true); }}
+                          disabled={restoring}
+                          className="flex items-center gap-1 px-2 py-1 text-xs font-semibold bg-red-50 text-red-600 rounded-lg hover:bg-red-100 transition-all border border-red-200"
+                          title="Restaurer cette sauvegarde"
+                        >
+                          <RotateCcw className="w-3 h-3" />
+                          Restaurer
+                        </button>
+                      </div>
                     </div>
                   ))}
                 </div>
               )}
             </div>
+
+            {/* Résultat de restauration */}
+            {(restoreOutput || restoreError) && (
+              <div className={`rounded-xl border px-4 py-3 text-sm ${restoreError ? 'border-red-100 bg-red-50 text-red-700' : 'border-emerald-100 bg-emerald-50 text-emerald-700'}`}>
+                <div className="flex items-center gap-2 font-semibold mb-1">
+                  {restoreError ? <XCircle className="w-4 h-4" /> : <CheckCircle2 className="w-4 h-4" />}
+                  {restoreError ? 'Erreur lors de la restauration' : 'Restauration terminée'}
+                </div>
+                {restoreError && <p className="text-xs">{restoreError}</p>}
+                {restoreOutput && (
+                  <pre className="mt-2 p-2 bg-gray-100 rounded text-[11px] overflow-auto max-h-40 whitespace-pre-wrap">{restoreOutput}</pre>
+                )}
+              </div>
+            )}
+
+            {/* Modal de confirmation */}
+            {showRestoreConfirm && (
+              <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+                <div className="bg-white rounded-xl shadow-xl border border-gray-200 w-full max-w-md mx-4 p-6">
+                  <div className="flex items-center gap-3 mb-4">
+                    <AlertTriangle className="w-6 h-6 text-red-500" />
+                    <h3 className="text-lg font-bold text-gray-900">Confirmer la restauration</h3>
+                  </div>
+                  <p className="text-sm text-gray-600 mb-2">
+                    Cette opération va <strong>ÉCRASER</strong> la base de données actuelle avec :
+                  </p>
+                  <p className="text-sm font-mono font-semibold text-red-600 bg-red-50 p-2 rounded mb-4">
+                    {restoreFile ? restoreFile.name : restoreTarget}
+                  </p>
+                  <p className="text-xs text-gray-400 mb-4">
+                    Toutes les données créées après cette sauvegarde seront perdues. L'application redémarrera automatiquement.
+                  </p>
+                  <div className="flex gap-3 justify-end">
+                    <button
+                      onClick={() => setShowRestoreConfirm(false)}
+                      className="px-4 py-2 text-sm font-semibold text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200"
+                    >
+                      Annuler
+                    </button>
+                    <button
+                      onClick={handleRestore}
+                      disabled={restoring}
+                      className="px-4 py-2 text-sm font-semibold bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-60"
+                    >
+                      {restoring ? 'Restauration en cours...' : 'Oui, restaurer'}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
 
             {/* Info cron */}
             <div className="bg-white rounded-xl border border-gray-100 shadow-sm px-5 py-4">

@@ -80,6 +80,7 @@ interface CommandeFormProps {
       totalTVA: number;
       totalTTC: number;
       totalBuyHT: number;
+      totalBuyTTC: number;
       totalMarginValue: number;
       globalMargin: string;
       globalMarginPercent: string;
@@ -267,11 +268,11 @@ export default function CommandeForm({
                     <div className="flex items-center gap-2 border-l border-base-300 pl-3">
                         <div className="flex flex-col">
                           <span className="text-[9px] font-semibold text-info uppercase">Taux</span>
-                          <input type="number" step="0.001" className="input-ref input-bordered input-xs w-16 h-7 rounded-md border-base-300 focus:border-info" value={tauxChange} onChange={(e) => setTauxChange(e.target.value)} />
+                          <input type="number" step="0.001" className="input-ref input-bordered input-xs w-24 h-7 rounded-md border-base-300 focus:border-info px-2" value={tauxChange} onChange={(e) => setTauxChange(e.target.value)} />
                         </div>
                         <div className="flex flex-col">
                           <span className="text-[9px] font-semibold text-info uppercase">Coeff</span>
-                          <input type="number" step="0.01" className="input-ref input-bordered input-xs w-12 h-7 rounded-md border-base-300 focus:border-info" value={fraisCoefficient} onChange={(e) => setFraisCoefficient(e.target.value)} />
+                          <input type="number" step="0.01" className="input-ref input-bordered input-xs w-16 h-7 rounded-md border-base-300 focus:border-info px-2" value={fraisCoefficient} onChange={(e) => setFraisCoefficient(e.target.value)} />
                         </div>
                     </div>
                   )}
@@ -343,36 +344,42 @@ export default function CommandeForm({
             </div>
 
             <div className="mt-2 flex flex-wrap justify-between items-end gap-4 shrink-0 bg-base-100 p-3 rounded-xl border border-base-200 shadow-sm">
-                <div className="flex flex-wrap gap-4 items-center">
-                    {/* HT (Achat) */}
-                    <div className="flex flex-col">
-                        <span className="text-[10px] font-semibold text-base-content/50 uppercase tracking-wider">{t('orders:product_table.total_ht', 'HT (ACHAT)')}</span>
-                        <span className={`text-sm font-mono font-semibold ${htColor}`}>{formatCurrency(orderTotals?.totalBuyHT || 0)}</span>
+                <div className="flex flex-wrap gap-3 items-center">
+                    {/* PRIX A HT */}
+                    <div className="flex flex-col items-end">
+                        <span className="text-[9px] uppercase font-bold text-base-content/50 -mb-1">PRIX A HT</span>
+                        <span className="text-sm font-bold">{formatCurrency(orderTotals?.totalBuyHT || 0)}</span>
                     </div>
 
-                    {/* TVA */}
-                    <div className="flex flex-col border-l pl-4 border-base-200">
-                        <span className="text-[10px] font-semibold text-base-content/50 uppercase tracking-wider">{t('orders:product_table.total_tva', 'TVA (VENTE)')}</span>
-                        <span className="text-sm font-mono font-semibold text-base-content/60">{formatCurrency(orderTotals?.totalTVA || 0)}</span>
+                    {/* TVA A */}
+                    <div className="flex flex-col items-end border-l pl-3 border-base-200">
+                        <span className="text-[9px] uppercase font-bold text-base-content/50 -mb-1">TVA A</span>
+                        <span className="text-sm font-bold text-base-content/60">{formatCurrency((orderTotals?.totalBuyTTC || 0) - (orderTotals?.totalBuyHT || 0))}</span>
                     </div>
 
-                    {/* TTC (Vente) */}
-                    <div className="flex flex-col border-l pl-4 border-base-200">
-                        <span className="text-[10px] font-semibold text-base-content/50 uppercase tracking-wider">{t('orders:product_table.total_ttc', 'TTC (VENTE)')}</span>
-                         <span className="text-base md:text-lg font-mono font-bold text-primary">{formatCurrency(orderTotals?.totalTTC || 0)}</span>
+                    {/* PRIX A TTC */}
+                    <div className="bg-primary/10 text-primary border border-indigo-500/20 px-3 py-1 rounded flex flex-col items-end shadow-sm">
+                        <span className="text-[9px] uppercase font-black -mb-1">PRIX A TTC</span>
+                        <span className="text-lg font-black leading-none">{formatCurrency(orderTotals?.totalBuyTTC || 0)}</span>
                     </div>
 
-                    {/* Montant Marge */}
-                    <div className="flex flex-col border-l pl-4 border-base-200">
-                        <span className="text-[10px] font-semibold text-base-content/50 uppercase tracking-wider">💰 {t('orders:product_table.info_row.margin_value', 'MONTANT MARGE')}</span>
-                        <span className={`text-sm font-mono font-semibold ${marginColor}`}>{formatCurrency(orderTotals?.totalMarginValue || 0)}</span>
+                    {/* PRIX V TTC */}
+                    <div className="bg-success/10 text-success border border-success/20 px-3 py-1 rounded flex flex-col items-end shadow-sm">
+                        <span className="text-[9px] uppercase font-black -mb-1">PRIX V TTC</span>
+                        <span className="text-lg font-black leading-none">{formatCurrency(orderTotals?.totalTTC || 0)}</span>
                     </div>
 
-                    {/* Coefficient & Pourcentage */}
-                    <div className="flex flex-col border-l pl-4 border-base-200">
-                        <span className="text-[10px] font-semibold text-base-content/50 uppercase tracking-wider">📦 {t('orders:product_table.headers.margin', 'COEFF / %')}</span>
+                    {/* Marge */}
+                    <div className="flex flex-col items-end border-l pl-3 border-base-200">
+                        <span className="text-[9px] uppercase font-bold text-base-content/50 -mb-1">MARGE</span>
+                        <span className={`text-sm font-bold ${marginColor}`}>{formatCurrency(orderTotals?.totalMarginValue || 0)}</span>
+                    </div>
+
+                    {/* Coeff */}
+                    <div className="flex flex-col items-end border-l pl-3 border-base-200">
+                        <span className="text-[9px] uppercase font-bold text-base-content/50 -mb-1">COEFF</span>
                         <div className="flex items-baseline gap-1">
-                            <span className={`text-lg font-mono font-bold ${marginColor}`}>x{orderTotals?.globalMargin || '1.0000'}</span>
+                            <span className={`text-sm font-bold ${marginColor}`}>x{orderTotals?.globalMargin || '1.00'}</span>
                             <span className={`text-[10px] font-semibold ${marginColor}`}>({orderTotals?.globalMarginPercent || '0.00'}%)</span>
                         </div>
                     </div>

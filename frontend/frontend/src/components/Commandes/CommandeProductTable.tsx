@@ -313,67 +313,9 @@ export default function CommandeProductTable({
 
                 
 
-                {/* PARTIE DROITE: STATS AGRANDIES */}
+                {/* PARTIE DROITE: ACTIONS SÉLECTION */}
 
                 <div className="flex items-center gap-3">
-
-                    {(() => {
-
-                        const s = commandeProduits.reduce((acc, p) => {
-
-                            const qty = Number(p.quantity || 0);
-
-                            const price = Number(p.price || 0);
-
-                            const tvaRate = Number(p.tva || 0);
-
-                            const lineHT = qty * price;
-
-                            const lineTVA = lineHT * (tvaRate / 100);
-
-                            return { ht: acc.ht + lineHT, tva: acc.tva + lineTVA };
-
-                        }, { ht: 0, tva: 0 });
-
-                        const totalTTC = s.ht + s.tva;
-
-                        
-
-                        return (
-
-                            <div className="flex items-center gap-4">
-
-                                <div className="flex flex-col items-end">
-
-                                    <span className="text-[9px] uppercase font-bold text-base-content/50 -mb-1">{t('orders:product_table.total_ht')}</span>
-
-                                    <span className="text-sm font-bold">{formatCurrency(s.ht)}</span>
-
-                                </div>
-
-                                <div className="flex flex-col items-end border-l pl-4 border-base-200">
-
-                                    <span className="text-[9px] uppercase font-bold text-base-content/50 -mb-1">TVA</span>
-
-                                    <span className="text-sm font-bold text-base-content/60">{formatCurrency(s.tva)}</span>
-
-                                </div>
-
-                                <div className="bg-primary/10 text-primary border border-indigo-500/20 px-4 py-1.5 rounded flex flex-col items-end shadow-sm">
-
-                                    <span className="text-[9px] uppercase font-black -mb-1">Total TTC</span>
-
-                                    <span className="text-lg font-black leading-none">{formatCurrency(totalTTC)}</span>
-
-                                </div>
-
-                            </div>
-
-                        );
-
-                    })()}
-
-
 
                     {selectedRows.size > 0 && (
 
@@ -471,19 +413,19 @@ export default function CommandeProductTable({
 
                     {commandeType === 'DIR' && (
 
-                        <th className="!bg-base-200 text-right w-20 font-bold text-info border-l border-base-300/30">{t('orders:product_table.headers.dev_price')}</th>
+                        <th className="!bg-base-200 text-right w-24 font-bold text-info border-l border-base-300/30">{t('orders:product_table.headers.dev_price')}</th>
 
                     )}
 
-                    <th className="!bg-base-200 text-right w-20 font-bold border-l border-base-300/30">{t('orders:product_table.headers.buy_price_ht')}</th>
+                    <th className="!bg-base-200 text-right w-24 font-bold border-l border-base-300/30">{t('orders:product_table.headers.buy_price_ht')}</th>
 
                     <th className="!bg-base-200 text-right w-24 font-bold text-primary border-l border-base-300/30">Montant</th>
 
-                    <th className="!bg-base-200 text-right w-14 font-bold">{t('orders:product_table.headers.tva')}</th>
+                    <th className="!bg-base-200 text-right w-16 font-bold">{t('orders:product_table.headers.tva')}</th>
 
-                    <th className="!bg-base-200 text-right w-14 font-bold">{t('orders:product_table.headers.margin')}</th>
+                    <th className="!bg-base-200 text-right w-16 font-bold">{t('orders:product_table.headers.margin')}</th>
 
-                    <th className="!bg-base-200 text-right w-20 font-bold border-l border-base-300/30">{t('orders:product_table.headers.sell_price')}</th>
+                    <th className="!bg-base-200 text-right w-24 font-bold border-l border-base-300/30">{t('orders:product_table.headers.sell_price')}</th>
 
                     <th className="!bg-base-200 text-left w-24 font-bold border-l border-base-300/30">{t('orders:product_table.headers.lot')}</th>
 

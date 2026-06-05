@@ -136,28 +136,33 @@ class Command(BaseCommand):
                 f'[OK] Backup created successfully: {backup_file_gz} ({file_size:.2f} MB)'
             ))
 
-            # Clean old backups (keep last 30 days)
-            self.cleanup_old_backups(backup_dir, days=30)
+            # Clean old backups (keep last N backups based on settings)
+            from api.models.settings import PharmacySettings
+            conf, _ = PharmacySettings.objects.get_or_create(pk=1)
+            retention = conf.backup_retention_count or 30
+            self.cleanup_old_backups(backup_dir, retention_count=retention)
 
         except Exception as e:
             self.stdout.write(self.style.ERROR(f'Error during backup: {str(e)}'))
 
-    def cleanup_old_backups(self, backup_dir, days=30):
-        """Remove backups older than specified days"""
-        cutoff_date = datetime.now() - timedelta(days=days)
-        removed_count = 0
-
+    def cleanup_old_backups(self, backup_dir, retention_count=30):
+        """Keep only the N most recent backups"""
+        backups = []
         for filename in os.listdir(backup_dir):
             if filename.startswith('backup_') and filename.endswith('.sql.gz'):
                 filepath = os.path.join(backup_dir, filename)
-                file_time = datetime.fromtimestamp(os.path.getmtime(filepath))
+                backups.append((filepath, os.path.getmtime(filepath)))
 
-                if file_time < cutoff_date:
-                    os.remove(filepath)
-                    removed_count += 1
+        # Sort by modification time descending
+        backups.sort(key=lambda x: x[1], reverse=True)
+
+        removed_count = 0
+        for filepath, _ in backups[retention_count:]:
+            os.remove(filepath)
+            removed_count += 1
 
         if removed_count > 0:
             self.stdout.write(self.style.WARNING(
-                f'[CLEANUP] Removed {removed_count} old backup(s)'
+                f'[CLEANUP] Supprimé {removed_count} backup(s) (conservé les {retention_count} plus récents)'
             ))
 
