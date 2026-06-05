@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 
 import { useTranslation } from 'react-i18next';
 
@@ -56,7 +56,7 @@ interface CommandeProductTableProps {
 
     openTransferModal: () => void;
 
-    
+    onViewProductDetails?: (produitId: number) => void;
 
     // Updates
 
@@ -114,6 +114,8 @@ export default function CommandeProductTable({
 
     openTransferModal,
 
+    onViewProductDetails,
+
     updateCommandeProduitField,
 
     handleTableFieldKeyDown,
@@ -131,6 +133,35 @@ export default function CommandeProductTable({
     const [searchQuery, setSearchQuery] = useState('');
 
     const [expandedRow, setExpandedRow] = useState<number | null>(null);
+
+    const tableRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        const el = tableRef.current;
+        if (!el || !onViewProductDetails) return;
+
+        const handler = (e: KeyboardEvent) => {
+            if (e.shiftKey && e.key === 'Enter') {
+                const target = e.target as HTMLElement;
+                if (target.tagName === 'INPUT' && target.hasAttribute('data-row')) {
+                    const rowIdx = parseInt(target.getAttribute('data-row')!, 10);
+                    const p = commandeProduits[rowIdx];
+                    if (!p) return;
+
+                    const isObjectProduit = p.produit && typeof p.produit === 'object';
+                    const produitId = isObjectProduit ? (p.produit as any).id : p.produit;
+                    if (produitId) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        onViewProductDetails(Number(produitId));
+                    }
+                }
+            }
+        };
+
+        el.addEventListener('keydown', handler, true);
+        return () => el.removeEventListener('keydown', handler, true);
+    }, [commandeProduits, onViewProductDetails]);
 
 
 
@@ -208,7 +239,7 @@ export default function CommandeProductTable({
 
     return (
 
-        <div className="flex-1 min-h-0 flex flex-col bg-base-100 rounded-xl shadow-sm border border-base-200">
+        <div ref={tableRef} className="flex-1 min-h-0 flex flex-col bg-base-100 rounded-xl shadow-sm border border-base-200">
 
             <div className="py-1.5 px-3 border-b border-base-200 flex justify-between items-center shrink-0 flex-wrap gap-x-4 gap-y-2">
 

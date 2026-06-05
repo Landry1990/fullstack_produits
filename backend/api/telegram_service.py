@@ -1,6 +1,7 @@
 import requests
 import logging
 from django.utils import timezone
+from .retry_utils import retry_with_backoff
 
 logger = logging.getLogger(__name__)
 
@@ -162,33 +163,46 @@ class TelegramService:
             "parse_mode": parse_mode,
         }
 
-        try:
+        @retry_with_backoff(
+            max_retries=2,
+            base_delay=1.0,
+            max_delay=5.0,
+            exceptions=(requests.exceptions.RequestException,),
+        )
+        def _do_request():
             resp = requests.post(url, json=payload, timeout=10)
             data = resp.json()
             if resp.status_code == 200 and data.get('ok'):
-                logger.info(f"[Telegram] Message envoyé à chat_id={chat_id}")
-                # Mettre à jour le log
-                log.status = TelegramLog.Status.SENT
-                log.sent_at = timezone.now()
-                log.provider_message_id = str(data.get('result', {}).get('message_id', ''))
-                log.provider_response = str(data)
-                log.save()
-                return True, "Message envoyé avec succès ✅"
-
+                return data
             error_desc = data.get('description', 'Erreur inconnue')
             error_code = data.get('error_code', resp.status_code)
-            logger.warning(f"[Telegram] Erreur {error_code}: {error_desc}")
-            # Mettre à jour le log avec l'erreur
-            log.status = TelegramLog.Status.FAILED
-            log.provider_response = f"Erreur {error_code}: {error_desc}"
-            log.save()
-            return False, f"Erreur Telegram ({error_code}): {error_desc}"
+            raise requests.exceptions.HTTPError(
+                f"Erreur {error_code}: {error_desc}",
+                response=resp
+            )
 
-        except requests.exceptions.Timeout:
-            log.status = TelegramLog.Status.FAILED
-            log.provider_response = "Timeout — impossible de joindre l'API Telegram"
+        try:
+            data = _do_request()
+            logger.info(f"[Telegram] Message envoyé à chat_id={chat_id}")
+            log.status = TelegramLog.Status.SENT
+            log.sent_at = timezone.now()
+            log.provider_message_id = str(data.get('result', {}).get('message_id', ''))
+            log.provider_response = str(data)
             log.save()
-            return False, "Timeout — impossible de joindre l'API Telegram"
+            return True, "Message envoyé avec succès ✅"
+
+        except requests.exceptions.HTTPError as e:
+            logger.warning(f"[Telegram] {e}")
+            log.status = TelegramLog.Status.FAILED
+            log.provider_response = str(e)
+            log.save()
+            return False, str(e)
+        except requests.exceptions.RequestException as e:
+            logger.error(f"[Telegram] Échec après retries: {e}")
+            log.status = TelegramLog.Status.FAILED
+            log.provider_response = f"Échec après retries: {str(e)}"
+            log.save()
+            return False, f"Échec après retries: {str(e)}"
         except Exception as e:
             logger.error(f"[Telegram] Exception: {e}")
             log.status = TelegramLog.Status.FAILED

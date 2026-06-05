@@ -19,6 +19,8 @@ import SudoValidationModal from './common/SudoValidationModal';
 import TransferCommandeModal from './Commandes/TransferCommandeModal';
 import MergeCommandesModal from './Commandes/MergeCommandesModal';
 import SuggestionCommandeModal from './Commandes/SuggestionCommandeModal';
+import { ProductDetailsModal } from './products/modals/ProductDetailsModal';
+import { useProduit, useProduitLots, useProduitStats, useProduitAchats, useProduitHistory } from '../hooks/useProduits';
 
 interface CommandesProps {
     forcedType?: 'LOC' | 'DIR' | 'DIV';
@@ -30,6 +32,19 @@ export default function Commandes({ forcedType }: CommandesProps) {
   const [editingSchedule, setEditingSchedule] = useState<any>(null); // State for editing
   const [schedulesRefreshKey, setSchedulesRefreshKey] = useState(0);
   const [isScheduledListOpen, setIsScheduledListOpen] = useState(false);
+  const [detailProduitId, setDetailProduitId] = useState<number | null>(null);
+  const [detailActiveTab, setDetailActiveTab] = useState('general');
+
+  const { data: detailProduit } = useProduit(detailProduitId);
+  const { data: detailLots = [] } = useProduitLots(detailProduitId);
+  const { data: detailStats = [] } = useProduitStats(detailProduitId);
+  const { data: detailAchats = [] } = useProduitAchats(detailProduitId);
+  const { data: detailHistory = [], isLoading: detailHistoryLoading } = useProduitHistory(detailProduitId, detailActiveTab);
+
+  const handleViewProductDetails = (produitId: number) => {
+    setDetailProduitId(produitId);
+    setDetailActiveTab('general');
+  };
   
   const location = useLocation();
   const navigate = useNavigate();
@@ -117,7 +132,7 @@ export default function Commandes({ forcedType }: CommandesProps) {
 
       {(state.viewMode === 'CREATE' || state.viewMode === 'EDIT') && (
         <div className="flex-1 min-h-0 overflow-hidden flex flex-col">
-          <CommandeForm {...(formProps as any)} />
+          <CommandeForm {...(formProps as any)} onViewProductDetails={handleViewProductDetails} />
         </div>
       )}
 
@@ -222,6 +237,25 @@ export default function Commandes({ forcedType }: CommandesProps) {
           fournisseurs={modals.fournisseurs}
           commandesEndpoint={modals.commandesEndpoint}
           onMergeSuccess={modals.handleMergeSuccess}
+        />
+      )}
+
+      {detailProduitId && (
+        <ProductDetailsModal
+          isOpen={!!detailProduitId}
+          onClose={() => setDetailProduitId(null)}
+          selectedProduit={detailProduit || null}
+          activeTab={detailActiveTab}
+          setActiveTab={setDetailActiveTab}
+          lots={detailLots}
+          monthlyStats={detailStats}
+          achats={detailAchats}
+          stockHistory={detailHistory}
+          loadingHistory={detailHistoryLoading}
+          onMovementClick={() => {}}
+          onOpenAdjustment={() => {}}
+          onOpenEdit={() => {}}
+          onDelete={() => {}}
         />
       )}
     </div>

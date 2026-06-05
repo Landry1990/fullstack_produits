@@ -4,6 +4,7 @@ import logging
 from django.conf import settings
 from .models import WhatsAppLog, PharmacySettings
 from django.utils import timezone
+from .retry_utils import retry_with_backoff
 
 logger = logging.getLogger(__name__)
 
@@ -90,17 +91,31 @@ class WhatsAppService:
             "Content-Type": "application/json"
         }
         
-        try:
+        @retry_with_backoff(
+            max_retries=2,
+            base_delay=1.0,
+            max_delay=5.0,
+            exceptions=(requests.exceptions.RequestException,),
+        )
+        def _do_request():
             response = requests.post(url, headers=headers, json=payload, timeout=10)
             response.raise_for_status()
-            res_data = response.json()
-            
+            return response.json()
+
+        try:
+            res_data = _do_request()
             log_entry.status = WhatsAppLog.Status.SENT
             log_entry.provider_id = res_data.get('messages', [{}])[0].get('id')
             log_entry.provider_response = json.dumps(res_data)
             log_entry.sent_at = timezone.now()
             log_entry.save()
             return True, "Ticket envoyé avec succès"
+        except requests.exceptions.RequestException as e:
+            logger.error(f"Erreur WhatsApp (Invoice) après retries: {str(e)}")
+            log_entry.status = WhatsAppLog.Status.FAILED
+            log_entry.provider_response = f"Échec après retries: {str(e)}"
+            log_entry.save()
+            return False, f"Erreur: {str(e)}"
         except Exception as e:
             logger.error(f"Erreur WhatsApp (Invoice): {str(e)}")
             log_entry.status = WhatsAppLog.Status.FAILED
@@ -147,17 +162,31 @@ class WhatsAppService:
             "text": {"body": message}
         }
         
-        try:
+        @retry_with_backoff(
+            max_retries=2,
+            base_delay=1.0,
+            max_delay=5.0,
+            exceptions=(requests.exceptions.RequestException,),
+        )
+        def _do_request():
             response = requests.post(url, headers=headers, json=payload, timeout=10)
             response.raise_for_status()
-            res_data = response.json()
-            
+            return response.json()
+
+        try:
+            res_data = _do_request()
             log_entry.status = WhatsAppLog.Status.SENT
             log_entry.provider_id = res_data.get('messages', [{}])[0].get('id')
             log_entry.provider_response = json.dumps(res_data)
             log_entry.sent_at = timezone.now()
             log_entry.save()
             return True
+        except requests.exceptions.RequestException as e:
+            logger.error(f"Erreur WhatsApp (Text) après retries: {str(e)}")
+            log_entry.status = WhatsAppLog.Status.FAILED
+            log_entry.provider_response = f"Échec après retries: {str(e)}"
+            log_entry.save()
+            return False
         except Exception as e:
             logger.error(f"Erreur WhatsApp (Text): {str(e)}")
             log_entry.status = WhatsAppLog.Status.FAILED

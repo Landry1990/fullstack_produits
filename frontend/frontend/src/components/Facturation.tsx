@@ -203,7 +203,7 @@ export default function Facturation() {
                 <p className="text-[10px] text-base-content/50">{hook.t('pos.scan_or_search')}</p>
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 w-full">
-                {[['F9','Valider'],['ENTRÉE','Recherche'],['ESC','Annuler'],['F8','En attente']].map(([k,v]) => (
+                {[['F9',hook.t('facturation.shortcuts.validate')],['ENTRÉE',hook.t('facturation.shortcuts.search_enter')],['ESC',hook.t('facturation.shortcuts.cancel')],['F8',hook.t('facturation.shortcuts.pending')]].map(([k,v]) => (
                   <div key={k} className="bg-base-200/60 rounded-xl p-2 flex flex-col items-center gap-1">
                     <kbd className="kbd kbd-xs font-sans text-[9px]">{k}</kbd>
                     <span className="text-[8px] uppercase font-bold text-base-content/40">{v}</span>
@@ -520,7 +520,7 @@ export default function Facturation() {
         onClose={hook.closeSudo}
         onValidate={hook.sudoState.onValidate}
         saving={false}
-        title={hook.sudoState.title || "Validation Requise"}
+        title={hook.sudoState.title || hook.t('facturation.payment.sudo_title')}
         message={hook.sudoState.message || ""}
         className="z-[9999]"
       />

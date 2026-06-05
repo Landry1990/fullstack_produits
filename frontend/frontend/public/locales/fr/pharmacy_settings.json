@@ -40,6 +40,7 @@
         "debt_threshold": "Seuil Alerte Créances",
         "auto_logout": "Déconnexion Auto (minutes)",
         "coeff_direct": "Coefficient Commande Directe",
+        "taux_change": "Taux de Change (EUR/FCFA)",
         "whatsapp_phone_id": "Phone Number ID",
         "whatsapp_token": "Access Token (Permanent)",
         "whatsapp_account_id": "WhatsApp Business Account ID",
@@ -60,6 +61,7 @@
         "tva_rate": "19.25",
         "tva_label": "TVA Normale",
         "coeff_direct": "1.35",
+        "taux_change": "655.957",
         "whatsapp_phone_id": "ID numérique de 15 chiffres",
         "whatsapp_token": "EAAG...",
         "whatsapp_account_id": "ID du compte business",
@@ -78,6 +80,7 @@
         "auto_logout": "Durée d'inactivité avant déconnexion automatique (0 pour désactiver).",
         "coeff_direct": "Coefficient multiplicateur appliqué aux commandes étrangères.",
         "coeff_formula": "Prix Vente = Prix Achat * Coefficient",
+        "taux_change": "Taux de conversion EUR vers FCFA. Valeur appliquée automatiquement aux nouvelles commandes directes.",
         "whatsapp_help": "Nécessite un compte Meta Developer et l'API WhatsApp Business configurée.",
         "pharmacist_whatsapp": "Le numéro qui recevra les rapports stratégiques et d'inventaire (ne pas mettre de + devant)."
     },

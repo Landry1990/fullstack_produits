@@ -108,6 +108,7 @@ def run_suggestions_for_schedule(schedule):
             periode=schedule.analysis_period_days,
             fournisseur_id=schedule.fournisseur.id,
             budget_max=None,
+            delai_couverture=schedule.delai_couverture_jours,
         )
     elif schedule.execution_mode == 'CUMULATIF':
         return calculer_reapprovisionnement_cumulatif(

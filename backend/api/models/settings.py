@@ -84,6 +84,13 @@ class PharmacySettings(models.Model):
         help_text="Coefficient multiplicateur pour les commandes directes (Euro -> Revient)"
     )
 
+    taux_change_actif = models.DecimalField(
+        max_digits=10,
+        decimal_places=3,
+        default=655.957,
+        help_text="Taux de change actif pour les commandes directes (Euro -> FCFA). Source de vérité unique."
+    )
+
     # --- Paramètres Avancés (Règles Métier) ---
     low_stock_threshold_days = models.IntegerField(
         default=15,
@@ -304,7 +311,8 @@ class ConfigurationOption(models.Model):
         unique_together = ['type', 'code']
 
     def __str__(self):
-        return f"[{self.get_type_display()}] {self.label}"
+        type_label = dict(self.Type.choices).get(self.type, self.type)
+        return f"[{type_label}] {self.label}"
 
 
 class TVA(models.Model):

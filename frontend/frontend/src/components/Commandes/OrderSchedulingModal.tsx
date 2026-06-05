@@ -3,6 +3,7 @@ import api from '../../services/api'
 import { toast } from 'react-hot-toast'
 import { formatPrice } from '../../utils/formatters'
 import procurementService from '../../services/procurementService'
+import fournisseurService from '../../services/fournisseurService'
 import PremiumModal from '../common/PremiumModal'
 import { useTranslation } from 'react-i18next'
 import { 
@@ -47,6 +48,7 @@ export default function OrderSchedulingModal({
     const defaultSchedule: OrderSchedule = {
         fournisseur: 0,
         active_days: [1, 2, 3, 4, 5],
+        active_month_days: [],
         frequency_weeks: 1,
         start_date: new Date().toISOString().split('T')[0],
         time: '12:10',
@@ -66,7 +68,8 @@ export default function OrderSchedulingModal({
         min_items: 0,
         condition_logic: 'AND',
         execution_mode: 'OPTIMISE',
-        analysis_period_days: 30
+        analysis_period_days: 30,
+        delai_couverture_jours: 30
     };
 
     const [schedule, setSchedule] = useState<OrderSchedule>({
@@ -82,6 +85,21 @@ export default function OrderSchedulingModal({
             });
         }
     }, [initialSchedule, isOpen]);
+
+    // --- Paramètres logistiques du fournisseur (éditables dans le modal) ---
+    const [logistics, setLogistics] = useState({ delai_livraison: 7, marge_retard: 2 });
+
+    useEffect(() => {
+        if (schedule.fournisseur > 0) {
+            const f = fournisseurs.find(fx => fx.id === schedule.fournisseur);
+            if (f) {
+                setLogistics({
+                    delai_livraison: f.delai_livraison_jours || 7,
+                    marge_retard: f.marge_retard_jours || 2,
+                });
+            }
+        }
+    }, [schedule.fournisseur, fournisseurs]);
 
     // --- Generation Logic State (Manual) ---
     const [suggestionParams, setSuggestionParams] = useState({
@@ -101,26 +119,26 @@ export default function OrderSchedulingModal({
     const handleSave = async () => {
         // Validation fournisseur
         if (!schedule.fournisseur || schedule.fournisseur === 0) {
-            toast.error("Veuillez sélectionner un fournisseur valide");
+            toast.error(t('scheduling.err_select_supplier'));
             return;
         }
         
         // Validation fréquence
         if (!schedule.frequency_weeks || schedule.frequency_weeks < 1) {
-            toast.error("La fréquence doit être d'au moins 1 semaine");
+            toast.error(t('scheduling.err_frequency_min'));
             return;
         }
         
         // Validation jours actifs
         if (!schedule.active_days || schedule.active_days.length === 0) {
-            toast.error("Sélectionnez au moins un jour d'activation");
+            toast.error(t('scheduling.err_select_day'));
             return;
         }
         
         // Validation format heure HH:MM ou HH:MM:SS
         const timeRegex = /^([0-1]?[0-9]|2[0-3]):[0-5][0-9](:[0-5][0-9])?$/;
         if (!schedule.time || !timeRegex.test(schedule.time)) {
-            toast.error("Format d'heure invalide (HH:MM attendu, ex: 14:30)");
+            toast.error(t('scheduling.err_time_format'));
             return;
         }
         // Normaliser en HH:MM (supprimer les secondes si présentes)
@@ -131,13 +149,13 @@ export default function OrderSchedulingModal({
         today.setHours(0, 0, 0, 0);
         const startDate = new Date(schedule.start_date);
         if (startDate < today) {
-            toast.error("La date de début ne peut pas être dans le passé");
+            toast.error(t('scheduling.err_date_past'));
             return;
         }
         
         // Validation logique conditions si les deux sont définis
         if (schedule.min_amount > 0 && schedule.min_items > 0 && !schedule.condition_logic) {
-            toast.error("Précisez la logique AND/OR pour les conditions min montant et min articles");
+            toast.error(t('scheduling.err_logic_and_or'));
             return;
         }
         
@@ -153,17 +171,32 @@ export default function OrderSchedulingModal({
                 // S'assurer que les valeurs numériques sont valides
                 frequency_weeks: Math.max(1, parseInt(String(schedule.frequency_weeks)) || 1),
                 analysis_period_days: Math.max(1, parseInt(String(schedule.analysis_period_days)) || 30),
+                delai_couverture_jours: Math.max(1, parseInt(String(schedule.delai_couverture_jours)) || 30),
                 min_amount: Math.max(0, parseInt(String(schedule.min_amount)) || 0),
                 min_items: Math.max(0, parseInt(String(schedule.min_items)) || 0),
             };
 
             if (schedule.id) {
                 await procurementService.updateSchedule(schedule.id, cleanedSchedule);
-                toast.success("Planning mis à jour !");
+                toast.success(t('scheduling.success_updated'));
             } else {
                 await procurementService.createSchedule(cleanedSchedule);
-                toast.success("Planning créé avec succès !");
+                toast.success(t('scheduling.success_created'));
             }
+
+            // Mettre à jour les paramètres logistiques du fournisseur
+            if (schedule.fournisseur > 0) {
+                try {
+                    await fournisseurService.update(schedule.fournisseur, {
+                        delai_livraison_jours: logistics.delai_livraison,
+                        marge_retard_jours: logistics.marge_retard,
+                    });
+                } catch (err) {
+                    // Ne pas bloquer la sauvegarde du schedule si la mise à jour du fournisseur échoue
+                    console.warn('Erreur mise à jour paramètres logistiques:', err);
+                }
+            }
+
             onSave(cleanedSchedule);
         } catch (err: any) {
             // Gestion d'erreur détaillée
@@ -173,7 +206,7 @@ export default function OrderSchedulingModal({
                 || err.response?.data?.detail
                 || err.response?.data?.error
                 || err.response?.data?.message
-                || "Erreur lors de l'enregistrement du planning";
+                || t('scheduling.err_save');
             toast.error(errorMsg);
         } finally {
             setSaving(false);
@@ -181,45 +214,54 @@ export default function OrderSchedulingModal({
     };
 
     const days = [
-        { label: 'L', full: 'Lundi', value: 1 },
-        { label: 'M', full: 'Mardi', value: 2 },
-        { label: 'M', full: 'Mercredi', value: 3 },
-        { label: 'J', full: 'Jeudi', value: 4 },
-        { label: 'V', full: 'Vendredi', value: 5 },
-        { label: 'S', full: 'Samedi', value: 6 },
-        { label: 'D', full: 'Dimanche', value: 0 },
+        { label: 'L', full: t('scheduling.days.monday'), value: 1 },
+        { label: 'M', full: t('scheduling.days.tuesday'), value: 2 },
+        { label: 'M', full: t('scheduling.days.wednesday'), value: 3 },
+        { label: 'J', full: t('scheduling.days.thursday'), value: 4 },
+        { label: 'V', full: t('scheduling.days.friday'), value: 5 },
+        { label: 'S', full: t('scheduling.days.saturday'), value: 6 },
+        { label: 'D', full: t('scheduling.days.sunday'), value: 0 },
     ];
 
     const toggleDay = (val: number) => {
         setSchedule(prev => ({
             ...prev,
-            active_days: prev.active_days.includes(val) 
+            active_days: prev.active_days.includes(val)
                 ? prev.active_days.filter(d => d !== val)
                 : [...prev.active_days, val]
+        }));
+    };
+
+    const toggleMonthDay = (val: number) => {
+        setSchedule(prev => ({
+            ...prev,
+            active_month_days: prev.active_month_days.includes(val)
+                ? prev.active_month_days.filter(d => d !== val)
+                : [...prev.active_month_days, val]
         }));
     };
 
     async function fetchSuggestions() {
         // Validation fournisseur
         if (!schedule.fournisseur || schedule.fournisseur === 0) {
-            toast.error("Veuillez d'abord sélectionner un fournisseur");
+            toast.error(t('scheduling.err_select_supplier_first'));
             return;
         }
         
         // Validation budget numérique
         if (suggestionParams.budgetMax && isNaN(Number(suggestionParams.budgetMax))) {
-            toast.error("Le budget maximum doit être un nombre valide");
+            toast.error(t('scheduling.err_budget_number'));
             return;
         }
         
         // Validation dates pour mode ventes horaire
         if (suggestionParams.mode === 'ventes_horaire') {
             if (!suggestionParams.dateDebut || !suggestionParams.dateFin) {
-                toast.error("Les dates de début et fin sont requises pour ce mode");
+                toast.error(t('scheduling.err_dates_required'));
                 return;
             }
             if (new Date(suggestionParams.dateDebut) > new Date(suggestionParams.dateFin)) {
-                toast.error("La date de début doit être antérieure à la date de fin");
+                toast.error(t('scheduling.err_date_order'));
                 return;
             }
         }
@@ -251,7 +293,7 @@ export default function OrderSchedulingModal({
             const errorMsg = err.response?.data?.error 
                 || err.response?.data?.detail 
                 || err.response?.data?.message 
-                || "Erreur lors de la génération des suggestions";
+                || t('scheduling.err_suggestions');
             toast.error(errorMsg);
         } finally {
             setLoadingSuggestions(false);
@@ -261,7 +303,7 @@ export default function OrderSchedulingModal({
     function handleApply() {
         const selectedItems = suggestions.filter((_, i) => selectedSuggestions.has(i));
         if (selectedItems.length === 0) {
-            toast("Aucune sélection", { icon: '⚠️' });
+            toast(t('scheduling.no_selection'), { icon: '⚠️' });
             return;
         }
 
@@ -300,8 +342,8 @@ export default function OrderSchedulingModal({
         <PremiumModal
             isOpen={isOpen}
             onClose={onClose}
-            title="Service de Ravitaillement Automatique"
-            subtitle={activeTab === 'plan' ? "Configurez l'intelligence de votre stock" : "Générez un aperçu immédiat de la commande"}
+            title={t('scheduling.title')}
+            subtitle={activeTab === 'plan' ? t('scheduling.subtitle_plan') : t('scheduling.subtitle_gen')}
             icon={<Zap className="size-6 text-primary fill-primary/20" />}
             maxWidth="max-w-4xl"
             footer={
@@ -311,7 +353,7 @@ export default function OrderSchedulingModal({
                         {activeTab === 'gen' && stepGen === 2 && (
                             <button className="btn-ref btn-ghost" onClick={() => setStepGen(1)}>
                                 <ChevronLeft className="size-4 mr-2" />
-                                Paramètres
+                                {t('scheduling.back_params')}
                             </button>
                         )}
                         {activeTab === 'plan' ? (
@@ -326,7 +368,7 @@ export default function OrderSchedulingModal({
                             ) : (
                                 <button className="inline-flex items-center justify-center gap-2 px-10 py-2.5 bg-primary text-white text-sm font-bold rounded-xl hover:bg-primary-focus transition-colors shadow-lg shadow-indigo-500/20" onClick={handleApply} disabled={selectedSuggestions.size === 0}>
                                     <ShoppingCart className="size-4 mr-2" />
-                                    Créer la commande ({selectedSuggestions.size})
+                                    {t('scheduling.create_order_count', { count: selectedSuggestions.size })}
                                 </button>
                             )
                         )}
@@ -345,7 +387,7 @@ export default function OrderSchedulingModal({
                                 value={schedule.fournisseur || ''}
                                 onChange={(e) => setSchedule({...schedule, fournisseur: parseInt(e.target.value) || 0})}
                             >
-                                <option value="">-- Sélectionner un fournisseur --</option>
+                                <option value="">{t('scheduling.select_supplier_placeholder')}</option>
                                 {fournisseurs.map(f => (
                                     <option key={f.id} value={f.id}>{f.name}</option>
                                 ))}
@@ -373,10 +415,10 @@ export default function OrderSchedulingModal({
                 <div className="px-4 pt-4">
                     <div className="inline-flex bg-base-200/50 p-1 rounded-2xl w-fit gap-1">
                         <button className={`inline-flex items-center justify-center text-sm font-bold rounded-xl px-8 h-9 transition-all ${activeTab === 'plan' ? 'bg-base-100 shadow-sm text-primary' : 'text-base-content/50 hover:text-primary'}`} onClick={() => setActiveTab('plan')}>
-                            <Calendar className="size-3.5 mr-2" /> Configuration
+                            <Calendar className="size-3.5 mr-2" /> {t('scheduling.tab_plan')}
                         </button>
                         <button className={`inline-flex items-center justify-center text-sm font-bold rounded-xl px-8 h-9 transition-all ${activeTab === 'gen' ? 'bg-base-100 shadow-sm text-primary' : 'text-base-content/50 hover:text-primary'}`} onClick={() => setActiveTab('gen')}>
-                            <Search className="size-3.5 mr-2" /> Aperçu Immédiat
+                            <Search className="size-3.5 mr-2" /> {t('scheduling.tab_gen')}
                         </button>
                     </div>
                 </div>
@@ -412,6 +454,27 @@ export default function OrderSchedulingModal({
                                                     </button>
                                                 ))}
                                             </div>
+                                        </div>
+
+                                        {/* Jours du mois */}
+                                        <div>
+                                            <label className="text-[10px] font-bold text-base-content/50 uppercase mb-2 block">Jours du mois (optionnel)</label>
+                                            <div className="grid grid-cols-7 gap-1">
+                                                {Array.from({length: 31}, (_, i) => i + 1).map(day => (
+                                                    <button
+                                                        key={day}
+                                                        onClick={() => toggleMonthDay(day)}
+                                                        className={`size-7 rounded-lg text-[10px] font-black transition-all flex items-center justify-center border-2
+                                                            ${schedule.active_month_days.includes(day)
+                                                                ? 'bg-rose-500 border-rose-600 text-white shadow-sm'
+                                                                : 'bg-base-100 border-base-300 text-base-content/40 hover:border-rose-400/40'}`}
+                                                        title={`${day} du mois`}
+                                                    >
+                                                        {day}
+                                                    </button>
+                                                ))}
+                                            </div>
+                                            <p className="text-[9px] text-base-content/40 mt-1">Si sélectionné, le planning s'exécute aussi ces jours du mois indépendamment du jour de la semaine.</p>
                                         </div>
 
                                         <div className="grid grid-cols-3 gap-3">
@@ -473,7 +536,7 @@ export default function OrderSchedulingModal({
                                             <div className="flex items-center gap-2">
                                                 <Info className={`size-3.5 ${schedule.execution_mode === 'OPTIMISE' ? 'text-blue-500' : schedule.execution_mode === 'CUMULATIF' ? 'text-green-500' : 'text-base-content/60'}`} />
                                                 <span className={`text-[10px] font-bold ${schedule.execution_mode === 'OPTIMISE' ? 'text-info' : schedule.execution_mode === 'CUMULATIF' ? 'text-green-700' : 'text-base-content'}`}>
-                                                    {schedule.execution_mode === 'OPTIMISE' ? "Période d'analyse" : schedule.execution_mode === 'CUMULATIF' ? "Période initiale" : "Période de comptage"}
+                                                    {schedule.execution_mode === 'OPTIMISE' ? t('scheduling.period_analysis') : schedule.execution_mode === 'CUMULATIF' ? t('scheduling.period_initial') : t('scheduling.period_counting')}
                                                 </span>
                                             </div>
                                             <div className="flex items-center gap-2">
@@ -485,17 +548,77 @@ export default function OrderSchedulingModal({
                                                     min={1}
                                                     max={365}
                                                 />
-                                                <span className={`text-[10px] font-bold ${schedule.execution_mode === 'OPTIMISE' ? 'text-info' : 'text-base-content'}`}>jours</span>
+                                                <span className={`text-[10px] font-bold ${schedule.execution_mode === 'OPTIMISE' ? 'text-info' : 'text-base-content'}`}>{t('scheduling.days_short')}</span>
                                             </div>
                                         </div>
+                                        {/* Délai de couverture — paramètre indépendant de la période d'analyse */}
+                                        {schedule.execution_mode === 'OPTIMISE' && (
+                                            <div className="space-y-3">
+                                                <div className="p-3 rounded-2xl border bg-purple-50/50 border-purple-100 flex items-center justify-between">
+                                                    <div className="flex items-center gap-2">
+                                                        <Info className="size-3.5 text-purple-500" />
+                                                        <span className="text-[10px] font-bold text-purple-700">
+                                                            Autonomie cible (stock à couvrir)
+                                                        </span>
+                                                    </div>
+                                                    <div className="flex items-center gap-2">
+                                                        <input
+                                                            type="number"
+                                                            className="w-12 bg-transparent border-b border-purple-300 text-center font-black text-xs focus:outline-none text-purple-700"
+                                                            value={schedule.delai_couverture_jours}
+                                                            onChange={(e) => setSchedule({...schedule, delai_couverture_jours: parseInt(e.target.value) || 30})}
+                                                            min={1}
+                                                            max={365}
+                                                        />
+                                                        <span className="text-[10px] font-bold text-purple-700">j</span>
+                                                    </div>
+                                                </div>
+                                                {/* Paramètres logistiques du fournisseur — éditables */}
+                                                {schedule.fournisseur > 0 && (
+                                                    <div className="p-3 rounded-2xl border bg-blue-50/30 border-blue-100/50 space-y-2">
+                                                        <div className="text-[9px] font-bold text-blue-700/60 uppercase tracking-wider">Paramètres logistiques du fournisseur</div>
+                                                        <div className="grid grid-cols-2 gap-3">
+                                                            <div className="space-y-1">
+                                                                <label className="text-[9px] font-bold text-blue-700/80">Délai livraison</label>
+                                                                <div className="join w-full">
+                                                                    <input
+                                                                        type="number"
+                                                                        className="input-ref input-bordered input-xs join-item w-full font-bold text-blue-700"
+                                                                        value={logistics.delai_livraison}
+                                                                        onChange={(e) => setLogistics({...logistics, delai_livraison: parseInt(e.target.value) || 7})}
+                                                                        min={1}
+                                                                        max={90}
+                                                                    />
+                                                                    <span className="join-item bg-blue-100 px-2 flex items-center text-[10px] font-black text-blue-700">j</span>
+                                                                </div>
+                                                            </div>
+                                                            <div className="space-y-1">
+                                                                <label className="text-[9px] font-bold text-amber-700/80">Marge retard</label>
+                                                                <div className="join w-full">
+                                                                    <input
+                                                                        type="number"
+                                                                        className="input-ref input-bordered input-xs join-item w-full font-bold text-amber-700"
+                                                                        value={logistics.marge_retard}
+                                                                        onChange={(e) => setLogistics({...logistics, marge_retard: parseInt(e.target.value) || 2})}
+                                                                        min={0}
+                                                                        max={30}
+                                                                    />
+                                                                    <span className="join-item bg-amber-100 px-2 flex items-center text-[10px] font-black text-amber-700">j</span>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        )}
                                         {schedule.execution_mode === 'SIMPLE' && (
                                             <p className="text-[9px] text-base-content/60 leading-tight">
-                                                Le système comptera les ventes sur ces {schedule.analysis_period_days} derniers jours pour suggérer un réassort identique.
+                                                {t('scheduling.simple_mode_info', { days: schedule.analysis_period_days })}
                                             </p>
                                         )}
                                         {schedule.execution_mode === 'CUMULATIF' && (
                                             <p className="text-[9px] text-green-600 leading-tight">
-                                                <strong>Mode chaîné :</strong> La 1ère commande utilise la période initiale ({schedule.analysis_period_days}j), puis chaque nouvelle commande compte les ventes depuis la précédente génération.
+                                                <strong>{t('scheduling.cumulative')}</strong> {t('scheduling.cumulative_mode_info', { days: schedule.analysis_period_days })}
                                             </p>
                                         )}
                                     </div>
@@ -508,7 +631,7 @@ export default function OrderSchedulingModal({
                                             <div className="p-2 bg-amber-500/10 text-amber-500 rounded-xl">
                                                 <ShieldCheck className="size-4" />
                                             </div>
-                                            <h3 className="text-sm font-black text-base-content uppercase tracking-tight">Filtre de Sécurité</h3>
+                                            <h3 className="text-sm font-black text-base-content uppercase tracking-tight">{t('scheduling.security_filter')}</h3>
                                         </div>
                                         <input 
                                             type="checkbox" 
@@ -520,17 +643,17 @@ export default function OrderSchedulingModal({
 
                                     {schedule.min_amount > 0 ? (
                                         <div className="space-y-1 animate-in fade-in slide-in-from-top-2 duration-300">
-                                            <label className="text-[10px] font-bold text-base-content/50 uppercase block">Montant Min de Commande (HT)</label>
+                                            <label className="text-[10px] font-bold text-base-content/50 uppercase block">{t('scheduling.min_amount_label')}</label>
                                             <div className="relative">
                                                 <input type="number" className="input-ref input-bordered input-sm w-full font-bold pr-8" value={schedule.min_amount} onChange={(e) => setSchedule({...schedule, min_amount: parseInt(e.target.value) || 0})}/>
                                                 <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] font-black text-base-content/30">F</span>
                                             </div>
-                                            <p className="text-[9px] text-warning/60 font-bold leading-tight mt-2">Le ravitaillement automatique ne se déclenche que si ce montant est atteint.</p>
+                                            <p className="text-[9px] text-warning/60 font-bold leading-tight mt-2">{t('scheduling.min_amount_warning')}</p>
                                         </div>
                                     ) : (
                                         <div className="p-3 bg-base-200 rounded-2xl border border-dashed border-base-300 text-center">
-                                            <p className="text-[10px] font-bold text-base-content/50 uppercase">Filtre Désactivé</p>
-                                            <p className="text-[9px] text-base-content/30 mt-1">La commande sera créée quel que soit le montant.</p>
+                                            <p className="text-[10px] font-bold text-base-content/50 uppercase">{t('scheduling.filter_disabled')}</p>
+                                            <p className="text-[9px] text-base-content/30 mt-1">{t('scheduling.filter_disabled_desc')}</p>
                                         </div>
                                     )}
                                 </div>
@@ -541,7 +664,7 @@ export default function OrderSchedulingModal({
                                         <div className="p-2 bg-indigo-500/10 text-indigo-500 rounded-xl">
                                             <Bell className="size-4" />
                                         </div>
-                                        <h3 className="text-sm font-black text-base-content uppercase tracking-tight">Canaux de Notification</h3>
+                                        <h3 className="text-sm font-black text-base-content uppercase tracking-tight">{t('scheduling.notification_channels')}</h3>
                                     </div>
 
                                     <div className="grid grid-cols-2 gap-3">
@@ -550,26 +673,26 @@ export default function OrderSchedulingModal({
                                             onClick={() => setSchedule({...schedule, notify_whatsapp: !schedule.notify_whatsapp})}
                                         >
                                             <div className={`size-3 rounded-full ${schedule.notify_whatsapp ? 'bg-success' : 'bg-base-200'}`}></div>
-                                            <span className="text-[11px] font-black text-base-content">WhatsApp</span>
+                                            <span className="text-[11px] font-black text-base-content">{t('scheduling.whatsapp')}</span>
                                         </button>
                                         <button 
                                             className={`flex items-center gap-3 p-3 rounded-2xl border-2 transition-all ${schedule.notify_sms ? 'border-indigo-500 bg-primary/10' : 'border-base-200 bg-base-200'}`}
                                             onClick={() => setSchedule({...schedule, notify_sms: !schedule.notify_sms})}
                                         >
                                             <div className={`size-3 rounded-full ${schedule.notify_sms ? 'bg-primary' : 'bg-base-200'}`}></div>
-                                            <span className="text-[11px] font-black text-base-content">SMS Direct</span>
+                                            <span className="text-[11px] font-black text-base-content">{t('scheduling.sms_direct')}</span>
                                         </button>
                                     </div>
-                                    <p className="text-[10px] italic text-base-content/50 text-center">Vous recevrez un résumé à chaque exécution du service.</p>
+                                    <p className="text-[10px] italic text-base-content/50 text-center">{t('scheduling.notify_summary')}</p>
                                 </div>
                             </div>
 
                             <div className="mt-2 bg-base-100 border border-base-300 rounded-3xl p-4 shadow-sm">
                                 <div className="flex items-center gap-2 mb-2 px-1">
                                     <MessageSquare className="size-3.5 text-base-content/50" />
-                                    <label className="text-[10px] font-black uppercase text-base-content/50 tracking-widest">Notes de Service</label>
+                                    <label className="text-[10px] font-black uppercase text-base-content/50 tracking-widest">{t('scheduling.service_notes')}</label>
                                 </div>
-                                <textarea className="textarea-ref textarea-bordered w-full h-16 rounded-2xl resize-none text-sm font-medium border-base-200 focus:border-primary" placeholder="Consignes particulières pour ce ravitaillement automatique..." value={schedule.comment} onChange={(e) => setSchedule({...schedule, comment: e.target.value})}></textarea>
+                                <textarea className="textarea-ref textarea-bordered w-full h-16 rounded-2xl resize-none text-sm font-medium border-base-200 focus:border-primary" placeholder={t('scheduling.service_notes_placeholder')} value={schedule.comment} onChange={(e) => setSchedule({...schedule, comment: e.target.value})}></textarea>
                             </div>
                         </div>
                     ) : (
@@ -582,24 +705,24 @@ export default function OrderSchedulingModal({
                                             <input type="radio" className="hidden" checked={suggestionParams.mode === 'simple'} onChange={() => setSuggestionParams({...suggestionParams, mode: 'simple'})}/>
                                             <div className={`p-2 rounded-xl ${suggestionParams.mode === 'simple' ? 'bg-primary text-white' : 'bg-base-200 text-base-content/50'}`}><ShieldCheck className="size-4" /></div>
                                             <div className="space-y-0.5">
-                                                <span className="text-xs font-black block">REMPLACEMENT</span>
-                                                <p className="text-[9px] font-bold opacity-60">Simple & Sûr</p>
+                                                <span className="text-xs font-black block">{t('scheduling.mode_replacement')}</span>
+                                                <p className="text-[9px] font-bold opacity-60">{t('scheduling.mode_replacement_desc')}</p>
                                             </div>
                                         </label>
                                         <label className={`p-3 cursor-pointer rounded-2xl border-2 transition-all flex flex-col items-center text-center gap-2 ${suggestionParams.mode === 'optimise' ? 'border-primary bg-primary/10' : 'border-base-300 bg-base-100 hover:border-primary/20'}`}>
                                             <input type="radio" className="hidden" checked={suggestionParams.mode === 'optimise'} onChange={() => setSuggestionParams({...suggestionParams, mode: 'optimise'})}/>
                                             <div className={`p-2 rounded-xl ${suggestionParams.mode === 'optimise' ? 'bg-primary text-white' : 'bg-base-200 text-base-content/50'}`}><Zap className="size-4" /></div>
                                             <div className="space-y-0.5">
-                                                <span className="text-xs font-black block">PRÉDICTIF</span>
-                                                <p className="text-[9px] font-bold opacity-60">Tendances & IA</p>
+                                                <span className="text-xs font-black block">{t('scheduling.mode_predictive')}</span>
+                                                <p className="text-[9px] font-bold opacity-60">{t('scheduling.mode_predictive_desc')}</p>
                                             </div>
                                         </label>
                                         <label className={`p-3 cursor-pointer rounded-2xl border-2 transition-all flex flex-col items-center text-center gap-2 ${suggestionParams.mode === 'ventes_horaire' ? 'border-primary bg-primary/10' : 'border-base-300 bg-base-100 hover:border-primary/20'}`}>
                                             <input type="radio" className="hidden" checked={suggestionParams.mode === 'ventes_horaire'} onChange={() => setSuggestionParams({...suggestionParams, mode: 'ventes_horaire'})}/>
                                             <div className={`p-2 rounded-xl ${suggestionParams.mode === 'ventes_horaire' ? 'bg-primary text-white' : 'bg-base-200 text-base-content/50'}`}><Clock className="size-4" /></div>
                                             <div className="space-y-0.5">
-                                                <span className="text-xs font-black block">TEMPOREL</span>
-                                                <p className="text-[9px] font-bold opacity-60">Ventes horaires</p>
+                                                <span className="text-xs font-black block">{t('scheduling.mode_temporal')}</span>
+                                                <p className="text-[9px] font-bold opacity-60">{t('scheduling.mode_temporal_desc')}</p>
                                             </div>
                                         </label>
                                     </div>
@@ -607,32 +730,32 @@ export default function OrderSchedulingModal({
                                     <div className="bg-base-200 border border-base-300 p-5 rounded-3xl space-y-4">
                                         <div className="flex items-center gap-2 mb-2">
                                             <Settings2 className="size-4 text-primary" />
-                                            <h4 className="text-[10px] font-black uppercase text-base-content/60 tracking-widest">Paramètres d'analyse</h4>
+                                            <h4 className="text-[10px] font-black uppercase text-base-content/60 tracking-widest">{t('scheduling.analysis_params')}</h4>
                                         </div>
                                         {suggestionParams.mode === 'ventes_horaire' ? (
                                             <div className="grid grid-cols-2 gap-4">
                                                 <div className="space-y-1">
-                                                    <label className="text-[10px] font-bold uppercase opacity-40">Date Début</label>
+                                                    <label className="text-[10px] font-bold uppercase opacity-40">{t('scheduling.date_start')}</label>
                                                     <input type="date" className="input-ref input-bordered w-full rounded-xl font-bold" value={suggestionParams.dateDebut} onChange={(e) => setSuggestionParams({...suggestionParams, dateDebut: e.target.value})}/>
                                                 </div>
                                                 <div className="space-y-1">
-                                                    <label className="text-[10px] font-bold uppercase opacity-40">Date Fin</label>
+                                                    <label className="text-[10px] font-bold uppercase opacity-40">{t('scheduling.date_end')}</label>
                                                     <input type="date" className="input-ref input-bordered w-full rounded-xl font-bold" value={suggestionParams.dateFin} onChange={(e) => setSuggestionParams({...suggestionParams, dateFin: e.target.value})}/>
                                                 </div>
                                             </div>
                                         ) : (
                                             <div className="grid grid-cols-2 gap-4">
                                                 <div className="space-y-1">
-                                                    <label className="text-[10px] font-bold uppercase opacity-40">Période d'analyse (jours)</label>
+                                                    <label className="text-[10px] font-bold uppercase opacity-40">{t('scheduling.analysis_period_days')}</label>
                                                     <div className="join w-full">
                                                         <input type="number" className="input-ref input-bordered join-item w-full font-bold" value={suggestionParams.periode} onChange={(e) => setSuggestionParams({...suggestionParams, periode: parseInt(e.target.value) || 0})}/>
-                                                        <span className="join-item bg-base-200 px-4 flex items-center text-[10px] font-black">JOURS</span>
+                                                        <span className="join-item bg-base-200 px-4 flex items-center text-[10px] font-black">{t('scheduling.days_unit')}</span>
                                                     </div>
                                                 </div>
                                                 <div className="space-y-1">
-                                                    <label className="text-[10px] font-bold uppercase opacity-40">Budget Max (HT)</label>
+                                                    <label className="text-[10px] font-bold uppercase opacity-40">{t('scheduling.budget_max')}</label>
                                                     <div className="relative">
-                                                        <input type="number" className="input-ref input-bordered w-full rounded-xl font-bold" placeholder="Illimité" value={suggestionParams.budgetMax} onChange={(e) => setSuggestionParams({...suggestionParams, budgetMax: e.target.value})}/>
+                                                        <input type="number" className="input-ref input-bordered w-full rounded-xl font-bold" placeholder={t('scheduling.unlimited')} value={suggestionParams.budgetMax} onChange={(e) => setSuggestionParams({...suggestionParams, budgetMax: e.target.value})}/>
                                                         <span className="absolute right-4 top-1/2 -translate-y-1/2 text-xs font-black text-base-content/20">F</span>
                                                     </div>
                                                 </div>
@@ -648,13 +771,13 @@ export default function OrderSchedulingModal({
                                                 <ShoppingCart className="size-6 text-primary" />
                                             </div>
                                             <div>
-                                                <div className="text-[10px] text-base-content/50 uppercase font-black tracking-widest">Total Estimé de la commande</div>
-                                                <div className="text-2xl font-mono font-black text-primary">{formatPrice(totalHt)} F <span className="text-xs text-base-content/50 ml-1">HT</span></div>
+                                                <div className="text-[10px] text-base-content/50 uppercase font-black tracking-widest">{t('scheduling.total_estimated_order')}</div>
+                                                <div className="text-2xl font-mono font-black text-primary">{formatPrice(totalHt)} F <span className="text-xs text-base-content/50 ml-1">{t('scheduling.ht_suffix')}</span></div>
                                             </div>
                                         </div>
                                         <div className="text-right">
-                                            <div className="text-[10px] text-base-content/50 uppercase font-black tracking-widest">Articles suggérés</div>
-                                            <div className="text-xl font-black">{suggestions.length} produits</div>
+                                            <div className="text-[10px] text-base-content/50 uppercase font-black tracking-widest">{t('scheduling.suggested_items')}</div>
+                                            <div className="text-xl font-black">{suggestions.length} {t('scheduling.products_unit')}</div>
                                         </div>
                                     </div>
                                     <div className="overflow-auto flex-1 border border-base-300 rounded-3xl bg-base-100 shadow-inner">
@@ -662,11 +785,11 @@ export default function OrderSchedulingModal({
                                             <thead>
                                                 <tr className="bg-base-200 text-[10px] font-black uppercase text-base-content/50">
                                                     <th className="w-10"><input type="checkbox" className="size-4 rounded border-base-300 text-primary focus:ring-primary cursor-pointer" checked={selectedSuggestions.size === suggestions.length} onChange={() => setSelectedSuggestions(selectedSuggestions.size === suggestions.length ? new Set() : new Set(suggestions.map((_, i) => i)))}/></th>
-                                                    <th>Désignation Produit</th>
-                                                    <th className="text-center">Stock</th>
-                                                    <th className="text-center">Ventes</th>
-                                                    <th className="text-right">Quantité</th>
-                                                    <th className="text-right">Total HT</th>
+                                                    <th>{t('scheduling.table_designation')}</th>
+                                                    <th className="text-center">{t('scheduling.table_stock')}</th>
+                                                    <th className="text-center">{t('scheduling.table_sales')}</th>
+                                                    <th className="text-right">{t('scheduling.table_qty')}</th>
+                                                    <th className="text-right">{t('scheduling.table_total_ht')}</th>
                                                 </tr>
                                             </thead>
                                             <tbody>

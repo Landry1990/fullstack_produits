@@ -2,7 +2,11 @@
     "title": "Vente & Facturation",
     "shortcuts": {
         "search": "Rechercher (F2)",
-        "pay": "Valider (F9)"
+        "pay": "Valider (F9)",
+        "validate": "Valider",
+        "search_enter": "Recherche",
+        "cancel": "Annuler",
+        "pending": "En attente"
     },
     "cart": {
         "title": "Panier de vente",
@@ -120,6 +124,7 @@
         "en_compte_auto": "En compte (automatique)",
         "payment_mode_label": "Mode de paiement",
         "add_btn": "Ajouter",
+        "sudo_title": "Validation Requise",
         "sudo_mode": {
             "validate_by": "Validé par",
             "password": "Mot de passe (Sudo)",
@@ -148,7 +153,10 @@
         "register_payment": "Enregistrer le paiement",
         "status": {
             "processing": "Traitement..."
-        }
+        },
+        "send_to_cash_register": "Envoyer Vers (Poste de Caisse)",
+        "unknown_cashier": "Inconnu",
+        "select_active_cash_register": "Veuillez sélectionner un poste de caisse actif"
     },
     "pending_sales": {
         "title": "Ventes en attente",

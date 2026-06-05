@@ -36,18 +36,6 @@ class RapportSalesMixin:
         User = get_user_model()
         user_map = {u.id: (u.get_full_name() or u.username) for u in User.objects.all()}
 
-        # Sous-requête pour calculer le montant des produits is_divers par facture
-        from django.db.models import OuterRef, Subquery
-        divers_total_sub = FactureProduitAllocation.objects.filter(
-            facture_produit__facture=OuterRef('pk'),
-            stock_lot__is_divers=True
-        ).values('facture_produit__facture').annotate(
-            total_divers=Coalesce(
-                Sum(F('selling_price') * F('quantity'), output_field=DecimalField()),
-                Decimal('0.00')
-            )
-        ).values('total_divers')
-
         rows = (
             Facture.objects
             .filter(
@@ -55,17 +43,10 @@ class RapportSalesMixin:
                 date__gte=date_debut,
                 date__lt=date_fin,
             )
-            .annotate(
-                divers_amount=Coalesce(
-                    Subquery(divers_total_sub, output_field=DecimalField()),
-                    Decimal('0.00')
-                ),
-                adjusted_total=F('total_ttc') - F('divers_amount')
-            )
             .values('created_by_id')
             .annotate(
                 nbre_ventes=Count('id'),
-                chiffre_affaires=Coalesce(Sum('adjusted_total'), Value(0, output_field=DecimalField())),
+                chiffre_affaires=Coalesce(Sum('total_ttc'), Value(0, output_field=DecimalField())),
             )
             .order_by('-chiffre_affaires')
         )
@@ -103,18 +84,6 @@ class RapportSalesMixin:
         except: return Response({'error': 'Date invalide'}, status=400)
 
         # ── 1 seule requête GROUP BY client ─────────────────────────────────
-        # Sous-requête pour calculer le montant des produits is_divers par facture
-        from django.db.models import OuterRef, Subquery
-        divers_total_sub = FactureProduitAllocation.objects.filter(
-            facture_produit__facture=OuterRef('pk'),
-            stock_lot__is_divers=True
-        ).values('facture_produit__facture').annotate(
-            total_divers=Coalesce(
-                Sum(F('selling_price') * F('quantity'), output_field=DecimalField()),
-                Decimal('0.00')
-            )
-        ).values('total_divers')
-
         rows = (
             Facture.objects
             .filter(
@@ -122,17 +91,10 @@ class RapportSalesMixin:
                 status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE],
                 client__isnull=False,
             )
-            .annotate(
-                divers_amount=Coalesce(
-                    Subquery(divers_total_sub, output_field=DecimalField()),
-                    Decimal('0.00')
-                ),
-                adjusted_total=F('total_ttc') - F('divers_amount')
-            )
             .values('client_id', 'client__name', 'client__client_type')
             .annotate(
                 nb_ventes=Count('id'),
-                chiffre_affaires=Coalesce(Sum('adjusted_total'), Value(0, output_field=DecimalField())),
+                chiffre_affaires=Coalesce(Sum('total_ttc'), Value(0, output_field=DecimalField())),
             )
             .order_by('-chiffre_affaires')
         )
@@ -197,30 +159,11 @@ class RapportSalesMixin:
         User = get_user_model()
         user_map = {u.id: (u.get_full_name() or u.username) for u in User.objects.all()}
 
-        # Sous-requête pour calculer le montant des produits is_divers par facture
-        from django.db.models import OuterRef, Subquery
-        divers_total_sub = FactureProduitAllocation.objects.filter(
-            facture_produit__facture=OuterRef('pk'),
-            stock_lot__is_divers=True
-        ).values('facture_produit__facture').annotate(
-            total_divers=Coalesce(
-                Sum(F('selling_price') * F('quantity'), output_field=DecimalField()),
-                Decimal('0.00')
-            )
-        ).values('total_divers')
-
         rows = (
             Facture.objects
             .filter(status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE], date__gte=date_debut, date__lt=date_fin)
-            .annotate(
-                divers_amount=Coalesce(
-                    Subquery(divers_total_sub, output_field=DecimalField()),
-                    Decimal('0.00')
-                ),
-                adjusted_total=F('total_ttc') - F('divers_amount')
-            )
             .values('created_by_id')
-            .annotate(nbre_ventes=Count('id'), chiffre_affaires=Coalesce(Sum('adjusted_total'), Value(0, output_field=DecimalField())))
+            .annotate(nbre_ventes=Count('id'), chiffre_affaires=Coalesce(Sum('total_ttc'), Value(0, output_field=DecimalField())))
             .order_by('-chiffre_affaires')
         )
 
@@ -261,18 +204,6 @@ class RapportSalesMixin:
 
         vendeur_ids = [v.id for v in v_list]
 
-        # Sous-requête pour calculer le montant des produits is_divers par facture
-        from django.db.models import OuterRef, Subquery
-        divers_total_sub = FactureProduitAllocation.objects.filter(
-            facture_produit__facture=OuterRef('pk'),
-            stock_lot__is_divers=True
-        ).values('facture_produit__facture').annotate(
-            total_divers=Coalesce(
-                Sum(F('selling_price') * F('quantity'), output_field=DecimalField()),
-                Decimal('0.00')
-            )
-        ).values('total_divers')
-
         # ── 1 seule requête GROUP BY (created_by, mois) ──────────────────────
         rows = (
             Facture.objects
@@ -282,15 +213,10 @@ class RapportSalesMixin:
                 created_by_id__in=vendeur_ids,
             )
             .annotate(
-                divers_amount=Coalesce(
-                    Subquery(divers_total_sub, output_field=DecimalField()),
-                    Decimal('0.00')
-                ),
-                adjusted_total=F('total_ttc') - F('divers_amount'),
                 mois=TruncMonth('date')
             )
             .values('created_by_id', 'mois')
-            .annotate(ca=Coalesce(Sum('adjusted_total'), Value(0, output_field=DecimalField())))
+            .annotate(ca=Coalesce(Sum('total_ttc'), Value(0, output_field=DecimalField())))
             .order_by('created_by_id', 'mois')
         )
 

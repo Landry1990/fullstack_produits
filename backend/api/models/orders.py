@@ -86,6 +86,20 @@ class Commande(models.Model):
                 self.numero_facture = None
         else:
             self.numero_facture = None
+
+        # Fiabilité : sur une nouvelle instance, le taux de change doit venir
+        # de PharmacySettings (source de vérité unique), pas du default du modèle.
+        # Seuls les taux explicitement personnalisés (différent du vieux hardcodé)
+        # sont préservés afin de ne pas casser les commandes historiques modifiées.
+        if self._state.adding and self.taux_change == Decimal('655.957'):
+            try:
+                from .settings import PharmacySettings
+                ps = PharmacySettings.objects.first()
+                if ps and ps.taux_change_actif:
+                    self.taux_change = ps.taux_change_actif
+            except Exception:
+                pass  # Fallback silencieux sur le default du modèle
+
         super().save(*args, **kwargs)
 
     def __str__(self):
@@ -324,7 +338,8 @@ class OrderSchedule(models.Model):
     fournisseur = models.ForeignKey('Fournisseur', on_delete=models.CASCADE, related_name='schedules')
     
     # Scheduling
-    active_days = models.JSONField(default=list, help_text="List of active days [0-6]")
+    active_days = models.JSONField(default=list, help_text="List of active weekdays [0-6]")
+    active_month_days = models.JSONField(default=list, help_text="List of active month days [1-31]")
     frequency_weeks = models.IntegerField(default=1)
     start_date = models.DateField(default=date.today)
     time = models.TimeField(default="12:00")
@@ -351,7 +366,11 @@ class OrderSchedule(models.Model):
     
     # Automation Logic
     execution_mode = models.CharField(max_length=10, choices=ExecutionMode.choices, default=ExecutionMode.OPTIMISE)
-    analysis_period_days = models.IntegerField(default=30)
+    analysis_period_days = models.IntegerField(default=30, help_text="Période d'analyse des ventes pour calculer la VMD (jours).")
+    delai_couverture_jours = models.IntegerField(
+        default=30,
+        help_text="Autonomie de stock souhaitée après réception (jours de vente à couvrir). Peut varier pour un même fournisseur."
+    )
     comment = models.TextField(blank=True)
     last_run = models.DateTimeField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)

@@ -11,6 +11,7 @@ interface InventaireDataTabProps {
     selectedLines: Set<number>;
     toggleSelectAll: () => void;
     toggleSelectLine: (id: number) => void;
+    dirtyLineIds?: Set<number>;
     handleUpdateQuantity: (id: number, qty: number) => void;
     handleDeleteLine: (id: number) => void;
     handleBulkDelete: () => void;
@@ -24,6 +25,7 @@ export const InventaireDataTab: React.FC<InventaireDataTabProps> = ({
     selectedLines,
     toggleSelectAll,
     toggleSelectLine,
+    dirtyLineIds,
     handleUpdateQuantity,
     handleDeleteLine,
     handleBulkDelete,
@@ -164,8 +166,9 @@ export const InventaireDataTab: React.FC<InventaireDataTabProps> = ({
                                             : "text-base-content/20 bg-base-100 border-transparent";
                             const rayonName = l.produit_rayon || (l.produit as any).rayon_name || '-';
 
+                            const isDirty = dirtyLineIds?.has(l.id);
                             return (
-                                <div key={l.id} className={`grid grid-cols-12 gap-2 py-1.5 px-4 items-center hover:bg-base-50 transition-colors ${l.isLocalOnly ? 'bg-warning/5 border-l-[2px] border-l-warning' : ''}`}>
+                                <div key={l.id} className={`grid grid-cols-12 gap-2 py-1.5 px-4 items-center hover:bg-base-50 transition-colors ${l.isLocalOnly ? 'bg-warning/5 border-l-[2px] border-l-warning' : ''} ${isDirty ? 'bg-info/5 border-l-[2px] border-l-info' : ''}`}>
                                     {!isReadOnly && (
                                         <div className="col-span-1 flex items-center justify-center">
                                             <input 
@@ -179,8 +182,13 @@ export const InventaireDataTab: React.FC<InventaireDataTabProps> = ({
                                     
                                     {/* Product Info */}
                                     <div className={!isReadOnly ? "col-span-3" : "col-span-4"}>
-                                        <div className="font-bold text-sm text-base-content truncate pr-2" title={l.produit_nom || (l.produit as any).name}>
+                                        <div className="font-bold text-sm text-base-content truncate pr-2 flex items-center gap-1" title={l.produit_nom || (l.produit as any).name}>
                                             {l.produit_nom || (l.produit as any).name}
+                                            {isDirty && (
+                                                <span className="badge badge-info badge-xs rounded-md text-[9px] font-bold uppercase tracking-wider">
+                                                    {t('common:unsaved', 'Modifié')}
+                                                </span>
+                                            )}
                                         </div>
                                         <div className="text-xs font-mono text-base-content/50 flex gap-2 items-center leading-none mt-1">
                                             <span>{l.produit_cip || (l.produit as any).cip1}</span>

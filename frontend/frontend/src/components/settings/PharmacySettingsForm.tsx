@@ -626,25 +626,47 @@ export default function PharmacySettingsForm() {
                       </h2>
                     </div>
                     <div className="p-8">
-                      <div className="flex flex-col gap-1 max-w-md">
-                        <label className="label">
-                          <span className="text-sm font-bold text-base-content font-bold text-base-content/60">{t('labels.coeff_direct')}</span>
-                        </label>
-                        <input
-                          type="number"
-                          step="0.01"
-                          min="1"
-                          value={formData.coefficient_direct_commande || ''}
-                          onChange={(e) => handleChange('coefficient_direct_commande', e.target.value)}
-                          className="input input-bordered w-full font-bold text-primary h-12 rounded-xl focus:input-primary"
-                          placeholder={t('placeholders.coeff_direct')}
-                        />
-                        <label className="label">
-                          <span className="text-xs text-base-content/50 flex flex-col gap-1 mt-1">
-                            <span className="flex items-center gap-1 font-medium"><ChevronRight className="size-3" /> {t('hints.coeff_direct')}</span>
-                            <span className="flex items-center gap-1 italic"><ChevronRight className="size-3" /> {t('hints.coeff_formula')}</span>
-                          </span>
-                        </label>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                        <div className="flex flex-col gap-1">
+                          <label className="label">
+                            <span className="text-sm font-bold text-base-content font-bold text-base-content/60">{t('labels.coeff_direct')}</span>
+                          </label>
+                          <input
+                            type="number"
+                            step="0.01"
+                            min="1"
+                            value={formData.coefficient_direct_commande || ''}
+                            onChange={(e) => handleChange('coefficient_direct_commande', e.target.value)}
+                            className="input input-bordered w-full font-bold text-primary h-12 rounded-xl focus:input-primary"
+                            placeholder={t('placeholders.coeff_direct')}
+                          />
+                          <label className="label">
+                            <span className="text-xs text-base-content/50 flex flex-col gap-1 mt-1">
+                              <span className="flex items-center gap-1 font-medium"><ChevronRight className="size-3" /> {t('hints.coeff_direct')}</span>
+                              <span className="flex items-center gap-1 italic"><ChevronRight className="size-3" /> {t('hints.coeff_formula')}</span>
+                            </span>
+                          </label>
+                        </div>
+
+                        <div className="flex flex-col gap-1">
+                          <label className="label">
+                            <span className="text-sm font-bold text-base-content font-bold text-base-content/60">{t('labels.taux_change')}</span>
+                          </label>
+                          <input
+                            type="number"
+                            step="0.001"
+                            min="1"
+                            value={formData.taux_change_actif || ''}
+                            onChange={(e) => handleChange('taux_change_actif', e.target.value)}
+                            className="input input-bordered w-full font-bold text-primary h-12 rounded-xl focus:input-primary"
+                            placeholder={t('placeholders.taux_change')}
+                          />
+                          <label className="label">
+                            <span className="text-xs text-base-content/50 flex items-center gap-1 mt-1">
+                              <ChevronRight className="size-3" /> {t('hints.taux_change')}
+                            </span>
+                          </label>
+                        </div>
                       </div>
                     </div>
                   </div>

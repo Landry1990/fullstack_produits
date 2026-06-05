@@ -103,7 +103,7 @@ export function useProductSearch(options: UseProductSearchOptions = {}): UseProd
         queryKey: ['products', 'search', debouncedSearch, autoLoad],
         queryFn: () => fetchProducts(debouncedSearch, autoLoad),
         enabled: shouldFetch,
-        staleTime: 1000 * 5, // 5 secondes de cache comme demandé
+        staleTime: 1000 * 30, // 30 secondes — réduit les requêtes lors de la navigation rapide
         gcTime: 1000 * 60 * 5,
     })
 

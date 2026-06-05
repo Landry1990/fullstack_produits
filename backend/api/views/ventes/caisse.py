@@ -501,7 +501,11 @@ class CaisseViewSet(BaseViewSetConfig, viewsets.ModelViewSet):
                 logger.error(f"Error parsing date_fin {date_fin}: {e}")
 
         if not start_date:
-            last_cloture = ClotureCaisse.objects.order_by('-date').first()
+            # FIX: Filtrer la dernière clôture par user_id pour éviter de mélanger les caissiers
+            if user_id:
+                last_cloture = ClotureCaisse.objects.filter(user_id=user_id).order_by('-date').first()
+            else:
+                last_cloture = ClotureCaisse.objects.order_by('-date').first()
             start_date = last_cloture.date if last_cloture else None
         
         transactions = Caisse.objects.filter(statut='completee').exclude(mode_paiement__in=['en_compte', 'depot'])
@@ -533,11 +537,14 @@ class CaisseViewSet(BaseViewSetConfig, viewsets.ModelViewSet):
         modes_globaux = transactions.exclude(mode_paiement__in=['en_compte', 'depot']).values('mode_paiement').annotate(total=Sum('montant'))
         details = {item['mode_paiement']: float(-item['total'] if item['mode_paiement'] == 'coupon' else item['total']) for item in modes_globaux}
         
+        # FIX: Filtrer les mouvements par user_id pour éviter de mélanger les caissiers
         mouvements = MouvementCaisse.objects.all()
         if start_date:
             mouvements = mouvements.filter(date__gte=start_date)
         if end_date:
             mouvements = mouvements.filter(date__lte=end_date)
+        if user_id:
+            mouvements = mouvements.filter(user_id=user_id)
         
         total_entrees = mouvements.filter(type='ENTREE').aggregate(Sum('montant'))['montant__sum'] or Decimal('0.00')
         total_sorties = mouvements.filter(type='SORTIE').aggregate(Sum('montant'))['montant__sum'] or Decimal('0.00')
@@ -555,12 +562,47 @@ class CaisseViewSet(BaseViewSetConfig, viewsets.ModelViewSet):
         )['ca_div'] or Decimal('0.00')
         total_ca_pharmacie = total_ventes - total_ca_divers
 
-        if total_ventes == 0 and total_entrees == 0 and total_sorties == 0:
+        # Récupérer le fond de caisse de la session active
+        from ...models import SessionCaisse
+        active_session = SessionCaisse.objects.filter(
+            user=target_user, date_fermeture__isnull=True
+        ).order_by('-date_ouverture').first()
+        fond_de_caisse = Decimal(str(active_session.fond_de_caisse)) if active_session and active_session.fond_de_caisse else Decimal('0.00')
+
+        # Créer les mouvements manuels envoyés par le frontend
+        mouvements_manuels_data = request.data.get('mouvements_manuels', [])
+        mouvements_crees = []
+        for mv in mouvements_manuels_data:
+            if mv.get('montant', 0) > 0 and mv.get('motif'):
+                mouvement = MouvementCaisse.objects.create(
+                    type=mv.get('type', 'SORTIE'),
+                    montant=Decimal(str(mv['montant'])),
+                    motif=mv['motif'],
+                    user=target_user,
+                    poste_caisse_id=poste_caisse_id,
+                    date=end_date or timezone.now()
+                )
+                mouvements_crees.append(mouvement)
+
+        # Recalculer les totaux avec les mouvements manuels créés
+        if mouvements_crees:
+            mouvements = MouvementCaisse.objects.all()
+            if start_date:
+                mouvements = mouvements.filter(date__gte=start_date)
+            if end_date:
+                mouvements = mouvements.filter(date__lte=end_date)
+            if user_id:
+                mouvements = mouvements.filter(user_id=user_id)
+            total_entrees = mouvements.filter(type='ENTREE').aggregate(Sum('montant'))['montant__sum'] or Decimal('0.00')
+            total_sorties = mouvements.filter(type='SORTIE').aggregate(Sum('montant'))['montant__sum'] or Decimal('0.00')
+
+        # Vérifier s'il y a au moins un mouvement (ventes, mouvements existants ou manuels)
+        if total_ventes == 0 and total_entrees == 0 and total_sorties == 0 and not mouvements_crees:
              return Response({'detail': 'Impossible de clôturer : aucun mouvement détecté depuis la dernière clôture.'}, status=status.HTTP_400_BAD_REQUEST)
 
-        # FIX: Inclure les recouvrements espèces dans le théorique de clôture
+        # FIX: Inclure les recouvrements espèces + fond de caisse dans le théorique
         recouv_especes = paiements_recouv.filter(mode_paiement='especes').aggregate(Sum('montant'))['montant__sum'] or Decimal('0.00')
-        total_theorique = total_ventes_especes + recouv_especes + total_entrees - total_sorties
+        total_theorique = total_ventes_especes + recouv_especes + total_entrees - total_sorties + fond_de_caisse
         ecart = montant_reel - total_theorique
         
         # type: ignore[index] - details is a mixed dict[str, Any] for API response
@@ -571,7 +613,8 @@ class CaisseViewSet(BaseViewSetConfig, viewsets.ModelViewSet):
             'total_entrees': float(total_entrees), 
             'total_sorties': float(total_sorties),
             'total_ca_divers': float(total_ca_divers),
-            'total_ca_pharmacie': float(total_ca_pharmacie)
+            'total_ca_pharmacie': float(total_ca_pharmacie),
+            'fond_de_caisse': float(fond_de_caisse)
         }
         
         mouvements_list = []
@@ -588,13 +631,41 @@ class CaisseViewSet(BaseViewSetConfig, viewsets.ModelViewSet):
             poste_caisse_id=poste_caisse_id
         )
         
+        # Fermer la session active
+        if active_session:
+            active_session.date_fermeture = timezone.now()
+            active_session.save(update_fields=['date_fermeture'])
+        
         log_audit(user=request.user, action=AuditLog.Action.CLOTURE_CAISSE, model_name='ClotureCaisse', object_id=cloture.pk,  # type: ignore[attr-defined]
             description=f"Clôture de caisse: Théorique={total_theorique:.0f}F, Réel={montant_reel:.0f}F, Écart={ecart:+.0f}F",
-            details={'theorique': float(total_theorique), 'reel': float(montant_reel), 'ecart': float(ecart), 'ventes': float(total_ventes), 'entrees': float(total_entrees), 'sorties': float(total_sorties)},
+            details={'theorique': float(total_theorique), 'reel': float(montant_reel), 'ecart': float(ecart), 'ventes': float(total_ventes), 'entrees': float(total_entrees), 'sorties': float(total_sorties), 'fond_de_caisse': float(fond_de_caisse)},
             request=request
         )
         
-        return Response({'status': 'success', 'cloture_id': cloture.pk, 'montant_reel': float(montant_reel), 'montant_theorique': float(total_theorique), 'ecart': float(ecart), 'total_ventes': float(total_ventes), 'total_entrees': float(total_entrees), 'total_sorties': float(total_sorties), 'details': details})  # type: ignore[attr-defined]
+        # Réponse structurée pour matcher l'attente du frontend
+        cloture_data = {
+            'id': cloture.pk,
+            'date': cloture.date.isoformat(),
+            'montant_reel': float(montant_reel),
+            'montant_theorique': float(total_theorique),
+            'ecart_caisse': float(ecart),
+            'total_ventes': float(total_ventes),
+            'total_entrees': float(total_entrees),
+            'total_sorties': float(total_sorties),
+            'total_ca_divers': float(total_ca_divers),
+            'total_ca_pharmacie': float(total_ca_pharmacie),
+            'fond_de_caisse': float(fond_de_caisse),
+            'date_debut': start_date.isoformat() if start_date else None,
+            'date_fin': end_date.isoformat() if end_date else None,
+            'details': details,
+            'user': target_user.get_full_name() or target_user.username,
+            'mouvements_manuels': [
+                {'type': m.type, 'montant': float(m.montant), 'motif': m.motif}
+                for m in mouvements_crees
+            ]
+        }
+        
+        return Response({'status': 'success', 'cloture': cloture_data})  # type: ignore[attr-defined]
 
 
 class ClotureCaisseViewSet(BaseViewSetConfig, viewsets.ReadOnlyModelViewSet):

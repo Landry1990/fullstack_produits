@@ -85,11 +85,12 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
 
   if (!isOpen) return null
 
-  const handleAddPayment = () => {
+  const handleAddPayment = (forcedMode?: string) => {
+    const mode = forcedMode || modePaiement
     const montant = Number(montantPaye)
     if (!montant || montant === 0) return
 
-    if (modePaiement === 'depot') {
+    if (mode === 'depot') {
       const alreadyPaidWithDepot = paiements
         .filter(p => p.mode === 'depot')
         .reduce((acc, p) => acc + p.montant, 0)
@@ -100,7 +101,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
       }
     }
     
-    const newPaiements = [...paiements, { mode: modePaiement, montant }]
+    const newPaiements = [...paiements, { mode, montant }]
     setPaiements(newPaiements)
     
     const newTotal = newPaiements.reduce((acc, p) => acc + p.montant, 0)
@@ -126,7 +127,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
     if (e.key === 'Enter' || e.key === ' ') {
       e.preventDefault()
       setModePaiement(paymentModes[index].value)
-      handleAddPayment()
+      handleAddPayment(paymentModes[index].value)
       return
     }
     if (e.key === 'ArrowRight') {
@@ -248,7 +249,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
             <button
               type="button"
               className="btn btn-sm btn-primary mb-0"
-              onClick={handleAddPayment}
+              onClick={() => handleAddPayment()}
               disabled={!montantPaye || Number(montantPaye) === 0}
               title="Entrée dans le montant ou clic"
             >
@@ -274,7 +275,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
                   }`}
                   onClick={() => {
                     setModePaiement(m.value)
-                    handleAddPayment()
+                    handleAddPayment(m.value)
                   }}
                   onKeyDown={(e) => handleModeKeyDown(e, idx)}
                   title={`${m.label} — ←→ pour naviguer, Entrée pour valider, Échap pour retour`}
