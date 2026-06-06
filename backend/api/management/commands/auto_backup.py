@@ -2,6 +2,8 @@ from django.core.management.base import BaseCommand
 from django.core.management import call_command
 from django.utils import timezone
 from api.models.settings import PharmacySettings
+from django.conf import settings
+from pathlib import Path
 import os
 from datetime import datetime, timedelta
 
@@ -15,16 +17,16 @@ class Command(BaseCommand):
             self.stdout.write("Backup automatique désactivé dans les paramètres.")
             return
 
-        from django.conf import settings as django_settings
-        backup_dir = os.path.join(django_settings.BASE_DIR, 'backups')
-        os.makedirs(backup_dir, exist_ok=True)
+        # Use shared backups folder (same as backup-db.sh and web interface)
+        backup_dir = Path(settings.BASE_DIR).parent / 'backups'
+        backup_dir.mkdir(parents=True, exist_ok=True)
 
         # Find the most recent backup file
         last_backup_time = None
-        backups = [f for f in os.listdir(backup_dir) if f.startswith('backup_') and f.endswith('.sql.gz')]
+        backups = [f for f in os.listdir(backup_dir) if f.startswith('backup-') and f.endswith('.sql')]
         if backups:
-            latest_file = max([os.path.join(backup_dir, f) for f in backups], key=os.path.getmtime)
-            last_backup_time = datetime.fromtimestamp(os.path.getmtime(latest_file))
+            latest_file = max([backup_dir / f for f in backups], key=lambda p: p.stat().st_mtime)
+            last_backup_time = datetime.fromtimestamp(latest_file.stat().st_mtime)
 
         now = timezone.localtime()
         interval = conf.backup_interval_minutes or 1440
@@ -48,7 +50,8 @@ class Command(BaseCommand):
         else:
             # Short interval: check minutes since last backup
             if last_backup_time:
-                minutes_since = (now - timezone.localtime(last_backup_time)).total_seconds() / 60
+                aware_last = timezone.make_aware(last_backup_time)
+                minutes_since = (now - aware_last).total_seconds() / 60
                 if minutes_since < interval:
                     self.stdout.write(f"Dernier backup il y a {minutes_since:.0f} min (intervalle: {interval} min). Skipping.")
                     return
@@ -65,3 +68,18 @@ class Command(BaseCommand):
                 dest_path = os.path.join(conf.secondary_backup_path, os.path.basename(latest_backup))
                 shutil.copy2(latest_backup, dest_path)
                 self.stdout.write(f"Copie vers destination secondaire OK: {dest_path}")
+
+        # Handle Google Drive backup
+        gdrive_path = (conf.google_drive_backup_path or '').strip()
+        if gdrive_path and os.path.exists(gdrive_path):
+            import shutil
+            backups = [f for f in os.listdir(backup_dir) if f.endswith('.sql.gz')]
+            if backups:
+                latest_backup = max([os.path.join(backup_dir, f) for f in backups], key=os.path.getmtime)
+                gdrive_backup_dir = os.path.join(gdrive_path, 'pharmacie-backups')
+                os.makedirs(gdrive_backup_dir, exist_ok=True)
+                dest_path = os.path.join(gdrive_backup_dir, os.path.basename(latest_backup))
+                shutil.copy2(latest_backup, dest_path)
+                self.stdout.write(self.style.SUCCESS(f"[GDRIVE] Copie Google Drive OK: {dest_path}"))
+        elif gdrive_path:
+            self.stdout.write(self.style.WARNING(f"[GDRIVE] Chemin Google Drive configuré mais introuvable: {gdrive_path}"))

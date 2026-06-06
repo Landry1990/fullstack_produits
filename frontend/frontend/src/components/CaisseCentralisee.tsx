@@ -248,6 +248,19 @@ export default function CaisseCentralisee() {
   // Ouvrir la modale de paiement (useCallback pour les raccourcis clavier)
   const handleCloseSession = async () => {
     if (!myActivePoste) return
+
+    // Vérifier si des ventes en attente sont présentes
+    if (facturesEnAttente.length > 0) {
+      toast.error(
+        t('cash_session.pending_sales_error', {
+          defaultValue: `Impossible de fermer : ${facturesEnAttente.length} vente(s) en attente de règlement. Veuillez régler ou annuler les ventes avant de clôturer.`,
+          count: facturesEnAttente.length
+        }),
+        { duration: 5000 }
+      )
+      return
+    }
+
     if (!window.confirm(t('cash_session.confirm_close', { defaultValue: 'Fermer votre caisse ?' }))) return
     try {
       const { data } = await cashSessionService.closePoste(myActivePoste.id, hideAmounts)

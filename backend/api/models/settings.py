@@ -175,6 +175,54 @@ class PharmacySettings(models.Model):
         default="",
         help_text="Chemin secondaire (ex: E:\\Backups_Pharmacie) pour double sauvegarde"
     )
+    google_drive_backup_path = models.CharField(
+        max_length=500,
+        blank=True,
+        default="",
+        help_text="Chemin du dossier Google Drive monté (ex: /mnt/gdrive) pour copie automatique"
+    )
+
+    # --- Paramètres Cloud Backup (S3) ---
+    cloud_backup_enabled = models.BooleanField(
+        default=False,
+        help_text="Activer la sauvegarde vers le cloud (S3-compatible)"
+    )
+    cloud_backup_endpoint = models.CharField(
+        max_length=500,
+        blank=True,
+        default="",
+        help_text="Endpoint S3 (ex: s3.amazonaws.com, s3.wasabisys.com, s3.fr-par.scw.cloud)"
+    )
+    cloud_backup_bucket = models.CharField(
+        max_length=200,
+        blank=True,
+        default="",
+        help_text="Nom du bucket S3"
+    )
+    cloud_backup_access_key = models.CharField(
+        max_length=200,
+        blank=True,
+        default="",
+        help_text="Access Key ID S3"
+    )
+    cloud_backup_secret_key = models.CharField(
+        max_length=200,
+        blank=True,
+        default="",
+        help_text="Secret Access Key S3"
+    )
+    cloud_backup_region = models.CharField(
+        max_length=50,
+        blank=True,
+        default="",
+        help_text="Région S3 (ex: us-east-1, eu-west-1, fr-par — laisser vide si non requis)"
+    )
+    cloud_backup_path_prefix = models.CharField(
+        max_length=200,
+        blank=True,
+        default="pharmacie-backups/",
+        help_text="Préfixe de chemin dans le bucket (ex: pharmacie-backups/)"
+    )
 
     # --- Paramètres Expert IA (Santé du Stock) ---
     availability_weight = models.IntegerField(

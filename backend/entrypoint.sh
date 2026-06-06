@@ -120,15 +120,16 @@ echo ""
 echo "📂 Collecte des fichiers statiques..."
 python manage.py collectstatic --noinput
 
-# ── 5. Créer une sauvegarde pré-démarrage si aucune récente ──
+# ── 5. Créer le dossier de sauvegarde et vérifier les backups ──
 echo ""
 echo "💾 Vérification des sauvegardes..."
+mkdir -p /backups
 python -c "
 import os, time
 from pathlib import Path
-backup_dir = Path('/app/backups')
+backup_dir = Path('/backups')
 backup_dir.mkdir(exist_ok=True)
-backups = list(backup_dir.glob('backup_*.sql.gz'))
+backups = list(backup_dir.glob('backup-*.sql'))
 if backups:
     latest = max(backups, key=lambda f: f.stat().st_mtime)
     age_h = (time.time() - latest.stat().st_mtime) / 3600

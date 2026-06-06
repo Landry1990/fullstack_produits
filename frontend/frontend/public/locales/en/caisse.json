@@ -379,6 +379,11 @@
     },
     "poste_label": "Post: ",
     "all_posts": "All posts",
+    "cash_session": {
+        "pending_sales_error": "Cannot close: {{count}} sale(s) pending settlement. Please settle or cancel the sales before closing.",
+        "confirm_close": "Close your cash register?",
+        "close_error": "Closing error"
+    },
     "common": {
         "unknown": "Unknown",
         "creance": "DEBT",

@@ -5,7 +5,7 @@ from rest_framework.permissions import IsAuthenticated
 from django.utils import timezone
 from django.db.models import Sum
 from decimal import Decimal
-from ...models import PosteCaisse, SessionCaisse, Caisse
+from ...models import PosteCaisse, SessionCaisse, Caisse, Facture
 from ...serializers import PosteCaisseSerializer, SessionCaisseSerializer
 
 class PosteCaisseViewSet(viewsets.ModelViewSet):
@@ -75,6 +75,18 @@ class PosteCaisseViewSet(viewsets.ModelViewSet):
         if not poste.est_ouvert:
             return Response({
                 "detail": f"Le poste {poste.nom} est déjà fermé."
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        # Vérifier si des ventes non réglées sont présentes sur ce poste
+        ventes_non_reglees = Facture.objects.filter(
+            poste_caisse=poste,
+            status__in=[Facture.Status.BROUILLON, Facture.Status.VALIDEE],
+            is_active=True
+        )
+        if ventes_non_reglees.exists():
+            count = ventes_non_reglees.count()
+            return Response({
+                "detail": f"Impossible de fermer la caisse : {count} vente(s) en attente de règlement. Veuillez régler ou annuler les ventes avant de clôturer."
             }, status=status.HTTP_400_BAD_REQUEST)
 
         # Récupérer la session active

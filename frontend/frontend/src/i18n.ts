@@ -52,7 +52,8 @@ i18n
             'config',
             'help',
             'clinical',
-            'changelog'
+            'changelog',
+            'system_admin'
         ],
         defaultNS: 'common',
         interpolation: {

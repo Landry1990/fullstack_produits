@@ -109,8 +109,8 @@
         "apply_reward_button": "Apply discount"
     },
     "payment": {
-        "modal_title": "Payment",
-        "amount_due": "Balance Due",
+        "modal_title": "Checkout",
+        "amount_due": "Amount to collect",
         "amount_paid": "Amount Paid",
         "change_due": "Change Due",
         "part_patient": "Patient Part (Active Tiers Payant)",
@@ -122,7 +122,7 @@
         "amount_label": "Amount",
         "caisse_centrale": "Main Cash",
         "en_compte_auto": "On account (automatic)",
-        "payment_mode_label": "Payment mode",
+        "payment_mode_label": "Cash register",
         "add_btn": "Add",
         "sudo_title": "Validation Required",
         "sudo_mode": {

@@ -3,6 +3,7 @@ import type { Facture } from '../../types'
 import { useTranslation } from 'react-i18next'
 import { formatCurrency } from '../../utils/formatters'
 import PremiumModal from '../common/PremiumModal'
+import { useAuth } from '../../context/AuthContext'
 
 type PaymentItem = {
     mode: string
@@ -70,6 +71,7 @@ export default function PaymentModal({
     setSelectedPosteCaisseId
 }: PaymentModalProps) {
     const { t } = useTranslation(['facturation', 'common'])
+    const { user } = useAuth()
 
     // Refs for keyboard-driven flow
     const submitBtnRef = useRef<HTMLButtonElement>(null);
@@ -260,6 +262,14 @@ export default function PaymentModal({
                     <div className="p-3 bg-base-100 border border-base-300 rounded-lg text-sm font-medium flex items-center gap-2">
                         <span className="badge badge-primary badge-xs"></span>
                         {t('facturation:payment.caisse_centrale')}
+                        {user?.username && (
+                          <span className="text-[10px] text-base-content/50 ml-auto font-normal flex items-center gap-1">
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" viewBox="0 0 20 20" fill="currentColor">
+                              <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
+                            </svg>
+                            {user.username}
+                          </span>
+                        )}
                     </div>
                     {/* Hidden input to maintain logic if needed, but we just use state 'especes' */}
                   </div>
