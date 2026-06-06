@@ -72,19 +72,22 @@ def main():
                 else:
                     # Court intervalle: vérifier le temps depuis dernier backup
                     from django.conf import settings as django_settings
+                    from pathlib import Path
                     import os as os_module
-                    backup_dir = os_module.path.join(django_settings.BASE_DIR, 'backups')
+                    backup_dir = Path(django_settings.BASE_DIR).parent / 'backups'
                     last_backup_time = None
-                    if os_module.path.exists(backup_dir):
+                    if backup_dir.exists():
                         backups = [f for f in os_module.listdir(backup_dir)
-                                   if f.startswith('backup_') and f.endswith('.sql.gz')]
+                                   if f.startswith('backup-') and f.endswith('.sql')]
                         if backups:
-                            latest_file = max([os_module.path.join(backup_dir, f) for f in backups],
-                                              key=os_module.path.getmtime)
-                            last_backup_time = datetime.fromtimestamp(os_module.path.getmtime(latest_file))
+                            latest_file = max([backup_dir / f for f in backups],
+                                              key=lambda p: p.stat().st_mtime)
+                            last_backup_time = datetime.fromtimestamp(latest_file.stat().st_mtime)
 
                     if last_backup_time:
-                        minutes_since = (now - timezone.localtime(last_backup_time)).total_seconds() / 60
+                        from django.utils import timezone as tz_util
+                        aware_last = tz_util.make_aware(last_backup_time)
+                        minutes_since = (now - aware_last).total_seconds() / 60
                         if minutes_since >= interval:
                             should_run = True
                     else:

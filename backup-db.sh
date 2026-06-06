@@ -1,13 +1,17 @@
 #!/usr/bin/env bash
 # ============================================================
 # Backup PostgreSQL depuis le conteneur Docker (Linux/Ubuntu)
-# Usage: ./backup-db.sh [--retention-days 7]
+# Usage: ./backup-db.sh [--retention-days 7] [--gdrive-dir /mnt/gdrive]
+#
+# Pour Google Drive : monter via rclone ou volume Docker,
+# puis passer --gdrive-dir ou définir GDRIVE_DIR dans .env
 # ============================================================
 
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 RETENTION_DAYS=7
+GDRIVE_DIR=""
 EXIT_CODE=0
 
 # Parse args
@@ -16,6 +20,9 @@ for ((i=1; i<=$#; i++)); do
     if [[ "$arg" == "--retention-days" ]]; then
         next=$((i+1))
         RETENTION_DAYS="${!next:-7}"
+    elif [[ "$arg" == "--gdrive-dir" ]]; then
+        next=$((i+1))
+        GDRIVE_DIR="${!next:-}"
     fi
 done
 
@@ -55,6 +62,11 @@ DB_USER="${DB_USER:-fullstack_user}"
 DB_NAME="${DB_NAME:-fullstack_db}"
 CONTAINER="${DB_CONTAINER:-fullstack_produits-db-1}"
 
+# Chemin Google Drive depuis .env si non passé en argument
+if [[ -z "$GDRIVE_DIR" && -n "${GDRIVE_DIR:-}" ]]; then
+    GDRIVE_DIR="$GDRIVE_DIR"
+fi
+
 log_entry() {
     local level="$1"
     local msg="$2"
@@ -86,6 +98,21 @@ if docker exec "$CONTAINER" pg_dump -U "$DB_USER" -d "$DB_NAME" --no-owner --no-
         CHECKSUM=$(cut -d' ' -f1 "$CHECKSUM_FILE")
         gray "   MD5: $CHECKSUM"
         log_entry "INFO" "Checksum MD5: $CHECKSUM"
+
+        # Copie vers Google Drive (si configuré)
+        if [[ -n "$GDRIVE_DIR" ]]; then
+            if [[ -d "$GDRIVE_DIR" ]]; then
+                GDRIVE_BACKUP_DIR="$GDRIVE_DIR/pharmacie-backups"
+                mkdir -p "$GDRIVE_BACKUP_DIR"
+                cp "$BACKUP_FILE" "$GDRIVE_BACKUP_DIR/"
+                cp "$CHECKSUM_FILE" "$GDRIVE_BACKUP_DIR/"
+                log "   ☁️  Copie Google Drive OK: $(basename "$BACKUP_FILE")"
+                log_entry "INFO" "Copie Google Drive OK: $(basename "$BACKUP_FILE")"
+            else
+                warn "   ⚠️ Dossier Google Drive introuvable: $GDRIVE_DIR"
+                log_entry "WARN" "Dossier Google Drive introuvable: $GDRIVE_DIR"
+            fi
+        fi
     else
         err "   ❌ Backup echoue (fichier vide)"
         log_entry "ERROR" "Backup échoué - fichier vide"
@@ -99,7 +126,7 @@ else
     EXIT_CODE=1
 fi
 
-# Nettoyer vieux backups (SQL + MD5)
+# Nettoyer vieux backups locaux (SQL + MD5)
 if [[ $EXIT_CODE -eq 0 ]]; then
     warn "🧹 Nettoyage des backups plus anciens que ${RETENTION_DAYS} jours..."
     DELETED=$(find "$BACKUP_DIR" -name "backup-*.sql" -type f -mtime +$RETENTION_DAYS -print | wc -l)
@@ -107,6 +134,18 @@ if [[ $EXIT_CODE -eq 0 ]]; then
     find "$BACKUP_DIR" -name "backup-*.sql.md5" -type f -mtime +$RETENTION_DAYS -delete
     log "   $DELETED fichier(s) supprime(s)"
     log_entry "INFO" "Nettoyage: $DELETED ancien(s) backup(s) supprimé(s)"
+
+    # Nettoyer aussi sur Google Drive si configuré
+    if [[ -n "$GDRIVE_DIR" && -d "$GDRIVE_DIR" ]]; then
+        GDRIVE_BACKUP_DIR="$GDRIVE_DIR/pharmacie-backups"
+        GDRIVE_DELETED=$(find "$GDRIVE_BACKUP_DIR" -name "backup-*.sql" -type f -mtime +$RETENTION_DAYS -print 2>/dev/null | wc -l)
+        find "$GDRIVE_BACKUP_DIR" -name "backup-*.sql" -type f -mtime +$RETENTION_DAYS -delete 2>/dev/null || true
+        find "$GDRIVE_BACKUP_DIR" -name "backup-*.sql.md5" -type f -mtime +$RETENTION_DAYS -delete 2>/dev/null || true
+        if [[ $GDRIVE_DELETED -gt 0 ]]; then
+            log "   ☁️  $GDRIVE_DELETED fichier(s) supprimé(s) sur Google Drive"
+            log_entry "INFO" "Nettoyage Google Drive: $GDRIVE_DELETED fichier(s) supprimé(s)"
+        fi
+    fi
 fi
 
 # Résumé
