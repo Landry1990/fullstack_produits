@@ -187,9 +187,9 @@ class RelationTransformationViewSet(viewsets.ModelViewSet):
                 quantite=-quantite,
                 stock_apres=source.stock,
                 user=request.user,
-                description=f"Transformation vers {destination.name}"
+                description=f"Transformation vers {destination.name} (par {request.user.username})"
             )
-            
+
             # Mouvement Destination
             MouvementStock.objects.create(
                 produit=destination,
@@ -197,7 +197,7 @@ class RelationTransformationViewSet(viewsets.ModelViewSet):
                 quantite=quantite_dest_total,
                 stock_apres=destination.stock,
                 user=request.user,
-                description=f"Transformation depuis {source.name}"
+                description=f"Transformation depuis {source.name} (par {request.user.username})"
             )
 
             # Historique Transformation

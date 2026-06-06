@@ -4,7 +4,7 @@ import subprocess
 import os
 import sys
 from datetime import datetime, timedelta
-import gzip
+from pathlib import Path
 import shutil
 
 
@@ -73,13 +73,14 @@ class Command(BaseCommand):
         self.stdout.write(self.style.SUCCESS(f'Using pg_dump: {pg_dump_cmd}'))
 
         # Create backups directory if it doesn't exist
-        backup_dir = os.path.join(settings.BASE_DIR, 'backups')
-        os.makedirs(backup_dir, exist_ok=True)
+        # Use the shared backups folder (same as backup-db.sh and the web interface)
+        backup_dir = Path(settings.BASE_DIR).parent / 'backups'
+        backup_dir.mkdir(parents=True, exist_ok=True)
 
-        # Generate timestamp filename
-        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-        backup_file = os.path.join(backup_dir, f'backup_{timestamp}.sql')
-        backup_file_gz = f'{backup_file}.gz'
+        # Generate timestamp filename (same format as backup-db.sh)
+        timestamp = datetime.now().strftime('%Y%m%d-%H%M%S')
+        backup_file = backup_dir / f'backup-{timestamp}.sql'
+        checksum_file = backup_dir / f'backup-{timestamp}.sql.md5'
 
         # Get database settings
         db_settings = settings.DATABASES['default']
@@ -120,36 +121,43 @@ class Command(BaseCommand):
                 self.stdout.write(self.style.ERROR(f'Backup failed: {result.stderr}'))
                 return
 
-            # Compress the backup
-            self.stdout.write('Compressing backup...')
-            with open(backup_file, 'rb') as f_in:
-                with gzip.open(backup_file_gz, 'wb') as f_out:
-                    shutil.copyfileobj(f_in, f_out)
-
-            # Remove uncompressed file
-            os.remove(backup_file)
+            # Generate MD5 checksum
+            import hashlib
+            hasher = hashlib.md5()
+            with open(backup_file, 'rb') as f:
+                for chunk in iter(lambda: f.read(8192), b''):
+                    hasher.update(chunk)
+            with open(checksum_file, 'w') as f:
+                f.write(f"{hasher.hexdigest()}  {backup_file.name}\n")
 
             # Get file size
-            file_size = os.path.getsize(backup_file_gz) / (1024 * 1024)  # MB
+            file_size = backup_file.stat().st_size / (1024 * 1024)  # MB
 
             self.stdout.write(self.style.SUCCESS(
-                f'[OK] Backup created successfully: {backup_file_gz} ({file_size:.2f} MB)'
+                f'[OK] Backup created successfully: {backup_file} ({file_size:.2f} MB)'
             ))
+            self.stdout.write(f'   MD5: {hasher.hexdigest()}')
+
+            # Upload to cloud (S3-compatible)
+            self.upload_to_cloud(str(backup_file))
+
+            # Copy to Google Drive (local mounted path)
+            self.copy_to_google_drive(str(backup_file))
 
             # Clean old backups (keep last N backups based on settings)
             from api.models.settings import PharmacySettings
             conf, _ = PharmacySettings.objects.get_or_create(pk=1)
             retention = conf.backup_retention_count or 30
-            self.cleanup_old_backups(backup_dir, retention_count=retention)
+            self.cleanup_old_backups(str(backup_dir), retention_count=retention)
 
         except Exception as e:
             self.stdout.write(self.style.ERROR(f'Error during backup: {str(e)}'))
 
     def cleanup_old_backups(self, backup_dir, retention_count=30):
-        """Keep only the N most recent backups"""
+        """Keep only the N most recent backups (.sql + .sql.md5)"""
         backups = []
         for filename in os.listdir(backup_dir):
-            if filename.startswith('backup_') and filename.endswith('.sql.gz'):
+            if filename.startswith('backup-') and filename.endswith('.sql'):
                 filepath = os.path.join(backup_dir, filename)
                 backups.append((filepath, os.path.getmtime(filepath)))
 
@@ -159,10 +167,103 @@ class Command(BaseCommand):
         removed_count = 0
         for filepath, _ in backups[retention_count:]:
             os.remove(filepath)
+            # Also remove associated MD5 file
+            md5_path = filepath + '.md5'
+            if os.path.exists(md5_path):
+                os.remove(md5_path)
             removed_count += 1
 
         if removed_count > 0:
             self.stdout.write(self.style.WARNING(
                 f'[CLEANUP] Supprimé {removed_count} backup(s) (conservé les {retention_count} plus récents)'
+            ))
+
+    def copy_to_google_drive(self, backup_file_path):
+        """Copy backup file to a locally mounted Google Drive folder"""
+        try:
+            from api.models.settings import PharmacySettings
+            conf, _ = PharmacySettings.objects.get_or_create(pk=1)
+
+            gdrive_path = (conf.google_drive_backup_path or '').strip()
+            if not gdrive_path:
+                return
+
+            if not os.path.exists(gdrive_path):
+                self.stdout.write(self.style.WARNING(
+                    f'[GDRIVE] Chemin Google Drive configuré mais introuvable: {gdrive_path}'
+                ))
+                return
+
+            import shutil
+            gdrive_backup_dir = os.path.join(gdrive_path, 'pharmacie-backups')
+            os.makedirs(gdrive_backup_dir, exist_ok=True)
+            dest_path = os.path.join(gdrive_backup_dir, os.path.basename(backup_file_path))
+            shutil.copy2(backup_file_path, dest_path)
+            self.stdout.write(self.style.SUCCESS(
+                f'[GDRIVE] Copie Google Drive OK: {dest_path}'
+            ))
+
+        except Exception as e:
+            self.stdout.write(self.style.ERROR(
+                f'[GDRIVE] Erreur copie: {str(e)}'
+            ))
+
+    def upload_to_cloud(self, backup_file_path):
+        """Upload backup file to S3-compatible cloud storage"""
+        try:
+            from api.models.settings import PharmacySettings
+            conf, _ = PharmacySettings.objects.get_or_create(pk=1)
+
+            if not conf.cloud_backup_enabled:
+                return
+
+            endpoint = (conf.cloud_backup_endpoint or '').strip()
+            bucket = (conf.cloud_backup_bucket or '').strip()
+            access_key = (conf.cloud_backup_access_key or '').strip()
+            secret_key = (conf.cloud_backup_secret_key or '').strip()
+
+            if not all([endpoint, bucket, access_key, secret_key]):
+                self.stdout.write(self.style.WARNING(
+                    '[CLOUD] Cloud backup activé mais paramètres incomplets — skipping'
+                ))
+                return
+
+            import boto3
+            from botocore.config import Config
+
+            region = (conf.cloud_backup_region or '').strip()
+            prefix = (conf.cloud_backup_path_prefix or 'pharmacie-backups/').strip()
+            if prefix and not prefix.endswith('/'):
+                prefix += '/'
+
+            filename = os.path.basename(backup_file_path)
+            s3_key = f"{prefix}{filename}"
+
+            config = Config(
+                signature_version='s3v4',
+                retries={'max_attempts': 3, 'mode': 'standard'}
+            )
+
+            session_kwargs = {
+                'service_name': 's3',
+                'aws_access_key_id': access_key,
+                'aws_secret_access_key': secret_key,
+                'endpoint_url': f"https://{endpoint}",
+                'config': config,
+            }
+            if region:
+                session_kwargs['region_name'] = region
+
+            s3 = boto3.client(**session_kwargs)
+
+            self.stdout.write(f'[CLOUD] Upload vers {endpoint}/{bucket}/{s3_key} ...')
+            s3.upload_file(backup_file_path, bucket, s3_key)
+            self.stdout.write(self.style.SUCCESS(
+                f'[CLOUD] Upload OK: {s3_key}'
+            ))
+
+        except Exception as e:
+            self.stdout.write(self.style.ERROR(
+                f'[CLOUD] Erreur upload: {str(e)}'
             ))
 

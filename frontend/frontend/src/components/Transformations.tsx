@@ -299,18 +299,26 @@ const Transformations: React.FC = () => {
   const handleTransformer = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!transformationData.relation) return;
-    
+
+    const confirmed = await confirm({
+      title: t('transformations.messages.transform_confirm_title', { defaultValue: 'Confirmer la transformation' }),
+      message: t('transformations.messages.transform_confirm_message', { defaultValue: `Transformer ${transformationData.quantite} ${transformationData.relation.produit_source_nom} en ${quantiteDestinationCalculee} ${transformationData.relation.produit_destination_nom} ?` }),
+      variant: 'warning',
+      confirmText: t('transformations.messages.transform_confirm_btn', { defaultValue: 'Oui, transformer' })
+    });
+    if (!confirmed) return;
+
     setSubmitting(true);
     try {
       const res = await api.post(`relations-transformation/${transformationData.relation.id}/transformer/`, {
         quantite: transformationData.quantite,
         notes: transformationData.notes
       });
-      
+
       if (res.data.success) {
         toast.success(res.data.message || t('transformations.messages.transform_success'));
         setIsTransformerModalOpen(false);
-        fetchData(); 
+        fetchData();
       }
     } catch (error) {
       toast.error(getApiErrorDetail(error, t('transformations.messages.transform_error')));

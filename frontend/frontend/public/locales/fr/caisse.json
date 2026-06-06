@@ -379,6 +379,11 @@
     },
     "poste_label": "Poste :",
     "all_posts": "Tous les postes",
+    "cash_session": {
+        "pending_sales_error": "Impossible de fermer : {{count}} vente(s) en attente de règlement. Veuillez régler ou annuler les ventes avant de clôturer.",
+        "confirm_close": "Fermer votre caisse ?",
+        "close_error": "Erreur fermeture"
+    },
     "common": {
         "unknown": "Inconnu",
         "creance": "CRÉANCE",
