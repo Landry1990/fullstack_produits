@@ -77,8 +77,13 @@ def main():
                     backup_dir = Path(django_settings.BASE_DIR).parent / 'backups'
                     last_backup_time = None
                     if backup_dir.exists():
-                        backups = [f for f in os_module.listdir(backup_dir)
-                                   if f.startswith('backup-') and f.endswith('.sql')]
+                        # Priorité aux .sql.gz (créés par backup_database, vrais backups auto)
+                        backups_gz = [f for f in os_module.listdir(backup_dir)
+                                      if f.startswith('backup-') and f.endswith('.sql.gz')]
+                        backups_sql = [f for f in os_module.listdir(backup_dir)
+                                       if f.startswith('backup-') and f.endswith('.sql')
+                                       and not f.endswith('.sql.gz')]
+                        backups = backups_gz if backups_gz else backups_sql
                         if backups:
                             latest_file = max([backup_dir / f for f in backups],
                                               key=lambda p: p.stat().st_mtime)

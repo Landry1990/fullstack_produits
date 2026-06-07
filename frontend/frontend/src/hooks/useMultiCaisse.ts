@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { cashSessionService } from '../services/cashSessionService'
 import type { PosteCaisse } from '../types'
 
@@ -27,6 +27,10 @@ export function useMultiCaisse(_options: UseMultiCaisseOptions = {}): UseMultiCa
     const [multiCaisseLoading, setMultiCaisseLoading] = useState(false)
     const [myActivePoste, setMyActivePoste] = useState<PosteCaisse | null>(null)
 
+    // Ref pour lire selectedPosteCaisseId sans en faire une dépendance de refreshPostes
+    const selectedPosteCaisseIdRef = useRef<number | null>(null)
+    selectedPosteCaisseIdRef.current = selectedPosteCaisseId
+
     const refreshPostes = useCallback(async () => {
         setMultiCaisseLoading(true)
         try {
@@ -39,36 +43,32 @@ export function useMultiCaisse(_options: UseMultiCaisseOptions = {}): UseMultiCa
             const myPoste = myPostes.length > 0 ? myPostes[0] : null
             setMyActivePoste(myPoste)
 
-            // Multicaisse auto-détecté : > 1 poste actif
             const hasMulti = activePostes.length > 1
             setIsMultiCaisse(hasMulti)
 
-            // Auto-select la caisse de l'utilisateur si ouverte, sinon le seul poste actif
-            if (!selectedPosteCaisseId) {
+            // Auto-select uniquement si aucun poste n'est déjà sélectionné
+            if (!selectedPosteCaisseIdRef.current) {
                 if (myPoste) {
-                    // L'utilisateur a sa propre caisse ouverte → la pré-sélectionner
                     setSelectedPosteCaisseId(myPoste.id)
                 } else if (activePostes.length === 1) {
-                    // Un seul poste ouvert (pas le sien) → le sélectionner
                     setSelectedPosteCaisseId(activePostes[0].id)
                 }
-                // Si multi-postes et pas la sienne → laisser l'utilisateur choisir
             }
         } catch (err) {
             console.error('Erreur chargement postes caisses:', err)
         } finally {
             setMultiCaisseLoading(false)
         }
-    }, [selectedPosteCaisseId])
+    }, []) // Pas de dépendances → fonction stable, pas de boucle
 
     // Initial fetch
     useEffect(() => {
         refreshPostes()
     }, [refreshPostes])
 
-    // Polling toutes les 30s
+    // Polling toutes les 60s (les sessions de caisse changent rarement)
     useEffect(() => {
-        const interval = setInterval(refreshPostes, 30000)
+        const interval = setInterval(refreshPostes, 60000)
         return () => clearInterval(interval)
     }, [refreshPostes])
 

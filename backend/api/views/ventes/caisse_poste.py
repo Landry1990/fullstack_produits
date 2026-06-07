@@ -3,7 +3,7 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from django.utils import timezone
-from django.db.models import Sum
+from django.db.models import Sum, Q
 from decimal import Decimal
 from ...models import PosteCaisse, SessionCaisse, Caisse, Facture
 from ...serializers import PosteCaisseSerializer, SessionCaisseSerializer
@@ -160,6 +160,90 @@ class PosteCaisseViewSet(viewsets.ModelViewSet):
         mes_postes = self.get_queryset().filter(est_ouvert=True, ouvert_par=request.user)
         serializer = self.get_serializer(mes_postes, many=True)
         return Response(serializer.data)
+
+    @action(detail=False, methods=['get'], url_path='recap_session')
+    def recap_session(self, request):
+        """Retourne les totaux en temps réel par mode de paiement pour la session active de l'utilisateur.
+        Pour les superusers sans session propre, agrège toutes les sessions actives."""
+        session = SessionCaisse.objects.filter(
+            ouvert_par=request.user,
+            est_active=True
+        ).select_related('poste').first()
+
+        # Superuser sans session propre : agrège toutes les sessions actives
+        if not session and request.user.is_superuser:
+            sessions = SessionCaisse.objects.filter(est_active=True).select_related('poste')
+            if not sessions.exists():
+                return Response({'has_session': False})
+
+            total_general = Decimal('0')
+            fond_total = Decimal('0')
+            details = {}
+            nb_transactions = 0
+            postes_noms = []
+
+            for s in sessions:
+                paiements = Caisse.objects.filter(
+                    facture__poste_caisse=s.poste,
+                    date_paiement__gte=s.date_ouverture,
+                    statut='completee'
+                ).exclude(mode_paiement__in=['en_compte', 'depot'])
+
+                total_general += paiements.aggregate(t=Sum('montant'))['t'] or Decimal('0')
+                fond_total += Decimal(str(s.fond_de_caisse)) if s.fond_de_caisse else Decimal('0')
+                nb_transactions += paiements.count()
+                postes_noms.append(s.poste.nom)
+
+                for item in paiements.values('mode_paiement').annotate(total=Sum('montant')):
+                    if item['total']:
+                        details[item['mode_paiement']] = details.get(item['mode_paiement'], 0) + float(item['total'])
+
+            first_session = sessions.order_by('date_ouverture').first()
+            date_ouverture = first_session.date_ouverture if first_session else None
+            poste_nom = ' + '.join(postes_noms) if len(postes_noms) > 1 else postes_noms[0]
+
+            return Response({
+                'has_session': True,
+                'poste_nom': poste_nom,
+                'date_ouverture': date_ouverture,
+                'fond_de_caisse': float(fond_total),
+                'total_encaisse': float(total_general),
+                'total_avec_fond': float(total_general + fond_total),
+                'nb_transactions': nb_transactions,
+                'details_par_mode': details,
+            })
+
+        if not session:
+            return Response({'has_session': False})
+
+        paiements = Caisse.objects.filter(
+            facture__poste_caisse=session.poste,
+            date_paiement__gte=session.date_ouverture,
+            statut='completee'
+        ).exclude(mode_paiement__in=['en_compte', 'depot'])
+
+        total_general = paiements.aggregate(t=Sum('montant'))['t'] or Decimal('0')
+
+        modes_data = paiements.values('mode_paiement').annotate(total=Sum('montant'))
+        details = {
+            item['mode_paiement']: float(item['total'])
+            for item in modes_data
+            if item['total']
+        }
+
+        nb_transactions = paiements.count()
+        fond = Decimal(str(session.fond_de_caisse)) if session.fond_de_caisse else Decimal('0')
+
+        return Response({
+            'has_session': True,
+            'poste_nom': session.poste.nom,
+            'date_ouverture': session.date_ouverture,
+            'fond_de_caisse': float(fond),
+            'total_encaisse': float(total_general),
+            'total_avec_fond': float(total_general + fond),
+            'nb_transactions': nb_transactions,
+            'details_par_mode': details,
+        })
 
     @action(detail=True, methods=['post'], url_path='forcer-fermeture')
     def forcer_fermeture(self, request, pk=None):

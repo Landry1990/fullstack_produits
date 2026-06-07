@@ -177,11 +177,12 @@ export function useFacturationState() {
   const { completeSale, completeExistingInvoicePayment, loading: saleLoading } = useSaleCompletion({
     onSuccess: (result: any) => {
       if (result.success && result.facture) {
-        setSuccessInfo(result.facture)
-        ui.setTicketCaisse(result.ticketCaisse || null)
+        // Notification visuelle uniquement si vente payée directement (pas en attente caisse centralisée)
+        if (result.ticketCaisse) {
+          setSuccessInfo(result.facture)
+          ui.setTicketCaisse(result.ticketCaisse)
 
-        if (isFactureA4) {
-          if (result.facture) {
+          if (isFactureA4) {
             const normalize = (str: string) => str?.toLowerCase().trim() || ''
             const clientName = normalize(result.facture.client_name || '')
             const isGenericClient = !result.facture.client_name_override && (
@@ -196,15 +197,15 @@ export function useFacturationState() {
               if (nameToUse) url += `?client_name=${encodeURIComponent(nameToUse)}`
               window.open(url, '_blank')
             }
+            setIsFactureA4(false)
+          } else {
+            ui.setShowTicketPreview(true)
           }
-          setIsFactureA4(false)
-        } else {
-          if (result.ticketCaisse) ui.setShowTicketPreview(true)
         }
 
         ui.resetUIState()
 
-        // Update product stock in React Query cache
+        // Mettre à jour le cache stock dans tous les cas
         cart.lignesFacture.forEach((ligne: LigneFacture) => {
           queryClient.setQueriesData({ queryKey: ['produits'] }, (oldData: PaginatedResponse<ProduitModel> | ProduitModel[] | undefined) => {
             if (!oldData) return oldData

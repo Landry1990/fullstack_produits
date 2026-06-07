@@ -1,5 +1,6 @@
 from django.core.management.base import BaseCommand
 from django.conf import settings
+from typing import cast
 import subprocess
 import os
 import sys
@@ -69,7 +70,7 @@ class Command(BaseCommand):
 
         psql_cmd = self.find_psql()
         if not psql_cmd:
-            self.stdout.write(self.style.ERROR('psql.exe not found! Please install PostgreSQL or add it to your PATH.'))
+            self.stdout.write(self.style.ERROR('psql not found! Please install PostgreSQL or add it to your PATH.'))
             return
 
         # Warning
@@ -95,15 +96,20 @@ class Command(BaseCommand):
         # Create a temporary directory for decompression
         with tempfile.TemporaryDirectory() as temp_dir:
             temp_sql_file = os.path.join(temp_dir, 'restore.sql')
-            
-            self.stdout.write(f"Decompressing {backup_file_gz}...")
-            try:
-                with gzip.open(backup_file_gz, 'rb') as f_in:
-                    with open(temp_sql_file, 'wb') as f_out:
-                        shutil.copyfileobj(f_in, f_out)
-            except Exception as e:
-                self.stdout.write(self.style.ERROR(f'Decompression failed: {str(e)}'))
-                return
+
+            is_gz = backup_file_gz.endswith('.gz')
+            if is_gz:
+                self.stdout.write(f"Decompressing {backup_file_gz}...")
+                try:
+                    with gzip.open(backup_file_gz, 'rb') as f_in:
+                        with open(temp_sql_file, 'wb') as f_out:
+                            shutil.copyfileobj(cast(gzip.GzipFile, f_in), f_out)
+                except Exception as e:
+                    self.stdout.write(self.style.ERROR(f'Decompression failed: {str(e)}'))
+                    return
+            else:
+                self.stdout.write(f"Using plain SQL file: {backup_file_gz}")
+                temp_sql_file = backup_file_gz
 
             self.stdout.write(f"Starting restoration to database: {db_name}...")
             try:
