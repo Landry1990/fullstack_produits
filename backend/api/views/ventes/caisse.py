@@ -319,9 +319,7 @@ class CaisseViewSet(BaseViewSetConfig, viewsets.ModelViewSet):
         total_entrees = moves_aggregated['entrees']
         total_sorties = moves_aggregated['sorties']
         
-        # FIX: Le total théorique (fond de caisse physique) doit inclure 
-        # les ventes espèces ET les recouvrements espèces.
-        total_theorique = total_ventes_especes + total_recouv_especes + total_entrees - total_sorties
+        total_theorique = total_ventes + total_recouvrement + total_entrees - total_sorties
         
         # Calcul du CA Divers
         from ...models import FactureProduitAllocation
@@ -548,7 +546,7 @@ class CaisseViewSet(BaseViewSetConfig, viewsets.ModelViewSet):
         
         total_entrees = mouvements.filter(type='ENTREE').aggregate(Sum('montant'))['montant__sum'] or Decimal('0.00')
         total_sorties = mouvements.filter(type='SORTIE').aggregate(Sum('montant'))['montant__sum'] or Decimal('0.00')
-        total_ventes_especes = paiements_sales.filter(mode_paiement='especes').aggregate(Sum('montant'))['montant__sum'] or Decimal('0.00')
+        total_ventes_especes = paiements_sales.aggregate(Sum('montant'))['montant__sum'] or Decimal('0.00')
 
         # Calcul du CA Divers
         from ...models import FactureProduitAllocation
@@ -562,12 +560,15 @@ class CaisseViewSet(BaseViewSetConfig, viewsets.ModelViewSet):
         )['ca_div'] or Decimal('0.00')
         total_ca_pharmacie = total_ventes - total_ca_divers
 
-        # Récupérer le fond de caisse de la session active
+        # Récupérer le fond de caisse de la dernière session du caissier
+        # (fermée ou active, car la caissière peut avoir déjà fermé sa session
+        # avant que l'admin ne fasse la clôture comptable dans le journal)
         from ...models import SessionCaisse
-        active_session = SessionCaisse.objects.filter(
-            user=target_user, date_fermeture__isnull=True
-        ).order_by('-date_ouverture').first()
-        fond_de_caisse = Decimal(str(active_session.fond_de_caisse)) if active_session and active_session.fond_de_caisse else Decimal('0.00')
+        session_qs = SessionCaisse.objects.filter(ouvert_par=target_user)
+        if poste_caisse_id:
+            session_qs = session_qs.filter(poste_id=poste_caisse_id)
+        last_session = session_qs.order_by('-date_ouverture').first()
+        fond_de_caisse = Decimal(str(last_session.fond_de_caisse)) if last_session and last_session.fond_de_caisse else Decimal('0.00')
 
         # Créer les mouvements manuels envoyés par le frontend
         mouvements_manuels_data = request.data.get('mouvements_manuels', [])
@@ -600,16 +601,15 @@ class CaisseViewSet(BaseViewSetConfig, viewsets.ModelViewSet):
         if total_ventes == 0 and total_entrees == 0 and total_sorties == 0 and not mouvements_crees:
              return Response({'detail': 'Impossible de clôturer : aucun mouvement détecté depuis la dernière clôture.'}, status=status.HTTP_400_BAD_REQUEST)
 
-        # FIX: Inclure les recouvrements espèces + fond de caisse dans le théorique
-        recouv_especes = paiements_recouv.filter(mode_paiement='especes').aggregate(Sum('montant'))['montant__sum'] or Decimal('0.00')
-        total_theorique = total_ventes_especes + recouv_especes + total_entrees - total_sorties + fond_de_caisse
+        recouv_total = paiements_recouv.aggregate(Sum('montant'))['montant__sum'] or Decimal('0.00')
+        total_theorique = total_ventes_especes + recouv_total + total_entrees - total_sorties + fond_de_caisse
         ecart = montant_reel - total_theorique
         
         # type: ignore[index] - details is a mixed dict[str, Any] for API response
         details['__meta__'] = {  # type: ignore[index]
             'total_ventes': float(total_ventes), 
             'total_ventes_especes': float(total_ventes_especes),
-            'total_recouvrement_especes': float(recouv_especes),
+            'total_recouvrement_especes': float(recouv_total),
             'total_entrees': float(total_entrees), 
             'total_sorties': float(total_sorties),
             'total_ca_divers': float(total_ca_divers),
@@ -631,13 +631,13 @@ class CaisseViewSet(BaseViewSetConfig, viewsets.ModelViewSet):
             poste_caisse_id=poste_caisse_id
         )
         
-        # Fermer la session active
-        if active_session:
-            active_session.date_fermeture = timezone.now()
-            active_session.save(update_fields=['date_fermeture'])
+        # Fermer la session si elle est encore active
+        if last_session and not last_session.date_fermeture:
+            last_session.date_fermeture = timezone.now()
+            last_session.save(update_fields=['date_fermeture'])
         
         log_audit(user=request.user, action=AuditLog.Action.CLOTURE_CAISSE, model_name='ClotureCaisse', object_id=cloture.pk,  # type: ignore[attr-defined]
-            description=f"Clôture de caisse: Théorique={total_theorique:.0f}F, Réel={montant_reel:.0f}F, Écart={ecart:+.0f}F",
+            description=f"Clôture de caisse: Théorique={total_theorique:.0f}F, Réel={montant_reel:.0f}F, Écart={ecart:+.0f}F (tous modes)",
             details={'theorique': float(total_theorique), 'reel': float(montant_reel), 'ecart': float(ecart), 'ventes': float(total_ventes), 'entrees': float(total_entrees), 'sorties': float(total_sorties), 'fond_de_caisse': float(fond_de_caisse)},
             request=request
         )

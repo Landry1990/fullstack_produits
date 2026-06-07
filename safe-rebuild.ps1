@@ -28,8 +28,11 @@ Write-Host "[2/4] Backup automatique de la base..." -ForegroundColor Yellow
 New-Item -ItemType Directory -Path "backups" -Force | Out-Null
 try {
     docker exec fullstack_produits-db-1 pg_dump -U fullstack_user -d fullstack_db --no-owner --no-privileges > $backupFile 2>$null
-    $size = (Get-Item $backupFile).Length / 1MB
-    Write-Host "   ✅ Backup OK: $backupFile ({0:N1} MB)" -f $size -ForegroundColor Green
+    $size = "{0:N1}" -f ((Get-Item $backupFile).Length / 1MB)
+    $md5 = (Get-FileHash $backupFile -Algorithm MD5).Hash.ToLower()
+    "$md5  $(Split-Path $backupFile -Leaf)" | Out-File -Encoding ascii "${backupFile}.md5"
+    Write-Host "   ✅ Backup OK: $backupFile ($size MB)" -ForegroundColor Green
+    Write-Host "   MD5: $md5" -ForegroundColor Gray
 } catch {
     Write-Host "   ❌ Backup echoue. Arret du rebuild pour securite." -ForegroundColor Red
     Write-Host "   Erreur: $_" -ForegroundColor Red

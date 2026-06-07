@@ -24,8 +24,25 @@ vi.mock('../../hooks/usePharmacySettings', () => ({
 }))
 
 vi.mock('../../hooks/useProduits', () => ({
+  useProduits: () => ({ data: { results: [] }, isLoading: false }),
+  useProduit: () => ({ data: null, isLoading: false }),
+  useRayons: () => ({ data: [] }),
+  useFournisseurs: () => ({ data: [] }),
   useFormes: () => ({ data: [] }),
-  useProducts: () => ({ data: { results: [] } })
+  useGroupes: () => ({ data: [] }),
+  useProducts: () => ({ data: { results: [] } }),
+  useProduitAchats: () => ({ data: [], isLoading: false }),
+  useProduitLots: () => ({ data: [], isLoading: false }),
+  useProduitAdjustments: () => ({ data: [], isLoading: false }),
+  useProduitStats: () => ({ data: [], isLoading: false }),
+  useProduitHistory: () => ({ data: [], isLoading: false }),
+  useUpdateProduit: () => ({ mutate: vi.fn(), isPending: false }),
+  useCreateProduit: () => ({ mutate: vi.fn(), isPending: false }),
+  useDeleteProduit: () => ({ mutate: vi.fn(), isPending: false }),
+  useAdjustStock: () => ({ mutate: vi.fn(), isPending: false }),
+  useRecalculateRotation: () => ({ mutate: vi.fn(), isPending: false }),
+  useImportCsv: () => ({ mutate: vi.fn(), isPending: false }),
+  useBulkDelete: () => ({ mutate: vi.fn(), isPending: false }),
 }))
 
 vi.mock('../../hooks/useConfirm', () => ({

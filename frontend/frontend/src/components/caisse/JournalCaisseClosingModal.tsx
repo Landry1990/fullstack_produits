@@ -37,10 +37,11 @@ export default function JournalCaisseClosingModal({ state }: Props) {
     const manualEntrees = manualMovements.filter(m => m.type === 'ENTREE').reduce((s, m) => s + m.montant, 0);
     const manualSorties = manualMovements.filter(m => m.type === 'SORTIE').reduce((s, m) => s + m.montant, 0);
     const baseTheorique = closingTotals.total_theorique || 0;
-    const totalTheorique = baseTheorique + fondDeCaisse + manualEntrees - manualSorties;
+    // fond_de_caisse est déjà inclus dans total_theorique renvoyé par le backend — ne pas le rajouter
+    const totalTheorique = baseTheorique + manualEntrees - manualSorties;
     const gap = actualAmount ? normalizeNumberInput(actualAmount) - totalTheorique : null;
     return { manualEntrees, manualSorties, totalTheorique, gap };
-  }, [closingTotals, manualMovements, fondDeCaisse, actualAmount]);
+  }, [closingTotals, manualMovements, actualAmount]);
 
   const handleAddMovement = () => {
     const montant = normalizeNumberInput(newMontant);

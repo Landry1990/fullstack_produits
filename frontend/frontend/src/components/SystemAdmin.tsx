@@ -109,15 +109,6 @@ export default function SystemAdmin() {
     }
   }, []);
 
-  useEffect(() => { fetchStatus(); }, [fetchStatus]);
-
-  useEffect(() => {
-    if (activeTab === 'sauvegardes') {
-      fetchBackups();
-      fetchBackupSettings();
-    }
-  }, [activeTab, fetchBackups]);
-
   const fetchBackupSettings = useCallback(async () => {
     setLoadingBackupSettings(true);
     try {
@@ -142,6 +133,15 @@ export default function SystemAdmin() {
       setLoadingBackupSettings(false);
     }
   }, []);
+
+  useEffect(() => { fetchStatus(); }, [fetchStatus]);
+
+  useEffect(() => {
+    if (activeTab === 'sauvegardes') {
+      fetchBackups();
+      fetchBackupSettings();
+    }
+  }, [activeTab, fetchBackups, fetchBackupSettings]);
 
   const saveBackupSettings = async () => {
     if (!backupSettings) return;
@@ -502,7 +502,19 @@ export default function SystemAdmin() {
                   <HardDrive className="w-4 h-4" />
                   {t('backup_settings')}
                 </h3>
-                {loadingBackupSettings && <RefreshCw className="w-4 h-4 animate-spin text-gray-400" />}
+                <div className="flex items-center gap-2">
+                  {loadingBackupSettings && <RefreshCw className="w-4 h-4 animate-spin text-gray-400" />}
+                  {backupSettings && (
+                    <button
+                      onClick={saveBackupSettings}
+                      disabled={savingBackupSettings}
+                      className="flex items-center gap-2 px-4 py-2 text-sm font-semibold bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-all disabled:opacity-60"
+                    >
+                      {savingBackupSettings ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <CheckCircle2 className="w-3.5 h-3.5" />}
+                      {savingBackupSettings ? t('saving') : t('save')}
+                    </button>
+                  )}
+                </div>
               </div>
 
               {backupSettings ? (

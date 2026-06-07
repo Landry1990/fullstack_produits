@@ -604,10 +604,10 @@ export default function PharmacySettingsForm() {
                         />
                         <div className="flex-1">
                           <label htmlFor="hide_cash_totals" className="font-medium text-base-content cursor-pointer">
-                            {t('labels.hide_cash_totals', { defaultValue: 'Masquer les montants dans le rapport de clôture' })}
+                            {t('labels.hide_cash_totals', { defaultValue: 'Masquer les montants de caisse aux caissières' })}
                           </label>
                           <p className="text-sm text-base-content/60 mt-1">
-                            {t('hints.hide_cash_totals', { defaultValue: 'Les caissières ne verront pas les montants (fond, encaissement, total) lors de la fermeture de caisse. Utile pour éviter les ajustements malveillants.' })}
+                            {t('hints.hide_cash_totals', { defaultValue: 'Si activé : les caissières ne verront pas le récapitulatif live (totaux par mode de règlement) ni les montants dans le rapport de fermeture de caisse. Le titulaire (admin) verra toujours tout. Décochez pour permettre aux caissières de suivre leur caisse en temps réel.' })}
                           </p>
                         </div>
                       </div>

@@ -15,7 +15,7 @@ import { useTranslation } from 'react-i18next'
 import { getApiErrorDetail } from '../utils/errorHandling'
 import PremiumModal from './common/PremiumModal'
 import { TicketTemplate } from './printing/TicketTemplate'
-import { RefreshCw, Ticket, Banknote, Clock, Keyboard, Monitor, Unlock, Lock } from 'lucide-react'
+import { RefreshCw, Ticket, Banknote, Clock, Keyboard, Monitor, Unlock, Lock, TrendingUp } from 'lucide-react'
 import { OpenCashSessionModal } from './caisse/OpenCashSessionModal'
 import { cashSessionService } from '../services/cashSessionService'
 import type { PosteCaisse } from '../types'
@@ -64,6 +64,16 @@ export default function CaisseCentralisee() {
   const [closingReport, setClosingReport] = useState<any>(null)
   const [showClosingReport, setShowClosingReport] = useState(false)
   const [hideAmounts, setHideAmounts] = useState(false) // Mode sécurité: masquer les montants aux caissiers
+  const [sessionRecap, setSessionRecap] = useState<{
+    has_session: boolean
+    poste_nom?: string
+    date_ouverture?: string
+    fond_de_caisse?: number
+    total_encaisse?: number
+    total_avec_fond?: number
+    nb_transactions?: number
+    details_par_mode?: Record<string, number>
+  } | null>(null)
 
   // Fonction pour récupérer les factures en attente
   const fetchFacturesEnAttente = useCallback(async () => {
@@ -95,6 +105,15 @@ export default function CaisseCentralisee() {
     }
   }, [])
 
+  const fetchSessionRecap = useCallback(async () => {
+    try {
+      const res = await api.get('postes-caisses/recap_session/')
+      setSessionRecap(res.data)
+    } catch {
+      // silencieux si pas de session
+    }
+  }, [])
+
   // Rafraîchissement automatique
   useEffect(() => {
     fetchFacturesEnAttente()
@@ -105,6 +124,13 @@ export default function CaisseCentralisee() {
     }, 20000)
     return () => clearInterval(interval)
   }, [fetchFacturesEnAttente, fetchCoupons, selectedPosteCaisseId])
+
+  // Récap session : moins fréquent (les montants changent moins vite)
+  useEffect(() => {
+    fetchSessionRecap()
+    const interval = setInterval(fetchSessionRecap, 30000)
+    return () => clearInterval(interval)
+  }, [fetchSessionRecap])
 
   // Générer un nouveau coupon (après validation sudo)
   const handleGenererCoupon = async () => {
@@ -267,6 +293,7 @@ export default function CaisseCentralisee() {
       setClosingReport(data)
       setShowClosingReport(true)
       setMyActivePoste(null)
+      setSessionRecap(null)
     } catch (err: any) {
       toast.error(err.response?.data?.detail || t('cash_session.close_error', { defaultValue: 'Erreur fermeture' }))
     }
@@ -505,8 +532,9 @@ export default function CaisseCentralisee() {
       setIsPaymentModalOpen(false)
       setShowTicketPreview(true)
 
-      // 7. Rafraîchir la liste
+      // 7. Rafraîchir la liste et le récap session
       await fetchFacturesEnAttente()
+      fetchSessionRecap()
 
       // Invalidate product cache to refresh stock data (if on same machine)
       queryClient.invalidateQueries({ queryKey: ['products'] })
@@ -714,7 +742,8 @@ export default function CaisseCentralisee() {
   const appliedCouponsCount = Object.keys(couponsParFacture).length
 
   return (
-    <div className="min-h-screen bg-base-200 p-6 space-y-6 font-sans">
+    <div className="h-full bg-base-200 flex flex-col overflow-hidden font-sans">
+      <div className="flex-1 overflow-y-auto p-6 space-y-4">
 
       {/* Header Card */}
       <div className="bg-base-100 rounded-2xl shadow-sm border border-base-300 flex flex-col">
@@ -847,7 +876,7 @@ export default function CaisseCentralisee() {
       </div>
 
       {/* Main Content: Sidebar + Table */}
-      <div className="flex gap-6" style={{ minHeight: 'calc(100vh - 320px)' }}>
+      <div className="flex gap-6 min-h-0" style={{ height: 'calc(100vh - 340px)' }}>
         {/* Panneau des Coupons (Sidebar Gauche) */}
         {isCouponPanelOpen && (
           <CouponPanel
@@ -865,7 +894,7 @@ export default function CaisseCentralisee() {
         )}
 
         {/* Table Card */}
-        <div className="flex-1 bg-base-100 rounded-2xl shadow-sm border border-base-300 overflow-hidden flex flex-col">
+        <div className="flex-1 bg-base-100 rounded-2xl shadow-sm border border-base-300 overflow-hidden flex flex-col min-h-0">
           <div className="flex-1 overflow-auto">
             <FacturesTable
               sortedFactures={sortedFactures}
@@ -898,6 +927,72 @@ export default function CaisseCentralisee() {
             </div>
           </div>
         </div>
+      </div>
+
+      {/* Récap Session Live — visible selon paramètre hide_cash_totals */}
+      {sessionRecap?.has_session && (user?.is_superuser || !pharmacySettings?.hide_cash_totals) && (
+        <div className="bg-base-100 rounded-2xl shadow-sm border border-success/30 overflow-hidden">
+          <div className="px-5 py-3 bg-success/5 border-b border-success/20 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <TrendingUp className="size-4 text-success" />
+              <span className="text-xs font-black text-success uppercase tracking-widest">
+                Récap caisse — {sessionRecap.poste_nom}
+              </span>
+              {sessionRecap.date_ouverture && (
+                <span className="text-[10px] text-base-content/40 font-mono">
+                  depuis {new Date(sessionRecap.date_ouverture).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
+                </span>
+              )}
+            </div>
+            <div className="flex items-center gap-3">
+              <div className="flex items-center gap-1.5 text-[10px] text-success/50">
+                <RefreshCw className="size-3 animate-spin" />
+                live
+              </div>
+            </div>
+          </div>
+          <div className="p-4 flex flex-wrap gap-3 items-center">
+            {(sessionRecap.fond_de_caisse ?? 0) > 0 && (
+              <div className="flex flex-col items-center px-4 py-2 bg-info/5 border border-info/20 rounded-xl min-w-[100px]">
+                <span className="text-[10px] font-bold text-info/60 uppercase tracking-wider">Fond</span>
+                <span className="text-base font-black text-info">+{formatCurrency(Math.round(sessionRecap.fond_de_caisse ?? 0))}</span>
+              </div>
+            )}
+            {Object.entries(sessionRecap.details_par_mode ?? {})
+              .filter(([, v]) => v > 0)
+              .sort(([, a], [, b]) => b - a)
+              .map(([mode, montant]) => {
+                const labels: Record<string, string> = {
+                  especes: '💵 Espèces', cheque: '📋 Chèque', carte: '💳 Carte',
+                  virement: '🏦 Virement', om: '📱 Orange Money', momo: '📱 Mobile Money',
+                  recouvrement: '🔄 Recouvrement', coupon: '🎫 Coupons'
+                }
+                const isNegative = mode === 'coupon'
+                return (
+                  <div key={mode} className={`flex flex-col items-center px-4 py-2 rounded-xl min-w-[100px] border ${isNegative ? 'bg-error/5 border-error/20' : 'bg-success/5 border-success/20'}`}>
+                    <span className={`text-[10px] font-bold uppercase tracking-wider ${isNegative ? 'text-error/60' : 'text-success/60'}`}>
+                      {labels[mode] ?? mode}
+                    </span>
+                    <span className={`text-base font-black ${isNegative ? 'text-error' : 'text-success'}`}>
+                      {isNegative ? '-' : ''}{formatCurrency(Math.round(montant))}
+                    </span>
+                  </div>
+                )
+              })
+            }
+            <div className="ml-auto flex flex-col items-end gap-1">
+              <div className="text-[10px] font-bold text-base-content/40 uppercase tracking-wider">
+                {sessionRecap.nb_transactions} vente{(sessionRecap.nb_transactions ?? 0) > 1 ? 's' : ''}
+              </div>
+              <div className="text-2xl font-black text-success">
+                {formatCurrency(Math.round(sessionRecap.total_avec_fond ?? 0))}
+              </div>
+              <div className="text-[10px] text-base-content/40">total caisse</div>
+            </div>
+          </div>
+        </div>
+      )}
+
       </div>
 
       {/* Modal de paiement */}
