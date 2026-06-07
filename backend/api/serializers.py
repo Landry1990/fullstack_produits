@@ -149,8 +149,13 @@ class PharmacySettingsSerializer(serializers.ModelSerializer):
         return obj.pharmacy_name
 
 class PosteCaisseSerializer(serializers.ModelSerializer):
-    ouvert_par_name = serializers.CharField(source='ouvert_par.username', read_only=True)
+    ouvert_par_name = serializers.SerializerMethodField()
     session_active = serializers.SerializerMethodField()
+
+    def get_ouvert_par_name(self, obj):
+        if obj.ouvert_par:
+            return obj.ouvert_par.get_full_name() or obj.ouvert_par.username
+        return None
 
     class Meta:
         model = PosteCaisse
@@ -164,13 +169,19 @@ class PosteCaisseSerializer(serializers.ModelSerializer):
                 'id': session.id,
                 'fond_de_caisse': str(session.fond_de_caisse) if session.fond_de_caisse else None,
                 'date_ouverture': session.date_ouverture,
-                'ouvert_par_name': session.ouvert_par.username if session.ouvert_par else None,
+                'ouvert_par_name': (session.ouvert_par.get_full_name() or session.ouvert_par.username) if session.ouvert_par else None,
             }
         return None
 
 class SessionCaisseSerializer(serializers.ModelSerializer):
     poste_nom = serializers.CharField(source='poste.nom', read_only=True)
-    ouvert_par_name = serializers.CharField(source='ouvert_par.username', read_only=True)
+    ouvert_par_name = serializers.SerializerMethodField()
+
+    def get_ouvert_par_name(self, obj):
+        if obj.ouvert_par:
+            return obj.ouvert_par.get_full_name() or obj.ouvert_par.username
+        return None
+
     ventilation_paiements = serializers.SerializerMethodField()
 
     class Meta:
