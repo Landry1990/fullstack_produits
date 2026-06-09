@@ -115,6 +115,7 @@ const Corbeille = lazyWithRetry(() => import('./components/Corbeille'));
 const ImportDCIPage = lazyWithRetry(() => import('./components/ImportDCIPage'));
 const Comptabilite = lazyWithRetry(() => import('./components/compta/Comptabilite'));
 const SystemAdmin = lazyWithRetry(() => import('./components/SystemAdmin'));
+const BackupManager = lazyWithRetry(() => import('./components/admin/BackupManager'));
 
 // ── Helper to reduce boilerplate ──
 const perm = (permission: string | string[], Component: React.ComponentType<any>, props?: Record<string, any>) => ({
@@ -239,6 +240,7 @@ export const router = createBrowserRouter([
           { path: 'import-dci', ...admin(ImportDCIPage) },
           { path: 'maintenance', ...perm('maintenance', Maintenance) },
           { path: 'systeme', ...admin(SystemAdmin) },
+          { path: 'sauvegardes', ...admin(BackupManager) },
           { path: 'corbeille', ...perm('corbeille', Corbeille) },
 
           // ── Paramètres ──

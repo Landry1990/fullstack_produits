@@ -108,6 +108,7 @@ from .views.margin_views import MarginViewSet
 from .views.meds_reference import MedicamentReferenceViewSet
 from .views.dci_admin import DCIAdminViewSet
 from .views.debug_score import DebugStockScoreView
+from .views.backup_views import BackupListView, CreateBackupView, RestoreBackupView, DeleteBackupView
 
 # Create a router and register our viewsets with it.
 router = DefaultRouter()
@@ -214,5 +215,12 @@ urlpatterns = [
     path('licence/notifications/', LicenceNotificationsView.as_view(), name='licence-notifications'),
     path('debug/score/', DebugStockScoreView.as_view(), name='debug-score'),
     path('health/', health_check, name='health-check'),
+    
+    # Gestion des backups (interface web pour pharmaciens)
+    path('backups/', BackupListView.as_view(), name='backup-list'),
+    path('backups/create/', CreateBackupView.as_view(), name='backup-create'),
+    path('backups/restore/', RestoreBackupView.as_view(), name='backup-restore'),
+    path('backups/<str:filename>/', DeleteBackupView.as_view(), name='backup-delete'),
+    
     path('', include(router.urls)),
 ]
