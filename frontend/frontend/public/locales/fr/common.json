@@ -339,6 +339,13 @@
         "price": "Prix",
         "select": "Choisir"
     },
+    "force_stock": {
+        "title": "Stock insuffisant — {{produit}}",
+        "message": "Ce produit a un stock de {{stock}}. Souhaitez-vous forcer la vente malgré tout ?",
+        "force": "Forcer la vente",
+        "substitute": "Voir les substituts",
+        "cancel": "Annuler"
+    },
     "omnisearch": {
         "placeholder": "Rechercher (produits, clients, navigation)...",
         "empty": "Aucun résultat trouvé.",
@@ -389,5 +396,18 @@
             "status": "Statut",
             "date": "Date"
         }
+    },
+    "licence_toast": {
+        "expiry_warning": "Votre licence expire dans {{days}} jour{{plural}}. Veuillez contacter votre administrateur.",
+        "expired": "Votre licence a expiré. Veuillez la renouveler immédiatement."
+    },
+    "licence_banner": {
+        "alert_title": "ALERTE LICENCE :",
+        "expires_in": "Votre licence pour <1>{{name}}</1> expire dans",
+        "day": "jour",
+        "days": "jours",
+        "update": "Mettre à jour",
+        "expired_title": "LICENCE EXPIRÉE :",
+        "expired_message": "L'accès au système sera restreint. Contactez votre administrateur immédiatement."
     }
 }

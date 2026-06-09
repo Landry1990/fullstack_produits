@@ -46,4 +46,12 @@ export type {
 // PDA WebSocket hook for cashier queue
 export { useCashierWebSocket } from './useCashierWebSocket';
 
+// Uppercase form handling
+export {
+    useUppercaseOnChange,
+    useUppercaseSetter,
+    toUppercaseValue,
+    uppercaseValues
+} from './useUppercaseForm';
+
 export type { PaymentDetails, TotalsData, AyantDroit as AyantDroitData, SaleCompletionParams, SaleCompletionResult } from '../types';

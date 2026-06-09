@@ -66,6 +66,7 @@ export default function SystemAdmin() {
   const [restoreError, setRestoreError] = useState<string | null>(null);
   const [showRestoreConfirm, setShowRestoreConfirm] = useState(false);
   const [restoreTarget, setRestoreTarget] = useState<string | null>(null);
+  const [restoreProgress, setRestoreProgress] = useState<string[]>([]);
 
   // Backup settings configuration
   const [backupSettings, setBackupSettings] = useState<{
@@ -191,18 +192,21 @@ export default function SystemAdmin() {
     setRestoring(true);
     setRestoreOutput(null);
     setRestoreError(null);
+    setRestoreProgress([t('restore_progress.safety_backup')]);
+    setShowRestoreConfirm(false);
     try {
       const res = await api.post('/system-admin/run_backup/');
-      setRestoreOutput(t('security_backup_created') + (res.data.output || res.data.message));
       if (!res.data.success) {
+        setRestoreProgress(p => [...p, t('restore_progress.safety_failed')]);
         setRestoreError(res.data.error || t('security_backup_error'));
         setRestoring(false);
         return;
       }
-      // Attendre un peu puis restaurer
+      setRestoreProgress(p => [...p, t('restore_progress.safety_ok')]);
       await new Promise(r => setTimeout(r, 1000));
       await handleRestore();
     } catch (e: any) {
+      setRestoreProgress(p => [...p, t('restore_progress.safety_failed')]);
       setRestoreError(e?.response?.data?.detail || t('security_backup_error'));
       setRestoring(false);
     }
@@ -213,17 +217,23 @@ export default function SystemAdmin() {
     setRestoring(true);
     setRestoreOutput(null);
     setRestoreError(null);
+    setRestoreProgress([t('restore_progress.connecting')]);
     setShowRestoreConfirm(false);
     try {
       const formData = new FormData();
       if (restoreFile) {
         formData.append('file', restoreFile);
+        setRestoreProgress(p => [...p, t('restore_progress.uploading', { name: restoreFile.name })]);
       } else if (restoreTarget) {
         formData.append('filename', restoreTarget);
+        setRestoreProgress(p => [...p, t('restore_progress.using_file', { name: restoreTarget })]);
       }
+      setRestoreProgress(p => [...p, t('restore_progress.running')]);
       const res = await api.post('/system-admin/restore/', formData, {
         headers: { 'Content-Type': 'multipart/form-data' },
+        timeout: 120000,
       });
+      setRestoreProgress(p => [...p, t('restore_progress.done')]);
       setRestoreOutput(res.data.output || res.data.message);
       if (!res.data.success) setRestoreError(res.data.error || t('unknown_error'));
       else {
@@ -231,6 +241,7 @@ export default function SystemAdmin() {
         setRestoreTarget(null);
       }
     } catch (e: any) {
+      setRestoreProgress(p => [...p, t('restore_progress.failed')]);
       setRestoreError(e?.response?.data?.detail || t('restore_error'));
     } finally {
       setRestoring(false);
@@ -266,7 +277,33 @@ export default function SystemAdmin() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
+    <div className="min-h-screen bg-gray-50 p-6 overflow-y-auto">
+
+      {/* ── OVERLAY RESTAURATION ── */}
+      {restoring && (
+        <div className="fixed inset-0 z-[200] flex flex-col items-center justify-center bg-black/70 backdrop-blur-sm">
+          <div className="bg-white rounded-2xl shadow-2xl border border-gray-200 w-full max-w-md mx-4 p-6">
+            <div className="flex items-center gap-3 mb-4">
+              <RotateCcw className="w-6 h-6 text-red-500 animate-spin" />
+              <h3 className="text-lg font-bold text-gray-900">{t('restore_in_progress')}</h3>
+            </div>
+            <p className="text-xs text-gray-500 mb-4">{t('restore_do_not_close')}</p>
+            <div className="bg-gray-950 rounded-lg p-4 font-mono text-xs text-green-400 min-h-[120px] max-h-48 overflow-y-auto space-y-1">
+              {restoreProgress.map((line, i) => (
+                <div key={i} className="flex items-start gap-2">
+                  <span className="text-green-600 select-none">{'>'}</span>
+                  <span>{line}</span>
+                </div>
+              ))}
+              <div className="flex items-center gap-2 text-yellow-400 animate-pulse">
+                <span>{'>'}</span>
+                <span>{t('restore_progress.waiting')}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="max-w-5xl mx-auto">
 
         {/* Header */}

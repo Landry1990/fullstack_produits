@@ -29,6 +29,8 @@
     "types": {
         "individual": "Particulier",
         "professional": "Professionnel",
+        "particulier": "Particulier",
+        "professionnel": "Professionnel",
         "pro_short": "Pro",
         "part_short": "Part"
     },
@@ -37,7 +39,9 @@
         "contact": "Coordonnées",
         "finance": "Conditions Financières",
         "programs": "Programmes & Avantages",
-        "purchase_history": "Historique d'Achats"
+        "purchase_history": "Historique d'Achats",
+        "settings": "Paramètres",
+        "pro_info": "Informations Professionnelles"
     },
     "finance": {
         "auto_discount": "Remise Automatique",

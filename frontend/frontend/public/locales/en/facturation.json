@@ -172,7 +172,10 @@
         "adding_pack": "Adding pack items...",
         "pack_items_error": "Failed to retrieve some items from the pack.",
         "reward_reminder": "Loyalty: This client has a {{discount}}% discount available for this sale.",
-        "reward_applied": "{{discount}}% discount applied successfully!"
+        "reward_applied": "{{discount}}% discount applied successfully!",
+        "no_cash_register_open": "Please open a cash register before making a sale",
+        "select_client": "Please select a client",
+        "add_product": "Please add at least one product"
     },
     "modification_mode": {
         "title": "Invoice Modification Mode",

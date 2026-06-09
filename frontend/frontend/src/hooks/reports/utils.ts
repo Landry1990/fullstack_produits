@@ -55,7 +55,15 @@ export const COLUMN_LABELS: Record<string, string> = {
     taux_marge: 'Taux Marge (%)',
     prix_vente_net: 'Prix Vente Net',
     cout_achat: 'Coût Achat',
-    cip1: 'CIP1'
+    mt_vente: 'Montant Vente',
+    mt_achat: 'Montant Achat',
+    cip1: 'CIP1',
+    // Uppercase aliases for backend column names
+    FACTURE: 'Facture',
+    PRODUIT: 'Produit',
+    QUANTITE: 'Qté',
+    MT_VENTE: 'Montant Vente',
+    MT_ACHAT: 'Montant Achat'
 };
 
 export const formatColumnHeader = (col: string, t?: any): string => {

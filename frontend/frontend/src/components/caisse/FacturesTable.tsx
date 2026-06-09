@@ -17,7 +17,10 @@ interface FacturesTableProps {
   onRemoveProduct: (factureId: number, produitId: number) => void
   couponsParFacture: Record<number, CouponMonnaie>
   user: any // Replace with proper User type if available
+  myActivePoste?: any | null // Poste de caisse actif de l'utilisateur courant
 }
+
+const PAGE_SIZE = 100
 
 export const FacturesTable: React.FC<FacturesTableProps> = ({
   sortedFactures,
@@ -32,14 +35,19 @@ export const FacturesTable: React.FC<FacturesTableProps> = ({
   onUpdateProductQuantity,
   onRemoveProduct,
   couponsParFacture,
-  user
+  user,
+  myActivePoste
 }) => {
   const { t } = useTranslation('caisse')
   const [previewFacture, setPreviewFacture] = useState<Facture | null>(null)
+  const [page, setPage] = useState(1)
 
   const canModify = user?.is_superuser || (user as any)?.can_modify_invoice || user?.profile?.can_modify_invoice
   const canCancel = user?.is_superuser || (user as any)?.can_cancel_invoice || user?.profile?.can_cancel_invoice
-  const canCashOut = user?.is_superuser || (user as any)?.can_cash_out || user?.profile?.can_cash_out
+  // Pour encaisser : il faut la permission ET avoir une caisse ouverte (sauf superuser)
+  const hasCashOutPermission = user?.is_superuser || (user as any)?.can_cash_out || user?.profile?.can_cash_out
+  const hasActiveCashSession = !!myActivePoste
+  const canCashOut = hasCashOutPermission && (user?.is_superuser || hasActiveCashSession)
 
   // Sync preview modal if the invoice is updated in the list
   useEffect(() => {
@@ -61,6 +69,14 @@ export const FacturesTable: React.FC<FacturesTableProps> = ({
       </div>
     )
   }
+
+  const totalPages = Math.ceil(sortedFactures.length / PAGE_SIZE)
+  const pagedFactures = sortedFactures.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE)
+
+  // Reset page if list shrinks
+  React.useEffect(() => {
+    if (page > 1 && (page - 1) * PAGE_SIZE >= sortedFactures.length) setPage(1)
+  }, [sortedFactures.length, page])
 
   if (sortedFactures.length === 0) {
     return (
@@ -92,7 +108,7 @@ export const FacturesTable: React.FC<FacturesTableProps> = ({
 
   return (
     <>
-      <div className="overflow-x-auto">
+      <div className="overflow-auto flex-1 min-h-0">
         <table className="table table-sm w-full">
           <thead className="bg-base-200 opacity-100 sticky top-0 z-10">
             <tr className="text-xs uppercase tracking-wider text-base-content/60">
@@ -107,7 +123,7 @@ export const FacturesTable: React.FC<FacturesTableProps> = ({
             </tr>
           </thead>
           <tbody>
-            {sortedFactures.map((facture, index) => {
+            {pagedFactures.map((facture, index) => {
               // Récupérer le coupon appliqué à CETTE facture spécifique
               const couponPourCetteFacture = couponsParFacture[facture.id]
               const montantAPayer = Math.round(
@@ -251,7 +267,11 @@ export const FacturesTable: React.FC<FacturesTableProps> = ({
                         onDoubleClick={(e) => e.stopPropagation()}
                         disabled={!canCashOut}
                         className="btn btn-xs btn-success text-white gap-1"
-                        title={!canCashOut ? t('table.not_authorized') : t('table.cash_in')}
+                        title={!canCashOut
+                          ? (!hasActiveCashSession && !user?.is_superuser
+                            ? t('table.open_cash_register_first', { defaultValue: 'Veuillez d\'abord ouvrir votre caisse' })
+                            : t('table.not_authorized'))
+                          : t('table.cash_in')}
                       >
                         <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
@@ -266,6 +286,20 @@ export const FacturesTable: React.FC<FacturesTableProps> = ({
           </tbody>
         </table>
       </div>
+
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <div className="shrink-0 bg-base-100 border-t border-base-200 px-4 py-2 flex items-center justify-between text-sm">
+          <span className="text-base-content/60">
+            {(page - 1) * PAGE_SIZE + 1}–{Math.min(page * PAGE_SIZE, sortedFactures.length)} {t('common.pagination.of', 'sur')} {sortedFactures.length}
+          </span>
+          <div className="join">
+            <button className="join-item btn btn-sm" onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1}>{t('common.pagination.prev', 'Précédent')}</button>
+            <button className="join-item btn btn-sm bg-base-200 pointer-events-none">{page}/{totalPages}</button>
+            <button className="join-item btn btn-sm" onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page === totalPages}>{t('common.pagination.next', 'Suivant')}</button>
+          </div>
+        </div>
+      )}
 
       {/* Products Preview Popup */}
       <PremiumModal

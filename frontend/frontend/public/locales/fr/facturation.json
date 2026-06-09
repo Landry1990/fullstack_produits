@@ -172,7 +172,10 @@
         "adding_pack": "Ajout des articles du pack...",
         "pack_items_error": "Certains articles du pack n'ont pas pu être récupérés.",
         "reward_reminder": "Fidélité : Ce client a une remise de {{discount}}% disponible pour cette vente.",
-        "reward_applied": "Remise de {{discount}}% appliquée avec succès !"
+        "reward_applied": "Remise de {{discount}}% appliquée avec succès !",
+        "no_cash_register_open": "Veuillez ouvrir une caisse avant de réaliser une vente",
+        "select_client": "Veuillez sélectionner un client",
+        "add_product": "Veuillez ajouter au moins un produit"
     },
     "modification_mode": {
         "title": "Mode Modification de Facture",

@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { Printer, Plus, Trash2 } from 'lucide-react';
 import { normalizeNumberInput } from '../../utils/formatters';
 import type { useJournalCaisse } from '../../hooks/useJournalCaisse';
@@ -13,7 +13,8 @@ export default function JournalCaisseClosingModal({ state }: Props) {
   const {
     t, isClosingModalOpen, closingTotals, actualAmount, setActualAmount,
     handleCloseCaisse, loading, handleImprimerCloture, setIsClosingModalOpen,
-    formatCurrencyLocal, manualMovements, setManualMovements, fondDeCaisse
+    formatCurrencyLocal, manualMovements, setManualMovements, fondDeCaisse,
+    setTheorique
   } = state;
 
   const [newMotif, setNewMotif] = useState('');
@@ -37,11 +38,14 @@ export default function JournalCaisseClosingModal({ state }: Props) {
     const manualEntrees = manualMovements.filter(m => m.type === 'ENTREE').reduce((s, m) => s + m.montant, 0);
     const manualSorties = manualMovements.filter(m => m.type === 'SORTIE').reduce((s, m) => s + m.montant, 0);
     const baseTheorique = closingTotals.total_theorique || 0;
-    // fond_de_caisse est déjà inclus dans total_theorique renvoyé par le backend — ne pas le rajouter
     const totalTheorique = baseTheorique + manualEntrees - manualSorties;
     const gap = actualAmount ? normalizeNumberInput(actualAmount) - totalTheorique : null;
     return { manualEntrees, manualSorties, totalTheorique, gap };
   }, [closingTotals, manualMovements, actualAmount]);
+
+  useEffect(() => {
+    if (computed) setTheorique(computed.totalTheorique);
+  }, [computed?.totalTheorique]);
 
   const handleAddMovement = () => {
     const montant = normalizeNumberInput(newMontant);

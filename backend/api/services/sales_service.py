@@ -54,12 +54,20 @@ class SalesService:
             session_active = SessionCaisse.objects.filter(
                 poste_id=poste_caisse_id,
                 est_active=True
-            ).first()
-            
+            ).select_related('ouvert_par').first()
+
             if not session_active:
                 raise ValueError(
                     "Aucune session de caisse active trouvée pour ce poste. "
                     "Veuillez ouvrir une caisse avant de réaliser une vente."
+                )
+
+            # Vérifier que l'utilisateur courant est celui qui a ouvert la session
+            # (sauf pour les superusers qui peuvent encaisser sur n'importe quelle caisse)
+            if session_active.ouvert_par != user and not user.is_superuser:
+                raise ValueError(
+                    f"Seul {session_active.ouvert_par.username} (qui a ouvert cette caisse) "
+                    f"peut encaisser sur ce poste. Veuillez ouvrir votre propre caisse."
                 )
         else:
             # Mode non-centralisé - vérifier si l'utilisateur a une session active

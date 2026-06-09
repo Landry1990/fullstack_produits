@@ -64,7 +64,13 @@ i18n
         backend: {
             loadPath: '/locales/{{lng}}/{{ns}}.json',
         },
-        load: 'languageOnly' // Avoid fr-FR if we only have fr
+        load: 'languageOnly', // Avoid fr-FR if we only have fr
+
+        detection: {
+            order: ['localStorage', 'navigator'],
+            lookupLocalStorage: 'i18nextLng',
+            caches: ['localStorage'],
+        }
     });
 
 const syncHtmlLang = (lng: string) => {
