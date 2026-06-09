@@ -217,6 +217,13 @@ select {
   text-transform: uppercase;
 }
 
+/* Exception: Login page inputs remain case-sensitive */
+.zl-page input,
+.zl-page textarea,
+.zl-page select {
+  text-transform: none !important;
+}
+
 /* Ajustement de la taille des inputs/selects pour l'ergonomie mobile et laptop */
 .input,
 .select {

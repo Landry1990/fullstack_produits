@@ -377,12 +377,31 @@
             "close": "Close"
         }
     },
+    "recap": {
+        "title": "Register recap",
+        "since": "since",
+        "fond": "Fund",
+        "coupons": "Coupons",
+        "sales": "sale(s)",
+        "total_register": "register total"
+    },
     "poste_label": "Post: ",
     "all_posts": "All posts",
     "cash_session": {
         "pending_sales_error": "Cannot close: {{count}} sale(s) pending settlement. Please settle or cancel the sales before closing.",
         "confirm_close": "Close your cash register?",
-        "close_error": "Closing error"
+        "close_error": "Closing error",
+        "open_title": "Open my register",
+        "open_short": "Open register",
+        "close_title": "Close my register",
+        "close_short": "Close",
+        "security_mode": "Security mode: hide amounts from cashiers",
+        "hide_amounts": "Hide amounts",
+        "closing_report": "Closing Report",
+        "fond_initial": "Initial Fund",
+        "encaisse": "Collected",
+        "total_theorique": "Theoretical Total in Register",
+        "transactions": "Transactions"
     },
     "common": {
         "unknown": "Unknown",

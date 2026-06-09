@@ -237,7 +237,6 @@ export default function JournalCaisseTable({ state }: Props) {
                             const mode = transaction.mode_paiement as any;
                             const isRecouvrement = mode === 'recouvrement' ||
                               transaction.is_creance_settlement ||
-                              transaction.client_type === 'PROFESSIONNEL' ||
                               (transaction.reference && transaction.reference.includes('[RECOUV]'));
                             return (
                               <div className="flex flex-col">

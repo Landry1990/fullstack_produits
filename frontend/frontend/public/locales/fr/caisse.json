@@ -377,12 +377,31 @@
             "close": "Fermer"
         }
     },
+    "recap": {
+        "title": "Récap caisse",
+        "since": "depuis",
+        "fond": "Fond",
+        "coupons": "Coupons",
+        "sales": "vente(s)",
+        "total_register": "total caisse"
+    },
     "poste_label": "Poste :",
     "all_posts": "Tous les postes",
     "cash_session": {
         "pending_sales_error": "Impossible de fermer : {{count}} vente(s) en attente de règlement. Veuillez régler ou annuler les ventes avant de clôturer.",
         "confirm_close": "Fermer votre caisse ?",
-        "close_error": "Erreur fermeture"
+        "close_error": "Erreur fermeture",
+        "open_title": "Ouvrir ma caisse",
+        "open_short": "Ouvrir caisse",
+        "close_title": "Fermer ma caisse",
+        "close_short": "Fermer",
+        "security_mode": "Mode sécurité : masquer les montants aux caissiers",
+        "hide_amounts": "Masquer montants",
+        "closing_report": "Rapport de Clôture",
+        "fond_initial": "Fond Initial",
+        "encaisse": "Encaissé",
+        "total_theorique": "Total Théorique en Caisse",
+        "transactions": "Transactions"
     },
     "common": {
         "unknown": "Inconnu",

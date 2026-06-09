@@ -1,3 +1,4 @@
+import { useRef, useEffect } from 'react'
 import { Eye, EyeOff, Moon, Sun } from 'lucide-react'
 import { formatCurrency } from '../utils/formatters'
 import { formatDateShort } from '../utils/dateUtils'
@@ -27,6 +28,14 @@ import { useFacturationState } from '../hooks/useFacturationState'
 
 export default function Facturation() {
   const hook = useFacturationState()
+  const forceStockModalRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (hook.forceStockProduct && forceStockModalRef.current) {
+      const primaryBtn = forceStockModalRef.current.querySelector('.btn-primary') as HTMLButtonElement | null
+      primaryBtn?.focus()
+    }
+  }, [hook.forceStockProduct])
 
   return (
     <div className="h-full flex flex-col bg-base-100 font-sans text-base-content overflow-hidden">
@@ -589,6 +598,59 @@ export default function Facturation() {
           }
         }}
       />
+
+      {/* Force Stock Modal */}
+      {hook.forceStockProduct && (
+        <div
+          ref={forceStockModalRef}
+          className="modal modal-open z-50"
+          onKeyDown={(e) => {
+            const buttons = e.currentTarget.querySelectorAll<HTMLButtonElement>('.modal-action button')
+            if (!buttons.length) return
+            const current = Array.from(buttons).indexOf(document.activeElement as HTMLButtonElement)
+            if (e.key === 'ArrowRight') {
+              e.preventDefault()
+              const next = current >= 0 ? (current + 1) % buttons.length : 0
+              buttons[next].focus()
+            } else if (e.key === 'ArrowLeft') {
+              e.preventDefault()
+              const prev = current >= 0 ? (current - 1 + buttons.length) % buttons.length : buttons.length - 1
+              buttons[prev].focus()
+            } else if (e.key === 'Enter' && current >= 0) {
+              e.preventDefault()
+              buttons[current].click()
+            }
+          }}
+        >
+          <div className="modal-box max-w-md">
+            <h3 className="font-bold text-lg mb-2">
+              {hook.t('common:force_stock.title', { produit: hook.forceStockProduct.name, defaultValue: `Stock insuffisant — ${hook.forceStockProduct.name}` })}
+            </h3>
+            <p className="text-sm text-base-content/70 mb-4">
+              {hook.t('common:force_stock.message', { stock: hook.forceStockProduct.stock, defaultValue: `Ce produit a un stock de ${hook.forceStockProduct.stock}. Souhaitez-vous forcer la vente malgré tout ?` })}
+            </p>
+            <div className="modal-action flex gap-2 justify-end">
+              <button className="btn btn-ghost btn-sm" onClick={() => {
+                const p = hook.forceStockProduct
+                hook.setForceStockProduct(null)
+                if (p) hook.setSubstitutionProduct(p)
+              }}>
+                {hook.t('common:force_stock.substitute', { defaultValue: 'Voir les substituts' })}
+              </button>
+              <button className="btn btn-primary btn-sm" onClick={() => {
+                const p = hook.forceStockProduct
+                hook.setForceStockProduct(null)
+                if (p) hook.cart.addProduit(p, { forceStock: true, isRetrocession: hook.isRetrocession })
+              }}>
+                {hook.t('common:force_stock.force', { defaultValue: 'Forcer la vente' })}
+              </button>
+              <button className="btn btn-sm" onClick={() => hook.setForceStockProduct(null)}>
+                {hook.t('common:force_stock.cancel', { defaultValue: 'Annuler' })}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Substitution Modal */}
       <SubstitutionModal

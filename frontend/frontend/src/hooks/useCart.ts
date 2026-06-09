@@ -14,10 +14,11 @@ interface UseCartOptions {
     onRequirePrescription?: () => void
     onAlert?: (msg: string, title: string, type: 'product' | 'client', is_blocking: boolean, targetId?: number) => void
     onSubstitution?: (produit: ProduitModel) => void
+    onForceStock?: (produit: ProduitModel) => void
     quantityInputsRef?: React.MutableRefObject<Map<number, HTMLInputElement>>
 }
 
-export function useCart({ onRequirePrescription, onAlert, onSubstitution, quantityInputsRef }: UseCartOptions = {}) {
+export function useCart({ onRequirePrescription, onAlert, onSubstitution, onForceStock, quantityInputsRef }: UseCartOptions = {}) {
     const { user } = useAuth()
     
     // Logic keys (prefixed with user ID for multi-user safety)
@@ -56,15 +57,19 @@ export function useCart({ onRequirePrescription, onAlert, onSubstitution, quanti
         }
     }, [lignesFacture, cartStorageKey])
 
-    const addProduit = useCallback(async (produit: ProduitModel, options?: { isRetrocession?: boolean; preventFocus?: boolean; markupPercentage?: number }) => {
+    const addProduit = useCallback(async (produit: ProduitModel, options?: { isRetrocession?: boolean; preventFocus?: boolean; markupPercentage?: number; forceStock?: boolean }) => {
         setLoading(true)
         try {
             const { data: fullProduit } = await api.get<ProduitModel>(`produits/${produit.id}/`)
 
-            // SUBSTITUTION CHECK: if product is out of stock, trigger substitution modal
-            if (fullProduit.stock <= 0 && onSubstitution) {
+            // SUBSTITUTION CHECK: if product is out of stock, ask whether to force or substitute
+            if (fullProduit.stock <= 0 && !options?.forceStock) {
                 setLoading(false)
-                onSubstitution(fullProduit)
+                if (onForceStock) {
+                    onForceStock(fullProduit)
+                } else if (onSubstitution) {
+                    onSubstitution(fullProduit)
+                }
                 return
             }
 

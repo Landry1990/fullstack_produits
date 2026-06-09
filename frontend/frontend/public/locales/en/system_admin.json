@@ -102,6 +102,20 @@
   "copy_secondary_ok": "Copy to secondary destination OK: {{path}}",
   "gdrive_copy_ok": "[GDRIVE] Google Drive copy OK: {{path}}",
   "gdrive_path_not_found": "[GDRIVE] Google Drive path configured but not found: {{path}}",
+  "restore_in_progress": "Restoration in progress...",
+  "restore_do_not_close": "Do not close this window. The operation may take up to 2 minutes.",
+  "restore_progress": {
+    "connecting": "Connecting to server...",
+    "uploading": "Uploading file: {{name}}",
+    "using_file": "Selected file: {{name}}",
+    "running": "Restoring the database...",
+    "done": "✓ Restoration completed successfully!",
+    "failed": "✗ Restoration failed",
+    "waiting": "Please wait...",
+    "safety_backup": "Creating safety backup...",
+    "safety_ok": "✓ Safety backup created",
+    "safety_failed": "✗ Safety backup failed"
+  },
   "scheduling": {
     "title": "Automatic Scheduling",
     "hourly": "Backup <strong>every hour</strong> (retention 7 days)",

@@ -110,7 +110,10 @@ const PriceEvolutionChart = ({ achats, t }: { achats: any[]; t: any }) => {
                     <YAxis
                         fontSize={10}
                         tickFormatter={(v: number) => formatCurrency(v)}
-                        domain={['auto', 'auto']}
+                        domain={[
+                            (dataMin: number) => Math.floor(dataMin * 0.95),
+                            (dataMax: number) => Math.ceil(dataMax * 1.05),
+                        ]}
                         width={70}
                     />
                     <Tooltip

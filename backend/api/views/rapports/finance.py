@@ -602,7 +602,7 @@ class RapportFinanceMixin:
             
             mt_vente_ttc_net = (price_ttc * qty) * ratio_remise
             
-            cost_unit = Decimal(str(last_lot_cost.get(p.id, float(p.pmp or 0))))
+            cost_unit = Decimal(str(last_lot_cost.get(p.id, float(p.pmp or p.cost_price or 0))))
             mt_achat = (cost_unit * qty).quantize(Decimal('1'), rounding=ROUND_HALF_UP)
             marge    = mt_vente_ttc_net - mt_achat
             

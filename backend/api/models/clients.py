@@ -115,7 +115,7 @@ class Client(models.Model):
         regex=r'^\+?1?\d{9,15}$',
         message="Le numéro de téléphone doit être au format: '+999999999'. Jusqu'à 15 chiffres autorisés."
     )
-    phone = models.CharField(validators=[phone_regex], max_length=17, unique=True, blank=True, null=True)
+    phone = models.CharField(validators=[phone_regex], max_length=17, blank=True, null=True)
     email = models.EmailField(blank=True, null=True)
     niu = models.CharField(max_length=100, blank=True, null=True, verbose_name="NIU")
     registre_commerce = models.CharField(max_length=100, blank=True, null=True, verbose_name="Registre de Commerce")
