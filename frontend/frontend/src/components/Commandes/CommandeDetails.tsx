@@ -152,7 +152,7 @@ const CommandeDetails: React.FC<CommandeDetailsProps> = ({
 
           <button
 
-            className="inline-flex items-center px-3 py-1.5 text-sm font-medium rounded-lg border border-base-300 bg-base-100 text-base-content hover:bg-base-200 transition-colors"
+            className="inline-flex items-center px-3 py-1.5 text-sm font-medium rounded-lg border border-base-300 bg-base-100 text-base-content hover:bg-base-200 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
 
             onClick={() => onEdit(selectedCommande)}
 
@@ -166,7 +166,7 @@ const CommandeDetails: React.FC<CommandeDetailsProps> = ({
 
           <button
 
-            className={`inline-flex items-center px-3 py-1.5 text-sm font-medium rounded-lg text-white transition-colors ${selectedCommande.status === 'ATT' ? 'bg-info hover:bg-info-focus' : 'bg-warning hover:bg-warning-focus'}`}
+            className={`inline-flex items-center px-3 py-1.5 text-sm font-medium rounded-lg text-white disabled:opacity-40 disabled:cursor-not-allowed transition-colors ${selectedCommande.status === 'ATT' ? 'bg-info hover:bg-info-focus' : 'bg-warning hover:bg-warning-focus'}`}
 
             onClick={onMettreEnAttente}
 
@@ -180,7 +180,7 @@ const CommandeDetails: React.FC<CommandeDetailsProps> = ({
 
           <button
 
-            className="inline-flex items-center px-3 py-1.5 text-sm font-medium rounded-lg text-white bg-success hover:bg-success-focus transition-colors"
+            className="inline-flex items-center px-3 py-1.5 text-sm font-medium rounded-lg text-white bg-success hover:bg-success-focus disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
 
             onClick={onCloture}
 
@@ -196,7 +196,7 @@ const CommandeDetails: React.FC<CommandeDetailsProps> = ({
 
             onClick={onOpenLabelsModal}
 
-            className="inline-flex items-center px-3 py-1.5 text-sm font-medium rounded-lg text-white bg-primary hover:bg-primary-focus disabled:opacity-40 transition-colors"
+            className="inline-flex items-center px-3 py-1.5 text-sm font-medium rounded-lg text-white bg-primary hover:bg-primary-focus disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
 
             disabled={selectedCommande.status !== 'CLOT' || executingAction}
 
@@ -226,7 +226,7 @@ const CommandeDetails: React.FC<CommandeDetailsProps> = ({
 
           <button
 
-            className="inline-flex items-center px-3 py-1.5 text-sm font-medium rounded-lg border border-base-300 bg-base-100 text-base-content hover:bg-base-200 disabled:opacity-40 transition-colors"
+            className="inline-flex items-center px-3 py-1.5 text-sm font-medium rounded-lg border border-base-300 bg-base-100 text-base-content hover:bg-base-200 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
 
             onClick={() => {
 
@@ -244,17 +244,15 @@ const CommandeDetails: React.FC<CommandeDetailsProps> = ({
 
           </button>
 
-          {selectedCommande.status === 'CLOT' && (
+          <button
 
-            <button
-
-              className="inline-flex items-center px-3 py-1.5 text-sm font-medium rounded-lg border border-amber-200 text-warning hover:bg-warning/10 transition-colors gap-1"
+              className="inline-flex items-center px-3 py-1.5 text-sm font-medium rounded-lg border border-amber-200 text-warning hover:bg-warning/10 disabled:opacity-40 disabled:cursor-not-allowed transition-colors gap-1"
 
               onClick={onAnnulerReception}
 
-              disabled={executingAction}
+              disabled={selectedCommande.status !== 'CLOT' || executingAction}
 
-              title={t('orders:details.cancel_reception')}
+              title={selectedCommande.status !== 'CLOT' ? t('orders:details.labels_clot_only', { defaultValue: 'Uniquement pour les commandes clôturées' }) : t('orders:details.cancel_reception')}
 
             >
 
@@ -262,19 +260,17 @@ const CommandeDetails: React.FC<CommandeDetailsProps> = ({
 
             </button>
 
-          )}
-
-          {selectedCommande.status === 'CLOT' && (
-
-            <button
+          <button
 
               type="button"
 
-              className="inline-flex items-center px-3 py-1.5 text-sm font-medium rounded-lg border border-amber-200 text-warning hover:bg-warning/10 transition-colors gap-1"
+              className="inline-flex items-center px-3 py-1.5 text-sm font-medium rounded-lg border border-amber-200 text-warning hover:bg-warning/10 disabled:opacity-40 disabled:cursor-not-allowed transition-colors gap-1"
 
               onClick={onCreateAvoir}
 
-              title={t('orders:details.return')}
+              disabled={selectedCommande.status !== 'CLOT' || executingAction}
+
+              title={selectedCommande.status !== 'CLOT' ? t('orders:details.labels_clot_only', { defaultValue: 'Uniquement pour les commandes clôturées' }) : t('orders:details.return')}
 
             >
 
@@ -287,8 +283,6 @@ const CommandeDetails: React.FC<CommandeDetailsProps> = ({
               {selectedRows.size > 0 ? `${t('orders:details.return')} (${selectedRows.size})` : t('orders:details.return')}
 
             </button>
-
-          )}
 
         </div>
 

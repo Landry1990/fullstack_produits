@@ -110,6 +110,28 @@ services:
     networks:
       - app-network
 
+  # Tunnel Tailscale Funnel pour accès externe sécurisé
+  tailscale:
+    image: tailscale/tailscale:latest
+    hostname: ${TAILSCALE_HOSTNAME:-fullstack-app}
+    environment:
+      - TS_AUTHKEY=${TAILSCALE_AUTHKEY}
+      - TS_STATE_DIR=/var/lib/tailscale
+      - TS_SERVE_CONFIG=/config/tailscale-serve.json
+      - TS_USERSPACE=false
+    volumes:
+      - tailscale_data:/var/lib/tailscale
+      - ./tailscale:/config
+      - /dev/net/tun:/dev/net/tun
+    cap_add:
+      - NET_ADMIN
+      - SYS_MODULE
+    depends_on:
+      - frontend
+    restart: always
+    networks:
+      - app-network
+
   # Tunnel ngrok pour accès externe
   ngrok:
     image: ngrok/ngrok:latest
@@ -136,3 +158,4 @@ volumes:
   static_volume:
   media_volume:
   redis_data:
+  tailscale_data:

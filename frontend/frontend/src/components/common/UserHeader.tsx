@@ -108,6 +108,32 @@ export default function UserHeader() {
             <MessageCircle size={16} className="text-base-content/70" />
           </button>
 
+          {/* Language Switcher — toujours visible */}
+          <div className="flex items-center gap-0.5 bg-base-200 rounded-lg p-0.5">
+            <button
+              onClick={() => i18n.changeLanguage('fr')}
+              className={`px-2 py-1 rounded-md text-xs font-bold transition-all ${
+                i18n.language === 'fr' || i18n.language.startsWith('fr')
+                  ? 'bg-primary text-white shadow-sm'
+                  : 'text-base-content/50 hover:text-base-content'
+              }`}
+              title="Français"
+            >
+              FR
+            </button>
+            <button
+              onClick={() => i18n.changeLanguage('en')}
+              className={`px-2 py-1 rounded-md text-xs font-bold transition-all ${
+                i18n.language === 'en' || i18n.language.startsWith('en')
+                  ? 'bg-primary text-white shadow-sm'
+                  : 'text-base-content/50 hover:text-base-content'
+              }`}
+              title="English"
+            >
+              EN
+            </button>
+          </div>
+
           <div className="h-6 w-[1px] bg-gray-300 mx-0.5"></div>
 
           {/* User Profile Area */}

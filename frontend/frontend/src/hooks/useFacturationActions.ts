@@ -31,6 +31,8 @@ export interface UseFacturationActionsProps {
     setShowClientNameModal: (show: boolean) => void;
     secureUpdateQuantite: (produitId: number, qty: number) => void;
     user: User | null;
+    myActivePoste?: { id: number; nom: string } | null;
+    postesCaisses?: { id: number }[];
 }
 
 export function useFacturationActions({
@@ -49,7 +51,9 @@ export function useFacturationActions({
     setPendingPrintFacture,
     setShowClientNameModal,
     secureUpdateQuantite,
-    user
+    user,
+    myActivePoste,
+    postesCaisses
 }: UseFacturationActionsProps) {
 
     const handleProforma = useCallback(async () => {
@@ -200,19 +204,26 @@ export function useFacturationActions({
     }, [pendingPrintFacture, setShowClientNameModal, setPendingPrintFacture, searchInputRef])
 
     const ouvrirModalPaiement = useCallback((facture?: Facture) => {
+        // Bloquer si aucune caisse n'est ouverte
+        const aucuneCaisseOuverte = !postesCaisses || postesCaisses.length === 0
+        if (aucuneCaisseOuverte) {
+            setError(t('facturation:messages.no_cash_register_open'))
+            return
+        }
         if (facture) {
             ui.setMontantPaye(Math.round(Number(facture.total_ttc)).toString())
             ui.openPaymentModal(facture)
         } else {
             if (!clientsHook.selectedClient) {
-                setError('Veuillez sélectionner un client')
+                setError(t('facturation:messages.select_client'))
                 return
             }
             if (cart.lignesFacture.length === 0) {
-                setError('Veuillez ajouter au moins un produit')
+                setError(t('facturation:messages.add_product'))
                 return
             }
-            ui.setMontantPaye(Math.round(totals.totalTtc).toString())
+            const montantInitial = totals.tauxCouverture > 0 ? totals.partPatient : totals.totalTtc
+            ui.setMontantPaye(Math.round(montantInitial).toString())
             ui.openPaymentModal()
         }
         ui.setModePaiement('especes')
@@ -222,7 +233,7 @@ export function useFacturationActions({
             paymentInputRef.current?.focus()
             paymentInputRef.current?.select()
         }, 100)
-    }, [ui, clientsHook.selectedClient, cart.lignesFacture.length, totals.totalTtc, setError, paymentInputRef])
+    }, [ui, clientsHook.selectedClient, cart.lignesFacture.length, totals.totalTtc, totals.tauxCouverture, totals.partPatient, setError, paymentInputRef, postesCaisses, t])
 
     const handleSendWhatsApp = useCallback(async () => {
         if (!ui.ticketCaisse || !ui.ticketCaisse.facture || typeof ui.ticketCaisse.facture === 'number') return

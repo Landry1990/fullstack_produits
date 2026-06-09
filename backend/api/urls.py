@@ -184,7 +184,6 @@ router.register(r'compta/journaux', JournalComptableViewSet, basename='compta-jo
 router.register(r'compta/exercices', ExerciceComptableViewSet, basename='compta-exercice')
 router.register(r'compta/ecritures', EcritureComptableViewSet, basename='compta-ecriture')
 
-
 # The API URLs are now determined automatically by the router.
 urlpatterns = [
     path('auth/token/', CustomAuthToken.as_view(), name='token-auth'),

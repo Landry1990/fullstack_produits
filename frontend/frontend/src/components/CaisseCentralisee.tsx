@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import { useNavigate } from 'react-router-dom'
 import api from '../services/api'
@@ -18,13 +18,18 @@ import { TicketTemplate } from './printing/TicketTemplate'
 import { RefreshCw, Ticket, Banknote, Clock, Keyboard, Monitor, Unlock, Lock, TrendingUp } from 'lucide-react'
 import { OpenCashSessionModal } from './caisse/OpenCashSessionModal'
 import { cashSessionService } from '../services/cashSessionService'
+import { useCaisseKeyboard } from '../hooks/useCaisseKeyboard'
+import { useCaissePayment } from '../hooks/useCaissePayment'
+import { useCaisseCoupons } from '../hooks/useCaisseCoupons'
+import { useCaisseStats } from '../hooks/useCaisseStats'
+import { useInvoiceModification } from '../hooks/useInvoiceModification'
 import type { PosteCaisse } from '../types'
 
 // TicketTemplate is used for preview and print
 
 export default function CaisseCentralisee() {
   const queryClient = useQueryClient()
-  const { t } = useTranslation('caisse')
+  const { t, i18n } = useTranslation('caisse')
   const navigate = useNavigate()
   const { user } = useAuth()
   const { settings: pharmacySettings } = usePharmacySettings()
@@ -41,7 +46,6 @@ export default function CaisseCentralisee() {
   const [isGenererCouponModalOpen, setIsGenererCouponModalOpen] = useState(false)
   const [nouveauCouponMontant, setNouveauCouponMontant] = useState('')
   const [nouveauCouponNotes, setNouveauCouponNotes] = useState('')
-  const [searchCouponNumero, setSearchCouponNumero] = useState('')
   const [couponTrouve, setCouponTrouve] = useState<CouponMonnaie | null>(null)
   const [isDetailsCouponModalOpen, setIsDetailsCouponModalOpen] = useState(false)
   const [isSudoModalOpen, setIsSudoModalOpen] = useState(false)
@@ -95,15 +99,47 @@ export default function CaisseCentralisee() {
   }, [selectedPosteCaisseId])
 
 
-  // Fonction pour récupérer les coupons (actifs + récemment utilisés)
-  const fetchCoupons = useCallback(async () => {
-    try {
-      const response = await api.get('coupons/', { params: { ordering: '-date_creation', page_size: 50 } })
-      setCoupons(response.data.results || response.data || [])
-    } catch (err) {
-      console.error('Erreur lors du chargement des coupons:', err)
+  // Hook pour la logique des coupons
+  const {
+    loading: couponLoading,
+    searchCouponNumero,
+    setSearchCouponNumero,
+    fetchCoupons,
+    handleGenererCoupon,
+    handleRechercherCoupon: handleRechercherCouponBase,
+    handleAppliquerCouponAFacture: handleAppliquerCouponBase,
+    handleRetirerCouponDeFacture,
+    utiliserCouponApresEncaissement
+  } = useCaisseCoupons({
+    coupons,
+    setCoupons,
+    couponsParFacture,
+    setCouponsParFacture,
+    setIsGenererCouponModalOpen,
+    setIsDetailsCouponModalOpen,
+    setCouponTrouve,
+    selectedFacture,
+    onSuccess: () => {
+      setNouveauCouponMontant('')
+      setNouveauCouponNotes('')
     }
-  }, [])
+  })
+
+  // Wrappers pour adapter les signatures avec traduction
+  const handleAppliquerCouponAFacture = useCallback((coupon: CouponMonnaie, facture: Facture) => {
+    handleAppliquerCouponBase(coupon, facture, t)
+    setFactureForCoupon(null)
+    setIsDetailsCouponModalOpen(false)
+    setCouponTrouve(null)
+  }, [handleAppliquerCouponBase, t])
+
+  const handleRechercherCoupon = useCallback(() => {
+    handleRechercherCouponBase(searchCouponNumero, t)
+  }, [handleRechercherCouponBase, searchCouponNumero, t])
+
+  const handleRetirerCouponWrapper = useCallback((factureId: number) => {
+    handleRetirerCouponDeFacture(factureId, t)
+  }, [handleRetirerCouponDeFacture, t])
 
   const fetchSessionRecap = useCallback(async () => {
     try {
@@ -132,39 +168,10 @@ export default function CaisseCentralisee() {
     return () => clearInterval(interval)
   }, [fetchSessionRecap])
 
-  // Générer un nouveau coupon (après validation sudo)
-  const handleGenererCoupon = async () => {
-    if (!nouveauCouponMontant || Number(nouveauCouponMontant) <= 0) {
-      toast.error(t('messages.invalid_amount'))
-      return
-    }
-
-      setLoading(true)
-    try {
-      const payload = {
-        montant: Number(nouveauCouponMontant),
-        notes: nouveauCouponNotes,
-        facture_origine: selectedFacture?.id || null
-      }
-      
-      const { data } = await api.post<CouponMonnaie>('coupons/', payload)
-      toast.success(t('messages.coupon_generated', { numero: data.numero }))
-      
-      setCoupons([data, ...coupons])
-      setIsGenererCouponModalOpen(false)
-      setNouveauCouponMontant('')
-      setNouveauCouponNotes('')
-      
-      // Ouvrir un aperçu pour impression
-      setCouponTrouve(data)
-      setIsDetailsCouponModalOpen(true)
-    } catch (err) {
-      console.error('Erreur génération coupon:', err)
-      toast.error(getApiErrorDetail(err, t('messages.error_generation')))
-    } finally {
-      setLoading(false)
-    }
-  }
+  // Wrapper pour la génération de coupon
+  const handleGenererCouponWrapper = useCallback(async () => {
+    await handleGenererCoupon(nouveauCouponMontant, nouveauCouponNotes, selectedFacture?.id || null, t)
+  }, [handleGenererCoupon, nouveauCouponMontant, nouveauCouponNotes, selectedFacture, t])
 
   // Charger les postes de caisse et réglages
   useEffect(() => {
@@ -196,73 +203,10 @@ export default function CaisseCentralisee() {
     initPage()
   }, [])
 
-  // Appliquer un coupon à UNE vente spécifique
-  const handleAppliquerCouponAFacture = (coupon: CouponMonnaie, facture: Facture) => {
-    if (coupon.status !== 'ACTIF') {
-      toast.error(t('messages.coupon_not_active'))
-      return
-    }
-    // Vérifier si ce coupon est déjà appliqué à une autre facture
-    const existingFactureId = Object.keys(couponsParFacture).find(
-      id => couponsParFacture[Number(id)]?.id === coupon.id
-    )
-    if (existingFactureId && Number(existingFactureId) !== facture.id) {
-      toast.error(t('messages.coupon_already_applied'))
-      return
-    }
-    
-    setCouponsParFacture(prev => ({ ...prev, [facture.id]: coupon }))
-    setFactureForCoupon(null)
-    setIsDetailsCouponModalOpen(false)
-    setCouponTrouve(null)
-    toast.success(t('messages.coupon_applied_to', { numero: coupon.numero, ticket: facture.session_ticket_number || facture.numero_facture }))
-  }
-  
-  // Retirer le coupon d'une facture spécifique
-  const handleRetirerCouponDeFacture = (factureId: number) => {
-    setCouponsParFacture(prev => {
-      const updated = { ...prev }
-      delete updated[factureId]
-      return updated
-    })
-    toast(t('messages.coupon_removed'), { icon: '🗑️' })
-  }
-  
   // Ouvrir le panneau pour sélectionner un coupon pour une facture
   const openCouponSelectionForFacture = (facture: Facture) => {
     setFactureForCoupon(facture)
     setIsCouponPanelOpen(true)
-  }
-
-  // Utiliser réellement le coupon (appelé après encaissement réussi)
-  const utiliserCouponApresEncaissement = async (couponId: number, factureId: number) => {
-    try {
-      await api.post(`coupons/${couponId}/utiliser/`, { facture_id: factureId })
-      fetchCoupons()
-    } catch (err) {
-      console.error('Erreur utilisation coupon:', err)
-      // Ne pas bloquer - le paiement a réussi
-    }
-  }
-
-  // Rechercher un coupon par numéro
-  const handleRechercherCoupon = async () => {
-    if (!searchCouponNumero) return
-
-    try {
-      const response = await api.get('coupons/', { params: { search: searchCouponNumero } })
-      const results = response.data.results || response.data || []
-      
-      if (results.length > 0) {
-        setCouponTrouve(results[0])
-        setIsDetailsCouponModalOpen(true)
-      } else {
-        toast.error(t('messages.coupon_not_found'))
-      }
-    } catch (err) {
-      console.error('Erreur recherche coupon:', err)
-      toast.error(t('messages.search_error'))
-    }
   }
 
   // Trier les factures par date chronologique (plus ancienne en premier)
@@ -304,28 +248,29 @@ export default function CaisseCentralisee() {
     setIsPaymentModalOpen(true)
   }, [])
 
-  const latestHandlers = useRef({
-    handleEncaisser,
-    openCouponSelectionForFacture,
-    fetchFacturesEnAttente,
-    fetchCoupons,
-    sortedFactures,
-    selectedRowIndex,
-    isPaymentModalOpen,
-    isGenererCouponModalOpen,
-    isDetailsCouponModalOpen,
-    isSudoModalOpen,
-    showTicketPreview,
-    isCouponPanelOpen,
-    user
-  })
-  
-  useEffect(() => {
-    latestHandlers.current = {
-      handleEncaisser,
-      openCouponSelectionForFacture,
-      fetchFacturesEnAttente,
-      fetchCoupons,
+  // Utiliser le hook personnalisé pour les raccourcis clavier
+  useCaisseKeyboard(
+    {
+      onEncaisser: handleEncaisser,
+      onOpenCouponPanel: openCouponSelectionForFacture,
+      onRefresh: () => {
+        fetchFacturesEnAttente()
+        fetchCoupons()
+        toast.success(t('messages.refreshed'))
+      },
+      onToggleCouponPanel: () => {
+        setIsCouponPanelOpen(false)
+        setFactureForCoupon(null)
+      },
+      onCloseModal: () => {
+        setIsPaymentModalOpen(false)
+        setIsGenererCouponModalOpen(false)
+        setIsDetailsCouponModalOpen(false)
+        setShowTicketPreview(false)
+      },
+      canCashOut: (user as any)?.can_cash_out || user?.is_superuser || false
+    },
+    {
       sortedFactures,
       selectedRowIndex,
       isPaymentModalOpen,
@@ -333,85 +278,10 @@ export default function CaisseCentralisee() {
       isDetailsCouponModalOpen,
       isSudoModalOpen,
       showTicketPreview,
-      isCouponPanelOpen,
-      user
-    }
-  })
-
-  // Raccourcis clavier (mouse killing)
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      const h = latestHandlers.current
-      // Ignorer si une modale est ouverte ou si l'utilisateur tape dans un champ
-      if (h.isPaymentModalOpen || h.isGenererCouponModalOpen || h.isDetailsCouponModalOpen || h.isSudoModalOpen) {
-        // Escape pour fermer les modales
-        if (e.key === 'Escape') {
-          setIsPaymentModalOpen(false)
-          setIsGenererCouponModalOpen(false)
-          setIsDetailsCouponModalOpen(false)
-          setShowTicketPreview(false)
-        }
-        return
-      }
-      if (h.showTicketPreview && e.key === 'Escape') {
-        setShowTicketPreview(false)
-        return
-      }
-      
-      // Si l'utilisateur tape dans un input, ignorer
-      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) {
-        return
-      }
-
-      // Navigation avec flèches
-      if (e.key === 'ArrowDown' || e.key === 'j') {
-        e.preventDefault()
-        setSelectedRowIndex(prev => Math.min(prev + 1, h.sortedFactures.length - 1))
-      } else if (e.key === 'ArrowUp' || e.key === 'k') {
-        e.preventDefault()
-        setSelectedRowIndex(prev => Math.max(prev - 1, 0))
-      }
-      // Enter pour encaisser la vente sélectionnée
-      else if (e.key === 'Enter' && h.sortedFactures.length > 0) {
-        e.preventDefault()
-        const facture = h.sortedFactures[h.selectedRowIndex]
-        if (facture && ((h.user as any)?.can_cash_out || h.user?.is_superuser)) {
-          h.handleEncaisser(facture)
-        }
-      }
-      // C pour ouvrir le panneau des coupons
-      else if (e.key === 'c' || e.key === 'C') {
-        e.preventDefault()
-        if (h.sortedFactures.length > 0) {
-          h.openCouponSelectionForFacture(h.sortedFactures[h.selectedRowIndex])
-        }
-      }
-      // R pour rafraîchir
-      else if (e.key === 'r' || e.key === 'R') {
-        e.preventDefault()
-        h.fetchFacturesEnAttente()
-        h.fetchCoupons()
-        toast.success(t('messages.refreshed'))
-      }
-      // Escape pour fermer le panneau coupons
-      else if (e.key === 'Escape') {
-        if (h.isCouponPanelOpen) {
-          setIsCouponPanelOpen(false)
-          setFactureForCoupon(null)
-        }
-      }
-      // 1-9 pour sélectionner directement une vente
-      else if (e.key >= '1' && e.key <= '9') {
-        const index = parseInt(e.key) - 1
-        if (index < h.sortedFactures.length) {
-          setSelectedRowIndex(index)
-        }
-      }
-    }
-
-    document.addEventListener('keydown', handleKeyDown)
-    return () => document.removeEventListener('keydown', handleKeyDown)
-  }, [t])
+      isCouponPanelOpen
+    },
+    setSelectedRowIndex
+  )
 
   // Garder l'index valide quand la liste change
   useEffect(() => {
@@ -420,144 +290,25 @@ export default function CaisseCentralisee() {
     }
   }, [facturesEnAttente.length, selectedRowIndex])
 
-  // Enregistrer le paiement
-  // Enregistrer le paiement
-  const enregistrerPaiement = async (paiementsValides: { mode: string; montant: number }[]) => {
-    if (!selectedFacture) return
+  // Hook pour la logique de paiement
+  const { loading: paymentLoading, enregistrerPaiement: enregistrerPaiementHook } = useCaissePayment({
+    selectedFacture,
+    couponsParFacture,
+    setCouponsParFacture,
+    setTicketCaisse,
+    setIsPaymentModalOpen,
+    setShowTicketPreview,
+    fetchFacturesEnAttente,
+    fetchSessionRecap,
+    fetchCoupons,
+    utiliserCouponApresEncaissement,
+    onSuccess: () => toast.success(t('messages.modification_success'))
+  })
 
-    // Calculer le total des paiements
-    const montantTotal = paiementsValides.reduce((acc, p) => acc + p.montant, 0)
-
-    if (montantTotal === 0) {
-      toast.error(t('messages.invalid_amount'))
-      return
-    }
-
-    setLoading(true)
-
-    try {
-      // 1. Valider la facture si elle n'est pas déjà validée
-      let factureValidee = selectedFacture
-      if (selectedFacture.status !== 'VAL' && selectedFacture.status !== 'VALIDEE') {
-        const { data } = await api.post<Facture>(`factures/${selectedFacture.id}/valider/`, {})
-        factureValidee = data
-      }
-
-      // Déterminer le montant réel à encaisser (en tenant compte des paiements déjà effectués comme les coupons)
-      // Le backend calcule automatiquement reste_a_payer = total_ttc - paiements_deja_effectues
-      const montantAEncaisser = factureValidee.reste_a_payer !== undefined && factureValidee.reste_a_payer !== null
-        ? Number(factureValidee.reste_a_payer)
-        : (factureValidee.part_client !== null && Number(factureValidee.part_client) >= 0
-            ? Number(factureValidee.part_client)
-            : Number(factureValidee.total_ttc))
-
-      // 2. Enregistrer les paiements
-      let resteAEnregistrer = montantAEncaisser;
-      
-      // Ajouter le paiement par coupon si présent
-      const couponUtilise = couponsParFacture[factureValidee.id]
-      if (couponUtilise) {
-        const couponPayload: any = {
-          facture: factureValidee.id,
-          mode_paiement: 'coupon',
-          montant: couponUtilise.montant,
-          reference: `COUPON-${couponUtilise.numero}`,
-          statut: 'completee',
-        }
-        await api.post('caisse/', couponPayload)
-        // Le coupon est déjà déduit de montantAEncaisser dans le frontend
-      }
-
-      const paiementPromises = [];
-      // resteAEnregistrer already declared above
-
-      for (const paiement of paiementsValides) {
-        if (resteAEnregistrer <= 0) break;
-
-        const montantReel = Math.min(paiement.montant, resteAEnregistrer);
-
-        const paiementPayload: any = {
-          facture: factureValidee.id,
-          mode_paiement: paiement.mode,
-          montant: montantReel,
-          reference: null,
-          statut: 'completee',
-        }
-
-        // Si tiers payant, marquer comme paiement de la part patient
-        const hasTiersPayant = factureValidee.part_client !== null && Number(factureValidee.part_client) >= 0
-        if (hasTiersPayant) {
-          paiementPayload.part_patient = montantReel
-          paiementPayload.part_assurance = 0
-        }
-
-        paiementPromises.push(api.post('caisse/', paiementPayload))
-        resteAEnregistrer -= montantReel;
-      }
-
-      await Promise.all(paiementPromises);
-
-      // 3. Mettre à jour le statut à PAYEE
-      await api.patch(`factures/${factureValidee.id}/`, { status: 'PAY' })
-
-      // 4. Récupérer la facture finale
-      const { data: factureFinale } = await api.get<Facture>(`factures/${factureValidee.id}/`)
-
-      // 5. Créer le ticket de caisse (calculer le rendu sur la base du montant encaissé, pas du total)
-      const rendu = montantTotal - montantAEncaisser
-      
-      // Priorité: client_name_override > client_name > 'Client de passage'
-      const clientNameForTicket = factureFinale.client_name_override 
-          || factureFinale.client_name 
-          || 'Client de passage';
-      
-      setTicketCaisse({
-        id: factureFinale.id,
-        facture: factureFinale,
-        mode_paiement: paiementsValides.length > 1 ? 'Mixte' : (paiementsValides[0]?.mode || 'especes'),
-        montant: factureFinale.total_ttc,
-        montant_verse: montantTotal.toString(),
-        rendu: rendu.toString(),
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-        statut: 'completee',
-        date_paiement: new Date().toISOString(),
-        client_name: clientNameForTicket,
-        paiements_details: (factureFinale as any).paiements || [],
-        user_details: user,
-        reference: null
-      } as any)
-
-      // 6. Fermer la modale de paiement et afficher le ticket
-      setIsPaymentModalOpen(false)
-      setShowTicketPreview(true)
-
-      // 7. Rafraîchir la liste et le récap session
-      await fetchFacturesEnAttente()
-      fetchSessionRecap()
-
-      // Invalidate product cache to refresh stock data (if on same machine)
-      queryClient.invalidateQueries({ queryKey: ['products'] })
-      
-      // 8. Si un coupon était appliqué à cette facture, le marquer comme utilisé au niveau du CouponMonnaie
-      if (couponUtilise) {
-        await utiliserCouponApresEncaissement(couponUtilise.id, factureFinale.id)
-        // Retirer le coupon de la map
-        setCouponsParFacture(prev => {
-          const updated = { ...prev }
-          delete updated[factureFinale.id]
-          return updated
-        })
-      }
-
-      toast.success(t('messages.modification_success'))
-    } catch (err) {
-      console.error('Erreur lors du paiement:', err)
-      toast.error(getApiErrorDetail(err, t('messages.save_payment_error')))
-    } finally {
-      setLoading(false)
-    }
-  }
+  // Wrapper pour adapter la signature au PaymentModal
+  const enregistrerPaiement = useCallback((paiements: { mode: string; montant: number }[]) => {
+    enregistrerPaiementHook(paiements, t, user)
+  }, [enregistrerPaiementHook, t, user])
   // Envoi WhatsApp
   const handleSendWhatsApp = async () => {
     if (!ticketCaisse || !ticketCaisse.facture || typeof ticketCaisse.facture === 'number') return
@@ -599,147 +350,40 @@ export default function CaisseCentralisee() {
     }
   }
 
-  // Modifier une facture (Redirection vers Facturation)
-  const handleModifier = async (facture: Facture) => {
-    if (!window.confirm(t('confirm_modify_invoice'))) return
+  // Hooks pour les modifications
+  const {
+    handleFullModification,
+    handleUpdateQuantity,
+    handleRemoveProduct: handleRemoveProductBase
+  } = useInvoiceModification({
+    setLoading,
+    fetchFacturesEnAttente,
+    t
+  })
 
-    try {
-      setLoading(true)
-      // 1. Fetch the FULL invoice detail (list endpoint doesn't include products)
-      const { data: fullFacture } = await api.get<Facture>(`factures/${facture.id}/`)
-      
-      if (!fullFacture.produits || fullFacture.produits.length === 0) {
-        toast.error(t('messages.empty_invoice_error'))
-        setLoading(false)
-        return
-      }
-      
-      // 2. Fetch complete product details for all products
-      const productPromises = fullFacture.produits.map(async (p: any) => {
-        try {
-          const response = await api.get(`produits/${p.produit}/`)
-          return {
-            id: response.data.id,
-            name: response.data.name,
-            price: p.selling_price,
-            quantity: p.quantity,
-            stock: response.data.stock,
-            discount: p.discount || 0,
-            cip: response.data.cip,
-            tva: response.data.tva
-          }
-        } catch (err) {
-          console.error(`Failed to fetch product ${p.produit}:`, err)
-          return {
-            id: p.produit,
-            name: p.produit_nom || 'Produit',
-            price: p.selling_price,
-            quantity: p.quantity,
-            stock: 9999,
-            discount: p.discount || 0
-          }
-        }
-      })
+  // Wrappers pour les modifications partielles
+  const handleModifier = useCallback((facture: Facture) => {
+    handleFullModification(facture)
+  }, [handleFullModification])
 
-      const cartItems = await Promise.all(productPromises)
+  const handleUpdateProductQuantity = useCallback((factureId: number, produitId: number, newQty: number) => {
+    handleUpdateQuantity(factureId, produitId, newQty, facturesEnAttente)
+  }, [handleUpdateQuantity, facturesEnAttente])
 
-      // 3. Cancel the invoice after fetching all data
-      await api.post(`factures/${facture.id}/annuler/`, { motif: 'Modification (Reload)' })
+  const handleRemoveProduct = useCallback((factureId: number, produitId: number) => {
+    handleRemoveProductBase(factureId, produitId, facturesEnAttente, handleAnnuler)
+  }, [handleRemoveProductBase, facturesEnAttente, handleAnnuler])
 
-      // 4. Navigate to Facturation with complete state
-      navigate('/app/facturation', { 
-        state: { 
-          cartData: cartItems,
-          client: fullFacture.client ? { id: fullFacture.client, name: fullFacture.client_name } : null,
-          remise: fullFacture.remise,
-          mode: 'edit_reload'
-        } 
-      })
-      
-    } catch (err) {
-      console.error('Erreur modification:', err)
-      toast.error(t('messages.load_invoice_error'))
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  // Modifier la quantité d'un produit directement (Partial Modification)
-  const handleUpdateProductQuantity = async (factureId: number, produitId: number, newQty: number) => {
-    try {
-      setLoading(true)
-      const facture = facturesEnAttente.find(f => f.id === factureId)
-      if (!facture) return
-      
-      const updatedProducts = (facture.produits || []).map((p: any) => {
-        if (p.produit === produitId) {
-          return { ...p, quantity: newQty }
-        }
-        return p
-      })
-      
-      const response = await api.post(`factures/${factureId}/modifier/`, {
-        produits: updatedProducts,
-        remise: facture.remise,
-        client: facture.client,
-        client_name_override: facture.client_name_override
-      })
-      
-      const updatedFacture = response.data.facture
-      setFacturesEnAttente(prev => prev.map(f => f.id === factureId ? { ...updatedFacture, session_ticket_number: f.session_ticket_number } : f))
-      toast.success(t('messages.modification_success'))
-      
-    } catch (err) {
-      console.error('Erreur modification produit:', err)
-      toast.error(getApiErrorDetail(err, t('messages.modification_error')))
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  // Supprimer un produit directement (Partial Modification)
-  const handleRemoveProduct = async (factureId: number, produitId: number) => {
-    try {
-      setLoading(true)
-      const facture = facturesEnAttente.find(f => f.id === factureId)
-      if (!facture) return
-      
-      const updatedProducts = (facture.produits || []).filter((p: any) => p.produit !== produitId)
-      
-      if (updatedProducts.length === 0) {
-        if (window.confirm(t('messages.confirm_cancel_empty'))) {
-          await handleAnnuler(facture)
-        }
-        setLoading(false)
-        return
-      }
-      
-      const response = await api.post(`factures/${factureId}/modifier/`, {
-        produits: updatedProducts,
-        remise: facture.remise,
-        client: facture.client,
-        client_name_override: facture.client_name_override
-      })
-      
-      const updatedFacture = response.data.facture
-      setFacturesEnAttente(prev => prev.map(f => f.id === factureId ? { ...updatedFacture, session_ticket_number: f.session_ticket_number } : f))
-      toast.success(t('messages.product_removed'))
-      
-    } catch (err) {
-      console.error('Erreur suppression produit:', err)
-      toast.error(getApiErrorDetail(err, t('messages.modification_error')))
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  // Compute stats for the header cards
-  const totalMontantEnAttente = useMemo(() => 
-    facturesEnAttente.reduce((acc, f) => acc + Number(f.total_ttc || 0), 0), 
-    [facturesEnAttente]
-  )
-  const activeCouponsCount = useMemo(() => coupons.filter(c => c.status === 'ACTIF').length, [coupons])
-  const appliedCouponsCount = Object.keys(couponsParFacture).length
+  // Hook pour les statistiques
+  const {
+    totalMontantEnAttente,
+    activeCouponsCount,
+    appliedCouponsCount
+  } = useCaisseStats({
+    facturesEnAttente,
+    coupons,
+    couponsParFacture
+  })
 
   return (
     <div className="h-full bg-base-200 flex flex-col overflow-hidden font-sans">
@@ -794,7 +438,7 @@ export default function CaisseCentralisee() {
                 title={t('cash_session.close_title', { defaultValue: 'Fermer ma caisse' })}
               >
                 <Lock className="size-4" />
-                <span className="hidden sm:inline">🔴 {myActivePoste.nom} - Fermer</span>
+                <span className="hidden sm:inline">🔴 {myActivePoste.nom} - {t('cash_session.close_short', { defaultValue: 'Fermer' })}</span>
                 {myActivePoste.fond_de_caisse && (
                   <span className="text-[10px] opacity-70">({Number(myActivePoste.fond_de_caisse).toLocaleString()} F)</span>
                 )}
@@ -895,14 +539,14 @@ export default function CaisseCentralisee() {
 
         {/* Table Card */}
         <div className="flex-1 bg-base-100 rounded-2xl shadow-sm border border-base-300 overflow-hidden flex flex-col min-h-0">
-          <div className="flex-1 overflow-auto">
+          <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
             <FacturesTable
               sortedFactures={sortedFactures}
               loading={loading}
               selectedRowIndex={selectedRowIndex}
               onSelectRow={setSelectedRowIndex}
               onEncaisser={handleEncaisser}
-              onRemoveCoupon={handleRetirerCouponDeFacture}
+              onRemoveCoupon={handleRetirerCouponWrapper}
               onModify={handleModifier}
               onCancel={handleAnnuler}
               onApplyCoupon={openCouponSelectionForFacture}
@@ -910,6 +554,7 @@ export default function CaisseCentralisee() {
               onRemoveProduct={handleRemoveProduct}
               couponsParFacture={couponsParFacture}
               user={user}
+              myActivePoste={myActivePoste}
             />
           </div>
           {/* Keyboard Shortcuts Footer */}
@@ -936,11 +581,11 @@ export default function CaisseCentralisee() {
             <div className="flex items-center gap-2">
               <TrendingUp className="size-4 text-success" />
               <span className="text-xs font-black text-success uppercase tracking-widest">
-                Récap caisse — {sessionRecap.poste_nom}
+                {t('recap.title', { defaultValue: 'Récap caisse' })} — {sessionRecap.poste_nom}
               </span>
               {sessionRecap.date_ouverture && (
                 <span className="text-[10px] text-base-content/40 font-mono">
-                  depuis {new Date(sessionRecap.date_ouverture).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
+                  {t('recap.since', { defaultValue: 'depuis' })} {new Date(sessionRecap.date_ouverture).toLocaleTimeString(i18n.language === 'en' ? 'en-GB' : 'fr-FR', { hour: '2-digit', minute: '2-digit' })}
                 </span>
               )}
             </div>
@@ -954,7 +599,7 @@ export default function CaisseCentralisee() {
           <div className="p-4 flex flex-wrap gap-3 items-center">
             {(sessionRecap.fond_de_caisse ?? 0) > 0 && (
               <div className="flex flex-col items-center px-4 py-2 bg-info/5 border border-info/20 rounded-xl min-w-[100px]">
-                <span className="text-[10px] font-bold text-info/60 uppercase tracking-wider">Fond</span>
+                <span className="text-[10px] font-bold text-info/60 uppercase tracking-wider">{t('recap.fond', { defaultValue: 'Fond' })}</span>
                 <span className="text-base font-black text-info">+{formatCurrency(Math.round(sessionRecap.fond_de_caisse ?? 0))}</span>
               </div>
             )}
@@ -963,9 +608,14 @@ export default function CaisseCentralisee() {
               .sort(([, a], [, b]) => b - a)
               .map(([mode, montant]) => {
                 const labels: Record<string, string> = {
-                  especes: '💵 Espèces', cheque: '📋 Chèque', carte: '💳 Carte',
-                  virement: '🏦 Virement', om: '📱 Orange Money', momo: '📱 Mobile Money',
-                  recouvrement: '🔄 Recouvrement', coupon: '🎫 Coupons'
+                  especes: `💵 ${t('journal.modes.especes')}`,
+                  cheque: `📋 ${t('journal.modes.cheque')}`,
+                  carte: `💳 ${t('journal.modes.carte')}`,
+                  virement: `🏦 ${t('journal.modes.virement')}`,
+                  om: `📱 ${t('journal.modes.om')}`,
+                  momo: `📱 ${t('journal.modes.momo')}`,
+                  recouvrement: `🔄 ${t('journal.modes.recouvrement')}`,
+                  coupon: `🎫 ${t('recap.coupons', { defaultValue: 'Coupons' })}`
                 }
                 const isNegative = mode === 'coupon'
                 return (
@@ -982,12 +632,12 @@ export default function CaisseCentralisee() {
             }
             <div className="ml-auto flex flex-col items-end gap-1">
               <div className="text-[10px] font-bold text-base-content/40 uppercase tracking-wider">
-                {sessionRecap.nb_transactions} vente{(sessionRecap.nb_transactions ?? 0) > 1 ? 's' : ''}
+                {sessionRecap.nb_transactions} {t('recap.sales', { defaultValue: 'vente(s)', count: sessionRecap.nb_transactions ?? 0 })}
               </div>
               <div className="text-2xl font-black text-success">
                 {formatCurrency(Math.round(sessionRecap.total_avec_fond ?? 0))}
               </div>
-              <div className="text-[10px] text-base-content/40">total caisse</div>
+              <div className="text-[10px] text-base-content/40">{t('recap.total_register', { defaultValue: 'total caisse' })}</div>
             </div>
           </div>
         </div>
@@ -1003,7 +653,7 @@ export default function CaisseCentralisee() {
           facture={selectedFacture}
           coupon={couponsParFacture[selectedFacture.id]}
           onConfirm={enregistrerPaiement}
-          loading={loading}
+          loading={paymentLoading}
         />
       )}
 
@@ -1205,7 +855,7 @@ export default function CaisseCentralisee() {
       <PasswordConfirmModal
         isOpen={isSudoModalOpen}
         onClose={() => setIsSudoModalOpen(false)}
-        onConfirm={handleGenererCoupon}
+        onConfirm={handleGenererCouponWrapper}
         title="Validation par mot de passe"
         message={`Confirmez la génération du coupon de ${nouveauCouponMontant} F.`}
       />

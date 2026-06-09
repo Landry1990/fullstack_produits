@@ -1,6 +1,7 @@
 import React, { createContext, use, useState, useEffect, useMemo, useCallback, type ReactNode } from 'react';
 import api from '../services/api';
 import { toast } from 'react-hot-toast';
+import i18n from '../i18n';
 
 interface LicenceInfo {
     pharmacie_nom: string;
@@ -40,13 +41,13 @@ export const LicenceProvider = ({ children }: { children: ReactNode }) => {
 
                 // Alerte si < 7 jours
                 if (days <= 7 && days > 0) {
-                    toast.error(`Votre licence expire dans ${days} jour${days > 1 ? 's' : ''}. Veuillez contacter votre administrateur.`, {
+                    toast.error(i18n.t('licence_toast.expiry_warning', { days, plural: days > 1 ? 's' : '', ns: 'common' }), {
                         duration: 8000,
                         id: 'licence-expiry-warning',
                         icon: '⚠️'
                     });
                 } else if (days <= 0) {
-                    toast.error(`Votre licence a expiré. Veuillez la renouveler immédiatement.`, {
+                    toast.error(i18n.t('licence_toast.expired', { ns: 'common' }), {
                         duration: 10000,
                         id: 'licence-expired-error',
                         icon: '🚫'

@@ -43,6 +43,29 @@ class CommandeProduitViewSet(viewsets.ModelViewSet):
             produit.selling_price = selling_price
             produit.save(update_fields=['selling_price'])
 
+    def _check_commande_not_closed(self, instance):
+        """Lève une erreur si la commande associée est clôturée."""
+        if instance.commande.status == Commande.Status.CLOTUREE:
+            from rest_framework.exceptions import PermissionDenied
+            raise PermissionDenied(
+                "Modification impossible : cette ligne appartient à une commande déjà clôturée."
+            )
+
+    def update(self, request, *args, **kwargs):
+        instance = self.get_object()
+        self._check_commande_not_closed(instance)
+        return super().update(request, *args, **kwargs)
+
+    def partial_update(self, request, *args, **kwargs):
+        instance = self.get_object()
+        self._check_commande_not_closed(instance)
+        return super().partial_update(request, *args, **kwargs)
+
+    def destroy(self, request, *args, **kwargs):
+        instance = self.get_object()
+        self._check_commande_not_closed(instance)
+        return super().destroy(request, *args, **kwargs)
+
     @action(detail=False, methods=['post'])
     @transaction.atomic
     def bulk_sync(self, request):
@@ -197,7 +220,7 @@ class CommandeProduitViewSet(viewsets.ModelViewSet):
                 Produit.objects.filter(id=p_id).update(
                     tva=to_decimal(latest_p_data.get('tva'), product_tva_map.get(p_id, 19.25)),
                     selling_price=to_decimal(latest_p_data.get('selling_price', 0)),
-                    cost_price=to_decimal(latest_p_data.get('price', 0))
+                    cost_price=to_decimal(latest_p_data.get('price_cost', latest_p_data.get('price', 0)))
                 )
                 p_obj = Produit.objects.get(id=p_id)
                 p_obj.save(update_fields=['taux_marge', 'pourcentage_marge'])

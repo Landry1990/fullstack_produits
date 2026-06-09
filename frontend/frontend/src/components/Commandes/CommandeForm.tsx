@@ -358,14 +358,14 @@ export default function CommandeForm({
                     </div>
 
                     {/* PRIX A TTC */}
-                    <div className="bg-primary/10 text-primary border border-indigo-500/20 px-3 py-1 rounded flex flex-col items-end shadow-sm">
-                        <span className="text-[9px] uppercase font-black -mb-1">PRIX A TTC</span>
+                    <div className="flex flex-col items-end border-l pl-3 border-base-200">
+                        <span className="text-[9px] uppercase font-bold text-base-content/50 -mb-1">PRIX A TTC</span>
                         <span className="text-lg font-black leading-none">{formatCurrency(orderTotals?.totalBuyTTC || 0)}</span>
                     </div>
 
                     {/* PRIX V TTC */}
-                    <div className="bg-success/10 text-success border border-success/20 px-3 py-1 rounded flex flex-col items-end shadow-sm">
-                        <span className="text-[9px] uppercase font-black -mb-1">PRIX V TTC</span>
+                    <div className="flex flex-col items-end border-l pl-3 border-base-200">
+                        <span className="text-[9px] uppercase font-bold text-base-content/50 -mb-1">PRIX V TTC</span>
                         <span className="text-lg font-black leading-none">{formatCurrency(orderTotals?.totalTTC || 0)}</span>
                     </div>
 

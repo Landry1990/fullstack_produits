@@ -1,8 +1,10 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { useLicence } from '../context/LicenceContext';
-import { AlertTriangle, Clock, ShieldAlert } from 'lucide-react';
+import { Clock, ShieldAlert } from 'lucide-react';
 
 export default function LicenceExpirationBanner() {
+    const { t } = useTranslation('common');
     const { daysRemaining, licence } = useLicence();
 
     if (daysRemaining === null || daysRemaining > 7) return null;
@@ -21,12 +23,16 @@ export default function LicenceExpirationBanner() {
             
             <div className="flex items-center gap-1">
                 {isExpired ? (
-                    <span><strong>LICENCE EXPIRÉE :</strong> L'accès au système sera restreint. Contactez votre administrateur immédiatement.</span>
+                    <span>
+                        <strong>{t('licence_banner.expired_title')}</strong>{' '}
+                        {t('licence_banner.expired_message')}
+                    </span>
                 ) : (
                     <span>
-                        <strong>ALERTE LICENCE :</strong> Votre licence pour <strong>{licence?.pharmacie_nom}</strong> expire dans 
+                        <strong>{t('licence_banner.alert_title')}</strong>{' '}
+                        {t('licence_banner.expires_in', { name: licence?.pharmacie_nom }).replace(/<1>/g, '').replace(/<\/1>/g, '')}
                         <span className="mx-1 px-1.5 py-0.5 bg-base-100/20 rounded font-bold underline decoration-2">
-                            {daysRemaining} {daysRemaining > 1 ? 'jours' : 'jour'}
+                            {daysRemaining} {t(daysRemaining > 1 ? 'licence_banner.days' : 'licence_banner.day')}
                         </span>
                     </span>
                 )}
@@ -37,7 +43,7 @@ export default function LicenceExpirationBanner() {
                     onClick={() => window.location.href = '/licence'}
                     className="ml-4 px-3 py-1 bg-base-100/20 hover:bg-base-100/30 rounded-lg transition-colors border border-white/20 text-xs font-bold uppercase"
                 >
-                    Mettre à jour
+                    {t('licence_banner.update')}
                 </button>
             )}
         </div>

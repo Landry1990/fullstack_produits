@@ -45,6 +45,7 @@ export function useFacturationState() {
   const [usePendingDiscount, setUsePendingDiscount] = useState(false)
   const [showHelp, setShowHelp] = useState(false)
   const [substitutionProduct, setSubstitutionProduct] = useState<ProduitModel | null>(null)
+  const [forceStockProduct, setForceStockProduct] = useState<ProduitModel | null>(null)
 
   const [refreshTrigger, setRefreshTrigger] = useState(0)
   const triggerUiRefresh = useCallback(() => {
@@ -70,6 +71,7 @@ export function useFacturationState() {
     onRequirePrescription: () => ui.setShowOrdonnanceModal(true),
     onAlert: (message, title, type, is_blocking, targetId) => ui.pushDisplayAlert({ message, title, type, is_blocking, targetId }),
     onSubstitution: (produit) => setSubstitutionProduct(produit),
+    onForceStock: (produit) => setForceStockProduct(produit),
     quantityInputsRef
   })
 
@@ -170,7 +172,9 @@ export function useFacturationState() {
     setPendingPrintFacture,
     setShowClientNameModal,
     secureUpdateQuantite,
-    user
+    user,
+    myActivePoste: multiCaisse.myActivePoste,
+    postesCaisses: multiCaisse.postesCaisses
   })
 
   // --- Sale Completion ---
@@ -605,6 +609,9 @@ export function useFacturationState() {
     // Substitution
     substitutionProduct,
     setSubstitutionProduct,
+    // Force stock
+    forceStockProduct,
+    setForceStockProduct,
     // Refs
     searchInputRef,
     clientSearchRef,

@@ -546,7 +546,7 @@ class CaisseViewSet(BaseViewSetConfig, viewsets.ModelViewSet):
         
         total_entrees = mouvements.filter(type='ENTREE').aggregate(Sum('montant'))['montant__sum'] or Decimal('0.00')
         total_sorties = mouvements.filter(type='SORTIE').aggregate(Sum('montant'))['montant__sum'] or Decimal('0.00')
-        total_ventes_especes = paiements_sales.aggregate(Sum('montant'))['montant__sum'] or Decimal('0.00')
+        # total_ventes inclut déjà tous les modes (espèces, carte, mobile...) hors recouvrement
 
         # Calcul du CA Divers
         from ...models import FactureProduitAllocation
@@ -601,14 +601,37 @@ class CaisseViewSet(BaseViewSetConfig, viewsets.ModelViewSet):
         if total_ventes == 0 and total_entrees == 0 and total_sorties == 0 and not mouvements_crees:
              return Response({'detail': 'Impossible de clôturer : aucun mouvement détecté depuis la dernière clôture.'}, status=status.HTTP_400_BAD_REQUEST)
 
+        # Vérifier qu'il n'existe pas déjà une clôture couvrant cette même période
+        doublon_qs = ClotureCaisse.objects.filter(user=target_user)
+        if start_date:
+            doublon_qs = doublon_qs.filter(date_fin__gte=start_date)
+        if end_date:
+            doublon_qs = doublon_qs.filter(date_debut__lte=end_date)
+        else:
+            doublon_qs = doublon_qs.filter(date_debut__lte=timezone.now())
+        existing = doublon_qs.order_by('-date').first()
+        if existing:
+            return Response({
+                'detail': f'Une clôture existe déjà pour cette période (#{existing.pk} du {existing.date.strftime("%d/%m/%Y %H:%M")}). Veuillez choisir une autre plage de dates.',
+                'existing_cloture_id': existing.pk,
+            }, status=status.HTTP_409_CONFLICT)
+
         recouv_total = paiements_recouv.aggregate(Sum('montant'))['montant__sum'] or Decimal('0.00')
-        total_theorique = total_ventes_especes + recouv_total + total_entrees - total_sorties + fond_de_caisse
+
+        # Utiliser le montant théorique calculé côté frontend (déjà inclut fond + ventes + entrées - sorties)
+        montant_theorique_frontend = request.data.get('montant_theorique_frontend')
+        if montant_theorique_frontend is not None:
+            try:
+                total_theorique = Decimal(str(montant_theorique_frontend))
+            except (ValueError, TypeError, InvalidOperation):
+                total_theorique = fond_de_caisse + total_ventes + total_entrees - total_sorties
+        else:
+            total_theorique = fond_de_caisse + total_ventes + total_entrees - total_sorties
         ecart = montant_reel - total_theorique
         
         # type: ignore[index] - details is a mixed dict[str, Any] for API response
         details['__meta__'] = {  # type: ignore[index]
-            'total_ventes': float(total_ventes), 
-            'total_ventes_especes': float(total_ventes_especes),
+            'total_ventes': float(total_ventes),
             'total_recouvrement_especes': float(recouv_total),
             'total_entrees': float(total_entrees), 
             'total_sorties': float(total_sorties),

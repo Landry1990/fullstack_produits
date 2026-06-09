@@ -82,6 +82,7 @@ export function useJournalCaisse() {
   const [actualAmount, setActualAmount] = useState<string>('');
   const [manualMovements, setManualMovements] = useState<{ id: number; motif: string; montant: number; type: 'ENTREE' | 'SORTIE' }[]>([]);
   const [fondDeCaisse, setFondDeCaisse] = useState<number>(0);
+  const [theoriqueFrontend, setTheorique] = useState<number | null>(null);
 
   const toggleReleve = (releveId: number) => {
     setExpandedReleves(prev => {
@@ -424,16 +425,25 @@ export function useJournalCaisse() {
 
     const win = window.open('', '_blank', 'width=800,height=600');
     if (win) {
-      const startStr = data.start_date ? new Date(data.start_date).toLocaleString(currentLocale) : '--';
-      const endStr = data.date_fin ? new Date(data.date_fin).toLocaleString(currentLocale) : '--';
+      const startStr = (data.date_debut || data.start_date) ? new Date(data.date_debut || data.start_date).toLocaleString(currentLocale) : '--';
+      const endStr = (data.date_fin || data.end_date) ? new Date(data.date_fin || data.end_date).toLocaleString(currentLocale) : '--';
       
-      const soldeOp = (data.total_ventes || 0) + (data.total_entrees || 0) - (data.total_sorties || 0);
+      const totalTheorique = data.montant_theorique ?? data.total_theorique ?? 0;
+      const montantReel = data.montant_reel ?? normalizeNumberInput(actualAmount);
+      // Solde à justifier = théorique backend (inclut recouvrements + fond + entrées - sorties)
+      const soldeOp = totalTheorique;
       
+      const modeLabels: Record<string, string> = {
+        especes: 'Espèces', cheque: 'Chèque', carte: 'Carte Bancaire',
+        virement: 'Virement', om: 'Orange Money', momo: 'Mobile Money',
+        recouvrement: 'Recouvrement', coupon: 'Coupons',
+      };
+
       const displayDetails = Object.entries(data.details || {}).filter(
         ([key]) => !key.startsWith('__') && key !== 'mouvements_audit' && key !== 'mouvements'
       );
 
-      const movementsAudit = data.mouvements_audit || [];
+      const movementsAudit = data.mouvements_audit || (data.details?.mouvements_audit) || [];
 
       const content = `
         <div style="font-family: monospace; width: 80mm; margin: 0 auto; padding: 10px; color: black; line-height: 1.2;">
@@ -510,7 +520,7 @@ export function useJournalCaisse() {
                 <div style="font-weight: bold; margin-bottom: 3px; border-bottom: 1px solid black; font-size: 0.85em;">${t('print.mode_summary')}</div>
                 ${displayDetails.map(([mode, montant]) => `
                     <div style="display: flex; justify-content: space-between; font-size: 0.8em; margin-bottom: 1px;">
-                        <span style="text-transform: capitalize;">${mode}</span>
+                        <span style="text-transform: capitalize;">${modeLabels[mode] || mode}</span>
                         <span>${formatCurrencyLocal(normalizeNumberInput(montant as any))}</span>
                     </div>
                 `).join('')}
@@ -519,15 +529,15 @@ export function useJournalCaisse() {
             <div style="border-top: 2px solid black; padding-top: 5px; margin-top: 5px;">
                 <div style="display: flex; justify-content: space-between; font-weight: bold; font-size: 1.05em;">
                     <span>${t('print.total_to_justify')}</span>
-                    <span>${formatCurrencyLocal(data.total_theorique)}</span>
+                    <span>${formatCurrencyLocal(totalTheorique)}</span>
                 </div>
                 <div style="display: flex; justify-content: space-between; font-size: 0.85em; margin-top: 3px;">
                     <span>${t('print.actual_amount')}</span>
-                    <span>${actualAmount ? formatCurrencyLocal(normalizeNumberInput(actualAmount)) : '_________'}</span>
+                    <span>${formatCurrencyLocal(montantReel)}</span>
                 </div>
                 <div style="display: flex; justify-content: space-between; font-weight: bold; border-top: 1px solid black; margin-top: 3px; padding-top: 3px;">
                     <span>${t('print.cash_gap')}</span>
-                    <span>${actualAmount ? formatCurrencyLocal(normalizeNumberInput(actualAmount) - data.total_theorique) : '_________'}</span>
+                    <span>${formatCurrencyLocal(montantReel - totalTheorique)}</span>
                 </div>
             </div>
 
@@ -563,8 +573,9 @@ export function useJournalCaisse() {
     try {
       const response = await api.post('caisse/cloturer/', {
         montant_reel: normalizeNumberInput(actualAmount),
+        montant_theorique_frontend: theoriqueFrontend,
         date_debut: dateDebut ? formatLocalISOString(dateDebut) : null,
-        date_fin: dateFin ? formatLocalISOString(dateFin) : null,
+        date_fin: dateFin ? formatLocalISOStringEnd(dateFin) : null,
         user_id: selectedUser,
         mouvements_manuels: manualMovements.map(m => ({ motif: m.motif, montant: m.montant, type: m.type }))
       });
@@ -639,6 +650,7 @@ export function useJournalCaisse() {
     setIsMovementModalOpen,
     setManualMovements,
     setFondDeCaisse,
+    setTheorique,
 
     // Derived
     filteredItems,
@@ -653,6 +665,8 @@ export function useJournalCaisse() {
     handleImprimerCloture,
     setTodayDateRange,
     
+    theoriqueFrontend,
+
     // Utils out for components
     t,
     currentLocale,

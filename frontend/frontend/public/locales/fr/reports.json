@@ -325,7 +325,14 @@
         "taux_marge": "Taux Marge (%)",
         "prix_vente_net": "Prix Vente Net",
         "cout_achat": "Coût Achat",
-        "cip1": "CIP1"
+        "mt_vente": "Montant Vente",
+        "mt_achat": "Montant Achat",
+        "cip1": "CIP1",
+        "FACTURE": "Facture",
+        "PRODUIT": "Produit",
+        "QUANTITE": "Qté",
+        "MT_VENTE": "Montant Vente",
+        "MT_ACHAT": "Montant Achat"
     },
     "preset_saved": "Configuration enregistrée !",
     "preset_loaded": "Chargement de : {{name}}",

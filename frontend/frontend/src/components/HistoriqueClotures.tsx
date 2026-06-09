@@ -198,6 +198,10 @@ export default function HistoriqueClotures() {
     setCurrentPage(1)
   }
 
+  // Pagination sessions (côté frontend)
+  const SESSION_PAGE_SIZE = 15
+  const [sessionPage, setSessionPage] = useState(1)
+
   // Fetch des sessions de caisse
   const fetchSessions = useCallback(async () => {
     setSessionsLoading(true)
@@ -217,8 +221,12 @@ export default function HistoriqueClotures() {
   useEffect(() => {
     if (activeTab === 'sessions' && canViewSessions) {
       fetchSessions()
+      setSessionPage(1)
     }
   }, [activeTab, canViewSessions, fetchSessions])
+
+  const sessionsTotalPages = Math.ceil(sessions.length / SESSION_PAGE_SIZE)
+  const sessionsPaged = sessions.slice((sessionPage - 1) * SESSION_PAGE_SIZE, sessionPage * SESSION_PAGE_SIZE)
 
   const totalPages = Math.ceil(totalItems / pageSize)
 
@@ -455,7 +463,7 @@ export default function HistoriqueClotures() {
       {/* Contenu conditionnel selon l'onglet */}
       {activeTab === 'sessions' && canViewSessions ? (
         /* ========== ONGLET SESSIONS DE CAISSE ========== */
-        <div className="flex-1 px-3 sm:px-6 py-4 sm:py-6 overflow-auto">
+        <div className="flex-1 px-3 sm:px-6 py-4 sm:py-6 overflow-hidden flex flex-col gap-4">
           {/* Active Sessions Banner */}
           {sessions.filter(s => s.est_active).length > 0 && (
             <div className="mb-4 p-4 bg-success/10 border border-success/30 rounded-xl">
@@ -491,8 +499,8 @@ export default function HistoriqueClotures() {
           )}
 
           {/* Sessions Table */}
-          <div className="bg-base-100 border border-base-200 rounded-xl shadow-sm overflow-hidden">
-            <div className="overflow-x-auto">
+          <div className="flex-1 bg-base-100 border border-base-200 rounded-xl shadow-sm overflow-hidden flex flex-col min-h-0">
+            <div className="flex-1 overflow-auto">
               <table className="table table-sm w-full">
                 <thead className="bg-base-200 sticky top-0 z-10">
                   <tr>
@@ -524,7 +532,7 @@ export default function HistoriqueClotures() {
                       </td>
                     </tr>
                   ) : (
-                    sessions.map(session => {
+                    sessionsPaged.map(session => {
                       const totalVentilation = Object.values(session.ventilation_paiements || {}).reduce((s, v) => s + v, 0)
                       return (
                         <tr key={session.id} className={`hover:bg-base-200/30 transition-colors ${session.est_active ? 'bg-success/5' : ''}`}>
@@ -580,6 +588,19 @@ export default function HistoriqueClotures() {
                 </tbody>
               </table>
             </div>
+            {/* Pagination sessions */}
+            {sessions.length > SESSION_PAGE_SIZE && (
+              <div className="bg-base-100 border-t border-base-200 p-3 flex items-center justify-between shrink-0">
+                <span className="text-sm text-base-content/60">
+                  {(sessionPage - 1) * SESSION_PAGE_SIZE + 1}–{Math.min(sessionPage * SESSION_PAGE_SIZE, sessions.length)} sur {sessions.length} sessions
+                </span>
+                <div className="join">
+                  <button className="join-item btn btn-sm" onClick={() => setSessionPage(p => Math.max(1, p - 1))} disabled={sessionPage === 1}>Précédent</button>
+                  <button className="join-item btn btn-sm bg-base-200 no-animation pointer-events-none w-24">Page {sessionPage}/{sessionsTotalPages}</button>
+                  <button className="join-item btn btn-sm" onClick={() => setSessionPage(p => Math.min(sessionsTotalPages, p + 1))} disabled={sessionPage === sessionsTotalPages}>Suivant</button>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       ) : (

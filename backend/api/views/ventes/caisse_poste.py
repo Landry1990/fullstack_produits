@@ -3,7 +3,7 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from django.utils import timezone
-from django.db.models import Sum, Q
+from django.db.models import Sum, Q, Count
 from decimal import Decimal
 from ...models import PosteCaisse, SessionCaisse, Caisse, Facture
 from ...serializers import PosteCaisseSerializer, SessionCaisseSerializer
@@ -66,7 +66,16 @@ class PosteCaisseViewSet(viewsets.ModelViewSet):
             est_active=True
         )
 
-        return Response(self.get_serializer(poste).data)
+        # Rattacher les factures en attente (PROF) sans caisse assignée à ce poste
+        factures_rattachees = Facture.objects.filter(
+            status=Facture.Status.PROFORMA,
+            poste_caisse__isnull=True,
+            is_active=True
+        ).update(poste_caisse=poste)
+
+        data = self.get_serializer(poste).data
+        data['factures_en_attente_rattachees'] = factures_rattachees
+        return Response(data)
 
     @action(detail=True, methods=['post'])
     def fermer(self, request, pk=None):
@@ -170,36 +179,39 @@ class PosteCaisseViewSet(viewsets.ModelViewSet):
             est_active=True
         ).select_related('poste').first()
 
-        # Superuser sans session propre : agrège toutes les sessions actives
+        # Superuser sans session propre : agrège toutes les sessions actives (1 seule requête SQL)
         if not session and request.user.is_superuser:
             sessions = SessionCaisse.objects.filter(est_active=True).select_related('poste')
-            if not sessions.exists():
+            sessions_list = list(sessions)
+            if not sessions_list:
                 return Response({'has_session': False})
 
-            total_general = Decimal('0')
-            fond_total = Decimal('0')
+            # Fond total : somme en Python sur les sessions déjà chargées
+            fond_total = sum(
+                Decimal(str(s.fond_de_caisse)) for s in sessions_list if s.fond_de_caisse
+            )
+            postes_noms = [s.poste.nom for s in sessions_list]
+
+            # Une seule requête SQL pour tous les paiements de toutes les sessions actives
+            filtre_sessions = Q()
+            for s in sessions_list:
+                filtre_sessions |= Q(facture__poste_caisse=s.poste, date_paiement__gte=s.date_ouverture)
+
+            paiements_qs = Caisse.objects.filter(
+                filtre_sessions,
+                statut='completee'
+            ).exclude(mode_paiement__in=['en_compte', 'depot'])
+
+            agg = paiements_qs.aggregate(total=Sum('montant'), count=Count('id'))
+            total_general = agg['total'] or Decimal('0')
+            nb_transactions = agg['count'] or 0
+
             details = {}
-            nb_transactions = 0
-            postes_noms = []
+            for item in paiements_qs.values('mode_paiement').annotate(total=Sum('montant')):
+                if item['total']:
+                    details[item['mode_paiement']] = float(item['total'])
 
-            for s in sessions:
-                paiements = Caisse.objects.filter(
-                    facture__poste_caisse=s.poste,
-                    date_paiement__gte=s.date_ouverture,
-                    statut='completee'
-                ).exclude(mode_paiement__in=['en_compte', 'depot'])
-
-                total_general += paiements.aggregate(t=Sum('montant'))['t'] or Decimal('0')
-                fond_total += Decimal(str(s.fond_de_caisse)) if s.fond_de_caisse else Decimal('0')
-                nb_transactions += paiements.count()
-                postes_noms.append(s.poste.nom)
-
-                for item in paiements.values('mode_paiement').annotate(total=Sum('montant')):
-                    if item['total']:
-                        details[item['mode_paiement']] = details.get(item['mode_paiement'], 0) + float(item['total'])
-
-            first_session = sessions.order_by('date_ouverture').first()
-            date_ouverture = first_session.date_ouverture if first_session else None
+            date_ouverture = min(s.date_ouverture for s in sessions_list)
             poste_nom = ' + '.join(postes_noms) if len(postes_noms) > 1 else postes_noms[0]
 
             return Response({

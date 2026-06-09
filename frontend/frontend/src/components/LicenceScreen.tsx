@@ -8,7 +8,7 @@ import { useTranslation } from 'react-i18next';
 
 const LicenceScreen = () => {
     const { t } = useTranslation('auth');
-    const [hardwareId, setHardwareId] = useState<string>('Chargement...');
+    const [hardwareId, setHardwareId] = useState<string>(t('loading', { ns: 'common' }));
     const [cle, setCle] = useState('');
     const [loading, setLoading] = useState(false);
     const [status, setStatus] = useState<{ is_valid: boolean; message: string; payload?: any } | null>(null);
@@ -35,7 +35,7 @@ const LicenceScreen = () => {
 
     const handleCopy = () => {
         navigator.clipboard.writeText(hardwareId);
-        toast.success('ID Matériel copié ! Envoyez-le à votre administrateur.');
+        toast.success(t('licence.copy_success'));
     };
 
 
@@ -53,9 +53,9 @@ const LicenceScreen = () => {
                     const res = await api.post('/licence/', { cle: content.trim(), preview: true });
                     setCle(content.trim()); // <--- CRITIQUE : On mémorise la clé ici
                     setPreviewData(res.data);
-                    toast.success('Informations de licence chargées !');
+                    toast.success(t('licence.file_loaded'));
                 } catch (error: any) {
-                    toast.error(error.response?.data?.detail || 'Fichier de licence invalide ou corrompu');
+                    toast.error(error.response?.data?.detail || t('licence.file_invalid'));
                     setCle('');
                     setPreviewData(null);
                 } finally {
@@ -71,13 +71,13 @@ const LicenceScreen = () => {
         setLoading(true);
         try {
             const res = await api.post('/licence/', { cle });
-            toast.success(res.data.detail || 'Licence activée avec succès !');
+            toast.success(res.data.detail || t('licence.activate_success'));
             await refreshLicence(); // On rafraîchit les infos globales (nom pharmacie, etc)
             setTimeout(() => {
                 window.location.href = '/'; 
             }, 1500);
         } catch (error: any) {
-            toast.error(error.response?.data?.detail || 'Erreur lors de l\'activation');
+            toast.error(error.response?.data?.detail || t('licence.activate_error'));
         } finally {
             setLoading(false);
         }
@@ -108,10 +108,10 @@ const LicenceScreen = () => {
                         <ShieldAlert className="size-6 text-blue-400 flex-shrink-0 mt-1" />
                         <div className="flex-1">
                             <h3 className="text-sm font-medium text-slate-300 mb-1">
-                                Empreinte Matérielle de cette machine
+                                {t('licence.hardware_id_label')}
                             </h3>
                             <p className="text-xs text-base-content/60 mb-3">
-                                Transmettez ce code à votre administrateur pour lier votre licence à cet ordinateur.
+                                {t('licence.hardware_id_help')}
                             </p>
                             <div className="flex items-center gap-2">
                                 <code className="flex-1 block px-3 py-2 bg-slate-950 text-blue-300 rounded-lg text-sm font-mono border border-slate-800">
@@ -131,11 +131,11 @@ const LicenceScreen = () => {
                             <div className="mt-3">
                                 <button
                                     type="button"
-                                    onClick={() => window.open(`https://wa.me/237XXXXXXXXX?text=${encodeURIComponent(`Bonjour ! Voici l'identifiant matériel de mon ordinateur pour générer ma licence de pharmacie :\n\n💻 *${hardwareId}*\n\nMerci.`)}`, '_blank')}
+                                    onClick={() => window.open(`https://wa.me/237XXXXXXXXX?text=${encodeURIComponent(t('licence.whatsapp_msg', { id: hardwareId }))}`, '_blank')}
                                     className="inline-flex items-center gap-2 px-3 py-1.5 bg-[#25D366]/10 text-[#25D366] hover:bg-[#25D366]/20 rounded-md text-xs font-medium transition-colors border border-[#25D366]/20"
                                 >
                                     <Send className="size-3.5" />
-                                    Envoyer mon ID par WhatsApp au Technicien
+                                    {t('licence.whatsapp_btn')}
                                 </button>
                             </div>
                         </div>
@@ -190,7 +190,7 @@ const LicenceScreen = () => {
                                 <div className="mt-6 flex items-start gap-3 p-3 bg-red-500/10 border border-red-500/20 rounded-xl text-red-400">
                                     <AlertTriangle className="size-5 flex-shrink-0" />
                                     <p className="text-xs">
-                                        Attention : Cette licence n'est pas prévue pour cet ordinateur. L'activation échouera.
+                                        {t('licence.hardware_mismatch')}
                                     </p>
                                 </div>
                             )}
@@ -202,13 +202,13 @@ const LicenceScreen = () => {
                                 disabled={loading || !previewData.hardware_match}
                                 className="w-full py-4 bg-green-600 hover:bg-green-500 disabled:bg-slate-700 text-white rounded-xl font-bold transition-all flex items-center justify-center gap-2 shadow-lg shadow-green-900/20"
                             >
-                                {loading ? <span className="size-6 border-2 border-white/20 border-t-white rounded-full animate-spin" /> : "Confirmer l'activation"}
+                                {loading ? <span className="size-6 border-2 border-white/20 border-t-white rounded-full animate-spin" /> : t('licence.confirm_activation')}
                             </button>
                             <button
                                 onClick={() => { setPreviewData(null); setCle(''); }}
                                 className="w-full py-3 text-base-content/50 hover:text-white text-xs transition-colors"
                             >
-                                Annuler et choisir un autre fichier
+                                {t('licence.cancel_file')}
                             </button>
                         </div>
                     </div>
@@ -216,7 +216,7 @@ const LicenceScreen = () => {
                     <div className="space-y-6">
                         <div>
                             <label className="block text-sm font-medium text-slate-300 mb-2 text-center">
-                                Avez-vous reçu votre fichier de licence ?
+                                {t('licence.file_label')}
                             </label>
                             
                             <div className="relative group">
@@ -237,10 +237,10 @@ const LicenceScreen = () => {
                                             </div>
                                             <div className="text-center">
                                                 <p className="text-sm font-medium text-white mb-1">
-                                                    Cliquez pour importer votre fichier
+                                                    {t('licence.file_click')}
                                                 </p>
                                                 <p className="text-xs text-base-content/60">
-                                                    Format supporté : .lic
+                                                    {t('licence.file_format')}
                                                 </p>
                                             </div>
                                         </>

@@ -369,5 +369,25 @@
         "stock": "Stock",
         "price": "Price",
         "select": "Select"
+    },
+    "force_stock": {
+        "title": "Out of stock — {{produit}}",
+        "message": "This product has a stock of {{stock}}. Do you want to force the sale anyway?",
+        "force": "Force sale",
+        "substitute": "See substitutes",
+        "cancel": "Cancel"
+    },
+    "licence_toast": {
+        "expiry_warning": "Your licence expires in {{days}} day{{plural}}. Please contact your administrator.",
+        "expired": "Your licence has expired. Please renew it immediately."
+    },
+    "licence_banner": {
+        "alert_title": "LICENCE ALERT:",
+        "expires_in": "Your licence for <1>{{name}}</1> expires in",
+        "day": "day",
+        "days": "days",
+        "update": "Update",
+        "expired_title": "LICENCE EXPIRED:",
+        "expired_message": "System access will be restricted. Contact your administrator immediately."
     }
 }

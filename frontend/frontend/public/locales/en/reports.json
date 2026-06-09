@@ -314,7 +314,14 @@
         "taux_marge": "Margin Rate (%)",
         "prix_vente_net": "Net Selling Price",
         "cout_achat": "Purchase Cost",
-        "cip1": "CIP1"
+        "mt_vente": "Sale Amount",
+        "mt_achat": "Purchase Amount",
+        "cip1": "CIP1",
+        "FACTURE": "Invoice",
+        "PRODUIT": "Product",
+        "QUANTITE": "Qty",
+        "MT_VENTE": "Sale Amount",
+        "MT_ACHAT": "Purchase Amount"
     },
     "preset_saved": "Configuration saved!",
     "preset_loaded": "Loading: {{name}}",

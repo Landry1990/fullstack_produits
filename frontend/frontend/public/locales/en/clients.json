@@ -22,6 +22,8 @@
     "types": {
         "individual": "Individual",
         "professional": "Professional",
+        "particulier": "Individual",
+        "professionnel": "Professional",
         "pro_short": "Pro",
         "part_short": "Ind"
     },
@@ -30,7 +32,9 @@
         "contact": "Contact Details",
         "finance": "Financial Conditions",
         "programs": "Programs & Benefits",
-        "purchase_history": "Purchase History"
+        "purchase_history": "Purchase History",
+        "settings": "Settings",
+        "pro_info": "Professional Information"
     },
     "finance": {
         "auto_discount": "Automatic Discount",

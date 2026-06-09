@@ -1,5 +1,6 @@
 import { useEffect, useState, useCallback, useRef } from 'react';
 import { toast } from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
 import { licenceService, type LicenceNotification } from '../services/licenceService';
 import { useAuth } from '../context/AuthContext';
 import { AlertTriangle, Info, XCircle, X } from 'lucide-react';
@@ -11,6 +12,7 @@ import { AlertTriangle, Info, XCircle, X } from 'lucide-react';
  * À placer dans le layout principal (ex: App.tsx)
  */
 export function LicenceNotifications() {
+  const { t } = useTranslation('auth');
   const { isAuthenticated, loading } = useAuth();
   const notificationsRef = useRef<LicenceNotification[]>([]);
   const dismissedIdsRef = useRef<Set<number>>(new Set());
@@ -47,11 +49,11 @@ export function LicenceNotifications() {
       await licenceService.dismissNotification(notification.id);
       dismissedIdsRef.current.add(notification.id);
       setTick(t => t + 1);
-      toast.success('Notification ignorée');
+      toast.success(t('licence.notification_dismissed'));
     } catch (error) {
-      toast.error('Erreur lors de la suppression');
+      toast.error(t('licence.notification_dismiss_error'));
     }
-  }, []);
+  }, [t]);
 
   // Afficher les notifications actives non ignorées
   useEffect(() => {
@@ -139,6 +141,7 @@ interface LicenceToastContentProps {
 }
 
 function LicenceToastContent({ notification, onDismiss }: LicenceToastContentProps) {
+  const { t } = useTranslation('auth');
   const getIcon = () => {
     switch (notification.severity) {
       case 'CRITICAL':
@@ -161,10 +164,10 @@ function LicenceToastContent({ notification, onDismiss }: LicenceToastContentPro
         {notification.days_remaining !== null && (
           <div className="mt-2 text-xs font-semibold opacity-80">
             {notification.days_remaining === 0
-              ? 'Expire aujourd\'hui'
+              ? t('licence.expires_today')
               : notification.days_remaining === 1
-              ? 'Expire demain'
-              : `Expire dans ${notification.days_remaining} jours`}
+              ? t('licence.expires_tomorrow')
+              : t('licence.expires_in_days', { days: notification.days_remaining })}
           </div>
         )}
       </div>
