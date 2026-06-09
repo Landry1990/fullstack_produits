@@ -1,0 +1,84 @@
+{
+  "title": "Gestion des Sauvegardes",
+  "subtitle": "Sauvegardez et restaurez vos données en toute sécurité",
+  
+  "buttons": {
+    "backup_now": "Sauvegarder maintenant",
+    "restore": "Restaurer",
+    "cancel": "Annuler",
+    "confirm_restore": "Confirmer la restauration",
+    "close": "Fermer",
+    "delete": "Supprimer"
+  },
+  
+  "tabs": {
+    "incremental": "Sauvegardes auto",
+    "full": "Sauvegardes complètes"
+  },
+  
+  "stats": {
+    "last_backup": "Dernière sauvegarde",
+    "backups_count": "Sauvegardes",
+    "backups": "sauvegardes",
+    "total_size": "Espace utilisé",
+    "never": "Jamais"
+  },
+  
+  "badges": {
+    "full": "Complète",
+    "incremental": "Auto"
+  },
+  
+  "details": {
+    "tables": "Tables sauvegardées"
+  },
+  
+  "time": {
+    "just_now": "À l'instant",
+    "hours_ago": "Il y a {{count}} heures",
+    "days_ago": "Il y a {{count}} jours"
+  },
+  
+  "alerts": {
+    "no_backups": "Aucune sauvegarde trouvée. Créez votre première sauvegarde maintenant!",
+    "auto_backup": "Les sauvegardes automatiques sont effectuées toutes les 30 minutes ({{count}} disponibles)"
+  },
+  
+  "empty": {
+    "incremental": "Aucune sauvegarde automatique disponible",
+    "full": "Aucune sauvegarde complète disponible"
+  },
+  
+  "loading": "Chargement des sauvegardes...",
+  
+  "restore_modal": {
+    "title": "Restauration des données",
+    "warning_title": "Attention!",
+    "warning_desc": "Cette opération va remplacer toutes les données actuelles par celles du backup sélectionné.",
+    "selected": "Backup sélectionné",
+    "explanation": "La restauration va récupérer toutes les ventes, stocks et transactions jusqu'à la date du backup. L'application sera temporairement indisponible pendant l'opération.",
+    "restoring": "Restauration en cours...",
+    "please_wait": "Veuillez patienter, ne fermez pas cette fenêtre",
+    "success": "Restauration terminée avec succès!",
+    "error": "Erreur lors de la restauration"
+  },
+  
+  "confirm": {
+    "delete": "Êtes-vous sûr de vouloir supprimer ce backup?"
+  },
+  
+  "messages": {
+    "backup_started": "Création de la sauvegarde...",
+    "backup_success": "{{count}} tables sauvegardées avec succès",
+    "restore_success": "Restauration terminée: {{factures}} ventes récupérées jusqu'au {{date}}",
+    "restore_complete": "Données restaurées. L'application est prête.",
+    "delete_success": "Backup supprimé"
+  },
+  
+  "errors": {
+    "load_failed": "Impossible de charger les sauvegardes",
+    "backup_failed": "Erreur lors de la sauvegarde",
+    "restore_failed": "Erreur lors de la restauration",
+    "delete_failed": "Erreur lors de la suppression"
+  }
+}
