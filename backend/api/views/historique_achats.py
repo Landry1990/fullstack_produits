@@ -52,7 +52,7 @@ class HistoriqueAchatsViewSet(viewsets.ViewSet):
         ).values('jour').annotate(
             nb_commandes=Count('id', distinct=True),
             total_achat=Coalesce(Sum(
-                F('produits__quantity') * F('produits__price_cost'),
+                F('produits__quantity') * F('produits__price'),
                 output_field=DecimalField()
             ), Value(0, output_field=DecimalField()))
         ).order_by('-jour')
@@ -60,7 +60,7 @@ class HistoriqueAchatsViewSet(viewsets.ViewSet):
         # Global Totals Aggregation
         global_totals = queryset.aggregate(
             total_achat_global=Coalesce(Sum(
-                F('produits__quantity') * F('produits__price_cost'),
+                F('produits__quantity') * F('produits__price'),
                 output_field=DecimalField()
             ), Value(0, output_field=DecimalField())),
             nb_commandes_global=Count('id', distinct=True)
@@ -127,13 +127,13 @@ class HistoriqueAchatsViewSet(viewsets.ViewSet):
             'produit__cip1'
         ).annotate(
             total_quantite=Sum('quantity'),
-            total_achat=Coalesce(Sum(F('quantity') * F('price_cost'), output_field=DecimalField()), Value(0, output_field=DecimalField())),
+            total_achat=Coalesce(Sum(F('quantity') * F('price'), output_field=DecimalField()), Value(0, output_field=DecimalField())),
             nb_commandes=Count('commande_id', distinct=True)
         ).order_by('-total_achat')
 
         # Global Totals Aggregation
         global_totals = queryset.aggregate(
-            total_achat_global=Coalesce(Sum(F('quantity') * F('price_cost'), output_field=DecimalField()), Value(0, output_field=DecimalField())),
+            total_achat_global=Coalesce(Sum(F('quantity') * F('price'), output_field=DecimalField()), Value(0, output_field=DecimalField())),
             total_produits_global=Count('produit_id', distinct=True)
         )
 

@@ -14,12 +14,14 @@ interface SudoState {
     title?: string;
     message?: string;
     permission?: string;
+    isValidating: boolean;
 }
 
 export const useSudo = () => {
     const [sudoState, setSudoState] = useState<SudoState>({
         isOpen: false,
         onValidate: async () => { },
+        isValidating: false,
     });
 
     const requireSudo = useCallback((
@@ -28,9 +30,19 @@ export const useSudo = () => {
     ) => {
         setSudoState({
             isOpen: true,
+            isValidating: false,
             onValidate: async (validatorId: number, password: string) => {
-                await onSuccess(validatorId, password);
-                setSudoState(prev => ({ ...prev, isOpen: false, onCancel: undefined }));
+                setSudoState(prev => ({ ...prev, isValidating: true }));
+                try {
+                    await onSuccess(validatorId, password);
+                    // Fermer le modal uniquement si la validation réussit
+                    setSudoState(prev => ({ ...prev, isOpen: false, onCancel: undefined, isValidating: false }));
+                } catch (error) {
+                    // Laisser le modal ouvert pour permettre de resaisir le mot de passe
+                    // L'erreur est gérée par le composant qui appelle requireSudo (toast)
+                    setSudoState(prev => ({ ...prev, isValidating: false }));
+                    throw error; // Re-lancer pour que l'appelant puisse gérer l'erreur
+                }
             },
             onCancel: options?.onCancel,
             title: options?.title,

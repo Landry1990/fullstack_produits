@@ -50,4 +50,5 @@ export interface SudoState {
     title?: string;
     message?: string;
     permission?: string;
+    isValidating: boolean;
 }

@@ -1252,13 +1252,13 @@ export function useCommandesState(forcedType?: 'LOC' | 'DIR' | 'DIV') {
     reader.readAsText(file);
   };
 
-  const handleCsvExport = (wholesaler: 'UBIPHARM' | 'LABOREX' | 'LABOREX_CIP3') => {
+  const handleCsvExport = (wholesaler: 'PRINCIPAL' | 'SECONDAIRE' | 'SECONDAIRE_CIP3') => {
     if (commandeProduits.length === 0) {
       toast(t('orders:messages.csv_empty_order'), { icon: '⚠️' });
       return;
     }
 
-    const cipLabel = wholesaler === 'UBIPHARM' ? 'CIP1' : wholesaler === 'LABOREX' ? 'CIP2' : 'CIP3';
+    const cipLabel = wholesaler === 'PRINCIPAL' ? 'CIP1' : wholesaler === 'SECONDAIRE' ? 'CIP2' : 'CIP3';
     const dateStr = new Date().toISOString().slice(0, 10);
 
     let csvContent = "";
@@ -1276,9 +1276,9 @@ export function useCommandesState(forcedType?: 'LOC' | 'DIR' | 'DIV') {
         }
 
         let code = '';
-        if (wholesaler === 'UBIPHARM')           code = product.cip1 || '';
-        else if (wholesaler === 'LABOREX')       code = product.cip2 || '';
-        else if (wholesaler === 'LABOREX_CIP3')  code = product.cip3 || product.cip2 || '';
+        if (wholesaler === 'PRINCIPAL')           code = product.cip1 || '';
+        else if (wholesaler === 'SECONDAIRE')       code = product.cip2 || '';
+        else if (wholesaler === 'SECONDAIRE_CIP3')  code = product.cip3 || product.cip2 || '';
 
         if (code) {
             csvContent += `${code};${qty}\n`;

@@ -210,7 +210,7 @@ export default function Commandes({ forcedType }: CommandesProps) {
         isOpen={state.sudoState.isOpen}
         onClose={state.closeSudo}
         onValidate={state.sudoState.onValidate}
-        saving={false}
+        saving={state.sudoState.isValidating}
         title={state.sudoState.title || modals.t('orders:messages.validation_required')}
         message={state.sudoState.message || ""}
       />

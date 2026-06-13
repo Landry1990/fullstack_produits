@@ -49,7 +49,7 @@
         "payment_conditions": "Conditions de paiement",
         "payment_type": "Type de règlement",
         "payment_type_invoice": "À la facture",
-        "payment_type_statement": "Sur relevé (ex: Ubipharm, Laborex)",
+        "payment_type_statement": "Sur relevé (ex: Principal, Secondaire)",
         "delay": "Délai (jours)",
         "delay_hint": "0 (au comptant)",
         "cancel": "Annuler",

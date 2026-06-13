@@ -129,24 +129,25 @@ class Commande(models.Model):
 
     @property
     def total_ht(self):
-        """Total Hors Taxes de la commande."""
+        """Total Hors Taxes de la commande (prix d'achat HT)."""
         return self.total
 
     @property
     def total_tva(self):
-        """Total TVA estimé de la commande (si applicable par ligne)."""
-        # Note: on CommandeProduit, price is HT and selling_price is TTC.
-        # But for accounting, we need the TVA paid to the supplier.
-        # CommandeProduit has a 'tva' field which is often the selling TVA.
-        # Let's assume for now that price is HT and there's no complex VAT on purchase side 
-        # or it's included in total_ttc.
-        return Decimal("0.00")
+        """Total TVA de la commande (calculée par ligne)."""
+        from decimal import Decimal
+        total = Decimal("0.00")
+        for ligne in self.produits.all():
+            qty = Decimal(str(ligne.quantity))
+            price = Decimal(str(ligne.price))
+            tva = Decimal(str(ligne.tva or 0))
+            total += qty * price * tva / Decimal("100")
+        return total.quantize(Decimal("0.01"))
 
     @property
     def total_ttc(self):
         """Total Toutes Taxes Comprises."""
-        # Dans ce système, 'total' semble être le montant net à payer au fournisseur.
-        return self.total
+        return self.total_ht + self.total_tva
 
     @property
     def statut_paiement(self):

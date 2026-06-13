@@ -94,11 +94,11 @@ export default function InventaireComponent() {
                 isSaving={editorLogic.saving}
             />
 
-            {sudoState.isOpen && <SudoValidationModal 
+            {sudoState.isOpen && <SudoValidationModal
                 isOpen={sudoState.isOpen}
                 onClose={closeSudo}
                 onValidate={sudoState.onValidate}
-                saving={false}
+                saving={sudoState.isValidating}
                 title={sudoState.title || t('common:sudo.title', "Validation Requise")}
                 message={sudoState.message || t('common:sudo.message', "Veuillez confirmer cette action.")}
             />}

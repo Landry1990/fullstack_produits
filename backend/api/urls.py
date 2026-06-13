@@ -108,6 +108,7 @@ from .views.margin_views import MarginViewSet
 from .views.meds_reference import MedicamentReferenceViewSet
 from .views.dci_admin import DCIAdminViewSet
 from .views.debug_score import DebugStockScoreView
+from .views.commandes.export import ExportCommandeView, ExportCommandePreviewView
 from .views.backup_views import BackupListView, CreateBackupView, RestoreBackupView, DeleteBackupView
 
 # Create a router and register our viewsets with it.
@@ -215,6 +216,10 @@ urlpatterns = [
     path('licence/notifications/', LicenceNotificationsView.as_view(), name='licence-notifications'),
     path('debug/score/', DebugStockScoreView.as_view(), name='debug-score'),
     path('health/', health_check, name='health-check'),
+    
+    # Export des commandes fournisseurs avec gestion CIP
+    path('commandes/<int:commande_id>/export/', ExportCommandeView.as_view(), name='commande-export'),
+    path('commandes/<int:commande_id>/export-preview/', ExportCommandePreviewView.as_view(), name='commande-export-preview'),
     
     # Gestion des backups (interface web pour pharmaciens)
     path('backups/', BackupListView.as_view(), name='backup-list'),

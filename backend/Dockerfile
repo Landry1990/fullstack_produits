@@ -11,9 +11,14 @@ RUN apt-get update && apt-get install -y \
     gcc \
     curl \
     tzdata \
-    docker.io \
     postgresql-client \
+    ca-certificates \
     && rm -rf /var/lib/apt/lists/*
+
+# Installer le client Docker CLI seul (~15MB vs docker.io ~800MB)
+RUN curl -fsSL https://download.docker.com/linux/static/stable/x86_64/docker-27.0.3.tgz -o docker.tgz && \
+    tar --extract --file docker.tgz --strip-components 1 --directory /usr/local/bin/ docker/docker && \
+    rm docker.tgz
 
 # Définir le fuseau horaire local (Africa/Douala = UTC+1)
 ENV TZ=Africa/Douala

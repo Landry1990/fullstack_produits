@@ -38,11 +38,11 @@ export default function Avoirs() {
         return (
             <>
                 <AvoirsDetails data={avoirsData} />
-                <SudoValidationModal 
+                <SudoValidationModal
                     isOpen={sudoState.isOpen}
                     onClose={closeSudo}
                     onValidate={sudoState.onValidate}
-                    saving={false}
+                    saving={sudoState.isValidating}
                     title={sudoState.title}
                     message={sudoState.message}
                 />
@@ -105,11 +105,11 @@ export default function Avoirs() {
             </div>
 
             {/* Validate Modal accessible from list view */}
-            <SudoValidationModal 
+            <SudoValidationModal
                 isOpen={sudoState.isOpen}
                 onClose={closeSudo}
                 onValidate={sudoState.onValidate}
-                saving={false}
+                saving={sudoState.isValidating}
                 title={sudoState.title || t('stock:avoirs.modals.sudo_validate_title')}
                 message={sudoState.message || t('stock:avoirs.modals.sudo_validate_message')}
             />

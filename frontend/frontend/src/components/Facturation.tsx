@@ -528,7 +528,7 @@ export default function Facturation() {
         isOpen={hook.sudoState.isOpen}
         onClose={hook.closeSudo}
         onValidate={hook.sudoState.onValidate}
-        saving={false}
+        saving={hook.sudoState.isValidating}
         title={hook.sudoState.title || hook.t('facturation.payment.sudo_title')}
         message={hook.sudoState.message || ""}
         className="z-[9999]"
