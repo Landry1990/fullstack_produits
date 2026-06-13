@@ -98,7 +98,7 @@ export default function Fournisseurs() {
          onValidate={state.sudoState.onValidate}
          title={state.sudoState.title}
          message={state.sudoState.message}
-         saving={state.isSubmitting}
+         saving={state.sudoState.isValidating}
       />
 
       {/* Modal Échéancier */}

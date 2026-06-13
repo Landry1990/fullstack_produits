@@ -54,6 +54,9 @@ export interface Commande {
     status: string
     status_display: string
     total: string
+    total_ht?: string
+    total_tva?: string
+    total_ttc?: string
     produits: CommandeProduit[]
     type?: 'LOC' | 'DIR' | 'DIV'
     taux_change?: string

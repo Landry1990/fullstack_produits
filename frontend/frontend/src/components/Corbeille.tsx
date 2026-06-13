@@ -262,7 +262,7 @@ export default function Corbeille() {
   };
 
   return (
-    <div className="min-h-screen bg-base-200 p-4 md:p-6 space-y-5 font-sans">
+    <div className="h-full bg-base-200 p-4 md:p-6 space-y-5 font-sans flex flex-col">
       {/* Header */}
       <div className="max-w-7xl mx-auto">
         <div className="flex items-center gap-3 mb-2">
@@ -330,7 +330,7 @@ export default function Corbeille() {
       </div>
 
       {/* Main Content */}
-      <div className="max-w-7xl mx-auto bg-base-100 rounded-2xl shadow-sm border border-base-200 overflow-hidden">
+      <div className="max-w-7xl mx-auto bg-base-100 rounded-2xl shadow-sm border border-base-200 overflow-hidden flex-1 min-h-0 flex flex-col">
         {/* Toolbar */}
         <div className="p-4 border-b border-base-200 flex flex-col sm:flex-row gap-3">
           {/* Search */}
@@ -400,88 +400,107 @@ export default function Corbeille() {
           </div>
         )}
 
-        {/* Items List */}
+        {/* Scrollable Content */}
+        <div className="flex-1 min-h-0 overflow-y-auto">
+
+        {/* Items List - Card Style */}
         {!loading && filteredItems.length > 0 && (
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm border-separate border-spacing-0">
-              <thead>
-                <tr className="text-[10px] font-black text-base-content/50 uppercase tracking-widest border-b border-base-200">
-                  <th className="w-10">
-                    <input
-                      type="checkbox"
-                      className="size-4 rounded border-base-300 text-primary focus:ring-primary cursor-pointer"
-                      checked={selectedIds.length === filteredItems.length && filteredItems.length > 0}
-                      onChange={selectAll}
-                    />
-                  </th>
-                  <th>{t('table.name')}</th>
-                  <th>{t('table.type')}</th>
-                  <th className="hidden md:table-cell">{t('table.details')}</th>
-                  <th className="hidden md:table-cell">{t('table.deleted_at')}</th>
-                  <th className="text-right">{t('table.actions')}</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredItems.map(item => (
-                  <tr
-                    key={`${item.type}-${item.id}`}
-                    className={`border-b border-base-200/60 hover:bg-base-200 transition-colors ${
-                      isSelected(item.type, item.id) ? 'bg-primary/10' : ''
-                    }`}
-                  >
-                    <td>
+          <div className="divide-y divide-base-200/60">
+            {/* List Header */}
+            <div className="px-5 py-3 flex items-center gap-3 bg-base-200/50">
+              <div className="flex items-center gap-3 flex-1">
+                <input
+                  type="checkbox"
+                  className="size-4 rounded border-base-300 text-primary focus:ring-primary cursor-pointer"
+                  checked={selectedIds.length === filteredItems.length && filteredItems.length > 0}
+                  onChange={selectAll}
+                />
+                <span className="text-[10px] font-black text-base-content/40 uppercase tracking-widest">
+                  {filteredItems.length} {t('footer.total', { defaultValue: 'éléments' })}
+                </span>
+              </div>
+            </div>
+
+            {filteredItems.map(item => {
+              const isSel = isSelected(item.type, item.id);
+              return (
+                <div
+                  key={`${item.type}-${item.id}`}
+                  className={`group px-5 py-4 transition-all duration-200 hover:bg-base-200/30 ${
+                    isSel ? 'bg-primary/5' : ''
+                  }`}
+                >
+                  <div className="flex items-start gap-4">
+                    {/* Checkbox */}
+                    <div className="pt-1">
                       <input
                         type="checkbox"
                         className="size-4 rounded border-base-300 text-primary focus:ring-primary cursor-pointer"
-                        checked={isSelected(item.type, item.id)}
+                        checked={isSel}
                         onChange={() => toggleSelect(item.type, item.id)}
                       />
-                    </td>
-                    <td>
-                      <div className="flex items-center gap-2.5">
-                        <div className="p-1.5 rounded-lg bg-base-200">{getTypeIcon(item.type)}</div>
-                        <span className="font-bold text-sm text-base-content truncate max-w-[250px]">
+                    </div>
+
+                    {/* Icon */}
+                    <div className={`shrink-0 w-10 h-10 rounded-xl flex items-center justify-center ${
+                      item.type === 'produit' ? 'bg-blue-50 text-blue-600' :
+                      item.type === 'client' ? 'bg-emerald-50 text-emerald-600' :
+                      item.type === 'fournisseur' ? 'bg-amber-50 text-amber-600' :
+                      item.type === 'commande' ? 'bg-indigo-50 text-indigo-600' :
+                      item.type === 'avoir' ? 'bg-rose-50 text-rose-600' :
+                      item.type === 'promis' ? 'bg-purple-50 text-purple-600' :
+                      item.type === 'inventaire' ? 'bg-teal-50 text-teal-600' :
+                      item.type === 'facture' ? 'bg-orange-50 text-orange-600' :
+                      'bg-slate-50 text-slate-500'
+                    }`}>
+                      {getTypeIcon(item.type)}
+                    </div>
+
+                    {/* Content */}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className="font-bold text-sm text-base-content truncate">
                           {item.name}
                         </span>
+                        {getTypeBadge(item.type)}
                       </div>
-                    </td>
-                    <td>{getTypeBadge(item.type)}</td>
-                    <td className="hidden md:table-cell">
-                      <span className="text-xs text-base-content/60 truncate max-w-[300px] inline-block">
+                      <div className="text-xs text-base-content/50 mb-1 truncate">
                         {getDetailString(item)}
-                      </span>
-                    </td>
-                    <td className="hidden md:table-cell">
-                      <span className="text-xs text-base-content/50">{formatDate(item.deleted_at)}</span>
-                    </td>
-                    <td>
-                      <div className="flex items-center gap-1 justify-end">
-                        <button
-                          onClick={() => handleRestore([{ model: item.type, id: item.id }])}
-                          className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-success hover:bg-success/10 text-xs font-medium transition-colors"
-                          title={t('actions.restore')}
-                          disabled={actionLoading}
-                        >
-                          <RotateCcw className="size-3.5" />
-                          <span className="hidden sm:inline">{t('actions.restore')}</span>
-                        </button>
-                        <button
-                          onClick={() => handlePurge([{ model: item.type, id: item.id }])}
-                          className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-red-500 hover:bg-error/10 text-xs font-medium transition-colors"
-                          title={t('actions.delete_permanently')}
-                          disabled={actionLoading}
-                        >
-                          <Trash2 className="size-3.5" />
-                          <span className="hidden sm:inline">{t('actions.delete_permanently')}</span>
-                        </button>
                       </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+                      <div className="text-[10px] text-base-content/40 flex items-center gap-1">
+                        <Clock className="size-3" />
+                        {formatDate(item.deleted_at)}
+                      </div>
+                    </div>
+
+                    {/* Actions */}
+                    <div className="shrink-0 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <button
+                        onClick={() => handleRestore([{ model: item.type, id: item.id }])}
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-success/10 text-success hover:bg-success hover:text-white text-xs font-bold transition-all"
+                        title={t('actions.restore')}
+                        disabled={actionLoading}
+                      >
+                        <RotateCcw className="size-3.5" />
+                        <span className="hidden sm:inline">{t('actions.restore')}</span>
+                      </button>
+                      <button
+                        onClick={() => handlePurge([{ model: item.type, id: item.id }])}
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-error/10 text-error hover:bg-error hover:text-white text-xs font-bold transition-all"
+                        title={t('actions.delete_permanently')}
+                        disabled={actionLoading}
+                      >
+                        <Trash2 className="size-3.5" />
+                        <span className="hidden sm:inline">{t('actions.delete_permanently')}</span>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
           </div>
         )}
+        </div>
 
         {/* Footer */}
         {!loading && filteredItems.length > 0 && (

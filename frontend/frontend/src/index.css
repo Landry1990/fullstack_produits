@@ -712,3 +712,145 @@ textarea:focus {
     display: none !important;
   }
 }
+
+/* === SCROLLBAR OPTIMISÉES - GLOBALES === */
+/* Applique des scrollbars fines à TOUS les éléments scrollables */
+[class*="overflow-auto"],
+[class*="overflow-y-auto"],
+[class*="overflow-x-auto"],
+[class*="overflow-scroll"],
+div[style*="overflow: auto"],
+div[style*="overflow-y: auto"],
+div[style*="overflow-x: auto"] {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(0, 0, 0, 0.2) transparent;
+}
+
+/* Scrollbar personnalisée pour Webkit (Chrome, Safari, Edge) */
+[class*="overflow-auto"]::-webkit-scrollbar,
+[class*="overflow-y-auto"]::-webkit-scrollbar,
+[class*="overflow-x-auto"]::-webkit-scrollbar,
+div[style*="overflow: auto"]::-webkit-scrollbar,
+div[style*="overflow-y: auto"]::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+[class*="overflow-auto"]::-webkit-scrollbar-track,
+[class*="overflow-y-auto"]::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+[class*="overflow-auto"]::-webkit-scrollbar-thumb,
+[class*="overflow-y-auto"]::-webkit-scrollbar-thumb {
+  background-color: rgba(0, 0, 0, 0.15);
+  border-radius: 3px;
+}
+
+[class*="overflow-auto"]::-webkit-scrollbar-thumb:hover,
+[class*="overflow-y-auto"]::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(0, 0, 0, 0.3);
+}
+
+/* Pour le mode sombre */
+[data-theme="dark"] [class*="overflow-auto"],
+[data-theme="dark"] [class*="overflow-y-auto"] {
+  scrollbar-color: rgba(255, 255, 255, 0.15) transparent;
+}
+
+[data-theme="dark"] [class*="overflow-auto"]::-webkit-scrollbar-thumb,
+[data-theme="dark"] [class*="overflow-y-auto"]::-webkit-scrollbar-thumb {
+  background-color: rgba(255, 255, 255, 0.15);
+}
+
+[data-theme="dark"] [class*="overflow-auto"]::-webkit-scrollbar-thumb:hover,
+[data-theme="dark"] [class*="overflow-y-auto"]::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(255, 255, 255, 0.3);
+}
+
+/* === UTILITAIRES DE LAYOUT OPTIMISÉ === */
+/* Header compact pour toutes les pages */
+.page-header-compact {
+  @apply flex items-center justify-between px-3 py-2 bg-base-100 border-b border-base-200;
+}
+
+.page-header-compact h1 {
+  @apply text-base font-semibold text-base-content;
+}
+
+/* Container de tableau optimisé */
+.table-container-optimized {
+  @apply flex flex-col h-full overflow-hidden;
+}
+
+.table-scrollable {
+  @apply flex-1 overflow-auto;
+}
+
+/* Tableau compact */
+.table-compact {
+  @apply table table-sm w-full;
+}
+
+.table-compact th,
+.table-compact td {
+  @apply p-2 text-xs;
+}
+
+/* Réduction d'espace pour les écrans 14 pouces */
+@media (max-height: 768px) {
+  .page-header-compact {
+    @apply py-1.5;
+  }
+  
+  .page-header-compact h1 {
+    @apply text-sm;
+  }
+  
+  .table-compact th,
+  .table-compact td {
+    @apply p-1.5 text-xs;
+  }
+}
+
+/* Note: Les styles scrollbar-thin ont été fusionnés avec les styles overflow-* ci-dessus */
+
+/* Cacher scrollbar mais garder fonctionnalité */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+/* === UTILITAIRES DE LAYOUT OPTIMISÉ === */
+/* Header compact pour toutes les pages */
+.page-header-compact {
+  @apply flex items-center justify-between px-3 py-2 bg-base-100 border-b border-base-200;
+}
+
+.page-header-compact h1 {
+  @apply text-base font-semibold text-base-content;
+}
+
+/* Container de tableau optimisé */
+.table-container-optimized {
+  @apply flex flex-col h-full overflow-hidden;
+}
+
+.table-scrollable {
+  @apply flex-1 overflow-auto;
+}
+
+/* Réduction d'espace pour les écrans 14 pouces */
+@media (max-height: 768px) {
+  .page-header-compact {
+    @apply py-1.5;
+  }
+  
+  .page-header-compact h1 {
+    @apply text-sm;
+  }
+}

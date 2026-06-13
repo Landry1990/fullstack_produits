@@ -228,8 +228,9 @@
         "invoice_placeholder": "Ex: FACT-2024-001",
         "export_btn": "Exporter",
         "export_options": {
-            "ubipharm": "Ubipharm (CIP1)",
-            "laborex": "Laborex (CIP2)"
+            "ubipharm": "Principal (CIP1)",
+            "laborex": "Secondaire (CIP2)",
+            "laborex_cip3": "Secondaire (CIP3)"
         },
         "import_btn": "Importer CSV",
         "new_product_btn": "Nouveau Produit",
