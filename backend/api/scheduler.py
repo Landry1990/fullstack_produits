@@ -39,6 +39,18 @@ def run_scheduler_loop():
                     call_command('send_monthly_telegram_report')
         except Exception as e:
             logger.error(f"Background Task Runner - Telegram Report Error: {e}")
+        
+        # Recalcul mensuel des seuils de stock min/max (le 1er de chaque mois)
+        try:
+            from django.utils import timezone
+            from .signals_stock_levels import monthly_stock_levels_update
+            now = timezone.now()
+            if now.day == 1 and now.hour < 2:  # Entre minuit et 2h du matin
+                logger.info("Scheduler: Premier jour du mois. Recalcul des seuils de stock...")
+                updated = monthly_stock_levels_update()
+                logger.info(f"Scheduler: {updated} produits avec seuils mis à jour")
+        except Exception as e:
+            logger.error(f"Background Task Runner - Stock Levels Error: {e}")
             
         # Wait 10 minutes before next check
         # (600 seconds = 10 minutes)

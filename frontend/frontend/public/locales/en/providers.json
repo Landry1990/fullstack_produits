@@ -49,7 +49,7 @@
         "payment_conditions": "Payment Conditions",
         "payment_type": "Payment Type",
         "payment_type_invoice": "Per Invoice",
-        "payment_type_statement": "Per Statement (e.g., Ubipharm, Laborex)",
+        "payment_type_statement": "Per Statement (e.g., Primary, Secondary)",
         "delay": "Delay (days)",
         "delay_hint": "0 (on delivery)",
         "cancel": "Cancel",

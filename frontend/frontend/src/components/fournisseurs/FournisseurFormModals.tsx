@@ -175,17 +175,35 @@ export default function FournisseurFormModals({ hook }: Props) {
               )}
             </Section>
 
+            <Section title="Paramètres logistiques">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <Field label="Délai de livraison (jours)">
+                  <input
+                    type="number"
+                    min="0"
+                    max="30"
+                    placeholder="2"
+                    value={data.delai_livraison_jours ?? 2}
+                    onChange={e => setData((f: any) => ({...f, delai_livraison_jours: parseInt(e.target.value) || 2}))}
+                    className="input input-bordered input-sm w-full rounded-lg focus:border-primary focus:ring-1 focus:ring-primary/20"
+                    disabled={isSubmitting}
+                  />
+                </Field>
+              </div>
+              <p className="text-[11px] text-base-content/50 mt-1">Délai moyen de livraison (2 jours pour les fournisseurs locaux)</p>
+            </Section>
+
             <Section title={t('providers:form.address_section')}>
               <Field label={t('providers:form.address')}>
-                <textarea
+                <input
+                  type="text"
                   placeholder={t('providers:form.address_placeholder')}
                   value={data.address}
                   onChange={e => setData((f: any) => ({...f, address: e.target.value}))}
-                  className="textarea-ref textarea-bordered textarea-sm w-full h-24 rounded-lg resize-none focus:border-primary focus:ring-1 focus:ring-primary/20"
+                  className="input input-bordered input-sm w-full rounded-lg focus:border-primary focus:ring-1 focus:ring-primary/20"
                   disabled={isSubmitting}
                 />
               </Field>
-              <p className="text-[11px] text-base-content/50">{t('providers:form.address_hint')}</p>
             </Section>
           </form>
 

@@ -851,7 +851,7 @@ export default function Perimes() {
         onValidate={sudoState.onValidate}
         title={sudoState.title}
         message={sudoState.message}
-        saving={processing}
+        saving={sudoState.isValidating}
       />
     </div>
   )

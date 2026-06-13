@@ -176,11 +176,11 @@ export default function Creances() {
                 onConfirm={actions.actions.confirmBulkPayment}
             />
 
-            <SudoValidationModal 
+            <SudoValidationModal
                 isOpen={actions.modals.sudoState.isOpen}
                 onClose={actions.modals.closeSudo}
                 onValidate={actions.modals.sudoState.onValidate}
-                saving={false}
+                saving={actions.modals.sudoState.isValidating}
                 title={actions.modals.sudoState.title}
                 message={actions.modals.sudoState.message}
             />

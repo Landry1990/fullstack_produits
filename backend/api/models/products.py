@@ -186,6 +186,10 @@ class Produit(models.Model):
     pmp = models.DecimalField(max_digits=10, decimal_places=2, default=0.00, help_text="Prix Moyen Pondéré")
     created_at = models.DateTimeField(default=timezone.now)
     updated_at = models.DateTimeField(auto_now=True)
+    date_premiere_vente = models.DateField(
+        blank=True, null=True,
+        help_text="Date de la première vente (pour calcul précis de la rotation)"
+    )
     
     # Optimistic Locking - évite les verrous pessimistes (select_for_update)
     version = models.IntegerField(

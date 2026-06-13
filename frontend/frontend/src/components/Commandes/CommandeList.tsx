@@ -518,7 +518,7 @@ export default function CommandeList({
 
                   <>
 
-                    <th className="text-[10px] uppercase font-semibold tracking-wider text-base-content/50 py-3 px-4 cursor-pointer hover:text-indigo-500 transition-colors sticky top-0 z-30 bg-base-200" onClick={() => onSortChange('numero')}>
+                    <th className="text-[10px] uppercase font-semibold tracking-wider text-base-content/50 py-3 px-4 text-left cursor-pointer hover:text-indigo-500 transition-colors sticky top-0 z-30 bg-base-200" onClick={() => onSortChange('numero')}>
 
                       <div className="flex items-center gap-2">
 
@@ -528,7 +528,7 @@ export default function CommandeList({
 
                     </th>
 
-                    <th className="text-[10px] uppercase font-semibold tracking-wider text-base-content/50 py-3 px-4 sticky top-0 z-30 bg-base-200">
+                    <th className="text-[10px] uppercase font-semibold tracking-wider text-base-content/50 py-3 px-4 text-left sticky top-0 z-30 bg-base-200">
 
                       {t('orders:list.table.invoice_number')}
 
@@ -562,7 +562,19 @@ export default function CommandeList({
 
                     <th className="text-[10px] uppercase font-semibold tracking-wider text-base-content/50 py-3 px-4 text-right sticky top-0 z-30 bg-base-200">
 
-                      {t('common:total')}
+                      HT
+
+                    </th>
+
+                    <th className="text-[10px] uppercase font-semibold tracking-wider text-base-content/50 py-3 px-4 text-right sticky top-0 z-30 bg-base-200">
+
+                      TVA
+
+                    </th>
+
+                    <th className="text-[10px] uppercase font-semibold tracking-wider text-base-content/50 py-3 px-4 text-right sticky top-0 z-30 bg-base-200">
+
+                      TTC
 
                     </th>
 
@@ -573,12 +585,6 @@ export default function CommandeList({
                         {t('common:us_title')} {sortKey === 'status' && (sortOrder === 'asc' ? '↑' : '↓')}
 
                       </div>
-
-                    </th>
-
-                    <th className="text-[10px] uppercase font-semibold tracking-wider text-base-content/50 py-3 px-4 text-right pr-4 sticky top-0 z-30 bg-base-200">
-
-                      {t('common:actions_title')}
 
                     </th>
 
@@ -624,15 +630,15 @@ export default function CommandeList({
 
                 </td>
 
-                <td>
+                <td className="text-left">
 
                     <span className="font-mono font-semibold text-sm text-base-content/70">#{commande.id}</span>
 
                 </td>
 
-                <td>
+                <td className="text-left">
 
-                    <span className="font-mono text-xs text-base-content/50">{commande.numero_facture || '-'}</span>
+                    <span className="font-mono text-sm text-base-content/60">{commande.numero_facture || '-'}</span>
 
                 </td>
 
@@ -686,9 +692,21 @@ export default function CommandeList({
 
                 </td>
 
+                <td className="text-right text-base-content/70 text-xs">
+
+                    {formatCurrency(Number(commande.total_ht || commande.total))}
+
+                </td>
+
+                <td className="text-right text-base-content/70 text-xs">
+
+                    {formatCurrency(Number(commande.total_tva || 0))}
+
+                </td>
+
                 <td className="font-semibold text-right text-primary">
 
-                    {formatCurrency(Number(commande.total))}
+                    {formatCurrency(Number(commande.total_ttc || commande.total))}
 
                 </td>
 
@@ -706,28 +724,6 @@ export default function CommandeList({
 
                 </td>
 
-                <td className="text-right pr-4" onClick={(e) => e.stopPropagation()}>
-
-                    <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-
-                        <button
-
-                            className="p-2 text-base-content/40 hover:text-info hover:bg-info/10 rounded-lg transition-colors"
-
-                            onClick={(e) => { e.stopPropagation(); onViewDetails(commande); }}
-
-                            title={t('orders:list.table.view_details')}
-
-                        >
-
-                            <Eye className="size-4" />
-
-                        </button>
-
-                    </div>
-
-                </td>
-
               </tr>
 
             ))}
@@ -736,7 +732,7 @@ export default function CommandeList({
 
                 <tr>
 
-                    <td colSpan={9} className="text-center py-12 text-base-content/40">
+                    <td colSpan={10} className="text-center py-12 text-base-content/40">
 
                         <div className="flex flex-col items-center gap-2">
 
@@ -762,15 +758,17 @@ export default function CommandeList({
 
       {/* Pagination Footer */}
 
-      <div className="flex items-center justify-between px-4 py-3 bg-base-100 rounded-lg border border-base-300 shadow-sm shrink-0">
+      <div className="flex flex-col px-4 py-3 bg-base-100 rounded-lg border border-base-300 shadow-sm shrink-0 gap-2">
+
+        {/* Ligne 1 : Info + Pagination */}
+
+        <div className="flex items-center justify-between">
 
           <div className="text-xs font-medium text-base-content/40">
 
             {t('orders:list.pagination.showing', { count: sortedCommandes.length, total: totalCount })}
 
           </div>
-
-
 
           <div className="flex gap-1">
 
@@ -809,6 +807,38 @@ export default function CommandeList({
             </button>
 
           </div>
+
+        </div>
+
+        {/* Ligne 2 : Totaux sélectionnés */}
+
+        {selectedOrderIds.size > 0 && (() => {
+
+          const selected = sortedCommandes.filter(c => selectedOrderIds.has(c.id));
+
+          const totalHt = selected.reduce((sum, c) => sum + Number(c.total_ht || c.total), 0);
+
+          const totalTva = selected.reduce((sum, c) => sum + Number(c.total_tva || 0), 0);
+
+          const totalTtc = selected.reduce((sum, c) => sum + Number(c.total_ttc || c.total), 0);
+
+          return (
+
+            <div className="flex items-center justify-end gap-4 text-sm border-t border-base-200 pt-2">
+
+              <span className="font-semibold text-base-content/60">{selectedOrderIds.size} sélectionnée{selectedOrderIds.size > 1 ? 's' : ''}</span>
+
+              <span className="text-base-content/50">HT <span className="font-semibold text-base-content/80">{formatCurrency(Number(totalHt.toFixed(2)))}</span></span>
+
+              <span className="text-base-content/50">TVA <span className="font-semibold text-base-content/80">{formatCurrency(Number(totalTva.toFixed(2)))}</span></span>
+
+              <span className="text-primary font-bold">TTC <span className="font-bold">{formatCurrency(Number(totalTtc.toFixed(2)))}</span></span>
+
+            </div>
+
+          );
+
+        })()}
 
       </div>
 

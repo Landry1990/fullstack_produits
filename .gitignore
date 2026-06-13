@@ -64,5 +64,11 @@ lint_report.json
 *_backup.py.txt
 temp_*
 
+# Backup folders (WSL/Linux)
+/backup/
+backup/
+[Cc]:/backup/
+/mnt/c/backup/
+
 # PDF files (not part of the application)
 *.pdf
