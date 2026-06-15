@@ -95,7 +95,7 @@ export const useSaveCommande = () => {
                 selling_price: p.selling_price ? parseFloat(String(p.selling_price)).toFixed(0) : '0',
                 prix_euro: p.prix_euro ? parseFloat(String(p.prix_euro)).toFixed(0) : null,
                 tva: parseFloat(String(p.tva || 18)).toFixed(0),
-                marge: parseFloat(String(p.marge || 1.3)).toFixed(4),
+                taux_marge: parseFloat(String(p.marge || p.taux_marge || 1.3)).toFixed(4),
                 lot: p.lot || null,
                 date_expiration: p.date_expiration || null
             }));

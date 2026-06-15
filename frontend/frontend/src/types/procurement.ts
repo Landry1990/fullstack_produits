@@ -41,7 +41,8 @@ export interface CommandeProduit {
     lot?: string
     date_expiration?: string
     tva?: string | number
-    marge?: string | number
+    marge?: string | number  // Alias frontend pour taux_marge
+    taux_marge?: string | number  // Champ backend
     prix_euro?: string
 }
 

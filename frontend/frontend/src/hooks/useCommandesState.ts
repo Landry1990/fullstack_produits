@@ -1435,23 +1435,32 @@ export function useCommandesState(forcedType?: 'LOC' | 'DIR' | 'DIV') {
         const produitId = produitObj ? produitObj.id : p.produit;
         const fullProduct = produitId ? produitsList.find(prod => prod.id === produitId) : null;
 
-        let marge = p.marge;
-        const cost = normalizeNumberInput(p.price);
-        const sell = normalizeNumberInput(p.selling_price || '0');
-        
-        if (!marge && cost > 0 && sell > 0) marge = (sell / cost).toFixed(2);
+        // Utiliser le taux de marge sauvegardé, sinon le calculer, sinon utiliser celui du produit
+        let tauxMarge = p.taux_marge;
+        if (!tauxMarge) {
+            const cost = normalizeNumberInput(p.price);
+            const sellTTC = normalizeNumberInput(p.selling_price || '0');
+            const tva = normalizeNumberInput(p.tva || '0');
+            if (cost > 0 && sellTTC > 0) {
+                // selling_price est TTC, il faut enlever la TVA pour calculer la marge
+                const sellHT = sellTTC / (1 + tva / 100);
+                tauxMarge = (sellHT / cost).toFixed(2);
+            } else {
+                tauxMarge = fullProduct?.taux_marge || '1.3';
+            }
+        }
 
         return {
             ...p,
             id: p.id,
             produit: fullProduct || p.produit,
             quantity: p.quantity,
-            unites_gratuites: p.unites_gratuites || 0,  
+            unites_gratuites: p.unites_gratuites || 0,
             prix_euro: p.prix_euro,
             price: p.price || (fullProduct?.cost_price || '0'),
             selling_price: p.selling_price || (fullProduct?.selling_price || '0'),
             tva: p.tva || (fullProduct?.tva || '0'),
-            marge: marge || (fullProduct?.taux_marge || '1.3'),
+            marge: tauxMarge,
             lot: p.lot || '',
             date_expiration: formatDateToMMYY(p.date_expiration || '')
         };

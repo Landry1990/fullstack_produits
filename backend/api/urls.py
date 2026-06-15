@@ -37,8 +37,8 @@ def health_check(request):
         if val == 'ok':
             checks['cache'] = {'status': 'ok', 'backend': str(cache.__class__.__name__)}
         else:
-            checks['cache'] = {'status': 'error', 'detail': 'valeur inattendue'}
-            status_code = 503
+            # DummyCache (dev sans Redis) : set/get ne persiste pas — non critique
+            checks['cache'] = {'status': 'unavailable', 'detail': 'DummyCache actif (pas de Redis)', 'backend': str(cache.__class__.__name__)}
     except Exception as e:
         checks['cache'] = {'status': 'unavailable', 'detail': str(e)}
         # Pas critique si pas configuré

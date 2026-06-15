@@ -92,7 +92,7 @@ export function useCommandeActions({
                     selling_price: parseAndFormat(p.selling_price),
                     prix_euro: parseEuro(p.prix_euro),
                     tva: p.tva !== undefined && p.tva !== null ? String(p.tva) : undefined,
-                    marge: parseFloat(String(p.marge || 1.3)).toFixed(4),
+                    taux_marge: parseFloat(String(p.marge || p.taux_marge || 1.3)).toFixed(4),
                     lot: p.lot || null,
                     date_expiration: p.date_expiration || null
                 };
