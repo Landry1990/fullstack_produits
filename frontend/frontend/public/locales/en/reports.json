@@ -104,6 +104,10 @@
             "name": "Top Selling Products",
             "description": "Analysis of revenue, quantity and margin per product"
         },
+        "stats_marges": {
+            "name": "Daily Margin Stats",
+            "description": "Daily margin summary (revenue, cost of sales, margin, rate)"
+        },
         "detail_marges_lots": {
             "name": "Margin Detail by Lot",
             "description": "Detailed sales with lot, purchase cost and exact margin"
@@ -310,6 +314,9 @@
         "status_display": "Status",
         "qty": "Qty",
         "catttc": "Revenue (Incl. Tax) (F)",
+        "ca": "Revenue (Incl. Tax) (F)",
+        "cout_ventes": "Cost of Sales (F)",
+        "cout": "Cost (F)",
         "marge": "Gross Margin (F)",
         "taux_marge": "Margin Rate (%)",
         "prix_vente_net": "Net Selling Price",

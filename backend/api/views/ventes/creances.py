@@ -28,6 +28,7 @@ from ...audit_helpers import log_audit
 from ...sudo_utils import validate_sudo_mode
 from ...pagination import StandardResultsSetPagination
 from ...cache_utils import ClientDebtCache
+from ...security_utils import build_safe_content_disposition
 
 logger = logging.getLogger(__name__)
 
@@ -180,7 +181,7 @@ class CreanceViewSet(viewsets.ReadOnlyModelViewSet):
         
         response = HttpResponse(content_type='application/pdf')
         filename = f"recu_{paiement.id}_{facture.numero_facture or facture.id}.pdf"
-        response['Content-Disposition'] = f'attachment; filename="{filename}"'
+        response['Content-Disposition'] = build_safe_content_disposition(filename)
 
         buffer = io.BytesIO()
         doc = SimpleDocTemplate(buffer, pagesize=A4, rightMargin=2*cm, leftMargin=2*cm, topMargin=2*cm, bottomMargin=2*cm)

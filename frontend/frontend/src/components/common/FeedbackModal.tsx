@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'react-hot-toast';
 import { X, Send, Bug, Lightbulb, TrendingUp, HelpCircle, MoreHorizontal } from 'lucide-react';
@@ -71,7 +72,7 @@ export default function FeedbackModal({ isOpen, onClose }: FeedbackModalProps) {
 
   if (!isOpen) return null;
 
-  return (
+  return createPortal(
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
       <div className="bg-white rounded-xl shadow-lg border border-gray-100 w-full max-w-2xl mx-4 max-h-[90vh] overflow-y-auto">
         {/* Header */}
@@ -205,6 +206,7 @@ export default function FeedbackModal({ isOpen, onClose }: FeedbackModalProps) {
           </div>
         </form>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }

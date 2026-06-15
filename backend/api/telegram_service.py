@@ -100,7 +100,15 @@ class TelegramService:
     def t(key: str, lang: str = 'fr-FR') -> str:
         """Traduit une clé selon la langue (fallback en français)."""
         translations = TelegramService.TRANSLATIONS.get(lang, TelegramService.TRANSLATIONS['fr-FR'])
-        return translations.get(key, key)
+        val = translations.get(key, key)
+        if key == 'footer':
+            try:
+                from api.utils.currency import get_pharmacy_name
+                pharma_name = get_pharmacy_name()
+                val = val.replace('Zenith Pharma', pharma_name)
+            except Exception:
+                pass
+        return val
 
     @staticmethod
     def _get_credentials():

@@ -9,6 +9,7 @@ import io
 from django.http import HttpResponse
 from openpyxl import Workbook
 from openpyxl.styles import Font, Alignment
+from openpyxl.utils import get_column_letter
 
 from ...models import StockAdjustment
 from ...serializers import StockAdjustmentSerializer
@@ -78,16 +79,21 @@ class StockAdjustmentViewSet(MultiTermSearchMixin, viewsets.ReadOnlyModelViewSet
 
         wb = Workbook()
         sheet = wb.active
+        if sheet is None:
+            sheet = wb.worksheets[0] if wb.worksheets else wb.create_sheet()
         sheet.title = "Ajustements Stock"
 
         # En-tête pharmacie
         try:
             pharmacy = PharmacySettings.objects.get(pk=1)
-            pharma_name = pharmacy.pharmacy_name or "ZENITH"
+            from ...utils.currency import get_pharmacy_name
+            pharma_name = get_pharmacy_name()
             pharma_address = f"{pharmacy.address} - {pharmacy.city}".strip(" -") if pharmacy.address or pharmacy.city else ""
             pharma_phone = f"Tél : {pharmacy.phone}" if pharmacy.phone else ""
         except PharmacySettings.DoesNotExist:
-            pharma_name, pharma_address, pharma_phone = "ZENITH", "", ""
+            from ...utils.currency import get_pharmacy_name
+            pharma_name = get_pharmacy_name()
+            pharma_address, pharma_phone = "", ""
 
         now_str = tz.localtime(tz.now()).strftime("%d/%m/%Y à %H:%M")
         for line in [pharma_name, pharma_address, pharma_phone, f"Édité le : {now_str}", "", "Journal des Ajustements de Stock"]:
@@ -124,8 +130,9 @@ class StockAdjustmentViewSet(MultiTermSearchMixin, viewsets.ReadOnlyModelViewSet
         dims = {}
         for row in sheet.rows:
             for cell in row:
-                if cell.value:
-                    dims[cell.column_letter] = max((dims.get(cell.column_letter, 0), len(str(cell.value))))
+                if cell.value and cell.column is not None:
+                    col_letter = get_column_letter(cell.column)
+                    dims[col_letter] = max((dims.get(col_letter, 0), len(str(cell.value))))
         for col, value in dims.items():
             sheet.column_dimensions[col].width = value + 2
 

@@ -251,15 +251,39 @@ echo "⏰ Démarrage du scheduler de backup automatique..."
 python -u /app/backup_scheduler.py > /app/logs/backup_scheduler.log 2>&1 &
 echo "✓ Scheduler de backup lancé (PID: $!)"
 
-# ── 9. Démarrage Daphne (ASGI) pour supporter WebSocket ──
+# ── 9. Démarrage Uvicorn (ASGI) optimisé pour production ──
 echo ""
-echo "🔥 Démarrage de Daphne (ASGI) pour HTTP + WebSocket..."
+echo "🔥 Démarrage Uvicorn (ASGI) optimisé..."
 echo "══════════════════════════════════════════════"
 echo ""
 
-exec daphne \
-    --bind 0.0.0.0 \
+# Configuration des workers : 2-4 workers selon les ressources
+# Formule : (2 x $num_cores) + 1, mais limité pour container Docker
+WORKERS=${UVICORN_WORKERS:-2}
+TIMEOUT=${UVICORN_TIMEOUT:-120}
+KEEP_ALIVE=${UVICORN_KEEP_ALIVE:-5}
+GRACEFUL_TIMEOUT=${UVICORN_GRACEFUL_TIMEOUT:-30}
+MAX_REQUESTS=${UVICORN_MAX_REQUESTS:-10000}
+MAX_REQUESTS_JITTER=${UVICORN_MAX_REQUESTS_JITTER:-1000}
+
+echo "⚙️  Configuration Uvicorn :"
+echo "   Workers : $WORKERS"
+echo "   Timeout : ${TIMEOUT}s"
+echo "   Keep-alive : ${KEEP_ALIVE}s"
+echo "   Max requests/worker : $MAX_REQUESTS"
+echo ""
+
+exec uvicorn \
+    backend.asgi:application \
+    --host 0.0.0.0 \
     --port 8000 \
-    --access-log - \
-    -v 1 \
-    backend.asgi:application
+    --workers $WORKERS \
+    --timeout-keep-alive $KEEP_ALIVE \
+    --timeout-graceful-shutdown $GRACEFUL_TIMEOUT \
+    --limit-max-requests $MAX_REQUESTS \
+    --limit-max-requests-jitter $MAX_REQUESTS_JITTER \
+    --proxy-headers \
+    --forwarded-allow-ips '*' \
+    --log-level info \
+    --access-log \
+    --no-use-colors

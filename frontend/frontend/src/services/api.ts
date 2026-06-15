@@ -36,8 +36,10 @@ const isNetworkError = (error: any): boolean => {
 };
 
 const isRetryableRequest = (error: any): boolean => {
-    const method = error.config?.method?.toUpperCase();
-    return method === 'GET' && isNetworkError(error);
+    // Retry sur erreurs réseau (connexion perdue, timeout) et erreurs serveur temporaires
+    const status = error.response?.status;
+    const isServerTempUnavailable = status === 502 || status === 503 || status === 504;
+    return isNetworkError(error) || isServerTempUnavailable;
 };
 
 let hasShownExpiredToast = false;

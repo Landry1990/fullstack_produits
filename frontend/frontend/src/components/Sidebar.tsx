@@ -7,6 +7,7 @@ import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useReapproStats } from '../hooks/useDashboard';
 import { LogOut, ChevronLeft, ChevronRight, ChevronDown, Menu, X } from 'lucide-react';
+import { formatVersion } from '../version';
 
 
 export default function Sidebar() {
@@ -469,6 +470,7 @@ export default function Sidebar() {
           <div className="flex items-center gap-2 opacity-20">
             <div className="size-1.5 rounded-full bg-emerald-400"></div>
             <span className="text-[9px] font-bold text-white uppercase tracking-widest truncate">Zenith OS</span>
+            <span className="text-[8px] text-white/60 font-mono ml-auto" title={formatVersion()}>v</span>
           </div>
         </div>
       </aside>

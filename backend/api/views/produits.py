@@ -46,6 +46,10 @@ class ProduitViewSet(
     - Multi-term AND search (e.g., "doli 500" finds products with both terms)
     - SQL annotations for stock value and expiring dates (avoids N+1 queries)
     """
+    
+    # Explicitement autoriser toutes les méthodes CRUD
+    http_method_names = ['get', 'post', 'put', 'patch', 'delete', 'head', 'options']
+    
     queryset = Produit.objects.select_related('rayon', 'fournisseur', 'forme').order_by('name')
     serializer_class = ProduitSerializer
     list_serializer_class = ProduitListSerializer

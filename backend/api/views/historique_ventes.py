@@ -275,6 +275,7 @@ class HistoriqueVentesViewSet(viewsets.ViewSet):
         """
         import openpyxl
         from openpyxl.styles import Font, Alignment, PatternFill, Border, Side
+        from openpyxl.utils import get_column_letter
         from django.http import HttpResponse
         
         # Récupérer les données filtrées (sans pagination)
@@ -364,7 +365,7 @@ class HistoriqueVentesViewSet(viewsets.ViewSet):
         # Ajuster largeur colonnes
         for col in ws.columns:
             max_length = 0
-            column = col[0].column_letter
+            column = get_column_letter(col[0].column)
             for cell in col:
                 try:
                     if len(str(cell.value)) > max_length:

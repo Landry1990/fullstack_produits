@@ -20,7 +20,7 @@
   {
     "desc": "Missing type_avoir",
     "status": 201,
-    "len": 454,
-    "content": "{\"id\":13,\"produits\":[],\"fournisseur_name\":\"Le Fournisseur Local\",\"created_by_name\":\"nkaha\",\"validated_by_name\":\"\",\"total_ht\":\"0.00\",\"status_display\":\"Brouillon\",\"type_avoir_display\":\"Autre\",\"numero\":\"AV-202604-0007\",\"fournisseur_nom\":null,\"type_avoir\":\"AUTRE\",\"date\":\"2026-04-04\",\"observations\":\"\",\"status\":\"BROUILLON\",\"created_at\":\"2026-04-04T19:51:24.989983\",\"updated_at\":\"2026-04-04T19:51:24.989992\",\"fournisseur\":1,\"created_by\":1,\"validated_by\":null}"
+    "len": 567,
+    "content": "{\"id\":45,\"produits\":[],\"fournisseur_name\":\"LABOREX CAMEROUN\",\"created_by_name\":\"System Administrator\",\"validated_by_name\":\"\",\"total_ht\":\"0.00\",\"status_display\":\"Brouillon\",\"type_avoir_display\":\"Autre\",\"numero\":\"AV-202606-0043\",\"fournisseur_nom\":null,\"type_avoir\":\"AUTRE\",\"date\":\"2026-06-13\",\"observations\":\"\",\"status\":\"BROUILLON\",\"created_at\":\"2026-06-13T08:33:09.925100+01:00\",\"updated_at\":\"2026-06-13T08:33:09.925108+01:00\",\"is_active\":true,\"stock_decharge\":false,\"stock_decharge_at\":null,\"fournisseur\":1,\"created_by\":1,\"validated_by\":null,\"stock_decharge_by\":null}"
   }
 ]

@@ -279,6 +279,17 @@ export const QUERIES: QueryDefinition[] = [
         resultType: 'table'
     },
     {
+        id: 'stats_marges',
+        name: 'Stats de Marge Journalières',
+        description: 'Résumé des marges par jour (CA, coût des ventes, marge, taux)',
+        endpoint: '/api/rapports/stats_marges/',
+        params: [
+            { key: 'date_debut', label: 'Début', type: 'date', required: true },
+            { key: 'date_fin', label: 'Fin', type: 'date', required: true }
+        ],
+        resultType: 'table'
+    },
+    {
         id: 'detail_marges_lots',
         name: 'Détail des Marges par Lot',
         description: 'Ventes détaillées avec lot, coût d\'achat et marge exacte',

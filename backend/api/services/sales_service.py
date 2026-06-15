@@ -451,26 +451,26 @@ class SalesService:
                 if loyalty_conf:
                     client = facture.client
                     client._skip_audit = True
-                save_client = False
-                if str(data.get('use_pending_discount', False)).lower() == 'true' and client.pending_discount > 0:
-                    client.pending_discount = 0
-                    save_client = True
-                points_to_use = int(data.get('points_to_use', 0))
-                if points_to_use > 0 and client.points_fidelite >= points_to_use:
-                    client.points_fidelite -= points_to_use
-                    facture.points_fidelite_utilises = points_to_use
-                    facture.montant_fidelite = points_to_use * loyalty_conf.point_value
-                    save_client = True
-                if facture.total_ttc > 0 and loyalty_conf.amount_per_point > 0:
-                    points_gagnes = int(facture.total_ttc // loyalty_conf.amount_per_point)
-                    facture.points_fidelite_gagnes = points_gagnes
-                    client.points_fidelite += points_gagnes
-                    save_client = True
-                if loyalty_conf.auto_reward_threshold > 0 and client.points_fidelite >= loyalty_conf.auto_reward_threshold:
-                    client.points_fidelite -= loyalty_conf.auto_reward_threshold
-                    client.pending_discount = max(client.pending_discount, loyalty_conf.auto_reward_percent)
-                    save_client = True
-                if save_client: client.save()
+                    save_client = False
+                    if str(data.get('use_pending_discount', False)).lower() == 'true' and client.pending_discount > 0:
+                        client.pending_discount = 0
+                        save_client = True
+                    points_to_use = int(data.get('points_to_use', 0))
+                    if points_to_use > 0 and client.points_fidelite >= points_to_use:
+                        client.points_fidelite -= points_to_use
+                        facture.points_fidelite_utilises = points_to_use
+                        facture.montant_fidelite = points_to_use * loyalty_conf.point_value
+                        save_client = True
+                    if facture.total_ttc > 0 and loyalty_conf.amount_per_point > 0:
+                        points_gagnes = int(facture.total_ttc // loyalty_conf.amount_per_point)
+                        facture.points_fidelite_gagnes = points_gagnes
+                        client.points_fidelite += points_gagnes
+                        save_client = True
+                    if loyalty_conf.auto_reward_threshold > 0 and client.points_fidelite >= loyalty_conf.auto_reward_threshold:
+                        client.points_fidelite -= loyalty_conf.auto_reward_threshold
+                        client.pending_discount = max(client.pending_discount, loyalty_conf.auto_reward_percent)
+                        save_client = True
+                    if save_client: client.save()
 
         # 6. Final updates
         facture.status = Facture.Status.VALIDEE

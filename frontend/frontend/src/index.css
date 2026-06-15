@@ -825,6 +825,16 @@ div[style*="overflow-y: auto"]::-webkit-scrollbar {
   display: none;
 }
 
+/* Alias — used by messaging modal tabs */
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
 /* === UTILITAIRES DE LAYOUT OPTIMISÉ === */
 /* Header compact pour toutes les pages */
 .page-header-compact {

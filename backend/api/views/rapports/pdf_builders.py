@@ -5,6 +5,7 @@ Isolé de finance.py pour alléger la lecture du mixin.
 from io import BytesIO
 
 from django.http import HttpResponse
+from api.security_utils import build_safe_content_disposition
 
 
 def build_rapport_pdf(data: dict, title_text: str, filename: str) -> HttpResponse:
@@ -277,6 +278,6 @@ def build_rapport_pdf(data: dict, title_text: str, filename: str) -> HttpRespons
     doc.build(story, onFirstPage=_on_page, onLaterPages=_on_page)
 
     response = HttpResponse(content_type='application/pdf')
-    response['Content-Disposition'] = f'attachment; filename="{filename}"'
+    response['Content-Disposition'] = build_safe_content_disposition(filename)
     response.write(buffer.getvalue())
     return response
