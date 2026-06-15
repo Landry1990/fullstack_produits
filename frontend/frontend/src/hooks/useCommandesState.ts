@@ -383,7 +383,8 @@ export function useCommandesState(forcedType?: 'LOC' | 'DIR' | 'DIV') {
 
   // Calcul des totaux de la commande (Edition ou Consultation)
   const orderTotals = useMemo(() => {
-    let totalTVA = 0;
+    let totalTVA = 0;  // TVA de vente
+    let totalBuyTVA = 0;  // TVA d'achat
     let totalTTC = 0;
     let totalBuyHT = 0;
     let totalBuyTTC = 0;
@@ -402,14 +403,16 @@ export function useCommandesState(forcedType?: 'LOC' | 'DIR' | 'DIV') {
 
       const lineBuyHT = qty * buyPriceHT;
       const lineBuyTTC = lineBuyHT * (1 + tvaRate / 100);
+      const lineBuyTVA = lineBuyTTC - lineBuyHT;  // TVA sur achat
       const lineSellTTC = qty * sellPriceTTC;
       const lineSellHT = lineSellTTC / (1 + tvaRate / 100);
-      const lineTVA = lineSellTTC - lineSellHT;
+      const lineSellTVA = lineSellTTC - lineSellHT;  // TVA sur vente
 
       totalBuyHT += lineBuyHT;
       totalBuyTTC += lineBuyTTC;
+      totalBuyTVA += lineBuyTVA;
       totalSellHT += lineSellHT;
-      totalTVA += lineTVA;
+      totalTVA += lineSellTVA;  // Garde le nom totalTVA pour compatibilité
       totalTTC += lineSellTTC;
     });
 
@@ -419,7 +422,8 @@ export function useCommandesState(forcedType?: 'LOC' | 'DIR' | 'DIV') {
 
     return {
       totalHT: totalSellHT,
-      totalTVA,
+      totalTVA,  // TVA de vente
+      totalBuyTVA,  // TVA d'achat (pour correspondre à la liste)
       totalTTC,
       totalBuyHT,
       totalBuyTTC,

@@ -136,8 +136,8 @@ export const InventaireDataTab: React.FC<InventaireDataTabProps> = ({
 
             {/* Table Header */}
             <div className="overflow-x-auto w-full">
-               <div className="min-w-[800px]">
-                    <div className="grid grid-cols-12 gap-2 p-2 px-4 border-b border-base-200 bg-base-50/50 text-[10px] font-bold uppercase tracking-wider text-base-content/50">
+               <div className="min-w-[600px] md:min-w-[800px]">
+                    <div className="grid grid-cols-12 gap-1 md:gap-2 p-2 px-2 md:px-4 border-b border-base-200 bg-base-50/50 text-[9px] md:text-[10px] font-bold uppercase tracking-wider text-base-content/50">
                         {!isReadOnly && (
                             <div className="col-span-1 flex items-center justify-center">
                                 <input 
@@ -148,13 +148,13 @@ export const InventaireDataTab: React.FC<InventaireDataTabProps> = ({
                                 />
                             </div>
                         )}
-                        <div className={!isReadOnly ? "col-span-3" : "col-span-4"}>{t('inventaire.detail.col_product')}</div>
-                        <div className="col-span-2">{t('inventaire.detail.col_rayon')}</div>
-                        <div className="col-span-1 text-right">{t('inventaire.detail.col_cmp')}</div>
+                        <div className={!isReadOnly ? "col-span-4 md:col-span-3" : "col-span-5 md:col-span-4"}>{t('inventaire.detail.col_product')}</div>
+                        <div className="hidden md:block col-span-2">{t('inventaire.detail.col_rayon')}</div>
+                        <div className="col-span-2 md:col-span-1 text-right">{t('inventaire.detail.col_cmp')}</div>
                         <div className="col-span-1.5 text-center">{t('inventaire.detail.col_theo')}</div>
                         <div className="col-span-1.5 text-center">{t('inventaire.detail.col_phys')}</div>
                         <div className="col-span-1 text-center">{t('inventaire.detail.col_gap')}</div>
-                        {!isReadOnly && <div className="col-span-1 text-right">{t('inventaire.detail.col_actions')}</div>}
+                        {!isReadOnly && <div className="hidden md:block col-span-1 text-right">{t('inventaire.detail.col_actions')}</div>}
                     </div>
 
                     {/* Grouped Table Body */}
@@ -168,7 +168,7 @@ export const InventaireDataTab: React.FC<InventaireDataTabProps> = ({
 
                             const isDirty = dirtyLineIds?.has(l.id);
                             return (
-                                <div key={l.id} className={`grid grid-cols-12 gap-2 py-1.5 px-4 items-center hover:bg-base-50 transition-colors ${l.isLocalOnly ? 'bg-warning/5 border-l-[2px] border-l-warning' : ''} ${isDirty ? 'bg-info/5 border-l-[2px] border-l-info' : ''}`}>
+                                <div key={l.id} className={`grid grid-cols-12 gap-1 md:gap-2 py-1.5 px-2 md:px-4 items-center hover:bg-base-50 transition-colors ${l.isLocalOnly ? 'bg-warning/5 border-l-[2px] border-l-warning' : ''} ${isDirty ? 'bg-info/5 border-l-[2px] border-l-info' : ''}`}>
                                     {!isReadOnly && (
                                         <div className="col-span-1 flex items-center justify-center">
                                             <input 
@@ -181,16 +181,14 @@ export const InventaireDataTab: React.FC<InventaireDataTabProps> = ({
                                     )}
                                     
                                     {/* Product Info */}
-                                    <div className={!isReadOnly ? "col-span-3" : "col-span-4"}>
-                                        <div className="font-bold text-sm text-base-content truncate pr-2 flex items-center gap-1" title={l.produit_nom || (l.produit as any).name}>
+                                    <div className={!isReadOnly ? "col-span-4 md:col-span-3" : "col-span-5 md:col-span-4"}>
+                                        <div className="font-bold text-xs md:text-sm text-base-content truncate pr-1 flex items-center gap-1" title={l.produit_nom || (l.produit as any).name}>
                                             {l.produit_nom || (l.produit as any).name}
                                             {isDirty && (
-                                                <span className="badge badge-info badge-xs rounded-md text-[9px] font-bold uppercase tracking-wider">
-                                                    {t('common:unsaved', 'Modifié')}
-                                                </span>
+                                                <span className="w-2 h-2 rounded-full bg-info ml-1" title={t('common:unsaved', 'Modifié')} />
                                             )}
                                         </div>
-                                        <div className="text-xs font-mono text-base-content/50 flex gap-2 items-center leading-none mt-1">
+                                        <div className="text-[10px] md:text-xs font-mono text-base-content/50 flex gap-1 md:gap-2 items-center leading-none mt-0.5">
                                             <span>{l.produit_cip || (l.produit as any).cip1}</span>
                                             {(l as any).lot_numero && (
                                                 <span className="text-primary font-bold">{t('inventaire.detail.lot_label')} {(l as any).lot_numero}</span>
@@ -198,33 +196,33 @@ export const InventaireDataTab: React.FC<InventaireDataTabProps> = ({
                                         </div>
                                     </div>
 
-                                    {/* Rayon Column */}
-                                    <div className="col-span-2 truncate text-xs font-medium text-base-content/60">
+                                    {/* Rayon Column - hidden on mobile */}
+                                    <div className="hidden md:block col-span-2 truncate text-xs font-medium text-base-content/60">
                                         {rayonName}
                                     </div>
 
-                                    <div className="col-span-1 text-right text-xs font-medium text-base-content/80">
+                                    <div className="col-span-2 md:col-span-1 text-right text-[10px] md:text-xs font-medium text-base-content/80">
                                         {formatCurrency(normalizeNumberInput(String(l.pmp_snapshot || l.produit_cost_price || '0')))}
                                     </div>
 
                                     {/* Stock Théorique */}
                                     <div className="col-span-1.5 flex justify-center">
-                                        <div className="bg-base-100 px-2 py-0.5 rounded border border-base-200 min-w-[45px] text-center">
-                                            <span className="font-mono font-bold text-xs text-base-content/50">{l.stock_theorique}</span>
+                                        <div className="bg-base-100 px-1 md:px-2 py-0.5 rounded border border-base-200 min-w-[35px] md:min-w-[45px] text-center">
+                                            <span className="font-mono font-bold text-[10px] md:text-xs text-base-content/50">{l.stock_theorique}</span>
                                         </div>
                                     </div>
 
                                     {/* Stock Physique (Input) */}
                                     <div className="col-span-1.5 flex justify-center">
                                         {isReadOnly ? (
-                                            <div className="bg-base-50 px-2 py-1 rounded border border-base-200 min-w-[45px] text-center">
-                                                <span className="font-mono font-bold text-xs">{l.quantite_physique}</span>
+                                            <div className="bg-base-50 px-1 md:px-2 py-1 rounded border border-base-200 min-w-[35px] md:min-w-[45px] text-center">
+                                                <span className="font-mono font-bold text-[10px] md:text-xs">{l.quantite_physique}</span>
                                             </div>
                                         ) : (
                                             <input 
                                                 id={`qty-input-${l.id}`}
                                                 type="number" 
-                                                className="input input-bordered h-8 px-2 w-16 text-center font-mono font-bold text-sm rounded-lg focus:border-primary focus:ring-1 focus:ring-primary/20 transition-all bg-base-50/30" 
+                                                className="input input-bordered h-7 md:h-8 px-1 md:px-2 w-12 md:w-16 text-center font-mono font-bold text-xs md:text-sm rounded-lg focus:border-primary focus:ring-1 focus:ring-primary/20 transition-all bg-base-50/30" 
                                                 value={l.quantite_physique}
                                                 onChange={e => {
                                                     const val = e.target.value;
@@ -280,14 +278,14 @@ export const InventaireDataTab: React.FC<InventaireDataTabProps> = ({
 
                                     {/* Ecart */}
                                     <div className="col-span-1 flex justify-center">
-                                        <div className={`px-2 py-0.5 rounded border font-mono font-bold text-xs min-w-[40px] text-center ${ecartClass}`}>
+                                        <div className={`px-1 md:px-2 py-0.5 rounded border font-mono font-bold text-[10px] md:text-xs min-w-[32px] md:min-w-[40px] text-center ${ecartClass}`}>
                                             {currentEcart > 0 ? '+' : ''}{currentEcart}
                                         </div>
                                     </div>
 
-                                    {/* Actions */}
+                                    {/* Actions - hidden on mobile */}
                                     {!isReadOnly && (
-                                        <div className="col-span-1 flex justify-end pr-1">
+                                        <div className="hidden md:flex col-span-1 justify-end pr-1">
                                             <button 
                                                 className="btn btn-ghost btn-sm btn-circle text-error/30 hover:text-error hover:bg-error/10 transition-colors"
                                                 onClick={() => handleDeleteLine(l.id)}
@@ -306,18 +304,18 @@ export const InventaireDataTab: React.FC<InventaireDataTabProps> = ({
             </div>
 
             {/* Sticky Footer for Totals */}
-            <div className="bg-base-200/80 backdrop-blur-md p-3 px-6 border-t border-base-300 flex justify-between items-center sticky bottom-0 z-10">
-                <div className="flex gap-6">
+            <div className="bg-base-200/80 backdrop-blur-md p-2 md:p-3 px-3 md:px-6 border-t border-base-300 flex justify-between items-center sticky bottom-0 z-10">
+                <div className="flex gap-3 md:gap-6">
                     <div className="flex flex-col">
-                        <span className="text-[10px] uppercase font-bold opacity-40 leading-none mb-1">{t('inventaire.detail.items_count')}</span>
-                        <span className="font-bold text-sm">{lignes.length}</span>
+                        <span className="text-[9px] md:text-[10px] uppercase font-bold opacity-40 leading-none mb-1">{t('inventaire.detail.items_count')}</span>
+                        <span className="font-bold text-xs md:text-sm">{lignes.length}</span>
                     </div>
                 </div>
                 
-                <div className="flex items-center gap-4">
+                <div className="flex items-center gap-2 md:gap-4">
                     <div className="text-right">
-                        <div className="text-[10px] uppercase font-bold opacity-40 leading-none mb-1">{t('inventaire.detail.total_gap_value')}</div>
-                        <div className={`text-lg font-black font-mono ${totalEcartValeur > 0 ? "text-success" : totalEcartValeur < 0 ? "text-error" : "text-base-content/40"}`}>
+                        <div className="text-[9px] md:text-[10px] uppercase font-bold opacity-40 leading-none mb-1">{t('inventaire.detail.total_gap_value')}</div>
+                        <div className={`text-base md:text-lg font-black font-mono ${totalEcartValeur > 0 ? "text-success" : totalEcartValeur < 0 ? "text-error" : "text-base-content/40"}`}>
                             {totalEcartValeur > 0 ? '+' : ''}{formatCurrency(totalEcartValeur)}
                         </div>
                     </div>

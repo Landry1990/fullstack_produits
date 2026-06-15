@@ -195,7 +195,7 @@ export const useInventaireEditor = (
         }
         debounceTimerRef.current = setTimeout(() => {
             flushPendingChanges();
-        }, 1500);
+        }, 20000);
     };
 
     const handleDeleteLine = async (lineId: number) => {

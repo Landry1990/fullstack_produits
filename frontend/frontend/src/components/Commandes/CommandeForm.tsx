@@ -80,6 +80,7 @@ interface CommandeFormProps {
     orderTotals?: {
       totalHT: number;
       totalTVA: number;
+      totalBuyTVA: number;
       totalTTC: number;
       totalBuyHT: number;
       totalBuyTTC: number;
@@ -358,7 +359,7 @@ export default function CommandeForm({
                     {/* TVA A */}
                     <div className="flex flex-col items-end border-l pl-3 border-base-200">
                         <span className="text-[9px] uppercase font-bold text-base-content/50 -mb-1">TVA A</span>
-                        <span className="text-sm font-bold text-base-content/60">{formatCurrency((orderTotals?.totalBuyTTC || 0) - (orderTotals?.totalBuyHT || 0))}</span>
+                        <span className="text-sm font-bold text-base-content/60">{formatCurrency(orderTotals?.totalBuyTVA || 0)}</span>
                     </div>
 
                     {/* PRIX A TTC */}
@@ -369,17 +370,17 @@ export default function CommandeForm({
 
                     {/* PRIX V TTC */}
                     <div className="flex flex-col items-end border-l pl-3 border-base-200">
-                        <span className="text-[9px] uppercase font-bold text-base-content/50 -mb-1">PRIX V TTC</span>
-                        <span className="text-lg font-black leading-none">{formatCurrency(orderTotals?.totalTTC || 0)}</span>
+                        <span className="text-[9px] uppercase font-bold text-primary -mb-1">PRIX V TTC</span>
+                        <span className="text-lg font-black leading-none text-primary">{formatCurrency(orderTotals?.totalTTC || 0)}</span>
                     </div>
 
-                    {/* Marge */}
+                    {/* MARGE */}
                     <div className="flex flex-col items-end border-l pl-3 border-base-200">
                         <span className="text-[9px] uppercase font-bold text-base-content/50 -mb-1">MARGE</span>
                         <span className={`text-sm font-bold ${marginColor}`}>{formatCurrency(orderTotals?.totalMarginValue || 0)}</span>
                     </div>
 
-                    {/* Coeff */}
+                    {/* COEFF */}
                     <div className="flex flex-col items-end border-l pl-3 border-base-200">
                         <span className="text-[9px] uppercase font-bold text-base-content/50 -mb-1">COEFF</span>
                         <div className="flex items-baseline gap-1">

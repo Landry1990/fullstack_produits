@@ -52,6 +52,8 @@ interface CommandeDetailsProps {
 
       totalBuyHT: number;
 
+      totalBuyTTC: number;
+
       totalMarginValue: number;
 
       globalMargin: string;
@@ -360,86 +362,46 @@ const CommandeDetails: React.FC<CommandeDetailsProps> = ({
 
       {/* Barre de synthèse horizontale */}
 
-      <div className="flex flex-wrap items-center gap-x-6 gap-y-4 bg-base-100 p-4 rounded-lg border border-base-200 shadow-sm shrink-0 text-sm">
+      <div className="mt-2 flex flex-wrap justify-between items-end gap-4 shrink-0 bg-base-100 p-3 rounded-xl border border-base-200 shadow-sm">
+        <div className="flex flex-wrap gap-3 items-center">
 
+          {/* PRIX A HT */}
+          <div className="flex flex-col items-end">
+            <span className="text-[9px] uppercase font-bold text-base-content/50 -mb-1">PRIX A HT</span>
+            <span className="text-sm font-bold">{formatCurrency(orderTotals?.totalBuyHT || 0)}</span>
+          </div>
 
+          {/* TVA A */}
+          <div className="flex flex-col items-end border-l pl-3 border-base-200">
+            <span className="text-[9px] uppercase font-bold text-base-content/50 -mb-1">TVA A</span>
+            <span className="text-sm font-bold text-base-content/60">{formatCurrency((orderTotals?.totalBuyTTC || 0) - (orderTotals?.totalBuyHT || 0))}</span>
+          </div>
 
-        {/* HT (Achat) */}
+          {/* PRIX A TTC */}
+          <div className="flex flex-col items-end border-l pl-3 border-base-200">
+            <span className="text-[9px] uppercase font-bold text-base-content/50 -mb-1">PRIX A TTC</span>
+            <span className="text-lg font-black leading-none">{formatCurrency(orderTotals?.totalBuyTTC || 0)}</span>
+          </div>
 
-        <div className="flex flex-col">
+          {/* PRIX V TTC */}
+          <div className="flex flex-col items-end border-l pl-3 border-base-200">
+            <span className="text-[9px] uppercase font-bold text-primary -mb-1">PRIX V TTC</span>
+            <span className={`text-lg font-black leading-none ${Number(orderTotals?.globalMargin || 0) >= 1.34 ? 'text-success' : 'text-warning'}`}>{formatCurrency(orderTotals?.totalTTC || 0)}</span>
+          </div>
 
-          <span className="text-[10px] font-semibold text-base-content/50 uppercase leading-none mb-1">{t('orders:product_table.total_ht', 'HT (Achat)')}</span>
+          {/* MARGE */}
+          <div className="flex flex-col items-end border-l pl-3 border-base-200">
+            <span className="text-[9px] uppercase font-bold text-base-content/50 -mb-1">MARGE</span>
+            <span className={`text-sm font-bold ${Number(orderTotals?.globalMargin || 0) >= 1.34 ? 'text-success' : 'text-warning'}`}>{formatCurrency(orderTotals?.totalMarginValue || 0)}</span>
+          </div>
 
-          <span className="font-mono font-semibold text-base-content text-base whitespace-nowrap">
-
-              {formatCurrency(orderTotals?.totalBuyHT || 0)}
-
-          </span>
-
-        </div>
-
-
-
-        {/* TVA */}
-
-        <div className="flex flex-col border-l pl-5 border-base-300">
-
-          <span className="text-[10px] font-semibold text-base-content/50 uppercase leading-none mb-1">{t('orders:product_table.total_tva', 'TVA (Vente)')}</span>
-
-          <span className="font-mono font-semibold text-base-content/60 whitespace-nowrap">
-
-              {formatCurrency(orderTotals?.totalTVA || 0)}
-
-          </span>
-
-        </div>
-
-
-
-        {/* TTC (Vente) */}
-
-        <div className="flex flex-col border-l pl-5 border-base-300">
-
-          <span className="text-[10px] font-semibold text-primary uppercase leading-none mb-1">{t('orders:product_table.total_ttc', 'TTC (Vente)')}</span>
-
-          <span className="font-mono font-bold text-lg text-primary">
-
-              {formatCurrency(orderTotals?.totalTTC || 0)}
-
-          </span>
-
-        </div>
-
-
-
-        {/* Montant Marge */}
-
-        <div className="flex flex-col border-l pl-4 border-base-300">
-
-          <span className="text-[10px] font-semibold text-base-content/50 uppercase leading-none mb-1">💰 {t('orders:product_table.info_row.margin_value', 'Montant Marge')}</span>
-
-          <span className={`font-mono font-semibold ${Number(orderTotals?.globalMargin || 0) >= 1.34 ? 'text-success' : 'text-warning'}`}>
-
-              {formatCurrency(orderTotals?.totalMarginValue || 0)}
-
-          </span>
-
-        </div>
-
-
-
-        {/* Ratio / % Marge */}
-
-        <div className="flex flex-col border-l pl-4 border-base-300">
-
-          <span className="text-[10px] font-semibold text-base-content/50 uppercase leading-none mb-1">📦 {t('orders:product_table.headers.margin', 'Coefficient / %')}</span>
-
-          <div className={`flex items-baseline gap-1 font-mono font-bold ${Number(orderTotals?.globalMargin || 0) >= 1.34 ? 'text-success' : 'text-warning'}`}>
-
-              <span className="text-lg">x{orderTotals?.globalMargin || '1.0000'}</span>
-
-              <span className="text-[10px]">({orderTotals?.globalMarginPercent || '0'}%)</span>
-
+          {/* COEFF */}
+          <div className="flex flex-col items-end border-l pl-3 border-base-200">
+            <span className="text-[9px] uppercase font-bold text-base-content/50 -mb-1">COEFF</span>
+            <div className="flex items-baseline gap-1">
+              <span className={`text-sm font-bold ${Number(orderTotals?.globalMargin || 0) >= 1.34 ? 'text-success' : 'text-warning'}`}>x{orderTotals?.globalMargin || '1.00'}</span>
+              <span className={`text-[10px] font-semibold ${Number(orderTotals?.globalMargin || 0) >= 1.34 ? 'text-success' : 'text-warning'}`}>({orderTotals?.globalMarginPercent || '0.00'}%)</span>
+            </div>
           </div>
 
         </div>
