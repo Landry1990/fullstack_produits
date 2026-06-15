@@ -172,6 +172,7 @@ class CommandeProduitViewSet(viewsets.ModelViewSet):
                 'selling_price': to_decimal(p.get('selling_price', 0)),
                 'prix_euro': to_decimal(p.get('prix_euro'), None) if p.get('prix_euro') else None,
                 'tva': to_decimal(p.get('tva') if p.get('tva') is not None else product_tva_map.get(produit_id, 19.25)),
+                'taux_marge': to_decimal(p.get('taux_marge'), None) if p.get('taux_marge') is not None else None,
                 'lot': lot,
                 'date_expiration': parse_expiration(p.get('date_expiration')),
             }
@@ -205,8 +206,8 @@ class CommandeProduitViewSet(viewsets.ModelViewSet):
         if items_to_update:
             CommandeProduit.objects.bulk_update(
                 items_to_update,
-                ['produit_id', 'quantity', 'unites_gratuites', 'price', 'price_cost', 'selling_price', 
-                 'prix_euro', 'tva', 'lot', 'date_expiration'],
+                ['produit_id', 'quantity', 'unites_gratuites', 'price', 'price_cost', 'selling_price',
+                 'prix_euro', 'tva', 'taux_marge', 'lot', 'date_expiration'],
                 batch_size=100
             )
 
