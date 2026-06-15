@@ -20,6 +20,7 @@ from rest_framework.response import Response
 from rest_framework.viewsets import ViewSet
 from django.contrib.auth import authenticate
 from django.core.management import call_command
+from django.conf import settings
 
 
 # ── Registry of purgeable tables ──────────────────────────────────────────
@@ -486,9 +487,9 @@ class PurgeViewSet(ViewSet):
             return Response({'detail': 'Format non supporté. Utilisez .xlsx, .xls ou .csv'}, status=status.HTTP_400_BAD_REQUEST)
 
         # Sauvegarder le fichier dans un endroit persistant
-        os.makedirs('/app/rapports', exist_ok=True)
+        os.makedirs(settings.REPORTS_DIR, exist_ok=True)
         job_id = str(uuid.uuid4())[:8]
-        tmp_path = f'/app/rapports/import_tmp_{job_id}{suffix}'
+        tmp_path = os.path.join(settings.REPORTS_DIR, f'import_tmp_{job_id}{suffix}')
         with open(tmp_path, 'wb') as f:
             for chunk in file_obj.chunks():
                 f.write(chunk)
@@ -545,9 +546,9 @@ class PurgeViewSet(ViewSet):
                 if m: errors = int(m.group(1))
 
                 rapport_xlsx = rapport_txt = None
-                rapports = sorted(glob.glob('/app/rapports/rapport_import_*.xlsx'), reverse=True)
+                rapports = sorted(glob.glob(os.path.join(settings.REPORTS_DIR, 'rapport_import_*.xlsx')), reverse=True)
                 if rapports: rapport_xlsx = os.path.basename(rapports[0])
-                rapports_txt = sorted(glob.glob('/app/rapports/rapport_import_*.txt'), reverse=True)
+                rapports_txt = sorted(glob.glob(os.path.join(settings.REPORTS_DIR, 'rapport_import_*.txt')), reverse=True)
                 if rapports_txt: rapport_txt = os.path.basename(rapports_txt[0])
 
                 c.set(f'import_{job_id}', {
@@ -654,7 +655,7 @@ class PurgeViewSet(ViewSet):
         filename = request.query_params.get('file', '')
         if not filename or '/' in filename or '..' in filename:
             return Response({'detail': 'Fichier invalide.'}, status=status.HTTP_400_BAD_REQUEST)
-        path = f'/app/rapports/{filename}'
+        path = os.path.join(settings.REPORTS_DIR, filename)
         if not os.path.exists(path):
             return Response({'detail': 'Fichier non trouvé.'}, status=status.HTTP_404_NOT_FOUND)
         return FileResponse(open(path, 'rb'), as_attachment=True, filename=filename)

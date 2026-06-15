@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 import { Send, MessageSquare, Trash2, Edit2, Plus, Bell, Clock, CheckCheck, Check, Archive, Reply, Paperclip, X, Shield } from 'lucide-react';
 import communicationService from '../../services/communicationService';
@@ -186,7 +187,7 @@ export default function MessagingModal({ isOpen, onClose, currentUser, onMessage
     setActiveTab('new');
   };
 
-  return (
+  return createPortal(
     <PremiumModal
       isOpen={isOpen}
       onClose={onClose}
@@ -195,7 +196,7 @@ export default function MessagingModal({ isOpen, onClose, currentUser, onMessage
       icon={<MessageSquare className="text-primary" />}
       maxWidth="max-w-4xl"
     >
-      <div className="flex flex-col md:flex-row h-[420px] overflow-hidden bg-base-100">
+      <div className="flex flex-col md:flex-row flex-1 min-h-0 overflow-hidden bg-base-100" style={{ minHeight: '420px' }}>
         {/* Navigation Tabs (Sidebar on Desktop, Top Bar on Mobile) */}
         <div className="w-full md:w-60 border-b md:border-b-0 md:border-r border-base-300 bg-base-200 p-2 flex flex-row md:flex-col gap-1 overflow-x-auto md:overflow-y-auto no-scrollbar shrink-0">
           <button 
@@ -664,6 +665,7 @@ export default function MessagingModal({ isOpen, onClose, currentUser, onMessage
           </div>
         </div>
       )}
-    </PremiumModal>
+    </PremiumModal>,
+    document.body
   );
 }

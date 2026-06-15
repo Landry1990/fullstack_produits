@@ -2,14 +2,14 @@
   {
     "desc": "Empty payload",
     "status": 201,
-    "len": 439,
-    "content": "{\"id\":11,\"produits\":[],\"fournisseur_name\":null,\"created_by_name\":\"nkaha\",\"validated_by_name\":\"\",\"total_ht\":\"0.00\",\"status_display\":\"Brouillon\",\"type_avoir_display\":\"Autre\",\"numero\":\"AV-202604-0005\",\"fournisseur_nom\":null,\"type_avoir\":\"AUTRE\",\"date\":\"2026-04-04\",\"observations\":\"\",\"status\":\"BROUILLON\",\"created_at\":\"2026-04-04T19:50:54.681303\",\"updated_at\":\"2026-04-04T19:50:54.681316\",\"fournisseur\":null,\"created_by\":1,\"validated_by\":null}"
+    "len": 556,
+    "content": "{\"id\":43,\"produits\":[],\"fournisseur_name\":null,\"created_by_name\":\"System Administrator\",\"validated_by_name\":\"\",\"total_ht\":\"0.00\",\"status_display\":\"Brouillon\",\"type_avoir_display\":\"Autre\",\"numero\":\"AV-202606-0041\",\"fournisseur_nom\":null,\"type_avoir\":\"AUTRE\",\"date\":\"2026-06-13\",\"observations\":\"\",\"status\":\"BROUILLON\",\"created_at\":\"2026-06-13T08:33:09.884037+01:00\",\"updated_at\":\"2026-06-13T08:33:09.884048+01:00\",\"is_active\":true,\"stock_decharge\":false,\"stock_decharge_at\":null,\"fournisseur\":null,\"created_by\":1,\"validated_by\":null,\"stock_decharge_by\":null}"
   },
   {
     "desc": "Null fournisseur",
     "status": 201,
-    "len": 451,
-    "content": "{\"id\":12,\"produits\":[],\"fournisseur_name\":null,\"created_by_name\":\"nkaha\",\"validated_by_name\":\"\",\"total_ht\":\"0.00\",\"status_display\":\"Brouillon\",\"type_avoir_display\":\"Produit périmé\",\"numero\":\"AV-202604-0006\",\"fournisseur_nom\":null,\"type_avoir\":\"PERIME\",\"date\":\"2026-04-04\",\"observations\":\"\",\"status\":\"BROUILLON\",\"created_at\":\"2026-04-04T19:50:54.691430\",\"updated_at\":\"2026-04-04T19:50:54.691436\",\"fournisseur\":null,\"created_by\":1,\"validated_by\":null}"
+    "len": 568,
+    "content": "{\"id\":44,\"produits\":[],\"fournisseur_name\":null,\"created_by_name\":\"System Administrator\",\"validated_by_name\":\"\",\"total_ht\":\"0.00\",\"status_display\":\"Brouillon\",\"type_avoir_display\":\"Produit périmé\",\"numero\":\"AV-202606-0042\",\"fournisseur_nom\":null,\"type_avoir\":\"PERIME\",\"date\":\"2026-06-13\",\"observations\":\"\",\"status\":\"BROUILLON\",\"created_at\":\"2026-06-13T08:33:09.890624+01:00\",\"updated_at\":\"2026-06-13T08:33:09.890632+01:00\",\"is_active\":true,\"stock_decharge\":false,\"stock_decharge_at\":null,\"fournisseur\":null,\"created_by\":1,\"validated_by\":null,\"stock_decharge_by\":null}"
   },
   {
     "desc": "Invalid type_avoir",

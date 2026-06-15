@@ -15,6 +15,7 @@ from datetime import datetime
 from django.utils import timezone
 from django.core.management.base import BaseCommand, CommandError
 from django.db import transaction
+from django.conf import settings
 from api.models import Produit, Fournisseur, Forme, Groupe, Rayon
 try:
     import pandas as pd
@@ -246,7 +247,7 @@ class Command(BaseCommand):
     def generate_report(self, stats, source_filepath):
         """Génère un rapport texte + Excel (si pandas dispo) avec succès et échecs"""
         timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-        reports_dir = Path('/app/rapports')
+        reports_dir = Path(settings.REPORTS_DIR)
         reports_dir.mkdir(parents=True, exist_ok=True)
 
         # --- Rapport texte (toujours généré) ---

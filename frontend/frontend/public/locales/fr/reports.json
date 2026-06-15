@@ -113,6 +113,10 @@
             "name": "Produits les plus vendus",
             "description": "Analyse du CA, quantité et marge par produit"
         },
+        "stats_marges": {
+            "name": "Stats de Marge Journalières",
+            "description": "Résumé des marges par jour (CA, coût des ventes, marge, taux)"
+        },
         "detail_marges_lots": {
             "name": "Détail des Marges par Lot",
             "description": "Ventes détaillées avec lot, coût d'achat et marge exacte"
@@ -321,6 +325,9 @@
         "status_display": "Statut",
         "qty": "Qté",
         "catttc": "CA TTC (F)",
+        "ca": "CA TTC (F)",
+        "cout_ventes": "Coût Ventes (F)",
+        "cout": "Coût (F)",
         "marge": "Marge Brute (F)",
         "taux_marge": "Taux Marge (%)",
         "prix_vente_net": "Prix Vente Net",

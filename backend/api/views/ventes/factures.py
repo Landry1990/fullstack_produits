@@ -37,6 +37,7 @@ from api.centralized_configs import (
     StandardResultsSetPagination,
     SQLAnnotations
 )
+from api.security_utils import build_safe_content_disposition
 
 logger = logging.getLogger(__name__)
 
@@ -986,7 +987,7 @@ class FactureViewSet(BaseViewSetConfig, OptimizedSerializerMixin, viewsets.Model
         
         response = HttpResponse(content_type='application/pdf')
         filename = f"facture_{facture.numero_facture or facture.id}.pdf"
-        response['Content-Disposition'] = f'attachment; filename="{filename}"'
+        response['Content-Disposition'] = build_safe_content_disposition(filename)
         response.write(buffer.getvalue())
         return response
 

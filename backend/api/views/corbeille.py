@@ -111,7 +111,7 @@ class CorbeilleViewSet(ViewSet):
                 'type': 'commande',
                 'details': {
                     'fournisseur': c.fournisseur.name if c.fournisseur else c.fournisseur_nom,
-                    'status': c.get_status_display(),
+                    'status': c.get_status_display(),  # type: ignore[attr-defined]
                 },
                 'deleted_at': c.date.isoformat() if c.date else None,
             })
@@ -124,7 +124,7 @@ class CorbeilleViewSet(ViewSet):
                 'type': 'avoir',
                 'details': {
                     'fournisseur': a.fournisseur.name if a.fournisseur else a.fournisseur_nom,
-                    'status': a.get_status_display(),
+                    'status': a.get_status_display(),  # type: ignore[attr-defined]
                 },
                 'deleted_at': a.updated_at.isoformat() if a.updated_at else None,
             })
@@ -137,7 +137,7 @@ class CorbeilleViewSet(ViewSet):
                 'type': 'promis',
                 'details': {
                     'client': p.client_display,
-                    'status': p.get_status_display(),
+                    'status': p.get_status_display(),  # type: ignore[attr-defined]
                     'quantite': p.quantite,
                 },
                 'deleted_at': p.date_promis.isoformat() if p.date_promis else None,
@@ -146,12 +146,12 @@ class CorbeilleViewSet(ViewSet):
         # Inventaires inactifs
         for i in Inventaire.objects.filter(is_active=False).order_by('-date')[:100]:
             items['inventaires'].append({
-                'id': i.id,
-                'name': f"Inventaire {i.reference or i.id}",
+                'id': i.id,  # type: ignore[attr-defined]
+                'name': f"Inventaire {i.reference or i.id}",  # type: ignore[attr-defined]
                 'type': 'inventaire',
                 'details': {
-                    'status': i.get_status_display(),
-                    'type': i.get_inventory_type_display(),
+                    'status': i.get_status_display(),  # type: ignore[attr-defined]
+                    'type': i.get_inventory_type_display(),  # type: ignore[attr-defined]
                 },
                 'deleted_at': i.date.isoformat() if i.date else None,
             })
@@ -164,7 +164,7 @@ class CorbeilleViewSet(ViewSet):
                 'type': 'facture',
                 'details': {
                     'client': f.client.name if f.client else f.client_name_override,
-                    'status': f.get_status_display(),
+                    'status': f.get_status_display(),  # type: ignore[attr-defined]
                     'total': float(f.total_ttc),
                 },
                 'deleted_at': f.date.isoformat() if f.date else None,
@@ -257,8 +257,10 @@ class CorbeilleViewSet(ViewSet):
                     names = list(qs.values_list('numero_facture', flat=True))
                 elif model_key == 'inventaire':
                     names = list(qs.values_list('reference', flat=True))
-                elif model_key in ['commande', 'avoir']:
-                    names = list(qs.values_list('numero_facture', flat=True)) # or similar
+                elif model_key == 'commande':
+                    names = list(qs.values_list('numero_facture', flat=True))
+                elif model_key == 'avoir':
+                    names = list(qs.values_list('numero', flat=True))
                 elif model_key == 'promis':
                     names = list(qs.values_list('id', flat=True)) # Promis has no direct simple name
                 else:

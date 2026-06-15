@@ -15,6 +15,7 @@ class Avoir(models.Model):
     Modèle pour les retours fournisseurs (Avoirs).
     Retire du stock contrairement aux Commandes qui en ajoutent.
     """
+    id = models.AutoField(primary_key=True)
     TYPE_CHOICES = [
         ('PERIME', 'Produit périmé'),
         ('AVARIE', 'Produit avarié'),
@@ -68,7 +69,7 @@ class Avoir(models.Model):
     @property
     def total_ht(self):
         """Calcule le total HT de l'avoir"""
-        return self.produits.aggregate(
+        return self.produits.aggregate(  # type: ignore[attr-defined]
             total=Sum(F('quantity') * F('price'), output_field=DecimalField())
         )['total'] or Decimal('0.00')
     

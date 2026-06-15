@@ -65,11 +65,13 @@ class LicenceMiddleware:
         if 'test' in sys.argv:
             return self.get_response(request)
 
-        # 1. On exclut les URL critiques (connexion, admin, et l'API de licence elle-même)
+        # 1. On exclut les URL critiques (connexion, admin, health check, et l'API de licence elle-même)
         # Sinon le client ne pourra même pas soumettre sa nouvelle clé !
+        # Health check doit toujours être accessible pour le monitoring Docker
         if (
             path.startswith('/api/licence/') or
             path.startswith('/api/users/login/') or
+            path.startswith('/api/health/') or
             path.startswith('/admin/')
         ):
             return self.get_response(request)

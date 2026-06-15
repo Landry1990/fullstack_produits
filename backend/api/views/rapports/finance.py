@@ -16,7 +16,7 @@ from rest_framework import status
 from rest_framework.decorators import action
 from rest_framework.response import Response
 
-from api.models import Caisse, Facture, FactureProduit, FactureProduitAllocation, StockLot
+from api.models import Caisse, Facture, FactureProduit, FactureProduitAllocation, Produit, StockLot
 from api.views.rapports.base import RapportBaseMixin
 from api.views.rapports.pdf_builders import build_rapport_pdf
 
@@ -28,14 +28,17 @@ def _write_pharma_header(ws, PharmacySettings, title: str) -> None:
     from django.utils import timezone as tz
     try:
         pharmacy = PharmacySettings.objects.get(pk=1)
-        pharma_name    = pharmacy.pharmacy_name or "ZENITH"
+        from api.utils.currency import get_pharmacy_name
+        pharma_name    = get_pharmacy_name()
         pharma_address = (
             f"{pharmacy.address} - {pharmacy.city}".strip(" -")
             if (pharmacy.address or pharmacy.city) else ""
         )
         pharma_phone = f"Tél : {pharmacy.phone}" if pharmacy.phone else ""
     except Exception:
-        pharma_name, pharma_address, pharma_phone = "ZENITH", "", ""
+        from api.utils.currency import get_pharmacy_name
+        pharma_name = get_pharmacy_name()
+        pharma_address, pharma_phone = "", ""
 
     now_time = tz.now()
     if tz.is_aware(now_time):
@@ -662,6 +665,119 @@ class RapportFinanceMixin:
         page = self.paginator.paginate_queryset(results, request)
         if page is not None:
             return self.paginator.get_paginated_response(page)
+        return Response(results)
+
+    # ── Stats Marges Journalières ─────────────────────────────────────────────
+
+    @action(detail=False, methods=['get'])
+    def stats_marges(self, request):
+        """
+        Résumé des marges par jour sur une période.
+        Retourne pour chaque jour : CA TTC, coût des ventes, marge brute, taux de marge, nb ventes.
+        """
+        try:
+            _, _, date_debut, date_fin = _parse_day_range_inclusive(request)
+        except ValueError as e:
+            return Response({"error": str(e)}, status=400)
+
+        # 1. CA par jour (total_ttc des factures validées/payées)
+        from django.db.models.functions import TruncDate
+        ca_by_day = (
+            Facture.objects
+            .filter(date__range=(date_debut, date_fin), status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE])
+            .annotate(day=TruncDate('date'))
+            .values('day')
+            .annotate(
+                ca=Coalesce(Sum('total_ttc'), Decimal('0')),
+                nb_ventes=Count('id'),
+            )
+            .order_by('day')
+        )
+
+        ca_map = {}
+        for row in ca_by_day:
+            day = row['day'].strftime('%d/%m/%Y')
+            ca_map[day] = {
+                'ca': Decimal(str(row['ca'])),
+                'nb_ventes': row['nb_ventes'],
+            }
+
+        # 2. Coût des ventes par jour (allocations)
+        alloc_by_day = (
+            FactureProduitAllocation.objects
+            .filter(facture_produit__facture__date__range=(date_debut, date_fin))
+            .filter(facture_produit__facture__status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE])
+            .exclude(stock_lot__is_divers=True)
+            .annotate(day=TruncDate('facture_produit__facture__date'))
+            .values('day')
+            .annotate(
+                cout=Coalesce(Sum(F('quantity') * F('cost_price')), Decimal('0'))
+            )
+            .order_by('day')
+        )
+
+        cout_map = {}
+        for row in alloc_by_day:
+            day = row['day'].strftime('%d/%m/%Y')
+            cout_map[day] = Decimal(str(row['cout']))
+
+        # 3. Coût des lignes non allouées (fallback PMP)
+        unalloc = (
+            FactureProduit.objects
+            .filter(facture__date__range=(date_debut, date_fin))
+            .filter(facture__status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE])
+            .annotate(has_alloc=Exists(FactureProduitAllocation.objects.filter(facture_produit=OuterRef('pk'))))
+            .filter(has_alloc=False)
+            .exclude(produit__stock_lots__is_divers=True)
+            .select_related('produit')
+        )
+        # Précharger PMP
+        produit_ids = list(unalloc.values_list('produit_id', flat=True).distinct())
+        pmp_map = {p.id: Decimal(str(p.pmp or p.cost_price or 0)) for p in Produit.objects.filter(id__in=produit_ids)}
+
+        for item in unalloc:
+            day = item.facture.date.date().strftime('%d/%m/%Y')
+            cost_unit = pmp_map.get(item.produit.id, Decimal('0'))
+            cout_map[day] = cout_map.get(day, Decimal('0')) + (Decimal(str(item.quantity)) * cost_unit)
+
+        # 4. Assembler les résultats
+        all_days = sorted(set(ca_map.keys()) | set(cout_map.keys()))
+        results = []
+        total_ca = Decimal('0')
+        total_cout = Decimal('0')
+        total_marge = Decimal('0')
+        total_ventes = 0
+
+        for day in all_days:
+            ca = ca_map.get(day, {}).get('ca', Decimal('0'))
+            cout = cout_map.get(day, Decimal('0'))
+            marge = ca - cout
+            nb = ca_map.get(day, {}).get('nb_ventes', 0)
+            taux = round(float(marge / ca * 100), 1) if ca > 0 else 0
+
+            results.append({
+                'date': day,
+                'ca': float(ca.quantize(Decimal('1'), rounding=ROUND_HALF_UP)),
+                'cout_ventes': float(cout.quantize(Decimal('1'), rounding=ROUND_HALF_UP)),
+                'marge': float(marge.quantize(Decimal('1'), rounding=ROUND_HALF_UP)),
+                'taux_marge': taux,
+                'nb_ventes': nb,
+            })
+            total_ca += ca
+            total_cout += cout
+            total_marge += marge
+            total_ventes += nb
+
+        if results:
+            results.append({
+                'date': 'TOTAL',
+                'ca': float(total_ca.quantize(Decimal('1'), rounding=ROUND_HALF_UP)),
+                'cout_ventes': float(total_cout.quantize(Decimal('1'), rounding=ROUND_HALF_UP)),
+                'marge': float(total_marge.quantize(Decimal('1'), rounding=ROUND_HALF_UP)),
+                'taux_marge': round(float(total_marge / total_ca * 100), 1) if total_ca > 0 else 0,
+                'nb_ventes': total_ventes,
+            })
+
         return Response(results)
 
     # ── Rapport dynamique ─────────────────────────────────────────────────────

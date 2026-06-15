@@ -1,12 +1,17 @@
 from django.http import JsonResponse
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import AllowAny
 
 # Health check endpoint for Docker monitoring
+@api_view(['GET'])
+@permission_classes([AllowAny])
 def health_check(request):
     """
     Health check complet : DB, Redis (si configuré), espace disque.
     Retourne 200 si tout est OK, 503 si un composant critique est down.
+    Accessible sans authentification pour le healthcheck Docker et le frontend.
     """
     from django.db import connection
     from django.core.cache import cache

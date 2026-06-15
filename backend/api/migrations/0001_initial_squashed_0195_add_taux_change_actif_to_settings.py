@@ -23,20 +23,49 @@ from django.utils import timezone
 
 def create_emergency_superuser(apps, schema_editor):
     """Crée un super-admin de secours qui ne peut pas être supprimé via l'interface."""
+    from django.db.models.signals import post_save
+    
     User = get_user_model()
     username = os.getenv('EMERGENCY_ADMIN_USER', 'sysadmin')
-    if not User.objects.filter(username=username).exists():
-        user = User.objects.create_superuser(
-            username=username,
-            email='admin@localhost',
-            password='ChangeMeImmediately123!',
-            first_name='System',
-            last_name='Administrator',
-            last_login=timezone.now()
-        )
-        user.profile.is_technical_account = True
-        user.profile.can_be_deleted = False
-        user.profile.save()
+    
+    # Import user signals to disconnect them
+    try:
+        from api.models.users import create_user_profile, save_user_profile
+        post_save.disconnect(create_user_profile, sender=User)
+        post_save.disconnect(save_user_profile, sender=User)
+    except ImportError:
+        pass
+
+    try:
+         if not User.objects.filter(username=username).exists():
+            user = User.objects.create_superuser(
+                username=username,
+                email='admin@localhost',
+                password='ChangeMeImmediately123!',
+                first_name='System',
+                last_name='Administrator',
+                last_login=timezone.now()
+            )
+            # Create profile manually using historical model
+            Profile = apps.get_model('api', 'Profile')
+            UserHistorical = apps.get_model('auth', 'User')
+            user_historical = UserHistorical.objects.get(pk=user.pk)
+            profile, created = Profile.objects.get_or_create(user=user_historical)
+            
+            # Set protected fields if they exist in this migration's state
+            if hasattr(profile, 'is_technical_account'):
+                profile.is_technical_account = True
+            if hasattr(profile, 'can_be_deleted'):
+                profile.can_be_deleted = False
+            profile.save()
+    finally:
+        # Reconnect signals
+        try:
+            from api.models.users import create_user_profile, save_user_profile
+            post_save.connect(create_user_profile, sender=User)
+            post_save.connect(save_user_profile, sender=User)
+        except ImportError:
+            pass
 
 
 def delete_emergency_superuser(apps, schema_editor):
