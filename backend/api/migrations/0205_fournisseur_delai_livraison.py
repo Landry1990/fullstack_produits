@@ -9,12 +9,5 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.AddField(
-            model_name='fournisseur',
-            name='delai_livraison_jours',
-            field=models.IntegerField(
-                default=2,
-                help_text='Délai de livraison en jours (défaut: 2 jours pour les fournisseurs locaux)',
-            ),
-        ),
+        # Ce champ est déjà créé dans la migration 0196_add_fournisseur_logistics_fields
     ]

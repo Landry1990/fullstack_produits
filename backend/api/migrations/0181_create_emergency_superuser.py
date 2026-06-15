@@ -7,40 +7,57 @@ import os
 
 def create_emergency_superuser(apps, schema_editor):
     """Crée un super-admin de secours qui ne peut pas être supprimé via l'interface."""
-    User = get_user_model()
+    from django.db.models.signals import post_save
     
-    # Nom d'utilisateur technique (éviter les noms évidents)
+    User = get_user_model()
     username = os.getenv('EMERGENCY_ADMIN_USER', 'sysadmin')
     
-    # Mot de passe à définir via variable d'environnement ou à changer immédiatement après install
-    # En prod, utiliser: python manage.py shell
-    # from django.contrib.auth import get_user_model
-    # User = get_user_model()
-    # u = User.objects.get(username='sysadmin')
-    # u.set_password('NOUVEAU_MOT_DE_PASSE_SUPER_FORT')
-    # u.save()
-    
-    if not User.objects.filter(username=username).exists():
-        user = User.objects.create_superuser(
-            username=username,
-            email='admin@localhost',
-            password='ChangeMeImmediately123!',  # À changer IMMÉDIATEMENT
-            first_name='System',
-            last_name='Administrator',
-            last_login=timezone.now()
-        )
-        # Marquer comme compte technique protégé
-        user.profile.is_technical_account = True
-        user.profile.can_be_deleted = False
-        user.profile.save()
-        
-        print(f"\n{'='*60}")
-        print(f"COMPTE SUPER-ADMIN DE SECOURS CRÉÉ")
-        print(f"{'='*60}")
-        print(f"Username: {username}")
-        print(f"Password par défaut: ChangeMeImmediately123!")
-        print(f"⚠️  CHANGER IMMÉDIATEMENT VIA: python manage.py changepassword {username}")
-        print(f"{'='*60}\n")
+    # Import user signals to disconnect them
+    try:
+        from api.models.users import create_user_profile, save_user_profile
+        post_save.disconnect(create_user_profile, sender=User)
+        post_save.disconnect(save_user_profile, sender=User)
+    except ImportError:
+        pass
+
+    try:
+        if not User.objects.filter(username=username).exists():
+            user = User.objects.create_superuser(
+                username=username,
+                email='admin@localhost',
+                password='ChangeMeImmediately123!',  # À changer IMMÉDIATEMENT
+                first_name='System',
+                last_name='Administrator',
+                last_login=timezone.now()
+            )
+            # Create profile manually using historical model
+            Profile = apps.get_model('api', 'Profile')
+            UserHistorical = apps.get_model('auth', 'User')
+            user_historical = UserHistorical.objects.get(pk=user.pk)
+            profile, created = Profile.objects.get_or_create(user=user_historical)
+            
+            # Set protected fields if they exist in this migration's state
+            if hasattr(profile, 'is_technical_account'):
+                profile.is_technical_account = True
+            if hasattr(profile, 'can_be_deleted'):
+                profile.can_be_deleted = False
+            profile.save()
+            
+            print(f"\n{'='*60}")
+            print(f"COMPTE SUPER-ADMIN DE SECOURS CRÉÉ")
+            print(f"{'='*60}")
+            print(f"Username: {username}")
+            print(f"Password par défaut: ChangeMeImmediately123!")
+            print(f"⚠️  CHANGER IMMÉDIATEMENT VIA: python manage.py changepassword {username}")
+            print(f"{'='*60}\n")
+    finally:
+        # Reconnect signals
+        try:
+            from api.models.users import create_user_profile, save_user_profile
+            post_save.connect(create_user_profile, sender=User)
+            post_save.connect(save_user_profile, sender=User)
+        except ImportError:
+            pass
 
 
 def delete_emergency_superuser(apps, schema_editor):

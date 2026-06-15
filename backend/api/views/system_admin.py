@@ -10,11 +10,13 @@ from datetime import datetime
 from pathlib import Path
 
 from django.conf import settings
+from django.core.exceptions import ValidationError
 from rest_framework import status
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAdminUser
 from rest_framework.response import Response
 from rest_framework.viewsets import ViewSet
+from api.security_utils import validate_safe_path
 
 
 def _get_backup_dir() -> Path:
@@ -34,7 +36,7 @@ class SystemAdminViewSet(ViewSet):
     @action(detail=False, methods=['get'])
     def status(self, request):
         """Retourne l'état des conteneurs Docker et du dernier backup."""
-        containers = ['fullstack_produits-db-1', 'fullstack_produits-backend-1']
+        containers = [settings.DOCKER_DB_CONTAINER, settings.DOCKER_BACKEND_CONTAINER]
         docker_status = []
 
         for name in containers:
@@ -147,7 +149,7 @@ class SystemAdminViewSet(ViewSet):
 
         try:
             result = subprocess.run(
-                ['bash', str(script), '--retention-days', '30'],
+                ['bash', str(script), '--retention-days', str(settings.BACKUP_RETENTION_DAYS)],
                 capture_output=True, text=True, timeout=120,
                 cwd=str(script.parent)
             )
@@ -172,7 +174,7 @@ class SystemAdminViewSet(ViewSet):
     @action(detail=False, methods=['post'])
     def fix_restart_policy(self, request):
         """Applique unless-stopped sur les conteneurs Docker."""
-        containers = ['fullstack_produits-db-1', 'fullstack_produits-backend-1']
+        containers = [settings.DOCKER_DB_CONTAINER, settings.DOCKER_BACKEND_CONTAINER]
         results = []
 
         for name in containers:

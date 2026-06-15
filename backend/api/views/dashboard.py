@@ -365,17 +365,19 @@ class DashboardViewSet(viewsets.ViewSet):
         from ..models import PharmacySettings
         settings = PharmacySettings.objects.first()
         
-        perf_drop_threshold = Decimal('0.7') # 30% drop
+        perf_drop = settings.perf_drop_threshold if (settings and settings.perf_drop_threshold) else Decimal('0.7')
+        perf_alert_hour = settings.perf_alert_hour if settings else 14
         stock_days_alert = settings.low_stock_threshold_days if settings else 15
         debt_alert_val = settings.debt_alert_threshold if settings else Decimal('100000')
         dormant_days_limit = settings.dormant_stock_days if settings else 90
+        shortage_alert_threshold = settings.shortage_alert_threshold if settings else 10
 
-        # Performance Alert (if CA < 70% of target after 14h)
+        # Performance Alert (if CA < perf_drop of target after perf_alert_hour)
         day_actual = ca_jour # Use the already calculated ca_jour
         day_target = obj_jour # Use the already calculated obj_jour
-        if day_target > 0 and now.hour >= 14:
+        if day_target > 0 and now.hour >= perf_alert_hour:
             rate = (float(day_actual) / float(day_target)) * 100
-            if rate < 70:
+            if rate < float(perf_drop * 100):
                 alerts.append({
                     'type': 'danger',
                     'title_key': 'manager_dashboard.alerts.perf_title',
@@ -390,7 +392,7 @@ class DashboardViewSet(viewsets.ViewSet):
             stock_minimum__gt=0,
             is_active=True
         ).count()
-        if shortages > 10:
+        if shortages > shortage_alert_threshold:
             alerts.append({
                 'type': 'warning',
                 'title_key': 'manager_dashboard.alerts.shortage_title',
@@ -489,7 +491,7 @@ class DashboardViewSet(viewsets.ViewSet):
         ).exclude(~Q(id__in=Caisse.objects.values('facture_id')), status='VAL').aggregate(ca=Coalesce(Sum('total_ttc'), Decimal('0')))['ca']
         
         # Only alert if we have enough history to compare and significant drop
-        if last_week_partial_ca > 0 and current_week_ca < last_week_partial_ca * perf_drop_threshold:
+        if last_week_partial_ca > 0 and current_week_ca < last_week_partial_ca * perf_drop:
              alerts.append({
                 'type': 'warning',
                 'title_key': 'manager_dashboard.alerts.drop_title',
@@ -540,13 +542,17 @@ class DashboardViewSet(viewsets.ViewSet):
     def hourly_traffic(self, request):
         """Returns average hourly traffic (number of sales) over the last 30 days."""
         from django.db.models.functions import ExtractHour
+        from ..models import PharmacySettings
+        
+        settings = PharmacySettings.objects.first()
+        days_count = settings.traffic_analysis_days if (settings and settings.traffic_analysis_days) else 30
         
         today = timezone.now().date()
-        date_30_days_ago = today - timedelta(days=30)
+        date_ago = today - timedelta(days=days_count)
         
-        # Get sales for last 30 days grouped by hour
+        # Get sales for last N days grouped by hour
         sales_by_hour = Facture.objects.filter(
-            date__date__gte=date_30_days_ago,
+            date__date__gte=date_ago,
             date__date__lte=today,
             status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE]
         ).exclude(~Q(id__in=Caisse.objects.values('facture_id')), status='VAL').annotate(
@@ -568,8 +574,6 @@ class DashboardViewSet(viewsets.ViewSet):
 
         # Initialize 24h data
         traffic_data = {h: {'count': 0, 'total': 0, 'today_count': 0} for h in range(24)}
-        
-        days_count = 30 # Fixed 30-day window average
         
         # Fill with average data
         for item in sales_by_hour:
@@ -644,6 +648,12 @@ class DashboardViewSet(viewsets.ViewSet):
         """
         from django.db.models.functions import Cast
         from django.db.models import FloatField
+        from ..models import PharmacySettings
+        
+        settings = PharmacySettings.objects.first()
+        min_coverage_days = settings.good_coverage_min_days if (settings and settings.good_coverage_min_days) else 15
+        critical_days = settings.critical_stock_days if (settings and settings.critical_stock_days) else 7
+        imminent_days = settings.imminent_rupture_days if (settings and settings.imminent_rupture_days) else 3
         
         # Avoid division by zero: only take products with moving stock (rotation > 0)
         # days_remaining = stock / (rotation_moyenne / 30) = stock * 30 / rotation_moyenne
@@ -653,7 +663,7 @@ class DashboardViewSet(viewsets.ViewSet):
             daily_rotation=Cast(F('rotation_moyenne'), FloatField()) / 30.0,
             days_remaining=Cast(F('stock'), FloatField()) / (Cast(F('rotation_moyenne'), FloatField()) / 30.0)
         ).filter(
-            Q(days_remaining__lte=15) | Q(stock__lte=0)  # Alert if <= 15 days coverage
+            Q(days_remaining__lte=min_coverage_days) | Q(stock__lte=0)
         ).order_by('days_remaining')[:10]
         
         data = []
@@ -666,9 +676,9 @@ class DashboardViewSet(viewsets.ViewSet):
             
             status = 'Rupture'
             if p.stock > 0:
-                if days <= 3:
+                if days <= imminent_days:
                     status = 'Rupture imminente'
-                elif days <= 7:
+                elif days <= critical_days:
                     status = f'Critique ({days}j)'
                 else:
                     status = f'~{int(days)}j de stock'
@@ -1114,9 +1124,12 @@ class StatistiquesViewSet(viewsets.ViewSet):
         Analyse experte de la santé du stock.
         Calcul du capital dormant, des pertes sur ruptures et du score de santé global.
         """
-        # 1. Capital Dormant (Produits sans ventes depuis 90 jours)
+        from api.models.settings import PharmacySettings
+        ps = PharmacySettings.objects.first()
+
+        # 1. Capital Dormant
         today = timezone.now().date()
-        dormant_days = 90
+        dormant_days = ps.dormant_stock_days if (ps and ps.dormant_stock_days) else 90
         limit_date = today - timedelta(days=dormant_days)
         
         dormant_qs = Produit.objects.filter(stock__gt=0, is_active=True).filter(
@@ -1142,14 +1155,15 @@ class StatistiquesViewSet(viewsets.ViewSet):
             total=Coalesce(Sum(ExpressionWrapper(F('rotation_moyenne') * (F('selling_price') - F('pmp')), output_field=DecimalField())), Decimal('0'))
         )['total']
 
-        # 3. Ruptures Imminentes (< 7 jours de stock)
+        # 3. Ruptures Imminentes
+        critical_days = ps.critical_stock_days if (ps and ps.critical_stock_days) else 7
         critical_soon_qs = Produit.objects.filter(
             is_active=True,
             rotation_moyenne__gt=0,
             stock__gt=0
         ).annotate(
             days_left=ExpressionWrapper(F('stock') * Value(30.0) / F('rotation_moyenne'), output_field=DecimalField())
-        ).filter(days_left__lt=7)
+        ).filter(days_left__lt=critical_days)
         
         critical_soon_count = critical_soon_qs.count()
         critical_soon_value = critical_soon_qs.aggregate(
@@ -1157,9 +1171,6 @@ class StatistiquesViewSet(viewsets.ViewSet):
         )['total']
 
         # 4. Score de Santé Global — 5 composantes dynamiques
-        from api.models.settings import PharmacySettings
-        ps = PharmacySettings.objects.first()
-
         total_active_count = Produit.objects.filter(is_active=True).count() or 1
         total_stock_value = Produit.objects.filter(is_active=True, stock__gt=0).aggregate(
             total=Coalesce(Sum(ExpressionWrapper(F('stock') * F('pmp'), output_field=DecimalField())), Decimal('0'))
@@ -1171,8 +1182,6 @@ class StatistiquesViewSet(viewsets.ViewSet):
         score_a = availability_rate * 0.30  # max 30 pts
 
         # ── Composante B : Fluidité du stock (peu de stock dormant) — 25 pts ────
-        # Seulement les produits avec rotation_moyenne > 0 ET vendus récemment sont OK
-        # Les produits sans rotation_moyenne (jamais vendus) ne pénalisent PAS autant
         produits_avec_rotation = Produit.objects.filter(is_active=True, rotation_moyenne__gt=0).count() or 1
         dormant_avec_rotation = dormant_qs.filter(rotation_moyenne__gt=0).count()
         fluidity_rate = (1 - float(dormant_avec_rotation) / float(produits_avec_rotation)) * 100
@@ -1180,21 +1189,21 @@ class StatistiquesViewSet(viewsets.ViewSet):
         score_b = fluidity_rate * 0.25  # max 25 pts
 
         # ── Composante C : Couverture de stock (ni sur-stock ni sous-stock) — 20 pts
-        # Produits bien couverts = entre 15 et 90 jours de stock restant
+        min_coverage = ps.good_coverage_min_days if (ps and ps.good_coverage_min_days) else 15
+        max_coverage = ps.good_coverage_max_days if (ps and ps.good_coverage_max_days) else 90
         produits_avec_rot = Produit.objects.filter(is_active=True, rotation_moyenne__gt=0, stock__gt=0)
         bonne_couverture = 0
         for p in produits_avec_rot:
             daily = float(p.rotation_moyenne) / 30.0
             if daily > 0:
                 jours = float(p.stock) / daily
-                if 15 <= jours <= 90:
+                if min_coverage <= jours <= max_coverage:
                     bonne_couverture += 1
         total_avec_rot = produits_avec_rot.count() or 1
         coverage_rate = (bonne_couverture / total_avec_rot) * 100
         score_c = coverage_rate * 0.20  # max 20 pts
 
         # ── Composante D : Activité récente des ventes (30 derniers jours) — 15 pts
-        # % de produits avec rotation_moyenne > 0 qui ont été vendus les 30 derniers jours
         thirty_days_ago = today - timedelta(days=30)
         produits_vendus_recemment = Produit.objects.filter(
             is_active=True, rotation_moyenne__gt=0,

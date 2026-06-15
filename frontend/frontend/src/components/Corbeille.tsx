@@ -1,9 +1,13 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import api from '../services/api';
 import { toast } from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import { useConfirm } from '../hooks/useConfirm';
-import { Trash2, RotateCcw, AlertTriangle, Package, Users, Truck, Search, X, ShoppingCart, CreditCard, Clock, ClipboardList, Receipt } from 'lucide-react';
+import {
+  Trash2, RotateCcw, AlertTriangle, Package, Users, Truck, Search, X,
+  ShoppingCart, CreditCard, Clock, ClipboardList, Receipt, ChevronDown,
+  ChevronUp, Filter, CheckSquare, Square, Archive, ArrowUpFromLine
+} from 'lucide-react';
 
 interface TrashedItem {
   id: number;
@@ -28,20 +32,46 @@ interface CorbeilleData {
   };
 }
 
-type TabKey = 'all' | 'produits' | 'clients' | 'fournisseurs' | 'commandes' | 'avoirs' | 'promis' | 'inventaires' | 'factures' | 'users';
+type TypeKey = 'all' | TrashedItem['type'];
 
-const TAB_CONFIG_KEYS: { key: TabKey; labelKey: string; icon: React.ReactNode; color: string }[] = [
-  { key: 'all', labelKey: 'tabs.all', icon: <Trash2 className="size-4" />, color: 'text-base-content' },
-  { key: 'produits', labelKey: 'tabs.produits', icon: <Package className="size-4" />, color: 'text-blue-500' },
-  { key: 'clients', labelKey: 'tabs.clients', icon: <Users className="size-4" />, color: 'text-emerald-500' },
-  { key: 'fournisseurs', labelKey: 'tabs.fournisseurs', icon: <Truck className="size-4" />, color: 'text-amber-500' },
-  { key: 'commandes', labelKey: 'tabs.commandes', icon: <ShoppingCart className="size-4" />, color: 'text-indigo-500' },
-  { key: 'avoirs', labelKey: 'tabs.avoirs', icon: <CreditCard className="size-4" />, color: 'text-rose-500' },
-  { key: 'promis', labelKey: 'tabs.promis', icon: <Clock className="size-4" />, color: 'text-purple-500' },
-  { key: 'inventaires', labelKey: 'tabs.inventaires', icon: <ClipboardList className="size-4" />, color: 'text-teal-500' },
-  { key: 'factures', labelKey: 'tabs.factures', icon: <Receipt className="size-4" />, color: 'text-orange-500' },
-  { key: 'users', labelKey: 'tabs.users', icon: <Users className="size-4" />, color: 'text-base-content/60' },
+const TYPE_CONFIG: { key: TypeKey; label: string; icon: React.ReactNode; color: string; bg: string }[] = [
+  { key: 'all', label: 'Tous', icon: <Archive className="size-3.5" />, color: 'text-slate-600', bg: 'bg-slate-50' },
+  { key: 'produit', label: 'Produits', icon: <Package className="size-3.5" />, color: 'text-blue-600', bg: 'bg-blue-50' },
+  { key: 'client', label: 'Clients', icon: <Users className="size-3.5" />, color: 'text-emerald-600', bg: 'bg-emerald-50' },
+  { key: 'fournisseur', label: 'Fournisseurs', icon: <Truck className="size-3.5" />, color: 'text-amber-600', bg: 'bg-amber-50' },
+  { key: 'commande', label: 'Commandes', icon: <ShoppingCart className="size-3.5" />, color: 'text-primary', bg: 'bg-primary/10' },
+  { key: 'avoir', label: 'Avoirs', icon: <CreditCard className="size-3.5" />, color: 'text-rose-600', bg: 'bg-rose-50' },
+  { key: 'promis', label: 'Promis', icon: <Clock className="size-3.5" />, color: 'text-purple-600', bg: 'bg-purple-50' },
+  { key: 'inventaire', label: 'Inventaires', icon: <ClipboardList className="size-3.5" />, color: 'text-teal-600', bg: 'bg-teal-50' },
+  { key: 'facture', label: 'Factures', icon: <Receipt className="size-3.5" />, color: 'text-orange-600', bg: 'bg-orange-50' },
+  { key: 'user', label: 'Utilisateurs', icon: <Users className="size-3.5" />, color: 'text-slate-500', bg: 'bg-slate-50' },
 ];
+
+function groupByDate(items: TrashedItem[]) {
+  const today = new Date(); today.setHours(0, 0, 0, 0);
+  const yesterday = new Date(today); yesterday.setDate(yesterday.getDate() - 1);
+  const weekAgo = new Date(today); weekAgo.setDate(weekAgo.getDate() - 7);
+
+  const groups: Record<string, TrashedItem[]> = { 'Aujourd\'hui': [], 'Hier': [], 'Cette semaine': [], 'Plus ancien': [] };
+
+  items.forEach(item => {
+    const d = item.deleted_at ? new Date(item.deleted_at) : new Date();
+    d.setHours(0, 0, 0, 0);
+    if (d.getTime() === today.getTime()) groups["Aujourd'hui"].push(item);
+    else if (d.getTime() === yesterday.getTime()) groups["Hier"].push(item);
+    else if (d >= weekAgo) groups["Cette semaine"].push(item);
+    else groups["Plus ancien"].push(item);
+  });
+
+  return Object.entries(groups).filter(([, v]) => v.length > 0);
+}
+
+function formatTime(dateStr: string | null) {
+  if (!dateStr) return '';
+  try {
+    return new Date(dateStr).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+  } catch { return ''; }
+}
 
 export default function Corbeille() {
   const { t } = useTranslation('corbeille');
@@ -49,91 +79,66 @@ export default function Corbeille() {
   const [data, setData] = useState<CorbeilleData | null>(null);
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
-  const [activeTab, setActiveTab] = useState<TabKey>('all');
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedIds, setSelectedIds] = useState<{ model: string; id: number }[]>([]);
+  const [typeFilter, setTypeFilter] = useState<TypeKey>('all');
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [showFilterMenu, setShowFilterMenu] = useState(false);
 
   const fetchData = async () => {
     try {
       setLoading(true);
       const res = await api.get('corbeille/');
       setData(res.data);
-      setSelectedIds([]);
-    } catch (err) {
-      toast.error(t('messages.fetch_error'));
-    } finally {
-      setLoading(false);
-    }
+      setSelectedIds(new Set());
+    } catch { toast.error(t('messages.fetch_error')); }
+    finally { setLoading(false); }
   };
 
   useEffect(() => { fetchData(); }, []);
 
-  // Flatten items based on active tab
   const allItems = useMemo(() => {
     if (!data) return [];
-    const items: TrashedItem[] = [];
-    if (activeTab === 'all' || activeTab === 'produits') items.push(...(data.items.produits || []));
-    if (activeTab === 'all' || activeTab === 'clients') items.push(...(data.items.clients || []));
-    if (activeTab === 'all' || activeTab === 'fournisseurs') items.push(...(data.items.fournisseurs || []));
-    if (activeTab === 'all' || activeTab === 'commandes') items.push(...(data.items.commandes || []));
-    if (activeTab === 'all' || activeTab === 'avoirs') items.push(...(data.items.avoirs || []));
-    if (activeTab === 'all' || activeTab === 'promis') items.push(...(data.items.promis || []));
-    if (activeTab === 'all' || activeTab === 'inventaires') items.push(...(data.items.inventaires || []));
-    if (activeTab === 'all' || activeTab === 'factures') items.push(...(data.items.factures || []));
-    if (activeTab === 'all' || activeTab === 'users') items.push(...(data.items.users || []));
-    return items;
-  }, [data, activeTab]);
-
-  const filteredItems = useMemo(() => {
-    if (!searchQuery.trim()) return allItems;
+    let items: TrashedItem[] = [];
+    if (typeFilter === 'all') {
+      items = Object.values(data.items).flat();
+    } else {
+      items = data.items[typeFilter as keyof typeof data.items] || [];
+    }
+    if (!searchQuery.trim()) return items;
     const q = searchQuery.toLowerCase();
-    return allItems.filter(item =>
-      item.name.toLowerCase().includes(q) ||
-      item.type.toLowerCase().includes(q)
-    );
-  }, [allItems, searchQuery]);
+    return items.filter(i => i.name.toLowerCase().includes(q) || i.type.toLowerCase().includes(q));
+  }, [data, typeFilter, searchQuery]);
 
-  const isSelected = (type: string, id: number) =>
-    selectedIds.some(s => s.model === type && s.id === id);
+  const grouped = useMemo(() => groupByDate(allItems), [allItems]);
 
-  const toggleSelect = (type: string, id: number) => {
-    setSelectedIds(prev =>
-      isSelected(type, id)
-        ? prev.filter(s => !(s.model === type && s.id === id))
-        : [...prev, { model: type, id }]
-    );
+  const toggleSelect = (key: string) => {
+    setSelectedIds(prev => {
+      const next = new Set(prev);
+      next.has(key) ? next.delete(key) : next.add(key);
+      return next;
+    });
   };
 
   const selectAll = () => {
-    if (selectedIds.length === filteredItems.length) {
-      setSelectedIds([]);
-    } else {
-      setSelectedIds(filteredItems.map(item => ({ model: item.type, id: item.id })));
-    }
+    if (selectedIds.size === allItems.length) setSelectedIds(new Set());
+    else setSelectedIds(new Set(allItems.map(i => `${i.type}-${i.id}`)));
   };
 
   const handleRestore = async (items: { model: string; id: number }[]) => {
-    // Group by model
     const grouped: Record<string, number[]> = {};
-    items.forEach(({ model, id }) => {
-      if (!grouped[model]) grouped[model] = [];
-      grouped[model].push(id);
-    });
-
+    items.forEach(({ model, id }) => { (grouped[model] ||= []).push(id); });
     setActionLoading(true);
-    let totalRestored = 0;
+    let restored = 0;
     try {
       for (const [model, ids] of Object.entries(grouped)) {
         const res = await api.post('corbeille/restore/', { model, ids });
-        totalRestored += res.data.restored;
+        restored += res.data.restored;
       }
-      toast.success(t('messages.restore_success', { count: totalRestored }));
+      toast.success(t('messages.restore_success', { count: restored }));
       fetchData();
-    } catch (err) {
-      toast.error(t('messages.restore_error'));
-    } finally {
-      setActionLoading(false);
-    }
+    } catch { toast.error(t('messages.restore_error')); }
+    finally { setActionLoading(false); }
   };
 
   const handlePurge = async (items: { model: string; id: number }[]) => {
@@ -144,27 +149,19 @@ export default function Corbeille() {
       confirmText: t('messages.purge_confirm_btn'),
     });
     if (!ok) return;
-
     const grouped: Record<string, number[]> = {};
-    items.forEach(({ model, id }) => {
-      if (!grouped[model]) grouped[model] = [];
-      grouped[model].push(id);
-    });
-
+    items.forEach(({ model, id }) => { (grouped[model] ||= []).push(id); });
     setActionLoading(true);
-    let totalDeleted = 0;
+    let deleted = 0;
     try {
       for (const [model, ids] of Object.entries(grouped)) {
         const res = await api.post('corbeille/purge/', { model, ids });
-        totalDeleted += res.data.deleted;
+        deleted += res.data.deleted;
       }
-      toast.success(t('messages.purge_success', { count: totalDeleted }));
+      toast.success(t('messages.purge_success', { count: deleted }));
       fetchData();
-    } catch (err: any) {
-      toast.error(err.response?.data?.detail || t('messages.purge_error'));
-    } finally {
-      setActionLoading(false);
-    }
+    } catch (err: any) { toast.error(err.response?.data?.detail || t('messages.purge_error')); }
+    finally { setActionLoading(false); }
   };
 
   const handleEmptyTrash = async () => {
@@ -175,347 +172,237 @@ export default function Corbeille() {
       confirmText: t('messages.empty_confirm_btn'),
     });
     if (!ok) return;
-
     setActionLoading(true);
     try {
       const res = await api.post('corbeille/empty/');
       toast.success(res.data.message);
-      if (res.data.errors?.length) {
-        res.data.errors.forEach((e: string) => toast.error(e, { duration: 5000 }));
-      }
+      if (res.data.errors?.length) res.data.errors.forEach((e: string) => toast.error(e, { duration: 5000 }));
       fetchData();
-    } catch (err) {
-      toast.error(t('messages.empty_error'));
-    } finally {
-      setActionLoading(false);
-    }
+    } catch { toast.error(t('messages.empty_error')); }
+    finally { setActionLoading(false); }
   };
 
-  const getTypeIcon = (type: string) => {
-    switch (type) {
-      case 'produit': return <Package className="size-4 text-blue-500" />;
-      case 'client': return <Users className="size-4 text-emerald-500" />;
-      case 'fournisseur': return <Truck className="size-4 text-amber-500" />;
-      case 'commande': return <ShoppingCart className="size-4 text-indigo-500" />;
-      case 'avoir': return <CreditCard className="size-4 text-rose-500" />;
-      case 'promis': return <Clock className="size-4 text-purple-500" />;
-      case 'inventaire': return <ClipboardList className="size-4 text-teal-500" />;
-      case 'facture': return <Receipt className="size-4 text-orange-500" />;
-      case 'user': return <Users className="size-4 text-base-content/60" />;
-      default: return <Trash2 className="size-4" />;
-    }
-  };
+  const selectedItems = useMemo(() => {
+    const result: { model: string; id: number }[] = [];
+    selectedIds.forEach(key => {
+      const [type, idStr] = key.split('-');
+      result.push({ model: type, id: parseInt(idStr) });
+    });
+    return result;
+  }, [selectedIds]);
 
-  const getTypeBadge = (type: string) => {
-    const config: Record<string, { bg: string; text: string; labelKey: string }> = {
-      produit: { bg: 'bg-blue-500/10', text: 'text-primary', labelKey: 'badges.produit' },
-      client: { bg: 'bg-emerald-500/10', text: 'text-success', labelKey: 'badges.client' },
-      fournisseur: { bg: 'bg-amber-500/10', text: 'text-warning', labelKey: 'badges.fournisseur' },
-      commande: { bg: 'bg-indigo-500/10', text: 'text-primary', labelKey: 'badges.commande' },
-      avoir: { bg: 'bg-rose-500/10', text: 'text-rose-600', labelKey: 'badges.avoir' },
-      promis: { bg: 'bg-purple-500/10', text: 'text-purple-600', labelKey: 'badges.promis' },
-      inventaire: { bg: 'bg-teal-500/10', text: 'text-teal-600', labelKey: 'badges.inventaire' },
-      facture: { bg: 'bg-orange-500/10', text: 'text-warning', labelKey: 'badges.facture' },
-      user: { bg: 'bg-slate-500/10', text: 'text-base-content/70', labelKey: 'badges.user' },
-    };
-    const c = config[type] || { bg: 'bg-base-200', text: 'text-base-content', labelKey: type };
-    return (
-      <span className={`px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider ${c.bg} ${c.text}`}>
-        {t(c.labelKey, { defaultValue: type })}
-      </span>
-    );
-  };
-
-  const formatDate = (dateStr: string | null) => {
-    if (!dateStr) return '-';
-    try {
-      return new Date(dateStr).toLocaleDateString('fr-FR', {
-        day: '2-digit', month: 'short', year: 'numeric',
-        hour: '2-digit', minute: '2-digit'
-      });
-    } catch { return '-'; }
-  };
-
-  const getDetailString = (item: TrashedItem) => {
-    const d = item.details;
-    switch (item.type) {
-      case 'produit':
-        return `Stock: ${d.stock ?? 0} · PV: ${d.selling_price?.toLocaleString('fr-FR') ?? '0'} FCFA${d.cip1 ? ` · CIP: ${d.cip1}` : ''}`;
-      case 'client':
-        return `${d.phone || ''}${d.email ? ` · ${d.email}` : ''}${d.client_type ? ` · ${d.client_type}` : ''}`;
-      case 'fournisseur':
-        return `${d.phone || ''}${d.email ? ` · ${d.email}` : ''}`;
-      case 'commande':
-      case 'avoir':
-        return `Fournisseur: ${d.fournisseur || 'Inconnu'} · Statut: ${d.status || 'Inconnu'}${d.total !== undefined ? ` · Total: ${d.total.toLocaleString('fr-FR')} FCFA` : ''}`;
-      case 'promis':
-        return `Client: ${d.client || 'Inconnu'} · Statut: ${d.status || 'Inconnu'} · Qté: ${d.quantite ?? '-'}`;
-      case 'inventaire':
-        return `Type: ${d.type || 'Inconnu'} · Statut: ${d.status || 'Inconnu'}`;
-      case 'facture':
-        return `Client: ${d.client || 'Inconnu'} · Statut: ${d.status || 'Inconnu'}${d.total !== undefined ? ` · Total: ${d.total.toLocaleString('fr-FR')} FCFA` : ''}`;
-      case 'user':
-        return `${d.first_name || ''} ${d.last_name || ''} ${d.email ? `(${d.email})` : ''}`.trim();
-      default:
-        return '';
-    }
-  };
+  const typeInfo = TYPE_CONFIG.find(c => c.key === typeFilter) || TYPE_CONFIG[0];
 
   return (
-    <div className="h-full bg-base-200 p-4 md:p-6 space-y-5 font-sans flex flex-col">
+    <div className="h-full bg-base-200 flex flex-col">
       {/* Header */}
-      <div className="max-w-7xl mx-auto">
-        <div className="flex items-center gap-3 mb-2">
-          <div className="size-12 bg-red-500/10 rounded-2xl flex items-center justify-center">
-            <Trash2 className="size-6 text-red-500" />
+      <div className="bg-base-100 border-b border-base-200 px-6 py-4 shrink-0">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-error/10 flex items-center justify-center">
+              <Trash2 className="size-5 text-error" />
+            </div>
+            <div>
+              <h1 className="text-lg font-bold text-base-content tracking-tight">{t('title')}</h1>
+              <p className="text-xs text-base-content/40">{data?.total ?? 0} élément{data && data.total > 1 ? 's' : ''} en suppression</p>
+            </div>
           </div>
-          <div>
-            <h1 className="text-2xl md:text-3xl font-bold text-base-content tracking-tight">
-              {t('title')}
-            </h1>
-            <p className="text-base-content/60 text-sm">
-              {t('subtitle')}
-            </p>
-          </div>
-          <div className="ml-auto flex items-center gap-2">
-            <button
-              onClick={fetchData}
-              className="inline-flex items-center gap-1.5 px-2.5 py-1.5 text-base-content/60 hover:text-primary hover:bg-base-200 rounded-lg text-sm font-medium transition-colors"
-              disabled={loading}
-            >
-              {loading
-                ? <span className="inline-block size-3 border-2 border-base-300 border-t-indigo-600 rounded-full animate-spin" />
-                : <RotateCcw className="size-4" />}
+          <div className="flex items-center gap-2">
+            <button onClick={fetchData} disabled={loading}
+              className="p-2 rounded-lg text-base-content/40 hover:text-base-content hover:bg-base-200 transition-colors"
+              title="Actualiser">
+              {loading ? <span className="inline-block size-4 border-2 border-base-300 border-t-primary rounded-full animate-spin" /> : <RotateCcw className="size-4" />}
             </button>
             {(data?.total ?? 0) > 0 && (
-              <button
-                onClick={handleEmptyTrash}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-error text-white rounded-xl text-xs font-bold hover:bg-error-focus transition-colors shadow-sm"
-                disabled={actionLoading}
-              >
+              <button onClick={handleEmptyTrash} disabled={actionLoading}
+                className="flex items-center gap-1.5 px-3 py-2 bg-error/10 text-error rounded-lg text-xs font-semibold hover:bg-error/20 transition-colors">
                 <Trash2 className="size-3.5" />
-                {t('actions.empty_trash')}
+                <span className="hidden sm:inline">Vider tout</span>
               </button>
             )}
           </div>
         </div>
       </div>
 
-      {/* Stats Cards */}
-      <div className="max-w-7xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-3">
-        {TAB_CONFIG_KEYS.map(tab => {
-          const count = tab.key === 'all'
-            ? (data?.total ?? 0)
-            : (data?.items[tab.key as keyof typeof data.items]?.length ?? 0);
-          return (
-            <button
-              key={tab.key}
-              onClick={() => { setActiveTab(tab.key); setSelectedIds([]); }}
-              className={`flex items-center gap-3 p-4 rounded-2xl border transition-all duration-200 ${
-                activeTab === tab.key
-                  ? 'bg-base-100 border-indigo-200 shadow-md shadow-indigo-50/50 ring-1 ring-indigo-200'
-                  : 'bg-base-100/60 border-base-200 hover:bg-base-100 hover:shadow-sm'
-              }`}
-            >
-              <div className={`p-2 rounded-xl ${activeTab === tab.key ? 'bg-primary/10' : 'bg-base-200'}`}>
-                {tab.icon}
-              </div>
-              <div className="text-left">
-                <p className="text-2xl font-black text-base-content">{count}</p>
-                <p className="text-[10px] font-bold text-base-content/50 uppercase tracking-widest">{t(tab.labelKey)}</p>
-              </div>
+      {/* Toolbar */}
+      <div className="bg-base-100 border-b border-base-200 px-6 py-3 flex items-center gap-3 shrink-0">
+        {/* Search */}
+        <div className="relative flex-1 max-w-sm">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-base-content/40" />
+          <input type="text" placeholder="Rechercher..."
+            value={searchQuery} onChange={e => setSearchQuery(e.target.value)}
+            className="w-full rounded-lg border border-base-300 bg-base-200 pl-9 pr-8 h-9 text-sm text-base-content placeholder:text-base-content/40 focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all" />
+          {searchQuery && (
+            <button onClick={() => setSearchQuery('')} className="absolute right-2.5 top-1/2 -translate-y-1/2">
+              <X className="size-3.5 text-base-content/40 hover:text-base-content/70" />
             </button>
-          );
-        })}
-      </div>
-
-      {/* Main Content */}
-      <div className="max-w-7xl mx-auto bg-base-100 rounded-2xl shadow-sm border border-base-200 overflow-hidden flex-1 min-h-0 flex flex-col">
-        {/* Toolbar */}
-        <div className="p-4 border-b border-base-200 flex flex-col sm:flex-row gap-3">
-          {/* Search */}
-          <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-base-content/40" />
-            <input
-              type="text"
-              placeholder={t('search')}
-              value={searchQuery}
-              onChange={e => setSearchQuery(e.target.value)}
-              className="w-full rounded-xl border border-base-300 bg-base-200 pl-10 pr-8 h-10 text-sm font-medium text-base-content focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
-            />
-            {searchQuery && (
-              <button onClick={() => setSearchQuery('')} className="absolute right-3 top-1/2 -translate-y-1/2">
-                <X className="size-4 text-base-content/40 hover:text-base-content" />
-              </button>
-            )}
-          </div>
-
-          {/* Bulk actions */}
-          {selectedIds.length > 0 && (
-            <div className="flex items-center gap-2 ">
-              <span className="text-xs font-bold text-base-content/60">
-                {t('actions.selected', { count: selectedIds.length })}
-              </span>
-              <button
-                onClick={() => handleRestore(selectedIds)}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-success text-white rounded-xl text-xs font-bold hover:bg-success-focus transition-colors shadow-sm"
-                disabled={actionLoading}
-              >
-                <RotateCcw className="size-3.5" />
-                {t('actions.restore')}
-              </button>
-              <button
-                onClick={() => handlePurge(selectedIds)}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-error text-white rounded-xl text-xs font-bold hover:bg-error-focus transition-colors shadow-sm"
-                disabled={actionLoading}
-              >
-                <Trash2 className="size-3.5" />
-                {t('actions.delete_permanently')}
-              </button>
-              <button
-                onClick={() => setSelectedIds([])}
-                className="inline-flex items-center gap-1.5 px-2.5 py-1.5 text-base-content/60 hover:bg-base-200 rounded-xl text-sm font-medium transition-colors"
-              >
-                <X className="size-3.5" />
-              </button>
-            </div>
           )}
         </div>
 
-        {/* Loading */}
-        {loading && (
-          <div className="flex items-center justify-center py-20">
-            <span className="inline-block size-8 border-2 border-base-300 border-t-indigo-600 rounded-full animate-spin" />
-          </div>
-        )}
-
-        {/* Empty State */}
-        {!loading && filteredItems.length === 0 && (
-          <div className="flex flex-col items-center justify-center py-20 text-base-content/50">
-            <div className="size-20 rounded-full bg-base-200 flex items-center justify-center mb-4">
-              <Trash2 className="size-8" />
-            </div>
-            <p className="font-bold text-lg">{t('empty_state.title')}</p>
-            <p className="text-sm mt-1">{t('empty_state.subtitle')}</p>
-          </div>
-        )}
-
-        {/* Scrollable Content */}
-        <div className="flex-1 min-h-0 overflow-y-auto">
-
-        {/* Items List - Card Style */}
-        {!loading && filteredItems.length > 0 && (
-          <div className="divide-y divide-base-200/60">
-            {/* List Header */}
-            <div className="px-5 py-3 flex items-center gap-3 bg-base-200/50">
-              <div className="flex items-center gap-3 flex-1">
-                <input
-                  type="checkbox"
-                  className="size-4 rounded border-base-300 text-primary focus:ring-primary cursor-pointer"
-                  checked={selectedIds.length === filteredItems.length && filteredItems.length > 0}
-                  onChange={selectAll}
-                />
-                <span className="text-[10px] font-black text-base-content/40 uppercase tracking-widest">
-                  {filteredItems.length} {t('footer.total', { defaultValue: 'éléments' })}
-                </span>
+        {/* Type filter dropdown */}
+        <div className="relative">
+          <button onClick={() => setShowFilterMenu(!showFilterMenu)}
+            className="flex items-center gap-2 px-3 py-2 rounded-lg border border-base-300 bg-base-100 text-sm text-base-content hover:bg-base-200 transition-colors">
+            <span className={`size-2 rounded-full ${typeInfo.bg.replace('bg-', 'bg-')}`} style={{ backgroundColor: 'currentColor' }} />
+            <span className={typeInfo.color}>{typeInfo.label}</span>
+            <ChevronDown className={`size-3.5 text-base-content/40 transition-transform ${showFilterMenu ? 'rotate-180' : ''}`} />
+          </button>
+          {showFilterMenu && (
+            <>
+              <div className="fixed inset-0 z-40" onClick={() => setShowFilterMenu(false)} />
+              <div className="absolute z-50 mt-1 w-48 bg-base-100 rounded-xl border border-base-200 shadow-lg py-1">
+                {TYPE_CONFIG.map(c => (
+                  <button key={c.key}
+                    onClick={() => { setTypeFilter(c.key); setShowFilterMenu(false); }}
+                    className={`w-full flex items-center gap-2 px-3 py-2 text-sm transition-colors ${typeFilter === c.key ? 'bg-primary/10 text-primary font-semibold' : 'text-base-content/70 hover:bg-base-200'}`}>
+                    <span className={c.color}>{c.icon}</span>
+                    {c.label}
+                  </button>
+                ))}
               </div>
-            </div>
-
-            {filteredItems.map(item => {
-              const isSel = isSelected(item.type, item.id);
-              return (
-                <div
-                  key={`${item.type}-${item.id}`}
-                  className={`group px-5 py-4 transition-all duration-200 hover:bg-base-200/30 ${
-                    isSel ? 'bg-primary/5' : ''
-                  }`}
-                >
-                  <div className="flex items-start gap-4">
-                    {/* Checkbox */}
-                    <div className="pt-1">
-                      <input
-                        type="checkbox"
-                        className="size-4 rounded border-base-300 text-primary focus:ring-primary cursor-pointer"
-                        checked={isSel}
-                        onChange={() => toggleSelect(item.type, item.id)}
-                      />
-                    </div>
-
-                    {/* Icon */}
-                    <div className={`shrink-0 w-10 h-10 rounded-xl flex items-center justify-center ${
-                      item.type === 'produit' ? 'bg-blue-50 text-blue-600' :
-                      item.type === 'client' ? 'bg-emerald-50 text-emerald-600' :
-                      item.type === 'fournisseur' ? 'bg-amber-50 text-amber-600' :
-                      item.type === 'commande' ? 'bg-indigo-50 text-indigo-600' :
-                      item.type === 'avoir' ? 'bg-rose-50 text-rose-600' :
-                      item.type === 'promis' ? 'bg-purple-50 text-purple-600' :
-                      item.type === 'inventaire' ? 'bg-teal-50 text-teal-600' :
-                      item.type === 'facture' ? 'bg-orange-50 text-orange-600' :
-                      'bg-slate-50 text-slate-500'
-                    }`}>
-                      {getTypeIcon(item.type)}
-                    </div>
-
-                    {/* Content */}
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-1">
-                        <span className="font-bold text-sm text-base-content truncate">
-                          {item.name}
-                        </span>
-                        {getTypeBadge(item.type)}
-                      </div>
-                      <div className="text-xs text-base-content/50 mb-1 truncate">
-                        {getDetailString(item)}
-                      </div>
-                      <div className="text-[10px] text-base-content/40 flex items-center gap-1">
-                        <Clock className="size-3" />
-                        {formatDate(item.deleted_at)}
-                      </div>
-                    </div>
-
-                    {/* Actions */}
-                    <div className="shrink-0 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <button
-                        onClick={() => handleRestore([{ model: item.type, id: item.id }])}
-                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-success/10 text-success hover:bg-success hover:text-white text-xs font-bold transition-all"
-                        title={t('actions.restore')}
-                        disabled={actionLoading}
-                      >
-                        <RotateCcw className="size-3.5" />
-                        <span className="hidden sm:inline">{t('actions.restore')}</span>
-                      </button>
-                      <button
-                        onClick={() => handlePurge([{ model: item.type, id: item.id }])}
-                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-error/10 text-error hover:bg-error hover:text-white text-xs font-bold transition-all"
-                        title={t('actions.delete_permanently')}
-                        disabled={actionLoading}
-                      >
-                        <Trash2 className="size-3.5" />
-                        <span className="hidden sm:inline">{t('actions.delete_permanently')}</span>
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        )}
+            </>
+          )}
         </div>
 
-        {/* Footer */}
-        {!loading && filteredItems.length > 0 && (
-          <div className="p-3 border-t border-base-200 bg-base-200 flex items-center justify-between px-6">
-            <div className="flex items-center gap-1.5">
-              <span className="text-[10px] font-bold text-base-content/50 uppercase tracking-widest">{t('footer.total')}</span>
-              <span className="text-red-500 font-black text-sm">{filteredItems.length}</span>
-            </div>
-            <div className="flex items-center gap-1 text-[10px] text-base-content/40">
-              <AlertTriangle className="size-3" />
-              {t('footer.warning')}
-            </div>
-          </div>
+        {/* Select all */}
+        {allItems.length > 0 && (
+          <button onClick={selectAll}
+            className="flex items-center gap-1.5 px-2 py-2 text-xs font-medium text-base-content/60 hover:text-primary transition-colors">
+            {selectedIds.size === allItems.length ? <CheckSquare className="size-4" /> : <Square className="size-4" />}
+            {selectedIds.size > 0 ? `${selectedIds.size} sélectionné${selectedIds.size > 1 ? 's' : ''}` : 'Tout sélectionner'}
+          </button>
         )}
       </div>
+
+      {/* Content */}
+      <div className="flex-1 min-h-0 overflow-y-auto px-6 py-4">
+        {loading && (
+          <div className="flex items-center justify-center py-20">
+            <span className="inline-block size-8 border-2 border-base-300 border-t-primary rounded-full animate-spin" />
+          </div>
+        )}
+
+        {!loading && allItems.length === 0 && (
+          <div className="flex flex-col items-center justify-center py-20 text-base-content/40">
+            <div className="w-16 h-16 rounded-2xl bg-base-200 flex items-center justify-center mb-4">
+              <Trash2 className="size-7 text-base-content/30" />
+            </div>
+            <p className="font-semibold text-base-content/60 text-sm">{t('empty_state.title')}</p>
+            <p className="text-xs mt-1">{t('empty_state.subtitle')}</p>
+          </div>
+        )}
+
+        {!loading && grouped.map(([section, items]) => (
+          <div key={section} className="mb-6">
+            <div className="flex items-center gap-2 mb-3 sticky top-0 bg-base-200 py-1 z-10">
+              <span className="text-[10px] font-black uppercase tracking-widest text-base-content/40">{section}</span>
+              <div className="flex-1 h-px bg-base-300" />
+              <span className="text-[10px] font-bold text-base-content/30">{items.length}</span>
+            </div>
+            <div className="space-y-2">
+              {items.map(item => {
+                const key = `${item.type}-${item.id}`;
+                const isSel = selectedIds.has(key);
+                const isExp = expandedId === key;
+                const cfg = TYPE_CONFIG.find(c => c.key === item.type) || TYPE_CONFIG[0];
+                return (
+                  <div key={key}
+                    onClick={() => toggleSelect(key)}
+                    className={`group relative bg-base-100 rounded-xl border transition-all cursor-pointer ${isSel ? 'border-primary/30 ring-1 ring-primary/20' : 'border-base-200 hover:border-base-300 hover:shadow-sm'}`}>
+                    <div className="flex items-start gap-3 px-4 py-3">
+                      <div className="pt-0.5">
+                        {isSel ? <CheckSquare className="size-4 text-primary" /> : <Square className="size-4 text-base-content/30 group-hover:text-base-content/40" />}
+                      </div>
+                      <div className={`shrink-0 w-9 h-9 rounded-lg flex items-center justify-center ${cfg.bg}`}>
+                        <span className={cfg.color}>{cfg.icon}</span>
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2">
+                          <span className="font-semibold text-sm text-base-content truncate">{item.name}</span>
+                          <span className={`px-1.5 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider ${cfg.bg} ${cfg.color}`}>{cfg.label}</span>
+                        </div>
+                        <div className="flex items-center gap-3 mt-1">
+                          <span className="text-[10px] text-base-content/40 flex items-center gap-1">
+                            <Clock className="size-3" />{formatTime(item.deleted_at)}
+                          </span>
+                          {item.type === 'produit' && (
+                            <span className="text-[10px] text-base-content/40">Stock: {item.details.stock ?? 0}</span>
+                          )}
+                          {item.type === 'facture' && (
+                            <span className="text-[10px] text-base-content/40">{item.details.total?.toLocaleString('fr-FR')} FCFA</span>
+                          )}
+                          {item.type === 'client' && item.details.phone && (
+                            <span className="text-[10px] text-base-content/40">{item.details.phone}</span>
+                          )}
+                        </div>
+                      </div>
+                      {/* Actions always visible */}
+                      <div className="flex items-center gap-1 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
+                        <button onClick={e => { e.stopPropagation(); handleRestore([{ model: item.type, id: item.id }]); }}
+                          disabled={actionLoading}
+                          className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-success/10 text-success hover:bg-success/20 text-[11px] font-semibold transition-colors"
+                          title="Restaurer">
+                          <ArrowUpFromLine className="size-3.5" />
+                          <span className="hidden sm:inline">Restaurer</span>
+                        </button>
+                        <button onClick={e => { e.stopPropagation(); handlePurge([{ model: item.type, id: item.id }]); }}
+                          disabled={actionLoading}
+                          className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-error/10 text-error hover:bg-error/20 text-[11px] font-semibold transition-colors"
+                          title="Supprimer définitivement">
+                          <Trash2 className="size-3.5" />
+                        </button>
+                        <button onClick={e => { e.stopPropagation(); setExpandedId(isExp ? null : key); }}
+                          className="p-1.5 rounded-lg text-base-content/40 hover:bg-base-200 transition-colors">
+                          {isExp ? <ChevronUp className="size-4" /> : <ChevronDown className="size-4" />}
+                        </button>
+                      </div>
+                    </div>
+                    {/* Expanded details */}
+                    {isExp && (
+                      <div className="px-4 pb-3 pt-0 border-t border-base-200/50">
+                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 mt-2">
+                          {Object.entries(item.details).map(([k, v]) => {
+                            if (v === null || v === undefined || v === '') return null;
+                            return (
+                              <div key={k} className="bg-base-200 rounded-lg px-3 py-2">
+                                <p className="text-[10px] font-bold uppercase tracking-wider text-base-content/40">{k.replace(/_/g, ' ')}</p>
+                                <p className="text-xs text-base-content font-medium truncate">{String(v)}</p>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Bulk actions bar */}
+      {selectedIds.size > 0 && (
+        <div className="shrink-0 bg-base-100 border-t border-base-200 px-6 py-3 flex items-center justify-between">
+          <span className="text-sm font-semibold text-base-content">
+            {selectedIds.size} sélectionné{selectedIds.size > 1 ? 's' : ''}
+          </span>
+          <div className="flex items-center gap-2">
+            <button onClick={() => handleRestore(selectedItems)}
+              disabled={actionLoading}
+              className="flex items-center gap-1.5 px-4 py-2 bg-primary text-white rounded-lg text-xs font-semibold hover:bg-primary-focus transition-colors shadow-sm">
+              <ArrowUpFromLine className="size-3.5" />
+              Restaurer
+            </button>
+            <button onClick={() => handlePurge(selectedItems)}
+              disabled={actionLoading}
+              className="flex items-center gap-1.5 px-4 py-2 bg-error/10 text-error rounded-lg text-xs font-semibold hover:bg-error/20 transition-colors">
+              <Trash2 className="size-3.5" />
+              Supprimer définitivement
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

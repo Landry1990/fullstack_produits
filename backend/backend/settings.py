@@ -11,6 +11,14 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # Charger le fichier .env depuis la racine du backend
 load_dotenv(BASE_DIR / '.env')
 
+# Configuration Docker et Infrastructure
+DOCKER_DB_CONTAINER = os.getenv('DOCKER_DB_CONTAINER', 'fullstack_produits-db-1')
+DOCKER_BACKEND_CONTAINER = os.getenv('DOCKER_BACKEND_CONTAINER', 'fullstack_produits-backend-1')
+REPORTS_DIR = os.getenv('REPORTS_DIR', str(BASE_DIR / 'rapports'))
+BACKUP_RETENTION_DAYS = int(os.getenv('BACKUP_RETENTION_DAYS', '30'))
+BACKUP_INCREMENTAL_DIR = os.getenv('BACKUP_INCREMENTAL_DIR', '/backup/incremental')
+BACKUP_FULL_DIR = os.getenv('BACKUP_FULL_DIR', '/backup/full')
+
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
@@ -142,12 +150,22 @@ REST_FRAMEWORK = {
 # }
 
 
+_db_name = os.getenv('DB_NAME')
+if not _db_name:
+    raise ImproperlyConfigured("DB_NAME est manquant dans les variables d'environnement")
+_db_user = os.getenv('DB_USER')
+if not _db_user:
+    raise ImproperlyConfigured("DB_USER est manquant dans les variables d'environnement")
+_db_password = os.getenv('DB_PASSWORD')
+if not _db_password:
+    raise ImproperlyConfigured("DB_PASSWORD est manquant dans les variables d'environnement")
+
 DATABASES = {
     'default': {
         'ENGINE': os.getenv('DB_ENGINE', 'django.db.backends.postgresql'),
-        'NAME': os.getenv('DB_NAME', 'MyDatabase'),
-        'USER': os.getenv('DB_USER', 'postgres'),
-        'PASSWORD': os.getenv('DB_PASSWORD', '123456'),
+        'NAME': _db_name,
+        'USER': _db_user,
+        'PASSWORD': _db_password,
         'HOST': os.getenv('DB_HOST', 'localhost'),
         'PORT': os.getenv('DB_PORT', '5432'),
         
@@ -239,24 +257,19 @@ CORS_ALLOW_ALL_ORIGINS = os.getenv('CORS_ALLOW_ALL', 'False').lower() == 'true'
 
 if not CORS_ALLOW_ALL_ORIGINS:
     CORS_ALLOWED_ORIGINS = os.getenv(
-        'CORS_ALLOWED_ORIGINS', 
-        'http://localhost,http://localhost:3000,http://localhost:5173,http://127.0.0.1,http://127.0.0.1:3000,http://192.168.1.192,http://192.168.1.192:3000,http://Odessa1988,http://192.168.1.181'
+        'CORS_ALLOWED_ORIGINS',
+        'http://localhost,http://localhost:3000,http://localhost:5173,http://127.0.0.1,http://127.0.0.1:3000,http://frontend'
     ).split(',')
-    # Ajouter automatiquement toutes les IPs privées locales pour les PDA
-    _local_origins = [f'http://192.168.1.{i}' for i in range(1, 255)]
-    _local_origins += [f'http://192.168.0.{i}' for i in range(1, 255)]
-    CORS_ALLOWED_ORIGINS = list(set(CORS_ALLOWED_ORIGINS + _local_origins))
+    # NOTE: Les IPs privées doivent être ajoutées explicitement via CORS_ALLOWED_ORIGINS
+    # pour éviter d'ouvrir l'API à n'importe quel site sur le réseau local
 
 CORS_ALLOW_CREDENTIALS = True
 
 CSRF_TRUSTED_ORIGINS = os.getenv(
-    'CSRF_TRUSTED_ORIGINS', 
-    'http://localhost,http://localhost:3000,http://127.0.0.1,http://127.0.0.1:3000,http://192.168.1.192,http://192.168.1.192:3000,http://Odessa1988'
+    'CSRF_TRUSTED_ORIGINS',
+    'http://localhost,http://localhost:3000,http://127.0.0.1,http://127.0.0.1:3000,http://frontend'
 ).split(',')
-# Ajouter automatiquement les IPs locales pour CSRF
-_local_csrf = [f'http://192.168.1.{i}' for i in range(1, 255)]
-_local_csrf += [f'http://192.168.0.{i}' for i in range(1, 255)]
-CSRF_TRUSTED_ORIGINS = list(set(CSRF_TRUSTED_ORIGINS + _local_csrf))
+# NOTE: Les IPs privées doivent être ajoutées explicitement via CSRF_TRUSTED_ORIGINS
 
 # Security cookies in production
 if not DEBUG:
@@ -286,11 +299,11 @@ EMAIL_PORT = int(os.getenv('EMAIL_PORT', '587'))
 EMAIL_USE_TLS = os.getenv('EMAIL_USE_TLS', 'True').lower() == 'true'
 EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER', '')
 EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD', '')
-DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL', 'noreply@pharma.com')
-SERVER_EMAIL = os.getenv('SERVER_EMAIL', 'noreply@pharma.com')
+DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL', 'noreply@example.com')
+SERVER_EMAIL = os.getenv('SERVER_EMAIL', 'noreply@example.com')
 
 # Email pour les notifications feedback
-FEEDBACK_EMAIL = os.getenv('FEEDBACK_EMAIL', 'admin@pharma.com')
+FEEDBACK_EMAIL = os.getenv('FEEDBACK_EMAIL', 'admin@example.com')
 
 if REDIS_URL:
     CACHES = {
@@ -327,6 +340,7 @@ except ImportError:
 
 LOG_DIR = (BASE_DIR / 'logs').resolve()
 LOG_DIR.mkdir(exist_ok=True)
+LOG_MAX_BYTES = int(os.getenv('LOG_MAX_BYTES', str(10 * 1024 * 1024)))
 
 LOGGING = {
     'version': 1,
@@ -355,7 +369,7 @@ LOGGING = {
         'file_app': {
             '()': ConcurrentRotatingFileHandler,
             'filename': str(LOG_DIR / 'app.log'),
-            'maxBytes': 10 * 1024 * 1024,  # 10 MB
+            'maxBytes': LOG_MAX_BYTES,
             'backupCount': 5,
             'formatter': 'verbose',
             'level': 'INFO',
@@ -365,7 +379,7 @@ LOGGING = {
         'file_error': {
             '()': ConcurrentRotatingFileHandler,
             'filename': str(LOG_DIR / 'error.log'),
-            'maxBytes': 10 * 1024 * 1024,  # 10 MB
+            'maxBytes': LOG_MAX_BYTES,
             'backupCount': 10,
             'formatter': 'verbose',
             'level': 'ERROR',
@@ -375,7 +389,7 @@ LOGGING = {
         'file_business': {
             '()': ConcurrentRotatingFileHandler,
             'filename': str(LOG_DIR / 'business.log'),
-            'maxBytes': 10 * 1024 * 1024,  # 10 MB
+            'maxBytes': LOG_MAX_BYTES,
             'backupCount': 10,
             'formatter': 'verbose',
             'level': 'INFO',
@@ -436,6 +450,8 @@ from sentry_sdk.integrations.django import DjangoIntegration
 from sentry_sdk.integrations.logging import LoggingIntegration
 
 SENTRY_DSN = os.getenv('SENTRY_DSN')
+SENTRY_TRACES_RATE = float(os.getenv('SENTRY_TRACES_RATE', '1.0' if DEBUG else '0.2'))
+SENTRY_PROFILES_RATE = float(os.getenv('SENTRY_PROFILES_RATE', '1.0' if DEBUG else '0.2'))
 
 if SENTRY_DSN:
     sentry_sdk.init(
@@ -450,7 +466,7 @@ if SENTRY_DSN:
         # Set traces_sample_rate to 1.0 to capture 100%
         # of transactions for performance monitoring.
         # We recommend adjusting this value in production.
-        traces_sample_rate=1.0 if DEBUG else 0.2,
+        traces_sample_rate=SENTRY_TRACES_RATE,
         
         # If you wish to associate users to errors (assuming you are using
         # django.contrib.auth) you may enable sending PII data.
@@ -459,7 +475,7 @@ if SENTRY_DSN:
         # Set profiles_sample_rate to 1.0 to profile 100%
         # of sampled transactions.
         # We recommend adjusting this value in production.
-        profiles_sample_rate=1.0 if DEBUG else 0.2,
+        profiles_sample_rate=SENTRY_PROFILES_RATE,
     )
 
 # ──────────────────────────────────────────────

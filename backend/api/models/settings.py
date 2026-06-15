@@ -234,6 +234,45 @@ class PharmacySettings(models.Model):
         help_text="Poids de la rotation dans le score de santé global (0-100)"
     )
 
+    # --- Seuils d'alertes et de performance configurables ---
+    perf_drop_threshold = models.DecimalField(
+        max_digits=3, decimal_places=2, default=0.70, 
+        help_text="Seuil de baisse CA pour alerte (0.7 = 30% de baisse)"
+    )
+    perf_alert_hour = models.IntegerField(
+        default=14, 
+        help_text="Heure à partir de laquelle l'alerte performance se déclenche"
+    )
+    good_coverage_min_days = models.IntegerField(
+        default=15, 
+        help_text="Couverture stock min (jours) pour score santé"
+    )
+    good_coverage_max_days = models.IntegerField(
+        default=90, 
+        help_text="Couverture stock max (jours) pour score santé"
+    )
+    critical_stock_days = models.IntegerField(
+        default=7, 
+        help_text="Seuil stock critique (jours)"
+    )
+    imminent_rupture_days = models.IntegerField(
+        default=3, 
+        help_text="Seuil rupture imminente (jours)"
+    )
+    traffic_analysis_days = models.IntegerField(
+        default=30, 
+        help_text="Fenêtre d'analyse du trafic horaire (jours)"
+    )
+    shortage_alert_threshold = models.IntegerField(
+        default=10, 
+        help_text="Nb de produits en rupture avant alerte"
+    )
+    dormant_stock_days = models.IntegerField(
+        default=90,
+        help_text="Seuil de jours pour stock dormant"
+    )
+
+
     # --- Paramètres Rapport Automatique Mensuel ---
     monthly_report_enabled = models.BooleanField(
         default=True,

@@ -736,6 +736,13 @@ class OrderScheduleSerializer(serializers.ModelSerializer):
         model = OrderSchedule
         fields = '__all__'
     
+    def validate_start_date(self, value):
+        """Valider que la date de début n'est pas dans le passé."""
+        from datetime import date
+        if value and value < date.today():
+            raise serializers.ValidationError("La date de début ne peut pas être dans le passé.")
+        return value
+    
     def validate(self, data):
         """Empêcher 2 plannings actifs pour le même fournisseur."""
         is_active = data.get('is_active', True)

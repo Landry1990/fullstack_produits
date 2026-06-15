@@ -17,11 +17,11 @@ import logging
 logger = logging.getLogger(__name__)
 
 # Configuration
-BACKUP_DIR = "/backup/incremental"
-FULL_BACKUP_DIR = "/backup/full"
-DB_NAME = "pharma_db"
-DB_USER = "postgres"
-CONTAINER = "fullstack_produits-postgres-1"
+BACKUP_DIR = getattr(settings, 'BACKUP_INCREMENTAL_DIR', '/backup/incremental')
+FULL_BACKUP_DIR = getattr(settings, 'BACKUP_FULL_DIR', '/backup/full')
+DB_NAME = settings.DATABASES['default']['NAME']
+DB_USER = settings.DATABASES['default']['USER']
+CONTAINER = settings.DOCKER_DB_CONTAINER
 
 
 class BackupListView(APIView):
@@ -245,7 +245,7 @@ class RestoreBackupView(APIView):
             
             # Arrêter le backend
             try:
-                subprocess.run(['docker', 'stop', 'fullstack_produits-backend-1'], 
+                subprocess.run(['docker', 'stop', settings.DOCKER_BACKEND_CONTAINER], 
                              capture_output=True, timeout=10)
             except:
                 pass
@@ -314,7 +314,7 @@ class RestoreBackupView(APIView):
             
             # Redémarrer le backend
             try:
-                subprocess.run(['docker', 'start', 'fullstack_produits-backend-1'],
+                subprocess.run(['docker', 'start', settings.DOCKER_BACKEND_CONTAINER],
                              capture_output=True, timeout=10)
             except:
                 pass
@@ -332,7 +332,7 @@ class RestoreBackupView(APIView):
             
             # Essayer de redémarrer le backend en cas d'erreur
             try:
-                subprocess.run(['docker', 'start', 'fullstack_produits-backend-1'],
+                subprocess.run(['docker', 'start', settings.DOCKER_BACKEND_CONTAINER],
                                capture_output=True)
             except:
                 pass

@@ -69,16 +69,26 @@ export default function ProduitFormModal({
 
   const costPrice = normalizeNumberInput(form.cost_price);
   const sellingPrice = normalizeNumberInput(form.selling_price);
+  const tvaRate = parseFloat(form.tva) || 0;
 
-  let tauxMarge = 0;
+  // Calcul des marges
+  let margeHT = 0;
+  let coefMultiplicateur = 0;
   let pourcMarge = 0;
+  let prixVenteHT = 0;
 
   if (costPrice > 0) {
-    tauxMarge = sellingPrice / costPrice;
-  }
-
-  if (sellingPrice > 0) {
-    pourcMarge = ((sellingPrice - costPrice) / sellingPrice) * 100;
+    // Calcul du prix de vente HT (déduit de la TVA)
+    prixVenteHT = sellingPrice / (1 + tvaRate / 100);
+    
+    // Marge HT = PV HT - PR
+    margeHT = prixVenteHT - costPrice;
+    
+    // Coefficient multiplicateur = PV HT / PR
+    coefMultiplicateur = prixVenteHT / costPrice;
+    
+    // % Marge = (Marge HT / PR) × 100
+    pourcMarge = (margeHT / costPrice) * 100;
   }
 
   function formatBackendErrors(data: unknown): string {
@@ -303,7 +313,7 @@ export default function ProduitFormModal({
             <h4 className="text-[10px] font-black uppercase tracking-widest text-base-content/40 mb-2 flex items-center gap-1.5">
               <DollarSign size={12} /> Tarification
             </h4>
-            <div className="grid grid-cols-1 md:grid-cols-5 gap-3">
+            <div className="grid grid-cols-1 md:grid-cols-6 gap-3">
               <div>
                 <label className="block text-[10px] font-semibold text-base-content/60 uppercase tracking-wider mb-1.5">{t('products:form.cost_price')}</label>
                 <div className="flex">
@@ -327,8 +337,12 @@ export default function ProduitFormModal({
                 </select>
               </div>
               <div>
+                <label className="block text-[10px] font-semibold text-base-content/60 uppercase tracking-wider mb-1.5">Marge HT (F)</label>
+                <div className={`${inputSm} flex items-center justify-center font-bold ${margeHT < 0 ? 'text-error' : 'text-success'}`}>{margeHT.toFixed(2)} F</div>
+              </div>
+              <div>
                 <label className="block text-[10px] font-semibold text-base-content/60 uppercase tracking-wider mb-1.5">{t('products:form.margin_coeff')}</label>
-                <div className={`${inputSm} flex items-center justify-center font-bold ${tauxMarge < 1 ? 'text-error' : 'text-success'}`}>{tauxMarge.toFixed(0)}</div>
+                <div className={`${inputSm} flex items-center justify-center font-bold ${coefMultiplicateur < 1 ? 'text-error' : 'text-success'}`}>{coefMultiplicateur.toFixed(2)}</div>
               </div>
               <div>
                 <label className="block text-[10px] font-semibold text-base-content/60 uppercase tracking-wider mb-1.5">{t('products:form.margin_percent')}</label>
