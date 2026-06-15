@@ -63,11 +63,11 @@ export const InventaireProductSearch: React.FC<InventaireProductSearchProps> = (
     return (
         <div className="bg-base-100 rounded-2xl shadow-sm border border-base-300 p-1 overflow-visible relative">
             <div className="relative">
-                <Search className="absolute left-6 top-1/2 -translate-y-1/2 h-5 w-5 text-base-content/30" />
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-base-content/30" />
                 <input 
                     ref={searchInputRef}
                     type="text" 
-                    className="input input-ghost w-full h-16 pl-14 pr-16 text-lg focus:bg-base-200/50 rounded-2xl focus:outline-none" 
+                    className="input input-ghost w-full h-8 pl-10 pr-10 text-sm focus:bg-base-200/50 rounded-lg focus:outline-none" 
                     placeholder={t('inventaire.detail.search_placeholder')}
                     value={searchQuery}
                     onChange={e => setSearchQuery(e.target.value)}
@@ -75,15 +75,15 @@ export const InventaireProductSearch: React.FC<InventaireProductSearchProps> = (
                     autoFocus
                 />
                 {loadingSearch && (
-                    <div className="absolute right-6 top-1/2 -translate-y-1/2">
-                        <span className="loading loading-spinner text-primary"></span>
+                    <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                        <span className="loading loading-spinner loading-xs text-primary"></span>
                     </div>
                 )}
             </div>
 
             {/* Search Results Dropdown */}
             {searchQuery && (
-              <div className="absolute left-0 right-0 top-full mt-2 bg-base-100 rounded-2xl shadow-2xl border border-base-300 max-h-[40vh] overflow-y-auto z-50 animate-in fade-in zoom-in-95 duration-200">
+              <div className="absolute left-0 right-0 top-full mt-1 bg-base-100 rounded-xl shadow-xl border border-base-300 max-h-[12vh] overflow-y-auto z-50 animate-in fade-in zoom-in-95 duration-200">
                 {searchResults.length === 0 ? (
                   <div className="text-center py-6 text-base-content/40">
                     {loadingSearch ? (
@@ -105,20 +105,23 @@ export const InventaireProductSearch: React.FC<InventaireProductSearchProps> = (
                           id={`search-result-${idx}`}
                           onClick={() => handleProductSelect(p)}
                           className={`
-                            group flex items-center justify-between py-2.5 px-4 rounded-xl cursor-pointer transition-all
+                            group flex items-center justify-between py-1.5 px-3 rounded-lg cursor-pointer transition-all
                             ${itemProps.className}
                           `}
                         >
                           <div className="flex-1 min-w-0">
-                            <div className="font-bold text-sm truncate">{p.name}</div>
-                            <div className={`text-[10px] flex gap-2 mt-0.5 text-base-content/70 ${idx === selectedItemIndex ? 'text-primary-content/80' : 'text-base-content/60'}`}>
+                            <div className="font-bold text-xs truncate">{p.name}</div>
+                            <div className={`text-[9px] flex gap-1.5 mt-0.5 ${idx === selectedItemIndex ? 'text-primary-content/80' : 'text-base-content/60'}`}>
                               <span className="font-mono">{p.cip1}</span>
-                              {p.rayon_name && <span className="text-base-content/50">• {p.rayon_name}</span>}
+                              {p.rayon_name && <span>• {p.rayon_name}</span>}
                             </div>
                           </div>
-                          <div className="flex items-center gap-3">
-                            <span className={`px-2 py-0.5 rounded-md text-[10px] font-bold border ${idx === selectedItemIndex ? 'bg-base-100/20 border-white/20' : (p.stock ?? 0) > 0 ? 'bg-success/10 text-success border-success/20' : 'bg-error/10 text-error border-error/20'}`}>
-                                {p.stock ?? 0} {t('common:units_short')}
+                          <div className="flex items-center gap-2">
+                            <span className={`text-[9px] font-mono ${idx === selectedItemIndex ? 'text-primary-content/70' : 'text-base-content/50'}`}>
+                              {(p.selling_price ?? 0).toLocaleString()} F
+                            </span>
+                            <span className={`px-1.5 py-0.5 rounded text-[9px] font-bold border ${idx === selectedItemIndex ? 'bg-base-100/20 border-white/20' : (p.stock ?? 0) > 0 ? 'bg-success/10 text-success border-success/20' : 'bg-error/10 text-error border-error/20'}`}>
+                                {p.stock ?? 0}
                             </span>
                           </div>
                         </div>

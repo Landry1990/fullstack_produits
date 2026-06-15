@@ -164,11 +164,16 @@ class CommandeListSerializer(serializers.ModelSerializer):
     closed_by_name = serializers.SerializerMethodField()
     items_count = serializers.IntegerField(read_only=True)
 
+    total_ht = serializers.DecimalField(source='total_annotated', max_digits=12, decimal_places=2, read_only=True)
+    total_tva = serializers.DecimalField(source='total_tva_annotated', max_digits=12, decimal_places=2, read_only=True)
+    total_ttc = serializers.SerializerMethodField()
+
     class Meta:
         model = Commande
         fields = [
             'id', 'numero_facture', 'fournisseur', 'fournisseur_nom',
             'date', 'date_cloture', 'status', 'status_display', 'total',
+            'total_ht', 'total_tva', 'total_ttc',
             'type', 'type_display', 'taux_change', 'frais_coefficient',
             'montant_paye', 'reste_a_payer', 'statut_paiement', 'closed_by_name',
             'items_count'
@@ -183,6 +188,16 @@ class CommandeListSerializer(serializers.ModelSerializer):
         if obj.closed_by:
             return obj.closed_by.get_full_name() or obj.closed_by.username
         return ''
+
+    def get_total_ttc(self, obj):
+        # TTC = HT + TVA (utiliser les annotations si disponibles)
+        ht = getattr(obj, 'total_annotated', None)
+        if ht is None:
+            ht = obj.total
+        tva = getattr(obj, 'total_tva_annotated', None)
+        if tva is None:
+            tva = obj.total_tva
+        return ht + tva
 
     def get_reste_a_payer(self, obj):
         # Use annotated values if available
