@@ -150,21 +150,21 @@ export default function CaisseCentralisee() {
     }
   }, [])
 
-  // Rafraîchissement automatique
+  // Rafraîchissement automatique - toutes les 5 secondes pour plus de réactivité
   useEffect(() => {
     fetchFacturesEnAttente()
     fetchCoupons()
     const interval = setInterval(() => {
       fetchFacturesEnAttente()
       fetchCoupons()
-    }, 20000)
+    }, 5000)
     return () => clearInterval(interval)
   }, [fetchFacturesEnAttente, fetchCoupons, selectedPosteCaisseId])
 
-  // Récap session : moins fréquent (les montants changent moins vite)
+  // Récap session : toutes les 15 secondes
   useEffect(() => {
     fetchSessionRecap()
-    const interval = setInterval(fetchSessionRecap, 30000)
+    const interval = setInterval(fetchSessionRecap, 15000)
     return () => clearInterval(interval)
   }, [fetchSessionRecap])
 

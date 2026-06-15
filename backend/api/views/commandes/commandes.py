@@ -129,6 +129,15 @@ class CommandeViewSet(MultiTermSearchMixin, OptimizedSerializerMixin, viewsets.M
                 ),
                 Value(0)
             ),
+            total_tva_annotated=Coalesce(
+                Subquery(
+                    CommandeProduit.objects.filter(commande=OuterRef('pk'))
+                    .values('commande')
+                    .annotate(s=Sum(F('quantity') * F('price') * F('tva') / 100, output_field=DecimalField()))
+                    .values('s')[:1]
+                ),
+                Value(0, output_field=DecimalField())
+            ),
         ).order_by('-date')
         
     serializer_class = CommandeSerializer
@@ -140,7 +149,7 @@ class CommandeViewSet(MultiTermSearchMixin, OptimizedSerializerMixin, viewsets.M
     ordering_fields = ['date', 'status']
     
     def get_serializer_class(self):
-        if self.request.query_params.get('layout') == 'omnisearch':
+        if self.request.query_params.get('layout') == 'omnisearch':  # type: ignore
             return CommandeOmnisearchSerializer
         return super().get_serializer_class()
 
@@ -156,7 +165,7 @@ class CommandeViewSet(MultiTermSearchMixin, OptimizedSerializerMixin, viewsets.M
         qs = super().get_queryset().filter(is_active=True)
         
         # Le paramètre 'omnisearch' ou l'action détermine si on affiche la liste des produits
-        is_omnisearch = self.request.query_params.get('layout') == 'omnisearch'
+        is_omnisearch = self.request.query_params.get('layout') == 'omnisearch'  # type: ignore
         
         # Only prefetch products for detail views or omnisearch
         if self.action in ['retrieve', 'update', 'partial_update'] or is_omnisearch:
