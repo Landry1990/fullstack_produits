@@ -16,7 +16,7 @@ export interface CommandeProduitPayload {
     selling_price: string;
     prix_euro: string | null;
     tva?: string;
-    marge: string;
+    taux_marge: string;
     lot?: number | string | null;
     date_expiration?: string | null;
 }

@@ -180,6 +180,7 @@ class CommandeProduit(models.Model):
     lot = models.CharField(max_length=20, blank=True, null=True)
     tva = models.DecimalField(max_digits=5, decimal_places=2, default=0.00)
     selling_price = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    taux_marge = models.DecimalField(max_digits=5, decimal_places=2, blank=True, null=True, help_text="Taux de marge appliqué (ex: 1.60)")
     date_expiration = models.DateField(blank=True, null=True)
     created_at = models.DateTimeField(default=timezone.now)
     updated_at = models.DateTimeField(auto_now=True)
