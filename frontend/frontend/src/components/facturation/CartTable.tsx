@@ -4,6 +4,9 @@ import { formatCurrency, normalizeNumberInput } from '../../utils/formatters'
 import type { LigneFacture, ProduitModel } from '../../types'
 import { useAuth } from '../../context/AuthContext'
 import { toast } from 'react-hot-toast'
+import { Button } from '../shadcn/button'
+import { Badge } from '../shadcn/badge'
+import { Tag, X, Package, Trash2, ShoppingCart } from 'lucide-react'
 
 interface CartTableProps {
   lignesFacture: LigneFacture[]
@@ -109,45 +112,47 @@ const CartRow = React.memo(({
 
   if (isSidebarStyle) {
     return (
-      <div 
+      <div
         onClick={() => onSelectLine?.(index)}
-        className={`group relative flex flex-col p-2 border-b border-base-300/50 transition-all duration-200 cursor-pointer
-          ${index === selectedIndex ? 'bg-primary/20 border-l-4 border-l-primary' : 'hover:bg-base-200/50'}
-          ${isReturn ? 'bg-red-500/10' : ''}`}
+        className={`group relative flex flex-col p-3 border-b border-slate-100 transition-all duration-200 cursor-pointer
+          ${index === selectedIndex ? 'bg-emerald-50 border-l-4 border-l-emerald-500' : 'hover:bg-slate-50'}
+          ${isReturn ? 'bg-red-50' : ''}`}
       >
         {/* Ligne Haut: Nom Produit + Total + Action */}
         <div className="flex justify-between items-start gap-2">
           <div className="flex-1 min-w-0">
-             <div className="flex items-center gap-1">
-               <h4 className={`text-sm font-bold truncate leading-tight ${isReturn ? 'text-red-400' : 'text-base-content'}`} title={ligne.produit.name}>
+             <div className="flex items-center gap-1.5">
+               <h4 className={`text-sm font-semibold truncate leading-tight ${isReturn ? 'text-red-600' : 'text-slate-800'}`} title={ligne.produit.name}>
                  {ligne.produit.name}
                </h4>
-               {ligne.isPromis && <span className="text-[8px] font-black bg-warning text-warning-content px-1 rounded shrink-0">PROMIS</span>}
+               {ligne.isPromis && <Badge variant="secondary" className="text-[9px] h-4 px-1 bg-amber-100 text-amber-700 border-amber-200">PROMIS</Badge>}
              </div>
              {ligne.produit.stock !== undefined && (
-                <div className={`text-[10px] leading-none mt-0.5 ${ligne.produit.stock <= 0 ? 'text-error font-bold' : 'text-base-content/40'}`}>
+                <div className={`text-[10px] leading-none mt-1 ${ligne.produit.stock <= 0 ? 'text-red-500 font-semibold' : 'text-slate-400'}`}>
                   Stock: {ligne.produit.stock}
                 </div>
              )}
           </div>
-          
+
           <div className="flex items-start shrink-0 gap-2">
-             <span className="text-sm font-black text-base-content font-mono whitespace-nowrap">
+             <span className="text-sm font-bold text-slate-900 font-mono whitespace-nowrap">
                 {formatCurrency(normalizeNumberInput(ligne.total_ligne))}
              </span>
-             <button 
+             <Button
+               variant="ghost"
+               size="icon"
                onClick={(e) => { e.stopPropagation(); removeLigne(ligne.produit.id); }}
-               className="p-1 text-base-content/30 hover:text-error lg:opacity-0 lg:group-hover:opacity-100 transition-all min-w-[32px] min-h-[32px] flex items-center justify-center"
+               className="size-7 text-slate-300 hover:text-red-500 hover:bg-red-50 lg:opacity-0 lg:group-hover:opacity-100 transition-all"
              >
-               <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" /></svg>
-             </button>
+               <X className="size-4" />
+             </Button>
           </div>
         </div>
 
         {/* Ligne Bas: Block (Qté x Prix) + Bouton Lot */}
-        <div className="flex items-center gap-2 mt-1">
+        <div className="flex items-center gap-2 mt-2">
            {/* Combo Input Qté + Prix Unitaire + Remise */}
-           <div className="flex items-center bg-base-200/50 border border-base-300 rounded focus-within:border-primary/50 overflow-hidden transition-colors">
+           <div className="flex items-center bg-slate-100 border border-slate-200 rounded-lg focus-within:border-emerald-300 focus-within:ring-1 focus-within:ring-emerald-100 overflow-hidden transition-all">
              <input
                ref={(el) => {
                  if (el) quantityInputsRef.current.set(ligne.produit.id, el)
@@ -165,9 +170,9 @@ const CartRow = React.memo(({
                    onReturnFocus()
                  }
                }}
-               className="w-12 h-8 bg-transparent px-1 text-xs text-center font-bold text-base-content focus:bg-base-200 focus:outline-none"
+               className="w-12 h-9 bg-transparent px-1 text-xs text-center font-semibold text-slate-700 focus:bg-white focus:outline-none"
              />
-             <div className="flex items-center h-8 px-1.5 bg-base-200/30 border-l border-base-300 text-[10px] font-bold text-base-content/50">
+             <div className="flex items-center h-9 px-1.5 bg-slate-50 border-l border-slate-200 text-[10px] font-semibold text-slate-400">
                 <span className="mr-1">×</span>
                 <input
                    type="text"
@@ -183,13 +188,13 @@ const CartRow = React.memo(({
                      }
                    }}
                    disabled={!canModifyPrice}
-                   className={`w-16 bg-transparent text-left font-bold border-none focus:outline-none focus:text-base-content ${!canModifyPrice ? 'text-base-content/70 cursor-not-allowed text-base-content/50' : 'text-base-content/80'}`}
+                   className={`w-16 bg-transparent text-left font-semibold border-none focus:outline-none focus:text-slate-800 ${!canModifyPrice ? 'text-slate-400 cursor-not-allowed' : 'text-slate-600'}`}
                    title={!canModifyPrice ? t('facturation:messages.price_modification_forbidden') : t('facturation:cart.edit_price')}
                 />
              </div>
              {/* Champ de Remise */}
-             <div className="flex items-center h-8 px-1.5 bg-warning/5 border-l border-warning/20 text-[10px] w-14 focus-within:bg-warning/10">
-                <span className="text-warning/70 font-black mr-0.5">-</span>
+             <div className="flex items-center h-9 px-1.5 bg-amber-50 border-l border-amber-200 text-[10px] w-14 focus-within:bg-amber-100">
+                <span className="text-amber-500 font-bold mr-0.5">-</span>
                 <input
                    type="text"
                    inputMode="decimal"
@@ -203,7 +208,7 @@ const CartRow = React.memo(({
                        onReturnFocus()
                      }
                    }}
-                   className="w-full bg-transparent text-left font-bold text-warning focus:text-warning focus:outline-none placeholder-warning/30"
+                   className="w-full bg-transparent text-left font-semibold text-amber-600 focus:text-amber-700 focus:outline-none placeholder-amber-300"
                    placeholder="Rem."
                    title={t('facturation:cart.discount_amount')}
                 />
@@ -211,15 +216,17 @@ const CartRow = React.memo(({
            </div>
 
            {/* Bouton Lot FEFO condensé */}
-           <button
+           <Button
+             variant="outline"
+             size="sm"
              onClick={(e) => { e.stopPropagation(); onOpenLotModal(ligne.produit, ligne.lotId || null); }}
-             className={`flex items-center justify-center gap-1.5 h-8 px-2 rounded text-[11px] font-bold uppercase transition-colors shrink min-w-[44px]
-               ${ligne.lotId ? 'bg-primary/20 text-primary border border-primary/30' : 'bg-base-200/50 text-base-content/40 border border-base-300 hover:bg-base-200'}`}
+             className={`h-9 px-2 text-[11px] font-semibold uppercase transition-colors shrink gap-1.5
+               ${ligne.lotId ? 'bg-emerald-50 text-emerald-600 border-emerald-200 hover:bg-emerald-100 hover:border-emerald-300' : 'bg-slate-100 text-slate-400 border-slate-200 hover:bg-slate-200 hover:text-slate-600'}`}
              title={ligne.lotId ? `Lot : ${ligne.lotText}` : "Géré en Auto FEFO"}
            >
-             <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" /></svg>
-             <span className="truncate max-w-[140px] tracking-wider">{ligne.lotId ? ligne.lotText : 'AUTO'}</span>
-           </button>
+             <Tag className="size-3 shrink-0" />
+             <span className="truncate max-w-[140px] tracking-wide">{ligne.lotId ? ligne.lotText : 'AUTO'}</span>
+           </Button>
         </div>
       </div>
     )
@@ -228,38 +235,38 @@ const CartRow = React.memo(({
 
   return (
     <tr
-      className={`hover:bg-base-50/50 group border-b border-base-100 last:border-0 cursor-pointer transition-colors duration-150 
-        ${index === selectedIndex ? '!bg-primary/10 border-l-4 border-l-primary shadow-sm' : ''}
-        ${isReturn ? 'bg-error/10 text-error font-semibold' : ''}`}
+      className={`hover:bg-slate-50/50 group border-b border-slate-100 last:border-0 cursor-pointer transition-colors duration-150
+        ${index === selectedIndex ? '!bg-emerald-50/70 border-l-4 border-l-emerald-500 shadow-sm' : ''}
+        ${isReturn ? 'bg-red-50 text-red-600 font-semibold' : ''}`}
       ref={index === selectedIndex ? (el) => el?.scrollIntoView({ behavior: 'smooth', block: 'nearest' }) : null}
       onClick={() => onSelectLine?.(index)}
     >
-      <td className="pl-2 md:pl-4 py-1">
+      <td className="pl-2 md:pl-4 py-2">
         <div className={`font-medium ${ligne.produit.is_deleted ? 'italic' : ''}`}>
           <div className="flex items-center gap-2">
-            <span className="truncate">{ligne.produit.name}</span>
+            <span className="truncate text-slate-800">{ligne.produit.name}</span>
             {ligne.isPromis && (
-              <span className="px-1.5 py-0.5 text-[10px] font-bold bg-warning/20 text-warning-content border border-warning/30 rounded animate-pulse shrink-0">
+              <Badge variant="secondary" className="text-[10px] h-5 bg-amber-100 text-amber-700 border-amber-200 animate-pulse shrink-0">
                 PROMIS
-              </span>
+              </Badge>
             )}
           </div>
-          {ligne.produit.is_deleted && <span className="text-xs ml-2 opacity-75 text-error">{t('facturation:cart.product_status.deleted')}</span>}
+          {ligne.produit.is_deleted && <span className="text-xs ml-2 opacity-75 text-red-500">{t('facturation:cart.product_status.deleted')}</span>}
           {ligne.produit.is_chronic && (
             <div className="flex items-center gap-2 mt-1">
-              <span className="badge badge-success badge-xs gap-1 py-1.5 px-2">
-               <span className="text-[10px]">{t('facturation:cart.product_status.chronic')}</span>
-              </span>
-              <div className="flex items-center gap-1 border rounded px-1.5 bg-success/5 border-success/20">
-                <span className="text-[10px] opacity-60">{t('facturation:cart.product_status.treatment')}</span>
-                <input 
+              <Badge variant="default" className="text-[10px] h-5 bg-emerald-100 text-emerald-700 border-emerald-200 gap-1">
+               <span>{t('facturation:cart.product_status.chronic')}</span>
+              </Badge>
+              <div className="flex items-center gap-1 border border-emerald-200 rounded px-1.5 bg-emerald-50">
+                <span className="text-[10px] text-emerald-600">{t('facturation:cart.product_status.treatment')}</span>
+                <input
                    type="number"
-                   className="w-8 bg-transparent text-[10px] font-bold outline-none"
+                   className="w-8 bg-transparent text-[10px] font-semibold text-emerald-700 outline-none"
                     value={ligne.treatment_duration_days || ''}
                     onChange={(e) => updateTreatmentDuration?.(ligne.produit.id, normalizeNumberInput(e.target.value) || 0)}
                     min={1}
                 />
-                <span className="text-[10px] opacity-60">{t('facturation:cart.product_status.days_unit')}</span>
+                <span className="text-[10px] text-emerald-600">{t('facturation:cart.product_status.days_unit')}</span>
               </div>
             </div>
           )}
@@ -282,7 +289,7 @@ const CartRow = React.memo(({
               onReturnFocus()
             }
           }}
-          className="input input-ghost input-xs sm:input-sm w-full text-right font-medium focus:bg-base-100 focus:text-primary min-h-[32px] sm:min-h-0"
+          className="w-full text-right font-medium text-sm bg-transparent border border-slate-200 rounded px-2 py-1 focus:bg-white focus:border-emerald-300 focus:outline-none focus:ring-1 focus:ring-emerald-100 min-h-[32px] sm:min-h-0"
         />
       </td>
       <td className="text-right py-1">
@@ -297,7 +304,7 @@ const CartRow = React.memo(({
               onReturnFocus()
             }
           }}
-          className={`input input-ghost input-xs sm:input-sm w-full text-right focus:bg-base-100 focus:text-primary min-h-[32px] sm:min-h-0 ${!canModifyPrice ? 'text-base-content/70 cursor-not-allowed' : ''}`}
+          className={`w-full text-right font-medium text-sm bg-transparent border border-slate-200 rounded px-2 py-1 focus:bg-white focus:border-emerald-300 focus:outline-none focus:ring-1 focus:ring-emerald-100 min-h-[32px] sm:min-h-0 ${!canModifyPrice ? 'text-slate-400 cursor-not-allowed' : 'text-slate-700'}`}
           disabled={!canModifyPrice}
           title={!canModifyPrice ? t('facturation:messages.price_modification_forbidden') : ""}
         />
@@ -314,38 +321,42 @@ const CartRow = React.memo(({
               onReturnFocus()
             }
           }}
-          className="input input-ghost input-xs w-full text-right focus:bg-base-100 focus:text-primary"
+          className="w-full text-right font-medium text-sm bg-transparent border border-slate-200 rounded px-2 py-1 focus:bg-white focus:border-emerald-300 focus:outline-none focus:ring-1 focus:ring-emerald-100 text-amber-600 placeholder-amber-300"
           placeholder="%"
         />
       </td>
-      <td className="text-center py-1 hidden md:table-cell">
-        <div className={`font-mono font-bold ${
-          (ligne.produit.stock ?? 0) <= 0 ? 'text-error' :
-          (ligne.produit.stock ?? 0) < 5 ? 'text-warning' : 'text-success'
+      <td className="text-center py-2 hidden md:table-cell">
+        <div className={`font-mono font-semibold ${
+          (ligne.produit.stock ?? 0) <= 0 ? 'text-red-500' :
+          (ligne.produit.stock ?? 0) < 5 ? 'text-amber-500' : 'text-emerald-600'
         }`}>
           {ligne.produit.stock ?? 0}
         </div>
       </td>
-      <td className="text-center py-1 hidden md:table-cell">
-        <button
-          className={`btn btn-xs ${ligne.lotId ? 'btn-primary' : 'btn-ghost text-base-content/50'} w-full max-w-[80px] truncate`}
+      <td className="text-center py-2 hidden md:table-cell">
+        <Button
+          variant={ligne.lotId ? 'default' : 'outline'}
+          size="sm"
           onClick={() => onOpenLotModal(ligne.produit, ligne.lotId || null)}
+          className={`w-full max-w-[80px] truncate text-xs h-7 ${ligne.lotId ? 'bg-emerald-600 hover:bg-emerald-700' : 'border-slate-200 text-slate-500 hover:bg-slate-50'}`}
           title={ligne.lotId ? `${t('facturation:cart.headers.lot')}: ${ligne.lotText}` : `${t('facturation:cart.headers.lot')}: ${t('facturation:cart.product_status.auto_lot')} (FEFO)`}
         >
           {ligne.lotId ? ligne.lotText : t('facturation:cart.product_status.auto_lot')}
-        </button>
+        </Button>
       </td>
-      <td className="text-right font-medium text-base-content pr-2 md:pr-4 py-1">
+      <td className="text-right font-semibold text-slate-800 pr-2 md:pr-4 py-2">
         {formatCurrency(normalizeNumberInput(ligne.total_ligne))}
       </td>
-      <td className="text-center py-1">
-        <button
+      <td className="text-center py-2">
+        <Button
+          variant="ghost"
+          size="icon"
           onClick={() => removeLigne(ligne.produit.id)}
-          className="btn btn-ghost btn-xs text-error/50 hover:text-error btn-square sm:opacity-0 group-hover:opacity-100 transition-opacity"
+          className="size-7 text-slate-300 hover:text-red-500 hover:bg-red-50 sm:opacity-0 group-hover:opacity-100 transition-opacity"
         >
           <span className="sr-only">{t('facturation:cart.actions.remove')}</span>
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
-        </button>
+          <Trash2 className="size-3.5" />
+        </Button>
       </td>
     </tr>
   )
@@ -375,11 +386,9 @@ const CartTable = React.memo(({
 
   if (lignesFacture.length === 0) {
     return (
-      <div className={`h-full flex flex-col items-center justify-center gap-4 min-h-[200px] text-base-content/30`}>
-        <svg xmlns="http://www.w3.org/2000/svg" className="h-16 w-16 text-base-content/20" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
-        </svg>
-        <p className="font-light">{t('facturation:cart.empty')}</p>
+      <div className="h-full flex flex-col items-center justify-center gap-4 min-h-[200px] text-slate-300">
+        <ShoppingCart className="size-16" />
+        <p className="font-light text-slate-400">{t('facturation:cart.empty')}</p>
       </div>
     )
   }
@@ -415,16 +424,16 @@ const CartTable = React.memo(({
 
   return (
     <table className="table table-pin-rows table-sm w-full">
-      <thead className="sticky top-0 z-30 bg-base-200 opacity-100">
-        <tr className="bg-base-200 uppercase tracking-wider text-base-content/60 font-semibold border-b border-base-200">
-          <th className="bg-base-200 pl-2 md:pl-4 min-w-[120px]">{t('facturation:cart.headers.product')}</th>
-          <th className="bg-base-200 text-right w-12 sm:w-20">{t('facturation:cart.headers.qty')}</th>
-          <th className="bg-base-200 text-right w-16 sm:w-24">{t('facturation:cart.headers.price')}</th>
-          <th className="bg-base-200 text-right w-14 md:w-16 hidden lg:table-cell">{t('facturation:cart.headers.discount')}</th>
-          <th className="bg-base-200 text-center w-24 hidden md:table-cell">{t('facturation:cart.headers.stock')}</th>
-          <th className="bg-base-200 text-center w-16 sm:w-20 hidden md:table-cell">{t('facturation:cart.headers.lot')}</th>
-          <th className="bg-base-200 text-right w-18 sm:w-28 pr-2 md:pr-4">{t('facturation:cart.headers.total')}</th>
-          <th className="bg-base-200 w-8"></th>
+      <thead className="sticky top-0 z-30 bg-slate-100">
+        <tr className="bg-slate-100 uppercase tracking-wider text-slate-500 font-semibold border-b border-slate-200 text-xs">
+          <th className="bg-slate-100 pl-2 md:pl-4 min-w-[120px] py-2">{t('facturation:cart.headers.product')}</th>
+          <th className="bg-slate-100 text-right w-12 sm:w-20 py-2">{t('facturation:cart.headers.qty')}</th>
+          <th className="bg-slate-100 text-right w-16 sm:w-24 py-2">{t('facturation:cart.headers.price')}</th>
+          <th className="bg-slate-100 text-right w-14 md:w-16 hidden lg:table-cell py-2">{t('facturation:cart.headers.discount')}</th>
+          <th className="bg-slate-100 text-center w-24 hidden md:table-cell py-2">{t('facturation:cart.headers.stock')}</th>
+          <th className="bg-slate-100 text-center w-16 sm:w-20 hidden md:table-cell py-2">{t('facturation:cart.headers.lot')}</th>
+          <th className="bg-slate-100 text-right w-18 sm:w-28 pr-2 md:pr-4 py-2">{t('facturation:cart.headers.total')}</th>
+          <th className="bg-slate-100 w-8 py-2"></th>
         </tr>
       </thead>
       <tbody>

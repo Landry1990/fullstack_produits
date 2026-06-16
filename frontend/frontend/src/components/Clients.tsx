@@ -4,23 +4,12 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'react-hot-toast';
 import {
-  UserPlus,
-  Users,
-  Settings,
-  Trash2,
-  Eye,
-  EyeOff,
-  Search,
-  Phone,
-  MapPin,
-  Mail,
-  User,
-  ShoppingBag,
-  ShieldCheck,
-  Edit,
-  Activity,
-  CreditCard
+  UserPlus, Users, Settings, Trash2, Eye, EyeOff, Search, Phone, MapPin, Mail,
+  User, ShoppingBag, ShieldCheck, Edit, Activity, CreditCard, ArrowLeft
 } from 'lucide-react';
+import { Button } from './shadcn/button';
+import { Badge } from './shadcn/badge';
+import { cn } from '../lib/utils';
 
 import type { Client, AyantDroit } from '../types';
 import ClientDepositModal from './clients/ClientDepositModal';
@@ -348,10 +337,10 @@ export default function Clients() {
   };
 
   return (
-    <div className="flex flex-col lg:flex-row h-full lg:h-[calc(100vh-64px)] bg-base-200">
+    <div className="flex flex-col lg:flex-row h-full lg:h-[calc(100vh-64px)] bg-slate-50">
       {/* LEFT PANEL */}
-      <div className={`w-full lg:w-1/3 border-b lg:border-b-0 lg:border-r border-base-200 flex flex-col bg-base-100 ${selectedClient ? 'hidden lg:flex' : 'flex'} h-[calc(100vh-140px)] lg:h-full`}>
-        <div className="p-4 border-b border-base-200 space-y-4">
+      <div className={cn("w-full lg:w-1/3 border-b lg:border-b-0 lg:border-r border-slate-200 flex flex-col bg-white h-[calc(100vh-140px)] lg:h-full", selectedClient ? 'hidden lg:flex' : 'flex')}>
+        <div className="p-4 border-b border-slate-200 space-y-4">
            {selectedIds.length > 0 ? (
              <SelectionHeader
                 selectedCount={selectedIds.length}
@@ -371,37 +360,42 @@ export default function Clients() {
            ) : (
              <div className="flex justify-between items-center h-10">
                <div className="flex items-center gap-2">
-                 <div className="p-2 bg-primary/10 text-primary rounded-lg">
+                 <div className="p-2 bg-emerald-100 text-emerald-600 rounded-lg">
                     <Users className="size-5" />
                  </div>
-                 <h2 className="font-bold text-lg text-base-content">{t('clients:title')}</h2>
+                 <h2 className="font-bold text-lg text-slate-800">{t('clients:title')}</h2>
+                 <Badge variant="secondary" className="text-xs">{totalCount}</Badge>
                </div>
                <div className="flex gap-1 items-center">
-                 <button
+                 <Button
+                    variant="ghost"
+                    size="icon"
                     onClick={() => setShowInactive(!showInactive)}
-                    className={`p-2 rounded-lg transition-colors ${showInactive ? 'bg-primary/10 text-primary' : 'text-base-content/50 hover:bg-base-200'}`}
+                    className={cn("size-9", showInactive ? 'bg-emerald-50 text-emerald-600' : 'text-slate-500')}
                     title={showInactive ? t('clients:filters.hide_inactive') : t('clients:filters.show_inactive')}
                  >
                     {showInactive ? <Eye className="size-4" /> : <EyeOff className="size-4" />}
-                 </button>
-                 <button
+                 </Button>
+                 <Button
+                    variant="ghost"
+                    size="icon"
                     onClick={() => setIsLoyaltyConfigOpen(true)}
-                    className="p-2 text-base-content/50 hover:bg-base-200 rounded-lg transition-colors"
+                    className="size-9 text-slate-500"
                  >
                     <Settings className="size-4" />
-                 </button>
-                 <button className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg text-white bg-primary hover:bg-primary-focus transition-colors shadow-sm" onClick={handleOpenCreate}>
+                 </Button>
+                 <Button size="sm" className="gap-2 bg-emerald-600 hover:bg-emerald-700" onClick={handleOpenCreate}>
                    <UserPlus className="size-4" />
                    {t('clients:actions.create')}
-                 </button>
+                 </Button>
                </div>
              </div>
            )}
 
            <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-base-content/50" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-slate-400" />
               <input
-                className="w-full pl-10 h-10 rounded-lg bg-base-200 border border-base-300 text-sm text-base-content focus:outline-none focus:bg-base-100 focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
+                className="w-full pl-10 h-10 rounded-lg bg-slate-100 border border-slate-200 text-sm text-slate-700 focus:outline-none focus:bg-white focus:border-emerald-300 focus:ring-2 focus:ring-emerald-100 transition-all"
                 placeholder={t('clients:filters.search_placeholder')}
                 value={searchTerm}
                 onChange={e => setSearchTerm(e.target.value)}
@@ -412,31 +406,31 @@ export default function Clients() {
         <div className="flex-1 overflow-y-auto">
           {loading && clients.length === 0 ? (
             <div className="flex justify-center p-12">
-              <div className="animate-spin rounded-full size-8 border-b-2 border-indigo-600"></div>
+              <div className="animate-spin rounded-full size-8 border-b-2 border-emerald-600"></div>
             </div>
           ) : (
             <ul className="p-2 space-y-0.5">
                {clients.map(client => (
                  <li key={client.id}>
-                    <div className={`flex items-center gap-2 p-2 rounded-lg transition-all cursor-pointer ${selectedClient?.id === client.id ? 'bg-primary/10' : 'hover:bg-base-200'}`} onClick={() => handleSelectClient(client)}>
+                    <div className={cn("flex items-center gap-2 p-2 rounded-lg transition-all cursor-pointer", selectedClient?.id === client.id ? 'bg-emerald-50' : 'hover:bg-slate-100')} onClick={() => handleSelectClient(client)}>
                        <input
                          type="checkbox"
-                         className="size-4 rounded border-base-300 text-primary focus:ring-primary cursor-pointer"
+                         className="size-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500 cursor-pointer"
                          checked={selectedIds.includes(client.id)}
                          onChange={() => setSelectedIds(prev => prev.includes(client.id) ? prev.filter(id => id !== client.id) : [...prev, client.id])}
                          onClick={(e) => e.stopPropagation()}
                        />
                        <div className="flex-1 min-w-0">
                           <div className="flex justify-between items-center">
-                             <p className={`text-sm font-semibold truncate ${selectedClient?.id === client.id ? 'text-primary' : 'text-base-content'}`}>{client.name}</p>
-                             <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-md uppercase tracking-wide ${client.client_type === 'PROFESSIONNEL' ? 'bg-warning/10 text-warning border border-amber-100' : 'bg-base-200 text-base-content/60'}`}>
+                             <p className={cn("text-sm font-semibold truncate", selectedClient?.id === client.id ? 'text-emerald-700' : 'text-slate-800')}>{client.name}</p>
+                             <Badge variant="outline" className={cn("text-[10px] font-semibold uppercase tracking-wide", client.client_type === 'PROFESSIONNEL' ? 'bg-amber-50 text-amber-600 border-amber-200' : 'bg-slate-100 text-slate-500 border-slate-200')}>
                                 {client.client_type === 'PROFESSIONNEL' ? t('clients:types.pro_short') : t('clients:types.part_short')}
-                             </span>
+                             </Badge>
                           </div>
-                          <div className="flex items-center justify-between gap-1.5 text-xs text-base-content/50">
+                          <div className="flex items-center justify-between gap-1.5 text-xs text-slate-500">
                              <span className="flex items-center gap-1"><Phone className="size-3" /> {client.phone || '—'}</span>
                              {client.client_type === 'PROFESSIONNEL' && (client as any).ayants_droit_count > 0 && (
-                               <span className="flex items-center gap-0.5 text-primary bg-primary/10 px-1.5 py-0.5 rounded text-[10px] font-medium">
+                               <span className="flex items-center gap-0.5 text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded text-[10px] font-medium">
                                  <Users className="size-3" />
                                  {(client as any).ayants_droit_count}
                                </span>
@@ -461,83 +455,91 @@ export default function Clients() {
       </div>
 
       {/* RIGHT PANEL */}
-      <div className={`flex-1 bg-base-200 flex flex-col overflow-hidden max-w-full ${!selectedClient ? 'hidden lg:flex' : 'flex'} h-[calc(100vh-80px)] lg:h-full`}>
+      <div className={cn("flex-1 bg-slate-50 flex flex-col overflow-hidden max-w-full h-[calc(100vh-80px)] lg:h-full", !selectedClient ? 'hidden lg:flex' : 'flex')}>
         {selectedClient ? (
           <>
-            <div className="p-4 lg:p-6 border-b border-base-200 bg-base-100 flex flex-col sm:flex-row justify-between items-start sm:items-center shrink-0 gap-4">
+            <div className="p-4 lg:p-6 border-b border-slate-200 bg-white flex flex-col sm:flex-row justify-between items-start sm:items-center shrink-0 gap-4">
                <div className="flex items-center gap-4 w-full">
-                  <button
-                    className="lg:hidden p-2 hover:bg-base-200 rounded-lg transition-colors mr-1"
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="lg:hidden mr-1"
                     onClick={() => setSelectedClient(null)}
                   >
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-base-content/70" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7" /></svg>
-                  </button>
-                  <div className="size-12 lg:w-14 lg:h-14 bg-primary/10 text-primary rounded-xl flex items-center justify-center text-xl lg:text-2xl font-bold shrink-0">
+                    <ArrowLeft className="size-5 text-slate-500" />
+                  </Button>
+                  <div className="size-12 lg:w-14 lg:h-14 bg-emerald-100 text-emerald-600 rounded-xl flex items-center justify-center text-xl lg:text-2xl font-bold shrink-0">
                     {selectedClient.name.charAt(0)}
                   </div>
                   <div>
-                     <h2 className="text-xl font-bold text-base-content flex items-center gap-2">
+                     <h2 className="text-xl font-bold text-slate-800 flex items-center gap-2">
                        {selectedClient.name}
-                       {selectedClient.is_active === false && <span className="px-2 py-0.5 bg-warning/20 text-warning rounded-md text-[10px] font-semibold">{t('clients:status.inactive')}</span>}
+                       {selectedClient.is_active === false && <Badge variant="outline" className="bg-amber-50 text-amber-600 border-amber-200 text-[10px]">{t('clients:status.inactive')}</Badge>}
                      </h2>
-                     <p className="flex items-center gap-3 text-xs text-base-content/60 mt-0.5">
+                     <p className="flex items-center gap-3 text-xs text-slate-500 mt-0.5">
                         <span className="flex items-center gap-1"><Phone className="size-3" /> {selectedClient.phone || '—'}</span>
                         <span className="flex items-center gap-1"><Mail className="size-3" /> {selectedClient.email || '—'}</span>
                      </p>
                   </div>
                </div>
                <div className="flex items-center gap-2">
-                  <button className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg border border-base-300 text-base-content hover:bg-base-200 transition-colors" onClick={() => handleOpenEdit(selectedClient)}>
+                  <Button variant="outline" size="sm" className="gap-2" onClick={() => handleOpenEdit(selectedClient)}>
                     <Edit className="size-4" /> {t('common:edit')}
-                  </button>
-                  <button className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg border border-red-200 text-error hover:bg-error/10 transition-colors" onClick={handleDelete}>
+                  </Button>
+                  <Button variant="outline" size="sm" className="gap-2 border-red-200 text-red-600 hover:bg-red-50" onClick={handleDelete}>
                     <Trash2 className="size-4" /> {t('common:delete')}
-                  </button>
-                  <button
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
                     onClick={() => setIsHistoryOpen(true)}
-                    className="p-2 text-primary bg-primary/10 hover:bg-primary/20 rounded-lg transition-colors"
+                    className="text-emerald-600 bg-emerald-50 hover:bg-emerald-100"
                     title={t('clients:sections.purchase_history')}
                   >
                     <ShoppingBag className="size-4" />
-                  </button>
+                  </Button>
                   {selectedClient.client_type === 'PARTICULIER' && selectedClient.is_deposit_enabled && (
-                    <button
+                    <Button
+                      variant="ghost"
+                      size="icon"
                       onClick={() => setIsDepositModalOpen(true)}
-                      className="p-2 text-base-content/50 hover:bg-base-200 rounded-lg transition-colors"
+                      className="text-slate-500"
                       title={t('clients:finance.manage_deposit')}
                     >
                       <CreditCard className="size-4" />
-                    </button>
+                    </Button>
                   )}
-                  <button
+                  <Button
+                    variant="ghost"
+                    size="icon"
                     onClick={handleToggleActive}
-                    className="p-2 text-base-content/50 hover:bg-base-200 rounded-lg transition-colors"
+                    className="text-slate-500"
                   >
                     {selectedClient.is_active ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
-                  </button>
+                  </Button>
                </div>
             </div>
 
             <div className="flex-1 overflow-y-auto p-6">
                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 max-w-5xl">
                   {/* Info Card */}
-                  <div className="bg-base-100 rounded-xl border border-base-200 shadow-sm overflow-hidden">
-                     <div className="px-5 py-3 border-b border-base-200 bg-base-200/50 flex items-center gap-2">
-                        <div className="p-1.5 bg-primary/10 text-primary rounded-md"><User className="size-4" /></div>
-                        <h3 className="text-xs font-semibold uppercase tracking-wider text-base-content/50">{t('clients:sections.contact')}</h3>
+                  <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+                     <div className="px-5 py-3 border-b border-slate-200 bg-slate-50 flex items-center gap-2">
+                        <div className="p-1.5 bg-emerald-100 text-emerald-600 rounded-md"><User className="size-4" /></div>
+                        <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-500">{t('clients:sections.contact')}</h3>
                      </div>
                      <div className="p-5 space-y-4">
                         <div className="space-y-1">
-                           <span className="text-[10px] font-semibold uppercase tracking-wider text-base-content/50">{t('clients:fields.address')}</span>
-                           <div className="flex items-start gap-2 text-sm text-base-content">
-                              <MapPin className="size-4 text-indigo-500 mt-0.5 shrink-0" />
+                           <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">{t('clients:fields.address')}</span>
+                           <div className="flex items-start gap-2 text-sm text-slate-700">
+                              <MapPin className="size-4 text-emerald-500 mt-0.5 shrink-0" />
                               <span>{selectedClient.address || t('common:no_address')}</span>
                            </div>
                         </div>
                         <div className="space-y-1">
-                           <span className="text-[10px] font-semibold uppercase tracking-wider text-base-content/50">{t('clients:fields.type')}</span>
-                           <div className="text-sm font-medium text-base-content flex items-center gap-2">
-                              <Activity className="size-4 text-base-content/60" />
+                           <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">{t('clients:fields.type')}</span>
+                           <div className="text-sm font-medium text-slate-700 flex items-center gap-2">
+                              <Activity className="size-4 text-slate-500" />
                               {selectedClient.client_type === 'PROFESSIONNEL' ? t('clients:types.professional') : t('clients:types.individual')}
                            </div>
                         </div>
@@ -545,10 +547,10 @@ export default function Clients() {
                   </div>
 
                   {/* Finance/Loyalty Card */}
-                  <div className="bg-base-100 rounded-xl border border-base-200 shadow-sm overflow-hidden">
-                     <div className="px-5 py-3 border-b border-base-200 bg-base-200/50 flex items-center gap-2">
-                        <div className="p-1.5 bg-warning/10 text-warning rounded-md"><ShieldCheck className="size-4" /></div>
-                        <h3 className="text-xs font-semibold uppercase tracking-wider text-base-content/50">{t('clients:sections.programs')}</h3>
+                  <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+                     <div className="px-5 py-3 border-b border-slate-200 bg-slate-50 flex items-center gap-2">
+                        <div className="p-1.5 bg-amber-100 text-amber-600 rounded-md"><ShieldCheck className="size-4" /></div>
+                        <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-500">{t('clients:sections.programs')}</h3>
                      </div>
                      <div className="p-5 grid grid-cols-2 gap-3">
                         {selectedClient.client_type === 'PARTICULIER' && (

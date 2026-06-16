@@ -2,6 +2,9 @@ import React from 'react';
 import { Search, RefreshCw, Plus, Lock, ArrowUpRight, ArrowDownRight, Banknote } from 'lucide-react';
 import DatePicker from 'react-datepicker';
 import type { useJournalCaisse } from '../../hooks/useJournalCaisse';
+import { Button } from '../shadcn/button';
+import { Badge } from '../shadcn/badge';
+import { cn } from '../../lib/utils';
 
 interface Props {
   state: ReturnType<typeof useJournalCaisse>;
@@ -17,18 +20,18 @@ export default function JournalCaisseFilters({ state }: Props) {
   } = state;
 
   return (
-    <div className="bg-base-100 border-b border-base-200 shrink-0 p-4 sticky-header shadow-sm">
+    <div className="bg-white border-b border-slate-200 shrink-0 p-4 shadow-sm">
       <div className="flex flex-col lg:flex-row gap-4 justify-between items-start lg:items-center">
         <div className="flex items-center gap-4">
-          <div className="p-2.5 bg-primary/10 rounded-xl text-primary shrink-0">
+          <div className="p-2.5 bg-emerald-100 rounded-xl text-emerald-600 shrink-0">
             <Banknote className="size-6" />
           </div>
           <div>
-            <h1 className="text-xl font-bold text-base-content tracking-tight">{t('title')}</h1>
-            <div className="text-base-content/50 text-xs flex items-center gap-2 mt-0.5">
+            <h1 className="text-xl font-bold text-slate-800 tracking-tight">{t('title')}</h1>
+            <div className="text-slate-500 text-xs flex items-center gap-2 mt-0.5">
               <span>{t('subtitle')}</span>
-              <span className="size-1 rounded-full bg-base-300"></span>
-              <span className="font-semibold text-primary/80">{t('operations_count', { count: totalCount })}</span>
+              <span className="size-1 rounded-full bg-slate-300"></span>
+              <span className="font-semibold text-emerald-600">{t('operations_count', { count: totalCount })}</span>
             </div>
           </div>
         </div>
@@ -41,9 +44,9 @@ export default function JournalCaisseFilters({ state }: Props) {
               placeholder={t('search_placeholder')}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="input input-sm input-bordered w-full pl-9 bg-base-200/50 border-base-300 focus:bg-base-100 transition-all text-sm"
+              className="w-full pl-9 h-9 rounded-lg bg-slate-100 border border-slate-200 text-sm text-slate-700 focus:outline-none focus:bg-white focus:border-emerald-300 focus:ring-2 focus:ring-emerald-100 transition-all"
             />
-            <Search className="size-4 absolute left-3 top-1/2 -translate-y-1/2 text-base-content/50 text-base-content" />
+            <Search className="size-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
           </div>
 
           {/* Mode filter */}
@@ -51,7 +54,7 @@ export default function JournalCaisseFilters({ state }: Props) {
             <select
               value={filterMode}
               onChange={(e) => setFilterMode(e.target.value)}
-              className="select select-bordered select-sm w-full bg-base-200/50 border-base-300 font-medium text-sm"
+              className="w-full sm:w-auto h-9 px-3 rounded-lg bg-slate-100 border border-slate-200 text-sm text-slate-700 focus:outline-none focus:border-emerald-300 focus:ring-2 focus:ring-emerald-100 transition-all"
             >
               <option value="all">{t('all_modes')}</option>
               <option value="especes">💵 {t('common:payment_modes.especes')}</option>
@@ -68,7 +71,7 @@ export default function JournalCaisseFilters({ state }: Props) {
             <select
               value={selectedUser}
               onChange={(e) => setSelectedUser(e.target.value)}
-              className="select select-bordered select-sm w-full bg-base-200/50 border-base-300 font-medium text-sm"
+              className="w-full sm:w-auto h-9 px-3 rounded-lg bg-slate-100 border border-slate-200 text-sm text-slate-700 focus:outline-none focus:border-emerald-300 focus:ring-2 focus:ring-emerald-100 transition-all"
             >
               <option value="">👤 {t('all_cashiers')}</option>
               {users.map((u: any) => (
@@ -80,7 +83,7 @@ export default function JournalCaisseFilters({ state }: Props) {
           </div>
 
           {/* Date Pickers */}
-          <div className="flex items-center gap-1 bg-base-200/50 border border-base-300 rounded-lg p-0.5 w-full lg:w-auto">
+          <div className="flex items-center gap-1 bg-slate-100 border border-slate-200 rounded-lg p-0.5 w-full lg:w-auto">
             <div className="flex items-center px-2 py-1 gap-1">
               <DatePicker
                 selected={dateDebut}
@@ -90,10 +93,10 @@ export default function JournalCaisseFilters({ state }: Props) {
                 dateFormat="dd/MM/yy HH:mm"
                 placeholderText={t('date_start')}
                 locale="fr"
-                className="w-36 text-xs bg-transparent focus:outline-none cursor-pointer pr-8 font-medium"
+                className="w-36 text-xs bg-transparent focus:outline-none cursor-pointer pr-8 font-medium text-slate-700"
                 isClearable
               />
-              <span className="text-base-content/30 text-[10px]">→</span>
+              <span className="text-slate-300 text-[10px]">→</span>
               <DatePicker
                 selected={dateFin}
                 onChange={(date: Date | null) => setDateFin(date)}
@@ -102,78 +105,91 @@ export default function JournalCaisseFilters({ state }: Props) {
                 dateFormat="dd/MM/yy HH:mm"
                 placeholderText={t('date_end')}
                 locale="fr"
-                className="w-36 text-xs bg-transparent focus:outline-none cursor-pointer pr-8 font-medium"
+                className="w-36 text-xs bg-transparent focus:outline-none cursor-pointer pr-8 font-medium text-slate-700"
                 isClearable
               />
             </div>
 
             {detectedShift?.active && (
-              <div className="flex flex-col items-center justify-center px-2 py-1 border-l border-base-300">
-                <span className="text-[8px] font-black text-primary uppercase leading-none">Shift</span>
+              <div className="flex flex-col items-center justify-center px-2 py-1 border-l border-slate-200">
+                <Badge variant="outline" className="text-[8px] font-black text-emerald-600 border-emerald-200 uppercase">Shift</Badge>
               </div>
             )}
 
-            <button
+            <Button
+              variant="ghost"
+              size="sm"
               onClick={setTodayDateRange}
-              className="btn btn-xs btn-ghost text-primary hover:bg-primary/10 px-2 min-h-0 h-7"
+              className="h-7 px-2 text-emerald-600 hover:bg-emerald-50 text-xs"
               title={t('today')}
             >
               {t('today_short') || 'Auj.'}
-            </button>
+            </Button>
 
-            <div className="w-px h-4 bg-base-300 mx-0.5"></div>
+            <div className="w-px h-4 bg-slate-200 mx-0.5"></div>
 
-            <button
+            <Button
+              variant="ghost"
+              size="sm"
               onClick={fetchData}
-              className="btn btn-xs btn-ghost btn-square min-h-0 h-7"
               disabled={loading}
+              className="h-7 w-7 p-0"
               title={t('refresh')}
             >
-              {loading ? <span className="loading loading-spinner loading-[10px]"></span> : <RefreshCw className="size-3.5 text-base-content/60" />}
-            </button>
+              {loading ? <div className="animate-spin rounded-full size-3.5 border-b-2 border-emerald-600" /> : <RefreshCw className="size-3.5 text-slate-500" />}
+            </Button>
           </div>
 
           {/* Action Buttons */}
           <div className="flex gap-2 w-full sm:w-auto ml-auto">
-            <button
+            <Button
+              variant="outline"
+              size="sm"
               onClick={() => setIsMovementModalOpen(true)}
-              className="btn btn-sm btn-outline border-base-300 btn-primary gap-2 flex-1 sm:flex-none shadow-sm"
+              className="gap-2 flex-1 sm:flex-none border-emerald-200 text-emerald-700 hover:bg-emerald-50"
             >
               <Plus className="size-4" /> <span className="sm:inline">{t('new_operation')}</span>
-            </button>
-            <button
+            </Button>
+            <Button
+              size="sm"
               onClick={openClosingModal}
-              className="btn btn-sm btn-primary shadow-md gap-2 flex-1 sm:flex-none"
               disabled={loading || !selectedUser}
+              className="bg-emerald-600 hover:bg-emerald-700 shadow-md gap-2 flex-1 sm:flex-none"
               title={!selectedUser ? t('messages.no_cashier_selected') : t('close_register')}
             >
               <Lock className="size-4" /> <span className="sm:inline">{t('close_register')}</span>
-            </button>
+            </Button>
           </div>
         </div>
       </div>
 
       {/* Status Filters Bar */}
-      <div className="mt-4 pt-4 border-t border-base-200 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-        <div className="join bg-base-50 p-1 rounded-lg border border-base-200 w-full sm:w-auto overflow-x-auto">
-          <button
-            className={`join-item btn btn-sm border-none font-medium px-6 ${filterType === 'all' ? 'bg-base-100 shadow-sm text-base-content' : 'bg-transparent text-base-content/60 hover:text-base-content'}`}
+      <div className="mt-4 pt-4 border-t border-slate-200 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <div className="flex bg-slate-50 p-1 rounded-lg border border-slate-200 w-full sm:w-auto overflow-x-auto gap-1">
+          <Button
+            variant="ghost"
+            size="sm"
+            className={cn("font-medium px-6", filterType === 'all' ? 'bg-white shadow-sm text-slate-800' : 'text-slate-500 hover:text-slate-700')}
             onClick={() => setFilterType('all')}
           >
             {t('filter.all')}
-          </button>
-          <button
-            className={`join-item btn btn-sm border-none font-medium px-6 flex items-center gap-1 ${filterType === 'entrees' ? 'bg-success text-white shadow-sm' : 'bg-transparent text-success/70 hover:text-success'}`}
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            className={cn("font-medium px-6 flex items-center gap-1", filterType === 'entrees' ? 'bg-emerald-600 text-white shadow-sm' : 'text-emerald-600 hover:bg-emerald-50')}
             onClick={() => setFilterType('entrees')}
           >
             <ArrowUpRight className="size-4" /> {t('filter.entries')}
-          </button>
-          <button
-            className={`join-item btn btn-sm border-none font-medium px-6 flex items-center gap-1 ${filterType === 'sorties' ? 'bg-error text-white shadow-sm' : 'bg-transparent text-error/70 hover:text-error'}`}
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            className={cn("font-medium px-6 flex items-center gap-1", filterType === 'sorties' ? 'bg-red-600 text-white shadow-sm' : 'text-red-600 hover:bg-red-50')}
             onClick={() => setFilterType('sorties')}
           >
             <ArrowDownRight className="size-4" /> {t('filter.exits')}
-          </button>
+          </Button>
         </div>
       </div>
     </div>

@@ -7,6 +7,7 @@ import { useTVA } from '../hooks/useTVA';
 import {
   X, Package, Hash, Layers, DollarSign, AlertTriangle, Calendar
 } from 'lucide-react';
+import { toast } from 'react-hot-toast';
 import { normalizeNumberInput } from '../utils/formatters';
 import { getLocale } from '../utils/dateUtils';
 import { productSchema } from '../schemas/productSchema';
@@ -16,7 +17,8 @@ const EMPTY_ARRAY: any[] = [];
 interface ProduitFormModalProps {
   open: boolean;
   onClose: () => void;
-  onCreated: (produit: ProduitModel) => void;
+  onCreated?: (produit: ProduitModel) => void;
+  onSuccess?: (produit: ProduitModel) => void;
   produitsEndpoint: string;
   initialData?: Partial<ProduitForm>;
   title?: string;
@@ -30,6 +32,7 @@ export default function ProduitFormModal({
   open,
   onClose,
   onCreated,
+  onSuccess,
   produitsEndpoint,
   initialData,
   title,
@@ -39,7 +42,9 @@ export default function ProduitFormModal({
   groupes = EMPTY_ARRAY,
 }: ProduitFormModalProps) {
   const { t } = useTranslation(['products', 'common']);
-  const titleText = title || t('products:create_title');
+  const productId = (initialData as any)?.id;
+  const isEditMode = Boolean(productId);
+  const titleText = title || (isEditMode ? t('products:edit_title') : t('products:create_title'));
   const { tvaList, loading: loadingTVA } = useTVA();
 
   const [form, setForm] = useState<ProduitForm>({
@@ -64,6 +69,27 @@ export default function ProduitFormModal({
        }
     }
   }, [tvaList, initialData?.tva]);
+
+  useEffect(() => {
+    if (open) {
+      setLoading(false);
+      setError(null);
+      setForm({
+        name: '', stock: '', cost_price: '', selling_price: '', cip1: '', cip2: '', cip3: '',
+        expire_date: '', stock_alert: '', stock_minimum: '', stock_maximum: '', tva: '19.25',
+        rayon: '', fournisseur: '', description: '', unite_mesure: '', is_perissable: false,
+        forme: '', groupe: '',
+        use_lot_management: true, requires_prescription: false,
+        surveillance_category: 'NONE', is_supplier_exclusive: false, has_reserve_storage: false,
+        capacite_rayon: '0', min_rayon: '0',
+        is_chronic: false,
+        default_treatment_days: '30',
+        message_alerte: '',
+        ...initialData,
+      });
+    }
+  }, [open, initialData]);
+
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -161,16 +187,26 @@ export default function ProduitFormModal({
 
       const cleanPayload = validation.data;
 
-      const { data } = await api.post<ProduitModel>(produitsEndpoint, cleanPayload);
-      onCreated(data);
+      if (isEditMode) {
+        const { data } = await api.patch<ProduitModel>(`${produitsEndpoint}${productId}/`, cleanPayload);
+        onCreated?.(data);
+        onSuccess?.(data);
+      } else {
+        const { data } = await api.post<ProduitModel>(produitsEndpoint, cleanPayload);
+        onCreated?.(data);
+        onSuccess?.(data);
+      }
       onClose();
     } catch (err: unknown) {
       const anyErr = err as any;
       if (anyErr.response) {
         const detail = anyErr.response?.data ?? anyErr.message;
-        setError(typeof detail === 'string' ? detail : formatBackendErrors(detail));
+        const errorText = typeof detail === 'string' ? detail : formatBackendErrors(detail);
+        setError(errorText);
+        toast.error(`❌ ${errorText}`);
       } else {
         setError(t('products:form.validation.unknown_error'));
+        toast.error(`❌ ${t('products:form.validation.unknown_error')}`);
       }
     } finally {
       setLoading(false);
@@ -242,10 +278,12 @@ export default function ProduitFormModal({
               <Layers size={12} /> Stock & Localisation
             </h4>
             <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
-              <div>
-                <label className="block text-[10px] font-semibold text-base-content/60 uppercase tracking-wider mb-1.5">{t('products:form.initial_stock')}</label>
-                <input type="number" className={inputBase} value={form.stock} onChange={(e) => setForm((p) => ({ ...p, stock: e.target.value }))} min={0} step={1} required />
-              </div>
+              {!isEditMode && (
+                <div>
+                  <label className="block text-[10px] font-semibold text-base-content/60 uppercase tracking-wider mb-1.5">{t('products:form.initial_stock')}</label>
+                  <input type="number" className={inputBase} value={form.stock} onChange={(e) => setForm((p) => ({ ...p, stock: e.target.value }))} min={0} step={1} required />
+                </div>
+              )}
               <div>
                 <label className="block text-[10px] font-semibold text-base-content/60 uppercase tracking-wider mb-1.5">{t('products:form.rayon')}</label>
                 <select className={selectBase} value={form.rayon} onChange={(e) => setForm((f) => ({ ...f, rayon: e.target.value }))}>
@@ -459,7 +497,7 @@ export default function ProduitFormModal({
               {t('common:cancel')}
             </button>
             <button type="submit" className="px-6 py-1.5 text-sm font-medium text-white bg-primary rounded-lg hover:bg-primary-focus transition-colors shadow-sm disabled:text-base-content/50" disabled={loading}>
-              {loading ? <span className="inline-block size-4 border-2 border-white border-t-transparent rounded-full animate-spin" /> : `💾 ${t('products:actions.create')}`}
+              {loading ? <span className="inline-block size-4 border-2 border-white border-t-transparent rounded-full animate-spin" /> : `💾 ${isEditMode ? t('common:save') : t('products:actions.create')}`}
             </button>
           </div>
         </form>

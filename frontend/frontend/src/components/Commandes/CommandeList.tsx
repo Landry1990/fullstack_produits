@@ -1,16 +1,12 @@
 import { useTranslation } from 'react-i18next';
-
-import { Eye, Trash2, Printer, GitMerge } from 'lucide-react';
-
+import { Eye, Trash2, Printer, GitMerge, Sparkles, Clock, Plus, ArrowUpDown } from 'lucide-react';
 import type { Commande, Fournisseur } from '../../types';
-
 import { formatCurrency } from '../../utils/formatters';
-
 import { formatDate } from '../../utils/dateUtils';
-
-
-
 import SelectionHeader from '../ui/SelectionHeader';
+import { Button } from '../shadcn/button';
+import { Badge } from '../shadcn/badge';
+import { cn } from '../../lib/utils';
 
 
 
@@ -147,19 +143,21 @@ export default function CommandeList({
 
 
   const getStatusStyle = (us: string) => {
-
     switch (us) {
-
-      case 'PREP': return 'bg-info/10 text-info border-info/20';
-
-      case 'ATT': return 'bg-warning/10 text-warning border-warning/20';
-
-      case 'CLOT': return 'bg-success/10 text-success border-success/20';
-
-      default: return 'bg-base-200 text-base-content/60 border-base-300';
-
+      case 'PREP': return 'bg-blue-50 text-blue-600 border-blue-200';
+      case 'ATT': return 'bg-amber-50 text-amber-600 border-amber-200';
+      case 'CLOT': return 'bg-emerald-50 text-emerald-600 border-emerald-200';
+      default: return 'bg-slate-100 text-slate-500 border-slate-200';
     }
+  };
 
+  const getStatusLabel = (us: string) => {
+    switch (us) {
+      case 'PREP': return t('orders:status.prep', 'Préparation');
+      case 'ATT': return t('orders:status.att', 'En attente');
+      case 'CLOT': return t('orders:status.clot', 'Clôturé');
+      default: return us;
+    }
   };
 
 
@@ -167,225 +165,162 @@ export default function CommandeList({
 
 
   return (
-
     <div className="flex flex-col h-full p-4 space-y-4">
-
       {/* Header Section */}
-
       <div className="flex flex-col md:flex-row justify-between items-center gap-4 shrink-0">
-
-        <h1 className="text-base font-semibold text-base-content">{t('orders:list.title')}</h1>
-
-        <div className="flex gap-2 w-full md:w-auto">
-
-            <button
-
-                className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg border border-base-300 bg-base-100 text-base-content hover:bg-base-200 transition-colors"
-
-                onClick={() => {
-
-                    console.log('Suggestions button clicked, onOpenSuggestionModal:', onOpenSuggestionModal);
-
-                    onOpenSuggestionModal();
-
-                }}
-
-                disabled={loading}
-
-            >
-
-                {loading ? <span className="inline-block size-4 border-2 border-base-300 border-t-base-content rounded-full animate-spin" /> : <span>✨</span>}
-
-                {t('orders:list.suggestions_btn')}
-
-            </button>
-
-            <button
-
-                className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg border border-base-300 bg-base-100 text-base-content hover:bg-base-200 transition-colors"
-
-                onClick={onOpenScheduledList}
-
-                disabled={loading}
-
-                title="Planification automatique"
-
-            >
-
-                {loading ? <span className="inline-block size-4 border-2 border-base-300 border-t-base-content rounded-full animate-spin" /> : <span>⏰</span>}
-
-                <span className="hidden sm:inline">{t('orders:list.scheduling_btn', 'Planification')}</span>
-
-            </button>
-
-            <button
-
-                className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg text-white bg-primary hover:bg-primary-focus transition-colors shadow-sm"
-
-                onClick={onOpenCreateView}
-
-                disabled={loading}
-
-            >
-
-                {loading ? <span className="inline-block size-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <span>+</span>}
-
-                {t('orders:list.create_btn')}
-
-            </button>
-
+        <div className="flex items-center gap-2">
+          <h1 className="text-lg font-semibold text-slate-800">{t('orders:list.title')}</h1>
+          <Badge variant="secondary" className="text-xs">{totalCount}</Badge>
         </div>
 
+        <div className="flex gap-2 w-full md:w-auto">
+          <Button
+            variant="outline"
+            size="sm"
+            className="gap-2"
+            onClick={() => onOpenSuggestionModal()}
+            disabled={loading}
+          >
+            {loading ? <span className="size-4 border-2 border-slate-300 border-t-slate-600 rounded-full animate-spin" /> : <Sparkles className="size-4 text-amber-500" />}
+            {t('orders:list.suggestions_btn')}
+          </Button>
+
+          <Button
+            variant="outline"
+            size="sm"
+            className="gap-2"
+            onClick={onOpenScheduledList}
+            disabled={loading}
+            title="Planification automatique"
+          >
+            {loading ? <span className="size-4 border-2 border-slate-300 border-t-slate-600 rounded-full animate-spin" /> : <Clock className="size-4 text-blue-500" />}
+            <span className="hidden sm:inline">{t('orders:list.scheduling_btn', 'Planification')}</span>
+          </Button>
+
+          <Button
+            size="sm"
+            className="gap-2 bg-emerald-600 hover:bg-emerald-700"
+            onClick={onOpenCreateView}
+            disabled={loading}
+          >
+            {loading ? <span className="size-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <Plus className="size-4" />}
+            {t('orders:list.create_btn')}
+          </Button>
+        </div>
       </div>
 
 
 
       {/* Unified Filter/Sort Bar */}
-
-      <div className="flex flex-wrap items-center gap-3 p-3 bg-base-100 rounded-lg border border-base-300 shadow-sm shrink-0">
-
+      <div className="flex flex-wrap items-center gap-3 p-3 bg-white rounded-lg border border-slate-200 shadow-sm shrink-0">
         <div className="flex items-center gap-2 mr-2">
-
-            <span className="text-[10px] font-semibold uppercase tracking-wider text-base-content/50">{t('orders:list.sort_by')}:</span>
-
-            <div className="flex bg-base-200 p-1 rounded-lg border border-base-300">
-
-                <button
-
-                className={`px-3 py-1 rounded-md text-xs font-medium transition-all ${sortKey === 'date' ? 'bg-base-100 text-primary shadow-sm border border-base-300' : 'text-base-content/60 hover:text-base-content'}`}
-
-                onClick={() => onSortChange('date')}
-
-                >
-
-                {t('orders:list.table.date')} {sortKey === 'date' && (sortOrder === 'asc' ? '↑' : '↓')}
-
-                </button>
-
-                <button
-
-                className={`px-3 py-1 rounded-md text-xs font-medium transition-all ${sortKey === 'numero' ? 'bg-base-100 text-primary shadow-sm border border-base-300' : 'text-base-content/60 hover:text-base-content'}`}
-
-                onClick={() => onSortChange('numero')}
-
-                >
-
-                {t('orders:list.table.id')} {sortKey === 'numero' && (sortOrder === 'asc' ? '↑' : '↓')}
-
-                </button>
-
-                <button
-
-                className={`px-3 py-1 rounded-md text-xs font-medium transition-all ${sortKey === 'status' ? 'bg-base-100 text-primary shadow-sm border border-base-300' : 'text-base-content/60 hover:text-base-content'}`}
-
-                onClick={() => onSortChange('status')}
-
-                >
-
-                {t('orders:list.table.status')} {sortKey === 'status' && (sortOrder === 'asc' ? '↑' : '↓')}
-
-                </button>
-
-            </div>
-
+          <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">{t('orders:list.sort_by')}:</span>
+          <div className="flex bg-slate-100 p-1 rounded-lg border border-slate-200">
+            <Button
+              variant="ghost"
+              size="sm"
+              className={cn(
+                "px-3 py-1 h-7 rounded-md text-xs font-medium transition-all",
+                sortKey === 'date' ? 'bg-white text-emerald-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'
+              )}
+              onClick={() => onSortChange('date')}
+            >
+              {t('orders:list.table.date')} {sortKey === 'date' && (sortOrder === 'asc' ? '↑' : '↓')}
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              className={cn(
+                "px-3 py-1 h-7 rounded-md text-xs font-medium transition-all",
+                sortKey === 'numero' ? 'bg-white text-emerald-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'
+              )}
+              onClick={() => onSortChange('numero')}
+            >
+              {t('orders:list.table.id')} {sortKey === 'numero' && (sortOrder === 'asc' ? '↑' : '↓')}
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              className={cn(
+                "px-3 py-1 h-7 rounded-md text-xs font-medium transition-all",
+                sortKey === 'status' ? 'bg-white text-emerald-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'
+              )}
+              onClick={() => onSortChange('status')}
+            >
+              {t('orders:list.table.status')} {sortKey === 'status' && (sortOrder === 'asc' ? '↑' : '↓')}
+            </Button>
+          </div>
         </div>
 
-
-
-        <div className="h-6 w-px bg-base-300 mx-1"></div>
-
-
+        <div className="h-6 w-px bg-slate-200 mx-1"></div>
 
         <div className="flex items-center gap-2">
-
-            <span className="text-[10px] font-semibold uppercase tracking-wider text-base-content/50">{t('orders:list.filter_by')}:</span>
-
-            <div className="flex gap-1">
-
-                <button
-
-                className={`px-3 py-1 rounded-full text-xs font-medium transition-all ${filterStatus === 'ALL' ? 'bg-base-content text-base-100' : 'text-base-content/60 hover:bg-base-200'}`}
-
-                onClick={() => onFilterStatusChange('ALL')}
-
-                >
-
-                {t('orders:list.filters.all')}
-
-                </button>
-
-                <button
-
-                className={`px-3 py-1 rounded-full text-xs font-medium transition-all border ${filterStatus === 'PREP' ? 'bg-info/10 border-info/30 text-info' : 'border-transparent text-base-content/60 hover:bg-base-200'}`}
-
-                onClick={() => onFilterStatusChange('PREP')}
-
-                >
-
-                {t('orders:list.filters.prep')}
-
-                </button>
-
-                <button
-
-                className={`px-3 py-1 rounded-full text-xs font-medium transition-all border ${filterStatus === 'ATT' ? 'bg-warning/10 border-warning/30 text-warning' : 'border-transparent text-base-content/60 hover:bg-base-200'}`}
-
-                onClick={() => onFilterStatusChange('ATT')}
-
-                >
-
-                {t('orders:list.filters.pending')}
-
-                </button>
-
-                <button
-
-                className={`px-3 py-1 rounded-full text-xs font-medium transition-all border ${filterStatus === 'CLOT' ? 'bg-success/10 border-success/30 text-success' : 'border-transparent text-base-content/60 hover:bg-base-200'}`}
-
-                onClick={() => onFilterStatusChange('CLOT')}
-
-                >
-
-                {t('orders:list.filters.closed')}
-
-                </button>
-
-            </div>
-
+          <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">{t('orders:list.filter_by')}:</span>
+          <div className="flex gap-1">
+            <Button
+              variant={filterStatus === 'ALL' ? 'default' : 'ghost'}
+              size="sm"
+              className={cn(
+                "px-3 py-1 h-7 rounded-full text-xs font-medium",
+                filterStatus === 'ALL' ? 'bg-slate-800 text-white' : 'text-slate-500 hover:bg-slate-100'
+              )}
+              onClick={() => onFilterStatusChange('ALL')}
+            >
+              {t('orders:list.filters.all')}
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              className={cn(
+                "px-3 py-1 h-7 rounded-full text-xs font-medium border transition-all",
+                filterStatus === 'PREP' ? 'bg-blue-50 border-blue-200 text-blue-600' : 'border-transparent text-slate-500 hover:bg-slate-100'
+              )}
+              onClick={() => onFilterStatusChange('PREP')}
+            >
+              {t('orders:list.filters.prep')}
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              className={cn(
+                "px-3 py-1 h-7 rounded-full text-xs font-medium border transition-all",
+                filterStatus === 'ATT' ? 'bg-amber-50 border-amber-200 text-amber-600' : 'border-transparent text-slate-500 hover:bg-slate-100'
+              )}
+              onClick={() => onFilterStatusChange('ATT')}
+            >
+              {t('orders:list.filters.pending')}
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              className={cn(
+                "px-3 py-1 h-7 rounded-full text-xs font-medium border transition-all",
+                filterStatus === 'CLOT' ? 'bg-emerald-50 border-emerald-200 text-emerald-600' : 'border-transparent text-slate-500 hover:bg-slate-100'
+              )}
+              onClick={() => onFilterStatusChange('CLOT')}
+            >
+              {t('orders:list.filters.closed')}
+            </Button>
+          </div>
         </div>
-
       </div>
 
 
 
       {/* Table Section */}
-
-      <div className="flex-1 min-h-0 overflow-auto bg-base-100 rounded-xl shadow-sm border border-base-300">
-
+      <div className="flex-1 min-h-0 overflow-auto bg-white rounded-xl shadow-sm border border-slate-200">
         <table className="w-full text-sm">
-
           <thead>
-
-            <tr className="bg-base-200 text-base-content/60 border-b border-base-300">
-
-              <th className="w-12 text-center sticky top-0 z-30 bg-base-200">
-
+            <tr className="bg-slate-50 text-slate-500 border-b border-slate-200">
+              <th className="w-12 text-center sticky top-0 z-30 bg-slate-50">
                 <label className="cursor-pointer flex items-center justify-center p-0">
-
                   <input
-
                     type="checkbox"
-
-                    className="size-4 rounded border-base-300 text-primary focus:ring-primary cursor-pointer"
-
+                    className="size-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500 cursor-pointer"
                     checked={selectedOrderIds.size === sortedCommandes.length && sortedCommandes.length > 0}
-
                     onChange={onToggleAllOrdersSelection}
-
                   />
-
                 </label>
-
               </th>
 
                 {selectedOrderIds.size > 0 ? (
@@ -515,77 +450,42 @@ export default function CommandeList({
                   </SelectionHeader>
 
                 ) : (
-
                   <>
-
-                    <th className="text-[10px] uppercase font-semibold tracking-wider text-base-content/50 py-3 px-4 text-left cursor-pointer hover:text-indigo-500 transition-colors sticky top-0 z-30 bg-base-200" onClick={() => onSortChange('numero')}>
-
+                    <th className="text-[10px] uppercase font-semibold tracking-wider text-slate-500 py-3 px-4 text-left cursor-pointer hover:text-emerald-600 transition-colors sticky top-0 z-30 bg-slate-50" onClick={() => onSortChange('numero')}>
                       <div className="flex items-center gap-2">
-
                         {t('orders:list.table.id')} {sortKey === 'numero' && (sortOrder === 'asc' ? '↑' : '↓')}
-
                       </div>
-
                     </th>
-
-                    <th className="text-[10px] uppercase font-semibold tracking-wider text-base-content/50 py-3 px-4 text-left sticky top-0 z-30 bg-base-200">
-
+                    <th className="text-[10px] uppercase font-semibold tracking-wider text-slate-500 py-3 px-4 text-left sticky top-0 z-30 bg-slate-50">
                       {t('orders:list.table.invoice_number')}
-
                     </th>
-
-                    <th className="text-[10px] uppercase font-semibold tracking-wider text-base-content/50 py-3 px-4 cursor-pointer hover:text-indigo-500 transition-colors sticky top-0 z-30 bg-base-200" onClick={() => onSortChange('date')}>
-
+                    <th className="text-[10px] uppercase font-semibold tracking-wider text-slate-500 py-3 px-4 cursor-pointer hover:text-emerald-600 transition-colors sticky top-0 z-30 bg-slate-50" onClick={() => onSortChange('date')}>
                       <div className="flex items-center gap-2">
-
                         {t('common:date')} {sortKey === 'date' && (sortOrder === 'asc' ? '↑' : '↓')}
-
                       </div>
-
                     </th>
-
-                    <th className="text-[10px] uppercase font-semibold tracking-wider text-base-content/50 py-3 px-4 cursor-pointer hover:text-indigo-500 transition-colors sticky top-0 z-30 bg-base-200" onClick={() => onSortChange('fournisseur')}>
-
+                    <th className="text-[10px] uppercase font-semibold tracking-wider text-slate-500 py-3 px-4 cursor-pointer hover:text-emerald-600 transition-colors sticky top-0 z-30 bg-slate-50" onClick={() => onSortChange('fournisseur')}>
                       <div className="flex items-center gap-2">
-
                         {t('common:supplier')} {sortKey === 'fournisseur' && (sortOrder === 'asc' ? '↑' : '↓')}
-
                       </div>
-
                     </th>
-
-                    <th className="text-[10px] uppercase font-semibold tracking-wider text-base-content/50 py-3 px-4 text-center sticky top-0 z-30 bg-base-200">
-
+                    <th className="text-[10px] uppercase font-semibold tracking-wider text-slate-500 py-3 px-4 text-center sticky top-0 z-30 bg-slate-50">
                       {t('orders:list.table.items')}
-
                     </th>
 
-                    <th className="text-[10px] uppercase font-semibold tracking-wider text-base-content/50 py-3 px-4 text-right sticky top-0 z-30 bg-base-200">
-
+                    <th className="text-[10px] uppercase font-semibold tracking-wider text-slate-500 py-3 px-4 text-right sticky top-0 z-30 bg-slate-50">
                       HT
-
                     </th>
-
-                    <th className="text-[10px] uppercase font-semibold tracking-wider text-base-content/50 py-3 px-4 text-right sticky top-0 z-30 bg-base-200">
-
+                    <th className="text-[10px] uppercase font-semibold tracking-wider text-slate-500 py-3 px-4 text-right sticky top-0 z-30 bg-slate-50">
                       TVA
-
                     </th>
-
-                    <th className="text-[10px] uppercase font-semibold tracking-wider text-base-content/50 py-3 px-4 text-right sticky top-0 z-30 bg-base-200">
-
+                    <th className="text-[10px] uppercase font-semibold tracking-wider text-slate-500 py-3 px-4 text-right sticky top-0 z-30 bg-slate-50">
                       TTC
-
                     </th>
-
-                    <th className="text-[10px] uppercase font-semibold tracking-wider text-base-content/50 py-3 px-4 cursor-pointer hover:text-indigo-500 transition-colors sticky top-0 z-30 bg-base-200" onClick={() => onSortChange('status')}>
-
+                    <th className="text-[10px] uppercase font-semibold tracking-wider text-slate-500 py-3 px-4 cursor-pointer hover:text-emerald-600 transition-colors sticky top-0 z-30 bg-slate-50" onClick={() => onSortChange('status')}>
                       <div className="flex items-center gap-2 justify-center">
-
                         {t('common:us_title')} {sortKey === 'status' && (sortOrder === 'asc' ? '↑' : '↓')}
-
                       </div>
-
                     </th>
 
                   </>
@@ -596,132 +496,76 @@ export default function CommandeList({
 
           </thead>
 
-          <tbody className="text-base-content font-medium">
-
+          <tbody className="text-slate-700 font-medium">
             {sortedCommandes.map(commande => (
-
               <tr
-
                 key={commande.id}
-
-                className={`hover:bg-base-200 transition-colors group cursor-pointer ${selectedOrderIds.has(commande.id) ? 'bg-indigo-500/10' : ''}`}
-
+                className={cn(
+                  "hover:bg-slate-50 transition-colors group cursor-pointer border-b border-slate-100 last:border-0",
+                  selectedOrderIds.has(commande.id) ? 'bg-emerald-50/50' : ''
+                )}
                 onClick={() => selectedOrderIds.size === 0 && onViewDetails(commande)}
-
               >
-
-                <td className="text-center" onClick={(e) => e.stopPropagation()}>
-
-                    <label className="cursor-pointer flex items-center justify-center p-0">
-
-                        <input
-
-                        type="checkbox"
-
-                        className="size-4 rounded border-base-300 text-primary focus:ring-primary cursor-pointer"
-
-                        checked={selectedOrderIds.has(commande.id)}
-
-                        onChange={() => onToggleOrderSelection(commande.id)}
-
-                        />
-
-                    </label>
-
+                <td className="text-center py-3" onClick={(e) => e.stopPropagation()}>
+                  <label className="cursor-pointer flex items-center justify-center p-0">
+                    <input
+                      type="checkbox"
+                      className="size-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500 cursor-pointer"
+                      checked={selectedOrderIds.has(commande.id)}
+                      onChange={() => onToggleOrderSelection(commande.id)}
+                    />
+                  </label>
+                </td>
+                <td className="text-left py-3 px-4">
+                  <span className="font-mono font-semibold text-sm text-slate-500">#{commande.id}</span>
+                </td>
+                <td className="text-left py-3 px-4">
+                  <span className="font-mono text-sm text-slate-400">{commande.numero_facture || '-'}</span>
+                </td>
+                <td className="py-3 px-4">
+                  <span className="text-sm font-medium text-slate-500">
+                    {formatDate(commande.date)}
+                  </span>
+                </td>
+                <td className="py-3 px-4">
+                  {(() => {
+                    const fournisseur = fournisseurs.find(f => f.id === commande.fournisseur);
+                    const isDeleted = !fournisseur && !!commande.fournisseur_nom;
+                    const nom = fournisseur?.name ?? (commande.fournisseur_nom || `${t('common:id', { defaultValue: 'ID' })}: ${commande.fournisseur}`);
+                    return (
+                      <div className="flex flex-col">
+                        <span className={cn("font-semibold text-sm", isDeleted ? 'italic text-slate-400' : 'text-slate-700')}>
+                          {nom}
+                        </span>
+                      </div>
+                    );
+                  })()}
+                </td>
+                <td className="text-center py-3 px-4">
+                  <Badge variant="secondary" className="text-xs font-mono">
+                    {commande.items_count || 0}
+                  </Badge>
+                </td>
+                <td className="text-right text-slate-500 text-xs py-3 px-4">
+                  {formatCurrency(Number(commande.total_ht || commande.total))}
+                </td>
+                <td className="text-right text-slate-500 text-xs py-3 px-4">
+                  {formatCurrency(Number(commande.total_tva || 0))}
+                </td>
+                <td className="font-semibold text-right text-emerald-600 py-3 px-4">
+                  {formatCurrency(Number(commande.total_ttc || commande.total))}
                 </td>
 
-                <td className="text-left">
-
-                    <span className="font-mono font-semibold text-sm text-base-content/70">#{commande.id}</span>
-
-                </td>
-
-                <td className="text-left">
-
-                    <span className="font-mono text-sm text-base-content/60">{commande.numero_facture || '-'}</span>
-
-                </td>
-
-                <td>
-
-                    <span className="text-sm font-medium text-base-content/60">
-
-                        {formatDate(commande.date)}
-
-                    </span>
-
-                </td>
-
-                <td>
-
-                    {(() => {
-
-                        const fournisseur = fournisseurs.find(f => f.id === commande.fournisseur);
-
-                        const isDeleted = !fournisseur && !!commande.fournisseur_nom;
-
-                        const nom = fournisseur?.name ?? (commande.fournisseur_nom || `${t('common:id', { defaultValue: 'ID' })}: ${commande.fournisseur}`);
-
-
-
-                        return (
-
-                            <div className="flex flex-col">
-
-                                <span className={`font-semibold text-sm ${isDeleted ? 'italic text-base-content/40' : 'text-base-content'}`}>
-
-                                    {nom}
-
-                                </span>
-
-                            </div>
-
-                        );
-
-                    })()}
-
-                </td>
-
-                <td className="text-center">
-
-                    <span className="text-xs font-mono bg-base-200 px-2 py-0.5 rounded-md text-base-content/60">
-
-                        {commande.items_count || 0}
-
-                    </span>
-
-                </td>
-
-                <td className="text-right text-base-content/70 text-xs">
-
-                    {formatCurrency(Number(commande.total_ht || commande.total))}
-
-                </td>
-
-                <td className="text-right text-base-content/70 text-xs">
-
-                    {formatCurrency(Number(commande.total_tva || 0))}
-
-                </td>
-
-                <td className="font-semibold text-right text-primary">
-
-                    {formatCurrency(Number(commande.total_ttc || commande.total))}
-
-                </td>
-
-                <td className="text-center">
-
-                    <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-semibold border uppercase tracking-wider ${getStatusStyle(commande.status)}`}>
-
-                        {commande.status === 'PREP' ? t('orders:us.prep') :
-
-                         commande.status === 'ATT' ? t('orders:us.pending') :
-
-                         t('orders:us.closed')}
-
-                    </span>
-
+                <td className="text-center py-3 px-4">
+                  <Badge
+                    variant="outline"
+                    className={cn(
+                      "text-[11px] font-semibold uppercase tracking-wider",
+                      getStatusStyle(commande.status)
+                    )}
+                  >
+                    {getStatusLabel(commande.status)}
+                  </Badge>
                 </td>
 
               </tr>
@@ -729,23 +573,18 @@ export default function CommandeList({
             ))}
 
             {sortedCommandes.length === 0 && (
-
-                <tr>
-
-                    <td colSpan={10} className="text-center py-12 text-base-content/40">
-
-                        <div className="flex flex-col items-center gap-2">
-
-                            <div className="size-12 rounded-full bg-base-200 flex items-center justify-center">📦</div>
-
-                            {t('orders:list.table.empty')}
-
-                        </div>
-
-                    </td>
-
-                </tr>
-
+              <tr>
+                <td colSpan={10} className="text-center py-12 text-slate-400">
+                  <div className="flex flex-col items-center gap-3">
+                    <div className="size-12 rounded-full bg-slate-100 flex items-center justify-center">
+                      <svg xmlns="http://www.w3.org/2000/svg" className="size-6 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+                      </svg>
+                    </div>
+                    <p className="text-sm">{t('orders:list.table.empty')}</p>
+                  </div>
+                </td>
+              </tr>
             )}
 
           </tbody>
@@ -757,89 +596,52 @@ export default function CommandeList({
 
 
       {/* Pagination Footer */}
-
-      <div className="flex flex-col px-4 py-3 bg-base-100 rounded-lg border border-base-300 shadow-sm shrink-0 gap-2">
-
+      <div className="flex flex-col px-4 py-3 bg-white rounded-lg border border-slate-200 shadow-sm shrink-0 gap-2">
         {/* Ligne 1 : Info + Pagination */}
-
         <div className="flex items-center justify-between">
-
-          <div className="text-xs font-medium text-base-content/40">
-
+          <div className="text-xs font-medium text-slate-400">
             {t('orders:list.pagination.showing', { count: sortedCommandes.length, total: totalCount })}
-
           </div>
-
           <div className="flex gap-1">
-
-            <button
-
-                className="inline-flex items-center px-3 py-1.5 text-xs font-medium rounded-md text-base-content/60 hover:bg-base-200 disabled:text-base-content/30 transition-colors"
-
-                disabled={page === 1}
-
-                onClick={() => onPageChange(page - 1)}
-
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-7 px-3 text-xs"
+              disabled={page === 1}
+              onClick={() => onPageChange(page - 1)}
             >
-
-                «
-
-            </button>
-
-            <span className="inline-flex items-center px-3 py-1.5 text-xs font-semibold rounded-md bg-base-200 text-base-content/70">
-
-                {page} / {totalPages}
-
+              «
+            </Button>
+            <span className="inline-flex items-center px-3 h-7 text-xs font-semibold rounded-md bg-slate-100 text-slate-600">
+              {page} / {totalPages}
             </span>
-
-            <button
-
-                className="inline-flex items-center px-3 py-1.5 text-xs font-medium rounded-md text-base-content/60 hover:bg-base-200 disabled:text-base-content/30 transition-colors"
-
-                disabled={page >= totalPages}
-
-                onClick={() => onPageChange(page + 1)}
-
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-7 px-3 text-xs"
+              disabled={page >= totalPages}
+              onClick={() => onPageChange(page + 1)}
             >
-
-                »
-
-            </button>
-
+              »
+            </Button>
           </div>
-
         </div>
 
         {/* Ligne 2 : Totaux sélectionnés */}
-
         {selectedOrderIds.size > 0 && (() => {
-
           const selected = sortedCommandes.filter(c => selectedOrderIds.has(c.id));
-
           const totalHt = selected.reduce((sum, c) => sum + Number(c.total_ht || c.total), 0);
-
           const totalTva = selected.reduce((sum, c) => sum + Number(c.total_tva || 0), 0);
-
           const totalTtc = selected.reduce((sum, c) => sum + Number(c.total_ttc || c.total), 0);
-
           return (
-
-            <div className="flex items-center justify-end gap-4 text-sm border-t border-base-200 pt-2">
-
-              <span className="font-semibold text-base-content/60">{selectedOrderIds.size} sélectionnée{selectedOrderIds.size > 1 ? 's' : ''}</span>
-
-              <span className="text-base-content/50">HT <span className="font-semibold text-base-content/80">{formatCurrency(Number(totalHt.toFixed(2)))}</span></span>
-
-              <span className="text-base-content/50">TVA <span className="font-semibold text-base-content/80">{formatCurrency(Number(totalTva.toFixed(2)))}</span></span>
-
-              <span className="text-primary font-bold">TTC <span className="font-bold">{formatCurrency(Number(totalTtc.toFixed(2)))}</span></span>
-
+            <div className="flex items-center justify-end gap-4 text-sm border-t border-slate-100 pt-2">
+              <span className="font-semibold text-slate-500">{selectedOrderIds.size} sélectionnée{selectedOrderIds.size > 1 ? 's' : ''}</span>
+              <span className="text-slate-400">HT <span className="font-semibold text-slate-700">{formatCurrency(Number(totalHt.toFixed(2)))}</span></span>
+              <span className="text-slate-400">TVA <span className="font-semibold text-slate-700">{formatCurrency(Number(totalTva.toFixed(2)))}</span></span>
+              <span className="text-emerald-600 font-bold">TTC <span className="font-bold">{formatCurrency(Number(totalTtc.toFixed(2)))}</span></span>
             </div>
-
           );
-
         })()}
-
       </div>
 
     </div>
