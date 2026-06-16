@@ -145,6 +145,7 @@ export const useCreanceActions = ({
             const error = err as { response?: { data?: { detail?: string } } };
             toast.error(error.response?.data?.detail || t('common:messages.error_saving'));
             console.error('Erreur:', err);
+            throw err;
         }
     }, [selectedCreance, montantPaiement, modePaiement, referencePaiement, refresh, handlePrintDirectReceipt, updateLocalCreance]);
 
@@ -224,6 +225,7 @@ export const useCreanceActions = ({
             const error = err as { response?: { data?: { detail?: string } } };
             toast.error(error.response?.data?.detail || t('common:messages.error_saving'));
             console.error('Erreur:', err);
+            throw err;
         }
     }, [selectedIds, modePaiement, referencePaiement, montantTotalBulk, setSelectedIds, refresh, handlePrintBulkReceipt, filteredCreances, pharmacySettings]);
 

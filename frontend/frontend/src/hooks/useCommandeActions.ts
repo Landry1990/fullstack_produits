@@ -123,6 +123,7 @@ export function useCommandeActions({
             setViewMode('LIST');
         } catch (err) {
             toast.error(getApiErrorDetail(err, t('messages.delete_error')));
+            throw err;
         } finally {
             setExecutingAction(false);
         }
@@ -139,6 +140,7 @@ export function useCommandeActions({
             setSelectedCommande(updated);
         } catch (err) {
             toast.error(getApiErrorDetail(err, "Erreur de clôture"));
+            throw err;
         } finally {
             setExecutingAction(false);
         }
@@ -173,6 +175,7 @@ export function useCommandeActions({
             setSelectedCommande(updated);
         } catch (err) {
             toast.error(getApiErrorDetail(err, "Erreur lors de l'annulation"));
+            throw err;
         } finally {
             setExecutingAction(false);
         }
@@ -521,6 +524,7 @@ export function useCommandeActions({
             setViewMode('LIST');
         } catch (err) {
             toast.error(t('messages.bulk_delete_error'));
+            throw err;
         } finally {
             setExecutingAction(false);
         }

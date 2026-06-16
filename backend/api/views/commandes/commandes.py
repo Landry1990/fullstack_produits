@@ -551,14 +551,25 @@ class CommandeViewSet(MultiTermSearchMixin, OptimizedSerializerMixin, viewsets.M
                             
                             existing_produit.stock += Decimal(total_qty)
                     
+                    # Capturer le stock APRES réception pour chaque ligne
+                    items_to_update_stock = []
+                    for item in items:
+                        produit = product_map.get(item.produit_id)
+                        if produit:
+                            item.stock_apres_reception = int(produit.stock) if not produit.has_reserve_storage else int(produit.stock_reserve or 0)
+                            items_to_update_stock.append(item)
+                    
                     # Phase 2: Écritures en base avec optimistic locking
                     
-                    # 2.1 Créer tous les lots
+                    # 2.1 Créer tous les lots et mettre à jour stock_apres_reception
                     if lots_to_create:
                         StockLot.objects.bulk_create(lots_to_create, batch_size=100)
                         items_with_lot = [item for item in items if item.lot]
                         if items_with_lot:
                             CommandeProduit.objects.bulk_update(items_with_lot, ['lot'], batch_size=100)
+                    
+                    if items_to_update_stock:
+                        CommandeProduit.objects.bulk_update(items_to_update_stock, ['stock_apres_reception'], batch_size=100)
                     
                     # 2.2 Mettre à jour les produits avec incrémentation de version
                     if produits_to_update:

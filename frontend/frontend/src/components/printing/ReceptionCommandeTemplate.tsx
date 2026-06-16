@@ -26,15 +26,19 @@ export const ReceptionCommandeTemplate: React.FC<ReceptionCommandeTemplateProps>
 
     const produits = commande.produits || [];
     
-    // Calculate totals
-    const totalHT = produits.reduce((sum, p) => sum + (parseFloat(p.price) * p.quantity), 0);
-    const totalTVA = produits.reduce((sum, p) => {
+    // Calculate totals — utiliser les totaux backend si disponibles (arrondis en Decimal côté backend)
+    const totalHT = commande.total_ht ? parseFloat(commande.total_ht) : produits.reduce((sum, p) => {
+        const lineHT = Math.round((parseFloat(p.price) * p.quantity) * 100) / 100;
+        return sum + lineHT;
+    }, 0);
+    const totalTVA = commande.total_tva ? parseFloat(commande.total_tva) : produits.reduce((sum, p) => {
         const price = parseFloat(p.price);
         const qty = p.quantity;
         const tvaPercent = parseFloat(String(p.tva || 0));
-        return sum + (price * qty * tvaPercent / 100);
+        const lineTVA = Math.round((price * qty * tvaPercent / 100) * 100) / 100;
+        return sum + lineTVA;
     }, 0);
-    const totalTTC = totalHT + totalTVA;
+    const totalTTC = commande.total_ttc ? parseFloat(commande.total_ttc) : Math.round((totalHT + totalTVA) * 100) / 100;
     const totalUG = produits.reduce((sum, p) => sum + (p.unites_gratuites || 0), 0);
 
     return (
@@ -122,7 +126,8 @@ export const ReceptionCommandeTemplate: React.FC<ReceptionCommandeTemplateProps>
                             
                             // Audit de stock
                             const qtyTotal = (p.quantity || 0) + (p.unites_gratuites || 0);
-                            const currentStock = (p as any).produit_stock ?? 0;
+                            const stockApres = (p as any).produit_stock_apres_reception ?? 0;
+                            const currentStock = stockApres > 0 ? stockApres : ((p as any).produit_stock ?? 0);
                             const stAnt = currentStock - qtyTotal;
 
                             return (
