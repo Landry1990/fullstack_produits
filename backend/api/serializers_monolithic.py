@@ -1,6 +1,7 @@
 from rest_framework import serializers
 from django.contrib.auth.models import User
 from django.db.models import Sum, Q
+from django.utils import timezone
 from decimal import Decimal
 from .models import (
     Produit, Rayon, Fournisseur, Client, Commande, 
@@ -25,18 +26,6 @@ class PromotionPackItemSerializer(serializers.ModelSerializer):
     class Meta:
         model = PromotionPackItem
         fields = ['product', 'product_name', 'quantity']
-
-class PromotionSerializer(serializers.ModelSerializer):
-    """Serializer pour la gestion des promotions"""
-    # OPTIMISATION: Utilise les annotations SQL au lieu de requêtes N+1 (.count)
-    products_count = serializers.IntegerField(read_only=True)  # From annotation
-    rayons_count = serializers.IntegerField(read_only=True)      # From annotation
-    discount_type_display = serializers.CharField(source='get_discount_type_display', read_only=True)
-    pack_items = PromotionPackItemSerializer(many=True, required=False)
-    
-    class Meta:
-        model = Promotion
-        fields = '__all__'
 
 class ConfigurationObjectifsSerializer(serializers.ModelSerializer):
     class Meta:
@@ -241,7 +230,7 @@ class UserSerializer(serializers.ModelSerializer):
         
         # Profile is created by signal, update it
         if profile_data:
-            profile = user.profile
+            profile = user.profile  # type: ignore[attr-defined]
             profile.allowed_menus = profile_data.get('allowed_menus', [])
             profile.can_do_returns = profile_data.get('can_do_returns', False)
             profile.can_sell_negative_stock = profile_data.get('can_sell_negative_stock', False)
@@ -285,7 +274,7 @@ class UserSerializer(serializers.ModelSerializer):
         instance.save()
 
         if profile_data:
-            profile = instance.profile
+            profile = instance.profile  # type: ignore[attr-defined]
             profile.allowed_menus = profile_data.get('allowed_menus', profile.allowed_menus)
             profile.can_do_returns = profile_data.get('can_do_returns', profile.can_do_returns)
             profile.can_sell_negative_stock = profile_data.get('can_sell_negative_stock', profile.can_sell_negative_stock)
@@ -577,6 +566,7 @@ class ProduitSerializer(serializers.ModelSerializer):
 class CommandeProduitSerializer(serializers.ModelSerializer):
     produit_nom = serializers.SerializerMethodField()
     produit_stock = serializers.SerializerMethodField()
+    produit_stock_apres_reception = serializers.IntegerField(source='stock_apres_reception', read_only=True)
     produit_rotation_moyenne = serializers.SerializerMethodField()
     produit_cip = serializers.SerializerMethodField()
     
@@ -596,7 +586,7 @@ class CommandeProduitSerializer(serializers.ModelSerializer):
     class Meta:
         model = CommandeProduit
         fields = '__all__'
-        read_only_fields = ['created_at', 'updated_at', 'total_quantity', 'effective_cost']
+        read_only_fields = ['created_at', 'updated_at', 'total_quantity', 'effective_cost', 'stock_apres_reception']
 
     def validate(self, data):
         # Allow instance prices if not provided in data
@@ -677,6 +667,9 @@ class CommandeSerializer(serializers.ModelSerializer):
     fournisseur_nom = serializers.SerializerMethodField()
     produits = CommandeProduitSerializer(many=True, read_only=True)
     total = serializers.DecimalField(max_digits=10, decimal_places=2, read_only=True)
+    total_ht = serializers.DecimalField(max_digits=10, decimal_places=2, read_only=True)
+    total_tva = serializers.DecimalField(max_digits=10, decimal_places=2, read_only=True)
+    total_ttc = serializers.DecimalField(max_digits=10, decimal_places=2, read_only=True)
     closed_by_name = serializers.SerializerMethodField()
 
     class Meta:

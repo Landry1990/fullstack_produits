@@ -182,6 +182,7 @@ class CommandeProduit(models.Model):
     selling_price = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
     taux_marge = models.DecimalField(max_digits=5, decimal_places=2, blank=True, null=True, help_text="Taux de marge appliqué (ex: 1.60)")
     date_expiration = models.DateField(blank=True, null=True)
+    stock_apres_reception = models.IntegerField(default=0, help_text="Stock du produit après réception (capturé au moment de la clôture)")
     created_at = models.DateTimeField(default=timezone.now)
     updated_at = models.DateTimeField(auto_now=True)
 

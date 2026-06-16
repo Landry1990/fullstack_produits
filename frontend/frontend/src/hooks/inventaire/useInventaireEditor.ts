@@ -306,6 +306,7 @@ export const useInventaireEditor = (
             const error = err as { response?: { data?: { detail?: string } } };
             toast.error(error.response?.data?.detail || t('inventaire.validation.error'));
             console.error(err);
+            throw err;
         } finally {
             setSaving(false);
         }
