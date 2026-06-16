@@ -20,7 +20,6 @@ import {
   useProduitLots,
   useProduitStats,
   useProduitHistory,
-  useUpdateProduit,
   useAdjustStock,
   useDeleteProduit,
   useRecalculateRotation
@@ -36,7 +35,6 @@ import { ProductTable } from './products/ProductTable';
 import { BulkActionsBar } from './products/BulkActionsBar';
 import { ProductDetailPanel } from './products/ProductDetailPanel';
 import { ProductDetailsModal } from './products/modals/ProductDetailsModal';
-import { ProductEditModal } from './products/modals/ProductEditModal';
 import { StockAdjustmentModal } from './products/modals/StockAdjustmentModal';
 import ImportProductsModal from './products/ImportProductsModal';
 import Pagination from './ui/Pagination';
@@ -150,7 +148,6 @@ export default function Produit() {
   const detailsLoading = detailsLoadingLots || detailsLoadingStats || loadingAchats;
 
   // Mutations
-  const updateProduitMutation = useUpdateProduit();
   const deleteProduitMutation = useDeleteProduit();
   const adjustStockMutation = useAdjustStock();
   const recalculateRotationMutation = useRecalculateRotation();
@@ -263,6 +260,7 @@ export default function Produit() {
 
   const handleOpenEditModal = (produit: ProduitModel) => {
     setEditForm({
+      id: produit.id,
       name: produit.name,
       stock: String(produit.stock ?? ''),
       cost_price: String(produit.cost_price ?? ''),
@@ -288,41 +286,6 @@ export default function Produit() {
       message_alerte: produit.message_alerte || ''
     })
     setIsEditModalOpen(true)
-  }
-
-  const handleUpdateProduit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!selectedProduit) return
-    
-    if (parseInt(editForm.stock || '0', 10) !== selectedProduit.stock) {
-      toast.error('⚠️ ' + t('products:messages.stock_update_warning'), { duration: 6000 })
-      setEditForm((prev: any) => ({ ...prev, stock: String(selectedProduit.stock) }))
-      return
-    }
-    
-    try {
-      const payload = {
-        ...editForm,
-        name: editForm.name.trim().toUpperCase(),
-        cip1: editForm.cip1?.trim() || null,
-        cip2: editForm.cip2?.trim() || null,
-        cip3: editForm.cip3?.trim() || null,
-        expire_date: editForm.expire_date || null,
-        stock_alert: parseInt(editForm.stock_alert || '0', 10),
-        stock_minimum: parseInt(editForm.stock_minimum || '0', 10),
-        stock_maximum: parseInt(editForm.stock_maximum || '0', 10),
-        rayon: editForm.rayon ? parseInt(editForm.rayon, 10) : null,
-        fournisseur: editForm.fournisseur ? parseInt(editForm.fournisseur, 10) : null,
-        forme: editForm.forme ? parseInt(editForm.forme, 10) : null,
-        capacite_rayon: parseInt(editForm.capacite_rayon || '0', 10),
-        min_rayon: parseInt(editForm.min_rayon || '0', 10),
-        message_alerte: editForm.message_alerte?.trim() || null
-      }
-      const updatedProduit = await updateProduitMutation.mutateAsync({ id: selectedProduit.id, data: payload })
-      setSelectedProduit(updatedProduit)
-      setIsEditModalOpen(false)
-      toast.success(t('products:messages.update_success'))
-    } catch (err) { toast.error(getApiErrorDetail(err, t('products:messages.update_error'))) }
   }
 
   const executeStockAdjustment = async () => {
@@ -580,10 +543,21 @@ export default function Produit() {
       </div>
 
       {/* Modals */}
-      <ProductEditModal 
-        isOpen={isEditModalOpen} onClose={() => setIsEditModalOpen(false)} 
-        form={editForm} setForm={setEditForm} onSubmit={handleUpdateProduit}
-        rayons={rayons} fournisseurs={fournisseurs} tvaList={tvaList}
+      <ProduitCreateModal
+        open={isEditModalOpen}
+        onClose={() => setIsEditModalOpen(false)}
+        onSuccess={(updated) => {
+          setSelectedProduit(updated);
+          setIsEditModalOpen(false);
+          refetchProduits();
+          toast.success(t('products:messages.update_success'));
+        }}
+        produitsEndpoint="produits/"
+        initialData={editForm}
+        rayons={rayons}
+        fournisseurs={fournisseurs}
+        formes={formes}
+        groupes={groupes as any}
       />
       <StockAdjustmentModal 
         isOpen={isAdjustmentModalOpen} onClose={() => setIsAdjustmentModalOpen(false)}
@@ -594,9 +568,20 @@ export default function Produit() {
         isOpen={isPasswordModalOpen} onClose={() => setIsPasswordModalOpen(false)}
         onConfirm={pendingAction} title={passwordModalConfig.title} message={passwordModalConfig.message}
       />
-      <ProduitCreateModal 
-        open={isCreateModalOpen} onClose={() => setIsCreateModalOpen(false)} onCreated={() => { refetchProduits(); setIsCreateModalOpen(false); }}
-        produitsEndpoint={'produits/'} rayons={rayons} fournisseurs={fournisseurs} formes={formes} groupes={groupes as any}
+      <ProduitCreateModal
+        open={isCreateModalOpen}
+        onClose={() => setIsCreateModalOpen(false)}
+        onCreated={(produit) => {
+          refetchProduits();
+          setIsCreateModalOpen(false);
+          setSelectedProduit(produit);
+          toast.success(`✅ ${produit.name} — ${t('products:messages.create_success', { defaultValue: 'Produit créé avec succès' })}`);
+        }}
+        produitsEndpoint={'produits/'}
+        rayons={rayons}
+        fournisseurs={fournisseurs}
+        formes={formes}
+        groupes={groupes as any}
       />
       {isImportModalOpen && (
         <ImportProductsModal 

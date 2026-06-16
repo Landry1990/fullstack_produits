@@ -63,7 +63,25 @@
     "operator": "Opérateur",
     "closures": "Clôtures",
     "avg_gap": "Écart Moyen",
-    "trend": "Tendance"
+    "trend": "Tendance",
+    "list_title": "Clôtures détaillées",
+    "daily_title": "Récapitulatif journalier"
+  },
+  "view_mode": {
+    "list": "Liste",
+    "daily": "Par jour"
+  },
+  "daily": {
+    "header_date": "Date",
+    "header_count": "Clôtures",
+    "header_theoretical": "Théorique",
+    "header_real": "Réel",
+    "header_gap": "Écart",
+    "header_sales": "Ventes",
+    "header_entries": "Entrées",
+    "header_exits": "Sorties",
+    "no_data": "Aucune donnée journalière",
+    "footer_total": "Totaux"
   },
   "pagination": {
     "showing": "Affichage de {{start}} à {{end}} sur {{total}}",

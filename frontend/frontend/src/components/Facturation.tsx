@@ -1,7 +1,10 @@
 import { useRef, useEffect } from 'react'
-import { Eye, EyeOff, Moon, Sun } from 'lucide-react'
+import { Eye, EyeOff, Moon, Sun, FileText, ShoppingCart, AlertTriangle } from 'lucide-react'
 import { formatCurrency } from '../utils/formatters'
 import { formatDateShort } from '../utils/dateUtils'
+import { Button } from './shadcn/button'
+import { Badge } from './shadcn/badge'
+import { cn } from '../lib/utils'
 import PaymentModal from './facturation/PaymentModal'
 import OrdonnanceModal from './OrdonnanceModal'
 import LotSelectionModal from './LotSelectionModal'
@@ -38,83 +41,93 @@ export default function Facturation() {
   }, [hook.forceStockProduct])
 
   return (
-    <div className="h-full flex flex-col bg-base-100 font-sans text-base-content overflow-hidden">
+    <div className="h-full flex flex-col bg-slate-50 font-sans text-slate-900 overflow-hidden">
 
-      {/* ── HEADER ─────────────────────────────────────────── */}
-      <div className="flex items-center justify-between px-3 sm:px-5 py-2.5 border-b border-base-200 bg-base-100 shrink-0 shadow-sm">
-        
+      {/* ── HEADER SHADCN ─────────────────────────────────── */}
+      <div className="flex items-center justify-between px-4 sm:px-6 py-3 border-b border-slate-200 bg-white shrink-0 shadow-sm">
+
         {/* Left */}
-        <div className="flex items-center gap-2 sm:gap-3">
-          <div className="p-1.5 bg-primary/10 text-primary rounded-xl shrink-0">
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
-            </svg>
+        <div className="flex items-center gap-3">
+          <div className="p-2 bg-emerald-100 text-emerald-600 rounded-xl shrink-0">
+            <FileText className="size-5" />
           </div>
-          <h1 className="text-sm sm:text-base font-black text-base-content uppercase tracking-widest truncate">{hook.t('facturation:title')}</h1>
+          <h1 className="text-base font-bold text-slate-900 uppercase tracking-wider truncate">{hook.t('facturation:title')}</h1>
 
-          <div className="flex items-center gap-1 border-l border-base-200 pl-2 ml-1">
-            <button
+          <div className="flex items-center gap-1 border-l border-slate-200 pl-3 ml-1">
+            <Button
+              variant="ghost"
+              size="icon"
               onClick={hook.toggleZenithMode}
-              className={`size-7 rounded-lg flex items-center justify-center transition-all ${hook.isZenithMode ? 'bg-primary text-white' : 'text-base-content/40 hover:text-base-content hover:bg-base-200'}`}
-              title={hook.isZenithMode ? hook.t('pos.exit_zenith') : hook.t('pos.zenith_title')}
+              className={cn(
+                "size-8 rounded-lg transition-all",
+                hook.isZenithMode
+                  ? 'bg-emerald-600 text-white hover:bg-emerald-700'
+                  : 'text-slate-400 hover:text-slate-700 hover:bg-slate-100'
+              )}
             >
-              {hook.isZenithMode ? <EyeOff size={14} /> : <Eye size={14} />}
-            </button>
-            <button
+              {hook.isZenithMode ? <EyeOff size={16} /> : <Eye size={16} />}
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
               onClick={hook.toggleMidnightTheme}
-              className={`size-7 rounded-lg flex items-center justify-center transition-all ${hook.isMidnightTheme ? 'bg-secondary text-white' : 'text-base-content/40 hover:text-base-content hover:bg-base-200'}`}
-              title={hook.isMidnightTheme ? hook.t('pos.theme_light') : hook.t('pos.theme_dark')}
+              className={cn(
+                "size-8 rounded-lg transition-all",
+                hook.isMidnightTheme
+                  ? 'bg-slate-800 text-amber-400 hover:bg-slate-900'
+                  : 'text-slate-400 hover:text-slate-700 hover:bg-slate-100'
+              )}
             >
-              {hook.isMidnightTheme ? <Sun size={14} /> : <Moon size={14} />}
-            </button>
+              {hook.isMidnightTheme ? <Sun size={16} /> : <Moon size={16} />}
+            </Button>
           </div>
 
           {hook.ventesEnAttente.length > 0 && (
-            <button
+            <Button
               onClick={() => hook.setShowPendingSales(true)}
-              className="flex items-center gap-1.5 px-2.5 py-1.5 bg-amber-500 hover:bg-amber-400 text-white rounded-xl text-xs font-bold shadow-lg shadow-amber-500/30 transition-all animate-pulse"
-              title={hook.t('facturation:actions.view_pending_tooltip')}
+              variant="default"
+              className="gap-2 bg-amber-500 hover:bg-amber-600 text-white rounded-xl text-xs font-semibold shadow-lg shadow-amber-500/20 animate-pulse h-8"
             >
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-              <span className="font-black">{hook.ventesEnAttente.length}</span>
-              <span className="hidden sm:inline uppercase text-[10px] tracking-widest">{hook.t('facturation:actions.pending')}</span>
-            </button>
+              <ShoppingCart className="size-3.5" />
+              <span className="font-bold">{hook.ventesEnAttente.length}</span>
+              <span className="hidden sm:inline uppercase text-[10px] tracking-wider">{hook.t('facturation:actions.pending')}</span>
+            </Button>
           )}
         </div>
 
         {/* Right: date + shortcuts */}
         <div className="flex flex-col items-end shrink-0">
-          <span className="text-[10px] sm:text-xs font-semibold text-base-content/50">{formatDateShort(new Date())}</span>
-          <div className="hidden sm:flex gap-3 text-[9px] text-base-content/30 mt-0.5 uppercase font-bold tracking-widest">
-            <span className="flex items-center gap-1"><kbd className="kbd kbd-xs py-0 h-3.5 font-sans">/</kbd> {hook.t('facturation:shortcuts.search')}</span>
-            <span className="flex items-center gap-1"><kbd className="kbd kbd-xs py-0 h-3.5 font-sans">F9</kbd> {hook.t('facturation:shortcuts.pay')}</span>
+          <span className="text-xs font-medium text-slate-500">{formatDateShort(new Date())}</span>
+          <div className="hidden sm:flex gap-3 text-[10px] text-slate-400 mt-0.5 uppercase font-semibold tracking-wider">
+            <span className="flex items-center gap-1"><kbd className="px-1.5 py-0.5 bg-slate-100 rounded text-slate-600 font-mono text-[9px]">/</kbd> {hook.t('facturation:shortcuts.search')}</span>
+            <span className="flex items-center gap-1"><kbd className="px-1.5 py-0.5 bg-slate-100 rounded text-slate-600 font-mono text-[9px]">F9</kbd> {hook.t('facturation:shortcuts.pay')}</span>
           </div>
         </div>
       </div>
 
-      {/* ── BANNIÈRE MODE MODIFICATION ── */}
+      {/* ── BANNIÈRE MODE MODIFICATION SHADCN ── */}
       {hook.isModificationMode && hook.modificationInvoiceId && (
-        <div className="flex items-center gap-3 px-4 py-2.5 bg-warning/10 border-b border-amber-200 shrink-0">
-          <div className="p-1.5 bg-warning/20 text-warning rounded-lg shrink-0">
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-            </svg>
+        <div className="flex items-center gap-3 px-4 py-3 bg-amber-50 border-b border-amber-200 shrink-0">
+          <div className="p-2 bg-amber-100 text-amber-600 rounded-xl shrink-0">
+            <AlertTriangle className="size-4" />
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-xs font-black text-amber-800 uppercase tracking-wide">{hook.t('facturation:modification_mode.title')}</p>
-            <div className="flex flex-wrap gap-3 text-[10px] text-warning mt-0.5">
-              <span>{hook.t('facturation:modification_mode.original_total')}: <strong>{formatCurrency(Math.round(hook.originalTotalTtc))}</strong></span>
-              <span>{hook.t('facturation:modification_mode.new_total')}: <strong>{formatCurrency(Math.round(hook.totals.totalTtc))}</strong></span>
+            <p className="text-xs font-bold text-amber-800 uppercase tracking-wide">{hook.t('facturation:modification_mode.title')}</p>
+            <div className="flex flex-wrap gap-3 text-[11px] text-amber-700 mt-0.5">
+              <span>{hook.t('facturation:modification_mode.original_total')}: <strong className="font-semibold">{formatCurrency(Math.round(hook.originalTotalTtc))}</strong></span>
+              <span>{hook.t('facturation:modification_mode.new_total')}: <strong className="font-semibold">{formatCurrency(Math.round(hook.totals.totalTtc))}</strong></span>
               {hook.totals.totalTtc !== hook.originalTotalTtc && (
-                <span className={`font-black ${hook.totals.totalTtc > hook.originalTotalTtc ? 'text-success' : 'text-error'}`}>
+                <Badge variant={hook.totals.totalTtc > hook.originalTotalTtc ? 'default' : 'destructive'} className="text-[10px] h-5">
                   {hook.totals.totalTtc > hook.originalTotalTtc ? '+' : ''}{formatCurrency(Math.round(hook.totals.totalTtc - hook.originalTotalTtc))}
                   {hook.totals.totalTtc > hook.originalTotalTtc ? ` (${hook.t('facturation:modification_mode.to_collect')})` : ` (${hook.t('facturation:modification_mode.to_refund')})`}
-                </span>
+                </Badge>
               )}
             </div>
           </div>
-          <button
-            className="btn btn-xs btn-ghost text-warning shrink-0"
+          <Button
+            variant="ghost"
+            size="sm"
+            className="text-amber-700 hover:text-amber-800 hover:bg-amber-100 shrink-0"
             onClick={() => {
               hook.setIsModificationMode(false)
               hook.setModificationInvoiceId(null)
@@ -123,7 +136,7 @@ export default function Facturation() {
             }}
           >
             {hook.t('common:cancel')}
-          </button>
+          </Button>
         </div>
       )}
 
@@ -143,11 +156,11 @@ export default function Facturation() {
       <div className="flex-1 flex flex-col lg:flex-row overflow-hidden min-h-0">
 
         {/* LEFT : Recherche & Client */}
-        <div className="shrink-0 lg:flex-1 flex flex-col overflow-y-auto pos-discovery p-3 sm:p-4 lg:p-5 gap-4 min-h-0">
+        <div className="shrink-0 lg:flex-1 flex flex-col overflow-y-auto pos-discovery p-4 sm:p-5 lg:p-6 gap-4 min-h-0 bg-slate-50">
 
           <div className="w-full flex flex-col gap-4 shrink-0">
             {/* Client */}
-            <div className="pos-glass-input-container rounded-2xl relative z-20">
+            <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-1 relative z-20">
               <ClientSection
                 inputRef={hook.clientSearchRef}
                 clients={hook.clientsHook.clients}
@@ -183,7 +196,7 @@ export default function Facturation() {
             </div>
 
             {/* Produit */}
-            <div className="pos-glass-input-container rounded-2xl relative z-10">
+            <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-1 relative z-10">
               <ProductSearchSection
                 searchQuery={hook.productSearch.searchQuery}
                 setSearchQuery={hook.productSearch.setSearchQuery}
@@ -200,22 +213,22 @@ export default function Facturation() {
           </div>
 
           {/* Zone vide — raccourcis */}
-          <div className="flex-1 hidden lg:flex flex-col justify-center items-center text-base-content/20 hover:opacity-60 transition-opacity duration-500">
-            <div className="w-full max-w-xs rounded-2xl border border-dashed border-base-300 p-6 flex flex-col items-center gap-5 text-center">
-              <div className="size-12 rounded-xl bg-primary/10 flex items-center justify-center">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <div className="flex-1 hidden lg:flex flex-col justify-center items-center text-slate-300 hover:opacity-70 transition-opacity duration-500">
+            <div className="w-full max-w-xs rounded-2xl border-2 border-dashed border-slate-200 p-6 flex flex-col items-center gap-5 text-center bg-white/50">
+              <div className="size-12 rounded-xl bg-emerald-50 flex items-center justify-center">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm14 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z" />
                 </svg>
               </div>
               <div>
-                <p className="text-xs font-black text-base-content uppercase tracking-widest mb-1">{hook.t('pos.ready_for_sale')}</p>
-                <p className="text-[10px] text-base-content/50">{hook.t('pos.scan_or_search')}</p>
+                <p className="text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">{hook.t('pos.ready_for_sale')}</p>
+                <p className="text-[10px] text-slate-400">{hook.t('pos.scan_or_search')}</p>
               </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 w-full">
+              <div className="grid grid-cols-2 gap-2 w-full">
                 {[['F9',hook.t('facturation.shortcuts.validate')],['ENTRÉE',hook.t('facturation.shortcuts.search_enter')],['ESC',hook.t('facturation.shortcuts.cancel')],['F8',hook.t('facturation.shortcuts.pending')]].map(([k,v]) => (
-                  <div key={k} className="bg-base-200/60 rounded-xl p-2 flex flex-col items-center gap-1">
-                    <kbd className="kbd kbd-xs font-sans text-[9px]">{k}</kbd>
-                    <span className="text-[8px] uppercase font-bold text-base-content/40">{v}</span>
+                  <div key={k} className="bg-slate-100 rounded-xl p-2 flex flex-col items-center gap-1">
+                    <kbd className="px-1.5 py-0.5 bg-white rounded text-slate-600 font-mono text-[9px] font-bold shadow-sm">{k}</kbd>
+                    <span className="text-[9px] uppercase font-semibold text-slate-400">{v}</span>
                   </div>
                 ))}
               </div>
@@ -224,19 +237,19 @@ export default function Facturation() {
         </div>
 
         {/* RIGHT : Panier */}
-        <aside className="w-full lg:w-[400px] xl:w-[440px] pos-checkout flex flex-col z-10 border-t lg:border-t-0 overflow-hidden flex-1 lg:flex-none lg:min-h-0 lg:h-full">
+        <aside className="w-full lg:w-[400px] xl:w-[440px] pos-checkout flex flex-col z-10 border-t lg:border-t-0 lg:border-l border-slate-200 overflow-hidden flex-1 lg:flex-none lg:min-h-0 lg:h-full bg-white">
 
           {/* Panier header */}
-          <div className="px-4 py-3 bg-base-200/50 border-b border-base-300 flex items-center justify-between shrink-0">
-            <h2 className="font-black text-sm text-base-content flex items-center gap-2 uppercase tracking-widest">
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <div className="px-4 py-3 bg-slate-50 border-b border-slate-200 flex items-center justify-between shrink-0">
+            <h2 className="font-bold text-sm text-slate-800 flex items-center gap-2 uppercase tracking-wider">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
               </svg>
               {hook.t('facturation:cart.title')}
             </h2>
-            <span className={`text-xs font-black px-2 py-0.5 rounded-lg ${hook.lignesFacture.length > 0 ? 'bg-primary text-white' : 'bg-base-200 text-base-content/40'}`}>
+            <Badge variant={hook.lignesFacture.length > 0 ? 'default' : 'secondary'} className="h-5 text-xs">
               {hook.lignesFacture.length}
-            </span>
+            </Badge>
           </div>
 
           {/* Alertes cliniques */}
@@ -261,7 +274,7 @@ export default function Facturation() {
           </div>
 
           {/* Totaux + actions - FIXE EN BAS */}
-          <div className="shrink-0 p-3 border-t border-base-300 bg-base-200/50">
+          <div className="shrink-0 p-4 border-t border-slate-200 bg-slate-50">
             <TotalsSection
               totalHT={hook.totals.totalHt}
               remiseGlobale={hook.ui.remiseGlobale}

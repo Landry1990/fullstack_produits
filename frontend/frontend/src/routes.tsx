@@ -54,14 +54,14 @@ export function prefetchRoute(factory: () => Promise<any>) {
 }
 
 // ── Eager-loaded (critical path - toujours chargees) ──
-import Login from './components/Login';
+import Login from './components/LoginShadcn';
 import Layout from './components/Layout';
 import PrintPage from './components/printing/PrintPage';
 import LicenceScreen from './components/LicenceScreen';
 
 // Routes principales - eager loaded pour performance
-import Dashboard from './components/Dashboard';
-import DashboardManager from './components/DashboardManager';
+import Dashboard from './components/DashboardShadcn';
+import DashboardManager from './components/DashboardManagerShadcn';
 import Produit from './components/Produit';
 import Ventes from './components/Ventes';
 import Facturation from './components/Facturation';

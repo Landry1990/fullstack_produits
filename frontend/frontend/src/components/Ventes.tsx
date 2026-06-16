@@ -15,7 +15,9 @@ import { usePharmacySettings } from '../hooks/usePharmacySettings';
 
 import { TrancheHoraireStats } from './sales/TrancheHoraireStats';
 import Pagination from './ui/Pagination';
-import { Receipt } from 'lucide-react';
+import { Receipt, Plus } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { Button } from './shadcn/button';
 
 const Ventes: React.FC = () => {
     const { t } = useTranslation(['sales', 'common']);
@@ -61,26 +63,35 @@ const Ventes: React.FC = () => {
     }, [location.state, filteredFactures, actions, navigate]);
     
     return (
-        <div className="min-h-screen bg-base-200 font-sans">
+        <div className="min-h-screen bg-slate-50 font-sans">
 
             {/* ── HEADER ── */}
-            <div className="sticky top-0 z-30 bg-base-100 border-b border-base-200 px-4 sm:px-6 py-3">
-                <div className="flex items-center gap-3 min-w-0">
-                    <div className="p-2 bg-primary/10 text-primary rounded-lg shrink-0">
-                        <Receipt className="size-5" />
+            <div className="sticky top-0 z-30 bg-white border-b border-slate-200 px-6 py-4 shadow-sm">
+                <div className="flex items-center justify-between gap-4">
+                    <div className="flex items-center gap-3 min-w-0">
+                        <div className="bg-emerald-100 text-emerald-600 rounded-xl p-2.5 shrink-0">
+                            <Receipt className="size-6" />
+                        </div>
+                        <div className="min-w-0">
+                            <h1 className="text-xl font-bold text-slate-900 tracking-tight truncate">
+                                {t('title')}
+                            </h1>
+                            <p className="text-sm text-slate-500">
+                                {t('subtitle')}
+                            </p>
+                        </div>
                     </div>
-                    <div className="min-w-0">
-                        <h1 className="text-base font-bold text-base-content tracking-tight leading-none truncate">
-                            {t('title')}
-                        </h1>
-                        <p className="text-[10px] font-medium text-base-content/50 uppercase tracking-widest">
-                            {t('subtitle')}
-                        </p>
-                    </div>
+                    <Link to="/app/facturation">
+                        <Button className="gap-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 shadow-lg shadow-emerald-600/20">
+                            <Plus className="size-4" />
+                            <span className="hidden sm:inline">Nouvelle vente</span>
+                            <span className="sm:hidden">Vente</span>
+                        </Button>
+                    </Link>
                 </div>
             </div>
 
-            <div className="p-4 sm:p-6 space-y-5">
+            <div className="p-6 space-y-6">
                 <SalesFilters
                     filters={filters}
                     onDeleteDrafts={handleDeleteBrouillons}
@@ -110,7 +121,7 @@ const Ventes: React.FC = () => {
                 )}
 
                 {/* Main Content: Table */}
-                <div className="bg-base-100 rounded-xl shadow-sm border border-base-200 overflow-visible">
+                <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-visible">
                     <SalesTable
                         factures={filteredFactures}
                         loading={loading}
@@ -125,15 +136,17 @@ const Ventes: React.FC = () => {
                         onBulkDelete={bulkDeleteFactures}
                     />
 
-                    <Pagination
-                        currentPage={pagination?.currentPage || 1}
-                        totalPages={pagination?.totalPages || 1}
-                        totalItems={pagination?.totalItems || 0}
-                        onPrev={() => pagination?.prevPage && pagination.prevPage()}
-                        onNext={() => pagination?.nextPage && pagination.nextPage()}
-                        hasNext={pagination?.hasNext}
-                        isLoading={loading}
-                    />
+                    <div className="border-t border-slate-100">
+                        <Pagination
+                            currentPage={pagination?.currentPage || 1}
+                            totalPages={pagination?.totalPages || 1}
+                            totalItems={pagination?.totalItems || 0}
+                            onPrev={() => pagination?.prevPage && pagination.prevPage()}
+                            onNext={() => pagination?.nextPage && pagination.nextPage()}
+                            hasNext={pagination?.hasNext}
+                            isLoading={loading}
+                        />
+                    </div>
                 </div>
 
                 {/* Modals */}

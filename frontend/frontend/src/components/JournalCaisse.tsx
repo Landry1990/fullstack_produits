@@ -10,13 +10,13 @@ export default function JournalCaisse() {
   const state = useJournalCaisse();
 
   return (
-    <div className="h-full flex flex-col bg-base-200/50">
+    <div className="h-full flex flex-col bg-slate-50">
       <JournalCaisseFilters state={state} />
       <JournalCaisseStats state={state} />
       <JournalCaisseTable state={state} />
       <JournalCaisseClosingModal state={state} />
-      
-      <CashMovementModal 
+
+      <CashMovementModal
         isOpen={state.isMovementModalOpen}
         onClose={() => state.setIsMovementModalOpen(false)}
         onSuccess={state.fetchData}

@@ -3,12 +3,15 @@ import { getLocale } from '../../utils/dateUtils';
 import { useTranslation } from 'react-i18next';
 import type { Promotion } from '../../types/Promotion';
 import { DiscountType, ApplicationMode } from '../../types/Promotion';
-import { useProductSearch } from '../../hooks/useProductSearch';
-import { useSearchNavigation } from '../../hooks/useSearchNavigation';
+import { ProductSearch, type SearchResult } from '../common/ProductSearch';
+import { useProductSearch as useProductSearchBase } from '../../hooks/product-search';
 import { useKeyboardNavigation } from '../../hooks/useKeyboardNavigation';
-import { Search, ShoppingBag, X, Plus, Minus, Calendar, Tag, Package, Trash2 } from 'lucide-react';
+import { ShoppingBag, X, Plus, Minus, Calendar, Tag, Package, Trash2, Search } from 'lucide-react';
 import api from '../../services/api';
 import { useEffect, useRef, useCallback } from 'react';
+import { Button } from '../shadcn/button';
+import { Badge } from '../shadcn/badge';
+import { cn } from '../../lib/utils';
 
 interface PromotionFormProps {
     onClose: () => void;
@@ -29,7 +32,6 @@ const PromotionForm: React.FC<PromotionFormProps> = ({ onClose, onSave, initialD
     const [endDate, setEndDate] = useState(initialData?.end_date ? new Date(initialData.end_date).toISOString().split('T')[0] : '');
     const [loading, setLoading] = useState(false);
 
-    const searchInputRef = useRef<HTMLInputElement>(null);
 
     const [selectedProducts, setSelectedProducts] = useState<any[]>(() => {
         if (!initialData) return [];
@@ -46,14 +48,13 @@ const PromotionForm: React.FC<PromotionFormProps> = ({ onClose, onSave, initialD
         return [];
     });
 
-    const addProduct = useCallback((product: any) => {
+    const addProduct = useCallback((product: SearchResult) => {
         setSelectedProducts(prev => {
             if (!prev.find(p => p.id === product.id)) {
                 return [...prev, { ...product, quantity: 1 }];
             }
             return prev;
         });
-        handleSearchChange('');
     }, []);
 
     const updateProductQuantity = useCallback((id: number, qty: number) => {
@@ -66,21 +67,22 @@ const PromotionForm: React.FC<PromotionFormProps> = ({ onClose, onSave, initialD
         setSelectedProducts(prev => prev.filter(p => p.id !== productId));
     }, []);
 
-    const { 
-        searchQuery, 
-        setSearchQuery: handleSearchChange, 
-        produits: searchResults
-    } = useProductSearch({ 
-        minSearchLength: 2,
-        debounceMs: 300,
-        onBarcodeMatch: (p) => addProduct(p)
+    // New ProductSearch architecture
+    const {
+        searchQuery,
+        setSearchQuery: handleSearchChange,
+        searchInputRef,
+        handleKeyDown,
+        getItemProps,
+        resetSearch
+    } = useProductSearchBase({
+        modes: ['products']
     });
 
-    const { handleKeyDown: handleSearchKeyDown, getItemProps } = useSearchNavigation(
-        searchResults,
-        (p) => addProduct(p),
-        { resetOnSelect: true, searchInputRef }
-    );
+    const handleAddProduct = (product: SearchResult) => {
+        addProduct(product);
+        resetSearch();
+    };
 
     const handleIncrement = useCallback((idx: number) => {
         setSelectedProducts(prev => {
@@ -182,52 +184,52 @@ const PromotionForm: React.FC<PromotionFormProps> = ({ onClose, onSave, initialD
 
     return (
         <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
-            <div className="bg-base-100 rounded-2xl shadow-2xl w-full max-w-5xl max-h-[92vh] overflow-hidden flex flex-col">
+            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-5xl max-h-[92vh] overflow-hidden flex flex-col">
                 {/* Header */}
-                <div className="p-6 border-b flex justify-between items-center bg-base-200/50">
+                <div className="p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
                     <div>
-                        <h2 className="text-2xl font-bold text-base-content flex items-center gap-2">
-                            {initialData ? <Tag className="text-primary" /> : <Plus className="text-success" />}
+                        <h2 className="text-2xl font-bold text-slate-800 flex items-center gap-2">
+                            {initialData ? <Tag className="text-emerald-600" /> : <Plus className="text-emerald-600" />}
                             {initialData ? t('promotions:form.title_edit') : t('promotions:form.title_new')}
                         </h2>
-                        <p className="text-sm text-base-content/60">{t('promotions:form.subtitle')}</p>
+                        <p className="text-sm text-slate-500">{t('promotions:form.subtitle')}</p>
                     </div>
-                    <button onClick={onClose} className="btn btn-ghost btn-circle">
+                    <Button variant="ghost" size="icon" onClick={onClose} className="size-10 rounded-full">
                         <X size={24} />
-                    </button>
+                    </Button>
                 </div>
                 
                 <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-6">
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                         {/* Info Section */}
                         <div className="md:col-span-2 space-y-6">
-                            <div className="bg-base-100 p-5 rounded-xl border shadow-sm space-y-4">
-                                <h3 className="text-xs font-bold uppercase text-base-content/40 tracking-wider flex items-center gap-2">
+                            <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm space-y-4">
+                                <h3 className="text-xs font-bold uppercase text-slate-400 tracking-wider flex items-center gap-2">
                                     <ShoppingBag size={14} /> {t('promotions:form.general_info')}
                                 </h3>
                                 <div>
-                                    <label className="block text-sm font-semibold text-base-content/90 mb-1">{t('promotions:form.pack_name')}</label>
-                                    <input 
-                                        type="text" 
-                                        className="input input-bordered w-full font-medium" 
-                                        value={name} 
-                                        onChange={e => setName(e.target.value)} 
-                                        placeholder={t('promotions:form.pack_placeholder')} 
-                                        required 
+                                    <label className="block text-sm font-semibold text-slate-700 mb-1">{t('promotions:form.pack_name')}</label>
+                                    <input
+                                        type="text"
+                                        className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 focus:outline-none focus:border-emerald-300 focus:ring-2 focus:ring-emerald-100 transition-all"
+                                        value={name}
+                                        onChange={e => setName(e.target.value)}
+                                        placeholder={t('promotions:form.pack_placeholder')}
+                                        required
                                     />
                                 </div>
                                 <div className="grid grid-cols-2 gap-4">
                                     <div>
-                                        <label className="block text-sm font-semibold text-base-content/90 mb-1 flex items-center gap-2 text-primary">
+                                        <label className="block text-sm font-semibold text-slate-700 mb-1 flex items-center gap-2 text-emerald-600">
                                             <Calendar size={14} /> {t('promotions:form.start_date')}
                                         </label>
-                                        <input type="date" lang={getLocale()} className="input input-bordered w-full" value={startDate} onChange={e => setStartDate(e.target.value)} required />
+                                        <input type="date" lang={getLocale()} className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 focus:outline-none focus:border-emerald-300 focus:ring-2 focus:ring-emerald-100 transition-all" value={startDate} onChange={e => setStartDate(e.target.value)} required />
                                     </div>
                                     <div>
-                                        <label className="block text-sm font-semibold text-base-content/90 mb-1 flex items-center gap-2 text-error">
+                                        <label className="block text-sm font-semibold text-slate-700 mb-1 flex items-center gap-2 text-red-500">
                                             <Calendar size={14} /> {t('promotions:form.end_date')}
                                         </label>
-                                        <input type="date" lang={getLocale()} className="input input-bordered w-full" value={endDate} onChange={e => setEndDate(e.target.value)} />
+                                        <input type="date" lang={getLocale()} className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 focus:outline-none focus:border-emerald-300 focus:ring-2 focus:ring-emerald-100 transition-all" value={endDate} onChange={e => setEndDate(e.target.value)} />
                                     </div>
                                 </div>
                             </div>
@@ -235,13 +237,13 @@ const PromotionForm: React.FC<PromotionFormProps> = ({ onClose, onSave, initialD
 
                         {/* Configuration Section */}
                         <div className="space-y-6">
-                            <div className="bg-base-200/50 p-5 rounded-xl border border-base-300 space-y-4">
-                                <h3 className="text-xs font-bold uppercase text-base-content/40 tracking-wider">{t('promotions:form.type_value')}</h3>
+                            <div className="bg-slate-50 p-5 rounded-xl border border-slate-200 space-y-4">
+                                <h3 className="text-xs font-bold uppercase text-slate-400 tracking-wider">{t('promotions:form.type_value')}</h3>
                                 <div>
-                                    <label className="block text-sm font-semibold text-base-content/90 mb-1">{t('promotions:form.promo_type')}</label>
-                                    <select 
-                                        className="select select-bordered w-full font-bold" 
-                                        value={discountType} 
+                                    <label className="block text-sm font-semibold text-slate-700 mb-1">{t('promotions:form.promo_type')}</label>
+                                    <select
+                                        className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 focus:outline-none focus:border-emerald-300 focus:ring-2 focus:ring-emerald-100 transition-all"
+                                        value={discountType}
                                         onChange={e => setDiscountType(e.target.value as DiscountType)}
                                     >
                                         <option value={DiscountType.PERCENTAGE}>{t('promotions:form.types.percentage')}</option>
@@ -252,33 +254,33 @@ const PromotionForm: React.FC<PromotionFormProps> = ({ onClose, onSave, initialD
                                 </div>
 
                                 {(discountType === DiscountType.PERCENTAGE || discountType === DiscountType.FIXED_AMOUNT || discountType === DiscountType.BUNDLE) && (
-                                    <div className="bg-base-100 p-3 rounded-lg border">
-                                        <label className="block text-xs font-bold uppercase text-base-content/60 mb-1">
+                                    <div className="bg-white p-3 rounded-lg border border-slate-200">
+                                        <label className="block text-xs font-bold uppercase text-slate-500 mb-1">
                                             {discountType === DiscountType.BUNDLE ? t('promotions:form.labels.pack_price') : t('promotions:form.labels.discount_value')}
                                         </label>
                                         <div className="relative">
-                                            <input 
-                                                type="number" 
-                                                className="input input-bordered w-full font-black text-2xl text-primary h-14" 
-                                                value={value} 
-                                                onChange={e => setValue(Number(e.target.value))} 
+                                            <input
+                                                type="number"
+                                                className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-2xl font-black text-emerald-600 h-14 focus:outline-none focus:border-emerald-300 focus:ring-2 focus:ring-emerald-100 transition-all"
+                                                value={value}
+                                                onChange={e => setValue(Number(e.target.value))}
                                             />
-                                            <span className="absolute right-4 top-1/2 -translate-y-1/2 font-bold text-base-content/40">
+                                            <span className="absolute right-4 top-1/2 -translate-y-1/2 font-bold text-slate-400">
                                                 {discountType === DiscountType.PERCENTAGE ? '%' : t('common:currency')}
                                             </span>
                                         </div>
                                     </div>
                                 )}
-                                
+
                                 {discountType === DiscountType.BUY_X_GET_Y && (
                                     <div className="grid grid-cols-2 gap-2">
-                                        <div className="bg-base-100 p-2 rounded-lg border">
-                                            <label className="block text-[10px] font-bold uppercase text-base-content/60">{t('promotions:form.labels.buy')}</label>
-                                            <input type="number" className="input input-bordered w-full input-sm font-bold" value={buyQuantity} onChange={e => setBuyQuantity(Number(e.target.value))} min="1" />
+                                        <div className="bg-white p-2 rounded-lg border border-slate-200">
+                                            <label className="block text-[10px] font-bold uppercase text-slate-500">{t('promotions:form.labels.buy')}</label>
+                                            <input type="number" className="w-full rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-sm font-bold focus:outline-none focus:border-emerald-300" value={buyQuantity} onChange={e => setBuyQuantity(Number(e.target.value))} min="1" />
                                         </div>
-                                        <div className="bg-base-100 p-2 rounded-lg border">
-                                            <label className="block text-[10px] font-bold uppercase text-base-content/60">{t('promotions:form.labels.get')}</label>
-                                            <input type="number" className="input input-bordered w-full input-sm font-bold text-success" value={getQuantity} onChange={e => setGetQuantity(Number(e.target.value))} />
+                                        <div className="bg-white p-2 rounded-lg border border-slate-200">
+                                            <label className="block text-[10px] font-bold uppercase text-slate-500">{t('promotions:form.labels.get')}</label>
+                                            <input type="number" className="w-full rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-sm font-bold text-emerald-600 focus:outline-none focus:border-emerald-300" value={getQuantity} onChange={e => setGetQuantity(Number(e.target.value))} />
                                         </div>
                                     </div>
                                 )}
@@ -290,147 +292,121 @@ const PromotionForm: React.FC<PromotionFormProps> = ({ onClose, onSave, initialD
                     <div className="mt-8">
                         <div className="flex flex-col gap-4">
                             <div className="flex items-center justify-between">
-                                <h3 className="font-bold text-lg flex items-center gap-2">
-                                    <Package size={20} className="text-secondary" /> 
+                                <h3 className="font-bold text-lg flex items-center gap-2 text-slate-800">
+                                    <Package size={20} className="text-violet-600" />
                                     {t('promotions:form.products.title')}
                                 </h3>
-                                <span className="badge badge-lg badge-ghost">{t('promotions:form.products.count', { count: selectedProducts.length })}</span>
+                                <Badge variant="secondary" className="text-xs">{t('promotions:form.products.count', { count: selectedProducts.length })}</Badge>
                             </div>
 
-                            <div className="relative group">
-                                <div className="absolute left-4 top-1/2 -translate-y-1/2 text-base-content/40 group-focus-within:text-primary transition-colors z-10">
-                                    <Search size={24} />
-                                </div>
-                                <input 
-                                    ref={searchInputRef}
-                                    type="text" 
-                                    className="input input-bordered w-full pl-14 h-16 text-xl shadow-lg ring-primary/10 focus:ring-4 transition-all" 
-                                    placeholder={t('promotions.form.products.search_placeholder')} 
-                                    value={searchQuery}
-                                    onChange={(e) => handleSearchChange(e.target.value)}
-                                    onKeyDown={handleSearchKeyDown}
-                                />
-                                
-                                {searchResults.length > 0 && (
-                                    <div className="absolute z-[100] left-0 right-0 mt-2 bg-base-100 border border-base-200 rounded-xl shadow-2xl overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
-                                        <div className="max-h-80 overflow-y-auto">
-                                            {searchResults.map((p, idx) => (
-                                                <div 
-                                                    key={p.id} 
-                                                    {...getItemProps(idx)}
-                                                    className={`p-4 hover:bg-primary/5 cursor-pointer border-b last:border-0 flex justify-between items-center transition-colors group/item ${getItemProps(idx).className}`}
-                                                    onClick={() => addProduct(p)}
-                                                >
-                                                    <div className="flex items-center gap-4">
-                                                        <div className="size-10 rounded-lg bg-base-200 flex items-center justify-center text-base-content/40 font-bold">
-                                                            {p.name.charAt(0)}
-                                                        </div>
-                                                        <div>
-                                                            <div className="font-bold text-base-content">{p.name}</div>
-                                                            <div className="text-xs text-base-content/60 flex gap-4">
-                                                                <span>{t('common:cip')}: {p.cip1 || t('common:not_available')}</span>
-                                                                <span className="flex items-center gap-1">
-                                                                    {t('promotions:form.products.stock')} <b className={`font-black ${p.stock <= 0 ? 'text-error' : 'text-success'}`}>{p.stock}</b>
-                                                                </span>
-                                                                <span className="font-bold">{p.selling_price} {t('common:currency')}</span>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                    <button type="button" className="btn btn-circle btn-primary btn-sm opacity-0 group-hover/item:opacity-100 transition-opacity">
-                                                        <Plus size={16} />
-                                                    </button>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    </div>
-                                )}
-                            </div>
+                            {/* Product Search using generic component */}
+                            <ProductSearch
+                                searchQuery={searchQuery}
+                                setSearchQuery={handleSearchChange}
+                                results={[]}
+                                loading={false}
+                                modes={['products']}
+                                onSelect={handleAddProduct}
+                                searchInputRef={searchInputRef}
+                                handleKeyDown={handleKeyDown}
+                                getItemProps={getItemProps}
+                                placeholder={t('promotions.form.products.search_placeholder')}
+                            />
                         </div>
                     </div>
 
                         {/* Selected Products Table */}
-                        <div className="mt-6 border rounded-2xl overflow-hidden shadow-sm">
-                            <table className="table w-full">
-                                <thead className="bg-base-200/50 border-b">
-                                    <tr className="text-base-content/60 uppercase text-[10px] tracking-widest">
-                                        <th className="py-4">{t('promotions:form.products.table.product')}</th>
-                                        <th className="py-4 text-center">{t('promotions:form.products.table.stock')}</th>
-                                        <th className="py-4 text-center w-32">{t('promotions:form.products.table.qty')}</th>
-                                        <th className="py-4 text-right">{t('promotions:form.products.table.unit_price')}</th>
-                                        {discountType !== DiscountType.BUNDLE && <th className="py-4 text-right">{t('promotions:form.products.table.discount_effect')}</th>}
-                                        <th className="py-4 w-20"></th>
+                        <div className="mt-6 border border-slate-200 rounded-2xl overflow-hidden shadow-sm bg-white">
+                            <table className="w-full text-sm">
+                                <thead className="bg-slate-50 border-b border-slate-100">
+                                    <tr className="text-slate-500 uppercase text-[10px] tracking-widest">
+                                        <th className="py-3 px-4 text-left">{t('promotions:form.products.table.product')}</th>
+                                        <th className="py-3 px-4 text-center">{t('promotions:form.products.table.stock')}</th>
+                                        <th className="py-3 px-4 text-center w-32">{t('promotions:form.products.table.qty')}</th>
+                                        <th className="py-3 px-4 text-right">{t('promotions:form.products.table.unit_price')}</th>
+                                        {discountType !== DiscountType.BUNDLE && <th className="py-3 px-4 text-right">{t('promotions:form.products.table.discount_effect')}</th>}
+                                        <th className="py-3 px-4 w-20"></th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     {selectedProducts.length === 0 ? (
                                         <tr>
                                             <td colSpan={6} className="text-center py-16">
-                                                <div className="flex flex-col items-center gap-3 text-base-content/40">
+                                                <div className="flex flex-col items-center gap-3 text-slate-400">
                                                     <Search size={48} strokeWidth={1} />
                                                     <p className="italic">{t('promotions:form.products.table.empty')}</p>
                                                 </div>
                                             </td>
                                         </tr>
                                     ) : (
-                                        selectedProducts.map((p, idx) => (
-                                            <tr 
-                                                key={p.id} 
-                                                className={`hover:bg-base-200/50 transition-colors ${tableSelectedIndex === idx ? 'bg-primary/5 ring-1 ring-inset ring-primary' : ''}`}
+                                        selectedProducts.map((p: any, idx: number) => (
+                                            <tr
+                                                key={p.id}
+                                                className={cn(
+                                                    "hover:bg-slate-50 transition-colors border-b border-slate-100 last:border-0",
+                                                    tableSelectedIndex === idx ? 'bg-emerald-50/50 ring-1 ring-inset ring-emerald-200' : ''
+                                                )}
                                             >
-                                                <td className="py-4">
-                                                    <div className="font-bold text-base-content">{p.name}</div>
-                                                    <div className="text-[10px] font-mono text-base-content/40">{p.cip1 || '#'+p.id}</div>
+                                                <td className="py-3 px-4">
+                                                    <div className="font-semibold text-slate-800">{p.name}</div>
+                                                    <div className="text-[10px] font-mono text-slate-400">{p.cip1 || '#'+p.id}</div>
                                                 </td>
-                                                <td className="py-4 text-center">
-                                                    <span className={`font-black ${p.stock <= 0 ? 'text-error' : 'text-success'}`}>
+                                                <td className="py-3 px-4 text-center">
+                                                    <span className={cn("font-bold", p.stock <= 0 ? 'text-red-500' : 'text-emerald-600')}>
                                                         {p.stock ?? t('common:not_available')}
                                                     </span>
                                                 </td>
-                                                <td className="py-4">
+                                                <td className="py-3 px-4">
                                                     <div className="flex items-center justify-center">
-                                                        <div className="flex items-center bg-base-200 rounded-lg p-1 border">
-                                                            <button 
+                                                        <div className="flex items-center bg-slate-100 rounded-lg p-1 border border-slate-200">
+                                                            <Button
                                                                 type="button"
-                                                                className="btn btn-xs btn-ghost"
+                                                                variant="ghost"
+                                                                size="icon"
+                                                                className="size-7"
                                                                 onClick={() => updateProductQuantity(p.id, Math.max(1, (p.quantity || 1) - 1))}
-                                                            ><Minus size={12} /></button>
-                                                            <input 
-                                                                type="number" 
-                                                                className="w-12 text-center bg-transparent border-none font-bold text-sm" 
-                                                                value={p.quantity || 1} 
+                                                            ><Minus size={12} /></Button>
+                                                            <input
+                                                                type="number"
+                                                                className="w-12 text-center bg-transparent border-none font-bold text-sm text-slate-700 focus:outline-none"
+                                                                value={p.quantity || 1}
                                                                 onChange={(e) => updateProductQuantity(p.id, Number(e.target.value))}
                                                                 min="1"
                                                             />
-                                                            <button 
+                                                            <Button
                                                                 type="button"
-                                                                className="btn btn-xs btn-ghost"
+                                                                variant="ghost"
+                                                                size="icon"
+                                                                className="size-7"
                                                                 onClick={() => updateProductQuantity(p.id, (p.quantity || 1) + 1)}
-                                                            ><Plus size={12} /></button>
+                                                            ><Plus size={12} /></Button>
                                                         </div>
                                                     </div>
                                                 </td>
-                                                <td className="py-4 text-right font-medium text-base-content/80">
+                                                <td className="py-3 px-4 text-right font-medium text-slate-600">
                                                     {p.selling_price} {t('common:currency')}
                                                 </td>
                                                 {discountType !== DiscountType.BUNDLE && (
-                                                    <td className="py-4 text-right">
-                                                         <span className="px-3 py-1 bg-primary/10 text-primary font-bold rounded-full text-xs">
+                                                    <td className="py-3 px-4 text-right">
+                                                         <Badge variant="secondary" className="text-xs font-bold">
                                                             {discountType === DiscountType.BUY_X_GET_Y ? (
                                                                 t('promotions:form.products.table.offered', { count: getQuantity })
                                                             ) : (
                                                                 discountType === DiscountType.PERCENTAGE ? `-${value}%` : `-${value} ${t('common:currency')}`
                                                             )}
-                                                         </span>
+                                                         </Badge>
                                                     </td>
                                                 )}
-                                                <td className="py-4 text-center">
-                                                    <button 
-                                                        type="button" 
+                                                <td className="py-3 px-4 text-center">
+                                                    <Button
+                                                        type="button"
+                                                        variant="ghost"
+                                                        size="icon"
                                                         onClick={() => removeProduct(p.id)}
-                                                        className="btn btn-ghost btn-sm text-error hover:bg-error/10"
+                                                        className="size-8 text-slate-400 hover:text-red-500 hover:bg-red-50"
                                                     >
                                                         <Trash2 size={18} />
-                                                    </button>
+                                                    </Button>
                                                 </td>
                                             </tr>
                                         ))
@@ -441,18 +417,18 @@ const PromotionForm: React.FC<PromotionFormProps> = ({ onClose, onSave, initialD
                 </form>
 
                 {/* Footer */}
-                <div className="p-6 border-t bg-base-200/50 flex justify-between items-center">
-                    <div className="flex gap-4 text-xs font-bold text-base-content/40 uppercase">
+                <div className="p-6 border-t border-slate-100 bg-slate-50 flex justify-between items-center">
+                    <div className="flex gap-4 text-xs font-bold text-slate-400 uppercase">
                         <span>Status: {loading ? t('promotions:form.status.loading') : t('promotions:form.status.ready')}</span>
                         {discountType === DiscountType.BUNDLE && (
-                            <span className="text-secondary">{t('promotions:form.status.total_fixed', { value })}</span>
+                            <span className="text-violet-600">{t('promotions:form.status.total_fixed', { value })}</span>
                         )}
                     </div>
                     <div className="flex gap-3">
-                        <button type="button" className="btn btn-ghost px-6" onClick={onClose} disabled={loading}>{t('promotions:form.actions.cancel')}</button>
-                        <button type="submit" className="btn btn-primary px-10 shadow-lg shadow-primary/20" onClick={handleSubmit} disabled={loading}>
-                            {loading ? <span className="loading loading-spinner"></span> : t('promotions:form.actions.save')}
-                        </button>
+                        <Button type="button" variant="outline" className="px-6" onClick={onClose} disabled={loading}>{t('promotions:form.actions.cancel')}</Button>
+                        <Button type="submit" className="px-10 bg-emerald-600 hover:bg-emerald-700 shadow-lg shadow-emerald-200" onClick={handleSubmit} disabled={loading}>
+                            {loading ? <span className="inline-block size-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : t('promotions:form.actions.save')}
+                        </Button>
                     </div>
                 </div>
             </div>
