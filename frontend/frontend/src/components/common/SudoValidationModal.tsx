@@ -36,12 +36,14 @@ export default function SudoValidationModal({
     const [selectedValidator, setSelectedValidator] = useState<number | null>(null);
     const [password, setPassword] = useState('');
     const [loadingUsers, setLoadingUsers] = useState(false);
+    const [passwordError, setPasswordError] = useState<string | null>(null);
     const passwordInputRef = useRef<HTMLInputElement>(null);
 
     useEffect(() => {
         if (isOpen) {
             fetchUsers();
             setPassword('');
+            setPasswordError(null);
             setSelectedValidator(null);
         }
     }, [isOpen]);
@@ -74,9 +76,17 @@ export default function SudoValidationModal({
         }
     };
 
-    const handleConfirm = () => {
+    const handleConfirm = async () => {
         if (selectedValidator && password) {
-            onValidate(selectedValidator, password);
+            setPasswordError(null);
+            try {
+                await onValidate(selectedValidator, password);
+            } catch (error: any) {
+                setPassword('');
+                const msg = error?.response?.data?.detail || error?.response?.data?.error || error?.message || t('common:sudo.invalid_password');
+                setPasswordError(msg);
+                setTimeout(() => passwordInputRef.current?.focus(), 50);
+            }
         }
     };
 
@@ -131,12 +141,18 @@ export default function SudoValidationModal({
                         <input 
                             ref={passwordInputRef}
                             type="password" 
-                            className="input input-bordered w-full h-12 rounded-xl focus:border-success focus:ring-2 focus:ring-success/20 transition-all" 
+                            className={`input input-bordered w-full h-12 rounded-xl focus:ring-2 transition-all ${passwordError ? 'input-error focus:border-error focus:ring-error/20' : 'focus:border-success focus:ring-success/20'}`}
                             placeholder={t('common:sudo.validate_password')}
                             value={password}
-                            onChange={e => setPassword(e.target.value)}
+                            onChange={e => { setPassword(e.target.value); setPasswordError(null); }}
                             onKeyDown={e => e.key === 'Enter' && handleConfirm()}
                         />
+                        {passwordError && (
+                            <p className="text-error text-xs mt-1.5 flex items-center gap-1">
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                                {passwordError}
+                            </p>
+                        )}
                     </div>
                 )}
 

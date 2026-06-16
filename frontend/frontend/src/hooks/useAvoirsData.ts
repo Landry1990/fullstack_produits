@@ -398,6 +398,7 @@ export function useAvoirsData(): UseAvoirsDataReturn {
             } catch (err: unknown) {
                 const error = err as { response?: { data?: { error?: string } }; message?: string };
                 toast.error('Erreur : ' + (error.response?.data?.error || error.message || 'Erreur inconnue'));
+                throw err;
             } finally {
                 setLoading(false);
             }

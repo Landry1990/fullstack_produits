@@ -344,6 +344,7 @@ export function useFournisseurs() {
         toast.error(t('providers:messages.delete_error'));
       }
       console.error('Erreur lors de la suppression du fournisseur:', err);
+      throw err;
     }
   }
 
@@ -359,6 +360,7 @@ export function useFournisseurs() {
     } catch (err) {
       toast.error(getApiErrorDetail(err, t('providers:messages.bulk_delete_error')));
       console.error(err);
+      throw err;
     }
   }
 

@@ -187,7 +187,7 @@ export default function Commandes({ forcedType }: CommandesProps) {
       <ProduitFormModal
         open={state.isCreateProduitModalOpen}
         onClose={() => state.setIsCreateProduitModalOpen(false)}
-        produitsEndpoint={modals.produitsEndpoint}
+        produitsEndpoint="produits/"
         onCreated={modals.handleProduitCreated}
         rayons={modals.rayons}
         fournisseurs={modals.fournisseurs}

@@ -213,6 +213,7 @@ export default function Perimes() {
       } catch (err) {
         console.error('Erreur sortie stock:', err);
         toast.error(t('perimes.messages.error_exit') + ': ' + getApiErrorDetail(err, 'Erreur inconnue'))
+        throw err;
       } finally {
         setProcessing(false)
       }
@@ -240,6 +241,7 @@ export default function Perimes() {
           } catch (err) {
               console.error('Erreur sortie groupée:', err)
               toast.error(getApiErrorDetail(err, t('perimes.messages.error_bulk_exit')))
+              throw err;
           } finally {
               setProcessing(false)
           }

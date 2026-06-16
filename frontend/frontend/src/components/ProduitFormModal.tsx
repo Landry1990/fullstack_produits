@@ -76,18 +76,20 @@ export default function ProduitFormModal({
   let coefMultiplicateur = 0;
   let pourcMarge = 0;
   let prixVenteHT = 0;
+  let prixVenteTTC = 0;
 
   if (costPrice > 0) {
-    // Calcul du prix de vente HT (déduit de la TVA)
-    prixVenteHT = sellingPrice / (1 + tvaRate / 100);
-    
-    // Marge HT = PV HT - PR
+    // Le prix de vente saisi est HT (comme le prix de revient)
+    prixVenteHT = sellingPrice;
+    prixVenteTTC = sellingPrice * (1 + tvaRate / 100);
+
+    // Marge HT = PV HT - PR HT
     margeHT = prixVenteHT - costPrice;
-    
-    // Coefficient multiplicateur = PV HT / PR
+
+    // Coefficient multiplicateur = PV HT / PR HT
     coefMultiplicateur = prixVenteHT / costPrice;
-    
-    // % Marge = (Marge HT / PR) × 100
+
+    // % Marge = (Marge HT / PR HT) × 100
     pourcMarge = (margeHT / costPrice) * 100;
   }
 
@@ -315,18 +317,21 @@ export default function ProduitFormModal({
             </h4>
             <div className="grid grid-cols-1 md:grid-cols-6 gap-3">
               <div>
-                <label className="block text-[10px] font-semibold text-base-content/60 uppercase tracking-wider mb-1.5">{t('products:form.cost_price')}</label>
+                <label className="block text-[10px] font-semibold text-base-content/60 uppercase tracking-wider mb-1.5">{t('products:form.cost_price')} (HT)</label>
                 <div className="flex">
                   <input type="number" className={`${inputBase} rounded-r-none border-r-0`} value={form.cost_price} onChange={(e) => setForm((p) => ({ ...p, cost_price: e.target.value }))} step="0.01" required />
                   <span className="px-3 flex items-center bg-base-200 border border-base-300 border-l-0 rounded-r-lg text-base-content/60 text-sm font-medium">F</span>
                 </div>
               </div>
               <div>
-                <label className="block text-[10px] font-semibold text-base-content/60 uppercase tracking-wider mb-1.5">{t('products:form.selling_price')}</label>
+                <label className="block text-[10px] font-semibold text-base-content/60 uppercase tracking-wider mb-1.5">{t('products:form.selling_price')} (HT)</label>
                 <div className="flex">
                   <input type="number" className={`${inputBase} rounded-r-none border-r-0 font-semibold text-primary`} value={form.selling_price} onChange={(e) => setForm((p) => ({ ...p, selling_price: e.target.value }))} step="0.01" required />
                   <span className="px-3 flex items-center bg-base-200 border border-base-300 border-l-0 rounded-r-lg text-base-content/60 text-sm font-medium">F</span>
                 </div>
+                {sellingPrice > 0 && (
+                  <p className="text-[10px] text-base-content/50 mt-1">TTC : {prixVenteTTC.toFixed(2)} F</p>
+                )}
               </div>
               <div>
                 <label className="block text-[10px] font-semibold text-base-content/60 uppercase tracking-wider mb-1.5">{t('products:form.tva')}</label>
