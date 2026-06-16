@@ -1,6 +1,10 @@
 import { useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useCommandesState } from '../hooks/useCommandesState';
+import { ShoppingCart, Store, Truck } from 'lucide-react';
+import { Button } from './shadcn/button';
+import { Badge } from './shadcn/badge';
+import { cn } from '../lib/utils';
 
 function scrollMainToTop() {
   const main = document.querySelector('main');
@@ -81,39 +85,53 @@ export default function Commandes({ forcedType }: CommandesProps) {
   }, [state.viewMode]);
   
   return (
-    <div className="flex-1 flex flex-col overflow-hidden bg-base-200">
-      <div className="px-6 py-4 border-b border-base-300 bg-base-100 shrink-0 flex flex-col sm:flex-row items-center justify-between gap-4">
+    <div className="flex-1 flex flex-col overflow-hidden bg-slate-50">
+      {/* Header moderne */}
+      <div className="px-6 py-4 border-b border-slate-200 bg-white shrink-0 flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-3">
-            <div className="p-2.5 bg-primary/20 rounded-lg dark:bg-indigo-900/30">
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-primary dark:text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
-              </svg>
+            <div className="p-2.5 bg-emerald-100 rounded-lg">
+              <ShoppingCart className="size-5 text-emerald-600" />
             </div>
-            <h1 className="text-lg font-bold text-base-content">
+            <h1 className="text-lg font-bold text-slate-800">
                 {state.activeTab === 'DIV' ? 'Commandes Divers' : state.activeTab === 'DIR' ? state.t('orders:title_direct') : state.t('orders:title_local')}
             </h1>
+            <Badge variant="secondary" className="ml-2">
+              {listProps.sortedCommandes?.length || 0}
+            </Badge>
           </div>
 
           {!forcedType && (
-            <div className="bg-base-200 p-1 rounded-lg flex gap-1 border border-base-300">
-                <button
-                className={`px-5 py-2 rounded-md text-sm font-medium transition-all ${state.activeTab === 'LOC' ? 'bg-base-100 text-primary shadow-sm border border-base-300' : 'text-base-content/60 hover:text-base-content'}`}
-                onClick={() => state.setActiveTab('LOC')}
+            <div className="bg-slate-100 p-1 rounded-lg flex gap-1">
+                <Button
+                  variant={state.activeTab === 'LOC' ? 'default' : 'ghost'}
+                  size="sm"
+                  className={cn(
+                    "px-5 py-2 rounded-md text-sm font-medium transition-all",
+                    state.activeTab === 'LOC' ? 'bg-white text-emerald-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'
+                  )}
+                  onClick={() => state.setActiveTab('LOC')}
                 >
-                {state.t('orders:tabs.local')}
-                </button>
-                <button
-                className={`px-5 py-2 rounded-md text-sm font-medium transition-all ${state.activeTab === 'DIR' ? 'bg-base-100 text-primary shadow-sm border border-base-300' : 'text-base-content/60 hover:text-base-content'}`}
-                onClick={() => state.setActiveTab('DIR')}
+                  <Store className="size-4 mr-2" />
+                  {state.t('orders:tabs.local')}
+                </Button>
+                <Button
+                  variant={state.activeTab === 'DIR' ? 'default' : 'ghost'}
+                  size="sm"
+                  className={cn(
+                    "px-5 py-2 rounded-md text-sm font-medium transition-all",
+                    state.activeTab === 'DIR' ? 'bg-white text-emerald-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'
+                  )}
+                  onClick={() => state.setActiveTab('DIR')}
                 >
-                {state.t('orders:tabs.direct')}
-                </button>
+                  <Truck className="size-4 mr-2" />
+                  {state.t('orders:tabs.direct')}
+                </Button>
             </div>
           )}
       </div>
 
       {state.error && (
-        <div role="alert" className="mx-4 mt-4 px-4 py-3 bg-error/10 border border-error/20 rounded-lg text-error text-sm shrink-0">
+        <div role="alert" className="mx-4 mt-4 px-4 py-3 bg-red-50 border border-red-200 rounded-lg text-red-600 text-sm shrink-0">
           {state.error}
         </div>
       )}
