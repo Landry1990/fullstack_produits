@@ -245,6 +245,10 @@ function useSaleCompletion(options: UseSaleCompletionOptions = {}): UseSaleCompl
             const paiementsList = buildPaymentsList(params.totals, params.paiements, params.montantPaye, params.modePaiement);
 
             // Payload atomique final
+            // Clé d'idempotence : générée une seule fois par tentative de vente.
+            // En cas de retry réseau, la même clé est réutilisée → pas de doublon.
+            const idempotencyKey = crypto.randomUUID();
+
             const finalPayload = {
                 client: params.useManualClient ? null : params.selectedClient,
                 client_name_override: params.useManualClient ? params.manualClientName : null,
@@ -279,11 +283,12 @@ function useSaleCompletion(options: UseSaleCompletionOptions = {}): UseSaleCompl
                 centralized_cash_register: params.centralizedCashRegister,
                 poste_caisse_id: params.poste_caisse_id,
                 coupon_numero: params.couponNumero,
-                existing_id: params.modificationInvoiceId, // Pass existing ID to reuse the record
-                image_ordonnance: params.prescriptionImage
+                existing_id: params.modificationInvoiceId,
+                image_ordonnance: params.prescriptionImage,
+                idempotency_key: idempotencyKey,
             };
 
-            const finalFacture = await venteService.finaliser(finalPayload);
+            const finalFacture = await venteService.finaliser(finalPayload, idempotencyKey);
 
             // Gestion des impressions post-vente
 

@@ -86,24 +86,24 @@ const ProductAutocomplete: React.FC<ProductAutocompleteProps> = ({
   if (selected) {
     return (
       <div>
-        <label className="block text-xs font-bold uppercase tracking-wider text-base-content/40 mb-2 flex items-center gap-2">
+        <label className="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-2 flex items-center gap-2">
           {icon} {label}
         </label>
-        <div className="flex items-center gap-3 bg-gradient-to-r from-primary/5 to-primary/10 border-2 border-primary/30 rounded-xl px-4 py-3 transition-all">
-          <div className="size-9 rounded-lg bg-primary/20 flex items-center justify-center text-primary font-black text-sm">
+        <div className="flex items-center gap-3 bg-gradient-to-r from-emerald-50 to-emerald-100/60 border-2 border-emerald-200 rounded-xl px-4 py-3 transition-all">
+          <div className="size-9 rounded-lg bg-emerald-100 flex items-center justify-center text-emerald-600 font-black text-sm">
             {selected.name.charAt(0).toUpperCase()}
           </div>
           <div className="flex-1 min-w-0">
-            <div className="font-bold text-base-content truncate">{selected.name}</div>
-            <div className="text-[11px] text-base-content/60 flex gap-3">
+            <div className="font-bold text-slate-800 truncate">{selected.name}</div>
+            <div className="text-[11px] text-slate-400 flex gap-3">
               <span>{t('common:cip')}: {selected.cip1 || t('common:not_available')}</span>
-              <span>{t('common:stock')}: <b className={selected.stock <= 0 ? 'text-error' : 'text-success'}>{formatNumber(selected.stock)}</b></span>
+              <span>{t('common:stock')}: <b className={selected.stock <= 0 ? 'text-red-500' : 'text-emerald-600'}>{formatNumber(selected.stock)}</b></span>
             </div>
           </div>
           <button
             type="button"
             onClick={onClear}
-            className="btn btn-ghost btn-circle btn-sm text-base-content/40 hover:text-error hover:bg-error/10 transition-colors"
+            className="size-7 rounded-full flex items-center justify-center text-slate-400 hover:text-red-500 hover:bg-red-50 transition-colors"
           >
             <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
               <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
@@ -118,11 +118,11 @@ const ProductAutocomplete: React.FC<ProductAutocompleteProps> = ({
 
   return (
     <div ref={containerRef}>
-      <label className="block text-xs font-bold uppercase tracking-wider text-base-content/40 mb-2 flex items-center gap-2">
+      <label className="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-2 flex items-center gap-2">
         {icon} {label}
       </label>
       <div className="relative">
-        <div className="absolute left-3 top-1/2 -translate-y-1/2 text-base-content/40 pointer-events-none">
+        <div className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none">
           <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
           </svg>
@@ -130,7 +130,7 @@ const ProductAutocomplete: React.FC<ProductAutocompleteProps> = ({
         <input
           ref={inputRef}
           type="text"
-          className="input input-bordered w-full pl-10 h-12 focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all rounded-xl"
+          className="w-full pl-10 h-12 rounded-xl border border-slate-200 bg-slate-50 text-sm text-slate-700 focus:outline-none focus:bg-white focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 transition-all"
           placeholder={placeholderText}
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
@@ -143,15 +143,15 @@ const ProductAutocomplete: React.FC<ProductAutocompleteProps> = ({
         />
         {loading && (
           <div className="absolute right-3 top-1/2 -translate-y-1/2">
-            <span className="loading loading-spinner loading-sm text-primary"></span>
+            <span className="size-4 border-2 border-emerald-300 border-t-emerald-600 rounded-full animate-spin inline-block"></span>
           </div>
         )}
 
         {/* Dropdown résultats */}
         {showResults && (
-          <div className="absolute z-50 left-0 right-0 mt-1 bg-base-100 border border-base-200 rounded-xl shadow-2xl overflow-hidden max-h-60 overflow-y-auto">
+          <div className="absolute z-50 left-0 right-0 mt-1 bg-white border border-slate-200 rounded-xl shadow-2xl overflow-hidden max-h-60 overflow-y-auto">
             {produits.length === 0 && !loading && (
-              <div className="p-4 text-center text-base-content/40 italic text-sm">
+              <div className="p-4 text-center text-slate-400 italic text-sm">
                 {t('common:no_results_found')}
               </div>
             )}
@@ -162,23 +162,23 @@ const ProductAutocomplete: React.FC<ProductAutocompleteProps> = ({
                   key={p.id}
                   id={itemProps.id}
                   onMouseEnter={itemProps.onMouseEnter}
-                  className={`px-4 py-3 cursor-pointer border-b last:border-0 flex items-center gap-3 transition-colors group ${itemProps.className}`}
+                  className={`px-4 py-3 cursor-pointer border-b border-slate-100 last:border-0 flex items-center gap-3 transition-colors group ${itemProps.className}`}
                   style={itemProps.style}
                   onClick={() => handleSelect(p)}
                 >
-                  <div className="size-8 rounded-lg bg-base-200 group-hover:bg-primary/10 flex items-center justify-center text-base-content/60 group-hover:text-primary font-bold text-xs transition-colors"
+                  <div className="size-8 rounded-lg bg-slate-100 group-hover:bg-emerald-50 flex items-center justify-center text-slate-500 group-hover:text-emerald-600 font-bold text-xs transition-colors"
                     style={itemProps.style.backgroundColor ? { backgroundColor: 'rgba(255,255,255,0.2)' } : {}}
                   >
                     {p.name.charAt(0).toUpperCase()}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <div className="font-semibold text-sm truncate">{p.name}</div>
-                    <div className="text-[10px] flex gap-3" style={itemProps.style.color ? { color: 'rgba(255,255,255,0.7)' } : { color: '#9ca3af' }}>
+                    <div className="font-semibold text-sm truncate text-slate-700">{p.name}</div>
+                    <div className="text-[10px] flex gap-3 text-slate-400">
                       <span>{t('common:cip')}: {p.cip1 || t('common:not_available')}</span>
                       <span>{t('common:stock')}: <b>{formatNumber(p.stock)}</b></span>
                     </div>
                   </div>
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-base-content/30 group-hover:opacity-100 transition-opacity" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-slate-300 group-hover:text-emerald-500 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />
                   </svg>
                 </div>
@@ -332,38 +332,42 @@ const Transformations: React.FC = () => {
     : 0;
 
   return (
-    <div className="h-full flex flex-col bg-base-200 overflow-hidden font-sans">
+    <div className="h-full flex flex-col bg-slate-100 overflow-hidden font-sans">
       {/* Header Section */}
-      <div className="bg-base-100 border-b border-base-200 sticky top-0 z-30 opacity-100 flex flex-col shrink-0">
+      <div className="bg-white border-b border-slate-200 sticky top-0 z-30 flex flex-col shrink-0">
         <div className="px-6 py-4 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
           <div className="flex items-center gap-3">
-            <div className="p-2.5 bg-primary/10 rounded-xl text-primary shadow-inner">
+            <div className="p-2.5 bg-emerald-50 rounded-xl text-emerald-600 shadow-inner">
               <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" /></svg>
             </div>
             <div>
-              <h1 className="text-xl font-bold text-base-content tracking-tight">{t('transformations.title')}</h1>
-              <p className="text-[11px] font-medium text-base-content/40 uppercase tracking-widest mt-0.5">{t('transformations.subtitle')}</p>
+              <h1 className="text-xl font-bold text-slate-800 tracking-tight">{t('transformations.title')}</h1>
+              <p className="text-[11px] font-medium text-slate-400 uppercase tracking-widest mt-0.5">{t('transformations.subtitle')}</p>
             </div>
           </div>
           <button 
             onClick={() => { resetRelationForm(); setIsRelationModalOpen(true); }}
-            className="btn btn-primary btn-sm h-10 px-5 rounded-xl shadow-lg shadow-primary/20 gap-2 font-bold"
+            className="inline-flex items-center gap-2 h-10 px-5 bg-emerald-600 text-white rounded-xl text-sm font-bold hover:bg-emerald-700 transition-colors shadow-sm"
           >
-            <Plus size={18} />
+            <Plus size={16} />
             {t('transformations.new_relation_btn')}
           </button>
         </div>
 
         {/* Tab Navigation */}
-        <div className="px-6 py-2 bg-base-100/50 flex gap-1 border-t border-base-200/50">
+        <div className="px-6 py-2 bg-slate-50 flex gap-1 border-t border-slate-100">
           <button 
-            className={`btn btn-xs h-8 rounded-lg px-4 transition-all duration-200 font-bold ${activeTab === 'relations' ? 'btn-primary shadow-md' : 'btn-ghost opacity-60'}`}
+            className={`h-8 px-4 rounded-lg text-xs font-bold transition-all duration-200 ${
+              activeTab === 'relations' ? 'bg-emerald-600 text-white shadow-sm' : 'text-slate-500 hover:bg-slate-200'
+            }`}
             onClick={() => setActiveTab('relations')}
           >
             {t('transformations.tabs.configured_relations')}
           </button>
           <button 
-            className={`btn btn-xs h-8 rounded-lg px-4 transition-all duration-200 font-bold ${activeTab === 'historique' ? 'btn-primary shadow-md' : 'btn-ghost opacity-60'}`}
+            className={`h-8 px-4 rounded-lg text-xs font-bold transition-all duration-200 ${
+              activeTab === 'historique' ? 'bg-emerald-600 text-white shadow-sm' : 'text-slate-500 hover:bg-slate-200'
+            }`}
             onClick={() => setActiveTab('historique')}
           >
             {t('transformations.tabs.history')}
@@ -375,50 +379,50 @@ const Transformations: React.FC = () => {
       <div className="flex-1 overflow-auto p-6">
         {loading ? (
           <div className="flex flex-col items-center justify-center p-20 gap-4">
-            <span className="loading loading-spinner loading-lg text-primary text-base-content/20"></span>
-            <p className="text-[10px] font-black uppercase tracking-widest text-base-content/30">{t('common:loading')}</p>
+            <span className="size-10 border-4 border-slate-200 border-t-emerald-500 rounded-full animate-spin"></span>
+            <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">{t('common:loading')}</p>
           </div>
         ) : (
           <div className="h-full">
             {activeTab === 'relations' && (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-6">
                 {relations.map(relation => (
-                  <div key={relation.id} className="group relative bg-base-100 border border-base-200 rounded-2xl p-5 hover:border-primary/30 transition-all hover:shadow-xl hover:shadow-primary/5 flex flex-col">
+                  <div key={relation.id} className="group relative bg-white border border-slate-200 rounded-2xl p-5 hover:border-emerald-300 transition-all hover:shadow-xl hover:shadow-emerald-500/5 flex flex-col">
                     <div className="flex items-center justify-between mb-5">
                        <div className="flex items-center gap-3">
-                          <div className="size-10 rounded-xl bg-primary/5 flex items-center justify-center text-primary font-black shadow-inner">
+                          <div className="size-10 rounded-xl bg-slate-100 flex items-center justify-center text-slate-600 font-black shadow-inner">
                              {relation.produit_source_nom.charAt(0).toUpperCase()}
                           </div>
                           <div className="max-w-[120px]">
-                             <div className="text-[9px] font-black text-base-content/30 uppercase tracking-widest mb-0.5">{t('common:source')}</div>
-                             <div className="font-bold text-xs truncate" title={relation.produit_source_nom}>{relation.produit_source_nom}</div>
+                             <div className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-0.5">{t('common:source')}</div>
+                             <div className="font-bold text-xs text-slate-700 truncate" title={relation.produit_source_nom}>{relation.produit_source_nom}</div>
                           </div>
                        </div>
-                       <div className="text-primary/20 group-hover:text-primary transition-colors flex flex-col items-center">
+                       <div className="text-slate-300 group-hover:text-emerald-500 transition-colors flex flex-col items-center">
                           <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M14 5l7 7m0 0l-7 7m7-7H3" /></svg>
                        </div>
                         <div className="flex items-center gap-3 text-right">
                           <div className="max-w-[120px]">
-                             <div className="text-[9px] font-black text-base-content/30 uppercase tracking-widest mb-0.5">{t('stock:transformations.labels.dest')}</div>
-                             <div className="font-bold text-xs truncate text-success" title={relation.produit_destination_nom}>{relation.produit_destination_nom}</div>
+                             <div className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-0.5">{t('stock:transformations.labels.dest')}</div>
+                             <div className="font-bold text-xs truncate text-emerald-600" title={relation.produit_destination_nom}>{relation.produit_destination_nom}</div>
                           </div>
                         </div>
                     </div>
 
-                    <div className="bg-base-200/50 rounded-xl p-3 flex justify-between items-center mb-6 border border-base-300/30">
-                       <div className="text-[10px] font-bold opacity-40 uppercase tracking-wider">{t('transformations.modal_relation.ratio_label')}</div>
-                       <div className="badge border-none bg-primary text-white font-mono font-black text-[11px] h-6">1 : {formatNumber(relation.ratio)}</div>
+                    <div className="bg-slate-50 rounded-xl p-3 flex justify-between items-center mb-6 border border-slate-200">
+                       <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">{t('transformations.modal_relation.ratio_label')}</div>
+                       <span className="bg-emerald-600 text-white font-mono font-black text-[11px] h-6 px-2.5 rounded-full inline-flex items-center">1 : {formatNumber(relation.ratio)}</span>
                     </div>
 
-                    <div className="mt-auto flex gap-2 pt-2 border-t border-base-200/50">
+                    <div className="mt-auto flex gap-2 pt-2 border-t border-slate-100">
                         <button 
-                          className="btn btn-primary btn-sm flex-1 rounded-lg h-9 font-bold"
+                          className="flex-1 h-9 bg-emerald-600 text-white rounded-lg text-xs font-bold hover:bg-emerald-700 transition-colors"
                           onClick={() => openTransformerModal(relation)}
                         >
                           {t('stock:transformations.labels.transformer')}
                         </button>
                        <button 
-                         className="btn btn-ghost btn-sm btn-square text-error hover:bg-error/10 rounded-lg h-9"
+                         className="size-9 rounded-lg text-red-500 hover:bg-red-50 flex items-center justify-center transition-colors"
                          onClick={() => handleDeleteRelation(relation.id)}
                        >
                          <Trash2 size={16} />
@@ -427,7 +431,7 @@ const Transformations: React.FC = () => {
                   </div>
                 ))}
                 {relations.length === 0 && (
-                  <div className="col-span-full flex flex-col items-center justify-center py-20 text-base-content/20 italic">
+                  <div className="col-span-full flex flex-col items-center justify-center py-20 text-slate-300 italic">
                     <svg xmlns="http://www.w3.org/2000/svg" className="h-16 w-16 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" /></svg>
                     <p className="font-bold uppercase tracking-widest text-xs">{t('stock:transformations.labels.no_relations')}</p>
                   </div>
@@ -436,48 +440,48 @@ const Transformations: React.FC = () => {
             )}
 
             {activeTab === 'historique' && (
-              <div className="bg-base-100 rounded-2xl border border-base-200 shadow-sm overflow-hidden">
+              <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
                 <div className="overflow-x-auto whitespace-nowrap">
-                  <table className="table table-sm w-full border-separate border-spacing-0">
-                    <thead className="bg-base-200 sticky top-0 z-10 opacity-100 border-b border-base-300">
-                      <tr className="text-base-content/50 uppercase text-[10px] tracking-widest font-black h-12">
-                        <th className="pl-6 bg-transparent">{t('transformations.table_history.date')}</th>
-                        <th className="bg-transparent">{t('transformations.table_history.user')}</th>
-                        <th className="bg-transparent">{t('transformations.table_history.transformation')}</th>
-                        <th className="bg-transparent">{t('transformations.table_history.quantities')}</th>
-                        <th className="bg-transparent pr-6">{t('transformations.table_history.notes')}</th>
+                  <table className="w-full border-separate border-spacing-0 text-sm">
+                    <thead className="bg-slate-50 sticky top-0 z-10 border-b border-slate-200">
+                      <tr className="text-slate-400 uppercase text-[10px] tracking-widest font-black h-12">
+                        <th className="pl-6 text-left font-black">{t('transformations.table_history.date')}</th>
+                        <th className="px-4 text-left font-black">{t('transformations.table_history.user')}</th>
+                        <th className="px-4 text-left font-black">{t('transformations.table_history.transformation')}</th>
+                        <th className="px-4 text-left font-black">{t('transformations.table_history.quantities')}</th>
+                        <th className="px-4 pr-6 text-left font-black">{t('transformations.table_history.notes')}</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-base-200">
+                    <tbody className="divide-y divide-slate-100">
                       {historique.map(hist => (
-                        <tr key={hist.id} className="hover:bg-base-200/30 transition-colors group">
+                        <tr key={hist.id} className="hover:bg-slate-50 transition-colors group">
                           <td className="pl-6 py-4">
-                             <div className="font-bold text-xs">{formatDate(hist.date_transformation)}</div>
-                             <div className="text-[10px] opacity-40 font-mono uppercase tracking-tighter">{formatDateTime(hist.date_transformation).split(' ').slice(1).join(' ')}</div>
+                             <div className="font-bold text-xs text-slate-800">{formatDate(hist.date_transformation)}</div>
+                             <div className="text-[10px] text-slate-400 font-mono uppercase tracking-tighter">{formatDateTime(hist.date_transformation).split(' ').slice(1).join(' ')}</div>
                           </td>
-                          <td className="font-black text-xs text-primary/70">{hist.user_nom}</td>
-                          <td className="max-w-xs">
+                          <td className="px-4 font-black text-xs text-emerald-700">{hist.user_nom}</td>
+                          <td className="px-4 max-w-xs">
                              <div className="flex items-center gap-2 text-xs font-bold truncate">
-                                <span className="opacity-40">{hist.produit_source_nom}</span>
-                                <ChevronRight size={12} className="text-base-content/20" />
-                                <span className="text-success">{hist.produit_destination_nom}</span>
+                                <span className="text-slate-400">{hist.produit_source_nom}</span>
+                                <ChevronRight size={12} className="text-slate-300" />
+                                <span className="text-emerald-600">{hist.produit_destination_nom}</span>
                              </div>
                           </td>
-                          <td>
+                          <td className="px-4">
                              <div className="flex items-center gap-3">
-                                <div className="bg-error/10 text-error px-2 py-0.5 rounded text-[10px] font-black font-mono">-{formatNumber(hist.quantite_source)}</div>
-                                <ChevronRight size={12} className="opacity-10" />
-                                <div className="bg-success/10 text-success px-2 py-0.5 rounded text-[10px] font-black font-mono">+{formatNumber(hist.quantite_destination)}</div>
+                                <div className="bg-red-50 text-red-500 px-2 py-0.5 rounded text-[10px] font-black font-mono">-{formatNumber(hist.quantite_source)}</div>
+                                <ChevronRight size={12} className="text-slate-200" />
+                                <div className="bg-emerald-50 text-emerald-600 px-2 py-0.5 rounded text-[10px] font-black font-mono">+{formatNumber(hist.quantite_destination)}</div>
                              </div>
                           </td>
-                          <td className="pr-6 italic text-base-content/40 text-[11px] max-w-sm truncate group-hover:whitespace-normal group-hover:overflow-visible transition-all">
+                          <td className="px-4 pr-6 italic text-slate-400 text-[11px] max-w-sm truncate group-hover:whitespace-normal group-hover:overflow-visible transition-all">
                              {hist.notes || '-'}
                           </td>
                         </tr>
                       ))}
                       {historique.length === 0 && (
                         <tr>
-                          <td colSpan={5} className="text-center py-20 text-base-content/20 italic font-bold uppercase tracking-widest text-xs">{t('stock:transformations.table_history.empty')}</td>
+                          <td colSpan={5} className="text-center py-20 text-slate-300 italic font-bold uppercase tracking-widest text-xs">{t('stock:transformations.table_history.empty')}</td>
                         </tr>
                       )}
                     </tbody>
@@ -554,50 +558,50 @@ const Transformations: React.FC = () => {
             <input 
               type="number" 
               step="0.01"
-              className="input input-bordered w-full h-12 rounded-xl text-lg font-black text-center focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all border-2" 
+              className="w-full h-12 rounded-xl border-2 border-slate-200 bg-slate-50 text-lg font-black text-center focus:outline-none focus:bg-white focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 transition-all" 
               placeholder="Ex: 20"
               value={ratioValue}
               onChange={e => setRatioValue(e.target.value)}
               required
             />
-            <p className="text-[11px] font-medium text-base-content/40 mt-1.5 text-center px-4">
+            <p className="text-[11px] font-medium text-slate-400 mt-1.5 text-center px-4">
               {t('transformations.modal_relation.ratio_help')}
             </p>
           </div>
 
           {/* Preview */}
           {selectedSource && selectedDestination && ratioValue && (
-            <div className="bg-gradient-to-br from-success/5 to-primary/5 border border-success/20 rounded-xl p-4 shadow-inner">
+            <div className="bg-gradient-to-br from-emerald-50 to-blue-50 border border-emerald-200 rounded-xl p-4 shadow-inner">
               <div className="flex items-center justify-between text-sm">
                   <div className="text-center flex-1">
-                    <div className="font-bold text-base-content truncate text-xs">{selectedSource.name}</div>
-                    <div className="text-[10px] font-black text-base-content/30 mt-0.5">× 1 {t('stock:transformations.labels.unit')}</div>
+                    <div className="font-bold text-slate-800 truncate text-xs">{selectedSource.name}</div>
+                    <div className="text-[10px] font-black text-slate-400 mt-0.5">× 1 {t('stock:transformations.labels.unit')}</div>
                   </div>
-                  <div className="px-4 text-primary/40 flex flex-col items-center">
+                  <div className="px-4 text-emerald-400 flex flex-col items-center">
                     <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M17 8l4 4m0 0l-4 4m4-4H3" />
                     </svg>
-                    <span className="text-[10px] font-black mt-1 bg-primary/10 px-2 py-0.5 rounded-full">× {ratioValue}</span>
+                    <span className="text-[10px] font-black mt-1 bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full">× {ratioValue}</span>
                   </div>
                   <div className="text-center flex-1">
-                    <div className="font-bold text-success truncate text-xs">{selectedDestination.name}</div>
-                    <div className="text-[10px] font-black text-success/40 mt-0.5">× {Math.floor(normalizeNumberInput(ratioValue))} {t('stock:transformations.labels.units')}</div>
+                    <div className="font-bold text-emerald-600 truncate text-xs">{selectedDestination.name}</div>
+                    <div className="text-[10px] font-black text-emerald-400/60 mt-0.5">× {Math.floor(normalizeNumberInput(ratioValue))} {t('stock:transformations.labels.units')}</div>
                   </div>
               </div>
             </div>
           )}
 
           {/* Footer Actions */}
-          <div className="flex justify-end gap-3 pt-4 border-t border-base-200">
-            <button type="button" className="btn btn-ghost px-6 rounded-xl font-bold" onClick={() => setIsRelationModalOpen(false)}>
+          <div className="flex justify-end gap-3 pt-4 border-t border-slate-200">
+            <button type="button" className="h-10 px-6 rounded-xl text-sm font-bold text-slate-600 hover:bg-slate-100 transition-colors" onClick={() => setIsRelationModalOpen(false)}>
               {t('transformations.modal_relation.cancel')}
             </button>
             <button 
               type="submit" 
-              className="btn btn-primary px-8 rounded-xl shadow-lg shadow-primary/20 font-bold"
+              className="inline-flex items-center gap-2 h-10 px-8 bg-emerald-600 text-white rounded-xl text-sm font-bold hover:bg-emerald-700 transition-colors shadow-sm disabled:opacity-50"
               disabled={!selectedSource || !selectedDestination || !ratioValue}
             >
-              <Plus size={18} />
+              <Plus size={16} />
               {t('transformations.modal_relation.create')}
             </button>
           </div>
@@ -626,62 +630,62 @@ const Transformations: React.FC = () => {
             {/* Source → Destination cards */}
             <div className="flex items-stretch gap-3">
               {/* Source */}
-              <div className="flex-1 bg-gradient-to-b from-error/5 to-transparent border border-error/20 rounded-2xl p-4 text-center">
-                <div className="text-[9px] font-black uppercase tracking-widest text-error/40 mb-3 flex items-center justify-center gap-1">
+              <div className="flex-1 bg-gradient-to-b from-red-50 to-transparent border border-red-200 rounded-2xl p-4 text-center">
+                <div className="text-[9px] font-black uppercase tracking-widest text-red-400 mb-3 flex items-center justify-center gap-1">
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M20 12H4" />
                   </svg>
                   {t('common:source')}
                 </div>
-                <div className="font-bold text-base-content text-xs mb-4 h-8 flex items-center justify-center line-clamp-2" title={transformationData.relation.produit_source_nom}>{transformationData.relation.produit_source_nom}</div>
+                <div className="font-bold text-slate-800 text-xs mb-4 h-8 flex items-center justify-center line-clamp-2" title={transformationData.relation.produit_source_nom}>{transformationData.relation.produit_source_nom}</div>
                 <input 
                   type="number" 
-                  className="input input-bordered w-full text-center text-2xl font-black h-14 rounded-xl focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all border-2"
+                  className="w-full h-14 rounded-xl border-2 border-slate-200 bg-slate-50 text-2xl font-black text-center focus:outline-none focus:bg-white focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 transition-all"
                   min="1"
                   value={transformationData.quantite}
                   onChange={e => setTransformationData({...transformationData, quantite: normalizeNumberInput(e.target.value)})}
                   required
                   autoFocus
                 />
-                <div className="text-[10px] uppercase font-black text-base-content/30 mt-3">{t('transformations.modal_transform.qty_to_transform')}</div>
+                <div className="text-[10px] uppercase font-black text-slate-400 mt-3">{t('transformations.modal_transform.qty_to_transform')}</div>
               </div>
 
               {/* Arrow */}
               <div className="flex flex-col items-center justify-center gap-2 px-1 pt-6">
-                <div className="size-10 rounded-full bg-base-200 flex items-center justify-center shadow-inner">
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-base-content/20" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <div className="size-10 rounded-full bg-slate-100 flex items-center justify-center shadow-inner">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M17 8l4 4m0 0l-4 4m4-4H3" />
                   </svg>
                 </div>
-                <span className="text-[9px] font-black text-primary/60 bg-primary/5 px-2.5 py-1 rounded-full border border-primary/10">× {transformationData.relation.ratio}</span>
+                <span className="text-[9px] font-black text-emerald-600 bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-200">× {transformationData.relation.ratio}</span>
               </div>
 
               {/* Destination */}
-              <div className="flex-1 bg-gradient-to-b from-success/5 to-transparent border border-success/20 rounded-2xl p-4 text-center">
-                <div className="text-[9px] font-black uppercase tracking-widest text-success/40 mb-3 flex items-center justify-center gap-1">
+              <div className="flex-1 bg-gradient-to-b from-emerald-50 to-transparent border border-emerald-200 rounded-2xl p-4 text-center">
+                <div className="text-[9px] font-black uppercase tracking-widest text-emerald-400 mb-3 flex items-center justify-center gap-1">
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M12 4v16m8-8H4" />
                   </svg>
                   {t('common:destination')}
                 </div>
-                <div className="font-bold text-base-content text-xs mb-4 h-8 flex items-center justify-center line-clamp-2" title={transformationData.relation.produit_destination_nom}>{transformationData.relation.produit_destination_nom}</div>
-                <div className="w-full h-14 rounded-xl bg-success/10 border-2 border-success/20 flex items-center justify-center font-black text-2xl text-success shadow-inner">
+                <div className="font-bold text-slate-800 text-xs mb-4 h-8 flex items-center justify-center line-clamp-2" title={transformationData.relation.produit_destination_nom}>{transformationData.relation.produit_destination_nom}</div>
+                <div className="w-full h-14 rounded-xl bg-emerald-50 border-2 border-emerald-200 flex items-center justify-center font-black text-2xl text-emerald-600 shadow-inner">
                   {formatNumber(quantiteDestinationCalculee)}
                 </div>
-                <div className="text-[10px] uppercase font-black text-success/40 mt-3">{t('transformations.modal_transform.qty_obtained')}</div>
+                <div className="text-[10px] uppercase font-black text-emerald-400 mt-3">{t('transformations.modal_transform.qty_obtained')}</div>
               </div>
             </div>
 
             {/* Notes */}
             <div>
-              <label className="block text-[10px] font-black uppercase tracking-widest text-base-content/40 mb-2 flex items-center gap-2">
+              <label className="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2 flex items-center gap-2">
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                 </svg>
                 {t('transformations.modal_transform.notes_label')}
               </label>
               <textarea 
-                className="textarea textarea-bordered w-full h-20 rounded-xl focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all resize-none border-2 p-4 text-sm font-medium" 
+                className="w-full h-20 rounded-xl border-2 border-slate-200 bg-slate-50 p-4 text-sm font-medium text-slate-700 focus:outline-none focus:bg-white focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 transition-all resize-none" 
                 placeholder={t('transformations.modal_transform.notes_placeholder')}
                 value={transformationData.notes}
                 onChange={e => setTransformationData({...transformationData, notes: e.target.value})}
@@ -689,10 +693,10 @@ const Transformations: React.FC = () => {
             </div>
 
             {/* Footer Actions */}
-            <div className="flex justify-end gap-3 pt-4 border-t border-base-200">
+            <div className="flex justify-end gap-3 pt-4 border-t border-slate-200">
               <button 
                 type="button" 
-                className="btn btn-ghost px-6 rounded-xl font-bold" 
+                className="h-10 px-6 rounded-xl text-sm font-bold text-slate-600 hover:bg-slate-100 transition-colors disabled:opacity-50" 
                 onClick={() => setIsTransformerModalOpen(false)} 
                 disabled={submitting}
               >
@@ -700,14 +704,14 @@ const Transformations: React.FC = () => {
               </button>
               <button 
                 type="submit" 
-                className="btn btn-accent px-8 rounded-xl shadow-lg shadow-accent/20 font-bold"
+                className="inline-flex items-center gap-2 h-10 px-8 bg-purple-600 text-white rounded-xl text-sm font-bold hover:bg-purple-700 transition-colors shadow-sm disabled:opacity-50"
                 disabled={submitting}
               >
                 {submitting ? (
-                  <span className="loading loading-spinner text-white"></span>
+                  <span className="size-4 border-2 border-purple-300 border-t-white rounded-full animate-spin"></span>
                 ) : (
                   <>
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                     </svg>
                     {t('transformations.modal_transform.confirm_btn')}

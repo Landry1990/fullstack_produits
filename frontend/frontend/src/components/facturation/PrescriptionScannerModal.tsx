@@ -219,31 +219,31 @@ const PrescriptionScannerModal: React.FC<PrescriptionScannerModalProps> = ({
       onClose={onClose}
       title="Scanner Ordonnance"
       subtitle="Capturez une photo pour extraction automatique avec OCR"
-      icon={<Camera className="size-5 text-primary" />}
+      icon={<Camera className="size-5 text-emerald-600" />}
       maxWidth="max-w-4xl"
     >
       <div className="flex flex-col h-[70vh]">
-        
+
         {/* Main Content Area */}
         <div className="flex-1 overflow-y-auto p-6">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 h-full">
-            
+
             {/* Left Column: Image Source */}
             <div className="flex flex-col gap-4">
               {!preview && !showCamera && (
-                <div 
-                  className="flex-1 border-2 border-dashed border-base-content/10 rounded-2xl flex flex-col items-center justify-center gap-4 bg-base-200/50 hover:bg-base-200 transition-colors cursor-pointer"
+                <div
+                  className="flex-1 border-2 border-dashed border-slate-200 rounded-2xl flex flex-col items-center justify-center gap-4 bg-slate-50 hover:bg-slate-100 transition-colors cursor-pointer"
                   onClick={() => fileInputRef.current?.click()}
                 >
-                  <div className="p-4 bg-primary/10 rounded-full text-primary">
+                  <div className="p-4 bg-emerald-50 rounded-full text-emerald-600">
                     <Upload className="size-8" />
                   </div>
                   <div className="text-center">
-                    <p className="font-bold">Glissez une image ici</p>
-                    <p className="text-sm text-base-content/50">Ou cliquez pour parcourir</p>
+                    <p className="font-bold text-slate-800">Glissez une image ici</p>
+                    <p className="text-sm text-slate-400">Ou cliquez pour parcourir</p>
                   </div>
-                  <button 
-                    className="btn btn-primary btn-sm rounded-lg"
+                  <button
+                    className="inline-flex items-center justify-center h-8 px-4 rounded-lg text-sm font-medium bg-emerald-600 text-white hover:bg-emerald-700 transition-colors"
                     onClick={(e) => { e.stopPropagation(); startCamera(); }}
                   >
                     <Camera className="size-4 mr-2" />
@@ -254,17 +254,17 @@ const PrescriptionScannerModal: React.FC<PrescriptionScannerModalProps> = ({
 
               {showCamera && (
                 <div className="relative flex-1 bg-gray-950 rounded-2xl overflow-hidden shadow-xl">
-                  <video 
-                    ref={videoRef} 
-                    autoPlay 
-                    playsInline 
+                  <video
+                    ref={videoRef}
+                    autoPlay
+                    playsInline
                     className="size-full object-cover"
                   />
                   <div className="absolute bottom-6 left-0 right-0 flex justify-center gap-3">
-                    <button className="btn btn-circle btn-primary btn-lg shadow-lg" onClick={capturePhoto}>
+                    <button className="inline-flex items-center justify-center size-14 rounded-full bg-emerald-600 text-white shadow-lg hover:bg-emerald-700 transition-colors" onClick={capturePhoto}>
                       <div className="size-4 rounded-full border-2 border-white" />
                     </button>
-                    <button className="btn btn-circle btn-ghost bg-base-100/20 backdrop-blur-md text-white" onClick={stopCamera}>
+                    <button className="inline-flex items-center justify-center size-12 rounded-full bg-white/10 backdrop-blur-md text-white hover:bg-white/20 transition-colors" onClick={stopCamera}>
                       <Trash2 className="size-5" />
                     </button>
                   </div>
@@ -272,17 +272,17 @@ const PrescriptionScannerModal: React.FC<PrescriptionScannerModalProps> = ({
               )}
 
               {preview && (
-                <div className="relative flex-1 rounded-2xl overflow-hidden group shadow-lg bg-base-300">
+                <div className="relative flex-1 rounded-2xl overflow-hidden group shadow-lg bg-slate-200">
                   <img src={preview} alt="Scan preview" className="size-full object-contain" />
                   <div className="absolute top-4 right-4 flex gap-2">
-                    <button className="btn btn-circle btn-sm btn-error shadow-lg" onClick={reset}>
+                    <button className="inline-flex items-center justify-center size-9 rounded-full bg-red-600 text-white shadow-lg hover:bg-red-700 transition-colors" onClick={reset}>
                       <Trash2 className="size-4" />
                     </button>
                   </div>
                   {!isProcessing && matchResults.length === 0 && (
                     <div className="absolute bottom-6 left-0 right-0 flex justify-center">
-                      <button 
-                        className="btn btn-primary px-8 rounded-xl shadow-xl shadow-primary/30"
+                      <button
+                        className="inline-flex items-center justify-center h-10 px-8 rounded-xl text-sm font-semibold bg-emerald-600 text-white shadow-lg hover:bg-emerald-700 transition-colors"
                         onClick={processOcr}
                         disabled={loadingProducts}
                       >
@@ -296,54 +296,56 @@ const PrescriptionScannerModal: React.FC<PrescriptionScannerModalProps> = ({
 
               {isProcessing && (
                 <div className="mt-4 space-y-2">
-                  <div className="flex justify-between text-xs font-bold uppercase tracking-wider text-base-content/50">
+                  <div className="flex justify-between text-xs font-bold uppercase tracking-wider text-slate-400">
                     <span>Traitement OCR en cours...</span>
                     <span>{Math.round(progress * 100)}%</span>
                   </div>
-                  <progress className="progress progress-primary w-full h-2" value={progress * 100} max="100"></progress>
+                  <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden">
+                    <div className="h-full bg-emerald-600 rounded-full transition-all" style={{ width: `${progress * 100}%` }}></div>
+                  </div>
                 </div>
               )}
             </div>
 
             {/* Right Column: OCR Results */}
-            <div className="flex flex-col bg-base-200/50 rounded-2xl border border-base-content/5 overflow-hidden">
-                <div className="p-4 border-b border-base-content/5 bg-base-200/80 backdrop-blur-sm flex justify-between items-center">
-                    <h3 className="font-bold flex items-center gap-2">
-                        <Search className="size-4 text-primary" />
+            <div className="flex flex-col bg-slate-50 rounded-2xl border border-slate-100 overflow-hidden">
+                <div className="p-4 border-b border-slate-100 bg-slate-100/80 backdrop-blur-sm flex justify-between items-center">
+                    <h3 className="font-bold flex items-center gap-2 text-slate-800">
+                        <Search className="size-4 text-emerald-600" />
                         Médicaments identifiés
                     </h3>
-                    <span className="badge badge-sm badge-secondary">{matchResults.filter(r => r.matchedProduct).length} reconnus</span>
+                    <span className="inline-flex items-center px-2.5 h-6 text-xs rounded-full bg-slate-200 text-slate-700 font-medium">{matchResults.filter(r => r.matchedProduct).length} reconnus</span>
                 </div>
 
                 <div className="flex-1 overflow-y-auto p-4 space-y-3">
                   {matchResults.length === 0 ? (
-                    <div className="h-full flex flex-col items-center justify-center p-8 text-center text-base-content/40 text-base-content/50 italic">
+                    <div className="h-full flex flex-col items-center justify-center p-8 text-center text-slate-400 italic">
                       <AlertCircle className="size-12 mb-4 stroke-1" />
                       <p>Les produits détectés apparaîtront ici après l'analyse.</p>
                     </div>
                   ) : (
                     matchResults.map((result, idx) => (
-                      <div key={idx} className={`p-3 rounded-xl border transition-all ${result.matchedProduct ? 'bg-success/5 border-success/30' : 'bg-base-100 border-base-content/10'}`}>
+                      <div key={idx} className={`p-3 rounded-xl border transition-all ${result.matchedProduct ? 'bg-emerald-50/50 border-emerald-200' : 'bg-white border-slate-100'}`}>
                         <div className="flex justify-between items-start mb-2">
-                          <span className="text-[10px] font-bold text-base-content/40 uppercase tracking-tighter">Lu sur l'ordonnance :</span>
-                          {result.matchedProduct && <Check className="size-4 text-success" />}
+                          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">Lu sur l'ordonnance :</span>
+                          {result.matchedProduct && <Check className="size-4 text-emerald-600" />}
                         </div>
-                        <p className="font-medium text-sm mb-2">{result.ocrLine}</p>
-                        
+                        <p className="font-medium text-sm mb-2 text-slate-800">{result.ocrLine}</p>
+
                         <div className="space-y-1">
                           {result.suggestions.map((product, sIdx) => (
-                            <button 
+                            <button
                                 key={product.id}
-                                className={`w-full text-left p-2 rounded-lg text-xs flex justify-between items-center transition-colors ${result.matchedProduct?.id === product.id ? 'bg-success text-success-content' : 'hover:bg-base-300 bg-base-200'}`}
+                                className={`w-full text-left p-2 rounded-lg text-xs flex justify-between items-center transition-colors ${result.matchedProduct?.id === product.id ? 'bg-emerald-600 text-white' : 'hover:bg-slate-100 bg-slate-50'}`}
                                 onClick={() => handleSelectProduct(idx, product)}
                             >
                                 <span className="truncate flex-1 font-bold">{product.name}</span>
-                                <span className="ml-2 text-[10px] text-base-content/70">{product.selling_price} F</span>
+                                <span className="ml-2 text-[10px] text-slate-400">{product.selling_price} F</span>
                             </button>
                           ))}
-                          
+
                           {result.suggestions.length === 0 && (
-                              <p className="text-[10px] text-error flex items-center gap-1 py-1">
+                              <p className="text-[10px] text-red-600 flex items-center gap-1 py-1">
                                   <AlertCircle className="size-3" />
                                   Aucune correspondance trouvée
                               </p>
@@ -358,19 +360,19 @@ const PrescriptionScannerModal: React.FC<PrescriptionScannerModalProps> = ({
         </div>
 
         {/* Footer */}
-        <div className="p-6 bg-base-200/80 backdrop-blur-md border-t border-base-content/5 flex justify-between items-center">
-            <div className="text-xs text-base-content/50">
+        <div className="p-6 bg-slate-100/80 backdrop-blur-md border-t border-slate-100 flex justify-between items-center">
+            <div className="text-xs text-slate-400">
                 {extractionData && (
                     <div className="flex gap-4">
-                        <span className="flex items-center gap-1"><Check className="size-3 text-success" /> Patient détecté</span>
-                        <span className="flex items-center gap-1"><Check className="size-3 text-success" /> Médecin détecté</span>
+                        <span className="flex items-center gap-1"><Check className="size-3 text-emerald-600" /> Patient détecté</span>
+                        <span className="flex items-center gap-1"><Check className="size-3 text-emerald-600" /> Médecin détecté</span>
                     </div>
                 )}
             </div>
             <div className="flex gap-3">
-                <button className="btn btn-ghost rounded-xl" onClick={onClose}>Annuler</button>
-                <button 
-                  className="btn btn-primary px-8 rounded-xl shadow-lg shadow-primary/20" 
+                <button className="inline-flex items-center justify-center h-9 px-4 rounded-xl text-sm font-medium text-slate-700 bg-white border border-slate-200 hover:bg-slate-50 transition-colors" onClick={onClose}>Annuler</button>
+                <button
+                  className="inline-flex items-center justify-center h-9 px-8 rounded-xl text-sm font-semibold bg-emerald-600 text-white shadow-lg hover:bg-emerald-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                   disabled={matchResults.filter(r => r.matchedProduct).length === 0 || isProcessing}
                   onClick={validateScan}
                 >

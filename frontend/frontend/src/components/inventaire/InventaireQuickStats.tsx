@@ -23,14 +23,14 @@ export const InventaireQuickStats: React.FC<InventaireQuickStatsProps> = ({ inve
     return (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
             {/* Inventaires En Cours Card */}
-            <div className="bg-gradient-to-br from-warning/10 to-warning/5 p-4 rounded-xl border border-warning/20 flex items-center justify-between">
+            <div className="bg-gradient-to-br from-amber-50 to-amber-50/50 p-4 rounded-xl border border-amber-200 flex items-center justify-between">
                 <div>
-                    <div className="text-xs font-bold text-warning uppercase tracking-wider mb-1 flex items-center gap-1">
+                    <div className="text-xs font-bold text-amber-600 uppercase tracking-wider mb-1 flex items-center gap-1">
                         <ClipboardList className="size-3" /> {t('inventaire.stats.en_cours')}
                     </div>
                     <div>
-                        <div className="text-lg font-bold text-base-content">{stats.en_cours_count}</div>
-                        <div className="text-xs text-base-content/60">
+                        <div className="text-lg font-bold text-slate-800">{stats.en_cours_count}</div>
+                        <div className="text-xs text-slate-500">
                             {t('inventaire.stats.to_validate')}
                         </div>
                     </div>
@@ -38,16 +38,16 @@ export const InventaireQuickStats: React.FC<InventaireQuickStatsProps> = ({ inve
             </div>
 
             {/* Total Valeur Physique Card */}
-            <div className="bg-gradient-to-br from-primary/10 to-primary/5 p-4 rounded-xl border border-primary/20 flex items-center justify-between">
+            <div className="bg-gradient-to-br from-emerald-50 to-emerald-50/50 p-4 rounded-xl border border-emerald-200 flex items-center justify-between">
                 <div>
-                    <div className="text-xs font-bold text-primary uppercase tracking-wider mb-1 flex items-center gap-1">
+                    <div className="text-xs font-bold text-emerald-600 uppercase tracking-wider mb-1 flex items-center gap-1">
                         <PackageSearch className="size-3" /> {t('inventaire.stats.val_phys')}
                     </div>
                     <div>
-                        <div className="text-lg font-mono font-bold text-base-content">
+                        <div className="text-lg font-mono font-bold text-slate-800">
                             {formatCurrency(stats.valeur_physique_totale)}
                         </div>
-                        <div className="text-xs text-base-content/60">
+                        <div className="text-xs text-slate-500">
                             {stats.validees_count + stats.en_cours_count} {t('inventaire.list.title_short')}
                         </div>
                     </div>
@@ -55,16 +55,16 @@ export const InventaireQuickStats: React.FC<InventaireQuickStatsProps> = ({ inve
             </div>
 
             {/* Ecart Global Card */}
-            <div className="bg-gradient-to-br from-secondary/10 to-secondary/5 p-4 rounded-xl border border-secondary/20 flex items-center justify-between">
+            <div className="bg-gradient-to-br from-slate-50 to-slate-50/50 p-4 rounded-xl border border-slate-200 flex items-center justify-between">
                  <div>
-                    <div className="text-xs font-bold text-secondary uppercase tracking-wider mb-1 flex items-center gap-1">
+                    <div className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1 flex items-center gap-1">
                         <TrendingDown className="size-3" /> {t('inventaire.stats.ecart_global')}
                     </div>
                     <div>
-                        <div className={`text-lg font-mono font-bold ${stats.ecart_total < 0 ? 'text-error' : stats.ecart_total > 0 ? 'text-success' : 'text-base-content'}`}>
+                        <div className={`text-lg font-mono font-bold ${stats.ecart_total < 0 ? 'text-red-500' : stats.ecart_total > 0 ? 'text-emerald-600' : 'text-slate-700'}`}>
                             {stats.ecart_total > 0 ? '+' : ''}{formatCurrency(stats.ecart_total)}
                         </div>
-                        <div className="text-xs text-base-content/60">
+                        <div className="text-xs text-slate-500">
                             {t('inventaire.stats.all_inventories')}
                         </div>
                     </div>

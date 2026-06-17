@@ -97,27 +97,27 @@ const PremiumModal: React.FC<PremiumModalProps> = ({
       onClick={() => !disableClose && onClose()}
     >
       <div
-        className={`bg-base-100 rounded-2xl shadow-2xl w-full ${maxWidth} overflow-hidden flex flex-col max-h-[90vh] ${className}`}
+        className={`bg-white rounded-2xl shadow-2xl w-full ${maxWidth} overflow-hidden flex flex-col max-h-[90vh] ${className}`}
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className={`bg-gradient-to-r from-${gradientFrom} via-${gradientVia} to-${gradientTo} px-6 py-5 border-b border-base-200 shrink-0`}>
+        <div className={`bg-gradient-to-r from-${gradientFrom} via-${gradientVia} to-${gradientTo} px-6 py-5 border-b border-slate-200 shrink-0`}>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3 min-w-0">
               {icon && (
-                <div className="size-10 rounded-xl bg-base-100/50 flex items-center justify-center shrink-0">
+                <div className="size-10 rounded-xl bg-white/50 flex items-center justify-center shrink-0">
                   {icon}
                 </div>
               )}
               <div className="min-w-0">
-                <h3 className="font-bold text-lg text-base-content truncate">{title}</h3>
-                {subtitle && <p className="text-xs text-base-content/40 truncate">{subtitle}</p>}
+                <h3 className="font-bold text-lg text-slate-800 truncate">{title}</h3>
+                {subtitle && <p className="text-xs text-slate-400 truncate">{subtitle}</p>}
               </div>
             </div>
             <button
               type="button"
               onClick={onClose}
-              className="btn btn-ghost btn-circle btn-sm shrink-0"
+              className="inline-flex items-center justify-center size-8 rounded-full text-slate-400 hover:bg-slate-100 transition-colors shrink-0 disabled:opacity-50 disabled:cursor-not-allowed"
               disabled={disableClose}
               aria-label="Fermer"
             >
@@ -135,7 +135,7 @@ const PremiumModal: React.FC<PremiumModalProps> = ({
 
         {/* Footer (optional) */}
         {footer && (
-          <div className="px-6 py-4 border-t border-base-200 bg-base-200/50 shrink-0">
+          <div className="px-6 py-4 border-t border-slate-200 bg-slate-50 shrink-0">
             {footer}
           </div>
         )}

@@ -63,7 +63,25 @@
     "operator": "Operator",
     "closures": "Closures",
     "avg_gap": "Avg Gap",
-    "trend": "Trend"
+    "trend": "Trend",
+    "list_title": "Detailed closings",
+    "daily_title": "Daily summary"
+  },
+  "view_mode": {
+    "list": "List",
+    "daily": "By day"
+  },
+  "daily": {
+    "header_date": "Date",
+    "header_count": "Closures",
+    "header_theoretical": "Theoretical",
+    "header_real": "Real",
+    "header_gap": "Gap",
+    "header_sales": "Sales",
+    "header_entries": "Entries",
+    "header_exits": "Exits",
+    "no_data": "No daily data",
+    "footer_total": "Totals"
   },
   "pagination": {
     "showing": "Showing {{start}} to {{end}} of {{total}}",

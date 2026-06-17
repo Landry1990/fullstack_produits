@@ -106,15 +106,15 @@ export const PromisFormModal: React.FC<PromisFormModalProps> = ({
         >
             <form onSubmit={handleSubmit} className="space-y-5">
                 {/* Client Search */}
-                <div className="space-y-1.5">
-                    <label className="block text-sm font-medium text-base-content/60 mb-1">
+                <div className="space-y-1.5 relative">
+                    <label className="block text-sm font-medium text-slate-500 mb-1">
                         {t('stock:promis.modal.client_label')}
                     </label>
                     <div className="relative">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-base-content/50" />
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-slate-300" />
                         <input
                             type="text"
-                            className="w-full rounded-lg border border-base-300 bg-base-100 pl-9 text-sm font-medium text-base-content focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
+                            className="h-10 w-full rounded-xl border border-slate-200 bg-slate-50 pl-9 pr-9 text-sm font-medium text-slate-700 focus:outline-none focus:bg-white focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 transition-all"
                             placeholder={t('stock:promis.modal.client_placeholder')}
                             value={clientSearch}
                             onChange={(e) => {
@@ -125,30 +125,30 @@ export const PromisFormModal: React.FC<PromisFormModalProps> = ({
                         {clientSearch && !formData.client && (
                             <button
                                 type="button"
-                                className="absolute right-3 top-1/2 -translate-y-1/2 p-1 bg-base-200 rounded-full hover:bg-base-300"
+                                className="absolute right-3 top-1/2 -translate-y-1/2 p-1 bg-slate-100 rounded-full hover:bg-slate-200 transition-colors"
                                 onClick={() => {
                                     setClientSearch('');
                                     setFormData(prev => ({ ...prev, client: null, client_name: '' }));
                                 }}
                             >
-                                <X className="size-3 text-base-content/60" />
+                                <X className="size-3 text-slate-400" />
                             </button>
                         )}
                     </div>
-                    {clientSearch && !formData.client && clients.filter(c => 
+                    {clientSearch && !formData.client && clients.filter(c =>
                         c.name.toLowerCase().includes(clientSearch.toLowerCase())
                     ).slice(0, 5).length > 0 && (
-                        <div className="absolute z-10 w-full mt-1 bg-base-100 border border-base-200 rounded-xl shadow-md max-h-48 overflow-y-auto">
-                            {clients.filter(c => 
+                        <div className="absolute z-10 w-full mt-1 bg-white border border-slate-200 rounded-xl shadow-lg max-h-48 overflow-y-auto">
+                            {clients.filter(c =>
                                 c.name.toLowerCase().includes(clientSearch.toLowerCase())
                             ).slice(0, 5).map(c => (
-                                <div 
-                                    key={c.id} 
-                                    className="p-3 hover:bg-primary/10 cursor-pointer border-b border-base-200 last:border-0 transition-colors"
+                                <div
+                                    key={c.id}
+                                    className="p-3 hover:bg-emerald-50 cursor-pointer border-b border-slate-100 last:border-0 transition-colors"
                                     onClick={() => selectClient(c)}
                                 >
-                                    <div className="font-medium text-sm">{c.name}</div>
-                                    <div className="text-xs text-base-content/60 font-mono mt-0.5">{c.phone || t('common:no_number', 'Sans numéro')}</div>
+                                    <div className="font-medium text-sm text-slate-800">{c.name}</div>
+                                    <div className="text-xs text-slate-400 font-mono mt-0.5">{c.phone || t('common:no_number', 'Sans numéro')}</div>
                                 </div>
                             ))}
                         </div>
@@ -157,12 +157,12 @@ export const PromisFormModal: React.FC<PromisFormModalProps> = ({
 
                 {/* Phone */}
                 <div className="space-y-1.5">
-                    <label className="block text-sm font-medium text-base-content/60 mb-1">
+                    <label className="block text-sm font-medium text-slate-500 mb-1">
                         {t('stock:promis.modal.phone_label')}
                     </label>
                     <input
                         type="text"
-                        className="w-full rounded-lg border border-base-300 bg-base-100 px-3 text-sm font-mono text-base-content focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
+                        className="h-10 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 text-sm font-mono text-slate-700 focus:outline-none focus:bg-white focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 transition-all"
                         placeholder={t('stock:promis.modal.phone_placeholder')}
                         value={formData.client_phone}
                         onChange={(e) => setFormData(prev => ({ ...prev, client: null, client_phone: e.target.value }))}
@@ -170,15 +170,15 @@ export const PromisFormModal: React.FC<PromisFormModalProps> = ({
                 </div>
 
                 {/* Product Search */}
-                <div className="space-y-1.5">
-                    <label className="block text-sm font-medium text-base-content/60 mb-1">
+                <div className="space-y-1.5 relative">
+                    <label className="block text-sm font-medium text-slate-500 mb-1">
                         {t('stock:promis.modal.product_label')}
                     </label>
                     <div className="relative">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-base-content/50" />
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-slate-300" />
                         <input
                             type="text"
-                            className="w-full rounded-lg border border-base-300 bg-base-100 pl-9 text-sm font-medium text-base-content focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
+                            className="h-10 w-full rounded-xl border border-slate-200 bg-slate-50 pl-9 pr-9 text-sm font-medium text-slate-700 focus:outline-none focus:bg-white focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 transition-all"
                             placeholder={t('stock:promis.modal.product_placeholder')}
                             value={productSearch}
                             onChange={(e) => {
@@ -189,35 +189,35 @@ export const PromisFormModal: React.FC<PromisFormModalProps> = ({
                         {productSearch && !formData.produit && (
                             <button
                                 type="button"
-                                className="absolute right-3 top-1/2 -translate-y-1/2 p-1 bg-base-200 rounded-full hover:bg-base-300"
+                                className="absolute right-3 top-1/2 -translate-y-1/2 p-1 bg-slate-100 rounded-full hover:bg-slate-200 transition-colors"
                                 onClick={() => {
                                     setProductSearch('');
                                     setFormData(prev => ({ ...prev, produit: null }));
                                 }}
                             >
-                                <X className="size-3 text-base-content/60" />
+                                <X className="size-3 text-slate-400" />
                             </button>
                         )}
                     </div>
-                    {productSearch && !formData.produit && produits.filter(p => 
+                    {productSearch && !formData.produit && produits.filter(p =>
                         p.name.toLowerCase().includes(productSearch.toLowerCase()) ||
                         (p.cip1 && p.cip1.includes(productSearch))
                     ).slice(0, 5).length > 0 && (
-                        <div className="absolute z-10 w-full mt-1 bg-base-100 border border-base-200 rounded-xl shadow-md max-h-48 overflow-y-auto">
-                            {produits.filter(p => 
+                        <div className="absolute z-10 w-full mt-1 bg-white border border-slate-200 rounded-xl shadow-lg max-h-48 overflow-y-auto">
+                            {produits.filter(p =>
                                 p.name.toLowerCase().includes(productSearch.toLowerCase()) ||
                                 (p.cip1 && p.cip1.includes(productSearch))
                             ).slice(0, 5).map(p => (
-                                <div 
-                                    key={p.id} 
-                                    className="p-3 hover:bg-primary/10 cursor-pointer border-b border-base-200 last:border-0 flex justify-between items-center transition-colors"
+                                <div
+                                    key={p.id}
+                                    className="p-3 hover:bg-emerald-50 cursor-pointer border-b border-slate-100 last:border-0 flex justify-between items-center transition-colors"
                                     onClick={() => selectProduct(p)}
                                 >
                                     <div>
-                                        <div className="font-medium text-sm">{p.name}</div>
-                                        {p.cip1 && <div className="text-xs text-base-content/60 font-mono mt-0.5">{p.cip1}</div>}
+                                        <div className="font-medium text-sm text-slate-800">{p.name}</div>
+                                        {p.cip1 && <div className="text-xs text-slate-400 font-mono mt-0.5">{p.cip1}</div>}
                                     </div>
-                                    <div className="text-xs font-medium px-2 py-1 bg-base-200 rounded-md">
+                                    <div className="text-xs font-medium px-2 py-1 bg-slate-100 rounded-md text-slate-600">
                                         {t('common:stock', 'Stock')}: {p.stock}
                                     </div>
                                 </div>
@@ -228,13 +228,13 @@ export const PromisFormModal: React.FC<PromisFormModalProps> = ({
 
                 {/* Quantity */}
                 <div className="space-y-1.5">
-                    <label className="block text-sm font-medium text-base-content/60 mb-1">
+                    <label className="block text-sm font-medium text-slate-500 mb-1">
                         {t('stock:promis.modal.qty_label')}
                     </label>
                     <input
                         type="number"
                         min="1"
-                        className="w-full rounded-lg border border-base-300 bg-base-100 px-3 text-sm font-mono text-base-content focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
+                        className="h-10 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 text-sm font-mono text-slate-700 focus:outline-none focus:bg-white focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 transition-all"
                         value={formData.quantite}
                         onChange={(e) => setFormData(prev => ({ ...prev, quantite: parseInt(e.target.value) || 1 }))}
                         required
@@ -243,11 +243,11 @@ export const PromisFormModal: React.FC<PromisFormModalProps> = ({
 
                 {/* Notes */}
                 <div className="space-y-1.5">
-                    <label className="block text-sm font-medium text-base-content/60 mb-1">
+                    <label className="block text-sm font-medium text-slate-500 mb-1">
                         {t('stock:promis.modal.notes_label')}
                     </label>
                     <textarea
-                        className="w-full rounded-lg border border-base-300 bg-base-100 p-3 text-sm font-medium text-base-content focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all h-24"
+                        className="w-full rounded-xl border border-slate-200 bg-slate-50 p-3 text-sm font-medium text-slate-700 focus:outline-none focus:bg-white focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 transition-all h-24 resize-none"
                         placeholder={t('stock:promis.modal.notes_placeholder')}
                         value={formData.notes}
                         onChange={(e) => setFormData(prev => ({ ...prev, notes: e.target.value }))}
@@ -255,21 +255,21 @@ export const PromisFormModal: React.FC<PromisFormModalProps> = ({
                 </div>
 
                 {/* Actions */}
-                <div className="flex items-center justify-end gap-3 pt-4 border-t border-base-200 mt-6">
-                    <button 
-                        type="button" 
-                        className="inline-flex items-center gap-1.5 px-3 py-1.5 text-base-content/70 hover:bg-base-200 rounded-lg text-sm font-medium transition-colors btn-ghost" 
+                <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-100 mt-6">
+                    <button
+                        type="button"
+                        className="inline-flex items-center gap-1.5 h-9 px-4 text-slate-600 hover:bg-slate-100 rounded-xl text-sm font-medium transition-colors"
                         onClick={handleClose}
                         disabled={saving}
                     >
                         {t('common:cancel')}
                     </button>
-                    <button 
-                        type="submit" 
-                        className="inline-flex items-center gap-1.5 px-3 py-1.5 text-base-content/70 hover:bg-base-200 rounded-lg text-sm font-medium transition-colors btn-primary text-white shadow-sm hover:shadow-md transition-all gap-2 px-6"
+                    <button
+                        type="submit"
+                        className="inline-flex items-center gap-2 h-9 px-6 bg-emerald-600 text-white rounded-xl text-sm font-bold hover:bg-emerald-700 shadow-sm hover:shadow-md transition-all disabled:opacity-60"
                         disabled={saving}
                     >
-                        {saving && <span className="inline-block size-4 border-2 border-base-300 border-t-indigo-600 rounded-full animate-spin" />}
+                        {saving && <span className="size-4 border-2 border-emerald-400 border-t-white rounded-full animate-spin" />}
                         {t('common:save')}
                     </button>
                 </div>

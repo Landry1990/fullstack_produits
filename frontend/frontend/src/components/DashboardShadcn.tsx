@@ -173,7 +173,7 @@ export default function DashboardShadcn() {
   return (
     <div className="min-h-screen bg-slate-50 font-sans">
       {/* ── HEADER ── */}
-      <div className="sticky top-0 z-30 bg-white border-b border-slate-200 px-6 py-4 shadow-sm">
+      <div className="sticky top-0 z-30 bg-white/70 backdrop-blur-md border-b border-slate-200/60 px-6 py-4">
         <div className="flex items-center justify-between gap-4">
           {/* Left: title + info */}
           <div className="flex items-center gap-4 min-w-0">

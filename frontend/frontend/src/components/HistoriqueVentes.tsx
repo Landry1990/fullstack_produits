@@ -6,6 +6,19 @@ import { useTranslation } from 'react-i18next';
 import { toast } from 'react-hot-toast';
 import { getApiErrorDetail } from '../utils/errorHandling';
 import { formatCurrency } from '../utils/formatters';
+import { Button } from './shadcn/button';
+import { Badge } from './shadcn/badge';
+import { cn } from '../lib/utils';
+import {
+  FileSpreadsheet,
+  CalendarDays,
+  RefreshCw,
+  ChevronLeft,
+  ChevronRight,
+  FileText,
+  Send,
+  Loader2
+} from 'lucide-react';
 
 interface DailySale {
   date: string;
@@ -119,204 +132,215 @@ const HistoriqueVentes = () => {
   const totalPages = Math.ceil(totalItems / pageSize);
 
   return (
-    <div className="min-h-screen bg-base-200 p-3 sm:p-6 space-y-4 sm:space-y-6 font-sans">
-      
+    <div className="min-h-screen bg-slate-50 p-3 sm:p-6 space-y-4 sm:space-y-6 font-sans">
+
       {/* Header Section */}
-      <div className="bg-base-100 rounded-2xl shadow-sm border border-base-300 flex flex-col p-4 sm:p-6 sticky-header">
+      <div className="bg-white rounded-2xl shadow-sm border border-slate-200 flex flex-col p-4 sm:p-6">
         <div className="flex flex-col gap-4 sm:flex-row sm:justify-between sm:items-start mb-4 sm:mb-6">
-            <div>
-                <h1 className="text-2xl font-bold text-base-content tracking-tight">
-                    {t('title')}
-                </h1>
-                <p className="text-base-content/60 text-sm mt-1">
-                    {t('subtitle')}
-                </p>
-            </div>
-            <button 
-                className={`btn btn-outline btn-success gap-2 w-full sm:w-auto ${exporting ? 'loading' : ''}`}
-                onClick={handleExportExcel}
-                disabled={exporting || data.length === 0}
-            >
-                {!exporting && (
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                    </svg>
-                )}
-                {t('export_excel')}
-            </button>
+          <div>
+            <h1 className="text-2xl font-bold text-slate-900 tracking-tight">
+              {t('title')}
+            </h1>
+            <p className="text-slate-500 text-sm mt-1">
+              {t('subtitle')}
+            </p>
+          </div>
+          <Button
+            variant="outline"
+            size="sm"
+            className="gap-2 w-full sm:w-auto"
+            onClick={handleExportExcel}
+            disabled={exporting || data.length === 0}
+          >
+            {exporting ? <Loader2 className="size-4 animate-spin" /> : <FileSpreadsheet className="size-4" />}
+            {t('export_excel')}
+          </Button>
         </div>
 
-        <div className="flex flex-col sm:flex-row sm:flex-wrap sm:items-end gap-3 sm:gap-4 bg-base-200/50 p-3 sm:p-4 rounded-xl border border-base-200">
-            <div className="form-control w-full sm:min-w-[200px] sm:flex-1">
-                <label className="label py-1">
-                    <span className="label-text text-xs font-semibold uppercase opacity-60">{t('start_date')}</span>
-                </label>
-                <input 
-                    type="date" 
-                    className="input input-bordered input-sm h-10 w-full" 
-                    value={dateDebut}
-                    onChange={(e) => { setDateDebut(e.target.value); setCurrentPage(1); }}
-                />
+        <div className="flex flex-col sm:flex-row sm:flex-wrap sm:items-end gap-3 sm:gap-4 bg-slate-50/50 p-3 sm:p-4 rounded-xl border border-slate-100">
+          <div className="w-full sm:min-w-[200px] sm:flex-1">
+            <label className="block text-xs font-bold uppercase text-slate-500 tracking-wider mb-1.5">
+              {t('start_date')}
+            </label>
+            <div className="relative">
+              <CalendarDays className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-slate-400" />
+              <input
+                type="date"
+                className="w-full h-10 pl-9 pr-3 rounded-lg border border-slate-200 bg-white text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all"
+                value={dateDebut}
+                onChange={(e) => { setDateDebut(e.target.value); setCurrentPage(1); }}
+              />
             </div>
-            <div className="form-control w-full sm:min-w-[200px] sm:flex-1">
-                <label className="label py-1">
-                    <span className="label-text text-xs font-semibold uppercase opacity-60">{t('end_date')}</span>
-                </label>
-                <input 
-                    type="date" 
-                    className="input input-bordered input-sm h-10 w-full" 
-                    value={dateFin}
-                    onChange={(e) => { setDateFin(e.target.value); setCurrentPage(1); }}
-                />
+          </div>
+          <div className="w-full sm:min-w-[200px] sm:flex-1">
+            <label className="block text-xs font-bold uppercase text-slate-500 tracking-wider mb-1.5">
+              {t('end_date')}
+            </label>
+            <div className="relative">
+              <CalendarDays className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-slate-400" />
+              <input
+                type="date"
+                className="w-full h-10 pl-9 pr-3 rounded-lg border border-slate-200 bg-white text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all"
+                value={dateFin}
+                onChange={(e) => { setDateFin(e.target.value); setCurrentPage(1); }}
+              />
             </div>
-            <button className="btn btn-primary btn-sm h-10 px-6 w-full sm:w-auto" onClick={() => { setCurrentPage(1); fetchHistory(); }}>
-                {t('common:refresh')}
-            </button>
+          </div>
+          <Button
+            size="sm"
+            className="h-10 px-6 w-full sm:w-auto"
+            onClick={() => { setCurrentPage(1); fetchHistory(); }}
+          >
+            <RefreshCw className="size-4" />
+            {t('common:refresh')}
+          </Button>
         </div>
       </div>
 
       {/* Main Content: Table */}
-      <div className="bg-base-100 rounded-2xl shadow-sm border border-base-300 overflow-hidden flex flex-col h-auto min-h-[450px] lg:h-[calc(100vh-28rem)]">
+      <div className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden flex flex-col h-auto min-h-[450px] lg:h-[calc(100vh-28rem)]">
         {loading ? (
-            <div className="flex flex-col items-center justify-center p-20 gap-4">
-                <span className="loading loading-spinner loading-lg text-primary"></span>
-                <p className="text-base-content/60 animate-pulse font-medium">{t('common:loading')}</p>
-            </div>
+          <div className="flex flex-col items-center justify-center p-20 gap-4">
+            <div className="animate-spin rounded-full size-10 border-b-2 border-emerald-600"></div>
+            <p className="text-slate-500 animate-pulse font-medium">{t('common:loading')}</p>
+          </div>
         ) : (
-            <>
-                <div className="overflow-auto flex-1 relative">
-                    <table className="table table-pin-rows table-zebra w-full shadow-inner">
-                        <thead>
-                            <tr className="bg-base-200 text-base-content/70 border-b border-base-300 text-[10px] uppercase tracking-widest font-bold">
-                                <th className="bg-base-200 sticky top-0 z-30 opacity-100 border-b border-base-300">{t('columns.date')}</th>
-                                <th className="bg-base-200 sticky top-0 z-30 opacity-100 border-b border-base-300 text-right">{t('columns.ca_ttc')}</th>
-                                <th className="bg-base-200 sticky top-0 z-30 opacity-100 border-b border-base-300 text-right">{t('columns.cash')}</th>
-                                <th className="bg-base-200 sticky top-0 z-30 opacity-100 border-b border-base-300 text-right">{t('columns.card')}</th>
-                                <th className="bg-base-200 sticky top-0 z-30 opacity-100 border-b border-base-300 text-right">{t('columns.check')}</th>
-                                <th className="bg-base-200 sticky top-0 z-30 opacity-100 border-b border-base-300 text-right">{t('columns.virement')}</th>
-                                <th className="bg-base-200 sticky top-0 z-30 opacity-100 border-b border-base-300 text-right">{t('columns.mobiles')}</th>
-                                <th className="bg-base-200 sticky top-0 z-30 opacity-100 border-b border-base-300 text-right">{t('columns.coupons')}</th>
-                                <th className="bg-base-200 sticky top-0 z-30 opacity-100 border-b border-base-300 text-right">{t('columns.en_compte')}</th>
-                                <th className="bg-base-200 sticky top-0 z-30 opacity-100 border-b border-base-300 text-center">{t('columns.nb_ventes')}</th>
-                                <th className="bg-base-200 sticky top-0 z-30 opacity-100 border-b border-base-300 text-right">{t('columns.avg_basket')}</th>
-                                <th className="bg-base-200 sticky top-0 z-30 opacity-100 border-b border-base-300 text-right">Marge</th>
-                                <th className="bg-base-200 sticky top-0 z-30 opacity-100 border-b border-base-300 text-right">Remises</th>
-                                <th className="bg-base-200 sticky top-0 z-30 opacity-100 border-b border-base-300 text-center">Telegram</th>
-                            </tr>
-                        </thead>
-                        <tbody className="divide-y divide-base-200">
-                            {data.map((row) => (
-                                <tr key={row.date} className="hover:bg-base-200/30 transition-colors group">
-                                    <td className="font-semibold text-base-content/80 whitespace-nowrap py-3">
-                                        <div className="flex flex-col">
-                                            <span>{format(new Date(row.date), 'dd/MM/yyyy')}</span>
-                                            <span className="text-[10px] opacity-40 font-normal">{format(new Date(row.date), 'EEEE', { locale: (window as any).dateLocale })}</span>
-                                        </div>
-                                    </td>
-                                    <td className="text-right py-3">
-                                        <div className="badge badge-ghost font-bold text-primary border-none bg-primary/10">
-                                            {formatMoney(row.ca_ttc)}
-                                        </div>
-                                    </td>
-                                    <td className="text-right font-mono text-sm py-3">{formatMoney(row.especes)}</td>
-                                    <td className="text-right font-mono text-sm py-3 text-base-content/70">{formatMoney(row.carte)}</td>
-                                    <td className="text-right font-mono text-sm py-3 text-base-content/70">{formatMoney(row.cheque)}</td>
-                                    <td className="text-right font-mono text-sm py-3 text-base-content/70">{formatMoney(row.virement)}</td>
-                                    <td className="text-right font-mono text-sm py-3">{formatMoney(row.om + row.momo)}</td>
-                                    <td className="text-right font-mono text-sm py-3 text-secondary italic">{formatMoney(row.coupon || 0)}</td>
-                                    <td className="text-right font-mono text-sm py-3 text-warning">{formatMoney(row.en_compte || 0)}</td>
-                                    <td className="text-center py-3">
-                                        <div className="badge badge-sm badge-outline text-base-content/70">{row.nb_ventes}</div>
-                                    </td>
-                                    <td className="text-right font-medium py-3">{formatMoney(row.panier_moyen)}</td>
-                                    <td className="text-right font-mono text-sm py-3 text-success font-semibold">{formatMoney(row.marge || 0)}</td>
-                                    <td className="text-right font-mono text-sm py-3 text-error">{formatMoney(row.remise || 0)}</td>
-                                    <td className="text-center py-3">
-                                      <button
-                                        className={`btn btn-xs btn-ghost text-[#229ED9] hover:bg-[#229ED9]/10 ${sendingTelegram === row.date ? 'loading' : ''}`}
-                                        onClick={() => handleSendTelegramFlash(row)}
-                                        disabled={sendingTelegram !== null}
-                                        title={t('common:telegram.send_report')}
-                                      >
-                                        {sendingTelegram !== row.date && (
-                                          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 24 24" fill="currentColor">
-                                            <path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.894 8.221-1.97 9.28c-.145.658-.537.818-1.084.508l-3-2.21-1.447 1.394c-.16.16-.295.295-.605.295l.213-3.053 5.56-5.023c.242-.213-.054-.333-.373-.12L7.17 13.67l-2.93-.918c-.638-.196-.65-.638.136-.943l11.434-4.41c.53-.194.995.131.822.943z"/>
-                                          </svg>
-                                        )}
-                                      </button>
-                                    </td>
-                                </tr>
-                            ))}
-                            {data.length === 0 && (
-                                <tr>
-                                    <td colSpan={14} className="text-center py-20">
-                                        <div className="flex flex-col items-center gap-2 text-base-content/30">
-                                            <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                                            </svg>
-                                            <p className="text-lg font-medium">{t('no_data')}</p>
-                                        </div>
-                                    </td>
-                                </tr>
-                            )}
-                        </tbody>
-                        {globalTotals && (
-                            <tfoot className="bg-base-200/40 border-t-2 border-base-300">
-                                <tr className="text-base-content font-bold">
-                                    <td className="py-4 whitespace-nowrap">
-                                        <span className="uppercase text-[10px] tracking-tight">{t('total_period')}</span>
-                                    </td>
-                                    <td className="text-right py-4 text-primary text-lg">{formatMoney(globalTotals.ca_ttc)}</td>
-                                    <td className="text-right py-4">{formatMoney(globalTotals.especes)}</td>
-                                    <td className="text-right py-4 text-base-content/70">{formatMoney(globalTotals.carte)}</td>
-                                    <td className="text-right py-4 text-base-content/70">{formatMoney(globalTotals.cheque)}</td>
-                                    <td className="text-right py-4 text-base-content/70">{formatMoney(globalTotals.virement)}</td>
-                                    <td className="text-right py-4">{formatMoney(globalTotals.om + globalTotals.momo)}</td>
-                                    <td className="text-right py-4 text-secondary">{formatMoney(globalTotals.coupon)}</td>
-                                    <td className="text-right py-4 text-warning">{formatMoney(globalTotals.en_compte || 0)}</td>
-                                    <td className="text-center py-4">
-                                        <div className="badge badge-primary">{globalTotals.nb_ventes}</div>
-                                    </td>
-                                    <td className="text-right py-4">-</td>
-                                </tr>
-                            </tfoot>
-                        )}
-                    </table>
-                </div>
-
-                {/* Pagination Controls */}
-                <div className="p-4 sm:p-6 border-t border-base-200 flex flex-col sm:flex-row items-stretch sm:items-center justify-between bg-base-100 gap-3 sm:gap-4">
-                    <div className="text-sm font-medium text-base-content/60 text-center sm:text-left">
-                        {t('pagination.showing')} <span className="text-base-content font-bold">{data.length}</span> {t('pagination.days_of')} <span className="text-base-content font-bold">{totalItems}</span> {t('pagination.total')}
-                    </div>
-                    
-                    <div className="join shadow-sm w-full sm:w-auto">
-                        <button 
-                            className="join-item btn btn-sm btn-outline h-10 px-4"
-                            onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-                            disabled={currentPage === 1 || loading}
-                        >
-                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                            </svg>
-                            {t('pagination.prev')}
-                        </button>
-                        <div className="join-item btn btn-sm btn-ghost no-animation h-10 px-6 font-bold bg-base-200">
-                            {t('pagination.page')} {currentPage} / {totalPages || 1}
+          <>
+            <div className="overflow-auto flex-1 relative">
+              <table className="min-w-full divide-y divide-slate-200">
+                <thead className="bg-slate-100 sticky top-0 z-10 opacity-100">
+                  <tr>
+                    <th className="py-3 px-2 text-[10px] lg:text-xs tracking-wider uppercase text-slate-500 font-bold whitespace-nowrap">{t('columns.date')}</th>
+                    <th className="text-right py-3 px-2 text-[10px] lg:text-xs tracking-wider uppercase text-slate-500 font-bold whitespace-nowrap">{t('columns.ca_ttc')}</th>
+                    <th className="text-right py-3 px-2 text-[10px] lg:text-xs tracking-wider uppercase text-slate-500 font-bold whitespace-nowrap">{t('columns.cash')}</th>
+                    <th className="text-right py-3 px-2 text-[10px] lg:text-xs tracking-wider uppercase text-slate-500 font-bold whitespace-nowrap">{t('columns.card')}</th>
+                    <th className="text-right py-3 px-2 text-[10px] lg:text-xs tracking-wider uppercase text-slate-500 font-bold whitespace-nowrap">{t('columns.check')}</th>
+                    <th className="text-right py-3 px-2 text-[10px] lg:text-xs tracking-wider uppercase text-slate-500 font-bold whitespace-nowrap">{t('columns.virement')}</th>
+                    <th className="text-right py-3 px-2 text-[10px] lg:text-xs tracking-wider uppercase text-slate-500 font-bold whitespace-nowrap">{t('columns.mobiles')}</th>
+                    <th className="text-right py-3 px-2 text-[10px] lg:text-xs tracking-wider uppercase text-slate-500 font-bold whitespace-nowrap">{t('columns.coupons')}</th>
+                    <th className="text-right py-3 px-2 text-[10px] lg:text-xs tracking-wider uppercase text-slate-500 font-bold whitespace-nowrap">{t('columns.en_compte')}</th>
+                    <th className="text-center py-3 px-2 text-[10px] lg:text-xs tracking-wider uppercase text-slate-500 font-bold whitespace-nowrap">{t('columns.nb_ventes')}</th>
+                    <th className="text-right py-3 px-2 text-[10px] lg:text-xs tracking-wider uppercase text-slate-500 font-bold whitespace-nowrap">{t('columns.avg_basket')}</th>
+                    <th className="text-right py-3 px-2 text-[10px] lg:text-xs tracking-wider uppercase text-slate-500 font-bold whitespace-nowrap">Marge</th>
+                    <th className="text-right py-3 px-2 text-[10px] lg:text-xs tracking-wider uppercase text-slate-500 font-bold whitespace-nowrap">Remises</th>
+                    <th className="text-center py-3 px-2 text-[10px] lg:text-xs tracking-wider uppercase text-slate-500 font-bold whitespace-nowrap">Telegram</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-200 bg-white">
+                  {data.map((row) => (
+                    <tr key={row.date} className="hover:bg-slate-50 transition-colors">
+                      <td className="font-semibold text-slate-700 whitespace-nowrap py-3 px-2">
+                        <div className="flex flex-col">
+                          <span className="text-sm">{format(new Date(row.date), 'dd/MM/yyyy')}</span>
+                          <span className="text-[10px] text-slate-400 font-normal">{format(new Date(row.date), 'EEEE', { locale: (window as any).dateLocale })}</span>
                         </div>
-                        <button 
-                            className="join-item btn btn-sm btn-outline h-10 px-4"
-                            onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-                            disabled={currentPage === totalPages || totalPages === 0 || loading}
+                      </td>
+                      <td className="text-right py-3 px-2">
+                        <Badge variant="default" className="font-bold">
+                          {formatMoney(row.ca_ttc)}
+                        </Badge>
+                      </td>
+                      <td className="text-right font-mono text-sm py-3 px-2 text-slate-700">{formatMoney(row.especes)}</td>
+                      <td className="text-right font-mono text-sm py-3 px-2 text-slate-500">{formatMoney(row.carte)}</td>
+                      <td className="text-right font-mono text-sm py-3 px-2 text-slate-500">{formatMoney(row.cheque)}</td>
+                      <td className="text-right font-mono text-sm py-3 px-2 text-slate-500">{formatMoney(row.virement)}</td>
+                      <td className="text-right font-mono text-sm py-3 px-2 text-slate-700">{formatMoney(row.om + row.momo)}</td>
+                      <td className="text-right font-mono text-sm py-3 px-2 text-slate-500 italic">{formatMoney(row.coupon || 0)}</td>
+                      <td className="text-right font-mono text-sm py-3 px-2 text-amber-600">{formatMoney(row.en_compte || 0)}</td>
+                      <td className="text-center py-3 px-2">
+                        <Badge variant="outline" className="text-slate-600 border-slate-200">
+                          {row.nb_ventes}
+                        </Badge>
+                      </td>
+                      <td className="text-right font-medium py-3 px-2 text-slate-700">{formatMoney(row.panier_moyen)}</td>
+                      <td className="text-right font-mono text-sm py-3 px-2 text-emerald-600 font-semibold">{formatMoney(row.marge || 0)}</td>
+                      <td className="text-right font-mono text-sm py-3 px-2 text-red-600">{formatMoney(row.remise || 0)}</td>
+                      <td className="text-center py-3 px-2">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="text-[#229ED9] hover:bg-[#229ED9]/10 h-8 w-8 p-0"
+                          onClick={() => handleSendTelegramFlash(row)}
+                          disabled={sendingTelegram !== null}
+                          title={t('common:telegram.send_report')}
                         >
-                            {t('pagination.next')}
-                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                            </svg>
-                        </button>
-                    </div>
-                </div>
-            </>
+                          {sendingTelegram === row.date ? (
+                            <Loader2 className="size-4 animate-spin" />
+                          ) : (
+                            <Send className="size-4" />
+                          )}
+                        </Button>
+                      </td>
+                    </tr>
+                  ))}
+                  {data.length === 0 && (
+                    <tr>
+                      <td colSpan={14} className="h-64 text-center text-slate-500">
+                        <div className="flex flex-col items-center justify-center gap-3">
+                          <FileText className="size-12 text-slate-300" />
+                          <p className="text-lg font-medium">{t('no_data')}</p>
+                        </div>
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+                {globalTotals && (
+                  <tfoot className="bg-slate-50 border-t-2 border-slate-200">
+                    <tr className="text-slate-700 font-bold">
+                      <td className="py-4 px-2 whitespace-nowrap">
+                        <span className="uppercase text-[10px] tracking-tight">{t('total_period')}</span>
+                      </td>
+                      <td className="text-right py-4 px-2 text-emerald-600 text-lg">{formatMoney(globalTotals.ca_ttc)}</td>
+                      <td className="text-right py-4 px-2">{formatMoney(globalTotals.especes)}</td>
+                      <td className="text-right py-4 px-2 text-slate-500">{formatMoney(globalTotals.carte)}</td>
+                      <td className="text-right py-4 px-2 text-slate-500">{formatMoney(globalTotals.cheque)}</td>
+                      <td className="text-right py-4 px-2 text-slate-500">{formatMoney(globalTotals.virement)}</td>
+                      <td className="text-right py-4 px-2">{formatMoney(globalTotals.om + globalTotals.momo)}</td>
+                      <td className="text-right py-4 px-2 text-slate-500">{formatMoney(globalTotals.coupon)}</td>
+                      <td className="text-right py-4 px-2 text-amber-600">{formatMoney(globalTotals.en_compte || 0)}</td>
+                      <td className="text-center py-4 px-2">
+                        <Badge variant="default">{globalTotals.nb_ventes}</Badge>
+                      </td>
+                      <td className="text-right py-4 px-2">-</td>
+                      <td className="text-right py-4 px-2 text-emerald-600 font-semibold">{formatMoney(globalTotals.marge || 0)}</td>
+                      <td className="text-right py-4 px-2 text-red-600">{formatMoney(globalTotals.remise || 0)}</td>
+                      <td className="px-2"></td>
+                    </tr>
+                  </tfoot>
+                )}
+              </table>
+            </div>
+
+            {/* Pagination Controls */}
+            <div className="bg-white border-t border-slate-200 p-4 flex items-center justify-between shrink-0">
+              <span className="text-sm text-slate-500">
+                {t('pagination.showing')} <span className="font-bold text-slate-700">{data.length}</span> {t('pagination.days_of')} <span className="font-bold text-slate-700">{totalItems}</span> {t('pagination.total')}
+              </span>
+              <div className="flex gap-1.5">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                  disabled={currentPage === 1 || loading}
+                >
+                  <ChevronLeft className="size-4" />
+                  {t('pagination.prev')}
+                </Button>
+                <span className="px-3 py-1.5 text-xs font-bold bg-slate-100 rounded-md flex items-center">
+                  {t('pagination.page')} {currentPage} / {totalPages || 1}
+                </span>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                  disabled={currentPage === totalPages || totalPages === 0 || loading}
+                >
+                  {t('pagination.next')}
+                  <ChevronRight className="size-4" />
+                </Button>
+              </div>
+            </div>
+          </>
         )}
       </div>
     </div>

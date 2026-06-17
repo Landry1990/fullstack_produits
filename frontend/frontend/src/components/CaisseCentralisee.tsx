@@ -386,25 +386,25 @@ export default function CaisseCentralisee() {
   })
 
   return (
-    <div className="h-full bg-base-200 flex flex-col overflow-hidden font-sans">
-      <div className="flex-1 overflow-y-auto p-6 space-y-4">
+    <div className="h-full bg-slate-50 flex flex-col overflow-hidden font-sans">
+      <div className="flex-1 overflow-y-auto p-3 sm:p-6 space-y-4">
 
       {/* Header Card */}
-      <div className="bg-base-100 rounded-2xl shadow-sm border border-base-300 flex flex-col">
-        <div className="p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+      <div className="bg-white rounded-2xl shadow-sm border border-slate-200 flex flex-col">
+        <div className="p-4 sm:p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-bold text-base-content tracking-tight">{t('title')}</h1>
-            <p className="text-base-content/60 text-sm mt-1">{t('subtitle')}</p>
+            <h1 className="text-2xl font-bold text-slate-900 tracking-tight">{t('title')}</h1>
+            <p className="text-slate-500 text-sm mt-1">{t('subtitle')}</p>
           </div>
-          
+
           {isMultiCaisse && (
-            <div className="flex items-center gap-2 bg-base-200 p-1.5 rounded-xl border border-base-300">
-              <div className="flex items-center gap-2 px-3 text-base-content/60">
+            <div className="flex items-center gap-2 bg-slate-100 p-1.5 rounded-xl border border-slate-200">
+              <div className="flex items-center gap-2 px-3 text-slate-500">
                 <Monitor className="size-4" />
                 <span className="text-xs font-bold uppercase tracking-wider">{t('poste_label')}</span>
               </div>
-              <select 
-                className="select select-sm select-ghost font-bold text-xs focus:bg-base-100"
+              <select
+                className="h-8 px-2 rounded-md bg-white border border-slate-200 text-xs font-bold text-slate-700 focus:outline-none focus:border-emerald-300"
                 value={selectedPosteCaisseId}
                 onChange={(e) => setSelectedPosteCaisseId(e.target.value)}
               >
@@ -419,14 +419,14 @@ export default function CaisseCentralisee() {
           <div className="flex items-center gap-3 flex-wrap">
             {/* Toggle Mode Sécurité (masquer les montants) */}
             {myActivePoste && (
-              <label className="flex items-center gap-2 cursor-pointer btn btn-ghost btn-sm" title={t('cash_session.security_mode', { defaultValue: 'Mode sécurité: masquer les montants aux caissiers' })}>
+              <label className="flex items-center gap-2 cursor-pointer px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 transition-colors" title={t('cash_session.security_mode', { defaultValue: 'Mode sécurité: masquer les montants aux caissiers' })}>
                 <input
                   type="checkbox"
                   checked={hideAmounts}
                   onChange={(e) => setHideAmounts(e.target.checked)}
-                  className="checkbox checkbox-xs checkbox-warning"
+                  className="size-4 accent-amber-500"
                 />
-                <span className="text-xs hidden sm:inline">🔒 {t('cash_session.hide_amounts', { defaultValue: 'Masquer montants' })}</span>
+                <span className="text-xs hidden sm:inline text-slate-600 font-medium">🔒 {t('cash_session.hide_amounts', { defaultValue: 'Masquer montants' })}</span>
               </label>
             )}
 
@@ -434,19 +434,19 @@ export default function CaisseCentralisee() {
             {myActivePoste ? (
               <button
                 onClick={handleCloseSession}
-                className="btn btn-sm gap-2 btn-warning shadow-sm"
+                className="inline-flex items-center gap-2 h-9 px-4 rounded-lg text-sm font-semibold bg-amber-500 text-white shadow-sm hover:bg-amber-600 transition-colors"
                 title={t('cash_session.close_title', { defaultValue: 'Fermer ma caisse' })}
               >
                 <Lock className="size-4" />
                 <span className="hidden sm:inline">🔴 {myActivePoste.nom} - {t('cash_session.close_short', { defaultValue: 'Fermer' })}</span>
                 {myActivePoste.fond_de_caisse && (
-                  <span className="text-[10px] opacity-70">({Number(myActivePoste.fond_de_caisse).toLocaleString()} F)</span>
+                  <span className="text-[10px] opacity-80">({Number(myActivePoste.fond_de_caisse).toLocaleString()} F)</span>
                 )}
               </button>
             ) : (
               <button
                 onClick={() => setShowOpenSessionModal(true)}
-                className="btn btn-sm gap-2 btn-success shadow-sm"
+                className="inline-flex items-center gap-2 h-9 px-4 rounded-lg text-sm font-semibold bg-emerald-600 text-white shadow-sm hover:bg-emerald-700 transition-colors"
                 title={t('cash_session.open_title', { defaultValue: 'Ouvrir ma caisse' })}
               >
                 <Unlock className="size-4" />
@@ -454,19 +454,19 @@ export default function CaisseCentralisee() {
               </button>
             )}
 
-            <div className="flex items-center gap-1.5 text-xs text-primary bg-primary/10 px-3 py-1.5 rounded-full font-medium">
+            <div className="flex items-center gap-1.5 text-xs text-emerald-600 bg-emerald-50 px-3 py-1.5 rounded-full font-medium">
               <RefreshCw className="size-3.5 animate-spin" />
               {t('auto_refresh')}
             </div>
-            <button 
+            <button
               onClick={() => setIsCouponPanelOpen(!isCouponPanelOpen)}
-              className={`btn btn-sm gap-2 ${isCouponPanelOpen ? 'btn-primary' : 'btn-outline btn-primary'}`}
+              className={`inline-flex items-center gap-2 h-9 px-3 rounded-lg text-xs font-semibold transition-all ${isCouponPanelOpen ? 'bg-emerald-600 text-white shadow-sm' : 'border-2 border-slate-200 bg-white text-emerald-600 hover:border-emerald-500'}`}
             >
               <Ticket className="size-4" />
               {t('coupons_active', { count: activeCouponsCount })}
             </button>
             {appliedCouponsCount > 0 && (
-              <div className="flex items-center gap-1.5 text-xs text-success bg-success/10 px-3 py-1.5 rounded-full font-medium">
+              <div className="flex items-center gap-1.5 text-xs text-emerald-700 bg-emerald-50 px-3 py-1.5 rounded-full font-medium">
                 <span>{t('coupons_applied', { count: appliedCouponsCount })}</span>
               </div>
             )}
@@ -477,44 +477,44 @@ export default function CaisseCentralisee() {
       {/* Quick Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {/* Pending Invoices */}
-        <div className="bg-gradient-to-br from-error/10 to-error/5 p-4 rounded-xl border border-error/20 flex items-center justify-between">
+        <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between">
           <div>
-            <div className="text-xs font-bold text-error uppercase tracking-wider mb-1 flex items-center gap-1">
+            <div className="text-xs font-bold text-red-500 uppercase tracking-wider mb-1 flex items-center gap-1">
               <Clock className="size-3" /> {t('stats_pending_title', { defaultValue: 'En Attente' })}
             </div>
-            <div className="text-2xl font-bold text-base-content">{facturesEnAttente.length}</div>
-            <div className="text-xs text-base-content/60">{t('stats_pending_desc', { defaultValue: 'facture(s) à encaisser' })}</div>
+            <div className="text-2xl font-bold text-slate-800">{facturesEnAttente.length}</div>
+            <div className="text-xs text-slate-500">{t('stats_pending_desc', { defaultValue: 'facture(s) à encaisser' })}</div>
           </div>
-          <div className="size-12 rounded-full bg-error/10 flex items-center justify-center">
-            <Clock className="size-6 text-error" />
+          <div className="p-3 bg-red-50 rounded-lg text-red-500">
+            <Clock className="size-6" />
           </div>
         </div>
 
         {/* Total Amount */}
-        <div className="bg-gradient-to-br from-primary/10 to-primary/5 p-4 rounded-xl border border-primary/20 flex items-center justify-between">
+        <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between">
           <div>
-            <div className="text-xs font-bold text-primary uppercase tracking-wider mb-1 flex items-center gap-1">
+            <div className="text-xs font-bold text-emerald-600 uppercase tracking-wider mb-1 flex items-center gap-1">
               <Banknote className="size-3" /> {t('stats_total_title', { defaultValue: 'Montant Total' })}
             </div>
-            <div className="text-2xl font-bold text-base-content">{formatCurrency(Math.round(totalMontantEnAttente))}</div>
-            <div className="text-xs text-base-content/60">{t('stats_total_desc', { defaultValue: 'à encaisser' })}</div>
+            <div className="text-2xl font-bold text-slate-800">{formatCurrency(Math.round(totalMontantEnAttente))}</div>
+            <div className="text-xs text-slate-500">{t('stats_total_desc', { defaultValue: 'à encaisser' })}</div>
           </div>
-          <div className="size-12 rounded-full bg-primary/10 flex items-center justify-center">
-            <Banknote className="size-6 text-primary" />
+          <div className="p-3 bg-emerald-50 rounded-lg text-emerald-600">
+            <Banknote className="size-6" />
           </div>
         </div>
 
         {/* Active Coupons */}
-        <div className="bg-gradient-to-br from-secondary/10 to-secondary/5 p-4 rounded-xl border border-secondary/20 flex items-center justify-between">
+        <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between">
           <div>
-            <div className="text-xs font-bold text-secondary uppercase tracking-wider mb-1 flex items-center gap-1">
+            <div className="text-xs font-bold text-blue-600 uppercase tracking-wider mb-1 flex items-center gap-1">
               <Ticket className="size-3" /> {t('stats_coupons_title', { defaultValue: 'Coupons Actifs' })}
             </div>
-            <div className="text-2xl font-bold text-base-content">{activeCouponsCount}</div>
-            <div className="text-xs text-base-content/60">{appliedCouponsCount > 0 ? t('coupons_applied', { count: appliedCouponsCount }) : t('stats_coupons_desc', { defaultValue: 'coupon(s) disponible(s)' })}</div>
+            <div className="text-2xl font-bold text-slate-800">{activeCouponsCount}</div>
+            <div className="text-xs text-slate-500">{appliedCouponsCount > 0 ? t('coupons_applied', { count: appliedCouponsCount }) : t('stats_coupons_desc', { defaultValue: 'coupon(s) disponible(s)' })}</div>
           </div>
-          <div className="size-12 rounded-full bg-secondary/10 flex items-center justify-center">
-            <Ticket className="size-6 text-secondary" />
+          <div className="p-3 bg-blue-50 rounded-lg text-blue-600">
+            <Ticket className="size-6" />
           </div>
         </div>
       </div>
@@ -538,7 +538,7 @@ export default function CaisseCentralisee() {
         )}
 
         {/* Table Card */}
-        <div className="flex-1 bg-base-100 rounded-2xl shadow-sm border border-base-300 overflow-hidden flex flex-col min-h-0">
+        <div className="flex-1 bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden flex flex-col min-h-0">
           <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
             <FacturesTable
               sortedFactures={sortedFactures}
@@ -558,17 +558,17 @@ export default function CaisseCentralisee() {
             />
           </div>
           {/* Keyboard Shortcuts Footer */}
-          <div className="p-3 border-t border-base-200 flex items-center justify-between text-xs text-base-content/40">
+          <div className="p-3 border-t border-slate-200 flex items-center justify-between text-xs text-slate-400 bg-white">
             <div className="flex items-center gap-1">
               <Keyboard className="size-3.5" />
               <span className="hidden sm:inline">{t('shortcuts.title')}</span>
             </div>
             <div className="flex gap-3">
-              <span><kbd className="kbd kbd-xs">↑↓</kbd> {t('shortcuts.navigate')}</span>
-              <span><kbd className="kbd kbd-xs">{t('shortcuts.enter_key', 'Entrée')}</kbd> {t('shortcuts.cash_in')}</span>
-              <span><kbd className="kbd kbd-xs">C</kbd> {t('shortcuts.coupon')}</span>
-              <span><kbd className="kbd kbd-xs">R</kbd> {t('shortcuts.refresh')}</span>
-              <span><kbd className="kbd kbd-xs">1-9</kbd> {t('shortcuts.quick_select')}</span>
+              <span><kbd className="inline-block px-1.5 py-0.5 rounded bg-slate-100 border border-slate-200 text-[10px] font-mono">↑↓</kbd> {t('shortcuts.navigate')}</span>
+              <span><kbd className="inline-block px-1.5 py-0.5 rounded bg-slate-100 border border-slate-200 text-[10px] font-mono">{t('shortcuts.enter_key', 'Entrée')}</kbd> {t('shortcuts.cash_in')}</span>
+              <span><kbd className="inline-block px-1.5 py-0.5 rounded bg-slate-100 border border-slate-200 text-[10px] font-mono">C</kbd> {t('shortcuts.coupon')}</span>
+              <span><kbd className="inline-block px-1.5 py-0.5 rounded bg-slate-100 border border-slate-200 text-[10px] font-mono">R</kbd> {t('shortcuts.refresh')}</span>
+              <span><kbd className="inline-block px-1.5 py-0.5 rounded bg-slate-100 border border-slate-200 text-[10px] font-mono">1-9</kbd> {t('shortcuts.quick_select')}</span>
             </div>
           </div>
         </div>
@@ -576,21 +576,21 @@ export default function CaisseCentralisee() {
 
       {/* Récap Session Live — visible selon paramètre hide_cash_totals */}
       {sessionRecap?.has_session && (user?.is_superuser || !pharmacySettings?.hide_cash_totals) && (
-        <div className="bg-base-100 rounded-2xl shadow-sm border border-success/30 overflow-hidden">
-          <div className="px-5 py-3 bg-success/5 border-b border-success/20 flex items-center justify-between">
+        <div className="bg-white rounded-2xl shadow-sm border border-emerald-200 overflow-hidden">
+          <div className="px-5 py-3 bg-emerald-50 border-b border-emerald-100 flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <TrendingUp className="size-4 text-success" />
-              <span className="text-xs font-black text-success uppercase tracking-widest">
+              <TrendingUp className="size-4 text-emerald-600" />
+              <span className="text-xs font-black text-emerald-600 uppercase tracking-widest">
                 {t('recap.title', { defaultValue: 'Récap caisse' })} — {sessionRecap.poste_nom}
               </span>
               {sessionRecap.date_ouverture && (
-                <span className="text-[10px] text-base-content/40 font-mono">
+                <span className="text-[10px] text-slate-400 font-mono">
                   {t('recap.since', { defaultValue: 'depuis' })} {new Date(sessionRecap.date_ouverture).toLocaleTimeString(i18n.language === 'en' ? 'en-GB' : 'fr-FR', { hour: '2-digit', minute: '2-digit' })}
                 </span>
               )}
             </div>
             <div className="flex items-center gap-3">
-              <div className="flex items-center gap-1.5 text-[10px] text-success/50">
+              <div className="flex items-center gap-1.5 text-[10px] text-emerald-500">
                 <RefreshCw className="size-3 animate-spin" />
                 live
               </div>
@@ -598,9 +598,9 @@ export default function CaisseCentralisee() {
           </div>
           <div className="p-4 flex flex-wrap gap-3 items-center">
             {(sessionRecap.fond_de_caisse ?? 0) > 0 && (
-              <div className="flex flex-col items-center px-4 py-2 bg-info/5 border border-info/20 rounded-xl min-w-[100px]">
-                <span className="text-[10px] font-bold text-info/60 uppercase tracking-wider">{t('recap.fond', { defaultValue: 'Fond' })}</span>
-                <span className="text-base font-black text-info">+{formatCurrency(Math.round(sessionRecap.fond_de_caisse ?? 0))}</span>
+              <div className="flex flex-col items-center px-4 py-2 bg-blue-50 border border-blue-100 rounded-xl min-w-[100px]">
+                <span className="text-[10px] font-bold text-blue-500/70 uppercase tracking-wider">{t('recap.fond', { defaultValue: 'Fond' })}</span>
+                <span className="text-base font-black text-blue-600">+{formatCurrency(Math.round(sessionRecap.fond_de_caisse ?? 0))}</span>
               </div>
             )}
             {Object.entries(sessionRecap.details_par_mode ?? {})
@@ -619,11 +619,11 @@ export default function CaisseCentralisee() {
                 }
                 const isNegative = mode === 'coupon'
                 return (
-                  <div key={mode} className={`flex flex-col items-center px-4 py-2 rounded-xl min-w-[100px] border ${isNegative ? 'bg-error/5 border-error/20' : 'bg-success/5 border-success/20'}`}>
-                    <span className={`text-[10px] font-bold uppercase tracking-wider ${isNegative ? 'text-error/60' : 'text-success/60'}`}>
+                  <div key={mode} className={`flex flex-col items-center px-4 py-2 rounded-xl min-w-[100px] border ${isNegative ? 'bg-red-50 border-red-100' : 'bg-emerald-50 border-emerald-100'}`}>
+                    <span className={`text-[10px] font-bold uppercase tracking-wider ${isNegative ? 'text-red-400' : 'text-emerald-500'}`}>
                       {labels[mode] ?? mode}
                     </span>
-                    <span className={`text-base font-black ${isNegative ? 'text-error' : 'text-success'}`}>
+                    <span className={`text-base font-black ${isNegative ? 'text-red-600' : 'text-emerald-600'}`}>
                       {isNegative ? '-' : ''}{formatCurrency(Math.round(montant))}
                     </span>
                   </div>
@@ -631,13 +631,13 @@ export default function CaisseCentralisee() {
               })
             }
             <div className="ml-auto flex flex-col items-end gap-1">
-              <div className="text-[10px] font-bold text-base-content/40 uppercase tracking-wider">
+              <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
                 {sessionRecap.nb_transactions} {t('recap.sales', { defaultValue: 'vente(s)', count: sessionRecap.nb_transactions ?? 0 })}
               </div>
-              <div className="text-2xl font-black text-success">
+              <div className="text-2xl font-black text-emerald-600">
                 {formatCurrency(Math.round(sessionRecap.total_avec_fond ?? 0))}
               </div>
-              <div className="text-[10px] text-base-content/40">{t('recap.total_register', { defaultValue: 'total caisse' })}</div>
+              <div className="text-[10px] text-slate-400">{t('recap.total_register', { defaultValue: 'total caisse' })}</div>
             </div>
           </div>
         </div>
@@ -661,14 +661,14 @@ export default function CaisseCentralisee() {
         isOpen={showTicketPreview && !!ticketCaisse}
         onClose={() => setShowTicketPreview(false)}
         title={t('ticket.title')}
-        icon={<span className="text-primary text-xl">📄</span>}
+        icon={<span className="text-emerald-600 text-xl">📄</span>}
         maxWidth="max-w-sm"
         footer={
             <div className="flex justify-end gap-2 w-full">
-              <button className="btn btn-ghost btn-sm" onClick={() => setShowTicketPreview(false)}>{t('coupons.details_modal.close') || 'Fermer'} (Esc)</button>
+              <button className="inline-flex items-center justify-center h-8 px-3 rounded-lg text-xs font-semibold text-slate-600 hover:bg-slate-100 transition-colors" onClick={() => setShowTicketPreview(false)}>{t('coupons.details_modal.close') || 'Fermer'} (Esc)</button>
               {pharmacySettings?.whatsapp_enabled && (
-                <button 
-                  className="btn btn-outline btn-success btn-sm gap-2"
+                <button
+                  className="inline-flex items-center gap-2 h-8 px-3 rounded-lg text-xs font-semibold border-2 border-emerald-500 text-emerald-600 hover:bg-emerald-50 transition-colors"
                   onClick={handleSendWhatsApp}
                   disabled={loading}
                 >
@@ -678,8 +678,8 @@ export default function CaisseCentralisee() {
                   WhatsApp
                 </button>
               )}
-              <button 
-                className="btn btn-primary btn-sm px-6"
+              <button
+                className="inline-flex items-center justify-center h-8 px-6 rounded-lg text-xs font-semibold bg-emerald-600 text-white shadow-sm hover:bg-emerald-700 transition-colors"
                 onClick={() => {
                   const ticketElement = document.getElementById('ticket-preview');
                   if (!ticketElement) return;
@@ -791,9 +791,9 @@ export default function CaisseCentralisee() {
             </div>
         }
       >
-        <div className="max-h-[70vh] overflow-y-auto bg-base-200/50 flex justify-center py-4">
+        <div className="max-h-[70vh] overflow-y-auto bg-slate-100 flex justify-center py-4">
           {ticketCaisse && (
-            <div id="ticket-preview" className="shadow-lg bg-base-100">
+            <div id="ticket-preview" className="shadow-lg bg-white">
               <TicketTemplate ticket={ticketCaisse} settings={pharmacySettings} />
             </div>
           )}
@@ -805,12 +805,12 @@ export default function CaisseCentralisee() {
         isOpen={isGenererCouponModalOpen}
         onClose={() => setIsGenererCouponModalOpen(false)}
         title={t('coupons.generate_modal.title')}
-        icon={<svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>}
+        icon={<svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>}
         footer={
             <div className="flex justify-end gap-2 w-full">
-              <button className="btn btn-ghost" onClick={() => setIsGenererCouponModalOpen(false)}>{t('table.cancel')}</button>
-              <button 
-                className="btn btn-primary gap-2" 
+              <button className="inline-flex items-center justify-center h-9 px-4 rounded-lg text-sm font-semibold text-slate-600 hover:bg-slate-100 transition-colors" onClick={() => setIsGenererCouponModalOpen(false)}>{t('table.cancel')}</button>
+              <button
+                className="inline-flex items-center gap-2 h-9 px-4 rounded-lg text-sm font-semibold bg-emerald-600 text-white shadow-sm hover:bg-emerald-700 transition-colors"
                 onClick={() => setIsSudoModalOpen(true)}
                 disabled={loading || !nouveauCouponMontant}
               >
@@ -823,13 +823,11 @@ export default function CaisseCentralisee() {
         }
       >
         <div className="p-6">
-            <div className="form-control w-full mb-4">
-              <label className="label">
-                <span className="label-text">Montant à rendre (F)</span>
-              </label>
-              <input 
-                type="number" 
-                className="input input-bordered w-full text-2xl font-bold text-center" 
+            <div className="w-full mb-4">
+              <label className="block text-xs font-bold uppercase text-slate-500 tracking-wider mb-1.5">Montant à rendre (F)</label>
+              <input
+                type="number"
+                className="w-full h-12 rounded-lg border border-slate-200 bg-white px-3 text-2xl font-bold text-center text-slate-700 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
                 placeholder="Ex: 250"
                 value={nouveauCouponMontant}
                 onChange={(e) => setNouveauCouponMontant(e.target.value)}
@@ -837,12 +835,10 @@ export default function CaisseCentralisee() {
               />
             </div>
 
-            <div className="form-control w-full mb-4">
-              <label className="label">
-                <span className="label-text">Notes (Optionnel)</span>
-              </label>
-              <textarea 
-                className="textarea textarea-bordered h-20" 
+            <div className="w-full mb-4">
+              <label className="block text-xs font-bold uppercase text-slate-500 tracking-wider mb-1.5">Notes (Optionnel)</label>
+              <textarea
+                className="w-full h-20 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 resize-none"
                 placeholder="Raison du coupon..."
                 value={nouveauCouponNotes}
                 onChange={(e) => setNouveauCouponNotes(e.target.value)}
@@ -865,11 +861,11 @@ export default function CaisseCentralisee() {
         isOpen={isDetailsCouponModalOpen && !!couponTrouve}
         onClose={() => { setIsDetailsCouponModalOpen(false); setCouponTrouve(null); setSearchCouponNumero(''); }}
         title="Détails du Coupon"
-        icon={<span className="text-primary text-xl">🎫</span>}
+        icon={<span className="text-emerald-600 text-xl">🎫</span>}
         footer={
             <div className="flex justify-between gap-2 w-full">
-              <button 
-                className="btn btn-sm btn-outline"
+              <button
+                className="inline-flex items-center justify-center h-8 px-3 rounded-lg text-xs font-semibold border-2 border-slate-200 text-slate-600 hover:border-emerald-500 hover:text-emerald-600 transition-colors"
                 onClick={() => {
                   if (!couponTrouve) return;
                   const win = window.open('', '', 'height=600,width=400');
@@ -1054,14 +1050,14 @@ export default function CaisseCentralisee() {
                 }}
               > {t('coupons.details_modal.print')} </button>
               <div className="flex gap-2">
-                <button className="btn btn-sm btn-ghost" onClick={() => { setIsDetailsCouponModalOpen(false); setCouponTrouve(null); setSearchCouponNumero(''); }}>{t('coupons.details_modal.close') || 'Fermer'}</button>
+                <button className="inline-flex items-center justify-center h-8 px-3 rounded-lg text-xs font-semibold text-slate-600 hover:bg-slate-100 transition-colors" onClick={() => { setIsDetailsCouponModalOpen(false); setCouponTrouve(null); setSearchCouponNumero(''); }}>{t('coupons.details_modal.close') || 'Fermer'}</button>
                 {couponTrouve && couponTrouve.status === 'ACTIF' && factureForCoupon && (
-                  <button className="btn btn-sm btn-success text-white" onClick={() => handleAppliquerCouponAFacture(couponTrouve, factureForCoupon)}>
+                  <button className="inline-flex items-center justify-center h-8 px-3 rounded-lg text-xs font-semibold bg-emerald-600 text-white shadow-sm hover:bg-emerald-700 transition-colors" onClick={() => handleAppliquerCouponAFacture(couponTrouve, factureForCoupon)}>
                     {t('table.apply_coupon')} #{factureForCoupon.session_ticket_number}
                   </button>
                 )}
                 {couponTrouve && couponTrouve.status === 'ACTIF' && !factureForCoupon && (
-                  <div className="text-xs text-warning">Sélectionnez d'abord une vente pour appliquer le coupon</div>
+                  <div className="text-xs text-amber-600">Sélectionnez d'abord une vente pour appliquer le coupon</div>
                 )}
               </div>
             </div>
@@ -1069,26 +1065,26 @@ export default function CaisseCentralisee() {
       >
         <div className="p-6">
             {couponTrouve && (
-            <div className="text-center p-4 border-2 border-dashed border-base-300 rounded-xl bg-base-50">
-              <div className="text-xs font-bold text-base-content/40 uppercase tracking-widest mb-1">Coupon de Monnaie</div>
-              <div className="text-4xl font-black text-primary font-mono mb-2">#{couponTrouve.numero}</div>
-              <div className="text-3xl font-bold mb-4">{Math.round(Number(couponTrouve.montant))} F</div>
-              <div className="divider"></div>
-              <div className="text-left space-y-2 text-xs">
+            <div className="text-center p-4 border-2 border-dashed border-slate-200 rounded-xl bg-slate-50">
+              <div className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">Coupon de Monnaie</div>
+              <div className="text-4xl font-black text-emerald-600 font-mono mb-2">#{couponTrouve.numero}</div>
+              <div className="text-3xl font-bold text-slate-800 mb-4">{Math.round(Number(couponTrouve.montant))} F</div>
+              <div className="border-t border-slate-200 my-2"></div>
+              <div className="text-left space-y-2 text-xs text-slate-700">
                 <div className="flex justify-between">
                   <span>Status:</span>
-                  <span className={`badge badge-xs ${
-                    couponTrouve.status === 'ACTIF' ? 'badge-success' : 
-                    couponTrouve.status === 'UTILISE' ? 'badge-neutral' : 'badge-ghost'
+                  <span className={`inline-flex items-center px-2 h-5 text-[10px] rounded font-semibold ${
+                    couponTrouve.status === 'ACTIF' ? 'bg-emerald-100 text-emerald-700' :
+                    couponTrouve.status === 'UTILISE' ? 'bg-slate-100 text-slate-700' : 'bg-slate-50 text-slate-500'
                   }`}>
                     {couponTrouve.status_display || couponTrouve.status}
                   </span>
                 </div>
-                
-                <div className="divider my-1"></div>
-                
-                <div className="bg-base-100 p-2 rounded border border-base-200 space-y-1">
-                  <div className="font-bold text-[10px] uppercase text-base-content/50 mb-1">Création</div>
+
+                <div className="border-t border-slate-200 my-1"></div>
+
+                <div className="bg-white p-2 rounded border border-slate-200 space-y-1">
+                  <div className="font-bold text-[10px] uppercase text-slate-500 mb-1">Création</div>
                   <div className="flex justify-between">
                     <span>Généré par:</span>
                     <span className="font-medium">{couponTrouve.cree_par_nom || 'Système'}</span>
@@ -1100,8 +1096,8 @@ export default function CaisseCentralisee() {
                 </div>
 
                 {couponTrouve.status === 'UTILISE' && (
-                  <div className="bg-success/5 p-2 rounded border border-success/20 space-y-1">
-                    <div className="font-bold text-[10px] uppercase text-success text-base-content/70 mb-1">Utilisation</div>
+                  <div className="bg-emerald-50 p-2 rounded border border-emerald-100 space-y-1">
+                    <div className="font-bold text-[10px] uppercase text-emerald-600 text-slate-500 mb-1">Utilisation</div>
                     <div className="flex justify-between">
                       <span>Utilisé par:</span>
                       <span className="font-medium">{couponTrouve.utilise_par_nom || 'N/A'}</span>
@@ -1114,10 +1110,10 @@ export default function CaisseCentralisee() {
                     )}
                   </div>
                 )}
-                
+
                 {couponTrouve.notes && (
-                  <div className="mt-2 p-2 bg-base-100 rounded italic border border-base-200">
-                    <span className="font-bold not-italic text-base-content/50 block text-[10px] mb-1">Notes:</span>
+                  <div className="mt-2 p-2 bg-white rounded italic border border-slate-200 text-slate-600">
+                    <span className="font-bold not-italic text-slate-500 block text-[10px] mb-1">Notes:</span>
                     "{couponTrouve.notes}"
                   </div>
                 )}
@@ -1142,11 +1138,11 @@ export default function CaisseCentralisee() {
         isOpen={showClosingReport}
         onClose={() => setShowClosingReport(false)}
         title={t('cash_session.closing_report', { defaultValue: 'Rapport de Clôture' })}
-        icon={<Ticket className="text-primary size-5" />}
+        icon={<Ticket className="text-emerald-600 size-5" />}
         footer={
           <div className="flex justify-end w-full">
-            <button 
-              className="btn btn-primary btn-sm" 
+            <button
+              className="inline-flex items-center justify-center h-8 px-4 rounded-lg text-xs font-semibold bg-emerald-600 text-white shadow-sm hover:bg-emerald-700 transition-colors"
               onClick={() => setShowClosingReport(false)}
             >
               {t('common:actions.close', { defaultValue: 'Fermer' })}
@@ -1157,9 +1153,9 @@ export default function CaisseCentralisee() {
         {closingReport && (
           <div className="p-5 space-y-4">
             {/* En-tête */}
-            <div className="text-center border-b border-base-300 pb-4">
-              <h3 className="font-bold text-lg">{closingReport.poste?.nom}</h3>
-              <p className="text-sm text-base-content/60">
+            <div className="text-center border-b border-slate-200 pb-4">
+              <h3 className="font-bold text-lg text-slate-800">{closingReport.poste?.nom}</h3>
+              <p className="text-sm text-slate-500">
                 {new Date(closingReport.session?.date_fermeture).toLocaleString('fr-FR')}
               </p>
             </div>
@@ -1168,41 +1164,41 @@ export default function CaisseCentralisee() {
             {!closingReport.hide_amounts ? (
               <>
                 <div className="grid grid-cols-2 gap-3">
-                  <div className="bg-base-100 p-3 rounded-lg border border-base-300">
-                    <p className="text-[10px] uppercase text-base-content/50">{t('cash_session.fond_initial', { defaultValue: 'Fond Initial' })}</p>
-                    <p className="font-mono font-bold text-lg">
+                  <div className="bg-white p-3 rounded-lg border border-slate-200">
+                    <p className="text-[10px] uppercase text-slate-500">{t('cash_session.fond_initial', { defaultValue: 'Fond Initial' })}</p>
+                    <p className="font-mono font-bold text-lg text-slate-800">
                       {closingReport.session?.fond_de_caisse?.toLocaleString('fr-FR')} F
                     </p>
                   </div>
-                  <div className="bg-success/10 p-3 rounded-lg border border-success/20">
-                    <p className="text-[10px] uppercase text-success">{t('cash_session.encaisse', { defaultValue: 'Encaissé' })}</p>
-                    <p className="font-mono font-bold text-lg text-success">
+                  <div className="bg-emerald-50 p-3 rounded-lg border border-emerald-100">
+                    <p className="text-[10px] uppercase text-emerald-600">{t('cash_session.encaisse', { defaultValue: 'Encaissé' })}</p>
+                    <p className="font-mono font-bold text-lg text-emerald-600">
                       {closingReport.session?.montant_encaisse?.toLocaleString('fr-FR')} F
                     </p>
                   </div>
                 </div>
 
                 {/* Total théorique */}
-                <div className="bg-primary/5 p-4 rounded-lg border border-primary/20">
-                  <p className="text-[10px] uppercase text-primary font-semibold mb-1">
+                <div className="bg-emerald-50 p-4 rounded-lg border border-emerald-100">
+                  <p className="text-[10px] uppercase text-emerald-600 font-semibold mb-1">
                     {t('cash_session.total_theorique', { defaultValue: 'Total Théorique en Caisse' })}
                   </p>
-                  <p className="font-mono font-bold text-2xl text-primary">
+                  <p className="font-mono font-bold text-2xl text-emerald-600">
                     {closingReport.session?.montant_theorique?.toLocaleString('fr-FR')} F
                   </p>
                 </div>
               </>
             ) : (
               /* Mode sécurité - montants masqués */
-              <div className="bg-warning/10 p-4 rounded-lg border border-warning/30 text-center">
-                <p className="text-warning text-sm font-medium mb-2">🔒 Mode Sécurité</p>
-                <p className="text-base-content/60 text-xs">
+              <div className="bg-amber-50 p-4 rounded-lg border border-amber-200 text-center">
+                <p className="text-amber-600 text-sm font-medium mb-2">🔒 Mode Sécurité</p>
+                <p className="text-slate-500 text-xs">
                   Les montants sont masqués pour des raisons de sécurité.
                   Consultez le pharmacien pour les détails financiers.
                 </p>
                 <div className="mt-3 space-y-2">
-                  <div className="bg-base-100 p-2 rounded border border-base-300">
-                    <span className="text-2xl font-mono">*** *** F</span>
+                  <div className="bg-white p-2 rounded border border-slate-200">
+                    <span className="text-2xl font-mono text-slate-800">*** *** F</span>
                   </div>
                 </div>
               </div>
@@ -1210,13 +1206,13 @@ export default function CaisseCentralisee() {
 
             {/* Transactions */}
             <div className="flex justify-between items-center text-sm">
-              <span className="text-base-content/60">{t('cash_session.transactions', { defaultValue: 'Transactions' })}</span>
-              <span className="font-bold">{closingReport.transactions?.total || 0}</span>
+              <span className="text-slate-500">{t('cash_session.transactions', { defaultValue: 'Transactions' })}</span>
+              <span className="font-bold text-slate-800">{closingReport.transactions?.total || 0}</span>
             </div>
 
             {/* Message de confirmation */}
             <div className="text-center pt-2">
-              <p className="text-sm text-success font-medium">✓ {closingReport.detail}</p>
+              <p className="text-sm text-emerald-600 font-medium">✓ {closingReport.detail}</p>
             </div>
           </div>
         )}

@@ -48,17 +48,17 @@ export default function AlertMessageModal({ isOpen, onClose, target, onSuccess }
             isOpen={isOpen}
             onClose={onClose}
             title={`⚠️ Alerte pour ${target?.name}`}
-            icon={<span className="text-warning">⚠️</span>}
-            gradientFrom="warning/20"
-            gradientTo="error/10"
+            icon={<span className="text-amber-500">⚠️</span>}
+            gradientFrom="amber-100"
+            gradientTo="red-50"
         >
             <div className="p-6 space-y-4">
-                <p className="text-sm text-base-content/70">
+                <p className="text-sm text-slate-500">
                     Définissez un message d'alerte qui apparaîtra en plein écran dès que {target?.type === 'product' ? 'ce produit sera scanné' : 'ce client sera sélectionné'}.
                 </p>
-                <div className="form-control">
-                    <textarea 
-                        className="textarea textarea-bordered textarea-warning w-full h-32 text-base"
+                <div>
+                    <textarea
+                        className="w-full h-32 rounded-xl border border-amber-300 bg-white px-3 py-2 text-base text-slate-700 focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 resize-none"
                         placeholder="Ex: Changement de conditionnement, attention au code barre..."
                         value={message}
                         onChange={(e) => setMessage(e.target.value)}
@@ -66,11 +66,11 @@ export default function AlertMessageModal({ isOpen, onClose, target, onSuccess }
                     />
                 </div>
                 <div className="flex justify-end gap-3 mt-4">
-                    <button className="btn btn-ghost" onClick={onClose} disabled={loading}>
+                    <button className="inline-flex items-center justify-center h-9 px-4 rounded-lg text-sm font-semibold text-slate-600 hover:bg-slate-100 transition-colors" onClick={onClose} disabled={loading}>
                         Annuler
                     </button>
-                    <button className="btn btn-warning shadow-lg text-warning-content" onClick={handleSave} disabled={loading}>
-                        {loading ? <span className="loading loading-spinner" /> : "💾 Enregistrer (Ctrl+S)"}
+                    <button className="inline-flex items-center justify-center h-9 px-4 rounded-lg text-sm font-semibold bg-amber-500 text-white shadow-sm hover:bg-amber-600 transition-colors" onClick={handleSave} disabled={loading}>
+                        {loading ? <div className="animate-spin rounded-full size-4 border-b-2 border-white"></div> : "💾 Enregistrer (Ctrl+S)"}
                     </button>
                 </div>
             </div>

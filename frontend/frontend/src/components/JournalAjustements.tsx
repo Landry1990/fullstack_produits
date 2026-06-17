@@ -21,22 +21,22 @@ export default function JournalAjustements() {
     } = useAjustementsData();
 
     return (
-        <div className="min-h-screen bg-base-200 p-3 sm:p-4 lg:p-8">
+        <div className="min-h-screen bg-slate-100 p-3 sm:p-4 lg:p-8">
             <Toaster position="top-right" />
-            
+
             <div className="max-w-[1600px] mx-auto space-y-8">
                 {/* Header Section */}
                 <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
                     <div>
                         <div className="flex items-center gap-3 mb-2">
-                            <div className="size-12 rounded-2xl bg-primary flex items-center justify-center text-white shadow-lg shadow-primary/20">
+                            <div className="size-12 rounded-2xl bg-emerald-600 flex items-center justify-center text-white shadow-lg shadow-emerald-200">
                                 <span className="text-2xl">📋</span>
                             </div>
                             <div>
-                                <h1 className="text-3xl font-black tracking-tight text-base-content">
+                                <h1 className="text-3xl font-black tracking-tight text-slate-800">
                                     {t('ajustements.title')}
                                 </h1>
-                                <p className="text-sm font-semibold text-base-content/40 uppercase tracking-widest">
+                                <p className="text-sm font-semibold text-slate-400 uppercase tracking-widest">
                                     {t('ajustements.subtitle')}
                                 </p>
                             </div>
@@ -45,15 +45,15 @@ export default function JournalAjustements() {
                 </div>
 
                 {/* Main Stats Dashboard */}
-                <AjustementsQuickStats 
+                <AjustementsQuickStats
                     totalCount={stats.total_count}
                     positiveSum={stats.positive_sum}
                     negativeSum={stats.negative_sum}
                 />
 
                 {/* Search & Filter Bar */}
-                <div className="bg-base-100 rounded-[32px] shadow-sm border border-base-200 overflow-hidden">
-                    <AjustementsFilters 
+                <div className="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden">
+                    <AjustementsFilters
                         searchQuery={filters.searchQuery}
                         onSearchChange={setFilters.setSearchQuery}
                         dateStart={filters.dateStart}
@@ -75,8 +75,8 @@ export default function JournalAjustements() {
                 </div>
 
                 {/* Table Section */}
-                <div className="bg-base-100 rounded-[32px] shadow-sm border border-base-200 overflow-hidden flex flex-col min-h-0 sm:min-h-[480px] lg:min-h-[600px]">
-                    <AjustementsTable 
+                <div className="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden flex flex-col min-h-0 sm:min-h-[480px] lg:min-h-[600px]">
+                    <AjustementsTable
                         adjustments={adjustments}
                         loading={loading}
                         currentPage={currentPage}

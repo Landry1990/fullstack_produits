@@ -56,16 +56,16 @@ const StockHealthSettingsModal: React.FC<StockHealthSettingsModalProps> = ({ isO
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center">
-            <div className="bg-base-100 w-full max-w-xl p-0 overflow-hidden rounded-[40px] border border-base-300 shadow-2xl">
+            <div className="bg-white w-full max-w-xl p-0 overflow-hidden rounded-[40px] border border-slate-200 shadow-2xl relative z-10">
                 {/* Header */}
-                <div className="bg-base-200 p-8 border-bottom border-base-300">
+                <div className="bg-slate-50 p-8 border-b border-slate-100">
                     <div className="flex items-center gap-4 mb-2">
-                        <div className="size-12 bg-primary/10 rounded-2xl flex items-center justify-center text-primary">
-                            <Settings className="size-6 animate-spin-slow" />
+                        <div className="size-12 bg-emerald-50 rounded-2xl flex items-center justify-center text-emerald-600">
+                            <Settings className="size-6" />
                         </div>
                         <div>
-                            <h3 className="text-2xl font-black tracking-tighter">Configuration Expert IA</h3>
-                            <p className="text-sm text-base-content/50 font-medium">Ajustez la pondération de votre score de santé</p>
+                            <h3 className="text-2xl font-black tracking-tighter text-slate-800">Configuration Expert IA</h3>
+                            <p className="text-sm text-slate-400 font-medium">Ajustez la pondération de votre score de santé</p>
                         </div>
                     </div>
                 </div>
@@ -73,10 +73,10 @@ const StockHealthSettingsModal: React.FC<StockHealthSettingsModalProps> = ({ isO
                 {/* Body */}
                 <div className="p-8 space-y-8">
                     {/* Explanation Alert */}
-                    <div className="bg-primary/10 p-4 rounded-2xl border border-indigo-200 flex gap-4">
-                        <Info className="size-6 text-primary shrink-0" />
-                        <p className="text-sm font-medium leading-relaxed">
-                            Définissez l'importance de chaque critère. Par défaut (60/40), nous privilégions la 
+                    <div className="bg-blue-50 p-4 rounded-2xl border border-blue-100 flex gap-4">
+                        <Info className="size-6 text-blue-500 shrink-0" />
+                        <p className="text-sm font-medium leading-relaxed text-slate-600">
+                            Définissez l'importance de chaque critère. Par défaut (60/40), nous privilégions la
                             disponibilité pour éviter de perdre des clients.
                         </p>
                     </div>
@@ -85,26 +85,26 @@ const StockHealthSettingsModal: React.FC<StockHealthSettingsModalProps> = ({ isO
                     <div className="space-y-6">
                         <div className="flex justify-between items-end">
                             <div className="space-y-1">
-                                <span className="text-xs font-black uppercase tracking-widest text-success">Disponibilité</span>
-                                <div className="text-3xl font-black text-success">{availWeight}%</div>
+                                <span className="text-xs font-black uppercase tracking-widest text-emerald-600">Disponibilité</span>
+                                <div className="text-3xl font-black text-emerald-600">{availWeight}%</div>
                             </div>
                             <div className="space-y-1 text-right">
-                                <span className="text-xs font-black uppercase tracking-widest text-primary">Rotation</span>
-                                <div className="text-3xl font-black text-primary">{100 - availWeight}%</div>
+                                <span className="text-xs font-black uppercase tracking-widest text-blue-600">Rotation</span>
+                                <div className="text-3xl font-black text-blue-600">{100 - availWeight}%</div>
                             </div>
                         </div>
 
-                        <input 
-                            type="range" 
-                            min="0" 
-                            max="100" 
-                            value={availWeight} 
+                        <input
+                            type="range"
+                            min="0"
+                            max="100"
+                            value={availWeight}
                             onChange={(e) => setAvailWeight(parseInt(e.target.value, 10))}
-                            className="w-full h-2 bg-base-300 rounded-lg appearance-none cursor-pointer accent-indigo-600" 
+                            className="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-emerald-600"
                             step="5"
                         />
-                        
-                        <div className="flex justify-between text-xs px-2 font-bold text-base-content/30">
+
+                        <div className="flex justify-between text-xs px-2 font-bold text-slate-300">
                             <span>Priorité Trésorerie</span>
                             <span>Équilibré</span>
                             <span>Priorité Service Client</span>
@@ -112,33 +112,37 @@ const StockHealthSettingsModal: React.FC<StockHealthSettingsModalProps> = ({ isO
                     </div>
 
                     {/* Logic Preview Card */}
-                    <div className="bg-base-200 p-6 rounded-3xl space-y-3">
-                        <div className="text-xs font-black uppercase tracking-widest text-base-content/50">Logique de calcul actuelle</div>
+                    <div className="bg-slate-50 p-6 rounded-3xl space-y-3">
+                        <div className="text-xs font-black uppercase tracking-widest text-slate-400">Logique de calcul actuelle</div>
                         <div className="flex items-center gap-2 font-mono text-sm">
-                            <span className="text-success font-bold">({availWeight}% × Dispo)</span>
-                            <span className="text-base-content/40">+</span>
-                            <span className="text-primary font-bold">({100 - availWeight}% × Rotation)</span>
+                            <span className="text-emerald-600 font-bold">({availWeight}% × Dispo)</span>
+                            <span className="text-slate-300">+</span>
+                            <span className="text-blue-600 font-bold">({100 - availWeight}% × Rotation)</span>
                         </div>
                     </div>
                 </div>
 
                 {/* Footer */}
-                <div className="p-8 bg-base-200 flex items-center justify-between">
-                    <button 
+                <div className="p-8 bg-slate-50 border-t border-slate-100 flex items-center justify-between">
+                    <button
                         onClick={handleReset}
-                        className="inline-flex items-center justify-center px-3 py-1.5 text-sm bg-transparent text-base-content hover:bg-base-200 rounded-2xl gap-2 font-bold transition-all"
+                        className="inline-flex items-center justify-center h-9 px-4 rounded-xl text-sm font-bold gap-2 text-slate-600 hover:bg-slate-200 transition-colors"
                         disabled={saving}
                     >
                         <RotateCcw className="size-4" />
                         Réinitialiser
                     </button>
                     <div className="flex gap-3">
-                        <button onClick={onClose} className="inline-flex items-center justify-center px-3 py-1.5 text-sm bg-transparent text-base-content hover:bg-base-200 rounded-2xl font-bold transition-all" disabled={saving}>
+                        <button
+                            onClick={onClose}
+                            className="inline-flex items-center justify-center h-9 px-4 rounded-xl text-sm font-bold text-slate-600 hover:bg-slate-200 transition-colors"
+                            disabled={saving}
+                        >
                             Annuler
                         </button>
-                        <button 
-                            onClick={handleSave} 
-                            className="inline-flex items-center justify-center px-3 py-1.5 text-sm bg-primary text-white hover:bg-primary-focus rounded-2xl gap-2 px-8 shadow-lg shadow-indigo-500/20 transition-all"
+                        <button
+                            onClick={handleSave}
+                            className="inline-flex items-center justify-center h-9 px-8 rounded-xl text-sm font-bold gap-2 bg-emerald-600 text-white hover:bg-emerald-700 shadow-lg shadow-emerald-200 transition-all disabled:opacity-60"
                             disabled={saving}
                         >
                             {saving ? (
@@ -153,7 +157,7 @@ const StockHealthSettingsModal: React.FC<StockHealthSettingsModalProps> = ({ isO
                     </div>
                 </div>
             </div>
-            <div className="fixed inset-0 bg-gray-900/20 backdrop-blur-sm -z-10" onClick={onClose}></div>
+            <div className="fixed inset-0 bg-slate-900/30 backdrop-blur-sm z-0" onClick={onClose}></div>
         </div>
     );
 };
