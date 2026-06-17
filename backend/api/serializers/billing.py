@@ -36,6 +36,8 @@ class FactureProduitSerializer(serializers.ModelSerializer):
 class CaisseSerializer(serializers.ModelSerializer):
     facture_numero = serializers.CharField(source='facture.numero_facture', read_only=True)
     client_name = serializers.SerializerMethodField()
+    user_details = serializers.SerializerMethodField()
+    facture_created_by_name = serializers.SerializerMethodField()
 
     class Meta:
         model = Caisse
@@ -49,6 +51,22 @@ class CaisseSerializer(serializers.ModelSerializer):
             return obj.facture.client_name_override or 'Client de passage'
         return 'N/A'
 
+    def get_user_details(self, obj):
+        if obj.user:
+            return {
+                'id': obj.user.id,
+                'username': obj.user.username,
+                'full_name': obj.user.get_full_name() or obj.user.username,
+                'first_name': obj.user.first_name,
+                'last_name': obj.user.last_name
+            }
+        return None
+
+    def get_facture_created_by_name(self, obj):
+        if obj.facture and obj.facture.created_by:
+            return obj.facture.created_by.get_full_name() or obj.facture.created_by.username
+        return None
+
 
 class ClotureCaisseSerializer(serializers.ModelSerializer):
     user_name = serializers.CharField(source='user.get_full_name', read_only=True)
@@ -60,6 +78,10 @@ class ClotureCaisseSerializer(serializers.ModelSerializer):
 
 class FactureSerializer(serializers.ModelSerializer):
     client_name = serializers.SerializerMethodField()
+    client_phone = serializers.SerializerMethodField()
+    client_email = serializers.SerializerMethodField()
+    client_address = serializers.SerializerMethodField()
+    client_niu = serializers.SerializerMethodField()
     vendeur_name = serializers.SerializerMethodField()
     produits = FactureProduitSerializer(many=True, read_only=True)
     ayant_droit_details = AyantDroitSerializer(source='ayant_droit', read_only=True)
@@ -112,6 +134,26 @@ class FactureSerializer(serializers.ModelSerializer):
         if obj.client:
             return obj.client.name
         return 'Client de passage'
+
+    def get_client_phone(self, obj):
+        if obj.client:
+            return obj.client.phone
+        return None
+
+    def get_client_email(self, obj):
+        if obj.client:
+            return obj.client.email
+        return None
+
+    def get_client_address(self, obj):
+        if obj.client:
+            return obj.client.address
+        return None
+
+    def get_client_niu(self, obj):
+        if obj.client:
+            return obj.client.niu
+        return None
 
     def get_montant_paye(self, obj):
         total = obj.paiements.filter(
