@@ -32,29 +32,31 @@ export function InventaireMergeModal({
 }: InventaireMergeModalProps) {
     const { t } = useTranslation(['stock', 'common']);
 
+    if (!showMergeModal) return null;
+
     return (
-        <dialog className={`modal ${showMergeModal ? 'modal-open' : ''}`}>
-             <div className="modal-box max-w-md rounded-2xl shadow-2xl border border-base-300 p-0 overflow-hidden bg-base-100">
-                <div className="p-6 border-b border-base-200 bg-base-50/50 flex items-center gap-4">
-                     <div className="size-12 rounded-xl bg-info/10 flex items-center justify-center">
-                        <ArrowUpDown className="h-6 w-6 text-info" />
-                     </div>
-                     <div>
-                        <h3 className="font-bold text-lg text-base-content">{t('inventaire.merge.modal_title')}</h3>
-                        <p className="text-sm text-base-content/60 mt-1">
-                            {viewMode === 'LIST' 
-                                ? t('inventaire.modals.merge_list_desc') 
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm" onClick={() => setShowMergeModal(false)}>
+            <div className="w-full max-w-md bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden" onClick={e => e.stopPropagation()}>
+                <div className="p-6 border-b border-slate-100 bg-slate-50/50 flex items-center gap-4">
+                    <div className="size-12 rounded-xl bg-blue-50 flex items-center justify-center">
+                        <ArrowUpDown className="h-6 w-6 text-blue-500" />
+                    </div>
+                    <div>
+                        <h3 className="font-bold text-lg text-slate-800">{t('inventaire.merge.modal_title')}</h3>
+                        <p className="text-sm text-slate-500 mt-1">
+                            {viewMode === 'LIST'
+                                ? t('inventaire.modals.merge_list_desc')
                                 : t('inventaire.merge.modal_desc')}
                         </p>
-                     </div>
+                    </div>
                 </div>
 
                 <div className="p-6 space-y-4">
                     {/* Warning about list merging */}
                     {viewMode === 'LIST' && (
-                        <div className="alert alert-warning shadow-sm rounded-xl py-3 border border-warning/20">
-                            <AlertCircle className="h-5 w-5" />
-                            <div className="text-sm">
+                        <div className="flex items-start gap-3 p-3 bg-amber-50 border border-amber-200 rounded-xl">
+                            <AlertCircle className="h-5 w-5 text-amber-600 shrink-0 mt-0.5" />
+                            <div className="text-sm text-amber-800">
                                 <span className="font-bold">{t('inventaire.modals.merge_warning')}</span><br/>
                                 {t('inventaire.modals.merge_warning_desc')}
                             </div>
@@ -62,16 +64,16 @@ export function InventaireMergeModal({
                     )}
 
                     <div className="space-y-2">
-                        <label className="text-sm font-bold text-base-content/70 flex items-center gap-2">
+                        <label className="text-sm font-bold text-slate-600 flex items-center gap-2">
                             <Database className="h-4 w-4" />
-                            {viewMode === 'LIST' 
-                                ? t('inventaire.modals.target_inventory') 
+                            {viewMode === 'LIST'
+                                ? t('inventaire.modals.target_inventory')
                                 : t('inventaire.merge.select_source')}
                         </label>
-                        
+
                         {viewMode === 'LIST' ? (
-                            <select 
-                                className="select select-bordered w-full rounded-xl focus:border-info focus:ring-1 focus:ring-info"
+                            <select
+                                className="w-full h-10 px-3 rounded-xl border border-slate-200 bg-white text-sm text-slate-700 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all"
                                 value={selectedMergeSource || ''}
                                 onChange={(e) => setSelectedMergeSource(Number(e.target.value))}
                             >
@@ -86,8 +88,8 @@ export function InventaireMergeModal({
                                 })}
                             </select>
                         ) : (
-                            <select 
-                                className="select select-bordered w-full rounded-xl focus:border-info focus:ring-1 focus:ring-info"
+                            <select
+                                className="w-full h-10 px-3 rounded-xl border border-slate-200 bg-white text-sm text-slate-700 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all disabled:opacity-60"
                                 value={selectedMergeSource || ''}
                                 onChange={(e) => setSelectedMergeSource(Number(e.target.value))}
                                 disabled={loadingMergeCandidates}
@@ -104,34 +106,27 @@ export function InventaireMergeModal({
                                 )}
                             </select>
                         )}
-                        
                     </div>
                 </div>
 
-                <div className="p-4 border-t border-base-200 bg-base-50/50 flex justify-end gap-3">
-                    <button 
-                        className="btn btn-ghost rounded-xl" 
-                        onClick={() => {
-                            setShowMergeModal(false);
-                            setSelectedMergeSource(null);
-                        }}
+                <div className="p-4 border-t border-slate-100 bg-slate-50/50 flex justify-end gap-3">
+                    <button
+                        className="inline-flex items-center justify-center h-9 px-5 rounded-xl text-sm font-bold text-slate-700 bg-white border border-slate-200 hover:bg-slate-50 transition-colors"
+                        onClick={() => { setShowMergeModal(false); setSelectedMergeSource(null); }}
                     >
                         {t('common:cancel')}
                     </button>
-                    <button 
-                        className="btn btn-info text-white rounded-xl shadow-lg shadow-info/20 px-6" 
+                    <button
+                        className="inline-flex items-center justify-center h-9 px-6 rounded-xl text-sm font-black bg-blue-600 text-white shadow-lg shadow-blue-200 hover:bg-blue-700 transition-colors gap-2 disabled:opacity-60"
                         onClick={handleMerge}
                         disabled={!selectedMergeSource || merging}
                     >
-                        {merging ? <span className="loading loading-spinner"></span> : <ArrowUpDown className="h-5 w-5" />}
+                        {merging ? <div className="animate-spin rounded-full size-4 border-b-2 border-white"></div> : <ArrowUpDown className="h-4 w-4" />}
                         {t('inventaire.merge.btn')}
                     </button>
                 </div>
             </div>
-            <form method="dialog" className="modal-backdrop">
-                 <button onClick={() => setShowMergeModal(false)}>close</button>
-            </form>
-        </dialog>
+        </div>
     );
 }
 

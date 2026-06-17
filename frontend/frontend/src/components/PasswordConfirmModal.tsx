@@ -66,41 +66,41 @@ export default function PasswordConfirmModal({
       title={title}
       subtitle={message}
       icon={
-        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-error" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
         </svg>
       }
-      gradientFrom="error/10"
-      gradientVia="warning/5"
-      gradientTo="error/10"
+      gradientFrom="red-50"
+      gradientVia="amber-50/50"
+      gradientTo="red-50"
       disableClose={loading}
     >
       <form onSubmit={handleSubmit} className="p-6 space-y-5">
         <div>
-          <label className="block text-xs font-bold uppercase tracking-wider text-base-content/40 mb-2">
+          <label className="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">
             {t('password_confirm.label')}
           </label>
           <input
             ref={inputRef}
             type="password"
             placeholder={t('password_confirm.placeholder')}
-            className={`input input-bordered w-full h-12 rounded-xl focus:border-error focus:ring-2 focus:ring-error/20 transition-all ${error ? 'input-error' : ''}`}
+            className={`w-full h-12 px-3 rounded-xl border border-slate-200 bg-white text-slate-700 focus:border-red-500 focus:ring-2 focus:ring-red-500/20 outline-none transition-all ${error ? 'border-red-500 focus:border-red-500' : ''}`}
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             disabled={loading}
-            autoComplete="current-password" 
+            autoComplete="current-password"
           />
           {error && (
-            <p className="text-xs text-error mt-1.5">{error}</p>
+            <p className="text-xs text-red-600 mt-1.5">{error}</p>
           )}
         </div>
 
         <div className="flex justify-end gap-3 pt-2">
-          <button type="button" className="btn btn-ghost px-6 rounded-xl" onClick={onClose} disabled={loading}>
+          <button type="button" className="inline-flex items-center justify-center h-9 px-6 rounded-xl text-sm font-medium text-slate-700 bg-white border border-slate-200 hover:bg-slate-50 transition-colors" onClick={onClose} disabled={loading}>
             {t('common:cancel')}
           </button>
-          <button type="submit" className="btn btn-error px-8 rounded-xl shadow-lg shadow-error/20" disabled={loading || !password}>
-            {loading ? <span className="loading loading-spinner loading-xs"></span> : t('common:confirm')}
+          <button type="submit" className="inline-flex items-center justify-center h-9 px-8 rounded-xl text-sm font-semibold bg-red-600 text-white shadow-lg hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed" disabled={loading || !password}>
+            {loading ? <div className="animate-spin rounded-full size-4 border-b-2 border-white"></div> : t('common:confirm')}
           </button>
         </div>
       </form>

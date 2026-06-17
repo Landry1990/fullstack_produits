@@ -26,53 +26,59 @@ export default function AnalyseTemporelle() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-base-content flex items-center gap-2">
+          <h1 className="text-2xl font-bold text-slate-800 flex items-center gap-2">
             <span>⏱️</span>
             {t('stock:temporal_analysis.title')}
           </h1>
-          <p className="text-sm text-base-content/70">
+          <p className="text-sm text-slate-500">
             {t('stock:temporal_analysis.subtitle')}
           </p>
         </div>
         
         {/* Tabs */}
-        <div className="tabs tabs-boxed bg-base-100 p-1 border border-base-200">
-          <a 
-            className={`tab ${activeTab === 'hours' ? 'tab-active bg-primary text-primary-content' : ''}`}
+        <div className="flex bg-slate-100 p-1 rounded-xl gap-1">
+          <button
+            className={`h-8 px-4 rounded-lg text-xs font-bold transition-all ${
+              activeTab === 'hours' ? 'bg-blue-600 text-white shadow' : 'text-slate-500 hover:bg-slate-200'
+            }`}
             onClick={() => setActiveTab('hours')}
           >
             {t('stock:temporal_analysis.peak_hours')}
-          </a>
-          <a 
-            className={`tab ${activeTab === 'days' ? 'tab-active bg-primary text-primary-content' : ''}`}
+          </button>
+          <button
+            className={`h-8 px-4 rounded-lg text-xs font-bold transition-all ${
+              activeTab === 'days' ? 'bg-blue-600 text-white shadow' : 'text-slate-500 hover:bg-slate-200'
+            }`}
             onClick={() => setActiveTab('days')}
           >
             {t('stock:temporal_analysis.daily_comparison')}
-          </a>
-          <a 
-            className={`tab ${activeTab === 'seasons' ? 'tab-active bg-primary text-primary-content' : ''}`}
+          </button>
+          <button
+            className={`h-8 px-4 rounded-lg text-xs font-bold transition-all ${
+              activeTab === 'seasons' ? 'bg-blue-600 text-white shadow' : 'text-slate-500 hover:bg-slate-200'
+            }`}
             onClick={() => setActiveTab('seasons')}
           >
             {t('stock:temporal_analysis.seasonality')}
-          </a>
+          </button>
         </div>
       </div>
 
       {/* Content */}
-      <div className="card bg-base-100 shadow-sm border border-base-200">
-        <div className="card-body p-4 sm:p-6">
+      <div className="bg-white rounded-2xl border border-slate-200 shadow-sm">
+        <div className="p-4 sm:p-6">
           
           {/* TAB 1: PEAK HOURS */}
           {activeTab === 'hours' && (
             <div className="space-y-6">
-              <div className="flex justify-between items-center bg-base-200/50 p-4 rounded-lg">
+              <div className="flex justify-between items-center bg-slate-50 p-4 rounded-xl border border-slate-100">
                 <div className="flex items-center gap-4">
-                  <div className="size-12 rounded-full bg-info/20 text-info flex items-center justify-center text-2xl">
+                  <div className="size-12 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center text-2xl">
                     ⚡
                   </div>
                   <div>
-                    <h3 className="font-bold text-lg">{t('stock:temporal_analysis.peak_hour_title')}</h3>
-                    <p className="text-sm text-base-content/70">
+                    <h3 className="font-bold text-lg text-slate-800">{t('stock:temporal_analysis.peak_hour_title')}</h3>
+                    <p className="text-sm text-slate-500">
                       {loadingHours ? t('common:loading') : 
                        peakHoursData?.peak_hour ? 
                        t('stock:temporal_analysis.peak_hour_summary', { 
@@ -84,7 +90,7 @@ export default function AnalyseTemporelle() {
                   </div>
                 </div>
                 <select 
-                  className="select select-bordered select-sm"
+                  className="h-9 px-3 rounded-xl border border-slate-200 bg-white text-xs font-bold text-slate-700 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all appearance-none"
                   value={hoursDays}
                   onChange={(e) => setHoursDays(Number(e.target.value))}
                 >
@@ -96,7 +102,7 @@ export default function AnalyseTemporelle() {
 
               {loadingHours ? (
                 <div className="h-80 flex items-center justify-center">
-                  <span className="loading loading-spinner loading-lg text-primary"></span>
+                  <span className="size-12 border-4 border-slate-200 border-t-blue-500 rounded-full animate-spin"></span>
                 </div>
               ) : (
                 <div className="h-80 w-full">
@@ -148,14 +154,14 @@ export default function AnalyseTemporelle() {
           {/* TAB 2: DAILY COMPARISON */}
           {activeTab === 'days' && (
             <div className="space-y-6">
-              <div className="flex justify-between items-center bg-base-200/50 p-4 rounded-lg">
+              <div className="flex justify-between items-center bg-slate-50 p-4 rounded-xl border border-slate-100">
                 <div className="flex items-center gap-4">
                   <div className="size-12 rounded-full bg-green-100 text-green-600 flex items-center justify-center text-2xl">
                     📅
                   </div>
                   <div>
-                    <h3 className="font-bold text-lg">{t('stock:temporal_analysis.best_day_title')}</h3>
-                    <p className="text-sm text-base-content/70">
+                    <h3 className="font-bold text-lg text-slate-800">{t('stock:temporal_analysis.best_day_title')}</h3>
+                    <p className="text-sm text-slate-500">
                       {loadingDays ? t('common:loading') : 
                        dailyData?.best_day ? 
                        t('stock:temporal_analysis.best_day_summary', {
@@ -167,7 +173,7 @@ export default function AnalyseTemporelle() {
                   </div>
                 </div>
                 <select 
-                  className="select select-bordered select-sm"
+                  className="h-9 px-3 rounded-xl border border-slate-200 bg-white text-xs font-bold text-slate-700 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all appearance-none"
                   value={daysWeeks}
                   onChange={(e) => setDaysWeeks(Number(e.target.value))}
                 >
@@ -179,7 +185,7 @@ export default function AnalyseTemporelle() {
 
               {loadingDays ? (
                 <div className="h-80 flex items-center justify-center">
-                  <span className="loading loading-spinner loading-lg text-primary"></span>
+                  <span className="size-12 border-4 border-slate-200 border-t-blue-500 rounded-full animate-spin"></span>
                 </div>
               ) : (
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -201,25 +207,25 @@ export default function AnalyseTemporelle() {
                   
                   {/* DataTable for Days */}
                   <div className="overflow-x-auto">
-                    <table className="table table-sm w-full">
+                    <table className="w-full border-separate border-spacing-0 text-sm">
                       <thead>
-                        <tr>
-                          <th>{t('stock:temporal_analysis.columns.day')}</th>
-                          <th className="text-right">{t('stock:temporal_analysis.columns.avg_sales')}</th>
-                          <th className="text-right">{t('stock:temporal_analysis.columns.avg_basket')}</th>
-                          <th className="text-right">{t('stock:temporal_analysis.columns.avg_revenue')}</th>
+                        <tr className="bg-slate-50 text-[11px] font-black text-slate-400 uppercase tracking-widest">
+                          <th className="py-3 pl-4 text-left border-b border-slate-200">{t('stock:temporal_analysis.columns.day')}</th>
+                          <th className="py-3 text-right border-b border-slate-200">{t('stock:temporal_analysis.columns.avg_sales')}</th>
+                          <th className="py-3 text-right border-b border-slate-200">{t('stock:temporal_analysis.columns.avg_basket')}</th>
+                          <th className="py-3 text-right border-b border-slate-200 pr-4">{t('stock:temporal_analysis.columns.avg_revenue')}</th>
                         </tr>
                       </thead>
-                      <tbody>
+                      <tbody className="divide-y divide-slate-100">
                         {dailyData?.data?.map((day) => (
-                          <tr key={day.day_number} className={day.is_best ? 'bg-green-50 font-medium' : ''}>
-                            <td className="flex items-center gap-2">
+                          <tr key={day.day_number} className={`transition-colors ${day.is_best ? 'bg-green-50' : 'hover:bg-slate-50'}`}>
+                            <td className="py-2.5 pl-4 flex items-center gap-2 font-medium text-slate-700">
                               {day.day}
-                              {day.is_best && <span className="badge badge-sm badge-success text-white">Top</span>}
+                              {day.is_best && <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 text-[10px] font-bold">Top</span>}
                             </td>
-                            <td className="text-right">{day.sales_count}</td>
-                            <td className="text-right">{formatCurrency(Math.round(day.avg_basket))}</td>
-                            <td className="text-right font-bold">{formatCurrency(Math.round(day.revenue))}</td>
+                            <td className="py-2.5 text-right text-slate-600">{day.sales_count}</td>
+                            <td className="py-2.5 text-right text-slate-600">{formatCurrency(Math.round(day.avg_basket))}</td>
+                            <td className="py-2.5 text-right font-bold text-slate-800 pr-4">{formatCurrency(Math.round(day.revenue))}</td>
                           </tr>
                         ))}
                       </tbody>
@@ -233,14 +239,14 @@ export default function AnalyseTemporelle() {
           {/* TAB 3: SEASONALITY */}
           {activeTab === 'seasons' && (
             <div className="space-y-6">
-              <div className="flex justify-between items-center bg-base-200/50 p-4 rounded-lg">
+              <div className="flex justify-between items-center bg-slate-50 p-4 rounded-xl border border-slate-100">
                 <div className="flex items-center gap-4">
-                  <div className="size-12 rounded-full bg-warning/20 text-warning flex items-center justify-center text-2xl">
+                  <div className="size-12 rounded-full bg-amber-100 text-amber-600 flex items-center justify-center text-2xl">
                     🍂
                   </div>
                   <div>
-                    <h3 className="font-bold text-lg">{t('stock:temporal_analysis.seasonality_title')}</h3>
-                    <p className="text-sm text-base-content/70">
+                    <h3 className="font-bold text-lg text-slate-800">{t('stock:temporal_analysis.seasonality_title')}</h3>
+                    <p className="text-sm text-slate-500">
                       {loadingSeasons ? t('common:loading') : 
                        t('stock:temporal_analysis.seasonality_summary', {
                           months: seasonsMonths,
@@ -250,7 +256,7 @@ export default function AnalyseTemporelle() {
                   </div>
                 </div>
                 <select 
-                  className="select select-bordered select-sm"
+                  className="h-9 px-3 rounded-xl border border-slate-200 bg-white text-xs font-bold text-slate-700 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all appearance-none"
                   value={seasonsMonths}
                   onChange={(e) => setSeasonsMonths(Number(e.target.value))}
                 >
@@ -261,13 +267,13 @@ export default function AnalyseTemporelle() {
 
               {loadingSeasons ? (
                 <div className="h-80 flex items-center justify-center">
-                  <span className="loading loading-spinner loading-lg text-primary"></span>
+                  <span className="size-12 border-4 border-slate-200 border-t-blue-500 rounded-full animate-spin"></span>
                 </div>
               ) : (
                 <div className="space-y-8">
                   {/* Monthly Trend Chart */}
                   <div className="h-72 w-full">
-                    <h4 className="text-sm font-bold uppercase text-base-content/50 mb-2">{t('stock:temporal_analysis.global_revenue_evolution')}</h4>
+                    <h4 className="text-sm font-bold uppercase text-slate-400 mb-2">{t('stock:temporal_analysis.global_revenue_evolution')}</h4>
                     <ResponsiveContainer width="100%" height="100%">
                       <LineChart data={seasonalityData?.monthly_trends || []}>
                         <CartesianGrid strokeDasharray="3 3" vertical={false} />
@@ -284,37 +290,37 @@ export default function AnalyseTemporelle() {
 
                   {/* Seasonal Products Table */}
                   <div>
-                    <h4 className="text-sm font-bold uppercase text-base-content/50 mb-2">{t('stock:temporal_analysis.top_seasonal_products')}</h4>
-                    <div className="overflow-x-auto border rounded-lg">
-                      <table className="table w-full">
-                        <thead className="bg-base-200">
-                          <tr>
-                            <th>{t('stock:temporal_analysis.columns.product')}</th>
-                            <th>{t('stock:temporal_analysis.columns.peak_month')}</th>
-                            <th className="text-right">{t('stock:temporal_analysis.columns.peak_volume')}</th>
-                            <th className="text-right">{t('stock:temporal_analysis.columns.monthly_avg')}</th>
-                            <th className="text-right">{t('stock:temporal_analysis.columns.variation')}</th>
+                    <h4 className="text-sm font-bold uppercase text-slate-400 mb-2">{t('stock:temporal_analysis.top_seasonal_products')}</h4>
+                    <div className="overflow-x-auto border border-slate-200 rounded-xl">
+                      <table className="w-full border-separate border-spacing-0 text-sm">
+                        <thead>
+                          <tr className="bg-slate-50 text-[11px] font-black text-slate-400 uppercase tracking-widest">
+                            <th className="py-3 pl-4 text-left border-b border-slate-200">{t('stock:temporal_analysis.columns.product')}</th>
+                            <th className="py-3 text-left border-b border-slate-200">{t('stock:temporal_analysis.columns.peak_month')}</th>
+                            <th className="py-3 text-right border-b border-slate-200">{t('stock:temporal_analysis.columns.peak_volume')}</th>
+                            <th className="py-3 text-right border-b border-slate-200">{t('stock:temporal_analysis.columns.monthly_avg')}</th>
+                            <th className="py-3 text-right border-b border-slate-200 pr-4">{t('stock:temporal_analysis.columns.variation')}</th>
                           </tr>
                         </thead>
-                        <tbody>
+                        <tbody className="divide-y divide-slate-100">
                           {seasonalityData?.seasonal_products?.map((prod) => (
-                            <tr key={prod.id} className="hover:bg-base-100">
-                              <td className="font-medium">{prod.name}</td>
-                              <td>
-                                <span className="badge badge-outline font-bold text-warning border-orange-200 bg-warning/10">
+                            <tr key={prod.id} className="hover:bg-slate-50 transition-colors">
+                              <td className="py-2.5 pl-4 font-medium text-slate-700">{prod.name}</td>
+                              <td className="py-2.5">
+                                <span className="inline-flex items-center px-2.5 py-1 rounded-full border border-amber-200 bg-amber-50 text-amber-700 text-xs font-bold">
                                   {prod.peak_month}
                                 </span>
                               </td>
-                              <td className="text-right">{prod.peak_quantity}</td>
-                              <td className="text-right">{prod.avg_monthly}</td>
-                              <td className="text-right font-bold text-warning">
+                              <td className="py-2.5 text-right text-slate-600">{prod.peak_quantity}</td>
+                              <td className="py-2.5 text-right text-slate-600">{prod.avg_monthly}</td>
+                              <td className="py-2.5 text-right font-bold text-amber-600 pr-4">
                                 +{Math.round(prod.variation_pct)}%
                               </td>
                             </tr>
                           ))}
                           {seasonalityData?.seasonal_products?.length === 0 && (
                             <tr>
-                              <td colSpan={5} className="text-center py-8 text-base-content/50">
+                              <td colSpan={5} className="text-center py-8 text-slate-400">
                                 {t('stock:temporal_analysis.no_seasonality_detected')}
                               </td>
                             </tr>

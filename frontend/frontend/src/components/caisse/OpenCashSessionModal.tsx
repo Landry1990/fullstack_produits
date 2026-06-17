@@ -89,19 +89,19 @@ export const OpenCashSessionModal: React.FC<OpenCashSessionModalProps> = ({
       isOpen={isOpen}
       onClose={onClose}
       title={t('cash_session.open_title', { defaultValue: 'Ouvrir ma caisse' })}
-      icon={<Monitor className="text-primary size-5" />}
+      icon={<Monitor className="text-emerald-600 size-5" />}
       footer={
         <div className="flex justify-end gap-2 w-full">
-          <button className="btn btn-ghost btn-sm" onClick={onClose} disabled={isLoading}>
+          <button className="inline-flex items-center justify-center h-8 px-4 rounded-lg text-sm font-medium text-slate-700 bg-white border border-slate-200 hover:bg-slate-50 transition-colors" onClick={onClose} disabled={isLoading}>
             {t('common:actions.cancel', 'Annuler')}
           </button>
           <button
-            className={`btn btn-sm ${selectedPosteId ? 'btn-primary' : 'btn-disabled'}`}
+            className={`inline-flex items-center justify-center h-8 px-4 rounded-lg text-sm font-semibold transition-colors ${selectedPosteId ? 'bg-emerald-600 text-white hover:bg-emerald-700' : 'bg-slate-100 text-slate-400 cursor-not-allowed'}`}
             onClick={handleOpen}
             disabled={isLoading || !selectedPosteId}
           >
             {isLoading ? (
-              <span className="loading loading-spinner loading-sm" />
+              <div className="animate-spin rounded-full size-4 border-b-2 border-white"></div>
             ) : (
               <><Unlock className="size-4 mr-1" /> {t('cash_session.open_btn', { defaultValue: 'Ouvrir' })}</>
             )}
@@ -112,18 +112,18 @@ export const OpenCashSessionModal: React.FC<OpenCashSessionModalProps> = ({
       <div className="p-5 space-y-4">
         {isLoading ? (
           <div className="flex justify-center py-4">
-            <span className="loading loading-spinner loading-md text-primary" />
+            <div className="animate-spin rounded-full size-8 border-b-2 border-emerald-600"></div>
           </div>
         ) : (
           <>
             {/* Liste des postes disponibles */}
             <div className="space-y-2">
-              <label className="text-xs font-semibold uppercase tracking-wider text-base-content/50">
+              <label className="text-xs font-semibold uppercase tracking-wider text-slate-400">
                 {t('cash_session.select_post', { defaultValue: 'Sélectionnez votre poste' })}
               </label>
-              
+
               {availablePostes.length === 0 ? (
-                <div className="text-sm text-warning text-center py-4 bg-warning/10 rounded border border-warning/20">
+                <div className="text-sm text-amber-600 text-center py-4 bg-amber-50 rounded border border-amber-200">
                   {t('cash_session.all_open', { defaultValue: 'Tous les postes sont déjà ouverts' })}
                 </div>
               ) : (
@@ -135,16 +135,16 @@ export const OpenCashSessionModal: React.FC<OpenCashSessionModalProps> = ({
                       onClick={() => setSelectedPosteId(poste.id)}
                       className={`p-3 rounded-lg border text-left transition-all flex items-center gap-3 ${
                         selectedPosteId === poste.id
-                          ? 'border-primary bg-primary/10 ring-1 ring-primary'
-                          : 'border-base-300 bg-base-100 hover:bg-base-200'
+                          ? 'border-emerald-500 bg-emerald-50 ring-1 ring-emerald-500'
+                          : 'border-slate-200 bg-white hover:bg-slate-50'
                       }`}
                     >
-                      <div className="w-10 h-10 rounded-full bg-success/10 flex items-center justify-center">
-                        <Unlock className="size-5 text-success" />
+                      <div className="w-10 h-10 rounded-full bg-emerald-50 flex items-center justify-center">
+                        <Unlock className="size-5 text-emerald-600" />
                       </div>
                       <div className="flex-1">
-                        <span className="font-medium text-sm block">{poste.nom}</span>
-                        <span className="text-[10px] text-base-content/50 flex items-center gap-1">
+                        <span className="font-medium text-sm block text-slate-800">{poste.nom}</span>
+                        <span className="text-[10px] text-slate-400 flex items-center gap-1">
                           <User className="size-3" />
                           {t('cash_session.available', { defaultValue: 'Disponible' })}
                         </span>
@@ -157,27 +157,23 @@ export const OpenCashSessionModal: React.FC<OpenCashSessionModalProps> = ({
 
             {/* Fond de caisse (optionnel) */}
             {availablePostes.length > 0 && (
-              <div className="form-control">
-                <label className="label py-1">
-                  <span className="label-text text-xs font-semibold">
-                    {t('cash_session.initial_amount', { defaultValue: 'Fond de caisse (optionnel)' })}
-                  </span>
+              <div className="w-full">
+                <label className="block py-1 text-xs font-semibold text-slate-700">
+                  {t('cash_session.initial_amount', { defaultValue: 'Fond de caisse (optionnel)' })}
                 </label>
                 <div className="relative">
-                  <Wallet className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-base-content/40" />
+                  <Wallet className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-slate-400" />
                   <input
                     type="number"
                     step="0.01"
-                    className="input input-bordered input-sm w-full pl-10 text-right font-mono"
+                    className="w-full h-9 px-3 pl-10 rounded-lg border border-slate-200 bg-white text-right font-mono text-slate-700 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 outline-none text-sm"
                     value={fondCaisse}
                     onChange={(e) => setFondCaisse(e.target.value)}
                     placeholder="0"
                   />
                 </div>
-                <label className="label py-0">
-                  <span className="label-text-alt text-[10px] text-base-content/40">
-                    {t('cash_session.amount_hint', { defaultValue: 'Laisser vide si pas de fond initial' })}
-                  </span>
+                <label className="block py-0 text-[10px] text-slate-400 mt-1">
+                  {t('cash_session.amount_hint', { defaultValue: 'Laisser vide si pas de fond initial' })}
                 </label>
               </div>
             )}

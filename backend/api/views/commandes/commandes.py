@@ -30,6 +30,7 @@ from ...search_mixins import MultiTermSearchMixin
 from ...audit_helpers import log_audit
 from ...sudo_utils import validate_sudo_mode
 from ...pagination import StandardResultsSetPagination
+from ...idempotency import idempotent_action
 import logging
 
 logger = logging.getLogger(__name__)
@@ -204,40 +205,35 @@ class CommandeViewSet(MultiTermSearchMixin, OptimizedSerializerMixin, viewsets.M
         
         if not fournisseur:
             return Response({'error': 'Aucun fournisseur associé à ce produit. Veuillez en définir un d\'abord.'}, status=status.HTTP_400_BAD_REQUEST)
-            
-        # Chercher une commande en préparation pour ce fournisseur
-        commande = Commande.objects.filter(
+
+        # get_or_create atomique : évite la race condition double-clic / requêtes simultanées
+        commande, created = Commande.objects.get_or_create(
             fournisseur=fournisseur,
-            status=Commande.Status.EN_PREPARATION
-        ).first()
-        
-        created = False
-        if not commande:
-            commande = Commande.objects.create(
-                fournisseur=fournisseur,
-                status=Commande.Status.EN_PREPARATION,
-                numero_facture=f"REASSORT_AUTO_{fournisseur.id}_{timezone.now().strftime('%Y%m%d')}",
-                date=timezone.now()
-            )
-            created = True
-            
-        # Chercher si le produit est déjà dans la commande
-        item = CommandeProduit.objects.filter(commande=commande, produit=produit).first()
-        
-        if item:
-            item.quantity += quantity
-            item.save(update_fields=['quantity'])
+            status=Commande.Status.EN_PREPARATION,
+            defaults={
+                'numero_facture': f"REASSORT_AUTO_{fournisseur.id}_{timezone.now().strftime('%Y%m%d')}",
+                'date': timezone.now(),
+            }
+        )
+
+        # Mise à jour ou création de la ligne produit de façon atomique
+        item, item_created = CommandeProduit.objects.get_or_create(
+            commande=commande,
+            produit=produit,
+            defaults={
+                'quantity': quantity,
+                'price': produit.cost_price,
+                'price_cost': produit.cost_price,
+                'selling_price': produit.selling_price,
+                'tva': produit.tva,
+            }
+        )
+        if not item_created:
+            # Ligne existante : incrémenter la quantité
+            CommandeProduit.objects.filter(pk=item.pk).update(quantity=F('quantity') + quantity)
+            item.refresh_from_db()
             msg = f"Quantité mise à jour dans la commande #{commande.id}"
         else:
-            item = CommandeProduit.objects.create(
-                commande=commande,
-                produit=produit,
-                quantity=quantity,
-                price=produit.cost_price,
-                price_cost=produit.cost_price,
-                selling_price=produit.selling_price,
-                tva=produit.tva
-            )
             msg = f"Produit ajouté à la commande #{commande.id}"
             
         return Response({
@@ -280,37 +276,34 @@ class CommandeViewSet(MultiTermSearchMixin, OptimizedSerializerMixin, viewsets.M
             if not fournisseur:
                 summary['errors'].append(f"Produit {produit.name} n'a pas de fournisseur associé.")
                 continue
-                
-            commande = Commande.objects.filter(
+
+            # get_or_create atomique : évite la race condition
+            commande, _ = Commande.objects.get_or_create(
                 fournisseur=fournisseur,
-                status=Commande.Status.EN_PREPARATION
-            ).first()
-            
-            if not commande:
-                commande = Commande.objects.create(
-                    fournisseur=fournisseur,
-                    status=Commande.Status.EN_PREPARATION,
-                    numero_facture=f"REASSORT_AUTO_{fournisseur.id}_{timezone.now().strftime('%Y%m%d')}",
-                    date=timezone.now()
-                )
-            
+                status=Commande.Status.EN_PREPARATION,
+                defaults={
+                    'numero_facture': f"REASSORT_AUTO_{fournisseur.id}_{timezone.now().strftime('%Y%m%d')}",
+                    'date': timezone.now(),
+                }
+            )
+
             summary['orders_involved'].add(commande.id)
-            
-            item = CommandeProduit.objects.filter(commande=commande, produit=produit).first()
-            if item:
-                item.quantity += quantity
-                item.save(update_fields=['quantity'])
+
+            item, item_created = CommandeProduit.objects.get_or_create(
+                commande=commande,
+                produit=produit,
+                defaults={
+                    'quantity': quantity,
+                    'price': produit.cost_price,
+                    'price_cost': produit.cost_price,
+                    'selling_price': produit.selling_price,
+                    'tva': produit.tva,
+                }
+            )
+            if not item_created:
+                CommandeProduit.objects.filter(pk=item.pk).update(quantity=F('quantity') + quantity)
                 summary['updated'] += 1
             else:
-                CommandeProduit.objects.create(
-                    commande=commande,
-                    produit=produit,
-                    quantity=quantity,
-                    price=produit.cost_price,
-                    price_cost=produit.cost_price,
-                    selling_price=produit.selling_price,
-                    tva=produit.tva
-                )
                 summary['added'] += 1
         
         summary['orders_involved'] = list(summary['orders_involved'])
@@ -413,6 +406,7 @@ class CommandeViewSet(MultiTermSearchMixin, OptimizedSerializerMixin, viewsets.M
         instance.save(update_fields=['is_active'])
 
     @action(detail=True, methods=['post'])
+    @idempotent_action
     def cloturer(self, request, pk=None):
         """
         Clôture une commande avec Optimistic Locking (sans select_for_update).

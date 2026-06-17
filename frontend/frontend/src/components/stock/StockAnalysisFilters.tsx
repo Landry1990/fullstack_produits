@@ -39,34 +39,34 @@ export const StockAnalysisFilters: React.FC<StockAnalysisFiltersProps> = ({
         <div className="flex flex-col gap-6 p-4 sm:p-6">
             {/* Tabs Header */}
             <div className="w-full max-w-full overflow-x-auto -mx-1 px-1 sm:mx-0 sm:px-0 [scrollbar-gutter:stable]">
-                <div className="inline-flex min-w-min items-center gap-2 bg-base-200 p-1.5 rounded-[20px] shadow-inner">
-                {tabs.map((tab) => (
-                    <button
-                        key={tab.id}
-                        onClick={() => onTabChange(tab.id as any)}
-                        className={`inline-flex items-center justify-center px-3 py-1.5 text-sm rounded-[14px] border-none transition-all gap-2 shrink-0 ${
-                            activeTab === tab.id 
-                            ? (tab.id === 'pilotage' ? 'bg-primary text-white shadow-lg' : 'bg-base-100 text-primary shadow-sm font-black') 
-                            : 'hover:bg-base-200 text-base-content/50 font-bold hover:bg-base-100/50'
-                        }`}
-                    >
-                        {tab.icon}
-                        <span className="whitespace-nowrap">{tab.label}</span>
-                    </button>
-                ))}
+                <div className="inline-flex min-w-min items-center gap-2 bg-slate-100 p-1.5 rounded-[20px] shadow-inner">
+                    {tabs.map((tab) => (
+                        <button
+                            key={tab.id}
+                            onClick={() => onTabChange(tab.id as any)}
+                            className={`inline-flex items-center justify-center px-3 py-1.5 text-sm rounded-[14px] transition-all gap-2 shrink-0 font-bold ${
+                                activeTab === tab.id
+                                ? (tab.id === 'pilotage' ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-200' : 'bg-white text-emerald-600 shadow-sm font-black')
+                                : 'text-slate-400 hover:text-slate-700 hover:bg-white/50'
+                            }`}
+                        >
+                            {tab.icon}
+                            <span className="whitespace-nowrap">{tab.label}</span>
+                        </button>
+                    ))}
                 </div>
             </div>
 
             {activeTab !== 'pilotage' && (
-                <div className="bg-base-100 p-4 rounded-[32px] shadow-sm border border-base-300">
+                <div className="bg-slate-50 p-4 rounded-[32px] border border-slate-200 flex flex-col md:flex-row gap-4 items-end">
                     <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-4">
                         {/* Supplier Filter */}
                         <div className="space-y-1.5">
-                            <label className="text-[10px] font-black uppercase tracking-widest text-base-content/40 flex items-center gap-1.5 ml-1">
+                            <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 flex items-center gap-1.5 ml-1">
                                 <User className="size-3" /> {t('stock:analyse.filters.supplier')}
                             </label>
-                            <select 
-                                className={`select border border-base-300 rounded-lg w-full font-bold focus:ring-2 focus:ring-primary/20 transition-all ${selectedFournisseur === '' ? 'text-base-content/50' : ''}`}
+                            <select
+                                className={`w-full h-9 px-3 rounded-xl border border-slate-200 bg-white text-sm font-bold focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 transition-all ${selectedFournisseur === '' ? 'text-slate-400' : 'text-slate-700'}`}
                                 value={selectedFournisseur}
                                 onChange={(e) => onFournisseurChange(e.target.value)}
                             >
@@ -80,11 +80,11 @@ export const StockAnalysisFilters: React.FC<StockAnalysisFiltersProps> = ({
                         {/* Unsold Days Threshold */}
                         {activeTab === 'unsold' && (
                             <div className="space-y-1.5">
-                                <label className="text-[10px] font-black uppercase tracking-widest text-base-content/50 flex items-center gap-1.5 ml-1">
+                                <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 flex items-center gap-1.5 ml-1">
                                     <Calendar className="size-3" /> {t('stock:analyse.filters.days_threshold')}
                                 </label>
-                                <select 
-                                    className="select select-sm border border-base-300 rounded-lg w-full font-bold focus:ring-2 focus:ring-primary/20 transition-all"
+                                <select
+                                    className="w-full h-9 px-3 rounded-xl border border-slate-200 bg-white text-sm font-bold text-slate-700 focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 transition-all"
                                     value={unsoldDays}
                                     onChange={(e) => onUnsoldDaysChange(Number(e.target.value))}
                                 >
@@ -99,8 +99,8 @@ export const StockAnalysisFilters: React.FC<StockAnalysisFiltersProps> = ({
                     </div>
 
                     <div className="shrink-0">
-                        <button 
-                            className={`btn btn-sm ${activeTab === 'overstock' ? 'bg-primary text-white' : 'bg-base-200 text-base-content'} rounded-xl`}
+                        <button
+                            className="inline-flex items-center justify-center h-9 px-4 rounded-xl text-sm font-bold gap-2 bg-emerald-600 text-white hover:bg-emerald-700 disabled:opacity-60 transition-colors"
                             onClick={onRefresh}
                             disabled={loading}
                         >

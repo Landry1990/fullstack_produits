@@ -38,6 +38,7 @@ from api.centralized_configs import (
     SQLAnnotations
 )
 from api.security_utils import build_safe_content_disposition
+from api.idempotency import idempotent_action
 
 logger = logging.getLogger(__name__)
 
@@ -218,6 +219,7 @@ class FactureViewSet(BaseViewSetConfig, OptimizedSerializerMixin, viewsets.Model
 
     @action(detail=False, methods=['post'])
     @transaction.atomic
+    @idempotent_action
     def finaliser(self, request):
         """
         Action ATOMIQUE pour finaliser une vente complète via SalesService.

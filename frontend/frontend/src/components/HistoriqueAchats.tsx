@@ -196,28 +196,32 @@ const HistoriqueAchats = ({ forcedType }: HistoriqueAchatsProps) => {
           {/* Header */}
           <div className="flex flex-col gap-3 mb-4 sm:mb-5 shrink-0">
             <div>
-              <h1 className="text-lg sm:text-xl font-bold text-base-content flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-2">
+              <h1 className="text-lg sm:text-xl font-bold text-slate-800 flex flex-col sm:flex-row sm:items-center gap-2">
                 <span className="inline-flex items-center gap-2">
-                  <Calendar className="size-5 text-primary" />
+                  <Calendar className="size-5 text-blue-600" />
                   {t('history.title')}
                 </span>
-                <span className="text-primary text-sm sm:text-xl sm:ml-1">
+                <span className="text-blue-600 text-sm sm:text-xl sm:ml-1">
                   {forcedType === 'LOC' ? t('history.subtitle_local') : forcedType === 'DIR' ? t('history.subtitle_direct') : t('history.subtitle_daily')}
                 </span>
               </h1>
-              <p className="text-[10px] text-base-content/50 mt-0.5 uppercase tracking-wider font-semibold">{totalCount} {t('history.results_found')}</p>
+              <p className="text-[10px] text-slate-400 mt-0.5 uppercase tracking-wider font-semibold">{totalCount} {t('history.results_found')}</p>
             </div>
 
             <div className="w-full max-w-full overflow-x-auto pb-1 -mx-1 px-1 sm:mx-0 sm:px-0">
-              <div className="tabs tabs-boxed bg-base-200/50 p-1 rounded-xl no-print w-max min-w-full sm:min-w-0 sm:w-auto">
+              <div className="flex bg-slate-200/70 p-1 rounded-xl no-print w-max min-w-full sm:min-w-0 sm:w-auto gap-1">
                 <button
-                  className={`tab tab-sm font-bold uppercase transition-all whitespace-nowrap ${activeTab === 'summary' ? 'tab-active !bg-primary !text-primary-content shadow-lg' : 'text-base-content/50 hover:text-base-content'}`}
+                  className={`h-8 px-4 rounded-lg text-xs font-bold uppercase transition-all whitespace-nowrap ${
+                    activeTab === 'summary' ? 'bg-blue-600 text-white shadow' : 'text-slate-500 hover:bg-slate-300'
+                  }`}
                   onClick={() => setActiveTab('summary')}
                 >
                   {t('tabs.purchase_summary')}
                 </button>
                 <button
-                  className={`tab tab-sm font-bold uppercase transition-all whitespace-nowrap ${activeTab === 'details' ? 'tab-active !bg-primary !text-primary-content shadow-lg' : 'text-base-content/50 hover:text-base-content'}`}
+                  className={`h-8 px-4 rounded-lg text-xs font-bold uppercase transition-all whitespace-nowrap ${
+                    activeTab === 'details' ? 'bg-blue-600 text-white shadow' : 'text-slate-500 hover:bg-slate-300'
+                  }`}
                   onClick={() => setActiveTab('details')}
                 >
                   {t('tabs.purchase_details')}
@@ -231,19 +235,19 @@ const HistoriqueAchats = ({ forcedType }: HistoriqueAchatsProps) => {
             <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 w-full">
                 <div className="relative w-full">
-                  <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-base-content/30" />
+                  <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-slate-400" />
                   <input
                     type="date"
-                    className="input input-sm input-bordered w-full pl-10 pr-4 font-bold bg-base-100 focus:border-primary transition-all text-xs"
+                    className="w-full h-9 pl-10 pr-4 rounded-xl border border-slate-200 bg-white text-xs font-bold text-slate-700 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all"
                     value={dateDebut}
                     onChange={(e) => setDateDebut(e.target.value)}
                   />
                 </div>
                 <div className="relative w-full">
-                  <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-base-content/30" />
+                  <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-slate-400" />
                   <input
                     type="date"
-                    className="input input-sm input-bordered w-full pl-10 pr-4 font-bold bg-base-100 focus:border-primary transition-all text-xs"
+                    className="w-full h-9 pl-10 pr-4 rounded-xl border border-slate-200 bg-white text-xs font-bold text-slate-700 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all"
                     value={dateFin}
                     onChange={(e) => setDateFin(e.target.value)}
                   />
@@ -252,7 +256,7 @@ const HistoriqueAchats = ({ forcedType }: HistoriqueAchatsProps) => {
 
               <div className="flex flex-col sm:flex-row gap-3 w-full lg:w-auto lg:min-w-[280px]">
                 <select
-                  className="select select-sm select-bordered font-bold bg-base-100 focus:border-primary transition-all text-xs w-full"
+                  className="w-full h-9 rounded-xl border border-slate-200 bg-white px-3 text-xs font-bold text-slate-700 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all appearance-none"
                   value={selectedSupplier}
                   onChange={(e) => setSelectedSupplier(e.target.value)}
                 >
@@ -266,28 +270,28 @@ const HistoriqueAchats = ({ forcedType }: HistoriqueAchatsProps) => {
 
                 <div className="flex items-center justify-stretch sm:justify-end gap-1 w-full sm:w-auto">
                   <button
-                    className="btn btn-sm btn-ghost flex-1 sm:flex-initial sm:btn-square hover:bg-base-200 transition-all text-primary tooltip tooltip-bottom"
+                    className="flex-1 sm:flex-initial h-9 w-9 rounded-xl flex items-center justify-center text-blue-600 hover:bg-blue-50 transition-colors disabled:opacity-40"
                     onClick={() => fetchHistory()}
                     disabled={loading}
-                    data-tip={t('history.refresh')}
+                    title={t('history.refresh')}
                     type="button"
                   >
                     <RefreshCw className={`size-4 ${loading ? 'animate-spin' : ''}`} />
                   </button>
                   <button
-                    className="btn btn-sm btn-ghost flex-1 sm:flex-initial sm:btn-square hover:bg-base-200 transition-all text-success tooltip tooltip-bottom"
+                    className="flex-1 sm:flex-initial h-9 w-9 rounded-xl flex items-center justify-center text-emerald-600 hover:bg-emerald-50 transition-colors disabled:opacity-40"
                     onClick={handleExportExcel}
                     disabled={loading}
-                    data-tip={t('history.export_excel')}
+                    title={t('history.export_excel')}
                     type="button"
                   >
                     <FileDown className="size-4" />
                   </button>
                   <button
-                    className="btn btn-sm btn-ghost flex-1 sm:flex-initial sm:btn-square hover:bg-base-200 transition-all text-info tooltip tooltip-bottom"
+                    className="flex-1 sm:flex-initial h-9 w-9 rounded-xl flex items-center justify-center text-cyan-600 hover:bg-cyan-50 transition-colors disabled:opacity-40"
                     onClick={handlePrint}
                     disabled={loading || data.length === 0}
-                    data-tip={t('history.print_pdf')}
+                    title={t('history.print_pdf')}
                     type="button"
                   >
                     <Printer className="size-4" />
@@ -302,7 +306,7 @@ const HistoriqueAchats = ({ forcedType }: HistoriqueAchatsProps) => {
             <div className="mb-4 no-print">
               <input 
                 type="text"
-                className="input input-sm input-bordered rounded-lg bg-base-100 w-full text-xs"
+                className="w-full h-9 rounded-xl border border-slate-200 bg-white px-4 text-xs text-slate-700 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all"
                 placeholder={t('history.product_search_placeholder')}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
@@ -312,28 +316,28 @@ const HistoriqueAchats = ({ forcedType }: HistoriqueAchatsProps) => {
 
           {/* Summary Cards */}
           <div className="grid grid-cols-2 gap-4 mb-4 shrink-0">
-            <div className="bg-gradient-to-br from-primary/5 to-primary/10 border border-primary/20 rounded-2xl px-5 py-3 flex items-center justify-between shadow-sm">
+            <div className="bg-gradient-to-br from-blue-50 to-blue-100/60 border border-blue-200 rounded-2xl px-5 py-3 flex items-center shadow-sm">
               <div className="flex items-center gap-3">
-                <div className="size-10 rounded-xl bg-primary/20 flex items-center justify-center">
-                  <Package className="size-5 text-primary" />
+                <div className="size-10 rounded-xl bg-blue-100 flex items-center justify-center">
+                  <Package className="size-5 text-blue-600" />
                 </div>
                 <div>
-                  <p className="text-[10px] font-bold text-base-content/40 uppercase tracking-widest leading-none mb-1">
+                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest leading-none mb-1">
                     {activeTab === 'summary' ? t('history.columns.nb_orders') : t('history.columns.nb_products', { defaultValue: 'Nombre de produits' })}
                   </p>
-                  <p className="text-xl font-black text-base-content leading-none">{totalDisplayCount}</p>
+                  <p className="text-xl font-black text-slate-800 leading-none">{totalDisplayCount}</p>
                 </div>
               </div>
             </div>
-            <div className="bg-gradient-to-br from-emerald-500/5 to-emerald-500/10 border border-emerald-500/20 rounded-2xl px-5 py-3 flex items-center justify-between shadow-sm">
+            <div className="bg-gradient-to-br from-emerald-50 to-emerald-100/60 border border-emerald-200 rounded-2xl px-5 py-3 flex items-center shadow-sm">
               <div className="flex items-center gap-3">
-                <div className="size-10 rounded-xl bg-emerald-500/20 flex items-center justify-center">
-                  <TrendingUp className="size-5 text-success" />
+                <div className="size-10 rounded-xl bg-emerald-100 flex items-center justify-center">
+                  <TrendingUp className="size-5 text-emerald-600" />
                 </div>
                 <div>
-                  <p className="text-[10px] font-bold text-base-content/40 uppercase tracking-widest leading-none mb-1">{t('history.columns.total_purchase')}</p>
-                  <p className="text-xl font-black text-base-content leading-none">
-                    {formatMoney(totalDisplayAmount)} <span className="text-xs font-bold text-base-content/30 ml-0.5">{t('common:currency_symbol')}</span>
+                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest leading-none mb-1">{t('history.columns.total_purchase')}</p>
+                  <p className="text-xl font-black text-slate-800 leading-none">
+                    {formatMoney(totalDisplayAmount)} <span className="text-xs font-bold text-slate-400 ml-0.5">{t('common:currency_symbol')}</span>
                   </p>
                 </div>
               </div>
@@ -342,32 +346,32 @@ const HistoriqueAchats = ({ forcedType }: HistoriqueAchatsProps) => {
 
           {/* Table Container */}
           <div className="flex-1 min-h-0 flex flex-col">
-            <div className={`overflow-auto flex-1 rounded-xl border-2 border-base-200/60 bg-base-100 shadow-sm transition-opacity duration-300 ${loading ? 'text-base-content/50 pointer-events-none' : 'opacity-100'}`}>
-              <table className="table table-sm w-full border-separate border-spacing-0">
+            <div className={`overflow-auto flex-1 rounded-xl border border-slate-200 bg-white shadow-sm transition-opacity duration-300 ${loading ? 'opacity-60 pointer-events-none' : 'opacity-100'}`}>
+              <table className="w-full border-separate border-spacing-0 text-sm">
                 <thead>
-                  <tr className="bg-base-300 text-[11px] font-black text-base-content uppercase tracking-[0.15em]">
+                  <tr className="bg-slate-50 text-[11px] font-black text-slate-400 uppercase tracking-[0.15em]">
                     {activeTab === 'summary' ? (
                       <>
-                        <th className="sticky top-0 z-30 py-4 pl-8 border-b border-base-300/60 bg-base-300">{t('history.columns.date')}</th>
-                        <th className="sticky top-0 z-30 text-center py-4 border-b border-base-300/60 bg-base-300">{t('history.columns.nb_orders')}</th>
-                        <th className="sticky top-0 z-30 text-right py-4 pr-8 border-b border-base-300/60 bg-base-300">{t('history.columns.total_purchase')}</th>
+                        <th className="sticky top-0 z-30 py-4 pl-8 text-left border-b border-slate-200 bg-slate-50">{t('history.columns.date')}</th>
+                        <th className="sticky top-0 z-30 text-center py-4 border-b border-slate-200 bg-slate-50">{t('history.columns.nb_orders')}</th>
+                        <th className="sticky top-0 z-30 text-right py-4 pr-8 border-b border-slate-200 bg-slate-50">{t('history.columns.total_purchase')}</th>
                       </>
                     ) : (
                       <>
-                        <th className="sticky top-0 z-30 py-4 pl-8 border-b border-base-300/60 bg-base-300">{t('history.columns.product')}</th>
-                        <th className="sticky top-0 z-30 py-4 border-b border-base-300/60 bg-base-300">{t('history.columns.cip')}</th>
-                        <th className="sticky top-0 z-30 text-center py-4 border-b border-base-300/60 bg-base-300">{t('history.columns.quantity')}</th>
-                        <th className="sticky top-0 z-30 text-center py-4 border-b border-base-300/60 bg-base-300">{t('history.columns.nb_purchases')}</th>
-                        <th className="sticky top-0 z-30 text-right py-4 pr-8 border-b border-base-300/60 bg-base-300">{t('history.columns.total_purchase')}</th>
+                        <th className="sticky top-0 z-30 py-4 pl-8 text-left border-b border-slate-200 bg-slate-50">{t('history.columns.product')}</th>
+                        <th className="sticky top-0 z-30 py-4 text-left border-b border-slate-200 bg-slate-50">{t('history.columns.cip')}</th>
+                        <th className="sticky top-0 z-30 text-center py-4 border-b border-slate-200 bg-slate-50">{t('history.columns.quantity')}</th>
+                        <th className="sticky top-0 z-30 text-center py-4 border-b border-slate-200 bg-slate-50">{t('history.columns.nb_purchases')}</th>
+                        <th className="sticky top-0 z-30 text-right py-4 pr-8 border-b border-slate-200 bg-slate-50">{t('history.columns.total_purchase')}</th>
                       </>
                     )}
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-base-100 font-sans">
+                <tbody className="divide-y divide-slate-100 font-sans">
                   {loading && data.length === 0 ? (
                     <tr>
                       <td colSpan={activeTab === 'summary' ? 3 : 5} className="py-20 text-center">
-                        <span className="loading loading-spinner loading-lg text-primary/40"></span>
+                        <span className="size-10 border-4 border-slate-200 border-t-blue-500 rounded-full animate-spin inline-block"></span>
                       </td>
                     </tr>
                   ) : data.filter(row => {
@@ -375,48 +379,48 @@ const HistoriqueAchats = ({ forcedType }: HistoriqueAchatsProps) => {
                       const d = row as DetailedPurchase;
                       return d.produit__name?.toLowerCase().includes(searchQuery.toLowerCase()) || d.produit__cip1?.includes(searchQuery);
                   }).map((row, i) => (
-                    <tr key={activeTab === 'summary' ? row.date : row.produit_id} className="group hover:bg-primary/[0.03] transition-colors">
+                    <tr key={activeTab === 'summary' ? row.date : row.produit_id} className="group hover:bg-blue-50/40 transition-colors">
                       {activeTab === 'summary' ? (
                         <>
                           <td className="py-3 pl-8">
                             <div className="flex items-center gap-3">
-                              <div className={`size-1.5 rounded-full ${i === 0 ? 'bg-primary shadow-[0_0_8px_rgba(var(--p),0.5)]' : 'bg-base-content/10'}`} />
-                              <span className="text-sm font-bold text-base-content/70">
+                              <div className={`size-1.5 rounded-full ${i === 0 ? 'bg-blue-500' : 'bg-slate-200'}`} />
+                              <span className="text-sm font-bold text-slate-600">
                                 {row.date ? format(new Date(row.date), 'dd MMMM yyyy', { locale: i18n.language.startsWith('fr') ? fr : undefined }) : '---'}
                               </span>
                             </div>
                           </td>
                           <td className="py-3 text-center">
-                            <span className="inline-flex items-center justify-center h-7 px-3 rounded-full bg-base-200 text-base-content/70 text-xs font-black group-hover:bg-primary group-hover:text-primary-content transition-colors">
+                            <span className="inline-flex items-center justify-center h-7 px-3 rounded-full bg-slate-100 text-slate-600 text-xs font-black group-hover:bg-blue-100 group-hover:text-blue-700 transition-colors">
                               {row.nb_commandes}
                             </span>
                           </td>
                           <td className="py-3 text-right pr-8">
-                            <span className="text-base font-black text-base-content group-hover:text-primary transition-colors">
+                            <span className="text-base font-black text-slate-800 group-hover:text-blue-600 transition-colors">
                               {formatMoney(normalizeNumber(row.total_achat))}
                             </span>
-                            <span className="text-[10px] font-bold text-base-content/30 ml-1">{t('common:currency_symbol')}</span>
+                            <span className="text-[10px] font-bold text-slate-400 ml-1">{t('common:currency_symbol')}</span>
                           </td>
                         </>
                       ) : (
                         <>
                           <td className="py-3 pl-8">
-                            <div className="font-bold text-sm text-base-content/80 group-hover:text-primary">{row.produit__name}</div>
+                            <div className="font-bold text-sm text-slate-700 group-hover:text-blue-600 transition-colors">{row.produit__name}</div>
                           </td>
                           <td className="py-3">
-                            <div className="font-mono text-xs text-base-content/50">{row.produit__cip1}</div>
+                            <div className="font-mono text-xs text-slate-400">{row.produit__cip1}</div>
                           </td>
                           <td className="py-3 text-center">
-                            <span className="badge badge-sm font-bold bg-base-200 border-none">{row.total_quantite}</span>
+                            <span className="inline-flex items-center justify-center h-6 px-2.5 rounded-full bg-slate-100 text-slate-600 text-xs font-bold">{row.total_quantite}</span>
                           </td>
                           <td className="py-3 text-center">
-                            <span className="text-xs font-bold text-base-content/70">{row.nb_commandes}</span>
+                            <span className="text-xs font-bold text-slate-500">{row.nb_commandes}</span>
                           </td>
                           <td className="py-3 text-right pr-8">
-                            <span className="text-sm font-black text-base-content">
+                            <span className="text-sm font-black text-slate-800">
                               {formatMoney(normalizeNumber(row.total_achat))}
                             </span>
-                            <span className="text-[10px] font-bold text-base-content/30 ml-1">{t('common:currency_symbol')}</span>
+                            <span className="text-[10px] font-bold text-slate-400 ml-1">{t('common:currency_symbol')}</span>
                           </td>
                         </>
                       )}
@@ -424,8 +428,8 @@ const HistoriqueAchats = ({ forcedType }: HistoriqueAchatsProps) => {
                   ))}
                   {data.length === 0 && !loading && (
                     <tr>
-                      <td colSpan={activeTab === 'summary' ? 3 : 5} className="text-center py-24 bg-base-100">
-                        <div className="flex flex-col items-center gap-3 text-base-content/20">
+                      <td colSpan={activeTab === 'summary' ? 3 : 5} className="text-center py-24">
+                        <div className="flex flex-col items-center gap-3 text-slate-300">
                           <Package className="size-12" />
                           <p className="text-sm font-bold uppercase tracking-widest">{t('history.no_data')}</p>
                         </div>
@@ -439,19 +443,19 @@ const HistoriqueAchats = ({ forcedType }: HistoriqueAchatsProps) => {
             {/* Pagination Component */}
             {totalPages > 1 && (
               <div className="flex items-center justify-between mt-5 px-2 shrink-0 no-print">
-                <div className="text-[10px] font-bold text-base-content/40 uppercase tracking-widest">
-                  {t('history.pagination.page')} {page} <span className="mx-1 text-base-content/20">/</span> {totalPages}
+                <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                  {t('history.pagination.page')} {page} <span className="mx-1 text-slate-300">/</span> {totalPages}
                 </div>
                 <div className="flex gap-2">
                   <button 
-                    className="btn btn-xs rounded-xl bg-base-100 border-2 border-base-200 hover:border-primary/50 text-base-content transition-all active:scale-90" 
+                    className="h-7 w-7 rounded-xl bg-white border border-slate-200 hover:border-blue-400 text-slate-600 flex items-center justify-center transition-all active:scale-90 disabled:opacity-40" 
                     disabled={page === 1}
                     onClick={() => handlePageChange(page - 1)}
                   >
                     <ChevronLeft className="size-4" />
                   </button>
                   <button 
-                    className="btn btn-xs rounded-xl bg-base-100 border-2 border-base-200 hover:border-primary/50 text-base-content transition-all active:scale-90" 
+                    className="h-7 w-7 rounded-xl bg-white border border-slate-200 hover:border-blue-400 text-slate-600 flex items-center justify-center transition-all active:scale-90 disabled:opacity-40" 
                     disabled={page === totalPages}
                     onClick={() => handlePageChange(page + 1)}
                   >

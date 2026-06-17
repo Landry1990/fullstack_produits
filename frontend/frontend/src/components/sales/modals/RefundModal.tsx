@@ -29,34 +29,34 @@ export const RefundModal: React.FC<RefundModalProps> = ({
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-in fade-in duration-200">
-            <div className="bg-base-100 rounded-xl shadow-2xl w-full max-w-md overflow-hidden animate-in scale-95 duration-200">
-                <div className="border-b border-base-200 p-4 flex justify-between items-center bg-error/10/50">
+            <div className="bg-white rounded-xl shadow-2xl w-full max-w-md overflow-hidden animate-in scale-95 duration-200">
+                <div className="border-b border-slate-200 p-4 flex justify-between items-center bg-red-50">
                     <div className="flex items-center gap-3">
-                        <div className="bg-error/20 p-2 rounded-lg">
-                            <AlertTriangle className="size-5 text-error" />
+                        <div className="bg-red-100 p-2 rounded-lg">
+                            <AlertTriangle className="size-5 text-red-600" />
                         </div>
-                        <h3 className="font-bold text-base-content">
+                        <h3 className="font-bold text-slate-800">
                             {t('refund_title')}
                         </h3>
                     </div>
-                    <button onClick={onClose} className="p-1 hover:bg-base-300 rounded-full transition-colors text-base-content/40 hover:text-base-content/80">
+                    <button onClick={onClose} className="p-1 hover:bg-slate-200 rounded-full transition-colors text-slate-400 hover:text-slate-600">
                         <X className="size-5" />
                     </button>
                 </div>
 
                 <form onSubmit={handleSubmit} className="p-6">
                     <div className="mb-6">
-                        <div className="bg-error/10 text-error text-sm p-3 rounded-lg border border-red-100 mb-4">
+                        <div className="bg-red-50 text-red-600 text-sm p-3 rounded-lg border border-red-100 mb-4">
                             Cette action générera un avoir et annulera la facture <strong>#{facture.numero_facture || facture.id}</strong>.
                         </div>
 
-                        <label className="block text-sm font-medium text-base-content/90 mb-2">
+                        <label className="block text-sm font-medium text-slate-700 mb-2">
                             {t('refund.refund_reason')} <span className="text-red-500">*</span>
                         </label>
                         <textarea
                             value={refundReason}
                             onChange={(e) => setRefundReason(e.target.value)}
-                            className="w-full px-4 py-3 rounded-lg border border-base-200 focus:ring-2 focus:ring-red-500 focus:border-red-500 transition-all outline-none resize-none"
+                            className="w-full px-4 py-3 rounded-lg border border-slate-200 focus:ring-2 focus:ring-red-500 focus:border-red-500 transition-all outline-none resize-none bg-white"
                             placeholder="Erreur de saisie, retour client, etc."
                             rows={3}
                             required
@@ -67,13 +67,13 @@ export const RefundModal: React.FC<RefundModalProps> = ({
                         <button
                             type="button"
                             onClick={onClose}
-                            className="px-4 py-2 text-base-content/80 font-medium hover:bg-base-200 rounded-lg transition-colors"
+                            className="px-4 py-2 text-slate-600 font-medium hover:bg-slate-100 rounded-lg transition-colors"
                         >
                             {t('common:cancel')}
                         </button>
                         <button
                             type="submit"
-                            className="px-6 py-2 bg-error text-white font-medium rounded-lg hover:bg-error-focus focus:ring-4 focus:ring-red-200 transition-all shadow-lg shadow-red-600/20"
+                            className="px-6 py-2 bg-red-600 text-white font-medium rounded-lg hover:bg-red-700 focus:ring-4 focus:ring-red-200 transition-all shadow-lg shadow-red-600/20"
                         >
                             {t('common:confirm')}
                         </button>

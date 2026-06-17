@@ -209,51 +209,51 @@ export default function ReapproRayon() {
   };
 
   return (
-    <div className="min-h-screen bg-base-200 p-6 space-y-6 font-sans">
+    <div className="min-h-screen bg-slate-50 p-6 space-y-6 font-sans">
       
       {/* Header & Stats Section */}
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 no-print">
         <div>
           <div className="flex items-center gap-3">
-            <div className="p-3 bg-primary text-primary-content rounded-2xl shadow-lg shadow-primary/20">
+            <div className="p-3 bg-emerald-600 text-white rounded-2xl shadow-lg shadow-emerald-500/20">
               <Package className="size-6" />
             </div>
             <div>
-                <h1 className="text-2xl font-black text-base-content tracking-tight">{t('reappro.title', { defaultValue: 'Réapprovisionnement Rayon' })}</h1>
-                <p className="text-[10px] font-black text-base-content/40 uppercase tracking-widest mt-0.5">{t('reappro.subtitle', { defaultValue: 'Gérer les transferts Réserve &rarr; Rayon' })}</p>
+                <h1 className="text-2xl font-black text-slate-800 tracking-tight">{t('reappro.title', { defaultValue: 'Réapprovisionnement Rayon' })}</h1>
+                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-0.5">{t('reappro.subtitle', { defaultValue: 'Gérer les transferts Réserve → Rayon' })}</p>
             </div>
           </div>
         </div>
 
         <div className="flex flex-wrap items-center gap-3">
-          <Link 
-            to="/app/reappro-history" 
-            className="btn btn-sm btn-ghost hover:bg-base-100 text-[10px] font-black uppercase tracking-widest gap-2 rounded-xl border border-base-300 shadow-sm"
+          <Link
+            to="/app/reappro-history"
+            className="inline-flex items-center gap-2 h-9 px-4 rounded-xl text-[10px] font-black uppercase tracking-widest bg-white text-slate-600 hover:text-emerald-600 hover:bg-emerald-50 border border-slate-200 shadow-sm transition-all"
           >
             <History className="size-3.5" />
             {t('common:history')}
           </Link>
-          <div className="flex items-center gap-2 bg-base-100 p-1.5 rounded-xl shadow-sm border border-base-300">
-            <button 
-                onClick={fetchNeedsRefill} 
-                className={`btn btn-sm btn-ghost hover:bg-base-200 text-[10px] font-black uppercase tracking-widest gap-2 rounded-lg ${loading ? 'loading' : ''}`}
+          <div className="flex items-center gap-1 bg-white p-1.5 rounded-xl shadow-sm border border-slate-200">
+            <button
+                onClick={fetchNeedsRefill}
+                className="inline-flex items-center gap-2 h-8 px-3 rounded-lg text-[10px] font-black uppercase tracking-widest text-slate-600 hover:bg-slate-100 transition-colors"
             >
-                {!loading && <RefreshCw className="size-3.5" />}
+                {loading ? <span className="animate-spin rounded-full size-3.5 border-b-2 border-slate-400"></span> : <RefreshCw className="size-3.5" />}
                 {t('common:refresh')}
             </button>
-            <button 
-                onClick={() => window.print()} 
-                className="btn btn-sm btn-ghost hover:bg-base-200 text-[10px] font-black uppercase tracking-widest gap-2 rounded-lg"
+            <button
+                onClick={() => window.print()}
+                className="inline-flex items-center gap-2 h-8 px-3 rounded-lg text-[10px] font-black uppercase tracking-widest text-slate-600 hover:bg-slate-100 transition-colors"
             >
                 <Printer className="size-3.5" />
                 {t('common:print')}
             </button>
           </div>
 
-          <div className="flex items-center gap-2 bg-base-100 p-1.5 rounded-xl shadow-sm border border-base-300">
-            <button 
+          <div className="flex items-center gap-2 bg-white p-1.5 rounded-xl shadow-sm border border-slate-200">
+            <button
                 onClick={() => handleBulkAction('all')}
-                className="btn btn-sm btn-primary text-[10px] font-black uppercase tracking-widest gap-2 rounded-lg"
+                className="inline-flex items-center gap-2 h-8 px-3 rounded-lg text-[10px] font-black uppercase tracking-widest bg-emerald-600 text-white hover:bg-emerald-700 disabled:opacity-50 transition-colors"
                 disabled={loading || products.length === 0}
             >
                 <Truck className="size-3.5" />
@@ -265,52 +265,52 @@ export default function ReapproRayon() {
 
       {/* Quick Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 no-print">
-        <div className="card bg-base-100 shadow-sm border border-base-300 rounded-2xl overflow-hidden p-6 flex flex-row items-center gap-4">
-          <div className={`p-3 rounded-xl ${stats.criticalProductsCount > 0 ? 'bg-error/20 text-error' : 'bg-success/20 text-success'}`}>
+        <div className="bg-white shadow-sm border border-slate-200 rounded-2xl p-6 flex flex-row items-center gap-4">
+          <div className={`p-3 rounded-xl ${stats.criticalProductsCount > 0 ? 'bg-red-50 text-red-500' : 'bg-emerald-50 text-emerald-600'}`}>
             <AlertCircle className="size-6" />
           </div>
           <div>
-            <p className="text-[10px] font-bold text-base-content/40 uppercase tracking-widest">{t('stock:reappro.critical_alerts')}</p>
-            <p className="text-2xl font-black">{stats.criticalProductsCount}</p>
+            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{t('stock:reappro.critical_alerts')}</p>
+            <p className="text-2xl font-black text-slate-800">{stats.criticalProductsCount}</p>
           </div>
         </div>
-        <div className="card bg-base-100 shadow-sm border border-base-300 rounded-2xl overflow-hidden p-6 flex flex-row items-center gap-4">
-          <div className="p-3 rounded-xl bg-info/20 text-info">
+        <div className="bg-white shadow-sm border border-slate-200 rounded-2xl p-6 flex flex-row items-center gap-4">
+          <div className="p-3 rounded-xl bg-blue-50 text-blue-500">
             <Truck className="size-6" />
           </div>
           <div>
-            <p className="text-[10px] font-bold text-base-content/40 uppercase tracking-widest">{t('stock:reappro.suggested_volume')}</p>
-            <p className="text-2xl font-black">{stats.totalToTransfer} <small className="text-xs">unités</small></p>
+            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{t('stock:reappro.suggested_volume')}</p>
+            <p className="text-2xl font-black text-slate-800">{stats.totalToTransfer} <small className="text-xs text-slate-400">unités</small></p>
           </div>
         </div>
-        <div className="card bg-base-100 shadow-sm border border-base-300 rounded-2xl overflow-hidden p-6 flex flex-row items-center gap-4">
-          <div className="p-3 rounded-xl bg-secondary/20 text-purple-600">
+        <div className="bg-white shadow-sm border border-slate-200 rounded-2xl p-6 flex flex-row items-center gap-4">
+          <div className="p-3 rounded-xl bg-purple-50 text-purple-600">
             <Filter className="size-6" />
           </div>
           <div>
-            <p className="text-[10px] font-bold text-base-content/40 uppercase tracking-widest">{t('stock:reappro.displayed_products')}</p>
-            <p className="text-2xl font-black">{stats.totalDisplayed}</p>
+            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{t('stock:reappro.displayed_products')}</p>
+            <p className="text-2xl font-black text-slate-800">{stats.totalDisplayed}</p>
           </div>
         </div>
       </div>
 
       {/* Main Content Section */}
-      <div className="bg-base-100 rounded-3xl shadow-sm border border-base-300 overflow-hidden flex flex-col">
+      <div className="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden flex flex-col">
         {/* Toolbar */}
-        <div className="p-6 border-b border-base-200 flex flex-col md:flex-row md:items-center justify-between gap-6 bg-base-50/50 no-print">
+        <div className="p-6 border-b border-slate-100 flex flex-col md:flex-row md:items-center justify-between gap-6 bg-slate-50/50 no-print">
           <div className="flex flex-col md:flex-row md:items-center gap-4 flex-1">
             <div className="relative flex-1 max-w-md">
-              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 size-4 text-base-content/30" />
-              <input 
-                type="text" 
-                placeholder={t('common:search_product_placeholder')} 
-                className="input input-sm h-11 w-full pl-11 bg-base-100 border-base-300 focus:border-primary rounded-xl text-sm font-bold"
+              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 size-4 text-slate-300" />
+              <input
+                type="text"
+                placeholder={t('common:search_product_placeholder')}
+                className="h-11 w-full pl-11 pr-4 bg-white border border-slate-200 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 rounded-xl text-sm font-bold text-slate-700 focus:outline-none transition-all"
                 value={searchQuery}
                 onChange={(e) => { setSearchQuery(e.target.value); setPage(1); }}
               />
             </div>
-            <select 
-              className="select select-sm h-11 bg-base-100 border-base-300 focus:border-primary rounded-xl text-sm font-bold min-w-[200px]"
+            <select
+              className="h-11 px-3 bg-white border border-slate-200 focus:border-emerald-500 focus:outline-none rounded-xl text-sm font-bold text-slate-700 min-w-[200px]"
               value={selectedRayon}
               onChange={(e) => { setSelectedRayon(e.target.value); setPage(1); }}
             >
@@ -322,41 +322,43 @@ export default function ReapproRayon() {
           </div>
 
           <div className="flex items-center gap-4">
-            <div className="form-control">
-              <label className="label cursor-pointer gap-3 bg-base-100 px-4 py-2 rounded-xl border border-base-300 shadow-sm transition-all hover:bg-base-200">
-                <span className="label-text text-[10px] font-black uppercase tracking-widest text-base-content/60">{t('stock:reappro.alerts_only')}</span> 
-                <input 
-                    type="checkbox" 
-                    className="toggle toggle-primary toggle-sm" 
-                    checked={onlyAlerts}
-                    onChange={(e) => setOnlyAlerts(e.target.checked)}
+            <label className="cursor-pointer flex items-center gap-3 bg-white px-4 py-2 rounded-xl border border-slate-200 shadow-sm hover:bg-slate-50 transition-all">
+              <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">{t('stock:reappro.alerts_only')}</span>
+              <div className="relative inline-flex">
+                <input
+                  type="checkbox"
+                  className="sr-only peer"
+                  checked={onlyAlerts}
+                  onChange={(e) => setOnlyAlerts(e.target.checked)}
                 />
-              </label>
-            </div>
+                <div className="w-9 h-5 bg-slate-200 rounded-full peer peer-checked:bg-emerald-500 transition-colors"></div>
+                <div className="absolute top-0.5 left-0.5 size-4 bg-white rounded-full shadow transition-all peer-checked:translate-x-4"></div>
+              </div>
+            </label>
           </div>
         </div>
 
         {/* Selection Action Bar (Sticky) */}
         {selectedIds.size > 0 && (
-            <div className="px-6 py-3 bg-primary/5 border-b border-primary/10 flex items-center justify-between animate-in slide-in-from-top duration-300">
+            <div className="px-6 py-3 bg-emerald-50 border-b border-emerald-100 flex items-center justify-between animate-in slide-in-from-top duration-300">
                 <div className="flex items-center gap-3">
-                    <div className="bg-primary text-primary-content size-6 rounded-lg flex items-center justify-center text-[10px] font-black">
+                    <div className="bg-emerald-600 text-white size-6 rounded-lg flex items-center justify-center text-[10px] font-black">
                         {selectedIds.size}
                     </div>
-                    <span className="text-xs font-black text-primary uppercase tracking-widest">{t('stock:reappro.selected_products')}</span>
+                    <span className="text-xs font-black text-emerald-700 uppercase tracking-widest">{t('stock:reappro.selected_products')}</span>
                 </div>
                 <div className="flex items-center gap-2">
-                    <button 
-                        className="btn btn-xs btn-ghost text-[10px] font-black uppercase tracking-widest"
+                    <button
+                        className="inline-flex items-center h-7 px-3 rounded-lg text-[10px] font-black uppercase tracking-widest text-slate-500 hover:bg-slate-100 transition-colors"
                         onClick={() => setSelectedIds(new Set())}
                     >
                         Annuler
                     </button>
-                    <button 
-                        className="btn btn-xs btn-primary px-4 text-[10px] font-black uppercase tracking-widest rounded-lg shadow-md shadow-primary/20"
+                    <button
+                        className="inline-flex items-center h-7 px-4 rounded-lg text-[10px] font-black uppercase tracking-widest bg-emerald-600 text-white hover:bg-emerald-700 shadow-md transition-colors"
                         onClick={() => handleBulkAction('selection')}
                     >
-                        Réapprovision{t('stock:reappro.transfer')}
+                        {t('stock:reappro.transfer')}
                     </button>
                 </div>
             </div>
@@ -364,10 +366,10 @@ export default function ReapproRayon() {
 
         {/* Table Content */}
         <div className="overflow-x-auto min-h-[400px]">
-          <table className="table w-full">
+          <table className="w-full text-sm">
             <thead>
-              <tr className="bg-base-200/30 border-b border-base-200">
-                <th className="bg-transparent w-12 no-print">
+              <tr className="bg-slate-50 border-b border-slate-100">
+                <th className="w-12 px-4 py-3 no-print">
                     <Checkbox
                         checked={selectedIds.size === products.length && products.length > 0}
                         indeterminate={selectedIds.size > 0 && selectedIds.size < products.length}
@@ -375,26 +377,26 @@ export default function ReapproRayon() {
                         size="sm"
                     />
                 </th>
-                <th className="bg-transparent text-[10px] font-black uppercase tracking-widest text-base-content/40">{t('stock:reappro.columns.product')}</th>
-                <th className="bg-transparent text-[10px] font-black uppercase tracking-widest text-base-content/40">{t('stock:reappro.columns.section_status')}</th>
-                <th className="bg-transparent text-[10px] font-black uppercase tracking-widest text-base-content/40 text-center">{t('stock:reappro.columns.section')}</th>
-                <th className="bg-transparent text-[10px] font-black uppercase tracking-widest text-base-content/40 text-center">{t('stock:reappro.columns.reserve')}</th>
-                <th className="bg-transparent text-[10px] font-black uppercase tracking-widest text-base-content/40 text-center text-primary">{t('stock:reappro.columns.suggestion')}</th>
-                <th className="bg-transparent text-[10px] font-black uppercase tracking-widest text-base-content/40 text-right no-print">{t('stock:reappro.columns.actions')}</th>
+                <th className="text-[10px] font-black uppercase tracking-widest text-slate-400 py-3 text-left">{t('stock:reappro.columns.product')}</th>
+                <th className="text-[10px] font-black uppercase tracking-widest text-slate-400 py-3 text-left">{t('stock:reappro.columns.section_status')}</th>
+                <th className="text-[10px] font-black uppercase tracking-widest text-slate-400 py-3 text-center">{t('stock:reappro.columns.section')}</th>
+                <th className="text-[10px] font-black uppercase tracking-widest text-slate-400 py-3 text-center">{t('stock:reappro.columns.reserve')}</th>
+                <th className="text-[10px] font-black uppercase tracking-widest text-emerald-600 py-3 text-center">{t('stock:reappro.columns.suggestion')}</th>
+                <th className="text-[10px] font-black uppercase tracking-widest text-slate-400 py-3 text-right no-print">{t('stock:reappro.columns.actions')}</th>
               </tr>
             </thead>
             <tbody>
               {loading && products.length === 0 ? (
                 <tr>
                    <td colSpan={7} className="py-24 text-center">
-                      <span className="loading loading-spinner loading-lg text-primary"></span>
-                      <p className="text-[10px] font-black uppercase tracking-widest text-base-content/30 mt-4 italic">{t('stock:reappro.loading')}</p>
+                      <div className="animate-spin rounded-full size-10 border-b-2 border-emerald-500 mx-auto"></div>
+                      <p className="text-[10px] font-black uppercase tracking-widest text-slate-300 mt-4 italic">{t('stock:reappro.loading')}</p>
                    </td>
                 </tr>
               ) : products.length === 0 ? (
                 <tr>
                    <td colSpan={7} className="py-24 text-center">
-                      <div className="flex flex-col items-center justify-center text-base-content/20">
+                      <div className="flex flex-col items-center justify-center text-slate-200">
                           <Package className="size-16 mb-4" />
                           <h3 className="text-xl font-black uppercase tracking-tight">{t('stock:reappro.empty')}</h3>
                           <p className="text-sm font-bold max-w-xs mt-2 italic">{t('stock:reappro.empty_desc')}</p>
@@ -410,18 +412,18 @@ export default function ReapproRayon() {
                   const isSelected = selectedIds.has(p.id);
 
                   return (
-                    <tr key={p.id} className={`group hover:bg-base-200/30 transition-all border-b border-base-200/50 ${isSelected ? 'bg-primary/5' : ''}`}>
-                      <td className="no-print">
+                    <tr key={p.id} className={`group hover:bg-slate-50/60 transition-all border-b border-slate-100 ${isSelected ? 'bg-emerald-50/30' : ''}`}>
+                      <td className="no-print px-4 py-3">
                         <Checkbox
                             checked={isSelected}
                             onChange={() => toggleSelect(p.id)}
                             size="sm"
                         />
                       </td>
-                      <td>
+                      <td className="py-3">
                         <div className="flex flex-col">
-                            <span className="text-xs font-black text-base-content max-w-[200px] truncate">{p.name}</span>
-                            <span className="text-[9px] font-bold text-base-content/30 uppercase tracking-widest">{p.rayon_name || t('common:no_section')}</span>
+                            <span className="text-xs font-black text-slate-800 max-w-[200px] truncate">{p.name}</span>
+                            <span className="text-[9px] font-bold text-slate-300 uppercase tracking-widest">{p.rayon_name || t('common:no_section')}</span>
                         </div>
                       </td>
                       <td className="w-48">
@@ -429,13 +431,13 @@ export default function ReapproRayon() {
                             <div className="flex justify-between items-center px-1">
                                 <div className="flex items-center gap-1.5">
                                     <div className={`size-1.5 rounded-full ${isLow ? 'bg-red-500 animate-pulse' : 'bg-emerald-500'}`}></div>
-                                    <span className={`text-[9px] font-black uppercase tracking-widest ${isLow ? 'text-error' : 'text-success'}`}>
+                                    <span className={`text-[9px] font-black uppercase tracking-widest ${isLow ? 'text-red-500' : 'text-emerald-600'}`}>
                                         {isLow ? t('stock:reappro.status.critical') : t('stock:reappro.status.ok')}
                                     </span>
                                 </div>
-                                <span className="text-[9px] font-black text-base-content/30">{Math.round(percent)}%</span>
+                                <span className="text-[9px] font-black text-slate-300">{Math.round(percent)}%</span>
                             </div>
-                            <div className="h-2 w-full bg-base-200 rounded-full overflow-hidden flex">
+                            <div className="h-2 w-full bg-slate-100 rounded-full overflow-hidden flex">
                                 <div 
                                     className={`h-full transition-all duration-700 ${isLow ? 'bg-red-500' : 'bg-emerald-500'}`}
                                     style={{ width: `${percent}%` }}
@@ -443,24 +445,24 @@ export default function ReapproRayon() {
                             </div>
                         </div>
                       </td>
-                      <td className="text-center">
-                        <span className="text-xs font-black text-base-content">{p.stock}</span>
-                        <div className="flex items-center justify-center gap-1 mt-0.5 text-base-content/30">
+                      <td className="text-center py-3">
+                        <span className="text-xs font-black text-slate-800">{p.stock}</span>
+                        <div className="flex items-center justify-center gap-1 mt-0.5 text-slate-300">
                             <span className="text-[8px] font-bold">{t('stock:reappro.min')} {p.min_rayon ?? 0}</span>
                             <span className="text-[8px] font-bold">{t('stock:reappro.cap')} {p.capacite_rayon ?? 0}</span>
                         </div>
                       </td>
-                      <td className="text-center">
-                        <div className="inline-flex flex-col items-center bg-base-200 px-3 py-1 rounded-lg border border-base-300">
-                            <span className="text-xs font-black text-base-content">{p.stock_reserve || 0}</span>
+                      <td className="text-center py-3">
+                        <div className="inline-flex flex-col items-center bg-slate-100 px-3 py-1 rounded-lg border border-slate-200">
+                            <span className="text-xs font-black text-slate-700">{p.stock_reserve || 0}</span>
                             <span className="text-[8px] font-bold uppercase tracking-widest opacity-40">Réserve</span>
                         </div>
                       </td>
-                      <td className="text-center">
+                      <td className="text-center py-3">
                         {suggest > 0 ? (
                             <div className="flex flex-col items-center animate-in zoom-in duration-300">
-                                <span className="text-sm font-black text-primary">+{suggest}</span>
-                                <div className="flex items-center gap-1 text-[8px] font-black text-primary/40 uppercase tracking-widest">
+                                <span className="text-sm font-black text-emerald-600">+{suggest}</span>
+                                <div className="flex items-center gap-1 text-[8px] font-black text-emerald-400 uppercase tracking-widest">
                                     <ChevronRight className="size-2" /> {t('stock:reappro.suggested')}
                                 </div>
                             </div>
@@ -468,14 +470,16 @@ export default function ReapproRayon() {
                             <CheckCircle2 className="size-5 text-emerald-500 mx-auto text-base-content/20" />
                         )}
                       </td>
-                      <td className="text-right no-print">
-                        <button 
-                            className={`btn btn-sm btn-ghost hover:bg-primary hover:text-white group/btn rounded-xl transition-all border border-transparent hover:border-primary ${isLow ? 'text-primary' : 'text-base-content/40'}`}
+                      <td className="text-right py-3 no-print">
+                        <button
+                            className={`inline-flex items-center gap-2 h-9 px-3 rounded-xl text-[9px] font-black uppercase tracking-widest border border-transparent hover:border-emerald-500 hover:bg-emerald-50 hover:text-emerald-700 group/btn transition-all ${
+                              isLow ? 'text-emerald-600' : 'text-slate-300'
+                            } disabled:opacity-30`}
                             onClick={() => handleTransfer(p)}
                             disabled={suggest <= 0}
                         >
                             <Truck className="size-4 transition-transform group-hover/btn:translate-x-1" />
-                            <span className="text-[9px] font-black uppercase tracking-widest ml-2 hidden xl:inline">{t('stock:reappro.transfer')}</span>
+                            <span className="hidden xl:inline">{t('stock:reappro.transfer')}</span>
                         </button>
                       </td>
                     </tr>
@@ -488,21 +492,21 @@ export default function ReapproRayon() {
 
         {/* Pagination Footer */}
         {products.length > itemsPerPage && (
-            <div className="p-6 border-t border-base-200 flex items-center justify-between bg-base-50/10 no-print">
-                <span className="text-[10px] font-black uppercase tracking-widest text-base-content/30">
+            <div className="p-6 border-t border-slate-100 flex items-center justify-between bg-slate-50/10 no-print">
+                <span className="text-[10px] font-black uppercase tracking-widest text-slate-300">
                     Page {page} sur {totalPages} ({products.length} produits)
                 </span>
-                <div className="flex items-center gap-1 bg-base-200 p-1 rounded-xl border border-base-300">
-                    <button 
-                        className="btn btn-xs btn-ghost hover:bg-base-100 rounded-lg text-[10px] font-black uppercase tracking-widest"
+                <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-xl">
+                    <button
+                        className="inline-flex items-center justify-center h-7 px-3 rounded-lg text-[10px] font-black uppercase tracking-widest text-slate-500 hover:bg-white disabled:opacity-30 transition-colors"
                         disabled={page === 1}
                         onClick={() => setPage(page - 1)}
                     >
                         {t('common:previous')}
                     </button>
-                    <div className="px-3 text-[10px] font-black">{page}</div>
-                    <button 
-                        className="btn btn-xs btn-ghost hover:bg-base-100 rounded-lg text-[10px] font-black uppercase tracking-widest"
+                    <div className="px-3 text-[10px] font-black text-slate-700">{page}</div>
+                    <button
+                        className="inline-flex items-center justify-center h-7 px-3 rounded-lg text-[10px] font-black uppercase tracking-widest text-slate-500 hover:bg-white disabled:opacity-30 transition-colors"
                         disabled={page === totalPages}
                         onClick={() => setPage(page + 1)}
                     >
@@ -524,23 +528,23 @@ export default function ReapproRayon() {
         maxWidth="max-w-md"
       >
         <div className="p-8 text-center">
-            <div className="size-20 bg-primary/10 text-primary rounded-3xl flex items-center justify-center mx-auto mb-6 shadow-sm">
+            <div className="size-20 bg-emerald-50 text-emerald-600 rounded-3xl flex items-center justify-center mx-auto mb-6 shadow-sm">
                 <Truck className="size-10" />
             </div>
-            <h3 className="text-xl font-black text-base-content tracking-tight">{t('stock:reappro.modal.title')}</h3>
-            <p className="text-sm font-bold text-base-content/40 mt-3 leading-relaxed">
+            <h3 className="text-xl font-black text-slate-800 tracking-tight">{t('stock:reappro.modal.title')}</h3>
+            <p className="text-sm font-bold text-slate-400 mt-3 leading-relaxed">
                 {t('stock:reappro.modal.confirm', {count: pendingIds.length})}
             </p>
-            
+
             <div className="flex gap-4 mt-8">
-                <button 
-                    className="btn btn-ghost flex-1 h-12 rounded-2xl text-[10px] font-black uppercase tracking-widest"
+                <button
+                    className="flex-1 h-12 rounded-2xl text-[10px] font-black uppercase tracking-widest text-slate-600 border border-slate-200 hover:bg-slate-50 transition-colors"
                     onClick={() => setShowConfirmBulk(false)}
                 >
                     {t('stock:reappro.modal.cancel')}
                 </button>
-                <button 
-                    className="btn btn-primary flex-1 h-12 rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-lg shadow-primary/20"
+                <button
+                    className="flex-1 h-12 rounded-2xl text-[10px] font-black uppercase tracking-widest bg-emerald-600 text-white hover:bg-emerald-700 shadow-lg shadow-emerald-500/20 transition-colors"
                     onClick={() => {
                         setShowConfirmBulk(false);
                         executeBulkTransfer(pendingIds);
@@ -560,17 +564,17 @@ export default function ReapproRayon() {
         maxWidth="max-w-md"
       >
         <div className="p-8 text-center">
-            <div className="size-20 bg-success/20 text-success rounded-full flex items-center justify-center mx-auto mb-6 shadow-sm">
+            <div className="size-20 bg-emerald-50 text-emerald-600 rounded-full flex items-center justify-center mx-auto mb-6 shadow-sm">
                 <CheckCircle2 className="size-10" />
             </div>
-            <h3 className="text-xl font-black text-base-content tracking-tight">{t('stock:reappro.modal.success')}</h3>
-            <p className="text-sm font-bold text-base-content/40 mt-3 leading-relaxed">
+            <h3 className="text-xl font-black text-slate-800 tracking-tight">{t('stock:reappro.modal.success')}</h3>
+            <p className="text-sm font-bold text-slate-400 mt-3 leading-relaxed">
                 {t('stock:reappro.modal.success_desc')}
             </p>
-            
+
             <div className="flex flex-col gap-3 mt-8">
-                <button 
-                    className="btn btn-primary h-12 rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-lg shadow-emerald-500/20 bg-success hover:bg-success-focus border-none gap-2"
+                <button
+                    className="inline-flex items-center justify-center gap-2 h-12 rounded-2xl text-[10px] font-black uppercase tracking-widest bg-emerald-600 text-white hover:bg-emerald-700 shadow-lg shadow-emerald-500/20 transition-colors"
                     onClick={() => {
                         if (lastSessionId) handleDownloadPdf(lastSessionId);
                         setShowSuccessModal(false);
@@ -580,14 +584,14 @@ export default function ReapproRayon() {
                     {t('stock:reappro.modal.download_pdf')}
                 </button>
                 <div className="grid grid-cols-2 gap-3">
-                    <Link 
+                    <Link
                         to="/app/reappro-history"
-                        className="btn btn-ghost h-12 rounded-2xl text-[10px] font-black uppercase tracking-widest border border-base-300"
+                        className="inline-flex items-center justify-center h-12 rounded-2xl text-[10px] font-black uppercase tracking-widest text-slate-600 border border-slate-200 hover:bg-slate-50 transition-colors"
                     >
                         {t('stock:reappro.modal.view_history')}
                     </Link>
-                    <button 
-                        className="btn btn-ghost h-12 rounded-2xl text-[10px] font-black uppercase tracking-widest border border-base-300"
+                    <button
+                        className="inline-flex items-center justify-center h-12 rounded-2xl text-[10px] font-black uppercase tracking-widest text-slate-600 border border-slate-200 hover:bg-slate-50 transition-colors"
                         onClick={() => setShowSuccessModal(false)}
                     >
                         {t('stock:reappro.modal.close')}

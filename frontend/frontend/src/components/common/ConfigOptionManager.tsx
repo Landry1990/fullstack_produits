@@ -119,31 +119,31 @@ export default function ConfigOptionManager({
     <div className="flex flex-col h-full gap-6 animate-in fade-in duration-500">
       
       {/* Header Controls */}
-      <div className="bg-base-100 p-6 rounded-3xl shadow-xl border border-base-200">
+      <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
          <div className="flex flex-col md:flex-row justify-between items-center gap-6">
             <div className="flex items-center gap-4 w-full md:w-auto">
-               <div className="p-3 bg-primary/10 rounded-2xl text-primary shadow-inner">
+               <div className="p-3 bg-slate-100 rounded-2xl text-slate-600">
                   {icon}
                </div>
                <div>
-                  <h2 className="text-2xl font-black tracking-tight">{title}</h2>
-                  {subtitle && <p className="text-sm text-base-content/50 font-medium">{subtitle}</p>}
+                  <h2 className="text-2xl font-black tracking-tight text-slate-800">{title}</h2>
+                  {subtitle && <p className="text-sm text-slate-400 font-medium">{subtitle}</p>}
                </div>
             </div>
 
             <div className="flex items-center gap-3 w-full md:w-auto">
                <div className="relative flex-1 md:w-64">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-base-content/30" />
-                  <input 
-                    type="text" 
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-slate-300" />
+                  <input
+                    type="text"
                     placeholder={t('common:actions.search')}
                     value={searchTerm}
                     onChange={e => setSearchTerm(e.target.value)}
-                    className="w-full rounded-xl border border-base-300 bg-base-200 pl-10 h-11 text-sm font-medium text-base-content focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
+                    className="w-full rounded-xl border border-slate-200 bg-slate-50 pl-10 h-11 text-sm font-medium text-slate-700 focus:outline-none focus:bg-white focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 transition-all"
                   />
                </div>
-               <button 
-                 className="inline-flex items-center gap-2 px-6 h-11 bg-primary text-white rounded-xl text-sm font-bold hover:bg-primary-focus transition-colors shadow-lg shadow-indigo-500/20"
+               <button
+                 className="inline-flex items-center gap-2 px-6 h-11 bg-emerald-600 text-white rounded-xl text-sm font-bold hover:bg-emerald-700 transition-colors shadow-sm"
                  onClick={() => {
                    setEditingOption(null);
                    setFormData({ code: '', label: '', value: '', order: 0, is_active: true });
@@ -161,47 +161,46 @@ export default function ConfigOptionManager({
       <div className="flex-1 overflow-y-auto">
          {loading ? (
             <div className="flex flex-col items-center justify-center h-64 gap-4">
-               <span className="inline-block size-8 border-2 border-base-300 border-t-indigo-600 rounded-full animate-spin"></span>
-               <p className="text-sm font-bold text-base-content/50">{t('common:loading')}</p>
+               <span className="size-8 border-2 border-slate-200 border-t-emerald-600 rounded-full animate-spin"></span>
+               <p className="text-sm font-bold text-slate-400">{t('common:loading')}</p>
             </div>
          ) : filteredOptions.length === 0 ? (
-            <div className="flex flex-col items-center justify-center h-64 bg-base-100 rounded-3xl border-2 border-dashed border-base-300 text-base-content/30">
+            <div className="flex flex-col items-center justify-center h-64 bg-white rounded-2xl border-2 border-dashed border-slate-200 text-slate-300">
                <Settings size={64} strokeWidth={1} className="mb-4" />
-               <p className="text-xl font-black">{searchTerm ? t('common:no_results_found') : t('common:messages.no_data')}</p>
+               <p className="text-xl font-black text-slate-400">{searchTerm ? t('common:no_results_found') : t('common:messages.no_data')}</p>
             </div>
          ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
                {filteredOptions.map(option => (
-                  <div key={option.id} className={`group bg-base-100 p-5 rounded-3xl shadow-sm border border-base-200 hover:shadow-xl hover:border-indigo-500/30 transition-all duration-300 relative overflow-hidden ${!option.is_active ? 'opacity-60' : ''}`}>
-                     {/* Status Badge Background */}
-                     <div className={`absolute top-0 right-0 w-24 h-24 -mr-8 -mt-8 rounded-full blur-3xl opacity-10 transition-colors ${option.is_active ? 'bg-emerald-500' : 'bg-red-500'}`}></div>
-                     
+                  <div key={option.id} className={`group bg-white p-5 rounded-2xl shadow-sm border border-slate-200 hover:shadow-md hover:border-slate-300 transition-all duration-300 relative overflow-hidden ${!option.is_active ? 'opacity-60' : ''}`}>
+                     <div className={`absolute top-0 right-0 w-24 h-24 -mr-8 -mt-8 rounded-full blur-3xl opacity-10 ${option.is_active ? 'bg-emerald-500' : 'bg-red-500'}`}></div>
+
                      <div className="flex justify-between items-start mb-4 relative z-10">
                         <div className="flex items-center gap-3">
-                           <div className={`p-2 rounded-xl ${option.is_active ? 'bg-success/10 text-success' : 'bg-error/10 text-error'}`}>
+                           <div className={`p-2 rounded-xl ${option.is_active ? 'bg-emerald-50 text-emerald-600' : 'bg-red-50 text-red-500'}`}>
                               {option.is_active ? <CheckCircle2 size={16} /> : <XCircle size={16} />}
                            </div>
-                           <div className="inline-flex items-center px-2 py-0.5 rounded-full bg-base-200 text-base-content/60 font-mono text-[10px] uppercase tracking-wider">{option.code}</div>
+                           <div className="inline-flex items-center px-2 py-0.5 rounded-full bg-slate-100 text-slate-500 font-mono text-[10px] uppercase tracking-wider">{option.code}</div>
                         </div>
-                        <div className="flex gap-1 opacity-0 group-hover: transition-opacity">
-                           <button 
-                             className="inline-flex items-center justify-center size-7 rounded-md text-base-content/60 hover:bg-primary/10 hover:text-primary text-sm transition-colors"
+                        <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                           <button
+                             className="inline-flex items-center justify-center size-7 rounded-md text-slate-400 hover:bg-emerald-50 hover:text-emerald-600 transition-colors"
                              onClick={() => {
                                setEditingOption(option);
-                               setFormData({ 
-                                 code: option.code, 
-                                 label: option.label, 
-                                 value: option.value || '', 
+                               setFormData({
+                                 code: option.code,
+                                 label: option.label,
+                                 value: option.value || '',
                                  order: option.order,
-                                 is_active: option.is_active 
+                                 is_active: option.is_active
                                });
                                setIsModalOpen(true);
                              }}
                            >
                              <Pencil size={14} />
                            </button>
-                           <button 
-                             className="inline-flex items-center justify-center size-7 rounded-md text-base-content/60 hover:bg-error/10 hover:text-error text-sm transition-colors"
+                           <button
+                             className="inline-flex items-center justify-center size-7 rounded-md text-slate-400 hover:bg-red-50 hover:text-red-500 transition-colors"
                              onClick={() => handleDelete(option.id)}
                            >
                              <Trash2 size={14} />
@@ -209,9 +208,9 @@ export default function ConfigOptionManager({
                         </div>
                      </div>
 
-                     <h3 className="text-lg font-bold mb-1 group-hover:text-primary transition-colors">{option.label}</h3>
-                     
-                     <div className="flex items-center gap-4 text-xs font-medium text-base-content/50">
+                     <h3 className="text-lg font-bold mb-1 text-slate-800 group-hover:text-emerald-700 transition-colors">{option.label}</h3>
+
+                     <div className="flex items-center gap-4 text-xs font-medium text-slate-400">
                         <div className="flex items-center gap-1">
                            <Hash size={12} />
                            {t('stock:organisation.category_manager.order_label', { defaultValue: 'Ordre' })}: {option.order}
@@ -240,24 +239,22 @@ export default function ConfigOptionManager({
         <form onSubmit={handleSubmit} className="p-6 space-y-5">
            <div className="grid grid-cols-2 gap-4">
               <div className="col-span-2 sm:col-span-1">
-                 <label className="block text-xs font-bold uppercase tracking-wider text-base-content/50 mb-2">{t('stock:organisation.config_option_manager.code_label')}</label>
-                 <div className="relative">
-                    <input 
-                      type="text" 
-                      className="w-full rounded-xl border border-base-300 bg-base-100 px-3 h-12 text-sm font-mono uppercase text-base-content focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all" 
-                      value={formData.code}
-                      onChange={e => setFormData({...formData, code: e.target.value.toUpperCase()})}
-                      required
-                      placeholder={t('stock:organisation.config_option_manager.code_placeholder')}
-                      disabled={!!editingOption}
-                    />
-                 </div>
+                 <label className="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">{t('stock:organisation.config_option_manager.code_label')}</label>
+                 <input
+                   type="text"
+                   className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 h-12 text-sm font-mono uppercase text-slate-700 focus:outline-none focus:bg-white focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 transition-all disabled:opacity-60"
+                   value={formData.code}
+                   onChange={e => setFormData({...formData, code: e.target.value.toUpperCase()})}
+                   required
+                   placeholder={t('stock:organisation.config_option_manager.code_placeholder')}
+                   disabled={!!editingOption}
+                 />
               </div>
               <div className="col-span-2 sm:col-span-1">
-                 <label className="block text-xs font-bold uppercase tracking-wider text-base-content/50 mb-2">{t('stock:organisation.category_manager.order_label')}</label>
-                 <input 
-                   type="number" 
-                   className="w-full rounded-xl border border-base-300 bg-base-100 px-3 h-12 text-sm font-medium text-base-content focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all" 
+                 <label className="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">{t('stock:organisation.category_manager.order_label')}</label>
+                 <input
+                   type="number"
+                   className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 h-12 text-sm font-medium text-slate-700 focus:outline-none focus:bg-white focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 transition-all"
                    value={formData.order}
                    onChange={e => setFormData({...formData, order: parseInt(e.target.value)})}
                    required
@@ -266,10 +263,10 @@ export default function ConfigOptionManager({
            </div>
 
            <div>
-              <label className="block text-xs font-bold uppercase tracking-wider text-base-content/50 mb-2">{t('stock:organisation.config_option_manager.label_label')}</label>
-              <input 
-                type="text" 
-                className="w-full rounded-xl border border-base-300 bg-base-100 px-3 h-12 text-sm font-medium text-base-content focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all" 
+              <label className="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">{t('stock:organisation.config_option_manager.label_label')}</label>
+              <input
+                type="text"
+                className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 h-12 text-sm font-medium text-slate-700 focus:outline-none focus:bg-white focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 transition-all"
                 value={formData.label}
                 onChange={e => setFormData({...formData, label: e.target.value})}
                 required
@@ -278,10 +275,10 @@ export default function ConfigOptionManager({
            </div>
 
            <div>
-              <label className="block text-xs font-bold uppercase tracking-wider text-base-content/50 mb-2">{t('stock:organisation.config_option_manager.value_label')}</label>
-              <input 
-                type="text" 
-                className="w-full rounded-xl border border-base-300 bg-base-100 px-3 h-12 text-sm font-medium text-base-content focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all" 
+              <label className="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">{t('stock:organisation.config_option_manager.value_label')}</label>
+              <input
+                type="text"
+                className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 h-12 text-sm font-medium text-slate-700 focus:outline-none focus:bg-white focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 transition-all"
                 value={formData.value}
                 onChange={e => setFormData({...formData, value: e.target.value})}
                 placeholder={t('stock:organisation.config_option_manager.value_placeholder')}
@@ -289,20 +286,20 @@ export default function ConfigOptionManager({
            </div>
 
            <div className="space-y-1.5">
-              <label className="flex items-center gap-3 cursor-pointer p-0">
-                 <input 
-                   type="checkbox" 
-                   className="size-4 rounded border-base-300 text-primary focus:ring-primary cursor-pointer"
+              <label className="flex items-center gap-3 cursor-pointer">
+                 <input
+                   type="checkbox"
+                   className="size-4 rounded border-slate-300 accent-emerald-600 cursor-pointer"
                    checked={formData.is_active}
                    onChange={e => setFormData({...formData, is_active: e.target.checked})}
                  />
-                 <span className="text-sm font-bold text-base-content/60">{t('stock:organisation.config_option_manager.is_active_label')}</span>
+                 <span className="text-sm font-bold text-slate-500">{t('stock:organisation.config_option_manager.is_active_label')}</span>
               </label>
            </div>
 
-           <div className="flex justify-end gap-3 pt-6 border-t border-base-200">
-              <button type="button" className="inline-flex items-center gap-1.5 px-6 py-2 text-base-content/60 hover:bg-base-200 rounded-xl text-sm font-medium transition-colors" onClick={() => setIsModalOpen(false)}>{t('common:actions.cancel')}</button>
-              <button type="submit" className="inline-flex items-center justify-center px-10 py-2.5 bg-primary text-white rounded-xl text-sm font-bold hover:bg-primary-focus transition-colors shadow-lg shadow-indigo-500/20">
+           <div className="flex justify-end gap-3 pt-6 border-t border-slate-100">
+              <button type="button" className="inline-flex items-center h-9 px-5 text-slate-600 hover:bg-slate-100 rounded-xl text-sm font-medium transition-colors" onClick={() => setIsModalOpen(false)}>{t('common:actions.cancel')}</button>
+              <button type="submit" className="inline-flex items-center justify-center h-9 px-8 bg-emerald-600 text-white rounded-xl text-sm font-bold hover:bg-emerald-700 transition-colors shadow-sm">
                  {editingOption ? t('stock:organisation.config_option_manager.update_btn') : t('stock:organisation.config_option_manager.save_btn')}
               </button>
            </div>

@@ -34,27 +34,24 @@ export const StockAnalysisStats: React.FC<StockAnalysisStatsProps> = ({
             label: t('stock:analyse.stats.supplier'),
             value: supplierName || t('stock:analyse.filters.all_suppliers'),
             icon: <Info className="size-6" />,
-            color: 'primary',
-            bg: 'bg-primary/10',
-            text: 'text-primary',
-            border: 'border-indigo-200'
+            bg: 'bg-blue-50',
+            text: 'text-blue-600',
+            border: 'border-blue-100'
         },
         {
             label: t('stock:analyse.stats.item_count'),
             value: totalItems,
             icon: <Package className="size-6" />,
-            color: 'warning',
-            bg: 'bg-warning/10',
-            text: 'text-warning',
+            bg: 'bg-amber-50',
+            text: 'text-amber-600',
             border: 'border-amber-200'
         },
         {
             label: getValueLabel(),
             value: `${formatCurrency(Math.round(totalValue))}`,
             icon: <TrendingUp className="size-6" />,
-            color: 'error',
-            bg: 'bg-error/10',
-            text: 'text-error',
+            bg: 'bg-red-50',
+            text: 'text-red-500',
             border: 'border-red-200'
         },
         ...(activeTab === 'shortage' ? [{
@@ -62,9 +59,8 @@ export const StockAnalysisStats: React.FC<StockAnalysisStatsProps> = ({
             value: criticalCount,
             subValue: `+ ${warningCount} ${t('stock:analyse.shortage.warnings')}`,
             icon: <AlertTriangle className="size-6" />,
-            color: 'error',
-            bg: 'bg-error/10',
-            text: 'text-error',
+            bg: 'bg-red-50',
+            text: 'text-red-500',
             border: 'border-red-200'
         }] : [])
     ];
@@ -72,22 +68,22 @@ export const StockAnalysisStats: React.FC<StockAnalysisStatsProps> = ({
     return (
         <div className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-${stats.length} gap-6`}>
             {stats.map((stat, idx) => (
-                <div 
+                <div
                     key={idx}
-                    className={`bg-base-100 p-6 rounded-3xl border ${stat.border} shadow-sm flex items-center gap-5 transition-all hover:shadow-md group`}
+                    className={`bg-white p-6 rounded-3xl border ${stat.border} shadow-sm flex items-center gap-5 transition-all hover:shadow-md group`}
                 >
                     <div className={`p-4 ${stat.bg} ${stat.text} rounded-2xl transition-transform group-hover:scale-110 duration-300`}>
                         {stat.icon}
                     </div>
                     <div className="min-w-0 flex-1">
-                        <div className="text-[10px] font-black uppercase tracking-widest text-base-content/50 mb-1 truncate">
+                        <div className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1 truncate">
                             {stat.label}
                         </div>
                         <div className={`text-xl font-black ${stat.text} tracking-tighter truncate`}>
                             {stat.value}
                         </div>
                         {stat.subValue && (
-                            <div className="text-[10px] font-bold text-warning uppercase mt-1 italic">
+                            <div className="text-[10px] font-bold text-amber-500 uppercase mt-1 italic">
                                 {stat.subValue}
                             </div>
                         )}

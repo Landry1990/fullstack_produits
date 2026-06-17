@@ -5,6 +5,10 @@ import type { Promotion } from '../../types/Promotion';
 import { DiscountType } from '../../types/Promotion';
 import { format } from 'date-fns';
 import PromotionForm from './PromotionForm';
+import { Button } from '../shadcn/button';
+import { Badge } from '../shadcn/badge';
+import { cn } from '../../lib/utils';
+import { Plus, Pencil, Trash2, Loader2, Tag, CalendarDays } from 'lucide-react';
 
 
 const PromotionList: React.FC = () => {
@@ -66,89 +70,127 @@ const PromotionList: React.FC = () => {
         setShowForm(true);
     };
 
-    if (loading) return <div className="p-6 text-center">{t('promotions:loading')}</div>;
-    if (error) return <div className="p-6 text-center text-red-500 font-bold">{error}</div>;
+    if (loading) return (
+      <div className="min-h-screen bg-slate-50 p-6 flex flex-col items-center justify-center gap-4">
+        <div className="animate-spin rounded-full size-10 border-b-2 border-emerald-600"></div>
+        <p className="text-slate-500 font-medium">{t('promotions:loading')}</p>
+      </div>
+    );
+    if (error) return (
+      <div className="min-h-screen bg-slate-50 p-6 flex flex-col items-center justify-center gap-4">
+        <p className="text-red-600 font-bold text-lg">{error}</p>
+      </div>
+    );
 
     return (
-        <div className="p-6 bg-base-100 rounded-lg shadow-md">
-            <div className="flex justify-between items-center mb-6">
-                <h2 className="text-2xl font-bold text-base-content">{t('promotions:title')}</h2>
-                <button 
-                    className="bg-info text-white px-4 py-2 rounded hover:bg-info-focus transition"
-                    onClick={handleCreate}
-                >
-                    {t('promotions:new_btn')}
-                </button>
+        <div className="min-h-screen bg-slate-50 p-3 sm:p-6 space-y-4 sm:space-y-6 font-sans">
+          {/* Header */}
+          <div className="bg-white rounded-2xl shadow-sm border border-slate-200 flex flex-col p-4 sm:p-6">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-4">
+              <div>
+                <h1 className="text-2xl font-bold text-slate-900 tracking-tight">{t('promotions:title')}</h1>
+                <p className="text-slate-500 text-sm mt-1">{t('promotions:subtitle')}</p>
+              </div>
+              <Button
+                size="sm"
+                className="gap-2"
+                onClick={handleCreate}
+              >
+                <Plus className="size-4" />
+                {t('promotions:new_btn')}
+              </Button>
             </div>
 
             {showForm && (
-                <PromotionForm 
+                <PromotionForm
                     initialData={editingPromotion}
                     onClose={() => {
                         setShowForm(false);
-                        setEditingPromotion(undefined); // Clear editing state when form closes
-                    }} 
+                        setEditingPromotion(undefined);
+                    }}
                     onSave={() => {
-                        fetchPromotions(); // Refresh list
-                        setShowForm(false); // Close form after save
-                        setEditingPromotion(undefined); // Clear editing state
-                    }} 
+                        fetchPromotions();
+                        setShowForm(false);
+                        setEditingPromotion(undefined);
+                    }}
                 />
             )}
 
-            <div className="overflow-x-auto">
-                <table className="min-w-full divide-y divide-base-200">
-                    <thead className="bg-base-200/50">
+            <div className="overflow-x-auto -mx-2 px-2">
+                <table className="min-w-full divide-y divide-slate-200">
+                    <thead className="bg-slate-100">
                         <tr>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-base-content/60 uppercase tracking-wider">{t('promotions:list.table.name')}</th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-base-content/60 uppercase tracking-wider">{t('promotions:list.table.type')}</th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-base-content/60 uppercase tracking-wider">{t('promotions:list.table.detail')}</th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-base-content/60 uppercase tracking-wider">{t('promotions:list.table.period')}</th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-base-content/60 uppercase tracking-wider">{t('promotions:list.table.status')}</th>
-                            <th className="px-6 py-3 text-right text-xs font-medium text-base-content/60 uppercase tracking-wider">{t('promotions:list.table.actions')}</th>
+                            <th className="px-4 py-3 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">{t('promotions:list.table.name')}</th>
+                            <th className="px-4 py-3 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">{t('promotions:list.table.type')}</th>
+                            <th className="px-4 py-3 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">{t('promotions:list.table.detail')}</th>
+                            <th className="px-4 py-3 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">{t('promotions:list.table.period')}</th>
+                            <th className="px-4 py-3 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">{t('promotions:list.table.status')}</th>
+                            <th className="px-4 py-3 text-right text-xs font-bold text-slate-500 uppercase tracking-wider">{t('promotions:list.table.actions')}</th>
                         </tr>
                     </thead>
-                    <tbody className="bg-base-100 divide-y divide-base-200">
+                    <tbody className="bg-white divide-y divide-slate-200">
                         {promotions.map((promo) => (
-                            <tr key={promo.id}>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-base-content">{promo.name}</td>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm text-base-content/60">
-                                    <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
-                                        ${promo.discount_type === DiscountType.BUY_X_GET_Y ? 'bg-secondary/20 text-purple-800' : 'bg-info/20 text-blue-800'}`}>
-                                        {promo.discount_type === DiscountType.BUY_X_GET_Y ? t('promotions:list.types.special_offer') : t('promotions:list.types.discount')}
-                                    </span>
+                            <tr key={promo.id} className="hover:bg-slate-50 transition-colors">
+                                <td className="px-4 py-3 whitespace-nowrap text-sm font-semibold text-slate-700">{promo.name}</td>
+                                <td className="px-4 py-3 whitespace-nowrap text-sm">
+                                    <Badge variant={promo.discount_type === DiscountType.BUY_X_GET_Y ? 'secondary' : 'default'} className={cn(promo.discount_type === DiscountType.BUY_X_GET_Y && 'bg-purple-100 text-purple-700 border-transparent shadow-none')}>
+                                      <Tag className="size-3 mr-1" />
+                                      {promo.discount_type === DiscountType.BUY_X_GET_Y ? t('promotions:list.types.special_offer') : t('promotions:list.types.discount')}
+                                    </Badge>
                                 </td>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm text-base-content/60 font-bold">
+                                <td className="px-4 py-3 whitespace-nowrap text-sm text-slate-700 font-bold">
                                     {getDiscountLabel(promo)}
                                 </td>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm text-base-content/60">
-                                    {format(new Date(promo.start_date), t('common:date_format_short', 'dd/MM/yyyy'))} 
-                                    {promo.end_date ? ` - ${format(new Date(promo.end_date), t('common:date_format_short', 'dd/MM/yyyy'))}` : ` ${t('promotions:list.period.indefinite')}`}
+                                <td className="px-4 py-3 whitespace-nowrap text-sm text-slate-500">
+                                    <div className="flex items-center gap-1.5">
+                                      <CalendarDays className="size-3.5 text-slate-400" />
+                                      {format(new Date(promo.start_date), t('common:date_format_short', 'dd/MM/yyyy'))}
+                                      {promo.end_date ? ` - ${format(new Date(promo.end_date), t('common:date_format_short', 'dd/MM/yyyy'))}` : ` ${t('promotions:list.period.indefinite')}`}
+                                    </div>
                                 </td>
-                                <td className="px-6 py-4 whitespace-nowrap">
-                                    <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${promo.active ? 'bg-green-100 text-green-800' : 'bg-error/20 text-red-800'}`}>
+                                <td className="px-4 py-3 whitespace-nowrap">
+                                    <Badge variant={promo.active ? 'default' : 'destructive'} className={cn(!promo.active && 'bg-red-100 text-red-700 border-transparent shadow-none')}>
                                         {promo.active ? t('promotions:list.status.active') : t('promotions:list.status.inactive')}
-                                    </span>
+                                    </Badge>
                                 </td>
-                                <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                    <button 
+                                <td className="px-4 py-3 whitespace-nowrap text-right text-sm font-medium">
+                                    <div className="flex justify-end gap-2">
+                                      <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        className="text-emerald-600 h-8 w-8 p-0"
                                         onClick={() => handleEdit(promo)}
-                                        className="text-primary hover:text-indigo-900 mr-4"
-                                    >
-                                        {t('promotions:list.actions.edit')}
-                                    </button>
-                                    <button 
+                                        title={t('promotions:list.actions.edit')}
+                                      >
+                                        <Pencil className="size-4" />
+                                      </Button>
+                                      <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        className="text-red-600 h-8 w-8 p-0"
                                         onClick={() => handleDelete(promo.id)}
-                                        className="text-error hover:text-red-900"
-                                    >
-                                        {t('promotions:list.actions.delete')}
-                                    </button>
+                                        title={t('promotions:list.actions.delete')}
+                                      >
+                                        <Trash2 className="size-4" />
+                                      </Button>
+                                    </div>
                                 </td>
                             </tr>
                         ))}
+                        {promotions.length === 0 && (
+                          <tr>
+                            <td colSpan={6} className="h-64 text-center text-slate-500">
+                              <div className="flex flex-col items-center justify-center gap-3">
+                                <Tag className="size-12 text-slate-300" />
+                                <p className="text-lg font-medium">{t('promotions:no_promotions')}</p>
+                              </div>
+                            </td>
+                          </tr>
+                        )}
                     </tbody>
                 </table>
             </div>
+          </div>
         </div>
     );
 };
