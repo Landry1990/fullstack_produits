@@ -114,7 +114,7 @@ const JournalAudit: React.FC = () => {
         switch (action) {
           case 'CREATE':
           case 'INV_CRE':
-            return { badge: 'badge-success', icon: '➕', bg: 'bg-green-50', color: 'text-green-700' };
+            return { badge: 'badge-success', icon: '➕', bg: 'bg-emerald-50', color: 'text-emerald-700' };
           case 'UPDATE':
           case 'STOCK_ADJ':
           case 'PRICE_CHG':
@@ -194,8 +194,8 @@ const JournalAudit: React.FC = () => {
                 <div className="stat-title text-blue-100">{t('stats.total')}</div>
                 <div className="stat-value">{formatNumber(statistics.total_logs)}</div>
               </div>
-              <div className="stat bg-gradient-to-br from-green-500 to-green-600 text-white rounded-lg shadow-lg">
-                <div className="stat-title text-green-100">{t('stats.last_24h')}</div>
+              <div className="stat bg-gradient-to-br from-emerald-500 to-emerald-600 text-white rounded-lg shadow-lg">
+                <div className="stat-title text-emerald-100">{t('stats.last_24h')}</div>
                 <div className="stat-value">{statistics.recent_activity.last_24h}</div>
               </div>
               <div className="stat bg-gradient-to-br from-purple-500 to-purple-600 text-white rounded-lg shadow-lg">

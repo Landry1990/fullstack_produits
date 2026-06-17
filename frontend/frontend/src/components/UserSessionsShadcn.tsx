@@ -8,12 +8,14 @@ import { LogOut, Monitor, Users, Clock, CalendarDays, Search, Loader2 } from 'lu
 import { toast } from 'react-hot-toast';
 import { getLocale } from '../utils/dateUtils';
 
-import { Card } from './ui/Card';
-import { Button } from './ui/Button';
-import { Input } from './ui/Input';
-import { Badge } from './ui/Badge';
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from './shadcn/card';
+import { Button } from './shadcn/button';
+import { Input } from './shadcn/input';
+import { Badge } from './shadcn/badge';
+import { Tabs, TabsList, TabsTrigger } from './shadcn/tabs';
+
 import { Label } from './ui/Label';
-import { Tabs, TabsList, TabsTrigger } from './ui/Tabs';
+import { Select } from './ui/Select';
 import {
   Table,
   TableBody,
@@ -22,7 +24,6 @@ import {
   TableHeader,
   TableRow,
 } from './ui/Table';
-import { cn } from '../lib/utils';
 
 interface UserSession {
   id: number;
@@ -47,7 +48,7 @@ interface RecapStats {
   avg_duration_display: string;
 }
 
-const UserSessions: React.FC = () => {
+const UserSessionsShadcn: React.FC = () => {
   const { t, i18n } = useTranslation(['users', 'common']);
   const { user, getServerDate } = useAuth();
   const [sessions, setSessions] = useState<UserSession[]>([]);
@@ -169,14 +170,14 @@ const UserSessions: React.FC = () => {
   return (
     <div className="min-h-screen bg-base-200 p-4 lg:p-6 space-y-6">
       {/* Header + Tabs */}
-      <Card variant="elevated" padding="none" className="overflow-hidden">
-        <div className="p-5 lg:p-6 border-b border-base-200 flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <Card className="overflow-hidden">
+        <CardHeader className="p-5 lg:p-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-bold text-base-content tracking-tight flex items-center gap-2">
+            <CardTitle className="text-2xl flex items-center gap-2">
               <Users className="size-6 text-primary" />
               {t('sessions.title')}
-            </h1>
-            <p className="text-base-content/60 text-sm mt-1">{t('sessions.subtitle')}</p>
+            </CardTitle>
+            <CardDescription>{t('sessions.subtitle')}</CardDescription>
           </div>
 
           <Tabs
@@ -188,10 +189,9 @@ const UserSessions: React.FC = () => {
               <TabsTrigger value="monthly">{t('sessions.tabs.monthly')}</TabsTrigger>
             </TabsList>
           </Tabs>
-        </div>
+        </CardHeader>
 
-        {/* Filters */}
-        <div className="p-5 lg:p-6 bg-base-100">
+        <CardContent className="p-5 lg:p-6 bg-base-100">
           {activeTab === 'daily' ? (
             <form onSubmit={handleFilter} className="flex flex-wrap items-end gap-4">
               <div className="space-y-1.5">
@@ -212,9 +212,9 @@ const UserSessions: React.FC = () => {
               {user?.is_superuser && (
                 <div className="space-y-1.5">
                   <Label htmlFor="session-operator">{t('sessions.operator')}</Label>
-                  <select
+                  <Select
                     id="session-operator"
-                    className="h-10 w-full md:w-56 rounded-lg border border-base-300 bg-base-100 px-3 text-sm font-medium text-base-content focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none"
+                    containerClassName="w-full md:w-56"
                     value={selectedUser}
                     onChange={(e) => setSelectedUser(e.target.value)}
                   >
@@ -224,11 +224,12 @@ const UserSessions: React.FC = () => {
                         {op.username}
                       </option>
                     ))}
-                  </select>
+                  </Select>
                 </div>
               )}
 
-              <Button type="submit" variant="primary" isLoading={loading} leftIcon={<Search className="size-4" />}>
+              <Button type="submit" disabled={loading} className="gap-2">
+                {loading ? <Loader2 className="size-4 animate-spin" /> : <Search className="size-4" />}
                 {t('common:filter')}
               </Button>
             </form>
@@ -236,9 +237,9 @@ const UserSessions: React.FC = () => {
             <form onSubmit={handleRecapFilter} className="flex flex-wrap items-end gap-4">
               <div className="space-y-1.5">
                 <Label htmlFor="recap-month">{t('sessions.recap.month')}</Label>
-                <select
+                <Select
                   id="recap-month"
-                  className="h-10 w-full md:w-44 rounded-lg border border-base-300 bg-base-100 px-3 text-sm font-medium text-base-content focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none"
+                  containerClassName="w-full md:w-44"
                   value={recapMonth}
                   onChange={(e) => setRecapMonth(e.target.value)}
                 >
@@ -249,14 +250,14 @@ const UserSessions: React.FC = () => {
                       </option>
                     )
                   )}
-                </select>
+                </Select>
               </div>
 
               <div className="space-y-1.5">
                 <Label htmlFor="recap-year">{t('sessions.recap.year')}</Label>
-                <select
+                <Select
                   id="recap-year"
-                  className="h-10 w-full md:w-32 rounded-lg border border-base-300 bg-base-100 px-3 text-sm font-medium text-base-content focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none"
+                  containerClassName="w-full md:w-32"
                   value={recapYear}
                   onChange={(e) => setRecapYear(e.target.value)}
                 >
@@ -265,19 +266,20 @@ const UserSessions: React.FC = () => {
                       {y}
                     </option>
                   ))}
-                </select>
+                </Select>
               </div>
 
-              <Button type="submit" variant="primary" isLoading={loading} leftIcon={<Search className="size-4" />}>
+              <Button type="submit" disabled={loading} className="gap-2">
+                {loading ? <Loader2 className="size-4 animate-spin" /> : <Search className="size-4" />}
                 {t('common:filter')}
               </Button>
             </form>
           )}
-        </div>
+        </CardContent>
       </Card>
 
       {/* Data Table */}
-      <Card variant="default" padding="none" className="overflow-hidden">
+      <Card className="overflow-hidden">
         <div className="overflow-x-auto">
           {activeTab === 'daily' ? (
             <Table>
@@ -353,17 +355,15 @@ const UserSessions: React.FC = () => {
                       <TableCell className="text-right">
                         <div className="flex items-center justify-end gap-2">
                           {session.last_logout ? (
-                            <Badge variant="success" size="sm">
-                              {t('sessions.closed')}
-                            </Badge>
+                            <Badge variant="default">{t('sessions.closed')}</Badge>
                           ) : (
                             <>
                               {format(getServerDate(), 'yyyy-MM-dd') === session.date ? (
-                                <Badge variant="primary" size="sm" className="animate-pulse">
+                                <Badge variant="default" className="animate-pulse">
                                   {t('sessions.ongoing')}
                                 </Badge>
                               ) : (
-                                <Badge variant="ghost" size="sm">
+                                <Badge variant="outline">
                                   {t('sessions.not_closed')}
                                 </Badge>
                               )}
@@ -372,13 +372,16 @@ const UserSessions: React.FC = () => {
                                 <Button
                                   variant="ghost"
                                   size="sm"
-                                  isLoading={disconnectingId === session.id}
                                   onClick={() => handleForceLogout(session.id, session.username)}
                                   disabled={!!disconnectingId}
                                   className="text-error hover:bg-red-50"
                                   title={t('sessions.force_logout')}
                                 >
-                                  <LogOut size={16} />
+                                  {disconnectingId === session.id ? (
+                                    <Loader2 className="size-4 animate-spin" />
+                                  ) : (
+                                    <LogOut size={16} />
+                                  )}
                                 </Button>
                               )}
                             </>
@@ -431,7 +434,7 @@ const UserSessions: React.FC = () => {
                         </div>
                       </TableCell>
                       <TableCell className="text-center">
-                        <Badge variant="secondary" size="lg">
+                        <Badge variant="secondary">
                           {stat.days_count} {t('sessions.recap.days_present')}
                         </Badge>
                       </TableCell>
@@ -458,4 +461,4 @@ const UserSessions: React.FC = () => {
   );
 };
 
-export default UserSessions;
+export default UserSessionsShadcn;

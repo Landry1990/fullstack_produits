@@ -69,11 +69,23 @@ class CaisseSerializer(serializers.ModelSerializer):
 
 
 class ClotureCaisseSerializer(serializers.ModelSerializer):
-    user_name = serializers.CharField(source='user.get_full_name', read_only=True)
+    user_name = serializers.SerializerMethodField()
+    cloture_par_name = serializers.SerializerMethodField()
+    poste_caisse_nom = serializers.CharField(source='poste_caisse.nom', read_only=True)
 
     class Meta:
         model = ClotureCaisse
         fields = '__all__'
+
+    def get_user_name(self, obj):
+        if obj.user:
+            return obj.user.get_full_name() or obj.user.username
+        return None
+
+    def get_cloture_par_name(self, obj):
+        if obj.cloture_par:
+            return obj.cloture_par.get_full_name() or obj.cloture_par.username
+        return None
 
 
 class FactureSerializer(serializers.ModelSerializer):
@@ -82,6 +94,10 @@ class FactureSerializer(serializers.ModelSerializer):
     client_email = serializers.SerializerMethodField()
     client_address = serializers.SerializerMethodField()
     client_niu = serializers.SerializerMethodField()
+    client_solde_depot = serializers.SerializerMethodField()
+    client_points_fidelite = serializers.SerializerMethodField()
+    client_type = serializers.SerializerMethodField()
+    client_is_deposit_enabled = serializers.SerializerMethodField()
     vendeur_name = serializers.SerializerMethodField()
     produits = FactureProduitSerializer(many=True, read_only=True)
     ayant_droit_details = AyantDroitSerializer(source='ayant_droit', read_only=True)
@@ -106,10 +122,10 @@ class FactureSerializer(serializers.ModelSerializer):
             'date', 'date_document', 'status', 'status_display', 'produits',
             'total_ht', 'remise', 'tva', 'total_tva', 'total_ttc', 'notes',
             'vendeur_name', 'created_by_name', 'validated_by_name',
-            'is_remise_auto', 'part_client', 'part_assurance',
+            'is_remise_auto', 'part_client',
             'created_by', 'validated_by',
             'montant_paye', 'reste_a_payer', 'paiements',
-            'poste_caisse', 'is_gift', 'is_modification'
+            'poste_caisse'
         ]
 
     def get_vendeur_name(self, obj):
@@ -154,6 +170,26 @@ class FactureSerializer(serializers.ModelSerializer):
         if obj.client:
             return obj.client.niu
         return None
+
+    def get_client_solde_depot(self, obj):
+        if obj.client:
+            return str(obj.client.solde_depot)
+        return '0.00'
+
+    def get_client_points_fidelite(self, obj):
+        if obj.client:
+            return obj.client.points_fidelite
+        return 0
+
+    def get_client_type(self, obj):
+        if obj.client:
+            return obj.client.client_type
+        return None
+
+    def get_client_is_deposit_enabled(self, obj):
+        if obj.client:
+            return obj.client.is_deposit_enabled
+        return False
 
     def get_montant_paye(self, obj):
         total = obj.paiements.filter(

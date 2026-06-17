@@ -189,7 +189,7 @@ export default function ClientFormModal({
               {/* Actif */}
               <label className="flex items-center justify-between p-3 rounded-lg border border-base-200 bg-base-200 cursor-pointer hover:border-base-300 transition-colors">
                 <div className="flex items-center gap-3">
-                  <div className={`p-1.5 rounded-md ${data.is_active !== false ? 'bg-green-100 text-green-700' : 'bg-base-300 text-base-content/50'}`}>
+                  <div className={`p-1.5 rounded-md ${data.is_active !== false ? 'bg-emerald-100 text-emerald-700' : 'bg-base-300 text-base-content/50'}`}>
                     <Activity className="size-4" />
                   </div>
                   <span className="text-sm font-medium text-base-content">{t('common:is_active')}</span>

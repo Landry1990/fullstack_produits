@@ -72,7 +72,7 @@ export const ProductDetailsModal: React.FC<ProductDetailsModalProps> = ({
                             </h2>
                             <span className={`px-2.5 py-0.5 rounded-full text-xs font-semibold ${
                                 facture.status === 'PAY'
-                                    ? 'bg-green-100 text-green-700'
+                                    ? 'bg-emerald-100 text-emerald-700'
                                     : facture.status === 'ANN'
                                         ? 'bg-red-50 text-red-600'
                                         : 'bg-yellow-100 text-yellow-700'
@@ -106,8 +106,8 @@ export const ProductDetailsModal: React.FC<ProductDetailsModalProps> = ({
                                 <>
                                     <span className="size-1 bg-gray-300 rounded-full hidden sm:block" />
                                     <span className="flex items-center gap-1.5 shrink-0" title="Caissier">
-                                        <div className="size-3.5 rounded-full bg-green-100 flex items-center justify-center">
-                                            <User className="size-2.5 text-green-600" />
+                                        <div className="size-3.5 rounded-full bg-emerald-100 flex items-center justify-center">
+                                            <User className="size-2.5 text-emerald-600" />
                                         </div>
                                         <span className="text-slate-500 text-xs">Caissier :</span>
                                         <span className="text-slate-600 font-medium">{facture.paiements[0].user_details.full_name || facture.paiements[0].user_details.username}</span>
@@ -117,8 +117,8 @@ export const ProductDetailsModal: React.FC<ProductDetailsModalProps> = ({
                                 <>
                                     <span className="size-1 bg-gray-300 rounded-full hidden sm:block" />
                                     <span className="flex items-center gap-1.5 shrink-0" title="Caissier">
-                                        <div className="size-3.5 rounded-full bg-green-100 flex items-center justify-center">
-                                            <User className="size-2.5 text-green-600" />
+                                        <div className="size-3.5 rounded-full bg-emerald-100 flex items-center justify-center">
+                                            <User className="size-2.5 text-emerald-600" />
                                         </div>
                                         <span className="text-slate-500 text-xs">Caissier :</span>
                                         <span className="text-slate-600 font-medium">{facture.validated_by_name}</span>

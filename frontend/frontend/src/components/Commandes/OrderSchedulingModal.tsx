@@ -532,10 +532,10 @@ export default function OrderSchedulingModal({
                                         </div>
 
                                         {/* Période d'analyse visible pour tous les modes */}
-                                        <div className={`p-3 rounded-2xl border flex items-center justify-between ${schedule.execution_mode === 'OPTIMISE' ? 'bg-info/10/50 border-blue-100' : schedule.execution_mode === 'CUMULATIF' ? 'bg-green-50/50 border-green-100' : 'bg-base-200 border-base-300'}`}>
+                                        <div className={`p-3 rounded-2xl border flex items-center justify-between ${schedule.execution_mode === 'OPTIMISE' ? 'bg-info/10/50 border-blue-100' : schedule.execution_mode === 'CUMULATIF' ? 'bg-emerald-50/50 border-emerald-100' : 'bg-base-200 border-base-300'}`}>
                                             <div className="flex items-center gap-2">
-                                                <Info className={`size-3.5 ${schedule.execution_mode === 'OPTIMISE' ? 'text-blue-500' : schedule.execution_mode === 'CUMULATIF' ? 'text-green-500' : 'text-base-content/60'}`} />
-                                                <span className={`text-[10px] font-bold ${schedule.execution_mode === 'OPTIMISE' ? 'text-info' : schedule.execution_mode === 'CUMULATIF' ? 'text-green-700' : 'text-base-content'}`}>
+                                                <Info className={`size-3.5 ${schedule.execution_mode === 'OPTIMISE' ? 'text-blue-500' : schedule.execution_mode === 'CUMULATIF' ? 'text-emerald-500' : 'text-base-content/60'}`} />
+                                                <span className={`text-[10px] font-bold ${schedule.execution_mode === 'OPTIMISE' ? 'text-info' : schedule.execution_mode === 'CUMULATIF' ? 'text-emerald-700' : 'text-base-content'}`}>
                                                     {schedule.execution_mode === 'OPTIMISE' ? t('scheduling.period_analysis') : schedule.execution_mode === 'CUMULATIF' ? t('scheduling.period_initial') : t('scheduling.period_counting')}
                                                 </span>
                                             </div>
@@ -617,7 +617,7 @@ export default function OrderSchedulingModal({
                                             </p>
                                         )}
                                         {schedule.execution_mode === 'CUMULATIF' && (
-                                            <p className="text-[9px] text-green-600 leading-tight">
+                                            <p className="text-[9px] text-emerald-600 leading-tight">
                                                 <strong>{t('scheduling.cumulative')}</strong> {t('scheduling.cumulative_mode_info', { days: schedule.analysis_period_days })}
                                             </p>
                                         )}

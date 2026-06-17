@@ -67,8 +67,11 @@ temp_*
 # Backup folders (WSL/Linux)
 /backup/
 backup/
+backups/
 [Cc]:/backup/
+[Cc]:/backups/
 /mnt/c/backup/
+/mnt/c/backups/
 
 # PDF files (not part of the application)
 *.pdf

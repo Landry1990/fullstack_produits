@@ -32,7 +32,7 @@ export default function FeedbackModal({ isOpen, onClose }: FeedbackModalProps) {
   ];
 
   const priorityOptions = [
-    { value: 'LOW', label: t('feedback.priority_low', 'Faible'), color: 'bg-green-100 text-green-700' },
+    { value: 'LOW', label: t('feedback.priority_low', 'Faible'), color: 'bg-emerald-100 text-emerald-700' },
     { value: 'MEDIUM', label: t('feedback.priority_medium', 'Moyenne'), color: 'bg-yellow-100 text-yellow-700' },
     { value: 'HIGH', label: t('feedback.priority_high', 'Haute'), color: 'bg-orange-100 text-orange-700' },
     { value: 'URGENT', label: t('feedback.priority_urgent', 'Urgente'), color: 'bg-red-100 text-red-700' },

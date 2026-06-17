@@ -49,6 +49,11 @@ export const FacturesTable: React.FC<FacturesTableProps> = ({
   const hasActiveCashSession = !!myActivePoste
   const canCashOut = hasCashOutPermission && (user?.is_superuser || hasActiveCashSession)
 
+  // Reset page if list shrinks
+  useEffect(() => {
+    if (page > 1 && (page - 1) * PAGE_SIZE >= sortedFactures.length) setPage(1)
+  }, [sortedFactures.length, page])
+
   // Sync preview modal if the invoice is updated in the list
   useEffect(() => {
     if (previewFacture) {
@@ -72,11 +77,6 @@ export const FacturesTable: React.FC<FacturesTableProps> = ({
 
   const totalPages = Math.ceil(sortedFactures.length / PAGE_SIZE)
   const pagedFactures = sortedFactures.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE)
-
-  // Reset page if list shrinks
-  React.useEffect(() => {
-    if (page > 1 && (page - 1) * PAGE_SIZE >= sortedFactures.length) setPage(1)
-  }, [sortedFactures.length, page])
 
   if (sortedFactures.length === 0) {
     return (

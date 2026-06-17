@@ -50,9 +50,10 @@ export default function SudoValidationModal({
 
     useEffect(() => {
         if (selectedValidator && isOpen) {
-            setTimeout(() => {
+            const timer = setTimeout(() => {
                 passwordInputRef.current?.focus();
             }, 100);
+            return () => clearTimeout(timer);
         }
     }, [selectedValidator, isOpen]);
 

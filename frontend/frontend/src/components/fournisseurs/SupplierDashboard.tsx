@@ -64,15 +64,15 @@ export default function SupplierDashboard({ onViewAllDeadlines }: SupplierDashbo
       value: formatCurrency(stats?.total_dette ?? 0),
       sub: t('providers:dashboard.kpis.active_providers', { count: stats?.nb_fournisseurs_actifs ?? 0 }),
       icon: TrendingDown,
-      accent: '#ef4444',
-      isPositive: false,
+      accent: '#10b981',
+      isPositive: true,
     },
     {
       title: t('providers:dashboard.kpis.overdue'),
       value: formatCurrency(stats?.stats_echeances?.en_retard ?? 0),
       sub: t('providers:dashboard.kpis.late_schedules', { count: stats?.stats_echeances?.count_retard ?? 0 }),
       icon: AlertCircle,
-      accent: '#f97316',
+      accent: '#059669',
       isPositive: false,
       alert: (stats?.stats_echeances?.count_retard ?? 0) > 0
     },
@@ -81,15 +81,15 @@ export default function SupplierDashboard({ onViewAllDeadlines }: SupplierDashbo
       value: formatCurrency(stats?.stats_echeances?.aujourdhui ?? 0),
       sub: t('providers:dashboard.kpis.immediate_pay'),
       icon: Clock,
-      accent: '#f59e0b',
-      isPositive: false,
+      accent: '#34d399',
+      isPositive: true,
     },
     {
       title: t('providers:dashboard.kpis.due_soon'),
       value: formatCurrency(stats?.stats_echeances?.a_venir ?? 0),
       sub: t('providers:dashboard.kpis.upcoming'),
       icon: Calendar,
-      accent: '#6366f1',
+      accent: '#6ee7b7',
       isPositive: true,
     }
   ];
@@ -153,8 +153,8 @@ export default function SupplierDashboard({ onViewAllDeadlines }: SupplierDashbo
               <AreaChart data={stats?.evolution_dette ?? []} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
                 <defs>
                   <linearGradient id="colorDette" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#ef4444" stopOpacity={0.2}/>
-                    <stop offset="95%" stopColor="#ef4444" stopOpacity={0}/>
+                    <stop offset="5%" stopColor="#10b981" stopOpacity={0.2}/>
+                    <stop offset="95%" stopColor="#10b981" stopOpacity={0}/>
                   </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
@@ -180,7 +180,7 @@ export default function SupplierDashboard({ onViewAllDeadlines }: SupplierDashbo
                 <Area 
                   type="monotone" 
                   dataKey="dette" 
-                  stroke="#ef4444" 
+                  stroke="#10b981" 
                   strokeWidth={3} 
                   fillOpacity={1} 
                   fill="url(#colorDette)" 

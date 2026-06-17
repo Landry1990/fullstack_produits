@@ -6,6 +6,10 @@ from rest_framework.authtoken.views import ObtainAuthToken
 from rest_framework.authtoken.models import Token
 from rest_framework.settings import api_settings
 from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
+from rest_framework.throttling import AnonRateThrottle
+
+class LoginRateThrottle(AnonRateThrottle):
+    scope = 'login'
 
 from django.contrib.auth.models import User
 from django.shortcuts import get_object_or_404
@@ -42,6 +46,8 @@ class CustomAuthToken(ObtainAuthToken):
     """
     Custom auth token view that returns user details along with the token.
     """
+    throttle_classes = [LoginRateThrottle]
+
     def post(self, request, *args, **kwargs):
         username = request.data.get('username')
         password = request.data.get('password')
@@ -141,6 +147,12 @@ class UserViewSet(BaseViewSetConfig, viewsets.ModelViewSet):
         if self.action in admin_actions:
             return [IsAdminUser()]
         return [IsAuthenticated()]
+
+    def get_throttles(self):
+        # login_options est exempter du throttling (page de connexion)
+        if self.action == 'login_options':
+            return []
+        return super().get_throttles()
     
     def partial_update(self, request, *args, **kwargs):
         response = super().partial_update(request, *args, **kwargs)
