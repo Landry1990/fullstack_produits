@@ -200,7 +200,7 @@ const LicenceScreen = () => {
                             <button
                                 onClick={handleConfirmActivation}
                                 disabled={loading || !previewData.hardware_match}
-                                className="w-full py-4 bg-green-600 hover:bg-green-500 disabled:bg-slate-700 text-white rounded-xl font-bold transition-all flex items-center justify-center gap-2 shadow-lg shadow-green-900/20"
+                                className="w-full py-4 bg-emerald-600 hover:bg-emerald-500 disabled:bg-slate-700 text-white rounded-xl font-bold transition-all flex items-center justify-center gap-2 shadow-lg shadow-emerald-900/20"
                             >
                                 {loading ? <span className="size-6 border-2 border-white/20 border-t-white rounded-full animate-spin" /> : t('licence.confirm_activation')}
                             </button>

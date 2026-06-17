@@ -116,7 +116,7 @@ export default function ModuleFinancier() {
     if (!predictions) return null;
     switch (predictions.tendance) {
       case 'hausse':
-        return { icon: '📈', color: 'text-green-500', label: t('trend.up', 'En hausse') };
+        return { icon: '📈', color: 'text-emerald-500', label: t('trend.up', 'En hausse') };
       case 'baisse':
         return { icon: '📉', color: 'text-red-500', label: t('trend.down', 'En baisse') };
       default:
@@ -169,7 +169,7 @@ export default function ModuleFinancier() {
       ) : kpis && (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           {/* Panier Moyen */}
-          <div className="card bg-gradient-to-br from-green-500 to-green-600 text-white shadow-lg">
+          <div className="card bg-gradient-to-br from-emerald-500 to-emerald-600 text-white shadow-lg">
             <div className="card-body p-4">
               <h3 className="text-sm font-medium opacity-80">
                 {t('kpis.avg_basket', 'Panier Moyen')}

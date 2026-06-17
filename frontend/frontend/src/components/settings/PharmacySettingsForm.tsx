@@ -4,14 +4,14 @@ import { usePharmacySettings, type PharmacySettings } from '../../hooks/usePharm
 import { useTVA } from '../../hooks/useTVA'
 import { useInvoiceSettings } from '../../hooks/useInvoiceSettings'
 import { getApiErrorDetail } from '../../utils/errorHandling'
-import { 
-  Info, 
-  Printer, 
-  Package, 
-  Percent, 
-  Bell, 
-  Save, 
-  MapPin, 
+import {
+  Info,
+  Printer,
+  Package,
+  Percent,
+  Bell,
+  Save,
+  MapPin,
   CreditCard,
   Settings,
   MessageSquare,
@@ -28,6 +28,18 @@ import {
   Users,
   Lock
 } from 'lucide-react'
+import { Button } from '../ui/Button'
+import { Card } from '../ui/Card'
+import { Input } from '../ui/Input'
+import { Label } from '../ui/Label'
+import { Checkbox } from '../ui/Checkbox'
+import { Select } from '../ui/Select'
+import { Textarea } from '../ui/Textarea'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/Tabs'
+import {
+  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
+} from '../ui/Table'
+import { Badge } from '../ui/Badge'
 
 type TabId = 'general' | 'printing' | 'stocks' | 'tva' | 'notifications' | 'reports'
 
@@ -151,7 +163,7 @@ export default function PharmacySettingsForm() {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-full">
-        <span className="inline-block size-8 border-2 border-base-300 border-t-indigo-600 rounded-full animate-spin"></span>
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
       </div>
     )
   }
@@ -166,48 +178,33 @@ export default function PharmacySettingsForm() {
   ] as const
 
   return (
-    <div className="h-full flex flex-col bg-base-100 overflow-hidden relative">
+    <div className="h-full flex flex-col overflow-hidden relative">
       {/* Header */}
-      <div className="px-6 py-4 border-b border-base-200 bg-base-100 shrink-0">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div>
-            <h1 className="text-2xl font-bold text-base-content flex items-center gap-3">
-              <Settings className="h-7 w-7 text-primary" />
-              {t('title')}
-            </h1>
-            <p className="text-sm text-base-content/60 mt-1">
-              {t('subtitle')}
-            </p>
-          </div>
-        </div>
-
-        {/* Navigation Tabs */}
-        <div className="flex gap-2 mt-6 overflow-x-auto no-scrollbar scroll-smooth pb-1">
-          {tabs.map((tab) => (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
-              className={`flex items-center gap-2 px-4 py-2 rounded-xl transition-all whitespace-nowrap font-medium border-2 ${
-                activeTab === tab.id 
-                  ? 'bg-primary border-indigo-500 text-primary-content shadow-lg shadow-indigo-200 scale-[1.02]' 
-                  : 'bg-base-100 border-base-200 text-base-content/60 hover:border-indigo-500/30 hover:text-primary'
-              }`}
-            >
-              <tab.icon className="size-4" />
-              {tab.label}
-            </button>
-          ))}
-        </div>
+      <div className="px-6 py-4 border-b shrink-0">
+        <h1 className="text-2xl font-bold tracking-tight flex items-center gap-3">
+          <Settings className="h-6 w-6 text-primary" />
+          {t('title')}
+        </h1>
+        <p className="text-sm text-muted-foreground mt-1">{t('subtitle')}</p>
       </div>
 
-      {/* Content Area */}
-      <div className="flex-1 overflow-auto bg-base-200">
-        <div className="max-w-4xl mx-auto p-6 pb-32">
-          <form onSubmit={handleSubmit} className="space-y-8">
+      <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as TabId)} className="flex-1 flex flex-col min-h-0">
+        <TabsList className="mx-6 mt-4 self-start">
+          {tabs.map((tab) => (
+            <TabsTrigger key={tab.id} value={tab.id} className="gap-2">
+              <tab.icon className="h-4 w-4" />
+              {tab.label}
+            </TabsTrigger>
+          ))}
+        </TabsList>
+
+        {/* Content Area */}
+        <div className="flex-1 overflow-auto bg-muted/30">
+          <div className="max-w-4xl mx-auto p-6 pb-32">
+            <form onSubmit={handleSubmit} className="space-y-8">
             
             {/* --- TAB: GENERAL --- */}
-            {activeTab === 'general' && (
-              <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+            <TabsContent value="general" className="mt-0 data-[state=inactive]:hidden space-y-8">
                 {/* Section: Identité */}
                 <div className="card bg-base-100 shadow-xl shadow-base-content/5 border border-base-200 overflow-hidden rounded-2xl">
                   <div className="p-0">
@@ -373,12 +370,10 @@ export default function PharmacySettingsForm() {
                     </div>
                   </div>
                 </div>
-              </div>
-            )}
+            </TabsContent>
 
             {/* --- TAB: PRINTING --- */}
-            {activeTab === 'printing' && (
-              <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+            <TabsContent value="printing" className="mt-0 data-[state=inactive]:hidden space-y-8">
                 {/* Section: Messages Ticket */}
                 <div className="card bg-base-100 shadow-xl shadow-base-content/5 border border-base-200 overflow-hidden rounded-2xl">
                   <div className="p-0">
@@ -491,12 +486,10 @@ export default function PharmacySettingsForm() {
                     </div>
                   </div>
                 </div>
-              </div>
-            )}
+            </TabsContent>
 
             {/* --- TAB: STOCKS & ORDERS --- */}
-            {activeTab === 'stocks' && (
-              <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+            <TabsContent value="stocks" className="mt-0 data-[state=inactive]:hidden space-y-8">
                 <div className="card bg-base-100 shadow-xl shadow-base-content/5 border border-base-200 overflow-hidden rounded-2xl">
                   <div className="p-0">
                     <div className="px-8 py-5 border-b border-base-200 bg-base-50/50">
@@ -671,12 +664,10 @@ export default function PharmacySettingsForm() {
                     </div>
                   </div>
                 </div>
-              </div>
-            )}
+            </TabsContent>
 
             {/* --- TAB: TVA --- */}
-            {activeTab === 'tva' && (
-              <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+            <TabsContent value="tva" className="mt-0 data-[state=inactive]:hidden space-y-8">
                 <div className="card bg-base-100 shadow-xl shadow-base-content/5 border border-base-200 overflow-hidden rounded-2xl">
                   <div className="p-0">
                     <div className="px-8 py-5 border-b border-base-200 bg-base-50/50">
@@ -776,12 +767,10 @@ export default function PharmacySettingsForm() {
                     </div>
                   </div>
                 </div>
-              </div>
-            )}
+            </TabsContent>
 
             {/* --- TAB: NOTIFICATIONS --- */}
-            {activeTab === 'notifications' && (
-              <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+            <TabsContent value="notifications" className="mt-0 data-[state=inactive]:hidden space-y-8">
                 {/* Section: WhatsApp */}
                 <div className="card bg-base-100 shadow-xl shadow-base-content/5 border border-base-200 overflow-hidden rounded-2xl">
                   <div className="p-0">
@@ -936,12 +925,10 @@ export default function PharmacySettingsForm() {
                     </div>
                   </div>
                 </div>
-              </div>
-            )}
+            </TabsContent>
 
             {/* --- TAB: RAPPORTS AUTOMATIQUES --- */}
-            {activeTab === 'reports' && (
-              <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+            <TabsContent value="reports" className="mt-0 data-[state=inactive]:hidden space-y-8">
                 {/* Section: Activation et Configuration Générale */}
                 <div className="card bg-base-100 shadow-xl shadow-base-content/5 border border-base-200 overflow-hidden rounded-2xl">
                   <div className="card-body p-6 space-y-6">
@@ -1026,7 +1013,7 @@ export default function PharmacySettingsForm() {
                           disabled={!formData.monthly_report_enabled}
                         />
                         <span className="text-sm text-base-content flex items-center gap-1">
-                          <Smartphone className="size-4 text-green-600" />
+                          <Smartphone className="size-4 text-emerald-600" />
                           Envoyer via WhatsApp
                         </span>
                       </label>
@@ -1090,7 +1077,7 @@ export default function PharmacySettingsForm() {
                         />
                         <div className="flex-1">
                           <div className="flex items-center gap-2">
-                            <DollarSign className="size-4 text-green-600" />
+                            <DollarSign className="size-4 text-emerald-600" />
                             <span className="font-medium text-base-content">Marges réalisées</span>
                           </div>
                           <p className="text-xs text-base-content/60 mt-1">Taux de marge et profit net</p>
@@ -1243,28 +1230,29 @@ export default function PharmacySettingsForm() {
                     </div>
                   </div>
                 </div>
-              </div>
-            )}
+            </TabsContent>
           </form>
         </div>
       </div>
+      </Tabs>
 
       {/* STICKY BOTTOM ACTION BAR */}
-      <div className="absolute bottom-0 left-0 right-0 p-6 bg-base-100/90 backdrop-blur-xl border-t border-base-200 z-50 flex justify-center items-center shadow-2xl">
-        <button
+      <div className="absolute bottom-0 left-0 right-0 p-6 bg-background/90 backdrop-blur-xl border-t z-50 flex justify-center items-center">
+        <Button
           onClick={() => handleSubmit()}
           disabled={saving}
-          className={`inline-flex items-center justify-center px-4 py-2 bg-primary text-white rounded-lg text-sm font-bold hover:bg-primary-focus transition-colors shadow-sm btn-wide h-14 rounded-xl gap-3 shadow-xl shadow-primary/30 transition-all duration-300 hover:scale-105 active:scale-95 font-bold text-lg ${saving ? 'loading' : ''}`}
+          size="lg"
+          className="gap-3 min-w-[240px] text-lg shadow-lg"
         >
           {saving ? (
             t('saving')
           ) : (
             <>
-              <Save className="size-6" />
+              <Save className="h-5 w-5" />
               {t('save_btn')}
             </>
           )}
-        </button>
+        </Button>
       </div>
     </div>
   )

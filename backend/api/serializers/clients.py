@@ -33,15 +33,18 @@ class ClientSerializer(serializers.ModelSerializer):
     class Meta:
         model = Client
         fields = [
-            'id', 'code', 'name', 'phone', 'email', 'address',
-            'taux_couverture', 'assure_principal', 'ayants_droit',
-            'points_fidelite', 'date_naissance', 'genre', 'notes',
-            'depot_count', 'solde_depot', 'solde_depot_display',
-            'created_at', 'updated_at', 'is_deposit_enabled'
+            'id', 'name', 'phone', 'email', 'address', 'niu', 'registre_commerce',
+            'client_type', 'plafond', 'taux_couverture',
+            'remise_automatique', 'majoration_pro_pourcentage',
+            'points_fidelite', 'pending_discount', 'is_loyalty_member',
+            'solde_depot', 'is_deposit_enabled',
+            'message_alerte', 'solde_factures',
+            'created_at',
+            'ayants_droit', 'depot_count', 'solde_depot_display'
         ]
 
     def get_depot_count(self, obj):
-        return obj.depots.filter(quantite_restante__gt=0).count()
+        return obj.depots_historique.count()
 
     def get_solde_depot_display(self, obj):
         return f"{obj.solde_depot:.2f} F"

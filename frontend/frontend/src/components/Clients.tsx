@@ -570,7 +570,7 @@ export default function Clients() {
                               </div>
                               {loyaltyThreshold > 0 && (selectedClient.points_fidelite ?? 0) >= loyaltyThreshold && (
                                 <div className="absolute top-2 right-2">
-                                  <div className="size-2 bg-green-500 rounded-full animate-ping"></div>
+                                  <div className="size-2 bg-emerald-500 rounded-full animate-ping"></div>
                                 </div>
                               )}
                            </div>

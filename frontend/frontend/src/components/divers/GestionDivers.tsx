@@ -18,6 +18,15 @@ import { fr } from 'date-fns/locale';
 import toast from 'react-hot-toast';
 import Commandes from '../Commandes';
 import { useCommandesStore } from '../../stores/useCommandesStore';
+import { cn } from '../../lib/utils';
+import { Button } from '../ui/Button';
+import { Input } from '../ui/Input';
+import { Card } from '../ui/Card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/Tabs';
+import {
+  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
+} from '../ui/Table';
+import { Badge } from '../ui/Badge';
 
 interface VenteDivers {
   id: number;
@@ -149,353 +158,236 @@ const GestionDivers: React.FC<{ defaultTab?: 'ca' | 'commandes' | 'stock' }> = (
   const totalPages = Math.ceil(totalCount / pageSize);
 
   return (
-    <div className="p-4 h-full flex flex-col">
-      <div className="flex justify-between items-center mb-4">
+    <div className="p-6 h-full flex flex-col space-y-6">
+      <div className="flex items-center gap-3">
+        <div className="p-2 bg-emerald-100 dark:bg-emerald-900/30 rounded-lg">
+          <Package className="h-6 w-6 text-emerald-600 dark:text-emerald-400" />
+        </div>
         <div>
-          <h1 className="text-3xl font-bold text-base-content flex items-center">
-            <Package className="h-8 w-8 mr-3 text-primary" />
-            {t('divers.revenue_tab')}
-          </h1>
-          <p className="text-base-content/60 mt-1">
-            {t('divers.imported_products_management')}
-          </p>
+          <h1 className="text-2xl font-bold tracking-tight">{t('divers.revenue_tab')}</h1>
+          <p className="text-sm text-muted-foreground">{t('divers.imported_products_management')}</p>
         </div>
       </div>
 
-      {/* Tabs */}
-      <div className="flex border-b border-base-300 mb-4 bg-base-100 rounded-t-xl overflow-hidden shadow-sm shrink-0">
-        <button
-          onClick={() => setActiveTab('ca')}
-          className={`flex-1 py-4 px-6 text-center font-medium transition-all ${
-            activeTab === 'ca'
-              ? 'text-primary border-b-2 border-indigo-600 bg-primary/10'
-              : 'text-base-content/60 hover:text-base-content hover:bg-base-200'
-          }`}
-        >
-          <div className="flex items-center justify-center">
-            <DollarSign className="h-5 w-5 mr-2" />
+      <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'ca' | 'commandes' | 'stock')} className="flex-1 flex flex-col min-h-0">
+        <TabsList className="grid w-full grid-cols-3 max-w-md">
+          <TabsTrigger value="ca" className="gap-2">
+            <DollarSign className="h-4 w-4" />
             {t('divers.revenue')}
-          </div>
-        </button>
-        <button
-          onClick={() => setActiveTab('commandes')}
-          className={`flex-1 py-4 px-6 text-center font-medium transition-all ${
-            activeTab === 'commandes'
-              ? 'text-primary border-b-2 border-indigo-600 bg-primary/10'
-              : 'text-base-content/60 hover:text-base-content hover:bg-base-200'
-          }`}
-        >
-          <div className="flex items-center justify-center">
-            <ShoppingBag className="h-5 w-5 mr-2" />
+          </TabsTrigger>
+          <TabsTrigger value="commandes" className="gap-2">
+            <ShoppingBag className="h-4 w-4" />
             {t('divers.orders_tab')}
-          </div>
-        </button>
-        <button
-          onClick={() => setActiveTab('stock')}
-          className={`flex-1 py-4 px-6 text-center font-medium transition-all ${
-            activeTab === 'stock'
-              ? 'text-primary border-b-2 border-indigo-600 bg-primary/10'
-              : 'text-base-content/60 hover:text-base-content hover:bg-base-200'
-          }`}
-        >
-          <div className="flex items-center justify-center">
-            <Warehouse className="h-5 w-5 mr-2" />
+          </TabsTrigger>
+          <TabsTrigger value="stock" className="gap-2">
+            <Warehouse className="h-4 w-4" />
             {t('divers.stock_tab')}
-          </div>
-        </button>
-      </div>
+          </TabsTrigger>
+        </TabsList>
 
-      {activeTab === 'ca' && (
-        <div className="flex-1 flex flex-col min-h-0 gap-4 animate-fadeIn">
-          {/* Filters & Summary */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="md:col-span-2 bg-base-100 p-6 rounded-xl shadow-sm border border-base-200 flex flex-wrap items-center gap-4">
-              <div className="flex-1 min-w-[150px] flex items-center">
-                <Calendar className="h-5 w-5 text-base-content/50 mr-2" />
-                <input
-                  type="date"
-                  value={dateRange.debut}
-                  onChange={(e) => setDateRange({ ...dateRange, debut: e.target.value })}
-                  className="input input-bordered h-10 w-full sm:w-40 focus:border-primary focus:ring-primary"
-                />
+        <TabsContent value="ca" className="flex-1 flex flex-col min-h-0 space-y-6 mt-6 data-[state=inactive]:hidden">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <Card className="lg:col-span-2 p-6 flex flex-wrap items-center gap-4">
+              <div className="flex items-center gap-2 flex-1 min-w-[200px]">
+                <Calendar className="h-4 w-4 text-muted-foreground shrink-0" />
+                <Input type="date" value={dateRange.debut} onChange={(e) => setDateRange({ ...dateRange, debut: e.target.value })} className="h-9" />
               </div>
-              <span className="text-base-content/50 font-medium">à</span>
-              <div className="flex-1 min-w-[150px] flex items-center">
-                <Calendar className="h-5 w-5 text-base-content/50 mr-2" />
-                <input
-                  type="date"
-                  value={dateRange.fin}
-                  onChange={(e) => setDateRange({ ...dateRange, fin: e.target.value })}
-                  className="input input-bordered h-10 w-full sm:w-40 focus:border-primary focus:ring-primary"
-                />
+              <span className="text-muted-foreground font-medium text-sm">à</span>
+              <div className="flex items-center gap-2 flex-1 min-w-[200px]">
+                <Calendar className="h-4 w-4 text-muted-foreground shrink-0" />
+                <Input type="date" value={dateRange.fin} onChange={(e) => setDateRange({ ...dateRange, fin: e.target.value })} className="h-9" />
               </div>
-              <button
-                onClick={handleFilter}
-                className="ml-auto inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg text-white bg-primary hover:bg-primary-focus focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary transition-colors"
-              >
-                <Filter className="h-4 w-4 mr-2" />
+              <Button onClick={handleFilter} variant="outline" className="gap-2 ml-auto border-emerald-600 text-emerald-700 hover:bg-emerald-50 hover:text-emerald-800">
+                <Filter className="h-4 w-4" />
                 {t('divers.filter')}
-              </button>
-            </div>
-
-            <div className="bg-primary p-6 rounded-xl shadow-md text-white">
-              <p className="text-indigo-100 text-sm font-medium uppercase tracking-wider mb-1">{t('divers.revenue')}</p>
-              <h2 className="text-3xl font-bold">{totalCA.toLocaleString()} F</h2>
-              <div className="mt-4 flex items-center text-indigo-100 text-xs">
+              </Button>
+            </Card>
+            <Card className="bg-emerald-600 text-white border-emerald-600 p-6 flex flex-col justify-center">
+              <p className="text-emerald-100 text-xs font-semibold uppercase tracking-wider">{t('divers.revenue')}</p>
+              <h2 className="text-3xl font-bold mt-1">{totalCA.toLocaleString()} F</h2>
+              <div className="mt-3 flex items-center text-emerald-100 text-xs">
                 <CalendarDays className="h-3 w-3 mr-1" />
-                {t('divers.period_from')} {format(new Date(dateRange.debut), 'dd/MM/yy')} {t('divers.to')} {format(new Date(dateRange.fin), 'dd/MM/yy')}
+                {format(new Date(dateRange.debut), 'dd/MM/yy')} → {format(new Date(dateRange.fin), 'dd/MM/yy')}
               </div>
-            </div>
+            </Card>
           </div>
 
-          {/* Data Table */}
-          <div className="flex-1 flex flex-col min-h-0 bg-base-100 rounded-xl shadow-sm border border-base-200 overflow-hidden">
-            <div className="px-6 py-4 border-b border-base-200 bg-base-200 flex justify-between items-center">
-              <h3 className="font-semibold text-base-content flex items-center">
-                <ClipboardList className="h-5 w-5 mr-2 text-indigo-500" />
+          <Card className="flex-1 flex flex-col min-h-0 overflow-hidden p-0">
+            <div className="px-6 py-4 border-b flex justify-between items-center bg-muted/30">
+              <h3 className="font-semibold flex items-center gap-2 text-sm">
+                <ClipboardList className="h-4 w-4 text-emerald-600" />
                 {t('divers.detail_sales')}
               </h3>
-              <span className="text-xs text-base-content/60">{t('divers.transactions_found', {count: totalCount})}</span>
+              <span className="text-xs text-muted-foreground">{t('divers.transactions_found', { count: totalCount })}</span>
             </div>
-            
             <div className="flex-1 overflow-auto">
-              <table className="min-w-full divide-y divide-base-300">
-                <thead className="bg-base-100">
-                  <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-base-content/60 uppercase tracking-wider">{t('divers.table.date')}</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-base-content/60 uppercase tracking-wider">{t('divers.table.invoice')}</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-base-content/60 uppercase tracking-wider">{t('divers.table.product')}</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-base-content/60 uppercase tracking-wider">{t('divers.table.lot')}</th>
-                    <th className="px-6 py-3 text-right text-xs font-medium text-base-content/60 uppercase tracking-wider">{t('divers.table.qty')}</th>
-                    <th className="px-6 py-3 text-right text-xs font-medium text-base-content/60 uppercase tracking-wider">{t('divers.table.unit_price')}</th>
-                    <th className="px-6 py-3 text-right text-xs font-medium text-base-content/60 uppercase tracking-wider">{t('divers.table.total')}</th>
-                  </tr>
-                </thead>
-                <tbody className="bg-base-100 divide-y divide-base-200">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>{t('divers.table.date')}</TableHead>
+                    <TableHead>{t('divers.table.invoice')}</TableHead>
+                    <TableHead>{t('divers.table.product')}</TableHead>
+                    <TableHead>{t('divers.table.lot')}</TableHead>
+                    <TableHead className="text-right">{t('divers.table.qty')}</TableHead>
+                    <TableHead className="text-right">{t('divers.table.unit_price')}</TableHead>
+                    <TableHead className="text-right">{t('divers.table.total')}</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
                   {loading ? (
-                    Array(5).fill(0).map((_, i) => (
-                      <tr key={i} className="animate-pulse">
-                        <td colSpan={7} className="px-6 py-4"><div className="h-4 bg-base-200 rounded w-full"></div></td>
-                      </tr>
+                    Array.from({ length: 5 }).map((_, i) => (
+                      <TableRow key={i}>
+                        <TableCell colSpan={7}><div className="h-4 bg-muted rounded animate-pulse w-full" /></TableCell>
+                      </TableRow>
                     ))
                   ) : ventes.length === 0 ? (
-                    <tr>
-                      <td colSpan={7} className="px-6 py-12 text-center text-base-content/60">
-                        {t('divers.no_sales_found')}
-                      </td>
-                    </tr>
+                    <TableRow>
+                      <TableCell colSpan={7} className="text-center text-muted-foreground py-12">{t('divers.no_sales_found')}</TableCell>
+                    </TableRow>
                   ) : (
                     ventes.map((v) => (
-                      <tr key={v.id} className="hover:bg-base-200 transition-colors">
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-base-content/70">
-                          {v.date ? format(parseISO(v.date), 'dd/MM/yyyy HH:mm', { locale: fr }) : 'N/A'}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-primary">
-                          {v.facture_numero}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-base-content">
-                          {v.produit_name}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm">
-                          <span className="px-2 py-1 bg-yellow-100 text-yellow-800 rounded-md text-xs font-medium">
-                            {v.lot}
-                          </span>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-base-content text-right font-medium">
-                          {v.quantity}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-base-content/70 text-right">
-                          {v.selling_price.toLocaleString()}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-primary text-right font-bold">
-                          {v.total.toLocaleString()} F
-                        </td>
-                      </tr>
+                      <TableRow key={v.id}>
+                        <TableCell className="text-muted-foreground">{v.date ? format(parseISO(v.date), 'dd/MM/yyyy HH:mm', { locale: fr }) : 'N/A'}</TableCell>
+                        <TableCell className="font-medium text-emerald-600">{v.facture_numero}</TableCell>
+                        <TableCell>{v.produit_name}</TableCell>
+                        <TableCell><Badge variant="secondary">{v.lot}</Badge></TableCell>
+                        <TableCell className="text-right font-medium">{v.quantity}</TableCell>
+                        <TableCell className="text-right text-muted-foreground">{v.selling_price.toLocaleString()}</TableCell>
+                        <TableCell className="text-right font-bold text-emerald-600">{v.total.toLocaleString()} F</TableCell>
+                      </TableRow>
                     ))
                   )}
-                </tbody>
-              </table>
+                </TableBody>
+              </Table>
             </div>
-
-            {/* Pagination */}
             {totalPages > 1 && (
-              <div className="px-6 py-4 border-t border-base-200 flex items-center justify-between bg-base-200">
-                <span className="text-sm text-base-content/60">
-                  Page {page} / {totalPages} · {totalCount} {t('divers.results')}
-                </span>
+              <div className="px-6 py-4 border-t flex items-center justify-between bg-muted/30">
+                <span className="text-sm text-muted-foreground">Page {page} / {totalPages} · {totalCount} {t('divers.results')}</span>
                 <div className="flex gap-2">
-                  <button
-                    onClick={() => setPage(p => Math.max(1, p - 1))}
-                    disabled={page <= 1}
-                    className="inline-flex items-center px-3 py-1.5 text-sm font-medium rounded-lg border border-base-300 bg-base-100 hover:bg-base-200 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-                  >
+                  <Button variant="outline" size="sm" onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page <= 1}>
                     <ChevronLeft className="h-4 w-4 mr-1" /> {t('divers.previous')}
-                  </button>
-                  <button
-                    onClick={() => setPage(p => Math.min(totalPages, p + 1))}
-                    disabled={page >= totalPages}
-                    className="inline-flex items-center px-3 py-1.5 text-sm font-medium rounded-lg border border-base-300 bg-base-100 hover:bg-base-200 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-                  >
+                  </Button>
+                  <Button variant="outline" size="sm" onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page >= totalPages}>
                     {t('divers.next')} <ChevronRight className="h-4 w-4 ml-1" />
-                  </button>
+                  </Button>
                 </div>
               </div>
             )}
-          </div>
-        </div>
-      )}
+          </Card>
+        </TabsContent>
 
-      {activeTab === 'commandes' && (
-        <div className="flex-1 min-h-0 animate-fadeIn">
+        <TabsContent value="commandes" className="flex-1 min-h-0 mt-6 data-[state=inactive]:hidden">
           <Commandes forcedType="DIV" />
-        </div>
-      )}
+        </TabsContent>
 
-      {activeTab === 'stock' && (
-        <div className="flex-1 min-h-0 overflow-auto space-y-6 animate-fadeIn">
-          {/* Valorisation Selector */}
-          <div className="bg-base-100 p-6 rounded-xl shadow-sm border border-base-200">
-            <div className="flex items-center gap-4">
-              <span className="text-sm font-medium text-base-content">{t('divers.valuation_method')}</span>
+        <TabsContent value="stock" className="flex-1 min-h-0 overflow-auto space-y-6 mt-6 data-[state=inactive]:hidden">
+          <Card className="p-6">
+            <div className="flex items-center gap-4 flex-wrap">
+              <span className="text-sm font-medium">{t('divers.valuation_method')}</span>
               <div className="flex gap-2">
-                <button
-                  onClick={() => setValorisation('ACHAT')}
-                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                    valorisation === 'ACHAT'
-                      ? 'bg-primary text-white'
-                      : 'bg-base-200 text-base-content hover:bg-base-300'
-                  }`}
-                >
+                <Button variant={valorisation === 'ACHAT' ? 'primary' : 'outline'} size="sm" onClick={() => setValorisation('ACHAT')}>
                   {t('divers.purchase_cost')}
-                </button>
-                <button
-                  onClick={() => setValorisation('VENTE')}
-                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                    valorisation === 'VENTE'
-                      ? 'bg-primary text-white'
-                      : 'bg-base-200 text-base-content hover:bg-base-300'
-                  }`}
-                >
+                </Button>
+                <Button variant={valorisation === 'VENTE' ? 'primary' : 'outline'} size="sm" onClick={() => setValorisation('VENTE')}>
                   {t('divers.selling_price')}
-                </button>
+                </Button>
               </div>
             </div>
-          </div>
+          </Card>
 
           {stockLoading ? (
-            <div className="bg-base-100 p-12 rounded-xl shadow-sm border border-base-200 text-center">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600 mx-auto"></div>
-              <p className="mt-4 text-base-content/60">{t('divers.loading_valuation')}</p>
-            </div>
+            <Card className="p-12 text-center">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-600 mx-auto" />
+              <p className="mt-4 text-muted-foreground">{t('divers.loading_valuation')}</p>
+            </Card>
           ) : stockData ? (
             <>
-              {/* Summary Cards */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div className="bg-primary p-6 rounded-xl shadow-md text-white">
-                  <p className="text-indigo-100 text-sm font-medium uppercase tracking-wider mb-1">{t('divers.total_value_ttc')}</p>
-                  <h2 className="text-3xl font-bold">{stockData.total_ttc.toLocaleString()} F</h2>
-                  <p className="mt-2 text-indigo-100 text-xs">
-                    {stockData.type_valorisation === 'PMP' ? t('divers.purchase_cost') : t('divers.selling_price')}
-                  </p>
-                </div>
-                <div className="bg-base-100 p-6 rounded-xl shadow-sm border border-base-200">
-                  <p className="text-base-content/60 text-sm font-medium uppercase tracking-wider mb-1">{t('divers.value_ht')}</p>
-                  <h2 className="text-2xl font-bold text-base-content">{stockData.total_ht.toLocaleString()} F</h2>
-                </div>
-                <div className="bg-base-100 p-6 rounded-xl shadow-sm border border-base-200">
-                  <p className="text-base-content/60 text-sm font-medium uppercase tracking-wider mb-1">{t('divers.total_vat')}</p>
-                  <h2 className="text-2xl font-bold text-base-content">{stockData.total_tva.toLocaleString()} F</h2>
-                </div>
+                <Card className="bg-emerald-600 text-white border-emerald-600 p-6">
+                  <p className="text-emerald-100 text-xs font-semibold uppercase tracking-wider">{t('divers.total_value_ttc')}</p>
+                  <h2 className="text-3xl font-bold mt-1">{stockData.total_ttc.toLocaleString()} F</h2>
+                  <p className="mt-2 text-emerald-100 text-xs">{stockData.type_valorisation === 'PMP' ? t('divers.purchase_cost') : t('divers.selling_price')}</p>
+                </Card>
+                <Card className="p-6">
+                  <p className="text-muted-foreground text-xs font-semibold uppercase tracking-wider">{t('divers.value_ht')}</p>
+                  <h2 className="text-2xl font-bold mt-1">{stockData.total_ht.toLocaleString()} F</h2>
+                </Card>
+                <Card className="p-6">
+                  <p className="text-muted-foreground text-xs font-semibold uppercase tracking-wider">{t('divers.total_vat')}</p>
+                  <h2 className="text-2xl font-bold mt-1">{stockData.total_tva.toLocaleString()} F</h2>
+                </Card>
               </div>
 
-              {/* TVA Breakdown */}
-              <div className="bg-base-100 rounded-xl shadow-sm border border-base-200 overflow-hidden">
-                <div className="px-6 py-4 border-b border-base-200 bg-base-200">
-                  <h3 className="font-semibold text-base-content flex items-center">
-                    <ClipboardList className="h-5 w-5 mr-2 text-indigo-500" />
+              <Card className="overflow-hidden p-0">
+                <div className="px-6 py-4 border-b bg-muted/30">
+                  <h3 className="font-semibold flex items-center gap-2 text-sm">
+                    <ClipboardList className="h-4 w-4 text-emerald-600" />
                     {t('divers.vat_breakdown')}
                   </h3>
                 </div>
                 <div className="overflow-x-auto">
-                  <table className="min-w-full divide-y divide-base-300">
-                    <thead className="bg-base-100">
-                      <tr>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-base-content/60 uppercase tracking-wider">{t('divers.table.vat_rate')}</th>
-                        <th className="px-6 py-3 text-right text-xs font-medium text-base-content/60 uppercase tracking-wider">{t('divers.table.base_ht')}</th>
-                        <th className="px-6 py-3 text-right text-xs font-medium text-base-content/60 uppercase tracking-wider">{t('divers.table.vat_amount')}</th>
-                        <th className="px-6 py-3 text-right text-xs font-medium text-base-content/60 uppercase tracking-wider">{t('divers.table.total_ttc')}</th>
-                      </tr>
-                    </thead>
-                    <tbody className="bg-base-100 divide-y divide-base-200">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>{t('divers.table.vat_rate')}</TableHead>
+                        <TableHead className="text-right">{t('divers.table.base_ht')}</TableHead>
+                        <TableHead className="text-right">{t('divers.table.vat_amount')}</TableHead>
+                        <TableHead className="text-right">{t('divers.table.total_ttc')}</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
                       {stockData.tva_breakdown.map((item, idx) => (
-                        <tr key={idx} className="hover:bg-base-200 transition-colors">
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-base-content font-medium">
-                            {item.rate}%
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-base-content/70 text-right">
-                            {item.ht.toLocaleString()} F
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-base-content/70 text-right">
-                            {item.tva.toLocaleString()} F
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-primary text-right font-bold">
-                            {item.ttc.toLocaleString()} F
-                          </td>
-                        </tr>
+                        <TableRow key={idx}>
+                          <TableCell className="font-medium">{item.rate}%</TableCell>
+                          <TableCell className="text-right text-muted-foreground">{item.ht.toLocaleString()} F</TableCell>
+                          <TableCell className="text-right text-muted-foreground">{item.tva.toLocaleString()} F</TableCell>
+                          <TableCell className="text-right font-bold text-emerald-600">{item.ttc.toLocaleString()} F</TableCell>
+                        </TableRow>
                       ))}
-                    </tbody>
-                  </table>
+                    </TableBody>
+                  </Table>
                 </div>
-              </div>
+              </Card>
 
-              {/* Rayon Breakdown */}
-              <div className="bg-base-100 rounded-xl shadow-sm border border-base-200 overflow-hidden">
-                <div className="px-6 py-4 border-b border-base-200 bg-base-200">
-                  <h3 className="font-semibold text-base-content flex items-center">
-                    <Package className="h-5 w-5 mr-2 text-indigo-500" />
+              <Card className="overflow-hidden p-0">
+                <div className="px-6 py-4 border-b bg-muted/30">
+                  <h3 className="font-semibold flex items-center gap-2 text-sm">
+                    <Package className="h-4 w-4 text-emerald-600" />
                     {t('divers.section_breakdown')}
                   </h3>
                 </div>
                 <div className="overflow-x-auto">
-                  <table className="min-w-full divide-y divide-base-300">
-                    <thead className="bg-base-100">
-                      <tr>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-base-content/60 uppercase tracking-wider">{t('divers.table.section')}</th>
-                        <th className="px-6 py-3 text-right text-xs font-medium text-base-content/60 uppercase tracking-wider">{t('divers.table.base_ht')}</th>
-                        <th className="px-6 py-3 text-right text-xs font-medium text-base-content/60 uppercase tracking-wider">{t('divers.table.vat_amount')}</th>
-                        <th className="px-6 py-3 text-right text-xs font-medium text-base-content/60 uppercase tracking-wider">{t('divers.table.total_ttc')}</th>
-                      </tr>
-                    </thead>
-                    <tbody className="bg-base-100 divide-y divide-base-200">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>{t('divers.table.section')}</TableHead>
+                        <TableHead className="text-right">{t('divers.table.base_ht')}</TableHead>
+                        <TableHead className="text-right">{t('divers.table.vat_amount')}</TableHead>
+                        <TableHead className="text-right">{t('divers.table.total_ttc')}</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
                       {stockData.rayon_breakdown.map((item, idx) => (
-                        <tr key={idx} className="hover:bg-base-200 transition-colors">
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-base-content font-medium">
-                            {item.name}
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-base-content/70 text-right">
-                            {item.ht.toLocaleString()} F
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-base-content/70 text-right">
-                            {item.tva.toLocaleString()} F
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-primary text-right font-bold">
-                            {item.ttc.toLocaleString()} F
-                          </td>
-                        </tr>
+                        <TableRow key={idx}>
+                          <TableCell className="font-medium">{item.name}</TableCell>
+                          <TableCell className="text-right text-muted-foreground">{item.ht.toLocaleString()} F</TableCell>
+                          <TableCell className="text-right text-muted-foreground">{item.tva.toLocaleString()} F</TableCell>
+                          <TableCell className="text-right font-bold text-emerald-600">{item.ttc.toLocaleString()} F</TableCell>
+                        </TableRow>
                       ))}
-                    </tbody>
-                  </table>
+                    </TableBody>
+                  </Table>
                 </div>
-              </div>
+              </Card>
             </>
           ) : (
-            <div className="bg-base-100 p-12 rounded-xl shadow-sm border border-base-200 text-center">
-              <Warehouse className="h-12 w-12 text-base-content/40 mx-auto mb-4" />
-              <p className="text-base-content/60">{t('divers.no_stock_data')}</p>
-            </div>
+            <Card className="p-12 text-center">
+              <Warehouse className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+              <p className="text-muted-foreground">{t('divers.no_stock_data')}</p>
+            </Card>
           )}
-        </div>
-      )}
+        </TabsContent>
+      </Tabs>
     </div>
   );
 };

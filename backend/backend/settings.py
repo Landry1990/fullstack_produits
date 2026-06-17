@@ -122,16 +122,15 @@ REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': [
         'rest_framework.permissions.IsAuthenticated',
     ],
-    # Throttling désactivé en pré-prod pour éviter les erreurs 429
-    # 'DEFAULT_THROTTLE_CLASSES': [
-    #     'rest_framework.throttling.AnonRateThrottle',
-    #     'rest_framework.throttling.UserRateThrottle',
-    # ],
-    # 'DEFAULT_THROTTLE_RATES': {
-    #     'anon': os.getenv('DJANGO_THROTTLE_ANON', '100/day'),
-    #     'user': os.getenv('DJANGO_THROTTLE_USER', '100000/day'),
-    #     'auth': os.getenv('DJANGO_THROTTLE_AUTH', '60/min'),
-    # },
+    'DEFAULT_THROTTLE_CLASSES': [
+        'rest_framework.throttling.AnonRateThrottle',
+        'rest_framework.throttling.UserRateThrottle',
+    ],
+    'DEFAULT_THROTTLE_RATES': {
+        'anon': os.getenv('DJANGO_THROTTLE_ANON', '200/day'),
+        'user': os.getenv('DJANGO_THROTTLE_USER', '5000/hour'),
+        'login': os.getenv('DJANGO_THROTTLE_LOGIN', '10/min'),
+    },
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
     'PAGE_SIZE': 50,
     'PAGE_SIZE_QUERY_PARAM': 'page_size',

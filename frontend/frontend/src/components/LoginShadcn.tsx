@@ -39,6 +39,13 @@ export default function LoginShadcn() {
   const dropdownRef = useRef<HTMLDivElement>(null);
   const [isOpen, setIsOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
+  const [highlightedIndex, setHighlightedIndex] = useState(0);
+  const listRef = useRef<HTMLDivElement>(null);
+
+  const filteredUsers = users.filter(u =>
+    u.full_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    u.username.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
   // Fetch users
   useEffect(() => {
@@ -76,6 +83,57 @@ export default function LoginShadcn() {
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
+
+  // Reset highlighted index when dropdown opens or filtered list changes
+  useEffect(() => {
+    if (isOpen) {
+      setHighlightedIndex(0);
+    }
+  }, [isOpen, searchTerm]);
+
+  // Keyboard navigation for dropdown
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (filteredUsers.length === 0) return;
+
+      switch (e.key) {
+        case 'ArrowDown':
+          e.preventDefault();
+          setHighlightedIndex(prev => {
+            const next = prev < filteredUsers.length - 1 ? prev + 1 : 0;
+            return next;
+          });
+          break;
+        case 'ArrowUp':
+          e.preventDefault();
+          setHighlightedIndex(prev => {
+            const next = prev > 0 ? prev - 1 : filteredUsers.length - 1;
+            return next;
+          });
+          break;
+        case 'Enter':
+          e.preventDefault();
+          if (highlightedIndex >= 0 && highlightedIndex < filteredUsers.length) {
+            const u = filteredUsers[highlightedIndex];
+            setUsername(u.username);
+            setIsOpen(false);
+            setError('');
+          }
+          break;
+        case 'Escape':
+          setIsOpen(false);
+          break;
+        case 'Tab':
+          setIsOpen(false);
+          break;
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, filteredUsers, highlightedIndex]);
 
   // Workstation naming
   const getDeviceType = () => {
@@ -144,11 +202,6 @@ export default function LoginShadcn() {
   const hours = currentTime.getHours();
   const greeting = hours < 12 ? 'Bonjour' : hours < 18 ? 'Bon après-midi' : 'Bonsoir';
 
-  const filteredUsers = users.filter(u =>
-    u.full_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    u.username.toLowerCase().includes(searchTerm.toLowerCase())
-  );
-
   return (
     <div className={cn(
       "min-h-screen w-full flex font-sans transition-colors duration-500",
@@ -160,10 +213,10 @@ export default function LoginShadcn() {
       <button
         onClick={() => setIsDark(!isDark)}
         className={cn(
-          "fixed top-4 right-4 z-50 p-2.5 rounded-xl transition-all duration-300",
+          "fixed top-4 right-4 z-50 p-2.5 rounded-xl transition-all duration-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2",
           isDark
-            ? 'bg-slate-800 text-amber-400 hover:bg-slate-700'
-            : 'bg-white text-slate-600 shadow-md hover:bg-slate-100'
+            ? 'bg-slate-800 text-amber-400 hover:bg-slate-700 focus-visible:ring-offset-slate-950'
+            : 'bg-white text-slate-600 shadow-md hover:bg-slate-100 focus-visible:ring-offset-white'
         )}
       >
         {isDark ? <Sun className="size-5" /> : <Moon className="size-5" />}
@@ -202,42 +255,60 @@ export default function LoginShadcn() {
             </p>
 
             {/* Features */}
-            <div className="space-y-4 w-full max-w-xs">
+            <div className="space-y-3 w-full max-w-xs">
+              {/* Feature: Multi-Postes (style capture) */}
               <div className={cn(
-                "flex items-center gap-4 p-4 rounded-2xl",
-                isDark ? 'bg-slate-800/50' : 'bg-slate-100'
+                "flex items-center gap-3.5 p-3.5 rounded-2xl",
+                isDark ? 'bg-slate-800/50' : 'bg-[#f0f4f8]'
               )}>
                 <div className={cn(
-                  "p-2.5 rounded-xl",
-                  isDark ? 'bg-emerald-500/20 text-emerald-400' : 'bg-emerald-100 text-emerald-600'
-                )}>
-                  <Shield className="size-5" />
-                </div>
-                <div className="text-left">
-                  <h4 className="font-semibold text-sm">{t('features.advanced_security')}</h4>
-                  <p className={cn(
-                    "text-xs",
-                    isDark ? 'text-slate-400' : 'text-slate-500'
-                  )}>{t('features.security_desc')}</p>
-                </div>
-              </div>
-
-              <div className={cn(
-                "flex items-center gap-4 p-4 rounded-2xl",
-                isDark ? 'bg-slate-800/50' : 'bg-slate-100'
-              )}>
-                <div className={cn(
-                  "p-2.5 rounded-xl",
+                  "shrink-0 h-10 w-10 rounded-xl flex items-center justify-center",
                   isDark ? 'bg-cyan-500/20 text-cyan-400' : 'bg-cyan-100 text-cyan-600'
                 )}>
                   <Monitor className="size-5" />
                 </div>
-                <div className="text-left">
-                  <h4 className="font-semibold text-sm">{t('features.multi_postes')}</h4>
+                <div className="text-left min-w-0">
+                  <div className="flex items-center gap-2">
+                    <h4 className="font-semibold text-sm text-slate-900 dark:text-slate-100">
+                      {t('features.multi_postes')}
+                    </h4>
+                    <span className={cn(
+                      "text-[10px] font-medium tracking-wide",
+                      isDark ? 'text-slate-500' : 'text-slate-400'
+                    )}>
+                      Phase 2 • v2.1
+                    </span>
+                  </div>
                   <p className={cn(
-                    "text-xs",
+                    "text-xs mt-0.5",
                     isDark ? 'text-slate-400' : 'text-slate-500'
-                  )}>{t('features.multi_postes_desc')}</p>
+                  )}>
+                    {t('features.multi_postes_desc')}
+                  </p>
+                </div>
+              </div>
+
+              {/* Feature: Sécurité */}
+              <div className={cn(
+                "flex items-center gap-3.5 p-3.5 rounded-2xl",
+                isDark ? 'bg-slate-800/50' : 'bg-[#f0f4f8]'
+              )}>
+                <div className={cn(
+                  "shrink-0 h-10 w-10 rounded-xl flex items-center justify-center",
+                  isDark ? 'bg-emerald-500/20 text-emerald-400' : 'bg-emerald-100 text-emerald-600'
+                )}>
+                  <Shield className="size-5" />
+                </div>
+                <div className="text-left min-w-0">
+                  <h4 className="font-semibold text-sm text-slate-900 dark:text-slate-100">
+                    {t('features.advanced_security')}
+                  </h4>
+                  <p className={cn(
+                    "text-xs mt-0.5",
+                    isDark ? 'text-slate-400' : 'text-slate-500'
+                  )}>
+                    {t('features.security_desc')}
+                  </p>
                 </div>
               </div>
             </div>
@@ -246,7 +317,7 @@ export default function LoginShadcn() {
               "absolute bottom-8 text-xs font-medium tracking-wider",
               isDark ? 'text-slate-600' : 'text-slate-400'
             )}>
-              Zenith OS • Phase 2 • v2.1
+              Zenith OS
             </p>
           </div>
         </div>
@@ -254,13 +325,13 @@ export default function LoginShadcn() {
         {/* Right Panel - Form */}
         <div className={cn(
           "flex-1 flex items-center justify-center p-6 relative",
-          isDark ? 'bg-slate-950' : 'bg-slate-50'
+          isDark ? 'bg-slate-950' : 'bg-[#eef2f6]'
         )}>
           <Card className={cn(
-            "w-full max-w-md border-0 shadow-2xl",
+            "w-full max-w-md border shadow-xl",
             isDark
-              ? 'bg-slate-900/80 backdrop-blur-xl border border-slate-800'
-              : 'bg-white border border-slate-200'
+              ? 'bg-slate-900/90 backdrop-blur-xl border-slate-700'
+              : 'bg-white border-slate-300'
           )}>
             <CardContent className="p-8">
               {/* Mobile Header */}
@@ -281,15 +352,15 @@ export default function LoginShadcn() {
               {/* Greeting */}
               <div className="mb-6">
                 <p className={cn(
-                  "text-xs font-semibold uppercase tracking-wider mb-1",
+                  "text-xs font-bold uppercase tracking-wider mb-1",
                   isDark ? 'text-emerald-400' : 'text-emerald-600'
                 )}>
                   {greeting}
                 </p>
-                <h2 className="text-2xl font-bold">{t('title')}</h2>
+                <h2 className="text-2xl font-bold text-slate-900 dark:text-white">{t('title')}</h2>
                 <p className={cn(
-                  "text-sm mt-1",
-                  isDark ? 'text-slate-400' : 'text-slate-500'
+                  "text-sm mt-1.5",
+                  isDark ? 'text-slate-400' : 'text-slate-600'
                 )}>
                   {t('login_form.subtitle')}
                 </p>
@@ -312,8 +383,8 @@ export default function LoginShadcn() {
                 {/* Username Field */}
                 <div className="space-y-2">
                   <label className={cn(
-                    "text-sm font-medium",
-                    isDark ? 'text-slate-300' : 'text-slate-700'
+                    "text-sm font-bold",
+                    isDark ? 'text-slate-200' : 'text-slate-800'
                   )}>
                     {t('username')}
                   </label>
@@ -324,11 +395,11 @@ export default function LoginShadcn() {
                         type="button"
                         onClick={() => { setIsOpen(prev => { if (!prev) setSearchTerm(''); return !prev; }); }}
                         className={cn(
-                          "w-full flex items-center justify-between px-4 py-3 rounded-xl text-left transition-all",
+                          "w-full flex items-center justify-between px-4 py-3 rounded-xl text-left transition-all shadow-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2",
                           isDark
-                            ? 'bg-slate-800 border border-slate-700 hover:border-slate-600 text-white'
-                            : 'bg-slate-50 border border-slate-200 hover:border-slate-300 text-slate-900',
-                          isOpen && (isDark ? 'border-emerald-500/50' : 'border-emerald-500')
+                            ? 'bg-slate-800 border border-slate-600 hover:border-slate-500 text-white focus-visible:ring-offset-slate-950'
+                            : 'bg-white border border-slate-300 hover:border-slate-400 text-slate-900 focus-visible:ring-offset-white',
+                          isOpen && (isDark ? 'border-emerald-500/50 ring-1 ring-emerald-500/20' : 'border-emerald-500 ring-1 ring-emerald-500/20')
                         )}
                       >
                         <span className="flex items-center gap-2">
@@ -380,21 +451,25 @@ export default function LoginShadcn() {
                           </div>
 
                           {/* User list */}
-                          <div className="max-h-64 overflow-y-auto">
-                            {filteredUsers.map((u) => (
+                          <div ref={listRef} className="max-h-64 overflow-y-auto">
+                            {filteredUsers.map((u, index) => (
                               <button
                                 key={u.username}
                                 type="button"
+                                ref={index === highlightedIndex ? (el) => {
+                                  if (el) el.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+                                } : undefined}
                                 onClick={() => {
                                   setUsername(u.username);
                                   setIsOpen(false);
                                   setError('');
                                 }}
                                 className={cn(
-                                  "w-full flex items-center justify-between px-4 py-3 text-left transition-colors",
+                                  "w-full flex items-center justify-between px-4 py-3 text-left transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-inset",
                                   isDark
-                                    ? 'hover:bg-slate-700/50'
-                                    : 'hover:bg-slate-50',
+                                    ? 'hover:bg-slate-700/50 focus-visible:ring-emerald-500/50'
+                                    : 'hover:bg-slate-50 focus-visible:ring-emerald-500',
+                                  index === highlightedIndex && (isDark ? 'bg-emerald-500/20' : 'bg-emerald-100'),
                                   username === u.username && (isDark ? 'bg-emerald-500/10' : 'bg-emerald-50')
                                 )}
                               >
@@ -429,14 +504,15 @@ export default function LoginShadcn() {
                       <Input
                         type="text"
                         required
+                        autoFocus
                         placeholder="ADMIN"
                         value={username}
                         onChange={(e: React.ChangeEvent<HTMLInputElement>) => setUsername(e.target.value)}
                         className={cn(
-                          "pl-10 py-3 rounded-xl transition-all",
+                          "pl-10 py-3 rounded-xl transition-all shadow-sm",
                           isDark
-                            ? 'bg-slate-800 border-slate-700 focus:border-emerald-500/50 text-white placeholder:text-slate-500'
-                            : 'bg-slate-50 border-slate-200 focus:border-emerald-500'
+                            ? 'bg-slate-800 border-slate-600 focus:border-emerald-500/50 text-white placeholder:text-slate-500'
+                            : 'bg-white border-slate-300 focus:border-emerald-500'
                         )}
                       />
                     </div>
@@ -448,8 +524,8 @@ export default function LoginShadcn() {
                   <div className="space-y-5 animate-in fade-in slide-in-from-top-2 duration-300">
                     <div className="space-y-2">
                       <label className={cn(
-                        "text-sm font-medium",
-                        isDark ? 'text-slate-300' : 'text-slate-700'
+                        "text-sm font-bold",
+                        isDark ? 'text-slate-200' : 'text-slate-800'
                       )}>
                         {t('password')}
                       </label>
@@ -466,18 +542,17 @@ export default function LoginShadcn() {
                           value={password}
                           onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPassword(e.target.value)}
                           className={cn(
-                            "pl-10 pr-10 py-3 rounded-xl transition-all",
+                            "pl-10 pr-10 py-3 rounded-xl transition-all shadow-sm",
                             isDark
-                              ? 'bg-slate-800 border-slate-700 focus:border-emerald-500/50 text-white placeholder:text-slate-500'
-                              : 'bg-slate-50 border-slate-200 focus:border-emerald-500'
+                              ? 'bg-slate-800 border-slate-600 focus:border-emerald-500/50 text-white placeholder:text-slate-500'
+                              : 'bg-white border-slate-300 focus:border-emerald-500'
                           )}
                         />
                         <button
                           type="button"
                           onClick={() => setShowPassword(!showPassword)}
-                          tabIndex={-1}
                           className={cn(
-                            "absolute right-3 top-1/2 -translate-y-1/2 transition-colors",
+                            "absolute right-3 top-1/2 -translate-y-1/2 transition-colors p-1 rounded-md focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500",
                             isDark ? 'text-slate-400 hover:text-slate-300' : 'text-slate-400 hover:text-slate-600'
                           )}
                         >
@@ -490,8 +565,8 @@ export default function LoginShadcn() {
                     <div className={cn(
                       "flex items-center gap-3 p-3 rounded-xl",
                       isDark
-                        ? 'bg-slate-800/50 border border-slate-700/50'
-                        : 'bg-slate-50 border border-slate-200'
+                        ? 'bg-slate-800 border border-slate-700'
+                        : 'bg-slate-100 border border-slate-200'
                     )}>
                       <Monitor className={cn(
                         "size-4",
@@ -522,10 +597,10 @@ export default function LoginShadcn() {
                       type="submit"
                       disabled={loading}
                       className={cn(
-                        "w-full py-3 h-auto text-base font-semibold rounded-xl transition-all",
+                        "w-full py-3 h-auto text-base font-semibold rounded-xl transition-all focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2",
                         isDark
-                          ? 'bg-emerald-600 hover:bg-emerald-500 text-white shadow-lg shadow-emerald-600/20'
-                          : 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-lg shadow-emerald-600/20'
+                          ? 'bg-emerald-600 hover:bg-emerald-500 text-white shadow-lg shadow-emerald-600/20 focus-visible:ring-offset-slate-950'
+                          : 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-lg shadow-emerald-600/20 focus-visible:ring-offset-white'
                       )}
                     >
                       {loading ? (

@@ -267,10 +267,10 @@ export default function AnalyseABC() {
             <div className="text-xs text-yellow-500 mt-1">{formatNumber(data.ca_categorie_b)} F ({data.ca_total > 0 ? Math.round(data.ca_categorie_b / data.ca_total * 100) : 0}%)</div>
           </div>
           
-          <div className="bg-green-50 rounded-xl border border-green-200 shadow-sm p-4">
-            <div className="text-xs font-bold text-green-600 uppercase tracking-widest mb-1">🟢 {t('stock:abc.stats.category_c')}</div>
-            <div className="text-2xl font-black text-green-600">{data.nb_produits_c}</div>
-            <div className="text-xs text-green-500 mt-1">{formatNumber(data.ca_categorie_c)} F ({data.ca_total > 0 ? Math.round(data.ca_categorie_c / data.ca_total * 100) : 0}%)</div>
+          <div className="bg-emerald-50 rounded-xl border border-emerald-200 shadow-sm p-4">
+            <div className="text-xs font-bold text-emerald-600 uppercase tracking-widest mb-1">🟢 {t('stock:abc.stats.category_c')}</div>
+            <div className="text-2xl font-black text-emerald-600">{data.nb_produits_c}</div>
+            <div className="text-xs text-emerald-500 mt-1">{formatNumber(data.ca_categorie_c)} F ({data.ca_total > 0 ? Math.round(data.ca_categorie_c / data.ca_total * 100) : 0}%)</div>
           </div>
         </div>
       )}
@@ -295,7 +295,7 @@ export default function AnalyseABC() {
         </button>
         <button 
           className={`h-8 px-4 rounded-lg text-xs font-bold transition-all ${
-            activeTab === 'C' ? 'bg-green-500 text-white shadow' : 'text-slate-500 hover:bg-slate-200'
+            activeTab === 'C' ? 'bg-emerald-500 text-white shadow' : 'text-slate-500 hover:bg-slate-200'
           }`}
           onClick={() => setActiveTab('C')}
         >
