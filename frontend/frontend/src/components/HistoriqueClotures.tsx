@@ -814,9 +814,9 @@ export default function HistoriqueClotures() {
                 <thead className="bg-slate-100 sticky top-0 z-10 opacity-100">
                   <tr>
                     <th className="py-3 px-2 text-[10px] lg:text-xs tracking-wider uppercase text-slate-500 font-bold whitespace-nowrap">{t('table.header_date')}</th>
-                    {isMultiCaisse && <th className="py-3 px-2 text-[10px] lg:text-xs tracking-wider uppercase text-slate-500 font-bold whitespace-nowrap">Poste</th>}
-                    <th className="py-3 px-2 text-[10px] lg:text-xs tracking-wider uppercase text-slate-500 font-bold whitespace-nowrap">{t('table.header_cashier')}</th>
-                    <th className="py-3 px-2 text-[10px] lg:text-xs tracking-wider uppercase text-slate-500 font-bold whitespace-nowrap">{t('table.header_done_by')}</th>
+                    {isMultiCaisse && <th className="py-3 px-4 text-left text-[10px] lg:text-xs tracking-wider uppercase text-slate-500 font-bold whitespace-nowrap">Poste</th>}
+                    <th className="py-3 px-4 text-left text-[10px] lg:text-xs tracking-wider uppercase text-slate-500 font-bold whitespace-nowrap">{t('table.header_cashier')}</th>
+                    <th className="py-3 px-4 text-left text-[10px] lg:text-xs tracking-wider uppercase text-slate-500 font-bold whitespace-nowrap">{t('table.header_done_by')}</th>
                     <th className="text-right py-3 px-2 text-[10px] lg:text-xs tracking-wider uppercase text-slate-500 font-bold whitespace-nowrap">{t('table.header_theoretical')}</th>
                     <th className="text-right py-3 px-2 text-[10px] lg:text-xs tracking-wider uppercase text-slate-500 font-bold whitespace-nowrap">{t('table.header_real')}</th>
                     <th className="text-right py-3 px-2 text-[10px] lg:text-xs tracking-wider uppercase text-slate-500 font-bold whitespace-nowrap">{t('table.header_gap')}</th>
@@ -853,17 +853,17 @@ export default function HistoriqueClotures() {
                           </div>
                         </td>
                         {isMultiCaisse && (
-                           <td className="py-3 px-2">
-                             <Badge variant="outline" className="font-bold text-slate-600 border-slate-200 text-[10px]">
+                           <td className="py-3 px-4 align-middle">
+                             <span className="font-medium text-sm text-slate-700">
                                {(cloture as any).poste_caisse_nom || '-'}
-                             </Badge>
+                             </span>
                            </td>
                         )}
-                        <td className="py-3 px-2">
-                           <div className="font-medium text-sm">{cloture.user_name || cloture.username || 'N/A'}</div>
+                        <td className="py-3 px-4 align-middle">
+                           <span className="font-medium text-sm text-slate-800">{cloture.user_name || cloture.username || 'N/A'}</span>
                         </td>
-                        <td className="py-3 px-2">
-                           <div className="text-[10px] font-semibold text-slate-600">{cloture.cloture_par_name || '-'}</div>
+                        <td className="py-3 px-4 align-middle">
+                           <span className="text-sm font-medium text-slate-500">{cloture.cloture_par_name || '-'}</span>
                         </td>
                         <td className="text-right py-3 px-2 text-slate-700 font-medium text-sm">
                           {formatMoney(cloture.montant_theorique)}
@@ -907,7 +907,7 @@ export default function HistoriqueClotures() {
                 {globalTotals && clotures.length > 0 && (
                   <tfoot className="bg-slate-50 border-t-2 border-slate-200">
                     <tr className="text-slate-700 font-bold">
-                      <td className="py-3 px-2 whitespace-nowrap" colSpan={2}>
+                      <td className="py-3 px-2 whitespace-nowrap" colSpan={isMultiCaisse ? 4 : 3}>
                         <span className="uppercase text-[10px] tracking-tight">{t('table.period_total', { count: totalItems })}</span>
                       </td>
                       <td className="text-right py-3 px-2 text-slate-700 font-bold">{formatMoney(globalTotals.montant_theorique)}</td>

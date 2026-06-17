@@ -23,6 +23,8 @@ export const Input: React.FC<InputProps> = ({
   size = 'md',
   className = '',
   containerClassName = '',
+  onChange,
+  type,
   ...props
 }) => {
   const sizeClasses = {
@@ -30,6 +32,15 @@ export const Input: React.FC<InputProps> = ({
     md: 'h-10 text-sm px-4',
     lg: 'h-12 text-base px-5'
   }[size];
+
+  const isText = type === 'text';
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (isText && e.target.value !== e.target.value.toUpperCase()) {
+      e.target.value = e.target.value.toUpperCase();
+    }
+    onChange?.(e);
+  };
 
   return (
     <div className={`w-full ${containerClassName}`}>
@@ -45,6 +56,8 @@ export const Input: React.FC<InputProps> = ({
           </div>
         )}
         <input
+          type={type}
+          onChange={handleChange}
           className={`
             w-full rounded-lg border transition-all duration-200 outline-none
             ${sizeClasses}
@@ -52,6 +65,7 @@ export const Input: React.FC<InputProps> = ({
             ${error ? 'border-red-300 text-error focus:border-red-500 focus:ring-2 focus:ring-red-100' : 'border-base-300 text-base-content focus:border-primary focus:ring-2 focus:ring-primary/20'}
             bg-base-100 hover:border-base-300
             placeholder:text-base-content/40
+            ${isText ? 'uppercase' : ''}
             ${className}
           `}
           {...props}

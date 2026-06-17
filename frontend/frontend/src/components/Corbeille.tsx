@@ -3,10 +3,14 @@ import api from '../services/api';
 import { toast } from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import { useConfirm } from '../hooks/useConfirm';
+import { Button } from './ui/Button';
+import { Input } from './ui/Input';
+import { Badge } from './ui/Badge';
+import { Checkbox } from './ui/Checkbox';
 import {
   Trash2, RotateCcw, AlertTriangle, Package, Users, Truck, Search, X,
   ShoppingCart, CreditCard, Clock, ClipboardList, Receipt, ChevronDown,
-  ChevronUp, Filter, CheckSquare, Square, Archive, ArrowUpFromLine
+  ChevronUp, Filter, Archive, ArrowUpFromLine
 } from 'lucide-react';
 
 interface TrashedItem {
@@ -208,17 +212,14 @@ export default function Corbeille() {
             </div>
           </div>
           <div className="flex items-center gap-2">
-            <button onClick={fetchData} disabled={loading}
-              className="p-2 rounded-lg text-base-content/40 hover:text-base-content hover:bg-base-200 transition-colors"
-              title="Actualiser">
+            <Button variant="ghost" size="sm" className="p-2 h-9 w-9" onClick={fetchData} disabled={loading} title="Actualiser">
               {loading ? <span className="inline-block size-4 border-2 border-base-300 border-t-primary rounded-full animate-spin" /> : <RotateCcw className="size-4" />}
-            </button>
+            </Button>
             {(data?.total ?? 0) > 0 && (
-              <button onClick={handleEmptyTrash} disabled={actionLoading}
-                className="flex items-center gap-1.5 px-3 py-2 bg-error/10 text-error rounded-lg text-xs font-semibold hover:bg-error/20 transition-colors">
-                <Trash2 className="size-3.5" />
+              <Button variant="danger" size="sm" onClick={handleEmptyTrash} disabled={actionLoading}>
+                <Trash2 className="size-3.5 mr-1.5" />
                 <span className="hidden sm:inline">Vider tout</span>
-              </button>
+              </Button>
             )}
           </div>
         </div>
@@ -228,25 +229,28 @@ export default function Corbeille() {
       <div className="bg-base-100 border-b border-base-200 px-6 py-3 flex items-center gap-3 shrink-0">
         {/* Search */}
         <div className="relative flex-1 max-w-sm">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-base-content/40" />
-          <input type="text" placeholder="Rechercher..."
-            value={searchQuery} onChange={e => setSearchQuery(e.target.value)}
-            className="w-full rounded-lg border border-base-300 bg-base-200 pl-9 pr-8 h-9 text-sm text-base-content placeholder:text-base-content/40 focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground z-10" />
+          <Input
+            type="text"
+            placeholder="Rechercher..."
+            value={searchQuery}
+            onChange={e => setSearchQuery(e.target.value)}
+            className="pl-9 pr-8 h-9 text-sm"
+          />
           {searchQuery && (
-            <button onClick={() => setSearchQuery('')} className="absolute right-2.5 top-1/2 -translate-y-1/2">
-              <X className="size-3.5 text-base-content/40 hover:text-base-content/70" />
-            </button>
+            <Button variant="ghost" size="sm" className="absolute right-0 top-0 h-9 w-8 p-0" onClick={() => setSearchQuery('')}>
+              <X className="size-3.5" />
+            </Button>
           )}
         </div>
 
         {/* Type filter dropdown */}
         <div className="relative">
-          <button onClick={() => setShowFilterMenu(!showFilterMenu)}
-            className="flex items-center gap-2 px-3 py-2 rounded-lg border border-base-300 bg-base-100 text-sm text-base-content hover:bg-base-200 transition-colors">
+          <Button variant="outline" size="sm" onClick={() => setShowFilterMenu(!showFilterMenu)}>
             <span className={`size-2 rounded-full ${typeInfo.bg.replace('bg-', 'bg-')}`} style={{ backgroundColor: 'currentColor' }} />
             <span className={typeInfo.color}>{typeInfo.label}</span>
             <ChevronDown className={`size-3.5 text-base-content/40 transition-transform ${showFilterMenu ? 'rotate-180' : ''}`} />
-          </button>
+          </Button>
           {showFilterMenu && (
             <>
               <div className="fixed inset-0 z-40" onClick={() => setShowFilterMenu(false)} />
@@ -266,11 +270,10 @@ export default function Corbeille() {
 
         {/* Select all */}
         {allItems.length > 0 && (
-          <button onClick={selectAll}
-            className="flex items-center gap-1.5 px-2 py-2 text-xs font-medium text-base-content/60 hover:text-primary transition-colors">
-            {selectedIds.size === allItems.length ? <CheckSquare className="size-4" /> : <Square className="size-4" />}
+          <Button variant="ghost" size="sm" onClick={selectAll} className="text-xs font-medium">
+            <Checkbox checked={selectedIds.size === allItems.length && allItems.length > 0} className="size-4 mr-1.5" />
             {selectedIds.size > 0 ? `${selectedIds.size} sélectionné${selectedIds.size > 1 ? 's' : ''}` : 'Tout sélectionner'}
-          </button>
+          </Button>
         )}
       </div>
 
@@ -311,7 +314,7 @@ export default function Corbeille() {
                     className={`group relative bg-base-100 rounded-xl border transition-all cursor-pointer ${isSel ? 'border-primary/30 ring-1 ring-primary/20' : 'border-base-200 hover:border-base-300 hover:shadow-sm'}`}>
                     <div className="flex items-start gap-3 px-4 py-3">
                       <div className="pt-0.5">
-                        {isSel ? <CheckSquare className="size-4 text-primary" /> : <Square className="size-4 text-base-content/30 group-hover:text-base-content/40" />}
+                        <Checkbox checked={isSel} className="size-4" />
                       </div>
                       <div className={`shrink-0 w-9 h-9 rounded-lg flex items-center justify-center ${cfg.bg}`}>
                         <span className={cfg.color}>{cfg.icon}</span>
@@ -319,7 +322,7 @@ export default function Corbeille() {
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2">
                           <span className="font-semibold text-sm text-base-content truncate">{item.name}</span>
-                          <span className={`px-1.5 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider ${cfg.bg} ${cfg.color}`}>{cfg.label}</span>
+                          <Badge variant="outline" className={`text-[10px] ${cfg.color}`}>{cfg.label}</Badge>
                         </div>
                         <div className="flex items-center gap-3 mt-1">
                           <span className="text-[10px] text-base-content/40 flex items-center gap-1">
@@ -338,23 +341,22 @@ export default function Corbeille() {
                       </div>
                       {/* Actions always visible */}
                       <div className="flex items-center gap-1 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
-                        <button onClick={e => { e.stopPropagation(); handleRestore([{ model: item.type, id: item.id }]); }}
+                        <Button size="sm" variant="outline" className="h-7 px-2.5 text-[11px] text-success border-success/20 hover:bg-success/10 hover:text-success"
+                          onClick={e => { e.stopPropagation(); handleRestore([{ model: item.type, id: item.id }]); }}
                           disabled={actionLoading}
-                          className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-success/10 text-success hover:bg-success/20 text-[11px] font-semibold transition-colors"
                           title="Restaurer">
-                          <ArrowUpFromLine className="size-3.5" />
+                          <ArrowUpFromLine className="size-3.5 mr-1" />
                           <span className="hidden sm:inline">Restaurer</span>
-                        </button>
-                        <button onClick={e => { e.stopPropagation(); handlePurge([{ model: item.type, id: item.id }]); }}
+                        </Button>
+                        <Button size="sm" variant="outline" className="h-7 px-2.5 text-[11px] text-error border-error/20 hover:bg-error/10 hover:text-error"
+                          onClick={e => { e.stopPropagation(); handlePurge([{ model: item.type, id: item.id }]); }}
                           disabled={actionLoading}
-                          className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-error/10 text-error hover:bg-error/20 text-[11px] font-semibold transition-colors"
                           title="Supprimer définitivement">
                           <Trash2 className="size-3.5" />
-                        </button>
-                        <button onClick={e => { e.stopPropagation(); setExpandedId(isExp ? null : key); }}
-                          className="p-1.5 rounded-lg text-base-content/40 hover:bg-base-200 transition-colors">
+                        </Button>
+                        <Button variant="ghost" size="sm" className="h-7 w-7 p-0" onClick={e => { e.stopPropagation(); setExpandedId(isExp ? null : key); }}>
                           {isExp ? <ChevronUp className="size-4" /> : <ChevronDown className="size-4" />}
-                        </button>
+                        </Button>
                       </div>
                     </div>
                     {/* Expanded details */}
@@ -388,18 +390,14 @@ export default function Corbeille() {
             {selectedIds.size} sélectionné{selectedIds.size > 1 ? 's' : ''}
           </span>
           <div className="flex items-center gap-2">
-            <button onClick={() => handleRestore(selectedItems)}
-              disabled={actionLoading}
-              className="flex items-center gap-1.5 px-4 py-2 bg-primary text-white rounded-lg text-xs font-semibold hover:bg-primary-focus transition-colors shadow-sm">
-              <ArrowUpFromLine className="size-3.5" />
+            <Button size="sm" onClick={() => handleRestore(selectedItems)} disabled={actionLoading}>
+              <ArrowUpFromLine className="size-3.5 mr-1.5" />
               Restaurer
-            </button>
-            <button onClick={() => handlePurge(selectedItems)}
-              disabled={actionLoading}
-              className="flex items-center gap-1.5 px-4 py-2 bg-error/10 text-error rounded-lg text-xs font-semibold hover:bg-error/20 transition-colors">
-              <Trash2 className="size-3.5" />
+            </Button>
+            <Button size="sm" variant="danger" onClick={() => handlePurge(selectedItems)} disabled={actionLoading}>
+              <Trash2 className="size-3.5 mr-1.5" />
               Supprimer définitivement
-            </button>
+            </Button>
           </div>
         </div>
       )}

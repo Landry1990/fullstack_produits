@@ -104,7 +104,7 @@ const GestionDivers = lazyWithRetry(() => import('./components/divers/GestionDiv
 const ClassementVendeurs = lazyWithRetry(() => import('./components/ClassementVendeurs'));
 const AnalyseTemporelle = lazyWithRetry(() => import('./components/AnalyseTemporelle'));
 const StockUGReport = lazyWithRetry(() => import('./components/StockUGReport'));
-const UserSessions = lazyWithRetry(() => import('./components/UserSessions'));
+const UserSessions = lazyWithRetry(() => import('./components/UserSessionsShadcn'));
 const GuideFinancier = lazyWithRetry(() => import('./components/GuideFinancier'));
 const HelpTraining = lazyWithRetry(() => import('./components/HelpTraining'));
 const GestionUtilisateurs = lazyWithRetry(() => import('./components/GestionUtilisateurs'));

@@ -44,7 +44,7 @@ export default function UserHeader() {
                     // @ts-ignore
                     toast.dismiss(toastObj.id);
                   }}
-                  className="px-3 py-1.5 text-xs font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors"
+                  className="px-3 py-1.5 text-xs font-medium text-white bg-emerald-600 rounded-lg hover:bg-emerald-700 transition-colors"
                 >
                   {t('new.view')}
                 </button>
@@ -93,7 +93,7 @@ export default function UserHeader() {
           {/* Notifications / Messages Bell */}
           <button 
             onClick={() => setIsMessagingOpen(true)}
-            className="relative p-2 rounded-full hover:bg-blue-50 transition-colors"
+            className="relative p-2 rounded-full hover:bg-emerald-50 transition-colors"
             title="Messagerie Interne"
           >
             <Bell size={16} className="text-slate-500" />
@@ -107,7 +107,7 @@ export default function UserHeader() {
           {/* Feedback Button */}
           <button 
             onClick={() => setIsFeedbackOpen(true)}
-            className="p-2 rounded-full hover:bg-blue-50 transition-colors"
+            className="p-2 rounded-full hover:bg-emerald-50 transition-colors"
             title="Feedback"
           >
             <MessageCircle size={16} className="text-slate-500" />
@@ -119,7 +119,7 @@ export default function UserHeader() {
               onClick={() => switchLanguage('fr')}
               className={`px-2 py-1 rounded-md text-xs font-bold transition-all ${
                 i18n.language === 'fr' || i18n.language.startsWith('fr')
-                  ? 'bg-blue-600 text-white shadow-sm'
+                  ? 'bg-emerald-600 text-white shadow-sm'
                   : 'text-slate-400 hover:text-slate-700'
               }`}
               title="Français"
@@ -130,7 +130,7 @@ export default function UserHeader() {
               onClick={() => switchLanguage('en')}
               className={`px-2 py-1 rounded-md text-xs font-bold transition-all ${
                 i18n.language === 'en' || i18n.language.startsWith('en')
-                  ? 'bg-blue-600 text-white shadow-sm'
+                  ? 'bg-emerald-600 text-white shadow-sm'
                   : 'text-slate-400 hover:text-slate-700'
               }`}
               title="English"
@@ -150,7 +150,7 @@ export default function UserHeader() {
             }}
           >
             <button className="flex items-center gap-2 px-1.5 py-0.5 rounded-lg hover:bg-slate-100 transition-all group">
-              <div className="size-7 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold text-sm shadow-md ring-2 ring-gray-200 overflow-hidden">
+              <div className="size-7 rounded-full bg-emerald-600 text-white flex items-center justify-center font-bold text-sm shadow-md ring-2 ring-gray-200 overflow-hidden">
                 {user.username.charAt(0).toUpperCase()}
               </div>
               <div className="hidden sm:block text-left mr-1">
@@ -170,7 +170,7 @@ export default function UserHeader() {
                 <div className="p-4 border-b border-slate-100 bg-slate-50">
                   <p className="text-xs font-semibold text-slate-400 uppercase tracking-widest mb-2">Compte</p>
                   <div className="flex items-center gap-3">
-                    <div className="size-10 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center">
+                    <div className="size-10 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center">
                       <UserIcon size={20} />
                     </div>
                     <div className="min-w-0">
@@ -183,7 +183,7 @@ export default function UserHeader() {
                 <div className="p-2">
                   <button 
                     onClick={() => setIsMessagingOpen(true)}
-                    className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm hover:bg-blue-50 hover:text-blue-600 transition-colors text-left"
+                    className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm hover:bg-emerald-50 hover:text-emerald-600 transition-colors text-left"
                   >
                     <MessageSquare size={18} />
                     <span className="flex-1">Messages</span>
@@ -194,20 +194,20 @@ export default function UserHeader() {
                     onClick={toggleMidnightTheme}
                     className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm hover:bg-slate-100 hover:text-slate-700 transition-colors text-left"
                   >
-                    {isMidnightTheme ? <Sun size={18} className="text-amber-500" /> : <Moon size={18} className="text-blue-600" />}
+                    {isMidnightTheme ? <Sun size={18} className="text-amber-500" /> : <Moon size={18} className="text-emerald-600" />}
                     <span>{isMidnightTheme ? 'Mode Clair' : 'Mode Sombre'}</span>
                   </button>
 
                   <div className="flex items-center gap-2 p-2 mt-1">
                     <button
                       onClick={() => switchLanguage('fr')}
-                      className={`flex-1 py-1.5 rounded-lg text-xs font-bold transition-all ${i18n.language === 'fr' ? 'bg-blue-600 text-white shadow-sm' : 'bg-slate-100 text-slate-500 hover:bg-slate-200'}`}
+                      className={`flex-1 py-1.5 rounded-lg text-xs font-bold transition-all ${i18n.language === 'fr' ? 'bg-emerald-600 text-white shadow-sm' : 'bg-slate-100 text-slate-500 hover:bg-slate-200'}`}
                     >
                       FR
                     </button>
                     <button
                       onClick={() => switchLanguage('en')}
-                      className={`flex-1 py-1.5 rounded-lg text-xs font-bold transition-all ${i18n.language === 'en' ? 'bg-blue-600 text-white shadow-sm' : 'bg-slate-100 text-slate-500 hover:bg-slate-200'}`}
+                      className={`flex-1 py-1.5 rounded-lg text-xs font-bold transition-all ${i18n.language === 'en' ? 'bg-emerald-600 text-white shadow-sm' : 'bg-slate-100 text-slate-500 hover:bg-slate-200'}`}
                     >
                       EN
                     </button>

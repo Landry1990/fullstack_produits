@@ -333,7 +333,7 @@ export default function Sidebar() {
       >
         {/* ── HEADER ── */}
         <div className={cn(
-          "flex items-center gap-3 px-4 py-4 border-b border-slate-800",
+          "flex items-center gap-3 px-4 py-4 border-b border-white/10",
           isCollapsed && 'justify-center px-3'
         )}>
           <div className="shrink-0">
@@ -344,7 +344,7 @@ export default function Sidebar() {
               <h1 className="text-sm font-black text-white tracking-widest uppercase leading-none truncate">
                 {licence?.pharmacie_nom || 'Zenith'}
               </h1>
-              <p className="text-[9px] font-bold text-emerald-400/70 uppercase tracking-[0.2em] mt-0.5 truncate">
+              <p className="text-[9px] font-bold text-primary uppercase tracking-[0.2em] mt-0.5 truncate">
                 {licence?.pharmacien_nom || t('app_subtitle')}
               </p>
             </div>
@@ -352,7 +352,7 @@ export default function Sidebar() {
           {/* Collapse button desktop */}
           <button
             onClick={toggleCollapse}
-            className="hidden lg:flex shrink-0 size-7 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white items-center justify-center transition-all"
+            className="hidden lg:flex shrink-0 size-7 rounded-lg bg-white/10 hover:bg-white/20 text-white/50 hover:text-white items-center justify-center transition-all"
             title={isCollapsed ? 'Déplier' : 'Replier'}
           >
             {isCollapsed ? <ChevronRight className="size-4" /> : <ChevronLeft className="size-4" />}
@@ -493,11 +493,11 @@ export default function Sidebar() {
         </nav>
 
         {/* Footer */}
-        <div className="shrink-0 px-4 py-3 border-t border-slate-800">
+        <div className="shrink-0 px-4 py-3 border-t border-white/10">
           <div className="flex items-center gap-2">
-            <div className="size-2 rounded-full bg-emerald-500"></div>
-            <span className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider truncate">Zenith OS</span>
-            <span className="text-[9px] text-slate-600 font-mono ml-auto" title={formatVersion()}>v{formatVersion().split('.').slice(0,2).join('.')}</span>
+            <div className="size-2 rounded-full bg-primary shadow-[0_0_6px] shadow-primary/50"></div>
+            <span className="text-[10px] font-semibold text-white/40 uppercase tracking-wider truncate">Zenith OS</span>
+            <span className="text-[9px] text-white/30 font-mono ml-auto" title={formatVersion()}>v{formatVersion().split('.').slice(0,2).join('.')}</span>
           </div>
         </div>
       </aside>

@@ -156,7 +156,7 @@ export default function AnalyseTemporelle() {
             <div className="space-y-6">
               <div className="flex justify-between items-center bg-slate-50 p-4 rounded-xl border border-slate-100">
                 <div className="flex items-center gap-4">
-                  <div className="size-12 rounded-full bg-green-100 text-green-600 flex items-center justify-center text-2xl">
+                  <div className="size-12 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center text-2xl">
                     📅
                   </div>
                   <div>
@@ -218,7 +218,7 @@ export default function AnalyseTemporelle() {
                       </thead>
                       <tbody className="divide-y divide-slate-100">
                         {dailyData?.data?.map((day) => (
-                          <tr key={day.day_number} className={`transition-colors ${day.is_best ? 'bg-green-50' : 'hover:bg-slate-50'}`}>
+                          <tr key={day.day_number} className={`transition-colors ${day.is_best ? 'bg-emerald-50' : 'hover:bg-slate-50'}`}>
                             <td className="py-2.5 pl-4 flex items-center gap-2 font-medium text-slate-700">
                               {day.day}
                               {day.is_best && <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 text-[10px] font-bold">Top</span>}

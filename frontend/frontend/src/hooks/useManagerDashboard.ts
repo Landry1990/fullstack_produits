@@ -73,7 +73,7 @@ export const useManagerDashboard = () => {
             }
 
             const response = await api.get(url, { responseType: 'blob' });
-            const blob = new Blob([response.data], { type: response.headers['content-type'] });
+            const blob = new Blob([response.data], { type: (response.headers['content-type'] as string | undefined) ?? undefined });
             const downloadUrl = window.URL.createObjectURL(blob);
             const link = document.createElement('a');
             link.href = downloadUrl;

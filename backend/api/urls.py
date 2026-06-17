@@ -1,12 +1,13 @@
 from django.http import JsonResponse
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
-from rest_framework.decorators import api_view, permission_classes
+from rest_framework.decorators import api_view, permission_classes, throttle_classes
 from rest_framework.permissions import AllowAny
 
 # Health check endpoint for Docker monitoring
 @api_view(['GET'])
 @permission_classes([AllowAny])
+@throttle_classes([])
 def health_check(request):
     """
     Health check complet : DB, Redis (si configuré), espace disque.

@@ -11,10 +11,18 @@ from ..models import (
 
 
 class FournisseurSerializer(serializers.ModelSerializer):
+    solde_dette = serializers.SerializerMethodField()
+
     class Meta:
         model = Fournisseur
         fields = '__all__'
         read_only_fields = ['created_at', 'updated_at']
+
+    def get_solde_dette(self, obj):
+        solde = getattr(obj, 'solde_dette_annotated', None)
+        if solde is not None:
+            return solde
+        return obj.solde_dette
 
 
 class PaiementFournisseurSerializer(serializers.ModelSerializer):
