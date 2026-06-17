@@ -84,99 +84,121 @@ export default function EtatsInventaire() {
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold">{t('stock:etats_inventaire.title')}</h1>
+      {/* Header */}
+      <div className="flex items-center gap-3">
+        <div className="p-2.5 bg-blue-50 rounded-xl text-blue-600">
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+          </svg>
+        </div>
+        <div>
+          <h1 className="text-xl font-bold text-slate-800 tracking-tight">{t('stock:etats_inventaire.title')}</h1>
+          <p className="text-[11px] font-medium text-slate-400 uppercase tracking-widest">{t('stock:etats_inventaire.generate_title')}</p>
+        </div>
       </div>
 
-      <div className="card bg-base-100 shadow-xl">
-        <div className="card-body">
-          <h2 className="card-title text-lg mb-4">{t('stock:etats_inventaire.generate_title')}</h2>
-          
+      {/* Main card */}
+      <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+        <div className="p-6 space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {/* Regroupement */}
-            <div className="form-control">
-              <label className="label">
-                <span className="label-text font-semibold">{t('stock:etats_inventaire.grouping_title')}</span>
-              </label>
+            <div className="space-y-3">
+              <p className="text-xs font-black uppercase tracking-widest text-slate-400">{t('stock:etats_inventaire.grouping_title')}</p>
               <div className="flex flex-col gap-2">
                 {groupByOptions.map(option => (
-                  <label key={option.value} className="flex items-center gap-3 cursor-pointer">
-                    <input
-                      type="radio"
-                      name="groupBy"
-                      className="radio radio-primary"
-                      checked={groupBy === option.value}
-                      onChange={() => setGroupBy(option.value as GroupByOption)}
-                    />
-                    <span className="label-text">{option.label}</span>
+                  <label key={option.value} className="flex items-center gap-3 cursor-pointer group">
+                    <div
+                      className={`size-4 rounded-full border-2 flex items-center justify-center transition-colors ${
+                        groupBy === option.value ? 'border-blue-600 bg-blue-600' : 'border-slate-300 bg-white group-hover:border-blue-400'
+                      }`}
+                      onClick={() => setGroupBy(option.value as GroupByOption)}
+                    >
+                      {groupBy === option.value && <div className="size-1.5 rounded-full bg-white"></div>}
+                    </div>
+                    <input type="radio" name="groupBy" className="sr-only" checked={groupBy === option.value} onChange={() => setGroupBy(option.value as GroupByOption)} />
+                    <span className="text-sm font-medium text-slate-700">{option.label}</span>
                   </label>
                 ))}
               </div>
             </div>
 
             {/* Sélection de l'entité */}
-            <div className="form-control">
-              <label className="label">
-                <span className="label-text font-semibold">{t('stock:etats_inventaire.to_print_label', { type: getEntityLabel() })}</span>
-              </label>
-              <select
-                className="select select-bordered w-full"
-                value={selectedEntity ?? ''}
-                onChange={(e) => setSelectedEntity(e.target.value ? Number(e.target.value) : null)}
-                disabled={loadingEntities}
-              >
-                <option value="">{t('stock:etats_inventaire.all_entities', { type: getEntityLabel().toLowerCase() })}</option>
-                {entities.map(entity => (
-                  <option key={entity.id} value={entity.id}>{entity.name}</option>
-                ))}
-              </select>
-              {loadingEntities && <span className="text-xs text-base-content/60 mt-1">{t('common:loading')}</span>}
+            <div className="space-y-3">
+              <p className="text-xs font-black uppercase tracking-widest text-slate-400">{t('stock:etats_inventaire.to_print_label', { type: getEntityLabel() })}</p>
+              <div className="relative">
+                <select
+                  className="w-full h-11 rounded-xl border border-slate-200 bg-slate-50 px-3 text-sm text-slate-700 focus:outline-none focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all appearance-none disabled:opacity-50"
+                  value={selectedEntity ?? ''}
+                  onChange={(e) => setSelectedEntity(e.target.value ? Number(e.target.value) : null)}
+                  disabled={loadingEntities}
+                >
+                  <option value="">{t('stock:etats_inventaire.all_entities', { type: getEntityLabel().toLowerCase() })}</option>
+                  {entities.map(entity => (
+                    <option key={entity.id} value={entity.id}>{entity.name}</option>
+                  ))}
+                </select>
+                <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400">
+                  {loadingEntities
+                    ? <span className="size-4 border-2 border-slate-200 border-t-blue-500 rounded-full animate-spin inline-block"></span>
+                    : <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" /></svg>
+                  }
+                </div>
+              </div>
             </div>
 
             {/* Affichage Stock */}
-            <div className="form-control">
-              <label className="label">
-                <span className="label-text font-semibold">{t('stock:etats_inventaire.stock_display_title')}</span>
-              </label>
+            <div className="space-y-3">
+              <p className="text-xs font-black uppercase tracking-widest text-slate-400">{t('stock:etats_inventaire.stock_display_title')}</p>
               <div className="flex flex-col gap-2">
                 {stockOptions.map(option => (
-                  <label key={option.value} className="flex items-center gap-3 cursor-pointer">
-                    <input
-                      type="radio"
-                      name="stockDisplay"
-                      className="radio radio-secondary"
-                      checked={stockDisplay === option.value}
-                      onChange={() => setStockDisplay(option.value as StockDisplayOption)}
-                    />
-                    <span className="label-text">{option.label}</span>
+                  <label key={option.value} className="flex items-center gap-3 cursor-pointer group">
+                    <div
+                      className={`size-4 rounded-full border-2 flex items-center justify-center transition-colors ${
+                        stockDisplay === option.value ? 'border-violet-600 bg-violet-600' : 'border-slate-300 bg-white group-hover:border-violet-400'
+                      }`}
+                      onClick={() => setStockDisplay(option.value as StockDisplayOption)}
+                    >
+                      {stockDisplay === option.value && <div className="size-1.5 rounded-full bg-white"></div>}
+                    </div>
+                    <input type="radio" name="stockDisplay" className="sr-only" checked={stockDisplay === option.value} onChange={() => setStockDisplay(option.value as StockDisplayOption)} />
+                    <span className="text-sm font-medium text-slate-700">{option.label}</span>
                   </label>
                 ))}
               </div>
             </div>
           </div>
 
-          <div className="divider"></div>
+          {/* Divider */}
+          <div className="h-px bg-slate-100"></div>
 
           {/* Résumé */}
-          <div className="bg-base-200 rounded-lg p-4">
-            <p className="text-sm">
-              <strong>{t('stock:etats_inventaire.summary.recap')}</strong> {t('stock:etats_inventaire.summary.title')}{' '}
-              <span className="badge badge-primary badge-sm mx-1">{groupByOptions.find(o => o.value === groupBy)?.label}</span>
+          <div className="bg-slate-50 rounded-xl p-4 border border-slate-100">
+            <p className="text-sm text-slate-600 flex flex-wrap items-center gap-1.5">
+              <strong className="text-slate-800">{t('stock:etats_inventaire.summary.recap')}</strong>
+              <span>{t('stock:etats_inventaire.summary.title')}</span>
+              <span className="inline-flex items-center h-5 px-2 rounded-full bg-blue-100 text-blue-700 font-bold text-[11px]">
+                {groupByOptions.find(o => o.value === groupBy)?.label}
+              </span>
               {selectedEntity ? (
-                <span className="badge badge-accent badge-sm mx-1">
+                <span className="inline-flex items-center h-5 px-2 rounded-full bg-violet-100 text-violet-700 font-bold text-[11px]">
                   {entities.find(e => e.id === selectedEntity)?.name || 'Sélection'}
                 </span>
               ) : (
-                <span className="badge badge-ghost badge-sm mx-1">{t('stock:etats_inventaire.summary.all')}</span>
+                <span className="inline-flex items-center h-5 px-2 rounded-full bg-slate-200 text-slate-600 font-bold text-[11px]">
+                  {t('stock:etats_inventaire.summary.all')}
+                </span>
               )}
-              {t('stock:etats_inventaire.summary.with')}
-              <span className="badge badge-secondary badge-sm mx-1">{stockOptions.find(o => o.value === stockDisplay)?.label}</span>
+              <span>{t('stock:etats_inventaire.summary.with')}</span>
+              <span className="inline-flex items-center h-5 px-2 rounded-full bg-emerald-100 text-emerald-700 font-bold text-[11px]">
+                {stockOptions.find(o => o.value === stockDisplay)?.label}
+              </span>
             </p>
           </div>
 
-          <div className="card-actions justify-end mt-4">
-            <button 
-              className="btn btn-primary gap-2"
+          {/* Action */}
+          <div className="flex justify-end">
+            <button
+              className="inline-flex items-center gap-2 h-11 px-6 bg-blue-600 text-white rounded-xl text-sm font-bold hover:bg-blue-700 transition-colors shadow-sm"
               onClick={handlePrint}
             >
               <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
@@ -189,15 +211,19 @@ export default function EtatsInventaire() {
       </div>
 
       {/* Info */}
-      <div className="alert alert-info">
-        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" className="stroke-current shrink-0 size-6"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+      <div className="flex gap-4 bg-blue-50 border border-blue-200 rounded-2xl p-4">
+        <div className="shrink-0 size-9 rounded-xl bg-blue-100 flex items-center justify-center text-blue-600">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" className="size-5">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+        </div>
         <div>
-          <h3 className="font-bold">{t('stock:etats_inventaire.help.title')}</h3>
-          <div className="text-xs">
-            {t('stock:etats_inventaire.help.step1')}<br/>
-            {t('stock:etats_inventaire.help.step2', { type: getEntityLabel().toLowerCase() })}<br/>
-            {t('stock:etats_inventaire.help.step3')}<br/>
-            {t('stock:etats_inventaire.help.step4')}
+          <h3 className="font-bold text-blue-800 text-sm mb-1">{t('stock:etats_inventaire.help.title')}</h3>
+          <div className="text-xs text-blue-700 space-y-0.5">
+            <p>{t('stock:etats_inventaire.help.step1')}</p>
+            <p>{t('stock:etats_inventaire.help.step2', { type: getEntityLabel().toLowerCase() })}</p>
+            <p>{t('stock:etats_inventaire.help.step3')}</p>
+            <p>{t('stock:etats_inventaire.help.step4')}</p>
           </div>
         </div>
       </div>

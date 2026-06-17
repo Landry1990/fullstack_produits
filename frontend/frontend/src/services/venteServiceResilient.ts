@@ -51,7 +51,7 @@ export const useResilientVenteService = (): ResilientVenteService => {
      * Génère une clé d'idempotence pour éviter les doublons
      */
     const generateIdempotencyKey = useCallback((): string => {
-        return `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+        return crypto.randomUUID();
     }, []);
 
     /**

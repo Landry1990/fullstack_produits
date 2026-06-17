@@ -166,11 +166,11 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
       isOpen={isOpen}
       onClose={onClose}
       title={t('payment.title_with_num', { num: facture.numero_facture })}
-      icon={<span className="text-primary text-xl">💰</span>}
+      icon={<span className="text-emerald-600 text-xl">💰</span>}
       footer={
         <div className="flex justify-end gap-2 w-full">
           <button
-            className="btn btn-ghost btn-sm"
+            className="inline-flex items-center justify-center h-8 px-4 rounded-lg text-sm font-medium text-slate-700 bg-white border border-slate-200 hover:bg-slate-50 transition-colors"
             onClick={onClose}
             disabled={loading}
           >
@@ -179,7 +179,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
           <button
             ref={validateBtnRef}
             onClick={handleConfirm}
-            className={`btn btn-sm ${peutValider ? 'btn-success text-white' : 'btn-disabled'}`}
+            className={`inline-flex items-center justify-center h-8 px-4 rounded-lg text-sm font-semibold transition-colors ${peutValider ? 'bg-emerald-600 text-white hover:bg-emerald-700' : 'bg-slate-100 text-slate-400 cursor-not-allowed'}`}
             disabled={loading || !peutValider}
             onKeyDown={(e) => {
               if (e.key === 'Enter' && peutValider && !loading) {
@@ -188,10 +188,10 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
               }
             }}
           >
-            {loading 
-              ? <span className="loading loading-spinner loading-sm"></span>
-              : peutValider 
-                ? `✓ ${t('payment.validate')}` 
+            {loading
+              ? <div className="animate-spin rounded-full size-4 border-b-2 border-white"></div>
+              : peutValider
+                ? `✓ ${t('payment.validate')}`
                 : t('payment.remaining', { amount: resteAPayer })
             }
           </button>
@@ -201,24 +201,24 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
         <div className="p-5 space-y-4">
           {/* Montant dû */}
           <div className="text-center">
-            <div className="text-xs uppercase tracking-wider text-base-content/50 mb-1">
+            <div className="text-xs uppercase tracking-wider text-slate-400 mb-1">
               {hasTiersPayant ? t('payment.part_patient') : t('payment.amount_to_pay')}
             </div>
-            <div className="text-4xl font-light text-primary">{montantDu} {t('common:currency_symbol', 'F')}</div>
+            <div className="text-4xl font-light text-emerald-600">{montantDu} {t('common:currency_symbol', 'F')}</div>
             {coupon && (
-              <div className="text-xs text-success mt-1">
+              <div className="text-xs text-emerald-600 mt-1">
                 {t('payment.coupon_discount', { num: coupon.numero, amount: Number(coupon.montant) })}
               </div>
             )}
             {hasTiersPayant && (
-              <div className="text-xs text-info mt-1">
+              <div className="text-xs text-blue-600 mt-1">
                 {t('payment.part_assurance', { amount: Math.round(Number(facture.total_ttc) - Number(facture.part_client!)) })}
               </div>
             )}
             {/* Reminder for Cashier about existing deposit */}
             {soldeDepot > 0 && (
               <div className="mt-2 text-center">
-                <span className="badge badge-success badge-sm gap-1 py-2 h-auto text-[10px] font-bold uppercase tracking-wider">
+                <span className="inline-flex items-center gap-1 px-2.5 h-6 text-xs rounded-full bg-emerald-100 text-emerald-700 font-medium">
                   💡 {t('payment.deposit_available', { amount: soldeDepot })}
                 </span>
               </div>
@@ -227,14 +227,14 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
 
           {/* Ligne de saisie : Montant + boutons Mode + Ajouter */}
           <div className="flex gap-2 items-end">
-            <div className="form-control flex-1">
-              <label className="label py-1">
-                <span className="label-text text-xs font-semibold">{t('payment.amount')}</span>
+            <div className="flex-1">
+              <label className="block py-1 text-xs font-semibold text-slate-700">
+                {t('payment.amount')}
               </label>
               <input
                 ref={montantInputRef}
                 type="number"
-                className="input input-bordered input-sm w-full text-right font-mono"
+                className="w-full h-9 px-3 rounded-lg border border-slate-200 bg-white text-right font-mono text-sm text-slate-700 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 outline-none"
                 value={montantPaye}
                 onChange={(e) => setMontantPaye(e.target.value)}
                 onKeyDown={(e) => {
@@ -248,7 +248,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
             </div>
             <button
               type="button"
-              className="btn btn-sm btn-primary mb-0"
+              className="inline-flex items-center justify-center h-9 px-3 rounded-lg text-sm font-semibold bg-emerald-600 text-white hover:bg-emerald-700 transition-colors mb-0.5"
               onClick={() => handleAddPayment()}
               disabled={!montantPaye || Number(montantPaye) === 0}
               title="Entrée dans le montant ou clic"
@@ -258,9 +258,9 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
           </div>
 
           {/* Modes de paiement en boutons */}
-          <div className="form-control">
-            <label className="label py-1">
-              <span className="label-text text-xs font-semibold">{t('payment.mode')}</span>
+          <div className="w-full">
+            <label className="block py-1 text-xs font-semibold text-slate-700">
+              {t('payment.mode')}
             </label>
             <div className="flex flex-wrap gap-1">
               {paymentModes.map((m, idx) => (
@@ -268,10 +268,10 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
                   key={m.value}
                   ref={(el) => { modeBtnRefs.current[idx] = el }}
                   type="button"
-                  className={`px-2 py-1 text-xs font-medium rounded-md border transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-1 ${
+                  className={`px-2 py-1 text-xs font-medium rounded-md border transition-colors focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-1 ${
                     modePaiement === m.value
-                      ? 'bg-primary text-white border-primary'
-                      : 'bg-base-100 text-base-content border-base-300 hover:bg-base-200'
+                      ? 'bg-emerald-600 text-white border-emerald-600'
+                      : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'
                   }`}
                   onClick={() => {
                     setModePaiement(m.value)
@@ -288,25 +288,25 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
 
           {/* Liste des paiements enregistrés */}
           {paiements.length > 0 && (
-            <div className="bg-base-100 rounded-lg border border-base-200 overflow-hidden">
-              <div className="px-3 py-2 bg-base-200/50 text-xs font-bold uppercase tracking-wider text-base-content/50">
+            <div className="bg-white rounded-lg border border-slate-200 overflow-hidden">
+              <div className="px-3 py-2 bg-slate-50 text-xs font-bold uppercase tracking-wider text-slate-400">
                 {t('payment.payments_list')}
               </div>
               {paiements.map((p, idx) => (
-                <div key={idx} className="flex justify-between items-center px-3 py-2 border-t border-base-200">
-                  <span className="text-sm">{getModeLabel(p.mode)}</span>
+                <div key={idx} className="flex justify-between items-center px-3 py-2 border-t border-slate-100">
+                  <span className="text-sm text-slate-700">{getModeLabel(p.mode)}</span>
                   <div className="flex items-center gap-2">
-                    <span className="font-mono font-bold">{p.montant} {t('common:currency_symbol', 'F')}</span>
+                    <span className="font-mono font-bold text-slate-800">{p.montant} {t('common:currency_symbol', 'F')}</span>
                     <button
                       onClick={() => handleRemovePayment(idx)}
-                      className="btn btn-ghost btn-xs text-error h-5 w-5 min-h-0 p-0"
+                      className="inline-flex items-center justify-center size-5 rounded text-red-500 hover:bg-red-50 transition-colors"
                     >✕</button>
                   </div>
                 </div>
               ))}
-              <div className="flex justify-between items-center px-3 py-2 border-t border-base-300 bg-base-200/30">
-                <span className="text-sm font-bold">{t('payment.total_paid')}</span>
-                <span className="font-mono font-bold text-primary">{totalVerse} {t('common:currency_symbol', 'F')}</span>
+              <div className="flex justify-between items-center px-3 py-2 border-t border-slate-200 bg-slate-50/50">
+                <span className="text-sm font-bold text-slate-800">{t('payment.total_paid')}</span>
+                <span className="font-mono font-bold text-emerald-600">{totalVerse} {t('common:currency_symbol', 'F')}</span>
               </div>
             </div>
           )}
@@ -315,15 +315,15 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
           {paiements.length > 0 && (
             <div className="space-y-2">
               {resteAPayer > 0 && (
-                <div className="flex justify-between items-center px-3 py-2 bg-warning/10 border border-warning/30 rounded-lg">
-                  <span className="text-sm font-semibold text-warning">{t('payment.remaining', { amount: '' }).replace(' F', '')}</span>
-                  <span className="font-mono font-bold text-warning text-lg">{resteAPayer} {t('common:currency_symbol', 'F')}</span>
+                <div className="flex justify-between items-center px-3 py-2 bg-amber-50 border border-amber-200 rounded-lg">
+                  <span className="text-sm font-semibold text-amber-700">{t('payment.remaining', { amount: '' }).replace(' F', '')}</span>
+                  <span className="font-mono font-bold text-amber-700 text-lg">{resteAPayer} {t('common:currency_symbol', 'F')}</span>
                 </div>
               )}
               {resteAPayer < 0 && (
-                <div className="flex justify-between items-center px-3 py-3 bg-success/10 border border-success/30 rounded-lg">
-                  <span className="text-sm font-semibold text-success">💰 {t('payment.change_back')}</span>
-                  <span className="font-mono font-bold text-success text-2xl">{Math.abs(resteAPayer)} {t('common:currency_symbol', 'F')}</span>
+                <div className="flex justify-between items-center px-3 py-3 bg-emerald-50 border border-emerald-200 rounded-lg">
+                  <span className="text-sm font-semibold text-emerald-700">💰 {t('payment.change_back')}</span>
+                  <span className="font-mono font-bold text-emerald-700 text-2xl">{Math.abs(resteAPayer)} {t('common:currency_symbol', 'F')}</span>
                 </div>
               )}
             </div>

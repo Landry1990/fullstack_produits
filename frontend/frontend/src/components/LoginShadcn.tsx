@@ -24,7 +24,12 @@ export default function LoginShadcn() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  const [isDark, setIsDark] = useState(true); // Default dark mode
+  const [isDark, setIsDark] = useState(() => {
+    // Forcer light mode sur la page login, ignorer le thème global sauvegardé
+    document.documentElement.classList.remove('theme-midnight');
+    document.documentElement.setAttribute('data-theme', 'light');
+    return false;
+  });
   const { login } = useAuth();
   const { licence } = useLicence();
   const navigate = useNavigate();

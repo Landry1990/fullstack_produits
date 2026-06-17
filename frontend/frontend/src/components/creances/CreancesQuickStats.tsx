@@ -23,47 +23,47 @@ export const CreancesQuickStats: React.FC<CreancesQuickStatsProps> = ({
             label: t('creances:stats.total_invoices'),
             value: `${formatCurrency(Math.round(totalDue))} ${t('common:currency')}`,
             icon: <CreditCard className="size-5 text-blue-500" />,
-            bgColor: 'bg-blue-500/10',
-            borderColor: 'border-blue-500/20'
+            bgColor: 'bg-blue-50',
+            borderColor: 'border-blue-200'
         },
         {
             label: t('creances:stats.total_paid'),
             value: `${formatCurrency(Math.round(totalPaid))} ${t('common:currency')}`,
-            icon: <CheckCircle className="size-5 text-success" />,
-            bgColor: 'bg-success/10',
-            borderColor: 'border-success/20'
+            icon: <CheckCircle className="size-5 text-emerald-600" />,
+            bgColor: 'bg-emerald-50',
+            borderColor: 'border-emerald-200'
         },
         {
             label: t('creances:stats.remaining'),
             value: `${formatCurrency(Math.round(totalRemaining))} ${t('common:currency')}`,
-            icon: <Clock className="size-5 text-warning" />,
-            bgColor: 'bg-warning/10',
-            borderColor: 'border-warning/20'
+            icon: <Clock className="size-5 text-amber-600" />,
+            bgColor: 'bg-amber-50',
+            borderColor: 'border-amber-200'
         },
         {
             label: t('creances:stats.debtors'),
             value: debtorsCount,
             icon: <Users className="size-5 text-purple-500" />,
-            bgColor: 'bg-purple-500/10',
-            borderColor: 'border-purple-500/20'
+            bgColor: 'bg-purple-50',
+            borderColor: 'border-purple-200'
         }
     ];
 
     return (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             {stats.map((stat, idx) => (
-                <div 
+                <div
                     key={idx}
                     className={`${stat.bgColor} ${stat.borderColor} border p-4 rounded-xl shadow-sm transition-all hover:shadow-md flex items-center gap-4`}
                 >
-                    <div className="p-3 bg-base-100 rounded-xl shadow-sm">
+                    <div className="p-3 bg-white rounded-xl shadow-sm">
                         {stat.icon}
                     </div>
                     <div>
-                        <div className="text-xs font-bold text-base-content/60 uppercase tracking-wider">
+                        <div className="text-xs font-bold text-slate-500 uppercase tracking-wider">
                             {stat.label}
                         </div>
-                        <div className="text-xl font-black text-base-content mt-0.5">
+                        <div className="text-xl font-black text-slate-800 mt-0.5">
                             {stat.value}
                         </div>
                     </div>

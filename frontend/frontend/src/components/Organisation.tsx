@@ -73,25 +73,23 @@ export default function Organisation({ defaultTab = 'rayons' }: OrganisationProp
   const currentTab = tabs.find(t => t.id === activeTab)!;
 
   return (
-    <div className="min-h-screen bg-base-200 p-6 space-y-6 font-sans">
-      {/* Header Section (Style Ventes.tsx) */}
-      <div className="bg-base-100 rounded-2xl shadow-sm border border-base-300 flex flex-col">
-        <div className="p-6 border-b border-base-200 flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+    <div className="min-h-screen bg-slate-50 p-6 space-y-6 font-sans">
+      <div className="bg-white rounded-2xl shadow-sm border border-slate-200 flex flex-col">
+        <div className="p-6 border-b border-slate-100 flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
            <div>
-              <h1 className="text-2xl font-bold text-base-content tracking-tight">{t('organisation.title')}</h1>
-              <p className="text-base-content/60 text-sm mt-1">{t('organisation.subtitle')}</p>
+              <h1 className="text-2xl font-bold text-slate-800 tracking-tight">{t('organisation.title')}</h1>
+              <p className="text-slate-500 text-sm mt-1">{t('organisation.subtitle')}</p>
            </div>
 
-           {/* Tabs Navigation (Style Ventes.tsx) */}
-           <div className="bg-base-200 p-1 rounded-xl border border-base-200 flex gap-1">
+           <div className="bg-slate-100 p-1 rounded-xl border border-slate-200 flex gap-1">
               {tabs.map(tab => (
                 <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id as any)}
-                  className={`flex items-center gap-2 px-6 py-2 rounded-lg font-bold text-sm transition-all ${
-                    activeTab === tab.id 
-                    ? 'bg-primary text-white shadow-sm' 
-                    : 'hover:bg-base-200 opacity-60'
+                  className={`flex items-center gap-2 px-5 py-2 rounded-lg font-bold text-sm transition-all ${
+                    activeTab === tab.id
+                    ? 'bg-white text-slate-800 shadow-sm'
+                    : 'text-slate-500 hover:bg-slate-200'
                   }`}
                 >
                   {tab.icon}
@@ -102,7 +100,6 @@ export default function Organisation({ defaultTab = 'rayons' }: OrganisationProp
         </div>
       </div>
 
-      {/* Main Content (Style Ventes.tsx) */}
       <div className="max-w-full mx-auto">
          {(currentTab.config as any).isConfigOption ? (
             <ConfigOptionManager 

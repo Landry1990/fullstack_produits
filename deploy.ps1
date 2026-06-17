@@ -82,7 +82,7 @@ function Deploy-Backend {
     }
 
     Write-Host "  Copie des fichiers..." -ForegroundColor Yellow
-    docker cp backend/api/serializers.py fullstack_produits-backend-1:/app/api/serializers.py
+    docker cp backend/api/serializers/. fullstack_produits-backend-1:/app/api/serializers/
     docker cp backend/api/urls.py fullstack_produits-backend-1:/app/api/urls.py
     docker cp backend/api/views/substances.py fullstack_produits-backend-1:/app/api/views/substances.py
     docker cp backend/api/views/meds_reference.py fullstack_produits-backend-1:/app/api/views/meds_reference.py
@@ -93,6 +93,9 @@ function Deploy-Backend {
     docker cp backend/api/services/finance_predictions.py fullstack_produits-backend-1:/app/api/services/finance_predictions.py
     docker cp backend/api/services/finance_marges.py fullstack_produits-backend-1:/app/api/services/finance_marges.py
     docker cp backend/api/services/finance_formatters.py fullstack_produits-backend-1:/app/api/services/finance_formatters.py
+    docker cp backend/api/idempotency.py fullstack_produits-backend-1:/app/api/idempotency.py
+    docker cp backend/api/views/commandes/commandes.py fullstack_produits-backend-1:/app/api/views/commandes/commandes.py
+    docker cp backend/api/views/ventes/factures.py fullstack_produits-backend-1:/app/api/views/ventes/factures.py
 
     if ($IncludeModels) {
         Write-Host "  Migration..." -ForegroundColor Yellow

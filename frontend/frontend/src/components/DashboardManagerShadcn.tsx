@@ -69,7 +69,7 @@ function KPIsShadcn({ kpis }: { kpis: { jour: KPIData; semaine: KPIData; mois: K
   ];
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-5">
       {items.map((item) => {
         const data = kpis[item.key];
         const isSuccess = data.rate >= 100 && data.target > 0;
@@ -94,21 +94,21 @@ function KPIsShadcn({ kpis }: { kpis: { jour: KPIData; semaine: KPIData; mois: K
               </div>
             )}
 
-            <CardContent className="p-6 relative z-10">
-              <div className="flex items-start gap-4">
-                <div className={`${item.iconBg} rounded-2xl p-3.5 shrink-0`}>
-                  <Icon className={`size-6 ${item.iconColor}`} />
+            <CardContent className="p-4 lg:p-6 relative z-10">
+              <div className="flex items-start gap-3 lg:gap-4">
+                <div className={`${item.iconBg} rounded-xl lg:rounded-2xl p-2.5 lg:p-3.5 shrink-0`}>
+                  <Icon className={`size-5 lg:size-6 ${item.iconColor}`} />
                 </div>
 
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-slate-500 uppercase tracking-wide">
+                  <p className="text-xs lg:text-sm font-medium text-slate-500 uppercase tracking-wide">
                     {item.label}
                   </p>
-                  <div className="mt-1 flex items-baseline gap-2">
-                    <span className={`text-3xl font-bold tracking-tight ${isSuccess ? 'text-emerald-600' : 'text-slate-900'}`}>
+                  <div className="mt-1 flex flex-wrap items-baseline gap-1.5 lg:gap-2">
+                    <span className={`text-2xl lg:text-3xl font-bold tracking-tight ${isSuccess ? 'text-emerald-600' : 'text-slate-900'}`}>
                       {fmt(data.actual)}
                     </span>
-                    <Badge variant={isSuccess ? 'default' : item.badgeVariant}>
+                    <Badge variant={isSuccess ? 'default' : item.badgeVariant} className="text-[10px] lg:text-xs">
                       {Math.round(data.rate)}%
                     </Badge>
                   </div>
@@ -336,10 +336,10 @@ function HeaderShadcn({
     <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
       <div>
         <div className="flex items-center gap-3 mb-1">
-          <h1 className="text-2xl font-bold text-slate-900 tracking-tight">
+          <h1 className="text-xl lg:text-2xl font-bold text-slate-900 tracking-tight">
             Tableau de Bord
           </h1>
-          <Badge variant="outline" className="text-[10px] uppercase tracking-wider font-semibold bg-white">
+          <Badge variant="outline" className="hidden lg:inline-flex text-[10px] uppercase tracking-wider font-semibold bg-white">
             shadcn/ui
           </Badge>
         </div>
@@ -352,7 +352,7 @@ function HeaderShadcn({
         <Button variant="ghost" size="icon" onClick={onOpenSettings} className="h-10 w-10 rounded-xl">
           <Settings className="size-5 text-slate-500" />
         </Button>
-        <Button onClick={onOpenObjective} className="gap-2 rounded-xl">
+        <Button onClick={onOpenObjective} className="gap-2 rounded-xl px-3 lg:px-4">
           <PlusCircle className="size-5" />
           <span className="hidden sm:inline">Fixer un Objectif</span>
         </Button>

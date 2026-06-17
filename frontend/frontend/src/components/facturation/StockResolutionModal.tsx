@@ -81,23 +81,23 @@ export default function StockResolutionModal({
       isOpen={isOpen}
       onClose={onClose}
       title={t('stock_resolution.title')}
-      icon={<ShieldAlert className="h-6 w-6 text-warning" />}
+      icon={<ShieldAlert className="h-6 w-6 text-amber-500" />}
       maxWidth="max-w-5xl"
       footer={
         <div className="flex justify-between items-center w-full">
-            <div className="text-xs text-base-content/50 italic px-4">
+            <div className="text-xs text-slate-400 italic px-4">
                 {hasForce && (
-                    <span className="flex items-center gap-1.5 text-warning font-bold">
+                    <span className="flex items-center gap-1.5 text-amber-600 font-bold">
                         <ShieldAlert className="size-3.5" />
                         {t('stock_resolution.force_warning')}
                     </span>
                 )}
             </div>
             <div className="flex gap-3">
-                <button className="btn btn-ghost" onClick={onClose}>
+                <button className="inline-flex items-center justify-center h-9 px-4 rounded-lg text-sm font-medium text-slate-700 bg-white border border-slate-200 hover:bg-slate-50 transition-colors" onClick={onClose}>
                     {t('stock_resolution.cancel_and_edit_cart')}
                 </button>
-                <button className="btn btn-primary px-8 gap-2" onClick={handleConfirm}>
+                <button className="inline-flex items-center justify-center h-9 px-8 rounded-lg text-sm font-semibold bg-emerald-600 text-white shadow-sm hover:bg-emerald-700 transition-colors gap-2" onClick={handleConfirm}>
                     {t('stock_resolution.validate_and_cash')}
                 </button>
             </div>
@@ -105,93 +105,93 @@ export default function StockResolutionModal({
       }
     >
       <div className="p-6">
-        <div className="alert alert-warning shadow-sm mb-6 flex flex-col md:flex-row gap-4 items-start md:items-center justify-between bg-warning/10 border-warning/20">
-            <div className="flex items-center gap-2 text-warning-content">
+        <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-6 flex flex-col md:flex-row gap-4 items-start md:items-center justify-between">
+            <div className="flex items-center gap-2 text-amber-800">
                 <ShieldAlert className="h-5 w-5" />
                 <span className="font-medium">{t('stock_resolution.message')}</span>
             </div>
             <div className="flex gap-2">
-                <button 
+                <button
                     onClick={() => handleBulkAction('reduce')}
-                    className="btn btn-xs btn-outline btn-warning gap-1"
+                    className="inline-flex items-center justify-center h-7 px-3 rounded-lg text-xs font-medium border border-amber-200 text-amber-700 bg-white hover:bg-amber-50 transition-colors gap-1"
                 >
                     <ArrowDown className="size-3" /> {t('stock_resolution.reduce_all')}
                 </button>
-                <button 
+                <button
                     onClick={() => handleBulkAction('promis')}
-                    className="btn btn-xs btn-warning gap-1"
+                    className="inline-flex items-center justify-center h-7 px-3 rounded-lg text-xs font-medium bg-amber-500 text-white hover:bg-amber-600 transition-colors gap-1"
                 >
                     <History className="size-3" /> {t('stock_resolution.promis_all')}
                 </button>
-                <button 
+                <button
                     onClick={() => handleBulkAction('force')}
-                    className="btn btn-xs btn-error gap-1 shadow-sm"
+                    className="inline-flex items-center justify-center h-7 px-3 rounded-lg text-xs font-medium bg-red-600 text-white hover:bg-red-700 transition-colors gap-1 shadow-sm"
                 >
                     <Zap className="size-3" /> {t('stock_resolution.force_all')}
                 </button>
             </div>
         </div>
 
-        <div className="overflow-x-auto border border-base-200 rounded-2xl mb-6 bg-base-100">
-          <table className="table w-full">
+        <div className="overflow-x-auto border border-slate-200 rounded-2xl mb-6 bg-white">
+          <table className="w-full text-left border-collapse">
             <thead>
-              <tr className="bg-base-200/50">
-                <th className="text-[10px] font-black uppercase tracking-widest opacity-40">{t('common:product')}</th>
-                <th className="text-center text-[10px] font-black uppercase tracking-widest opacity-40">{t('stock_resolution.demand')}</th>
-                <th className="text-center text-[10px] font-black uppercase tracking-widest opacity-40">{t('stock_resolution.stock')}</th>
-                <th className="text-center text-[10px] font-black uppercase tracking-widest opacity-40">{t('stock_resolution.missing')}</th>
-                <th className="text-center text-[10px] font-black uppercase tracking-widest opacity-40 py-4">{t('stock_resolution.actions')}</th>
+              <tr className="bg-slate-100/50">
+                <th className="text-[10px] font-black uppercase tracking-widest text-slate-400 px-4 py-3">{t('common:product')}</th>
+                <th className="text-center text-[10px] font-black uppercase tracking-widest text-slate-400 px-4 py-3">{t('stock_resolution.demand')}</th>
+                <th className="text-center text-[10px] font-black uppercase tracking-widest text-slate-400 px-4 py-3">{t('stock_resolution.stock')}</th>
+                <th className="text-center text-[10px] font-black uppercase tracking-widest text-slate-400 px-4 py-3">{t('stock_resolution.missing')}</th>
+                <th className="text-center text-[10px] font-black uppercase tracking-widest text-slate-400 px-4 py-3">{t('stock_resolution.actions')}</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-base-100">
+            <tbody className="divide-y divide-slate-50">
               {conflicts.map((item) => {
                 const stock = item.stock || 0
                 const manquant = item.qty - stock
                 const currentAction = resolutionActions[item.id] || 'promis'
-                
+
                 return (
-                  <tr key={item.id} className="hover:bg-base-200/20 transition-colors">
-                    <td>
+                  <tr key={item.id} className="hover:bg-slate-50/50 transition-colors">
+                    <td className="px-4 py-3">
                         <div className="flex items-center gap-3">
-                            <div className="size-8 rounded-lg bg-base-200 flex items-center justify-center">
-                                <Package className="size-4 text-base-content/30" />
+                            <div className="size-8 rounded-lg bg-slate-100 flex items-center justify-center">
+                                <Package className="size-4 text-slate-400" />
                             </div>
                             <div className="flex flex-col">
-                                <span className="font-bold text-sm">{item.nom}</span>
-                                <span className="text-[10px] opacity-40 font-mono tracking-tighter">{item.cip}</span>
+                                <span className="font-bold text-sm text-slate-800">{item.nom}</span>
+                                <span className="text-[10px] text-slate-400 font-mono tracking-tighter">{item.cip}</span>
                             </div>
                         </div>
                     </td>
-                    <td className="text-center font-mono font-bold">{item.qty}</td>
-                    <td className="text-center font-mono opacity-60">{stock}</td>
-                    <td className="text-center">
-                        <span className="font-mono font-bold text-error bg-error/10 px-2 py-0.5 rounded text-xs">
+                    <td className="text-center font-mono font-bold text-slate-700 px-4 py-3">{item.qty}</td>
+                    <td className="text-center font-mono text-slate-500 px-4 py-3">{stock}</td>
+                    <td className="text-center px-4 py-3">
+                        <span className="font-mono font-bold text-red-600 bg-red-50 px-2 py-0.5 rounded text-xs">
                             -{manquant}
                         </span>
                     </td>
-                    <td className="text-center">
-                        <div className="inline-flex p-1 bg-base-200 rounded-xl gap-1">
-                            <button 
+                    <td className="text-center px-4 py-3">
+                        <div className="inline-flex p-1 bg-slate-100 rounded-xl gap-1">
+                            <button
                                 onClick={() => handleSetAction(item.id, 'reduce')}
-                                className={`btn btn-xs border-none h-8 px-3 rounded-lg flex items-center gap-1.5 transition-all ${
-                                    currentAction === 'reduce' ? 'bg-base-100 shadow-sm text-primary font-bold' : 'btn-ghost opacity-40'
+                                className={`inline-flex items-center justify-center h-8 px-3 rounded-lg text-xs font-medium transition-all gap-1.5 border-none ${
+                                    currentAction === 'reduce' ? 'bg-white shadow-sm text-emerald-600 font-bold' : 'text-slate-400 hover:bg-white/50'
                                 }`}
                                 title={t('stock_resolution.reduce')}
                             >
                                 <ArrowDown className="size-3" /> {t('stock_resolution.reduce')}
                             </button>
-                            <button 
+                            <button
                                 onClick={() => handleSetAction(item.id, 'promis')}
-                                className={`btn btn-xs border-none h-8 px-3 rounded-lg flex items-center gap-1.5 transition-all ${
-                                    currentAction === 'promis' ? 'bg-info text-info-content shadow-md font-bold' : 'btn-ghost opacity-40'
+                                className={`inline-flex items-center justify-center h-8 px-3 rounded-lg text-xs font-medium transition-all gap-1.5 border-none ${
+                                    currentAction === 'promis' ? 'bg-blue-500 text-white shadow-md font-bold' : 'text-slate-400 hover:bg-white/50'
                                 }`}
                             >
                                 <History className="size-3" /> {t('stock_resolution.promised')}
                             </button>
-                            <button 
+                            <button
                                 onClick={() => handleSetAction(item.id, 'force')}
-                                className={`btn btn-xs border-none h-8 px-3 rounded-lg flex items-center gap-1.5 transition-all ${
-                                    currentAction === 'force' ? 'bg-error text-error-content shadow-md font-bold' : 'btn-ghost opacity-40'
+                                className={`inline-flex items-center justify-center h-8 px-3 rounded-lg text-xs font-medium transition-all gap-1.5 border-none ${
+                                    currentAction === 'force' ? 'bg-red-600 text-white shadow-md font-bold' : 'text-slate-400 hover:bg-white/50'
                                 }`}
                             >
                                 <Zap className="size-3" /> {t('stock_resolution.force')}
@@ -206,31 +206,31 @@ export default function StockResolutionModal({
         </div>
 
         {hasPromis && (
-            <div className="p-6 bg-info/5 rounded-2xl border border-info/10 shadow-inner space-y-4">
-                <div className="flex items-center gap-2 text-info mb-1">
+            <div className="p-6 bg-blue-50/50 rounded-2xl border border-blue-100 shadow-inner space-y-4">
+                <div className="flex items-center gap-2 text-blue-600 mb-1">
                     <History className="size-4" />
                     <h4 className="text-xs font-black uppercase tracking-widest">{t('promis:details')}</h4>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div className="form-control w-full">
-                        <label className="label py-1">
-                            <span className="label-text-alt font-bold uppercase text-base-content/40">{t('stock_resolution.client_name')} <span className="lowercase font-normal text-base-content/50">({t('stock_resolution.optional')})</span></span>
+                    <div className="w-full">
+                        <label className="block py-1 text-xs font-bold uppercase text-slate-400">
+                            {t('stock_resolution.client_name')} <span className="lowercase font-normal text-slate-400">({t('stock_resolution.optional')})</span>
                         </label>
-                        <input 
-                            type="text" 
-                            className="input input-bordered focus:input-info rounded-xl bg-base-100" 
+                        <input
+                            type="text"
+                            className="w-full h-10 px-3 rounded-xl border border-slate-200 bg-white text-slate-700 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none"
                             value={promisClientName}
                             onChange={(e) => setPromisClientName(e.target.value)}
                             placeholder={t('client.manual_placeholder')}
                         />
                     </div>
-                    <div className="form-control w-full">
-                        <label className="label py-1">
-                            <span className="label-text-alt font-bold uppercase text-base-content/40">{t('stock_resolution.client_phone_for_promised_ticket')}</span>
+                    <div className="w-full">
+                        <label className="block py-1 text-xs font-bold uppercase text-slate-400">
+                            {t('stock_resolution.client_phone_for_promised_ticket')}
                         </label>
-                        <input 
-                            type="text" 
-                            className="input input-bordered focus:input-info rounded-xl bg-base-100" 
+                        <input
+                            type="text"
+                            className="w-full h-10 px-3 rounded-xl border border-slate-200 bg-white text-slate-700 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none"
                             value={promisPhone}
                             onChange={(e) => setPromisPhone(e.target.value)}
                             placeholder={t('stock_resolution.phone_number_placeholder')}

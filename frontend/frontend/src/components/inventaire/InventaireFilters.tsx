@@ -48,38 +48,38 @@ export const InventaireFilters: React.FC<InventaireFiltersProps> = ({ filters, o
     }, []);
 
     return (
-        <div className="bg-base-100 p-4 rounded-xl shadow-sm border border-base-300 space-y-4">
+        <div className="bg-white p-4 rounded-xl shadow-sm border border-slate-200 space-y-4">
             {/* Top Row: Search & Dates */}
             <div className="flex flex-col md:flex-row gap-4">
                 {/* Search Bar */}
                 <div className="flex-1 relative">
                     <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                        <Search className="h-5 w-5 text-base-content/40" />
+                        <Search className="h-5 w-5 text-slate-400" />
                     </div>
                     <input
                         type="text"
                         placeholder={t('inventaire.filters.search_placeholder')}
-                        className="input input-bordered pl-10 w-full bg-base-100 focus:border-primary focus:ring-1 focus:ring-primary"
+                        className="w-full h-10 pl-10 pr-3 rounded-xl border border-slate-200 bg-white text-sm text-slate-700 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 outline-none transition-all"
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
                     />
                 </div>
 
                 {/* Date Range */}
-                <div className="flex items-center gap-2 bg-base-100 p-1.5 rounded-lg border border-base-300 px-3">
-                    <Calendar className="h-5 w-5 text-base-content/60" />
+                <div className="flex items-center gap-2 bg-white p-1.5 rounded-lg border border-slate-200 px-3">
+                    <Calendar className="h-5 w-5 text-slate-400" />
                     <input
                         type="date"
                         value={startDate}
                         onChange={(e) => setStartDate(e.target.value)}
-                        className="bg-transparent border-none text-sm focus:ring-0 px-2 outline-none text-base-content"
+                        className="bg-transparent border-none text-sm focus:ring-0 px-2 outline-none text-slate-700"
                     />
-                    <span className="text-base-content/40">-</span>
+                    <span className="text-slate-300">-</span>
                     <input
                         type="date"
                         value={endDate}
                         onChange={(e) => setEndDate(e.target.value)}
-                        className="bg-transparent border-none text-sm focus:ring-0 px-2 outline-none text-base-content"
+                        className="bg-transparent border-none text-sm focus:ring-0 px-2 outline-none text-slate-700"
                     />
                 </div>
             </div>
@@ -90,12 +90,12 @@ export const InventaireFilters: React.FC<InventaireFiltersProps> = ({ filters, o
                     {/* Status Filter */}
                     <div className="relative">
                         <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                            <Filter className="h-4 w-4 text-base-content/40" />
+                            <Filter className="h-4 w-4 text-slate-400" />
                         </div>
                         <select
                             value={statusFilter}
                             onChange={(e) => setStatusFilter(e.target.value)}
-                            className="select select-bordered w-full pl-10 select-sm"
+                            className="w-full h-9 pl-10 pr-3 rounded-xl border border-slate-200 bg-white text-sm font-medium text-slate-700 focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 transition-all"
                         >
                             <option value="">{t('inventaire.filters.status_all')}</option>
                             <option value="EN_COURS">{t('inventaire.status.draft', { defaultValue: 'En cours' })}</option>
@@ -106,12 +106,12 @@ export const InventaireFilters: React.FC<InventaireFiltersProps> = ({ filters, o
                     {/* Creator Filter */}
                     <div className="relative">
                         <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                            <User className="h-4 w-4 text-base-content/40" />
+                            <User className="h-4 w-4 text-slate-400" />
                         </div>
                         <select
                             value={creatorFilter || ''}
                             onChange={(e) => setCreatorFilter(e.target.value)}
-                            className="select select-bordered w-full pl-10 select-sm"
+                            className="w-full h-9 pl-10 pr-3 rounded-xl border border-slate-200 bg-white text-sm font-medium text-slate-700 focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 transition-all"
                         >
                             <option value="">{t('inventaire.filters.creators_all')}</option>
                             {users.map(u => (
@@ -125,12 +125,12 @@ export const InventaireFilters: React.FC<InventaireFiltersProps> = ({ filters, o
                     {/* Ordering Filter */}
                     <div className="relative">
                         <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                            <ArrowUpDown className="h-4 w-4 text-base-content/40" />
+                            <ArrowUpDown className="h-4 w-4 text-slate-400" />
                         </div>
                         <select
                             value={ordering}
                             onChange={(e) => setOrdering(e.target.value)}
-                            className="select select-bordered w-full pl-10 select-sm"
+                            className="w-full h-9 pl-10 pr-3 rounded-xl border border-slate-200 bg-white text-sm font-medium text-slate-700 focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 transition-all"
                         >
                             <option value="-date">{t('inventaire.filters.sort_date_desc', 'Plus récent')}</option>
                             <option value="date">{t('inventaire.filters.sort_date_asc', 'Plus ancien')}</option>
@@ -144,11 +144,11 @@ export const InventaireFilters: React.FC<InventaireFiltersProps> = ({ filters, o
                 </div>
 
                 {/* Actions Buttons */}
-                <div className="flex gap-2 shrink-0 border-l border-base-300 pl-4">
+                <div className="flex gap-2 shrink-0 border-l border-slate-200 pl-4">
                     {onDeleteDrafts && (
                         <button
                             onClick={onDeleteDrafts}
-                            className="btn btn-ghost btn-sm text-error hover:bg-error/10"
+                            className="inline-flex items-center justify-center h-9 w-9 rounded-lg text-red-500 hover:bg-red-50 transition-colors"
                             title={t('inventaire.filters.delete_drafts', { defaultValue: 'Supprimer les brouillons' })}
                         >
                             <Trash2 className="size-5" />
@@ -157,7 +157,7 @@ export const InventaireFilters: React.FC<InventaireFiltersProps> = ({ filters, o
 
                     <button
                         onClick={onRefresh}
-                        className="btn btn-ghost btn-sm text-base-content/60"
+                        className="inline-flex items-center justify-center h-9 w-9 rounded-lg text-slate-500 hover:bg-slate-100 transition-colors"
                         title={t('common:refresh', { defaultValue: 'Actualiser' })}
                     >
                         <RefreshCw className="size-5" />

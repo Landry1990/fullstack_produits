@@ -35,23 +35,23 @@ export default function Creances() {
     }, [data.selectedIds, data.creances]);
 
     return (
-        <div className="min-h-screen bg-base-200 p-6 space-y-6 font-sans overflow-auto">
+        <div className="min-h-screen bg-slate-100 p-6 space-y-6 font-sans overflow-auto">
             <Toaster position="top-center" />
 
             {/* Header Area */}
             <div className="flex flex-col gap-6">
-                <div className="bg-base-100 rounded-xl shadow-sm border border-base-300 flex flex-col">
-                    <div className="p-6 border-b border-base-200 flex justify-between items-center bg-base-100/50">
+                <div className="bg-white rounded-xl shadow-sm border border-slate-200 flex flex-col">
+                    <div className="p-6 border-b border-slate-100 flex justify-between items-center bg-white/50">
                         <div>
                             <div className="flex items-center gap-3">
-                                <div className="p-2 bg-primary/10 text-primary rounded-xl">
+                                <div className="p-2 bg-emerald-50 text-emerald-600 rounded-xl">
                                     <Wallet className="size-6" />
                                 </div>
                                 <div>
-                                    <h1 className="text-2xl font-black text-base-content tracking-tight">
+                                    <h1 className="text-2xl font-black text-slate-800 tracking-tight">
                                         {t('creances:title')}
                                     </h1>
-                                    <p className="text-xs font-bold text-base-content/50 uppercase tracking-widest mt-0.5">
+                                    <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mt-0.5">
                                         {t('creances:subtitle')}
                                     </p>
                                 </div>
@@ -62,17 +62,17 @@ export default function Creances() {
                         {data.filters.selectedClient && data.selectedIds.length > 0 && !data.filters.showHistory && (
                             <div className="flex items-center gap-4 animate-in fade-in zoom-in duration-300">
                                 <div className="flex flex-col items-end">
-                                    <span className="text-[10px] font-black uppercase tracking-widest text-base-content/50">{t('creances:selection')}</span>
-                                    <span className="text-sm font-black text-primary">{t('creances:invoices_count', { count: data.selectedIds.length })}</span>
+                                    <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">{t('creances:selection')}</span>
+                                    <span className="text-sm font-black text-emerald-600">{t('creances:invoices_count', { count: data.selectedIds.length })}</span>
                                 </div>
-                                <div className="h-8 w-px bg-base-200"></div>
+                                <div className="h-8 w-px bg-slate-200"></div>
                                 <div className="flex flex-col items-end mr-2">
-                                    <span className="text-[10px] font-black uppercase tracking-widest text-base-content/50">{t('creances:total_due')}</span>
-                                    <span className="text-sm font-black text-base-content">{formatCurrency(Math.round(bulkTotalAmount))}</span>
+                                    <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">{t('creances:total_due')}</span>
+                                    <span className="text-sm font-black text-slate-800">{formatCurrency(Math.round(bulkTotalAmount))}</span>
                                 </div>
-                                <button 
-                                    onClick={actions.actions.handleBulkPayment} 
-                                    className="btn btn-primary btn-sm px-6 font-black uppercase tracking-widest text-[10px] shadow-lg shadow-indigo-200"
+                                <button
+                                    onClick={actions.actions.handleBulkPayment}
+                                    className="inline-flex items-center justify-center h-8 px-6 rounded-lg text-xs font-black uppercase tracking-widest bg-emerald-600 text-white shadow-lg shadow-emerald-200 hover:bg-emerald-700 transition-colors"
                                 >
                                     <DollarSign className="size-4 mr-2" />
                                     {t('creances:pay_selection')}
@@ -81,7 +81,7 @@ export default function Creances() {
                         )}
                     </div>
 
-                    <CreancesFilters 
+                    <CreancesFilters
                         clients={data.clients}
                         selectedClient={data.filters.selectedClient}
                         onClientChange={data.setFilters.setSelectedClient}
@@ -103,7 +103,7 @@ export default function Creances() {
             </div>
 
             {/* Stats Dashboard */}
-            <CreancesQuickStats 
+            <CreancesQuickStats
                 totalDue={data.totals.total}
                 totalPaid={data.totals.paye}
                 totalRemaining={data.totals.reste}
@@ -111,8 +111,8 @@ export default function Creances() {
             />
 
             {/* Main Content Table Card */}
-            <div className="bg-base-100 rounded-xl shadow-sm border border-base-300 overflow-hidden flex-1 relative min-h-[500px]">
-                <CreancesTable 
+            <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden flex-1 relative min-h-[500px]">
+                <CreancesTable
                     mode={data.filters.selectedClient ? 'invoices' : 'clients'}
                     groupedClients={data.groupedClients}
                     filteredCreances={data.filteredCreances}
@@ -128,7 +128,7 @@ export default function Creances() {
                         }
                     }}
                     onSelectOne={(id) => {
-                        data.setSelectedIds(prev => 
+                        data.setSelectedIds(prev =>
                             prev.includes(id) ? prev.filter(item => item !== id) : [...prev, id]
                         );
                     }}
@@ -145,7 +145,7 @@ export default function Creances() {
             {/* Error handling */}
             {data.error && (
                 <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50">
-                    <div className="px-4 py-3 rounded-xl bg-error/10 border border-red-200 text-red-800 text-sm font-medium shadow-sm">
+                    <div className="px-4 py-3 rounded-xl bg-red-50 border border-red-200 text-red-800 text-sm font-medium shadow-sm">
                         <span>{data.error}</span>
                     </div>
                 </div>

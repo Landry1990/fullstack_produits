@@ -134,22 +134,22 @@ export default function ClassementVendeurs() {
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-base-content flex items-center gap-2">
+          <h1 className="text-2xl font-bold text-slate-800 flex items-center gap-2">
             🏆 {t('sellers:ranking.title')}
           </h1>
-          <p className="text-base-content/60">
+          <p className="text-slate-500 text-sm">
             {t('sellers:ranking.subtitle')}
           </p>
         </div>
         <div className="flex gap-2">
           <input
             type="month"
-            className="input input-bordered input-sm"
+            className="h-9 px-3 rounded-xl border border-slate-200 bg-white text-xs font-bold text-slate-700 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all"
             value={mois}
             onChange={(e) => setMois(e.target.value)}
           />
           <select
-            className="select select-bordered select-sm"
+            className="h-9 px-3 rounded-xl border border-slate-200 bg-white text-xs font-bold text-slate-700 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all appearance-none"
             value={periode}
             onChange={(e) => setPeriode(e.target.value as 'mois' | 'trimestre' | 'annee')}
           >
@@ -166,31 +166,31 @@ export default function ClassementVendeurs() {
           {ranking.data.slice(0, 3).map((v, i) => (
             <div 
               key={v.vendeur_id}
-              className={`card shadow-lg cursor-pointer hover:shadow-xl transition-shadow ${
+              className={`rounded-2xl shadow-lg cursor-pointer hover:shadow-xl transition-shadow p-5 ${
                 i === 0 ? 'bg-gradient-to-br from-yellow-400 to-yellow-600 text-white' :
                 i === 1 ? 'bg-gradient-to-br from-gray-300 to-gray-500 text-white' :
                 'bg-gradient-to-br from-orange-400 to-orange-600 text-white'
               }`}
               onClick={() => setSelectedVendeur(v.vendeur_id)}
             >
-              <div className="card-body p-4">
-                <div className="flex justify-between items-start">
-                  <div>
-                    <p className="text-4xl font-bold">{getMedal(v.rang)}</p>
-                    <h3 className="text-lg font-semibold mt-2">{v.vendeur}</h3>
-                  </div>
-                  {v.evolution !== null && v.evolution !== undefined && (
-                    <div className={`badge ${v.evolution >= 0 ? 'badge-success' : 'badge-error'}`}>
-                      {v.evolution >= 0 ? '+' : ''}{v.evolution}%
-                    </div>
-                  )}
+              <div className="flex justify-between items-start">
+                <div>
+                  <p className="text-4xl font-bold">{getMedal(v.rang)}</p>
+                  <h3 className="text-lg font-semibold mt-2">{v.vendeur}</h3>
                 </div>
-                <div className="mt-4 space-y-1">
-                  <p className="text-2xl font-bold">{formatMoney(v.chiffre_affaires, t('common:currency'))}</p>
-                  <p className="text-sm opacity-80">
-                    {v.nbre_ventes} ventes · Panier: {formatMoney(v.panier_moyen, t('common:currency'))}
-                  </p>
-                </div>
+                {v.evolution !== null && v.evolution !== undefined && (
+                  <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold ${
+                    v.evolution >= 0 ? 'bg-white/20 text-white' : 'bg-black/20 text-white'
+                  }`}>
+                    {v.evolution >= 0 ? '+' : ''}{v.evolution}%
+                  </span>
+                )}
+              </div>
+              <div className="mt-4 space-y-1">
+                <p className="text-2xl font-bold">{formatMoney(v.chiffre_affaires, t('common:currency'))}</p>
+                <p className="text-sm opacity-80">
+                  {v.nbre_ventes} ventes · Panier: {formatMoney(v.panier_moyen, t('common:currency'))}
+                </p>
               </div>
             </div>
           ))}
@@ -200,104 +200,103 @@ export default function ClassementVendeurs() {
       {/* Main Content */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Ranking Table */}
-        <div className="card bg-base-100 shadow-lg">
-          <div className="card-body">
-            <h3 className="text-lg font-semibold mb-4">
-              {t('sellers:ranking.table_title')}
-            </h3>
-            {loading ? (
-              <div className="h-64 flex items-center justify-center">
-                <span className="loading loading-spinner loading-lg"></span>
-              </div>
-            ) : ranking && ranking.data.length > 0 ? (
-              <div className="overflow-x-auto max-h-96">
-                <table className="table table-sm table-zebra">
-                  <thead className="sticky top-0 bg-base-100">
-                    <tr>
-                      <th>#</th>
-                      <th>{t('sellers:ranking.seller')}</th>
-                      <th className="text-right">{t('sellers:ranking.sales')}</th>
-                      <th className="text-right">{t('sellers:ranking.revenue')}</th>
-                      <th className="text-right">{t('sellers:ranking.avg_basket')}</th>
-                      <th className="text-right">{t('sellers:ranking.evolution')}</th>
+        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-5">
+          <h3 className="text-base font-bold text-slate-800 mb-4">
+            {t('sellers:ranking.table_title')}
+          </h3>
+          {loading ? (
+            <div className="h-64 flex items-center justify-center">
+              <span className="size-10 border-4 border-slate-200 border-t-blue-500 rounded-full animate-spin"></span>
+            </div>
+          ) : ranking && ranking.data.length > 0 ? (
+            <div className="overflow-x-auto max-h-96">
+              <table className="w-full border-separate border-spacing-0 text-sm">
+                <thead>
+                  <tr className="bg-slate-50 text-[11px] font-black text-slate-400 uppercase tracking-widest">
+                    <th className="sticky top-0 bg-slate-50 py-3 pl-3 text-left border-b border-slate-200">#</th>
+                    <th className="sticky top-0 bg-slate-50 py-3 text-left border-b border-slate-200">{t('sellers:ranking.seller')}</th>
+                    <th className="sticky top-0 bg-slate-50 py-3 text-right border-b border-slate-200">{t('sellers:ranking.sales')}</th>
+                    <th className="sticky top-0 bg-slate-50 py-3 text-right border-b border-slate-200">{t('sellers:ranking.revenue')}</th>
+                    <th className="sticky top-0 bg-slate-50 py-3 text-right border-b border-slate-200">{t('sellers:ranking.avg_basket')}</th>
+                    <th className="sticky top-0 bg-slate-50 py-3 text-right border-b border-slate-200 pr-3">{t('sellers:ranking.evolution')}</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {ranking.data.map((v) => (
+                    <tr 
+                      key={v.vendeur_id}
+                      className={`cursor-pointer transition-colors ${
+                        selectedVendeur === v.vendeur_id ? 'bg-blue-50' : 'hover:bg-slate-50'
+                      }`}
+                      onClick={() => setSelectedVendeur(v.vendeur_id)}
+                    >
+                      <td className="py-2.5 pl-3 font-bold text-slate-700">{getMedal(v.rang)}</td>
+                      <td className="py-2.5 text-slate-700">{v.vendeur}</td>
+                      <td className="py-2.5 text-right text-slate-600">{v.nbre_ventes}</td>
+                      <td className="py-2.5 text-right font-mono text-slate-800 font-bold">{formatMoney(v.chiffre_affaires, t('common:currency'))}</td>
+                      <td className="py-2.5 text-right font-mono text-sm text-slate-600">{formatMoney(v.panier_moyen, t('common:currency'))}</td>
+                      <td className="py-2.5 text-right pr-3">
+                        {v.evolution !== null && v.evolution !== undefined ? (
+                          <span className={`font-bold ${
+                            v.evolution >= 0 ? 'text-emerald-600' : 'text-red-500'
+                          }`}>
+                            {v.evolution >= 0 ? '+' : ''}{v.evolution}%
+                          </span>
+                        ) : '-'}
+                      </td>
                     </tr>
-                  </thead>
-                  <tbody>
-                    {ranking.data.map((v) => (
-                      <tr 
-                        key={v.vendeur_id}
-                        className={`cursor-pointer hover:bg-base-200 ${selectedVendeur === v.vendeur_id ? 'bg-primary/10' : ''}`}
-                        onClick={() => setSelectedVendeur(v.vendeur_id)}
-                      >
-                        <td className="font-bold">{getMedal(v.rang)}</td>
-                        <td>{v.vendeur}</td>
-                        <td className="text-right">{v.nbre_ventes}</td>
-                        <td className="text-right font-mono">{formatMoney(v.chiffre_affaires, t('common:currency'))}</td>
-                        <td className="text-right font-mono text-sm">{formatMoney(v.panier_moyen, t('common:currency'))}</td>
-                        <td className="text-right">
-                          {v.evolution !== null && v.evolution !== undefined ? (
-                            <span className={v.evolution >= 0 ? 'text-success' : 'text-error'}>
-                              {v.evolution >= 0 ? '+' : ''}{v.evolution}%
-                            </span>
-                          ) : '-'}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            ) : (
-              <div className="h-64 flex items-center justify-center text-base-content/50">
-                {t('sellers:ranking.no_data')}
-              </div>
-            )}
-          </div>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <div className="h-64 flex items-center justify-center text-slate-400">
+              {t('sellers:ranking.no_data')}
+            </div>
+          )}
         </div>
 
         {/* Evolution Chart */}
-        <div className="card bg-base-100 shadow-lg">
-          <div className="card-body">
-            <h3 className="text-lg font-semibold mb-4">
-              {t('sellers:ranking.evolution_chart')}
-            </h3>
-            {chartData.length > 0 ? (
-              <ResponsiveContainer width="100%" height={350}>
-                <LineChart data={chartData}>
-                  <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
-                  <XAxis dataKey="label" fontSize={11} />
-                  <YAxis tickFormatter={(v: number) => `${(v / 1000).toFixed(0)}k`} fontSize={11} />
-                  <Tooltip formatter={(value: number) => formatMoney(value, t('common:currency'))} />
-                  <Legend />
-                  {evolutionData.map((series, index) => (
-                    <Line 
-                        key={series.vendeur_id}
-                        type="monotone" 
-                        dataKey={series.vendeur} 
-                        name={series.vendeur} 
-                        stroke={COLORS[index % COLORS.length]} 
-                        strokeWidth={2}
-                        dot={false}
-                        opacity={selectedVendeur === null || selectedVendeur === series.vendeur_id ? 1 : 0.2}
-                    />
-                  ))}
-                </LineChart>
-              </ResponsiveContainer>
-            ) : (
-              <div className="h-80 flex items-center justify-center text-base-content/50">
-                {t('common:loading')}
-              </div>
-            )}
-          </div>
+        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-5">
+          <h3 className="text-base font-bold text-slate-800 mb-4">
+            {t('sellers:ranking.evolution_chart')}
+          </h3>
+          {chartData.length > 0 ? (
+            <ResponsiveContainer width="100%" height={350}>
+              <LineChart data={chartData}>
+                <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
+                <XAxis dataKey="label" fontSize={11} />
+                <YAxis tickFormatter={(v: number) => `${(v / 1000).toFixed(0)}k`} fontSize={11} />
+                <Tooltip formatter={(value: number) => formatMoney(value, t('common:currency'))} />
+                <Legend />
+                {evolutionData.map((series, index) => (
+                  <Line 
+                    key={series.vendeur_id}
+                    type="monotone" 
+                    dataKey={series.vendeur} 
+                    name={series.vendeur} 
+                    stroke={COLORS[index % COLORS.length]} 
+                    strokeWidth={2}
+                    dot={false}
+                    opacity={selectedVendeur === null || selectedVendeur === series.vendeur_id ? 1 : 0.2}
+                  />
+                ))}
+              </LineChart>
+            </ResponsiveContainer>
+          ) : (
+            <div className="h-80 flex items-center justify-center text-slate-400">
+              {t('common:loading')}
+            </div>
+          )}
         </div>
       </div>
 
       {/* Bar Chart Comparison (Top 5) */}
       {ranking && ranking.data.length > 0 && (
-        <div className="card bg-base-100 shadow-lg">
-          <div className="card-body">
-            <h3 className="text-lg font-semibold mb-4">
-              {t('sellers:ranking.comparison')}
-            </h3>
+        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-5">
+          <h3 className="text-base font-bold text-slate-800 mb-4">
+            {t('sellers:ranking.comparison')}
+          </h3>
             <ResponsiveContainer width="100%" height={300}>
               <BarChart data={ranking.data.slice(0, 5)} layout="vertical">
                 <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
@@ -311,7 +310,6 @@ export default function ClassementVendeurs() {
                 </Bar>
               </BarChart>
             </ResponsiveContainer>
-          </div>
         </div>
       )}
     </div>

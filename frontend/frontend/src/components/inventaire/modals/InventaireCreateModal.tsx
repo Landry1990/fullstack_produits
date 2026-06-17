@@ -49,96 +49,96 @@ const InventaireCreateModal: React.FC<InventaireCreateModalProps> = ({
     };
 
     return (
-        <div className="modal modal-open">
-            <div className="modal-box max-w-2xl p-0 overflow-hidden rounded-2xl border border-base-300 shadow-2xl">
-                <div className="p-6 border-b border-base-200 bg-base-50 flex items-center gap-4">
-                    <div className="size-12 rounded-xl bg-primary/10 flex items-center justify-center">
-                        <ClipboardIcon className="h-6 w-6 text-primary" />
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
+            <div className="w-full max-w-2xl bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden">
+                <div className="p-6 border-b border-slate-100 bg-slate-50 flex items-center gap-4">
+                    <div className="size-12 rounded-xl bg-emerald-50 flex items-center justify-center">
+                        <ClipboardIcon className="h-6 w-6 text-emerald-600" />
                     </div>
                     <div>
-                        <h3 className="font-bold text-xl text-base-content">{t('inventaire.create.title')}</h3>
-                        <p className="text-sm text-base-content/60 mt-0.5">{t('inventaire.subtitle')}</p>
+                        <h3 className="font-bold text-xl text-slate-800">{t('inventaire.create.title')}</h3>
+                        <p className="text-sm text-slate-500 mt-0.5">{t('inventaire.subtitle')}</p>
                     </div>
                 </div>
-                
+
                 <form onSubmit={handleSubmit} className="p-6 space-y-6">
                     {/* Action Selection */}
                     <div className="space-y-3">
-                        <span className="text-[10px] font-bold text-base-content/40 uppercase tracking-widest pl-1">
+                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest pl-1">
                             {t('inventaire.create.action_title')}
                         </span>
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                            <label className={`flex items-start p-4 rounded-xl border-2 cursor-pointer transition-all duration-200 group ${action === 'VERIFY' ? 'border-primary bg-primary/5 shadow-inner' : 'border-base-200 hover:border-base-300 bg-base-50'}`}>
+                            <label className={`flex items-start p-4 rounded-xl border-2 cursor-pointer transition-all duration-200 group ${action === 'VERIFY' ? 'border-emerald-500 bg-emerald-50 shadow-inner' : 'border-slate-200 hover:border-slate-300 bg-slate-50'}`}>
                                 <div className="flex items-center h-5 mr-3 mt-1">
-                                    <input 
-                                        type="radio" 
-                                        className="radio radio-primary radio-sm" 
-                                        checked={action === 'VERIFY'} 
-                                        onChange={() => setAction('VERIFY')} 
+                                    <input
+                                        type="radio"
+                                        className="w-4 h-4 text-emerald-600 border-slate-300 focus:ring-emerald-500"
+                                        checked={action === 'VERIFY'}
+                                        onChange={() => setAction('VERIFY')}
                                     />
                                 </div>
                                 <div>
-                                    <div className={`font-bold text-sm ${action === 'VERIFY' ? 'text-primary' : 'text-base-content'}`}>{t('inventaire.create.action_verify')}</div>
-                                    <div className="text-[11px] opacity-60 leading-tight mt-1">{t('inventaire.create.action_verify_desc')}</div>
+                                    <div className={`font-bold text-sm ${action === 'VERIFY' ? 'text-emerald-600' : 'text-slate-700'}`}>{t('inventaire.create.action_verify')}</div>
+                                    <div className="text-[11px] text-slate-400 leading-tight mt-1">{t('inventaire.create.action_verify_desc')}</div>
                                 </div>
-                                <Settings2 className={`h-5 w-5 ml-auto opacity-10 group-hover:text-base-content/20 transition-opacity ${action === 'VERIFY' ? 'text-primary text-base-content/20' : ''}`} />
+                                <Settings2 className={`h-5 w-5 ml-auto opacity-20 transition-opacity ${action === 'VERIFY' ? 'text-emerald-600 opacity-40' : ''}`} />
                             </label>
-                            
-                            <label className={`flex items-start p-4 rounded-xl border-2 cursor-pointer transition-all duration-200 group ${action === 'ENTRY' ? 'border-primary bg-primary/5 shadow-inner' : 'border-base-200 hover:border-base-300 bg-base-50'}`}>
+
+                            <label className={`flex items-start p-4 rounded-xl border-2 cursor-pointer transition-all duration-200 group ${action === 'ENTRY' ? 'border-emerald-500 bg-emerald-50 shadow-inner' : 'border-slate-200 hover:border-slate-300 bg-slate-50'}`}>
                                 <div className="flex items-center h-5 mr-3 mt-1">
-                                    <input 
-                                        type="radio" 
-                                        className="radio radio-primary radio-sm" 
-                                        checked={action === 'ENTRY'} 
-                                        onChange={() => setAction('ENTRY')} 
+                                    <input
+                                        type="radio"
+                                        className="w-4 h-4 text-emerald-600 border-slate-300 focus:ring-emerald-500"
+                                        checked={action === 'ENTRY'}
+                                        onChange={() => setAction('ENTRY')}
                                     />
                                 </div>
                                 <div>
-                                    <div className={`font-bold text-sm ${action === 'ENTRY' ? 'text-primary' : 'text-base-content'}`}>{t('inventaire.create.action_entry')}</div>
-                                    <div className="text-[11px] opacity-60 leading-tight mt-1">{t('inventaire.create.action_entry_desc')}</div>
+                                    <div className={`font-bold text-sm ${action === 'ENTRY' ? 'text-emerald-600' : 'text-slate-700'}`}>{t('inventaire.create.action_entry')}</div>
+                                    <div className="text-[11px] text-slate-400 leading-tight mt-1">{t('inventaire.create.action_entry_desc')}</div>
                                 </div>
-                                <Edit3 className={`h-5 w-5 ml-auto opacity-10 group-hover:text-base-content/20 transition-opacity ${action === 'ENTRY' ? 'text-primary text-base-content/20' : ''}`} />
+                                <Edit3 className={`h-5 w-5 ml-auto opacity-20 transition-opacity ${action === 'ENTRY' ? 'text-emerald-600 opacity-40' : ''}`} />
                             </label>
                         </div>
                     </div>
 
                     {/* Stock Type Selection */}
                     <div className="space-y-3">
-                        <span className="text-[10px] font-bold text-base-content/40 uppercase tracking-widest pl-1">
+                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest pl-1">
                             {t('inventaire.create.stock_type_title')}
                         </span>
                         <div className="grid grid-cols-3 gap-3">
-                            <label className={`flex flex-col items-center justify-center p-3 rounded-xl border-2 cursor-pointer transition-all duration-200 ${stockType === 'GLOBAL' ? 'border-primary bg-primary/5' : 'border-base-200 bg-base-50 text-base-content/70 hover:opacity-100'}`}>
-                                <Archive className={`h-5 w-5 mb-2 ${stockType === 'GLOBAL' ? 'text-primary' : 'text-base-content/40'}`} />
+                            <label className={`flex flex-col items-center justify-center p-3 rounded-xl border-2 cursor-pointer transition-all duration-200 ${stockType === 'GLOBAL' ? 'border-emerald-500 bg-emerald-50' : 'border-slate-200 bg-slate-50 text-slate-400'}`}>
+                                <Archive className={`h-5 w-5 mb-2 ${stockType === 'GLOBAL' ? 'text-emerald-600' : 'text-slate-300'}`} />
                                 <input type="radio" className="hidden" checked={stockType === 'GLOBAL'} onChange={() => setStockType('GLOBAL')} />
-                                <span className="text-xs font-bold text-center">{t('inventaire.create.stock_global')}</span>
+                                <span className={`text-xs font-bold text-center ${stockType === 'GLOBAL' ? 'text-emerald-700' : 'text-slate-500'}`}>{t('inventaire.create.stock_global')}</span>
                             </label>
-                            
-                            <label className={`flex flex-col items-center justify-center p-3 rounded-xl border-2 cursor-pointer transition-all duration-200 ${stockType === 'RAYON' ? 'border-primary bg-primary/5' : 'border-base-200 bg-base-50 text-base-content/70 hover:opacity-100'}`}>
-                                <Store className={`h-5 w-5 mb-2 ${stockType === 'RAYON' ? 'text-primary' : 'text-base-content/40'}`} />
+
+                            <label className={`flex flex-col items-center justify-center p-3 rounded-xl border-2 cursor-pointer transition-all duration-200 ${stockType === 'RAYON' ? 'border-emerald-500 bg-emerald-50' : 'border-slate-200 bg-slate-50 text-slate-400'}`}>
+                                <Store className={`h-5 w-5 mb-2 ${stockType === 'RAYON' ? 'text-emerald-600' : 'text-slate-300'}`} />
                                 <input type="radio" className="hidden" checked={stockType === 'RAYON'} onChange={() => setStockType('RAYON')} />
-                                <span className="text-xs font-bold text-center">{t('inventaire.create.stock_rayon')}</span>
+                                <span className={`text-xs font-bold text-center ${stockType === 'RAYON' ? 'text-emerald-700' : 'text-slate-500'}`}>{t('inventaire.create.stock_rayon')}</span>
                             </label>
-                            
-                            <label className={`flex flex-col items-center justify-center p-3 rounded-xl border-2 cursor-pointer transition-all duration-200 ${stockType === 'RESERVE' ? 'border-primary bg-primary/5' : 'border-base-200 bg-base-50 text-base-content/70 hover:opacity-100'}`}>
-                                <Warehouse className={`h-5 w-5 mb-2 ${stockType === 'RESERVE' ? 'text-primary' : 'text-base-content/40'}`} />
+
+                            <label className={`flex flex-col items-center justify-center p-3 rounded-xl border-2 cursor-pointer transition-all duration-200 ${stockType === 'RESERVE' ? 'border-emerald-500 bg-emerald-50' : 'border-slate-200 bg-slate-50 text-slate-400'}`}>
+                                <Warehouse className={`h-5 w-5 mb-2 ${stockType === 'RESERVE' ? 'text-emerald-600' : 'text-slate-300'}`} />
                                 <input type="radio" className="hidden" checked={stockType === 'RESERVE'} onChange={() => setStockType('RESERVE')} />
-                                <span className="text-xs font-bold text-center">{t('inventaire.create.stock_reserve')}</span>
+                                <span className={`text-xs font-bold text-center ${stockType === 'RESERVE' ? 'text-emerald-700' : 'text-slate-500'}`}>{t('inventaire.create.stock_reserve')}</span>
                             </label>
                         </div>
                     </div>
 
                     {/* Category Selection (Only for VERIFY) */}
                     {action === 'VERIFY' && (
-                        <div className="space-y-3 bg-base-50 p-4 rounded-xl border border-base-200 animate-in slide-in-from-top-2 duration-300">
-                             <span className="text-[10px] font-bold text-base-content/40 uppercase tracking-widest block">
+                        <div className="space-y-3 bg-slate-50 p-4 rounded-xl border border-slate-200 animate-in slide-in-from-top-2 duration-300">
+                            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block">
                                 {t('inventaire.create.perimeter_title')}
-                             </span>
-                             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-2">
-                                <div className="form-control w-full">
-                                    <label className="label py-1"><span className="label-text text-[10px] uppercase font-bold text-base-content/50">{t('sidebar.stock.organisation.tabs.rayons', 'Rayon')}</span></label>
-                                    <select 
-                                        className="select select-bordered select-sm w-full rounded-lg bg-base-100"
+                            </span>
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-2">
+                                <div className="space-y-1">
+                                    <label className="block text-[10px] uppercase font-bold text-slate-400">{t('sidebar.stock.organisation.tabs.rayons', 'Rayon')}</label>
+                                    <select
+                                        className="w-full h-9 px-3 rounded-lg border border-slate-200 bg-white text-sm text-slate-700 focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 transition-all"
                                         value={rayonId || ''}
                                         onChange={(e) => setRayonId(e.target.value ? parseInt(e.target.value) : undefined)}
                                     >
@@ -146,10 +146,10 @@ const InventaireCreateModal: React.FC<InventaireCreateModalProps> = ({
                                         {rayons?.map(r => <option key={r.id} value={r.id}>{r.name}</option>)}
                                     </select>
                                 </div>
-                                <div className="form-control w-full">
-                                    <label className="label py-1"><span className="label-text text-[10px] uppercase font-bold text-base-content/50">{t('sidebar.stock.organisation.tabs.groupes', 'Groupe')}</span></label>
-                                    <select 
-                                        className="select select-bordered select-sm w-full rounded-lg bg-base-100"
+                                <div className="space-y-1">
+                                    <label className="block text-[10px] uppercase font-bold text-slate-400">{t('sidebar.stock.organisation.tabs.groupes', 'Groupe')}</label>
+                                    <select
+                                        className="w-full h-9 px-3 rounded-lg border border-slate-200 bg-white text-sm text-slate-700 focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 transition-all"
                                         value={groupeId || ''}
                                         onChange={(e) => setGroupeId(e.target.value ? parseInt(e.target.value) : undefined)}
                                     >
@@ -157,10 +157,10 @@ const InventaireCreateModal: React.FC<InventaireCreateModalProps> = ({
                                         {groupes?.map((g: any) => <option key={g.id} value={g.id}>{g.nom}</option>)}
                                     </select>
                                 </div>
-                                <div className="form-control w-full">
-                                    <label className="label py-1"><span className="label-text text-[10px] uppercase font-bold text-base-content/50">{t('sidebar.stock.organisation.tabs.formes', 'Forme')}</span></label>
-                                    <select 
-                                        className="select select-bordered select-sm w-full rounded-lg bg-base-100"
+                                <div className="space-y-1">
+                                    <label className="block text-[10px] uppercase font-bold text-slate-400">{t('sidebar.stock.organisation.tabs.formes', 'Forme')}</label>
+                                    <select
+                                        className="w-full h-9 px-3 rounded-lg border border-slate-200 bg-white text-sm text-slate-700 focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 transition-all"
                                         value={formeId || ''}
                                         onChange={(e) => setFormeId(e.target.value ? parseInt(e.target.value) : undefined)}
                                     >
@@ -168,16 +168,16 @@ const InventaireCreateModal: React.FC<InventaireCreateModalProps> = ({
                                         {formes?.map(f => <option key={f.id} value={f.id}>{f.nom}</option>)}
                                     </select>
                                 </div>
-                             </div>
+                            </div>
                         </div>
                     )}
 
-                    <div className="flex gap-3 pt-4 border-t border-base-200">
-                        <button type="button" className="btn btn-ghost rounded-xl flex-1" onClick={onClose} disabled={isSaving}>
+                    <div className="flex gap-3 pt-4 border-t border-slate-100">
+                        <button type="button" className="inline-flex items-center justify-center h-10 flex-1 rounded-xl text-sm font-bold text-slate-700 bg-white border border-slate-200 hover:bg-slate-50 transition-colors" onClick={onClose} disabled={isSaving}>
                             {t('common:cancel')}
                         </button>
-                        <button type="submit" className="btn btn-primary rounded-xl flex-[2] shadow-lg shadow-primary/20 gap-2" disabled={isSaving}>
-                            {isSaving ? <span className="loading loading-spinner loading-sm"></span> : <CheckCircle2 className="h-5 w-5" />}
+                        <button type="submit" className="inline-flex items-center justify-center h-10 flex-[2] rounded-xl text-sm font-black bg-emerald-600 text-white shadow-lg shadow-emerald-200 hover:bg-emerald-700 transition-colors gap-2 disabled:opacity-60" disabled={isSaving}>
+                            {isSaving ? <div className="animate-spin rounded-full size-5 border-b-2 border-white"></div> : <CheckCircle2 className="h-5 w-5" />}
                             {t('common:confirm')}
                         </button>
                     </div>

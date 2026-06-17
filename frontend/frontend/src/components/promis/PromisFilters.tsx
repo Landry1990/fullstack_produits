@@ -23,24 +23,24 @@ export const PromisFilters: React.FC<PromisFiltersProps> = ({
     const { t } = useTranslation(['stock', 'common']);
 
     return (
-        <div className="p-4 bg-base-100 border-b border-base-200">
+        <div className="p-4 bg-white border-b border-slate-100">
             <div className="flex flex-col md:flex-row gap-4 justify-between items-center">
                 <div className="flex flex-1 gap-4 items-center w-full md:w-auto">
                     <div className="relative flex-1 max-w-md">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-base-content/50" />
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-slate-300" />
                         <input
                             type="text"
                             placeholder={t('common:search')}
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
-                            className="w-full rounded-lg border border-base-300 bg-base-200 pl-9 text-sm font-medium text-base-content focus:outline-none focus:bg-base-100 focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
+                            className="h-10 w-full rounded-xl border border-slate-200 bg-slate-50 pl-9 pr-4 text-sm font-medium text-slate-700 focus:outline-none focus:bg-white focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 transition-all"
                         />
                     </div>
-                    
+
                     <div className="flex items-center gap-2">
-                        <Filter className="size-4 text-base-content/50" />
+                        <Filter className="size-4 text-slate-300" />
                         <select
-                            className="w-full rounded-lg border border-base-300 bg-base-200 px-3 text-sm font-medium text-base-content focus:outline-none focus:bg-base-100 focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all min-w-[140px]"
+                            className="h-10 rounded-xl border border-slate-200 bg-slate-50 px-3 text-sm font-medium text-slate-700 focus:outline-none focus:bg-white focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 transition-all min-w-[140px]"
                             value={filterStatus}
                             onChange={(e) => setFilterStatus(e.target.value as any)}
                         >
@@ -53,15 +53,15 @@ export const PromisFilters: React.FC<PromisFiltersProps> = ({
                 </div>
 
                 <div className="flex items-center gap-2 w-full md:w-auto justify-end">
-                    <button 
-                        className="inline-flex items-center gap-1.5 px-3 py-1.5 text-base-content/70 hover:bg-base-200 rounded-lg text-sm font-medium transition-colors btn-square btn-ghost text-base-content/60 hover:text-primary hover:bg-primary/10 transition-colors"
+                    <button
+                        className="inline-flex items-center justify-center size-10 rounded-xl text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 border border-slate-200 transition-colors"
                         onClick={onRefresh}
                         title={t('common:refresh')}
                     >
                         <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
                     </button>
-                    <button 
-                        className="inline-flex items-center justify-center gap-2 h-9 px-4 bg-primary text-white rounded-lg text-sm font-bold hover:bg-primary-focus hover:shadow-md transition-all shadow-sm"
+                    <button
+                        className="inline-flex items-center justify-center gap-2 h-10 px-5 bg-emerald-600 text-white rounded-xl text-sm font-bold hover:bg-emerald-700 transition-all shadow-sm"
                         onClick={onNew}
                     >
                         <Plus className="size-4" />

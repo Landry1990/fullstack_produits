@@ -68,7 +68,12 @@ const commandeService = {
     },
 
     cloturer: async (id: number, sudoData: SudoCredentials = {}): Promise<{ message: string }> => {
-        const response = await api.post<{ message: string }>(`commandes/${id}/cloturer/`, sudoData);
+        const idempotencyKey = crypto.randomUUID();
+        const response = await api.post<{ message: string }>(
+            `commandes/${id}/cloturer/`,
+            sudoData,
+            { headers: { 'Idempotency-Key': idempotencyKey } }
+        );
         return response.data;
     },
 

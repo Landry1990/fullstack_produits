@@ -13,6 +13,14 @@
       (function() {
         var lng = localStorage.getItem('i18nextLng') || 'fr';
         document.documentElement.lang = lng.startsWith('en') ? 'en-US' : 'fr-FR';
+
+        var isDark = localStorage.getItem('theme-midnight') === 'true';
+        if (isDark) {
+          document.documentElement.classList.add('theme-midnight');
+          document.documentElement.setAttribute('data-theme', 'dark');
+        } else {
+          document.documentElement.setAttribute('data-theme', 'light');
+        }
       })();
     </script>
     <script type="module" src="/src/main.tsx"></script>

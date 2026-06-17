@@ -46,17 +46,17 @@ const Promis: React.FC = () => {
     } = usePromisData();
 
     return (
-        <div className="min-h-screen bg-base-200 p-6 space-y-6 font-sans">
+        <div className="min-h-screen bg-slate-50 p-6 space-y-6 font-sans">
             
             {/* Header Section */}
             <div className="flex flex-col gap-6">
                 
                 {/* Title & Filters */}
                 <div className="w-full space-y-4">
-                    <div className="bg-base-100 rounded-2xl shadow-sm border border-base-300 flex flex-col">
-                        <div className="p-6 border-b border-base-200">
-                            <h1 className="text-3xl font-black text-base-content tracking-tight">{t('stock:promis.title', 'Promised Products Management')}</h1>
-                            <p className="text-base-content/60 font-medium text-sm mt-1">{t('stock:promis.subtitle', 'Manage promised products, deliveries and stock returns')}</p>
+                    <div className="bg-white rounded-2xl shadow-sm border border-slate-200 flex flex-col">
+                        <div className="p-6 border-b border-slate-100">
+                            <h1 className="text-3xl font-black text-slate-800 tracking-tight">{t('stock:promis.title', 'Promised Products Management')}</h1>
+                            <p className="text-slate-500 font-medium text-sm mt-1">{t('stock:promis.subtitle', 'Manage promised products, deliveries and stock returns')}</p>
                         </div>
                         
                         <PromisFilters 
@@ -75,7 +75,7 @@ const Promis: React.FC = () => {
             </div>
 
             {/* Main Content: Table */}
-            <div className="bg-base-100 rounded-2xl shadow-sm border border-base-300 overflow-hidden flex flex-col h-[calc(100vh-28rem)] min-h-[400px]">
+            <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden flex flex-col h-[calc(100vh-28rem)] min-h-[400px]">
                 <PromisTable 
                     promisList={filteredPromis}
                     loading={loading}

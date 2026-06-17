@@ -133,25 +133,25 @@ export default function TicketPreviewModal({
   }
 
   return (
-    <div className="modal modal-open">
-      <div className="modal-box p-0 max-w-sm bg-base-100 overflow-hidden">
-        <div className="bg-base-50 p-3 flex justify-between items-center border-b border-base-200">
-          <h3 className="font-bold text-lg">{t('common:receipt')}</h3>
-          <button className="btn btn-sm btn-circle btn-ghost" onClick={onClose}>✕</button>
+    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 p-4">
+      <div className="bg-white rounded-xl shadow-2xl w-full max-w-sm overflow-hidden flex flex-col max-h-[90vh]">
+        <div className="bg-slate-50 p-3 flex justify-between items-center border-b border-slate-200">
+          <h3 className="font-bold text-lg text-slate-800">{t('common:receipt')}</h3>
+          <button className="inline-flex items-center justify-center size-8 rounded-full text-slate-400 hover:bg-slate-100 transition-colors" onClick={onClose}>✕</button>
         </div>
 
-        <div className="max-h-[75vh] overflow-y-auto bg-slate-900/90 flex justify-center py-8 px-4" id="ticket-preview-container">
+        <div className="flex-1 overflow-y-auto bg-slate-900/90 flex justify-center py-8 px-4" id="ticket-preview-container">
           <div id="ticket-preview" className="shadow-2xl ring-1 ring-white/10">
             <TicketTemplate ticket={ticket} settings={settings} />
           </div>
         </div>
 
-        <div className="p-3 bg-base-50 border-t border-base-200 flex justify-end gap-2">
-          <button className="btn btn-ghost btn-sm" onClick={onClose}>{t('common:close')} (Esc)</button>
-          
+        <div className="p-3 bg-slate-50 border-t border-slate-200 flex justify-end gap-2">
+          <button className="inline-flex items-center justify-center h-9 px-4 rounded-lg text-sm font-medium text-slate-700 bg-white border border-slate-200 hover:bg-slate-100 transition-colors" onClick={onClose}>{t('common:close')} (Esc)</button>
+
           {settings?.whatsapp_enabled && onSendWhatsApp && (
-             <button 
-               className="btn btn-outline btn-success btn-sm gap-2"
+             <button
+               className="inline-flex items-center justify-center h-9 px-4 rounded-lg text-sm font-medium text-emerald-700 bg-emerald-50 border border-emerald-200 hover:bg-emerald-100 transition-colors gap-2"
                onClick={onSendWhatsApp}
              >
                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="currentColor" viewBox="0 0 448 512">
@@ -162,14 +162,13 @@ export default function TicketPreviewModal({
           )}
 
           <button
-            className="btn btn-primary btn-sm"
+            className="inline-flex items-center justify-center h-9 px-4 rounded-lg text-sm font-medium bg-emerald-600 text-white hover:bg-emerald-700 transition-colors"
             onClick={handlePrint}
           >
             {t('common:print')}
           </button>
         </div>
       </div>
-      <div className="modal-backdrop" onClick={onClose}></div>
     </div>
   )
 }

@@ -78,18 +78,21 @@ const venteService = {
         return response.data;
     },
 
-    finaliser: async (data: any): Promise<Facture> => {
+    finaliser: async (data: any, idempotencyKey?: string): Promise<Facture> => {
+        const key = idempotencyKey || data.idempotency_key || crypto.randomUUID();
+        const headers = { 'Idempotency-Key': key };
+
         // Handle images/files using FormData
         if (data.image_ordonnance instanceof File) {
             const formData = new FormData();
             const { image_ordonnance, ...jsonData } = data;
             formData.append('image_ordonnance', image_ordonnance);
             formData.append('json_data', JSON.stringify(jsonData));
-            const response = await api.post<Facture>('factures/finaliser/', formData);
+            const response = await api.post<Facture>('factures/finaliser/', formData, { headers });
             return response.data;
         }
 
-        const response = await api.post<Facture>('factures/finaliser/', data);
+        const response = await api.post<Facture>('factures/finaliser/', data, { headers });
         return response.data;
     },
 
