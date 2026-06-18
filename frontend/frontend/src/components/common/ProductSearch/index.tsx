@@ -24,6 +24,7 @@ export const ProductSearch: React.FC<ProductSearchProps> = ({
   modes = ['products'],
   showCsvImport = false,
   onSelect,
+  onSelectOutOfStock,
   onCsvImport,
   onQuantityShortcut,
   // Mode DCI/Packs
@@ -37,7 +38,9 @@ export const ProductSearch: React.FC<ProductSearchProps> = ({
   // Search state
   searchInputRef,
   handleKeyDown,
-  getItemProps
+  getItemProps,
+  // Permissions
+  user
 }) => {
   const { t } = useTranslation(['facturation', 'common'])
   const [internalMode, setInternalMode] = React.useState<SearchMode>(modes[0])
@@ -141,11 +144,11 @@ export const ProductSearch: React.FC<ProductSearchProps> = ({
           onChange={(e) => setSearchQuery(e.target.value)}
           onKeyDown={onInternalKeyDown}
           className={cn(
-            "w-full pl-12 pr-4 text-lg h-14 bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:border-transparent transition-all",
+            "w-full pl-10 pr-4 text-base h-11 bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:border-transparent transition-all",
             getFocusColor()
           )}
         />
-        <Search className="size-6 absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
+        <Search className="size-5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
         {loading && (
           <span className="absolute right-4 top-1/2 -translate-y-1/2 inline-block size-5 border-2 border-emerald-200 border-t-emerald-600 rounded-full animate-spin" />
         )}
@@ -156,22 +159,41 @@ export const ProductSearch: React.FC<ProductSearchProps> = ({
   const renderProductItem = (item: SearchResult, idx: number) => {
     const itemProps = getItemProps?.(idx) || { className: '', style: {} }
     const isSelected = itemProps.className?.includes('shadow')
-    const isOutOfStock = (item.stock ?? 0) <= 0
-    
+    const stock = item.stock ?? 0
+    const canSellNegativeStock = user?.is_superuser || user?.profile?.can_sell_negative_stock || user?.can_sell_negative_stock
+    const isOutOfStock = stock <= 0
+    const isBlocked = isOutOfStock && !canSellNegativeStock
+    const isNegativeStock = stock < 0
+    const isZeroStock = stock === 0
+
+    const handleClick = () => {
+      if (isBlocked) return
+      if (isOutOfStock && onSelectOutOfStock) {
+        onSelectOutOfStock(item)
+      } else {
+        onSelect(item)
+      }
+    }
+
     return (
       <div
         key={item.id}
         {...itemProps}
-        onClick={() => !isOutOfStock && onSelect(item)}
+        onClick={handleClick}
         className={cn(
           "group flex items-center justify-between p-3 rounded-lg cursor-pointer transition-all",
           isSelected ? 'bg-emerald-50 shadow-md border-l-4 border-l-emerald-500' : 'hover:bg-slate-50',
-          isOutOfStock ? 'text-slate-400 cursor-not-allowed' : ''
+          isBlocked ? 'text-slate-400 cursor-not-allowed' : ''
         )}
       >
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
-            <div className="font-medium truncate text-sm text-slate-800">{item.name}</div>
+            <div className={cn(
+              "truncate text-sm",
+              isNegativeStock ? 'text-red-600 font-medium' :
+              isZeroStock ? 'text-slate-500 font-normal' :
+              'text-slate-800 font-bold'
+            )}>{item.name}</div>
             {item.active_promis_count && item.active_promis_count > 0 && (
               <Badge variant="secondary" className="text-[9px] h-4 px-1 bg-amber-100 text-amber-700 border-amber-200 animate-pulse shrink-0">
                 PROMIS ({item.active_promis_count})
@@ -179,13 +201,19 @@ export const ProductSearch: React.FC<ProductSearchProps> = ({
             )}
           </div>
           <div className="text-xs flex gap-3 mt-0.5">
-            <span className={isOutOfStock ? 'text-red-500 font-semibold' : 'text-slate-500'}>
-              {t('facturation:search.stock_label')} {item.stock}
+            <span className={cn(
+              isNegativeStock ? 'text-red-500 font-semibold' :
+              isZeroStock ? 'text-slate-400' :
+              'text-slate-500'
+            )}>
+              {isZeroStock
+                ? t('facturation:search.out_of_stock', { defaultValue: 'Épuisé' })
+                : `${t('facturation:search.stock_label')} ${stock}`}
             </span>
             <span className="text-slate-600 font-medium">{formatCurrency(Number(item.selling_price))}</span>
           </div>
         </div>
-        {!isOutOfStock && (
+        {!isBlocked && (
           <Button variant="ghost" size="icon" className="size-8 opacity-0 group-hover:opacity-100 text-emerald-600 hover:text-emerald-700 hover:bg-emerald-100">
             <Plus className="size-4" />
           </Button>
@@ -238,7 +266,7 @@ export const ProductSearch: React.FC<ProductSearchProps> = ({
         <div className="flex-1 min-w-0">
           <div className="font-semibold text-amber-700 text-sm">{dci.nom}</div>
           <div className="text-xs text-slate-500 mt-0.5">
-            {dci.produits_count || 0} {t('facturation:search.dci_products_count')}
+            {dci.produits_count ? `${dci.produits_count} ${t('facturation:search.dci_products_count')}` : ''}
           </div>
         </div>
         <Button variant="ghost" size="icon" className="size-8 opacity-0 group-hover:opacity-100 text-amber-600 hover:text-amber-700 hover:bg-amber-100">

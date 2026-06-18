@@ -35,6 +35,11 @@ const fournisseurService = {
     getStats: async (id: number): Promise<any> => {
         const response = await api.get(`fournisseurs/${id}/stats/`);
         return response.data;
+    },
+
+    getEcheancesDetaillees: async (id: number): Promise<any> => {
+        const response = await api.get(`fournisseurs/${id}/echeances_detaillees/`);
+        return response.data;
     }
 };
 

@@ -63,10 +63,10 @@ const Ventes: React.FC = () => {
     }, [location.state, filteredFactures, actions, navigate]);
     
     return (
-        <div className="min-h-screen bg-slate-50 font-sans">
+        <div className="min-h-screen bg-slate-50 font-sans p-6 space-y-6">
 
             {/* ── HEADER ── */}
-            <div className="sticky top-0 z-30 bg-white border-b border-slate-200 px-6 py-4 shadow-sm">
+            <div className="bg-white rounded-2xl border border-slate-200 shadow-sm px-6 py-4">
                 <div className="flex items-center justify-between gap-4">
                     <div className="flex items-center gap-3 min-w-0">
                         <div className="bg-emerald-100 text-emerald-600 rounded-xl p-2.5 shrink-0">
@@ -91,7 +91,6 @@ const Ventes: React.FC = () => {
                 </div>
             </div>
 
-            <div className="p-6 space-y-6">
                 <SalesFilters
                     filters={filters}
                     onDeleteDrafts={handleDeleteBrouillons}
@@ -172,8 +171,6 @@ const Ventes: React.FC = () => {
                     ticket={modals.selectedTicket}
                     settings={settings}
                 />
-            </div>
-
         </div>
     );
 }

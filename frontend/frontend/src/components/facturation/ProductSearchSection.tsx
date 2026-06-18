@@ -1,6 +1,6 @@
 import React from 'react'
 import { useTranslation } from 'react-i18next'
-import type { ProduitModel } from '../../types'
+import type { ProduitModel, User } from '../../types'
 import { ProductSearch, type SearchResult, type PackResult, type DciResult } from '../common/ProductSearch'
 import { useFacturationSearch } from '../../hooks/product-search'
 
@@ -15,6 +15,8 @@ interface ProductSearchSectionProps {
   placeholder?: string
   onQuantityShortcut?: (qty: number) => void
   onCsvImport?: (file: File) => void
+  user?: User | null
+  onSelectOutOfStock?: (product: ProduitModel) => void
 }
 
 const ProductSearchSection = React.memo(({
@@ -27,7 +29,9 @@ const ProductSearchSection = React.memo(({
   searchInputRef,
   placeholder,
   onQuantityShortcut,
-  onCsvImport
+  onCsvImport,
+  user,
+  onSelectOutOfStock
 }: ProductSearchSectionProps) => {
   const {
     searchMode,
@@ -85,6 +89,7 @@ const ProductSearchSection = React.memo(({
       modes={['products', 'packs', 'dci']}
       showCsvImport={!!onCsvImport}
       onSelect={handleAddProduit}
+      onSelectOutOfStock={onSelectOutOfStock ? (item) => onSelectOutOfStock(item as unknown as ProduitModel) : undefined}
       onCsvImport={onCsvImport}
       onQuantityShortcut={onQuantityShortcut}
       packResults={packResults}
@@ -97,6 +102,7 @@ const ProductSearchSection = React.memo(({
       searchInputRef={searchInputRef}
       handleKeyDown={handleKeyDown}
       getItemProps={getItemProps}
+      user={user}
     />
   )
 })

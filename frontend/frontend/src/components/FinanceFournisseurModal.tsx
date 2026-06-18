@@ -4,6 +4,7 @@ import { formatCurrency, normalizeNumberInput } from '../utils/formatters';
 import { formatDate } from '../utils/dateUtils';
 import type { Fournisseur } from '../types';
 import { useFinanceFournisseurs } from '../hooks/useFinanceFournisseurs';
+import fournisseurService from '../services/fournisseurService';
 import {
   Dialog,
   DialogContent,
@@ -32,6 +33,7 @@ import {
   Receipt,
   Loader2,
   AlertCircle,
+  CalendarClock,
 } from 'lucide-react';
 
 interface FinanceFournisseurModalProps {
@@ -65,6 +67,8 @@ export default function FinanceFournisseurModal({
   const [reference, setReference] = useState('');
   const [notes, setNotes] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [echeances, setEcheances] = useState<any[]>([]);
+  const [echeancesLoading, setEcheancesLoading] = useState(false);
 
   useEffect(() => {
     if (isOpen && fournisseur) {
@@ -77,6 +81,12 @@ export default function FinanceFournisseurModal({
           ? t('providers:finance.pointage_note', { count: commandeIds.length })
           : ''
       );
+      // Charger les échéances
+      setEcheancesLoading(true);
+      fournisseurService.getEcheancesDetaillees(fournisseur.id)
+        .then(data => setEcheances(data || []))
+        .catch(() => setEcheances([]))
+        .finally(() => setEcheancesLoading(false));
     }
   }, [isOpen, fournisseur, fetchPaiements, prefilledMontant, commandeIds, t]);
 
@@ -115,6 +125,23 @@ export default function FinanceFournisseurModal({
       await deletePaiement(id);
       if (onSuccess) onSuccess();
     }
+  };
+
+  // Calcule la répartition d'un nouveau paiement sur les échéances existantes
+  const computeDistribution = () => {
+    const amount = normalizeNumberInput(montant);
+    if (!amount || amount <= 0 || echeances.length === 0) return [];
+
+    let remaining = amount;
+    return echeances.map((ech: any) => {
+      const reste = ech.montant_reste || 0;
+      if (remaining <= 0 || reste <= 0) {
+        return { ...ech, montant_alloue: 0, montant_apres: reste };
+      }
+      const alloue = Math.min(remaining, reste);
+      remaining -= alloue;
+      return { ...ech, montant_alloue: alloue, montant_apres: reste - alloue };
+    });
   };
 
   const solde = normalizeNumberInput(fournisseur.solde_dette || 0);
@@ -277,103 +304,174 @@ export default function FinanceFournisseurModal({
             </form>
           </div>
 
-          {/* Right Panel: History */}
+          {/* Right Panel: Échéances + History */}
           <div className="flex-1 bg-base-200/30 flex flex-col overflow-hidden min-h-0">
-            <div className="px-5 py-4 border-b border-base-200 bg-base-100/60 backdrop-blur shrink-0">
-              <h4 className="font-semibold text-sm text-base-content/90 flex items-center gap-2">
-                <FileText className="h-4 w-4" />
-                {t('providers:finance.history')}
-              </h4>
-            </div>
-            <div className="flex-1 overflow-y-auto p-0 min-h-0">
-              {loading ? (
-                <div className="flex justify-center items-center h-full">
-                  <Loader2 className="h-8 w-8 text-primary animate-spin" />
-                </div>
-              ) : paiements.length === 0 ? (
-                <div className="flex flex-col items-center justify-center h-full text-base-content/40 gap-3 py-12">
-                  <div className="h-14 w-14 rounded-2xl bg-base-200 flex items-center justify-center">
-                    <FileText className="h-7 w-7 text-base-content/30" />
+            {/* Échéances */}
+            <div className="shrink-0 border-b border-base-200">
+              <div className="px-5 py-3 bg-base-100/60 backdrop-blur flex items-center gap-2">
+                <CalendarClock className="h-4 w-4 text-base-content/60" />
+                <h4 className="font-semibold text-sm text-base-content/90">
+                  Échéancier — {echeances.length} échéance(s)
+                </h4>
+                {normalizeNumberInput(montant) > 0 && (
+                  <Badge variant="success" size="sm" className="ml-auto">
+                    Aperçu répartition
+                  </Badge>
+                )}
+              </div>
+              <div className="max-h-[180px] overflow-y-auto">
+                {echeancesLoading ? (
+                  <div className="flex justify-center items-center py-4">
+                    <Loader2 className="h-5 w-5 text-primary animate-spin" />
                   </div>
-                  <p className="text-sm font-medium">
-                    {t('providers:finance.no_payments')}
-                  </p>
-                </div>
-              ) : (
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>{t('providers:finance.table.date')}</TableHead>
-                      <TableHead>{t('providers:finance.table.mode')}</TableHead>
-                      <TableHead>{t('providers:finance.table.reference')}</TableHead>
-                      <TableHead className="text-right">
-                        {t('providers:finance.table.amount')}
-                      </TableHead>
-                      <TableHead className="text-center w-16">
-                        {t('providers:finance.table.action')}
-                      </TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {paiements.map((paiement) => (
-                      <TableRow key={paiement.id}>
-                        <TableCell className="font-mono text-xs">
-                          {formatDate(paiement.date_paiement)}
-                        </TableCell>
-                        <TableCell>
-                          <Badge
-                            variant={modeBadgeVariant(paiement.mode_paiement)}
-                            size="sm"
-                          >
-                            {modeLabel(paiement.mode_paiement)}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>
-                          <div className="text-sm text-base-content/80">
-                            {paiement.reference || '-'}
-                          </div>
-                          {paiement.notes && (
-                            <div
-                              className="text-xs text-base-content/40 truncate max-w-[180px]"
-                              title={paiement.notes}
-                            >
-                              {paiement.notes}
+                ) : echeances.length === 0 ? (
+                  <div className="text-center py-3 text-xs text-base-content/40">
+                    Aucune échéance en attente
+                  </div>
+                ) : (
+                  <table className="w-full text-xs">
+                    <thead className="bg-base-200/50 text-base-content/50">
+                      <tr>
+                        <th className="text-left px-3 py-1.5 font-medium">Facture</th>
+                        <th className="text-right px-3 py-1.5 font-medium">Total</th>
+                        <th className="text-right px-3 py-1.5 font-medium">Payé</th>
+                        <th className="text-right px-3 py-1.5 font-medium">Reste</th>
+                        {normalizeNumberInput(montant) > 0 && (
+                          <th className="text-right px-3 py-1.5 font-medium text-emerald-600">Alloué</th>
+                        )}
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-base-200">
+                      {computeDistribution().map((ech: any, idx: number) => (
+                        <tr key={idx} className={ech.montant_alloue > 0 ? 'bg-emerald-50/50' : ''}>
+                          <td className="px-3 py-1.5">
+                            <div className="font-medium truncate max-w-[140px]" title={ech.numero_facture}>
+                              {ech.numero_facture}
                             </div>
+                            <div className="text-[10px] text-base-content/40">
+                              {formatDate(ech.date_echeance)}
+                            </div>
+                          </td>
+                          <td className="text-right px-3 py-1.5 font-mono">
+                            {formatCurrency(ech.montant_total)}
+                          </td>
+                          <td className="text-right px-3 py-1.5 font-mono text-base-content/50">
+                            {formatCurrency(ech.montant_paye)}
+                          </td>
+                          <td className="text-right px-3 py-1.5 font-mono font-medium">
+                            {formatCurrency(ech.montant_reste)}
+                          </td>
+                          {normalizeNumberInput(montant) > 0 && (
+                            <td className="text-right px-3 py-1.5 font-mono font-bold text-emerald-600">
+                              {ech.montant_alloue > 0 ? formatCurrency(ech.montant_alloue) : '-'}
+                            </td>
                           )}
-                          {paiement.commandes_liees &&
-                            paiement.commandes_liees.length > 0 && (
-                              <div className="mt-1 flex flex-wrap gap-1">
-                                {paiement.commandes_liees.map((cmd: any) => (
-                                  <Badge
-                                    key={cmd}
-                                    variant="ghost"
-                                    size="sm"
-                                    className="font-mono text-[10px]"
-                                  >
-                                    #{cmd}
-                                  </Badge>
-                                ))}
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                )}
+              </div>
+            </div>
+
+            {/* History */}
+            <div className="flex-1 flex flex-col overflow-hidden min-h-0">
+              <div className="px-5 py-3 border-b border-base-200 bg-base-100/60 backdrop-blur shrink-0">
+                <h4 className="font-semibold text-sm text-base-content/90 flex items-center gap-2">
+                  <FileText className="h-4 w-4" />
+                  {t('providers:finance.history')}
+                </h4>
+              </div>
+              <div className="flex-1 overflow-y-auto p-0 min-h-0">
+                {loading ? (
+                  <div className="flex justify-center items-center h-full">
+                    <Loader2 className="h-8 w-8 text-primary animate-spin" />
+                  </div>
+                ) : paiements.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center h-full text-base-content/40 gap-3 py-12">
+                    <div className="h-14 w-14 rounded-2xl bg-base-200 flex items-center justify-center">
+                      <FileText className="h-7 w-7 text-base-content/30" />
+                    </div>
+                    <p className="text-sm font-medium">
+                      {t('providers:finance.no_payments')}
+                    </p>
+                  </div>
+                ) : (
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>{t('providers:finance.table.date')}</TableHead>
+                        <TableHead>{t('providers:finance.table.mode')}</TableHead>
+                        <TableHead>{t('providers:finance.table.reference')}</TableHead>
+                        <TableHead className="text-right">
+                          {t('providers:finance.table.amount')}
+                        </TableHead>
+                        <TableHead className="text-center w-16">
+                          {t('providers:finance.table.action')}
+                        </TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {paiements.map((paiement) => (
+                        <TableRow key={paiement.id}>
+                          <TableCell className="font-mono text-xs">
+                            {formatDate(paiement.date_paiement)}
+                          </TableCell>
+                          <TableCell>
+                            <Badge
+                              variant={modeBadgeVariant(paiement.mode_paiement)}
+                              size="sm"
+                            >
+                              {modeLabel(paiement.mode_paiement)}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>
+                            <div className="text-sm text-base-content/80">
+                              {paiement.reference || '-'}
+                            </div>
+                            {paiement.notes && (
+                              <div
+                                className="text-xs text-base-content/40 truncate max-w-[180px]"
+                                title={paiement.notes}
+                              >
+                                {paiement.notes}
                               </div>
                             )}
-                        </TableCell>
-                        <TableCell className="text-right font-bold font-mono">
-                          {formatCurrency(normalizeNumberInput(paiement.montant))}
-                        </TableCell>
-                        <TableCell className="text-center">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleDelete(paiement.id)}
-                            className="text-error hover:bg-red-50 hover:text-red-600"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              )}
+                            {paiement.commandes_liees &&
+                              paiement.commandes_liees.length > 0 && (
+                                <div className="mt-1 flex flex-wrap gap-1">
+                                  {paiement.commandes_liees.map((cmd: any) => (
+                                    <Badge
+                                      key={cmd}
+                                      variant="ghost"
+                                      size="sm"
+                                      className="font-mono text-[10px]"
+                                    >
+                                      #{cmd}
+                                    </Badge>
+                                  ))}
+                                </div>
+                              )}
+                          </TableCell>
+                          <TableCell className="text-right font-bold font-mono">
+                            {formatCurrency(normalizeNumberInput(paiement.montant))}
+                          </TableCell>
+                          <TableCell className="text-center">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleDelete(paiement.id)}
+                              className="text-error hover:bg-red-50 hover:text-red-600"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                )}
+              </div>
             </div>
           </div>
         </div>

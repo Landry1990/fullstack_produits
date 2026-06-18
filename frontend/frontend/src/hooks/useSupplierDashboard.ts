@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import api from '../services/api';
 import { getApiErrorDetail } from '../utils/errorHandling';
 
@@ -24,28 +24,25 @@ export interface SupplierDashboardStats {
     evolution_dette: Array<{ month: string; dette: number }>;
 }
 
+const QUERY_KEY = ['supplier-dashboard'];
+
 export function useSupplierDashboard() {
-    const [stats, setStats] = useState<SupplierDashboardStats | null>(null);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
-
-    const fetchStats = useCallback(async () => {
-        setLoading(true);
-        setError(null);
-        try {
+    const { data: stats, isLoading: loading, error: queryError, refetch } = useQuery<SupplierDashboardStats>({
+        queryKey: QUERY_KEY,
+        queryFn: async () => {
             const response = await api.get('fournisseurs/dashboard_stats/');
-            setStats(response.data);
-        } catch (err) {
-            console.error('Error fetching supplier dashboard stats:', err);
-            setError(getApiErrorDetail(err, 'Erreur lors de la récupération des statistiques'));
-        } finally {
-            setLoading(false);
-        }
-    }, []);
+            return response.data;
+        },
+    });
 
-    useEffect(() => {
-        fetchStats();
-    }, [fetchStats]);
+    const error = queryError ? getApiErrorDetail(queryError, 'Erreur lors de la récupération des statistiques') : null;
 
-    return { stats, loading, error, refresh: fetchStats };
+    return { stats: stats || null, loading, error, refresh: refetch };
+}
+
+export function useInvalidateSupplierDashboard() {
+    const queryClient = useQueryClient();
+    return () => {
+        queryClient.invalidateQueries({ queryKey: QUERY_KEY });
+    };
 }

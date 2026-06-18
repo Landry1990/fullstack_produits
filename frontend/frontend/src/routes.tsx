@@ -62,7 +62,7 @@ import LicenceScreen from './components/LicenceScreen';
 // Routes principales - eager loaded pour performance
 import Dashboard from './components/DashboardShadcn';
 import DashboardManager from './components/DashboardManagerShadcn';
-import Produit from './components/Produit';
+import Produit from './components/ProduitShadcn';
 import Ventes from './components/Ventes';
 import Facturation from './components/Facturation';
 import Commandes from './components/Commandes';
@@ -103,7 +103,7 @@ const ModuleFinancier = lazyWithRetry(() => import('./components/ModuleFinancier
 const GestionDivers = lazyWithRetry(() => import('./components/divers/GestionDivers'));
 const ClassementVendeurs = lazyWithRetry(() => import('./components/ClassementVendeurs'));
 const AnalyseTemporelle = lazyWithRetry(() => import('./components/AnalyseTemporelle'));
-const StockUGReport = lazyWithRetry(() => import('./components/StockUGReport'));
+const StockUGReport = lazyWithRetry(() => import('./components/StockUGReportShadcn'));
 const UserSessions = lazyWithRetry(() => import('./components/UserSessionsShadcn'));
 const GuideFinancier = lazyWithRetry(() => import('./components/GuideFinancier'));
 const HelpTraining = lazyWithRetry(() => import('./components/HelpTraining'));

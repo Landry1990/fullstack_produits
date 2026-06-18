@@ -204,7 +204,7 @@ export default function LoginShadcn() {
 
   return (
     <div className={cn(
-      "min-h-screen w-full flex font-sans transition-colors duration-500",
+      "min-h-[100dvh] w-full flex font-sans transition-colors duration-500",
       isDark
         ? 'bg-slate-950 text-white'
         : 'bg-slate-50 text-slate-900'
@@ -222,7 +222,7 @@ export default function LoginShadcn() {
         {isDark ? <Sun className="size-5" /> : <Moon className="size-5" />}
       </button>
 
-      <div className="flex w-full min-h-screen">
+      <div className="flex w-full min-h-[100dvh]">
         {/* Left Panel - Brand */}
         <div className={cn(
           "hidden lg:flex flex-col w-[45%] items-center justify-center p-12 relative overflow-hidden",
@@ -324,7 +324,7 @@ export default function LoginShadcn() {
 
         {/* Right Panel - Form */}
         <div className={cn(
-          "flex-1 flex items-center justify-center p-6 relative",
+          "flex-1 flex items-center justify-center p-6 relative overflow-y-auto",
           isDark ? 'bg-slate-950' : 'bg-[#eef2f6]'
         )}>
           <Card className={cn(

@@ -3,11 +3,13 @@ import financeService from '../services/financeService';
 import fournisseurService from '../services/fournisseurService';
 import type { PaiementFournisseur, Fournisseur } from '../types';
 import toast from 'react-hot-toast';
+import { useInvalidateSupplierDashboard } from './useSupplierDashboard';
 
 export function useFinanceFournisseurs() {
     const [paiements, setPaiements] = useState<PaiementFournisseur[]>([]);
     const [fournisseurs, setFournisseurs] = useState<Fournisseur[]>([]);
     const [loading, setLoading] = useState(false);
+    const invalidateDashboard = useInvalidateSupplierDashboard();
 
     const fetchFournisseurs = useCallback(async () => {
         try {
@@ -38,6 +40,7 @@ export function useFinanceFournisseurs() {
             toast.success('Paiement enregistré avec succès');
             fetchPaiements(data.fournisseur);
             fetchFournisseurs();
+            invalidateDashboard();
             return result;
         } catch (error: unknown) {
             console.error('Erreur lors de l\'enregistrement du paiement:', error);
@@ -54,6 +57,7 @@ export function useFinanceFournisseurs() {
             toast.success('Paiement supprimé');
             setPaiements(prev => prev.filter(p => p.id !== id));
             fetchFournisseurs();
+            invalidateDashboard();
         } catch (error) {
             console.error('Erreur lors de la suppression du paiement:', error);
             toast.error('Erreur lors de la suppression');
