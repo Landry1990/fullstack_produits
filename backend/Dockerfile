@@ -37,9 +37,6 @@ ENV DJANGO_SECRET_KEY=build-temp-key-not-for-production
 # Copier le reste du code de l'application
 COPY . .
 
-# Collecter les fichiers statiques
-RUN python manage.py collectstatic --noinput
-
 # Copier le script d'entrée et le rendre exécutable
 RUN chmod +x entrypoint.sh
 
