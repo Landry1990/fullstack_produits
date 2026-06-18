@@ -115,7 +115,7 @@ export default function PerformanceOverview({
         {kpiCards.map((card: any, i: number) => {
           const Icon = card.icon;
           const inner = (
-            <div className="relative p-3 sm:p-4 xl:p-5 flex flex-col gap-2 sm:gap-3 h-full overflow-hidden">
+            <div className="relative p-2 sm:p-3 xl:p-3.5 flex flex-col gap-1 sm:gap-1.5 h-full overflow-hidden">
               {/* accent bar top */}
               <div className="absolute top-0 left-0 right-0 h-1 rounded-t-2xl" style={{ background: card.accent }} />
 
@@ -123,12 +123,12 @@ export default function PerformanceOverview({
                 <p className="text-[9px] sm:text-[10px] font-black uppercase tracking-widest text-slate-500 leading-tight">
                   {card.title}
                 </p>
-                <div className="size-8 xl:size-9 rounded-lg xl:rounded-xl flex items-center justify-center shrink-0" style={{ background: card.accent + '20', color: card.accent }}>
-                  <Icon className="size-4" style={{ width: 16, height: 16 }} />
+                <div className="size-7 xl:size-8 rounded-lg xl:rounded-xl flex items-center justify-center shrink-0" style={{ background: card.accent + '20', color: card.accent }}>
+                  <Icon className="size-3.5 xl:size-4" />
                 </div>
               </div>
 
-              <p className={`text-lg sm:text-xl xl:text-2xl font-black text-slate-800 tracking-tight leading-none ${card.highlight ? 'xl:text-2xl' : ''}`}>
+              <p className={`text-base sm:text-lg xl:text-xl font-black text-slate-800 tracking-tight leading-none ${card.highlight ? 'xl:text-2xl' : ''}`}>
                 {card.value}
               </p>
 

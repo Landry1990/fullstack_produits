@@ -53,7 +53,7 @@ export default function SupplierDashboard({ onViewAllDeadlines }: SupplierDashbo
       <div className="alert-ref alert-error shadow-lg rounded-2xl">
         <AlertCircle className="size-6" />
         <span>{error || t('providers:messages.load_error')}</span>
-        <button className="btn-ref btn-sm btn-ghost" onClick={refresh}>{t('common:retry')}</button>
+        <button className="btn-ref btn-sm btn-ghost" onClick={() => refresh()}>{t('common:retry')}</button>
       </div>
     );
   }
@@ -98,22 +98,22 @@ export default function SupplierDashboard({ onViewAllDeadlines }: SupplierDashbo
     <div className="space-y-6 animate-in fade-in duration-700">
       
       {/* KPI Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
         {kpis.map((card, i) => (
-          <div key={i} className="bg-base-100 border border-base-300 rounded-3xl shadow-sm overflow-hidden group hover:shadow-md transition-all">
-            <div className="relative p-5 flex flex-col gap-3 h-full">
+          <div key={i} className="bg-base-100 border border-base-300 rounded-2xl shadow-sm overflow-hidden group hover:shadow-md transition-all">
+            <div className="relative p-4 flex flex-col gap-2 h-full">
               <div className="absolute top-0 left-0 right-0 h-1" style={{ background: card.accent }} />
               
               <div className="flex items-start justify-between">
                 <p className="text-[10px] font-black uppercase tracking-widest text-base-content/40 leading-tight">
                   {card.title}
                 </p>
-                <div className={`size-10 rounded-2xl flex items-center justify-center shrink-0 ${card.alert ? 'animate-pulse' : ''}`} style={{ background: card.accent + '15', color: card.accent }}>
-                  <card.icon className="size-5" />
+                <div className={`size-8 rounded-xl flex items-center justify-center shrink-0 ${card.alert ? 'animate-pulse' : ''}`} style={{ background: card.accent + '15', color: card.accent }}>
+                  <card.icon className="size-4" />
                 </div>
               </div>
 
-              <p className="text-2xl font-black text-base-content tracking-tight leading-none">
+              <p className="text-xl font-black text-base-content tracking-tight leading-none">
                 {card.value}
               </p>
 
@@ -143,7 +143,7 @@ export default function SupplierDashboard({ onViewAllDeadlines }: SupplierDashbo
                 <p className="text-[10px] font-bold text-base-content/30 uppercase tracking-widest">{t('providers:dashboard.charts.evolution_subtitle')}</p>
               </div>
             </div>
-            <button onClick={refresh} className="inline-flex items-center justify-center size-7 rounded-full text-base-content/60 hover:bg-base-200 opacity-40 hover:opacity-100 transition-opacity">
+            <button onClick={() => refresh()} className="inline-flex items-center justify-center size-7 rounded-full text-base-content/60 hover:bg-base-200 opacity-40 hover:opacity-100 transition-opacity">
                <RefreshCw className="size-3" />
             </button>
           </div>

@@ -349,6 +349,14 @@ export default function Sidebar() {
               </p>
             </div>
           )}
+          {/* Close button mobile */}
+          <button
+            onClick={closeSidebar}
+            className="lg:hidden shrink-0 size-8 rounded-lg bg-white/10 hover:bg-white/20 text-white/70 hover:text-white flex items-center justify-center transition-all"
+            aria-label="Fermer le menu"
+          >
+            <X className="size-5" />
+          </button>
           {/* Collapse button desktop */}
           <button
             onClick={toggleCollapse}

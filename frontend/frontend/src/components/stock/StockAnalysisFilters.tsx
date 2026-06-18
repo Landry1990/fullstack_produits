@@ -46,7 +46,7 @@ export const StockAnalysisFilters: React.FC<StockAnalysisFiltersProps> = ({
                             onClick={() => onTabChange(tab.id as any)}
                             className={`inline-flex items-center justify-center px-3 py-1.5 text-sm rounded-[14px] transition-all gap-2 shrink-0 font-bold ${
                                 activeTab === tab.id
-                                ? (tab.id === 'pilotage' ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-200' : 'bg-white text-emerald-600 shadow-sm font-black')
+                                ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-200'
                                 : 'text-slate-400 hover:text-slate-700 hover:bg-white/50'
                             }`}
                         >

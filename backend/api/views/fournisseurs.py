@@ -191,7 +191,12 @@ class FournisseurViewSet(viewsets.ModelViewSet):
             return tranches
 
         today = date.today()
+        fournisseur_id = request.query_params.get('fournisseur_id')
+
         fournisseurs = self.get_queryset().filter(is_active=True)
+        if fournisseur_id:
+            fournisseurs = fournisseurs.filter(id=int(fournisseur_id))
+
         echeances = []
 
         for f in fournisseurs:
@@ -257,6 +262,7 @@ class FournisseurViewSet(viewsets.ModelViewSet):
                         reste_paye -= montant_tranche
                         continue
                     montant_du = montant_tranche - reste_paye
+                    montant_paye = reste_paye
                     reste_paye = Decimal('0.00')
 
                     date_fin_tranche = tranche[1]
@@ -270,6 +276,9 @@ class FournisseurViewSet(viewsets.ModelViewSet):
                         'type_reglement': 'RELEVE',
                         'commande_id': None,
                         'numero_facture': label,
+                        'montant_total': float(montant_tranche),
+                        'montant_paye': float(montant_paye),
+                        'montant_reste': float(montant_du),
                         'montant_du': float(montant_du),
                         'date_echeance': echeance_date.isoformat(),
                         'jours_restants': jours_restants,
@@ -287,6 +296,7 @@ class FournisseurViewSet(viewsets.ModelViewSet):
                         reste_paye -= cmd_total
                         continue
                     cmd_due = cmd_total - reste_paye
+                    montant_paye = reste_paye
                     reste_paye = Decimal('0.00')
 
                     base_date = c.date_cloture.date() if c.date_cloture else today
@@ -299,11 +309,151 @@ class FournisseurViewSet(viewsets.ModelViewSet):
                         'type_reglement': 'FACTURE',
                         'commande_id': c.id,
                         'numero_facture': c.numero_facture or f"CMD-{c.id}",
+                        'montant_total': float(cmd_total),
+                        'montant_paye': float(montant_paye),
+                        'montant_reste': float(cmd_due),
                         'montant_du': float(cmd_due),
                         'date_echeance': echeance_date.isoformat(),
                         'jours_restants': jours_restants,
                         'status': _statut(jours_restants),
                     })
+
+        echeances.sort(key=lambda x: x['jours_restants'])
+        return Response(echeances)
+
+    @action(detail=True, methods=['get'])
+    def echeances_detaillees(self, request, pk=None):
+        """
+        Retourne les échéances détaillées d'un fournisseur spécifique avec
+        montant_total, montant_paye et montant_reste pour chaque échéance.
+        """
+        from decimal import Decimal
+        import calendar
+
+        def _statut(jours):
+            if jours < 0:
+                return "EN RETARD"
+            if jours == 0:
+                return "AUJOURD'HUI"
+            return "À VENIR"
+
+        def _tranches_releve(annee, mois, periode_jours):
+            _, dernier_jour = calendar.monthrange(annee, mois)
+            tranches = []
+            debut = 1
+            while debut <= dernier_jour:
+                fin = min(debut + periode_jours - 1, dernier_jour)
+                tranches.append((date(annee, mois, debut), date(annee, mois, fin)))
+                debut = fin + 1
+            return tranches
+
+        today = date.today()
+        f = self.get_object()
+        echeances = []
+
+        commandes_qs = (
+            Commande.objects
+            .filter(fournisseur=f, status=Commande.Status.CLOTUREE)
+            .annotate(
+                total_value=Coalesce(
+                    Subquery(
+                        CommandeProduit.objects
+                        .filter(commande=OuterRef('pk'))
+                        .values('commande')
+                        .annotate(s=Sum(F('quantity') * F('price'), output_field=DecimalField()))
+                        .values('s')[:1]
+                    ),
+                    Value(Decimal('0.00'), output_field=DecimalField())
+                )
+            )
+            .order_by('date_cloture')
+        )
+        commandes = list(commandes_qs)
+        if not commandes:
+            return Response(echeances)
+
+        total_paye = PaiementFournisseur.objects.filter(fournisseur=f).aggregate(
+            t=Coalesce(Sum('montant', output_field=DecimalField()), Value(Decimal('0.00'), output_field=DecimalField()))
+        )['t']
+
+        if f.type_reglement == 'RELEVE':
+            periode = max(f.periode_releve_jours, 1)
+            tranches_map: dict[tuple, Decimal] = {}
+            mois_concernes: set[tuple] = set()
+            for c in commandes:
+                cmd_date = c.date_cloture.date() if c.date_cloture else today
+                mois_concernes.add((cmd_date.year, cmd_date.month))
+
+            all_tranches: list[tuple] = []
+            for (annee, mois) in sorted(mois_concernes):
+                all_tranches.extend(_tranches_releve(annee, mois, periode))
+
+            for tranche in all_tranches:
+                tranches_map[tranche] = Decimal('0.00')
+            for c in commandes:
+                cmd_date = c.date_cloture.date() if c.date_cloture else today
+                for tranche in all_tranches:
+                    if tranche[0] <= cmd_date <= tranche[1]:
+                        tranches_map[tranche] += c.total_value
+                        break
+
+            reste_paye = total_paye
+            for tranche in sorted(all_tranches):
+                montant_tranche = tranches_map.get(tranche, Decimal('0.00'))
+                if montant_tranche <= Decimal('0.00'):
+                    continue
+                if reste_paye >= montant_tranche:
+                    reste_paye -= montant_tranche
+                    continue
+                montant_du = montant_tranche - reste_paye
+                montant_paye = reste_paye
+                reste_paye = Decimal('0.00')
+
+                date_fin_tranche = tranche[1]
+                echeance_date = date_fin_tranche + timedelta(days=f.delai_paiement_jours)
+                jours_restants = (echeance_date - today).days
+                label = f"Relevé {tranche[0].strftime('%d/%m')}→{tranche[1].strftime('%d/%m/%Y')}"
+
+                echeances.append({
+                    'fournisseur_id': f.id,
+                    'fournisseur_nom': f.name,
+                    'type_reglement': 'RELEVE',
+                    'numero_facture': label,
+                    'montant_total': float(montant_tranche),
+                    'montant_paye': float(montant_paye),
+                    'montant_reste': float(montant_du),
+                    'date_echeance': echeance_date.isoformat(),
+                    'jours_restants': jours_restants,
+                    'status': _statut(jours_restants),
+                })
+        else:
+            reste_paye = total_paye
+            for c in commandes:
+                cmd_total = c.total_value
+                if reste_paye >= cmd_total:
+                    reste_paye -= cmd_total
+                    continue
+                cmd_due = cmd_total - reste_paye
+                montant_paye = reste_paye
+                reste_paye = Decimal('0.00')
+
+                base_date = c.date_cloture.date() if c.date_cloture else today
+                echeance_date = base_date + timedelta(days=f.delai_paiement_jours)
+                jours_restants = (echeance_date - today).days
+
+                echeances.append({
+                    'fournisseur_id': f.id,
+                    'fournisseur_nom': f.name,
+                    'type_reglement': 'FACTURE',
+                    'commande_id': c.id,
+                    'numero_facture': c.numero_facture or f"CMD-{c.id}",
+                    'montant_total': float(cmd_total),
+                    'montant_paye': float(montant_paye),
+                    'montant_reste': float(cmd_due),
+                    'date_echeance': echeance_date.isoformat(),
+                    'jours_restants': jours_restants,
+                    'status': _statut(jours_restants),
+                })
 
         echeances.sort(key=lambda x: x['jours_restants'])
         return Response(echeances)

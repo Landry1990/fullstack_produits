@@ -20,7 +20,7 @@ export default function JournalCaisseFilters({ state }: Props) {
   } = state;
 
   return (
-    <div className="bg-white border-b border-slate-200 shrink-0 p-4 shadow-sm">
+    <div className="shrink-0 p-4">
       <div className="flex flex-col lg:flex-row gap-4 justify-between items-start lg:items-center">
         <div className="flex items-center gap-4">
           <div className="p-2.5 bg-emerald-100 rounded-xl text-emerald-600 shrink-0">

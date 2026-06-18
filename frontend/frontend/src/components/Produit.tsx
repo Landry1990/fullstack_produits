@@ -433,7 +433,16 @@ export default function Produit() {
           </button>
           <button
             className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg border border-base-300 bg-base-100 text-base-content hover:bg-base-200 transition-colors"
-            onClick={() => setIsImportModalOpen(true)}
+            onClick={() => {
+              setPasswordModalConfig({
+                title: t('products:messages.password_confirm_import_title'),
+                message: t('products:messages.password_confirm_import_body')
+              });
+              setPendingAction(() => async () => {
+                setIsImportModalOpen(true);
+              });
+              setIsPasswordModalOpen(true);
+            }}
           >
             <Upload className="size-3.5" />
             <span>{t('products:import.title')}</span>

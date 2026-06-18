@@ -208,6 +208,20 @@ export default function Facturation() {
                 placeholder={hook.t('facturation:search.placeholder')}
                 onQuantityShortcut={hook.handleQuantityShortcut}
                 onCsvImport={hook.handleCsvImport}
+                user={hook.user}
+                onSelectOutOfStock={(p) => {
+                  hook.requireSudo(
+                    async () => {
+                      hook.cart.addProduit(p, { isRetrocession: hook.isRetrocession, markupPercentage: (hook as any).currentMarkup })
+                      hook.productSearch.setSearchQuery('')
+                    },
+                    {
+                      permission: 'can_sell_negative_stock',
+                      title: hook.t('facturation:search.out_of_stock_sudo_title', { defaultValue: 'Vente hors stock' }),
+                      message: hook.t('facturation:search.out_of_stock_sudo_message', { name: p.name, stock: p.stock ?? 0, defaultValue: `Le produit "${p.name}" n'a pas de stock disponible (${p.stock ?? 0}). Confirmez votre identité pour forcer la vente.` })
+                    }
+                  )
+                }}
               />
             </div>
           </div>
@@ -221,11 +235,11 @@ export default function Facturation() {
                 </svg>
               </div>
               <div>
-                <p className="text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">{hook.t('pos.ready_for_sale')}</p>
-                <p className="text-[10px] text-slate-400">{hook.t('pos.scan_or_search')}</p>
+                <p className="text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">{hook.t('sales:pos.ready_for_sale')}</p>
+                <p className="text-[10px] text-slate-400">{hook.t('sales:pos.scan_or_search')}</p>
               </div>
               <div className="grid grid-cols-2 gap-2 w-full">
-                {[['F9',hook.t('facturation.shortcuts.validate')],['ENTRÉE',hook.t('facturation.shortcuts.search_enter')],['ESC',hook.t('facturation.shortcuts.cancel')],['F8',hook.t('facturation.shortcuts.pending')]].map(([k,v]) => (
+                {[['F9',hook.t('facturation:shortcuts.validate')],['ENTRÉE',hook.t('facturation:shortcuts.search_enter')],['ESC',hook.t('facturation:shortcuts.cancel')],['F8',hook.t('facturation:shortcuts.pending')]].map(([k,v]) => (
                   <div key={k} className="bg-slate-100 rounded-xl p-2 flex flex-col items-center gap-1">
                     <kbd className="px-1.5 py-0.5 bg-white rounded text-slate-600 font-mono text-[9px] font-bold shadow-sm">{k}</kbd>
                     <span className="text-[9px] uppercase font-semibold text-slate-400">{v}</span>
