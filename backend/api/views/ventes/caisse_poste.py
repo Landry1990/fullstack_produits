@@ -148,7 +148,7 @@ class PosteCaisseViewSet(viewsets.ModelViewSet):
                 'total': Caisse.objects.filter(
                     facture__poste_caisse=poste,
                     date_paiement__gte=session.date_ouverture if session else timezone.now()
-                ).count(),
+                ).values('facture').distinct().count(),
                 'montant_total': float(montant_encaisse) if not hide_amounts else None
             },
             'hide_amounts': hide_amounts
@@ -202,7 +202,7 @@ class PosteCaisseViewSet(viewsets.ModelViewSet):
                 statut='completee'
             ).exclude(mode_paiement__in=['en_compte', 'depot'])
 
-            agg = paiements_qs.aggregate(total=Sum('montant'), count=Count('id'))
+            agg = paiements_qs.aggregate(total=Sum('montant'), count=Count('facture', distinct=True))
             total_general = agg['total'] or Decimal('0')
             nb_transactions = agg['count'] or 0
 
@@ -243,7 +243,7 @@ class PosteCaisseViewSet(viewsets.ModelViewSet):
             if item['total']
         }
 
-        nb_transactions = paiements.count()
+        nb_transactions = paiements.values('facture').distinct().count()
         fond = Decimal(str(session.fond_de_caisse)) if session.fond_de_caisse else Decimal('0')
 
         return Response({
