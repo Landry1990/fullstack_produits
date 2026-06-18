@@ -424,7 +424,7 @@ const UserSessionsShadcn: React.FC = () => {
                     <TableRow key={stat.user_id}>
                       <TableCell>
                         <div className="flex items-center gap-3">
-                          <div className="bg-secondary/10 text-purple-600 rounded-xl size-11 flex items-center justify-center font-bold text-sm border border-purple-200 shrink-0">
+                          <div className="bg-base-200 text-base-content/70 rounded-xl size-11 flex items-center justify-center font-bold text-sm border border-base-300 shrink-0">
                             {stat.username.charAt(0).toUpperCase()}
                           </div>
                           <div>
@@ -434,12 +434,12 @@ const UserSessionsShadcn: React.FC = () => {
                         </div>
                       </TableCell>
                       <TableCell className="text-center">
-                        <Badge variant="secondary">
+                        <Badge variant="outline" className="text-muted-foreground font-normal">
                           {stat.days_count} {t('sessions.recap.days_present')}
                         </Badge>
                       </TableCell>
                       <TableCell className="text-right">
-                        <div className="text-xl font-black text-primary tracking-tight">
+                        <div className="text-xl font-black text-base-content tracking-tight">
                           {stat.total_duration_display}
                         </div>
                       </TableCell>
