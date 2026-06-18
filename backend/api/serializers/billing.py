@@ -111,6 +111,7 @@ class FactureSerializer(serializers.ModelSerializer):
     validated_by_name = serializers.SerializerMethodField()
     montant_paye = serializers.SerializerMethodField()
     reste_a_payer = serializers.SerializerMethodField()
+    session_ticket_number = serializers.IntegerField(source='ticket_session', read_only=True)
 
     class Meta:
         model = Facture
@@ -125,6 +126,7 @@ class FactureSerializer(serializers.ModelSerializer):
             'is_remise_auto', 'part_client',
             'created_by', 'validated_by',
             'montant_paye', 'reste_a_payer', 'paiements',
+            'session_ticket_number',
             'poste_caisse'
         ]
 
