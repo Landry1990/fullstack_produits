@@ -7,6 +7,8 @@ import { Button } from './ui/Button';
 import { Input } from './ui/Input';
 import { Badge } from './ui/Badge';
 import { Checkbox } from './ui/Checkbox';
+import { Select } from './ui/Select';
+import { Card } from './ui/Card';
 import {
   Trash2, RotateCcw, AlertTriangle, Package, Users, Truck, Search, X,
   ShoppingCart, CreditCard, Clock, ClipboardList, Receipt, ChevronDown,
@@ -87,7 +89,6 @@ export default function Corbeille() {
   const [typeFilter, setTypeFilter] = useState<TypeKey>('all');
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [expandedId, setExpandedId] = useState<string | null>(null);
-  const [showFilterMenu, setShowFilterMenu] = useState(false);
 
   const fetchData = async () => {
     try {
@@ -244,29 +245,12 @@ export default function Corbeille() {
           )}
         </div>
 
-        {/* Type filter dropdown */}
-        <div className="relative">
-          <Button variant="outline" size="sm" onClick={() => setShowFilterMenu(!showFilterMenu)}>
-            <span className={`size-2 rounded-full ${typeInfo.bg.replace('bg-', 'bg-')}`} style={{ backgroundColor: 'currentColor' }} />
-            <span className={typeInfo.color}>{typeInfo.label}</span>
-            <ChevronDown className={`size-3.5 text-base-content/40 transition-transform ${showFilterMenu ? 'rotate-180' : ''}`} />
-          </Button>
-          {showFilterMenu && (
-            <>
-              <div className="fixed inset-0 z-40" onClick={() => setShowFilterMenu(false)} />
-              <div className="absolute z-50 mt-1 w-48 bg-base-100 rounded-xl border border-base-200 shadow-lg py-1">
-                {TYPE_CONFIG.map(c => (
-                  <button key={c.key}
-                    onClick={() => { setTypeFilter(c.key); setShowFilterMenu(false); }}
-                    className={`w-full flex items-center gap-2 px-3 py-2 text-sm transition-colors ${typeFilter === c.key ? 'bg-primary/10 text-primary font-semibold' : 'text-base-content/70 hover:bg-base-200'}`}>
-                    <span className={c.color}>{c.icon}</span>
-                    {c.label}
-                  </button>
-                ))}
-              </div>
-            </>
-          )}
-        </div>
+        {/* Type filter */}
+        <Select size="sm" value={typeFilter} onChange={e => setTypeFilter(e.target.value as TypeKey)} className="w-40">
+          {TYPE_CONFIG.map(c => (
+            <option key={c.key} value={c.key}>{c.label}</option>
+          ))}
+        </Select>
 
         {/* Select all */}
         {allItems.length > 0 && (
@@ -309,12 +293,12 @@ export default function Corbeille() {
                 const isExp = expandedId === key;
                 const cfg = TYPE_CONFIG.find(c => c.key === item.type) || TYPE_CONFIG[0];
                 return (
-                  <div key={key}
-                    onClick={() => toggleSelect(key)}
-                    className={`group relative bg-base-100 rounded-xl border transition-all cursor-pointer ${isSel ? 'border-primary/30 ring-1 ring-primary/20' : 'border-base-200 hover:border-base-300 hover:shadow-sm'}`}>
-                    <div className="flex items-start gap-3 px-4 py-3">
+                  <Card key={key} padding="sm" variant={isSel ? 'elevated' : 'default'}
+                    className={`group cursor-pointer transition-all ${isSel ? 'ring-1 ring-primary/20 border-primary/30' : 'hover:border-base-300 hover:shadow-md'}`}
+                    onClick={() => toggleSelect(key)}>
+                    <div className="flex items-start gap-3">
                       <div className="pt-0.5">
-                        <Checkbox checked={isSel} className="size-4" />
+                        <Checkbox checked={isSel} />
                       </div>
                       <div className={`shrink-0 w-9 h-9 rounded-lg flex items-center justify-center ${cfg.bg}`}>
                         <span className={cfg.color}>{cfg.icon}</span>
@@ -322,24 +306,24 @@ export default function Corbeille() {
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2">
                           <span className="font-semibold text-sm text-base-content truncate">{item.name}</span>
-                          <Badge variant="outline" className={`text-[10px] ${cfg.color}`}>{cfg.label}</Badge>
+                          <Badge variant="outline" size="sm" className={cfg.color}>{cfg.label}</Badge>
                         </div>
                         <div className="flex items-center gap-3 mt-1">
-                          <span className="text-[10px] text-base-content/40 flex items-center gap-1">
+                          <span className="text-[10px] text-muted-foreground flex items-center gap-1">
                             <Clock className="size-3" />{formatTime(item.deleted_at)}
                           </span>
                           {item.type === 'produit' && (
-                            <span className="text-[10px] text-base-content/40">Stock: {item.details.stock ?? 0}</span>
+                            <span className="text-[10px] text-muted-foreground">Stock: {item.details.stock ?? 0}</span>
                           )}
                           {item.type === 'facture' && (
-                            <span className="text-[10px] text-base-content/40">{item.details.total?.toLocaleString('fr-FR')} FCFA</span>
+                            <span className="text-[10px] text-muted-foreground">{item.details.total?.toLocaleString('fr-FR')} FCFA</span>
                           )}
                           {item.type === 'client' && item.details.phone && (
-                            <span className="text-[10px] text-base-content/40">{item.details.phone}</span>
+                            <span className="text-[10px] text-muted-foreground">{item.details.phone}</span>
                           )}
                         </div>
                       </div>
-                      {/* Actions always visible */}
+                      {/* Actions */}
                       <div className="flex items-center gap-1 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
                         <Button size="sm" variant="outline" className="h-7 px-2.5 text-[11px] text-success border-success/20 hover:bg-success/10 hover:text-success"
                           onClick={e => { e.stopPropagation(); handleRestore([{ model: item.type, id: item.id }]); }}
@@ -361,21 +345,21 @@ export default function Corbeille() {
                     </div>
                     {/* Expanded details */}
                     {isExp && (
-                      <div className="px-4 pb-3 pt-0 border-t border-base-200/50">
-                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 mt-2">
+                      <div className="mt-3 pt-3 border-t border-base-200/50">
+                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                           {Object.entries(item.details).map(([k, v]) => {
                             if (v === null || v === undefined || v === '') return null;
                             return (
-                              <div key={k} className="bg-base-200 rounded-lg px-3 py-2">
+                              <Card key={k} padding="sm" variant="bordered" className="bg-base-200/50">
                                 <p className="text-[10px] font-bold uppercase tracking-wider text-base-content/40">{k.replace(/_/g, ' ')}</p>
                                 <p className="text-xs text-base-content font-medium truncate">{String(v)}</p>
-                              </div>
+                              </Card>
                             );
                           })}
                         </div>
                       </div>
                     )}
-                  </div>
+                  </Card>
                 );
               })}
             </div>
