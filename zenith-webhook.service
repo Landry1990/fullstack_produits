@@ -10,7 +10,7 @@ Restart=always
 RestartSec=5
 WorkingDirectory=/opt/zenith-pharma
 Environment=PYTHONUNBUFFERED=1
-ExecStart=/usr/bin/python3 /opt/zenith-pharma/webhook-deploy.py --port 9000 --secret %DEPLOY_SECRET%
+ExecStart=/bin/sh -c 'exec /usr/bin/python3 /opt/zenith-pharma/webhook-deploy.py --port 9000 --secret "$DEPLOY_SECRET"'
 # Le secret doit etre defini dans /etc/systemd/system/zenith-webhook.service.d/override.conf
 # ou via: systemctl edit zenith-webhook
 StandardOutput=journal
