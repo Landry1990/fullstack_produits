@@ -1,4 +1,4 @@
-import type { ProduitModel } from '../../../types'
+import type { ProduitModel, User } from '../../../types'
 
 export type SearchMode = 'products' | 'packs' | 'dci'
 
@@ -54,6 +54,7 @@ export interface ProductSearchProps {
   
   // Callbacks
   onSelect: (item: SearchResult | ProduitModel) => void
+  onSelectOutOfStock?: (item: SearchResult) => void
   onCsvImport?: (file: File) => void
   onQuantityShortcut?: (qty: number) => void
   
@@ -72,6 +73,9 @@ export interface ProductSearchProps {
   
   // Ref
   searchInputRef: React.RefObject<HTMLInputElement | null>
+
+  // Permissions
+  user?: User | null
 }
 
 export interface UseProductSearchOptions {

@@ -198,7 +198,7 @@ const HistoriqueVentes = () => {
       </div>
 
       {/* Main Content: Table */}
-      <div className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden flex flex-col h-auto min-h-[450px] lg:h-[calc(100vh-28rem)]">
+      <div className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden flex flex-col h-auto min-h-[450px] lg:h-[calc(100vh-28rem)]">
         {loading ? (
           <div className="flex flex-col items-center justify-center p-20 gap-4">
             <div className="animate-spin rounded-full size-10 border-b-2 border-emerald-600"></div>

@@ -255,6 +255,8 @@
         "password_confirm_delete_body": "Cette action est sensible. Veuillez saisir votre mot de passe pour confirmer la suppression définitive de ce produit.",
         "password_confirm_adjust_title": "Confirmer l'ajustement de stock",
         "password_confirm_adjust_body": "Vous allez modifier le stock de \"{{name}}\" : {{oldStock}} → {{newStock}}",
+        "password_confirm_import_title": "Confirmer l'import de produits",
+        "password_confirm_import_body": "Cette action est sensible. Veuillez saisir votre mot de passe pour confirmer l'import des produits.",
         "invalid_quantity": "Quantité invalide",
         "generation_error": "Erreur lors de la génération des étiquettes",
         "access_denied_delete": "Accès refusé : Vous n'avez pas la permission de supprimer des produits.",

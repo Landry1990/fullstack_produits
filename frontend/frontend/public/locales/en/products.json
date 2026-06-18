@@ -255,6 +255,8 @@
         "password_confirm_delete_body": "This action is sensitive. Please enter your password to confirm permanent deletion of this product.",
         "password_confirm_adjust_title": "Confirm stock adjustment",
         "password_confirm_adjust_body": "You are about to modify stock for \"{{name}}\": {{oldStock}} → {{newStock}}",
+        "password_confirm_import_title": "Confirm product import",
+        "password_confirm_import_body": "This action is sensitive. Please enter your password to confirm the product import.",
         "invalid_quantity": "Invalid quantity",
         "generation_error": "Error during label generation",
         "access_denied_delete": "Access denied: You do not have permission to delete products.",

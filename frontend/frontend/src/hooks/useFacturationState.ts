@@ -617,6 +617,7 @@ export function useFacturationState() {
     clientSearchRef,
     quantityInputsRef,
     paymentInputRef,
-    applyLoyaltyReward
+    applyLoyaltyReward,
+    user
   }
 }
