@@ -100,9 +100,9 @@ print(f'  Produits en base: {count}')
 exit(0 if count == 0 else 1)
 " 2>/dev/null && {
     FIXTURE=/app/fixtures/produits_seed.json
-    if [ -f \"\$FIXTURE\" ]; then
+    if [ -f "$FIXTURE" ]; then
         echo "📦 Base vide — chargement de la fixture produits..."
-        python manage.py loaddata \"\$FIXTURE\" && echo "✓ Fixture chargée" || echo "⚠️  Échec du chargement fixture"
+        python manage.py loaddata "$FIXTURE" && echo "✓ Fixture chargée" || echo "⚠️  Échec du chargement fixture"
     else
         echo "  Aucune fixture trouvée ($FIXTURE) — base restera vide"
     fi

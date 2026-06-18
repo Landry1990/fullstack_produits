@@ -91,6 +91,7 @@ else
     SECRET_KEY=$(python3 -c "import secrets; print(secrets.token_urlsafe(50))")
     DEPLOY_SECRET=$(python3 -c "import secrets; print(secrets.token_urlsafe(32))")
     DB_PASS=$(python3 -c "import secrets; print(secrets.token_urlsafe(24))")
+    EMERGENCY_PASS=$(python3 -c "import secrets; print(secrets.token_urlsafe(24))")
     cat > .env <<EOF
 # Base de données
 DB_NAME=pharma_db
@@ -105,10 +106,9 @@ DJANGO_DEBUG=False
 # Frontend
 FRONTEND_PORT=80
 
-# CORS
+# CORS (docker-compose.prod.yml force CORS_ALLOW_ALL=false en prod)
 CORS_ALLOWED_ORIGINS=http://localhost,http://frontend
 CSRF_TRUSTED_ORIGINS=http://localhost,http://frontend
-CORS_ALLOW_ALL=true
 
 # Cache
 REDIS_URL=redis://redis:6379/0
@@ -118,11 +118,19 @@ DEFAULT_ADMIN_USER=admin
 DEFAULT_ADMIN_PASSWORD=admin123
 DEFAULT_ADMIN_EMAIL=admin@pharmacie.local
 
+# Admin de secours (accès d'urgence si admin principal bloqué)
+EMERGENCY_ADMIN_USER=sysadmin
+EMERGENCY_ADMIN_PASSWORD=$EMERGENCY_PASS
+
 # Webhook
 DEPLOY_SECRET=$DEPLOY_SECRET
 
 # Ngrok (optionnel — décommentez et ajoutez votre token)
 # NGROK_AUTHTOKEN=
+
+# Tailscale (optionnel — décommentez et ajoutez votre auth key)
+# TAILSCALE_AUTHKEY=tskey-auth-xxxxxxxxxxxxxxxx-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+# TAILSCALE_HOSTNAME=fullstack-app
 EOF
     ok ".env créé avec clés auto-générées"
     echo -e "${YELLOW}  → IMPORTANT : Copiez ces valeurs dans un endroit sûr :${NC}"
@@ -139,6 +147,8 @@ ok "Scripts prêts"
 
 # ── 7. Lancer Docker ──────────────────────────────────
 step "7. Construction & démarrage des conteneurs"
+sudo docker volume create fullstack_postgres_data_protected 2>/dev/null || true
+ok "Volume Docker PostgreSQL prêt"
 sudo docker compose -f docker-compose.prod.yml pull 2>/dev/null || true
 sudo docker compose -f docker-compose.prod.yml build --quiet 2>/dev/null || sudo docker compose -f docker-compose.prod.yml build
 sudo docker compose -f docker-compose.prod.yml up -d --remove-orphans
@@ -187,6 +197,15 @@ ok "Superutilisateur : admin / admin123 (changez le mot de passe !)"
 step "10. Installation des services auto-démarrage"
 if [ -f zenith-webhook.service ]; then
     sudo cp zenith-webhook.service /etc/systemd/system/ 2>/dev/null || true
+    # Configurer le secret webhook via un override systemd
+    if [ -f .env ]; then
+        DEPLOY_SECRET_VAL=$(grep "^DEPLOY_SECRET=" .env | cut -d'=' -f2-)
+        if [ -n "$DEPLOY_SECRET_VAL" ]; then
+            sudo mkdir -p /etc/systemd/system/zenith-webhook.service.d
+            printf "[Service]\nEnvironment=\"DEPLOY_SECRET=%s\"\n" "$DEPLOY_SECRET_VAL" | \
+                sudo tee /etc/systemd/system/zenith-webhook.service.d/override.conf >/dev/null
+        fi
+    fi
 fi
 if [ -f zenith-watchdog.service ]; then
     sudo cp zenith-watchdog.service /etc/systemd/system/ 2>/dev/null || true
@@ -204,12 +223,12 @@ else
     docker volume create portainer_data 2>/dev/null || true
     docker run -d \
         --name portainer \
-        -p 9000:9000 \
+        -p 9001:9000 \
         -v /var/run/docker.sock:/var/run/docker.sock \
         -v portainer_data:/data \
         --restart always \
         portainer/portainer-ce:latest 2>/dev/null || warn "Portainer non installé"
-    ok "Portainer démarré sur http://localhost:9000"
+    ok "Portainer démarré sur http://localhost:9001"
 fi
 
 # ── 12. Résumé ────────────────────────────────────────
@@ -220,9 +239,18 @@ echo -e "  🏥  Zenith Pharma est installé et fonctionnel"
 echo -e "${GREEN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
 echo ""
 echo -e "  ${BLUE}Accès application :${NC}  http://localhost/"
-echo -e "  ${BLUE}Accès Portainer   :${NC}  http://localhost:9000/"
+echo -e "  ${BLUE}Accès Portainer   :${NC}  http://localhost:9001/"
+echo -e "  ${BLUE}Webhook deploy    :${NC}  http://localhost:9000/deploy"
 echo -e "  ${BLUE}Superutilisateur  :${NC}  admin / admin123"
 echo -e "  ${BLUE}Dossier projet    :${NC}  $ZENITH_DIR"
+
+# Warnings services optionnels
+if ! grep -q "^NGROK_AUTHTOKEN=" .env 2>/dev/null || grep -q "^# NGROK_AUTHTOKEN=" .env 2>/dev/null; then
+    echo -e "  ${YELLOW}⚠ Ngrok non configuré — éditez .env si vous avez besoin d'un tunnel public${NC}"
+fi
+if ! grep -q "^TAILSCALE_AUTHKEY=" .env 2>/dev/null || grep -q "^# TAILSCALE_AUTHKEY=" .env 2>/dev/null; then
+    echo -e "  ${YELLOW}⚠ Tailscale non configuré — éditez .env si vous avez besoin d'un accès VPN${NC}"
+fi
 echo ""
 echo -e "  ${YELLOW}Prochaines étapes manuelles :${NC}"
 echo -e "    1. Configurer le webhook GitHub (section 7 du guide)"
