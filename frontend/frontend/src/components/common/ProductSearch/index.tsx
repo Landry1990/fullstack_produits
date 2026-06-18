@@ -194,7 +194,7 @@ export const ProductSearch: React.FC<ProductSearchProps> = ({
               isZeroStock ? 'text-slate-500 font-normal' :
               'text-slate-800 font-bold'
             )}>{item.name}</div>
-            {item.active_promis_count && item.active_promis_count > 0 && (
+            {(item.active_promis_count ?? 0) > 0 && (
               <Badge variant="secondary" className="text-[9px] h-4 px-1 bg-amber-100 text-amber-700 border-amber-200 animate-pulse shrink-0">
                 PROMIS ({item.active_promis_count})
               </Badge>

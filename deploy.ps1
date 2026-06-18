@@ -97,6 +97,7 @@ function Deploy-Backend {
     docker cp backend/api/idempotency.py fullstack_produits-backend-1:/app/api/idempotency.py
     docker cp backend/api/views/commandes/commandes.py fullstack_produits-backend-1:/app/api/views/commandes/commandes.py
     docker cp backend/api/views/ventes/factures.py fullstack_produits-backend-1:/app/api/views/ventes/factures.py
+    docker cp backend/api/views/ventes/caisse_poste.py fullstack_produits-backend-1:/app/api/views/ventes/caisse_poste.py
 
     if ($IncludeModels) {
         Write-Host "  Migration..." -ForegroundColor Yellow

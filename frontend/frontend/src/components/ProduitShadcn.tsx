@@ -3,7 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'react-hot-toast'
 import {
-  Package, Upload, RotateCw, RefreshCw, Search, X,
+  Package, Upload, RefreshCw, Search, X,
   ChevronLeft, ChevronRight, AlertTriangle
 } from 'lucide-react'
 
@@ -11,10 +11,13 @@ import api from '../services/api'
 import { getApiErrorDetail } from '../utils/errorHandling'
 import { useConfirm } from '../hooks/useConfirm'
 import { useAuth } from '../context/AuthContext'
-import type { ProduitModel, Facture } from '../types'
+import type { ProduitModel } from '../types'
 import { formatCurrency } from '../utils/formatters'
 
-import { useProduits, useRayons, useFournisseurs, useFormes, useGroupes } from '../hooks/useProduits'
+import {
+  useProduits, useRayons, useFournisseurs, useFormes, useGroupes,
+  useProduitLots, useProduitStats, useProduitAchats, useProduitHistory
+} from '../hooks/useProduits'
 import { useTVA } from '../hooks/useTVA'
 
 import { Card } from './ui/Card'
@@ -23,6 +26,7 @@ import { Input } from './ui/Input'
 import { Badge } from './ui/Badge'
 import { Checkbox } from './ui/Checkbox'
 import SkeletonTable from './ui/SkeletonTable'
+import { ProductTabsContent } from './products/ProductTabsContent'
 import ProduitCreateModal from './ProduitFormModal'
 import PasswordConfirmModal from './PasswordConfirmModal'
 
@@ -101,6 +105,11 @@ export default function ProduitShadcn() {
     only_in_stock: showInStockOnly,
   })
 
+  const { data: lots = [], isLoading: loadingLots } = useProduitLots(selectedProduit?.id || null)
+  const { data: monthlyStats = [], isLoading: loadingStats } = useProduitStats(selectedProduit?.id || null)
+  const { data: achats = [], isLoading: loadingAchats } = useProduitAchats(selectedProduit?.id || null)
+  const { data: stockHistory = [], isLoading: loadingHistory } = useProduitHistory(selectedProduit?.id || null, activeTab)
+
   useEffect(() => {
     if (location.state?.action === 'NEW_PRODUCT') {
       setIsCreateOpen(true)
@@ -160,6 +169,20 @@ export default function ProduitShadcn() {
       setSelectedProduit(prev => prev ? ({ ...prev, is_active: isActive }) : null)
       refetch()
     } catch (err) { toast.error(getApiErrorDetail(err, t('products:messages.status_error'))) }
+  }
+
+  const handleMovementClick = async (item: any) => {
+    if (item.facture && (item.type === 'SORTIE' || item.type === 'RETOUR')) {
+      try {
+        const response = await api.get(`factures/${item.facture}/`)
+        toast.success(t('products:messages.facture_loaded', { defaultValue: 'Facture #' + item.facture }))
+        // Navigation vers la caisse avec la facture si besoin — pour l'instant on navigue simplement
+      } catch (error) {
+        toast.error(t('products:messages.facture_load_error', { defaultValue: 'Erreur chargement facture' }))
+      }
+    } else if (item.commande) {
+      navigate('/app/commandes', { state: { openDetailsId: item.commande } })
+    }
   }
 
   const handleOpenEdit = (produit: ProduitModel) => {
@@ -372,7 +395,7 @@ export default function ProduitShadcn() {
                                 {produit.is_supplier_exclusive && (
                                   <Badge variant="success" size="sm">EXCLU</Badge>
                                 )}
-                                {!produit.is_active && (
+                                {produit.is_active === false && (
                                   <Badge variant="ghost" size="sm">Inactif</Badge>
                                 )}
                               </div>
@@ -432,7 +455,7 @@ export default function ProduitShadcn() {
                         <h2 className="text-lg font-bold text-slate-900 truncate uppercase" title={selectedProduit.name}>
                           {selectedProduit.name}
                         </h2>
-                        {!selectedProduit.is_active && <Badge variant="ghost" size="sm">Inactif</Badge>}
+                        {selectedProduit.is_active === false && <Badge variant="ghost" size="sm">Inactif</Badge>}
                         {selectedProduit.is_supplier_exclusive && <Badge variant="success" size="sm">Exclusif</Badge>}
                       </div>
                       <p className="text-sm text-slate-500 font-mono">CIP: {selectedProduit.cip1 || '-'}</p>
@@ -447,73 +470,17 @@ export default function ProduitShadcn() {
                     </div>
                   </div>
 
-                  {/* Tabs */}
-                  <div className="shrink-0 px-6 border-b border-slate-100">
-                    <div className="flex gap-1 -mb-px">
-                      {(['general', 'prix', 'achats', 'lots', 'stats', 'mvmts'] as ActiveTab[]).map(tab => (
-                        <button
-                          key={tab}
-                          onClick={() => setActiveTab(tab)}
-                          className={cn(
-                            "px-4 py-2.5 text-xs font-semibold uppercase tracking-wider border-b-2 transition-colors",
-                            activeTab === tab
-                              ? "border-emerald-500 text-emerald-700"
-                              : "border-transparent text-slate-400 hover:text-slate-600"
-                          )}
-                        >
-                          {t(`products:tabs.${tab}`, { defaultValue: tab })}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Tab Content */}
-                  <div className="flex-1 overflow-y-auto p-6">
-                    {activeTab === 'general' && (
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <StatCard label="Stock" value={String(selectedProduit.stock ?? 0)} variant={stockBadgeVariant(selectedProduit.stock ?? 0, selectedProduit.stock_alert)} />
-                        <StatCard label="Prix d'achat" value={formatCurrency(Number(selectedProduit.cost_price || 0))} />
-                        <StatCard label="Prix de vente" value={formatCurrency(Number(selectedProduit.selling_price || 0))} />
-                        <StatCard label="TVA" value={`${selectedProduit.tva || '19.25'}%`} />
-                        <StatCard label="Rayon" value={selectedProduit.rayon_name || '-'} />
-                        <StatCard label="Fournisseur" value={selectedProduit.fournisseur_name || '-'} />
-                        <StatCard label="Forme" value={selectedProduit.forme_name || '-'} />
-                        <StatCard label="Alerte stock" value={String(selectedProduit.stock_alert ?? 0)} variant="warning" />
-                      </div>
-                    )}
-                    {activeTab === 'prix' && (
-                      <div className="space-y-4">
-                        <PriceRow label="Prix d'achat HT" value={formatCurrency(Number(selectedProduit.cost_price || 0))} />
-                        <PriceRow label="Prix de vente TTC" value={formatCurrency(Number(selectedProduit.selling_price || 0))} />
-                        <PriceRow label="TVA" value={`${selectedProduit.tva || '19.25'}%`} />
-                        <PriceRow label="Marge brute" value={formatCurrency(Number(selectedProduit.selling_price || 0) - Number(selectedProduit.cost_price || 0))} />
-                      </div>
-                    )}
-                    {activeTab === 'achats' && (
-                      <div className="text-center text-slate-400 py-12">
-                        <Package className="size-12 mx-auto mb-3 opacity-30" />
-                        <p>{t('products:details.no_purchases', { defaultValue: 'Aucun achat récent' })}</p>
-                      </div>
-                    )}
-                    {activeTab === 'lots' && (
-                      <div className="text-center text-slate-400 py-12">
-                        <Package className="size-12 mx-auto mb-3 opacity-30" />
-                        <p>{t('products:details.no_lots', { defaultValue: 'Aucun lot' })}</p>
-                      </div>
-                    )}
-                    {activeTab === 'stats' && (
-                      <div className="text-center text-slate-400 py-12">
-                        <RotateCw className="size-12 mx-auto mb-3 opacity-30" />
-                        <p>{t('products:details.no_stats', { defaultValue: 'Statistiques non disponibles' })}</p>
-                      </div>
-                    )}
-                    {activeTab === 'mvmts' && (
-                      <div className="text-center text-slate-400 py-12">
-                        <RefreshCw className="size-12 mx-auto mb-3 opacity-30" />
-                        <p>{t('products:details.no_movements', { defaultValue: 'Aucun mouvement' })}</p>
-                      </div>
-                    )}
-                  </div>
+                  <ProductTabsContent
+                    selectedProduit={selectedProduit}
+                    activeTab={activeTab}
+                    setActiveTab={setActiveTab}
+                    lots={lots}
+                    monthlyStats={monthlyStats}
+                    achats={achats}
+                    stockHistory={stockHistory}
+                    loadingHistory={loadingHistory}
+                    onMovementClick={handleMovementClick}
+                  />
                 </>
               ) : (
                 <div className="flex-1 flex flex-col items-center justify-center text-slate-300">
@@ -563,7 +530,7 @@ export default function ProduitShadcn() {
 /*  Sub-components                                                    */
 /* ------------------------------------------------------------------ */
 
-function StatCard({ label, value, variant = 'ghost' }: { label: string; value: string; variant?: 'success' | 'warning' | 'error' | 'ghost' }) {
+function StatCard({ label, value, variant = 'ghost' }: { label: string; value: string; variant?: 'primary' | 'success' | 'warning' | 'error' | 'ghost' }) {
   return (
     <Card variant="bordered" padding="sm" className="flex items-center justify-between">
       <span className="text-xs text-slate-400 font-medium uppercase tracking-wider">{label}</span>
