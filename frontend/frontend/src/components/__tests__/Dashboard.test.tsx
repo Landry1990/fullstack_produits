@@ -2,7 +2,7 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { MemoryRouter } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import Dashboard from '../Dashboard';
+import Dashboard from '../DashboardShadcn';
 import * as useDashboardHooks from '../../hooks/useDashboard';
 
 const createTestQueryClient = () => new QueryClient({
