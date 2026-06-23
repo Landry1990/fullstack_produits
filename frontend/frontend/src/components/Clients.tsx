@@ -111,6 +111,7 @@ export default function Clients() {
       const data = await clientService.getAll({
         search: debouncedSearch,
         page: currentPage,
+        page_size: itemsPerPage,
         // @ts-ignore - Backend supports include_inactive
         include_inactive: showInactive
       }, skipCache);

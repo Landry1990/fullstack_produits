@@ -775,7 +775,7 @@ class DashboardViewSet(viewsets.ViewSet):
             commande__fournisseur=OuterRef('pk'),
             commande__status=Commande.Status.CLOTUREE
         ).order_by().values('commande__fournisseur').annotate(
-            total=Sum(F('quantity') * F('price'), output_field=DecimalField())
+            total=Sum(F('quantity') * F('price_cost'), output_field=DecimalField())
         ).values('total')
         
         paiements_total = PaiementFournisseur.objects.filter(
@@ -797,18 +797,11 @@ class DashboardViewSet(viewsets.ViewSet):
         data = []
         total_debt_global = Decimal('0.00')
 
-        # Fetch all relevant orders for these suppliers in ONE go to avoid N+1 queries
-        # Use Subqueries to avoid Cartesian product duplication when joining produits and paiements
+        # Charger les totaux par commande (quantité × prix)
         order_total_sub = CommandeProduit.objects.filter(
             commande=OuterRef('pk')
         ).values('commande').annotate(
-            total=Sum(F('quantity') * F('price'), output_field=DecimalField())
-        ).values('total')
-
-        order_paid_sub = PaiementFournisseur.objects.filter(
-            commande=OuterRef('pk')
-        ).values('commande').annotate(
-            total=Sum('montant', output_field=DecimalField())
+            total=Sum(F('quantity') * F('price_cost'), output_field=DecimalField())
         ).values('total')
 
         all_orders = Commande.objects.filter(
@@ -816,10 +809,18 @@ class DashboardViewSet(viewsets.ViewSet):
             status=Commande.Status.CLOTUREE
         ).annotate(
             total_annotated=Coalesce(Subquery(order_total_sub[:1]), Value(0, output_field=DecimalField())),
-            paid_annotated=Coalesce(Subquery(order_paid_sub[:1]), Value(0, output_field=DecimalField()))
         ).order_by('date_cloture')
-        
-        # Group orders by supplier
+
+        # Charger TOUS les paiements fournisseurs (globaux + liés à commande)
+        # groupés par fournisseur_id → montant total payé réel
+        all_payments = PaiementFournisseur.objects.filter(
+            fournisseur__in=suppliers_qs
+        ).values('fournisseur_id').annotate(
+            total=Sum('montant', output_field=DecimalField())
+        )
+        payments_by_supplier = {row['fournisseur_id']: row['total'] or Decimal('0.00') for row in all_payments}
+
+        # Grouper les commandes par fournisseur
         orders_by_supplier = defaultdict(list)
         for order in all_orders:
             orders_by_supplier[order.fournisseur_id].append(order)
@@ -830,12 +831,20 @@ class DashboardViewSet(viewsets.ViewSet):
 
             supplier_items = []
 
+            # Répartition FIFO des paiements globaux sur les commandes (du plus ancien au plus récent).
+            # Cela gère correctement les réglements sans FK commande (champ déprécié).
+            budget_restant = payments_by_supplier.get(supplier.id, Decimal('0.00'))
+            remainings: dict[int, Decimal] = {}
+            for order in orders:
+                order_total = order.total_annotated
+                applique = min(budget_restant, order_total)
+                remainings[order.id] = order_total - applique
+                budget_restant -= applique
+
             if supplier.type_reglement == 'FACTURE':
                 # Individual invoices
                 for order in orders:
-                    order_total = order.total_annotated
-                    order_paid = order.paid_annotated
-                    remaining = order_total - order_paid
+                    remaining = remainings.get(order.id, order.total_annotated)
 
                     if remaining > 0:
                         # Calculate due date
@@ -866,9 +875,7 @@ class DashboardViewSet(viewsets.ViewSet):
                 periods: Dict[str, Dict[str, Any]] = {}
 
                 for order in orders:
-                    order_total = order.total_annotated
-                    order_paid = order.paid_annotated
-                    remaining = order_total - order_paid
+                    remaining = remainings.get(order.id, order.total_annotated)
 
                     if remaining > 0:
                         # Determine period based on order date
@@ -940,9 +947,19 @@ class DashboardViewSet(viewsets.ViewSet):
         # Sort by overdue amount (highest first), then by total debt
         data.sort(key=lambda x: (-x['overdue_amount'], -x['debt_total']))
 
+        # Pagination optionnelle pour éviter un payload énorme sur de gros volumes
+        limit = int(request.query_params.get('limit', 50))
+        offset = int(request.query_params.get('offset', 0))
+        limit = max(1, min(limit, 200))  # plafond 200 par page
+        offset = max(0, offset)
+        paginated = data[offset:offset + limit]
+
         return Response({
             'total_debt': float(total_debt_global),
-            'suppliers': data
+            'total_suppliers': len(data),
+            'limit': limit,
+            'offset': offset,
+            'suppliers': paginated
         })
 
 

@@ -58,6 +58,7 @@ class CachedSearchMixin:
             return response
         
         # Pour les listes sans recherche, utiliser le cache de liste
+        # MAIS si des filtres sont présents, utiliser le cache de recherche (qui prend en compte les filtres)
         try:
             page_num = int(page)
             page_size_num = int(page_size)
@@ -65,25 +66,31 @@ class CachedSearchMixin:
             page_num = 1
             page_size_num = 50
         
-        cached_list = SearchCache.get_product_list(page_num, page_size_num, ordering)
-        if cached_list is not None:
-            response = Response(cached_list)
-            response['X-Cache-Hit'] = 'true'
+        if filters:
+            # Désactiver le cache quand il y a des filtres (ex: only_in_stock)
+            # car les filtres changent souvent et le cache devient rapidement invalide
+            response = super().list(request, *args, **kwargs)
+            response['X-Cache-Hit'] = 'false'
+            response['X-Cache-Disabled'] = 'filters-present'
             return response
-        
-        # Pas en cache, exécuter la requête normale
-        response = super().list(request, *args, **kwargs)
-        
-        # Mettre en cache
-        SearchCache.set_product_list(
-            response.data,
-            page_num,
-            page_size_num,
-            ordering,
-            ttl=self.cache_ttl
-        )
-        response['X-Cache-Hit'] = 'false'
-        return response
+        else:
+            # Pas de filtres, utiliser le cache de liste standard
+            cached_list = SearchCache.get_product_list(page_num, page_size_num, ordering)
+            if cached_list is not None:
+                response = Response(cached_list)
+                response['X-Cache-Hit'] = 'true'
+                return response
+            
+            response = super().list(request, *args, **kwargs)
+            SearchCache.set_product_list(
+                response.data,
+                page_num,
+                page_size_num,
+                ordering,
+                ttl=self.cache_ttl
+            )
+            response['X-Cache-Hit'] = 'false'
+            return response
     
     def retrieve(self, request, *args, **kwargs):
         """

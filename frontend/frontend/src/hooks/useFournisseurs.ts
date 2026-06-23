@@ -158,6 +158,7 @@ export function useFournisseurs() {
         params: { 
           include_inactive: showInactive,
           page: currentPage,
+          page_size: itemsPerPage,
           search: debouncedSearch
         },
         signal: controller.signal,

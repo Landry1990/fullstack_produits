@@ -22,7 +22,7 @@ from reportlab.lib.colors import HexColor
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Table, TableStyle, Spacer
 
 from api.models import (
-    Facture, FactureProduit, InvoiceSettings, AuditLog
+    Facture, FactureProduit, InvoiceSettings, AuditLog, Caisse
 )
 from api.services import SalesService
 from api.serializers import FactureSerializer, FacturePrintSerializer
@@ -417,7 +417,18 @@ class FactureViewSet(BaseViewSetConfig, OptimizedSerializerMixin, viewsets.Model
 
         try:
             SalesService.validate_invoice(facture, validation_user, request.data)
-            
+
+            # Enregistrer le paiement si un mode est fourni
+            mode_paiement = request.data.get('mode_paiement')
+            if mode_paiement and facture.total_ttc > 0:
+                Caisse.objects.create(
+                    facture=facture,
+                    mode_paiement=mode_paiement,
+                    montant=facture.total_ttc,
+                    statut='completee',
+                    user=validation_user
+                )
+
             # Log d'audit
             log_audit(
                 user=request.user,

@@ -53,7 +53,7 @@ class EtatInventairePDFView(APIView):
         if stock_display == 'NON_ZERO':
             base_filter['stock__gt'] = 0
 
-        # Récupérer tous les produits actifs avec leurs lots (Prefetch filtré évite N+1)
+        # Récupérer les produits actifs avec leurs lots (Prefetch filtré évite N+1)
         active_lots_prefetch = Prefetch(
             'stock_lots',
             queryset=StockLot.objects.filter(quantity_remaining__gt=0).order_by('date_expiration'),
@@ -64,7 +64,7 @@ class EtatInventairePDFView(APIView):
         ).only(
             'id', 'cip1', 'name', 'stock', 'selling_price', 'rayon', 'forme', 'groupe'
         ).prefetch_related(active_lots_prefetch).order_by('name')
-        
+
         # Filtrer par entité spécifique si filter_id est fourni
         filter_name = None
         if filter_id:
@@ -85,9 +85,16 @@ class EtatInventairePDFView(APIView):
             except (ValueError, Rayon.DoesNotExist, Forme.DoesNotExist, Groupe.DoesNotExist):
                 pass  # Ignorer le filtre invalide
 
+        # Limite de sécurité pour éviter les timeouts / OOM sur les très gros catalogues
+        MAX_PRODUITS = 5000
+        total_produits = produits.count()
+        is_truncated = total_produits > MAX_PRODUITS
+        if is_truncated:
+            produits = produits[:MAX_PRODUITS]
+
         # Grouper les produits
         grouped_data = {}
-        
+
         for produit in produits:
             if group_by == 'FORME':
                 key = produit.forme.nom if produit.forme else 'Sans Forme'
@@ -95,13 +102,13 @@ class EtatInventairePDFView(APIView):
                 key = produit.rayon.name if produit.rayon else 'Sans Rayon'
             elif group_by == 'GROUPE':
                 key = produit.groupe.nom if produit.groupe else 'Sans Groupe'
-            
+
             if key not in grouped_data:
                 grouped_data[key] = []
-            
+
             # Utiliser les lots préchargés (pas de requête supplémentaire)
             lots = produit.active_lots
-            
+
             if len(lots) > 1:
                 # Multi-lots: une ligne par lot
                 for lot in lots:
@@ -131,13 +138,34 @@ class EtatInventairePDFView(APIView):
 
         # Support du format JSON pour l'impression frontend
         if request.query_params.get('format', '').lower() == 'json':
+            try:
+                page = int(request.query_params.get('page', 1))
+                page_size = int(request.query_params.get('page_size', 50))
+            except (ValueError, TypeError):
+                page, page_size = 1, 50
+            page = max(1, page)
+            page_size = max(1, min(page_size, 200))
+
+            # Aplatir toutes les lignes pour la pagination JSON
+            all_items = []
+            for g in sorted_groups:
+                for item in grouped_data[g]:
+                    all_items.append({'group': g, **item})
+            total_items = len(all_items)
+            start = (page - 1) * page_size
+            paginated = all_items[start:start + page_size]
+
             return Response({
                 'title': f"ÉTAT D'INVENTAIRE PAR {group_by}",
                 'filter_name': filter_name,
                 'group_label': group_by,
                 'stock_label': 'Stock Machine' if stock_display == 'MACHINE' else ('Stocks Non Nuls' if stock_display == 'NON_ZERO' else 'Stock à Zéro'),
                 'date': datetime.now().isoformat(),
-                'groups': {g: grouped_data[g] for g in sorted_groups}
+                'count': total_items,
+                'page': page,
+                'page_size': page_size,
+                'is_truncated': is_truncated,
+                'results': paginated
             })
 
         # Générer le PDF

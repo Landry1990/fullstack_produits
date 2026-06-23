@@ -8,7 +8,8 @@ import {
   ArrowUpRight,
   ArrowDownRight,
   History,
-  ArrowRight
+  ArrowRight,
+  HandCoins
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { 
@@ -31,6 +32,7 @@ interface PerformanceOverviewProps {
   revenueChart: any;
   hourlyTraffic: any;
   reapproStats?: { product_count: number; total_units_suggested: number };
+  supplierDebts?: { total_debt: number; suppliers: any[] };
   t: any;
   formatCurrencyLocal: (val: number) => string;
 }
@@ -40,6 +42,7 @@ export default function PerformanceOverview({
   revenueChart, 
   hourlyTraffic, 
   reapproStats,
+  supplierDebts,
   t, 
   formatCurrencyLocal 
 }: PerformanceOverviewProps) {
@@ -53,27 +56,25 @@ export default function PerformanceOverview({
 
   const isVendeur = stats?.role === 'VENDEUR' || stats?.role === 'CAISSIER';
 
+  const totalDettes = supplierDebts?.total_debt ?? 0;
+  const nbFournisseursDetteurs = supplierDebts?.suppliers?.length ?? 0;
+
   // KPI cards config
   const kpiCards = stats ? (isVendeur ? [
-    {
-      title: t('stats.my_sales'),
-      value: formatCurrencyLocal(stats.user_stats?.sales ?? 0),
-      sub: t('stats.sales_count', { count: stats.user_stats?.count || 0 }),
-      icon: TrendingUp, accent: '#10b981', isPositive: true,
-    },
     {
       title: t('stats.my_avg_basket'),
       value: formatCurrencyLocal(stats.user_stats?.avg_basket ?? 0),
       sub: t('stats.avg_per_client'),
       icon: Package, accent: '#10b981', isPositive: true,
     },
+    {
+      title: 'Dettes fournisseurs',
+      value: formatCurrencyLocal(totalDettes),
+      sub: `${nbFournisseursDetteurs} fournisseur${nbFournisseursDetteurs > 1 ? 's' : ''} concerné${nbFournisseursDetteurs > 1 ? 's' : ''}`,
+      icon: HandCoins, accent: '#10b981', isPositive: true,
+      link: '/app/fournisseurs',
+    },
   ] : [
-    ...(stats.user_stats ? [{
-      title: t('stats.my_sales'),
-      value: formatCurrencyLocal(stats.user_stats.sales ?? 0),
-      sub: t('stats.sales_count', { count: stats.user_stats.count ?? 0 }),
-      icon: TrendingUp, accent: '#10b981', isPositive: true,
-    }] : []),
     {
       title: t('stats.revenue'),
       value: formatCurrencyLocal(stats.revenue?.value ?? 0),
@@ -94,6 +95,13 @@ export default function PerformanceOverview({
       sub: t('stats.invoices_count', { count: stats.receivables?.count || 0 }),
       icon: Users, accent: '#10b981', isPositive: true,
       link: '/app/creances',
+    },
+    {
+      title: 'Dettes fournisseurs',
+      value: formatCurrencyLocal(totalDettes),
+      sub: `${nbFournisseursDetteurs} fournisseur${nbFournisseursDetteurs > 1 ? 's' : ''} concerné${nbFournisseursDetteurs > 1 ? 's' : ''}`,
+      icon: HandCoins, accent: '#10b981', isPositive: true,
+      link: '/app/fournisseurs',
     },
     {
       title: t('stats.stock_value'),

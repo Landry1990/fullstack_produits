@@ -9,7 +9,7 @@ from django.utils import timezone
 from django.http import HttpResponse
 import io
 
-from ...models import Promis, MouvementStock
+from ...models import Promis, MouvementStock, Produit
 from ...serializers import PromisSerializer
 from ...search_mixins import MultiTermSearchMixin
 from ...pagination import StandardResultsSetPagination
@@ -72,24 +72,24 @@ class PromisViewSet(MultiTermSearchMixin, viewsets.ModelViewSet):
         Annuler un promis et réintégrer le stock.
         Crée un mouvement de stock de type RETOUR (affiché en vert dans les stats).
         """
-        promis = self.get_object()
-        
+        promis = Promis.objects.select_for_update().get(pk=self.kwargs['pk'])
+
         if promis.status == Promis.Status.ANNULE:
             return Response({'detail': 'Ce promis est déjà annulé.'}, status=status.HTTP_400_BAD_REQUEST)
-        
+
         if promis.status == Promis.Status.DELIVRE:
             return Response({'detail': 'Impossible d\'annuler un promis déjà délivré.'}, status=status.HTTP_400_BAD_REQUEST)
-        
+
         # 1. Réintégrer le stock
-        produit = promis.produit
-        
+        produit = Produit.objects.select_for_update().get(pk=promis.produit_id) if promis.produit_id else None
+
         # Pour les produits avec gestion par lots, le stock est géré automatiquement par les signaux
-        if not produit.use_lot_management:
+        if produit and not produit.use_lot_management:
             produit.stock += promis.quantite
             produit.save(update_fields=['stock'])
-        
+
         # 2. Créer le mouvement de stock (type RETOUR = affiché en vert)
-        final_stock = produit.stock # Simplified
+        final_stock = produit.total_stock if produit else 0
         MouvementStock.objects.create(
             produit=produit,
             type_mouvement=MouvementStock.TypeMouvement.RETOUR,
@@ -98,16 +98,16 @@ class PromisViewSet(MultiTermSearchMixin, viewsets.ModelViewSet):
             user=request.user,
             description=f"Réintégration stock - Annulation promis #{promis.id} (Client: {promis.client_display})"
         )
-        
+
         # 3. Mettre à jour le statut du promis
         promis.status = Promis.Status.ANNULE
         promis.notes = f"{promis.notes}\n[Annulé le {timezone.now().strftime('%d/%m/%Y %H:%M')} par {request.user.username}]".strip()
         promis.save()
-        
+
         return Response({
-            'detail': f'Promis #{promis.id} annulé. {promis.quantite} unité(s) réintégrée(s) au stock de {produit.name}.',
+            'detail': f'Promis #{promis.id} annulé. {promis.quantite} unité(s) réintégrée(s) au stock de {produit.name if produit else "Produit inconnu"}.',
             'promis': PromisSerializer(promis).data,
-            'nouveau_stock': produit.stock
+            'nouveau_stock': final_stock
         })
 
     @action(detail=False, methods=['post'])
@@ -148,47 +148,52 @@ class PromisViewSet(MultiTermSearchMixin, viewsets.ModelViewSet):
         ids = request.data.get('ids', [])
         if not ids:
             return Response({'detail': 'Aucun ID fourni.'}, status=status.HTTP_400_BAD_REQUEST)
-        
-        promis_list = Promis.objects.filter(
-            id__in=ids, 
+
+        promis_list = list(Promis.objects.filter(
+            id__in=ids,
             status=Promis.Status.EN_ATTENTE
-        ).select_related('produit')
-        
-        count = promis_list.count()
+        ).select_for_update())
+
+        count = len(promis_list)
         if count == 0:
             return Response({'detail': 'Aucun promis en attente trouvé.'}, status=status.HTTP_400_BAD_REQUEST)
-        
+
+        # Lock products in deterministic order to avoid deadlocks
+        product_ids = sorted({promis.produit_id for promis in promis_list if promis.produit_id})
+        locked_products = {p.id: p for p in Produit.objects.filter(id__in=product_ids).select_for_update().order_by('id')} if product_ids else {}
+
         reintegrated = []
         for promis in promis_list:
-            produit = promis.produit
-            
+            produit = locked_products.get(promis.produit_id) if promis.produit_id else None
+
             # Réintégrer le stock
-            if not produit.use_lot_management:
+            if produit and not produit.use_lot_management:
                 produit.stock += promis.quantite
                 produit.save(update_fields=['stock'])
-            
+
             # Créer le mouvement de stock
+            final_stock = produit.total_stock if produit else 0
             MouvementStock.objects.create(
                 produit=produit,
                 type_mouvement=MouvementStock.TypeMouvement.RETOUR,
                 quantite=promis.quantite,
-                stock_apres=produit.stock,
+                stock_apres=final_stock,
                 user=request.user,
                 description=f"Réintégration stock - Annulation promis #{promis.id} (Client: {promis.client_display})"
             )
-            
+
             reintegrated.append({
                 'id': promis.id,
-                'produit': produit.name,
+                'produit': produit.name if produit else 'Produit inconnu',
                 'quantite': promis.quantite
             })
-        
+
         # Bulk update status
-        promis_list.update(
+        Promis.objects.filter(id__in=ids).update(
             status=Promis.Status.ANNULE,
             notes=models.F('notes')  # Can't easily append in bulk, so just mark as cancelled
         )
-        
+
         return Response({
             'detail': f'{count} promis annulé(s) et stock réintégré.',
             'count': count,

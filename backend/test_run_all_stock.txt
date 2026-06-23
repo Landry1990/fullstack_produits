@@ -1,0 +1,638 @@
+Using existing test database for alias 'default' ('test_MyDatabase')...
+
+test_pmp_calculated_on_order_closure (api.tests.test_stock_management.PMPCalculationTestCase.test_pmp_calculated_on_order_closure)
+Test that PMP is recalculated when a new order is closed. ... INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 325 change
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after order 35 closure
+INFO     api.business         | [COMMANDE] Cloture OK #35 | produits=1 | lots=1 | user=admin_1
+ok
+test_adjust_stock_creates_adjustment_record (api.tests.test_stock_management.StockAdjustmentTestCase.test_adjust_stock_creates_adjustment_record)
+Test that adjusting stock creates a StockAdjustment record. ... INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 326 change
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after stock adjustment for product 326
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 326 change
+ok
+test_adjust_stock_records_difference (api.tests.test_stock_management.StockAdjustmentTestCase.test_adjust_stock_records_difference)
+Test that the adjustment records the correct quantity change. ... INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 327 change
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after stock adjustment for product 327
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 327 change
+ok
+test_adjust_stock_updates_product_stock (api.tests.test_stock_management.StockAdjustmentTestCase.test_adjust_stock_updates_product_stock)
+Test that stock adjustment actually updates product stock. ... INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 328 change
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after stock adjustment for product 328
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 328 change
+ok
+test_adjustment_creates_movement (api.tests.test_stock_management.StockHistoryTestCase.test_adjustment_creates_movement)
+Test that stock adjustment creates a movement record. ... INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 329 change
+ok
+test_lot_reception_creates_stock_lot (api.tests.test_stock_management.StockLotManagementTestCase.test_lot_reception_creates_stock_lot)
+Test that closing an order creates StockLot records. ... INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 330 change
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after order 36 closure
+INFO     api.business         | [COMMANDE] Cloture OK #36 | produits=1 | lots=1 | user=admin_21
+ok
+test_lot_reception_updates_stock (api.tests.test_stock_management.StockLotManagementTestCase.test_lot_reception_updates_stock)
+Test that closing an order creates lots and updates stock. ... INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 331 change
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after order 37 closure
+INFO     api.business         | [COMMANDE] Cloture OK #37 | produits=1 | lots=1 | user=admin_25
+ok
+test_history_contient_champs_attendus (api.tests.test_mouvements_stock.HistoriqueProduitAPITestCase.test_history_contient_champs_attendus) ... INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 332 change
+ok
+test_history_endpoint_retourne_200 (api.tests.test_mouvements_stock.HistoriqueProduitAPITestCase.test_history_endpoint_retourne_200) ... INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 333 change
+ok
+test_history_liste_les_mouvements_du_produit (api.tests.test_mouvements_stock.HistoriqueProduitAPITestCase.test_history_liste_les_mouvements_du_produit) ... INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 334 change
+ok
+test_history_non_authentifie_retourne_401_ou_403 (api.tests.test_mouvements_stock.HistoriqueProduitAPITestCase.test_history_non_authentifie_retourne_401_ou_403) ... INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 335 change
+ok
+test_history_ordre_decroissant (api.tests.test_mouvements_stock.HistoriqueProduitAPITestCase.test_history_ordre_decroissant)
+Le dernier mouvement cr├®├® appara├«t en premier. ... INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 336 change
+ok
+test_history_produit_inconnu_retourne_404 (api.tests.test_mouvements_stock.HistoriqueProduitAPITestCase.test_history_produit_inconnu_retourne_404) ... INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 337 change
+ok
+test_ajustement_cree_mouvement (api.tests.test_mouvements_stock.MouvementAjustementTestCase.test_ajustement_cree_mouvement) ... INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 338 change
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after stock adjustment for product 338
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 338 change
+ok
+test_ajustement_quantite_negative (api.tests.test_mouvements_stock.MouvementAjustementTestCase.test_ajustement_quantite_negative)
+R├®duction de stock ÔåÆ quantite n├®gative dans le mouvement. ... INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 339 change
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after stock adjustment for product 339
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 339 change
+ok
+test_ajustement_quantite_positive (api.tests.test_mouvements_stock.MouvementAjustementTestCase.test_ajustement_quantite_positive)
+Augmentation de stock ÔåÆ quantite positive dans le mouvement. ... INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 340 change
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after stock adjustment for product 340
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 340 change
+ok
+test_ajustement_reason_type_invalide_retourne_400 (api.tests.test_mouvements_stock.MouvementAjustementTestCase.test_ajustement_reason_type_invalide_retourne_400)
+Un reason_type inconnu doit renvoyer HTTP 400. ... INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 341 change
+ok
+test_ajustement_sans_quantite_retourne_400 (api.tests.test_mouvements_stock.MouvementAjustementTestCase.test_ajustement_sans_quantite_retourne_400)
+Aucune quantit├® fournie ÔåÆ HTTP 400. ... INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 342 change
+ok
+test_ajustement_stock_apres_coherent (api.tests.test_mouvements_stock.MouvementAjustementTestCase.test_ajustement_stock_apres_coherent)
+stock_apres correspond au stock total apr├¿s l'ajustement. ... INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 343 change
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after stock adjustment for product 343
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 343 change
+ok
+test_cloture_commande_cree_mouvement_entree (api.tests.test_mouvements_stock.MouvementEntreeCommandeTestCase.test_cloture_commande_cree_mouvement_entree) ... INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 344 change
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after order 38 closure
+INFO     api.business         | [COMMANDE] Cloture OK #38 | produits=1 | lots=1 | user=admin_77
+ok
+test_cloture_commande_mouvement_quantite_correcte (api.tests.test_mouvements_stock.MouvementEntreeCommandeTestCase.test_cloture_commande_mouvement_quantite_correcte)
+La quantit├® du mouvement = quantit├® command├®e (+ UG si applicable). ... INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 345 change
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after order 39 closure
+INFO     api.business         | [COMMANDE] Cloture OK #39 | produits=1 | lots=1 | user=admin_81
+ok
+test_cloture_commande_mouvement_stock_apres (api.tests.test_mouvements_stock.MouvementEntreeCommandeTestCase.test_cloture_commande_mouvement_stock_apres)
+stock_apres refl├¿te le stock total apr├¿s r├®ception. ... INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 346 change
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 346 change
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after order 40 closure
+INFO     api.business         | [COMMANDE] Cloture OK #40 | produits=1 | lots=1 | user=admin_85
+ok
+test_cloture_commande_user_enregistre (api.tests.test_mouvements_stock.MouvementEntreeCommandeTestCase.test_cloture_commande_user_enregistre)
+L'utilisateur qui cl├┤ture est bien enregistr├® dans le mouvement. ... INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 347 change
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after order 41 closure
+INFO     api.business         | [COMMANDE] Cloture OK #41 | produits=1 | lots=1 | user=admin_89
+ok
+test_transfert_cree_deux_mouvements_reappro (api.tests.test_mouvements_stock.MouvementReapproInterstockTestCase.test_transfert_cree_deux_mouvements_reappro) ... INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 348 change
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after order 42 closure
+INFO     api.business         | [COMMANDE] Cloture OK #42 | produits=1 | lots=1 | user=admin_93
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 348 change
+ok
+test_transfert_quantite_superieure_reserve_retourne_400 (api.tests.test_mouvements_stock.MouvementReapproInterstockTestCase.test_transfert_quantite_superieure_reserve_retourne_400) ... INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 349 change
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after order 43 closure
+INFO     api.business         | [COMMANDE] Cloture OK #43 | produits=1 | lots=1 | user=admin_97
+ok
+test_transfert_quantites_positives_et_negatives (api.tests.test_mouvements_stock.MouvementReapproInterstockTestCase.test_transfert_quantites_positives_et_negatives) ... INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 350 change
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after order 44 closure
+INFO     api.business         | [COMMANDE] Cloture OK #44 | produits=1 | lots=1 | user=admin_101
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 350 change
+ok
+test_transfert_sans_reserve_retourne_400 (api.tests.test_mouvements_stock.MouvementReapproInterstockTestCase.test_transfert_sans_reserve_retourne_400)
+Produit sans stock r├®serve ÔåÆ erreur. ... INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 351 change
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 352 change
+ok
+test_transfert_stock_coherent_apres (api.tests.test_mouvements_stock.MouvementReapproInterstockTestCase.test_transfert_stock_coherent_apres) ... INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 353 change
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after order 45 closure
+INFO     api.business         | [COMMANDE] Cloture OK #45 | produits=1 | lots=1 | user=admin_112
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 353 change
+ok
+test_annulation_promis_cree_mouvement_retour (api.tests.test_mouvements_stock.MouvementRetourPromisTestCase.test_annulation_promis_cree_mouvement_retour) ... INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 354 change
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 354 change
+ok
+test_annulation_promis_deja_annule_retourne_400 (api.tests.test_mouvements_stock.MouvementRetourPromisTestCase.test_annulation_promis_deja_annule_retourne_400) ... INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 355 change
+ok
+test_annulation_promis_delivre_retourne_400 (api.tests.test_mouvements_stock.MouvementRetourPromisTestCase.test_annulation_promis_delivre_retourne_400) ... INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 356 change
+ok
+test_annulation_promis_quantite_mouvement (api.tests.test_mouvements_stock.MouvementRetourPromisTestCase.test_annulation_promis_quantite_mouvement) ... INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 357 change
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 357 change
+ok
+test_annulation_promis_reinjecte_stock (api.tests.test_mouvements_stock.MouvementRetourPromisTestCase.test_annulation_promis_reinjecte_stock) ... INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 358 change
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 358 change
+ok
+test_mouvement_li├®_commande_existe_sans_commande (api.tests.test_mouvements_stock.MouvementStockIntegriteTestCase.test_mouvement_li├®_commande_existe_sans_commande)
+Suppression d'une commande ÔåÆ le mouvement reste, FK devient NULL. ... INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 359 change
+ok
+test_produit_nom_preserve_apres_suppression (api.tests.test_mouvements_stock.MouvementStockIntegriteTestCase.test_produit_nom_preserve_apres_suppression) ... INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 360 change
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 360 change
+ok
+test_all_type_mouvement_choices_valid (api.tests.test_mouvements_stock.MouvementStockModelTestCase.test_all_type_mouvement_choices_valid)
+Tous les TypeMouvement peuvent ├¬tre enregistr├®s en base. ... INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 361 change
+ok
+test_create_mouvement_minimal (api.tests.test_mouvements_stock.MouvementStockModelTestCase.test_create_mouvement_minimal)
+Peut cr├®er un mouvement avec les champs minimaux. ... INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 362 change
+ok
+test_ordering_is_date_desc (api.tests.test_mouvements_stock.MouvementStockModelTestCase.test_ordering_is_date_desc)
+Les mouvements sont tri├®s par date d├®croissante. ... INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 363 change
+ok
+test_stock_apres_snapshot (api.tests.test_mouvements_stock.MouvementStockModelTestCase.test_stock_apres_snapshot)
+stock_apres est bien conserv├® comme snapshot. ... INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 364 change
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 364 change
+ok
+test_str_representation (api.tests.test_mouvements_stock.MouvementStockModelTestCase.test_str_representation)
+__str__ contient le nom du produit. ... INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 365 change
+ok
+test_str_with_no_produit_uses_produit_nom (api.tests.test_mouvements_stock.MouvementStockModelTestCase.test_str_with_no_produit_uses_produit_nom)
+__str__ utilise produit_nom si la FK produit est nulle. ... INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 366 change
+ok
+test_transformation_cree_mouvement_entree_destination (api.tests.test_mouvements_stock.MouvementTransformationTestCase.test_transformation_cree_mouvement_entree_destination) ... INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 367 change
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 368 change
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after stock adjustment for product 367
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 367 change
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after stock adjustment for product 368
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 368 change
+ok
+test_transformation_cree_mouvement_sortie_source (api.tests.test_mouvements_stock.MouvementTransformationTestCase.test_transformation_cree_mouvement_sortie_source) ... INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 369 change
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 370 change
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after stock adjustment for product 369
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 369 change
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after stock adjustment for product 370
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 370 change
+ok
+test_transformation_quantites_correctes (api.tests.test_mouvements_stock.MouvementTransformationTestCase.test_transformation_quantites_correctes) ... INFO     api.scheduler        | Background Task Runner: Started
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 371 change
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 372 change
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after stock adjustment for product 371
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 371 change
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after stock adjustment for product 372
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 372 change
+ok
+test_transformation_stock_insuffisant (api.tests.test_mouvements_stock.MouvementTransformationTestCase.test_transformation_stock_insuffisant) ... INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 373 change
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 374 change
+ok
+test_complete_inventory_flow (api.tests.test_stock_inventory.StockInventoryTest.test_complete_inventory_flow)
+Test full flow: Create -> Pre-populate -> Edit -> Validate. ... INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 375 change
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 376 change
+ok
+test_transformation_insufficient_stock (api.tests.test_stock_transformations.StockTransformationTest.test_transformation_insufficient_stock) ... INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 377 change
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 378 change
+ok
+test_transformation_invalid_quantity (api.tests.test_stock_transformations.StockTransformationTest.test_transformation_invalid_quantity) ... INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 379 change
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 380 change
+ok
+test_transformation_success_with_lots (api.tests.test_stock_transformations.StockTransformationTest.test_transformation_success_with_lots) ... INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 381 change
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 382 change
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after stock adjustment for product 381
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 381 change
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after stock adjustment for product 382
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 382 change
+ok
+test_stock_aggregation_validation (api.tests.test_stock_loophole.StockLoopholeTestCase.test_stock_aggregation_validation)
+Test that multiple lines of the same product are correctly aggregated during validation. ... INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 383 change
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 383 change
+C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\db\models\fields\__init__.py:1612: RuntimeWarning: DateTimeField Facture.date received a naive datetime (2026-05-21 00:00:00) while time zone support is active.
+  warnings.warn(
+C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\db\models\fields\__init__.py:1612: RuntimeWarning: DateTimeField Facture.date received a naive datetime (2026-03-22 00:00:00) while time zone support is active.
+  warnings.warn(
+ok
+test_superuser_can_still_force_stock (api.tests.test_stock_loophole.StockLoopholeTestCase.test_superuser_can_still_force_stock)
+Test that superusers can still bypass stock limits (existing requirement). ... INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 384 change
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 384 change
+INFO     api.signals_comptabilite | [COMPTA] ├ëcriture vente cr├®├®e pour facture 231
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after invoice 231 validation/payment
+ERROR    api.signals_comptabilite | [COMPTA] ERREUR cr├®ation ├®criture vente pour facture 231: ERREUR:  la relation ┬½ api_lettrage_lignes ┬╗ n'existe pas
+LINE 1: DELETE FROM "api_lettrage_lignes" WHERE "api_lettrage_lignes...
+                    ^
+
+ERROR    api.signals_comptabilite | [COMPTA] L'├®criture devra ├¬tre cr├®├®e manuellement ou via la commande de r├®g├®n├®ration
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after invoice 231 validation/payment
+ERROR    api.signals_comptabilite | [COMPTA] ERREUR cr├®ation ├®criture vente pour facture 231: ERREUR:  la relation ┬½ api_lettrage_lignes ┬╗ n'existe pas
+LINE 1: DELETE FROM "api_lettrage_lignes" WHERE "api_lettrage_lignes...
+                    ^
+
+ERROR    api.signals_comptabilite | [COMPTA] L'├®criture devra ├¬tre cr├®├®e manuellement ou via la commande de r├®g├®n├®ration
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after invoice 231 validation/payment
+INFO     api.signals_comptabilite | [COMPTA] ├ëcriture paiement cr├®├®e pour caisse 97
+ok
+test_global_stock_history_flow (api.tests.test_stock_history_global.GlobalStockHistoryTestCase.test_global_stock_history_flow)
+Verify that history reflects global stock (rayon + reserve) across different operations. ... INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 385 change
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after order 47 closure
+INFO     api.business         | [COMMANDE] Cloture OK #47 | produits=1 | lots=1 | user=admin_hist
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 385 change
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after stock adjustment for product 385
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 385 change
+ok
+test_add_lines_to_commande (api.tests.test_order_management.OrderManagementTestCase.test_add_lines_to_commande)
+Test adding products to a command. ... INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 386 change
+ok
+test_close_command_updates_pmp (api.tests.test_order_management.OrderManagementTestCase.test_close_command_updates_pmp)
+Test Weighted Average Price (PMP) calculation on reception. ... INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 387 change
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 387 change
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after order 49 closure
+INFO     api.business         | [COMMANDE] Cloture OK #49 | produits=1 | lots=1 | user=admin_239
+ok
+test_close_command_updates_stock_and_creates_lot (api.tests.test_order_management.OrderManagementTestCase.test_close_command_updates_stock_and_creates_lot)
+Test that closing a command increments stock and creates a lot. ... INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 388 change
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after order 50 closure
+INFO     api.business         | [COMMANDE] Cloture OK #50 | produits=1 | lots=1 | user=admin_242
+ok
+test_create_commande (api.tests.test_order_management.OrderManagementTestCase.test_create_commande)
+Test creating a new draft command. ... INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 389 change
+ok
+test_calculate_client_debt_fully_paid_invoice (api.tests.test_critical_business_logic.CreancesManagementTestCase.test_calculate_client_debt_fully_paid_invoice)
+Test que les factures enti├¿rement pay├®es ne comptent pas dans la dette. ... INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 390 change
+INFO     api.signals_comptabilite | [COMPTA] ├ëcriture vente cr├®├®e pour facture 232
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after invoice 232 validation/payment
+INFO     api.signals_comptabilite | [COMPTA] ├ëcriture paiement cr├®├®e pour caisse 98
+ok
+test_calculate_client_debt_multiple_invoices (api.tests.test_critical_business_logic.CreancesManagementTestCase.test_calculate_client_debt_multiple_invoices)
+Test le calcul de la dette avec plusieurs factures. ... INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 391 change
+INFO     api.signals_comptabilite | [COMPTA] ├ëcriture vente cr├®├®e pour facture 233
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after invoice 233 validation/payment
+INFO     api.signals_comptabilite | [COMPTA] ├ëcriture vente cr├®├®e pour facture 234
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after invoice 234 validation/payment
+INFO     api.signals_comptabilite | [COMPTA] ├ëcriture vente cr├®├®e pour facture 235
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after invoice 235 validation/payment
+INFO     api.signals_comptabilite | [COMPTA] ├ëcriture paiement cr├®├®e pour caisse 99
+ok
+test_calculate_client_debt_partial_payment (api.tests.test_critical_business_logic.CreancesManagementTestCase.test_calculate_client_debt_partial_payment)
+Test le calcul de la dette avec paiement partiel. ... INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 392 change
+INFO     api.signals_comptabilite | [COMPTA] ├ëcriture vente cr├®├®e pour facture 236
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after invoice 236 validation/payment
+INFO     api.signals_comptabilite | [COMPTA] ├ëcriture paiement cr├®├®e pour caisse 100
+ok
+test_calculate_client_debt_single_invoice (api.tests.test_critical_business_logic.CreancesManagementTestCase.test_calculate_client_debt_single_invoice)
+Test le calcul de la dette pour une facture unique non pay├®e. ... INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 393 change
+INFO     api.signals_comptabilite | [COMPTA] ├ëcriture vente cr├®├®e pour facture 237
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after invoice 237 validation/payment
+ok
+test_client_debt_exceeds_plafond (api.tests.test_critical_business_logic.CreancesManagementTestCase.test_client_debt_exceeds_plafond)
+Test que le syst├¿me d├®tecte quand la dette d├®passe le plafond. ... INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 394 change
+INFO     api.signals_comptabilite | [COMPTA] ├ëcriture vente cr├®├®e pour facture 238
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after invoice 238 validation/payment
+INFO     api.signals_comptabilite | [COMPTA] ├ëcriture vente cr├®├®e pour facture 239
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after invoice 239 validation/payment
+ok
+test_professional_client_partial_payment_creance (api.tests.test_critical_business_logic.CreancesManagementTestCase.test_professional_client_partial_payment_creance)
+Test que pour un client professionnel, les paiements partiels cr├®ent une cr├®ance. ... INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 395 change
+INFO     api.signals_comptabilite | [COMPTA] ├ëcriture vente cr├®├®e pour facture 240
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after invoice 240 validation/payment
+ERROR    api.signals_comptabilite | [COMPTA] ERREUR cr├®ation ├®criture vente pour facture 240: ERREUR:  la relation ┬½ api_lettrage_lignes ┬╗ n'existe pas
+LINE 1: DELETE FROM "api_lettrage_lignes" WHERE "api_lettrage_lignes...
+                    ^
+
+ERROR    api.signals_comptabilite | [COMPTA] L'├®criture devra ├¬tre cr├®├®e manuellement ou via la commande de r├®g├®n├®ration
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after invoice 240 validation/payment
+ERROR    api.signals_comptabilite | [COMPTA] ERREUR cr├®ation ├®criture vente pour facture 240: ERREUR:  la relation ┬½ api_lettrage_lignes ┬╗ n'existe pas
+LINE 1: DELETE FROM "api_lettrage_lignes" WHERE "api_lettrage_lignes...
+                    ^
+
+ERROR    api.signals_comptabilite | [COMPTA] L'├®criture devra ├¬tre cr├®├®e manuellement ou via la commande de r├®g├®n├®ration
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after invoice 240 validation/payment
+ok
+test_complex_transaction_all_features (api.tests.test_critical_business_logic.ComplexTransactionsTestCase.test_complex_transaction_all_features)
+Test une transaction complexe combinant tous les ├®l├®ments: ... INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 396 change
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 396 change
+INFO     api.business         | [COUPON] Tentative d'utilisation #COUPON-COMPLEX-001 par admin_278
+INFO     api.views.coupons    | Facture associ├®e: 241
+INFO     api.views.coupons    | Coupon #COUPON-COMPLEX-001 associ├® ├á la facture 241 - Montant: 1000 F
+INFO     api.business         | [COUPON] Utilise avec succes #COUPON-COMPLEX-001 | facture=241 | user=admin_278
+INFO     api.signals_comptabilite | [COMPTA] ├ëcriture vente cr├®├®e pour facture 241
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after invoice 241 validation/payment
+ERROR    api.signals_comptabilite | [COMPTA] ERREUR cr├®ation ├®criture vente pour facture 241: ERREUR:  la relation ┬½ api_lettrage_lignes ┬╗ n'existe pas
+LINE 1: DELETE FROM "api_lettrage_lignes" WHERE "api_lettrage_lignes...
+                    ^
+
+ERROR    api.signals_comptabilite | [COMPTA] L'├®criture devra ├¬tre cr├®├®e manuellement ou via la commande de r├®g├®n├®ration
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after invoice 241 validation/payment
+ERROR    api.signals_comptabilite | [COMPTA] ERREUR cr├®ation ├®criture vente pour facture 241: ERREUR:  la relation ┬½ api_lettrage_lignes ┬╗ n'existe pas
+LINE 1: DELETE FROM "api_lettrage_lignes" WHERE "api_lettrage_lignes...
+                    ^
+
+ERROR    api.signals_comptabilite | [COMPTA] L'├®criture devra ├¬tre cr├®├®e manuellement ou via la commande de r├®g├®n├®ration
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after invoice 241 validation/payment
+INFO     api.signals_comptabilite | [COMPTA] ├ëcriture paiement cr├®├®e pour caisse 101
+ok
+test_transaction_multiple_payment_methods (api.tests.test_critical_business_logic.ComplexTransactionsTestCase.test_transaction_multiple_payment_methods)
+Test une transaction avec plusieurs modes de paiement. ... INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 397 change
+INFO     api.signals_comptabilite | [COMPTA] ├ëcriture vente cr├®├®e pour facture 242
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after invoice 242 validation/payment
+INFO     api.signals_comptabilite | [COMPTA] ├ëcriture paiement cr├®├®e pour caisse 102
+INFO     api.signals_comptabilite | [COMPTA] ├ëcriture paiement cr├®├®e pour caisse 103
+INFO     api.signals_comptabilite | [COMPTA] ├ëcriture paiement cr├®├®e pour caisse 104
+ok
+test_transaction_with_automatic_discount (api.tests.test_critical_business_logic.ComplexTransactionsTestCase.test_transaction_with_automatic_discount)
+Test une transaction avec remise automatique client. ... INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 398 change
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 398 change
+ok
+test_transaction_with_coupon (api.tests.test_critical_business_logic.ComplexTransactionsTestCase.test_transaction_with_coupon)
+Test une transaction avec un coupon de monnaie. ... INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 399 change
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 399 change
+INFO     api.business         | [COUPON] Tentative d'utilisation #COUPON-TEST-001 par admin_293
+INFO     api.views.coupons    | Facture associ├®e: 244
+INFO     api.views.coupons    | Coupon #COUPON-TEST-001 associ├® ├á la facture 244 - Montant: 2000 F
+INFO     api.business         | [COUPON] Utilise avec succes #COUPON-TEST-001 | facture=244 | user=admin_293
+ok
+test_transaction_with_loyalty_points (api.tests.test_critical_business_logic.ComplexTransactionsTestCase.test_transaction_with_loyalty_points)
+Test une transaction avec utilisation de points de fid├®lit├®. ... INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 400 change
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 400 change
+INFO     api.signals_comptabilite | [COMPTA] ├ëcriture vente cr├®├®e pour facture 245
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after invoice 245 validation/payment
+ERROR    api.signals_comptabilite | [COMPTA] ERREUR cr├®ation ├®criture vente pour facture 245: ERREUR:  la relation ┬½ api_lettrage_lignes ┬╗ n'existe pas
+LINE 1: DELETE FROM "api_lettrage_lignes" WHERE "api_lettrage_lignes...
+                    ^
+
+ERROR    api.signals_comptabilite | [COMPTA] L'├®criture devra ├¬tre cr├®├®e manuellement ou via la commande de r├®g├®n├®ration
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after invoice 245 validation/payment
+ERROR    api.signals_comptabilite | [COMPTA] ERREUR cr├®ation ├®criture vente pour facture 245: ERREUR:  la relation ┬½ api_lettrage_lignes ┬╗ n'existe pas
+LINE 1: DELETE FROM "api_lettrage_lignes" WHERE "api_lettrage_lignes...
+                    ^
+
+ERROR    api.signals_comptabilite | [COMPTA] L'├®criture devra ├¬tre cr├®├®e manuellement ou via la commande de r├®g├®n├®ration
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after invoice 245 validation/payment
+INFO     api.signals_comptabilite | [COMPTA] ├ëcriture paiement cr├®├®e pour caisse 105
+ok
+test_fefo_allocation_expiration_priority (api.tests.test_critical_business_logic.FIFOAllocationTestCase.test_fefo_allocation_expiration_priority)
+Test FEFO: les lots avec expiration la plus proche sont utilis├®s en premier, ... INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 401 change
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 401 change
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 401 change
+INFO     api.signals_comptabilite | [COMPTA] ├ëcriture vente cr├®├®e pour facture 246
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after invoice 246 validation/payment
+ERROR    api.signals_comptabilite | [COMPTA] ERREUR cr├®ation ├®criture vente pour facture 246: ERREUR:  la relation ┬½ api_lettrage_lignes ┬╗ n'existe pas
+LINE 1: DELETE FROM "api_lettrage_lignes" WHERE "api_lettrage_lignes...
+                    ^
+
+ERROR    api.signals_comptabilite | [COMPTA] L'├®criture devra ├¬tre cr├®├®e manuellement ou via la commande de r├®g├®n├®ration
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after invoice 246 validation/payment
+ERROR    api.signals_comptabilite | [COMPTA] ERREUR cr├®ation ├®criture vente pour facture 246: ERREUR:  la relation ┬½ api_lettrage_lignes ┬╗ n'existe pas
+LINE 1: DELETE FROM "api_lettrage_lignes" WHERE "api_lettrage_lignes...
+                    ^
+
+ERROR    api.signals_comptabilite | [COMPTA] L'├®criture devra ├¬tre cr├®├®e manuellement ou via la commande de r├®g├®n├®ration
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after invoice 246 validation/payment
+INFO     api.signals_comptabilite | [COMPTA] ├ëcriture paiement cr├®├®e pour caisse 106
+ok
+test_fifo_allocation_insufficient_stock_across_lots (api.tests.test_critical_business_logic.FIFOAllocationTestCase.test_fifo_allocation_insufficient_stock_across_lots)
+Test que la vente ├®choue si le stock total est insuffisant, m├¬me r├®parti sur plusieurs lots. ... INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 402 change
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 402 change
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 402 change
+INFO     api.signals_comptabilite | [COMPTA] ├ëcriture vente cr├®├®e pour facture 247
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after invoice 247 validation/payment
+ERROR    api.signals_comptabilite | [COMPTA] ERREUR cr├®ation ├®criture vente pour facture 247: ERREUR:  la relation ┬½ api_lettrage_lignes ┬╗ n'existe pas
+LINE 1: DELETE FROM "api_lettrage_lignes" WHERE "api_lettrage_lignes...
+                    ^
+
+ERROR    api.signals_comptabilite | [COMPTA] L'├®criture devra ├¬tre cr├®├®e manuellement ou via la commande de r├®g├®n├®ration
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after invoice 247 validation/payment
+ERROR    api.signals_comptabilite | [COMPTA] ERREUR cr├®ation ├®criture vente pour facture 247: ERREUR:  la relation ┬½ api_lettrage_lignes ┬╗ n'existe pas
+LINE 1: DELETE FROM "api_lettrage_lignes" WHERE "api_lettrage_lignes...
+                    ^
+
+ERROR    api.signals_comptabilite | [COMPTA] L'├®criture devra ├¬tre cr├®├®e manuellement ou via la commande de r├®g├®n├®ration
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after invoice 247 validation/payment
+INFO     api.signals_comptabilite | [COMPTA] ├ëcriture paiement cr├®├®e pour caisse 107
+ok
+test_fifo_allocation_multiple_lots (api.tests.test_critical_business_logic.FIFOAllocationTestCase.test_fifo_allocation_multiple_lots)
+Test FIFO avec plusieurs lots: les lots les plus anciens sont utilis├®s en premier. ... INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 403 change
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 403 change
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 403 change
+INFO     api.signals_comptabilite | [COMPTA] ├ëcriture vente cr├®├®e pour facture 248
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after invoice 248 validation/payment
+ERROR    api.signals_comptabilite | [COMPTA] ERREUR cr├®ation ├®criture vente pour facture 248: ERREUR:  la relation ┬½ api_lettrage_lignes ┬╗ n'existe pas
+LINE 1: DELETE FROM "api_lettrage_lignes" WHERE "api_lettrage_lignes...
+                    ^
+
+ERROR    api.signals_comptabilite | [COMPTA] L'├®criture devra ├¬tre cr├®├®e manuellement ou via la commande de r├®g├®n├®ration
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after invoice 248 validation/payment
+ERROR    api.signals_comptabilite | [COMPTA] ERREUR cr├®ation ├®criture vente pour facture 248: ERREUR:  la relation ┬½ api_lettrage_lignes ┬╗ n'existe pas
+LINE 1: DELETE FROM "api_lettrage_lignes" WHERE "api_lettrage_lignes...
+                    ^
+
+ERROR    api.signals_comptabilite | [COMPTA] L'├®criture devra ├¬tre cr├®├®e manuellement ou via la commande de r├®g├®n├®ration
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after invoice 248 validation/payment
+INFO     api.signals_comptabilite | [COMPTA] ├ëcriture paiement cr├®├®e pour caisse 108
+ok
+
+----------------------------------------------------------------------
+Ran 70 tests in 26.704s
+
+OK
+Preserving test database for alias 'default' ('test_MyDatabase')...
+
+Found 70 test(s).
+Operations to perform:
+  Synchronize unmigrated apps: channels, corsheaders, daphne, django_filters, messages, postgres, rest_framework, staticfiles
+  Apply all migrations: admin, api, auth, authtoken, contenttypes, sessions
+Synchronizing apps without migrations:
+  Creating tables...
+    Running deferred SQL...
+Running migrations:
+  No migrations to apply.
+System check identified no issues (0 silenced).
+Another instance is already running. Skipping.
+DEBUG: CREATE RESPONSE DATA = {'id': 3, 'lignes': [], 'created_by_name': 'admin_inv_test', 'total_valeur_theorique': 0, 'total_valeur_physique': 0, 'total_ecart_valeur': 0, 'date': '2026-06-20T11:47:03.772495+01:00', 'reference': 'INV-202606-0001', 'description': 'Test Inv', 'status': 'EN_COURS', 'inventory_type': 'RAYON', 'created_at': '2026-06-20T11:47:03.774638+01:00', 'updated_at': '2026-06-20T11:47:03.774645+01:00', 'is_active': True, 'created_by': 384, 'validated_by': None}
+DEBUG: DB CHECK - is_active=True, status=EN_COURS
+DEBUG: URL POP = /api/inventaires/3/pre_populate/
+[Rotation] Recalcul├®e pour produit #383 (vente)
+[Rotation] Date premi├¿re vente stock├®e pour produit #383
+[Rotation] Recalcul├®e pour produit #384 (vente)
+[Rotation] Date premi├¿re vente stock├®e pour produit #384
+[Rotation] Recalcul├®e pour produit #396 (vente)
+[Rotation] Date premi├¿re vente stock├®e pour produit #396
+[Rotation] Recalcul├®e pour produit #398 (vente)
+[Rotation] Date premi├¿re vente stock├®e pour produit #398
+[Rotation] Recalcul├®e pour produit #399 (vente)
+[Rotation] Date premi├¿re vente stock├®e pour produit #399
+[Rotation] Recalcul├®e pour produit #400 (vente)
+[Rotation] Date premi├¿re vente stock├®e pour produit #400
+[Rotation] Recalcul├®e pour produit #401 (vente)
+[Rotation] Date premi├¿re vente stock├®e pour produit #401
+[Rotation] Recalcul├®e pour produit #402 (vente)
+[Rotation] Date premi├¿re vente stock├®e pour produit #402
+[Rotation] Recalcul├®e pour produit #403 (vente)
+[Rotation] Date premi├¿re vente stock├®e pour produit #403

@@ -200,18 +200,19 @@ class Facture(models.Model):
 
         # Application de la remise globale au prorata
         remise_globale = Decimal(str(self.remise))
-        total_ttc_net = total_ttc_brut - remise_globale
-        
+        # Arrondi du TTC net à l'entier pour le FCFA (pas de décimales)
+        total_ttc_net = (total_ttc_brut - remise_globale).quantize(Decimal('1'), rounding=ROUND_HALF_UP)
+
         if total_ttc_brut > 0:
             ratio = total_ttc_net / total_ttc_brut
-            # Arrondi de la TVA à l'entier pour le FCFA
-            self.total_tva = (total_tva * ratio).quantize(Decimal('1'), rounding=ROUND_HALF_UP)
-            # Le HT est la différence pour garantir HT + TVA = TTC
-            self.total_ht = total_ttc_net - self.total_tva
+            # Arrondi du HT au prorata à l'entier
+            self.total_ht = (total_ht * ratio).quantize(Decimal('1'), rounding=ROUND_HALF_UP)
+            # La TVA est la différence pour garantir HT + TVA = TTC
+            self.total_tva = total_ttc_net - self.total_ht
         else:
             self.total_ht = Decimal('0.00')
             self.total_tva = Decimal('0.00')
-            
+
         self.total_ttc = total_ttc_net
         
         # Tiers Payant

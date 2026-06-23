@@ -1,0 +1,69 @@
+Using existing test database for alias 'default' ('test_MyDatabase')...
+
+test_stock_aggregation_validation (api.tests.test_stock_loophole.StockLoopholeTestCase.test_stock_aggregation_validation)
+Test that multiple lines of the same product are correctly aggregated during validation. ... INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 100 change
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 100 change
+C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\db\models\fields\__init__.py:1612: RuntimeWarning: DateTimeField Facture.date received a naive datetime (2026-05-21 00:00:00) while time zone support is active.
+  warnings.warn(
+C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\db\models\fields\__init__.py:1612: RuntimeWarning: DateTimeField Facture.date received a naive datetime (2026-03-22 00:00:00) while time zone support is active.
+  warnings.warn(
+ok
+test_superuser_can_still_force_stock (api.tests.test_stock_loophole.StockLoopholeTestCase.test_superuser_can_still_force_stock)
+Test that superusers can still bypass stock limits (existing requirement). ... INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 101 change
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 101 change
+INFO     api.signals_comptabilite | [COMPTA] ├ëcriture vente cr├®├®e pour facture 48
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after invoice 48 validation/payment
+ERROR    api.signals_comptabilite | [COMPTA] ERREUR cr├®ation ├®criture vente pour facture 48: ERREUR:  la relation ┬½ api_lettrage_lignes ┬╗ n'existe pas
+LINE 1: DELETE FROM "api_lettrage_lignes" WHERE "api_lettrage_lignes...
+                    ^
+
+ERROR    api.signals_comptabilite | [COMPTA] L'├®criture devra ├¬tre cr├®├®e manuellement ou via la commande de r├®g├®n├®ration
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after invoice 48 validation/payment
+ERROR    api.signals_comptabilite | [COMPTA] ERREUR cr├®ation ├®criture vente pour facture 48: ERREUR:  la relation ┬½ api_lettrage_lignes ┬╗ n'existe pas
+LINE 1: DELETE FROM "api_lettrage_lignes" WHERE "api_lettrage_lignes...
+                    ^
+
+ERROR    api.signals_comptabilite | [COMPTA] L'├®criture devra ├¬tre cr├®├®e manuellement ou via la commande de r├®g├®n├®ration
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after invoice 48 validation/payment
+ok
+test_global_stock_history_flow (api.tests.test_stock_history_global.GlobalStockHistoryTestCase.test_global_stock_history_flow)
+Verify that history reflects global stock (rayon + reserve) across different operations. ... INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 102 change
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after order 17 closure
+INFO     api.business         | [COMMANDE] Cloture OK #17 | produits=1 | lots=1 | user=admin_hist
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 102 change
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after stock adjustment for product 102
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 102 change
+ok
+
+----------------------------------------------------------------------
+Ran 3 tests in 1.250s
+
+OK
+Preserving test database for alias 'default' ('test_MyDatabase')...
+
+Found 3 test(s).
+Operations to perform:
+  Synchronize unmigrated apps: channels, corsheaders, daphne, django_filters, messages, postgres, rest_framework, staticfiles
+  Apply all migrations: admin, api, auth, authtoken, contenttypes, sessions
+Synchronizing apps without migrations:
+  Creating tables...
+    Running deferred SQL...
+Running migrations:
+  No migrations to apply.
+System check identified no issues (0 silenced).
+[Rotation] Recalcul├®e pour produit #100 (vente)
+[Rotation] Date premi├¿re vente stock├®e pour produit #100
+[Rotation] Recalcul├®e pour produit #101 (vente)
+[Rotation] Date premi├¿re vente stock├®e pour produit #101

@@ -29,6 +29,7 @@ export interface SuggestionFilters {
 
 export interface CommandeFilters {
     page?: number;
+    page_size?: number;
     type?: 'LOC' | 'DIR' | 'DIV';
     status?: string;
     search?: string;

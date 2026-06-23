@@ -176,7 +176,7 @@
             "choose_target": "Choose target inventory..."
         },
         "pdf": {
-            "title_etat": "STOCK TAKE STATE #{{id}}",
+            "title_etat": "INVENTORY REPORT #{{id}}",
             "title_ecarts": "DISCREPANCY REPORT - #{{id}}",
             "date": "Date: {{date}}",
             "desc": "Description: {{desc}}",

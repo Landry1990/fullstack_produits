@@ -123,7 +123,7 @@ export default function Ruptures() {
   const fetchPharmacieRuptures = async (page = 1) => {
     setPharmacieLoading(true);
     try {
-      let url = `produits/?stock__lte=0&rotation_moyenne__gt=1&latest_supplier=true&page=${page}`;
+      let url = `produits/?stock__lte=0&rotation_moyenne__gt=1&latest_supplier=true&page=${page}&page_size=50`;
       if (selectedRayon) url += `&rayon=${selectedRayon}`;
       if (selectedFournisseur) url += `&fournisseur=${selectedFournisseur}`;
       

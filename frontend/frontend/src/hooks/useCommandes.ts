@@ -6,6 +6,7 @@ import api from '../services/api';
 // Types
 interface CommandesFilters {
     page: number;
+    page_size?: number;
     type?: 'LOC' | 'DIR' | 'DIV';
     status?: string;
 }
@@ -17,6 +18,7 @@ export const useCommandes = (filters: CommandesFilters) => {
         queryKey: ['commandes', filters],
         queryFn: () => commandeService.getAll({
             page: filters.page,
+            page_size: filters.page_size || 20,
             type: filters.type,
             status: filters.status
         }),

@@ -31,6 +31,7 @@ from .inventaire import (
     merge_inventaires, merge_duplicate_lines,
     get_inventaire_stats, audit_discrepancies,
     validate_inventaire,
+    generate_listing_excel,
 )
 
 
@@ -433,6 +434,59 @@ class InventaireViewSet(MultiTermSearchMixin, viewsets.ModelViewSet):
         """
         inventaire = self.get_object()
         return generate_etat_pdf(inventaire)
+
+    @action(detail=False, methods=['get'], url_path='listing-json')
+    def listing_json(self, request):
+        """
+        Retourne les données du listing de stock en JSON plat (pour export côté client).
+        Paramètres identiques à listing-excel.
+        """
+        from .inventaire.listing_excel import _get_rows_from_stock, _get_rows_from_inventaire
+
+        group_by = request.query_params.get('group_by', 'rayon')
+        stock_filter = request.query_params.get('stock_filter', 'tous')
+        filter_id_str = request.query_params.get('filter_id')
+        inventaire_id_str = request.query_params.get('inventaire_id')
+
+        filter_id = int(filter_id_str) if filter_id_str and filter_id_str.isdigit() else None
+        inventaire_id = int(inventaire_id_str) if inventaire_id_str and inventaire_id_str.isdigit() else None
+
+        if inventaire_id:
+            grouped = _get_rows_from_inventaire(inventaire_id, group_by, stock_filter, filter_id)
+        else:
+            grouped = _get_rows_from_stock(group_by, stock_filter, filter_id)
+
+        rows = []
+        for group_name, group_rows in grouped.items():
+            for r in group_rows:
+                rows.append({**r, 'groupe': group_name})
+
+        return Response(rows)
+
+    @action(detail=False, methods=['get'], url_path='listing-excel')
+    def listing_excel(self, request):
+        """
+        Génère un fichier Excel configurable du listing de stock.
+        Paramètres :
+          - group_by    : rayon | forme | groupe | fournisseur
+          - stock_filter: tous | zero | non_zero
+          - filter_id   : id de l'entité de regroupement (optionnel)
+          - inventaire_id: id d'un inventaire précis (optionnel)
+        """
+        group_by = request.query_params.get('group_by', 'rayon')
+        stock_filter = request.query_params.get('stock_filter', 'tous')
+        filter_id_str = request.query_params.get('filter_id')
+        inventaire_id_str = request.query_params.get('inventaire_id')
+
+        filter_id = int(filter_id_str) if filter_id_str and filter_id_str.isdigit() else None
+        inventaire_id = int(inventaire_id_str) if inventaire_id_str and inventaire_id_str.isdigit() else None
+
+        return generate_listing_excel(
+            group_by=group_by,
+            stock_filter=stock_filter,
+            filter_id=filter_id,
+            inventaire_id=inventaire_id,
+        )
 
 
 class LigneInventaireViewSet(viewsets.ModelViewSet):
