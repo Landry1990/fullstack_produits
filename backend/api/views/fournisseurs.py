@@ -197,52 +197,64 @@ class FournisseurViewSet(viewsets.ModelViewSet):
         if fournisseur_id:
             fournisseurs = fournisseurs.filter(id=int(fournisseur_id))
 
-        echeances = []
+        # Charger tous les fournisseurs en mémoire (queryset déjà annoté)
+        fournisseurs_list = list(fournisseurs)
+        if not fournisseurs_list:
+            return Response([])
 
-        for f in fournisseurs:
-            # Toutes les commandes clôturées, triées chronologiquement
-            commandes_qs = (
-                Commande.objects
-                .filter(fournisseur=f, status=Commande.Status.CLOTUREE)
-                .annotate(
-                    total_value=Coalesce(
-                        Subquery(
-                            CommandeProduit.objects
-                            .filter(commande=OuterRef('pk'))
-                            .values('commande')
-                            .annotate(s=Sum(F('quantity') * F('price'), output_field=DecimalField()))
-                            .values('s')[:1]
-                        ),
-                        Value(Decimal('0.00'), output_field=DecimalField())
-                    )
-                )
-                .order_by('date_cloture')
-            )
-            commandes = list(commandes_qs)
+        fournisseur_ids = [f.id for f in fournisseurs_list]
+
+        # ── Requêtes globales (évite N+1 par fournisseur) ──
+        from collections import defaultdict
+
+        order_total_sub = CommandeProduit.objects.filter(
+            commande=OuterRef('pk')
+        ).values('commande').annotate(
+            s=Sum(F('quantity') * F('price'), output_field=DecimalField())
+        ).values('s')[:1]
+
+        all_commandes = Commande.objects.filter(
+            fournisseur_id__in=fournisseur_ids,
+            status=Commande.Status.CLOTUREE
+        ).annotate(
+            total_value=Coalesce(Subquery(order_total_sub), Value(Decimal('0.00'), output_field=DecimalField()))
+        ).order_by('date_cloture')
+
+        commandes_by_fournisseur = defaultdict(list)
+        for c in all_commandes:
+            commandes_by_fournisseur[c.fournisseur_id].append(c)  # type: ignore[attr-defined]
+
+        all_paiements = PaiementFournisseur.objects.filter(
+            fournisseur_id__in=fournisseur_ids
+        ).values('fournisseur_id').annotate(
+            total=Sum('montant', output_field=DecimalField())
+        )
+        paiements_by_fournisseur = {
+            p['fournisseur_id']: p['total'] or Decimal('0.00')
+            for p in all_paiements
+        }
+
+        echeances = []
+        for f in fournisseurs_list:
+            commandes = commandes_by_fournisseur.get(f.id, [])
             if not commandes:
                 continue
 
-            # Total payé à ce fournisseur (tous paiements confondus)
-            total_paye = PaiementFournisseur.objects.filter(fournisseur=f).aggregate(
-                t=Coalesce(Sum('montant', output_field=DecimalField()), Value(Decimal('0.00'), output_field=DecimalField()))
-            )['t']
+            total_paye = paiements_by_fournisseur.get(f.id, Decimal('0.00'))
 
             if f.type_reglement == 'RELEVE':
                 periode = max(f.periode_releve_jours, 1)
 
-                # Grouper les commandes par tranche calendaire
                 tranches_map: dict[tuple, Decimal] = {}
                 mois_concernes: set[tuple] = set()
                 for c in commandes:
                     cmd_date = c.date_cloture.date() if c.date_cloture else today
                     mois_concernes.add((cmd_date.year, cmd_date.month))
 
-                # Construire toutes les tranches pour les mois concernés
                 all_tranches: list[tuple] = []
                 for (annee, mois) in sorted(mois_concernes):
                     all_tranches.extend(_tranches_releve(annee, mois, periode))
 
-                # Additionner le montant des commandes dans chaque tranche
                 for tranche in all_tranches:
                     tranches_map[tranche] = Decimal('0.00')
                 for c in commandes:
@@ -252,7 +264,6 @@ class FournisseurViewSet(viewsets.ModelViewSet):
                             tranches_map[tranche] += c.total_value
                             break
 
-                # Imputer les paiements tranche par tranche (chronologique)
                 reste_paye = total_paye
                 for tranche in sorted(all_tranches):
                     montant_tranche = tranches_map.get(tranche, Decimal('0.00'))

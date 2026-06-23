@@ -92,7 +92,10 @@ export default function ProduitShadcn() {
     return () => clearTimeout(timer)
   }, [searchQuery])
 
-  useEffect(() => { setPage(1) }, [showInStockOnly, showInactive, filterRayon, filterFournisseur])
+  useEffect(() => {
+    console.log('[Filter Change] showInStockOnly:', showInStockOnly, 'resetting page to 1')
+    setPage(1)
+  }, [showInStockOnly, showInactive, filterRayon, filterFournisseur])
 
   /* ── Data ── */
   const { data: productsData, isLoading, error: loadError, refetch } = useProduits({
@@ -133,6 +136,11 @@ export default function ProduitShadcn() {
   const produits = useMemo(() => productsData?.results || [], [productsData])
   const totalCount = productsData?.count || 0
   const totalPages = Math.ceil(totalCount / 50) || 1
+
+  // DEBUG pagination
+  useEffect(() => {
+    console.log('[Pagination Debug] page:', page, 'count:', totalCount, 'totalPages:', totalPages, 'results:', productsData?.results?.length)
+  }, [page, productsData, totalCount, totalPages])
 
   /* ── Stats ── */
   const lowStockCount = useMemo(() => produits.filter(p => (p.stock ?? 0) <= (p.stock_alert ?? 0) && (p.stock ?? 0) > 0).length, [produits])

@@ -5,7 +5,7 @@ import type { User } from '../types/auth';
 
 // Fetch Logs Function
 const fetchLogs = async (filters: AuditFilters): Promise<AuditLogResponse> => {
-    const params: Record<string, string | number> = { page: filters.page };
+    const params: Record<string, string | number> = { page: filters.page, page_size: 50 };
     if (filters.action) params['action'] = filters.action;
     if (filters.user) params['user'] = filters.user;
     if (filters.model_name) params['model_name'] = filters.model_name;

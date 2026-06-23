@@ -5,7 +5,7 @@ import api from '../services/api';
 import { toast } from 'react-hot-toast';
 import { getApiErrorDetail } from '../utils/errorHandling';
 import { usePharmacySettings } from './usePharmacySettings';
-import { exportToExcel } from '../utils/excelExport';
+import { exportToExcel, downloadBlob } from '../utils/excelExport';
 
 // Re-export types and constants from modular files
 export type { QueryDefinition, QueryParam, ParamType, PaginationData, Client, Supplier, User, Famille } from './reports/types';
@@ -273,15 +273,8 @@ export function useCentreRapports() {
                     responseType: 'blob'
                 });
                 
-                const url = window.URL.createObjectURL(new Blob([response.data], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }));
-                const link = document.createElement('a');
-                link.href = url;
                 const filename = `Balance_Stocks_${params.date_debut}_${params.date_fin}.xlsx`;
-                
-                link.setAttribute('download', filename);
-                document.body.appendChild(link);
-                link.click();
-                link.remove();
+                downloadBlob(response.data, filename);
                 
                 toast.success(t('results.export_success', { filename }));
                 setResults({ status: 'success', filename });
@@ -295,15 +288,8 @@ export function useCentreRapports() {
                     responseType: 'blob'
                 });
                 
-                const url = window.URL.createObjectURL(new Blob([response.data], { type: 'text/csv' }));
-                const link = document.createElement('a');
-                link.href = url;
                 const filename = `Export_Sage_i7_${params.date_debut}_${params.date_fin}.csv`;
-                
-                link.setAttribute('download', filename);
-                document.body.appendChild(link);
-                link.click();
-                link.remove();
+                downloadBlob(response.data, filename, 'text/csv');
                 
                 toast.success(t('results.export_success', { filename }));
                 setResults({ status: 'success', filename });
@@ -370,14 +356,7 @@ export function useCentreRapports() {
                     responseType: 'blob'
                 });
                 
-                const url = window.URL.createObjectURL(new Blob([response.data]));
-                const link = document.createElement('a');
-                link.href = url;
-                link.setAttribute('download', filename);
-                document.body.appendChild(link);
-                link.click();
-                link.remove();
-                window.URL.revokeObjectURL(url);
+                downloadBlob(response.data, filename);
                 toast.success(t('results.export_success', { filename }));
             } catch (err) {
                 console.error('Excel download error:', err);

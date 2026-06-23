@@ -3,7 +3,6 @@ import { toast } from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import type { ProduitModel } from '../../types';
 import { useRayons } from '../../hooks/useProduits';
-import PremiumModal from '../common/PremiumModal';
 import SudoValidationModal from '../common/SudoValidationModal';
 import { useAuth } from '../../context/AuthContext';
 import produitService from '../../services/produitService';
@@ -18,11 +17,20 @@ import {
   CheckCircle2, 
   AlertCircle,
   ChevronRight,
-  ShieldCheck,
-  Download
+  Download,
+  ArrowRight
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Checkbox } from '../ui/Checkbox';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from '../ui/Dialog';
+import { Button } from '../ui/Button';
 
 export default function ReapproRayon() {
   const { t, i18n } = useTranslation(['stock', 'common']);
@@ -517,89 +525,107 @@ export default function ReapproRayon() {
         )}
       </div>
 
-      {/* Bulk Confirmation Modal */}
-      <PremiumModal
-        isOpen={showConfirmBulk}
-        onClose={() => {
-            setShowConfirmBulk(false);
-            if (bulkActionType === null) setPendingIds([]);
-        }}
-        title={t('stock:reappro.modal.confirm')}
-        maxWidth="max-w-md"
-      >
-        <div className="p-8 text-center">
-            <div className="size-20 bg-emerald-50 text-emerald-600 rounded-3xl flex items-center justify-center mx-auto mb-6 shadow-sm">
-                <Truck className="size-10" />
-            </div>
-            <h3 className="text-xl font-black text-slate-800 tracking-tight">{t('stock:reappro.modal.title')}</h3>
-            <p className="text-sm font-bold text-slate-400 mt-3 leading-relaxed">
-                {t('stock:reappro.modal.confirm', {count: pendingIds.length})}
-            </p>
-
-            <div className="flex gap-4 mt-8">
-                <button
-                    className="flex-1 h-12 rounded-2xl text-[10px] font-black uppercase tracking-widest text-slate-600 border border-slate-200 hover:bg-slate-50 transition-colors"
-                    onClick={() => setShowConfirmBulk(false)}
-                >
-                    {t('stock:reappro.modal.cancel')}
-                </button>
-                <button
-                    className="flex-1 h-12 rounded-2xl text-[10px] font-black uppercase tracking-widest bg-emerald-600 text-white hover:bg-emerald-700 shadow-lg shadow-emerald-500/20 transition-colors"
-                    onClick={() => {
-                        setShowConfirmBulk(false);
-                        executeBulkTransfer(pendingIds);
-                    }}
-                >
-                    {t('stock:reappro.modal.confirm_btn')}
-                </button>
-            </div>
-        </div>
-      </PremiumModal>
-
-      {/* Success Modal with PDF Link */}
-      <PremiumModal
-        isOpen={showSuccessModal}
-        onClose={() => setShowSuccessModal(false)}
-        title={t('stock:reappro.success')}
-        maxWidth="max-w-md"
-      >
-        <div className="p-8 text-center">
-            <div className="size-20 bg-emerald-50 text-emerald-600 rounded-full flex items-center justify-center mx-auto mb-6 shadow-sm">
-                <CheckCircle2 className="size-10" />
-            </div>
-            <h3 className="text-xl font-black text-slate-800 tracking-tight">{t('stock:reappro.modal.success')}</h3>
-            <p className="text-sm font-bold text-slate-400 mt-3 leading-relaxed">
-                {t('stock:reappro.modal.success_desc')}
-            </p>
-
-            <div className="flex flex-col gap-3 mt-8">
-                <button
-                    className="inline-flex items-center justify-center gap-2 h-12 rounded-2xl text-[10px] font-black uppercase tracking-widest bg-emerald-600 text-white hover:bg-emerald-700 shadow-lg shadow-emerald-500/20 transition-colors"
-                    onClick={() => {
-                        if (lastSessionId) handleDownloadPdf(lastSessionId);
-                        setShowSuccessModal(false);
-                    }}
-                >
-                    <Download className="size-4" />
-                    {t('stock:reappro.modal.download_pdf')}
-                </button>
-                <div className="grid grid-cols-2 gap-3">
-                    <Link
-                        to="/app/reappro-history"
-                        className="inline-flex items-center justify-center h-12 rounded-2xl text-[10px] font-black uppercase tracking-widest text-slate-600 border border-slate-200 hover:bg-slate-50 transition-colors"
-                    >
-                        {t('stock:reappro.modal.view_history')}
-                    </Link>
-                    <button
-                        className="inline-flex items-center justify-center h-12 rounded-2xl text-[10px] font-black uppercase tracking-widest text-slate-600 border border-slate-200 hover:bg-slate-50 transition-colors"
-                        onClick={() => setShowSuccessModal(false)}
-                    >
-                        {t('stock:reappro.modal.close')}
-                    </button>
+      {/* ── Modal Confirmation Transfert Groupé ── */}
+      <Dialog open={showConfirmBulk} onOpenChange={(open) => {
+        if (!open) { setShowConfirmBulk(false); if (bulkActionType === null) setPendingIds([]); }
+      }}>
+        <DialogContent className="max-w-md rounded-2xl border-0 shadow-2xl p-0 overflow-hidden">
+          {/* Bande accent emerald */}
+          <div className="h-1 w-full bg-gradient-to-r from-emerald-400 via-emerald-500 to-emerald-600" />
+          <div className="px-8 pt-8 pb-6">
+            <div className="flex flex-col items-center text-center gap-5">
+              <div className="size-20 rounded-3xl bg-emerald-50 border border-emerald-100 flex items-center justify-center shadow-inner">
+                <Truck className="size-9 text-emerald-600" />
+              </div>
+              <DialogHeader className="space-y-2">
+                <DialogTitle className="text-xl font-black text-slate-800 tracking-tight">
+                  {t('stock:reappro.modal.title')}
+                </DialogTitle>
+                <DialogDescription className="text-sm font-semibold text-slate-400 leading-relaxed">
+                  {t('stock:reappro.modal.confirm', { count: pendingIds.length })}
+                </DialogDescription>
+              </DialogHeader>
+              <div className="w-full flex items-center justify-center gap-3 bg-emerald-50 border border-emerald-100 rounded-xl px-4 py-3">
+                <div className="size-8 rounded-lg bg-emerald-100 flex items-center justify-center">
+                  <Package className="size-4 text-emerald-600" />
                 </div>
+                <span className="text-sm font-black text-emerald-700">
+                  {pendingIds.length} produit{pendingIds.length > 1 ? 's' : ''} à transférer
+                </span>
+                <ArrowRight className="size-4 text-emerald-400 ml-auto" />
+              </div>
             </div>
-        </div>
-      </PremiumModal>
+            <DialogFooter className="flex gap-3 mt-6 sm:flex-row">
+              <Button
+                variant="outline"
+                className="flex-1 h-11 rounded-xl font-black text-[10px] uppercase tracking-widest border-slate-200 text-slate-600 hover:bg-slate-50"
+                onClick={() => setShowConfirmBulk(false)}
+              >
+                {t('stock:reappro.modal.cancel')}
+              </Button>
+              <Button
+                className="flex-1 h-11 rounded-xl font-black text-[10px] uppercase tracking-widest bg-emerald-600 hover:bg-emerald-700 text-white shadow-lg shadow-emerald-500/25"
+                onClick={() => { setShowConfirmBulk(false); executeBulkTransfer(pendingIds); }}
+              >
+                <Truck className="size-3.5 mr-2" />
+                {t('stock:reappro.modal.confirm_btn')}
+              </Button>
+            </DialogFooter>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* ── Modal Succès + Téléchargement PDF ── */}
+      <Dialog open={showSuccessModal} onOpenChange={(open) => { if (!open) setShowSuccessModal(false); }}>
+        <DialogContent className="max-w-md rounded-2xl border-0 shadow-2xl p-0 overflow-hidden">
+          <div className="h-1 w-full bg-gradient-to-r from-emerald-400 via-emerald-500 to-emerald-600" />
+          <div className="px-8 pt-8 pb-6">
+            <div className="flex flex-col items-center text-center gap-5">
+              <div className="relative">
+                <div className="size-20 rounded-full bg-emerald-50 border-2 border-emerald-200 flex items-center justify-center shadow-inner">
+                  <CheckCircle2 className="size-10 text-emerald-600" />
+                </div>
+                <div className="absolute -top-1 -right-1 size-5 rounded-full bg-emerald-500 border-2 border-white flex items-center justify-center">
+                  <span className="text-white text-[9px] font-black">✓</span>
+                </div>
+              </div>
+              <DialogHeader className="space-y-2">
+                <DialogTitle className="text-xl font-black text-slate-800 tracking-tight">
+                  {t('stock:reappro.modal.success')}
+                </DialogTitle>
+                <DialogDescription className="text-sm font-semibold text-slate-400 leading-relaxed">
+                  {t('stock:reappro.modal.success_desc')}
+                </DialogDescription>
+              </DialogHeader>
+            </div>
+            <div className="flex flex-col gap-3 mt-6">
+              <Button
+                className="w-full h-11 rounded-xl font-black text-[10px] uppercase tracking-widest bg-emerald-600 hover:bg-emerald-700 text-white shadow-lg shadow-emerald-500/25"
+                onClick={() => { if (lastSessionId) handleDownloadPdf(lastSessionId); setShowSuccessModal(false); }}
+              >
+                <Download className="size-3.5 mr-2" />
+                {t('stock:reappro.modal.download_pdf')}
+              </Button>
+              <div className="grid grid-cols-2 gap-3">
+                <Link
+                  to="/app/reappro-history"
+                  className="inline-flex items-center justify-center h-11 rounded-xl font-black text-[10px] uppercase tracking-widest border border-slate-200 text-slate-600 hover:bg-slate-50 transition-colors gap-1.5"
+                >
+                  <History className="size-3.5" />
+                  {t('stock:reappro.modal.view_history')}
+                </Link>
+                <Button
+                  variant="outline"
+                  className="h-11 rounded-xl font-black text-[10px] uppercase tracking-widest border-slate-200 text-slate-600 hover:bg-slate-50"
+                  onClick={() => setShowSuccessModal(false)}
+                >
+                  {t('stock:reappro.modal.close')}
+                </Button>
+              </div>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* Sudo Mode Validation */}
       <SudoValidationModal

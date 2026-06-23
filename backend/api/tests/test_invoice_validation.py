@@ -27,7 +27,7 @@ class InvoiceValidationTestCase(APITestCase):
         """Set up test data."""
         self.user = TestDataFactory.create_superuser()
         self.client.force_authenticate(user=self.user)
-        
+
         # Create product with stock
         self.rayon = TestDataFactory.create_rayon(name='Médicaments')
         self.fournisseur = TestDataFactory.create_fournisseur(name='Pharma Distrib')
@@ -39,10 +39,13 @@ class InvoiceValidationTestCase(APITestCase):
             rayon=self.rayon,
             fournisseur=self.fournisseur
         )
-        
+
         # Create client
         self.client_obj = TestDataFactory.create_client(name='Patient Test')
-        
+
+        # Several invoice actions require an active cashier session
+        self.session = TestDataFactory.create_session_caisse(user=self.user)
+
     def test_validate_invoice_decrements_stock(self):
         """
         Test that validating an invoice decrements the product stock.

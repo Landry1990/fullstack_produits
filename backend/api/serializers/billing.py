@@ -211,7 +211,8 @@ class FactureSerializer(serializers.ModelSerializer):
         if not obj.remise or obj.remise <= 0:
             return False
         for fp in obj.produits.all():
-            if fp.promotion_applied:
+            # free_quantity tracks promotion-given free units; promotion_applied field does not exist
+            if getattr(fp, 'promotion_applied', False) or (fp.free_quantity or 0) > 0:
                 return True
         return False
 

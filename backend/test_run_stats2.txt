@@ -1,0 +1,27 @@
+Using existing test database for alias 'default' ('test_MyDatabase')...
+
+test_classement_vendeurs_mensuel_includes_boundary_sale (api.tests.test_stats_discrepancy.StatsDiscrepancyTest.test_classement_vendeurs_mensuel_includes_boundary_sale) ... INFO     api.signals_comptabilite | [COMPTA] ├ëcriture vente cr├®├®e pour facture 249
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after invoice 249 validation/payment
+ok
+test_stats_vendeurs_includes_boundary_sale (api.tests.test_stats_discrepancy.StatsDiscrepancyTest.test_stats_vendeurs_includes_boundary_sale) ... INFO     api.signals_comptabilite | [COMPTA] ├ëcriture vente cr├®├®e pour facture 250
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after invoice 250 validation/payment
+ok
+
+----------------------------------------------------------------------
+Ran 2 tests in 0.206s
+
+OK
+Preserving test database for alias 'default' ('test_MyDatabase')...
+
+Found 2 test(s).
+Operations to perform:
+  Synchronize unmigrated apps: channels, corsheaders, daphne, django_filters, messages, postgres, rest_framework, staticfiles
+  Apply all migrations: admin, api, auth, authtoken, contenttypes, sessions
+Synchronizing apps without migrations:
+  Creating tables...
+    Running deferred SQL...
+Running migrations:
+  No migrations to apply.
+System check identified no issues (0 silenced).

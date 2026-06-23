@@ -1,0 +1,453 @@
+Using existing test database for alias 'default' ('test_MyDatabase')...
+
+test_classement_vendeurs_mensuel_includes_boundary_sale (api.tests.test_stats_discrepancy.StatsDiscrepancyTest.test_classement_vendeurs_mensuel_includes_boundary_sale) ... INFO     api.signals_comptabilite | [COMPTA] ├ëcriture vente cr├®├®e pour facture 160
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after invoice 160 validation/payment
+ok
+test_stats_vendeurs_includes_boundary_sale (api.tests.test_stats_discrepancy.StatsDiscrepancyTest.test_stats_vendeurs_includes_boundary_sale) ... INFO     api.signals_comptabilite | [COMPTA] ├ëcriture vente cr├®├®e pour facture 161
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after invoice 161 validation/payment
+ok
+test_formula_consistency_with_existing_calculations (api.tests.test_margin_service.MarginServiceIntegrationTestCase.test_formula_consistency_with_existing_calculations)
+Test coh├®rence avec les calculs existants ... INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 251 change
+ok
+test_service_integration_with_produit_model (api.tests.test_margin_service.MarginServiceIntegrationTestCase.test_service_integration_with_produit_model)
+Test int├®gration avec le mod├¿le Produit ... INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 252 change
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 252 change
+ok
+test_calculate_facture_margin (api.tests.test_margin_service.MarginServiceTestCase.test_calculate_facture_margin)
+Test calcul marge pour une facture ... INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 253 change
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 254 change
+ERROR
+test_calculate_lot_margin (api.tests.test_margin_service.MarginServiceTestCase.test_calculate_lot_margin)
+Test calcul marge pour un lot ... INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 255 change
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 256 change
+ERROR
+test_calculate_period_margin (api.tests.test_margin_service.MarginServiceTestCase.test_calculate_period_margin)
+Test calcul marge sur p├®riode ... INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 257 change
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 258 change
+ERROR
+test_calculate_product_margin_none_values (api.tests.test_margin_service.MarginServiceTestCase.test_calculate_product_margin_none_values)
+Test avec valeurs None ... INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 259 change
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 260 change
+ERROR
+test_calculate_product_margin_normal_case (api.tests.test_margin_service.MarginServiceTestCase.test_calculate_product_margin_normal_case)
+Test calcul marge normal ... INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 261 change
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 262 change
+ERROR
+test_calculate_product_margin_zero_cost (api.tests.test_margin_service.MarginServiceTestCase.test_calculate_product_margin_zero_cost)
+Test avec co├╗t d'achat nul ... INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 263 change
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 264 change
+ERROR
+test_calculate_product_margin_zero_price (api.tests.test_margin_service.MarginServiceTestCase.test_calculate_product_margin_zero_price)
+Test avec prix de vente nul ... INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 265 change
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 266 change
+ERROR
+test_get_margin_variance_analysis (api.tests.test_margin_service.MarginServiceTestCase.test_get_margin_variance_analysis)
+Test analyse variance des marges ... INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 267 change
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 268 change
+ERROR
+test_get_products_with_anomalous_margins (api.tests.test_margin_service.MarginServiceTestCase.test_get_products_with_anomalous_margins)
+Test d├®tection produits avec marges anormales ... INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 269 change
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 270 change
+ERROR
+test_margin_calculation_consistency (api.tests.test_margin_service.MarginServiceTestCase.test_margin_calculation_consistency)
+Test coh├®rence des calculs de marge ... INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 271 change
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 272 change
+ERROR
+test_rounding_behavior (api.tests.test_margin_service.MarginServiceTestCase.test_rounding_behavior)
+Test comportement des arrondis ... INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 273 change
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 274 change
+ERROR
+test_update_product_margins_all (api.tests.test_margin_service.MarginServiceTestCase.test_update_product_margins_all)
+Test mise ├á jour marges de tous les produits ... INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 275 change
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 276 change
+ERROR
+test_update_product_margins_selected (api.tests.test_margin_service.MarginServiceTestCase.test_update_product_margins_selected)
+Test mise ├á jour marges pour produits s├®lectionn├®s ... INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 277 change
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 278 change
+ERROR
+
+======================================================================
+ERROR: test_calculate_facture_margin (api.tests.test_margin_service.MarginServiceTestCase.test_calculate_facture_margin)
+Test calcul marge pour une facture
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "c:\Projet Fullstack\fullstack_produits\backend\api\tests\test_margin_service.py", line 45, in setUp
+    self.lot1 = StockLot.objects.create(
+                ~~~~~~~~~~~~~~~~~~~~~~~^
+        produit=self.produit1,
+        ^^^^^^^^^^^^^^^^^^^^^^
+    ...<6 lines>...
+        date_expiration=timezone.now() + timedelta(days=90)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\db\models\manager.py", line 87, in manager_method
+    return getattr(self.get_queryset(), name)(*args, **kwargs)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\db\models\query.py", line 661, in create
+    obj = self.model(**kwargs)
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\db\models\base.py", line 569, in __init__
+    raise TypeError(
+    ...<2 lines>...
+    )
+TypeError: StockLot() got unexpected keyword arguments: 'quantity'
+
+======================================================================
+ERROR: test_calculate_lot_margin (api.tests.test_margin_service.MarginServiceTestCase.test_calculate_lot_margin)
+Test calcul marge pour un lot
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "c:\Projet Fullstack\fullstack_produits\backend\api\tests\test_margin_service.py", line 45, in setUp
+    self.lot1 = StockLot.objects.create(
+                ~~~~~~~~~~~~~~~~~~~~~~~^
+        produit=self.produit1,
+        ^^^^^^^^^^^^^^^^^^^^^^
+    ...<6 lines>...
+        date_expiration=timezone.now() + timedelta(days=90)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\db\models\manager.py", line 87, in manager_method
+    return getattr(self.get_queryset(), name)(*args, **kwargs)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\db\models\query.py", line 661, in create
+    obj = self.model(**kwargs)
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\db\models\base.py", line 569, in __init__
+    raise TypeError(
+    ...<2 lines>...
+    )
+TypeError: StockLot() got unexpected keyword arguments: 'quantity'
+
+======================================================================
+ERROR: test_calculate_period_margin (api.tests.test_margin_service.MarginServiceTestCase.test_calculate_period_margin)
+Test calcul marge sur p├®riode
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "c:\Projet Fullstack\fullstack_produits\backend\api\tests\test_margin_service.py", line 45, in setUp
+    self.lot1 = StockLot.objects.create(
+                ~~~~~~~~~~~~~~~~~~~~~~~^
+        produit=self.produit1,
+        ^^^^^^^^^^^^^^^^^^^^^^
+    ...<6 lines>...
+        date_expiration=timezone.now() + timedelta(days=90)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\db\models\manager.py", line 87, in manager_method
+    return getattr(self.get_queryset(), name)(*args, **kwargs)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\db\models\query.py", line 661, in create
+    obj = self.model(**kwargs)
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\db\models\base.py", line 569, in __init__
+    raise TypeError(
+    ...<2 lines>...
+    )
+TypeError: StockLot() got unexpected keyword arguments: 'quantity'
+
+======================================================================
+ERROR: test_calculate_product_margin_none_values (api.tests.test_margin_service.MarginServiceTestCase.test_calculate_product_margin_none_values)
+Test avec valeurs None
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "c:\Projet Fullstack\fullstack_produits\backend\api\tests\test_margin_service.py", line 45, in setUp
+    self.lot1 = StockLot.objects.create(
+                ~~~~~~~~~~~~~~~~~~~~~~~^
+        produit=self.produit1,
+        ^^^^^^^^^^^^^^^^^^^^^^
+    ...<6 lines>...
+        date_expiration=timezone.now() + timedelta(days=90)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\db\models\manager.py", line 87, in manager_method
+    return getattr(self.get_queryset(), name)(*args, **kwargs)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\db\models\query.py", line 661, in create
+    obj = self.model(**kwargs)
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\db\models\base.py", line 569, in __init__
+    raise TypeError(
+    ...<2 lines>...
+    )
+TypeError: StockLot() got unexpected keyword arguments: 'quantity'
+
+======================================================================
+ERROR: test_calculate_product_margin_normal_case (api.tests.test_margin_service.MarginServiceTestCase.test_calculate_product_margin_normal_case)
+Test calcul marge normal
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "c:\Projet Fullstack\fullstack_produits\backend\api\tests\test_margin_service.py", line 45, in setUp
+    self.lot1 = StockLot.objects.create(
+                ~~~~~~~~~~~~~~~~~~~~~~~^
+        produit=self.produit1,
+        ^^^^^^^^^^^^^^^^^^^^^^
+    ...<6 lines>...
+        date_expiration=timezone.now() + timedelta(days=90)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\db\models\manager.py", line 87, in manager_method
+    return getattr(self.get_queryset(), name)(*args, **kwargs)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\db\models\query.py", line 661, in create
+    obj = self.model(**kwargs)
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\db\models\base.py", line 569, in __init__
+    raise TypeError(
+    ...<2 lines>...
+    )
+TypeError: StockLot() got unexpected keyword arguments: 'quantity'
+
+======================================================================
+ERROR: test_calculate_product_margin_zero_cost (api.tests.test_margin_service.MarginServiceTestCase.test_calculate_product_margin_zero_cost)
+Test avec co├╗t d'achat nul
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "c:\Projet Fullstack\fullstack_produits\backend\api\tests\test_margin_service.py", line 45, in setUp
+    self.lot1 = StockLot.objects.create(
+                ~~~~~~~~~~~~~~~~~~~~~~~^
+        produit=self.produit1,
+        ^^^^^^^^^^^^^^^^^^^^^^
+    ...<6 lines>...
+        date_expiration=timezone.now() + timedelta(days=90)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\db\models\manager.py", line 87, in manager_method
+    return getattr(self.get_queryset(), name)(*args, **kwargs)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\db\models\query.py", line 661, in create
+    obj = self.model(**kwargs)
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\db\models\base.py", line 569, in __init__
+    raise TypeError(
+    ...<2 lines>...
+    )
+TypeError: StockLot() got unexpected keyword arguments: 'quantity'
+
+======================================================================
+ERROR: test_calculate_product_margin_zero_price (api.tests.test_margin_service.MarginServiceTestCase.test_calculate_product_margin_zero_price)
+Test avec prix de vente nul
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "c:\Projet Fullstack\fullstack_produits\backend\api\tests\test_margin_service.py", line 45, in setUp
+    self.lot1 = StockLot.objects.create(
+                ~~~~~~~~~~~~~~~~~~~~~~~^
+        produit=self.produit1,
+        ^^^^^^^^^^^^^^^^^^^^^^
+    ...<6 lines>...
+        date_expiration=timezone.now() + timedelta(days=90)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\db\models\manager.py", line 87, in manager_method
+    return getattr(self.get_queryset(), name)(*args, **kwargs)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\db\models\query.py", line 661, in create
+    obj = self.model(**kwargs)
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\db\models\base.py", line 569, in __init__
+    raise TypeError(
+    ...<2 lines>...
+    )
+TypeError: StockLot() got unexpected keyword arguments: 'quantity'
+
+======================================================================
+ERROR: test_get_margin_variance_analysis (api.tests.test_margin_service.MarginServiceTestCase.test_get_margin_variance_analysis)
+Test analyse variance des marges
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "c:\Projet Fullstack\fullstack_produits\backend\api\tests\test_margin_service.py", line 45, in setUp
+    self.lot1 = StockLot.objects.create(
+                ~~~~~~~~~~~~~~~~~~~~~~~^
+        produit=self.produit1,
+        ^^^^^^^^^^^^^^^^^^^^^^
+    ...<6 lines>...
+        date_expiration=timezone.now() + timedelta(days=90)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\db\models\manager.py", line 87, in manager_method
+    return getattr(self.get_queryset(), name)(*args, **kwargs)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\db\models\query.py", line 661, in create
+    obj = self.model(**kwargs)
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\db\models\base.py", line 569, in __init__
+    raise TypeError(
+    ...<2 lines>...
+    )
+TypeError: StockLot() got unexpected keyword arguments: 'quantity'
+
+======================================================================
+ERROR: test_get_products_with_anomalous_margins (api.tests.test_margin_service.MarginServiceTestCase.test_get_products_with_anomalous_margins)
+Test d├®tection produits avec marges anormales
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "c:\Projet Fullstack\fullstack_produits\backend\api\tests\test_margin_service.py", line 45, in setUp
+    self.lot1 = StockLot.objects.create(
+                ~~~~~~~~~~~~~~~~~~~~~~~^
+        produit=self.produit1,
+        ^^^^^^^^^^^^^^^^^^^^^^
+    ...<6 lines>...
+        date_expiration=timezone.now() + timedelta(days=90)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\db\models\manager.py", line 87, in manager_method
+    return getattr(self.get_queryset(), name)(*args, **kwargs)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\db\models\query.py", line 661, in create
+    obj = self.model(**kwargs)
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\db\models\base.py", line 569, in __init__
+    raise TypeError(
+    ...<2 lines>...
+    )
+TypeError: StockLot() got unexpected keyword arguments: 'quantity'
+
+======================================================================
+ERROR: test_margin_calculation_consistency (api.tests.test_margin_service.MarginServiceTestCase.test_margin_calculation_consistency)
+Test coh├®rence des calculs de marge
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "c:\Projet Fullstack\fullstack_produits\backend\api\tests\test_margin_service.py", line 45, in setUp
+    self.lot1 = StockLot.objects.create(
+                ~~~~~~~~~~~~~~~~~~~~~~~^
+        produit=self.produit1,
+        ^^^^^^^^^^^^^^^^^^^^^^
+    ...<6 lines>...
+        date_expiration=timezone.now() + timedelta(days=90)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\db\models\manager.py", line 87, in manager_method
+    return getattr(self.get_queryset(), name)(*args, **kwargs)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\db\models\query.py", line 661, in create
+    obj = self.model(**kwargs)
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\db\models\base.py", line 569, in __init__
+    raise TypeError(
+    ...<2 lines>...
+    )
+TypeError: StockLot() got unexpected keyword arguments: 'quantity'
+
+======================================================================
+ERROR: test_rounding_behavior (api.tests.test_margin_service.MarginServiceTestCase.test_rounding_behavior)
+Test comportement des arrondis
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "c:\Projet Fullstack\fullstack_produits\backend\api\tests\test_margin_service.py", line 45, in setUp
+    self.lot1 = StockLot.objects.create(
+                ~~~~~~~~~~~~~~~~~~~~~~~^
+        produit=self.produit1,
+        ^^^^^^^^^^^^^^^^^^^^^^
+    ...<6 lines>...
+        date_expiration=timezone.now() + timedelta(days=90)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\db\models\manager.py", line 87, in manager_method
+    return getattr(self.get_queryset(), name)(*args, **kwargs)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\db\models\query.py", line 661, in create
+    obj = self.model(**kwargs)
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\db\models\base.py", line 569, in __init__
+    raise TypeError(
+    ...<2 lines>...
+    )
+TypeError: StockLot() got unexpected keyword arguments: 'quantity'
+
+======================================================================
+ERROR: test_update_product_margins_all (api.tests.test_margin_service.MarginServiceTestCase.test_update_product_margins_all)
+Test mise ├á jour marges de tous les produits
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "c:\Projet Fullstack\fullstack_produits\backend\api\tests\test_margin_service.py", line 45, in setUp
+    self.lot1 = StockLot.objects.create(
+                ~~~~~~~~~~~~~~~~~~~~~~~^
+        produit=self.produit1,
+        ^^^^^^^^^^^^^^^^^^^^^^
+    ...<6 lines>...
+        date_expiration=timezone.now() + timedelta(days=90)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\db\models\manager.py", line 87, in manager_method
+    return getattr(self.get_queryset(), name)(*args, **kwargs)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\db\models\query.py", line 661, in create
+    obj = self.model(**kwargs)
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\db\models\base.py", line 569, in __init__
+    raise TypeError(
+    ...<2 lines>...
+    )
+TypeError: StockLot() got unexpected keyword arguments: 'quantity'
+
+======================================================================
+ERROR: test_update_product_margins_selected (api.tests.test_margin_service.MarginServiceTestCase.test_update_product_margins_selected)
+Test mise ├á jour marges pour produits s├®lectionn├®s
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "c:\Projet Fullstack\fullstack_produits\backend\api\tests\test_margin_service.py", line 45, in setUp
+    self.lot1 = StockLot.objects.create(
+                ~~~~~~~~~~~~~~~~~~~~~~~^
+        produit=self.produit1,
+        ^^^^^^^^^^^^^^^^^^^^^^
+    ...<6 lines>...
+        date_expiration=timezone.now() + timedelta(days=90)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\db\models\manager.py", line 87, in manager_method
+    return getattr(self.get_queryset(), name)(*args, **kwargs)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\db\models\query.py", line 661, in create
+    obj = self.model(**kwargs)
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\db\models\base.py", line 569, in __init__
+    raise TypeError(
+    ...<2 lines>...
+    )
+TypeError: StockLot() got unexpected keyword arguments: 'quantity'
+
+----------------------------------------------------------------------
+Ran 17 tests in 0.479s
+
+FAILED (errors=13)
+Preserving test database for alias 'default' ('test_MyDatabase')...
+
+Found 17 test(s).
+Operations to perform:
+  Synchronize unmigrated apps: channels, corsheaders, daphne, django_filters, messages, postgres, rest_framework, staticfiles
+  Apply all migrations: admin, api, auth, authtoken, contenttypes, sessions
+Synchronizing apps without migrations:
+  Creating tables...
+    Running deferred SQL...
+Running migrations:
+  No migrations to apply.
+System check identified no issues (0 silenced).

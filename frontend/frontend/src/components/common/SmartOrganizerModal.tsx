@@ -1,7 +1,7 @@
 ﻿import { useState, useEffect, useMemo } from 'react';
 import api from '../../services/api';
 import { toast } from 'react-hot-toast';
-import { Search, Sparkles, AlertCircle, ArrowRight } from 'lucide-react';
+import { Search, Sparkles, AlertCircle, ArrowRight, X } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import PremiumModal from './PremiumModal';
 
@@ -27,7 +27,8 @@ export default function SmartOrganizerModal({ isOpen, onClose, targetCategory, o
     const [allProducts, setAllProducts] = useState<MiniProduct[]>([]);
     const [loading, setLoading] = useState(false);
     const [processing, setProcessing] = useState(false);
-    
+    const [excludedIds, setExcludedIds] = useState<Set<number>>(new Set());
+
     // Filters
     const [fromName, setFromName] = useState('');
     const [toName, setToName] = useState('');
@@ -39,6 +40,11 @@ export default function SmartOrganizerModal({ isOpen, onClose, targetCategory, o
             fetchAllProducts();
         }
     }, [isOpen]);
+
+    // Reset exclusions quand les filtres changent
+    useEffect(() => {
+        setExcludedIds(new Set());
+    }, [fromName, toName, contains, caseSensitive]);
 
     const fetchAllProducts = async () => {
         setLoading(true);
@@ -80,13 +86,26 @@ export default function SmartOrganizerModal({ isOpen, onClose, targetCategory, o
         }).sort((a, b) => a.name.localeCompare(b.name));
     }, [allProducts, fromName, toName, contains]);
 
+    const finalProducts = useMemo(
+        () => filteredProducts.filter(p => !excludedIds.has(p.id)),
+        [filteredProducts, excludedIds]
+    );
+
+    const handleExclude = (id: number) => {
+        setExcludedIds(prev => new Set([...prev, id]));
+    };
+
+    const handleRestoreAll = () => {
+        setExcludedIds(new Set());
+    };
+
     const handleApply = async () => {
-        if (filteredProducts.length === 0) return;
+        if (finalProducts.length === 0) return;
         
         setProcessing(true);
         try {
             const res = await api.post('produits/bulk-categorize/', {
-                ids: filteredProducts.map(p => p.id),
+                ids: finalProducts.map(p => p.id),
                 category_type: targetCategory.type,
                 category_id: targetCategory.id
             });
@@ -165,7 +184,7 @@ export default function SmartOrganizerModal({ isOpen, onClose, targetCategory, o
 
                 <div className="border-t border-slate-100"></div>
 
-                <div className="bg-slate-50 rounded-2xl border border-slate-200 min-h-[150px] max-h-[250px] overflow-auto">
+                <div className="bg-slate-50 rounded-2xl border border-slate-200 min-h-[150px] max-h-[300px] overflow-auto">
                     {loading ? (
                         <div className="flex flex-col items-center justify-center p-12 text-slate-400 gap-2">
                             <span className="size-6 border-2 border-slate-200 border-t-purple-500 rounded-full animate-spin"></span>
@@ -173,25 +192,67 @@ export default function SmartOrganizerModal({ isOpen, onClose, targetCategory, o
                         </div>
                     ) : filteredProducts.length > 0 ? (
                         <div className="p-4">
-                           <div className="flex justify-between items-center mb-4 sticky top-0 bg-slate-50 py-1">
-                              <h4 className="font-bold text-slate-700 text-sm">
-                                 {t('stock:organisation.smart_organizer.products_found', { count: filteredProducts.length })}
-                              </h4>
-                              <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-purple-100 text-purple-700 text-[10px] font-bold">{t('stock:organisation.smart_organizer.preview')}</span>
-                           </div>
-                           <div className="space-y-2">
-                              {filteredProducts.slice(0, 50).map(p => (
-                                 <div key={p.id} className="flex items-center justify-between bg-white p-2 rounded-lg border border-slate-100 text-xs">
-                                    <span className="font-medium text-slate-700">{p.name}</span>
-                                    <span className="text-slate-400">{p.cip1}</span>
-                                 </div>
-                              ))}
-                              {filteredProducts.length > 50 && (
-                                 <p className="text-center text-[10px] text-slate-400 italic pt-2">
-                                    {t('stock:organisation.smart_organizer.more_products', { count: filteredProducts.length - 50 })}
-                                 </p>
-                              )}
-                           </div>
+                            <div className="flex justify-between items-center mb-3 sticky top-0 bg-slate-50 pb-2 border-b border-slate-100 z-10">
+                                <div className="flex items-center gap-2">
+                                    <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 text-[10px] font-bold">
+                                        {finalProducts.length} sélectionné{finalProducts.length > 1 ? 's' : ''}
+                                    </span>
+                                    {excludedIds.size > 0 && (
+                                        <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-red-100 text-red-600 text-[10px] font-bold">
+                                            {excludedIds.size} exclu{excludedIds.size > 1 ? 's' : ''}
+                                        </span>
+                                    )}
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    {excludedIds.size > 0 && (
+                                        <button
+                                            onClick={handleRestoreAll}
+                                            className="text-[10px] text-purple-600 hover:text-purple-800 font-medium underline underline-offset-2 transition-colors"
+                                        >
+                                            Tout restaurer
+                                        </button>
+                                    )}
+                                    <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-purple-100 text-purple-700 text-[10px] font-bold">
+                                        Aperçu — cliquer ✕ pour exclure
+                                    </span>
+                                </div>
+                            </div>
+                            <div className="space-y-1.5">
+                                {filteredProducts.map(p => {
+                                    const excluded = excludedIds.has(p.id);
+                                    return (
+                                        <div
+                                            key={p.id}
+                                            className={`flex items-center justify-between p-2 rounded-lg border text-xs transition-all ${
+                                                excluded
+                                                    ? 'bg-red-50 border-red-100 opacity-50'
+                                                    : 'bg-white border-slate-100'
+                                            }`}
+                                        >
+                                            <div className="flex items-center gap-2 min-w-0">
+                                                {excluded && <span className="shrink-0 text-[9px] font-bold text-red-400 uppercase tracking-wider">exclu</span>}
+                                                <span className={`font-medium truncate ${excluded ? 'text-red-400 line-through' : 'text-slate-700'}`}>
+                                                    {p.name}
+                                                </span>
+                                            </div>
+                                            <div className="flex items-center gap-2 shrink-0 ml-2">
+                                                <span className="text-slate-400">{p.cip1}</span>
+                                                <button
+                                                    onClick={() => excluded ? setExcludedIds(prev => { const s = new Set(prev); s.delete(p.id); return s; }) : handleExclude(p.id)}
+                                                    className={`size-5 rounded-full flex items-center justify-center transition-colors ${
+                                                        excluded
+                                                            ? 'bg-slate-200 text-slate-400 hover:bg-emerald-100 hover:text-emerald-600'
+                                                            : 'bg-red-100 text-red-400 hover:bg-red-200 hover:text-red-600'
+                                                    }`}
+                                                    title={excluded ? 'Réinclure' : 'Exclure ce produit'}
+                                                >
+                                                    <X className="size-2.5" />
+                                                </button>
+                                            </div>
+                                        </div>
+                                    );
+                                })}
+                            </div>
                         </div>
                     ) : (
                         <div className="flex flex-col items-center justify-center p-12 text-slate-400 gap-2">
@@ -212,12 +273,12 @@ export default function SmartOrganizerModal({ isOpen, onClose, targetCategory, o
                     <button
                         className="inline-flex items-center gap-2 h-9 px-8 bg-purple-600 text-white rounded-xl text-sm font-bold hover:bg-purple-700 transition-colors shadow-sm disabled:opacity-50"
                         onClick={handleApply}
-                        disabled={filteredProducts.length === 0 || processing}
+                        disabled={finalProducts.length === 0 || processing}
                     >
                         {processing ? (
                             <><span className="size-4 border-2 border-purple-400 border-t-white rounded-full animate-spin" />{t('stock:organisation.smart_organizer.processing')}</>
                         ) : (
-                            <>{t('stock:organisation.smart_organizer.apply_btn', { name: targetCategory.name })}<ArrowRight className="size-4" /></>
+                            <>{t('stock:organisation.smart_organizer.apply_btn', { name: targetCategory.name })} ({finalProducts.length})<ArrowRight className="size-4" /></>
                         )}
                     </button>
                 </div>

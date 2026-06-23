@@ -13,7 +13,6 @@ import { useTranslation } from 'react-i18next';
 
 import { Button } from './shadcn/button';
 import { Card, CardContent } from './shadcn/card';
-import { Input } from './shadcn/input.tsx';
 import { Badge } from './shadcn/badge';
 import { cn } from '../lib/utils';
 
@@ -501,7 +500,7 @@ export default function LoginShadcn() {
                         "absolute left-3 top-1/2 -translate-y-1/2 size-4",
                         isDark ? 'text-slate-400' : 'text-slate-500'
                       )} />
-                      <Input
+                      <input
                         type="text"
                         required
                         autoFocus
@@ -509,7 +508,7 @@ export default function LoginShadcn() {
                         value={username}
                         onChange={(e: React.ChangeEvent<HTMLInputElement>) => setUsername(e.target.value)}
                         className={cn(
-                          "pl-10 py-3 rounded-xl transition-all shadow-sm",
+                          "pl-10 py-3 rounded-xl transition-all shadow-sm flex h-10 w-full border bg-white px-3 text-sm ring-offset-white placeholder:text-slate-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-950 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50",
                           isDark
                             ? 'bg-slate-800 border-slate-600 focus:border-emerald-500/50 text-white placeholder:text-slate-500'
                             : 'bg-white border-slate-300 focus:border-emerald-500'
@@ -534,7 +533,7 @@ export default function LoginShadcn() {
                           "absolute left-3 top-1/2 -translate-y-1/2 size-4",
                           isDark ? 'text-slate-400' : 'text-slate-500'
                         )} />
-                        <Input
+                        <input
                           type={showPassword ? 'text' : 'password'}
                           required
                           autoFocus
@@ -542,7 +541,7 @@ export default function LoginShadcn() {
                           value={password}
                           onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPassword(e.target.value)}
                           className={cn(
-                            "pl-10 pr-10 py-3 rounded-xl transition-all shadow-sm",
+                            "pl-10 pr-10 py-3 rounded-xl transition-all shadow-sm flex h-10 w-full border bg-white px-3 text-sm ring-offset-white placeholder:text-slate-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-950 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50",
                             isDark
                               ? 'bg-slate-800 border-slate-600 focus:border-emerald-500/50 text-white placeholder:text-slate-500'
                               : 'bg-white border-slate-300 focus:border-emerald-500'
@@ -573,13 +572,13 @@ export default function LoginShadcn() {
                         isDark ? 'text-slate-400' : 'text-slate-500'
                       )} />
                       <div className="flex-1">
-                        <Input
+                        <input
                           type="text"
                           value={workstationName}
                           onChange={(e: React.ChangeEvent<HTMLInputElement>) => setWorkstationName(e.target.value)}
                           spellCheck={false}
                           className={cn(
-                            "border-0 p-0 h-auto text-sm font-medium bg-transparent focus-visible:ring-0",
+                            "border-0 p-0 h-auto text-sm font-medium bg-transparent focus-visible:ring-0 w-full outline-none",
                             isDark ? 'text-slate-200' : 'text-slate-800'
                           )}
                         />
