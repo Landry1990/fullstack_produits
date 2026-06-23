@@ -140,27 +140,28 @@ class ProduitStockMixin:
     @action(detail=True, methods=['post'])
     @transaction.atomic
     def adjust_stock(self, request, pk=None):
-        produit = self.get_object()
-        
+        # Lock product (and optional lot) to prevent concurrent manual adjustments.
+        produit = Produit.objects.select_for_update().get(pk=self.kwargs['pk'])
+
         new_quantity = request.data.get('new_quantity')
         new_reserve_quantity = request.data.get('new_reserve_quantity')
         reason_type = request.data.get('reason_type')
         reason_detail = request.data.get('reason_detail', '')
         stock_lot_id = request.data.get('stock_lot_id')
-        
+
         if new_quantity is None and new_reserve_quantity is None:
             return Response({'detail': 'new_quantity ou new_reserve_quantity est requis'}, status=status.HTTP_400_BAD_REQUEST)
-        
+
         from ...models import ConfigurationOption
         valid_reasons = [choice[0] for choice in StockAdjustment.ReasonType.choices]
         custom_reasons = list(ConfigurationOption.objects.filter(
-            type=ConfigurationOption.Type.STOCK_ADJUSTMENT_REASON, 
+            type=ConfigurationOption.Type.STOCK_ADJUSTMENT_REASON,
             is_active=True
         ).values_list('code', flat=True))
-        
+
         if reason_type not in valid_reasons and reason_type not in custom_reasons:
             return Response({'detail': f'reason_type invalide. Choisir parmi les motifs standards ou personnaliss.'}, status=status.HTTP_400_BAD_REQUEST)
-        
+
         try:
             if new_quantity is not None:
                 new_quantity = int(new_quantity)
@@ -168,11 +169,11 @@ class ProduitStockMixin:
                 new_reserve_quantity = int(new_reserve_quantity)
         except ValueError:
             return Response({'detail': 'Les quantités doivent être des entiers'}, status=status.HTTP_400_BAD_REQUEST)
-        
+
         stock_lot = None
         if stock_lot_id:
             try:
-                stock_lot = StockLot.objects.get(pk=stock_lot_id, produit=produit)
+                stock_lot = StockLot.objects.select_for_update().get(pk=stock_lot_id, produit=produit)
             except StockLot.DoesNotExist:
                 return Response({'detail': 'Lot introuvable'}, status=status.HTTP_400_BAD_REQUEST)
         
@@ -240,10 +241,10 @@ class ProduitStockMixin:
         validation_user, error_res = validate_sudo_mode(request, permission_attr='can_adjust_stock')
         if error_res: return error_res
 
-        produit = self.get_object()
+        produit = Produit.objects.select_for_update().get(pk=self.kwargs['pk'])
         if not produit.has_reserve_storage:
             return Response({'detail': "La gestion de réserve n'est pas activée pour ce produit."}, status=status.HTTP_400_BAD_REQUEST)
-        
+
         quantity = request.data.get('quantity')
         if quantity:
             try: quantity = int(quantity)
@@ -251,11 +252,11 @@ class ProduitStockMixin:
         else:
             needed = max(0, produit.capacite_rayon - produit.stock)
             quantity = min(needed, produit.stock_reserve)
-            
+
         if quantity <= 0: return Response({'detail': "Quantité de transfert nulle ou négative."}, status=status.HTTP_400_BAD_REQUEST)
         if quantity > produit.stock_reserve: return Response({'detail': f"Quantité demandée ({quantity}) supérieure au stock en réserve ({produit.stock_reserve})."}, status=status.HTTP_400_BAD_REQUEST)
-            
-        lots = produit.stock_lots.filter(quantity_reserved__gt=0).order_by('date_reception')
+
+        lots = produit.stock_lots.filter(quantity_reserved__gt=0).select_for_update().order_by('date_reception')
         remaining_to_transfer = quantity
         for lot in lots:
             if remaining_to_transfer <= 0: break
@@ -264,14 +265,17 @@ class ProduitStockMixin:
             lot.quantity_remaining += transfer_qty
             lot.save(update_fields=['quantity_reserved', 'quantity_remaining'])
             remaining_to_transfer -= transfer_qty
-            
+
+        if remaining_to_transfer > 0:
+            return Response({'detail': f"Quantité réellement transférable ({quantity - remaining_to_transfer}) inférieure à la demande."}, status=status.HTTP_400_BAD_REQUEST)
+
         produit.stock += quantity
         produit.stock_reserve -= quantity
         oldest_shelf_lot = produit.stock_lots.filter(quantity_remaining__gt=0).order_by('date_reception').first()
         if oldest_shelf_lot:
             produit.selling_price = oldest_shelf_lot.selling_price
             produit.expire_date = oldest_shelf_lot.date_expiration
-            
+
         produit.save(update_fields=['stock', 'stock_reserve', 'selling_price', 'expire_date'])
         
         base_desc = f" (Validé par {validation_user.username})" if validation_user != request.user else ""
@@ -333,17 +337,17 @@ class ProduitStockMixin:
                     quantity = min(needed, produit.stock_reserve)
                     
                     if quantity <= 0: continue
-                        
-                    lots = produit.stock_lots.filter(quantity_reserved__gt=0).order_by('date_expiration', 'id')
+
+                    lots = produit.stock_lots.filter(quantity_reserved__gt=0).select_for_update().order_by('date_expiration', 'id')
                     remaining_to_transfer = quantity
-                    
+
                     for lot in lots:
                         if remaining_to_transfer <= 0: break
                         can_take = min(lot.quantity_reserved, remaining_to_transfer)
                         lot.quantity_reserved -= can_take
                         lot.quantity_remaining += can_take
                         lot.save(update_fields=['quantity_reserved', 'quantity_remaining'])
-                        
+
                         StockAdjustment.objects.create(
                             produit=produit, stock_lot=lot, user=request.user, reappro_session=session,
                             quantity_before=produit.stock, quantity_after=produit.stock + can_take, quantity_change=can_take,
@@ -351,7 +355,10 @@ class ProduitStockMixin:
                             reason_type='REAPPRO', reason_detail=f"Réappro session #{session.id} - Lot {lot.lot}"
                         )
                         remaining_to_transfer -= can_take
-                    
+
+                    if remaining_to_transfer > 0:
+                        quantity -= remaining_to_transfer
+
                     produit.stock += quantity
                     produit.stock_reserve -= quantity
                     produit.save(update_fields=['stock', 'stock_reserve'])

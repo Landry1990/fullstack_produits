@@ -20,7 +20,8 @@ import {
   useLowStock,
   usePromisDisponibles,
   useUgStats,
-  useEcheances
+  useEcheances,
+  useSupplierDebts
 } from '../hooks/useDashboard';
 
 import { useTranslation } from 'react-i18next';
@@ -63,6 +64,8 @@ export default function DashboardShadcn() {
   const { data: promisDisponibles = [] } = usePromisDisponibles(isStockTab);
   const { data: expiringLots = [], refetch: refetchExpiring } = useExpiringLots(expirationMonths, isStockTab);
   const { data: reapproStats } = useReapproStats(true);
+
+  const { data: supplierDebts } = useSupplierDebts(true);
 
   const isFinanceTab = activeTab === 'finance';
   const { data: ugStats } = useUgStats(isFinanceTab);
@@ -282,6 +285,7 @@ export default function DashboardShadcn() {
             revenueChart={revenueChart}
             hourlyTraffic={hourlyTraffic}
             reapproStats={reapproStats}
+            supplierDebts={supplierDebts}
             t={t}
             formatCurrencyLocal={formatCurrencyLocal}
           />

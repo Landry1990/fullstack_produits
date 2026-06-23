@@ -198,17 +198,18 @@ export default function CategoryManager({
     }
   };
 
-  const handleDelete = async (id: number) => {
+  const handleDelete = async (id: number, name: string) => {
     const confirmed = await confirm({
       title: t('stock:organisation.category_manager.delete_confirm_title'),
-      message: t('stock:organisation.category_manager.delete_confirm_msg'),
-      variant: 'danger'
+      message: `« ${name} » sera déplacé en corbeille. Vous pourrez le restaurer depuis la page Corbeille.`,
+      variant: 'danger',
+      confirmText: 'Mettre en corbeille'
     });
     if (!confirmed) return;
 
     try {
       await api.delete(`${apiPath.replace(/^\/api\//, '')}${id}/`);
-      toast.success(t('stock:organisation.category_manager.success_delete', { type: "" }));
+      toast.success(`« ${name} » déplacé en corbeille.`);
       if (selectedCategory?.id === id) setSelectedCategory(null);
       fetchCategories();
     } catch (err) {
@@ -405,6 +406,13 @@ export default function CategoryManager({
                        >
                          <Pencil size={12} />
                        </button>
+                       <button
+                         className={`inline-flex items-center justify-center size-7 rounded-md transition-colors ${selectedCategory?.id === cat.id ? 'text-red-300 hover:bg-white/20 hover:text-red-200' : 'text-slate-300 hover:bg-red-50 hover:text-red-500'}`}
+                         onClick={(e) => { e.stopPropagation(); handleDelete(cat.id, getCategoryName(cat)); }}
+                         title="Mettre en corbeille"
+                       >
+                         <Trash2 size={12} />
+                       </button>
                     </div>
                   </button>
 
@@ -435,6 +443,13 @@ export default function CategoryManager({
                                onClick={(e) => { e.stopPropagation(); setOrganizerTarget({id: child.id, name: getCategoryName(child)}); setIsOrganizerOpen(true); }}
                              >
                                <Sparkles size={10} />
+                             </button>
+                             <button
+                               className="inline-flex items-center justify-center size-6 rounded-md text-slate-300 hover:bg-red-50 hover:text-red-500 transition-colors"
+                               onClick={(e) => { e.stopPropagation(); handleDelete(child.id, getCategoryName(child)); }}
+                               title="Mettre en corbeille"
+                             >
+                               <Trash2 size={10} />
                              </button>
                           </div>
                         </button>
@@ -483,7 +498,7 @@ export default function CategoryManager({
                           {t('stock:organisation.category_manager.add_products_btn')}
                         </button>
                         <button
-                           onClick={() => handleDelete(selectedCategory.id)}
+                           onClick={() => handleDelete(selectedCategory.id, getCategoryName(selectedCategory))}
                            className="inline-flex items-center justify-center size-9 text-slate-400 hover:bg-red-50 hover:text-red-500 rounded-xl transition-colors"
                         >
                            <Trash2 size={18} />
@@ -492,7 +507,7 @@ export default function CategoryManager({
                   </div>
                </div>
 
-               <div className="flex-1 overflow-y-auto p-4">
+               <div className="flex-1 overflow-hidden p-4">
                   {productsLoading ? (
                      <div className="flex flex-col items-center justify-center h-64 gap-4">
                         <span className="size-8 border-2 border-slate-200 border-t-emerald-600 rounded-full animate-spin"></span>
@@ -505,34 +520,55 @@ export default function CategoryManager({
                         <p className="text-sm text-slate-400">{t('stock:organisation.category_manager.select_item_hint')}</p>
                      </div>
                   ) : (
-                     <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
-                        {products.map(p => (
-                           <div key={p.id} className="bg-slate-50 border border-slate-200 p-4 rounded-xl flex items-center justify-between group hover:bg-slate-100 transition-all">
-                              <div className="flex items-center gap-4 overflow-hidden">
-                                 <div className="size-12 bg-white rounded-xl flex items-center justify-center shadow-sm border border-slate-100">
-                                    <Package size={20} className="text-slate-300" />
-                                 </div>
-                                 <div className="overflow-hidden">
-                                    <h4 className="font-bold truncate text-slate-800">{p.name}</h4>
-                                    <p className="text-xs text-slate-400 font-mono">{p.cip1} • Stock: <span className={p.stock <= p.stock_alert ? 'text-red-500 font-bold' : 'text-slate-600'}>{p.stock}</span></p>
-                                 </div>
-                              </div>
-                              <div className="flex items-center gap-3">
-                                 <div className="text-right hidden sm:block">
-                                    <div className="font-bold text-sm text-slate-700">{formatCurrency(normalizeNumberInput(p.selling_price))}</div>
-                                 </div>
-                                 <button
-                                   onClick={() => handleRemoveProduct(p)}
-                                   className="inline-flex items-center justify-center size-8 rounded-full text-slate-400 hover:bg-red-50 hover:text-red-500 transition-colors opacity-0 group-hover:opacity-100"
-                                 >
-                                    ✕
-                                 </button>
-                              </div>
-                           </div>
-                        ))}
+                     <div className="flex flex-col h-full border border-slate-200 rounded-2xl overflow-hidden bg-white">
+                        <div className="overflow-y-auto flex-1">
+                           <table className="w-full text-sm">
+                              <thead className="bg-slate-50 sticky top-0 z-10">
+                                 <tr className="border-b border-slate-200 text-left">
+                                    <th className="px-4 py-3 font-bold text-slate-500 uppercase tracking-wider text-[10px]">Produit</th>
+                                    <th className="px-4 py-3 font-bold text-slate-500 uppercase tracking-wider text-[10px] w-28">CIP</th>
+                                    <th className="px-4 py-3 font-bold text-slate-500 uppercase tracking-wider text-[10px] w-20 text-center">Stock</th>
+                                    <th className="px-4 py-3 font-bold text-slate-500 uppercase tracking-wider text-[10px] w-24 text-right">Prix</th>
+                                    <th className="px-4 py-3 font-bold text-slate-500 uppercase tracking-wider text-[10px] w-14 text-center">Action</th>
+                                 </tr>
+                              </thead>
+                              <tbody className="divide-y divide-slate-100">
+                                 {products.map(p => (
+                                    <tr key={p.id} className="group hover:bg-slate-50 transition-colors">
+                                       <td className="px-4 py-3">
+                                          <div className="flex items-center gap-3">
+                                             <div className="size-9 bg-white rounded-lg flex items-center justify-center border border-slate-100 shadow-sm">
+                                                <Package size={16} className="text-slate-300" />
+                                             </div>
+                                             <div className="font-semibold text-slate-800 truncate">{p.name}</div>
+                                          </div>
+                                       </td>
+                                       <td className="px-4 py-3 font-mono text-slate-400">{p.cip1}</td>
+                                       <td className="px-4 py-3 text-center">
+                                          <span className={`inline-flex items-center justify-center px-2 py-0.5 rounded-md font-bold text-xs ${p.stock <= p.stock_alert ? 'bg-red-50 text-red-600' : 'bg-slate-100 text-slate-600'}`}>
+                                             {p.stock}
+                                          </span>
+                                       </td>
+                                       <td className="px-4 py-3 text-right font-bold text-slate-700">
+                                          {formatCurrency(normalizeNumberInput(p.selling_price))}
+                                       </td>
+                                       <td className="px-4 py-3 text-center">
+                                          <button
+                                            onClick={() => handleRemoveProduct(p)}
+                                            className="inline-flex items-center justify-center size-7 rounded-full text-slate-300 hover:bg-red-50 hover:text-red-500 transition-colors opacity-0 group-hover:opacity-100"
+                                            title={t('stock:organisation.category_manager.remove_product_title')}
+                                          >
+                                             ✕
+                                          </button>
+                                       </td>
+                                    </tr>
+                                 ))}
+                              </tbody>
+                           </table>
+                        </div>
                      </div>
-                    )}
-                 </div>
+                  )}
+               </div>
 
                  {totalPages > 1 && (
                     <div className="p-4 border-t border-slate-100 bg-slate-50 flex items-center justify-between">

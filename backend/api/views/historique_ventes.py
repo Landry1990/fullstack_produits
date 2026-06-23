@@ -2,7 +2,7 @@ from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
-from django.db.models import Sum, Count, Q, Avg, F as models_f, ExpressionWrapper, DecimalField, F, OuterRef, Subquery
+from django.db.models import Sum, Count, Q, Avg, F as models_f, ExpressionWrapper, DecimalField, F, OuterRef, Subquery, Case, When
 from django.db.models.functions import TruncDate, Coalesce
 from django.utils import timezone
 from datetime import datetime
@@ -31,17 +31,6 @@ class HistoriqueVentesViewSet(viewsets.ViewSet):
             status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE]
         )
         
-        # DEBUG: Loguer les factures exclues pour troubleshooting
-        excluded = Facture.objects.exclude(
-            status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE]
-        )
-        if date_debut:
-            excluded = excluded.filter(date__date__gte=date_debut)
-        if date_fin:
-            excluded = excluded.filter(date__date__lte=date_fin)
-        for f in excluded[:5]:
-            logger.warning(f"[HISTORIQUE DEBUG] Facture exclue: {f.numero} - Status: {f.status} - Date: {f.date}")
-
         # Apply date filters
         if date_debut:
             factures = factures.filter(date__date__gte=date_debut)
@@ -86,68 +75,69 @@ class HistoriqueVentesViewSet(viewsets.ViewSet):
 
         # Total count for pagination
         total_count = daily_stats_query.count()
-        
+
         # Slice for current page
         start = (page - 1) * page_size
         end = start + page_size
         daily_stats = daily_stats_query[start:end]
-        
-        # Get payment modes for each day
+
+        # ── Pré-calculs par jour en UNE requête chacun (évite N+1) ──
+        from collections import defaultdict
+        jours = [day['jour'] for day in daily_stats]
+        factures_jour = factures.filter(date__date__in=jours) if jours else Facture.objects.none()
+
+        paiements_par_jour = defaultdict(lambda: {m: 0.0 for m in pay_modes})
+        if jours:
+            for p in Caisse.objects.filter(
+                facture__in=factures_jour,
+                statut='completee'
+            ).exclude(mode_paiement='recouvrement').annotate(
+                jour=TruncDate('facture__date')
+            ).values('jour', 'mode_paiement').annotate(
+                total=Sum('montant')
+            ):
+                mode = (p['mode_paiement'] or '').lower()
+                if mode in pay_modes:
+                    paiements_par_jour[p['jour']][mode] = float(p['total'] or 0)
+
+        remises_par_jour = defaultdict(float)
+        if jours:
+            for r in FactureProduit.objects.filter(
+                facture__in=factures_jour
+            ).annotate(
+                jour=TruncDate('facture__date')
+            ).values('jour').annotate(
+                total=Sum(ExpressionWrapper(models_f('discount') * models_f('quantity'), output_field=DecimalField()))
+            ):
+                remises_par_jour[r['jour']] = float(r['total'] or 0)
+
+        marges_par_jour = defaultdict(float)
+        if jours:
+            for m in FactureProduit.objects.filter(
+                facture__in=factures_jour
+            ).annotate(
+                cout_unitaire=Case(
+                    When(stock_lot__isnull=False, then=F('stock_lot__price_cost')),
+                    When(produit__pmp__isnull=False, then=F('produit__pmp')),
+                    default=F('produit__cost_price'),
+                    output_field=DecimalField()
+                ),
+                marge_ligne=(F('selling_price') - F('cout_unitaire')) * F('quantity'),
+                jour=TruncDate('facture__date')
+            ).values('jour').annotate(
+                marge=Sum('marge_ligne')
+            ):
+                marges_par_jour[m['jour']] = float(m['marge'] or 0)
+
+        # Build results
         results = []
         for day in daily_stats:
             jour = day['jour']
             nb_ventes = day['nb_ventes'] or 0
-            ca_ttc_factures = float(day['ca_ttc'] or 0)
-            
-            # Get payment modes for this day
-            # NOTE: Filtrer aussi par statut facture pour cohérence avec ca_ttc
-            paiements = Caisse.objects.filter(
-                facture__date__date=jour,
-                facture__status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE],
-                statut='completee'
-            ).exclude(mode_paiement='recouvrement').values('mode_paiement').annotate(
-                total=Sum('montant')
-            )
-            
-            # Build payment modes dict
-            modes = {m: 0 for m in pay_modes}
-            
-            for p in paiements:
-                mode = (p['mode_paiement'] or '').lower()
-                if mode in modes:
-                    modes[mode] = float(p['total'] or 0)
-            
-            # Use invoice aggregation for the main ca_ttc to stay consistent with Dashboard
             ca_ttc = float(day['ca_ttc'] or 0)
-            
-            # Calculate average basket
             panier_moyen = ca_ttc / nb_ventes if nb_ventes > 0 else 0
-
-            # Remises du jour (somme des discounts sur les lignes + remise globale facture)
-            remises_lignes = FactureProduit.objects.filter(
-                facture__date__date=jour,
-                facture__status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE]
-            ).aggregate(total=Sum(ExpressionWrapper(models_f('discount') * models_f('quantity'), output_field=DecimalField())))
-            remise_globale = float(day['total_remise'] or 0)
-            remise = float(remises_lignes['total'] or 0) + remise_globale
-
-            # Marge brute : (prix_vente - coût) * quantite
-            # Coût = stock_lot.price_cost si dispo, sinon produit.pmp, sinon produit.cost_price
-            fps = FactureProduit.objects.filter(
-                facture__date__date=jour,
-                facture__status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE]
-            ).select_related('stock_lot', 'produit')
-            marge = 0.0
-            for fp in fps:
-                if fp.stock_lot_id:
-                    cout = float(fp.stock_lot.price_cost or 0)
-                elif fp.produit_id and fp.produit.pmp:
-                    cout = float(fp.produit.pmp)
-                elif fp.produit_id:
-                    cout = float(fp.produit.cost_price or 0)
-                else:
-                    cout = 0.0
-                marge += (float(fp.selling_price) - cout) * fp.quantity
+            remise = remises_par_jour.get(jour, 0.0) + float(day['total_remise'] or 0)
+            modes = paiements_par_jour.get(jour, {m: 0.0 for m in pay_modes})
 
             results.append({
                 'date': jour.strftime('%Y-%m-%d'),
@@ -156,7 +146,7 @@ class HistoriqueVentesViewSet(viewsets.ViewSet):
                 'ca_ht': float(day['ca_ht'] or 0),
                 'tva': float(day['tva'] or 0),
                 'ca_ttc': ca_ttc,
-                'marge': round(marge, 2),
+                'marge': round(marges_par_jour.get(jour, 0.0), 2),
                 'remise': round(remise, 2),
                 'total_paiements': sum(modes.values()),
                 **modes
@@ -201,29 +191,13 @@ class HistoriqueVentesViewSet(viewsets.ViewSet):
         except ValueError:
             return Response({'error': 'Invalid datetime format'}, status=status.HTTP_400_BAD_REQUEST)
         
-        # Debug logging
-        logger.debug(f"[VENTES PAR TRANCHE] Recherche de {debut} à {fin}")
-        
-        # First, check all validated/paid invoices to debug
-        all_factures = Facture.objects.filter(
-            status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE]
-        ).order_by('-date')[:10]
-        
-        logger.debug(f"[DEBUG] Dernières 10 factures VAL/PAY:")
-        for f in all_factures:
-            logger.debug(f"  - Facture #{f.id} ({f.numero_facture}): {f.date} - Status: {f.status}")
-        
         # Get FactureProduit for validated/paid invoices in the time range
         factures_in_range = Facture.objects.filter(
             status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE],
             date__gte=debut,
             date__lte=fin
         )
-        
-        logger.debug(f"[DEBUG] Factures dans la tranche horaire: {factures_in_range.count()}")
-        for f in factures_in_range:
-            logger.debug(f"  - Facture #{f.id}: {f.date}")
-        
+
         facture_produits = FactureProduit.objects.filter(
             facture__in=factures_in_range
         ).select_related('produit', 'produit__rayon').values(

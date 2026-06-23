@@ -82,6 +82,7 @@ const HistoriqueAchats = ({ forcedType }: HistoriqueAchatsProps) => {
     try {
       const params = new URLSearchParams();
       params.append('page', targetPage.toString());
+      params.append('page_size', pageSize.toString());
       if (dateDebut) params.append('date_debut', dateDebut);
       if (dateFin) params.append('date_fin', dateFin);
       if (selectedSupplier) params.append('fournisseur_id', selectedSupplier);

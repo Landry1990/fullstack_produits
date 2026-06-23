@@ -333,8 +333,10 @@ class CaisseViewSet(BaseViewSetConfig, viewsets.ModelViewSet):
         )['ca_div'] or Decimal('0.00')
         total_ca_pharmacie = total_ventes - total_ca_divers
         
+        # Limiter les mouvements audit pour ne pas gonfler la réponse sur de longues périodes
         mouvements_list = []
-        for m in mouvements.select_related('user'):
+        mouvements_total = mouvements.count()
+        for m in mouvements.select_related('user').order_by('-date')[:100]:
             mouvements_list.append({
                 'type': m.type,
                 'montant': float(m.montant),
@@ -342,7 +344,7 @@ class CaisseViewSet(BaseViewSetConfig, viewsets.ModelViewSet):
                 'user_nom': m.user.get_full_name() or m.user.username if m.user else "Inconnu",
                 'date': m.date.isoformat()
             })
-        
+
         return Response({
             'start_date': start_date,
             'end_date': end_date,
@@ -358,6 +360,7 @@ class CaisseViewSet(BaseViewSetConfig, viewsets.ModelViewSet):
             'details': details,
             'details_ventes': details_ventes,
             'details_recouvrements': details_recouv,
+            'mouvements_count': mouvements_total,
             'mouvements_audit': mouvements_list
         })
 

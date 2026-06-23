@@ -1,0 +1,557 @@
+Using existing test database for alias 'default' ('test_MyDatabase')...
+
+test_annuler_already_cancelled (api.tests.test_facturation.AnnulationTests.test_annuler_already_cancelled)
+Cancelling an already cancelled invoice returns 400. ... INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 59 change
+ok
+test_annuler_creates_mouvement_stock (api.tests.test_facturation.AnnulationTests.test_annuler_creates_mouvement_stock)
+Cancelling a validated invoice creates stock return movements. ... INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 60 change
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 60 change
+C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\db\models\fields\__init__.py:1612: RuntimeWarning: DateTimeField Facture.date received a naive datetime (2026-05-21 00:00:00) while time zone support is active.
+  warnings.warn(
+C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\db\models\fields\__init__.py:1612: RuntimeWarning: DateTimeField Facture.date received a naive datetime (2026-03-22 00:00:00) while time zone support is active.
+  warnings.warn(
+INFO     api.signals_comptabilite | [COMPTA] ├ëcriture vente cr├®├®e pour facture 2
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after invoice 2 validation/payment
+ERROR    api.signals_comptabilite | [COMPTA] ERREUR cr├®ation ├®criture vente pour facture 2: ERREUR:  la relation ┬½ api_lettrage_lignes ┬╗ n'existe pas
+LINE 1: DELETE FROM "api_lettrage_lignes" WHERE "api_lettrage_lignes...
+                    ^
+
+ERROR    api.signals_comptabilite | [COMPTA] L'├®criture devra ├¬tre cr├®├®e manuellement ou via la commande de r├®g├®n├®ration
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after invoice 2 validation/payment
+ERROR    api.signals_comptabilite | [COMPTA] ERREUR cr├®ation ├®criture vente pour facture 2: ERREUR:  la relation ┬½ api_lettrage_lignes ┬╗ n'existe pas
+LINE 1: DELETE FROM "api_lettrage_lignes" WHERE "api_lettrage_lignes...
+                    ^
+
+ERROR    api.signals_comptabilite | [COMPTA] L'├®criture devra ├¬tre cr├®├®e manuellement ou via la commande de r├®g├®n├®ration
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after invoice 2 validation/payment
+ok
+test_annuler_restores_lot_quantities (api.tests.test_facturation.AnnulationTests.test_annuler_restores_lot_quantities)
+Cancelling restores FIFO lot remaining quantities. ... INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 61 change
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 61 change
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 61 change
+INFO     api.signals_comptabilite | [COMPTA] ├ëcriture vente cr├®├®e pour facture 3
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after invoice 3 validation/payment
+ERROR    api.signals_comptabilite | [COMPTA] ERREUR cr├®ation ├®criture vente pour facture 3: ERREUR:  la relation ┬½ api_lettrage_lignes ┬╗ n'existe pas
+LINE 1: DELETE FROM "api_lettrage_lignes" WHERE "api_lettrage_lignes...
+                    ^
+
+ERROR    api.signals_comptabilite | [COMPTA] L'├®criture devra ├¬tre cr├®├®e manuellement ou via la commande de r├®g├®n├®ration
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after invoice 3 validation/payment
+ERROR    api.signals_comptabilite | [COMPTA] ERREUR cr├®ation ├®criture vente pour facture 3: ERREUR:  la relation ┬½ api_lettrage_lignes ┬╗ n'existe pas
+LINE 1: DELETE FROM "api_lettrage_lignes" WHERE "api_lettrage_lignes...
+                    ^
+
+ERROR    api.signals_comptabilite | [COMPTA] L'├®criture devra ├¬tre cr├®├®e manuellement ou via la commande de r├®g├®n├®ration
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after invoice 3 validation/payment
+ok
+test_bulk_delete_brouillons (api.tests.test_facturation.BulkDeleteTests.test_bulk_delete_brouillons)
+Bulk deleting draft invoices works. ... ok
+test_bulk_delete_no_ids (api.tests.test_facturation.BulkDeleteTests.test_bulk_delete_no_ids)
+Bulk delete with empty ID list returns 400. ... ok
+test_bulk_delete_skips_validated (api.tests.test_facturation.BulkDeleteTests.test_bulk_delete_skips_validated)
+Bulk delete refuses to delete validated invoices. ... INFO     api.signals_comptabilite | [COMPTA] ├ëcriture vente cr├®├®e pour facture 7
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after invoice 7 validation/payment
+ok
+test_caisse_payment_capped_to_invoice_total (api.tests.test_facturation.CaisseCappingTests.test_caisse_payment_capped_to_invoice_total)
+CaisseViewSet.perform_create caps the amount to the invoice total. ... INFO     api.signals_comptabilite | [COMPTA] ├ëcriture vente cr├®├®e pour facture 9
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after invoice 9 validation/payment
+INFO     api.signals_comptabilite | [COMPTA] ├ëcriture paiement cr├®├®e pour caisse 1
+ERROR    api.signals_comptabilite | [COMPTA] ERREUR cr├®ation ├®criture vente pour facture 9: ERREUR:  la relation ┬½ api_lettrage_lignes ┬╗ n'existe pas
+LINE 1: DELETE FROM "api_lettrage_lignes" WHERE "api_lettrage_lignes...
+                    ^
+
+ERROR    api.signals_comptabilite | [COMPTA] L'├®criture devra ├¬tre cr├®├®e manuellement ou via la commande de r├®g├®n├®ration
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after invoice 9 validation/payment
+ERROR    api.signals_comptabilite | [COMPTA] ERREUR cr├®ation ├®criture vente pour facture 9: ERREUR:  la relation ┬½ api_lettrage_lignes ┬╗ n'existe pas
+LINE 1: DELETE FROM "api_lettrage_lignes" WHERE "api_lettrage_lignes...
+                    ^
+
+ERROR    api.signals_comptabilite | [COMPTA] L'├®criture devra ├¬tre cr├®├®e manuellement ou via la commande de r├®g├®n├®ration
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after invoice 9 validation/payment
+ok
+test_caisse_payment_capped_to_part_patient (api.tests.test_facturation.CaisseCappingTests.test_caisse_payment_capped_to_part_patient)
+CaisseViewSet.perform_create caps the amount to the part_client for insured clients. ... INFO     api.signals_comptabilite | [COMPTA] ├ëcriture vente cr├®├®e pour facture 10
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after invoice 10 validation/payment
+INFO     api.signals_comptabilite | [COMPTA] ├ëcriture paiement cr├®├®e pour caisse 2
+INFO     api.signals_comptabilite | [COMPTA] ├ëcriture paiement cr├®├®e pour caisse 3
+ERROR    api.signals_comptabilite | [COMPTA] ERREUR cr├®ation ├®criture vente pour facture 10: ERREUR:  la relation ┬½ api_lettrage_lignes ┬╗ n'existe pas
+LINE 1: DELETE FROM "api_lettrage_lignes" WHERE "api_lettrage_lignes...
+                    ^
+
+ERROR    api.signals_comptabilite | [COMPTA] L'├®criture devra ├¬tre cr├®├®e manuellement ou via la commande de r├®g├®n├®ration
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after invoice 10 validation/payment
+ERROR    api.signals_comptabilite | [COMPTA] ERREUR cr├®ation ├®criture vente pour facture 10: ERREUR:  la relation ┬½ api_lettrage_lignes ┬╗ n'existe pas
+LINE 1: DELETE FROM "api_lettrage_lignes" WHERE "api_lettrage_lignes...
+                    ^
+
+ERROR    api.signals_comptabilite | [COMPTA] L'├®criture devra ├¬tre cr├®├®e manuellement ou via la commande de r├®g├®n├®ration
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after invoice 10 validation/payment
+ok
+test_caisse_payment_partial_capped (api.tests.test_facturation.CaisseCappingTests.test_caisse_payment_partial_capped)
+Subsequent payments are also capped to the remaining balance. ... INFO     api.signals_comptabilite | [COMPTA] ├ëcriture vente cr├®├®e pour facture 11
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after invoice 11 validation/payment
+INFO     api.signals_comptabilite | [COMPTA] ├ëcriture paiement cr├®├®e pour caisse 4
+INFO     api.signals_comptabilite | [COMPTA] ├ëcriture paiement cr├®├®e pour caisse 5
+ERROR    api.signals_comptabilite | [COMPTA] ERREUR cr├®ation ├®criture vente pour facture 11: ERREUR:  la relation ┬½ api_lettrage_lignes ┬╗ n'existe pas
+LINE 1: DELETE FROM "api_lettrage_lignes" WHERE "api_lettrage_lignes...
+                    ^
+
+ERROR    api.signals_comptabilite | [COMPTA] L'├®criture devra ├¬tre cr├®├®e manuellement ou via la commande de r├®g├®n├®ration
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after invoice 11 validation/payment
+ERROR    api.signals_comptabilite | [COMPTA] ERREUR cr├®ation ├®criture vente pour facture 11: ERREUR:  la relation ┬½ api_lettrage_lignes ┬╗ n'existe pas
+LINE 1: DELETE FROM "api_lettrage_lignes" WHERE "api_lettrage_lignes...
+                    ^
+
+ERROR    api.signals_comptabilite | [COMPTA] L'├®criture devra ├¬tre cr├®├®e manuellement ou via la commande de r├®g├®n├®ration
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after invoice 11 validation/payment
+ok
+test_part_client_with_coverage (api.tests.test_facturation.CalculateTotalsTests.test_part_client_with_coverage)
+calculate_totals sets part_client based on taux_couverture. ... INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 62 change
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 62 change
+ok
+test_totals_simple (api.tests.test_facturation.CalculateTotalsTests.test_totals_simple)
+calculate_totals with a single line, no TVA, no discount. ... INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 63 change
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 63 change
+ok
+test_totals_with_global_discount (api.tests.test_facturation.CalculateTotalsTests.test_totals_with_global_discount)
+calculate_totals subtracts the global discount (remise). ... INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 64 change
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 64 change
+ok
+test_totals_with_line_discount (api.tests.test_facturation.CalculateTotalsTests.test_totals_with_line_discount)
+calculate_totals accounts for per-line discount on units. ... INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 65 change
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 65 change
+ok
+test_totals_with_tva (api.tests.test_facturation.CalculateTotalsTests.test_totals_with_tva)
+calculate_totals properly separates HT/TVA/TTC. ... INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 66 change
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 66 change
+FAIL
+test_destroy_brouillon_succeeds (api.tests.test_facturation.DestroyFactureTests.test_destroy_brouillon_succeeds)
+Deleting a draft invoice succeeds. ... ok
+test_finaliser_centralized_validates_and_destocks (api.tests.test_facturation.FinaliserVenteTests.test_finaliser_centralized_validates_and_destocks)
+With centralized_cash_register=True, finaliser validates the facture ... INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 67 change
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 67 change
+FAIL
+test_finaliser_creates_invoice_and_products (api.tests.test_facturation.FinaliserVenteTests.test_finaliser_creates_invoice_and_products)
+A successful finaliser call creates a facture with its products. ... INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 68 change
+FAIL
+test_finaliser_creates_payment_in_non_centralized (api.tests.test_facturation.FinaliserVenteTests.test_finaliser_creates_payment_in_non_centralized)
+In non-centralized mode, finaliser creates payment entries in Caisse. ... INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 69 change
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 69 change
+FAIL
+test_finaliser_empty_products_rejected (api.tests.test_facturation.FinaliserVenteTests.test_finaliser_empty_products_rejected)
+Finaliser with no products returns 400. ... INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 70 change
+ok
+test_finaliser_non_centralized_validates (api.tests.test_facturation.FinaliserVenteTests.test_finaliser_non_centralized_validates)
+With centralized_cash_register=False, finaliser validates the invoice, ... INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 71 change
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 71 change
+FAIL
+test_finaliser_with_discount (api.tests.test_facturation.FinaliserVenteTests.test_finaliser_with_discount)
+Finaliser applies the global discount correctly. ... INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 72 change
+FAIL
+test_historique_list (api.tests.test_facturation.HistoriqueVentesTests.test_historique_list)
+List returns aggregated daily data for validated invoices. ... INFO     api.signals_comptabilite | [COMPTA] ├ëcriture vente cr├®├®e pour facture 18
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after invoice 18 validation/payment
+ok
+test_ventes_par_tranche_with_dates (api.tests.test_facturation.HistoriqueVentesTests.test_ventes_par_tranche_with_dates)
+ventes_par_tranche returns product-level data for a given range. ... INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 73 change
+INFO     api.signals_comptabilite | [COMPTA] ├ëcriture vente cr├®├®e pour facture 19
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after invoice 19 validation/payment
+ERROR    api.signals_comptabilite | [COMPTA] ERREUR cr├®ation ├®criture vente pour facture 19: ERREUR:  la relation ┬½ api_lettrage_lignes ┬╗ n'existe pas
+LINE 1: DELETE FROM "api_lettrage_lignes" WHERE "api_lettrage_lignes...
+                    ^
+
+ERROR    api.signals_comptabilite | [COMPTA] L'├®criture devra ├¬tre cr├®├®e manuellement ou via la commande de r├®g├®n├®ration
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after invoice 19 validation/payment
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 73 change
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 73 change
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 73 change
+DEBUG    api.views.historique_ventes | [VENTES PAR TRANCHE] Recherche de 2026-06-20 08:18:00.214188+00:00 ├á 2026-06-20 11:18:00.214188+00:00
+DEBUG    api.views.historique_ventes | [DEBUG] Derni├¿res 10 factures VAL/PAY:
+DEBUG    api.views.historique_ventes |   - Facture #19 (None): 2026-06-20 10:18:00.150523+00:00 - Status: VAL
+DEBUG    api.views.historique_ventes | [DEBUG] Factures dans la tranche horaire: 1
+DEBUG    api.views.historique_ventes |   - Facture #19: 2026-06-20 10:18:00.150523+00:00
+DEBUG    api.views.historique_ventes | [VENTES PAR TRANCHE] Trouv├® 1 produits distincts
+ok
+test_marquer_payee_already_paid_rejected (api.tests.test_facturation.MarquerPayeeTests.test_marquer_payee_already_paid_rejected)
+Marking an already paid invoice returns 400. ... INFO     api.signals_comptabilite | [COMPTA] ├ëcriture vente cr├®├®e pour facture 20
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after invoice 20 validation/payment
+ok
+test_marquer_payee_brouillon_rejected (api.tests.test_facturation.MarquerPayeeTests.test_marquer_payee_brouillon_rejected)
+Marking a brouillon invoice as paid is rejected. ... ok
+test_marquer_payee_valid (api.tests.test_facturation.MarquerPayeeTests.test_marquer_payee_valid)
+Marking a validated invoice as paid succeeds. ... INFO     api.signals_comptabilite | [COMPTA] ├ëcriture vente cr├®├®e pour facture 22
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after invoice 22 validation/payment
+ERROR    api.signals_comptabilite | [COMPTA] ERREUR cr├®ation ├®criture vente pour facture 22: ERREUR:  la relation ┬½ api_lettrage_lignes ┬╗ n'existe pas
+LINE 1: DELETE FROM "api_lettrage_lignes" WHERE "api_lettrage_lignes...
+                    ^
+
+ERROR    api.signals_comptabilite | [COMPTA] L'├®criture devra ├¬tre cr├®├®e manuellement ou via la commande de r├®g├®n├®ration
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after invoice 22 validation/payment
+ERROR    api.signals_comptabilite | [COMPTA] ERREUR cr├®ation ├®criture vente pour facture 22: ERREUR:  la relation ┬½ api_lettrage_lignes ┬╗ n'existe pas
+LINE 1: DELETE FROM "api_lettrage_lignes" WHERE "api_lettrage_lignes...
+                    ^
+
+ERROR    api.signals_comptabilite | [COMPTA] L'├®criture devra ├¬tre cr├®├®e manuellement ou via la commande de r├®g├®n├®ration
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after invoice 22 validation/payment
+ok
+test_stats_jour_empty (api.tests.test_facturation.StatsJourTests.test_stats_jour_empty)
+stats_jour with no sales returns null top_vendeur and top_produit. ... ok
+test_stats_jour_with_sales (api.tests.test_facturation.StatsJourTests.test_stats_jour_with_sales)
+stats_jour returns top seller and top product from today's sales. ... INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 74 change
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 75 change
+INFO     api.signals_comptabilite | [COMPTA] ├ëcriture vente cr├®├®e pour facture 23
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after invoice 23 validation/payment
+ERROR    api.signals_comptabilite | [COMPTA] ERREUR cr├®ation ├®criture vente pour facture 23: ERREUR:  la relation ┬½ api_lettrage_lignes ┬╗ n'existe pas
+LINE 1: DELETE FROM "api_lettrage_lignes" WHERE "api_lettrage_lignes...
+                    ^
+
+ERROR    api.signals_comptabilite | [COMPTA] L'├®criture devra ├¬tre cr├®├®e manuellement ou via la commande de r├®g├®n├®ration
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after invoice 23 validation/payment
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 74 change
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 74 change
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 74 change
+ERROR    api.signals_comptabilite | [COMPTA] ERREUR cr├®ation ├®criture vente pour facture 23: ERREUR:  la relation ┬½ api_lettrage_lignes ┬╗ n'existe pas
+LINE 1: DELETE FROM "api_lettrage_lignes" WHERE "api_lettrage_lignes...
+                    ^
+
+ERROR    api.signals_comptabilite | [COMPTA] L'├®criture devra ├¬tre cr├®├®e manuellement ou via la commande de r├®g├®n├®ration
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after invoice 23 validation/payment
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 75 change
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 75 change
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 75 change
+INFO     api.signals_comptabilite | [COMPTA] ├ëcriture paiement cr├®├®e pour caisse 6
+ok
+test_cannot_validate_already_validated_invoice (api.tests.test_invoice_validation.InvoiceStatusTransitionTests.test_cannot_validate_already_validated_invoice)
+Test that validating an already validated invoice fails. ... INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 76 change
+INFO     api.signals_comptabilite | [COMPTA] ├ëcriture vente cr├®├®e pour facture 24
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after invoice 24 validation/payment
+ok
+test_cancel_invoice_restores_stock (api.tests.test_invoice_validation.InvoiceValidationTestCase.test_cancel_invoice_restores_stock)
+Test that cancelling an invoice restores the stock. ... INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 77 change
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 77 change
+INFO     api.signals_comptabilite | [COMPTA] ├ëcriture vente cr├®├®e pour facture 25
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after invoice 25 validation/payment
+ERROR    api.signals_comptabilite | [COMPTA] ERREUR cr├®ation ├®criture vente pour facture 25: ERREUR:  la relation ┬½ api_lettrage_lignes ┬╗ n'existe pas
+LINE 1: DELETE FROM "api_lettrage_lignes" WHERE "api_lettrage_lignes...
+                    ^
+
+ERROR    api.signals_comptabilite | [COMPTA] L'├®criture devra ├¬tre cr├®├®e manuellement ou via la commande de r├®g├®n├®ration
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after invoice 25 validation/payment
+ERROR    api.signals_comptabilite | [COMPTA] ERREUR cr├®ation ├®criture vente pour facture 25: ERREUR:  la relation ┬½ api_lettrage_lignes ┬╗ n'existe pas
+LINE 1: DELETE FROM "api_lettrage_lignes" WHERE "api_lettrage_lignes...
+                    ^
+
+ERROR    api.signals_comptabilite | [COMPTA] L'├®criture devra ├¬tre cr├®├®e manuellement ou via la commande de r├®g├®n├®ration
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after invoice 25 validation/payment
+ok
+test_validate_invoice_creates_payment (api.tests.test_invoice_validation.InvoiceValidationTestCase.test_validate_invoice_creates_payment)
+Test that validating an invoice creates a payment record. ... INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 78 change
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 78 change
+INFO     api.signals_comptabilite | [COMPTA] ├ëcriture vente cr├®├®e pour facture 26
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after invoice 26 validation/payment
+ERROR    api.signals_comptabilite | [COMPTA] ERREUR cr├®ation ├®criture vente pour facture 26: ERREUR:  la relation ┬½ api_lettrage_lignes ┬╗ n'existe pas
+LINE 1: DELETE FROM "api_lettrage_lignes" WHERE "api_lettrage_lignes...
+                    ^
+
+ERROR    api.signals_comptabilite | [COMPTA] L'├®criture devra ├¬tre cr├®├®e manuellement ou via la commande de r├®g├®n├®ration
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after invoice 26 validation/payment
+ERROR    api.signals_comptabilite | [COMPTA] ERREUR cr├®ation ├®criture vente pour facture 26: ERREUR:  la relation ┬½ api_lettrage_lignes ┬╗ n'existe pas
+LINE 1: DELETE FROM "api_lettrage_lignes" WHERE "api_lettrage_lignes...
+                    ^
+
+ERROR    api.signals_comptabilite | [COMPTA] L'├®criture devra ├¬tre cr├®├®e manuellement ou via la commande de r├®g├®n├®ration
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after invoice 26 validation/payment
+FAIL
+test_validate_invoice_decrements_stock (api.tests.test_invoice_validation.InvoiceValidationTestCase.test_validate_invoice_decrements_stock)
+Test that validating an invoice decrements the product stock. ... INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 79 change
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 79 change
+INFO     api.signals_comptabilite | [COMPTA] ├ëcriture vente cr├®├®e pour facture 27
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after invoice 27 validation/payment
+ERROR    api.signals_comptabilite | [COMPTA] ERREUR cr├®ation ├®criture vente pour facture 27: ERREUR:  la relation ┬½ api_lettrage_lignes ┬╗ n'existe pas
+LINE 1: DELETE FROM "api_lettrage_lignes" WHERE "api_lettrage_lignes...
+                    ^
+
+ERROR    api.signals_comptabilite | [COMPTA] L'├®criture devra ├¬tre cr├®├®e manuellement ou via la commande de r├®g├®n├®ration
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after invoice 27 validation/payment
+ERROR    api.signals_comptabilite | [COMPTA] ERREUR cr├®ation ├®criture vente pour facture 27: ERREUR:  la relation ┬½ api_lettrage_lignes ┬╗ n'existe pas
+LINE 1: DELETE FROM "api_lettrage_lignes" WHERE "api_lettrage_lignes...
+                    ^
+
+ERROR    api.signals_comptabilite | [COMPTA] L'├®criture devra ├¬tre cr├®├®e manuellement ou via la commande de r├®g├®n├®ration
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after invoice 27 validation/payment
+ok
+test_validate_invoice_fifo_allocation (api.tests.test_invoice_validation.InvoiceValidationTestCase.test_validate_invoice_fifo_allocation)
+Test that FIFO allocation works correctly with multiple lots. ... INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 80 change
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 80 change
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 80 change
+INFO     api.signals_comptabilite | [COMPTA] ├ëcriture vente cr├®├®e pour facture 28
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after invoice 28 validation/payment
+ERROR    api.signals_comptabilite | [COMPTA] ERREUR cr├®ation ├®criture vente pour facture 28: ERREUR:  la relation ┬½ api_lettrage_lignes ┬╗ n'existe pas
+LINE 1: DELETE FROM "api_lettrage_lignes" WHERE "api_lettrage_lignes...
+                    ^
+
+ERROR    api.signals_comptabilite | [COMPTA] L'├®criture devra ├¬tre cr├®├®e manuellement ou via la commande de r├®g├®n├®ration
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after invoice 28 validation/payment
+ERROR    api.signals_comptabilite | [COMPTA] ERREUR cr├®ation ├®criture vente pour facture 28: ERREUR:  la relation ┬½ api_lettrage_lignes ┬╗ n'existe pas
+LINE 1: DELETE FROM "api_lettrage_lignes" WHERE "api_lettrage_lignes...
+                    ^
+
+ERROR    api.signals_comptabilite | [COMPTA] L'├®criture devra ├¬tre cr├®├®e manuellement ou via la commande de r├®g├®n├®ration
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after invoice 28 validation/payment
+ok
+test_validate_invoice_with_insufficient_stock (api.tests.test_invoice_validation.InvoiceValidationTestCase.test_validate_invoice_with_insufficient_stock)
+Test that validation fails when there's not enough stock. ... INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 81 change
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 81 change
+INFO     api.signals_comptabilite | [COMPTA] ├ëcriture vente cr├®├®e pour facture 29
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after invoice 29 validation/payment
+ERROR    api.signals_comptabilite | [COMPTA] ERREUR cr├®ation ├®criture vente pour facture 29: ERREUR:  la relation ┬½ api_lettrage_lignes ┬╗ n'existe pas
+LINE 1: DELETE FROM "api_lettrage_lignes" WHERE "api_lettrage_lignes...
+                    ^
+
+ERROR    api.signals_comptabilite | [COMPTA] L'├®criture devra ├¬tre cr├®├®e manuellement ou via la commande de r├®g├®n├®ration
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after invoice 29 validation/payment
+ERROR    api.signals_comptabilite | [COMPTA] ERREUR cr├®ation ├®criture vente pour facture 29: ERREUR:  la relation ┬½ api_lettrage_lignes ┬╗ n'existe pas
+LINE 1: DELETE FROM "api_lettrage_lignes" WHERE "api_lettrage_lignes...
+                    ^
+
+ERROR    api.signals_comptabilite | [COMPTA] L'├®criture devra ├¬tre cr├®├®e manuellement ou via la commande de r├®g├®n├®ration
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after invoice 29 validation/payment
+ok
+test_add_lines_to_commande (api.tests.test_order_management.OrderManagementTestCase.test_add_lines_to_commande)
+Test adding products to a command. ... INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 82 change
+INFO     api.scheduler        | Background Task Runner: Started
+ok
+test_close_command_updates_pmp (api.tests.test_order_management.OrderManagementTestCase.test_close_command_updates_pmp)
+Test Weighted Average Price (PMP) calculation on reception. ... INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 83 change
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 83 change
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after order 14 closure
+INFO     api.business         | [COMMANDE] Cloture OK #14 | produits=1 | lots=1 | user=admin_120
+ok
+test_close_command_updates_stock_and_creates_lot (api.tests.test_order_management.OrderManagementTestCase.test_close_command_updates_stock_and_creates_lot)
+Test that closing a command increments stock and creates a lot. ... INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 84 change
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after order 15 closure
+INFO     api.business         | [COMMANDE] Cloture OK #15 | produits=1 | lots=1 | user=admin_123
+ok
+test_create_commande (api.tests.test_order_management.OrderManagementTestCase.test_create_commande)
+Test creating a new draft command. ... INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 85 change
+ok
+
+======================================================================
+FAIL: test_totals_with_tva (api.tests.test_facturation.CalculateTotalsTests.test_totals_with_tva)
+calculate_totals properly separates HT/TVA/TTC.
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "c:\Projet Fullstack\fullstack_produits\backend\api\tests\test_facturation.py", line 475, in test_totals_with_tva
+    self.assertEqual(facture.total_ht, Decimal('1000.00'))
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: Decimal('999.50') != Decimal('1000.00')
+
+======================================================================
+FAIL: test_finaliser_centralized_validates_and_destocks (api.tests.test_facturation.FinaliserVenteTests.test_finaliser_centralized_validates_and_destocks)
+With centralized_cash_register=True, finaliser validates the facture
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "c:\Projet Fullstack\fullstack_produits\backend\api\tests\test_facturation.py", line 89, in test_finaliser_centralized_validates_and_destocks
+    self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 400 != 201
+
+======================================================================
+FAIL: test_finaliser_creates_invoice_and_products (api.tests.test_facturation.FinaliserVenteTests.test_finaliser_creates_invoice_and_products)
+A successful finaliser call creates a facture with its products.
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "c:\Projet Fullstack\fullstack_produits\backend\api\tests\test_facturation.py", line 60, in test_finaliser_creates_invoice_and_products
+    self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 400 != 201
+
+======================================================================
+FAIL: test_finaliser_creates_payment_in_non_centralized (api.tests.test_facturation.FinaliserVenteTests.test_finaliser_creates_payment_in_non_centralized)
+In non-centralized mode, finaliser creates payment entries in Caisse.
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "c:\Projet Fullstack\fullstack_produits\backend\api\tests\test_facturation.py", line 164, in test_finaliser_creates_payment_in_non_centralized
+    self.assertTrue(payments.exists(), "At least one payment record should exist")
+    ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: False is not true : At least one payment record should exist
+
+======================================================================
+FAIL: test_finaliser_non_centralized_validates (api.tests.test_facturation.FinaliserVenteTests.test_finaliser_non_centralized_validates)
+With centralized_cash_register=False, finaliser validates the invoice,
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "c:\Projet Fullstack\fullstack_produits\backend\api\tests\test_facturation.py", line 119, in test_finaliser_non_centralized_validates
+    self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 400 != 201
+
+======================================================================
+FAIL: test_finaliser_with_discount (api.tests.test_facturation.FinaliserVenteTests.test_finaliser_with_discount)
+Finaliser applies the global discount correctly.
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "c:\Projet Fullstack\fullstack_produits\backend\api\tests\test_facturation.py", line 144, in test_finaliser_with_discount
+    self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 400 != 201
+
+======================================================================
+FAIL: test_validate_invoice_creates_payment (api.tests.test_invoice_validation.InvoiceValidationTestCase.test_validate_invoice_creates_payment)
+Test that validating an invoice creates a payment record.
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "c:\Projet Fullstack\fullstack_produits\backend\api\tests\test_invoice_validation.py", line 132, in test_validate_invoice_creates_payment
+    self.assertTrue(payments.exists(), "Payment record should be created")
+    ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: False is not true : Payment record should be created
+
+----------------------------------------------------------------------
+Ran 38 tests in 8.726s
+
+FAILED (failures=7)
+Preserving test database for alias 'default' ('test_MyDatabase')...
+
+Found 38 test(s).
+Operations to perform:
+  Synchronize unmigrated apps: channels, corsheaders, daphne, django_filters, messages, postgres, rest_framework, staticfiles
+  Apply all migrations: admin, api, auth, authtoken, contenttypes, sessions
+Synchronizing apps without migrations:
+  Creating tables...
+    Running deferred SQL...
+Running migrations:
+  No migrations to apply.
+System check identified no issues (0 silenced).
+[Rotation] Recalcul├®e pour produit #60 (vente)
+[Rotation] Date premi├¿re vente stock├®e pour produit #60
+[Rotation] Recalcul├®e pour produit #61 (vente)
+[Rotation] Date premi├¿re vente stock├®e pour produit #61
+[Rotation] Recalcul├®e pour produit #62 (vente)
+[Rotation] Date premi├¿re vente stock├®e pour produit #62
+[Rotation] Recalcul├®e pour produit #63 (vente)
+[Rotation] Date premi├¿re vente stock├®e pour produit #63
+[Rotation] Recalcul├®e pour produit #64 (vente)
+[Rotation] Date premi├¿re vente stock├®e pour produit #64
+[Rotation] Recalcul├®e pour produit #65 (vente)
+[Rotation] Date premi├¿re vente stock├®e pour produit #65
+[Rotation] Recalcul├®e pour produit #66 (vente)
+[Rotation] Date premi├¿re vente stock├®e pour produit #66
+[Rotation] Recalcul├®e pour produit #73 (vente)
+[StockLevels] Produit #73: min=1, max=6 (Ventes/mois=5)
+[StockLevels] Recalcul├® pour produit #73 (vente)
+[Rotation] Recalcul├®e pour produit #74 (vente)
+[StockLevels] Produit #74: min=1, max=4 (Ventes/mois=3)
+[StockLevels] Recalcul├® pour produit #74 (vente)
+[Rotation] Recalcul├®e pour produit #75 (vente)
+[StockLevels] Produit #75: min=1, max=1 (Ventes/mois=1)
+[StockLevels] Recalcul├® pour produit #75 (vente)
+[Rotation] Recalcul├®e pour produit #77 (vente)
+[Rotation] Date premi├¿re vente stock├®e pour produit #77
+[Rotation] Recalcul├®e pour produit #78 (vente)
+[Rotation] Date premi├¿re vente stock├®e pour produit #78
+[Rotation] Recalcul├®e pour produit #79 (vente)
+[Rotation] Date premi├¿re vente stock├®e pour produit #79
+[Rotation] Recalcul├®e pour produit #80 (vente)
+[Rotation] Date premi├¿re vente stock├®e pour produit #80
+[Rotation] Recalcul├®e pour produit #81 (vente)
+[Rotation] Date premi├¿re vente stock├®e pour produit #81
+Checking schedules for 2026-06-20 11:18:04.387012+01:00 (local time)...
+Found 0 potential schedules for today (2026-06-20).

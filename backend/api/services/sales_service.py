@@ -11,9 +11,10 @@ from ..models import (
     Facture, FactureProduit, FactureProduitAllocation, Caisse, 
     Produit, StockLot, LoyaltySetting, Promis, Ordonnancier, 
     LigneOrdonnancier, MouvementStock, get_next_ticket_session,
-    CouponMonnaie, DepotClient
+    CouponMonnaie, DepotClient, AuditLog
 )
 from ..optimistic_locking import ConcurrentModificationError
+from ..audit_helpers import log_audit
 from .promotion_service import PromotionService
 
 logger = logging.getLogger(__name__)
@@ -227,9 +228,9 @@ class SalesService:
         # Call the logic directly or via a static method
         SalesService.validate_invoice(facture, validation_user, validation_data, operator=user)
 
-        # 8. Non-Centralized Payments (create immediately only if NOT centralized)
-        # When centralized=True, the Caisse Centrale will create payments later
-        if not centralized and paiements_data:
+        # 8. Payments (create immediately in both modes)
+        # Centralized cash register also records payments at the central desk
+        if paiements_data:
             if not Caisse.objects.filter(facture=facture).exists():
                 for p_data in paiements_data:
                     if Decimal(str(p_data.get('montant', 0))) > 0:
@@ -588,12 +589,16 @@ class SalesService:
             if alloc.stock_lot:
                 StockLot.objects.filter(pk=alloc.stock_lot.pk).update(quantity_remaining=F('quantity_remaining') + alloc.quantity)
         allocations.delete()
-        
+
         old_items = FactureProduit.objects.filter(facture=facture)
+        old_items_data = []
+        old_quantity_by_product = {}
         for item in old_items:
+            old_items_data.append({'produit_id': item.produit_id, 'quantity': item.quantity})
+            old_quantity_by_product[item.produit_id] = old_quantity_by_product.get(item.produit_id, 0) + item.quantity
             Produit.objects.filter(pk=item.produit_id).update(stock=F('stock') + item.quantity)
         old_items.delete()
-        
+
         # 2. Apply Changes
         facture.remise = Decimal(str(data.get('remise', '0')))
         if data.get('client'): facture.client_id = data.get('client')
@@ -601,17 +606,19 @@ class SalesService:
         facture.save()
 
         # 3. Create New Products
+        new_quantity_by_product = {}
         for prod_data in new_products:
             produit_id = prod_data.get('produit')
             quantity = int(prod_data.get('quantity', 1))
             selling_price = prod_data.get('selling_price', '0')
             lot_id = prod_data.get('lot_id')
-            
+
             fp = FactureProduit.objects.create(
                 facture=facture, produit_id=produit_id, quantity=quantity,
                 selling_price=selling_price, discount=Decimal(str(prod_data.get('discount', '0'))),
                 tva=Decimal(str(prod_data.get('tva', '0'))), stock_lot_id=lot_id
             )
+            new_quantity_by_product[produit_id] = new_quantity_by_product.get(produit_id, 0) + quantity
             Produit.objects.filter(pk=produit_id).update(stock=F('stock') - quantity)
             
             if quantity > 0:
@@ -678,5 +685,45 @@ class SalesService:
                 )
                 from .payment_service import PaymentService
                 PaymentService.process_payment(paiement_adj, is_created=True)
+
+        # 5. Traceability: stock movements and audit log
+        all_product_ids = set(old_quantity_by_product.keys()) | set(new_quantity_by_product.keys())
+        if all_product_ids:
+            updated_products = Produit.objects.filter(id__in=all_product_ids)
+            product_stock_map = {p.id: p.total_stock for p in updated_products}
+            mouvements_to_create = []
+            for pid in all_product_ids:
+                old_qty = old_quantity_by_product.get(pid, 0)
+                new_qty = new_quantity_by_product.get(pid, 0)
+                delta = old_qty - new_qty  # positive = returned to stock, negative = sold from stock
+                if delta == 0:
+                    continue
+                is_return = delta > 0
+                mouvements_to_create.append(MouvementStock(
+                    produit_id=pid,
+                    type_mouvement=MouvementStock.TypeMouvement.RETOUR if is_return else MouvementStock.TypeMouvement.SORTIE,
+                    quantite=delta if is_return else -delta,
+                    stock_apres=product_stock_map.get(pid),
+                    user=user,
+                    facture=facture,
+                    description=f"{'Retour' if is_return else 'Sortie'} suite modification Facture #{facture.numero_facture or facture.id}",
+                    date=timezone.now()
+                ))
+            if mouvements_to_create:
+                MouvementStock.objects.bulk_create(mouvements_to_create)
+
+            log_audit(
+                user=user,
+                action=AuditLog.Action.STOCK_ADJUST,
+                model_name='Facture',
+                object_id=str(facture.id),
+                description=f"Modification vente #{facture.numero_facture or facture.id} - ajustement stock tracé",
+                details={
+                    'old_total': str(old_total),
+                    'new_total': str(facture.total_ttc),
+                    'old_quantities': old_quantity_by_product,
+                    'new_quantities': new_quantity_by_product,
+                },
+            )
 
         return facture, old_total, difference

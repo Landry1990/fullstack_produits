@@ -77,7 +77,7 @@
       "title": "Advanced Stock Management",
       "items": [
         "Free Units (UG) report by supplier and period",
-        "Exportable inventory states (PDF / Excel)",
+        "Exportable inventory reports (PDF / Excel)",
         "Stock shortage tracking with automatic alerts",
         "Shelf replenishment: counter badge in sidebar",
         "Dormant stock calculation fixed for products without last movement date"

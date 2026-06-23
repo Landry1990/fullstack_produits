@@ -191,8 +191,8 @@ export function useCommandesState(forcedType?: 'LOC' | 'DIR' | 'DIV') {
     isLoading: loading, 
     error: loadError,
     refetch: refetchCommandes 
-  } = useCommandes({ page, type: activeTab, status: filterStatus });
-  
+  } = useCommandes({ page, type: activeTab, status: filterStatus, page_size: 20 });
+
   const { data: fournisseurs = [] } = useCommandeFournisseurs();
   const { data: rayons = [] } = useCommandeRayons();
   const { data: formes = [] } = useFormes();
@@ -210,7 +210,7 @@ export function useCommandesState(forcedType?: 'LOC' | 'DIR' | 'DIV') {
 
   const commandes = useMemo(() => commandesData?.results || [], [commandesData]);
   const totalCount = commandesData?.count || 0;
-  const pageSize = commandesData?.results?.length || 20;
+  const pageSize = 20;
   const totalPages = Math.ceil(totalCount / pageSize) || 1;
   const error = loadError ? (loadError as Error).message : null;
 

@@ -1,0 +1,720 @@
+Using existing test database for alias 'default' ('test_MyDatabase')...
+
+test_annuler_already_cancelled (api.tests.test_facturation.AnnulationTests.test_annuler_already_cancelled)
+Cancelling an already cancelled invoice returns 400. ... INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 103 change
+ok
+test_annuler_creates_mouvement_stock (api.tests.test_facturation.AnnulationTests.test_annuler_creates_mouvement_stock)
+Cancelling a validated invoice creates stock return movements. ... INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 104 change
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 104 change
+C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\db\models\fields\__init__.py:1612: RuntimeWarning: DateTimeField Facture.date received a naive datetime (2026-05-21 00:00:00) while time zone support is active.
+  warnings.warn(
+C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\db\models\fields\__init__.py:1612: RuntimeWarning: DateTimeField Facture.date received a naive datetime (2026-03-22 00:00:00) while time zone support is active.
+  warnings.warn(
+INFO     api.signals_comptabilite | [COMPTA] ├ëcriture vente cr├®├®e pour facture 50
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after invoice 50 validation/payment
+ERROR    api.signals_comptabilite | [COMPTA] ERREUR cr├®ation ├®criture vente pour facture 50: ERREUR:  la relation ┬½ api_lettrage_lignes ┬╗ n'existe pas
+LINE 1: DELETE FROM "api_lettrage_lignes" WHERE "api_lettrage_lignes...
+                    ^
+
+ERROR    api.signals_comptabilite | [COMPTA] L'├®criture devra ├¬tre cr├®├®e manuellement ou via la commande de r├®g├®n├®ration
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after invoice 50 validation/payment
+ERROR    api.signals_comptabilite | [COMPTA] ERREUR cr├®ation ├®criture vente pour facture 50: ERREUR:  la relation ┬½ api_lettrage_lignes ┬╗ n'existe pas
+LINE 1: DELETE FROM "api_lettrage_lignes" WHERE "api_lettrage_lignes...
+                    ^
+
+ERROR    api.signals_comptabilite | [COMPTA] L'├®criture devra ├¬tre cr├®├®e manuellement ou via la commande de r├®g├®n├®ration
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after invoice 50 validation/payment
+ERROR    api.views.ventes.factures | [VENTE] Erreur lors de la validation: No module named 'api.views.models'
+Traceback (most recent call last):
+  File "c:\Projet Fullstack\fullstack_produits\backend\api\views\ventes\factures.py", line 424, in valider
+    from ..models import Caisse
+ModuleNotFoundError: No module named 'api.views.models'
+ERROR    django.request       | Internal Server Error: /api/factures/50/valider/
+FAIL
+test_annuler_restores_lot_quantities (api.tests.test_facturation.AnnulationTests.test_annuler_restores_lot_quantities)
+Cancelling restores FIFO lot remaining quantities. ... INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 105 change
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 105 change
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 105 change
+INFO     api.signals_comptabilite | [COMPTA] ├ëcriture vente cr├®├®e pour facture 51
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after invoice 51 validation/payment
+ERROR    api.signals_comptabilite | [COMPTA] ERREUR cr├®ation ├®criture vente pour facture 51: ERREUR:  la relation ┬½ api_lettrage_lignes ┬╗ n'existe pas
+LINE 1: DELETE FROM "api_lettrage_lignes" WHERE "api_lettrage_lignes...
+                    ^
+
+ERROR    api.signals_comptabilite | [COMPTA] L'├®criture devra ├¬tre cr├®├®e manuellement ou via la commande de r├®g├®n├®ration
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after invoice 51 validation/payment
+ERROR    api.signals_comptabilite | [COMPTA] ERREUR cr├®ation ├®criture vente pour facture 51: ERREUR:  la relation ┬½ api_lettrage_lignes ┬╗ n'existe pas
+LINE 1: DELETE FROM "api_lettrage_lignes" WHERE "api_lettrage_lignes...
+                    ^
+
+ERROR    api.signals_comptabilite | [COMPTA] L'├®criture devra ├¬tre cr├®├®e manuellement ou via la commande de r├®g├®n├®ration
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after invoice 51 validation/payment
+ERROR    api.views.ventes.factures | [VENTE] Erreur lors de la validation: No module named 'api.views.models'
+Traceback (most recent call last):
+  File "c:\Projet Fullstack\fullstack_produits\backend\api\views\ventes\factures.py", line 424, in valider
+    from ..models import Caisse
+ModuleNotFoundError: No module named 'api.views.models'
+ERROR    django.request       | Internal Server Error: /api/factures/51/valider/
+FAIL
+test_bulk_delete_brouillons (api.tests.test_facturation.BulkDeleteTests.test_bulk_delete_brouillons)
+Bulk deleting draft invoices works. ... ok
+test_bulk_delete_no_ids (api.tests.test_facturation.BulkDeleteTests.test_bulk_delete_no_ids)
+Bulk delete with empty ID list returns 400. ... ok
+test_bulk_delete_skips_validated (api.tests.test_facturation.BulkDeleteTests.test_bulk_delete_skips_validated)
+Bulk delete refuses to delete validated invoices. ... INFO     api.signals_comptabilite | [COMPTA] ├ëcriture vente cr├®├®e pour facture 55
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after invoice 55 validation/payment
+ok
+test_caisse_payment_capped_to_invoice_total (api.tests.test_facturation.CaisseCappingTests.test_caisse_payment_capped_to_invoice_total)
+CaisseViewSet.perform_create caps the amount to the invoice total. ... INFO     api.signals_comptabilite | [COMPTA] ├ëcriture vente cr├®├®e pour facture 57
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after invoice 57 validation/payment
+INFO     api.signals_comptabilite | [COMPTA] ├ëcriture paiement cr├®├®e pour caisse 13
+ERROR    api.signals_comptabilite | [COMPTA] ERREUR cr├®ation ├®criture vente pour facture 57: ERREUR:  la relation ┬½ api_lettrage_lignes ┬╗ n'existe pas
+LINE 1: DELETE FROM "api_lettrage_lignes" WHERE "api_lettrage_lignes...
+                    ^
+
+ERROR    api.signals_comptabilite | [COMPTA] L'├®criture devra ├¬tre cr├®├®e manuellement ou via la commande de r├®g├®n├®ration
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after invoice 57 validation/payment
+ERROR    api.signals_comptabilite | [COMPTA] ERREUR cr├®ation ├®criture vente pour facture 57: ERREUR:  la relation ┬½ api_lettrage_lignes ┬╗ n'existe pas
+LINE 1: DELETE FROM "api_lettrage_lignes" WHERE "api_lettrage_lignes...
+                    ^
+
+ERROR    api.signals_comptabilite | [COMPTA] L'├®criture devra ├¬tre cr├®├®e manuellement ou via la commande de r├®g├®n├®ration
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after invoice 57 validation/payment
+ok
+test_caisse_payment_capped_to_part_patient (api.tests.test_facturation.CaisseCappingTests.test_caisse_payment_capped_to_part_patient)
+CaisseViewSet.perform_create caps the amount to the part_client for insured clients. ... INFO     api.signals_comptabilite | [COMPTA] ├ëcriture vente cr├®├®e pour facture 58
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after invoice 58 validation/payment
+INFO     api.signals_comptabilite | [COMPTA] ├ëcriture paiement cr├®├®e pour caisse 14
+INFO     api.signals_comptabilite | [COMPTA] ├ëcriture paiement cr├®├®e pour caisse 15
+ERROR    api.signals_comptabilite | [COMPTA] ERREUR cr├®ation ├®criture vente pour facture 58: ERREUR:  la relation ┬½ api_lettrage_lignes ┬╗ n'existe pas
+LINE 1: DELETE FROM "api_lettrage_lignes" WHERE "api_lettrage_lignes...
+                    ^
+
+ERROR    api.signals_comptabilite | [COMPTA] L'├®criture devra ├¬tre cr├®├®e manuellement ou via la commande de r├®g├®n├®ration
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after invoice 58 validation/payment
+ERROR    api.signals_comptabilite | [COMPTA] ERREUR cr├®ation ├®criture vente pour facture 58: ERREUR:  la relation ┬½ api_lettrage_lignes ┬╗ n'existe pas
+LINE 1: DELETE FROM "api_lettrage_lignes" WHERE "api_lettrage_lignes...
+                    ^
+
+ERROR    api.signals_comptabilite | [COMPTA] L'├®criture devra ├¬tre cr├®├®e manuellement ou via la commande de r├®g├®n├®ration
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after invoice 58 validation/payment
+ok
+test_caisse_payment_partial_capped (api.tests.test_facturation.CaisseCappingTests.test_caisse_payment_partial_capped)
+Subsequent payments are also capped to the remaining balance. ... INFO     api.signals_comptabilite | [COMPTA] ├ëcriture vente cr├®├®e pour facture 59
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after invoice 59 validation/payment
+INFO     api.signals_comptabilite | [COMPTA] ├ëcriture paiement cr├®├®e pour caisse 16
+INFO     api.signals_comptabilite | [COMPTA] ├ëcriture paiement cr├®├®e pour caisse 17
+ERROR    api.signals_comptabilite | [COMPTA] ERREUR cr├®ation ├®criture vente pour facture 59: ERREUR:  la relation ┬½ api_lettrage_lignes ┬╗ n'existe pas
+LINE 1: DELETE FROM "api_lettrage_lignes" WHERE "api_lettrage_lignes...
+                    ^
+
+ERROR    api.signals_comptabilite | [COMPTA] L'├®criture devra ├¬tre cr├®├®e manuellement ou via la commande de r├®g├®n├®ration
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after invoice 59 validation/payment
+ERROR    api.signals_comptabilite | [COMPTA] ERREUR cr├®ation ├®criture vente pour facture 59: ERREUR:  la relation ┬½ api_lettrage_lignes ┬╗ n'existe pas
+LINE 1: DELETE FROM "api_lettrage_lignes" WHERE "api_lettrage_lignes...
+                    ^
+
+ERROR    api.signals_comptabilite | [COMPTA] L'├®criture devra ├¬tre cr├®├®e manuellement ou via la commande de r├®g├®n├®ration
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after invoice 59 validation/payment
+ok
+test_part_client_with_coverage (api.tests.test_facturation.CalculateTotalsTests.test_part_client_with_coverage)
+calculate_totals sets part_client based on taux_couverture. ... INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 106 change
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 106 change
+ok
+test_totals_simple (api.tests.test_facturation.CalculateTotalsTests.test_totals_simple)
+calculate_totals with a single line, no TVA, no discount. ... INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 107 change
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 107 change
+ok
+test_totals_with_global_discount (api.tests.test_facturation.CalculateTotalsTests.test_totals_with_global_discount)
+calculate_totals subtracts the global discount (remise). ... INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 108 change
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 108 change
+ok
+test_totals_with_line_discount (api.tests.test_facturation.CalculateTotalsTests.test_totals_with_line_discount)
+calculate_totals accounts for per-line discount on units. ... INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 109 change
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 109 change
+ok
+test_totals_with_tva (api.tests.test_facturation.CalculateTotalsTests.test_totals_with_tva)
+calculate_totals properly separates HT/TVA/TTC. ... INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 110 change
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 110 change
+ok
+test_destroy_brouillon_succeeds (api.tests.test_facturation.DestroyFactureTests.test_destroy_brouillon_succeeds)
+Deleting a draft invoice succeeds. ... ok
+test_finaliser_centralized_validates_and_destocks (api.tests.test_facturation.FinaliserVenteTests.test_finaliser_centralized_validates_and_destocks)
+With centralized_cash_register=True, finaliser validates the facture ... INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 111 change
+ERROR
+test_finaliser_creates_invoice_and_products (api.tests.test_facturation.FinaliserVenteTests.test_finaliser_creates_invoice_and_products)
+A successful finaliser call creates a facture with its products. ... INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 112 change
+ERROR
+test_finaliser_creates_payment_in_non_centralized (api.tests.test_facturation.FinaliserVenteTests.test_finaliser_creates_payment_in_non_centralized)
+In non-centralized mode, finaliser creates payment entries in Caisse. ... INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 113 change
+ERROR
+test_finaliser_empty_products_rejected (api.tests.test_facturation.FinaliserVenteTests.test_finaliser_empty_products_rejected)
+Finaliser with no products returns 400. ... INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 114 change
+ERROR
+test_finaliser_non_centralized_validates (api.tests.test_facturation.FinaliserVenteTests.test_finaliser_non_centralized_validates)
+With centralized_cash_register=False, finaliser validates the invoice, ... INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 115 change
+ERROR
+test_finaliser_with_discount (api.tests.test_facturation.FinaliserVenteTests.test_finaliser_with_discount)
+Finaliser applies the global discount correctly. ... INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 116 change
+ERROR
+test_historique_list (api.tests.test_facturation.HistoriqueVentesTests.test_historique_list)
+List returns aggregated daily data for validated invoices. ... INFO     api.signals_comptabilite | [COMPTA] ├ëcriture vente cr├®├®e pour facture 66
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after invoice 66 validation/payment
+ok
+test_ventes_par_tranche_with_dates (api.tests.test_facturation.HistoriqueVentesTests.test_ventes_par_tranche_with_dates)
+ventes_par_tranche returns product-level data for a given range. ... INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 117 change
+INFO     api.signals_comptabilite | [COMPTA] ├ëcriture vente cr├®├®e pour facture 67
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after invoice 67 validation/payment
+ERROR    api.signals_comptabilite | [COMPTA] ERREUR cr├®ation ├®criture vente pour facture 67: ERREUR:  la relation ┬½ api_lettrage_lignes ┬╗ n'existe pas
+LINE 1: DELETE FROM "api_lettrage_lignes" WHERE "api_lettrage_lignes...
+                    ^
+
+ERROR    api.signals_comptabilite | [COMPTA] L'├®criture devra ├¬tre cr├®├®e manuellement ou via la commande de r├®g├®n├®ration
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after invoice 67 validation/payment
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 117 change
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 117 change
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 117 change
+DEBUG    api.views.historique_ventes | [VENTES PAR TRANCHE] Recherche de 2026-06-20 08:29:50.283682+00:00 ├á 2026-06-20 11:29:50.283682+00:00
+DEBUG    api.views.historique_ventes | [DEBUG] Derni├¿res 10 factures VAL/PAY:
+DEBUG    api.views.historique_ventes |   - Facture #67 (None): 2026-06-20 10:29:50.199698+00:00 - Status: VAL
+DEBUG    api.views.historique_ventes | [DEBUG] Factures dans la tranche horaire: 1
+DEBUG    api.views.historique_ventes |   - Facture #67: 2026-06-20 10:29:50.199698+00:00
+DEBUG    api.views.historique_ventes | [VENTES PAR TRANCHE] Trouv├® 1 produits distincts
+ok
+test_marquer_payee_already_paid_rejected (api.tests.test_facturation.MarquerPayeeTests.test_marquer_payee_already_paid_rejected)
+Marking an already paid invoice returns 400. ... INFO     api.signals_comptabilite | [COMPTA] ├ëcriture vente cr├®├®e pour facture 68
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after invoice 68 validation/payment
+ok
+test_marquer_payee_brouillon_rejected (api.tests.test_facturation.MarquerPayeeTests.test_marquer_payee_brouillon_rejected)
+Marking a brouillon invoice as paid is rejected. ... ok
+test_marquer_payee_valid (api.tests.test_facturation.MarquerPayeeTests.test_marquer_payee_valid)
+Marking a validated invoice as paid succeeds. ... INFO     api.signals_comptabilite | [COMPTA] ├ëcriture vente cr├®├®e pour facture 70
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after invoice 70 validation/payment
+ERROR    api.signals_comptabilite | [COMPTA] ERREUR cr├®ation ├®criture vente pour facture 70: ERREUR:  la relation ┬½ api_lettrage_lignes ┬╗ n'existe pas
+LINE 1: DELETE FROM "api_lettrage_lignes" WHERE "api_lettrage_lignes...
+                    ^
+
+ERROR    api.signals_comptabilite | [COMPTA] L'├®criture devra ├¬tre cr├®├®e manuellement ou via la commande de r├®g├®n├®ration
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after invoice 70 validation/payment
+ERROR    api.signals_comptabilite | [COMPTA] ERREUR cr├®ation ├®criture vente pour facture 70: ERREUR:  la relation ┬½ api_lettrage_lignes ┬╗ n'existe pas
+LINE 1: DELETE FROM "api_lettrage_lignes" WHERE "api_lettrage_lignes...
+                    ^
+
+ERROR    api.signals_comptabilite | [COMPTA] L'├®criture devra ├¬tre cr├®├®e manuellement ou via la commande de r├®g├®n├®ration
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after invoice 70 validation/payment
+ok
+test_stats_jour_empty (api.tests.test_facturation.StatsJourTests.test_stats_jour_empty)
+stats_jour with no sales returns null top_vendeur and top_produit. ... ok
+test_stats_jour_with_sales (api.tests.test_facturation.StatsJourTests.test_stats_jour_with_sales)
+stats_jour returns top seller and top product from today's sales. ... INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 118 change
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 119 change
+INFO     api.signals_comptabilite | [COMPTA] ├ëcriture vente cr├®├®e pour facture 71
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after invoice 71 validation/payment
+ERROR    api.signals_comptabilite | [COMPTA] ERREUR cr├®ation ├®criture vente pour facture 71: ERREUR:  la relation ┬½ api_lettrage_lignes ┬╗ n'existe pas
+LINE 1: DELETE FROM "api_lettrage_lignes" WHERE "api_lettrage_lignes...
+                    ^
+
+ERROR    api.signals_comptabilite | [COMPTA] L'├®criture devra ├¬tre cr├®├®e manuellement ou via la commande de r├®g├®n├®ration
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after invoice 71 validation/payment
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 118 change
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 118 change
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 118 change
+ERROR    api.signals_comptabilite | [COMPTA] ERREUR cr├®ation ├®criture vente pour facture 71: ERREUR:  la relation ┬½ api_lettrage_lignes ┬╗ n'existe pas
+LINE 1: DELETE FROM "api_lettrage_lignes" WHERE "api_lettrage_lignes...
+                    ^
+
+ERROR    api.signals_comptabilite | [COMPTA] L'├®criture devra ├¬tre cr├®├®e manuellement ou via la commande de r├®g├®n├®ration
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after invoice 71 validation/payment
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 119 change
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 119 change
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 119 change
+INFO     api.signals_comptabilite | [COMPTA] ├ëcriture paiement cr├®├®e pour caisse 18
+ok
+test_cannot_validate_already_validated_invoice (api.tests.test_invoice_validation.InvoiceStatusTransitionTests.test_cannot_validate_already_validated_invoice)
+Test that validating an already validated invoice fails. ... INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 120 change
+INFO     api.signals_comptabilite | [COMPTA] ├ëcriture vente cr├®├®e pour facture 72
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after invoice 72 validation/payment
+ok
+test_cancel_invoice_restores_stock (api.tests.test_invoice_validation.InvoiceValidationTestCase.test_cancel_invoice_restores_stock)
+Test that cancelling an invoice restores the stock. ... INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 121 change
+ERROR
+test_validate_invoice_creates_payment (api.tests.test_invoice_validation.InvoiceValidationTestCase.test_validate_invoice_creates_payment)
+Test that validating an invoice creates a payment record. ... INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 122 change
+ERROR
+test_validate_invoice_decrements_stock (api.tests.test_invoice_validation.InvoiceValidationTestCase.test_validate_invoice_decrements_stock)
+Test that validating an invoice decrements the product stock. ... INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 123 change
+ERROR
+test_validate_invoice_fifo_allocation (api.tests.test_invoice_validation.InvoiceValidationTestCase.test_validate_invoice_fifo_allocation)
+Test that FIFO allocation works correctly with multiple lots. ... INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 124 change
+ERROR
+test_validate_invoice_with_insufficient_stock (api.tests.test_invoice_validation.InvoiceValidationTestCase.test_validate_invoice_with_insufficient_stock)
+Test that validation fails when there's not enough stock. ... INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 125 change
+ERROR
+
+======================================================================
+ERROR: test_finaliser_centralized_validates_and_destocks (api.tests.test_facturation.FinaliserVenteTests.test_finaliser_centralized_validates_and_destocks)
+With centralized_cash_register=True, finaliser validates the facture
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "c:\Projet Fullstack\fullstack_produits\backend\api\tests\test_facturation.py", line 35, in setUp
+    self.session = TestDataFactory.create_session_caisse(user=self.user)
+                   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^
+  File "c:\Projet Fullstack\fullstack_produits\backend\api\tests\factories.py", line 242, in create_session_caisse
+    poste = TestDataFactory.create_poste_caisse()
+  File "c:\Projet Fullstack\fullstack_produits\backend\api\tests\factories.py", line 231, in create_poste_caisse
+    return PosteCaisse.objects.create(
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~^
+        name=name,
+        ^^^^^^^^^^
+    ...<2 lines>...
+        **kwargs
+        ^^^^^^^^
+    )
+    ^
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\db\models\manager.py", line 87, in manager_method
+    return getattr(self.get_queryset(), name)(*args, **kwargs)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\db\models\query.py", line 661, in create
+    obj = self.model(**kwargs)
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\db\models\base.py", line 569, in __init__
+    raise TypeError(
+    ...<2 lines>...
+    )
+TypeError: PosteCaisse() got unexpected keyword arguments: 'name'
+
+======================================================================
+ERROR: test_finaliser_creates_invoice_and_products (api.tests.test_facturation.FinaliserVenteTests.test_finaliser_creates_invoice_and_products)
+A successful finaliser call creates a facture with its products.
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "c:\Projet Fullstack\fullstack_produits\backend\api\tests\test_facturation.py", line 35, in setUp
+    self.session = TestDataFactory.create_session_caisse(user=self.user)
+                   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^
+  File "c:\Projet Fullstack\fullstack_produits\backend\api\tests\factories.py", line 242, in create_session_caisse
+    poste = TestDataFactory.create_poste_caisse()
+  File "c:\Projet Fullstack\fullstack_produits\backend\api\tests\factories.py", line 231, in create_poste_caisse
+    return PosteCaisse.objects.create(
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~^
+        name=name,
+        ^^^^^^^^^^
+    ...<2 lines>...
+        **kwargs
+        ^^^^^^^^
+    )
+    ^
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\db\models\manager.py", line 87, in manager_method
+    return getattr(self.get_queryset(), name)(*args, **kwargs)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\db\models\query.py", line 661, in create
+    obj = self.model(**kwargs)
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\db\models\base.py", line 569, in __init__
+    raise TypeError(
+    ...<2 lines>...
+    )
+TypeError: PosteCaisse() got unexpected keyword arguments: 'name'
+
+======================================================================
+ERROR: test_finaliser_creates_payment_in_non_centralized (api.tests.test_facturation.FinaliserVenteTests.test_finaliser_creates_payment_in_non_centralized)
+In non-centralized mode, finaliser creates payment entries in Caisse.
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "c:\Projet Fullstack\fullstack_produits\backend\api\tests\test_facturation.py", line 35, in setUp
+    self.session = TestDataFactory.create_session_caisse(user=self.user)
+                   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^
+  File "c:\Projet Fullstack\fullstack_produits\backend\api\tests\factories.py", line 242, in create_session_caisse
+    poste = TestDataFactory.create_poste_caisse()
+  File "c:\Projet Fullstack\fullstack_produits\backend\api\tests\factories.py", line 231, in create_poste_caisse
+    return PosteCaisse.objects.create(
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~^
+        name=name,
+        ^^^^^^^^^^
+    ...<2 lines>...
+        **kwargs
+        ^^^^^^^^
+    )
+    ^
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\db\models\manager.py", line 87, in manager_method
+    return getattr(self.get_queryset(), name)(*args, **kwargs)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\db\models\query.py", line 661, in create
+    obj = self.model(**kwargs)
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\db\models\base.py", line 569, in __init__
+    raise TypeError(
+    ...<2 lines>...
+    )
+TypeError: PosteCaisse() got unexpected keyword arguments: 'name'
+
+======================================================================
+ERROR: test_finaliser_empty_products_rejected (api.tests.test_facturation.FinaliserVenteTests.test_finaliser_empty_products_rejected)
+Finaliser with no products returns 400.
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "c:\Projet Fullstack\fullstack_produits\backend\api\tests\test_facturation.py", line 35, in setUp
+    self.session = TestDataFactory.create_session_caisse(user=self.user)
+                   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^
+  File "c:\Projet Fullstack\fullstack_produits\backend\api\tests\factories.py", line 242, in create_session_caisse
+    poste = TestDataFactory.create_poste_caisse()
+  File "c:\Projet Fullstack\fullstack_produits\backend\api\tests\factories.py", line 231, in create_poste_caisse
+    return PosteCaisse.objects.create(
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~^
+        name=name,
+        ^^^^^^^^^^
+    ...<2 lines>...
+        **kwargs
+        ^^^^^^^^
+    )
+    ^
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\db\models\manager.py", line 87, in manager_method
+    return getattr(self.get_queryset(), name)(*args, **kwargs)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\db\models\query.py", line 661, in create
+    obj = self.model(**kwargs)
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\db\models\base.py", line 569, in __init__
+    raise TypeError(
+    ...<2 lines>...
+    )
+TypeError: PosteCaisse() got unexpected keyword arguments: 'name'
+
+======================================================================
+ERROR: test_finaliser_non_centralized_validates (api.tests.test_facturation.FinaliserVenteTests.test_finaliser_non_centralized_validates)
+With centralized_cash_register=False, finaliser validates the invoice,
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "c:\Projet Fullstack\fullstack_produits\backend\api\tests\test_facturation.py", line 35, in setUp
+    self.session = TestDataFactory.create_session_caisse(user=self.user)
+                   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^
+  File "c:\Projet Fullstack\fullstack_produits\backend\api\tests\factories.py", line 242, in create_session_caisse
+    poste = TestDataFactory.create_poste_caisse()
+  File "c:\Projet Fullstack\fullstack_produits\backend\api\tests\factories.py", line 231, in create_poste_caisse
+    return PosteCaisse.objects.create(
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~^
+        name=name,
+        ^^^^^^^^^^
+    ...<2 lines>...
+        **kwargs
+        ^^^^^^^^
+    )
+    ^
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\db\models\manager.py", line 87, in manager_method
+    return getattr(self.get_queryset(), name)(*args, **kwargs)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\db\models\query.py", line 661, in create
+    obj = self.model(**kwargs)
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\db\models\base.py", line 569, in __init__
+    raise TypeError(
+    ...<2 lines>...
+    )
+TypeError: PosteCaisse() got unexpected keyword arguments: 'name'
+
+======================================================================
+ERROR: test_finaliser_with_discount (api.tests.test_facturation.FinaliserVenteTests.test_finaliser_with_discount)
+Finaliser applies the global discount correctly.
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "c:\Projet Fullstack\fullstack_produits\backend\api\tests\test_facturation.py", line 35, in setUp
+    self.session = TestDataFactory.create_session_caisse(user=self.user)
+                   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^
+  File "c:\Projet Fullstack\fullstack_produits\backend\api\tests\factories.py", line 242, in create_session_caisse
+    poste = TestDataFactory.create_poste_caisse()
+  File "c:\Projet Fullstack\fullstack_produits\backend\api\tests\factories.py", line 231, in create_poste_caisse
+    return PosteCaisse.objects.create(
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~^
+        name=name,
+        ^^^^^^^^^^
+    ...<2 lines>...
+        **kwargs
+        ^^^^^^^^
+    )
+    ^
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\db\models\manager.py", line 87, in manager_method
+    return getattr(self.get_queryset(), name)(*args, **kwargs)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\db\models\query.py", line 661, in create
+    obj = self.model(**kwargs)
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\db\models\base.py", line 569, in __init__
+    raise TypeError(
+    ...<2 lines>...
+    )
+TypeError: PosteCaisse() got unexpected keyword arguments: 'name'
+
+======================================================================
+ERROR: test_cancel_invoice_restores_stock (api.tests.test_invoice_validation.InvoiceValidationTestCase.test_cancel_invoice_restores_stock)
+Test that cancelling an invoice restores the stock.
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "c:\Projet Fullstack\fullstack_produits\backend\api\tests\test_invoice_validation.py", line 47, in setUp
+    self.session = TestDataFactory.create_session_caisse(user=self.user)
+                   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^
+  File "c:\Projet Fullstack\fullstack_produits\backend\api\tests\factories.py", line 242, in create_session_caisse
+    poste = TestDataFactory.create_poste_caisse()
+  File "c:\Projet Fullstack\fullstack_produits\backend\api\tests\factories.py", line 231, in create_poste_caisse
+    return PosteCaisse.objects.create(
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~^
+        name=name,
+        ^^^^^^^^^^
+    ...<2 lines>...
+        **kwargs
+        ^^^^^^^^
+    )
+    ^
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\db\models\manager.py", line 87, in manager_method
+    return getattr(self.get_queryset(), name)(*args, **kwargs)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\db\models\query.py", line 661, in create
+    obj = self.model(**kwargs)
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\db\models\base.py", line 569, in __init__
+    raise TypeError(
+    ...<2 lines>...
+    )
+TypeError: PosteCaisse() got unexpected keyword arguments: 'name'
+
+======================================================================
+ERROR: test_validate_invoice_creates_payment (api.tests.test_invoice_validation.InvoiceValidationTestCase.test_validate_invoice_creates_payment)
+Test that validating an invoice creates a payment record.
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "c:\Projet Fullstack\fullstack_produits\backend\api\tests\test_invoice_validation.py", line 47, in setUp
+    self.session = TestDataFactory.create_session_caisse(user=self.user)
+                   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^
+  File "c:\Projet Fullstack\fullstack_produits\backend\api\tests\factories.py", line 242, in create_session_caisse
+    poste = TestDataFactory.create_poste_caisse()
+  File "c:\Projet Fullstack\fullstack_produits\backend\api\tests\factories.py", line 231, in create_poste_caisse
+    return PosteCaisse.objects.create(
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~^
+        name=name,
+        ^^^^^^^^^^
+    ...<2 lines>...
+        **kwargs
+        ^^^^^^^^
+    )
+    ^
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\db\models\manager.py", line 87, in manager_method
+    return getattr(self.get_queryset(), name)(*args, **kwargs)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\db\models\query.py", line 661, in create
+    obj = self.model(**kwargs)
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\db\models\base.py", line 569, in __init__
+    raise TypeError(
+    ...<2 lines>...
+    )
+TypeError: PosteCaisse() got unexpected keyword arguments: 'name'
+
+======================================================================
+ERROR: test_validate_invoice_decrements_stock (api.tests.test_invoice_validation.InvoiceValidationTestCase.test_validate_invoice_decrements_stock)
+Test that validating an invoice decrements the product stock.
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "c:\Projet Fullstack\fullstack_produits\backend\api\tests\test_invoice_validation.py", line 47, in setUp
+    self.session = TestDataFactory.create_session_caisse(user=self.user)
+                   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^
+  File "c:\Projet Fullstack\fullstack_produits\backend\api\tests\factories.py", line 242, in create_session_caisse
+    poste = TestDataFactory.create_poste_caisse()
+  File "c:\Projet Fullstack\fullstack_produits\backend\api\tests\factories.py", line 231, in create_poste_caisse
+    return PosteCaisse.objects.create(
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~^
+        name=name,
+        ^^^^^^^^^^
+    ...<2 lines>...
+        **kwargs
+        ^^^^^^^^
+    )
+    ^
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\db\models\manager.py", line 87, in manager_method
+    return getattr(self.get_queryset(), name)(*args, **kwargs)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\db\models\query.py", line 661, in create
+    obj = self.model(**kwargs)
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\db\models\base.py", line 569, in __init__
+    raise TypeError(
+    ...<2 lines>...
+    )
+TypeError: PosteCaisse() got unexpected keyword arguments: 'name'
+
+======================================================================
+ERROR: test_validate_invoice_fifo_allocation (api.tests.test_invoice_validation.InvoiceValidationTestCase.test_validate_invoice_fifo_allocation)
+Test that FIFO allocation works correctly with multiple lots.
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "c:\Projet Fullstack\fullstack_produits\backend\api\tests\test_invoice_validation.py", line 47, in setUp
+    self.session = TestDataFactory.create_session_caisse(user=self.user)
+                   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^
+  File "c:\Projet Fullstack\fullstack_produits\backend\api\tests\factories.py", line 242, in create_session_caisse
+    poste = TestDataFactory.create_poste_caisse()
+  File "c:\Projet Fullstack\fullstack_produits\backend\api\tests\factories.py", line 231, in create_poste_caisse
+    return PosteCaisse.objects.create(
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~^
+        name=name,
+        ^^^^^^^^^^
+    ...<2 lines>...
+        **kwargs
+        ^^^^^^^^
+    )
+    ^
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\db\models\manager.py", line 87, in manager_method
+    return getattr(self.get_queryset(), name)(*args, **kwargs)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\db\models\query.py", line 661, in create
+    obj = self.model(**kwargs)
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\db\models\base.py", line 569, in __init__
+    raise TypeError(
+    ...<2 lines>...
+    )
+TypeError: PosteCaisse() got unexpected keyword arguments: 'name'
+
+======================================================================
+ERROR: test_validate_invoice_with_insufficient_stock (api.tests.test_invoice_validation.InvoiceValidationTestCase.test_validate_invoice_with_insufficient_stock)
+Test that validation fails when there's not enough stock.
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "c:\Projet Fullstack\fullstack_produits\backend\api\tests\test_invoice_validation.py", line 47, in setUp
+    self.session = TestDataFactory.create_session_caisse(user=self.user)
+                   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^
+  File "c:\Projet Fullstack\fullstack_produits\backend\api\tests\factories.py", line 242, in create_session_caisse
+    poste = TestDataFactory.create_poste_caisse()
+  File "c:\Projet Fullstack\fullstack_produits\backend\api\tests\factories.py", line 231, in create_poste_caisse
+    return PosteCaisse.objects.create(
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~^
+        name=name,
+        ^^^^^^^^^^
+    ...<2 lines>...
+        **kwargs
+        ^^^^^^^^
+    )
+    ^
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\db\models\manager.py", line 87, in manager_method
+    return getattr(self.get_queryset(), name)(*args, **kwargs)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\db\models\query.py", line 661, in create
+    obj = self.model(**kwargs)
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\db\models\base.py", line 569, in __init__
+    raise TypeError(
+    ...<2 lines>...
+    )
+TypeError: PosteCaisse() got unexpected keyword arguments: 'name'
+
+======================================================================
+FAIL: test_annuler_creates_mouvement_stock (api.tests.test_facturation.AnnulationTests.test_annuler_creates_mouvement_stock)
+Cancelling a validated invoice creates stock return movements.
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "c:\Projet Fullstack\fullstack_produits\backend\api\tests\test_facturation.py", line 554, in test_annuler_creates_mouvement_stock
+    self.assertGreaterEqual(new_movements, 1)
+    ~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^
+AssertionError: 0 not greater than or equal to 1
+
+======================================================================
+FAIL: test_annuler_restores_lot_quantities (api.tests.test_facturation.AnnulationTests.test_annuler_restores_lot_quantities)
+Cancelling restores FIFO lot remaining quantities.
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "c:\Projet Fullstack\fullstack_produits\backend\api\tests\test_facturation.py", line 577, in test_annuler_restores_lot_quantities
+    self.assertEqual(lot.quantity_remaining, 65)
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 80 != 65
+
+----------------------------------------------------------------------
+Ran 34 tests in 5.480s
+
+FAILED (failures=2, errors=11)
+Preserving test database for alias 'default' ('test_MyDatabase')...
+
+Found 34 test(s).
+Operations to perform:
+  Synchronize unmigrated apps: channels, corsheaders, daphne, django_filters, messages, postgres, rest_framework, staticfiles
+  Apply all migrations: admin, api, auth, authtoken, contenttypes, sessions
+Synchronizing apps without migrations:
+  Creating tables...
+    Running deferred SQL...
+Running migrations:
+  No migrations to apply.
+System check identified no issues (0 silenced).
+[Rotation] Recalcul├®e pour produit #104 (vente)
+[Rotation] Date premi├¿re vente stock├®e pour produit #104
+[Rotation] Recalcul├®e pour produit #105 (vente)
+[Rotation] Date premi├¿re vente stock├®e pour produit #105
+[Rotation] Recalcul├®e pour produit #106 (vente)
+[Rotation] Date premi├¿re vente stock├®e pour produit #106
+[Rotation] Recalcul├®e pour produit #107 (vente)
+[Rotation] Date premi├¿re vente stock├®e pour produit #107
+[Rotation] Recalcul├®e pour produit #108 (vente)
+[Rotation] Date premi├¿re vente stock├®e pour produit #108
+[Rotation] Recalcul├®e pour produit #109 (vente)
+[Rotation] Date premi├¿re vente stock├®e pour produit #109
+[Rotation] Recalcul├®e pour produit #110 (vente)
+[Rotation] Date premi├¿re vente stock├®e pour produit #110
+[Rotation] Recalcul├®e pour produit #117 (vente)
+[StockLevels] Produit #117: min=1, max=6 (Ventes/mois=5)
+[StockLevels] Recalcul├® pour produit #117 (vente)
+[Rotation] Recalcul├®e pour produit #118 (vente)
+[StockLevels] Produit #118: min=1, max=4 (Ventes/mois=3)
+[StockLevels] Recalcul├® pour produit #118 (vente)
+[Rotation] Recalcul├®e pour produit #119 (vente)
+[StockLevels] Produit #119: min=1, max=1 (Ventes/mois=1)
+[StockLevels] Recalcul├® pour produit #119 (vente)

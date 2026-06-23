@@ -1,0 +1,123 @@
+Using existing test database for alias 'default' ('test_MyDatabase')...
+
+Found 7 test(s).
+Operations to perform:
+  Synchronize unmigrated apps: channels, corsheaders, daphne, django_filters, messages, postgres, rest_framework, staticfiles
+  Apply all migrations: admin, api, auth, authtoken, contenttypes, sessions
+Synchronizing apps without migrations:
+  Creating tables...
+    Running deferred SQL...
+Running migrations:
+  Applying api.0181_create_emergency_superuser...
+============================================================
+COMPTE SUPER-ADMIN DE SECOURS CR├ë├ë
+============================================================
+Username: sysadmin
+Password par d├®faut: ChangeMeImmediately123!
+ÔÜá´©Å  CHANGER IMM├ëDIATEMENT VIA: python manage.py changepassword sysadmin
+============================================================
+
+ OK
+  Applying api.0182_telegramlog... OK
+  Applying api.0183_produit_dci_reference_produit_is_generic_and_more... OK
+  Applying api.0184_substance_contre_indications... OK
+  Applying api.0185_pharmacysettings_monthly_report_day_and_more... OK
+  Applying api.0187_commande_version... OK
+  Applying api.0188_ligneavoir_motif... OK
+  Applying api.0189_avoir_stock_decharge... OK
+  Applying api.0190_postecaisse_fond_de_caisse_alter_fournisseur_address_and_more... OK
+  Applying api.0191_add_performance_indexes... OK
+  Applying api.0192_add_hide_cash_totals... OK
+  Applying api.0193_remove_commande_cmd_fourn_status_date_idx_and_more... OK
+  Applying api.0194_profile_can_view_cash_sessions... OK
+  Applying api.0195_add_taux_change_actif_to_settings... OK
+  Applying api.0196_add_fournisseur_logistics_fields... OK
+  Applying api.0197_remove_fournisseur_couverture_add_to_schedule... OK
+  Applying api.0198_add_order_schedule_month_days... OK
+  Applying api.0199_add_backup_interval_and_retention... OK
+  Applying api.0200_add_cloud_backup_fields... OK
+  Applying api.0201_add_google_drive_backup_path... OK
+  Applying api.0202_remove_unique_client_phone... OK
+  Applying api.0203_add_date_premiere_vente... OK
+  Applying api.0204_produit_fournisseur_seuil... OK
+  Applying api.0205_fournisseur_delai_livraison... OK
+  Applying api.0206_pharmacysettings_critical_stock_days_and_more... OK
+  Applying api.0207_commandeproduit_taux_marge... OK
+  Applying api.0208_commandeproduit_stock_apres_reception... OK
+  Applying contenttypes.0002_remove_content_type_name... OK
+  Applying auth.0002_alter_permission_name_max_length... OK
+  Applying auth.0003_alter_user_email_max_length... OK
+  Applying auth.0004_alter_user_username_opts... OK
+  Applying auth.0005_alter_user_last_login_null... OK
+  Applying auth.0006_require_contenttypes_0002... OK
+  Applying auth.0007_alter_validators_add_error_messages... OK
+  Applying auth.0008_alter_user_username_max_length... OK
+  Applying auth.0009_alter_user_last_name_max_length... OK
+  Applying auth.0010_alter_group_name_max_length... OK
+  Applying auth.0011_update_proxy_permissions... OK
+  Applying auth.0012_alter_user_first_name_max_length... OK
+  Applying authtoken.0001_initial... OK
+  Applying authtoken.0002_auto_20160226_1747... OK
+  Applying authtoken.0003_tokenproxy... OK
+  Applying authtoken.0004_alter_tokenproxy_options... OK
+INFO     api.scheduler        | Background Task Runner: Started
+test_pmp_calculated_on_order_closure (api.tests.test_stock_management.PMPCalculationTestCase.test_pmp_calculated_on_order_closure)
+Test that PMP is recalculated when a new order is closed. ... INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 1 change
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after order 1 closure
+INFO     api.business         | [COMMANDE] Cloture OK #1 | produits=1 | lots=1 | user=admin_1
+ok
+test_adjust_stock_creates_adjustment_record (api.tests.test_stock_management.StockAdjustmentTestCase.test_adjust_stock_creates_adjustment_record)
+Test that adjusting stock creates a StockAdjustment record. ... INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 2 change
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after stock adjustment for product 2
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 2 change
+ok
+test_adjust_stock_records_difference (api.tests.test_stock_management.StockAdjustmentTestCase.test_adjust_stock_records_difference)
+Test that the adjustment records the correct quantity change. ... INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 3 change
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after stock adjustment for product 3
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 3 change
+ok
+test_adjust_stock_updates_product_stock (api.tests.test_stock_management.StockAdjustmentTestCase.test_adjust_stock_updates_product_stock)
+Test that stock adjustment actually updates product stock. ... INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 4 change
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after stock adjustment for product 4
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 4 change
+ok
+test_adjustment_creates_movement (api.tests.test_stock_management.StockHistoryTestCase.test_adjustment_creates_movement)
+Test that stock adjustment creates a movement record. ... INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 5 change
+ok
+test_lot_reception_creates_stock_lot (api.tests.test_stock_management.StockLotManagementTestCase.test_lot_reception_creates_stock_lot)
+Test that closing an order creates StockLot records. ... INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 6 change
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after order 2 closure
+INFO     api.business         | [COMMANDE] Cloture OK #2 | produits=1 | lots=1 | user=admin_21
+ok
+test_lot_reception_updates_stock (api.tests.test_stock_management.StockLotManagementTestCase.test_lot_reception_updates_stock)
+Test that closing an order creates lots and updates stock. ... INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 7 change
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after order 3 closure
+INFO     api.business         | [COMMANDE] Cloture OK #3 | produits=1 | lots=1 | user=admin_25
+ok
+
+----------------------------------------------------------------------
+Ran 7 tests in 2.138s
+
+OK
+Preserving test database for alias 'default' ('test_MyDatabase')...
+
+  Applying sessions.0001_initial... OK
+Checking schedules for 2026-06-20 11:08:18.924655+01:00 (local time)...
+Found 0 potential schedules for today (2026-06-20).
+System check identified no issues (0 silenced).

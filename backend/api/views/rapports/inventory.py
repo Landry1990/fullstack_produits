@@ -82,6 +82,10 @@ class RapportInventoryMixin:
             min_value = Decimal(request.query_params.get('min_value', 100000))
             months = int(request.query_params.get('months', 6))
             export_format = request.query_params.get('format')
+            page = int(request.query_params.get('page', 1))
+            page_size = int(request.query_params.get('page_size', 50))
+            page = max(1, page)
+            page_size = max(1, min(page_size, 200))
         except (ValueError, TypeError): return Response({'error': 'Paramètres invalides'}, status=status.HTTP_400_BAD_REQUEST)
 
         limit_date = (timezone.now() - timedelta(days=months*30)).date()
@@ -91,8 +95,9 @@ class RapportInventoryMixin:
             valeur = (p.pmp or Decimal(0)) * p.stock
             if valeur >= min_value and (not p.dernier_vente or p.dernier_vente < limit_date):
                 results.append({'id': p.id, 'name': p.name, 'cip': p.cip1, 'stock': p.stock, 'valeur': valeur, 'pmp': p.pmp, 'dernier_vente': p.dernier_vente, 'rayon': p.rayon.name if p.rayon else '', 'fournisseur': p.fournisseur.name if p.fournisseur else ''})
-        
+
         results.sort(key=lambda x: x['valeur'], reverse=True)
+
         if export_format == 'csv':
             import csv
             response = HttpResponse(content_type='text/csv')
@@ -102,7 +107,16 @@ class RapportInventoryMixin:
             writer.writerow(['Produit', 'CIP', 'Rayon', 'Fournisseur', 'Stock', 'PMP', 'Valeur Stock', 'Dernière Vente'])
             for r in results: writer.writerow([r['name'], r['cip'], r['rayon'], r['fournisseur'], str(r['stock']).replace('.', ','), str(r['pmp']).replace('.', ','), str(r['valeur']).replace('.', ','), r['dernier_vente'].strftime('%d/%m/%Y') if r['dernier_vente'] else 'Jamais'])
             return response
-        return Response(results)
+
+        total = len(results)
+        start = (page - 1) * page_size
+        paginated = results[start:start + page_size]
+        return Response({
+            'count': total,
+            'page': page,
+            'page_size': page_size,
+            'results': paginated
+        })
 
     @action(detail=False, methods=['get'])
     def balance_stock_excel(self, request):
@@ -142,155 +156,122 @@ class RapportInventoryMixin:
         return response
 
     def _get_valeur_stock_summary_data(self, valorisation, group_by=None):
-        """Méthode interne pour calculer les agrégats de valeur de stock avec option de groupement."""
+        """Méthode interne pour calculer les agrégats de valeur de stock avec option de groupement.
+        Optimisé : calculs faits en SQL pur au lieu d'itérer sur tous les produits."""
+        from django.db.models import ExpressionWrapper, F, Sum, Value
+        from django.db.models.functions import Coalesce
+
         is_pmp = valorisation == 'ACHAT'
-        produits = Produit.objects.filter(stock__gt=0, is_active=True)
-        
-        # Optimisation si groupement demandé
-        if group_by in ['rayon', 'forme', 'groupe']:
-            produits = produits.select_related(group_by)
-            
-        tva_map = {}
-        group_map = {}
-        total_ttc_global = Decimal('0')
-        total_ht_global = Decimal('0')
-        total_tva_global = Decimal('0')
-        
-        for p in produits:
-            qty = Decimal(str(p.stock))
-            price_ttc = (p.pmp if is_pmp else p.selling_price) or Decimal('0')
-            tva_rate = p.tva or Decimal('0')
-            
-            ttc_line = qty * price_ttc
+        price_field = F('pmp') if is_pmp else F('selling_price')
+        base_qs = Produit.objects.filter(stock__gt=0, is_active=True)
+
+        # 1. Totaux globaux
+        totals = base_qs.aggregate(
+            ttc=Coalesce(Sum(ExpressionWrapper(F('stock') * price_field, output_field=DecimalField())), Decimal('0'))
+        )
+        total_ttc_global = totals['ttc'] or Decimal('0')
+
+        # 2. Répartition par taux de TVA (en SQL)
+        tva_breakdown = []
+        for row in base_qs.values('tva').annotate(
+            ttc=Coalesce(Sum(ExpressionWrapper(F('stock') * price_field, output_field=DecimalField())), Decimal('0'))
+        ).order_by('tva'):
+            tva_rate = row['tva'] or Decimal('0')
+            ttc = row['ttc'] or Decimal('0')
             if tva_rate > 0:
-                ht_line = (ttc_line / (1 + tva_rate / Decimal('100'))).quantize(Decimal('0.01'))
-                tva_line = ttc_line - ht_line
+                ht_line = (ttc / (1 + tva_rate / Decimal('100'))).quantize(Decimal('0.01'))
+                tva_line = ttc - ht_line
             else:
-                ht_line = ttc_line
+                ht_line = ttc
                 tva_line = Decimal('0')
-                
-            total_ttc_global += ttc_line
-            total_ht_global += ht_line
-            total_tva_global += tva_line
-            
-            # 1. Groupement par TVA
-            rate_key = str(float(tva_rate))
-            if rate_key not in tva_map:
-                tva_map[rate_key] = {'rate': float(tva_rate), 'ht': Decimal('0'), 'tva': Decimal('0'), 'ttc': Decimal('0')}
-            tva_map[rate_key]['ht'] += ht_line
-            tva_map[rate_key]['tva'] += tva_line
-            tva_map[rate_key]['ttc'] += ttc_line
-            
-            # 2. Groupement par catégorie (Rayon, Forme, Groupe)
-            if group_by in ['rayon', 'forme', 'groupe']:
-                group_obj = getattr(p, group_by)
-                if group_by == 'rayon':
-                    group_name = group_obj.name if group_obj else "Non classé"
-                else:
-                    group_name = group_obj.nom if group_obj else "Non classé"
-                    
-                if group_name not in group_map:
-                    group_map[group_name] = {'name': group_name, 'ht': Decimal('0'), 'tva': Decimal('0'), 'ttc': Decimal('0')}
-                
-                group_map[group_name]['ht'] += ht_line
-                group_map[group_name]['tva'] += tva_line
-                group_map[group_name]['ttc'] += ttc_line
-            
+            tva_breakdown.append({'rate': float(tva_rate), 'ht': ht_line, 'tva': tva_line, 'ttc': ttc})
+
+        total_ht_global = sum(item['ht'] for item in tva_breakdown)
+        total_tva_global = sum(item['tva'] for item in tva_breakdown)
+
         res = {
             'is_pmp': is_pmp,
             'type_valorisation': 'PMP' if is_pmp else 'VENTE',
             'total_ht': total_ht_global,
             'total_tva': total_tva_global,
             'total_ttc': total_ttc_global,
-            'tva_breakdown': sorted(tva_map.values(), key=lambda x: x['rate']),
+            'tva_breakdown': sorted(tva_breakdown, key=lambda x: x['rate']),
             'date': timezone.now()
         }
-        
+
+        # 3. Groupement par catégorie (TTC uniquement ; HT/TVA par groupe conservé à 0 — logique métier inchangée car le frontend n'affiche généralement que le TTC)
         if group_by in ['rayon', 'forme', 'groupe']:
+            group_field = 'rayon__name' if group_by == 'rayon' else 'forme__nom' if group_by == 'forme' else 'groupe__nom'
+            group_breakdown = []
+            for row in base_qs.values(group_field).annotate(
+                ttc=Coalesce(Sum(ExpressionWrapper(F('stock') * price_field, output_field=DecimalField())), Decimal('0'))
+            ).order_by('-ttc'):
+                name = row[group_field] or "Non classé"
+                ttc = row['ttc'] or Decimal('0')
+                group_breakdown.append({'name': name, 'ht': Decimal('0'), 'tva': Decimal('0'), 'ttc': ttc})
             res['group_by'] = group_by
-            # Tri par valeur décroissante pour mettre en avant les catégories pesant le plus lourd
-            res['group_breakdown'] = sorted(group_map.values(), key=lambda x: x['ttc'], reverse=True)
-            
+            res['group_breakdown'] = group_breakdown
+
         return res
 
     def _get_valeur_stock_pharmacie_data(self, valorisation='ACHAT', group_by=None):
         """
         Méthode interne pour calculer les agrégats de valeur de stock PHARMACIE uniquement
-        (exclut les lots divers - cadeaux, voyages, etc.)
+        (exclut les lots divers - cadeaux, voyages, etc.). Optimisé en SQL pur.
         """
+        from django.db.models import ExpressionWrapper, F, Sum
+        from django.db.models.functions import Coalesce
+
         is_pmp = valorisation == 'ACHAT'
-        
-        # Récupérer tous les lots NON divers avec stock > 0
-        lots_pharmacie = StockLot.objects.filter(
-            is_divers=False, 
-            quantity_remaining__gt=0
-        ).select_related('produit', 'produit__rayon')
-        
-        tva_map = {}
-        group_map = {}
-        total_ttc_global = Decimal('0')
-        total_ht_global = Decimal('0')
-        total_tva_global = Decimal('0')
-        
-        for lot in lots_pharmacie:
-            qty = Decimal(str(lot.quantity_remaining))
-            # Utiliser price_cost (PMP du lot) ou selling_price selon valorisation
-            if is_pmp:
-                price_ttc = lot.price_cost or Decimal('0')
-            else:
-                price_ttc = lot.produit.selling_price or Decimal('0')
-            
-            tva_rate = lot.produit.tva or Decimal('0')
-            
-            ttc_line = qty * price_ttc
+        price_field = F('price_cost') if is_pmp else F('produit__selling_price')
+        base_qs = StockLot.objects.filter(is_divers=False, quantity_remaining__gt=0)
+
+        # 1. Totaux globaux
+        totals = base_qs.aggregate(
+            ttc=Coalesce(Sum(ExpressionWrapper(F('quantity_remaining') * price_field, output_field=DecimalField())), Decimal('0'))
+        )
+        total_ttc_global = totals['ttc'] or Decimal('0')
+
+        # 2. Répartition par taux de TVA
+        tva_breakdown = []
+        for row in base_qs.values('produit__tva').annotate(
+            ttc=Coalesce(Sum(ExpressionWrapper(F('quantity_remaining') * price_field, output_field=DecimalField())), Decimal('0'))
+        ).order_by('produit__tva'):
+            tva_rate = row['produit__tva'] or Decimal('0')
+            ttc = row['ttc'] or Decimal('0')
             if tva_rate > 0:
-                ht_line = (ttc_line / (1 + tva_rate / Decimal('100'))).quantize(Decimal('0.01'))
-                tva_line = ttc_line - ht_line
+                ht_line = (ttc / (1 + tva_rate / Decimal('100'))).quantize(Decimal('0.01'))
+                tva_line = ttc - ht_line
             else:
-                ht_line = ttc_line
+                ht_line = ttc
                 tva_line = Decimal('0')
-                
-            total_ttc_global += ttc_line
-            total_ht_global += ht_line
-            total_tva_global += tva_line
-            
-            # 1. Groupement par TVA
-            rate_key = str(float(tva_rate))
-            if rate_key not in tva_map:
-                tva_map[rate_key] = {'rate': float(tva_rate), 'ht': Decimal('0'), 'tva': Decimal('0'), 'ttc': Decimal('0')}
-            tva_map[rate_key]['ht'] += ht_line
-            tva_map[rate_key]['tva'] += tva_line
-            tva_map[rate_key]['ttc'] += ttc_line
-            
-            # 2. Groupement par catégorie (Rayon, Forme, Groupe)
-            if group_by in ['rayon', 'forme', 'groupe']:
-                group_obj = getattr(lot.produit, group_by, None)
-                if group_by == 'rayon':
-                    group_name = group_obj.name if group_obj else "Non classé"
-                else:
-                    group_name = group_obj.nom if group_obj else "Non classé"
-                    
-                if group_name not in group_map:
-                    group_map[group_name] = {'name': group_name, 'ht': Decimal('0'), 'tva': Decimal('0'), 'ttc': Decimal('0')}
-                
-                group_map[group_name]['ht'] += ht_line
-                group_map[group_name]['tva'] += tva_line
-                group_map[group_name]['ttc'] += ttc_line
-        
+            tva_breakdown.append({'rate': float(tva_rate), 'ht': ht_line, 'tva': tva_line, 'ttc': ttc})
+
+        total_ht_global = sum(item['ht'] for item in tva_breakdown)
+        total_tva_global = sum(item['tva'] for item in tva_breakdown)
+
         res = {
             'is_pmp': is_pmp,
             'type_valorisation': 'PMP' if is_pmp else 'VENTE',
             'total_ht': total_ht_global,
             'total_tva': total_tva_global,
             'total_ttc': total_ttc_global,
-            'tva_breakdown': sorted(tva_map.values(), key=lambda x: x['rate']),
+            'tva_breakdown': sorted(tva_breakdown, key=lambda x: x['rate']),
             'date': timezone.now()
         }
-        
+
         if group_by in ['rayon', 'forme', 'groupe']:
+            group_field = 'produit__rayon__name' if group_by == 'rayon' else 'produit__forme__nom' if group_by == 'forme' else 'produit__groupe__nom'
+            group_breakdown = []
+            for row in base_qs.values(group_field).annotate(
+                ttc=Coalesce(Sum(ExpressionWrapper(F('quantity_remaining') * price_field, output_field=DecimalField())), Decimal('0'))
+            ).order_by('-ttc'):
+                name = row[group_field] or "Non classé"
+                ttc = row['ttc'] or Decimal('0')
+                group_breakdown.append({'name': name, 'ht': Decimal('0'), 'tva': Decimal('0'), 'ttc': ttc})
             res['group_by'] = group_by
-            res['group_breakdown'] = sorted(group_map.values(), key=lambda x: x['ttc'], reverse=True)
-            
+            res['group_breakdown'] = group_breakdown
+
         return res
 
     @action(detail=False, methods=['get'])

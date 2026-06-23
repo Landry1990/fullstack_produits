@@ -16,6 +16,7 @@ from .bulk import bulk_delete_lignes_inventaire, bulk_lignes_inventaire
 from .merge import merge_inventaires, merge_duplicate_lines
 from .stats import get_inventaire_stats, audit_discrepancies
 from .validation import validate_inventaire
+from .listing_excel import generate_listing_excel
 
 __all__ = [
     # PDF
@@ -35,4 +36,6 @@ __all__ = [
     'audit_discrepancies',
     # Validation
     'validate_inventaire',
+    # Listing Excel
+    'generate_listing_excel',
 ]

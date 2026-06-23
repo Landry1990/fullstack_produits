@@ -1,146 +1,173 @@
+
 #!/usr/bin/env pwsh
 <#
 .SYNOPSIS
     Déploiement rapide Zenith Pharma - sans rebuild Docker
 .DESCRIPTION
-    Copie les fichiers et redémarre les services sans utiliser --no-cache.
-    Tags automatiquement les images 'latest' → 'previous' pour rollback rapide.
-    Usage: .\deploy.ps1 [-Target all|frontend|backend|backend-full] [-BackupDB]
+    Frontend : npm run build → docker cp dist/ → nginx reload.
+    Backend  : docker cp de TOUT le dossier api/ → restart.
+               Avec -IncludeModels (backend-full ou all) : migrations + setup_dci_prod.
+    Avec -Rebuild : reconstruit les images Docker via docker compose build.
+    Usage: .\deploy.ps1 [-Target all|frontend|backend|backend-full] [-BackupDB] [-Rebuild]
 #>
 
 param(
     [Parameter()]
     [ValidateSet("frontend", "backend", "backend-full", "all")]
     [string]$Target = "all",
-    [switch]$BackupDB
+    [switch]$BackupDB,
+    [switch]$Rebuild
 )
 
 $ErrorActionPreference = "Stop"
+$BACKEND_CONTAINER = "fullstack_produits-backend-1"
+$FRONTEND_CONTAINER = "fullstack_produits-frontend-1"
+$scriptPath = Split-Path -Parent $PSCommandPath
+
+# ── Helpers ───────────────────────────────────────────────────────────────────
+
+function Assert-ContainerRunning {
+    param([string]$ContainerName)
+
+    $state = docker inspect --format='{{.State.Status}}' $ContainerName 2>$null
+    if (-not $state) {
+        Write-Host "  ❌ Conteneur '$ContainerName' introuvable. Vérifie docker compose up." -ForegroundColor Red
+        throw "Conteneur '$ContainerName' absent - déploiement annulé."
+    }
+    if ($state -ne 'running') {
+        Write-Host "  ⚠️  Conteneur '$ContainerName' est '$state'. Tentative de démarrage..." -ForegroundColor Yellow
+        docker start $ContainerName | Out-Null
+        Start-Sleep -Seconds 3
+        $state = docker inspect --format='{{.State.Status}}' $ContainerName 2>$null
+        if ($state -ne 'running') {
+            Write-Host "  ❌ Impossible de démarrer '$ContainerName'. Déploiement annulé." -ForegroundColor Red
+            throw "Conteneur '$ContainerName' ne démarre pas."
+        }
+        Write-Host "  ✅ Conteneur démarré." -ForegroundColor Green
+    } else {
+        Write-Host "  ✅ $ContainerName : running" -ForegroundColor Green
+    }
+}
 
 function Backup-Database {
     param([string]$Reason = "pre-deploy")
-    Write-Host "💾 Backup DB avant déploiement ($Reason)..." -ForegroundColor Yellow
-    $scriptPath = Split-Path -Parent $PSCommandPath
+    Write-Host "💾 Backup DB ($Reason)..." -ForegroundColor Yellow
     $backupScript = Join-Path $scriptPath "backup-db.ps1"
-    if (Test-Path $backupScript) {
-        & $backupScript
-    } else {
-        Write-Host "   ⚠️ backup-db.ps1 introuvable, skip" -ForegroundColor Yellow
+    if (Test-Path $backupScript) { & $backupScript }
+    else { Write-Host "   ⚠️  backup-db.ps1 introuvable, skip" -ForegroundColor Yellow }
+}
+
+function Set-ImageTag {
+    param([string]$ContainerName, [string]$ImageName)
+    $img = docker inspect --format='{{.Image}}' $ContainerName 2>$null
+    if ($img) {
+        docker tag $img "${ImageName}:previous" 2>$null | Out-Null
+        Write-Host "    🏷  Tag: ${ImageName}:previous" -ForegroundColor Gray
     }
 }
 
-function Tag-Image {
-    param([string]$ContainerName, [string]$ImageName)
-    $currentImage = docker inspect --format='{{.Image}}' $ContainerName 2>$null
-    if ($currentImage) {
-        docker tag $currentImage "${ImageName}:previous" 2>$null | Out-Null
-        Write-Host "   � Image taggee: ${ImageName}:previous" -ForegroundColor Gray
-    }
+function Invoke-DockerRebuild {
+    param([string]$RebuildTarget = "all")
+    Write-Host "🔨 Rebuild Docker ($RebuildTarget)..." -ForegroundColor Yellow
+    Push-Location $scriptPath
+    try {
+        switch ($RebuildTarget) {
+            "frontend"     { docker compose build frontend; docker compose up -d frontend }
+            { $_ -in "backend","backend-full" } {
+                             docker compose build backend;  docker compose up -d backend  }
+            "all"          { docker compose build;          docker compose up -d          }
+        }
+        Write-Host "✅ Rebuild terminé" -ForegroundColor Green
+    } finally { Pop-Location }
 }
+
+# ── Frontend ──────────────────────────────────────────────────────────────────
 
 function Deploy-Frontend {
-    Write-Host "� Déploiement Frontend..." -ForegroundColor Green
+    Write-Host ""
+    Write-Host "🌐 Frontend — vérification conteneur..." -ForegroundColor Cyan
+    Assert-ContainerRunning $FRONTEND_CONTAINER
+    Set-ImageTag $FRONTEND_CONTAINER "fullstack_produits-frontend"
 
-    # Tag image actuelle comme previous
-    Tag-Image "fullstack_produits-frontend-1" "fullstack_produits-frontend"
-
-    $scriptPath = Split-Path -Parent $PSCommandPath
     Push-Location (Join-Path $scriptPath "frontend/frontend")
     try {
-        Write-Host "  Building..." -ForegroundColor Yellow
+        Write-Host "  npm run build..." -ForegroundColor Yellow
         npm run build
-        if ($LASTEXITCODE -ne 0) {
-            Write-Host "  ❌ Build échoué!" -ForegroundColor Red
-            throw "Build frontend échoué avec le code $LASTEXITCODE"
-        }
-        Write-Host "  ✅ Build réussi" -ForegroundColor Green
+        if ($LASTEXITCODE -ne 0) { throw "Build frontend échoué (code $LASTEXITCODE)" }
+        Write-Host "  ✅ Build OK" -ForegroundColor Green
 
-        Write-Host "  Copie vers conteneur..." -ForegroundColor Yellow
-        docker cp dist/. fullstack_produits-frontend-1:/usr/share/nginx/html/
-
-        Write-Host "  Reload nginx..." -ForegroundColor Yellow
-        docker exec fullstack_produits-frontend-1 nginx -s reload
-
-        Write-Host "  ✅ Frontend déployé!" -ForegroundColor Green
-    } finally {
-        Pop-Location
-    }
+        Write-Host "  docker cp dist/ → nginx..." -ForegroundColor Yellow
+        docker cp dist/. "${FRONTEND_CONTAINER}:/usr/share/nginx/html/"
+        docker exec $FRONTEND_CONTAINER nginx -s reload
+        Write-Host "  ✅ Frontend déployé" -ForegroundColor Green
+    } finally { Pop-Location }
 }
+
+# ── Backend ───────────────────────────────────────────────────────────────────
 
 function Deploy-Backend {
     param([switch]$IncludeModels)
 
-    Write-Host "🚀 Déploiement Backend..." -ForegroundColor Green
+    Write-Host ""
+    Write-Host "⚙️  Backend — vérification conteneur..." -ForegroundColor Cyan
+    Assert-ContainerRunning $BACKEND_CONTAINER
+    Set-ImageTag $BACKEND_CONTAINER "fullstack_produits-backend"
 
-    # Tag image actuelle comme previous
-    Tag-Image "fullstack_produits-backend-1" "fullstack_produits-backend"
+    Push-Location $scriptPath
+    try {
+        # Copie intégrale du dossier api/ (vues, modèles, serializers, services, management...)
+        # Plus besoin de lister les fichiers un par un : tout est synchronisé d'un coup.
+        Write-Host "  Copie backend/api/ → conteneur /app/api/ ..." -ForegroundColor Yellow
+        docker cp backend/api/. "${BACKEND_CONTAINER}:/app/api/"
+        Write-Host "  ✅ Copie terminée" -ForegroundColor Green
 
-    if ($IncludeModels) {
-        Write-Host "  Copie des modèles..." -ForegroundColor Yellow
-        docker cp backend/api/models/__init__.py fullstack_produits-backend-1:/app/api/models/__init__.py
-        docker cp backend/api/models/products.py fullstack_produits-backend-1:/app/api/models/products.py
-    }
+        if ($IncludeModels) {
+            Write-Host "  Migrations..." -ForegroundColor Yellow
+            docker exec $BACKEND_CONTAINER python manage.py makemigrations 2>&1 |
+                Select-String -Pattern "No changes|Migration|already" |
+                ForEach-Object { Write-Host "    $_" }
+            docker exec $BACKEND_CONTAINER python manage.py migrate 2>&1 |
+                Select-String -Pattern "Applying|OK|No migrations" |
+                ForEach-Object { Write-Host "    $_" }
 
-    Write-Host "  Copie des fichiers..." -ForegroundColor Yellow
-    docker cp backend/api/serializers/. fullstack_produits-backend-1:/app/api/serializers/
-    docker cp backend/api/urls.py fullstack_produits-backend-1:/app/api/urls.py
-    docker cp backend/api/views/substances.py fullstack_produits-backend-1:/app/api/views/substances.py
-    docker cp backend/api/views/meds_reference.py fullstack_produits-backend-1:/app/api/views/meds_reference.py
-    docker cp backend/api/views/produits.py fullstack_produits-backend-1:/app/api/views/produits.py
-    docker cp backend/api/views/dci_admin.py fullstack_produits-backend-1:/app/api/views/dci_admin.py
-    docker cp backend/api/views/finance_stats.py fullstack_produits-backend-1:/app/api/views/finance_stats.py
-    docker cp backend/api/views/fournisseurs.py fullstack_produits-backend-1:/app/api/views/fournisseurs.py
-    docker cp backend/api/services/finance_base_queries.py fullstack_produits-backend-1:/app/api/services/finance_base_queries.py
-    docker cp backend/api/services/finance_predictions.py fullstack_produits-backend-1:/app/api/services/finance_predictions.py
-    docker cp backend/api/services/finance_marges.py fullstack_produits-backend-1:/app/api/services/finance_marges.py
-    docker cp backend/api/services/finance_formatters.py fullstack_produits-backend-1:/app/api/services/finance_formatters.py
-    docker cp backend/api/idempotency.py fullstack_produits-backend-1:/app/api/idempotency.py
-    docker cp backend/api/views/commandes/commandes.py fullstack_produits-backend-1:/app/api/views/commandes/commandes.py
-    docker cp backend/api/views/ventes/factures.py fullstack_produits-backend-1:/app/api/views/ventes/factures.py
-    docker cp backend/api/views/ventes/caisse_poste.py fullstack_produits-backend-1:/app/api/views/ventes/caisse_poste.py
+            Write-Host "  Setup DCI / Substances..." -ForegroundColor Yellow
+            docker exec $BACKEND_CONTAINER python manage.py setup_dci_prod 2>&1 |
+                ForEach-Object { Write-Host "    $_" }
+        }
 
-    if ($IncludeModels) {
-        Write-Host "  Migration..." -ForegroundColor Yellow
-        docker exec fullstack_produits-backend-1 python manage.py makemigrations 2>&1 | Select-String -Pattern "No changes|Migration" | ForEach-Object { Write-Host "  $_" }
-        docker exec fullstack_produits-backend-1 python manage.py migrate 2>&1 | Select-String -Pattern "Applying|OK" | ForEach-Object { Write-Host "  $_" }
-
-        Write-Host "  Setup DCI / Substances..." -ForegroundColor Yellow
-        docker cp backend/api/management/commands/setup_dci_prod.py fullstack_produits-backend-1:/app/api/management/commands/setup_dci_prod.py
-        docker exec fullstack_produits-backend-1 python manage.py setup_dci_prod 2>&1 | ForEach-Object { Write-Host "  $_" }
-    }
-
-    Write-Host "  Redémarrage..." -ForegroundColor Yellow
-    docker restart fullstack_produits-backend-1 | Out-Null
-
-    Write-Host "  ✅ Backend déployé!" -ForegroundColor Green
+        Write-Host "  Redémarrage conteneur..." -ForegroundColor Yellow
+        docker restart $BACKEND_CONTAINER | Out-Null
+        Write-Host "  ✅ Backend déployé" -ForegroundColor Green
+    } finally { Pop-Location }
 }
 
-# Main
-Write-Host "═══════════════════════════════════════" -ForegroundColor Cyan
-Write-Host "   Zenith Pharma - Déploiement Rapide" -ForegroundColor Cyan
-Write-Host "═══════════════════════════════════════" -ForegroundColor Cyan
+# ── Main ──────────────────────────────────────────────────────────────────────
 
-if ($BackupDB) {
-    Backup-Database
-}
+Write-Host ""
+Write-Host "══════════════════════════════════════════" -ForegroundColor Cyan
+Write-Host "   Zenith Pharma — Déploiement  [$Target]" -ForegroundColor Cyan
+Write-Host "══════════════════════════════════════════" -ForegroundColor Cyan
 
-switch ($Target) {
-    "frontend" { Deploy-Frontend }
-    "backend" { Deploy-Backend }
-    "backend-full" { Deploy-Backend -IncludeModels }
-    "all" {
-        Deploy-Frontend
-        Deploy-Backend -IncludeModels
+if ($BackupDB) { Backup-Database }
+
+if ($Rebuild) {
+    Invoke-DockerRebuild -RebuildTarget $Target
+} else {
+    switch ($Target) {
+        "frontend"     { Deploy-Frontend }
+        "backend"      { Deploy-Backend }
+        "backend-full" { Deploy-Backend -IncludeModels }
+        "all"          { Deploy-Frontend; Deploy-Backend -IncludeModels }
     }
 }
 
 Write-Host ""
-Write-Host "═══════════════════════════════════════" -ForegroundColor Cyan
-Write-Host "  ✅ Déploiement terminé!" -ForegroundColor Green
-Write-Host "═══════════════════════════════════════" -ForegroundColor Cyan
+Write-Host "══════════════════════════════════════════" -ForegroundColor Cyan
+Write-Host "  ✅ Déploiement terminé !" -ForegroundColor Green
+Write-Host "══════════════════════════════════════════" -ForegroundColor Cyan
 Write-Host ""
 Write-Host "Commandes utiles:" -ForegroundColor White
-Write-Host "  Backup DB manuel:  .\backup-db.ps1" -ForegroundColor Gray
-Write-Host "  Rollback rapide:   .\rollback.ps1" -ForegroundColor Gray
-Write-Host "  Rollback + DB:     .\rollback.ps1 -IncludeDB" -ForegroundColor Gray
+Write-Host "  Backup DB :     .\backup-db.ps1" -ForegroundColor Gray
+Write-Host "  Rollback :      .\rollback.ps1" -ForegroundColor Gray
+Write-Host "  Rollback + DB : .\rollback.ps1 -IncludeDB" -ForegroundColor Gray
 Write-Host ""

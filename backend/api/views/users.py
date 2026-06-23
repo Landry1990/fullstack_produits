@@ -10,6 +10,7 @@ from rest_framework.throttling import AnonRateThrottle
 
 class LoginRateThrottle(AnonRateThrottle):
     scope = 'login'
+    THROTTLE_RATES = {'login': '10/min'}
 
 from django.contrib.auth.models import User
 from django.shortcuts import get_object_or_404

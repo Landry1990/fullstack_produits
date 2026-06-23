@@ -60,35 +60,36 @@ class StockLotViewSet(BaseViewSetConfig, OptimizedSerializerMixin, viewsets.Mode
         Sort un lot du stock (destruction/retour).
         Supporte le mode SUDO pour valider par un autre utilisateur.
         """
-        lot = self.get_object()
+        lot = StockLot.objects.select_for_update().get(pk=self.kwargs['pk'])
         quantity_to_remove = int(request.data.get('quantity', lot.quantity_remaining))
         reason = request.data.get('reason', 'Périmé')
-        
+
         validation_user, error_res = validate_sudo_mode(request, permission_attr='can_manage_perimes')
         if error_res:
              return error_res
         # -------------------------
-        
+
         if quantity_to_remove > lot.quantity_remaining:
             return Response({'detail': 'Quantité insuffisante dans le lot.'}, status=status.HTTP_400_BAD_REQUEST)
-            
+
         # Capture quantity before for adjustment record
         quantity_before = lot.quantity_remaining
 
         # Update lot
         lot.quantity_remaining -= quantity_to_remove
         lot.save()
-        
+
         # Update product stock
         produit = lot.produit
         if produit:
+            produit = Produit.objects.select_for_update().get(pk=produit.pk)
             if produit.use_lot_management:
                 # Recalculate stock from all lots
                 produit.calculate_stock_from_lots()
             else:
                 produit.stock = F('stock') - quantity_to_remove
                 produit.save(update_fields=['stock'])
-            
+
             # Refresh to get actual stock value for MouvementStock
             produit.refresh_from_db()
 
@@ -142,36 +143,40 @@ class StockLotViewSet(BaseViewSetConfig, OptimizedSerializerMixin, viewsets.Mode
         """
         lot_ids = request.data.get('lot_ids', [])
         reason = request.data.get('reason', 'Sortie groupée périmés')
-        
+
         if not lot_ids:
             return Response({'detail': 'Aucun lot sélectionné.'}, status=status.HTTP_400_BAD_REQUEST)
-            
+
         validation_user, error_res = validate_sudo_mode(request, permission_attr='can_manage_perimes')
         if error_res:
              return error_res
-             
-        lots = StockLot.objects.filter(id__in=lot_ids, quantity_remaining__gt=0).select_related('produit')
+
+        # Lock lots and associated products in deterministic order to avoid deadlocks
+        lots = list(StockLot.objects.filter(id__in=lot_ids, quantity_remaining__gt=0).select_for_update().select_related('produit'))
+        product_ids = sorted({lot.produit_id for lot in lots if lot.produit_id})
+        locked_products = {p.id: p for p in Produit.objects.filter(id__in=product_ids).select_for_update().order_by('id')} if product_ids else {}
+
         count = 0
-        
+
         for lot in lots:
             quantity_to_remove = lot.quantity_remaining
             quantity_before = lot.quantity_remaining
-            
+
             # Update lot
             lot.quantity_remaining = 0
             lot.save()
-            
+
             # Update product stock
-            produit = lot.produit
+            produit = locked_products.get(lot.produit_id) if lot.produit_id else None
             if produit:
                 if produit.use_lot_management:
                     produit.calculate_stock_from_lots()
                 else:
                     produit.stock = F('stock') - quantity_to_remove
                     produit.save(update_fields=['stock'])
-                
+
                 produit.refresh_from_db()
-            
+
             # Traceability
             StockAdjustment.objects.create(
                 produit=produit, stock_lot=lot, user=validation_user,
@@ -180,7 +185,7 @@ class StockLotViewSet(BaseViewSetConfig, OptimizedSerializerMixin, viewsets.Mode
                 reason_type=StockAdjustment.ReasonType.PERIME,
                 reason_detail=f"Sortie groupée: {reason}"
             )
-            
+
             MouvementStock.objects.create(
                 produit=produit,
                 type_mouvement=MouvementStock.TypeMouvement.AVOIR,
@@ -189,7 +194,7 @@ class StockLotViewSet(BaseViewSetConfig, OptimizedSerializerMixin, viewsets.Mode
                 user=validation_user,
                 description=f"Sortie groupée périmés - Lot {lot.lot}"
             )
-            
+
             count += 1
             
         # Global Audit

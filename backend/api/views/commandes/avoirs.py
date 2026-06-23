@@ -114,6 +114,7 @@ class AvoirViewSet(viewsets.ModelViewSet):
         Le déchargement = on retire physiquement du stock.
         """
         from django.utils import timezone
+        from django.db.models import F
         avoir = self.get_object()
 
         if avoir.stock_decharge:
@@ -129,14 +130,26 @@ class AvoirViewSet(viewsets.ModelViewSet):
 
         try:
             with transaction.atomic():
-                for ligne in avoir.produits.all():
-                    produit = ligne.produit
+                # Lock avoir and related lines
+                avoir = Avoir.objects.select_for_update().get(pk=self.kwargs['pk'])
+                lignes = list(avoir.produits.select_related('produit', 'stock_lot').all())
+
+                # Lock products and lots in deterministic order to avoid deadlocks
+                product_ids = sorted({ligne.produit_id for ligne in lignes if ligne.produit_id})
+                lot_ids = sorted({ligne.stock_lot_id for ligne in lignes if ligne.stock_lot_id})
+                locked_products = {p.id: p for p in Produit.objects.filter(id__in=product_ids).select_for_update().order_by('id')} if product_ids else {}
+                locked_lots = {l.id: l for l in StockLot.objects.filter(id__in=lot_ids).select_for_update().order_by('id')} if lot_ids else {}
+
+                for ligne in lignes:
+                    produit = locked_products.get(ligne.produit_id) if ligne.produit_id else None
                     if not produit:
                         continue
 
                     # Déstockage du lot si applicable
-                    if ligne.stock_lot:
-                        lot = ligne.stock_lot
+                    if ligne.stock_lot_id:
+                        lot = locked_lots.get(ligne.stock_lot_id)
+                        if not lot:
+                            continue
                         if lot.quantity_remaining < ligne.quantity:
                             raise ValueError(
                                 f'Lot {lot.lot} : stock restant ({lot.quantity_remaining}) '
@@ -146,10 +159,10 @@ class AvoirViewSet(viewsets.ModelViewSet):
                         lot.save()
 
                     # Mise à jour du stock produit
-                    if produit.use_lot_management and ligne.stock_lot:
+                    if produit.use_lot_management and ligne.stock_lot_id:
                         produit.calculate_stock_from_lots()
                     else:
-                        produit.stock -= ligne.quantity
+                        produit.stock = F('stock') - ligne.quantity
                         produit.save()
 
                     # Mouvement de stock (AVOIR = sortie négative)

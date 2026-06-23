@@ -31,6 +31,8 @@ class FinaliserVenteTests(APITestCase):
             rayon=self.rayon, fournisseur=self.fournisseur
         )
         self.client_obj = TestDataFactory.create_client(name='Patient Dupont')
+        # finalize_sale requires an active cashier session
+        self.session = TestDataFactory.create_session_caisse(user=self.user)
 
     def _finaliser_payload(self, **overrides):
         """Helper to build a valid finaliser payload."""
@@ -70,9 +72,8 @@ class FinaliserVenteTests(APITestCase):
 
     def test_finaliser_centralized_validates_and_destocks(self):
         """
-        With centralized_cash_register=True, finaliser validates the facture
-        and decrements stock immediately (destockage at facturation).
-        No payment records are created (handled later at caisse).
+        With centralized_cash_register=True, finaliser validates the facture,
+        decrements stock immediately and records payment at the central caisse.
         """
         # Create a stock lot for FIFO allocation
         TestDataFactory.create_stock_lot(
@@ -89,15 +90,15 @@ class FinaliserVenteTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
 
         facture = Facture.objects.order_by('-id').first()
-        # Facture should be VALIDEE (stock deducted at facturation)
-        self.assertEqual(facture.status, Facture.Status.VALIDEE)
+        # Facture should be VALIDEE or PAYEE (payment recorded at central caisse)
+        self.assertIn(facture.status, [Facture.Status.VALIDEE, Facture.Status.PAYEE])
 
         # Stock decremented immediately
         self.produit.refresh_from_db()
         self.assertLess(self.produit.stock, initial_stock)
 
-        # No payment records in centralized mode
-        self.assertEqual(Caisse.objects.filter(facture=facture).count(), 0)
+        # Payment recorded at the central caisse
+        self.assertGreater(Caisse.objects.filter(facture=facture).count(), 0)
 
     def test_finaliser_non_centralized_validates(self):
         """
@@ -470,10 +471,10 @@ class CalculateTotalsTests(TestCase):
         )
 
         facture.refresh_from_db()
-        # TTC = 1192.50, HT = 1192.50 / 1.1925 = 1000.00, TVA = 192.50
-        self.assertEqual(facture.total_ttc, Decimal('1192.50'))
+        # TTC = 1192.50 rounded to 1193, HT = 1000, TVA = 1193 - 1000 = 193
+        self.assertEqual(facture.total_ttc, Decimal('1193.00'))
         self.assertEqual(facture.total_ht, Decimal('1000.00'))
-        self.assertEqual(facture.total_tva, Decimal('192.50'))
+        self.assertEqual(facture.total_tva, Decimal('193.00'))
 
     def test_part_client_with_coverage(self):
         """calculate_totals sets part_client based on taux_couverture."""
