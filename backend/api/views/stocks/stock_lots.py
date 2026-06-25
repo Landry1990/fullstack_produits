@@ -211,6 +211,65 @@ class StockLotViewSet(BaseViewSetConfig, OptimizedSerializerMixin, viewsets.Mode
         return Response({'status': f'{count} lots sortis du stock.', 'validated_by': validation_user.username})
 
     @action(detail=False, methods=['get'])
+    def by_datamatrix(self, request):
+        """
+        Retrouve un lot de stock à partir du scan datamatrix GS1.
+        Paramètres : cip (CIP13 ou CIP7) + lot (numéro de lot)
+        Retourne les infos du lot + du produit pour injection directe dans le panier.
+        """
+        cip = request.query_params.get('cip', '').strip()
+        lot_numero = request.query_params.get('lot', '').strip()
+
+        if not cip or not lot_numero:
+            return Response(
+                {'detail': 'Paramètres cip et lot requis.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # Chercher le produit par CIP13 ou CIP7
+        produit = None
+        if len(cip) == 13:
+            produit = Produit.objects.filter(cip1=cip, is_active=True).first()
+        if not produit and len(cip) == 7:
+            produit = Produit.objects.filter(cip2=cip, is_active=True).first()
+        # Fallback : essai sur cip1 quelle que soit la longueur
+        if not produit:
+            produit = Produit.objects.filter(cip1=cip, is_active=True).first()
+
+        if not produit:
+            return Response(
+                {'detail': f'Produit introuvable pour le CIP « {cip} ».'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+        # Chercher le lot exact sur ce produit
+        lot = StockLot.objects.filter(
+            produit=produit,
+            lot=lot_numero,
+        ).order_by('-date_reception').first()
+
+        if not lot:
+            return Response(
+                {'detail': f'Lot « {lot_numero} » introuvable pour ce produit.'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+        return Response({
+            'lot_id': lot.id,
+            'lot_numero': lot.lot,
+            'date_expiration': lot.date_expiration.isoformat() if lot.date_expiration else None,
+            'quantity_remaining': lot.quantity_remaining,
+            'selling_price': str(lot.selling_price or produit.selling_price or '0'),
+            'produit': {
+                'id': produit.id,
+                'name': produit.name,
+                'cip1': produit.cip1,
+                'selling_price': str(produit.selling_price or '0'),
+                'stock': produit.stock,
+            }
+        })
+
+    @action(detail=False, methods=['get'])
     def alerts_expiration(self, request):
         """
         Retourne les alertes de péremption pour notification frontend.

@@ -202,6 +202,7 @@ export interface LigneFacture {
     lotId?: string | null
     lotText?: string | null
     lotExpiration?: string | null
+    lotSellingPrice?: string | null
     treatment_duration_days?: number
 }
 

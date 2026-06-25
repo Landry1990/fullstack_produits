@@ -83,7 +83,7 @@ export default function CaisseCentralisee() {
   const fetchFacturesEnAttente = useCallback(async () => {
     try {
       const params: Record<string, any> = { 
-        status__in: 'BROU,VAL', 
+        status__in: 'BROU,VAL,PROF', 
         include_pending: true,
         include_details: true 
       }

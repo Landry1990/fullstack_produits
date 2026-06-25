@@ -59,6 +59,7 @@
         "validated": "Validée",
         "draft": "Brouillon",
         "cancelled": "Annulée",
+        "proforma": "Proforma",
         "validated_by": "Validé par",
         "cancelled_by": "Annulé par"
     },

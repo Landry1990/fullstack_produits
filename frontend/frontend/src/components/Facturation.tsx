@@ -28,10 +28,17 @@ import DisplayAlertModal from './facturation/DisplayAlertModal'
 import PrescriptionScannerModal from './facturation/PrescriptionScannerModal'
 
 import { useFacturationState } from '../hooks/useFacturationState'
+import { useDatamatrixScan } from '../hooks/useDatamatrixScan'
 
 export default function Facturation() {
   const hook = useFacturationState()
   const forceStockModalRef = useRef<HTMLDivElement>(null)
+
+  const scan = useDatamatrixScan({
+    addProduit: (p, opts) => hook.cart.addProduit(p, opts),
+    setLignesFacture: hook.cart.setLignesFacture,
+    lignesFacture: hook.cart.lignesFacture,
+  })
 
   useEffect(() => {
     if (hook.forceStockProduct && forceStockModalRef.current) {
@@ -209,6 +216,11 @@ export default function Facturation() {
                 onQuantityShortcut={hook.handleQuantityShortcut}
                 onCsvImport={hook.handleCsvImport}
                 user={hook.user}
+                scanInput={scan.scanInput}
+                scanStatus={scan.scanStatus}
+                scanLastScanned={scan.lastScanned}
+                onScanChange={scan.handleScanChange}
+                onScanKeyDown={scan.handleScanKeyDown}
                 onSelectOutOfStock={(p) => {
                   hook.requireSudo(
                     async () => {

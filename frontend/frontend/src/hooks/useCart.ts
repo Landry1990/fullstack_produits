@@ -9,6 +9,18 @@ import { differenceInDays, parseISO } from 'date-fns'
 import { showExpirationToast } from '../utils/toastUtils'
 import { safeStorage } from '../utils/storage'
 
+function getFEFOLotInfo(produit: ProduitModel) {
+  const lots = produit.stock_lots || []
+  const fefo = lots.find(l => l.quantity_remaining > 0)
+  if (!fefo) return null
+  return {
+    id: String(fefo.id),
+    text: fefo.lot || `Lot ${fefo.id}`,
+    expiration: fefo.date_expiration,
+    sellingPrice: fefo.selling_price ?? null
+  }
+}
+
 interface UseCartOptions {
     apiBaseUrl?: string
     onRequirePrescription?: () => void
@@ -128,15 +140,17 @@ export function useCart({ onRequirePrescription, onAlert, onSubstitution, onForc
                     }
 
                     const prixUnitaire = normalizeNumberInput(basePriceValue, { min: 0 })
+                    const fefoLot = getFEFOLotInfo(fullProduit)
                     const nouvelleLigne: LigneFacture = {
                         produit: fullProduit,
                         quantite: 1,
                         prix_unitaire: prixUnitaire.toString(),
                         remise_produit: '0',
                         total_ligne: prixUnitaire,
-                        lotId: null, // Default to Auto/FEFO
-                        lotText: null,
-                        lotExpiration: null,
+                        lotId: fefoLot ? fefoLot.id : null,
+                        lotText: fefoLot ? fefoLot.text : null,
+                        lotExpiration: fefoLot ? fefoLot.expiration : null,
+                        lotSellingPrice: fefoLot ? fefoLot.sellingPrice : null,
                         treatment_duration_days: fullProduit.is_chronic ? fullProduit.default_treatment_days : undefined
                     }
 
@@ -250,6 +264,7 @@ export function useCart({ onRequirePrescription, onAlert, onSubstitution, onForc
                     lotId: lot ? String(lot.id) : null,
                     lotText: lot ? lot.lot : null,
                     lotExpiration: lot?.date_expiration || null,
+                    lotSellingPrice: lot?.selling_price ?? null,
                     // Update price if lot has a specific selling price
                     prix_unitaire: (lot && lot.selling_price !== null && lot.selling_price !== undefined)
                         ? String(lot.selling_price)
@@ -308,15 +323,17 @@ export function useCart({ onRequirePrescription, onAlert, onSubstitution, onForc
                         total_ligne: calculateLineTotal(newQty, existing.prix_unitaire, finalRemise)
                     }
                 } else {
+                    const fefoLot = getFEFOLotInfo(product)
                     newLignes.push({
                         produit: product,
                         quantite: quantity,
                         prix_unitaire: prixBase,
                         remise_produit: remise,
                         total_ligne: calculateLineTotal(quantity, prixBase, remise),
-                        lotId: null,
-                        lotText: null,
-                        lotExpiration: null,
+                        lotId: fefoLot ? fefoLot.id : null,
+                        lotText: fefoLot ? fefoLot.text : null,
+                        lotExpiration: fefoLot ? fefoLot.expiration : null,
+                        lotSellingPrice: fefoLot ? fefoLot.sellingPrice : null,
                         treatment_duration_days: product.is_chronic ? product.default_treatment_days : undefined
                     })
                 }
