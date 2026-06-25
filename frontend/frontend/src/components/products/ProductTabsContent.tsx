@@ -436,11 +436,11 @@ export const ProductTabsContent: React.FC<ProductTabsContentProps> = ({
                 </tr>
                 <tr className="border-b border-base-200">
                    <td className="font-bold text-sm text-base-content/50 uppercase tracking-wider py-4">{t('products:detail.general.lot_management')}</td>
-                   <td className="font-bold text-sm py-4">{selectedProduit.use_lot_management ? `✅ ${t('products:detail.general.enabled')}` : `❌ ${t('products:detail.general.disabled')}`}</td>
+                  <td className="font-bold text-sm py-4">{selectedProduit.use_lot_management ? `✅ ${t('products:detail.general.enabled')}` : `❌ ${t('products:detail.general.disabled')}`}</td>
                 </tr>
                 <tr className="border-b border-base-200">
                    <td className="font-bold text-sm text-base-content/50 uppercase tracking-wider py-4">{t('products:detail.general.prescription')}</td>
-                   <td className="font-bold text-sm py-4">{selectedProduit.requires_prescription ? `✅ ${t('products:detail.general.yes')}` : `❌ ${t('products:detail.general.no')}`}</td>
+                  <td className="font-bold text-sm py-4">{selectedProduit.requires_prescription ? `✅ ${t('products:detail.general.yes')}` : `❌ ${t('products:detail.general.no')}`}</td>
                 </tr>
                 <tr>
                    <td className="font-bold text-sm text-base-content/50 uppercase tracking-wider py-4">{t('products:detail.general.surveillance')}</td>

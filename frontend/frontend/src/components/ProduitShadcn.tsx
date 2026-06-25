@@ -459,12 +459,22 @@ export default function ProduitShadcn() {
                   {/* Detail Header */}
                   <div className="shrink-0 px-6 py-4 border-b border-slate-100 flex items-start justify-between gap-4">
                     <div className="min-w-0">
-                      <div className="flex items-center gap-2 mb-1">
+                      <div className="flex flex-wrap items-center gap-2 mb-1">
                         <h2 className="text-lg font-bold text-slate-900 truncate uppercase" title={selectedProduit.name}>
                           {selectedProduit.name}
                         </h2>
                         {selectedProduit.is_active === false && <Badge variant="ghost" size="sm">Inactif</Badge>}
                         {selectedProduit.is_supplier_exclusive && <Badge variant="success" size="sm">Exclusif</Badge>}
+                        <span className={`inline-flex items-center px-2 py-0.5 rounded-md text-xs font-semibold ${
+                          ((selectedProduit.total_stock ?? selectedProduit.stock) ?? 0) <= 0 ? 'bg-red-50 text-red-600' :
+                          ((selectedProduit.total_stock ?? selectedProduit.stock) ?? 0) <= (selectedProduit.stock_alert ?? 0) ? 'bg-amber-50 text-amber-600' :
+                          'bg-emerald-50 text-emerald-600'
+                        }`}>
+                          Stock: {selectedProduit.total_stock ?? selectedProduit.stock ?? 0}
+                          {selectedProduit.has_reserve_storage && (
+                            <> / Réserve: {selectedProduit.stock_reserve ?? 0}</>
+                          )}
+                        </span>
                       </div>
                       <p className="text-sm text-slate-500 font-mono">CIP: {selectedProduit.cip1 || '-'}</p>
                     </div>

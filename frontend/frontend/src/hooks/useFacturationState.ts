@@ -275,7 +275,8 @@ export function useFacturationState() {
       poste_caisse_id: multiCaisse.selectedPosteCaisseId,
       prescriptionImage: ui.prescriptionImage,
       modificationInvoiceId: ui.modificationInvoiceId,
-      isFactureA4: isFactureA4
+      isFactureA4: isFactureA4,
+      is_avoir_client: ui.isAvoirClient
     }
     await completeSale(params)
   }

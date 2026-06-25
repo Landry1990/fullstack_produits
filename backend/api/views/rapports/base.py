@@ -1,5 +1,6 @@
 from decimal import Decimal
-from django.db.models import Sum, F, DecimalField, Q, Count, Value
+from datetime import timedelta
+from django.db.models import Sum, F, DecimalField, Q, Count, Value, Min, Max
 from django.db.models.functions import Coalesce
 from api.models import Facture, FactureProduit, FactureProduitAllocation, Caisse, CouponMonnaie, CommandeProduit, MouvementCaisse
 
@@ -75,43 +76,31 @@ class RapportBaseMixin:
         }
 
     def _calculate_margin(self, factures):
-        from django.db.models import OuterRef, Subquery
-
-        # Exclure les allocations is_divers du coût d'achat
-        allocations = FactureProduitAllocation.objects.filter(
-            facture_produit__facture__in=factures
-        ).exclude(stock_lot__is_divers=True)
-        cout_achat_total = allocations.aggregate(
-            total=Coalesce(Sum(F('cost_price') * F('quantity'), output_field=DecimalField()), Decimal('0.00'))
-        )['total']
-
-        # Sous-requête pour exclure is_divers du CA HT
-        divers_total_sub = FactureProduitAllocation.objects.filter(
-            facture_produit__facture=OuterRef('pk'),
-            stock_lot__is_divers=True
-        ).values('facture_produit__facture').annotate(
-            total_divers=Coalesce(
-                Sum(F('selling_price') * F('quantity'), output_field=DecimalField()),
-                Decimal('0.00')
-            )
-        ).values('total_divers')
-
-        ca_ht_total = factures.annotate(
-            divers_amount=Coalesce(
-                Subquery(divers_total_sub, output_field=DecimalField()),
-                Decimal('0.00')
-            ),
-            adjusted_ht=F('total_ht') - F('divers_amount')
-        ).aggregate(
-            total=Coalesce(Sum('adjusted_ht'), Decimal('0.00'))
-        )['total']
-
-        marge_brute = ca_ht_total - cout_achat_total
-        marge_pct = (marge_brute / ca_ht_total * 100) if ca_ht_total > 0 else Decimal('0.00')
+        from api.services.margin_service import MarginService
+        
+        # Get date range from factures
+        date_debut = factures.aggregate(min_date=Min('date'))['min_date']
+        date_fin = factures.aggregate(max_date=Max('date'))['max_date']
+        
+        if not date_debut or not date_fin:
+            return {
+                'cout_achat': Decimal('0.00'),
+                'marge_brute': Decimal('0.00'),
+                'marge_pct': 0.0
+            }
+        
+        # Use centralized margin calculation with discounts
+        margin_stats = MarginService.calculate_period_margin_with_discounts(
+            date_debut=date_debut,
+            date_fin=date_fin + timedelta(days=1),  # Make it exclusive
+            factures_qs=factures,
+            exclude_is_divers=True  # Monthly reports exclude is_divers
+        )
+        
         return {
-            'cout_achat': cout_achat_total,
-            'marge_brute': marge_brute,
-            'marge_pct': round(marge_pct, 2)
+            'cout_achat': margin_stats['cout_achat_total'],
+            'marge_brute': margin_stats['marge_brute'],
+            'marge_pct': float(margin_stats['marge_pct'])
         }
 
     def _calculate_encaissements(self, date_debut, date_fin, factures):

@@ -58,11 +58,11 @@ export const ProductDetailPanel: React.FC<ProductDetailPanelProps> = (props) => 
               <div className="flex flex-wrap items-center gap-2">
                 <span className="inline-flex items-center px-3 py-1.5 rounded-lg bg-primary/10 text-primary text-xs font-semibold uppercase">#{selectedProduit.id}</span>
                 <span className={`inline-flex items-center px-3 py-1.5 rounded-lg text-xs font-semibold ${
-                  (selectedProduit.stock ?? 0) <= 0 ? 'bg-error/10 text-error' :
-                  (selectedProduit.stock ?? 0) <= (selectedProduit.stock_alert ?? 0) ? 'bg-warning/10 text-warning' :
+                  ((selectedProduit.total_stock ?? selectedProduit.stock) ?? 0) <= 0 ? 'bg-error/10 text-error' :
+                  ((selectedProduit.total_stock ?? selectedProduit.stock) ?? 0) <= (selectedProduit.stock_alert ?? 0) ? 'bg-warning/10 text-warning' :
                   'bg-success/10 text-success'
                 }`}>
-                  {t('products:detail.rayon_label')}: {selectedProduit.stock ?? 0}
+                  {t('products:detail.stock_label', { defaultValue: 'Stock' })}: {selectedProduit.total_stock ?? selectedProduit.stock ?? 0}
                   {selectedProduit.has_reserve_storage && (
                     <> / {t('products:detail.reserve_label')}: {selectedProduit.stock_reserve ?? 0}</>
                   )}
