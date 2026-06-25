@@ -21,6 +21,7 @@ export interface UseDevisLoaderOptions {
         setModificationInvoiceId: (v: number | null) => void
         setModificationInvoiceStatus: (v: string | null) => void
         setOriginalTotalTtc: (v: number) => void
+        setIsAvoirClient?: (v: boolean) => void
     }
 }
 
@@ -76,6 +77,10 @@ export function useDevisLoader({ clientsHook, cart, ui }: UseDevisLoaderOptions)
                 if (devis.remise) {
                     ui.setRemiseGlobale(devis.remise)
                     ui.setRemiseMode('montant')
+                }
+
+                if (devis.is_avoir_client && ui.setIsAvoirClient) {
+                    ui.setIsAvoirClient(devis.is_avoir_client)
                 }
 
                 const isValidatedOrPaid = devis.status === 'VAL' || devis.status === 'PAY'

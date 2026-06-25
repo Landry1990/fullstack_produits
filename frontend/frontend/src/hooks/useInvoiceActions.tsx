@@ -270,6 +270,7 @@ export const useInvoiceActions = ({ setFacturesLocal }: UseInvoiceActionsProps) 
                 date: new Date().toISOString(),
                 date_paiement: new Date().toISOString(),
                 reference: null,
+                is_avoir_client: true, // Flag to bypass Sudo validation
             };
 
             // Sauvegarder la facture "avoir" pour le chargement dans Facturation
