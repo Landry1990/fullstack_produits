@@ -142,6 +142,7 @@ export function useFacturationUI() {
     const [modificationInvoiceId, setModificationInvoiceId] = useState<number | null>(null)
     const [modificationInvoiceStatus, setModificationInvoiceStatus] = useState<string | null>(null)
     const [originalTotalTtc, setOriginalTotalTtc] = useState<number>(0)
+    const [isAvoirClient, setIsAvoirClient] = useState(false)
 
 
     // --- HELPERS ---
@@ -168,6 +169,7 @@ export function useFacturationUI() {
         setModificationInvoiceId(null)
         setModificationInvoiceStatus(null)
         setOriginalTotalTtc(0)
+        setIsAvoirClient(false)
     }, [])
 
     const openPaymentModal = useCallback((facture?: Facture) => {
@@ -242,6 +244,7 @@ export function useFacturationUI() {
         modificationInvoiceId, setModificationInvoiceId,
         modificationInvoiceStatus, setModificationInvoiceStatus,
         originalTotalTtc, setOriginalTotalTtc,
+        isAvoirClient, setIsAvoirClient,
 
         // Actions
         resetUIState,

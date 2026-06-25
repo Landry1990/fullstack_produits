@@ -164,42 +164,14 @@ class DashboardViewSet(viewsets.ViewSet):
                 for p in top_products
             ]
 
-            # 6. Today's Margin (Improved with unallocated products and discounts)
-            # NOTE: Le dashboard ne filtre PAS les is_divers (contrairement aux rapports mensuels)
-            factures_today_qs = Facture.objects.filter(
-                date__date=today,
-                status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE]
-            ).annotate(
-                num_p=Count('paiements')
-            ).exclude(status=Facture.Status.VALIDEE, num_p=0)
-
-            total_global_remise = factures_today_qs.aggregate(s=Coalesce(Sum('remise'), Decimal('0')))['s']
-
-            # 6a. Margin from allocated products (FIFO/FEFO)
-            # Using HT calculation like monthly report: cost_price * quantity
-            margin_allocated = FactureProduitAllocation.objects.filter(
-                facture_produit__facture__in=factures_today_qs
-            ).aggregate(
-                total=Coalesce(Sum(F('cost_price') * F('quantity'), output_field=DecimalField()), Decimal('0'))
-            )['total']
-
-            # 6b. Cost from unallocated products (fallback to PMP)
-            unallocated_cost = FactureProduit.objects.filter(
-                facture__in=factures_today_qs
-            ).annotate(
-                has_allocation=Exists(FactureProduitAllocation.objects.filter(facture_produit=OuterRef('pk')))
-            ).filter(
-                has_allocation=False
-            ).aggregate(
-                total=Coalesce(Sum(F('produit__pmp') * F('quantity'), output_field=DecimalField()), Decimal('0'))
-            )['total']
-
-            # Calculate margin based on TTC for consistency
-            ca_ttc_today = factures_today_qs.aggregate(
-                total=Coalesce(Sum('total_ttc'), Decimal('0'))
-            )['total']
- 
-            margin_today = ca_ttc_today - (margin_allocated + unallocated_cost)
+            # 6. Today's Margin (Centralized calculation with discounts)
+            from ..services.margin_service import MarginService
+            margin_stats = MarginService.calculate_period_margin_with_discounts(
+                date_debut=today,
+                date_fin=today + timedelta(days=1),
+                exclude_is_divers=False  # Dashboard includes is_divers
+            )
+            margin_today = margin_stats['marge_brute']
 
             # 7. Dormant Stock (6 months defaults)
             dormant_threshold = today - timedelta(days=6 * 30)
@@ -318,33 +290,30 @@ class DashboardViewSet(viewsets.ViewSet):
             ttc_mois=Coalesce(Sum(F('total_ttc')), Decimal('0'))
         )
 
-        # 2. Somme des Coûts (Allocations + Unallocated fallback)
-        # NOTE: Le dashboard ne filtre PAS les is_divers (contrairement aux rapports mensuels)
-        # Coûts depuis les allocations
-        cost_alloc_stats = FactureProduitAllocation.objects.filter(
-            facture_produit__facture__in=factures_mois_qs
-        ).aggregate(
-            cost_jour=Coalesce(Sum(Case(When(facture_produit__facture__date__date=today, then=F('cost_price') * F('quantity')), default=Value(0, output_field=DecimalField()))), Decimal('0')),
-            cost_sem=Coalesce(Sum(Case(When(facture_produit__facture__date__date__gte=start_of_week, then=F('cost_price') * F('quantity')), default=Value(0, output_field=DecimalField()))), Decimal('0')),
-            cost_mois=Coalesce(Sum(F('cost_price') * F('quantity')), Decimal('0'))
+        # 2. Somme des Coûts (Centralized calculation with discounts)
+        # NOTE: Manager stats exclude is_divers like monthly reports
+        from ..services.margin_service import MarginService
+        
+        margin_jour_stats = MarginService.calculate_period_margin_with_discounts(
+            date_debut=today,
+            date_fin=today + timedelta(days=1),
+            exclude_is_divers=True
         )
-
-        # Coûts depuis les lignes non allouées
-        cost_unalloc_stats = FactureProduit.objects.filter(
-            facture__in=factures_mois_qs
-        ).annotate(
-            has_allocation=Exists(FactureProduitAllocation.objects.filter(facture_produit=OuterRef('pk')))
-        ).filter(
-            has_allocation=False
-        ).aggregate(
-            cost_jour=Coalesce(Sum(Case(When(facture__date__date=today, then=F('produit__pmp') * F('quantity')), default=Value(0, output_field=DecimalField()))), Decimal('0')),
-            cost_sem=Coalesce(Sum(Case(When(facture__date__date__gte=start_of_week, then=F('produit__pmp') * F('quantity')), default=Value(0, output_field=DecimalField()))), Decimal('0')),
-            cost_mois=Coalesce(Sum(F('produit__pmp') * F('quantity')), Decimal('0'))
+        margin_jour = margin_jour_stats['marge_brute']
+        
+        margin_sem_stats = MarginService.calculate_period_margin_with_discounts(
+            date_debut=start_of_week,
+            date_fin=today + timedelta(days=1),
+            exclude_is_divers=True
         )
-
-        margin_jour = ca_ttc_stats['ttc_jour'] - (cost_alloc_stats['cost_jour'] + cost_unalloc_stats['cost_jour'])
-        margin_sem = ca_ttc_stats['ttc_sem'] - (cost_alloc_stats['cost_sem'] + cost_unalloc_stats['cost_sem'])
-        margin_mois = ca_ttc_stats['ttc_mois'] - (cost_alloc_stats['cost_mois'] + cost_unalloc_stats['cost_mois'])
+        margin_sem = margin_sem_stats['marge_brute']
+        
+        margin_mois_stats = MarginService.calculate_period_margin_with_discounts(
+            date_debut=start_of_month,
+            date_fin=today + timedelta(days=1),
+            exclude_is_divers=True
+        )
+        margin_mois = margin_mois_stats['marge_brute']
         
         # --- Objectifs (Full fetch) ---
         objectifs_data = ObjectifCommercial.get_objectifs_courants()

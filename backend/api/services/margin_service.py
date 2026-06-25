@@ -5,7 +5,7 @@ Service centralisé pour tous les calculs de marge
 from decimal import Decimal, ROUND_HALF_UP
 from typing import Dict, List, Optional, Tuple, Union
 from datetime import timedelta
-from django.db.models import Sum, F, DecimalField, Q, Value, Count, Avg
+from django.db.models import Sum, F, DecimalField, Q, Value, Count, Avg, Exists, OuterRef
 from django.db.models.functions import Coalesce
 from django.utils import timezone
 from api.models import Produit, Facture, FactureProduit, FactureProduitAllocation, StockLot
@@ -164,6 +164,105 @@ class MarginService:
             'marge_brute': marge_brute.quantize(Decimal('0.01'), rounding=ROUND_HALF_UP),
             'marge_pct': marge_pct.quantize(Decimal('0.01'), rounding=ROUND_HALF_UP),
             'nb_factures': factures_with_margin['nb_factures']
+        }
+    
+    @staticmethod
+    def calculate_period_margin_with_discounts(
+        date_debut,
+        date_fin,
+        factures_qs=None,
+        exclude_is_divers=True
+    ) -> Dict[str, Decimal]:
+        """
+        Calcule la marge sur une période avec prise en compte des remises globales
+        Formule unifiée : (CA TTC * ratio_remise) - coût_achat
+        où ratio_remise = total_ttc / (total_ttc + remise_globale)
+        
+        Args:
+            date_debut: Date de début
+            date_fin: Date de fin
+            factures_qs: Queryset de factures (optionnel)
+            exclude_is_divers: Exclure les lots is_divers (défaut True)
+            
+        Returns:
+            Dict avec statistiques de marge sur la période
+        """
+        if factures_qs is None:
+            factures_qs = Facture.objects.filter(
+                status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE],
+                date__gte=date_debut,
+                date__lt=date_fin
+            )
+        
+        # Exclure les factures avec uniquement des produits is_divers si demandé
+        if exclude_is_divers:
+            factures_qs = factures_qs.exclude(
+                produits__allocations__stock_lot__is_divers=True
+            ).distinct()
+        
+        # Coût des produits alloués (exclure is_divers)
+        allocations_qs = FactureProduitAllocation.objects.filter(
+            facture_produit__facture__in=factures_qs
+        )
+        if exclude_is_divers:
+            allocations_qs = allocations_qs.exclude(stock_lot__is_divers=True)
+        
+        cost_allocated = allocations_qs.aggregate(
+            total=Coalesce(
+                Sum(F('cost_price') * F('quantity'), output_field=DecimalField()),
+                Value(0, output_field=DecimalField())
+            )
+        )['total']
+        
+        # Coût des produits non alloués (fallback PMP)
+        unallocated_qs = FactureProduit.objects.filter(
+            facture__in=factures_qs
+        ).annotate(
+            has_alloc=Exists(
+                FactureProduitAllocation.objects.filter(facture_produit=OuterRef('pk'))
+            )
+        ).filter(has_alloc=False)
+        
+        if exclude_is_divers:
+            unallocated_qs = unallocated_qs.exclude(produit__stock_lots__is_divers=True)
+        
+        cost_unallocated = unallocated_qs.aggregate(
+            total=Coalesce(
+                Sum(F('produit__pmp') * F('quantity'), output_field=DecimalField()),
+                Value(0, output_field=DecimalField())
+            )
+        )['total']
+        
+        total_cost = cost_allocated + cost_unallocated
+        
+        # CA TTC total
+        ca_ttc_total = factures_qs.aggregate(
+            total=Coalesce(Sum('total_ttc'), Value(0, output_field=DecimalField()))
+        )['total']
+        
+        # Calcul de la marge avec ratio de remise globale
+        # ratio_remise = total_ttc / (total_ttc + remise_globale)
+        total_remise = factures_qs.aggregate(
+            total=Coalesce(Sum('remise'), Value(0, output_field=DecimalField()))
+        )['total']
+        
+        ratio_remise = Decimal('1')
+        if ca_ttc_total + total_remise > 0:
+            ratio_remise = ca_ttc_total / (ca_ttc_total + total_remise)
+        
+        ca_ttc_net = ca_ttc_total * ratio_remise
+        marge_brute = ca_ttc_net - total_cost
+        marge_pct = (marge_brute / ca_ttc_net * 100) if ca_ttc_net > 0 else Decimal('0.00')
+        
+        return {
+            'ca_ttc_total': ca_ttc_total.quantize(Decimal('0.01'), rounding=ROUND_HALF_UP),
+            'ca_ttc_net': ca_ttc_net.quantize(Decimal('0.01'), rounding=ROUND_HALF_UP),
+            'cout_achat_total': total_cost.quantize(Decimal('0.01'), rounding=ROUND_HALF_UP),
+            'remise_globale': total_remise.quantize(Decimal('0.01'), rounding=ROUND_HALF_UP),
+            'ratio_remise': ratio_remise.quantize(Decimal('0.0001'), rounding=ROUND_HALF_UP),
+            'marge_brute': marge_brute.quantize(Decimal('0.01'), rounding=ROUND_HALF_UP),
+            'marge_pct': marge_pct.quantize(Decimal('0.01'), rounding=ROUND_HALF_UP),
+            'nb_factures': Decimal(str(factures_qs.count()))
         }
     
     @staticmethod

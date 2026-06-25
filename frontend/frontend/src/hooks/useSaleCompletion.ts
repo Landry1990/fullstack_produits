@@ -286,6 +286,7 @@ function useSaleCompletion(options: UseSaleCompletionOptions = {}): UseSaleCompl
                 existing_id: params.modificationInvoiceId,
                 image_ordonnance: params.prescriptionImage,
                 idempotency_key: idempotencyKey,
+                is_avoir_client: params.is_avoir_client || false,
             };
 
             const finalFacture = await venteService.finaliser(finalPayload, idempotencyKey);

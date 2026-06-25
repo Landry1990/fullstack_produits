@@ -139,13 +139,13 @@ class FactureViewSet(BaseViewSetConfig, OptimizedSerializerMixin, viewsets.Model
         # Masquer les factures 'envoyées à la caisse' (VAL sans paiement) de la liste par défaut
         # sauf si on demande explicitement les brouillons ou les attentes.
         if self.action == 'list':
-            include_pending = self.request.query_params.get('include_pending', 'false').lower() == 'true'
+            include_pending = self.request.query_params.get('include_pending', 'false').lower() == 'true'  # type: ignore[attr-defined]
             if not include_pending:
                 queryset = queryset.annotate(num_p=Count('paiements')).exclude(status=Facture.Status.VALIDEE, num_p=0)
 
         # Add prefetch only for detail view where products/payments are shown, OR omnisearch, OR printing
-        is_omnisearch = self.request.query_params.get('layout') == 'omnisearch'
-        is_checkout = self.request.query_params.get('include_details') == 'true'
+        is_omnisearch = self.request.query_params.get('layout') == 'omnisearch'  # type: ignore[attr-defined]
+        is_checkout = self.request.query_params.get('include_details') == 'true'  # type: ignore[attr-defined]
         is_printing = self.action in ['retrieve', 'imprimer', 'imprimer_proforma', 'generer_avoir']
         
         if is_printing or is_omnisearch or is_checkout:
@@ -165,9 +165,9 @@ class FactureViewSet(BaseViewSetConfig, OptimizedSerializerMixin, viewsets.Model
     search_fields = ['numero_facture', 'client__name', 'produits__produit__name']
     
     def get_serializer_class(self):
-        if self.request.query_params.get('layout') == 'omnisearch':
+        if self.request.query_params.get('layout') == 'omnisearch':  # type: ignore[attr-defined]
             return FactureOmnisearchSerializer
-        if self.request.query_params.get('include_details') == 'true':
+        if self.request.query_params.get('include_details') == 'true':  # type: ignore[attr-defined]
             return self.detail_serializer_class
         return super().get_serializer_class()
 
@@ -200,7 +200,7 @@ class FactureViewSet(BaseViewSetConfig, OptimizedSerializerMixin, viewsets.Model
         users_qs = AuthUser.objects.filter(is_active=True).order_by('first_name', 'last_name')
         users_data = [
             {
-                'id': u.id,
+                'id': u.id,  # type: ignore[attr-defined]
                 'username': u.username,
                 'first_name': u.first_name,
                 'last_name': u.last_name,
@@ -280,14 +280,16 @@ class FactureViewSet(BaseViewSetConfig, OptimizedSerializerMixin, viewsets.Model
             total_ttc = temp_sum - remise_globale
 
         validation_user = None
-        if total_ttc <= 0:
+        is_avoir_client = data.get('is_avoir_client', False)
+        
+        if total_ttc <= 0 and not is_avoir_client:
             try:
                 validation_user, error_res = validate_sudo_mode(request)
                 if error_res:
                     return error_res
 
                 # Allow if user is superuser OR has the specific permission
-                has_permission = getattr(validation_user.profile, 'can_validate_zero_amount', False) if hasattr(validation_user, 'profile') else False
+                has_permission = getattr(validation_user.profile, 'can_validate_zero_amount', False) if hasattr(validation_user, 'profile') else False  # type: ignore[attr-defined]
 
                 if validation_user == user and not user.is_superuser and not has_permission:
                     return Response({

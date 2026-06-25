@@ -68,6 +68,7 @@ export interface Facture {
     montant_en_compte?: string
     total_lettres?: string
     poste_caisse?: number | PosteCaisse
+    is_avoir_client?: boolean
 }
 
 export interface PaymentDetails {
@@ -294,6 +295,7 @@ export interface SaleCompletionParams {
     sudo_password?: string;
     poste_caisse_id?: number | null;
     prescriptionImage?: File | null;
+    is_avoir_client?: boolean;
     isFactureA4?: boolean;
 }
 

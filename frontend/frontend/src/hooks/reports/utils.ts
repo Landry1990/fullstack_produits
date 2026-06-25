@@ -70,11 +70,14 @@ export const COLUMN_LABELS: Record<string, string> = {
 };
 
 export const formatColumnHeader = (col: string, t?: any): string => {
-    if (t) {
-        const translated = t(`reports.column_labels.${col}`, { defaultValue: COLUMN_LABELS[col] });
-        if (translated) return translated;
-    }
+    // First check COLUMN_LABELS directly
     if (COLUMN_LABELS[col]) return COLUMN_LABELS[col];
+    
+    // Then try i18n translation with fallback to COLUMN_LABELS
+    if (t) {
+        const translated = t(`reports.column_labels.${col}`, { defaultValue: COLUMN_LABELS[col] || col.replace(/_/g, ' ') });
+        if (translated && translated !== `reports.column_labels.${col}`) return translated;
+    }
 
     const match = col.match(/^(\d{4})_(.*)$/);
     if (match && t) {
