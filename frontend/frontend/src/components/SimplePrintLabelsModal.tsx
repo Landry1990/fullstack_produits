@@ -617,8 +617,10 @@ export default function SimplePrintLabelsModal({
                 gs1 += `(17)${yy}${mm}${dd}`
               }
             }
-            const size = isCompact ? 9 : 11
-            barcodeSvg = bwipjs.toSVG({ bcid: 'datamatrix', text: gs1, scale: 2, height: size, width: size, parsefnc: true })
+            const size = isCompact ? 7 : 9
+            const svgRaw = bwipjs.toSVG({ bcid: 'datamatrix', text: gs1, scale: 1, height: size, width: size, parsefnc: true })
+            const svgMm = isCompact ? '7mm' : '9mm'
+            barcodeSvg = svgRaw.replace('<svg ', `<svg style="width:${svgMm};height:${svgMm};display:block;" `)
           } catch { /* ignore */ }
         } else {
           try {
@@ -652,7 +654,8 @@ export default function SimplePrintLabelsModal({
 
       // Barcode
       if (barcodeSvg) {
-        lines.push(`<div style="display:flex;justify-content:center;align-items:center;margin:0.2mm 0;flex-shrink:0;">${barcodeSvg}</div>`)
+        const barcodeMaxH = barcodeType === 'DATAMATRIX' ? (isCompact ? '7mm' : '9mm') : (isCompact ? '6mm' : '8mm')
+        lines.push(`<div style="display:flex;justify-content:center;align-items:center;margin:0.2mm 0;flex-shrink:0;max-height:${barcodeMaxH};overflow:hidden;">${barcodeSvg}</div>`)
       }
 
       // Bottom row - Grouped version for space saving

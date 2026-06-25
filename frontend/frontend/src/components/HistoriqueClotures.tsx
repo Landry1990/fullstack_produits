@@ -728,7 +728,7 @@ export default function HistoriqueClotures() {
             </div>
           </div>
           {showMetric && (
-            <div className="p-6 bg-slate-50">
+            <div className="p-3 bg-slate-50/50">
               <BestCashierMetric month={metricMonth} year={metricYear} userId={selectedUser || undefined} />
             </div>
           )}
