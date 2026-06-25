@@ -98,6 +98,7 @@ export const SalesTable: React.FC<SalesTableProps> = ({
         if (['VAL', 'VALIDE', 'VALIDÉE', 'VALIDEE'].includes(s)) return 'VAL';
         if (['ANN', 'ANNULEE', 'ANNULÉE'].includes(s)) return 'ANN';
         if (['BROU', 'BROUILLON'].includes(s)) return 'BROU';
+        if (['PROF', 'PROFORMA'].includes(s)) return 'PROF';
         return s || 'UNKNOWN';
     };
 
@@ -108,6 +109,7 @@ export const SalesTable: React.FC<SalesTableProps> = ({
             case 'VAL': return t('sales:status.validated', 'Validated');
             case 'BROU': return t('sales:status.draft', 'Draft');
             case 'ANN': return t('sales:status.cancelled', 'Cancelled');
+            case 'PROF': return t('sales:status.proforma', 'Proforma');
             default: return status;
         }
     };
@@ -118,6 +120,7 @@ export const SalesTable: React.FC<SalesTableProps> = ({
             case 'PAY': return 'bg-emerald-50 text-emerald-600 border-emerald-100';
             case 'ANN': return 'bg-red-50 text-red-600 border-red-100';
             case 'BROU': return 'bg-slate-100 text-slate-500 border-slate-200';
+            case 'PROF': return 'bg-blue-50 text-blue-600 border-blue-100';
             default: return 'bg-amber-50 text-amber-600 border-amber-100';
         }
     };

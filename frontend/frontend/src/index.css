@@ -183,21 +183,28 @@ input, button, textarea, select {
 }
 
 /* Custom scrollbar for sidebar */
+.custom-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(16, 185, 129, 0.7) transparent;
+}
+
 .custom-scrollbar::-webkit-scrollbar {
-  width: 4px;
+  width: 5px;
 }
 
 .custom-scrollbar::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-.custom-scrollbar::-webkit-scrollbar-thumb {
-  background: rgba(16, 185, 129, 0.45);
+  background: rgba(255, 255, 255, 0.05);
   border-radius: 10px;
 }
 
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(16, 185, 129, 0.7);
+  border-radius: 10px;
+  min-height: 40px;
+}
+
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-  background: rgba(16, 185, 129, 0.85);
+  background: rgba(16, 185, 129, 1);
 }
 
 /* Prevent horizontal overflow globally */

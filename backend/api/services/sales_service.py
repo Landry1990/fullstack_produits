@@ -84,7 +84,7 @@ class SalesService:
                 )
             
             # Utiliser le poste de la session active
-            poste_caisse_id = session_active.poste_id
+            poste_caisse_id = session_active.poste_id  # type: ignore[attr-defined]
 
         # Validate each product entry before touching the DB
         valid_product_ids = set(
@@ -110,21 +110,23 @@ class SalesService:
 
         # 2. Handle Existing Facture or Create New
         existing_id = data.get('existing_id')
-        poste_caisse_id = data.get('poste_caisse_id')
+        # Ne pas écraser poste_caisse_id déjà résolu depuis la session active (lignes 51-87)
+        if data.get('poste_caisse_id'):
+            poste_caisse_id = data.get('poste_caisse_id')
         
         if existing_id:
             try:
                 facture = Facture.objects.get(id=existing_id)
                 # Ensure we reset status to draft before re-validating
                 facture.status = Facture.Status.BROUILLON
-                facture.client_id = client_id
+                facture.client_id = client_id  # type: ignore[attr-defined]
                 facture.client_name_override = client_name_override
-                facture.ayant_droit_id = ayant_droit_id
+                facture.ayant_droit_id = ayant_droit_id  # type: ignore[attr-defined]
                 facture.remise = remise_montant
-                facture.validated_by = validation_user
+                facture.validated_by = validation_user  # type: ignore[attr-defined]
                 if poste_caisse_id:
-                    facture.poste_caisse_id = poste_caisse_id
-                if centralized and not facture.ticket_session:
+                    facture.poste_caisse_id = poste_caisse_id  # type: ignore[attr-defined]
+                if centralized and not facture.ticket_session:  # type: ignore[attr-defined]
                     facture.ticket_session = get_next_ticket_session()
                 facture.save()
                 
@@ -136,14 +138,14 @@ class SalesService:
                 raise ValueError(f"La facture #{existing_id} est introuvable.")
         else:
             facture = Facture.objects.create(
-                client_id=client_id,
+                client_id=client_id,  # type: ignore[attr-defined]
                 client_name_override=client_name_override,
-                ayant_droit_id=ayant_droit_id,
+                ayant_droit_id=ayant_droit_id,  # type: ignore[attr-defined]
                 remise=remise_montant,
                 status=Facture.Status.BROUILLON,
                 created_by=user,
-                validated_by=validation_user,
-                poste_caisse_id=poste_caisse_id,
+                validated_by=validation_user,  # type: ignore[attr-defined]
+                poste_caisse_id=poste_caisse_id,  # type: ignore[attr-defined]
                 ticket_session=get_next_ticket_session() if centralized else None
             )
 
@@ -218,19 +220,25 @@ class SalesService:
                 LigneOrdonnancier.objects.bulk_create(ordonnance_lignes_to_create)
 
         # 7. Validation Logic (Destocking, FIFO, loyalty)
-        validation_data = {
-            'use_pending_discount': loyalty_data.get('use_pending_discount', False),
-            'points_to_use': loyalty_data.get('points_to_use', 0),
-            'paiement_immediat': sum(Decimal(str(p['montant'])) for p in paiements_data),
-            'mode_paiement': data.get('mode_paiement') # Can be passed for single payment auto-creation
-        }
-        
-        # Call the logic directly or via a static method
-        SalesService.validate_invoice(facture, validation_user, validation_data, operator=user)
+        # En mode caisse centralisée : la facture reste PROFORMA et attend l'encaissement à la caisse.
+        # En mode direct : validation immédiate avec déstockage.
+        if centralized:
+            facture.status = Facture.Status.PROFORMA
+            facture._skip_audit = True
+            facture.save(update_fields=['status'])
+        else:
+            validation_data = {
+                'use_pending_discount': loyalty_data.get('use_pending_discount', False),
+                'points_to_use': loyalty_data.get('points_to_use', 0),
+                'paiement_immediat': sum(Decimal(str(p['montant'])) for p in paiements_data),
+                'mode_paiement': data.get('mode_paiement')
+            }
+            SalesService.validate_invoice(facture, validation_user, validation_data, operator=user)
 
-        # 8. Payments (create immediately in both modes)
-        # Centralized cash register also records payments at the central desk
-        if paiements_data:
+        # 8. Payments
+        # En mode direct : les paiements sont enregistrés immédiatement.
+        # En mode caisse centralisée : les paiements sont créés au moment de l'encaissement à la caisse centrale.
+        if not centralized and paiements_data:
             if not Caisse.objects.filter(facture=facture).exists():
                 for p_data in paiements_data:
                     if Decimal(str(p_data.get('montant', 0))) > 0:
@@ -345,12 +353,16 @@ class SalesService:
         
         for item in items:
             produit = products_map.get(item.produit_id)
+            if not produit:
+                continue
             lots_updated = False
             
             if item.quantity > 0:
                 qty_to_alloc = item.quantity
                 if item.stock_lot_id:
                     target_lot = lots_map.get(item.stock_lot_id)
+                    if target_lot is None:
+                        raise ValueError(f"Lot de stock {item.stock_lot_id} introuvable pour le produit {item.produit_id}.")
                     if target_lot.quantity_remaining < qty_to_alloc:
                         raise ValueError(f"Stock insuffisant dans le lot {target_lot.lot}.")
                     
