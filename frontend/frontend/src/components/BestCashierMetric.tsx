@@ -73,124 +73,95 @@ const BestCashierMetric: React.FC<BestCashierMetricProps> = ({ month, year, user
     const winner = performances[0];
 
     return (
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {/* Winner Card */}
-            <div className="lg:col-span-1 bg-primary rounded-2xl shadow-lg p-6 text-primary-content relative overflow-hidden group border border-primary-focus">
-                {/* Subtle pattern instead of big icon */}
-                <div className="absolute inset-0 opacity-5 pointer-events-none">
-                    <svg width="100%" height="100%"><rect width="100%" height="100%" fill="url(#grid)"/><defs><pattern id="grid" width="20" height="20" patternUnits="userSpaceOnUse"><path d="M 20 0 L 0 0 0 20" fill="none" stroke="currentColor" strokeWidth="1"/></pattern></defs></svg>
+        <div className="flex flex-col sm:flex-row gap-3">
+            {/* Winner Card — compact horizontal */}
+            <div className="sm:w-56 shrink-0 bg-emerald-600 rounded-xl p-3 text-white relative overflow-hidden border border-emerald-700">
+                <div className="flex items-center gap-2 mb-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-yellow-300 shrink-0"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></svg>
+                    <span className="text-[10px] font-black uppercase tracking-widest opacity-80">{t('performance.best_cashier')}</span>
                 </div>
-                
-                <div className="relative z-10">
-                    <div className="flex items-center gap-2 mb-4">
-                        <div className="bg-base-100/20 p-2 rounded-xl border border-white/30 backdrop-blur-sm">
-                             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-yellow-300"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></svg>
-                        </div>
-                        <h3 className="font-black text-lg uppercase tracking-widest">{t('performance.best_cashier')}</h3>
+                <div className="flex items-center gap-2 mb-3">
+                    <div className="bg-white/20 text-white rounded-lg size-9 flex items-center justify-center text-sm font-black border border-white/40 shrink-0">
+                        {winner.username.charAt(0).toUpperCase()}
                     </div>
-
-                    <div className="flex items-center gap-5 mb-6 pt-2">
-                        <div className="avatar placeholder">
-                            <div className="bg-base-100/30 text-white rounded-2xl size-20 flex items-center justify-center text-3xl font-black border-2 border-white/50 shadow-inner">
-                                <span>{winner.username.charAt(0).toUpperCase()}</span>
-                            </div>
-                        </div>
-                        <div className="min-w-0">
-                            <div className="text-2xl font-black leading-tight truncate drop-shadow-sm">{winner.full_name}</div>
-                            <div className="text-white/70 text-sm font-bold flex items-center gap-1">
-                                <span className="text-base-content/50">@</span>{winner.username}
-                            </div>
-                        </div>
+                    <div className="min-w-0">
+                        <div className="text-sm font-black leading-tight truncate">{winner.full_name}</div>
+                        <div className="text-white/60 text-[10px] font-bold">@{winner.username}</div>
                     </div>
-
-                    <div className="space-y-4 pt-5 border-t border-white/20">
-                        <div className="flex justify-between items-end">
-                            <span className="text-white/80 text-xs font-bold uppercase tracking-wider">{t('performance.rigor_score')}</span>
-                            <span className="text-2xl font-black text-yellow-300 drop-shadow-md">{formatCurrency(winner.moyenne_ecart_absolu)}</span>
-                        </div>
-                        <div className="flex justify-between items-center bg-base-100/10 p-2 px-3 rounded-lg border border-white/5">
-                            <span className="text-white/80 text-[10px] font-bold uppercase tracking-wider">{t('performance.avg_trend')}</span>
-                            <span className="font-black text-xs">
-                                {winner.moyenne_ecart_algebrique > 0 ? '+' : ''}{formatCurrency(winner.moyenne_ecart_algebrique)}
-                            </span>
-                        </div>
-                        <div className="flex justify-between items-center bg-base-100/10 p-3 rounded-xl border border-white/5">
-                            <span className="text-white/80 text-xs font-bold uppercase tracking-wider">{t('performance.total_closures')}</span>
-                            <span className="font-black text-lg">{winner.nombre_clotures}</span>
-                        </div>
+                </div>
+                <div className="space-y-1.5 border-t border-white/20 pt-2">
+                    <div className="flex justify-between items-center">
+                        <span className="text-white/70 text-[10px] font-bold uppercase tracking-wide">{t('performance.rigor_score')}</span>
+                        <span className="text-sm font-black text-yellow-300">{formatCurrency(winner.moyenne_ecart_absolu)}</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                        <span className="text-white/70 text-[10px] font-bold uppercase tracking-wide">{t('performance.avg_trend')}</span>
+                        <span className="text-xs font-black">{winner.moyenne_ecart_algebrique > 0 ? '+' : ''}{formatCurrency(winner.moyenne_ecart_algebrique)}</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                        <span className="text-white/70 text-[10px] font-bold uppercase tracking-wide">{t('performance.total_closures')}</span>
+                        <span className="text-sm font-black">{winner.nombre_clotures}</span>
                     </div>
                 </div>
             </div>
 
-            {/* Ranking List Card */}
-            <div className="lg:col-span-2 bg-base-100 rounded-2xl shadow-sm border border-base-300 overflow-hidden flex flex-col">
-                <div className="px-6 py-5 border-b border-base-200 flex justify-between items-center bg-base-100/50 backdrop-blur-sm">
-                    <h3 className="font-black text-base-content flex items-center gap-3 text-lg uppercase tracking-tight">
-                         <div className="bg-primary/10 p-2 rounded-lg">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="text-primary"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-                         </div>
+            {/* Ranking Table — compact */}
+            <div className="flex-1 bg-base-100 rounded-xl border border-base-200 overflow-hidden flex flex-col">
+                <div className="px-4 py-2 border-b border-base-200 flex justify-between items-center">
+                    <h3 className="font-black text-xs text-base-content uppercase tracking-widest flex items-center gap-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="text-primary"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
                         {t('performance.ranking_title')}
                     </h3>
-                    <div className="text-xs font-bold uppercase opacity-40 bg-base-200 px-3 py-1.5 rounded-full border border-base-300">
-                        Top {performances.length}
-                    </div>
+                    <span className="text-[10px] font-bold opacity-40 bg-base-200 px-2 py-0.5 rounded-full">Top {performances.length}</span>
                 </div>
                 <div className="overflow-x-auto flex-1">
-                    <table className="table table-zebra w-full border-separate border-spacing-0">
+                    <table className="table table-xs w-full">
                         <thead>
-                            <tr className="bg-base-200/50 border-b border-base-300">
-                                <th className="text-[10px] uppercase font-black text-base-content/40 px-6 py-4 tracking-widest">{t('table.rank')}</th>
-                                <th className="text-[10px] uppercase font-black text-base-content/40 px-6 py-4 tracking-widest">{t('table.operator')}</th>
-                                <th className="text-[10px] uppercase font-black text-base-content/40 text-center px-6 py-4 tracking-widest">{t('table.closures')}</th>
-                                <th className="text-[10px] uppercase font-black text-base-content/40 text-right px-6 py-4 tracking-widest">{t('table.avg_gap')}</th>
-                                <th className="text-[10px] uppercase font-black text-base-content/40 text-right px-6 py-4 tracking-widest">{t('table.trend')}</th>
+                            <tr className="bg-base-200/40">
+                                <th className="text-[10px] uppercase font-black text-base-content/40 px-3 py-2 tracking-widest">{t('table.rank')}</th>
+                                <th className="text-[10px] uppercase font-black text-base-content/40 px-3 py-2 tracking-widest">{t('table.operator')}</th>
+                                <th className="text-[10px] uppercase font-black text-base-content/40 text-center px-3 py-2 tracking-widest">{t('table.closures')}</th>
+                                <th className="text-[10px] uppercase font-black text-base-content/40 text-right px-3 py-2 tracking-widest">{t('table.avg_gap')}</th>
+                                <th className="text-[10px] uppercase font-black text-base-content/40 text-right px-3 py-2 tracking-widest">{t('table.trend')}</th>
                             </tr>
                         </thead>
-                        <tbody className="divide-y divide-base-200">
+                        <tbody>
                             {performances.map((perf, index) => (
-                                <tr key={perf.user_id} className="hover:bg-primary/5 transition-all duration-200 group">
-                                    <td className="px-6 py-4">
+                                <tr key={perf.user_id} className="hover:bg-primary/5 transition-colors group border-b border-base-100">
+                                    <td className="px-3 py-2">
                                         {index === 0 ? (
-                                            <div className="badge bg-yellow-400 border-none text-yellow-900 font-black px-3 h-7 italic shadow-sm">{t('performance.badges.1st')}</div>
+                                            <span className="badge badge-xs bg-yellow-400 border-none text-yellow-900 font-black italic px-2">{t('performance.badges.1st')}</span>
                                         ) : index === 1 ? (
-                                            <div className="badge bg-slate-300 border-none text-base-content/90 font-black px-3 h-7 italic shadow-sm">{t('performance.badges.2nd')}</div>
+                                            <span className="badge badge-xs bg-slate-300 border-none text-base-content/90 font-black italic px-2">{t('performance.badges.2nd')}</span>
                                         ) : index === 2 ? (
-                                             <div className="badge bg-warning border-none text-amber-50 font-black px-3 h-7 italic shadow-sm">{t('performance.badges.3rd')}</div>
+                                            <span className="badge badge-xs bg-warning border-none text-amber-50 font-black italic px-2">{t('performance.badges.3rd')}</span>
                                         ) : (
-                                            <span className="text-base-content/30 font-black pl-2 font-mono">{index + 1}</span>
+                                            <span className="text-base-content/30 font-black text-xs pl-1 font-mono">{index + 1}</span>
                                         )}
                                     </td>
-                                    <td className="px-6 py-4">
-                                        <div className="flex flex-col">
-                                            <span className="font-bold text-base-content group-hover:text-primary transition-colors">{perf.full_name}</span>
-                                            <span className="text-[10px] font-bold text-base-content/30 uppercase tracking-tighter cursor-default">@{perf.username}</span>
-                                        </div>
+                                    <td className="px-3 py-2">
+                                        <div className="font-bold text-xs text-base-content group-hover:text-primary transition-colors leading-tight">{perf.full_name}</div>
+                                        <div className="text-[10px] font-bold text-base-content/30 uppercase tracking-tighter">@{perf.username}</div>
                                     </td>
-                                    <td className="px-6 py-4 text-center">
-                                        <div className="font-black text-base-content/80 text-sm">
-                                            {perf.nombre_clotures}
-                                        </div>
+                                    <td className="px-3 py-2 text-center">
+                                        <span className="font-black text-xs text-base-content/80">{perf.nombre_clotures}</span>
                                     </td>
-                                    <td className="px-6 py-4 text-right">
-                                        <div className="font-black text-primary text-sm tracking-tight bg-primary/5 rounded-lg py-1 px-3 inline-block">
-                                            {formatCurrency(perf.moyenne_ecart_absolu)}
-                                        </div>
+                                    <td className="px-3 py-2 text-right">
+                                        <span className="font-black text-xs text-primary bg-primary/5 rounded px-2 py-0.5">{formatCurrency(perf.moyenne_ecart_absolu)}</span>
                                     </td>
-                                    <td className="px-6 py-4 text-right">
-                                        <div className={`text-[11px] font-black inline-flex items-center gap-1 px-2 py-1 rounded-md ${
-                                            perf.moyenne_ecart_algebrique > 0 
-                                                ? 'bg-success/10 text-success' 
-                                                : perf.moyenne_ecart_algebrique < 0 
-                                                    ? 'bg-error/10 text-error' 
-                                                    : 'bg-base-200 text-base-content/30'
+                                    <td className="px-3 py-2 text-right">
+                                        <span className={`text-[11px] font-black inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded ${
+                                            perf.moyenne_ecart_algebrique > 0 ? 'bg-success/10 text-success'
+                                            : perf.moyenne_ecart_algebrique < 0 ? 'bg-error/10 text-error'
+                                            : 'bg-base-200 text-base-content/30'
                                         }`}>
                                             {perf.moyenne_ecart_algebrique > 0 ? (
-                                                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="m5 12 7-7 7 7"/><path d="M12 19V5"/></svg>
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="m5 12 7-7 7 7"/><path d="M12 19V5"/></svg>
                                             ) : perf.moyenne_ecart_algebrique < 0 ? (
-                                                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M12 5v14"/><path d="m19 12-7 7-7-7"/></svg>
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M12 5v14"/><path d="m19 12-7 7-7-7"/></svg>
                                             ) : null}
                                             {perf.moyenne_ecart_algebrique > 0 ? '+' : ''}{formatCurrency(perf.moyenne_ecart_algebrique)}
-                                        </div>
+                                        </span>
                                     </td>
                                 </tr>
                             ))}
