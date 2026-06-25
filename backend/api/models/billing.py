@@ -342,9 +342,10 @@ class FactureProduit(models.Model):
     )
     lot = models.CharField(max_length=20, blank=True, null=True)
     stock_lot = models.ForeignKey(
-        'StockLot', on_delete=models.SET_NULL, null=True, blank=True, 
+        'StockLot', on_delete=models.SET_NULL, null=True, blank=True,
         help_text="Lot spécifique choisi manuellement"
     )
+    stock_lot_id: int | None
     date_expiration = models.DateField(blank=True, null=True)
     created_at = models.DateTimeField(default=timezone.now)
     updated_at = models.DateTimeField(auto_now=True)

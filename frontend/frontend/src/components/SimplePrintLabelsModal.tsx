@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect, useMemo, useCallback } from 'react'
 import JsBarcode from 'jsbarcode'
+import bwipjs from 'bwip-js'
 import PremiumModal from './common/PremiumModal'
 import { useTranslation } from 'react-i18next'
 import { usePharmacySettings } from '../hooks/usePharmacySettings'
@@ -49,6 +50,15 @@ const EMPTY_PRODUCTS_LIST: ProduitModel[] = []
    ═══════════════════════════════════════════ */
 const LABEL_CONFIG_KEY = 'zenith_label_fields_config'
 const LABEL_FORMAT_KEY = 'zenith_label_format'
+const LABEL_BARCODE_TYPE_KEY = 'zenith_label_barcode_type'
+
+function loadBarcodeType(): 'CODE128' | 'DATAMATRIX' {
+  try {
+    const saved = localStorage.getItem(LABEL_BARCODE_TYPE_KEY)
+    if (saved === 'DATAMATRIX') return 'DATAMATRIX'
+  } catch { /* ignore */ }
+  return 'CODE128'
+}
 
 /* ═══════════════════════════════════════════
    DEFAULT FIELDS LOADER (Internal keys)
@@ -84,7 +94,7 @@ function loadFormat(): '40x20' | '30x15' {
 }
 
 /* ═══════════════════════════════════════════
-   BARCODE COMPONENT
+   BARCODE COMPONENTS
    ═══════════════════════════════════════════ */
 function BarcodeCanvas({ value, height, width }: { value: string; height: number; width: number }) {
   const svgRef = useRef<SVGSVGElement>(null)
@@ -103,16 +113,51 @@ function BarcodeCanvas({ value, height, width }: { value: string; height: number
           font: 'monospace',
         })
       } catch {
-        // Fallback: show text if barcode fails
-        if (svgRef.current) {
-          svgRef.current.innerHTML = ''
-        }
+        if (svgRef.current) svgRef.current.innerHTML = ''
       }
     }
   }, [value, height, width])
 
   if (!value) return null
   return <svg ref={svgRef} style={{ maxWidth: width }} />
+}
+
+function DatamatrixCanvas({ cip, lot, expiration, size }: { cip: string; lot: string; expiration: string; size: number }) {
+  const canvasRef = useRef<HTMLCanvasElement>(null)
+
+  // Construit la chaîne GS1 Datamatrix : 01<CIP13 padded to 14> 10<LOT> 17<YYMMDD>
+  const gs1Data = (() => {
+    const gtin = cip.length === 13 ? '0' + cip : cip.padStart(14, '0')
+    let s = `(01)${gtin}`
+    if (lot) s += `(10)${lot}`
+    if (expiration) {
+      try {
+        const d = new Date(expiration)
+        const yy = String(d.getFullYear()).slice(-2)
+        const mm = String(d.getMonth() + 1).padStart(2, '0')
+        const dd = String(d.getDate()).padStart(2, '0')
+        s += `(17)${yy}${mm}${dd}`
+      } catch { /* ignore */ }
+    }
+    return s
+  })()
+
+  useEffect(() => {
+    if (!canvasRef.current || !cip) return
+    try {
+      bwipjs.toCanvas(canvasRef.current, {
+        bcid: 'datamatrix',
+        text: gs1Data,
+        scale: 2,
+        height: Math.round(size / 3.78), // px → mm approx
+        width: Math.round(size / 3.78),
+        parsefnc: true,
+      })
+    } catch { /* ignore */ }
+  }, [gs1Data, size])
+
+  if (!cip) return null
+  return <canvas ref={canvasRef} style={{ width: size, height: size }} />
 }
 
 /* ═══════════════════════════════════════════
@@ -122,11 +167,13 @@ function LabelPreview({
   label,
   fields,
   format,
+  barcodeType,
   t,
 }: {
   label: LabelData
   fields: LabelField[]
   format: '40x20' | '30x15'
+  barcodeType: 'CODE128' | 'DATAMATRIX'
   t: any
 }) {
   const isEnabled = (key: string) => fields.find(f => f.key === key)?.enabled ?? false
@@ -188,7 +235,7 @@ function LabelPreview({
         )}
       </div>
 
-      {/* Middle zone: barcode */}
+      {/* Middle zone: barcode / datamatrix */}
       {isEnabled('barcode') && label.barcode && (
         <div style={{
           display: 'flex',
@@ -197,11 +244,19 @@ function LabelPreview({
           margin: '0.3mm 0',
           flexShrink: 0,
         }}>
-          <BarcodeCanvas
-            value={label.barcode}
-            height={isCompact ? 7 : 10}
-            width={isCompact ? 80 : 110}
-          />
+          {barcodeType === 'DATAMATRIX'
+            ? <DatamatrixCanvas
+                cip={label.cip}
+                lot={label.lot}
+                expiration={label.dateExpiration}
+                size={isCompact ? 28 : 36}
+              />
+            : <BarcodeCanvas
+                value={label.barcode}
+                height={isCompact ? 7 : 10}
+                width={isCompact ? 80 : 110}
+              />
+          }
         </div>
       )}
 
@@ -278,12 +333,14 @@ function PreviewLabelWrapper({
   label,
   fields,
   format,
+  barcodeType,
   t,
   scale = 2.0,
 }: {
   label: LabelData
   fields: LabelField[]
   format: '40x20' | '30x15'
+  barcodeType: 'CODE128' | 'DATAMATRIX'
   t: any
   scale?: number
 }) {
@@ -315,7 +372,7 @@ function PreviewLabelWrapper({
           height: `${baseH}mm`,
         }}
       >
-        <LabelPreview label={label} fields={fields} format={format} t={t} />
+        <LabelPreview label={label} fields={fields} format={format} barcodeType={barcodeType} t={t} />
       </div>
     </div>
   )
@@ -355,6 +412,7 @@ export default function SimplePrintLabelsModal({
   }, [t])
 
   const [labelFormat, setLabelFormat] = useState<'40x20' | '30x15'>(loadFormat)
+  const [barcodeType, setBarcodeType] = useState<'CODE128' | 'DATAMATRIX'>(loadBarcodeType)
   const [qtyMode, setQtyMode] = useState<'received' | 'fixed'>('received')
   const [fixedQty, setFixedQty] = useState(1)
   const [printing, setPrinting] = useState(false)
@@ -369,6 +427,10 @@ export default function SimplePrintLabelsModal({
   useEffect(() => {
     localStorage.setItem(LABEL_FORMAT_KEY, labelFormat)
   }, [labelFormat])
+
+  useEffect(() => {
+    localStorage.setItem(LABEL_BARCODE_TYPE_KEY, barcodeType)
+  }, [barcodeType])
 
   const toggleField = (key: string) => {
     setFields(prev =>
@@ -538,23 +600,42 @@ export default function SimplePrintLabelsModal({
       const isEnabled = (key: string) => fields.find(f => f.key === key)?.enabled ?? false
       const truncate = (s: string, max: number) => s.length > max ? s.slice(0, max - 2) + '..' : s
 
-      // Build barcode SVG string
+      // Build barcode / datamatrix SVG string
       let barcodeSvg = ''
       if (isEnabled('barcode') && label.barcode) {
-        try {
-          const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg')
-          JsBarcode(svg, label.barcode, {
-            format: 'CODE128',
-            width: isCompact ? 1 : 1.2,
-            height: isCompact ? 7 : 10,
-            displayValue: true,
-            fontSize: isCompact ? 6 : 7,
-            margin: 0,
-            textMargin: 1,
-            font: 'monospace',
-          })
-          barcodeSvg = svg.outerHTML
-        } catch { /* ignore */ }
+        if (barcodeType === 'DATAMATRIX') {
+          try {
+            const gtin = label.cip.length === 13 ? '0' + label.cip : label.cip.padStart(14, '0')
+            let gs1 = `(01)${gtin}`
+            if (label.lot) gs1 += `(10)${label.lot}`
+            if (label.dateExpiration) {
+              const d = new Date(label.dateExpiration)
+              if (!isNaN(d.getTime())) {
+                const yy = String(d.getFullYear()).slice(-2)
+                const mm = String(d.getMonth() + 1).padStart(2, '0')
+                const dd = String(d.getDate()).padStart(2, '0')
+                gs1 += `(17)${yy}${mm}${dd}`
+              }
+            }
+            const size = isCompact ? 9 : 11
+            barcodeSvg = bwipjs.toSVG({ bcid: 'datamatrix', text: gs1, scale: 2, height: size, width: size, parsefnc: true })
+          } catch { /* ignore */ }
+        } else {
+          try {
+            const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg')
+            JsBarcode(svg, label.barcode, {
+              format: 'CODE128',
+              width: isCompact ? 1 : 1.2,
+              height: isCompact ? 7 : 10,
+              displayValue: true,
+              fontSize: isCompact ? 6 : 7,
+              margin: 0,
+              textMargin: 1,
+              font: 'monospace',
+            })
+            barcodeSvg = svg.outerHTML
+          } catch { /* ignore */ }
+        }
       }
 
       const lines: string[] = []
@@ -767,6 +848,42 @@ ${labelsHTML}
           </div>
         </div>
 
+        {/* ── Barcode Type Selection ── */}
+        <div>
+          <label className="block text-xs font-bold uppercase tracking-wider text-base-content/40 mb-2.5">
+            Type de code-barres
+          </label>
+          <div className="flex gap-3">
+            <label className={`label cursor-pointer gap-2 border rounded-xl p-3 flex-1 transition-all ${barcodeType === 'CODE128' ? 'border-primary bg-primary/5 shadow-sm' : 'hover:bg-base-200'}`}>
+              <input
+                type="radio"
+                name="barcodeType"
+                className="radio radio-primary radio-sm"
+                checked={barcodeType === 'CODE128'}
+                onChange={() => setBarcodeType('CODE128')}
+              />
+              <div className="flex-1">
+                <span className="label-text font-semibold text-sm">Code-barres</span>
+                <p className="text-xs text-base-content/50">CODE128 linéaire</p>
+              </div>
+            </label>
+            <label className={`label cursor-pointer gap-2 border rounded-xl p-3 flex-1 transition-all ${barcodeType === 'DATAMATRIX' ? 'border-emerald-500 bg-emerald-50 shadow-sm' : 'hover:bg-base-200'}`}>
+              <input
+                type="radio"
+                name="barcodeType"
+                className="radio radio-sm"
+                style={{ accentColor: '#10b981' }}
+                checked={barcodeType === 'DATAMATRIX'}
+                onChange={() => setBarcodeType('DATAMATRIX')}
+              />
+              <div className="flex-1">
+                <span className="label-text font-semibold text-sm">Datamatrix</span>
+                <p className="text-xs text-base-content/50">GS1 (CIP + lot + exp.)</p>
+              </div>
+            </label>
+          </div>
+        </div>
+
         {/* ── Configuration Toggle ── */}
         <div className="border border-base-200 rounded-xl overflow-hidden">
           <button
@@ -949,6 +1066,7 @@ ${labelsHTML}
                     label={label}
                     fields={fields}
                     format={labelFormat}
+                    barcodeType={barcodeType}
                     t={t}
                     scale={1.8}
                   />

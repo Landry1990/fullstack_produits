@@ -110,6 +110,28 @@ const CartRow = React.memo(({
 
   const isReturn = normalizeNumberInput(ligne.quantite) < 0
 
+  const lotDisplayText = React.useMemo(() => {
+    if (!ligne.lotId) return 'AUTO (FEFO)'
+    const parts = [ligne.lotText || `Lot ${ligne.lotId}`]
+    if (ligne.lotExpiration) {
+      const d = new Date(ligne.lotExpiration)
+      parts.push(`${String(d.getMonth() + 1).padStart(2, '0')}/${String(d.getFullYear()).slice(-2)}`)
+    }
+    if (ligne.lotSellingPrice) {
+      parts.push(`${formatCurrency(Number(ligne.lotSellingPrice))}`)
+    }
+    return parts.join(' • ')
+  }, [ligne.lotId, ligne.lotText, ligne.lotExpiration, ligne.lotSellingPrice])
+
+  const lotTooltip = React.useMemo(() => {
+    if (!ligne.lotId) return t('facturation:cart.product_status.auto_lot')
+    return [
+      ligne.lotText ? `${t('facturation:cart.headers.lot')}: ${ligne.lotText}` : '',
+      ligne.lotExpiration ? `Péremption: ${new Date(ligne.lotExpiration).toLocaleDateString('fr-FR')}` : '',
+      ligne.lotSellingPrice ? `Prix lot: ${formatCurrency(Number(ligne.lotSellingPrice))}` : ''
+    ].filter(Boolean).join(' | ')
+  }, [ligne, t])
+
   if (isSidebarStyle) {
     return (
       <div
@@ -222,10 +244,10 @@ const CartRow = React.memo(({
              onClick={(e) => { e.stopPropagation(); onOpenLotModal(ligne.produit, ligne.lotId || null); }}
              className={`h-9 px-2 text-[11px] font-semibold uppercase transition-colors shrink gap-1.5
                ${ligne.lotId ? 'bg-emerald-50 text-emerald-600 border-emerald-200 hover:bg-emerald-100 hover:border-emerald-300' : 'bg-slate-100 text-slate-400 border-slate-200 hover:bg-slate-200 hover:text-slate-600'}`}
-             title={ligne.lotId ? `Lot : ${ligne.lotText}` : "Géré en Auto FEFO"}
+             title={lotTooltip}
            >
              <Tag className="size-3 shrink-0" />
-             <span className="truncate max-w-[140px] tracking-wide">{ligne.lotId ? ligne.lotText : 'AUTO'}</span>
+             <span className="truncate max-w-[320px] tracking-wide">{lotDisplayText}</span>
            </Button>
         </div>
       </div>
@@ -338,10 +360,10 @@ const CartRow = React.memo(({
           variant={ligne.lotId ? 'default' : 'outline'}
           size="sm"
           onClick={() => onOpenLotModal(ligne.produit, ligne.lotId || null)}
-          className={`w-full max-w-[80px] truncate text-xs h-7 ${ligne.lotId ? 'bg-emerald-600 hover:bg-emerald-700' : 'border-slate-200 text-slate-500 hover:bg-slate-50'}`}
-          title={ligne.lotId ? `${t('facturation:cart.headers.lot')}: ${ligne.lotText}` : `${t('facturation:cart.headers.lot')}: ${t('facturation:cart.product_status.auto_lot')} (FEFO)`}
+          className={`w-full max-w-[260px] truncate text-xs h-7 ${ligne.lotId ? 'bg-emerald-600 hover:bg-emerald-700' : 'border-slate-200 text-slate-500 hover:bg-slate-50'}`}
+          title={lotTooltip}
         >
-          {ligne.lotId ? ligne.lotText : t('facturation:cart.product_status.auto_lot')}
+          {lotDisplayText}
         </Button>
       </td>
       <td className="text-right font-semibold text-slate-800 pr-2 md:pr-4 py-2">
@@ -431,7 +453,7 @@ const CartTable = React.memo(({
           <th className="bg-slate-100 text-right w-16 sm:w-24 py-2">{t('facturation:cart.headers.price')}</th>
           <th className="bg-slate-100 text-right w-14 md:w-16 hidden lg:table-cell py-2">{t('facturation:cart.headers.discount')}</th>
           <th className="bg-slate-100 text-center w-24 hidden md:table-cell py-2">{t('facturation:cart.headers.stock')}</th>
-          <th className="bg-slate-100 text-center w-16 sm:w-20 hidden md:table-cell py-2">{t('facturation:cart.headers.lot')}</th>
+          <th className="bg-slate-100 text-center w-36 sm:w-64 hidden md:table-cell py-2">{t('facturation:cart.headers.lot')}</th>
           <th className="bg-slate-100 text-right w-18 sm:w-28 pr-2 md:pr-4 py-2">{t('facturation:cart.headers.total')}</th>
           <th className="bg-slate-100 w-8 py-2"></th>
         </tr>

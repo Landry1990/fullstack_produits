@@ -67,6 +67,7 @@ export interface ProduitModel {
     capacite_rayon?: number
     min_rayon?: number
     next_expiring_date?: string | null
+    stock_lots?: StockLot[]
     rotation_moyenne?: number | string
     fournisseur?: number | null
     fournisseur_name?: string | null

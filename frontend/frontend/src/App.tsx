@@ -1,5 +1,6 @@
 import { Suspense, useState, useEffect } from 'react'
 import { RouterProvider } from 'react-router-dom'
+import { useLicenceShortcut } from './hooks/useLicenceShortcut'
 import { AuthProvider } from './context/AuthContext'
 import { ConfirmProvider } from './hooks/useConfirm'
 import { PharmacySettingsProvider } from './context/PharmacySettingsContext'
@@ -132,6 +133,8 @@ function GlobalAlerts() {
 }
 
 export default function App() {
+  useLicenceShortcut();
+
   return (
     <ErrorBoundary>
       <AuthProvider>
