@@ -134,19 +134,16 @@ def calculate_and_apply_stock_levels(produit_id=None):
             if stock_minimum_int < 1 and ventes_mensuelles > 0:
                 stock_minimum_int = 1
             
-            # 5. Appliquer si changement significatif (> 20% ou valeur initiale 0)
-            current_min = produit.stock_minimum or 0
-            current_max = produit.stock_maximum or 0
+            # Garantir la cohérence : max doit toujours être > min
+            if stock_maximum_int <= stock_minimum_int:
+                stock_maximum_int = stock_minimum_int + max(1, stock_minimum_int)
             
-            min_changed = abs(current_min - stock_minimum_int) > max(1, current_min * 0.2)
-            max_changed = abs(current_max - stock_maximum_int) > max(1, current_max * 0.2)
-            
-            if min_changed or max_changed or current_min == 0 or current_max == 0:
-                produit.stock_minimum = stock_minimum_int
-                produit.stock_maximum = stock_maximum_int
-                produit.save(update_fields=['stock_minimum', 'stock_maximum'])
-                updated_count += 1
-                print(f"[StockLevels] Produit #{produit.id}: min={stock_minimum_int}, max={stock_maximum_int} (Ventes/mois={ventes_mensuelles:.0f})")
+            # 5. Toujours mettre à jour les deux ensemble pour garantir la cohérence
+            produit.stock_minimum = stock_minimum_int
+            produit.stock_maximum = stock_maximum_int
+            produit.save(update_fields=['stock_minimum', 'stock_maximum'])
+            updated_count += 1
+            print(f"[StockLevels] Produit #{produit.id}: min={stock_minimum_int}, max={stock_maximum_int} (Ventes/mois={ventes_mensuelles:.0f})")
                 
         except Exception as e:
             print(f"[StockLevels] Erreur produit #{produit.id}: {e}")
