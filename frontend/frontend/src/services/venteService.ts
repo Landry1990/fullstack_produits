@@ -1,5 +1,6 @@
 import api from './api';
 import type { Facture, PaginatedResponse, SaleCompletionParams } from '../types';
+import { generateUUID } from '../utils/uuid';
 
 export interface SalesStats {
     top_vendeur: {
@@ -79,7 +80,7 @@ const venteService = {
     },
 
     finaliser: async (data: any, idempotencyKey?: string): Promise<Facture> => {
-        const key = idempotencyKey || data.idempotency_key || crypto.randomUUID();
+        const key = idempotencyKey || data.idempotency_key || generateUUID();
         const headers = { 'Idempotency-Key': key };
 
         // Handle images/files using FormData

@@ -76,12 +76,14 @@ export function useFacturationState() {
   })
 
   // --- Secure Cart Operations (sudo-protected) ---
-  const { secureUpdateQuantite, secureUpdatePrix, secureUpdateRemiseProduit } = useSecureCartOperations({
+  const maxDiscountRate = user?.is_superuser ? 100 : (Number(user?.profile?.max_discount_rate || 0))
+  const { secureUpdateQuantite, secureUpdatePrix, secureUpdateRemiseProduit, secureSetRemiseGlobale } = useSecureCartOperations({
     cart,
     requireSudo,
     setActiveSudoCreds,
     t,
-    triggerUiRefresh
+    triggerUiRefresh,
+    maxDiscountRate
   })
 
   // --- Clinical Check ---
@@ -591,6 +593,7 @@ export function useFacturationState() {
     secureUpdateQuantite,
     secureUpdatePrix,
     secureUpdateRemiseProduit,
+    secureSetRemiseGlobale,
     completeExistingInvoicePayment,
 
     // Sub-hooks exposed state

@@ -8,6 +8,7 @@ import { useResilientAPI } from '../hooks/useResilientAPI';
 import venteService from './venteService';
 import type { Facture, PaginatedResponse } from '../types';
 import type { SalesFilters, PageInitResponse } from './venteService';
+import { generateUUID } from '../utils/uuid';
 
 export interface ResilientVenteService {
     // Même API que venteService mais avec résilience
@@ -51,7 +52,7 @@ export const useResilientVenteService = (): ResilientVenteService => {
      * Génère une clé d'idempotence pour éviter les doublons
      */
     const generateIdempotencyKey = useCallback((): string => {
-        return crypto.randomUUID();
+        return generateUUID();
     }, []);
 
     /**

@@ -58,8 +58,8 @@ export const useDashboardStats = () => {
             const response = await api.get<DashboardStats>('dashboard/stats/');
             return response.data;
         },
-        staleTime: 1000 * 60, // 1 minute
-        refetchInterval: 1000 * 60, // Auto-update every 1 minute
+        staleTime: 1000 * 15, // 15 secondes
+        refetchInterval: 1000 * 15, // Auto-update every 15 seconds
         refetchIntervalInBackground: false,
     });
 };

@@ -1,3 +1,4 @@
+import React, { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { formatCurrency } from '../../utils/formatters'
 import { cn } from '../../lib/utils'
@@ -7,6 +8,7 @@ interface TotalsSectionProps {
   totalHT: number
   remiseGlobale: string
   setRemiseGlobale: (v: string) => void
+  onRemiseChange?: (value: string, mode: 'montant' | 'taux', totalTTC: number, setRemise: (v: string) => void) => void
   remiseMode: 'montant' | 'taux'
   setRemiseMode: (v: 'montant' | 'taux') => void
   remiseMontant: number
@@ -25,6 +27,7 @@ export default function TotalsSection({
   totalHT,
   remiseGlobale,
   setRemiseGlobale,
+  onRemiseChange,
   remiseMode,
   setRemiseMode,
   remiseMontant,
@@ -36,6 +39,17 @@ export default function TotalsSection({
   isSidebarStyle
 }: TotalsSectionProps) {
   const { t } = useTranslation(['facturation', 'common'])
+  const [localRemise, setLocalRemise] = useState(remiseGlobale)
+
+  useEffect(() => { setLocalRemise(remiseGlobale) }, [remiseGlobale])
+
+  const handleRemiseCommit = () => {
+    if (!onRemiseChange) {
+      setRemiseGlobale(localRemise)
+      return
+    }
+    onRemiseChange(localRemise, remiseMode, totalTTC, setRemiseGlobale)
+  }
 
   if (isSidebarStyle) {
     const mainTotal = tauxCouverture > 0 ? partPatient : totalTTC
@@ -63,8 +77,10 @@ export default function TotalsSection({
                   </select>
                   <input
                     type="text"
-                    value={remiseGlobale}
-                    onChange={(e) => setRemiseGlobale(e.target.value)}
+                    value={localRemise}
+                    onChange={(e) => setLocalRemise(e.target.value.replace(/[^0-9.]/g, ''))}
+                    onBlur={handleRemiseCommit}
+                    onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleRemiseCommit() } }}
                     className="w-14 bg-transparent text-xs text-right font-semibold text-slate-700 outline-none px-2 py-1"
                   />
                </div>
@@ -133,8 +149,10 @@ export default function TotalsSection({
                 </select>
                 <input
                     type="text"
-                    value={remiseGlobale}
-                    onChange={(e) => setRemiseGlobale(e.target.value)}
+                    value={localRemise}
+                    onChange={(e) => setLocalRemise(e.target.value.replace(/[^0-9.]/g, ''))}
+                    onBlur={handleRemiseCommit}
+                    onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleRemiseCommit() } }}
                     className="w-16 sm:w-24 text-right focus:bg-white bg-transparent font-semibold text-sm sm:text-base outline-none px-2"
                     placeholder="0"
                 />

@@ -20,17 +20,38 @@ interface LicenceContextType {
 
 const LicenceContext = createContext<LicenceContextType | undefined>(undefined);
 
+const LICENCE_STORAGE_KEY = 'pharmacy_licence_cache';
+
+function loadCachedLicence(): LicenceInfo | null {
+    try {
+        const cached = localStorage.getItem(LICENCE_STORAGE_KEY);
+        if (!cached) return null;
+        const data = JSON.parse(cached) as LicenceInfo;
+        const expMs = (data.exp ?? 0) * 1000;
+        if (!data.exp || expMs > Date.now()) return data;
+        localStorage.removeItem(LICENCE_STORAGE_KEY);
+    } catch {}
+    return null;
+}
+
 export const LicenceProvider = ({ children }: { children: ReactNode }) => {
-    const [licence, setLicence] = useState<LicenceInfo | null>(null);
+    const [licence, setLicence] = useState<LicenceInfo | null>(() => loadCachedLicence());
     const [loading, setLoading] = useState(true);
-    const [daysRemaining, setDaysRemaining] = useState<number | null>(null);
+    const [daysRemaining, setDaysRemaining] = useState<number | null>(() => {
+        const cached = loadCachedLicence();
+        if (!cached?.exp) return null;
+        return Math.ceil(((cached.exp * 1000) - Date.now()) / (1000 * 60 * 60 * 24));
+    });
 
     const fetchLicence = useCallback(async () => {
         try {
-            const res = await api.get('/licence/');
+            const res = await api.get('licence/');
             if (res.data.is_valid && res.data.payload) {
                 const data = res.data.payload;
-                setLicence({ ...data, is_valid: true });
+                const licenceInfo = { ...data, is_valid: true };
+                setLicence(licenceInfo);
+                // Persister la dernière licence valide pour survie aux redémarrages
+                try { localStorage.setItem(LICENCE_STORAGE_KEY, JSON.stringify(licenceInfo)); } catch {}
 
                 // Calcul des jours restants
                 const expTimestamp = data.exp * 1000;
@@ -54,11 +75,28 @@ export const LicenceProvider = ({ children }: { children: ReactNode }) => {
                     });
                 }
             } else {
+                // Licence invalide côté serveur — effacer le cache local
+                try { localStorage.removeItem(LICENCE_STORAGE_KEY); } catch {}
                 setLicence(null);
                 setDaysRemaining(null);
             }
         } catch (err) {
             console.error("Erreur chargement licence globale", err);
+            // En cas d'erreur réseau, utiliser la dernière licence valide connue
+            try {
+                const cached = localStorage.getItem(LICENCE_STORAGE_KEY);
+                if (cached) {
+                    const cachedLicence = JSON.parse(cached) as LicenceInfo;
+                    // Vérifier que la licence en cache n'est pas expirée
+                    const expMs = (cachedLicence.exp ?? 0) * 1000;
+                    if (!cachedLicence.exp || expMs > Date.now()) {
+                        setLicence(cachedLicence);
+                        const days = cachedLicence.exp ? Math.ceil((expMs - Date.now()) / (1000 * 60 * 60 * 24)) : null;
+                        setDaysRemaining(days);
+                        return;
+                    }
+                }
+            } catch {}
             setLicence(null);
             setDaysRemaining(null);
         } finally {

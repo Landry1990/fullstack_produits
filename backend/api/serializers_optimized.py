@@ -41,7 +41,7 @@ class ProduitListSerializer(serializers.ModelSerializer):
         model = Produit
         fields = [
             'id', 'name', 'cip1', 'cip2', 'cip3',
-            'stock', 'total_stock', 'stock_minimum', 'pmp', 'selling_price',
+            'stock', 'total_stock', 'stock_minimum', 'stock_maximum', 'stock_alert', 'pmp', 'selling_price',
             'rayon_name', 'fournisseur_name', 'forme_nom', 'rotation_moyenne',
             'use_lot_management',
             'tva', 'cost_price', 'taux_marge', 'pourcentage_marge',
@@ -106,7 +106,7 @@ class FactureListSerializer(serializers.ModelSerializer):
             'id', 'numero_facture', 'client', 'client_name', 'created_by_name',
             'validated_by_name', 'ayant_droit_details',
             'date', 'status', 'status_display', 'total_ht', 'total_ttc',
-            'montant_regle', 'montant_en_compte', 'poste_caisse',
+            'remise', 'montant_regle', 'montant_en_compte', 'poste_caisse',
             'ticket_session', 'session_ticket_number'
         ]
 

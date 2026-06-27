@@ -144,6 +144,21 @@ export const AvoirsTable: React.FC<AvoirsTableProps> = ({
         }
     };
 
+    const getTypeAvoirStyle = (type: string) => {
+        switch (type?.toUpperCase()) {
+            case 'PERIME':
+            case 'PÉRIMÉ': return 'bg-red-50 text-red-600 border-red-200';
+            case 'CASSE':
+            case 'CASSÉ': return 'bg-orange-50 text-orange-600 border-orange-200';
+            case 'ERREUR_LIVRAISON':
+            case 'ERREUR': return 'bg-yellow-50 text-yellow-700 border-yellow-200';
+            case 'AVARIE': return 'bg-purple-50 text-purple-600 border-purple-200';
+            case 'NON_FACTURE': return 'bg-blue-50 text-blue-600 border-blue-200';
+            case 'AUTRE': return 'bg-slate-100 text-slate-500 border-slate-200';
+            default: return 'bg-slate-100 text-slate-500 border-slate-200';
+        }
+    };
+
     const getStatusLabel = (status: string) => {
         switch (status?.toUpperCase()) {
             case 'BROUILLON':
@@ -190,22 +205,20 @@ export const AvoirsTable: React.FC<AvoirsTableProps> = ({
             <table className="w-full text-sm border-separate border-spacing-0">
                 <thead>
                     <tr className="bg-base-200 text-base-content/60 border-b border-base-300">
-                        <th className="w-12 text-center rounded-tl-xl sticky top-0 z-30 bg-base-200  border-b border-base-300">
-                            <label className="cursor-pointer flex items-center justify-center p-0">
-                                <input 
-                                    type="checkbox" 
-                                    className="size-4 rounded border-base-300 text-primary focus:ring-primary cursor-pointer" 
-                                    checked={allSelected}
-                                    onChange={onToggleSelectAll}
-                                    disabled={draftAvoirsCount === 0}
-                                />
-                            </label>
+                        <th className="w-10 text-center sticky top-0 z-30 bg-base-200 border-b border-base-300 px-3">
+                            <input
+                                type="checkbox"
+                                className="size-3.5 rounded border-base-300 text-primary focus:ring-primary cursor-pointer"
+                                checked={allSelected}
+                                onChange={onToggleSelectAll}
+                                disabled={draftAvoirsCount === 0}
+                            />
                         </th>
                         {selectedIds.size > 0 ? (
                             <SelectionHeader
                                 selectedCount={selectedIds.size}
                                 onClear={onClearSelection}
-                                colSpan={6}
+                                colSpan={7}
                                 actions={
                                     <BulkActionsMenu
                                         selectedIds={selectedIds}
@@ -224,85 +237,108 @@ export const AvoirsTable: React.FC<AvoirsTableProps> = ({
                             </SelectionHeader>
                         ) : (
                             <>
-                                <th className="sticky top-0 z-30 bg-base-200  border-b border-base-300 text-[10px] font-black uppercase tracking-widest text-base-content/50 px-6 py-4">{t('stock:avoirs.table.date')}</th>
-                                <th className="sticky top-0 z-30 bg-base-200  border-b border-base-300 text-[10px] font-black uppercase tracking-widest text-base-content/50 px-6 py-4">{t('stock:avoirs.table.numero')}</th>
-                                <th className="sticky top-0 z-30 bg-base-200  border-b border-base-300 text-[10px] font-black uppercase tracking-widest text-base-content/50 px-6 py-4">{t('stock:avoirs.table.fournisseur')}</th>
-                                <th className="sticky top-0 z-30 bg-base-200  border-b border-base-300 text-[10px] font-black uppercase tracking-widest text-base-content/50 px-6 py-4 text-right">{t('stock:avoirs.table.montant')}</th>
-                                <th className="sticky top-0 z-30 bg-base-200  border-b border-base-300 text-[10px] font-black uppercase tracking-widest text-base-content/50 px-6 py-4 text-center">{t('stock:avoirs.table.status')}</th>
-                                <th className="sticky top-0 z-30 bg-base-200  border-b border-base-300 text-[10px] font-black uppercase tracking-widest text-base-content/50 px-6 py-4 text-right pr-6">{t('common:actions_title')}</th>
+                                <th className="sticky top-0 z-30 bg-base-200 border-b border-base-300 text-[10px] font-black uppercase tracking-widest text-base-content/50 px-4 py-3 w-32">{t('stock:avoirs.table.date')}</th>
+                                <th className="sticky top-0 z-30 bg-base-200 border-b border-base-300 text-[10px] font-black uppercase tracking-widest text-base-content/50 px-4 py-3 w-36">{t('stock:avoirs.table.numero')}</th>
+                                <th className="sticky top-0 z-30 bg-base-200 border-b border-base-300 text-[10px] font-black uppercase tracking-widest text-base-content/50 px-4 py-3">{t('stock:avoirs.table.fournisseur')}</th>
+                                <th className="sticky top-0 z-30 bg-base-200 border-b border-base-300 text-[10px] font-black uppercase tracking-widest text-base-content/50 px-4 py-3 w-36">Type</th>
+                                <th className="sticky top-0 z-30 bg-base-200 border-b border-base-300 text-[10px] font-black uppercase tracking-widest text-base-content/50 px-4 py-3 text-center w-16">Lignes</th>
+                                <th className="sticky top-0 z-30 bg-base-200 border-b border-base-300 text-[10px] font-black uppercase tracking-widest text-base-content/50 px-4 py-3 text-right w-32">{t('stock:avoirs.table.montant')}</th>
+                                <th className="sticky top-0 z-30 bg-base-200 border-b border-base-300 text-[10px] font-black uppercase tracking-widest text-base-content/50 px-4 py-3 text-center w-28">{t('stock:avoirs.table.status')}</th>
+                                <th className="sticky top-0 z-30 bg-base-200 border-b border-base-300 px-4 py-3 w-28"></th>
                             </>
                         )}
                     </tr>
                 </thead>
-                <tbody className="text-base-content font-medium">
-                    {avoirs.map((avoir) => (
-                        <tr 
-                            key={avoir.id} 
-                            className={`hover:bg-base-200 transition-colors group cursor-pointer ${selectedIds.has(avoir.id) ? 'bg-primary/10' : ''}`}
+                <tbody className="text-base-content">
+                    {avoirs.map((avoir) => {
+                        const isDraft = avoir.status?.toUpperCase() === 'BROUILLON' || avoir.status?.toUpperCase() === 'BRO';
+                        const montant = Number(avoir.total_ht) || 0;
+                        const nbLignes = (avoir as any).lignes?.length ?? (avoir as any).lignes_count ?? null;
+                        return (
+                        <tr
+                            key={avoir.id}
+                            className={`border-b border-base-200 transition-colors group cursor-pointer ${
+                                selectedIds.has(avoir.id)
+                                    ? 'bg-primary/10 hover:bg-primary/15'
+                                    : 'hover:bg-base-200/70'
+                            }`}
                             onClick={() => selectedIds.size === 0 && onView(avoir)}
                         >
-                            <td className="text-center" onClick={(e) => e.stopPropagation()}>
-                                {(avoir.status?.toUpperCase() === 'BROUILLON' || avoir.status?.toUpperCase() === 'BRO') && (
-                                    <label className="cursor-pointer flex items-center justify-center p-0">
-                                        <input 
-                                            type="checkbox" 
-                                            className="size-4 rounded border-base-300 text-primary focus:ring-primary cursor-pointer" 
-                                            checked={selectedIds.has(avoir.id)}
-                                            onChange={() => onToggleSelection(avoir.id)}
-                                        />
-                                    </label>
+                            <td className="px-3 py-2.5 text-center" onClick={(e) => e.stopPropagation()}>
+                                {isDraft && (
+                                    <input
+                                        type="checkbox"
+                                        className="size-3.5 rounded border-base-300 text-primary focus:ring-primary cursor-pointer"
+                                        checked={selectedIds.has(avoir.id)}
+                                        onChange={() => onToggleSelection(avoir.id)}
+                                    />
                                 )}
                             </td>
-                            <td>
-                                <div className="flex flex-col">
-                                    <span className="font-semibold text-base-content">
-                                        {format(new Date(avoir.created_at || avoir.date), 'dd/MM/yyyy', { locale: i18n.language === 'fr' ? fr : enUS })}
-                                    </span>
-                                    <span className="text-xs text-base-content/60">
-                                        {format(new Date(avoir.created_at || avoir.date), 'HH:mm', { locale: i18n.language === 'fr' ? fr : enUS })}
-                                    </span>
+                            <td className="px-4 py-2.5">
+                                <div className="font-semibold text-base-content text-[13px]">
+                                    {format(new Date(avoir.created_at || avoir.date), 'dd/MM/yyyy', { locale: i18n.language === 'fr' ? fr : enUS })}
+                                </div>
+                                <div className="text-[11px] text-base-content/50 font-medium">
+                                    {format(new Date(avoir.created_at || avoir.date), 'HH:mm', { locale: i18n.language === 'fr' ? fr : enUS })}
                                 </div>
                             </td>
-                            <td>
-                                <span className="font-mono text-base-content/60 font-semibold">{avoir.numero}</span>
+                            <td className="px-4 py-2.5">
+                                <span className="font-mono text-xs font-bold text-base-content/70 bg-base-200 px-2 py-0.5 rounded">
+                                    {avoir.numero}
+                                </span>
                             </td>
-                            <td>
-                                <div className="font-bold">{avoir.fournisseur_name}</div>
-                                <div className="text-[10px] text-base-content/50 uppercase tracking-tight">{getTypeAvoirLabel(avoir.type_avoir)}</div>
+                            <td className="px-4 py-2.5">
+                                <div className="font-semibold text-base-content text-[13px] leading-tight">
+                                    {avoir.fournisseur_name || <span className="text-base-content/30 italic text-xs">—</span>}
+                                </div>
                             </td>
-                            <td className="text-right font-bold text-primary">
-                                {formatCurrency(Number(avoir.total_ht) || 0)}
+                            <td className="px-4 py-2.5">
+                                <span className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold border uppercase tracking-wide ${getTypeAvoirStyle(avoir.type_avoir)}`}>
+                                    {getTypeAvoirLabel(avoir.type_avoir)}
+                                </span>
                             </td>
-                            <td className="text-center">
-                                <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-bold border uppercase tracking-wider ${getStatusStyle(avoir.status_display || avoir.status)}`}>
+                            <td className="px-4 py-2.5 text-center">
+                                {nbLignes !== null
+                                    ? <span className="inline-flex items-center justify-center size-6 rounded-full bg-base-200 text-[11px] font-bold text-base-content/70">{nbLignes}</span>
+                                    : <span className="text-base-content/30">—</span>
+                                }
+                            </td>
+                            <td className="px-4 py-2.5 text-right">
+                                <span className={`font-mono font-black text-sm ${
+                                    montant > 0 ? 'text-base-content' : 'text-base-content/30'
+                                }`}>
+                                    {formatCurrency(montant)}
+                                </span>
+                            </td>
+                            <td className="px-4 py-2.5 text-center">
+                                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold border uppercase tracking-wide ${getStatusStyle(avoir.status_display || avoir.status)}`}>
                                     {getStatusLabel(avoir.status_display || avoir.status)}
                                 </span>
                             </td>
-                            <td className="text-right" onClick={(e) => e.stopPropagation()}>
+                            <td className="px-4 py-2.5 text-right" onClick={(e) => e.stopPropagation()}>
                                 {selectedIds.size === 0 && (
-                                    <div className="flex items-center justify-end gap-1 opacity-60 group-hover: transition-opacity">
-                                        <ActionIcon 
+                                    <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                        <ActionIcon
                                             icon={Eye}
                                             onClick={() => onView(avoir)}
                                             title={t('common:view')}
                                             variant="info"
                                         />
-                                        
-                                        {(avoir.status?.toUpperCase() === 'BROUILLON' || avoir.status?.toUpperCase() === 'BRO') && (
+                                        {isDraft && (
                                             <>
-                                                <ActionIcon 
+                                                <ActionIcon
                                                     icon={Edit}
                                                     onClick={() => onEdit(avoir)}
                                                     title={t('common:edit')}
                                                     variant="warning"
                                                 />
-                                                <ActionIcon 
+                                                <ActionIcon
                                                     icon={CheckCircle2}
                                                     onClick={() => onValidate(avoir)}
                                                     title={t('common:validate')}
                                                     variant="success"
                                                 />
-                                                <ActionIcon 
+                                                <ActionIcon
                                                     icon={Trash2}
                                                     onClick={() => onDelete(avoir)}
                                                     title={t('common:delete')}
@@ -314,7 +350,8 @@ export const AvoirsTable: React.FC<AvoirsTableProps> = ({
                                 )}
                             </td>
                         </tr>
-                    ))}
+                        );
+                    })}
                 </tbody>
             </table>
         </div>

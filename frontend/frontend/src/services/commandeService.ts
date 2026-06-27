@@ -1,5 +1,6 @@
 import api from './api';
 import type { Commande, PaginatedResponse } from '../types';
+import { generateUUID } from '../utils/uuid';
 
 export interface SudoCredentials {
     validated_by_id?: number;
@@ -69,7 +70,7 @@ const commandeService = {
     },
 
     cloturer: async (id: number, sudoData: SudoCredentials = {}): Promise<{ message: string }> => {
-        const idempotencyKey = crypto.randomUUID();
+        const idempotencyKey = generateUUID();
         const response = await api.post<{ message: string }>(
             `commandes/${id}/cloturer/`,
             sudoData,

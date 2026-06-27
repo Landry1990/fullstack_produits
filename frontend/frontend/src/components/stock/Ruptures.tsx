@@ -6,6 +6,7 @@ import { formatCurrency } from '../../utils/formatters';
 import { formatDate } from '../../utils/dateUtils';
 import { toast } from 'react-hot-toast';
 import { getApiErrorDetail } from '../../utils/errorHandling';
+import { generateUUID } from '../../utils/uuid';
 import SkeletonTable from '../ui/SkeletonTable';
 
 export default function Ruptures() {
@@ -92,7 +93,7 @@ export default function Ruptures() {
       const res = await api.post(
         'commandes/ajouter_produits_bulk/',
         { produit_ids: ids, quantity: 1 },
-        { headers: { 'Idempotency-Key': crypto.randomUUID() } }
+        { headers: { 'Idempotency-Key': generateUUID() } }
       );
       toast.success(res.data.message);
       clearSelection();
@@ -211,7 +212,7 @@ export default function Ruptures() {
       const res = await api.post(
         'commandes/ajouter_produit_auto/',
         { produit_id: produitId, quantity: 1 },
-        { headers: { 'Idempotency-Key': crypto.randomUUID() } }
+        { headers: { 'Idempotency-Key': generateUUID() } }
       );
       toast.success(res.data.message || t('ruptures.pharmacie.added_to_order_success', 'Ajouté à la commande'));
     } catch (error) {
