@@ -40,6 +40,7 @@ ALLOWED_HOSTS = [h.strip() for h in _hosts if h.strip()]
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 USE_X_FORWARDED_HOST = True
 USE_X_FORWARDED_PORT = True
+USE_X_FORWARDED_FOR = True  # Permet au throttle DRF d’utiliser l’IP réelle du client
 
 # Password hashing: Argon2 (fast + secure) instead of PBKDF2 (1M iterations = ~12s on this CPU)
 PASSWORD_HASHERS = [
@@ -123,13 +124,12 @@ REST_FRAMEWORK = {
         'rest_framework.permissions.IsAuthenticated',
     ],
     'DEFAULT_THROTTLE_CLASSES': [
-        'rest_framework.throttling.AnonRateThrottle',
         'rest_framework.throttling.UserRateThrottle',
     ],
     'DEFAULT_THROTTLE_RATES': {
-        'anon': os.getenv('DJANGO_THROTTLE_ANON', '200/day'),
+        'anon': os.getenv('DJANGO_THROTTLE_ANON', '10000/day'),
         'user': os.getenv('DJANGO_THROTTLE_USER', '5000/hour'),
-        'login': os.getenv('DJANGO_THROTTLE_LOGIN', '10/min'),
+        'login': os.getenv('DJANGO_THROTTLE_LOGIN', '30/min'),
     },
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
     'PAGE_SIZE': 50,

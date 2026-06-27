@@ -107,9 +107,19 @@ class LicenceMiddleware:
                         message = cached_fallback.get('message', 'Erreur DB - Cache fallback')
                         payload = cached_fallback.get('payload')
                     else:
-                        # Pas de cache fallback - autoriser temporairement (fail-open)
-                        logger.error("[LICENCE] Pas de cache fallback - autorisation temporaire")
-                        return self.get_response(request)
+                        # Pas de cache — tenter une lecture directe minimale sans transaction
+                        try:
+                            from api.models.licence import Licence
+                            if Licence.objects.using('default').exists():
+                                # Une licence existe — on autorise temporairement le temps que la DB récupère
+                                logger.warning("[LICENCE] Erreur DB mais licence présente — autorisation temporaire")
+                                return self.get_response(request)
+                        except Exception:
+                            pass
+                        # Aucune licence jamais installée ou DB totalement HS — bloquer
+                        logger.error("[LICENCE] Pas de licence ni de cache — accès refusé")
+                        est_valide = False
+                        message = "Service temporairement indisponible. Veuillez réessayer."
 
             if not est_valide:
                 return JsonResponse({

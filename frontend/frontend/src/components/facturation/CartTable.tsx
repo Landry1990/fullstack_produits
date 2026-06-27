@@ -1,12 +1,42 @@
 import React from 'react'
 import { useTranslation } from 'react-i18next'
 import { formatCurrency, normalizeNumberInput } from '../../utils/formatters'
-import type { LigneFacture, ProduitModel } from '../../types'
+import type { LigneFacture, ProduitModel, StockLot } from '../../types'
 import { useAuth } from '../../context/AuthContext'
 import { toast } from 'react-hot-toast'
 import { Button } from '../shadcn/button'
 import { Badge } from '../shadcn/badge'
 import { Tag, X, Package, Trash2, ShoppingCart } from 'lucide-react'
+
+function getFEFOPreview(lots: StockLot[] | undefined, quantity: number): { lot: string; qty: number; expiration?: string }[] {
+  if (!lots || lots.length === 0 || quantity <= 0) return []
+  const sorted = [...lots]
+    .filter(l => (l.quantity_remaining || 0) > 0)
+    .sort((a, b) => {
+      const expA = a.date_expiration ? new Date(a.date_expiration).getTime() : Infinity
+      const expB = b.date_expiration ? new Date(b.date_expiration).getTime() : Infinity
+      if (expA !== expB) return expA - expB
+      const recA = a.date_reception ? new Date(a.date_reception).getTime() : 0
+      const recB = b.date_reception ? new Date(b.date_reception).getTime() : 0
+      return recA - recB
+    })
+  let remaining = quantity
+  const preview: { lot: string; qty: number; expiration?: string }[] = []
+  for (const lot of sorted) {
+    if (remaining <= 0) break
+    const available = lot.quantity_remaining || 0
+    const take = Math.min(available, remaining)
+    if (take > 0) {
+      preview.push({
+        lot: lot.lot || `Lot ${lot.id}`,
+        qty: take,
+        expiration: lot.date_expiration || undefined
+      })
+      remaining -= take
+    }
+  }
+  return preview
+}
 
 interface CartTableProps {
   lignesFacture: LigneFacture[]
@@ -110,8 +140,27 @@ const CartRow = React.memo(({
 
   const isReturn = normalizeNumberInput(ligne.quantite) < 0
 
+  const fefoPreview = React.useMemo(() => {
+    if (ligne.lotId) return []
+    return getFEFOPreview(ligne.produit.stock_lots, Math.abs(ligne.quantite))
+  }, [ligne.lotId, ligne.produit.stock_lots, ligne.quantite])
+
   const lotDisplayText = React.useMemo(() => {
-    if (!ligne.lotId) return 'AUTO (FEFO)'
+    if (!ligne.lotId) {
+      if (fefoPreview.length === 0) return 'AUTO (FEFO)'
+      if (fefoPreview.length === 1) {
+        const p = fefoPreview[0]
+        const parts = [p.lot]
+        if (p.expiration) {
+          const d = new Date(p.expiration)
+          parts.push(`${String(d.getMonth() + 1).padStart(2, '0')}/${String(d.getFullYear()).slice(-2)}`)
+        }
+        return `AUTO • ${parts.join(' • ')}`
+      }
+      const totalLots = fefoPreview.length
+      const firstLot = fefoPreview[0]
+      return `AUTO • ${firstLot.lot} +${totalLots - 1}`
+    }
     const parts = [ligne.lotText || `Lot ${ligne.lotId}`]
     if (ligne.lotExpiration) {
       const d = new Date(ligne.lotExpiration)
@@ -121,16 +170,25 @@ const CartRow = React.memo(({
       parts.push(`${formatCurrency(Number(ligne.lotSellingPrice))}`)
     }
     return parts.join(' • ')
-  }, [ligne.lotId, ligne.lotText, ligne.lotExpiration, ligne.lotSellingPrice])
+  }, [ligne.lotId, ligne.lotText, ligne.lotExpiration, ligne.lotSellingPrice, fefoPreview])
 
   const lotTooltip = React.useMemo(() => {
-    if (!ligne.lotId) return t('facturation:cart.product_status.auto_lot')
+    if (!ligne.lotId) {
+      if (fefoPreview.length === 0) return t('facturation:cart.product_status.auto_lot')
+      return [
+        'FEFO automatique :',
+        ...fefoPreview.map(p => {
+          const exp = p.expiration ? new Date(p.expiration).toLocaleDateString('fr-FR') : 'sans date'
+          return `${p.lot} × ${p.qty} (exp ${exp})`
+        })
+      ].join('\n')
+    }
     return [
       ligne.lotText ? `${t('facturation:cart.headers.lot')}: ${ligne.lotText}` : '',
       ligne.lotExpiration ? `Péremption: ${new Date(ligne.lotExpiration).toLocaleDateString('fr-FR')}` : '',
       ligne.lotSellingPrice ? `Prix lot: ${formatCurrency(Number(ligne.lotSellingPrice))}` : ''
     ].filter(Boolean).join(' | ')
-  }, [ligne, t])
+  }, [ligne, t, fefoPreview])
 
   if (isSidebarStyle) {
     return (

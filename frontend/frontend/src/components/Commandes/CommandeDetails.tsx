@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ArrowLeft, Pencil, Pause, Play, Check, Printer, Trash2, Tag, RotateCcw, Package } from 'lucide-react';
 import type { Commande, Fournisseur, ProduitModel } from '../../types';
@@ -7,6 +7,9 @@ import { formatDate } from '../../utils/dateUtils';
 import { Button } from '../shadcn/button';
 import { Badge } from '../shadcn/badge';
 import { cn } from '../../lib/utils';
+import api from '../../services/api';
+import toast from 'react-hot-toast';
+import { useQueryClient } from '@tanstack/react-query';
 
 
 
@@ -111,6 +114,45 @@ const CommandeDetails: React.FC<CommandeDetailsProps> = ({
   const [detailSortKey, setDetailSortKey] = useState<'name' | 'quantity' | 'price' | null>(null);
 
   const [detailSortOrder, setDetailSortOrder] = useState<'asc' | 'desc'>('asc');
+
+  const queryClient = useQueryClient();
+  const [editingLotId, setEditingLotId] = useState<number | null>(null);
+  const [editLotValues, setEditLotValues] = useState<{ lot: string; date_expiration: string; produitId?: number }>({ lot: '', date_expiration: '' });
+  const [savingLot, setSavingLot] = useState(false);
+  const [localProduits, setLocalProduits] = useState<typeof selectedCommande.produits>(selectedCommande.produits);
+
+  const startLotEdit = useCallback((p: any) => {
+    setEditingLotId(p.id);
+    const produitId = typeof p.produit === 'object' ? p.produit?.id : p.produit;
+    setEditLotValues({
+      lot: p.lot || '',
+      date_expiration: p.date_expiration ? String(p.date_expiration).slice(0, 10) : '',
+      produitId,
+    });
+  }, []);
+
+  const cancelLotEdit = useCallback(() => setEditingLotId(null), []);
+
+  const saveLotEdit = useCallback(async (lineId: number) => {
+    setSavingLot(true);
+    try {
+      const payload: Record<string, string | null> = { lot: editLotValues.lot };
+      payload.date_expiration = editLotValues.date_expiration || null;
+      await api.patch(`commande-produits/${lineId}/correct_lot/`, payload);
+      setLocalProduits(prev => (prev || []).map(p =>
+        p.id === lineId ? { ...p, lot: editLotValues.lot, date_expiration: editLotValues.date_expiration || undefined } : p
+      ));
+      setEditingLotId(null);
+      if (editLotValues.produitId) {
+        queryClient.invalidateQueries({ queryKey: ['produit-lots', editLotValues.produitId] });
+      }
+      toast.success('Lot / date mis à jour');
+    } catch {
+      toast.error('Erreur lors de la mise à jour');
+    } finally {
+      setSavingLot(false);
+    }
+  }, [editLotValues, queryClient]);
 
 
 
@@ -410,11 +452,12 @@ const CommandeDetails: React.FC<CommandeDetailsProps> = ({
                   <th className="px-3 py-2 text-left text-[10px] font-semibold text-slate-500 uppercase">{t('orders:product_table.headers.lot')}</th>
                   <th className="px-3 py-2 text-left text-[10px] font-semibold text-slate-500 uppercase">{t('orders:product_table.headers.exp_date')}</th>
                   <th className="px-3 py-2 text-right text-[10px] font-semibold text-slate-500 uppercase">{t('orders:product_table.total_ht')}</th>
+                  {selectedCommande.status === 'CLOT' && <th className="w-8"></th>}
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-slate-200">
 
-                {[...(selectedCommande.produits || [])]
+                {[...(localProduits || [])]
 
                   .map((p, originalIndex) => {
 
@@ -491,9 +534,40 @@ const CommandeDetails: React.FC<CommandeDetailsProps> = ({
                           <span className={cn("font-semibold text-sm", (p.unites_gratuites || 0) > 0 ? 'text-emerald-600' : 'text-slate-400')}>{p.unites_gratuites || 0}</span>
                         </td>
                         <td className="px-3 py-2 text-right font-mono text-sm text-slate-600">{formatCurrency(normalizeNumberInput(p.price))}</td>
-                        <td className="px-3 py-2 text-xs font-mono text-slate-500">{p.lot || '-'}</td>
-                        <td className="px-3 py-2 text-xs text-slate-400">{p.date_expiration ? (() => { const d = new Date(p.date_expiration); return `${String(d.getMonth() + 1).padStart(2, '0')}/${String(d.getFullYear()).slice(-2)}`; })() : ''}</td>
+                        <td className="px-3 py-2 text-xs font-mono text-slate-500" onClick={e => e.stopPropagation()}>
+                          {editingLotId === p.id ? (
+                            <input
+                              type="text"
+                              className="border border-slate-300 rounded px-1 py-0.5 text-xs w-24 font-mono"
+                              value={editLotValues.lot}
+                              onChange={e => setEditLotValues(v => ({ ...v, lot: e.target.value }))}
+                              autoFocus
+                            />
+                          ) : p.lot || '-'}
+                        </td>
+                        <td className="px-3 py-2 text-xs text-slate-400" onClick={e => e.stopPropagation()}>
+                          {editingLotId === p.id ? (
+                            <input
+                              type="date"
+                              className="border border-slate-300 rounded px-1 py-0.5 text-xs w-32"
+                              value={editLotValues.date_expiration}
+                              onChange={e => setEditLotValues(v => ({ ...v, date_expiration: e.target.value }))}
+                            />
+                          ) : (p.date_expiration ? (() => { const d = new Date(p.date_expiration); return `${String(d.getMonth() + 1).padStart(2, '0')}/${String(d.getFullYear()).slice(-2)}`; })() : '')}
+                        </td>
                         <td className="px-3 py-2 text-right font-semibold text-emerald-600">{formatCurrency(normalizeNumberInput(p.quantity) * normalizeNumberInput(p.price))}</td>
+                        {selectedCommande.status === 'CLOT' && (
+                          <td className="px-2 py-2 text-center" onClick={e => e.stopPropagation()}>
+                            {editingLotId === p.id ? (
+                              <div className="flex items-center gap-1">
+                                <button className="text-emerald-600 hover:text-emerald-800 font-bold text-sm" onClick={() => saveLotEdit(p.id)} disabled={savingLot} title="Enregistrer">✓</button>
+                                <button className="text-slate-400 hover:text-slate-600 text-sm" onClick={cancelLotEdit} disabled={savingLot} title="Annuler">✕</button>
+                              </div>
+                            ) : (
+                              <button className="text-slate-300 hover:text-blue-500 transition-colors" onClick={() => startLotEdit(p)} title="Corriger lot / date péremption">✏️</button>
+                            )}
+                          </td>
+                        )}
                       </tr>
                     );
 
