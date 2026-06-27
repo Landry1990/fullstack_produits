@@ -1,4 +1,5 @@
 import { extractErrorMessage } from '../utils/errorHandling';
+import { generateUUID } from '../utils/uuid';
 import { useState, useCallback } from 'react';
 import { toast } from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
@@ -247,7 +248,7 @@ function useSaleCompletion(options: UseSaleCompletionOptions = {}): UseSaleCompl
             // Payload atomique final
             // Clé d'idempotence : générée une seule fois par tentative de vente.
             // En cas de retry réseau, la même clé est réutilisée → pas de doublon.
-            const idempotencyKey = crypto.randomUUID();
+            const idempotencyKey = generateUUID();
 
             const finalPayload = {
                 client: params.useManualClient ? null : params.selectedClient,

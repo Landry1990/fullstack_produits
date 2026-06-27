@@ -90,8 +90,8 @@ api.interceptors.response.use(
     async (error) => {
         const config = error.config;
 
-        // Retry automatique sur les GET en cas de coupure réseau
-        if (isRetryableRequest(error) && config) {
+        // Retry automatique sur les GET en cas de coupure réseau (jamais sur POST pour éviter double envoi)
+        if (isRetryableRequest(error) && config && config.method?.toLowerCase() !== 'post') {
             config._retryCount = (config._retryCount || 0) + 1;
             if (config._retryCount <= MAX_RETRIES) {
                 await sleep(RETRY_DELAY_MS * config._retryCount);
@@ -138,6 +138,8 @@ api.interceptors.response.use(
             } else if (!requestUrl.includes('verify-password')) {
                 toast.error('Accès refusé : permissions insuffisantes', { id: 'access-denied' });
             }
+        } else if (status === 429) {
+            toast.error('Trop de tentatives. Attendez quelques instants.', { id: 'rate-limited', duration: 6000 });
         } else if (status >= 500) {
             toast.error('Erreur serveur. Réessayez plus tard.', { id: 'server-error' });
         }

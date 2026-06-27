@@ -1,4 +1,5 @@
 
+import React, { useState, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAvoirsData } from '../hooks/useAvoirsData';
 
@@ -14,9 +15,24 @@ import SudoValidationModal from './common/SudoValidationModal';
 export default function Avoirs() {
     const { t } = useTranslation(['stock', 'common']);
     const avoirsData = useAvoirsData();
-
-    // Sudo Hook extracted values for Modal rendering
     const { sudoState, closeSudo } = avoirsData;
+
+    const [statusFilter, setStatusFilter] = useState('');
+    const [typeFilter, setTypeFilter] = useState('');
+
+    const filteredAvoirs = useMemo(() => {
+        return avoirsData.avoirs.filter(a => {
+            if (statusFilter) {
+                const s = a.status?.toUpperCase();
+                const match = statusFilter === 'VAL'
+                    ? ['VAL', 'VALIDE', 'VALIDÉ', 'VALIDEE', 'VALIDÉE'].includes(s)
+                    : ['BROUILLON', 'BRO'].includes(s);
+                if (!match) return false;
+            }
+            if (typeFilter && a.type_avoir?.toUpperCase() !== typeFilter.toUpperCase()) return false;
+            return true;
+        });
+    }, [avoirsData.avoirs, statusFilter, typeFilter]);
 
     // View routing
     if (avoirsData.viewMode === 'CREATE' || avoirsData.viewMode === 'EDIT') {
@@ -69,9 +85,13 @@ export default function Avoirs() {
                             </p>
                         </div>
                         
-                        <AvoirsFilters 
+                        <AvoirsFilters
                             searchQuery={avoirsData.listSearchQuery}
                             setSearchQuery={avoirsData.setListSearchQuery}
+                            statusFilter={statusFilter}
+                            setStatusFilter={setStatusFilter}
+                            typeFilter={typeFilter}
+                            setTypeFilter={setTypeFilter}
                             onRefresh={() => avoirsData.fetchAvoirs(avoirsData.listSearchQuery)}
                             onNew={avoirsData.handleCreateNew}
                         />
@@ -84,8 +104,8 @@ export default function Avoirs() {
 
             {/* Main Content: Table */}
             <div className="bg-base-100 rounded-2xl shadow-sm border border-base-300 overflow-hidden">
-                <AvoirsTable 
-                    avoirs={avoirsData.avoirs}
+                <AvoirsTable
+                    avoirs={filteredAvoirs}
                     loading={avoirsData.loading}
                     selectedIds={avoirsData.selectedIds}
                     onToggleSelection={avoirsData.onToggleSelection}

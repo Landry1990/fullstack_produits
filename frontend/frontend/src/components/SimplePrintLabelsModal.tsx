@@ -190,7 +190,7 @@ function LabelPreview({
         borderRadius: '1px',
         display: 'flex',
         flexDirection: 'column',
-        justifyContent: 'space-between',
+        justifyContent: 'flex-start',
         overflow: 'hidden',
         fontFamily: "'Inter', 'Helvetica Neue', Arial, sans-serif",
         background: '#fff',
@@ -241,8 +241,10 @@ function LabelPreview({
           display: 'flex',
           justifyContent: 'center',
           alignItems: 'center',
-          margin: '0.3mm 0',
-          flexShrink: 0,
+          margin: '0.2mm 0',
+          flexShrink: 1,
+          overflow: 'hidden',
+          minHeight: 0,
         }}>
           {barcodeType === 'DATAMATRIX'
             ? <DatamatrixCanvas
@@ -316,7 +318,6 @@ function LabelPreview({
             whiteSpace: 'nowrap',
             flexShrink: 0,
             textAlign: 'right',
-            marginBottom: '0.6mm',
           }}>
             {label.sellingPrice.toLocaleString('fr-FR', { maximumFractionDigits: 0 })}{t('common:currency_symbol', { defaultValue: 'F' })}
           </div>
@@ -654,8 +655,8 @@ export default function SimplePrintLabelsModal({
 
       // Barcode
       if (barcodeSvg) {
-        const barcodeMaxH = barcodeType === 'DATAMATRIX' ? (isCompact ? '7mm' : '9mm') : (isCompact ? '6mm' : '8mm')
-        lines.push(`<div style="display:flex;justify-content:center;align-items:center;margin:0.2mm 0;flex-shrink:0;max-height:${barcodeMaxH};overflow:hidden;">${barcodeSvg}</div>`)
+        const barcodeMaxH = barcodeType === 'DATAMATRIX' ? (isCompact ? '6mm' : '8mm') : (isCompact ? '5mm' : '7mm')
+        lines.push(`<div style="display:flex;justify-content:center;align-items:center;margin:0.1mm 0;flex-shrink:1;max-height:${barcodeMaxH};overflow:hidden;">${barcodeSvg}</div>`)
       }
 
       // Bottom row - Grouped version for space saving
@@ -688,7 +689,7 @@ export default function SimplePrintLabelsModal({
       }
 
       const priceHtml = isEnabled('sellingPrice')
-        ? `<div style="font-size:${isCompact ? '7pt' : '8pt'};font-weight:900;white-space:nowrap;flex-shrink:0;text-align:right;margin-bottom:0.6mm;">${label.sellingPrice.toLocaleString('fr-FR', { maximumFractionDigits: 0 })}${t('common:currency_symbol', { defaultValue: 'F' })}</div>`
+        ? `<div style="font-size:${isCompact ? '7pt' : '8pt'};font-weight:900;white-space:nowrap;flex-shrink:0;text-align:right;">${label.sellingPrice.toLocaleString('fr-FR', { maximumFractionDigits: 0 })}${t('common:currency_symbol', { defaultValue: 'F' })}</div>`
         : ''
 
       const bottomRow = `<div style="display:flex;justify-content:space-between;align-items:flex-end;gap:0.5mm;line-height:1.0;">
@@ -698,7 +699,7 @@ export default function SimplePrintLabelsModal({
 
       lines.push(bottomRow)
 
-      return `<div class="label" style="width:${w};height:${h};padding:${isCompact ? '0.5mm 1mm' : '0.8mm 1.2mm'};border:0.3px solid #ccc;border-radius:1px;display:flex;flex-direction:column;justify-content:space-between;overflow:hidden;font-family:'Inter','Helvetica Neue',Arial,sans-serif;background:#fff;color:#000;box-sizing:border-box;page-break-after:always;break-after:page;">
+      return `<div class="label" style="width:${w};height:${h};padding:${isCompact ? '0.5mm 1mm' : '0.8mm 1.2mm'};border:0.3px solid #ccc;border-radius:1px;display:flex;flex-direction:column;justify-content:flex-start;overflow:hidden;font-family:'Inter','Helvetica Neue',Arial,sans-serif;background:#fff;color:#000;box-sizing:border-box;page-break-after:always;break-after:page;">
         ${lines.join('')}
       </div>`
     }).join('\n')

@@ -1,4 +1,5 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import {
   LineChart,
@@ -13,6 +14,8 @@ import {
 import type { ProduitModel, StockLot } from '../../types';
 import { formatCurrency } from '../../utils/formatters';
 import { formatDate } from '../../utils/dateUtils';
+import api from '../../services/api';
+import toast from 'react-hot-toast';
 
 interface ProductTabsContentProps {
   selectedProduit: ProduitModel;
@@ -182,8 +185,49 @@ const PurchasesTabContent = ({ achats, t }: { achats: any[]; t: any }) => {
     );
 };
 
-const LotsTabContent = ({ lots, t }: { lots: StockLot[]; t: any }) => {
-    if (!lots || lots.length === 0) return <p className="text-center text-base-content/50 py-8">{t('products:detail.lots.empty')}</p>;
+const LotsTabContent = ({ lots, produitId, t }: { lots: StockLot[]; produitId: number; t: any }) => {
+    const queryClient = useQueryClient();
+    const [editingId, setEditingId] = useState<number | null>(null);
+    const [editValues, setEditValues] = useState<{ lot: string; date_expiration: string }>({ lot: '', date_expiration: '' });
+    const [saving, setSaving] = useState(false);
+    const [localLots, setLocalLots] = useState<StockLot[]>(lots);
+
+    React.useEffect(() => { setLocalLots(lots); }, [lots]);
+
+    const startEdit = useCallback((lot: StockLot) => {
+        setEditingId(lot.id);
+        setEditValues({
+            lot: lot.lot || '',
+            date_expiration: lot.date_expiration ? lot.date_expiration.slice(0, 10) : '',
+        });
+    }, []);
+
+    const cancelEdit = useCallback(() => {
+        setEditingId(null);
+    }, []);
+
+    const saveEdit = useCallback(async (lotId: number) => {
+        setSaving(true);
+        try {
+            const payload: Record<string, string | null> = { lot: editValues.lot };
+            if (editValues.date_expiration) {
+                payload.date_expiration = editValues.date_expiration;
+            } else {
+                payload.date_expiration = null;
+            }
+            await api.patch(`stock-lots/${lotId}/`, payload);
+            setLocalLots(prev => prev.map(l => l.id === lotId ? { ...l, ...payload } : l));
+            setEditingId(null);
+            queryClient.invalidateQueries({ queryKey: ['produit-lots', produitId] });
+            toast.success('Lot mis à jour');
+        } catch {
+            toast.error('Erreur lors de la mise à jour');
+        } finally {
+            setSaving(false);
+        }
+    }, [editValues, queryClient, produitId]);
+
+    if (!localLots || localLots.length === 0) return <p className="text-center text-base-content/50 py-8">{t('products:detail.lots.empty')}</p>;
 
     return (
         <div className="overflow-x-auto">
@@ -197,21 +241,42 @@ const LotsTabContent = ({ lots, t }: { lots: StockLot[]; t: any }) => {
                         <th className="text-[11px] font-black uppercase tracking-wider text-right">{t('products:detail.purchases.price', { defaultValue: 'Prix' })}</th>
                         <th className="text-[11px] font-black uppercase tracking-wider text-right">{t('products:detail.lots.initial_qty')}</th>
                         <th className="text-[11px] font-black uppercase tracking-wider text-right">{t('products:detail.lots.remaining_qty')}</th>
+                        <th className="text-[11px] font-black uppercase tracking-wider w-16"></th>
                     </tr>
                 </thead>
                 <tbody>
-                    {lots.map((lot) => {
+                    {localLots.map((lot) => {
                         const isExpired = lot.date_expiration ? new Date(lot.date_expiration) < new Date() : false;
+                        const isEditing = editingId === lot.id;
                         return (
                             <tr key={lot.id} className="hover:bg-base-200 transition-colors border-b border-gray-50">
                                 <td className="text-sm font-mono font-bold text-base-content/60">{formatDate(lot.date_reception)}</td>
                                 <td>
-                                    <span className="inline-flex items-center px-2 py-0.5 rounded border border-base-300 text-xs font-mono font-bold text-base-content bg-base-200">{lot.lot || '-'}</span>
+                                    {isEditing ? (
+                                        <input
+                                            type="text"
+                                            className="input input-bordered input-xs w-28 font-mono text-xs"
+                                            value={editValues.lot}
+                                            onChange={e => setEditValues(v => ({ ...v, lot: e.target.value }))}
+                                            autoFocus
+                                        />
+                                    ) : (
+                                        <span className="inline-flex items-center px-2 py-0.5 rounded border border-base-300 text-xs font-mono font-bold text-base-content bg-base-200">{lot.lot || '-'}</span>
+                                    )}
                                 </td>
                                 <td>
-                                    <span className={`text-sm font-black ${isExpired ? 'text-error' : 'text-base-content'}`}>
-                                        {formatDate(lot.date_expiration)}
-                                    </span>
+                                    {isEditing ? (
+                                        <input
+                                            type="date"
+                                            className="input input-bordered input-xs w-36 text-xs"
+                                            value={editValues.date_expiration}
+                                            onChange={e => setEditValues(v => ({ ...v, date_expiration: e.target.value }))}
+                                        />
+                                    ) : (
+                                        <span className={`text-sm font-black ${isExpired ? 'text-error' : 'text-base-content'}`}>
+                                            {formatDate(lot.date_expiration)}
+                                        </span>
+                                    )}
                                 </td>
                                 <td className="text-sm font-bold truncate max-w-[120px]" title={lot.fournisseur_nom}>{lot.fournisseur_nom}</td>
                                 <td className="text-right text-sm font-black text-info">
@@ -222,6 +287,30 @@ const LotsTabContent = ({ lots, t }: { lots: StockLot[]; t: any }) => {
                                     <span className={lot.quantity_remaining > 0 ? 'text-success' : 'text-base-content/40'}>
                                         {lot.quantity_remaining}
                                     </span>
+                                </td>
+                                <td className="text-center">
+                                    {isEditing ? (
+                                        <div className="flex items-center gap-1 justify-center">
+                                            <button
+                                                className="btn btn-xs btn-success"
+                                                onClick={() => saveEdit(lot.id)}
+                                                disabled={saving}
+                                                title="Enregistrer"
+                                            >✓</button>
+                                            <button
+                                                className="btn btn-xs btn-ghost"
+                                                onClick={cancelEdit}
+                                                disabled={saving}
+                                                title="Annuler"
+                                            >✕</button>
+                                        </div>
+                                    ) : (
+                                        <button
+                                            className="btn btn-xs btn-ghost text-base-content/40 hover:text-primary"
+                                            onClick={() => startEdit(lot)}
+                                            title="Modifier lot / date péremption"
+                                        >✏️</button>
+                                    )}
                                 </td>
                             </tr>
                         );
@@ -482,7 +571,7 @@ export const ProductTabsContent: React.FC<ProductTabsContentProps> = ({
 
         {activeTab === 'achats' && <PurchasesTabContent achats={achats} t={t} />}
         
-        {activeTab === 'lots' && <LotsTabContent lots={lots} t={t} />}
+        {activeTab === 'lots' && <LotsTabContent lots={lots} produitId={selectedProduit.id} t={t} />}
 
         {activeTab === 'stats' && <StatsTabContent monthlyStats={monthlyStats} t={t} />}
 

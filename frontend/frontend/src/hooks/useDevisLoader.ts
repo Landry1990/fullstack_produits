@@ -60,13 +60,14 @@ export function useDevisLoader({ clientsHook, cart, ui }: UseDevisLoaderOptions)
                                 produitData = { id: produitId, name: p.produit_nom || `Produit #${produitId}`, stock: 0, is_deleted: true } as ProduitModel
                             }
                         }
+                        const lotId = p.stock_lot ? String(p.stock_lot) : (p.lot || null)
                         return {
                             produit: produitData,
                             quantite: p.quantity,
                             prix_unitaire: p.selling_price,
                             remise_produit: '0',
                             total_ligne: p.quantity * Number(p.selling_price),
-                            lotId: p.lot || null,
+                            lotId: lotId,
                             lotText: p.lot || null,
                             lotExpiration: p.date_expiration || null
                         }

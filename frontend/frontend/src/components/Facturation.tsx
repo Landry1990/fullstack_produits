@@ -305,6 +305,9 @@ export default function Facturation() {
               totalHT={hook.totals.totalHt}
               remiseGlobale={hook.ui.remiseGlobale}
               setRemiseGlobale={hook.ui.setRemiseGlobale}
+              onRemiseChange={(value, mode, totalTTC, setRemise) =>
+                hook.secureSetRemiseGlobale(value, mode, totalTTC, setRemise)
+              }
               remiseMode={hook.ui.remiseMode}
               setRemiseMode={hook.ui.setRemiseMode}
               remiseMontant={hook.totals.remiseMontant}

@@ -1116,19 +1116,19 @@ export function useCommandesState(forcedType?: 'LOC' | 'DIR' | 'DIV') {
           }
         }
         
-        // Parser les colonnes : CIP;Libellé;Qté commandée;UG;Qté livrée;Prix cession;Prix public
+        // Parser les colonnes : CIP;Qté;Prix cession (format flexible, reste optionnel)
         const cols = line.split(';');
         const cip = cols[0];
         if (!cip) return;
 
-        const qty = normalizeNumberInput(cols[4]) || 1;              // Colonne 5: Qté livrée (Qté commandée ignorée)
-        const ug = normalizeNumberInput(cols[3]) || 0;              // Colonne 4: Qté UG
-        const prixCession = parseCsvPrice(cols[5]);                    // Colonne 6: Prix cession
-        const prixPublic = parseCsvPrice(cols[6]);                   // Colonne 7: Prix public
+        const qty = normalizeNumberInput(cols[1]) || 0;              // Colonne 2: Qté (obligatoire)
+        const ug = 0;                                                 // UG non présent dans ce format
+        const prixCession = parseCsvPrice(cols[2]);                   // Colonne 3: Prix cession (optionnel)
+        const prixPublic = parseCsvPrice(cols[3]);                    // Colonne 4: Prix public (optionnel)
 
         const cleanCip = cip.trim();
         const normalizedSearchCip = normalizeCip(cleanCip);
-        const libelle = cols[1] ? cols[1].trim() : '';  // Colonne 2: Libellé du produit
+        const libelle = '';  // Libellé non présent dans ce format
         const normalizedLibelle = normalizeText(libelle);
 
         // 1. Chercher par CIP

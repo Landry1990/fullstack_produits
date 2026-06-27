@@ -102,13 +102,13 @@ class CommandeProduitViewSet(viewsets.ModelViewSet):
         warnings_list = []
         
         # Helper to convert values to Decimal safely
-        def to_decimal(val, default=0):
+        def to_decimal(val, default: int | None = 0):
             if val is None or val == '' or str(val).strip() == '':
-                return Decimal(str(default))
+                return Decimal(str(default)) if default is not None else None
             try:
                 return Decimal(str(val))
             except:
-                return Decimal(str(default))
+                return Decimal(str(default)) if default is not None else None
 
         def parse_expiration(val):
             if val is None:
@@ -237,8 +237,18 @@ class CommandeProduitViewSet(viewsets.ModelViewSet):
                 # Identification des objets protecteurs pour un message clair
                 protected_elements = []
                 for obj in e.protected_objects:
-                    if hasattr(obj, 'facture'):
-                        protected_elements.append(f"Facture {obj.facture.numero_facture or obj.facture.id}")
+                    if hasattr(obj, 'facture_produit'):
+                        try:
+                            f = obj.facture_produit.facture  # type: ignore[attr-defined]
+                            protected_elements.append(f"Facture {f.numero_facture or f.id}")
+                        except Exception:
+                            protected_elements.append(str(obj))
+                    elif hasattr(obj, 'facture'):
+                        try:
+                            f = obj.facture  # type: ignore[attr-defined]
+                            protected_elements.append(f"Facture {f.numero_facture or f.id}")
+                        except Exception:
+                            protected_elements.append(str(obj))
                     else:
                         protected_elements.append(str(obj))
                 
@@ -251,4 +261,51 @@ class CommandeProduitViewSet(viewsets.ModelViewSet):
             'updated': len(items_to_update),
             'deleted': deleted_count,
             'warnings': warnings_list
+        })
+
+    @action(detail=True, methods=['patch'], url_path='correct_lot')
+    @transaction.atomic
+    def correct_lot(self, request, pk=None):
+        """
+        Corrige uniquement le numéro de lot et/ou la date d'expiration d'une ligne de commande,
+        même si la commande est clôturée. Met à jour aussi le StockLot associé.
+        """
+        instance = self.get_object()
+        lot = request.data.get('lot', instance.lot)
+        date_expiration_raw = request.data.get('date_expiration', None)
+
+        # Parse date_expiration
+        new_date = None
+        if date_expiration_raw:
+            try:
+                parts = str(date_expiration_raw).split('T')[0].split('-')
+                y, m, d = int(parts[0]), int(parts[1]), int(parts[2])
+                last_day = calendar.monthrange(y, m)[1]
+                new_date = date(y, m, last_day)
+            except Exception:
+                return Response({'error': 'Format de date invalide. Utiliser YYYY-MM-DD.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Mise à jour de la ligne commande
+        instance.lot = lot or ''
+        if new_date is not None:
+            instance.date_expiration = new_date
+        elif 'date_expiration' in request.data and not date_expiration_raw:
+            instance.date_expiration = None
+        instance.save(update_fields=['lot', 'date_expiration'])
+
+        # Mise à jour du StockLot associé si existant
+        if instance.lot_id:
+            try:
+                stock_lot = StockLot.objects.get(pk=instance.lot_id)
+                stock_lot.lot = instance.lot
+                if instance.date_expiration is not None:
+                    stock_lot.date_expiration = instance.date_expiration
+                stock_lot.save(update_fields=['lot', 'date_expiration'])
+            except StockLot.DoesNotExist:
+                pass
+
+        return Response({
+            'status': 'success',
+            'lot': instance.lot,
+            'date_expiration': instance.date_expiration.isoformat() if instance.date_expiration else None,
         })

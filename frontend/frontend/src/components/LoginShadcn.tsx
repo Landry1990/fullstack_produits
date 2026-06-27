@@ -30,7 +30,7 @@ export default function LoginShadcn() {
     return false;
   });
   const { login } = useAuth();
-  const { licence } = useLicence();
+  const { licence, loading: licenceLoading } = useLicence();
   const navigate = useNavigate();
   const [users, setUsers] = useState<{ username: string; full_name: string }[]>([]);
   const [showResetButton, setShowResetButton] = useState(false);
@@ -174,6 +174,8 @@ export default function LoginShadcn() {
         setError(t('common:messages.server_unreachable'));
       } else if (e.response.status === 400 || e.response.status === 401) {
         setError(t('common:messages.login_invalid'));
+      } else if (e.response.status === 429) {
+        setError('Trop de tentatives de connexion. Attendez 1 minute avant de réessayer.');
       } else if (e.response.status === 403) {
         setError(t('common:messages.forbidden'));
       } else if (e.response.status >= 500) {
@@ -244,13 +246,19 @@ export default function LoginShadcn() {
             </div>
 
             <h1 className="text-3xl font-bold tracking-tight mb-2">
-              {licence?.pharmacie_nom || 'Zenith'}
+              {licenceLoading && !licence
+                ? <span className={cn('inline-block rounded-lg animate-pulse w-40 h-8', isDark ? 'bg-slate-700' : 'bg-slate-200')} />
+                : (licence?.pharmacie_nom || 'Zenith')
+              }
             </h1>
             <p className={cn(
               "text-sm mb-12",
               isDark ? 'text-slate-400' : 'text-slate-500'
             )}>
-              {licence?.pharmacien_nom || t('subtitle')}
+              {licenceLoading && !licence
+                ? <span className={cn('inline-block rounded-md animate-pulse w-48 h-4', isDark ? 'bg-slate-700' : 'bg-slate-200')} />
+                : (licence?.pharmacien_nom || t('subtitle'))
+              }
             </p>
 
             {/* Features */}
