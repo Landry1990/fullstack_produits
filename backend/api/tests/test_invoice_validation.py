@@ -7,7 +7,6 @@ Tests critical business logic:
 - Cancellation and stock restoration
 """
 from decimal import Decimal
-from django.test import TestCase, TransactionTestCase
 from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APITestCase

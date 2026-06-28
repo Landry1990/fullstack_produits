@@ -1,10 +1,9 @@
 from decimal import Decimal, InvalidOperation, ROUND_HALF_UP
 from django.db import transaction, models
 from django.db.utils import DataError
-from django.db.models import F, Sum, Q, Value, DecimalField
+from django.db.models import F, Sum, Value
 from django.utils import timezone
 from django.core.cache import cache
-import time
 import logging
 
 from ..models import (
@@ -13,7 +12,6 @@ from ..models import (
     LigneOrdonnancier, MouvementStock, get_next_ticket_session,
     CouponMonnaie, DepotClient, AuditLog
 )
-from ..optimistic_locking import ConcurrentModificationError
 from ..audit_helpers import log_audit
 from .promotion_service import PromotionService
 

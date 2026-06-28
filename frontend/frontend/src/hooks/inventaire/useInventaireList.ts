@@ -5,9 +5,6 @@ import { useTranslation } from 'react-i18next';
 import { getApiErrorDetail } from '../../utils/errorHandling';
 import type { Inventaire } from '../../types';
 
-// Depending on how types are defined, you might need to adjust this import
-// import { Inventaire } from '../components/inventaire/types';
-
 export const useInventaireList = () => {
     const { t } = useTranslation();
 
@@ -124,7 +121,6 @@ export const useInventaireList = () => {
             toast.success(t('common:messages.deleted'));
             setInventaires(prev => prev.filter(inv => inv.id !== id));
             setTotalCount(prev => Math.max(0, prev - 1));
-            // fetchInventaires(); // Optionnel si on veut vraiment re-synchroniser tout, mais filtrer localement suffit pour l'instantanéité
         } catch (error) {
             console.error(error);
             toast.error(getApiErrorDetail(error, t('common:messages.error_deleting')));

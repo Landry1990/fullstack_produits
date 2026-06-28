@@ -4,6 +4,63 @@
 
 ## 2026-06-28
 
+### 🧹 Nettoyage du code mort
+
+- **Backend — code commenté / mort supprimé**
+  - `backend/api/signals.py` : debug `print` commenté.
+  - `backend/backend/settings.py` : bloc `DATABASES` SQLite commenté.
+  - `backend/diag_march.py` : filtre coupons commenté + imports `timezone`/`datetime` inutilisés.
+  - `backend/api/management/commands/send_monthly_report.py` : calcul dettes fournisseurs commenté + import `Fournisseur` inutilisé.
+  - `backend/api/views/commandes/commandes.py` : validation sudo commentée.
+  - `backend/api/services/sms.py` : `time.sleep` commenté + correction du bug `sms_type`/`user` non définis dans `_mock_provider_send`.
+  - `backend/scripts/benchmark_server.py` : `time.sleep` commenté.
+  - `backend/scripts/verify_sudo_perimes.py` : `assert` commenté + import `Decimal` inutilisé.
+
+- **Backend — imports inutilisés retirés (facturation)**
+  - `backend/api/services/sales_service.py` : `Q`, `DecimalField`, `time`, `ConcurrentModificationError`.
+  - `backend/api/views/ventes/factures.py` : `Q`, `StandardResultsSetPagination`, `SQLAnnotations`.
+  - `backend/api/views/ventes/caisse.py` : `filters`, `parse_date`, `Facture`, `CommonFilterFields`.
+  - `backend/api/views/ventes/creances.py` : `filters`, `AuditLog`, `log_audit`, `ClientDebtCache`.
+  - `backend/api/models/billing.py` : `Q`, `Value`, `Coalesce`, `Self`.
+
+- **Backend — imports inutilisés retirés (tests facturation)**
+  - `backend/api/tests/test_facturation.py` : `StockLot`, `FactureProduitAllocation`.
+  - `backend/api/tests/test_cash_closure.py` : `TestCase`.
+  - `backend/api/tests/test_invoice_validation.py` : `TestCase`, `TransactionTestCase`.
+
+- **Frontend — code commenté / mort supprimé**
+  - `frontend/src/components/HistoriqueClotures.tsx` : `usePharmacySettings` commenté.
+  - `frontend/src/utils/__tests__/finance.test.ts` : anciennes lignes de calcul HT/TVA commentées.
+  - `frontend/src/App.test.tsx` : `import App` commenté.
+  - `frontend/src/components/GestionUtilisateurs.tsx` : `fetchUsers()` commenté.
+  - `frontend/src/hooks/useCommandesState.ts` : `handleBackToList()` commenté.
+  - `frontend/src/hooks/inventaire/useInventaireList.ts` : import `Inventaire` commenté + `fetchInventaires()` commenté.
+  - `frontend/src/utils/dateUtils.ts` : alias `formatDateLongFr` commenté.
+
+- **Vérification** : compilation `py_compile` réussie sur tous les fichiers Python modifiés.
+
+### ⚡ Performance / Test de charge backend
+
+- **Script de test de charge** : `backend/scripts/load_test_api.py`
+  - Scénario réaliste : auth + recherche produits + liste factures + finalisation vente.
+  - Création d'un utilisateur et d'une session de caisse dédiés pour le test.
+
+- **Optimisation de la génération des tickets de caisse**
+  - `backend/api/models/stock.py` : `get_next_ticket_session()` passé de `select_for_update()` (verrouillage global) à un compteur Redis (`cache.incr()`), sur le même modèle que `generate_lot_number()`.
+  - Cette séquence était le principal goulot d'étranglement sous forte concurrence.
+
+- **Optimisation infrastructure (Docker Compose)**
+  - `docker-compose.yml` : `max_connections` PostgreSQL passé à 300.
+  - `docker-compose.yml` : `UVICORN_WORKERS=4` pour plus de workers parallèles.
+  - `docker-compose.yml` : `DB_CONN_MAX_AGE=0` pour libérer les connexions DB rapidement sous forte charge.
+
+- **Résultats du test de charge**
+  - **10 clients** : ~46 RPS, 0 échec, temps finales ~0.5s.
+  - **30 clients** (5 min) : ~31 RPS stable, 0 échec, 1360 ventes finalisées.
+  - **40 clients** : ~36 RPS, quelques erreurs de connexion.
+  - **50 clients** : ~30 RPS, 0 échec mais latence élevée (finales ~3.6s).
+  - **Limite actuelle** : environ 30 clients simultanés avant dégradation.
+
 ### 🐛 Corrections
 
 - **Avoir — "Décharge stock" : erreur `StockLot is not defined`**

@@ -334,11 +334,6 @@ class CommandeViewSet(MultiTermSearchMixin, OptimizedSerializerMixin, viewsets.M
         
         logger.info(f"Bulk delete requested for IDs: {ids}")
         
-        # Validation Sudo (Optionnelle, selon la politique)
-        # validation_user, error_res = validate_sudo_mode(request, permission_attr='can_delete_commande')
-        # if error_res:
-        #      return error_res
-        
         commandes = Commande.objects.filter(id__in=ids)
         total_found = commandes.count()
         deletable = commandes.exclude(status=Commande.Status.CLOTUREE)

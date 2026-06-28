@@ -5,14 +5,12 @@ Billing-related models: Facture, FactureProduit, Caisse, etc.
 from django.db import models
 from django.utils import timezone
 from django.contrib.auth.models import User
-from django.db.models import Sum, F, DecimalField, Q, Value
-from django.db.models.functions import Coalesce
+from django.db.models import Sum, F, DecimalField
 from django.db.models.signals import pre_save, post_save, post_delete
 from django.contrib.postgres.indexes import GinIndex
 from django.dispatch import receiver
 from decimal import Decimal, ROUND_HALF_UP
 from typing import TYPE_CHECKING
-from typing_extensions import Self
 
 
 class PosteCaisse(models.Model):

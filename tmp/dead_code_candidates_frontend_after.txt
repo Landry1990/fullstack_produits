@@ -1,0 +1,8 @@
+frontend\frontend\src\components\LazyRecharts.tsx:3: // Import ResponsiveContainer directly - it has issues with lazy loading
+frontend\frontend\src\components\LazyRecharts.tsx:28: // Export ResponsiveContainer directly (not lazy)
+frontend\frontend\src\components\SimplePrintLabelsModal.tsx:781:     // Function to trigger printing
+frontend\frontend\src\hooks\useOptimizedTable.ts:33:   // Pagination (optionnelle)
+frontend\frontend\src\hooks\product-search\useInventaireSearch.ts:149:     // Return selected product with lot quantities
+frontend\frontend\src\utils\finance.ts:52:             // TTC = HT * (1 + taux/100) => HT = TTC / (1 + taux/100)
+frontend\frontend\src\utils\print\promisPdf.ts:120:             // Quantity (aligned with first line of name)
+frontend\frontend\src\utils\print\promisPdf.ts:127:             // Barcode (below name)

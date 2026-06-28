@@ -11,7 +11,7 @@ from django.db.models import Sum, Count, F, Q, DecimalField
 from django.db.models.functions import Coalesce
 from decimal import Decimal
 
-from api.models import Facture, Caisse, MouvementCaisse, PharmacySettings, Produit, Client, Fournisseur
+from api.models import Facture, Caisse, MouvementCaisse, PharmacySettings, Produit, Client
 from api.models import FactureProduit, CommandeProduit
 from api.telegram_service import TelegramService
 from api.services.finance_marges import calculate_margin_for_invoices
@@ -213,13 +213,9 @@ class Command(BaseCommand):
             creances = Client.objects.filter(solde_factures__gt=0).aggregate(
                 total=Coalesce(Sum('solde_factures'), Decimal('0'))
             )['total']
-            # TODO: Vérifier le champ correct pour les dettes fournisseurs
-            # dettes = Fournisseur.objects.filter(solde__lt=0).aggregate(
-            #     total=Coalesce(Sum('solde'), Decimal('0'))
-            # )['total']
             data['debt'] = {
                 'creances': float(creances),
-                'dettes_fournisseurs': 0  # float(abs(dettes))
+                'dettes_fournisseurs': 0
             }
 
         # 8. Résumé financier

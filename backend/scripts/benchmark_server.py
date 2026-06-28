@@ -33,9 +33,6 @@ def user_scenario(token, results, errors):
     
     while time.time() - start_time < DURATION_SECONDS:
         try:
-            # Simulate human think time (very fast for stress test, but present)
-            # time.sleep(random.uniform(0.1, 0.5)) 
-            
             # Action 1: Search for products (Heavy read)
             term = random.choice(search_terms)
             resp = requests.get(SEARCH_URL, params={'search': term}, headers=headers, timeout=5)

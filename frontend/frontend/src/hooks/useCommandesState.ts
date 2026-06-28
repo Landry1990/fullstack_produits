@@ -683,9 +683,6 @@ export function useCommandesState(forcedType?: 'LOC' | 'DIR' | 'DIV') {
       }
       
       if (e.key === 'Escape' && !isInput) {
-        if (viewMode === 'CREATE' || viewMode === 'EDIT') {
-          // handleBackToList();
-        }
         return;
       }
     };
