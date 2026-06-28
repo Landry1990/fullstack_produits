@@ -3,6 +3,7 @@ services:
   # Base de données PostgreSQL
   db:
     image: postgres:15-alpine
+    command: postgres -c max_connections=300
     volumes:
       - fullstack_postgres_data_protected:/var/lib/postgresql/data
     env_file:
@@ -55,6 +56,8 @@ services:
       - DJANGO_DEBUG=${DJANGO_DEBUG:-True}
       - DB_HOST=${DB_HOST:-db}
       - DB_PORT=${DB_PORT:-5432}
+      - DB_CONN_MAX_AGE=0
+      - UVICORN_WORKERS=4
     ports:
       - "8000:8000"
     depends_on:

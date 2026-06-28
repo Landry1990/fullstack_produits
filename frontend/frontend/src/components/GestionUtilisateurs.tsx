@@ -612,7 +612,6 @@ export default function GestionUtilisateurs() {
       }
       
       setModalOpen(false);
-      // fetchUsers(); // Supprimé pour l'instantanéité
     } catch (error) {
       console.error('Error saving user:', error);
       toast.error(getApiErrorDetail(error, t('messages.save_error')));

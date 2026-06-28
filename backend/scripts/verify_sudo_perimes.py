@@ -3,7 +3,6 @@ import os
 import sys
 import django
 from django.utils import timezone
-from decimal import Decimal
 
 # Setup Django environment
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
@@ -130,7 +129,6 @@ def verify_sudo_perimes():
         assert adjustment.user.id == validator.id, "Utilisateur ajustement incorrect"
     else:
         print("ERREUR: Aucun ajustement de stock trouvé !")
-        # assert False, "StockAdjustment manquant" # Uncomment if strict checking required immediately
 
     print("\n✅ VÉRIFICATION RÉUSSIE : La sortie de périmés via Sudo Mode fonctionne correctement.")
 

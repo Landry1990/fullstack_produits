@@ -1,4 +1,4 @@
-from rest_framework import viewsets, status, filters
+from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
@@ -20,14 +20,11 @@ from reportlab.lib.colors import HexColor
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Table, TableStyle, Spacer
 
 from ...models import (
-    Facture, FactureProduit, Caisse, InvoiceSettings, AuditLog,
-    RelevePaiement
+    Facture, FactureProduit, Caisse, InvoiceSettings, RelevePaiement
 )
 from ...serializers import CreanceSerializer
-from ...audit_helpers import log_audit
 from ...sudo_utils import validate_sudo_mode
 from ...pagination import StandardResultsSetPagination
-from ...cache_utils import ClientDebtCache
 from ...security_utils import build_safe_content_disposition
 
 logger = logging.getLogger(__name__)

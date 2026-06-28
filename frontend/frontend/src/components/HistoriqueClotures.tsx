@@ -117,7 +117,6 @@ export default function HistoriqueClotures() {
 
   // Sélection
   const [selectedCloture, setSelectedCloture] = useState<ClotureCaisse | null>(null)
-  // const { settings: pharmacySettings } = usePharmacySettings()
 
   // Metric month/year (default to now)
   const [metricMonth, setMetricMonth] = useState<string>(() => format(new Date(), 'MM'))

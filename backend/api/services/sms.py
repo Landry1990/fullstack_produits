@@ -41,7 +41,7 @@ class SmsService:
         try:
             # 2. Appel au Provider (Mock pour l'instant)
             # TODO: Intégrer Twilio / Infobip ici
-            response = self._mock_provider_send(clean_number, message)
+            response = self._mock_provider_send(clean_number, message, sms_type, user)
             
             # 3. Mise à jour succès
             log.status = SmsLog.Status.SENT
@@ -62,13 +62,9 @@ class SmsService:
             
             return False, f"Erreur lors de l'envoi: {str(e)}"
 
-    def _mock_provider_send(self, recipient, message):
+    def _mock_provider_send(self, recipient, message, sms_type='MANUEL', user=None):
         """Simule l'envoi via une API externe."""
-        import time
         import uuid
-        
-        # Simuler latence réseau
-        # time.sleep(0.5)
         
         business_logger.info(f"[SMS] SENT to {recipient} | type={sms_type} | user={user.username if user else 'system'}")
         

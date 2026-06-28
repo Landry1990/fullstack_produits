@@ -2,8 +2,6 @@ import os
 import django
 import sys
 from decimal import Decimal
-from django.utils import timezone
-from datetime import datetime
 
 # Setup Django
 sys.path.append(r"c:\Projet Fullstack\fullstack_produits\backend")
@@ -57,8 +55,6 @@ def analyze_march():
     # On filtrera en python si besoin
     total_coupons = Decimal('0.00')
     for c in coupons:
-        # if c.date_creation.month == month and c.date_creation.year == year:
-        #     total_coupons += c.montant
         pass
     print(f"Total Coupons (TBC): {total_coupons}")
     
