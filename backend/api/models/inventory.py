@@ -37,7 +37,7 @@ class Inventaire(models.Model):
     def save(self, *args, **kwargs):
         if not self.reference:
             # Generate INV-YYYYMM-XXXX
-            today = timezone.now().date()
+            today = timezone.localtime(timezone.now()).date()
             prefix = f"INV-{today.strftime('%Y%m')}"
             last = Inventaire.objects.filter(reference__startswith=prefix).order_by('-reference').first()
             if last:

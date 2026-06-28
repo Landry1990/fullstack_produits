@@ -540,7 +540,7 @@ class FournisseurViewSet(viewsets.ModelViewSet):
         import traceback
         
         try:
-            today = timezone.now().date()
+            today = timezone.localtime(timezone.now()).date()
             
             # 1. Statistiques Globales
             fournisseurs = self.get_queryset()

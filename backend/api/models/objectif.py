@@ -89,7 +89,7 @@ class ObjectifCommercial(models.Model):
         """
         Récupère l'objectif actuel pour une période donnée.
         """
-        today = timezone.now().date()
+        today = timezone.localtime(timezone.now()).date()
         
         if periode == cls.Periode.JOUR:
             date_debut = today

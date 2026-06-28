@@ -92,6 +92,12 @@ class PharmacySettings(models.Model):
     )
 
     # --- Paramètres Avancés (Règles Métier) ---
+    min_margin_threshold = models.DecimalField(
+        max_digits=5,
+        decimal_places=2,
+        default=1.34,
+        help_text="Taux de marge minimum acceptable pour les commandes (ex: 1.34 = 25% de marge)"
+    )
     low_stock_threshold_days = models.IntegerField(
         default=15,
         help_text="Seuil d'alerte stock bas (en jours de couverture)"

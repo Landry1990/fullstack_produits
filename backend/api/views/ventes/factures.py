@@ -750,7 +750,7 @@ class FactureViewSet(BaseViewSetConfig, OptimizedSerializerMixin, viewsets.Model
         date_lte = request.query_params.get('date__lte')
 
         # Fallback to today if no dates provided
-        today = timezone.now().date()
+        today = timezone.localtime(timezone.now()).date()
         
         # Build base queryset for filtering
         # On exclut les factures VALIDEE qui n'ont AUCUN paiement (ce sont celles juste 'envoyées à la caisse')
