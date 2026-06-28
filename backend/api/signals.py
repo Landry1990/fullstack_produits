@@ -12,7 +12,6 @@ def invalidate_dashboard_stats(sender, instance, **kwargs):
     Invalidate dashboard stats cache when data changes.
     """
     cache.delete('dashboard_stats')
-    # print(f"Cache invalidated due to change in {sender.__name__}") # Debug
 
 # --- AUDIT LOGGING ---
 from django.forms.models import model_to_dict

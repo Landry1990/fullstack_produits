@@ -1,4 +1,4 @@
-from rest_framework import viewsets, status, filters
+from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from django.db import transaction
@@ -6,7 +6,6 @@ from django.db.models import Sum, Q, Value, DecimalField, Count, F
 from django.db.models.functions import Coalesce, Abs
 from django_filters.rest_framework import DjangoFilterBackend
 from django.utils import timezone
-from django.utils.dateparse import parse_date
 from datetime import datetime
 from decimal import Decimal, InvalidOperation
 import logging
@@ -14,14 +13,13 @@ import logging
 from django.contrib.auth.models import User
 
 from ...models import (
-    Facture, Caisse, ClotureCaisse, MouvementCaisse, AuditLog
+    Caisse, ClotureCaisse, MouvementCaisse, AuditLog
 )
 from ...serializers import CaisseSerializer, ClotureCaisseSerializer, MouvementCaisseSerializer
 from ...audit_helpers import log_audit
 from ...sudo_utils import validate_sudo_mode
 from ...centralized_configs import (
     BaseViewSetConfig,
-    CommonFilterFields,
     StandardResultsSetPagination
 )
 

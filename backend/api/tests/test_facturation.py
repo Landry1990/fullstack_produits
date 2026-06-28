@@ -12,8 +12,7 @@ from rest_framework.test import APITestCase
 
 from .factories import TestDataFactory
 from ..models import (
-    Facture, FactureProduit, Produit, Caisse, StockLot,
-    FactureProduitAllocation, MouvementStock
+    Facture, FactureProduit, Produit, Caisse, MouvementStock
 )
 
 

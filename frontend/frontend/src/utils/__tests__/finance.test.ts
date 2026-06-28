@@ -35,11 +35,6 @@ describe('finance utilities', () => {
 
         it('should calculate aggregate stats for multiple items', () => {
             const stats = calculateCartStats(mockLignes);
-            // P1: 1000 (HT: 1000 / 1.18 = 847.45) -> No, app usually does HT = TTC / (1 + TVA/100)
-            // But wait, my utility did: 
-            // const htTotal = ligneTotal / (1 + (tvaRate / 100));
-            // const tvaAmount = ligneTotal - htTotal;
-
             // P1: 1000 TTC, 18% TVA -> HT = 1000 / 1.18 = 847.457, TVA = 152.542
             // P2: 2 * 2000 * 0.9 = 3600 TTC, 0% TVA -> HT = 3600, TVA = 0
             // Total TTC: 4600

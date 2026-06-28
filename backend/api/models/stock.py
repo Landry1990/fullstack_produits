@@ -77,19 +77,30 @@ def generate_lot_number():
 def get_next_ticket_session():
     """
     Retourne le prochain numéro de ticket pour la journée en cours.
-    Gère le reset quotidien de manière atomique.
+    Utilise Redis (cache) pour éviter le verrouillage global de la base de données.
     """
-    from django.db import transaction
+    from django.core.cache import cache
     today = timezone.localtime(timezone.now()).date()
+    cache_key = f"ticket_session_sequence:{today}"
     
-    with transaction.atomic():
-        seq, created = TicketSessionSequence.objects.select_for_update().get_or_create(
+    try:
+        sequence = cache.incr(cache_key)
+    except ValueError:
+        # Cache non initialisé : récupérer la dernière valeur en base
+        last_number = 0
+        seq_obj = TicketSessionSequence.objects.filter(date=today).first()
+        if seq_obj:
+            last_number = seq_obj.last_number
+        
+        cache.set(cache_key, last_number, timeout=None)
+        sequence = cache.incr(cache_key)
+        # Persister la valeur initiale pour reprise après Redis restart
+        TicketSessionSequence.objects.update_or_create(
             date=today,
-            defaults={'last_number': 0}
+            defaults={'last_number': sequence}
         )
-        seq.last_number += 1
-        seq.save(update_fields=['last_number'])
-        return seq.last_number
+    
+    return sequence
 
 
 class StockLot(models.Model):
