@@ -41,7 +41,7 @@ class RapportInventoryMixin:
         )
         current_stock_cost = stock_totals['total_cost']
         current_stock_ttc = stock_totals['total_ttc']
-        today = timezone.now().date()
+        today = timezone.localtime(timezone.now()).date()
         
         ventes_ca = Facture.objects.filter(date__date__gte=date_debut, status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE]).annotate(jour=TruncDate('date')).values('jour').annotate(ca_net=Sum('total_ttc')).order_by('-jour')
         ventes_details = FactureProduit.objects.filter(facture__date__date__gte=date_debut, facture__status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE]).annotate(jour=TruncDate('facture__date')).values('jour').annotate(ventes_ttc_brut=Sum(F('quantity') * F('selling_price'), output_field=DecimalField()), cout_ventes=Sum(F('quantity') * F('produit__pmp'), output_field=DecimalField())).order_by('-jour')
@@ -101,7 +101,7 @@ class RapportInventoryMixin:
         if export_format == 'csv':
             import csv
             response = HttpResponse(content_type='text/csv')
-            response['Content-Disposition'] = f'attachment; filename="stocks_morts_{timezone.now().date()}.csv"'
+            response['Content-Disposition'] = f'attachment; filename="stocks_morts_{timezone.localtime(timezone.now()).date()}.csv"'
             response.write(u'\ufeff'.encode('utf8'))
             writer = csv.writer(response, delimiter=';')
             writer.writerow(['Produit', 'CIP', 'Rayon', 'Fournisseur', 'Stock', 'PMP', 'Valeur Stock', 'Dernière Vente'])

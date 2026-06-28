@@ -283,7 +283,7 @@ class StockLotViewSet(BaseViewSetConfig, OptimizedSerializerMixin, viewsets.Mode
         min_quantity = int(request.query_params.get('min_quantity', 1))
         include_critical_only = request.query_params.get('critical_only', 'false').lower() == 'true'
 
-        today = timezone.now().date()
+        today = timezone.localtime(timezone.now()).date()
         future_date = today + timedelta(days=days_ahead)
         critical_date = today + timedelta(days=7)
 
@@ -360,7 +360,7 @@ class StockLotViewSet(BaseViewSetConfig, OptimizedSerializerMixin, viewsets.Mode
         from api.models import Facture, FactureProduitAllocation
         from django.db.models import Q
         
-        today = timezone.now().date()
+        today = timezone.localtime(timezone.now()).date()
         
         # Paramètres de période pour le CA (par défaut: 12 derniers mois)
         periode_jours = int(request.query_params.get('periode_jours', 365))

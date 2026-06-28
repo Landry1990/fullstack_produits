@@ -373,6 +373,8 @@ export default function DashboardManagerShadcn() {
     isSettingsModalOpen,
     setIsSettingsModalOpen,
     exporting,
+    editingObjectif,
+    setEditingObjectif,
     actions,
   } = useManagerDashboard();
 
@@ -450,7 +452,7 @@ export default function DashboardManagerShadcn() {
           <div className="space-y-5 py-4">
             <div className="space-y-2">
               <label className="text-sm font-semibold text-slate-700">Période</label>
-              <Tabs defaultValue="JOUR">
+              <Tabs value={editingObjectif.periode} onValueChange={(v) => setEditingObjectif({ ...editingObjectif, periode: v })}>
                 <TabsList className="grid w-full grid-cols-3 rounded-xl bg-slate-100 p-1">
                   <TabsTrigger value="JOUR" className="rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-sm">
                     Journalier
@@ -471,6 +473,8 @@ export default function DashboardManagerShadcn() {
                 type="number"
                 className="flex h-11 w-full rounded-xl border border-slate-200 bg-white px-4 text-sm font-medium shadow-sm transition-all placeholder:text-slate-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/20 focus-visible:border-emerald-500"
                 placeholder="500000"
+                value={editingObjectif.ca_objectif}
+                onChange={(e) => setEditingObjectif({ ...editingObjectif, ca_objectif: e.target.value })}
               />
             </div>
           </div>
@@ -486,7 +490,6 @@ export default function DashboardManagerShadcn() {
             <Button
               onClick={() => {
                 actions.handleSaveObjectif();
-                setIsModalOpen(false);
               }}
               className="rounded-xl"
             >

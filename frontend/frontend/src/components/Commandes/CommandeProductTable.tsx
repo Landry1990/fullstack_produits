@@ -1,10 +1,12 @@
 import React, { useState, useRef, useEffect } from 'react';
 
 import { useTranslation } from 'react-i18next';
+import { AlertTriangle } from 'lucide-react';
 
 import type { CommandeProduit, ProduitModel, Commande } from '../../types';
 
 import { formatCurrency } from '../../utils/formatters';
+import { usePharmacySettings } from '../../context/PharmacySettingsContext';
 
 
 
@@ -129,6 +131,8 @@ export default function CommandeProductTable({
 }: CommandeProductTableProps) {
 
     const { t } = useTranslation(['orders', 'common']);
+    const { settings: pharmacySettings } = usePharmacySettings();
+    const marginThreshold = pharmacySettings?.min_margin_threshold ?? 1.34;
 
     const [searchQuery, setSearchQuery] = useState('');
 
@@ -843,31 +847,38 @@ export default function CommandeProductTable({
 
                         <td className="text-right py-0.5">
 
-                        <input
+                        <div className="relative flex items-center justify-end">
+                            <input
 
-                            type="text"
+                                type="text"
 
-                            data-row={index}
+                                data-row={index}
 
-                            data-field="marge"
+                                data-field="marge"
 
-                            value={p.marge || ''}
+                                value={p.marge || ''}
 
-                            onChange={(e) => updateCommandeProduitField(index, 'marge', e.target.value)}
+                                onChange={(e) => updateCommandeProduitField(index, 'marge', e.target.value)}
 
-                            onKeyDown={(e) => handleTableFieldKeyDown(e, index, (commandeType === 'DIR' ? 5 : 4))}
+                                onKeyDown={(e) => handleTableFieldKeyDown(e, index, (commandeType === 'DIR' ? 5 : 4))}
 
-                            onFocus={handleSelectAll}
+                                onFocus={handleSelectAll}
 
-                            className={`input-ref input-bordered input-sm h-8 min-h-8 px-2 text-sm w-full text-right font-bold focus:bg-base-100 ${Number(p.marge || 0) >= 1.34 ? 'text-success' : 'text-warning'} ${!fieldsConfig[4].editable ? 'bg-base-200 cursor-not-allowed' : ''}`}
+                                className={`input-ref input-bordered input-sm h-8 min-h-8 px-2 text-sm w-full text-right font-bold focus:bg-base-100 ${Number(p.marge || 0) >= marginThreshold ? 'text-success' : 'text-warning bg-warning/10 border-warning'} ${!fieldsConfig[4].editable ? 'bg-base-200 cursor-not-allowed' : ''}`}
 
-                            autoFocus={focusedField?.row === index && focusedField?.field === 4}
+                                autoFocus={focusedField?.row === index && focusedField?.field === 4}
 
-                            readOnly={!fieldsConfig[4].editable}
+                                readOnly={!fieldsConfig[4].editable}
 
-                            tabIndex={!fieldsConfig[4].editable ? -1 : 0}
+                                tabIndex={!fieldsConfig[4].editable ? -1 : 0}
 
-                        />
+                            />
+                            {Number(p.marge || 0) > 0 && Number(p.marge || 0) < marginThreshold && (
+                                <div className="absolute right-1 top-1/2 -translate-y-1/2" title={t('orders:product_table.low_margin_tooltip', { threshold: marginThreshold, defaultValue: `Marge faible (seuil: ${marginThreshold})` })}>
+                                    <AlertTriangle className="size-3.5 text-warning" />
+                                </div>
+                            )}
+                        </div>
 
                         </td>
 

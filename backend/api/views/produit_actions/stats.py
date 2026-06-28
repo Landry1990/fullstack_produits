@@ -94,7 +94,7 @@ class ProduitStatsMixin:
     def recalculate_rotation(self, request):
         from django.db import transaction
         try:
-            today = timezone.now().date()
+            today = timezone.localtime(timezone.now()).date()
             
             ventes_par_produit = FactureProduit.objects.filter(
                 facture__status__in=['VAL', 'PAY']

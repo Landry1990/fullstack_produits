@@ -6,7 +6,7 @@ from django.db import transaction
 from django_filters.rest_framework import DjangoFilterBackend
 
 from ...models import (
-    Avoir, LigneAvoir, Produit, MouvementStock, AuditLog
+    Avoir, LigneAvoir, Produit, MouvementStock, AuditLog, StockLot
 )
 from ...serializers import AvoirSerializer, LigneAvoirSerializer
 from ...audit_helpers import log_audit

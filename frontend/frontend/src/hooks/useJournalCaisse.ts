@@ -62,7 +62,9 @@ export function useJournalCaisse() {
   const [detectedShift, setDetectedShift] = useState<{
     start: Date,
     end: Date,
-    active: boolean
+    active: boolean,
+    posteCaisseId?: number | null,
+    posteCaisseNom?: string | null
   } | null>(null);
 
   const [isClosingModalOpen, setIsClosingModalOpen] = useState(false);
