@@ -347,7 +347,7 @@ class StockAnalysisShortageView(APIView):
         except ValueError:
             page_size = 50
             
-        today = timezone.now().date()
+        today = timezone.localtime(timezone.now()).date()
         date_30_days_ago = today - timedelta(days=30)
         date_7_days_ago = today - timedelta(days=7)
 

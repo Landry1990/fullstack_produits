@@ -40,7 +40,7 @@ class DashboardViewSet(viewsets.ViewSet):
 
     @action(detail=False, methods=['get'])
     def stats(self, request):
-        today = timezone.now().date()
+        today = timezone.localtime(timezone.now()).date()
         yesterday = today - timedelta(days=1)
         
         # Determine Role early to skip complex queries for cashiers
@@ -240,12 +240,13 @@ class DashboardViewSet(viewsets.ViewSet):
         Calculates KPIs for Manager Dashboard: Actual vs Targets and Alerts.
         """
         # Role check
-        role = getattr(request.user, 'profile', None).role if hasattr(request.user, 'profile') else None
+        profile = getattr(request.user, 'profile', None)
+        role = profile.role if profile else None
         if role in ['VENDEUR', 'CAISSIER'] and not request.user.is_superuser:
             return Response({"error": "Accès non autorisé"}, status=status.HTTP_403_FORBIDDEN)
 
         # 1. Basic dates
-        now = timezone.now()
+        now = timezone.localtime(timezone.now())
         today = now.date()
         start_of_week = today - timedelta(days=today.weekday())
         start_of_month = today.replace(day=1)
@@ -516,7 +517,7 @@ class DashboardViewSet(viewsets.ViewSet):
         settings = PharmacySettings.objects.first()
         days_count = settings.traffic_analysis_days if (settings and settings.traffic_analysis_days) else 30
         
-        today = timezone.now().date()
+        today = timezone.localtime(timezone.now()).date()
         date_ago = today - timedelta(days=days_count)
         
         # Get sales for last N days grouped by hour
@@ -571,7 +572,7 @@ class DashboardViewSet(viewsets.ViewSet):
     @action(detail=False, methods=['get'])
     def revenue_chart(self, request):
         """Returns daily revenue for the last 7 days in format expected by frontend."""
-        end_date = timezone.now()
+        end_date = timezone.localtime(timezone.now())
         start_date = end_date - timedelta(days=6)  # 7 days including today
         
         daily_revenue = Facture.objects.filter(
@@ -1068,7 +1069,7 @@ class StatistiquesViewSet(viewsets.ViewSet):
         threshold = int(request.query_params.get('threshold', 5))
         days = int(request.query_params.get('days', 30))
         
-        start_date = timezone.now() - timedelta(days=days)
+        start_date = timezone.localtime(timezone.now()) - timedelta(days=days)
         
         # Compter les annulations par utilisateur
         cancellations = AuditLog.objects.filter(
@@ -1114,7 +1115,7 @@ class StatistiquesViewSet(viewsets.ViewSet):
         ps = PharmacySettings.objects.first()
 
         # 1. Capital Dormant
-        today = timezone.now().date()
+        today = timezone.localtime(timezone.now()).date()
         dormant_days = ps.dormant_stock_days if (ps and ps.dormant_stock_days) else 90
         limit_date = today - timedelta(days=dormant_days)
         

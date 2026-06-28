@@ -19,6 +19,7 @@ export interface PharmacySettings {
   logo?: string;
   coefficient_direct_commande?: string;
   taux_change_actif?: string;
+  min_margin_threshold?: number;
   low_stock_threshold_days?: number;
   dormant_stock_days?: number;
   debt_alert_threshold?: string;
@@ -73,6 +74,7 @@ const DEFAULT_SETTINGS: PharmacySettings = {
   logo: undefined,
   coefficient_direct_commande: '1.35',
   taux_change_actif: '655.957',
+  min_margin_threshold: 1.34,
   low_stock_threshold_days: 15,
   dormant_stock_days: 90,
   debt_alert_threshold: '100000',

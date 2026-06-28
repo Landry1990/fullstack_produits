@@ -34,7 +34,7 @@ class TemporalAnalysisViewSet(viewsets.ViewSet):
             - days: Number of days to analyze (default: 30)
         """
         days = int(request.query_params.get('days', 30))
-        today = timezone.now().date()
+        today = timezone.localtime(timezone.now()).date()
         date_start = today - timedelta(days=days)
         
         # Get sales grouped by hour
@@ -99,7 +99,7 @@ class TemporalAnalysisViewSet(viewsets.ViewSet):
         """
         weeks = int(request.query_params.get('weeks', 12))
         days = weeks * 7
-        today = timezone.now().date()
+        today = timezone.localtime(timezone.now()).date()
         date_start = today - timedelta(days=days)
         
         # Day names in French
@@ -180,7 +180,7 @@ class TemporalAnalysisViewSet(viewsets.ViewSet):
         """
         months = int(request.query_params.get('months', 12))
         top_n = int(request.query_params.get('top_n', 20))
-        today = timezone.now().date()
+        today = timezone.localtime(timezone.now()).date()
         date_start = today - timedelta(days=months * 30)
         
         # Monthly revenue trends

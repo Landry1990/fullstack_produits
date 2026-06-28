@@ -80,7 +80,7 @@ def get_next_ticket_session():
     Gère le reset quotidien de manière atomique.
     """
     from django.db import transaction
-    today = timezone.now().date()
+    today = timezone.localtime(timezone.now()).date()
     
     with transaction.atomic():
         seq, created = TicketSessionSequence.objects.select_for_update().get_or_create(
@@ -166,6 +166,7 @@ class ReapproSession(models.Model):
     Regroupe un ensemble de transferts de stock (Réserve -> Rayon) effectués simultanément.
     Permet la traçabilité et l'impression de rapports de réapprovisionnement.
     """
+    id = models.BigAutoField(primary_key=True)
     user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, help_text="Utilisateur ayant effectué le réappro")
     total_products = models.IntegerField(default=0, help_text="Nombre de produits distincts impactés")
     total_units = models.IntegerField(default=0, help_text="Nombre total d'unités transférées")

@@ -384,7 +384,7 @@ class TelegramRapportFlashView(APIView):
             # Si les stats ne sont pas passées, on les calcule côté backend
             if not stats:
                 from ..models import Facture, Produit
-                today = timezone.now().date()
+                today = timezone.localtime(timezone.now()).date()
                 factures_today = Facture.objects.filter(date__date=today, status='VALIDEE')
                 ca = sum(f.total_ttc for f in factures_today) or 0
                 nb_ventes = factures_today.count()

@@ -4,8 +4,8 @@
 .SYNOPSIS
     Déploiement rapide Zenith Pharma - sans rebuild Docker
 .DESCRIPTION
-    Frontend : npm run build → docker cp dist/ → nginx reload.
-    Backend  : docker cp de TOUT le dossier api/ → restart.
+    Frontend : npm run build -> docker cp dist/ -> nginx reload.
+    Backend  : docker cp de TOUT le dossier api/ -> restart.
                Avec -IncludeModels (backend-full ou all) : migrations + setup_dci_prod.
     Avec -Rebuild : reconstruit les images Docker via docker compose build.
     Usage: .\deploy.ps1 [-Target all|frontend|backend|backend-full] [-BackupDB] [-Rebuild]
@@ -96,7 +96,7 @@ function Deploy-Frontend {
         if ($LASTEXITCODE -ne 0) { throw "Build frontend échoué (code $LASTEXITCODE)" }
         Write-Host "  ✅ Build OK" -ForegroundColor Green
 
-        Write-Host "  docker cp dist/ → nginx..." -ForegroundColor Yellow
+        Write-Host "  docker cp dist/ -> nginx..." -ForegroundColor Yellow
         docker cp dist/. "${FRONTEND_CONTAINER}:/usr/share/nginx/html/"
         docker exec $FRONTEND_CONTAINER nginx -s reload
         Write-Host "  ✅ Frontend déployé" -ForegroundColor Green
@@ -117,7 +117,7 @@ function Deploy-Backend {
     try {
         # Copie intégrale du dossier api/ (vues, modèles, serializers, services, management...)
         # Plus besoin de lister les fichiers un par un : tout est synchronisé d'un coup.
-        Write-Host "  Copie backend/api/ → conteneur /app/api/ ..." -ForegroundColor Yellow
+        Write-Host "  Copie backend/api/ -> conteneur /app/api/ ..." -ForegroundColor Yellow
         docker cp backend/api/. "${BACKEND_CONTAINER}:/app/api/"
         Write-Host "  ✅ Copie terminée" -ForegroundColor Green
 

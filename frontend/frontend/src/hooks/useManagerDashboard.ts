@@ -6,6 +6,7 @@ import api from '../services/api';
 import { useManagerStats, useCurrentObjectifs } from './useDashboard';
 import { usePharmacySettings } from './usePharmacySettings';
 import { exportToExcel } from '../utils/excelExport';
+import { getLocalDateString } from '../utils/dateUtils';
 
 export interface EditingObjectif {
     periode: string;
@@ -22,7 +23,7 @@ export const useManagerDashboard = () => {
     const [editingObjectif, setEditingObjectif] = useState<EditingObjectif>({
         periode: 'JOUR',
         ca_objectif: '',
-        date_debut: new Date().toISOString().split('T')[0]
+        date_debut: getLocalDateString()
     });
 
     const { data: stats, isLoading: statsLoading, refetch: refetchStats } = useManagerStats();
@@ -112,13 +113,13 @@ export const useManagerDashboard = () => {
             setEditingObjectif({
                 periode: periode,
                 ca_objectif: objective ? objective.ca_objectif : '',
-                date_debut: objective ? objective.date_debut : new Date().toISOString().split('T')[0]
+                date_debut: objective ? objective.date_debut : getLocalDateString()
             });
         } else {
             setEditingObjectif({
                 periode: 'JOUR',
                 ca_objectif: '',
-                date_debut: new Date().toISOString().split('T')[0]
+                date_debut: getLocalDateString()
             });
         }
         setIsModalOpen(true);

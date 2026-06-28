@@ -56,7 +56,7 @@ class ConfigurationObjectifs(models.Model):
         from .objectif import ObjectifCommercial
         from django.utils import timezone
         
-        today = timezone.now().date()
+        today = timezone.localtime(timezone.now()).date()
         start_of_month = today.replace(day=1)
         
         ObjectifCommercial.objects.filter(

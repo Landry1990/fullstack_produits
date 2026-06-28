@@ -41,7 +41,7 @@ class FinanceStatsViewSet(viewsets.ViewSet):
     # ── 1. CA Evolution ──────────────────────────────────
     @action(detail=False, methods=['get'])
     def ca_evolution(self, request):
-        today = timezone.now().date()
+        today = timezone.localtime(timezone.now()).date()
         start_date = (today - relativedelta(months=11)).replace(day=1)
         start_date_n1 = start_date - relativedelta(years=1)
 
@@ -82,7 +82,7 @@ class FinanceStatsViewSet(viewsets.ViewSet):
     # ── 2. Marges Evolution ──────────────────────────────
     @action(detail=False, methods=['get'])
     def marges_evolution(self, request):
-        today = timezone.now().date()
+        today = timezone.localtime(timezone.now()).date()
         start_date = (today - relativedelta(months=11)).replace(day=1)
 
         margin_map = build_monthly_margin_map(start_date, today)
@@ -106,7 +106,7 @@ class FinanceStatsViewSet(viewsets.ViewSet):
     # ── 3. Predictions ───────────────────────────────────
     @action(detail=False, methods=['get'])
     def predictions(self, request):
-        today = timezone.now().date()
+        today = timezone.localtime(timezone.now()).date()
         start_date = (today - relativedelta(months=11)).replace(day=1)
 
         ca_data = get_validated_invoices_queryset().filter(
@@ -140,7 +140,7 @@ class FinanceStatsViewSet(viewsets.ViewSet):
         if cached is not None:
             return Response(cached)
 
-        today = timezone.now().date()
+        today = timezone.localtime(timezone.now()).date()
         start_of_month = today.replace(day=1)
         start_of_year = today.replace(month=1, day=1)
 
@@ -204,7 +204,7 @@ class FinanceStatsViewSet(viewsets.ViewSet):
     def top_products(self, request):
         periode = request.query_params.get('periode', 'mois')
         critere = request.query_params.get('critere', 'ca')
-        today = timezone.now().date()
+        today = timezone.localtime(timezone.now()).date()
 
         if periode == 'trimestre':
             start_date = today - relativedelta(months=3)
@@ -256,7 +256,7 @@ class FinanceStatsViewSet(viewsets.ViewSet):
     def repartition_ca(self, request):
         by = request.query_params.get('by', 'categorie')
         periode = request.query_params.get('periode', 'mois')
-        today = timezone.now().date()
+        today = timezone.localtime(timezone.now()).date()
 
         if periode == 'trimestre':
             start_date = today - relativedelta(months=3)
@@ -335,7 +335,7 @@ class FinanceStatsViewSet(viewsets.ViewSet):
     def analyse_categories(self, request):
         cat_type = request.query_params.get('type', 'rayon')
         periode = request.query_params.get('periode', 'mois')
-        today = timezone.now().date()
+        today = timezone.localtime(timezone.now()).date()
 
         if periode == 'trimestre':
             start_date = today - relativedelta(months=3)
@@ -400,7 +400,7 @@ class FinanceStatsViewSet(viewsets.ViewSet):
     def evolution_categories(self, request):
         cat_type = request.query_params.get('type', 'rayon')
         top_n = int(request.query_params.get('top', 5))
-        today = timezone.now().date()
+        today = timezone.localtime(timezone.now()).date()
         start_date = (today - relativedelta(months=11)).replace(day=1)
 
         if cat_type == 'groupe':
@@ -456,7 +456,7 @@ class FinanceStatsViewSet(viewsets.ViewSet):
     # ── 9. Analyse Marges ─────────────────────────────────
     @action(detail=False, methods=['get'])
     def analyse_marges(self, request):
-        today = timezone.now().date()
+        today = timezone.localtime(timezone.now()).date()
         start_date = today - relativedelta(months=3)
 
         base_qs = FactureProduit.objects.filter(
@@ -532,7 +532,7 @@ class FinanceStatsViewSet(viewsets.ViewSet):
     def analyse_fournisseurs(self, request):
         from ..models import Fournisseur, StockLot, StockAdjustment
         from collections import defaultdict
-        today = timezone.now().date()
+        today = timezone.localtime(timezone.now()).date()
         start_date = today - relativedelta(months=12)
 
         fournisseurs = list(Fournisseur.objects.filter(
@@ -613,7 +613,7 @@ class FinanceStatsViewSet(viewsets.ViewSet):
     def comparaison_prix_achat(self, request):
         from ..models import StockLot
         from collections import defaultdict
-        today = timezone.now().date()
+        today = timezone.localtime(timezone.now()).date()
         start_date = today - relativedelta(months=12)
 
         produits_multi_source = StockLot.objects.filter(
@@ -665,7 +665,7 @@ class FinanceStatsViewSet(viewsets.ViewSet):
     @action(detail=False, methods=['get'])
     def repartition_achats(self, request):
         from ..models import StockLot
-        today = timezone.now().date()
+        today = timezone.localtime(timezone.now()).date()
         start_date = today - relativedelta(months=12)
 
         achats = StockLot.objects.filter(
@@ -691,7 +691,7 @@ class FinanceStatsViewSet(viewsets.ViewSet):
     # ── 13. Margin Variance Analysis ──────────────────────
     @action(detail=False, methods=['get'])
     def margin_variance_analysis(self, request):
-        today = timezone.now().date()
+        today = timezone.localtime(timezone.now()).date()
         is_english = request.query_params.get('lang', 'fr') == 'en'
 
         p1_start = request.query_params.get('p1_start', today.isoformat())

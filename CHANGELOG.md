@@ -2,6 +2,48 @@
 
 ---
 
+## 2026-06-28
+
+### 🐛 Corrections
+
+- **Avoir — "Décharge stock" : erreur `StockLot is not defined`**
+  - `StockLot` utilisé dans `decharger_stock` mais manquant dans l'import du fichier.
+  - Ajout de `StockLot` dans les imports de `backend/api/views/commandes/avoirs.py`.
+
+- **Journal de caisse — ventes manquantes quand on sélectionne un caissier**
+  - `get_user_shift` partait de la date de la dernière clôture, excluant les ventes antérieures de la journée (ex: vente à 00:53).
+  - Le shift part maintenant de **minuit** (`today_start`) pour inclure toutes les ventes du jour.
+  - Fichier : `backend/api/views/ventes/caisse.py`
+
+- **FEFO multi-lots — facturation**
+  - `useCart.ts` : ne force plus `lotId` par défaut, garde `null` pour que le backend applique le FEFO automatiquement.
+  - `CartTable.tsx` : badge prévisualise les lots FEFO consommés (multi-lots) au lieu d'en afficher un seul.
+  - Fichiers : `frontend/src/hooks/useCart.ts`, `frontend/src/components/facturation/CartTable.tsx`
+
+- **Timezone UTC+1 — données du jour incorrectes (dashboard, journal caisse, stats)**
+  - `timezone.now().date()` retournait la date en **UTC** (23:xx la veille en UTC+1), causant des listes vides et un dashboard affichant les données d'hier.
+  - Remplacé par `timezone.localtime(timezone.now()).date()` dans **14 fichiers** backend :
+    - `dashboard.py` (stats, manager_stats, hourly_traffic, revenue_chart, stock_health)
+    - `ventes/caisse.py` (get_user_shift)
+    - `ventes/factures.py` (stats_jour)
+    - `temporal_analysis.py`, `stocks/stock_lots.py`, `stocks/analysis.py`
+    - `settings.py`, `rapports/inventory.py`, `produit_actions/stats.py`
+    - `fournisseurs.py`, `finance_stats.py`
+    - `models/objectif.py`, `models/configuration_objectifs.py`, `models/stock.py`, `models/inventory.py`
+
+- **Dashboard manager — impossible d'ajouter un objectif commercial**
+  - Le modal shadcn n'était pas relié à l'état `editingObjectif` : le montant et la période restaient vides.
+  - Câblé `Tabs` et l'input à `editingObjectif` / `setEditingObjectif`.
+  - Corrigé les dates initiales en UTC (`new Date().toISOString().split('T')[0]`) par `getLocalDateString()` pour utiliser UTC+1.
+  - Fichiers : `frontend/src/components/DashboardManagerShadcn.tsx`, `frontend/src/hooks/useManagerDashboard.ts`
+
+- **Indicateur marge faible — saisie de commande (entrée stock)**
+  - Ajout du champ `min_margin_threshold` dans `PharmacySettings` (défaut 1.34, configurable).
+  - Dans le tableau de commande, la cellule **Marge** devient orange et affiche un icône `AlertTriangle` quand le taux de marge est inférieur au seuil.
+  - Fichiers : `backend/api/models/settings.py`, `frontend/src/context/PharmacySettingsContext.tsx`, `frontend/src/components/Commandes/CommandeProductTable.tsx`
+
+---
+
 ## 2026-06-27
 
 ### 🎨 Améliorations UI

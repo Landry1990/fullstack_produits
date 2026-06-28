@@ -417,17 +417,25 @@ class CaisseViewSet(BaseViewSetConfig, viewsets.ModelViewSet):
         if not user_id:
             return Response({'detail': 'user_id is required'}, status=400)
             
-        now = timezone.now()
+        now = timezone.localtime(timezone.now())
         today_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
-        
-        last_cloture = ClotureCaisse.objects.filter(user_id=user_id).order_by('-date').first()
-        search_from = last_cloture.date if last_cloture else today_start
-        if search_from < today_start:
-            search_from = today_start
+
+        # Le shift journalier part toujours du début de la journée pour inclure
+        # toutes les ventes du jour (même celles avant une clôture intermédiaire).
+        search_from = today_start
 
         txs = Caisse.objects.filter(user_id=user_id, date_paiement__gte=search_from).order_by('date_paiement')
         mvs = MouvementCaisse.objects.filter(user_id=user_id, date__gte=search_from).order_by('date')
-        
+
+        # Récupérer la session active du caissier (poste + fond)
+        from ...models import SessionCaisse
+        active_session = SessionCaisse.objects.filter(
+            ouvert_par_id=user_id,
+            est_active=True
+        ).select_related('poste').first()
+        poste_caisse_id = active_session.poste_id if active_session else None
+        poste_caisse_nom = active_session.poste.nom if active_session and active_session.poste else None
+
         first_dates, last_dates = [], []
         if txs.exists():
             first_tx = txs.first()
@@ -443,16 +451,16 @@ class CaisseViewSet(BaseViewSetConfig, viewsets.ModelViewSet):
                 first_dates.append(first_mv.date)  # type: ignore[attr-defined]
             if last_mv is not None:
                 last_dates.append(last_mv.date)  # type: ignore[attr-defined]
-            
+
         if not first_dates:
-            return Response({'user_id': user_id, 'start_date': None, 'end_date': None, 'has_activity': False})
-            
+            return Response({'user_id': user_id, 'start_date': None, 'end_date': None, 'has_activity': False, 'poste_caisse_id': poste_caisse_id, 'poste_caisse_nom': poste_caisse_nom})
+
         start_date = min(first_dates)
         end_date = max(last_dates)
         if start_date == end_date:
             end_date = now
 
-        return Response({'user_id': user_id, 'start_date': start_date, 'end_date': end_date, 'has_activity': True})
+        return Response({'user_id': user_id, 'start_date': start_date, 'end_date': end_date, 'has_activity': True, 'poste_caisse_id': poste_caisse_id, 'poste_caisse_nom': poste_caisse_nom})
 
     @action(detail=False, methods=['post'], url_path='cloturer')
     @transaction.atomic
