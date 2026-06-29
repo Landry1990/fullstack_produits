@@ -18,6 +18,9 @@ interface FacturesTableProps {
   couponsParFacture: Record<number, CouponMonnaie>
   user: any // Replace with proper User type if available
   myActivePoste?: any | null // Poste de caisse actif de l'utilisateur courant
+  selectedIds?: Set<number>
+  onToggleSelect?: (id: number) => void
+  onSelectAll?: () => void
 }
 
 const PAGE_SIZE = 100
@@ -36,7 +39,10 @@ export const FacturesTable: React.FC<FacturesTableProps> = ({
   onRemoveProduct,
   couponsParFacture,
   user,
-  myActivePoste
+  myActivePoste,
+  selectedIds,
+  onToggleSelect,
+  onSelectAll
 }) => {
   const { t } = useTranslation('caisse')
   const [previewFacture, setPreviewFacture] = useState<Facture | null>(null)
@@ -112,6 +118,17 @@ export const FacturesTable: React.FC<FacturesTableProps> = ({
         <table className="table table-sm w-full">
           <thead className="bg-base-200 opacity-100 sticky top-0 z-10">
             <tr className="text-xs uppercase tracking-wider text-base-content/60">
+              {onToggleSelect && (
+                <th className="w-10">
+                  <input
+                    type="checkbox"
+                    className="checkbox checkbox-sm checkbox-error"
+                    checked={selectedIds ? selectedIds.size === pagedFactures.length && pagedFactures.length > 0 : false}
+                    onChange={(e) => { if (onSelectAll) onSelectAll() }}
+                    onClick={(e) => e.stopPropagation()}
+                  />
+                </th>
+              )}
               <th>{t('table.ticket')}</th>
               <th>{t('table.invoice')}</th>
               <th>{t('table.client')}</th>
@@ -135,13 +152,17 @@ export const FacturesTable: React.FC<FacturesTableProps> = ({
               const hasTiersPayant = facture.part_client !== null && facture.part_client !== undefined && Number(facture.part_client) >= 0 && Number(facture.part_client) < Number(facture.total_ttc)
               const isSelected = index === selectedRowIndex
               
+              const isChecked = selectedIds ? selectedIds.has(facture.id) : false
+
               return (
                 <tr 
                   key={facture.id} 
                   className={`cursor-pointer transition-all ${
-                    isSelected 
-                      ? 'bg-primary/10 border-l-4 border-primary font-medium' 
-                      : 'hover:bg-base-100'
+                    isChecked
+                      ? 'bg-error/5 border-l-4 border-error'
+                      : isSelected 
+                        ? 'bg-primary/10 border-l-4 border-primary font-medium' 
+                        : 'hover:bg-base-100'
                   }`}
                   onClick={() => onSelectRow(index)}
                   onDoubleClick={() => {
@@ -150,6 +171,16 @@ export const FacturesTable: React.FC<FacturesTableProps> = ({
                     }
                   }}
                 >
+                  {onToggleSelect && (
+                    <td onClick={(e) => e.stopPropagation()}>
+                      <input
+                        type="checkbox"
+                        className="checkbox checkbox-sm checkbox-error"
+                        checked={isChecked}
+                        onChange={() => { if (onToggleSelect) onToggleSelect(facture.id) }}
+                      />
+                    </td>
+                  )}
                   <td>
                     <span className="badge badge-neutral font-bold">
                       {facture.session_ticket_number || '?'}

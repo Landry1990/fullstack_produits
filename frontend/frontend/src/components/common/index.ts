@@ -14,3 +14,6 @@ export { default as FeedbackModal } from './FeedbackModal';
 export { default as UserHeader } from './UserHeader';
 export { default as Omnisearch } from './Omnisearch';
 export { default as CategoryManager } from './CategoryManager';
+
+// Verrou pessimiste
+export { LockBanner } from './LockBanner';

@@ -15,7 +15,7 @@ import { useTranslation } from 'react-i18next'
 import { getApiErrorDetail } from '../utils/errorHandling'
 import PremiumModal from './common/PremiumModal'
 import { TicketTemplate } from './printing/TicketTemplate'
-import { RefreshCw, Ticket, Banknote, Clock, Keyboard, Monitor, Unlock, Lock, TrendingUp } from 'lucide-react'
+import { RefreshCw, Ticket, Banknote, Clock, Keyboard, Monitor, Unlock, Lock, TrendingUp, Trash2, AlertTriangle } from 'lucide-react'
 import { OpenCashSessionModal } from './caisse/OpenCashSessionModal'
 import { cashSessionService } from '../services/cashSessionService'
 import { useCaisseKeyboard } from '../hooks/useCaisseKeyboard'
@@ -23,7 +23,9 @@ import { useCaissePayment } from '../hooks/useCaissePayment'
 import { useCaisseCoupons } from '../hooks/useCaisseCoupons'
 import { useCaisseStats } from '../hooks/useCaisseStats'
 import { useInvoiceModification } from '../hooks/useInvoiceModification'
+import { useSudo } from '../hooks/useSudo'
 import type { PosteCaisse } from '../types'
+import SudoValidationModal from './common/SudoValidationModal'
 
 // TicketTemplate is used for preview and print
 
@@ -68,6 +70,11 @@ export default function CaisseCentralisee() {
   const [closingReport, setClosingReport] = useState<any>(null)
   const [showClosingReport, setShowClosingReport] = useState(false)
   const [hideAmounts, setHideAmounts] = useState(false) // Mode sécurité: masquer les montants aux caissiers
+  const [selectedFactureIds, setSelectedFactureIds] = useState<Set<number>>(new Set())
+  const [showBulkCancelModal, setShowBulkCancelModal] = useState(false)
+  const [bulkCancelLoading, setBulkCancelLoading] = useState(false)
+  const [bulkProgress, setBulkProgress] = useState<{ processed: number; total: number } | null>(null)
+  const { sudoState, requireSudo, closeSudo } = useSudo()
   const [sessionRecap, setSessionRecap] = useState<{
     has_session: boolean
     poste_nom?: string
@@ -350,6 +357,103 @@ export default function CaisseCentralisee() {
     }
   }
 
+  // Sélection en lot
+  const toggleSelectFacture = useCallback((id: number) => {
+    setSelectedFactureIds(prev => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
+  }, [])
+
+  const selectAllFactures = useCallback(() => {
+    setSelectedFactureIds(prev => {
+      if (prev.size === facturesEnAttente.length) return new Set()
+      return new Set(facturesEnAttente.map(f => f.id))
+    })
+  }, [facturesEnAttente])
+
+  const canBulkCancel = user?.is_superuser || (user as any)?.can_cancel_invoice || (user as any)?.profile?.can_cancel_invoice
+
+  // Ouvrir le modal de confirmation
+  const handleBulkCancelClick = () => {
+    if (selectedFactureIds.size === 0 && facturesEnAttente.length === 0) return
+    setShowBulkCancelModal(true)
+  }
+
+  // Confirmer → demander sudo → exécuter par lots
+  const handleConfirmBulkCancel = () => {
+    const BATCH_SIZE = 50
+    const factureIdsToSend = selectedFactureIds.size > 0 ? Array.from(selectedFactureIds) : null
+    const isAllPending = !factureIdsToSend || factureIdsToSend.length === facturesEnAttente.length
+
+    requireSudo(
+      async (validatorId: number, password: string) => {
+        setBulkCancelLoading(true)
+        setBulkProgress({ processed: 0, total: factureIdsToSend ? factureIdsToSend.length : facturesEnAttente.length })
+        let totalSuccess = 0
+        let totalError = 0
+        let totalStockReintegrated = 0
+
+        try {
+          let remainingIds = factureIdsToSend ? [...factureIdsToSend] : null
+          let totalProcessed = 0
+          let totalRemaining = remainingIds ? remainingIds.length : facturesEnAttente.length
+          let hasMore = true
+
+          while (hasMore) {
+            const payload: Record<string, any> = {
+              motif: 'Vidange caisse centrale',
+              sudo_user: validatorId,
+              sudo_password: password,
+              batch_size: BATCH_SIZE,
+            }
+            if (isAllPending) {
+              payload.all_pending = true
+            } else {
+              payload.facture_ids = remainingIds!.slice(0, BATCH_SIZE)
+            }
+
+            const { data } = await api.post('factures/bulk_cancel/', payload)
+            totalSuccess += data.success_count || 0
+            totalError += data.error_count || 0
+            totalStockReintegrated += data.total_stock_reintegrated || 0
+            totalProcessed += data.processed || 0
+            totalRemaining = data.remaining ?? 0
+
+            setBulkProgress({ processed: totalProcessed, total: totalProcessed + totalRemaining })
+
+            if (totalRemaining === 0) {
+              hasMore = false
+            } else if (!isAllPending) {
+              remainingIds = remainingIds!.slice(data.processed)
+              if (remainingIds.length === 0) hasMore = false
+            }
+          }
+
+          toast.success(`${totalSuccess} facture(s) annulée(s). ${totalStockReintegrated} lignes de stock réintégrées.`)
+          if (totalError > 0) {
+            toast.error(`${totalError} erreur(s) au total`)
+          }
+          setSelectedFactureIds(new Set())
+          setShowBulkCancelModal(false)
+          fetchFacturesEnAttente()
+        } catch (err: any) {
+          toast.error(getApiErrorDetail(err, 'Erreur lors de la vidange'))
+          throw err
+        } finally {
+          setBulkCancelLoading(false)
+          setBulkProgress(null)
+        }
+      },
+      {
+        title: t('bulk_cancel_sudo_title', { defaultValue: 'Validation requise — Vidange caisse' }),
+        message: t('bulk_cancel_sudo_msg', { defaultValue: 'Cette action annule des factures et réintègre le stock. Validation d\'un administrateur requise.' }),
+      }
+    )
+  }
+
   // Hooks pour les modifications
   const {
     handleFullModification,
@@ -470,6 +574,21 @@ export default function CaisseCentralisee() {
                 <span>{t('coupons_applied', { count: appliedCouponsCount })}</span>
               </div>
             )}
+            {canBulkCancel && facturesEnAttente.length > 0 && (
+              <button
+                onClick={handleBulkCancelClick}
+                disabled={selectedFactureIds.size === 0 && facturesEnAttente.length === 0}
+                className="inline-flex items-center gap-2 h-9 px-4 rounded-lg text-sm font-semibold bg-red-600 text-white shadow-sm hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                title={t('bulk_cancel_title', { defaultValue: 'Annuler les factures sélectionnées (ou toutes) avec réintégration stock' })}
+              >
+                <Trash2 className="size-4" />
+                <span className="hidden sm:inline">
+                  {selectedFactureIds.size > 0
+                    ? `${t('bulk_cancel_selected', { defaultValue: 'Vider' })} (${selectedFactureIds.size})`
+                    : t('bulk_cancel_all', { defaultValue: 'Vider la caisse' })}
+                </span>
+              </button>
+            )}
           </div>
         </div>
       </div>
@@ -555,6 +674,9 @@ export default function CaisseCentralisee() {
               couponsParFacture={couponsParFacture}
               user={user}
               myActivePoste={myActivePoste}
+              selectedIds={selectedFactureIds}
+              onToggleSelect={toggleSelectFacture}
+              onSelectAll={selectAllFactures}
             />
           </div>
           {/* Keyboard Shortcuts Footer */}
@@ -1217,6 +1339,107 @@ export default function CaisseCentralisee() {
           </div>
         )}
       </PremiumModal>
+
+      {/* Modal de confirmation — Vidange caisse */}
+      <PremiumModal
+        isOpen={showBulkCancelModal}
+        onClose={() => setShowBulkCancelModal(false)}
+        title={t('bulk_cancel_title', { defaultValue: 'Vider la caisse' })}
+        icon={<AlertTriangle className="h-5 w-5 text-red-600" />}
+        gradientFrom="red-50"
+        gradientTo="amber-50"
+        maxWidth="max-w-lg"
+      >
+        <div className="p-6 space-y-4">
+          <div className="bg-red-50 border border-red-200 rounded-xl p-4 flex items-start gap-3">
+            <AlertTriangle className="size-5 text-red-600 shrink-0 mt-0.5" />
+            <div className="text-sm text-red-700">
+              <p className="font-bold mb-1">
+                {selectedFactureIds.size > 0
+                  ? `${selectedFactureIds.size} facture(s) sélectionnée(s)`
+                  : `${facturesEnAttente.length} facture(s) en attente`}
+              </p>
+              <p>
+                {t('bulk_cancel_warning', { defaultValue: 'Toutes les factures sélectionnées seront annulées. Le stock des factures déjà validées sera réintégré automatiquement. Cette action est irréversible.' })}
+              </p>
+            </div>
+          </div>
+
+          {selectedFactureIds.size > 0 && selectedFactureIds.size < facturesEnAttente.length && (
+            <div className="max-h-40 overflow-y-auto rounded-lg border border-slate-200">
+              <table className="table table-xs w-full">
+                <thead className="bg-slate-100 sticky top-0">
+                  <tr>
+                    <th>N° Facture</th>
+                    <th>Client</th>
+                    <th className="text-right">Montant</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {facturesEnAttente
+                    .filter(f => selectedFactureIds.has(f.id))
+                    .map(f => (
+                      <tr key={f.id}>
+                        <td className="font-bold">#{f.numero_facture}</td>
+                        <td>{f.client_name || 'Passager'}</td>
+                        <td className="text-right font-mono">{Math.round(Number(f.total_ttc))} F</td>
+                      </tr>
+                    ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+
+          {bulkCancelLoading && bulkProgress && (
+            <div className="space-y-2">
+              <div className="flex justify-between text-xs font-medium text-slate-600">
+                <span>Traitement par lots...</span>
+                <span>{bulkProgress.processed} / {bulkProgress.total}</span>
+              </div>
+              <div className="w-full h-2 bg-slate-200 rounded-full overflow-hidden">
+                <div
+                  className="h-full bg-red-600 transition-all duration-300"
+                  style={{ width: `${bulkProgress.total > 0 ? (bulkProgress.processed / bulkProgress.total) * 100 : 0}%` }}
+                ></div>
+              </div>
+            </div>
+          )}
+
+          <div className="flex justify-end gap-3 pt-2">
+            <button
+              type="button"
+              className="inline-flex items-center justify-center h-9 px-6 rounded-xl text-sm font-medium text-slate-700 bg-white border border-slate-200 hover:bg-slate-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              onClick={() => setShowBulkCancelModal(false)}
+              disabled={bulkCancelLoading}
+            >
+              {t('common:cancel', { defaultValue: 'Annuler' })}
+            </button>
+            <button
+              type="button"
+              className="inline-flex items-center justify-center gap-2 h-9 px-6 rounded-xl text-sm font-semibold text-white bg-red-600 hover:bg-red-700 shadow-lg shadow-red-600/20 transition-colors"
+              onClick={handleConfirmBulkCancel}
+              disabled={bulkCancelLoading}
+            >
+              {bulkCancelLoading ? (
+                <div className="animate-spin rounded-full size-4 border-b-2 border-white"></div>
+              ) : (
+                <Trash2 className="size-4" />
+              )}
+              {t('bulk_cancel_confirm', { defaultValue: 'Vider la caisse' })}
+            </button>
+          </div>
+        </div>
+      </PremiumModal>
+
+      {/* Modal Sudo pour la vidange */}
+      <SudoValidationModal
+        isOpen={sudoState.isOpen}
+        onClose={closeSudo}
+        onValidate={sudoState.onValidate}
+        saving={sudoState.isValidating}
+        title={sudoState.title}
+        message={sudoState.message}
+      />
     </div>
   )
 }

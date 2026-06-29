@@ -1,4 +1,6 @@
 import React, { useState, useCallback } from 'react';
+import { useDocumentLock } from '../../hooks/useDocumentLock';
+import { LockBanner } from '../common/LockBanner';
 import { useTranslation } from 'react-i18next';
 import { ArrowLeft, Pencil, Pause, Play, Check, Printer, Trash2, Tag, RotateCcw, Package } from 'lucide-react';
 import type { Commande, Fournisseur, ProduitModel } from '../../types';
@@ -116,6 +118,8 @@ const CommandeDetails: React.FC<CommandeDetailsProps> = ({
   const [detailSortOrder, setDetailSortOrder] = useState<'asc' | 'desc'>('asc');
 
   const queryClient = useQueryClient();
+  const lock = useDocumentLock('commande', selectedCommande.id);
+  const isReadOnly = lock.isLocked && !lock.isMine;
   const [editingLotId, setEditingLotId] = useState<number | null>(null);
   const [editLotValues, setEditLotValues] = useState<{ lot: string; date_expiration: string; produitId?: number }>({ lot: '', date_expiration: '' });
   const [savingLot, setSavingLot] = useState(false);
@@ -180,6 +184,10 @@ const CommandeDetails: React.FC<CommandeDetailsProps> = ({
   return (
 
     <div className="flex-1 min-h-0 flex flex-col p-4 space-y-4">
+      {/* Verrou pessimiste */}
+      {selectedCommande.status !== 'CLOT' && (
+        <LockBanner lock={lock} documentLabel="commande" />
+      )}
       {/* Header */}
       <div className="flex items-center gap-4 shrink-0">
         <Button variant="ghost" size="icon" onClick={onBack} className="size-9 text-slate-400 hover:text-slate-600">
@@ -194,7 +202,7 @@ const CommandeDetails: React.FC<CommandeDetailsProps> = ({
             size="sm"
             className="gap-1"
             onClick={() => onEdit(selectedCommande)}
-            disabled={selectedCommande.status === 'CLOT' || executingAction}
+            disabled={selectedCommande.status === 'CLOT' || executingAction || isReadOnly}
           >
             <Pencil className="size-4" /> {t('orders:details.edit')}
           </Button>
@@ -207,7 +215,7 @@ const CommandeDetails: React.FC<CommandeDetailsProps> = ({
               selectedCommande.status === 'ATT' ? 'bg-blue-600 hover:bg-blue-700' : 'border-amber-300 text-amber-700 hover:bg-amber-50'
             )}
             onClick={onMettreEnAttente}
-            disabled={selectedCommande.status === 'CLOT' || executingAction}
+            disabled={selectedCommande.status === 'CLOT' || executingAction || isReadOnly}
           >
             {executingAction ? <span className="size-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : (selectedCommande.status === 'ATT' ? <><Play className="size-4" /> {t('orders:details.resume')}</> : <><Pause className="size-4" /> {t('orders:details.suspend')}</>)}
           </Button>
@@ -216,7 +224,7 @@ const CommandeDetails: React.FC<CommandeDetailsProps> = ({
             size="sm"
             className="gap-1 bg-emerald-600 hover:bg-emerald-700"
             onClick={onCloture}
-            disabled={selectedCommande.status === 'CLOT' || executingAction}
+            disabled={selectedCommande.status === 'CLOT' || executingAction || isReadOnly}
           >
             {executingAction ? <span className="size-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <><Check className="size-4" /> {t('orders:details.close')}</>}
           </Button>
@@ -237,7 +245,7 @@ const CommandeDetails: React.FC<CommandeDetailsProps> = ({
             size="sm"
             className="gap-1 border-red-200 text-red-600 hover:bg-red-50"
             onClick={onDelete}
-            disabled={selectedCommande.status === 'CLOT' || executingAction}
+            disabled={selectedCommande.status === 'CLOT' || executingAction || isReadOnly}
           >
             {executingAction ? <span className="size-4 border-2 border-slate-300 border-t-slate-600 rounded-full animate-spin" /> : <><Trash2 className="size-4" /> {t('orders:details.delete')}</>}
           </Button>

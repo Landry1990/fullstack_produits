@@ -1,4 +1,6 @@
 import React, { useState } from 'react';
+import { useDocumentLock } from '../../../hooks/useDocumentLock';
+import { LockBanner } from '../../common/LockBanner';
 import { useTranslation } from 'react-i18next';
 import { 
     ChevronLeft, Plus, FileText, CheckCircle2, History, 
@@ -62,6 +64,7 @@ export const InventaireEditor: React.FC<InventaireEditorProps> = ({
     } = editorLogic;
 
     const { generateEtatPDF, generateEcartsPDF } = useInventairePDF();
+    const lock = useDocumentLock('inventaire', activeInventaire?.id);
     
     const searchLogic = useProductSearch(
         'lignes-inventaire/',
@@ -74,6 +77,11 @@ export const InventaireEditor: React.FC<InventaireEditorProps> = ({
     return (
         <div className="flex flex-col gap-6 animate-in fade-in slide-in-from-bottom-2 duration-500">
           
+          {/* Verrou pessimiste */}
+          {activeInventaire && activeInventaire.status !== 'VALIDEE' && (
+            <LockBanner lock={lock} documentLabel="inventaire" />
+          )}
+
           {/* Header Card */}
           <div className="bg-white rounded-2xl shadow-sm border border-slate-200 flex flex-col overflow-hidden">
             <div className="p-6 border-b border-slate-100">

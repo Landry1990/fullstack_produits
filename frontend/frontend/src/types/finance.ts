@@ -191,6 +191,14 @@ export interface Creance {
     notes?: string
 }
 
+export interface LotAllocation {
+    lotId: string | number
+    lotText: string | null
+    lotExpiration?: string | null
+    quantity: number
+    sellingPrice?: string | null
+}
+
 export interface LigneFacture {
     produit: ProduitModel
     quantite: number
@@ -204,6 +212,7 @@ export interface LigneFacture {
     lotText?: string | null
     lotExpiration?: string | null
     lotSellingPrice?: string | null
+    lotAllocations?: LotAllocation[] | null
     treatment_duration_days?: number
 }
 

@@ -162,6 +162,11 @@ class SalesService:
             ]
             if facture_produits_to_create:
                 FactureProduit.objects.bulk_create(facture_produits_to_create)
+                # Associer les allocations explicites pour validate_invoice
+                for item, p in zip(facture_produits_to_create, produits_data):
+                    allocs = p.get('lot_allocations')
+                    if allocs:
+                        item._lot_allocations = allocs
         except DataError as e:
             raise ValueError(f"Valeur numérique hors limites dans les produits : {e}") from e
 
@@ -323,13 +328,21 @@ class SalesService:
 
         # 3. Lot Allocation (FIFO/FEFO) avec Optimistic Locking
         lot_ids_to_lock = [item.stock_lot_id for item in items if item.stock_lot_id]
-        lots_map = {l.id: l for l in StockLot.objects.filter(id__in=lot_ids_to_lock)} if lot_ids_to_lock else {}
+        # Inclure aussi les lots des allocations explicites
+        explicit_alloc_lot_ids = [
+            alloc.get('lot_id') or alloc.get('stock_lot_id')
+            for item in items
+            for alloc in getattr(item, '_lot_allocations', []) or []
+            if alloc.get('lot_id') or alloc.get('stock_lot_id')
+        ]
+        all_lot_ids = list(set(lot_ids_to_lock + explicit_alloc_lot_ids))
+        lots_map = {l.id: l for l in StockLot.objects.filter(id__in=all_lot_ids)} if all_lot_ids else {}
         
         # Sauvegarder versions des lots
         initial_lot_versions = {lid: l.version for lid, l in lots_map.items()}
         
         # Prepare FIFO queues (sans verrou - vérification à la fin)
-        fifo_prods = [item.produit_id for item in items if item.quantity > 0 and not item.stock_lot_id]
+        fifo_prods = [item.produit_id for item in items if item.quantity > 0 and not item.stock_lot_id and not getattr(item, '_lot_allocations', None)]
         fifo_lots_queue = {}
         fifo_lots_versions = {}
         if fifo_prods:
@@ -399,6 +412,34 @@ class SalesService:
                         if available:
                             item.date_expiration = available[0].date_expiration
                         items_to_update.append(item)
+            elif getattr(item, '_lot_allocations', None):
+                # Allocation explicite définie par l'utilisateur
+                used_lots_names = []
+                for alloc in item._lot_allocations:
+                    lot_id = alloc.get('lot_id') or alloc.get('stock_lot_id')
+                    qty = int(alloc.get('quantity', 0))
+                    if not lot_id or qty <= 0:
+                        continue
+                    target_lot = lots_map.get(lot_id)
+                    if target_lot is None:
+                        raise ValueError(f"Lot de stock {lot_id} introuvable pour le produit {item.produit_id}.")
+                    if target_lot.quantity_remaining < qty:
+                        raise ValueError(f"Stock insuffisant dans le lot {target_lot.lot} (demandé {qty}, disponible {target_lot.quantity_remaining}).")
+                    allocations_to_create.append(FactureProduitAllocation(
+                        facture_produit=item, stock_lot=target_lot, quantity=qty,
+                        cost_price=target_lot.price_cost, selling_price=item.selling_price
+                    ))
+                    target_lot.quantity_remaining -= qty
+                    if target_lot.quantity_free_remaining > 0:
+                        target_lot.quantity_free_remaining -= min(qty, target_lot.quantity_free_remaining)
+                    lots_to_update_set.add(target_lot)
+                    lots_to_check_versions[target_lot.id] = initial_lot_versions.get(target_lot.id, 1)
+                    used_lots_names.append(target_lot.lot)
+                    lots_updated = True
+                if used_lots_names:
+                    item.lot = ",".join([n for n in used_lots_names if n])[:20]
+                    item.date_expiration = None
+                    items_to_update.append(item)
             elif item.quantity < 0:
                 target_lot = lots_map.get(item.stock_lot_id) or (StockLot.objects.filter(produit=produit).order_by('-created_at').first() if produit.use_lot_management else None)
                 if target_lot:

@@ -2,7 +2,96 @@
 
 ---
 
+## 2026-06-29
+
+### ✨ Nouvelles fonctionnalités
+
+- **Répartition manuelle des lots en facturation**
+  - `frontend/src/components/LotSelectionModal.tsx` : modal transformé en table avec inputs de quantité par lot.
+  - Le mode **FEFO automatique** reste proposé par défaut, mais l'utilisateur peut modifier chaque lot individuellement.
+  - `frontend/src/hooks/useFacturationUI.ts` : le state `lotModal` stocke `quantity` et `currentAllocations`.
+  - `frontend/src/hooks/useFacturationActions.ts` : `handleLotSelect` accepte un tableau `LotAllocation[]` et met à jour `lotAllocations` sur la ligne.
+  - `frontend/src/components/facturation/CartTable.tsx` : badge lot affiche la répartition manuelle (`2 lots • LotA×1, LotB×1`) avec tooltip détaillé et style visuel distinct (vert).
+  - `frontend/src/hooks/useSaleCompletion.ts` : envoie `lot_allocations` au backend lors de la finalisation de la vente.
+  - `backend/api/services/sales_service.py` : `validate_invoice` utilise les allocations explicites `_lot_allocations` pour débiter les lots choisis par l'utilisateur, avec vérification du stock disponible par lot.
+
+### ⚡ Performance / Fiabilité
+
+- **Vidange caisse centralisée — traitement par lots**
+  - `backend/api/views/ventes/factures.py` : `bulk_cancel` accepte `batch_size` et renvoie `processed / remaining / total` pour un suivi de progression.
+  - `frontend/src/components/CaisseCentralisee.tsx` : annulation des factures en plusieurs requêtes avec barre de progression.
+  - Suppression du `@transaction.atomic` global sur `bulk_cancel` pour éviter les timeouts sur de gros volumes (chaque `cancel_invoice` conserve sa propre transaction atomique).
+
+---
+
 ## 2026-06-28
+
+### 🌐 Suppression ngrok — Tailscale comme unique tunnel externe
+
+- **Suppression du conteneur ngrok**
+  - `docker-compose.prod.yml` : service `ngrok` supprimé (image, port 4040, variable `NGROK_AUTHTOKEN`).
+  - `.env.example` : section ngrok supprimée.
+  - `install.sh` : génération de `NGROK_AUTHTOKEN` et warning supprimés.
+  - `docs/TECHNIQUE/CONFIGURATION.md` : section ngrok, port 4040 et ligne conteneur supprimés.
+  - `docs/TECHNIQUE/ARCHITECTURE.md` : table services et section sécurité mises à jour (Tailscale uniquement).
+  - `tailscale/README-TAILSCALE.md` : tableau comparatif ngrok supprimé.
+  - `backend/backend/settings.py` : commentaire proxy mis à jour.
+
+- **Finalisation config Tailscale**
+  - `frontend/frontend/nginx.conf` : ajout du bloc `location /ws/` avec proxy WebSocket (`Upgrade`, `Connection upgrade`, `proxy_read_timeout 86400`).
+  - Permet aux WebSocket (PDA, caisse, verrouillage documents) de passer via Tailscale Funnel en production.
+  - `tailscale/tailscale-serve.json` : inchangé (proxy `https://<hostname>.ts.net` → `http://frontend:80`).
+
+### 🔒 Gestion des accès concurrents (Commande & Inventaire)
+
+- **Problème** : ouverture simultanée du même dossier par deux postes → écrasement silencieux.
+
+- **Backend — `DocumentLockConsumer` (WebSocket)**
+  - `backend/api/consumers.py` : nouveau consumer `DocumentLockConsumer`.
+  - Verrou Redis TTL 30s par clé `doc_lock:<model>:<pk>`.
+  - Protocole : `acquire` / `release` / `heartbeat` (renouvellement TTL toutes les 15s).
+  - Broadcast groupe : tous les postes connectés sur le même document reçoivent `lock_update`.
+  - Déconnexion propre : libération automatique du verrou si le poste ferme le navigateur.
+
+- **Backend — Routing WebSocket**
+  - `backend/api/routing.py` : URL `ws/lock/<model>/<pk>/` → `DocumentLockConsumer`.
+
+- **Backend — Endpoints REST (fallback HTTP)**
+  - `backend/api/views/commandes/commandes.py` : `POST lock/`, `POST unlock/`, `GET check_lock/`.
+  - `backend/api/views/stocks/inventaire_main.py` : idem sur `InventaireViewSet`.
+  - HTTP 423 `LOCKED` si le verrou est détenu par quelqu'un d'autre.
+
+- **Backend — Champ `version` sur `Inventaire`**
+  - `backend/api/models/inventory.py` : champ `version IntegerField(default=1)`.
+  - Migration `0210_add_version_to_inventaire.py` appliquée.
+
+- **Frontend — Hook `useDocumentLock`**
+  - `frontend/src/hooks/useDocumentLock.ts` : gestion WebSocket avec reconnexion automatique et heartbeat.
+  - Exporté depuis `hooks/index.ts`.
+
+- **Frontend — Composant `LockBanner`**
+  - `frontend/src/components/common/LockBanner.tsx` : bannière contextuelle (vert = édition, orange = lecture seule, bleu = disponible).
+  - Exporté depuis `components/common/index.ts`.
+
+- **Frontend — Intégration**
+  - `CommandeDetails.tsx` : `LockBanner` affiché pour commandes non clôturées. Boutons Modifier / Suspendre / Clôturer / Supprimer désactivés si `isReadOnly`.
+  - `InventaireEditor.tsx` : `LockBanner` affiché pour inventaires non validés.
+
+- **Backend — Authentification WebSocket par token**
+  - `backend/api/ws_auth_middleware.py` : nouveau `TokenAuthMiddleware` pour authentifier les WebSocket via `?token=<drf_token>` en query string.
+  - `backend/backend/asgi.py` : `TokenAuthMiddleware` ajouté dans la stack ASGI (avant `AuthMiddlewareStack`).
+  - Token invalide → connexion fermée (code 4001). Sans token → retombe sur session auth.
+
+- **Backend — Validation des entrées (durcissement)**
+  - `commandes.py` & `inventaire_main.py` : validation PK numérique `> 0` sur les 6 actions `lock` / `unlock` / `check_lock`.
+  - PK non-numérique, négatif ou zéro → HTTP 404.
+  - Les méthodes HTTP non autorisées retournent 405 (DRF `@action`).
+  - Authentification obligatoire : sans token → 401.
+
+- **Tests automatisés**
+  - `backend/scripts/test_locking.py` : 9 tests fonctionnels (REST + WebSocket) — TTL, race condition, broadcast multi-user, idempotence.
+  - `backend/scripts/test_locking_inputs.py` : 39 tests de validation des entrées — auth, PK invalide, méthodes HTTP, payloads malformés, injection Redis, isolation cross-entité, WebSocket auth.
+  - **Résultat** : 39/39 passés, 0 échoués.
 
 ### 🧹 Nettoyage du code mort
 

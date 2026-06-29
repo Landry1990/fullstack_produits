@@ -36,7 +36,7 @@ ENABLE_SILK = os.getenv('ENABLE_SILK', 'False').lower() == 'true'
 _hosts = os.getenv('DJANGO_ALLOWED_HOSTS', 'localhost,127.0.0.1,0.0.0.0,[::],backend,frontend').split(',')
 ALLOWED_HOSTS = [h.strip() for h in _hosts if h.strip()]
 
-# Support pour les proxys comme Nginx/ngrok
+# Support pour les proxys comme Nginx/Tailscale Funnel
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 USE_X_FORWARDED_HOST = True
 USE_X_FORWARDED_PORT = True
