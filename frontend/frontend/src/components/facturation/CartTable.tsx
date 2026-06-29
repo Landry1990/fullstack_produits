@@ -1,7 +1,7 @@
 import React from 'react'
 import { useTranslation } from 'react-i18next'
 import { formatCurrency, normalizeNumberInput } from '../../utils/formatters'
-import type { LigneFacture, ProduitModel, StockLot } from '../../types'
+import type { LigneFacture, ProduitModel, StockLot, LotAllocation } from '../../types'
 import { useAuth } from '../../context/AuthContext'
 import { toast } from 'react-hot-toast'
 import { Button } from '../shadcn/button'
@@ -45,7 +45,7 @@ interface CartTableProps {
   updateRemiseProduit: (produitId: number, remise: string) => void
   updateTreatmentDuration?: (produitId: number, duration: number) => void
   removeLigne: (produitId: number) => void
-  onOpenLotModal: (product: ProduitModel, currentLotId: string | null) => void
+  onOpenLotModal: (product: ProduitModel, currentLotId: string | null, quantity: number, currentAllocations: LotAllocation[] | null) => void
   quantityInputsRef: React.MutableRefObject<Map<number, HTMLInputElement>>
   onReturnFocus: () => void
   selectedIndex?: number
@@ -64,7 +64,7 @@ interface CartRowProps {
   updateRemiseProduit: (produitId: number, remise: string) => void
   updateTreatmentDuration?: (produitId: number, duration: number) => void
   removeLigne: (produitId: number) => void
-  onOpenLotModal: (product: ProduitModel, currentLotId: string | null) => void
+  onOpenLotModal: (product: ProduitModel, currentLotId: string | null, quantity: number, currentAllocations: LotAllocation[] | null) => void
   quantityInputsRef: React.MutableRefObject<Map<number, HTMLInputElement>>
   onReturnFocus: () => void
   canModifyPrice: boolean
@@ -146,6 +146,19 @@ const CartRow = React.memo(({
   }, [ligne.lotId, ligne.produit.stock_lots, ligne.quantite])
 
   const lotDisplayText = React.useMemo(() => {
+    const manualAllocs = ligne.lotAllocations?.filter(a => a.quantity > 0)
+    if (manualAllocs && manualAllocs.length > 0) {
+      if (manualAllocs.length === 1) {
+        const a = manualAllocs[0]
+        const parts = [a.lotText || `Lot ${a.lotId}`]
+        if (a.lotExpiration) {
+          const d = new Date(a.lotExpiration)
+          parts.push(`${String(d.getMonth() + 1).padStart(2, '0')}/${String(d.getFullYear()).slice(-2)}`)
+        }
+        return parts.join(' • ')
+      }
+      return `${manualAllocs.length} lots • ${manualAllocs.map(a => `${a.lotText || a.lotId}×${a.quantity}`).join(', ')}`
+    }
     if (!ligne.lotId) {
       if (fefoPreview.length === 0) return 'AUTO (FEFO)'
       if (fefoPreview.length === 1) {
@@ -170,9 +183,19 @@ const CartRow = React.memo(({
       parts.push(`${formatCurrency(Number(ligne.lotSellingPrice))}`)
     }
     return parts.join(' • ')
-  }, [ligne.lotId, ligne.lotText, ligne.lotExpiration, ligne.lotSellingPrice, fefoPreview])
+  }, [ligne.lotId, ligne.lotText, ligne.lotExpiration, ligne.lotSellingPrice, ligne.lotAllocations, fefoPreview])
 
   const lotTooltip = React.useMemo(() => {
+    const manualAllocs = ligne.lotAllocations?.filter(a => a.quantity > 0)
+    if (manualAllocs && manualAllocs.length > 0) {
+      return [
+        'Répartition manuelle :',
+        ...manualAllocs.map(a => {
+          const exp = a.lotExpiration ? new Date(a.lotExpiration).toLocaleDateString('fr-FR') : 'sans date'
+          return `${a.lotText || a.lotId} × ${a.quantity} (exp ${exp})`
+        })
+      ].join('\n')
+    }
     if (!ligne.lotId) {
       if (fefoPreview.length === 0) return t('facturation:cart.product_status.auto_lot')
       return [
@@ -299,9 +322,11 @@ const CartRow = React.memo(({
            <Button
              variant="outline"
              size="sm"
-             onClick={(e) => { e.stopPropagation(); onOpenLotModal(ligne.produit, ligne.lotId || null); }}
+             onClick={(e) => { e.stopPropagation(); onOpenLotModal(ligne.produit, ligne.lotId || null, ligne.quantite, ligne.lotAllocations || null); }}
              className={`h-9 px-2 text-[11px] font-semibold uppercase transition-colors shrink gap-1.5
-               ${ligne.lotId ? 'bg-emerald-50 text-emerald-600 border-emerald-200 hover:bg-emerald-100 hover:border-emerald-300' : 'bg-slate-100 text-slate-400 border-slate-200 hover:bg-slate-200 hover:text-slate-600'}`}
+               ${(ligne.lotId || ligne.lotAllocations?.length)
+                 ? 'bg-emerald-50 text-emerald-600 border-emerald-200 hover:bg-emerald-100 hover:border-emerald-300'
+                 : 'bg-slate-100 text-slate-400 border-slate-200 hover:bg-slate-200 hover:text-slate-600'}`}
              title={lotTooltip}
            >
              <Tag className="size-3 shrink-0" />
@@ -415,10 +440,10 @@ const CartRow = React.memo(({
       </td>
       <td className="text-center py-2 hidden md:table-cell">
         <Button
-          variant={ligne.lotId ? 'default' : 'outline'}
+          variant={(ligne.lotId || ligne.lotAllocations?.length) ? 'default' : 'outline'}
           size="sm"
-          onClick={() => onOpenLotModal(ligne.produit, ligne.lotId || null)}
-          className={`w-full max-w-[260px] truncate text-xs h-7 ${ligne.lotId ? 'bg-emerald-600 hover:bg-emerald-700' : 'border-slate-200 text-slate-500 hover:bg-slate-50'}`}
+          onClick={() => onOpenLotModal(ligne.produit, ligne.lotId || null, ligne.quantite, ligne.lotAllocations || null)}
+          className={`w-full max-w-[260px] truncate text-xs h-7 ${(ligne.lotId || ligne.lotAllocations?.length) ? 'bg-emerald-600 hover:bg-emerald-700' : 'border-slate-200 text-slate-500 hover:bg-slate-50'}`}
           title={lotTooltip}
         >
           {lotDisplayText}

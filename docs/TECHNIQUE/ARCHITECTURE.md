@@ -190,8 +190,7 @@ Toutes les 30 minutes
 
 | Service | Utilisation | Configuration |
 |---------|-------------|---------------|
-| **Tailscale** | VPN interne | `TAILSCALE_AUTHKEY` |
-| **Ngrok** | Tunnel public | `NGROK_AUTHTOKEN` |
+| **Tailscale** | VPN interne + Funnel public | `TAILSCALE_AUTHKEY` |
 | **Redis** | Cache + Sessions | Interne (Docker) |
 
 ---
@@ -203,7 +202,7 @@ Toutes les 30 minutes
 1. **Réseau** : Docker internal network, pas d'exposition directe DB
 2. **Application** : CORS, CSRF protection, JWT tokens
 3. **Données** : PostgreSQL avec authentification, backups chiffrés (optionnel)
-4. **Transport** : HTTPS (via Tailscale/Ngrok), HTTP local
+4. **Transport** : HTTPS (via Tailscale Funnel), HTTP local
 
 ### Permissions
 

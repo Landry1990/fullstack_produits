@@ -1164,3 +1164,109 @@ class FactureViewSet(BaseViewSetConfig, OptimizedSerializerMixin, viewsets.Model
         facture.save(update_fields=['status'])
 
         return Response({'status': 'Facture marquée comme payée.'})
+
+    @action(detail=False, methods=['post'])
+    def bulk_cancel(self, request):
+        """
+        Annule plusieurs factures en lot avec réintégration automatique du stock.
+        Body:
+          - {"facture_ids": [1, 2, 3]} pour annuler une sélection
+          - {"all_pending": true, "batch_size": 50} pour annuler par lots
+        Réservé aux administrateurs (sudo requis).
+        """
+        validation_user, error_res = validate_sudo_mode(request, permission_attr='can_cancel_invoice')
+        if error_res:
+            return error_res
+
+        motif = request.data.get('motif', 'Vidange caisse centrale')
+        batch_size = request.data.get('batch_size')
+        if batch_size is not None:
+            try:
+                batch_size = int(batch_size)
+                if batch_size < 1:
+                    batch_size = None
+            except (ValueError, TypeError):
+                batch_size = None
+
+        if request.data.get('all_pending'):
+            all_pending_qs = Facture.objects.filter(
+                is_active=True,
+                status__in=[Facture.Status.BROUILLON, Facture.Status.PROFORMA, Facture.Status.VALIDEE]
+            ).order_by('id')
+            total_remaining = all_pending_qs.count()
+            if batch_size:
+                factures = all_pending_qs[:batch_size]
+            else:
+                factures = all_pending_qs
+        else:
+            ids = request.data.get('facture_ids', [])
+            if not ids:
+                return Response({'detail': 'Aucune facture sélectionnée.'}, status=status.HTTP_400_BAD_REQUEST)
+            total_remaining = len(ids)
+            if batch_size:
+                ids = ids[:batch_size]
+            factures = Facture.objects.filter(id__in=ids, is_active=True).order_by('id')
+
+        if not factures.exists():
+            return Response({'detail': 'Aucune facture à annuler.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        results = []
+        success_count = 0
+        error_count = 0
+        total_reintegrated = 0
+
+        for facture in factures:
+            if facture.status == Facture.Status.ANNULEE:
+                results.append({'id': facture.id, 'numero': facture.numero_facture, 'status': 'deja_annulee'})
+                error_count += 1
+                continue
+            try:
+                was_validated = facture.status in [Facture.Status.VALIDEE, Facture.Status.PAYEE]
+                success, message = SalesService.cancel_invoice(facture, validation_user, motif)
+                if success:
+                    items_count = FactureProduit.objects.filter(facture=facture).count()
+                    total_reintegrated += items_count if was_validated else 0
+                    results.append({
+                        'id': facture.id,
+                        'numero': facture.numero_facture,
+                        'status': 'annulee',
+                        'stock_reintegrated': was_validated
+                    })
+                    success_count += 1
+                    log_audit(
+                        user=request.user,
+                        action=AuditLog.Action.INVOICE_CANCEL,
+                        model_name='Facture',
+                        object_id=facture.id,
+                        description=f"Annulation en lot - Facture {facture.numero_facture or facture.id}",
+                        details={
+                            'facture_id': facture.id,
+                            'numero_facture': facture.numero_facture,
+                            'montant': float(facture.total_ttc),
+                            'motif': motif,
+                            'bulk_cancel': True,
+                            'cancelled_by': validation_user.username
+                        },
+                        request=request
+                    )
+                else:
+                    results.append({'id': facture.id, 'numero': facture.numero_facture, 'status': 'erreur', 'detail': message})
+                    error_count += 1
+            except Exception as e:
+                logger.error(f"[BULK_CANCEL] Erreur sur facture {facture.id}: {str(e)}")
+                results.append({'id': facture.id, 'numero': facture.numero_facture, 'status': 'erreur', 'detail': str(e)})
+                error_count += 1
+
+        processed = success_count + error_count
+        remaining = max(0, total_remaining - processed)
+        return Response({
+            'detail': f'{success_count} facture(s) annulée(s), {error_count} erreur(s).',
+            'success_count': success_count,
+            'error_count': error_count,
+            'total_stock_reintegrated': total_reintegrated,
+            'processed': processed,
+            'remaining': remaining,
+            'total': total_remaining,
+            'batch_size': batch_size,
+            'results': results
+        })

@@ -10,4 +10,7 @@ websocket_urlpatterns = [
     
     # Endpoint PDA (mobile-facturation)
     re_path(r'ws/pda/$', consumers.PDAConsumer.as_asgi()),
+
+    # Endpoint verrouillage pessimiste documents (commande, inventaire, etc.)
+    re_path(r'ws/lock/(?P<model>[a-z]+)/(?P<pk>\d+)/$', consumers.DocumentLockConsumer.as_asgi()),
 ]
