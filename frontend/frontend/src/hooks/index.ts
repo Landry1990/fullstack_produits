@@ -19,6 +19,8 @@ export { usePeakHours, useDailyComparison, useSeasonality } from './useTemporalA
 
 // UI hooks
 export { useConfirm } from './useConfirm';
+export { useDocumentLock } from './useDocumentLock';
+export type { DocumentLockState, LockStatus } from './useDocumentLock';
 export { useKeyboardNavigation } from './useKeyboardNavigation';
 export { useSearchNavigation } from './useSearchNavigation';
 

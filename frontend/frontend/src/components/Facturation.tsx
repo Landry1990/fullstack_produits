@@ -289,7 +289,7 @@ export default function Facturation() {
               updatePrix={hook.secureUpdatePrix}
               updateRemiseProduit={hook.secureUpdateRemiseProduit}
               removeLigne={hook.removeLigne}
-              onOpenLotModal={(product, currentLotId) => hook.ui.openLotModal(product, currentLotId || null)}
+              onOpenLotModal={(product, currentLotId, quantity, currentAllocations) => hook.ui.openLotModal(product, currentLotId || null, quantity, currentAllocations)}
               quantityInputsRef={hook.quantityInputsRef}
               onReturnFocus={() => hook.searchInputRef.current?.focus()}
               selectedIndex={hook.keyboardNav.selectedIndex}
@@ -462,8 +462,9 @@ export default function Facturation() {
           isOpen={hook.lotModal.isOpen}
           onClose={hook.closeLotModal}
           produit={hook.lotModal.product}
-          onSelectLot={hook.handleLotSelect}
-          currentLotId={hook.lotModal.currentLotId}
+          quantity={hook.lotModal.quantity}
+          currentAllocations={hook.lotModal.currentAllocations}
+          onSelectAllocations={hook.handleLotSelect}
         />
       )}
 

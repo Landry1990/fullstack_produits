@@ -1236,3 +1236,60 @@ class CommandeViewSet(MultiTermSearchMixin, OptimizedSerializerMixin, viewsets.M
         response = HttpResponse(buffer, content_type='application/pdf')
         response['Content-Disposition'] = f'inline; filename="etiquettes_commande_{commande.id}.pdf"'
         return response
+
+    @action(detail=True, methods=['post'])
+    def lock(self, request, pk=None):
+        """
+        Acquiert le verrou pessimiste sur cette commande.
+        Retourne 200 si acquis, 423 si déjà verrouillé par quelqu'un d'autre.
+        """
+        if not str(pk).isdigit() or int(pk) <= 0:
+            return Response({'detail': 'PK invalide.'}, status=status.HTTP_404_NOT_FOUND)
+        lock_key = f"doc_lock:commande:{pk}"
+        username = request.user.username
+        acquired = cache.add(lock_key, username, timeout=30)
+        if acquired:
+            return Response({'locked': True, 'holder': username})
+        holder = cache.get(lock_key)
+        if holder == username:
+            cache.set(lock_key, username, timeout=30)
+            return Response({'locked': True, 'holder': username})
+        return Response(
+            {'locked': False, 'holder': holder, 'detail': f'Commande verrouillée par {holder}.'},
+            status=status.HTTP_423_LOCKED
+        )
+
+    @action(detail=True, methods=['post'])
+    def unlock(self, request, pk=None):
+        """
+        Libère le verrou si l'utilisateur courant en est le détenteur.
+        """
+        if not str(pk).isdigit() or int(pk) <= 0:
+            return Response({'detail': 'PK invalide.'}, status=status.HTTP_404_NOT_FOUND)
+        lock_key = f"doc_lock:commande:{pk}"
+        username = request.user.username
+        holder = cache.get(lock_key)
+        if holder == username:
+            cache.delete(lock_key)
+            return Response({'released': True})
+        if holder is None:
+            return Response({'released': True})
+        return Response(
+            {'released': False, 'detail': f'Vous ne détenez pas le verrou (détenteur: {holder}).'},
+            status=status.HTTP_403_FORBIDDEN
+        )
+
+    @action(detail=True, methods=['get'])
+    def check_lock(self, request, pk=None):
+        """
+        Vérifie l'état du verrou sur cette commande.
+        """
+        if not str(pk).isdigit() or int(pk) <= 0:
+            return Response({'detail': 'PK invalide.'}, status=status.HTTP_404_NOT_FOUND)
+        lock_key = f"doc_lock:commande:{pk}"
+        holder = cache.get(lock_key)
+        return Response({
+            'locked': holder is not None,
+            'holder': holder,
+            'is_mine': holder == request.user.username,
+        })

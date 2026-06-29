@@ -159,19 +159,6 @@ https://fullstack-app.ma-pharmacie.ts.net
 
 ---
 
-## Comparaison avec ngrok
-
-| Critère | Tailscale Funnel | ngrok |
-|---|---|---|
-| URL stable | ✅ Toujours la même | ❌ Change à chaque redémarrage (plan gratuit) |
-| Coût | ✅ Gratuit | ⚠️ Limité (plan gratuit) |
-| Authentification | Auth key | Auth token |
-| Protocole | WireGuard (VPN mesh) | Tunnel HTTP(S) |
-| Accès VPN privé | ✅ Oui (tailnet) | ❌ Non |
-| Fonnel public | ✅ Oui | ✅ Oui |
-
----
-
 ## Dépannage
 
 ### Le conteneur démarre mais ne s'authentifie pas

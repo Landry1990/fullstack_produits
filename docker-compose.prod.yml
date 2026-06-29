@@ -44,7 +44,7 @@ services:
       - DJANGO_ALLOWED_HOSTS=*
       - CORS_ALLOWED_ORIGINS=${CORS_ALLOWED_ORIGINS:-http://localhost,http://frontend}
       - CSRF_TRUSTED_ORIGINS=${CSRF_TRUSTED_ORIGINS:-http://localhost,http://frontend}
-      # Sécurisation CORS en prod (Désactivé par défaut, configurez CORS_ALLOWED_ORIGINS via .env ou ngrok/VPN)
+      # Sécurisation CORS en prod (Désactivé par défaut, configurez CORS_ALLOWED_ORIGINS via .env ou Tailscale)
       - CORS_ALLOW_ALL=false
       # Choisir le fournisseur pour import auto (FOURNISSEUR1, FOURNISSEUR2, etc.)
       - SUPPLIER_DATA=${SUPPLIER_DATA:-}
@@ -129,22 +129,6 @@ services:
     depends_on:
       - frontend
     restart: always
-    networks:
-      - app-network
-
-  # Tunnel ngrok pour accès externe
-  ngrok:
-    image: ngrok/ngrok:latest
-    restart: always
-    environment:
-      - NGROK_AUTHTOKEN=${NGROK_AUTHTOKEN}
-    command:
-      - "http"
-      - "frontend:80"
-    ports:
-      - "4040:4040"
-    depends_on:
-      - frontend
     networks:
       - app-network
 

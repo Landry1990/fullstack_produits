@@ -233,6 +233,13 @@ function useSaleCompletion(options: UseSaleCompletionOptions = {}): UseSaleCompl
                     discount: (prixUnitaire - prixNet).toFixed(0),
                     tva: ligne.produit.tva || 0, // On envoie le taux de TVA
                     lot_id: ligne.lotId ? Number(ligne.lotId) : null,
+                    lot_allocations: ligne.lotAllocations && ligne.lotAllocations.length > 0
+                        ? ligne.lotAllocations.map(a => ({
+                            lot_id: Number(a.lotId),
+                            quantity: Number(a.quantity),
+                            selling_price: a.sellingPrice ? Number(a.sellingPrice) : undefined,
+                        }))
+                        : undefined,
                     is_promis: !!ligne.isPromis,
                     promis_quantity: ligne.isPromis ? ligne.promisQuantity : 0,
                     promis_phone: ligne.isPromis ? (ligne.promisPhone || '') : ''

@@ -125,9 +125,6 @@ EMERGENCY_ADMIN_PASSWORD=$EMERGENCY_PASS
 # Webhook
 DEPLOY_SECRET=$DEPLOY_SECRET
 
-# Ngrok (optionnel — décommentez et ajoutez votre token)
-# NGROK_AUTHTOKEN=
-
 # Tailscale (optionnel — décommentez et ajoutez votre auth key)
 # TAILSCALE_AUTHKEY=tskey-auth-xxxxxxxxxxxxxxxx-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 # TAILSCALE_HOSTNAME=fullstack-app
@@ -245,11 +242,8 @@ echo -e "  ${BLUE}Superutilisateur  :${NC}  admin / admin123"
 echo -e "  ${BLUE}Dossier projet    :${NC}  $ZENITH_DIR"
 
 # Warnings services optionnels
-if ! grep -q "^NGROK_AUTHTOKEN=" .env 2>/dev/null || grep -q "^# NGROK_AUTHTOKEN=" .env 2>/dev/null; then
-    echo -e "  ${YELLOW}⚠ Ngrok non configuré — éditez .env si vous avez besoin d'un tunnel public${NC}"
-fi
 if ! grep -q "^TAILSCALE_AUTHKEY=" .env 2>/dev/null || grep -q "^# TAILSCALE_AUTHKEY=" .env 2>/dev/null; then
-    echo -e "  ${YELLOW}⚠ Tailscale non configuré — éditez .env si vous avez besoin d'un accès VPN${NC}"
+    echo -e "  ${YELLOW}⚠ Tailscale non configuré — éditez .env si vous avez besoin d'un accès externe${NC}"
 fi
 echo ""
 echo -e "  ${YELLOW}Prochaines étapes manuelles :${NC}"

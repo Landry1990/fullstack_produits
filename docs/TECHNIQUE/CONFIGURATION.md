@@ -44,11 +44,6 @@ FRONTEND_PORT=80
 # ====================
 TAILSCALE_AUTHKEY=tskey-auth-xxx
 TAILSCALE_HOSTNAME=fullstack-app
-
-# ====================
-# NGROK (Tunnel alternatif)
-# ====================
-NGROK_AUTHTOKEN=votre_token_ngrok
 ```
 
 ---
@@ -61,7 +56,7 @@ NGROK_AUTHTOKEN=votre_token_ngrok
 | **Backend** | 8000 | 8000 | API Django |
 | **PostgreSQL** | 5432 | - | Base de données |
 | **Redis** | 6379 | - | Cache |
-| **Ngrok** | 4040 | 4040 | Dashboard tunnel |
+| **Tailscale** | 443 | - | Funnel HTTPS |
 
 ---
 
@@ -74,7 +69,6 @@ NGROK_AUTHTOKEN=votre_token_ngrok
 | **db** | postgres:15-alpine | 2G | 2.0 |
 | **redis** | redis:7-alpine | 512M | 0.5 |
 | **tailscale** | tailscale/tailscale | 256M | 0.25 |
-| **ngrok** | ngrok/ngrok | 256M | 0.25 |
 
 ---
 

@@ -3,7 +3,7 @@ import api from '../services/api';
 import { toast } from 'react-hot-toast';
 import { getApiErrorDetail } from '../utils/errorHandling';
 import { safeStorage } from '../utils/storage';
-import type { Facture, LigneFacture, TotalsData, User, StockLot, Client } from '../types';
+import type { Facture, LigneFacture, TotalsData, User, StockLot, Client, LotAllocation } from '../types';
 import type { OrdonnanceData } from '../components/OrdonnanceModal';
 import type { useFacturationClients } from './useFacturationClients';
 import type { useFacturationUI } from './useFacturationUI';
@@ -84,6 +84,13 @@ export function useFacturationActions({
                     stock_lot: ligne.lotId ? Number(ligne.lotId) : null,
                     lot: null,
                     date_expiration: ligne.produit.expire_date || null,
+                    lot_allocations: ligne.lotAllocations && ligne.lotAllocations.length > 0
+                        ? ligne.lotAllocations.map(a => ({
+                            lot_id: Number(a.lotId),
+                            quantity: Number(a.quantity),
+                            selling_price: a.sellingPrice ? Number(a.sellingPrice) : undefined,
+                        }))
+                        : undefined,
                 }
             })
 
@@ -148,6 +155,13 @@ export function useFacturationActions({
                     stock_lot_id: lotIdNum,
                     lot: ligne.lotText || null,
                     date_expiration: ligne.lotExpiration || ligne.produit.expire_date || null,
+                    lot_allocations: ligne.lotAllocations && ligne.lotAllocations.length > 0
+                        ? ligne.lotAllocations.map(a => ({
+                            lot_id: Number(a.lotId),
+                            quantity: Number(a.quantity),
+                            selling_price: a.sellingPrice ? Number(a.sellingPrice) : undefined,
+                        }))
+                        : undefined,
                 }
             })
 
@@ -289,17 +303,40 @@ export function useFacturationActions({
         }
     }, [cart.lignesFacture, secureUpdateQuantite])
 
-    const handleLotSelect = useCallback((lot: StockLot | null) => {
+    const handleLotSelect = useCallback((allocations: LotAllocation[] | null) => {
         const product = ui.lotModal.product;
         if (!product) return
         cart.setLignesFacture(
             cart.lignesFacture.map((l) => {
                 if (l.produit.id === product.id) {
+                    if (!allocations || allocations.length === 0) {
+                        return {
+                            ...l,
+                            lotId: null,
+                            lotText: null,
+                            lotExpiration: null,
+                            lotSellingPrice: null,
+                            lotAllocations: null,
+                        }
+                    }
+                    if (allocations.length === 1) {
+                        const alloc = allocations[0]
+                        return {
+                            ...l,
+                            lotId: String(alloc.lotId),
+                            lotText: alloc.lotText,
+                            lotExpiration: alloc.lotExpiration || null,
+                            lotSellingPrice: alloc.sellingPrice || null,
+                            lotAllocations: allocations,
+                        }
+                    }
                     return {
                         ...l,
-                        lotId: lot?.id?.toString() || null,
-                        lotText: lot?.lot || null,
-                        lotExpiration: lot?.date_expiration || null
+                        lotId: null,
+                        lotText: `${allocations.length} lots`,
+                        lotExpiration: null,
+                        lotSellingPrice: null,
+                        lotAllocations: allocations,
                     }
                 }
                 return l

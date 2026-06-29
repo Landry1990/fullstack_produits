@@ -20,10 +20,13 @@ django_asgi_app = get_asgi_application()
 
 # Importer le routage WebSocket après l'initialisation Django
 from api.routing import websocket_urlpatterns
+from api.ws_auth_middleware import TokenAuthMiddleware
 
 application = ProtocolTypeRouter({
     'http': django_asgi_app,
-    'websocket': AuthMiddlewareStack(
-        URLRouter(websocket_urlpatterns)
+    'websocket': TokenAuthMiddleware(
+        AuthMiddlewareStack(
+            URLRouter(websocket_urlpatterns)
+        )
     ),
 })

@@ -33,6 +33,10 @@ class Inventaire(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     is_active = models.BooleanField(default=True, help_text="Inventaire actif (non supprimé dans la corbeille)")
+    version = models.IntegerField(
+        default=1,
+        help_text="Version pour optimistic locking — incrémentée à chaque modification de lignes"
+    )
 
     def save(self, *args, **kwargs):
         if not self.reference:

@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react'
-import type { ProduitModel, Facture, TicketCaisse, OrdonnanceData, Client, TotalsData } from '../types'
+import type { ProduitModel, Facture, TicketCaisse, OrdonnanceData, Client, TotalsData, LotAllocation } from '../types'
 import { calculateFactureTotals } from '../utils/finance'
 
 export interface FacturationUIState {
@@ -27,6 +27,8 @@ export interface FacturationUIState {
         isOpen: boolean
         product: ProduitModel | null
         currentLotId: string | null
+        quantity: number
+        currentAllocations: LotAllocation[] | null
     }
     confirmModal: {
         isOpen: boolean
@@ -99,10 +101,14 @@ export function useFacturationUI() {
         isOpen: boolean
         product: ProduitModel | null
         currentLotId: string | null
+        quantity: number
+        currentAllocations: LotAllocation[] | null
     }>({
         isOpen: false,
         product: null,
-        currentLotId: null
+        currentLotId: null,
+        quantity: 0,
+        currentAllocations: null
     })
 
     const [confirmModal, setConfirmModal] = useState<{
@@ -186,8 +192,8 @@ export function useFacturationUI() {
         setFacturePourPaiement(null)
     }, [])
 
-    const openLotModal = useCallback((product: ProduitModel, currentLotId: string | null) => {
-        setLotModal({ isOpen: true, product, currentLotId })
+    const openLotModal = useCallback((product: ProduitModel, currentLotId: string | null, quantity: number, currentAllocations: LotAllocation[] | null) => {
+        setLotModal({ isOpen: true, product, currentLotId, quantity, currentAllocations })
     }, [])
 
     const closeLotModal = useCallback(() => {
