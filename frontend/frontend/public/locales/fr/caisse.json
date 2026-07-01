@@ -78,7 +78,17 @@
             "notes": "Notes (optionnel)",
             "cancel": "Annuler",
             "confirm": "Générer"
-        }
+        },
+        "sudo_validate": "Valider (Mode Sudo)",
+        "sudo_title": "Validation par mot de passe",
+        "sudo_confirm": "Confirmez la génération du coupon de {{amount}} F.",
+        "coupon_label": "Coupon de Monnaie",
+        "creation": "Création",
+        "generated_by": "Généré par:",
+        "used_by": "Utilisé par:",
+        "na": "N/A",
+        "notes_label": "Notes:",
+        "select_sale_first": "Sélectionnez d'abord une vente pour appliquer le coupon"
     },
     "messages": {
         "refreshed": "Liste actualisée",
@@ -97,6 +107,8 @@
         "modification_error": "Erreur lors de la modification",
         "save_payment_error": "Erreur lors de l'enregistrement du paiement",
         "whatsapp_send_error": "Erreur lors de l'envoi WhatsApp",
+        "whatsapp_sent": "Ticket envoyé par WhatsApp !",
+        "bulk_cancel_error": "Erreur lors de la vidange",
         "cancel_invoice_success": "Facture annulée",
         "cancel_invoice_error": "Erreur lors de l'annulation",
         "empty_invoice_error": "Cette facture ne contient aucun produit",
@@ -243,7 +255,25 @@
             "cash_gap": "Écart de caisse (Espèces)",
             "mode_details": "Détails par mode",
             "confirm": "CONFIRMER LA CLÔTURE",
-            "ticket": "TICKET"
+            "ticket": "TICKET",
+            "sales_breakdown": "Répartition des ventes",
+            "pharmacy_sales": "Ventes Pharmacie",
+            "diverse_sales": "Ventes Diverses",
+            "total_sales": "Total Ventes",
+            "sales_by_method": "Ventes par mode de paiement",
+            "no_sales": "Aucune vente",
+            "initial_fund": "Fond de caisse initial",
+            "db_entries": "Entrées (DB)",
+            "db_exits": "Sorties (DB)",
+            "add_movement": "Ajouter une dépense / entrée",
+            "exit": "Sortie",
+            "entry": "Entrée",
+            "reason_placeholder": "Motif (ex: Carburant)",
+            "amount_placeholder": "Montant",
+            "add": "Ajouter",
+            "manual_movements": "Mouvements ajoutés ({{count}})",
+            "theoretical_amount": "Montant théorique",
+            "theoretical_formula": "Ventes espèces + Recouv. + Entrées - Sorties + Fond"
         },
         "movement_modal": {
             "title_out": "Nouvelle Dépense (Sortie)",
@@ -385,6 +415,9 @@
         "sales": "vente(s)",
         "total_register": "total caisse"
     },
+    "bulk_cancel_selected_count": "{{count}} facture(s) sélectionnée(s)",
+    "bulk_cancel_pending_count": "{{count}} facture(s) en attente",
+    "bulk_cancel_batch_processing": "Traitement par lots...",
     "poste_label": "Poste :",
     "all_posts": "Tous les postes",
     "cash_session": {
@@ -401,7 +434,9 @@
         "fond_initial": "Fond Initial",
         "encaisse": "Encaissé",
         "total_theorique": "Total Théorique en Caisse",
-        "transactions": "Transactions"
+        "transactions": "Transactions",
+        "security_mode_title": "🔒 Mode Sécurité",
+        "amounts_hidden": "Les montants sont masqués pour des raisons de sécurité. Consultez le pharmacien pour les détails financiers."
     },
     "common": {
         "unknown": "Inconnu",

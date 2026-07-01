@@ -82,6 +82,7 @@ export default function PerformanceOverview({
       icon: Wallet, accent: '#10b981',
       isPositive: (stats.revenue?.change || 0) >= 0,
       highlight: true,
+      link: '/app/historique-ventes',
     },
     ...(stats.margin_today !== undefined ? [{
       title: t('dashboard.stats.margin_today', { defaultValue: 'Marge brute (jour)' }),

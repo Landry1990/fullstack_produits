@@ -199,11 +199,27 @@ export const ProductDetailsModal: React.FC<ProductDetailsModalProps> = ({
                                                     )}
                                                 </div>
                                                 <div className="flex flex-wrap gap-2 mt-1">
-                                                    {prod.lot && (
+                                                    {prod.allocations && prod.allocations.length > 1 ? (
+                                                        <div className="flex flex-col gap-1">
+                                                            <span className="text-[10px] font-medium text-blue-700 bg-blue-50 px-1.5 py-0.5 rounded border border-blue-100">
+                                                                {prod.allocations.length} lots répartis manuellement
+                                                            </span>
+                                                            {prod.allocations.map((alloc, idx) => (
+                                                                <span key={alloc.id || idx} className="text-[10px] text-blue-600 font-mono bg-blue-50/50 px-1.5 py-0.5 rounded border border-blue-100">
+                                                                    Lot: {alloc.lot || 'N/A'} × {alloc.quantity}
+                                                                    {alloc.date_expiration && ` (Exp: ${alloc.date_expiration})`}
+                                                                </span>
+                                                            ))}
+                                                        </div>
+                                                    ) : prod.lot ? (
                                                         <span className="text-[10px] text-blue-600 font-mono bg-blue-50 px-1.5 py-0.5 rounded border border-blue-100">
                                                             Lot: {prod.lot} {prod.date_expiration && `(Exp: ${prod.date_expiration})`}
                                                         </span>
-                                                    )}
+                                                    ) : prod.allocations && prod.allocations.length === 1 ? (
+                                                        <span className="text-[10px] text-blue-600 font-mono bg-blue-50 px-1.5 py-0.5 rounded border border-blue-100">
+                                                            Lot: {prod.allocations[0].lot || 'N/A'} {prod.allocations[0].date_expiration && `(Exp: ${prod.allocations[0].date_expiration})`}
+                                                        </span>
+                                                    ) : null}
                                                     {remiseUnitaire > 0 && (
                                                         <span className="text-[10px] text-amber-600 font-medium bg-amber-50 px-1.5 py-0.5 rounded border border-amber-100">
                                                             Remise: -{formatCurrency(remiseUnitaire)} /unité

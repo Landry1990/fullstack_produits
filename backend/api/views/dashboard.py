@@ -743,7 +743,8 @@ class DashboardViewSet(viewsets.ViewSet):
         # Use simpler subqueries without extra values() if possible
         commandes_total = CommandeProduit.objects.filter(
             commande__fournisseur=OuterRef('pk'),
-            commande__status=Commande.Status.CLOTUREE
+            commande__status=Commande.Status.CLOTUREE,
+            commande__is_active=True
         ).order_by().values('commande__fournisseur').annotate(
             total=Sum(F('quantity') * F('price_cost'), output_field=DecimalField())
         ).values('total')
@@ -776,7 +777,8 @@ class DashboardViewSet(viewsets.ViewSet):
 
         all_orders = Commande.objects.filter(
             fournisseur__in=suppliers_qs,
-            status=Commande.Status.CLOTUREE
+            status=Commande.Status.CLOTUREE,
+            is_active=True
         ).annotate(
             total_annotated=Coalesce(Subquery(order_total_sub[:1]), Value(0, output_field=DecimalField())),
         ).order_by('date_cloture')
