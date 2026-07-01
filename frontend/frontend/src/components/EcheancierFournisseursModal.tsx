@@ -1,8 +1,38 @@
-﻿import { useState, useEffect } from 'react';
+﻿import { useState, useEffect, useMemo } from 'react';
 import api from '../services/api';
 import { useTranslation } from 'react-i18next';
-import PremiumModal from './common/PremiumModal';
 import { formatCurrency } from '../utils/formatters';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from './ui/Dialog';
+import { Input } from './ui/Input';
+import { Select } from './ui/Select';
+import { Button } from './ui/Button';
+import { Badge } from './ui/Badge';
+import { Card } from './ui/Card';
+import {
+  Table,
+  TableHeader,
+  TableBody,
+  TableRow,
+  TableHead,
+  TableCell,
+} from './ui/Table';
+import SkeletonTable from './ui/SkeletonTable';
+import {
+  Search,
+  CalendarDays,
+  Wallet,
+  CheckSquare,
+  AlertCircle,
+  TrendingDown,
+  Clock,
+  CheckCircle2,
+} from 'lucide-react';
 
 interface Echeance {
   fournisseur_id: number;
@@ -22,6 +52,15 @@ interface Props {
   onRegler: (fournisseurId: number) => void;
   onPointer?: (fournisseurId: number, fournisseurNom: string) => void;
 }
+
+const statusBadgeVariant = (status: Echeance['status']) => {
+  switch (status) {
+    case 'EN RETARD': return 'error';
+    case "AUJOURD'HUI": return 'warning';
+    case 'À VENIR': return 'success';
+    default: return 'ghost';
+  }
+};
 
 export default function EcheancierFournisseursModal({ isOpen, onClose, onRegler, onPointer }: Props) {
   const { t } = useTranslation(['providers', 'common']);
@@ -53,146 +92,184 @@ export default function EcheancierFournisseursModal({ isOpen, onClose, onRegler,
     }
   }
 
-  const filteredEcheances = echeances.filter(e => {
-    const matchSearch = e.fournisseur_nom.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                        e.numero_facture.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchStatus = statusFilter === 'TOUS' || e.status === statusFilter;
-    return matchSearch && matchStatus;
-  });
+  const filteredEcheances = useMemo(() => {
+    return echeances.filter(e => {
+      const term = searchTerm.toLowerCase();
+      const matchSearch = e.fournisseur_nom.toLowerCase().includes(term) ||
+                          e.numero_facture.toLowerCase().includes(term);
+      const matchStatus = statusFilter === 'TOUS' || e.status === statusFilter;
+      return matchSearch && matchStatus;
+    });
+  }, [echeances, searchTerm, statusFilter]);
+
+  const summary = useMemo(() => {
+    return filteredEcheances.reduce((acc, e) => {
+      acc.total += e.montant_du;
+      if (e.status === 'EN RETARD') acc.late += e.montant_du;
+      else if (e.status === "AUJOURD'HUI") acc.today += e.montant_du;
+      else acc.upcoming += e.montant_du;
+      return acc;
+    }, { total: 0, late: 0, today: 0, upcoming: 0 });
+  }, [filteredEcheances]);
+
+  const summaryCards = [
+    { label: t('providers:schedule.summary.total'), amount: summary.total, icon: Wallet, variant: 'primary' as const },
+    { label: t('providers:schedule.summary.late'), amount: summary.late, icon: TrendingDown, variant: 'error' as const },
+    { label: t('providers:schedule.summary.today'), amount: summary.today, icon: Clock, variant: 'warning' as const },
+    { label: t('providers:schedule.summary.upcoming'), amount: summary.upcoming, icon: CalendarDays, variant: 'success' as const },
+  ];
 
   return (
-    <PremiumModal
-      isOpen={isOpen}
-      onClose={onClose}
-      title={t('providers:schedule.title')}
-      subtitle={t('providers:schedule.subtitle')}
-      icon={
-        <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-        </svg>
-      }
-      maxWidth="max-w-5xl"
-    >
-      <div className="p-6 flex flex-col" style={{ maxHeight: '80vh' }}>
-        {error && (
-          <div className="alert alert-error mb-4 shrink-0">
-            <span>{error}</span>
-          </div>
-        )}
-
-        {/* Filters */}
-        <div className="flex gap-4 mb-4 shrink-0">
-          <div className="relative flex-1">
-            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-base-content/40" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-              </svg>
+    <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
+      <DialogContent className="max-w-6xl max-h-[90vh] p-0 overflow-hidden flex flex-col">
+        <DialogHeader className="p-6 pb-2 border-b border-base-200">
+          <div className="flex items-center gap-3">
+            <div className="p-2.5 bg-indigo-50 rounded-xl">
+              <CalendarDays className="h-6 w-6 text-indigo-600" />
             </div>
-            <input 
-              type="text" 
-              placeholder={t('providers:schedule.search_placeholder')} 
-              className="input input-sm input-bordered w-full pl-9"
+            <div>
+              <DialogTitle>{t('providers:schedule.title')}</DialogTitle>
+              <DialogDescription>{t('providers:schedule.subtitle')}</DialogDescription>
+            </div>
+          </div>
+        </DialogHeader>
+
+        <div className="p-6 flex flex-col gap-5 overflow-hidden">
+          {error && (
+            <div className="flex items-center gap-3 p-4 rounded-xl bg-red-50 border border-red-200 text-red-700 text-sm shrink-0">
+              <AlertCircle className="h-5 w-5 shrink-0" />
+              <span>{error}</span>
+            </div>
+          )}
+
+          {/* Summary cards */}
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 shrink-0">
+            {summaryCards.map((card) => (
+              <Card key={card.label} variant="bordered" padding="sm" className="flex items-center gap-3">
+                <div className={`p-2 rounded-lg ${
+                  card.variant === 'error' ? 'bg-red-50 text-red-600' :
+                  card.variant === 'warning' ? 'bg-amber-50 text-amber-600' :
+                  card.variant === 'success' ? 'bg-emerald-50 text-emerald-600' :
+                  'bg-indigo-50 text-indigo-600'
+                }`}>
+                  <card.icon className="h-4 w-4" />
+                </div>
+                <div>
+                  <div className="text-[10px] font-bold uppercase tracking-wider text-base-content/50">{card.label}</div>
+                  <div className="text-base font-black text-base-content tabular-nums">{formatCurrency(card.amount)}</div>
+                </div>
+              </Card>
+            ))}
+          </div>
+
+          {/* Filters */}
+          <div className="flex flex-col sm:flex-row gap-3 shrink-0">
+            <Input
+              type="text"
+              placeholder={t('providers:schedule.search_placeholder')}
+              size="sm"
+              containerClassName="flex-1"
+              icon={<Search className="h-4 w-4" />}
               value={searchTerm}
               onChange={e => setSearchTerm(e.target.value)}
             />
+            <Select
+              size="sm"
+              containerClassName="w-full sm:w-48"
+              value={statusFilter}
+              onChange={e => setStatusFilter(e.target.value)}
+            >
+              <option value="TOUS">{t('providers:schedule.status_all')}</option>
+              <option value="EN RETARD">{t('providers:schedule.status_late')}</option>
+              <option value="AUJOURD'HUI">{t('providers:schedule.status_today')}</option>
+              <option value="À VENIR">{t('providers:schedule.status_upcoming')}</option>
+            </Select>
           </div>
-          <select 
-            className="select select-sm select-bordered w-48 font-medium"
-            value={statusFilter}
-            onChange={e => setStatusFilter(e.target.value)}
-          >
-            <option value="TOUS">{t('providers:schedule.status_all')}</option>
-            <option value="EN RETARD">{t('providers:schedule.status_late')}</option>
-            <option value="AUJOURD'HUI">{t('providers:schedule.status_today')}</option>
-            <option value="À VENIR">{t('providers:schedule.status_upcoming')}</option>
-          </select>
-        </div>
 
-        {loading ? (
-          <div className="flex justify-center flex-1 items-center p-10">
-            <span className="loading loading-spinner loading-lg text-primary"></span>
-          </div>
-        ) : filteredEcheances.length === 0 ? (
-          <div className="text-center flex-1 flex flex-col justify-center p-10 bg-base-200/50 rounded-xl border border-slate-100">
-            <div className="text-4xl mb-4 text-base-content/50">✅</div>
-            <h3 className="text-lg font-bold text-base-content/90">{t('providers:schedule.empty')}</h3>
-            <p className="text-sm text-base-content/60">{t('providers:schedule.empty_subtitle')}</p>
-          </div>
-        ) : (
-          <div className="overflow-auto rounded-xl border border-base-200 shadow-sm flex-1">
-            <table className="table table-sm w-full table-pin-rows">
-              <thead className="bg-[#f8fafc] text-[#64748b]">
-                <tr>
-                  <th className="font-semibold uppercase text-[10px] tracking-wider py-3">{t('providers:schedule.table.provider')}</th>
-                  <th className="font-semibold uppercase text-[10px] tracking-wider py-3">{t('providers:schedule.table.ref_type')}</th>
-                  <th className="font-semibold uppercase text-[10px] tracking-wider text-right py-3">{t('providers:schedule.table.amount')}</th>
-                  <th className="font-semibold uppercase text-[10px] tracking-wider text-center py-3">{t('providers:schedule.table.due_date')}</th>
-                  <th className="font-semibold uppercase text-[10px] tracking-wider text-center py-3">{t('providers:schedule.table.status')}</th>
-                  <th className="font-semibold uppercase text-[10px] tracking-wider text-center py-3">{t('providers:schedule.table.action')}</th>
-                </tr>
-              </thead>
-              <tbody className="bg-base-100">
-                {filteredEcheances.map((e) => (
-                  <tr key={`${e.fournisseur_id}-${e.commande_id || 'releve'}`} className="hover:bg-base-200/50 transition-colors border-b border-slate-100 last:border-0">
-                    <td className="py-3">
-                      <div className="font-bold text-base-content">{e.fournisseur_nom}</div>
-                    </td>
-                    <td className="py-3">
-                        <div className="font-mono text-xs text-base-content/80 font-medium bg-base-200 px-2 py-0.5 rounded inline-block">
+          {loading ? (
+            <div className="flex-1 overflow-hidden">
+              <SkeletonTable rows={6} columns={6} />
+            </div>
+          ) : filteredEcheances.length === 0 ? (
+            <div className="flex-1 flex flex-col items-center justify-center p-10 bg-base-200/30 rounded-xl border border-base-200 text-center">
+              <div className="p-4 bg-emerald-50 rounded-full mb-4">
+                <CheckCircle2 className="h-8 w-8 text-emerald-600" />
+              </div>
+              <h3 className="text-lg font-bold text-base-content/90">{t('providers:schedule.empty')}</h3>
+              <p className="text-sm text-base-content/60 mt-1">{t('providers:schedule.empty_subtitle')}</p>
+            </div>
+          ) : (
+            <div className="flex-1 overflow-auto rounded-xl border border-base-200 shadow-sm">
+              <Table className="border-0">
+                <TableHeader className="bg-base-200/50 sticky top-0 z-10">
+                  <TableRow>
+                    <TableHead>{t('providers:schedule.table.provider')}</TableHead>
+                    <TableHead>{t('providers:schedule.table.ref_type')}</TableHead>
+                    <TableHead className="text-right">{t('providers:schedule.table.amount')}</TableHead>
+                    <TableHead className="text-center">{t('providers:schedule.table.due_date')}</TableHead>
+                    <TableHead className="text-center">{t('providers:schedule.table.status')}</TableHead>
+                    <TableHead className="text-center">{t('providers:schedule.table.action')}</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {filteredEcheances.map((e) => (
+                    <TableRow key={`${e.fournisseur_id}-${e.commande_id || 'releve'}`}>
+                      <TableCell>
+                        <div className="font-bold text-base-content">{e.fournisseur_nom}</div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="font-mono text-xs font-medium bg-base-200 px-2 py-0.5 rounded inline-block text-base-content/80">
                           {e.numero_facture}
                         </div>
                         <div className="text-[10px] text-base-content/40 mt-0.5 uppercase tracking-wide">
                           {e.type_reglement === 'RELEVE' ? t('providers:schedule.type_statement') : t('providers:schedule.type_invoice')}
                         </div>
-                    </td>
-                    <td className="py-3 text-right">
-                      <div className={`font-black tracking-tight ${e.status === 'EN RETARD' ? 'text-error' : 'text-base-content/90'}`}>
-                        {formatCurrency(e.montant_du)}
-                      </div>
-                    </td>
-                    <td className="py-3 text-center">
-                      <div className="font-semibold text-sm text-base-content/90">
-                        {new Date(e.date_echeance).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' })}
-                      </div>
-                    </td>
-                    <td className="py-3 text-center">
-                      <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider ${
-                        e.status === 'EN RETARD' ? 'bg-error/20 text-error' :
-                        e.status === "AUJOURD'HUI" ? 'bg-warning/20 text-warning' :
-                        'bg-success/20 text-success'
-                      }`}>
-                        {e.status}
-                        {e.jours_restants < 0 ? ` (${Math.abs(e.jours_restants)}j)` : e.jours_restants > 0 ? ` (dans ${e.jours_restants}j)` : ''}
-                      </span>
-                    </td>
-                    <td className="py-3 text-center">
-                       <button 
-                         className="btn btn-xs btn-primary btn-outline rounded-full px-4 hover:shadow-md transition-all gap-1 mr-2"
-                         onClick={() => onRegler(e.fournisseur_id)}
-                       >
-                         <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                         </svg>
-                         {t('providers:schedule.table.pay_btn')}
-                       </button>
-                       <button 
-                         className="btn btn-xs btn-neutral btn-outline rounded-full px-3 hover:shadow-md transition-all gap-1"
-                         onClick={() => onPointer && onPointer(e.fournisseur_id, e.fournisseur_nom)}
-                         title={t('providers:schedule.table.pointage_btn')}
-                       >
-                         <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-                         </svg>
-                         {t('providers:schedule.table.pointage_btn')}
-                       </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </div>
-    </PremiumModal>
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <div className={`font-black tracking-tight tabular-nums ${e.status === 'EN RETARD' ? 'text-red-600' : 'text-base-content'}`}>
+                          {formatCurrency(e.montant_du)}
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-center">
+                        <div className="font-semibold text-sm text-base-content">
+                          {new Date(e.date_echeance).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' })}
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-center">
+                        <Badge variant={statusBadgeVariant(e.status)} size="sm">
+                          {e.status}
+                          {e.jours_restants < 0 ? ` (${Math.abs(e.jours_restants)}j)` : e.jours_restants > 0 ? ` (dans ${e.jours_restants}j)` : ''}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-center">
+                        <div className="flex items-center justify-center gap-2">
+                          <Button
+                            variant="primary"
+                            size="sm"
+                            leftIcon={<Wallet className="h-3.5 w-3.5" />}
+                            onClick={() => onRegler(e.fournisseur_id)}
+                          >
+                            {t('providers:schedule.table.pay_btn')}
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            leftIcon={<CheckSquare className="h-3.5 w-3.5" />}
+                            onClick={() => onPointer && onPointer(e.fournisseur_id, e.fournisseur_nom)}
+                            title={t('providers:schedule.table.pointage_btn')}
+                          >
+                            {t('providers:schedule.table.pointage_btn')}
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          )}
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 }

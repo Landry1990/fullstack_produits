@@ -24,7 +24,8 @@ class FournisseurViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         commandes_total = CommandeProduit.objects.filter(
             commande__fournisseur=OuterRef('pk'),
-            commande__status=Commande.Status.CLOTUREE
+            commande__status=Commande.Status.CLOTUREE,
+            commande__is_active=True
         ).values('commande__fournisseur').annotate(
             total=Sum(F('quantity') * F('price_cost'), output_field=DecimalField())
         ).values('total')
@@ -210,12 +211,13 @@ class FournisseurViewSet(viewsets.ModelViewSet):
         order_total_sub = CommandeProduit.objects.filter(
             commande=OuterRef('pk')
         ).values('commande').annotate(
-            s=Sum(F('quantity') * F('price'), output_field=DecimalField())
+            s=Sum(F('quantity') * F('price_cost'), output_field=DecimalField())
         ).values('s')[:1]
 
         all_commandes = Commande.objects.filter(
             fournisseur_id__in=fournisseur_ids,
-            status=Commande.Status.CLOTUREE
+            status=Commande.Status.CLOTUREE,
+            is_active=True
         ).annotate(
             total_value=Coalesce(Subquery(order_total_sub), Value(Decimal('0.00'), output_field=DecimalField()))
         ).order_by('date_cloture')
@@ -364,14 +366,14 @@ class FournisseurViewSet(viewsets.ModelViewSet):
 
         commandes_qs = (
             Commande.objects
-            .filter(fournisseur=f, status=Commande.Status.CLOTUREE)
+            .filter(fournisseur=f, status=Commande.Status.CLOTUREE, is_active=True)
             .annotate(
                 total_value=Coalesce(
                     Subquery(
                         CommandeProduit.objects
                         .filter(commande=OuterRef('pk'))
                         .values('commande')
-                        .annotate(s=Sum(F('quantity') * F('price'), output_field=DecimalField()))
+                        .annotate(s=Sum(F('quantity') * F('price_cost'), output_field=DecimalField()))
                         .values('s')[:1]
                     ),
                     Value(Decimal('0.00'), output_field=DecimalField())
@@ -482,7 +484,8 @@ class FournisseurViewSet(viewsets.ModelViewSet):
 
         commandes_qs = Commande.objects.filter(
             fournisseur=fournisseur,
-            status=Commande.Status.CLOTUREE
+            status=Commande.Status.CLOTUREE,
+            is_active=True
         )
 
         if start_date:
@@ -499,7 +502,7 @@ class FournisseurViewSet(viewsets.ModelViewSet):
 
         commandes_qs = commandes_qs.annotate(
             total_value=Coalesce(
-                Sum(F('produits__quantity') * F('produits__price'), output_field=DecimalField()), 
+                Sum(F('produits__quantity') * F('produits__price_cost'), output_field=DecimalField()), 
                 Decimal('0.00')
             )
         ).order_by('date_cloture')
@@ -614,6 +617,7 @@ class FournisseurViewSet(viewsets.ModelViewSet):
                 # On exclut les avoirs (mode AVOIR) qui représentent des crédits entrants, pas des paiements sortants
                 total_commandes = CommandeProduit.objects.filter(
                     commande__status=Commande.Status.CLOTUREE,
+                    commande__is_active=True,
                     commande__date_cloture__date__lte=last_day
                 ).aggregate(
                     total=Sum(F('quantity') * F('price_cost'), output_field=DecimalField())

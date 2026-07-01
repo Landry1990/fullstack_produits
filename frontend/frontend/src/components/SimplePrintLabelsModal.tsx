@@ -105,7 +105,7 @@ function BarcodeCanvas({ value, height, width }: { value: string; height: number
         JsBarcode(svgRef.current, value, {
           format: 'CODE128',
           width: 1.2,
-          height,
+          height: height + 4,
           displayValue: true,
           fontSize: 8,
           margin: 0,
@@ -185,7 +185,7 @@ function LabelPreview({
       style={{
         width: isCompact ? '30mm' : '40mm',
         height: isCompact ? '15mm' : '20mm',
-        padding: isCompact ? '0.5mm 1mm' : '0.8mm 1.2mm',
+        padding: isCompact ? '0.8mm 1mm' : '1mm 1.2mm',
         border: '0.3px solid #ccc',
         borderRadius: '1px',
         display: 'flex',
@@ -629,7 +629,7 @@ export default function SimplePrintLabelsModal({
             JsBarcode(svg, label.barcode, {
               format: 'CODE128',
               width: isCompact ? 1 : 1.2,
-              height: isCompact ? 7 : 10,
+              height: isCompact ? 10 : 14,
               displayValue: true,
               fontSize: isCompact ? 6 : 7,
               margin: 0,
@@ -699,7 +699,7 @@ export default function SimplePrintLabelsModal({
 
       lines.push(bottomRow)
 
-      return `<div class="label" style="width:${w};height:${h};padding:${isCompact ? '0.5mm 1mm' : '0.8mm 1.2mm'};border:0.3px solid #ccc;border-radius:1px;display:flex;flex-direction:column;justify-content:flex-start;overflow:hidden;font-family:'Inter','Helvetica Neue',Arial,sans-serif;background:#fff;color:#000;box-sizing:border-box;page-break-after:always;break-after:page;">
+      return `<div class="label" style="padding:${isCompact ? '0.8mm 1mm' : '1mm 1.2mm'};border:0.3px solid #ccc;border-radius:1px;display:flex;flex-direction:column;justify-content:flex-start;overflow:hidden;font-family:'Inter','Helvetica Neue',Arial,sans-serif;background:#fff;color:#000;box-sizing:border-box;page-break-after:always;break-after:page;">
         ${lines.join('')}
       </div>`
     }).join('\n')
@@ -743,6 +743,12 @@ export default function SimplePrintLabelsModal({
     @page {
       size: ${w} ${h};
       margin: 0;
+    }
+    @media print {
+      @page {
+        size: ${w} ${h};
+        margin: 0;
+      }
     }
     * { 
       margin: 0; 
@@ -799,6 +805,13 @@ ${labelsHTML}
       setTimeout(triggerPrint, 1000)
     }
   }, [labelsData, fields, labelFormat, commandeNumero, onClose])
+
+  /* ─── PDF backend print handler ─── */
+  const handlePrintPDF = useCallback(() => {
+    const format = labelFormat === '30x15' ? '30x15' : '40x20'
+    const url = `${window.location.origin}/api/commandes/${commandeId}/imprimer_etiquettes/?format=${format}`
+    window.open(url, '_blank')
+  }, [commandeId, labelFormat])
 
   const enabledFieldsCount = fields.filter(f => f.enabled).length
 
@@ -1106,6 +1119,16 @@ ${labelsHTML}
         <div className="flex justify-end gap-3 pt-1">
           <button onClick={onClose} className="btn btn-ghost px-6 rounded-xl">
             {t('cancel')}
+          </button>
+          <button
+            onClick={handlePrintPDF}
+            className="btn btn-secondary px-6 rounded-xl gap-2"
+            disabled={labelsData.length === 0}
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            </svg>
+            PDF
           </button>
           <button
             onClick={handlePrint}

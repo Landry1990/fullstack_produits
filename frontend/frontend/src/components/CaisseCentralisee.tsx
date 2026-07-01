@@ -332,7 +332,7 @@ export default function CaisseCentralisee() {
       const response = await api.post(`factures/${facture.id}/send_whatsapp/`, {
         phone: phone
       })
-      toast.success(response.data.detail || 'Ticket envoyé par WhatsApp !')
+      toast.success(response.data.detail || t('messages.whatsapp_sent'))
     } catch (err) {
       console.error('Erreur envoi WhatsApp:', err)
       toast.error(getApiErrorDetail(err, t('messages.whatsapp_send_error')))
@@ -440,7 +440,7 @@ export default function CaisseCentralisee() {
           setShowBulkCancelModal(false)
           fetchFacturesEnAttente()
         } catch (err: any) {
-          toast.error(getApiErrorDetail(err, 'Erreur lors de la vidange'))
+          toast.error(getApiErrorDetail(err, t('messages.bulk_cancel_error')))
           throw err
         } finally {
           setBulkCancelLoading(false)
@@ -939,14 +939,14 @@ export default function CaisseCentralisee() {
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                 </svg>
-                Valider (Mode Sudo)
+                {t('coupons.sudo_validate')}
               </button>
             </div>
         }
       >
         <div className="p-6">
             <div className="w-full mb-4">
-              <label className="block text-xs font-bold uppercase text-slate-500 tracking-wider mb-1.5">Montant à rendre (F)</label>
+              <label className="block text-xs font-bold uppercase text-slate-500 tracking-wider mb-1.5">{t('coupons.generate_modal.amount')} (F)</label>
               <input
                 type="number"
                 className="w-full h-12 rounded-lg border border-slate-200 bg-white px-3 text-2xl font-bold text-center text-slate-700 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
@@ -958,10 +958,10 @@ export default function CaisseCentralisee() {
             </div>
 
             <div className="w-full mb-4">
-              <label className="block text-xs font-bold uppercase text-slate-500 tracking-wider mb-1.5">Notes (Optionnel)</label>
+              <label className="block text-xs font-bold uppercase text-slate-500 tracking-wider mb-1.5">{t('coupons.generate_modal.notes')}</label>
               <textarea
                 className="w-full h-20 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 resize-none"
-                placeholder="Raison du coupon..."
+                placeholder={t('journal.movement_modal.description_placeholder')}
                 value={nouveauCouponNotes}
                 onChange={(e) => setNouveauCouponNotes(e.target.value)}
               ></textarea>
@@ -974,15 +974,15 @@ export default function CaisseCentralisee() {
         isOpen={isSudoModalOpen}
         onClose={() => setIsSudoModalOpen(false)}
         onConfirm={handleGenererCouponWrapper}
-        title="Validation par mot de passe"
-        message={`Confirmez la génération du coupon de ${nouveauCouponMontant} F.`}
+        title={t('coupons.sudo_title')}
+        message={t('coupons.sudo_confirm', { amount: nouveauCouponMontant })}
       />
 
       {/* Modal Détails Coupon */}
       <PremiumModal
         isOpen={isDetailsCouponModalOpen && !!couponTrouve}
         onClose={() => { setIsDetailsCouponModalOpen(false); setCouponTrouve(null); setSearchCouponNumero(''); }}
-        title="Détails du Coupon"
+        title={t('coupons.details_modal.title')}
         icon={<span className="text-emerald-600 text-xl">🎫</span>}
         footer={
             <div className="flex justify-between gap-2 w-full">
@@ -1179,7 +1179,7 @@ export default function CaisseCentralisee() {
                   </button>
                 )}
                 {couponTrouve && couponTrouve.status === 'ACTIF' && !factureForCoupon && (
-                  <div className="text-xs text-amber-600">Sélectionnez d'abord une vente pour appliquer le coupon</div>
+                  <div className="text-xs text-amber-600">{t('coupons.select_sale_first')}</div>
                 )}
               </div>
             </div>
@@ -1188,13 +1188,13 @@ export default function CaisseCentralisee() {
         <div className="p-6">
             {couponTrouve && (
             <div className="text-center p-4 border-2 border-dashed border-slate-200 rounded-xl bg-slate-50">
-              <div className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">Coupon de Monnaie</div>
+              <div className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">{t('coupons.coupon_label')}</div>
               <div className="text-4xl font-black text-emerald-600 font-mono mb-2">#{couponTrouve.numero}</div>
               <div className="text-3xl font-bold text-slate-800 mb-4">{Math.round(Number(couponTrouve.montant))} F</div>
               <div className="border-t border-slate-200 my-2"></div>
               <div className="text-left space-y-2 text-xs text-slate-700">
                 <div className="flex justify-between">
-                  <span>Status:</span>
+                  <span>{t('coupons.headers.status')}:</span>
                   <span className={`inline-flex items-center px-2 h-5 text-[10px] rounded font-semibold ${
                     couponTrouve.status === 'ACTIF' ? 'bg-emerald-100 text-emerald-700' :
                     couponTrouve.status === 'UTILISE' ? 'bg-slate-100 text-slate-700' : 'bg-slate-50 text-slate-500'
@@ -1206,27 +1206,27 @@ export default function CaisseCentralisee() {
                 <div className="border-t border-slate-200 my-1"></div>
 
                 <div className="bg-white p-2 rounded border border-slate-200 space-y-1">
-                  <div className="font-bold text-[10px] uppercase text-slate-500 mb-1">Création</div>
+                  <div className="font-bold text-[10px] uppercase text-slate-500 mb-1">{t('coupons.creation')}</div>
                   <div className="flex justify-between">
-                    <span>Généré par:</span>
-                    <span className="font-medium">{couponTrouve.cree_par_nom || 'Système'}</span>
+                    <span>{t('coupons.generated_by')}</span>
+                    <span className="font-medium">{couponTrouve.cree_par_nom || t('coupons.system')}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span>Date:</span>
+                    <span>{t('journal.table.date_time')}</span>
                     <span className="font-medium">{new Date(couponTrouve.date_creation).toLocaleDateString('fr-FR', { day: '2-digit', month: 'long', year: 'numeric' })}</span>
                   </div>
                 </div>
 
                 {couponTrouve.status === 'UTILISE' && (
                   <div className="bg-emerald-50 p-2 rounded border border-emerald-100 space-y-1">
-                    <div className="font-bold text-[10px] uppercase text-emerald-600 text-slate-500 mb-1">Utilisation</div>
+                    <div className="font-bold text-[10px] uppercase text-emerald-600 text-slate-500 mb-1">{t('coupons.headers.usage')}</div>
                     <div className="flex justify-between">
-                      <span>Utilisé par:</span>
-                      <span className="font-medium">{couponTrouve.utilise_par_nom || 'N/A'}</span>
+                      <span>{t('coupons.used_by')}</span>
+                      <span className="font-medium">{couponTrouve.utilise_par_nom || t('coupons.na')}</span>
                     </div>
                     {couponTrouve.date_utilisation && (
                       <div className="flex justify-between">
-                        <span>Date:</span>
+                        <span>{t('journal.table.date_time')}</span>
                         <span>{new Date(couponTrouve.date_utilisation).toLocaleDateString('fr-FR', { day: '2-digit', month: 'long', year: 'numeric' })}</span>
                       </div>
                     )}
@@ -1235,7 +1235,7 @@ export default function CaisseCentralisee() {
 
                 {couponTrouve.notes && (
                   <div className="mt-2 p-2 bg-white rounded italic border border-slate-200 text-slate-600">
-                    <span className="font-bold not-italic text-slate-500 block text-[10px] mb-1">Notes:</span>
+                    <span className="font-bold not-italic text-slate-500 block text-[10px] mb-1">{t('coupons.notes_label')}:</span>
                     "{couponTrouve.notes}"
                   </div>
                 )}
@@ -1313,10 +1313,9 @@ export default function CaisseCentralisee() {
             ) : (
               /* Mode sécurité - montants masqués */
               <div className="bg-amber-50 p-4 rounded-lg border border-amber-200 text-center">
-                <p className="text-amber-600 text-sm font-medium mb-2">🔒 Mode Sécurité</p>
+                <p className="text-amber-600 text-sm font-medium mb-2">{t('cash_session.security_mode_title')}</p>
                 <p className="text-slate-500 text-xs">
-                  Les montants sont masqués pour des raisons de sécurité.
-                  Consultez le pharmacien pour les détails financiers.
+                  {t('cash_session.amounts_hidden')}
                 </p>
                 <div className="mt-3 space-y-2">
                   <div className="bg-white p-2 rounded border border-slate-200">
@@ -1356,8 +1355,8 @@ export default function CaisseCentralisee() {
             <div className="text-sm text-red-700">
               <p className="font-bold mb-1">
                 {selectedFactureIds.size > 0
-                  ? `${selectedFactureIds.size} facture(s) sélectionnée(s)`
-                  : `${facturesEnAttente.length} facture(s) en attente`}
+                  ? t('bulk_cancel_selected_count', { count: selectedFactureIds.size })
+                  : t('bulk_cancel_pending_count', { count: facturesEnAttente.length })}
               </p>
               <p>
                 {t('bulk_cancel_warning', { defaultValue: 'Toutes les factures sélectionnées seront annulées. Le stock des factures déjà validées sera réintégré automatiquement. Cette action est irréversible.' })}
@@ -1370,9 +1369,9 @@ export default function CaisseCentralisee() {
               <table className="table table-xs w-full">
                 <thead className="bg-slate-100 sticky top-0">
                   <tr>
-                    <th>N° Facture</th>
-                    <th>Client</th>
-                    <th className="text-right">Montant</th>
+                    <th>{t('table.invoice')}</th>
+                    <th>{t('table.client')}</th>
+                    <th className="text-right">{t('table.amount')}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -1381,7 +1380,7 @@ export default function CaisseCentralisee() {
                     .map(f => (
                       <tr key={f.id}>
                         <td className="font-bold">#{f.numero_facture}</td>
-                        <td>{f.client_name || 'Passager'}</td>
+                        <td>{f.client_name || t('table.passerby_client')}</td>
                         <td className="text-right font-mono">{Math.round(Number(f.total_ttc))} F</td>
                       </tr>
                     ))}
@@ -1393,7 +1392,7 @@ export default function CaisseCentralisee() {
           {bulkCancelLoading && bulkProgress && (
             <div className="space-y-2">
               <div className="flex justify-between text-xs font-medium text-slate-600">
-                <span>Traitement par lots...</span>
+                <span>{t('bulk_cancel_batch_processing')}</span>
                 <span>{bulkProgress.processed} / {bulkProgress.total}</span>
               </div>
               <div className="w-full h-2 bg-slate-200 rounded-full overflow-hidden">

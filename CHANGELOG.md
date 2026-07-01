@@ -2,6 +2,22 @@
 
 ---
 
+## 2026-06-30
+
+### 🐛 Corrections
+
+- **Date d'expiration non sauvegardée lors de la création d'un produit**
+  - `frontend/src/schemas/productSchema.ts` : ajout du champ `expire_date` au schéma Zod.
+  - Le champ était envoyé dans le payload mais strippé par Zod car absent du schéma.
+  - Désormais, si l'utilisateur laisse le champ vide, `null` est envoyé (pas de génération automatique).
+
+- **Impression des étiquettes en orientation verticale au lieu d'horizontale**
+  - `frontend/src/components/SimplePrintLabelsModal.tsx` : ajout d'un bouton **PDF** qui appelle le backend `commandes.py:imprimer_etiquettes`.
+  - Le backend génère un PDF ReportLab avec `pagesize=(40mm, 20mm)` (orientation paysage) — format respecté par les imprimantes d'étiquettes Windows.
+  - Le bouton d'impression navigateur est conservé pour les cas où le CSS `@page` fonctionne.
+
+---
+
 ## 2026-06-29
 
 ### ✨ Nouvelles fonctionnalités
@@ -14,6 +30,20 @@
   - `frontend/src/components/facturation/CartTable.tsx` : badge lot affiche la répartition manuelle (`2 lots • LotA×1, LotB×1`) avec tooltip détaillé et style visuel distinct (vert).
   - `frontend/src/hooks/useSaleCompletion.ts` : envoie `lot_allocations` au backend lors de la finalisation de la vente.
   - `backend/api/services/sales_service.py` : `validate_invoice` utilise les allocations explicites `_lot_allocations` pour débiter les lots choisis par l'utilisateur, avec vérification du stock disponible par lot.
+
+### 🎨 Améliorations UI
+
+- **Modernisation des modals fournisseurs avec shadcn/ui**
+  - `frontend/src/components/EcheancierFournisseursModal.tsx` : remplacement du modal legacy par `Dialog` shadcn/ui, ajout de cartes de résumé, filtres `Input`/`Select`, tableau `Table`, badges de statut et `SkeletonTable` pour le chargement.
+  - `frontend/src/components/FinanceFournisseurModal.tsx` : optimisation de la taille de fenêtre et des espacements, remplacement du `<select>` natif par le composant `Select` shadcn/ui, uniformisation des tableaux et des boutons avec la bibliothèque de composants.
+- `frontend/src/components/fournisseurs/SupplierDashboard.tsx` : limite de hauteur (`max-h-[420px]`) et défilement vertical sur le tableau des échéances prioritaires pour éviter qu'il ne s'étire indéfiniment.
+- `frontend/src/components/caisse/JournalCaisseClosingModal.tsx` : ajout d'une section **Répartition des ventes** dans le modal de clôture affichant séparément les ventes Pharmacie (vert) et les ventes Diverses (violet), avec total consolidé. La section n'apparaît que si les données sont disponibles, et les Ventes Diverses sont masquées si leur montant est nul.
+
+### 🐛 Corrections
+
+- **Calcul de la dette fournisseur**
+  - `backend/api/views/fournisseurs.py` : harmonisation du calcul du solde de dette et de l'évolution de la dette sur le **prix fournisseur** (`price`) au lieu du **coût effectif** (`price_cost`).
+  - Auparavant, le tableau de bord affichait une dette totale inférieure au « Dû prochainement » car l'échéancier utilisait `price` tandis que le solde utilisait `price_cost`.
 
 ### ⚡ Performance / Fiabilité
 

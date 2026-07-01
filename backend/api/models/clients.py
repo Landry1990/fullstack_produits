@@ -91,9 +91,10 @@ class Fournisseur(models.Model):
         # 1. Total des commandes clôturées en une seule requête agrégée
         total_du = CommandeProduit.objects.filter(
             commande__fournisseur=self,
-            commande__status=Commande.Status.CLOTUREE
+            commande__status=Commande.Status.CLOTUREE,
+            commande__is_active=True
         ).aggregate(
-            total=Sum(F('quantity') * F('price'), output_field=DecimalField())
+            total=Sum(F('quantity') * F('price_cost'), output_field=DecimalField())
         )['total'] or Decimal('0.00')
             
         # 2. Total des paiements effectués

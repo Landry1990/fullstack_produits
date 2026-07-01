@@ -19,6 +19,16 @@ export interface PosteCaisse {
     } | null;
 }
 
+export interface FactureProduitAllocation {
+    id: number
+    stock_lot?: number | null
+    quantity: number
+    cost_price?: string
+    selling_price?: string
+    lot?: string | null
+    date_expiration?: string | null
+}
+
 export interface FactureProduit {
     id: number
     produit: number | ProduitModel
@@ -32,6 +42,7 @@ export interface FactureProduit {
     treatment_duration_days?: number
     is_chronic?: boolean
     default_treatment_days?: number
+    allocations?: FactureProduitAllocation[]
 }
 
 export interface Facture {

@@ -295,6 +295,32 @@ class DashboardSupplierDebtsTestCase(APITestCase):
         names = [s['name'] for s in response.data['suppliers']]
         self.assertNotIn('Fournisseur Payé', names)
 
+    def test_supplier_debt_uses_price_cost(self):
+        """Vérifie que la dette est calculée sur price_cost et non price."""
+        fournisseur = TestDataFactory.create_fournisseur(name='Fournisseur Prix Différents')
+        produit = TestDataFactory.create_produit(fournisseur=fournisseur)
+
+        commande = TestDataFactory.create_commande(
+            fournisseur=fournisseur, status='CLOT'
+        )
+        # price = 200 (prix facturé), price_cost = 100 (coût réel)
+        TestDataFactory.create_commande_produit(
+            commande=commande, produit=produit,
+            quantity=10, price=Decimal('200.00'), price_cost=Decimal('100.00')
+        )
+
+        dashboard_resp = self.client.get(self.url)
+        self.assertEqual(dashboard_resp.status_code, status.HTTP_200_OK)
+        dashboard_total = dashboard_resp.data['total_debt']
+
+        fournisseurs_resp = self.client.get('/api/fournisseurs/dashboard_stats/')
+        self.assertEqual(fournisseurs_resp.status_code, status.HTTP_200_OK)
+        fournisseurs_total = fournisseurs_resp.data['total_dette']
+
+        # Les deux endpoints doivent retourner 1000 (10 × 100) et non 2000 (10 × 200)
+        self.assertEqual(dashboard_total, 1000.0)
+        self.assertEqual(fournisseurs_total, 1000.0)
+
 class DashboardManagerStatsTestCase(APITestCase):
     """Test suite pour l'endpoint /api/dashboard/manager_stats/."""
 
