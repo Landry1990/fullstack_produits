@@ -127,6 +127,12 @@
         "status_late": "🔴 En retard",
         "status_today": "🟠 Aujourd'hui",
         "status_upcoming": "🟢 À venir",
+        "summary": {
+            "total": "Total échéances",
+            "late": "En retard",
+            "today": "Dû aujourd'hui",
+            "upcoming": "À venir"
+        },
         "empty": "Aucun paiement trouvé",
         "empty_subtitle": "Essayez de modifier vos filtres ou félicitations, tout est à jour !",
         "type_statement": "Paiement Global",

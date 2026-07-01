@@ -246,8 +246,8 @@ export default function SupplierDashboard({ onViewAllDeadlines }: SupplierDashbo
       </div>
 
       {/* Upcoming Deadlines Table */}
-      <div className="bg-base-100 border border-base-300 rounded-3xl shadow-sm overflow-hidden flex flex-col">
-        <div className="flex items-center justify-between px-6 py-5 border-b border-base-200 bg-base-200/50">
+      <div className="bg-base-100 border border-base-300 rounded-3xl shadow-sm overflow-hidden flex flex-col max-h-[420px]">
+        <div className="flex items-center justify-between px-6 py-5 border-b border-base-200 bg-base-200/50 shrink-0">
           <div className="flex items-center gap-3">
             <div className="p-2.5 bg-success/20 text-success rounded-2xl">
               <Calendar className="size-5" />
@@ -265,7 +265,7 @@ export default function SupplierDashboard({ onViewAllDeadlines }: SupplierDashbo
           </button>
         </div>
 
-        <div className="overflow-x-auto">
+        <div className="overflow-auto flex-1">
           <table className="w-full">
             <thead>
               <tr className="text-[10px] font-black uppercase text-base-content/40 bg-base-200/30 border-none">

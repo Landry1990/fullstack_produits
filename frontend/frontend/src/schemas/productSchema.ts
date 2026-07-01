@@ -28,6 +28,8 @@ export const productSchema = z.object({
   min_rayon: z.coerce.number().min(0).optional(),
   capacite_rayon: z.coerce.number().min(0).optional(),
   
+  expire_date: z.string().optional().nullable(),
+
   description: z.string().optional().nullable(),
   message_alerte: z.string().optional().nullable(),
   

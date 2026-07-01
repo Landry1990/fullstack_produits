@@ -127,6 +127,12 @@
         "status_late": "🔴 Late",
         "status_today": "🟠 Today",
         "status_upcoming": "🟢 Upcoming",
+        "summary": {
+            "total": "Total Due",
+            "late": "Late",
+            "today": "Due Today",
+            "upcoming": "Upcoming"
+        },
         "empty": "No payment found",
         "empty_subtitle": "Try modifying filters or congrats, everything is up to date!",
         "type_statement": "Global Payment",

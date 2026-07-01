@@ -1,9 +1,10 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { Printer, Plus, Trash2 } from 'lucide-react';
+import { Printer, Plus, Trash2, User as UserIcon } from 'lucide-react';
 import { normalizeNumberInput } from '../../utils/formatters';
 import type { useJournalCaisse } from '../../hooks/useJournalCaisse';
 import { Button } from '../shadcn/button';
 import { cn } from '../../lib/utils';
+import { useAuth } from '../../context/AuthContext';
 
 interface Props {
   state: ReturnType<typeof useJournalCaisse>;
@@ -16,8 +17,15 @@ export default function JournalCaisseClosingModal({ state }: Props) {
     t, isClosingModalOpen, closingTotals, actualAmount, setActualAmount,
     handleCloseCaisse, loading, handleImprimerCloture, setIsClosingModalOpen,
     formatCurrencyLocal, manualMovements, setManualMovements, fondDeCaisse,
-    setTheorique
+    setTheorique, selectedUser, users
   } = state;
+
+  const { user } = useAuth();
+  // Priorité : caissier sélectionné dans le filtre → sinon user connecté
+  const selectedUserObj = selectedUser ? users?.find((u: any) => u.id.toString() === selectedUser) : null;
+  const userName = selectedUserObj
+    ? selectedUserObj.full_name || selectedUserObj.username
+    : user ? (user.first_name ? `${user.first_name} ${user.last_name || ''}`.trim() : user.username) : '';
 
   const [newMotif, setNewMotif] = useState('');
   const [newMontant, setNewMontant] = useState('');
@@ -28,8 +36,8 @@ export default function JournalCaisseClosingModal({ state }: Props) {
     cheque: t('common:payment_modes.cheque'),
     carte: t('common:payment_modes.carte'),
     virement: t('common:payment_modes.virement'),
-    om: 'Orange Money',
-    momo: 'Mobile Money',
+    om: t('journal.modes.om'),
+    momo: t('journal.modes.momo'),
     depot: t('common:payment_modes.depot'),
     en_compte: t('common:payment_modes.en_compte'),
     recouvrement: t('common:payment_modes.recouvrement'),
@@ -52,7 +60,7 @@ export default function JournalCaisseClosingModal({ state }: Props) {
   const handleAddMovement = () => {
     const montant = normalizeNumberInput(newMontant);
     if (!montant || !newMotif.trim()) return;
-    setManualMovements(prev => [...prev, { id: nextManualId++, motif: newMotif.trim(), montant, type: newType }]);
+    setManualMovements(prev => [...prev, { id: nextManualId++, motif: newMotif.trim(), montant, type: newType, caissier: userName }]);
     setNewMotif('');
     setNewMontant('');
   };
@@ -76,10 +84,41 @@ export default function JournalCaisseClosingModal({ state }: Props) {
         <div className="p-5 space-y-4 overflow-y-auto">
           {closingTotals && (
             <>
+              {/* === RÉPARTITION PHARMACIE / DIVERS === */}
+              {(closingTotals.total_ca_pharmacie !== undefined || closingTotals.total_ca_divers !== undefined) && (
+                <div className="bg-white border border-slate-200 rounded-xl overflow-hidden">
+                  <div className="px-4 py-2 bg-slate-50 text-xs font-bold uppercase tracking-wider text-slate-500">
+                    {t('journal.closing.sales_breakdown')}
+                  </div>
+                  <div className="p-3 space-y-1">
+                    <div className="flex justify-between text-xs">
+                      <span className="text-slate-500 flex items-center gap-1.5">
+                        <span className="inline-block size-2 rounded-full bg-emerald-500" />
+                        {t('journal.closing.pharmacy_sales')}
+                      </span>
+                      <span className="font-bold text-emerald-600">{formatCurrencyLocal(Math.round(closingTotals.total_ca_pharmacie ?? closingTotals.total_ventes))}</span>
+                    </div>
+                    {(closingTotals.total_ca_divers ?? 0) > 0 && (
+                      <div className="flex justify-between text-xs">
+                        <span className="text-slate-500 flex items-center gap-1.5">
+                          <span className="inline-block size-2 rounded-full bg-violet-500" />
+                          {t('journal.closing.diverse_sales')}
+                        </span>
+                        <span className="font-bold text-violet-600">{formatCurrencyLocal(Math.round(closingTotals.total_ca_divers ?? 0))}</span>
+                      </div>
+                    )}
+                    <div className="flex justify-between text-xs pt-1 mt-1 border-t border-dashed border-slate-200">
+                      <span className="font-bold text-slate-600">{t('journal.closing.total_sales')}</span>
+                      <span className="font-black text-slate-800">{formatCurrencyLocal(Math.round(closingTotals.total_ventes))}</span>
+                    </div>
+                  </div>
+                </div>
+              )}
+
               {/* === VENTES PAR MODE === */}
               <div className="bg-white border border-slate-200 rounded-xl overflow-hidden">
                 <div className="px-4 py-2 bg-slate-50 text-xs font-bold uppercase tracking-wider text-slate-500">
-                  Ventes par mode de paiement
+                  {t('journal.closing.sales_by_method')}
                 </div>
                 <div className="p-3 space-y-1">
                   {Object.entries(closingTotals.details)
@@ -91,7 +130,7 @@ export default function JournalCaisseClosingModal({ state }: Props) {
                       </div>
                     ))}
                   {(!closingTotals.details || Object.keys(closingTotals.details).filter(k => !k.startsWith('__')).length === 0) && (
-                    <div className="text-xs text-slate-400 italic text-center py-1">Aucune vente</div>
+                    <div className="text-xs text-slate-400 italic text-center py-1">{t('journal.closing.no_sales')}</div>
                   )}
                 </div>
               </div>
@@ -99,7 +138,7 @@ export default function JournalCaisseClosingModal({ state }: Props) {
               {/* === FOND DE CAISSE === */}
               {fondDeCaisse > 0 && (
                 <div className="flex justify-between items-center p-3 bg-sky-50 border border-sky-200 rounded-xl">
-                  <span className="text-xs font-bold text-sky-600 uppercase">Fond de caisse initial</span>
+                  <span className="text-xs font-bold text-sky-600 uppercase">{t('journal.closing.initial_fund')}</span>
                   <span className="text-sm font-black text-sky-600">+{formatCurrencyLocal(Math.round(fondDeCaisse))}</span>
                 </div>
               )}
@@ -109,13 +148,13 @@ export default function JournalCaisseClosingModal({ state }: Props) {
                 <div className="flex gap-2 text-xs">
                   {closingTotals.total_entrees > 0 && (
                     <div className="flex-1 p-2 bg-emerald-50/50 border border-emerald-200 rounded-lg text-center">
-                      <div className="text-emerald-600/60 uppercase font-bold">Entrées (DB)</div>
+                      <div className="text-emerald-600/60 uppercase font-bold">{t('journal.closing.db_entries')}</div>
                       <div className="font-black text-emerald-600">+{formatCurrencyLocal(Math.round(closingTotals.total_entrees))}</div>
                     </div>
                   )}
                   {closingTotals.total_sorties > 0 && (
                     <div className="flex-1 p-2 bg-red-50/50 border border-red-200 rounded-lg text-center">
-                      <div className="text-red-600/60 uppercase font-bold">Sorties (DB)</div>
+                      <div className="text-red-600/60 uppercase font-bold">{t('journal.closing.db_exits')}</div>
                       <div className="font-black text-red-600">-{formatCurrencyLocal(Math.round(closingTotals.total_sorties))}</div>
                     </div>
                   )}
@@ -124,28 +163,38 @@ export default function JournalCaisseClosingModal({ state }: Props) {
 
               {/* === AJOUTER MOUVEMENT MANUEL === */}
               <div className="bg-white border border-slate-200 rounded-xl p-3 space-y-2">
-                <div className="text-xs font-bold uppercase tracking-wider text-slate-500">Ajouter une dépense / entrée</div>
+                <div className="flex items-center justify-between">
+                  <div className="text-xs font-bold uppercase tracking-wider text-slate-500">{t('journal.closing.add_movement')}</div>
+                  {userName && (
+                    <div className="flex items-center gap-1 text-[10px] text-slate-400 font-bold">
+                      <UserIcon className="size-3" />
+                      {userName}
+                    </div>
+                  )}
+                </div>
                 <div className="flex gap-2">
                   <select
-                    className="h-8 px-2 rounded-md bg-slate-100 border border-slate-200 text-xs text-slate-700 focus:outline-none focus:border-emerald-300 w-28"
+                    className="h-8 px-2 rounded-md bg-slate-100 border border-slate-200 text-xs text-slate-700 focus:outline-none focus:border-emerald-300 w-24 shrink-0"
                     value={newType}
                     onChange={e => setNewType(e.target.value as 'ENTREE' | 'SORTIE')}
                   >
-                    <option value="SORTIE">Sortie</option>
-                    <option value="ENTREE">Entrée</option>
+                    <option value="SORTIE">{t('journal.closing.exit')}</option>
+                    <option value="ENTREE">{t('journal.closing.entry')}</option>
                   </select>
                   <input
                     type="text"
-                    placeholder="Motif (ex: Carburant)"
-                    className="flex-1 h-8 px-3 rounded-md bg-slate-100 border border-slate-200 text-xs text-slate-700 focus:outline-none focus:border-emerald-300"
+                    placeholder={t('journal.closing.reason_placeholder')}
+                    className="flex-1 min-w-0 h-8 px-3 rounded-md bg-slate-100 border border-slate-200 text-xs text-slate-700 focus:outline-none focus:border-emerald-300"
                     value={newMotif}
                     onChange={e => setNewMotif(e.target.value)}
                     onKeyDown={e => e.key === 'Enter' && handleAddMovement()}
                   />
+                </div>
+                <div className="flex gap-2">
                   <input
                     type="number"
-                    placeholder="Montant"
-                    className="h-8 w-24 px-3 rounded-md bg-slate-100 border border-slate-200 text-xs text-slate-700 text-right focus:outline-none focus:border-emerald-300"
+                    placeholder={t('journal.closing.amount_placeholder')}
+                    className="flex-1 h-8 px-3 rounded-md bg-slate-100 border border-slate-200 text-xs text-slate-700 text-right focus:outline-none focus:border-emerald-300"
                     value={newMontant}
                     onChange={e => setNewMontant(e.target.value)}
                     onKeyDown={e => e.key === 'Enter' && handleAddMovement()}
@@ -153,11 +202,11 @@ export default function JournalCaisseClosingModal({ state }: Props) {
                   <Button
                     type="button"
                     size="sm"
-                    className="h-8 px-2"
+                    className="h-8 px-3 bg-emerald-600 hover:bg-emerald-700 text-white shrink-0"
                     onClick={handleAddMovement}
                     disabled={!newMotif.trim() || !newMontant}
                   >
-                    <Plus className="size-4" />
+                    <Plus className="size-4 mr-1" /> {t('journal.closing.add')}
                   </Button>
                 </div>
               </div>
@@ -166,16 +215,19 @@ export default function JournalCaisseClosingModal({ state }: Props) {
               {manualMovements.length > 0 && (
                 <div className="bg-white border border-slate-200 rounded-xl overflow-hidden">
                   <div className="px-4 py-2 bg-slate-50 text-xs font-bold uppercase tracking-wider text-slate-500">
-                    Mouvements ajoutés ({manualMovements.length})
+                    {t('journal.closing.manual_movements', { count: manualMovements.length })}
                   </div>
                   <div className="divide-y divide-slate-200">
                     {manualMovements.map(m => (
                       <div key={m.id} className="flex justify-between items-center px-4 py-2 text-xs">
-                        <div className="flex items-center gap-2">
-                          <span className={cn("inline-flex items-center rounded-md px-1.5 py-0.5 text-[10px] font-bold", m.type === 'ENTREE' ? 'bg-emerald-500 text-white' : 'bg-red-500 text-white')}>
+                        <div className="flex items-center gap-2 min-w-0">
+                          <span className={cn("inline-flex items-center rounded-md px-1.5 py-0.5 text-[10px] font-bold shrink-0", m.type === 'ENTREE' ? 'bg-emerald-500 text-white' : 'bg-red-500 text-white')}>
                             {m.type === 'ENTREE' ? '+' : '-'}
                           </span>
-                          <span className="text-slate-700">{m.motif}</span>
+                          <div className="min-w-0">
+                            <div className="text-slate-700 truncate">{m.motif}</div>
+                            {(m as any).caissier && <div className="text-[10px] text-slate-400 font-bold">{(m as any).caissier}</div>}
+                          </div>
                         </div>
                         <div className="flex items-center gap-2">
                           <span className={cn("font-bold", m.type === 'ENTREE' ? 'text-emerald-600' : 'text-red-600')}>
@@ -200,10 +252,10 @@ export default function JournalCaisseClosingModal({ state }: Props) {
               {/* === TOTAL THÉORIQUE CALCULÉ === */}
               {computed && (
                 <div className="p-4 bg-emerald-50 border border-emerald-200 rounded-xl text-center">
-                  <div className="text-[10px] font-black text-emerald-600/60 uppercase tracking-widest">Montant théorique</div>
+                  <div className="text-[10px] font-black text-emerald-600/60 uppercase tracking-widest">{t('journal.closing.theoretical_amount')}</div>
                   <div className="text-2xl font-black text-emerald-600">{formatCurrencyLocal(Math.round(computed.totalTheorique))}</div>
                   <div className="text-[10px] text-emerald-400 mt-1 font-mono">
-                    Ventes espèces + Recouv. + Entrées - Sorties + Fond
+                    {t('journal.closing.theoretical_formula')}
                   </div>
                 </div>
               )}

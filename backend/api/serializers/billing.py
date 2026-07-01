@@ -13,9 +13,12 @@ from .clients import AyantDroitSerializer
 
 
 class FactureProduitAllocationSerializer(serializers.ModelSerializer):
+    lot = serializers.CharField(source='stock_lot.lot', read_only=True, allow_null=True)
+    date_expiration = serializers.DateField(source='stock_lot.date_expiration', read_only=True, allow_null=True)
+
     class Meta:
         model = FactureProduitAllocation
-        fields = '__all__'
+        fields = ['id', 'facture_produit', 'stock_lot', 'quantity', 'cost_price', 'selling_price', 'created_at', 'lot', 'date_expiration']
 
 
 class FactureProduitSerializer(serializers.ModelSerializer):

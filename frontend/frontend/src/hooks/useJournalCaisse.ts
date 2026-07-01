@@ -477,21 +477,14 @@ export function useJournalCaisse() {
                     <span>Ventes Pharmacie</span>
                     <span>${formatCurrencyLocal(data.total_ca_pharmacie ?? (data.details_paiement?.__meta__?.total_ca_pharmacie) ?? data.total_ventes)}</span>
                 </div>
-                ${(data.total_ca_divers ?? data.details_paiement?.__meta__?.total_ca_divers) > 0 ? `
                 <div style="display: flex; justify-content: space-between; font-size: 0.85em;">
                     <span>Ventes Diverses</span>
-                    <span>${formatCurrencyLocal(data.total_ca_divers ?? data.details_paiement?.__meta__?.total_ca_divers)}</span>
+                    <span>${formatCurrencyLocal(data.total_ca_divers ?? data.details_paiement?.__meta__?.total_ca_divers ?? 0)}</span>
                 </div>
                 <div style="display: flex; justify-content: space-between; font-size: 0.85em; margin-top: 3px; padding-top: 2px; border-top: 1px dashed #ccc;">
                     <span style="font-weight: bold;">Total Ventes</span>
                     <span style="font-weight: bold;">${formatCurrencyLocal(data.total_ventes)}</span>
                 </div>
-                ` : `
-                <div style="display: flex; justify-content: space-between; font-size: 0.85em;">
-                    <span>${t('print.net_sales')}</span>
-                    <span>${formatCurrencyLocal(data.total_ventes)}</span>
-                </div>
-                `}
                 <div style="display: flex; justify-content: space-between; font-size: 0.85em;">
                     <span>${t('print.misc_entries')}</span>
                     <span>${formatCurrencyLocal(data.total_entrees)}</span>

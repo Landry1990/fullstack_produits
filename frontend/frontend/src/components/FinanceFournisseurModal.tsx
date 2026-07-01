@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { formatCurrency, normalizeNumberInput } from '../utils/formatters';
 import { formatDate } from '../utils/dateUtils';
@@ -16,6 +16,7 @@ import { Card } from './ui/Card';
 import { Button } from './ui/Button';
 import { Input } from './ui/Input';
 import { Label } from './ui/Label';
+import { Select } from './ui/Select';
 import { Textarea } from './ui/Textarea';
 import { Badge } from './ui/Badge';
 import {
@@ -145,6 +146,11 @@ export default function FinanceFournisseurModal({
   };
 
   const solde = normalizeNumberInput(fournisseur.solde_dette || 0);
+  const totalPaye = useMemo(
+    () => paiements.reduce((acc, p) => acc + normalizeNumberInput(p.montant), 0),
+    [paiements]
+  );
+  const soldeRestant = Math.max(0, solde - totalPaye);
 
   const modeBadgeVariant = (mode: string) => {
     switch (mode) {
@@ -178,54 +184,61 @@ export default function FinanceFournisseurModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="max-w-5xl p-0 overflow-hidden max-h-[90vh]">
+      <DialogContent className="max-w-4xl p-0 overflow-hidden max-h-[85vh]">
         {/* Header */}
-        <DialogHeader className="px-6 pt-6 pb-0">
-          <div className="flex items-center gap-3">
-            <div className="h-10 w-10 rounded-xl bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center">
-              <Wallet className="h-5 w-5 text-emerald-600" />
+        <DialogHeader className="px-5 pt-5 pb-0">
+          <div className="flex items-center gap-2.5">
+            <div className="h-9 w-9 rounded-lg bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center">
+              <Wallet className="h-4 w-4 text-emerald-600" />
             </div>
             <div>
-              <DialogTitle className="text-xl">{t('providers:finance.title')}</DialogTitle>
-              <DialogDescription>{fournisseur.name}</DialogDescription>
+              <DialogTitle className="text-lg">{t('providers:finance.title')}</DialogTitle>
+              <DialogDescription className="text-xs">{fournisseur.name}</DialogDescription>
             </div>
           </div>
         </DialogHeader>
 
         {/* Debt Banner */}
-        <div className="px-6">
+        <div className="px-5">
           <Card
             variant="bordered"
             padding="sm"
-            className="flex items-center justify-between"
+            className="flex items-center justify-between py-2.5"
           >
             <div className="flex items-center gap-2">
               <AlertCircle className="h-4 w-4 text-base-content/40" />
-              <span className="text-sm font-medium text-base-content/70">
-                {t('providers:details.debt_balance')}
-              </span>
+              <div>
+                <span className="text-xs font-semibold text-base-content/70 block">
+                  {t('providers:details.debt_balance')} (restant)
+                </span>
+                {totalPaye > 0 && (
+                  <span className="text-[10px] text-base-content/40">
+                    {formatCurrency(totalPaye)} payé sur {formatCurrency(solde)}
+                  </span>
+                )}
+              </div>
             </div>
             <span
-              className={`text-xl font-black font-mono ${
-                solde > 0 ? 'text-red-500' : 'text-emerald-500'
+              className={`text-lg font-black font-mono ${
+                soldeRestant > 0 ? 'text-red-500' : 'text-emerald-500'
               }`}
             >
-              {formatCurrency(solde)}
+              {formatCurrency(soldeRestant)}
             </span>
           </Card>
         </div>
 
         {/* Content */}
-        <div className="flex flex-col md:flex-row" style={{ height: '55vh' }}>
+        <div className="flex flex-col md:flex-row max-h-[62vh] min-h-0">
           {/* Left Panel: Payment Form */}
-          <div className="w-full md:w-80 border-b md:border-b-0 md:border-r border-base-200 bg-base-100 p-6 overflow-y-auto shrink-0">
-            <h4 className="font-bold text-base mb-5 flex items-center gap-2">
+          <div className="w-full md:w-72 border-b md:border-b-0 md:border-r border-base-200 bg-base-100 p-4 overflow-y-auto shrink-0 h-full">
+            <h4 className="font-bold text-sm mb-3 flex items-center gap-2">
               <Receipt className="h-4 w-4 text-primary" />
               {t('providers:finance.new_payment')}
             </h4>
-            <form onSubmit={handleSubmit} className="space-y-5">
-              <div className="space-y-2">
-                <Label htmlFor="montant">{t('providers:finance.amount')}</Label>
+            <form onSubmit={handleSubmit} className="space-y-3.5 flex flex-col h-[calc(100%-1.75rem)]">
+              <div className="space-y-1.5">
+                <Label htmlFor="montant" className="text-xs">{t('providers:finance.amount')}</Label>
                 <div className="relative">
                   <span className="absolute left-3 top-1/2 -translate-y-1/2 text-base-content/40 font-bold text-sm">
                     {t('common:currency')}
@@ -235,10 +248,11 @@ export default function FinanceFournisseurModal({
                     type="number"
                     min="0"
                     step="0.01"
+                    size="sm"
                     value={montant}
                     onChange={(e) => setMontant(e.target.value)}
                     placeholder="0.00"
-                    className={`pl-8 font-mono font-bold text-lg ${
+                    className={`pl-8 font-mono font-bold text-base ${
                       prefilledMontant
                         ? 'bg-emerald-50 border-emerald-200 dark:bg-emerald-900/20 dark:border-emerald-800'
                         : ''
@@ -248,13 +262,13 @@ export default function FinanceFournisseurModal({
                 </div>
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="mode">
+              <div className="space-y-1.5">
+                <Label htmlFor="mode" className="text-xs">
                   {t('providers:finance.payment_mode')}
                 </Label>
-                <select
+                <Select
                   id="mode"
-                  className="flex h-10 w-full rounded-lg border border-base-300 bg-base-100 px-3 py-2 text-sm text-base-content shadow-sm transition-all focus:border-primary focus:ring-2 focus:ring-primary/20 focus-visible:outline-none"
+                  size="sm"
                   value={modePaiement}
                   onChange={(e) => setModePaiement(e.target.value)}
                 >
@@ -263,24 +277,25 @@ export default function FinanceFournisseurModal({
                   <option value="VIR">{t('providers:finance.modes.transfer')}</option>
                   <option value="AVOIR">{t('providers:finance.modes.credit')}</option>
                   <option value="AUTRE">{t('providers:finance.modes.other')}</option>
-                </select>
+                </Select>
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="reference">
+              <div className="space-y-1.5">
+                <Label htmlFor="reference" className="text-xs">
                   {t('providers:finance.reference')}
                 </Label>
                 <Input
                   id="reference"
                   type="text"
+                  size="sm"
                   placeholder={t('providers:finance.reference_placeholder')}
                   value={reference}
                   onChange={(e) => setReference(e.target.value)}
                 />
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="notes">
+              <div className="space-y-1.5 flex-1 flex flex-col min-h-0">
+                <Label htmlFor="notes" className="text-xs">
                   {t('providers:finance.notes')}
                 </Label>
                 <Textarea
@@ -288,16 +303,18 @@ export default function FinanceFournisseurModal({
                   placeholder={t('providers:finance.notes_placeholder')}
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
-                  className="h-24"
+                  className="flex-1 min-h-0 text-sm"
                 />
               </div>
 
               <Button
                 type="submit"
                 variant="primary"
+                size="sm"
                 fullWidth
                 isLoading={isSubmitting}
                 leftIcon={<Receipt className="h-4 w-4" />}
+                className="mt-auto shrink-0"
               >
                 {t('providers:finance.save_payment')}
               </Button>
@@ -308,7 +325,7 @@ export default function FinanceFournisseurModal({
           <div className="flex-1 bg-base-200/30 flex flex-col overflow-hidden min-h-0">
             {/* Échéances */}
             <div className="shrink-0 border-b border-base-200">
-              <div className="px-5 py-3 bg-base-100/60 backdrop-blur flex items-center gap-2">
+              <div className="px-4 py-2 bg-base-100/60 backdrop-blur flex items-center gap-2">
                 <CalendarClock className="h-4 w-4 text-base-content/60" />
                 <h4 className="font-semibold text-sm text-base-content/90">
                   Échéancier — {echeances.length} échéance(s)
@@ -319,64 +336,64 @@ export default function FinanceFournisseurModal({
                   </Badge>
                 )}
               </div>
-              <div className="max-h-[180px] overflow-y-auto">
+              <div className="max-h-[150px] overflow-y-auto">
                 {echeancesLoading ? (
-                  <div className="flex justify-center items-center py-4">
+                  <div className="flex justify-center items-center py-3">
                     <Loader2 className="h-5 w-5 text-primary animate-spin" />
                   </div>
                 ) : echeances.length === 0 ? (
-                  <div className="text-center py-3 text-xs text-base-content/40">
+                  <div className="text-center py-2.5 text-xs text-base-content/40">
                     Aucune échéance en attente
                   </div>
                 ) : (
-                  <table className="w-full text-xs">
-                    <thead className="bg-base-200/50 text-base-content/50">
-                      <tr>
-                        <th className="text-left px-3 py-1.5 font-medium">Facture</th>
-                        <th className="text-right px-3 py-1.5 font-medium">Total</th>
-                        <th className="text-right px-3 py-1.5 font-medium">Payé</th>
-                        <th className="text-right px-3 py-1.5 font-medium">Reste</th>
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead className="text-xs py-1.5">Facture</TableHead>
+                        <TableHead className="text-xs py-1.5 text-right">Total</TableHead>
+                        <TableHead className="text-xs py-1.5 text-right">Payé</TableHead>
+                        <TableHead className="text-xs py-1.5 text-right">Reste</TableHead>
                         {normalizeNumberInput(montant) > 0 && (
-                          <th className="text-right px-3 py-1.5 font-medium text-emerald-600">Alloué</th>
+                          <TableHead className="text-xs py-1.5 text-right text-emerald-600">Alloué</TableHead>
                         )}
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-base-200">
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
                       {computeDistribution().map((ech: any, idx: number) => (
-                        <tr key={idx} className={ech.montant_alloue > 0 ? 'bg-emerald-50/50' : ''}>
-                          <td className="px-3 py-1.5">
-                            <div className="font-medium truncate max-w-[140px]" title={ech.numero_facture}>
+                        <TableRow key={idx} className={ech.montant_alloue > 0 ? 'bg-emerald-50/50' : ''}>
+                          <TableCell className="py-1.5">
+                            <div className="font-medium text-xs truncate max-w-[140px]" title={ech.numero_facture}>
                               {ech.numero_facture}
                             </div>
                             <div className="text-[10px] text-base-content/40">
                               {formatDate(ech.date_echeance)}
                             </div>
-                          </td>
-                          <td className="text-right px-3 py-1.5 font-mono">
+                          </TableCell>
+                          <TableCell className="text-right py-1.5 font-mono text-xs">
                             {formatCurrency(ech.montant_total)}
-                          </td>
-                          <td className="text-right px-3 py-1.5 font-mono text-base-content/50">
+                          </TableCell>
+                          <TableCell className="text-right py-1.5 font-mono text-xs text-base-content/50">
                             {formatCurrency(ech.montant_paye)}
-                          </td>
-                          <td className="text-right px-3 py-1.5 font-mono font-medium">
+                          </TableCell>
+                          <TableCell className="text-right py-1.5 font-mono text-xs font-medium">
                             {formatCurrency(ech.montant_reste)}
-                          </td>
+                          </TableCell>
                           {normalizeNumberInput(montant) > 0 && (
-                            <td className="text-right px-3 py-1.5 font-mono font-bold text-emerald-600">
+                            <TableCell className="text-right py-1.5 font-mono text-xs font-bold text-emerald-600">
                               {ech.montant_alloue > 0 ? formatCurrency(ech.montant_alloue) : '-'}
-                            </td>
+                            </TableCell>
                           )}
-                        </tr>
+                        </TableRow>
                       ))}
-                    </tbody>
-                  </table>
+                    </TableBody>
+                  </Table>
                 )}
               </div>
             </div>
 
             {/* History */}
             <div className="flex-1 flex flex-col overflow-hidden min-h-0">
-              <div className="px-5 py-3 border-b border-base-200 bg-base-100/60 backdrop-blur shrink-0">
+              <div className="px-4 py-2 border-b border-base-200 bg-base-100/60 backdrop-blur shrink-0">
                 <h4 className="font-semibold text-sm text-base-content/90 flex items-center gap-2">
                   <FileText className="h-4 w-4" />
                   {t('providers:finance.history')}
@@ -388,9 +405,9 @@ export default function FinanceFournisseurModal({
                     <Loader2 className="h-8 w-8 text-primary animate-spin" />
                   </div>
                 ) : paiements.length === 0 ? (
-                  <div className="flex flex-col items-center justify-center h-full text-base-content/40 gap-3 py-12">
-                    <div className="h-14 w-14 rounded-2xl bg-base-200 flex items-center justify-center">
-                      <FileText className="h-7 w-7 text-base-content/30" />
+                  <div className="flex flex-col items-center justify-center h-full text-base-content/40 gap-2 py-10">
+                    <div className="h-12 w-12 rounded-2xl bg-base-200 flex items-center justify-center">
+                      <FileText className="h-6 w-6 text-base-content/30" />
                     </div>
                     <p className="text-sm font-medium">
                       {t('providers:finance.no_payments')}
@@ -400,13 +417,13 @@ export default function FinanceFournisseurModal({
                   <Table>
                     <TableHeader>
                       <TableRow>
-                        <TableHead>{t('providers:finance.table.date')}</TableHead>
-                        <TableHead>{t('providers:finance.table.mode')}</TableHead>
-                        <TableHead>{t('providers:finance.table.reference')}</TableHead>
-                        <TableHead className="text-right">
+                        <TableHead className="text-xs">{t('providers:finance.table.date')}</TableHead>
+                        <TableHead className="text-xs">{t('providers:finance.table.mode')}</TableHead>
+                        <TableHead className="text-xs">{t('providers:finance.table.reference')}</TableHead>
+                        <TableHead className="text-xs text-right">
                           {t('providers:finance.table.amount')}
                         </TableHead>
-                        <TableHead className="text-center w-16">
+                        <TableHead className="text-xs text-center w-16">
                           {t('providers:finance.table.action')}
                         </TableHead>
                       </TableRow>
@@ -414,10 +431,10 @@ export default function FinanceFournisseurModal({
                     <TableBody>
                       {paiements.map((paiement) => (
                         <TableRow key={paiement.id}>
-                          <TableCell className="font-mono text-xs">
+                          <TableCell className="font-mono text-xs py-2">
                             {formatDate(paiement.date_paiement)}
                           </TableCell>
-                          <TableCell>
+                          <TableCell className="py-2">
                             <Badge
                               variant={modeBadgeVariant(paiement.mode_paiement)}
                               size="sm"
@@ -425,13 +442,13 @@ export default function FinanceFournisseurModal({
                               {modeLabel(paiement.mode_paiement)}
                             </Badge>
                           </TableCell>
-                          <TableCell>
-                            <div className="text-sm text-base-content/80">
+                          <TableCell className="py-2">
+                            <div className="text-xs text-base-content/80">
                               {paiement.reference || '-'}
                             </div>
                             {paiement.notes && (
                               <div
-                                className="text-xs text-base-content/40 truncate max-w-[180px]"
+                                className="text-[10px] text-base-content/40 truncate max-w-[160px]"
                                 title={paiement.notes}
                               >
                                 {paiement.notes}
@@ -453,15 +470,15 @@ export default function FinanceFournisseurModal({
                                 </div>
                               )}
                           </TableCell>
-                          <TableCell className="text-right font-bold font-mono">
+                          <TableCell className="text-right font-bold font-mono text-xs py-2">
                             {formatCurrency(normalizeNumberInput(paiement.montant))}
                           </TableCell>
-                          <TableCell className="text-center">
+                          <TableCell className="text-center py-2">
                             <Button
                               variant="ghost"
                               size="sm"
                               onClick={() => handleDelete(paiement.id)}
-                              className="text-error hover:bg-red-50 hover:text-red-600"
+                              className="text-error hover:bg-red-50 hover:text-red-600 h-8 w-8 p-0"
                             >
                               <Trash2 className="h-4 w-4" />
                             </Button>
