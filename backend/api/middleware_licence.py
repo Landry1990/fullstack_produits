@@ -62,7 +62,7 @@ class LicenceMiddleware:
 
         # On autorise tout en mode TEST pour ne pas casser l'intégration continue
         import sys
-        if 'test' in sys.argv:
+        if 'test' in sys.argv or 'pytest' in sys.argv[0] or any('pytest' in arg for arg in sys.argv):
             return self.get_response(request)
 
         # 1. On exclut les URL critiques (connexion, admin, health check, et l'API de licence elle-même)

@@ -57,7 +57,7 @@ class FinaliserVenteTests(APITestCase):
         url = reverse('facture-finaliser')
         payload = self._finaliser_payload()
         response = self.client.post(url, payload, format='json')
-
+        print("RESPONSE DATA:", response.data)
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
 
         # Facture was created
