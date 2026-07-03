@@ -4,6 +4,22 @@
 
 ## 2026-07-03
 
+### 🐛 Corrections
+
+- **Impression étiquettes — rotation corrigée**
+  - `frontend/src/components/SimplePrintLabelsModal.tsx` : la règle `@page` envoyait `size: 40mm 20mm` (paysage implicite) sans le mot-clé `landscape`, ce qui provoquait une rotation de 90° sur les imprimantes thermiques (Zebra/TSC). Ajout explicite de `landscape` pour les formats 40×20mm et 30×15mm.
+
+- **Impression étiquettes — lisibilité zone métadonnées améliorée**
+  - Numéro de lot : police passée de `4pt` gris `#444` à **`5.5pt` noir `#111` bold**.
+  - Date d'entrée : même amélioration (`5.5pt` noir bold).
+  - Fournisseur : `4pt` gris `#666` → **`5pt` gris foncé `#333` semi-bold**.
+
+- **Impression étiquettes — débordement du nom produit corrigé**
+  - Le nom produit était limité à 2 lignes (`-webkit-line-clamp:2`). Remplacé par `white-space:nowrap` + `text-overflow:ellipsis` pour rester sur une seule ligne.
+
+- **Impression étiquettes — débordement du prix corrigé**
+  - Le prix avait `flex-shrink:0` et `white-space:nowrap` sans limite de largeur, pouvant sortir de l'étiquette pour des montants longs (ex : `1 250 000F`). Ajout d'une taille de police adaptive selon la longueur du montant (`8pt` → `7pt` → `6.5pt`) et d'un `max-width:45%` avec `text-overflow:ellipsis`.
+
 ### ✨ Nouvelles fonctionnalités
 
 - **Rapport Excel mensuel — 7 nouvelles feuilles**
