@@ -2,7 +2,7 @@ import { useTranslation } from 'react-i18next';
 import {
   PlusCircle, Settings, Calendar, BarChart3, TrendingUp,
   Trophy, Zap, AlertCircle, Target, RefreshCw, Download,
-  ArrowUpRight, Activity
+  ArrowUpRight, Activity, FileSpreadsheet
 } from 'lucide-react';
 import { Toaster } from 'react-hot-toast';
 import { useManagerDashboard } from '../hooks/useManagerDashboard';
@@ -281,12 +281,12 @@ function ObjectivesShadcn({ currentObj, onEdit, onRefresh }: { currentObj: any; 
 }
 
 /* ─── Reports ─── */
-function ReportsShadcn({ onExport, exporting }: { onExport: (type: 'csv' | 'pdf' | 'dead_stock') => void; exporting: boolean }) {
+function ReportsShadcn({ onExport, exporting }: { onExport: (type: 'csv' | 'pdf' | 'dead_stock' | 'rapport_general') => void; exporting: boolean }) {
   const { t } = useTranslation(['dashboard', 'common']);
   const reports: { key: 'csv' | 'pdf' | 'dead_stock'; label: string; desc: string }[] = [
     { key: 'csv', label: 'Rapport Journalier', desc: 'Export CSV du jour' },
     { key: 'pdf', label: 'Rapport Hebdo', desc: 'PDF de la semaine' },
-    { key: 'dead_stock', label: 'Rapport Mensuel', desc: 'Analyse complète' },
+    { key: 'dead_stock', label: 'Stocks Dormants', desc: 'Excel stocks inactifs' },
   ];
 
   return (
@@ -297,12 +297,33 @@ function ReportsShadcn({ onExport, exporting }: { onExport: (type: 'csv' | 'pdf'
             <Download className="size-5 text-slate-600" />
           </div>
           <div>
-            <CardTitle className="text-base font-bold">Exports</CardTitle>
-            <CardDescription>Téléchargez vos rapports</CardDescription>
+            <CardTitle className="text-base font-bold">Exports &amp; Rapports</CardTitle>
+            <CardDescription>Téléchargez vos rapports et analyses</CardDescription>
           </div>
         </div>
       </CardHeader>
-      <CardContent>
+      <CardContent className="space-y-4">
+        {/* Bouton Rapport Général mis en avant */}
+        <Button
+          variant="default"
+          onClick={() => onExport('rapport_general')}
+          disabled={exporting}
+          className="w-full h-auto py-4 px-5 flex items-center gap-4 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white shadow-lg shadow-emerald-600/20 transition-all"
+        >
+          {exporting
+            ? <span className="size-6 border-2 border-white/30 border-t-white rounded-full animate-spin flex-shrink-0" />
+            : <FileSpreadsheet className="size-6 flex-shrink-0" />
+          }
+          <div className="text-left flex-1">
+            <p className="font-bold text-base leading-tight">Rapport Général du Mois</p>
+            <p className="text-xs text-emerald-100 font-normal mt-0.5">
+              Excel 10 feuilles — CA, marges, caisses, dettes, dépenses…
+            </p>
+          </div>
+          <Download className="size-4 flex-shrink-0 opacity-70" />
+        </Button>
+
+        {/* Autres exports */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           {reports.map((r) => (
             <Button

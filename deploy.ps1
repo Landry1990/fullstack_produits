@@ -1,4 +1,4 @@
-
+﻿
 #!/usr/bin/env pwsh
 <#
 .SYNOPSIS
@@ -6,14 +6,16 @@
 .DESCRIPTION
     Frontend : npm run build -> docker cp dist/ -> nginx reload.
     Backend  : docker cp de TOUT le dossier api/ -> restart.
-               Avec -IncludeModels (backend-full ou all) : migrations + setup_dci_prod.
+               Avec -IncludeModels (backend-full ou all-full) : migrations + setup_dci_prod.
+    'all'      = frontend + backend SANS migrations ni DCI (rapide, usage courant).
+    'all-full' = frontend + backend AVEC migrations + setup_dci_prod (changements de modèles).
     Avec -Rebuild : reconstruit les images Docker via docker compose build.
-    Usage: .\deploy.ps1 [-Target all|frontend|backend|backend-full] [-BackupDB] [-Rebuild]
+    Usage: .\deploy.ps1 [-Target all|all-full|frontend|backend|backend-full] [-BackupDB] [-Rebuild]
 #>
 
 param(
     [Parameter()]
-    [ValidateSet("frontend", "backend", "backend-full", "all")]
+    [ValidateSet("frontend", "backend", "backend-full", "all", "all-full")]
     [string]$Target = "all",
     [switch]$BackupDB,
     [switch]$Rebuild
@@ -122,6 +124,15 @@ function Deploy-Backend {
         Write-Host "  ✅ Copie terminée" -ForegroundColor Green
 
         if ($IncludeModels) {
+            if (Test-Path "COMPO.txt") {
+                Write-Host "  Copie COMPO.txt dans le conteneur..." -ForegroundColor Yellow
+                docker cp COMPO.txt "${BACKEND_CONTAINER}:/app/COMPO.txt"
+            }
+            if (Test-Path "unified_meds.txt") {
+                Write-Host "  Copie unified_meds.txt dans le conteneur..." -ForegroundColor Yellow
+                docker cp unified_meds.txt "${BACKEND_CONTAINER}:/app/unified_meds.txt"
+            }
+
             Write-Host "  Migrations..." -ForegroundColor Yellow
             docker exec $BACKEND_CONTAINER python manage.py makemigrations 2>&1 |
                 Select-String -Pattern "No changes|Migration|already" |
@@ -131,8 +142,17 @@ function Deploy-Backend {
                 ForEach-Object { Write-Host "    $_" }
 
             Write-Host "  Setup DCI / Substances..." -ForegroundColor Yellow
-            docker exec $BACKEND_CONTAINER python manage.py setup_dci_prod 2>&1 |
-                ForEach-Object { Write-Host "    $_" }
+            $oldPreference = $ErrorActionPreference
+            $ErrorActionPreference = "Continue"
+            try {
+                docker exec $BACKEND_CONTAINER python manage.py setup_dci_prod 2>&1 |
+                    ForEach-Object { Write-Host "    $_" }
+            } finally {
+                $ErrorActionPreference = $oldPreference
+            }
+
+            # Nettoyage des fichiers temporaires dans le conteneur
+            docker exec $BACKEND_CONTAINER rm -f /app/COMPO.txt /app/unified_meds.txt 2>$null | Out-Null
         }
 
         Write-Host "  Redémarrage conteneur..." -ForegroundColor Yellow
@@ -157,7 +177,8 @@ if ($Rebuild) {
         "frontend"     { Deploy-Frontend }
         "backend"      { Deploy-Backend }
         "backend-full" { Deploy-Backend -IncludeModels }
-        "all"          { Deploy-Frontend; Deploy-Backend -IncludeModels }
+        "all"          { Deploy-Frontend; Deploy-Backend }
+        "all-full"     { Deploy-Frontend; Deploy-Backend -IncludeModels }
     }
 }
 

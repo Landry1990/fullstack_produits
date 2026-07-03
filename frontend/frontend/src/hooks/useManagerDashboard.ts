@@ -30,7 +30,7 @@ export const useManagerDashboard = () => {
     const { data: currentObj } = useCurrentObjectifs();
     const { settings: pharmacySettings } = usePharmacySettings();
 
-    const handleExport = useCallback(async (type: 'csv' | 'pdf' | 'dead_stock') => {
+    const handleExport = useCallback(async (type: 'csv' | 'pdf' | 'dead_stock' | 'rapport_general') => {
         setExporting(true);
         try {
             let url = '';
@@ -38,7 +38,26 @@ export const useManagerDashboard = () => {
             const firstDay = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
             const lastDay = now.toISOString();
 
-            if (type === 'csv') {
+            if (type === 'rapport_general') {
+                // Mois précédent par défaut
+                const prevMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+                const moisParam = `${prevMonth.getFullYear()}-${String(prevMonth.getMonth() + 1).padStart(2, '0')}`;
+                url = `rapports/rapport_general_excel/?mois=${moisParam}`;
+                const response = await api.get(url, { responseType: 'blob' });
+                const blob = new Blob([response.data], {
+                    type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+                });
+                const downloadUrl = window.URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.href = downloadUrl;
+                link.setAttribute('download', `Rapport_Pharmacie_${moisParam}.xlsx`);
+                document.body.appendChild(link);
+                link.click();
+                link.remove();
+                window.URL.revokeObjectURL(downloadUrl);
+                toast.success(t('common:export_success', 'Export réussi'));
+                return;
+            } else if (type === 'csv') {
                 url = `rapports/export_comptable_csv/?date_debut=${firstDay}&date_fin=${lastDay}`;
             } else if (type === 'pdf') {
                 const month = String(now.getMonth() + 1).padStart(2, '0');
