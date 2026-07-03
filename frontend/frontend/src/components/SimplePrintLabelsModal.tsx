@@ -650,7 +650,7 @@ export default function SimplePrintLabelsModal({
 
       // Product name
       if (isEnabled('productName')) {
-        lines.push(`<div style="font-size:${isCompact ? '5pt' : '6pt'};font-weight:900;line-height:1.1;margin-top:0.3mm;overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;word-break:break-word;">${label.productName}</div>`)
+        lines.push(`<div style="font-size:${isCompact ? '5pt' : '6pt'};font-weight:900;line-height:1.1;margin-top:0.3mm;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${label.productName}</div>`)
       }
 
       // Barcode
@@ -667,17 +667,17 @@ export default function SimplePrintLabelsModal({
         let txt = ""
         if (isEnabled('rayon') && label.rayon) txt += `${t('prefixes.rayon')}:${truncate(label.rayon, 12)} `
         if (isEnabled('lot') && label.lot) txt += `${t('prefixes.lot')}:${truncate(label.lot, 10)}`
-        leftRows.push(`<div style="font-size:${isCompact ? '3.5pt' : '4pt'};color:#444;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${txt}</div>`)
+        leftRows.push(`<div style="font-size:${isCompact ? '4.5pt' : '5.5pt'};font-weight:700;color:#111;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${txt}</div>`)
       }
 
       if (isEnabled('dateEntree') && label.dateEntree) {
-        leftRows.push(`<div style="font-size:${isCompact ? '3.5pt' : '4pt'};font-weight:600;color:#444;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${label.dateEntree}</div>`)
+        leftRows.push(`<div style="font-size:${isCompact ? '4.5pt' : '5.5pt'};font-weight:700;color:#111;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${label.dateEntree}</div>`)
       }
       if (isEnabled('dateExpiration') && label.dateExpiration) {
         leftRows.push(`<div style="font-size:${isCompact ? '3.5pt' : '4.5pt'};font-weight:700;color:#c00;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${t('prefixes.expiration')}:${label.dateExpiration}</div>`)
       }
       if (isEnabled('fournisseur') && label.fournisseur) {
-        leftRows.push(`<div style="font-size:${isCompact ? '3.5pt' : '4pt'};color:#666;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${truncate(label.fournisseur, 15)}</div>`)
+        leftRows.push(`<div style="font-size:${isCompact ? '4pt' : '5pt'};font-weight:600;color:#333;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${truncate(label.fournisseur, 15)}</div>`)
       }
 
       // Group: Order + Invoice
@@ -688,12 +688,18 @@ export default function SimplePrintLabelsModal({
         leftRows.push(`<div style="font-size:${isCompact ? '3.5pt' : '4pt'};color:#777;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${txt}</div>`)
       }
 
+      const priceVal = label.sellingPrice.toLocaleString('fr-FR', { maximumFractionDigits: 0 })
+      const priceFontSize = priceVal.length > 7
+        ? (isCompact ? '5.5pt' : '6.5pt')
+        : priceVal.length > 5
+          ? (isCompact ? '6pt' : '7pt')
+          : (isCompact ? '7pt' : '8pt')
       const priceHtml = isEnabled('sellingPrice')
-        ? `<div style="font-size:${isCompact ? '7pt' : '8pt'};font-weight:900;white-space:nowrap;flex-shrink:0;text-align:right;">${label.sellingPrice.toLocaleString('fr-FR', { maximumFractionDigits: 0 })}${t('common:currency_symbol', { defaultValue: 'F' })}</div>`
+        ? `<div style="font-size:${priceFontSize};font-weight:900;white-space:nowrap;flex-shrink:0;text-align:right;max-width:45%;overflow:hidden;text-overflow:ellipsis;">${priceVal}${t('common:currency_symbol', { defaultValue: 'F' })}</div>`
         : ''
 
       const bottomRow = `<div style="display:flex;justify-content:space-between;align-items:flex-end;gap:0.5mm;line-height:1.0;">
-        <div style="flex:1;min-width:0;">${leftRows.join('')}</div>
+        <div style="flex:1;min-width:0;overflow:hidden;">${leftRows.join('')}</div>
         ${priceHtml}
       </div>`
 
@@ -741,12 +747,12 @@ export default function SimplePrintLabelsModal({
     }
 
     @page {
-      size: ${w} ${h};
+      size: ${w} ${h} landscape;
       margin: 0;
     }
     @media print {
       @page {
-        size: ${w} ${h};
+        size: ${w} ${h} landscape;
         margin: 0;
       }
     }
