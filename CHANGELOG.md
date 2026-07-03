@@ -2,6 +2,36 @@
 
 ---
 
+## 2026-07-03
+
+### ✨ Nouvelles fonctionnalités
+
+- **Rapport Excel mensuel — 7 nouvelles feuilles**
+  - `backend/api/views/rapports/excel_general_extra.py` : nouveau module dédié aux feuilles supplémentaires.
+  - **Feuille 11 — Modes de Paiement** : récapitulatif global par mode (espèces, CB, virement…), détail JSON des clôtures de caisse, et évolution journalière par mode.
+  - **Feuille 12 — Retours & Annulations** : liste des factures annulées dans le mois (date, client, montant, annulé par, motif) + top produits retournés via `MouvementStock`.
+  - **Feuille 13 — Performance Vendeurs** : CA, nb ventes, panier moyen, remises accordées, taux remise et nb annulations par vendeur.
+  - **Feuille 14 — Suivi Trésorerie** : encaissements / dépenses / achats fournisseurs par semaine ISO, solde net et solde cumulé, projection mois suivant basée sur les créances.
+  - **Feuille 15 — Périmés & Pertes** : ajustements de stock `PERIME` du mois avec quantité détruite, PMP et valeur perdue.
+  - **Feuille 16 — Promotions** : promotions actives sur la période avec type, valeur, dates et nb produits couverts.
+  - **Feuille 17 — Clients Pro & Mutuelles** : CA du mois, encours et taux d'utilisation du plafond par client professionnel.
+
+- **Feuille 1 (Synthèse) enrichie**
+  - Bloc **Évolution vs mois précédent** : variation CA, marge et nb ventes avec indicateurs ▲/▼ colorés.
+  - Bloc **Objectif commercial** : CA objectif vs réalisé, taux d'atteinte et écart (vert ≥ 100 %, orange ≥ 80 %, rouge < 80 %).
+
+### 🐛 Corrections
+
+- **Feuille "Stock & Inventaire"** : les produits sans rayon assigné (`rayon=NULL`) étaient exclus. Désormais affichés sous la ligne **(Sans rayon)**.
+- **Feuille "État des Caisses"** : tous les caissiers apparaissent maintenant, y compris ceux avec uniquement des paiements en espèces. Fallback `username` si `get_full_name()` est vide. Ajout de sous-tableaux individuels par caissier sous le récapitulatif général.
+- **Feuille "Achats Fournisseurs"** : suppression du `.exclude(type="DIV")` — les commandes de type Divers (fournisseurs divers) sont maintenant incluses.
+- **Suivi Trésorerie** : la colonne "Achats fournisseurs (F)" était toujours à zéro (boucle manquante). Alimentée via `CommandeProduit.price_cost × quantity` par semaine ISO.
+- `excel_general_extra.py` : correction `MouvementStock.created_at` → `MouvementStock.date` (FieldError).
+- `excel_general_extra.py` : correction `ValueError: Unknown format code 'd' for object of type 'float'` sur la variation nb ventes — cast `int()` ajouté.
+- `Promotion` : correction des noms de champs (`nom` → `name`, `type` → `discount_type`, `valeur` → `value`, `date_debut` → `start_date`, `date_fin` → `end_date`, `produits` → `products`).
+
+---
+
 ## 2026-06-30
 
 ### 🐛 Corrections
