@@ -30,6 +30,7 @@ interface CommandesStoreState {
   selectedOrderIds: Set<number>;
   isMergeModalOpen: boolean;
   saving: boolean;
+  searchQuery: string;
 }
 
 interface CommandesStoreActions {
@@ -58,6 +59,7 @@ interface CommandesStoreActions {
   setSelectedOrderIds: (updater: Set<number> | ((prev: Set<number>) => Set<number>)) => void;
   setIsMergeModalOpen: (value: boolean) => void;
   setSaving: (value: boolean) => void;
+  setSearchQuery: (value: string) => void;
   resetCreateForm: (type: CommandeType, defaultCoeff: string) => void;
 }
 
@@ -89,6 +91,7 @@ const createInitialState = (): CommandesStoreState => ({
   selectedOrderIds: new Set<number>(),
   isMergeModalOpen: false,
   saving: false,
+  searchQuery: '',
 });
 
 export const useCommandesStore = create<CommandesStore>((set) => ({
@@ -130,6 +133,7 @@ export const useCommandesStore = create<CommandesStore>((set) => ({
     })),
   setIsMergeModalOpen: (value) => set({ isMergeModalOpen: value }),
   setSaving: (value) => set({ saving: value }),
+  setSearchQuery: (value) => set({ searchQuery: value, page: 1 }),
   resetCreateForm: (type, defaultCoeff) =>
     set({
       viewMode: 'CREATE',

@@ -1,5 +1,5 @@
 import { useTranslation } from 'react-i18next';
-import { Eye, Trash2, Printer, GitMerge, Sparkles, Clock, Plus, ArrowUpDown } from 'lucide-react';
+import { Eye, Trash2, Printer, GitMerge, Sparkles, Clock, Plus, ArrowUpDown, Search, X } from 'lucide-react';
 import type { Commande, Fournisseur } from '../../types';
 import { formatCurrency } from '../../utils/formatters';
 import { formatDate } from '../../utils/dateUtils';
@@ -25,8 +25,7 @@ interface CommandeListProps {
   loading: boolean;
 
   totalCount: number;
-
-  
+  statusCounts: Record<string, number>;
 
   // Pagination
 
@@ -53,7 +52,8 @@ interface CommandeListProps {
   filterStatus: string;
 
   onFilterStatusChange: (us: string) => void;
-
+  searchQuery: string;
+  onSearchQueryChange: (q: string) => void;
 
 
   // Selection
@@ -99,6 +99,7 @@ export default function CommandeList({
   loading,
 
   totalCount,
+  statusCounts,
 
   page,
 
@@ -115,6 +116,8 @@ export default function CommandeList({
   filterStatus,
 
   onFilterStatusChange,
+  searchQuery,
+  onSearchQueryChange,
 
   selectedOrderIds,
 
@@ -243,6 +246,17 @@ export default function CommandeList({
               size="sm"
               className={cn(
                 "px-3 py-1 h-7 rounded-md text-xs font-medium transition-all",
+                sortKey === 'fournisseur' ? 'bg-white text-emerald-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'
+              )}
+              onClick={() => onSortChange('fournisseur')}
+            >
+              {t('common:supplier')} {sortKey === 'fournisseur' && (sortOrder === 'asc' ? '↑' : '↓')}
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              className={cn(
+                "px-3 py-1 h-7 rounded-md text-xs font-medium transition-all",
                 sortKey === 'status' ? 'bg-white text-emerald-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'
               )}
               onClick={() => onSortChange('status')}
@@ -254,8 +268,29 @@ export default function CommandeList({
 
         <div className="h-6 w-px bg-slate-200 mx-1"></div>
 
-        <div className="flex items-center gap-2">
-          <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">{t('orders:list.filter_by')}:</span>
+        {/* Search input */}
+        <div className="flex items-center gap-2 flex-1 min-w-[200px]">
+          <div className="relative flex-1 max-w-xs">
+            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 size-3.5 text-slate-400" />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => onSearchQueryChange(e.target.value)}
+              placeholder={t('orders:list.search_placeholder', 'Rechercher (N° facture, ID)…')}
+              className="w-full h-8 pl-8 pr-7 text-xs rounded-lg border border-slate-200 bg-slate-50 focus:bg-white focus:border-emerald-300 focus:ring-1 focus:ring-emerald-200 outline-none transition-all"
+            />
+            {searchQuery && (
+              <button
+                onClick={() => onSearchQueryChange('')}
+                className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+              >
+                <X className="size-3.5" />
+              </button>
+            )}
+          </div>
+        </div>
+
+        <div className="h-6 w-px bg-slate-200 mx-1"></div>
           <div className="flex gap-1">
             <Button
               variant={filterStatus === 'ALL' ? 'default' : 'ghost'}
@@ -266,7 +301,7 @@ export default function CommandeList({
               )}
               onClick={() => onFilterStatusChange('ALL')}
             >
-              {t('orders:list.filters.all')}
+              {t('orders:list.filters.all')} ({totalCount})
             </Button>
             <Button
               variant="ghost"
@@ -277,7 +312,7 @@ export default function CommandeList({
               )}
               onClick={() => onFilterStatusChange('PREP')}
             >
-              {t('orders:list.filters.prep')}
+              {t('orders:list.filters.prep')} ({statusCounts.PREP || 0})
             </Button>
             <Button
               variant="ghost"
@@ -288,7 +323,7 @@ export default function CommandeList({
               )}
               onClick={() => onFilterStatusChange('ATT')}
             >
-              {t('orders:list.filters.pending')}
+              {t('orders:list.filters.pending')} ({statusCounts.ATT || 0})
             </Button>
             <Button
               variant="ghost"
@@ -299,13 +334,10 @@ export default function CommandeList({
               )}
               onClick={() => onFilterStatusChange('CLOT')}
             >
-              {t('orders:list.filters.closed')}
+              {t('orders:list.filters.closed')} ({statusCounts.CLOT || 0})
             </Button>
           </div>
         </div>
-      </div>
-
-
 
       {/* Table Section */}
       <div className="flex-1 min-h-0 overflow-auto bg-white rounded-xl shadow-sm border border-slate-200">

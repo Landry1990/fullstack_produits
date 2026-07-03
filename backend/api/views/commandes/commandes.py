@@ -178,6 +178,31 @@ class CommandeViewSet(MultiTermSearchMixin, OptimizedSerializerMixin, viewsets.M
         
         return qs
 
+    def list(self, request, *args, **kwargs):
+        """
+        Retourne la liste paginée avec des compteurs par statut indépendants de la pagination.
+        """
+        queryset = self.filter_queryset(self.get_queryset())
+        status_counts = dict(
+            queryset.values('status').annotate(count=Count('id')).values_list('status', 'count')
+        )
+        for s in [Commande.Status.EN_PREPARATION, Commande.Status.EN_ATTENTE, Commande.Status.CLOTUREE]:
+            if s not in status_counts:
+                status_counts[s] = 0
+
+        page = self.paginate_queryset(queryset)
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            response = self.get_paginated_response(serializer.data)
+            response.data['status_counts'] = status_counts
+            return response
+
+        serializer = self.get_serializer(queryset, many=True)
+        return Response({
+            'results': serializer.data,
+            'status_counts': status_counts,
+        })
+
     @action(detail=False, methods=['post'])
     @transaction.atomic
     def ajouter_produit_auto(self, request):
