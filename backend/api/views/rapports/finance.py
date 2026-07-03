@@ -183,6 +183,38 @@ class RapportFinanceMixin:
             f"rapport_{db_s}_{df_s}.pdf",
         )
 
+    # ── Rapport général Excel ─────────────────────────────────────────────────
+
+    @action(detail=False, methods=['get'])
+    def rapport_general_excel(self, request):
+        """
+        Génère le rapport général du mois passé (ou du mois demandé) en Excel multi-feuilles.
+        Param optionnel : ?mois=YYYY-MM  (défaut : mois précédent)
+        """
+        from api.views.rapports.excel_general import build_rapport_general_excel
+        from django.utils import timezone as tz
+        import calendar
+
+        mois = request.query_params.get('mois')
+        if mois:
+            try:
+                date_debut = tz.make_aware(datetime.strptime(f"{mois}-01", '%Y-%m-%d'))
+            except ValueError:
+                return Response({'detail': 'Format mois invalide (YYYY-MM)'}, status=400)
+        else:
+            today = tz.localtime(tz.now()).date()
+            first_of_month = today.replace(day=1)
+            last_month_end = first_of_month - timedelta(days=1)
+            date_debut = tz.make_aware(
+                datetime(last_month_end.year, last_month_end.month, 1)
+            )
+            mois = date_debut.strftime('%Y-%m')
+
+        date_fin = (date_debut + timedelta(days=32)).replace(day=1)
+        mois_label = date_debut.strftime('%B %Y').capitalize()
+
+        return build_rapport_general_excel(date_debut, date_fin, mois_label)
+
     # ── CA multi-annuel ───────────────────────────────────────────────────────
 
     @action(detail=False, methods=['get'])
