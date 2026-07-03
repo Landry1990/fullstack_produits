@@ -210,6 +210,7 @@ export function useCommandesState(forcedType?: 'LOC' | 'DIR' | 'DIV') {
 
   const commandes = useMemo(() => commandesData?.results || [], [commandesData]);
   const totalCount = commandesData?.count || 0;
+  const statusCounts = useMemo(() => commandesData?.status_counts || {}, [commandesData]);
   const pageSize = 20;
   const totalPages = Math.ceil(totalCount / pageSize) || 1;
   const error = loadError ? (loadError as Error).message : null;
@@ -241,6 +242,8 @@ export function useCommandesState(forcedType?: 'LOC' | 'DIR' | 'DIV') {
   const setSortKey = useCommandesStore((s) => s.setSortKey);
   const sortOrder = useCommandesStore((s) => s.sortOrder);
   const setSortOrder = useCommandesStore((s) => s.setSortOrder);
+  const searchQuery = useCommandesStore((s) => s.searchQuery);
+  const setSearchQuery = useCommandesStore((s) => s.setSearchQuery);
   const showPrintLabelsModal = useCommandesStore((s) => s.showPrintLabelsModal);
   const setShowPrintLabelsModal = useCommandesStore((s) => s.setShowPrintLabelsModal);
 
@@ -1349,6 +1352,16 @@ export function useCommandesState(forcedType?: 'LOC' | 'DIR' | 'DIV') {
     let filtered = commandes;
     if (filterStatus !== 'ALL') filtered = filtered.filter(c => c.status === filterStatus);
     
+    // Recherche par numero_facture ou ID
+    if (searchQuery.trim()) {
+      const q = searchQuery.trim().toLowerCase();
+      filtered = filtered.filter(c => {
+        const numFact = (c.numero_facture || '').toLowerCase();
+        const idStr = String(c.id);
+        return numFact.includes(q) || idStr.includes(q);
+      });
+    }
+    
     return filtered.toSorted((a, b) => {
       let valA, valB;
       if (sortKey === 'numero') { valA = a.numero_facture || a.id; valB = b.numero_facture || b.id; }
@@ -1364,7 +1377,7 @@ export function useCommandesState(forcedType?: 'LOC' | 'DIR' | 'DIV') {
       if (valA! > valB!) return sortOrder === 'asc' ? 1 : -1;
       return 0;
     });
-  }, [commandes, sortKey, sortOrder, fournisseurs, filterStatus, statusOrder]);
+  }, [commandes, sortKey, sortOrder, fournisseurs, filterStatus, statusOrder, searchQuery]);
 
   function handleProduitCreated(produit: ProduitModel) {
     selectProduct(produit); 
@@ -1511,6 +1524,7 @@ export function useCommandesState(forcedType?: 'LOC' | 'DIR' | 'DIV') {
       fournisseurs: filteredFournisseurs,
       loading,
       totalCount,
+      statusCounts,
       page,
       totalPages,
       onPageChange: setPage,
@@ -1519,6 +1533,8 @@ export function useCommandesState(forcedType?: 'LOC' | 'DIR' | 'DIV') {
       onSortChange: handleSortChange,
       filterStatus,
       onFilterStatusChange: setFilterStatus,
+      searchQuery,
+      onSearchQueryChange: setSearchQuery,
       selectedOrderIds,
       onToggleOrderSelection: toggleOrderSelection,
       onToggleAllOrdersSelection: toggleAllOrdersSelection,

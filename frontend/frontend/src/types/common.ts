@@ -3,4 +3,5 @@ export interface PaginatedResponse<T> {
     next: string | null;
     previous: string | null;
     results: T[];
+    status_counts?: Record<string, number>;
 }
