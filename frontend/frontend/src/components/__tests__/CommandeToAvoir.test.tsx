@@ -2,6 +2,17 @@ import { render, screen, fireEvent } from '@testing-library/react';
 import { describe, it, expect, vi } from 'vitest';
 import CommandeForm from '../Commandes/CommandeForm';
 
+vi.mock('../../context/PharmacySettingsContext', () => ({
+    usePharmacySettings: () => ({
+        settings: { pharmacy_name: 'Test', currency_symbol: 'F' },
+        loading: false, error: null, updateSettings: vi.fn(), refetch: vi.fn()
+    })
+}));
+
+vi.mock('../../context/AuthContext', () => ({
+    useAuth: () => ({ user: { id: 1, username: 'testuser', role: 'PHARMACIEN' } })
+}));
+
 // Mocks simples
 const mockProps = {
     viewMode: 'DETAILS' as const,

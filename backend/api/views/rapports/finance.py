@@ -714,10 +714,11 @@ class RapportFinanceMixin:
 
         # 1. CA par jour (total_ttc des factures validées/payées)
         from django.db.models.functions import TruncDate
+        from api.views.rapports.tz_utils import local_trunc_date
         ca_by_day = (
             Facture.objects
             .filter(date__range=(date_debut, date_fin), status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE])
-            .annotate(day=TruncDate('date'))
+            .annotate(day=local_trunc_date('date'))
             .values('day')
             .annotate(
                 ca=Coalesce(Sum('total_ttc'), Decimal('0')),
@@ -740,7 +741,7 @@ class RapportFinanceMixin:
             .filter(facture_produit__facture__date__range=(date_debut, date_fin))
             .filter(facture_produit__facture__status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE])
             .exclude(stock_lot__is_divers=True)
-            .annotate(day=TruncDate('facture_produit__facture__date'))
+            .annotate(day=local_trunc_date('facture_produit__facture__date'))
             .values('day')
             .annotate(
                 cout=Coalesce(Sum(F('quantity') * F('cost_price')), Decimal('0'))

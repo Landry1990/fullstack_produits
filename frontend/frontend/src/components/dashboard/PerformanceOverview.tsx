@@ -68,9 +68,11 @@ export default function PerformanceOverview({
       icon: Package, accent: '#10b981', isPositive: true,
     },
     {
-      title: 'Dettes fournisseurs',
+      title: t('stats.supplier_debts_title', 'Dettes fournisseurs'),
       value: formatCurrencyLocal(totalDettes),
-      sub: `${nbFournisseursDetteurs} fournisseur${nbFournisseursDetteurs > 1 ? 's' : ''} concerné${nbFournisseursDetteurs > 1 ? 's' : ''}`,
+      sub: nbFournisseursDetteurs > 1
+        ? t('stats.supplier_debts_sub_plural', '{{count}} fournisseurs concernés', { count: nbFournisseursDetteurs })
+        : t('stats.supplier_debts_sub', '{{count}} fournisseur concerné', { count: nbFournisseursDetteurs }),
       icon: HandCoins, accent: '#10b981', isPositive: true,
       link: '/app/fournisseurs',
     },
@@ -98,9 +100,11 @@ export default function PerformanceOverview({
       link: '/app/creances',
     },
     {
-      title: 'Dettes fournisseurs',
+      title: t('stats.supplier_debts_title', 'Dettes fournisseurs'),
       value: formatCurrencyLocal(totalDettes),
-      sub: `${nbFournisseursDetteurs} fournisseur${nbFournisseursDetteurs > 1 ? 's' : ''} concerné${nbFournisseursDetteurs > 1 ? 's' : ''}`,
+      sub: nbFournisseursDetteurs > 1
+        ? t('stats.supplier_debts_sub_plural', '{{count}} fournisseurs concernés', { count: nbFournisseursDetteurs })
+        : t('stats.supplier_debts_sub', '{{count}} fournisseur concerné', { count: nbFournisseursDetteurs }),
       icon: HandCoins, accent: '#10b981', isPositive: true,
       link: '/app/fournisseurs',
     },
@@ -173,7 +177,7 @@ export default function PerformanceOverview({
             <div className="text-white min-w-0">
               <h3 className="text-xs sm:text-sm font-black uppercase tracking-wide leading-tight">{t('reappro.alert_title', { defaultValue: 'Réapprovisionnement rayon nécessaire' })}</h3>
               <p className="text-[10px] sm:text-xs font-bold opacity-75 mt-0.5 truncate">
-                {reapproStats.product_count} produits · +{reapproStats.total_units_suggested} unités à transférer
+                {t('reappro.products_waiting', '{{count}} produits', { count: reapproStats.product_count })} · +{reapproStats.total_units_suggested} {t('reappro.units_to_transfer', 'unités à transférer')}
               </p>
             </div>
           </div>

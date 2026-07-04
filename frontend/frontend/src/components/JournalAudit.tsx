@@ -1,441 +1,473 @@
 ﻿import React, { useState, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import api from '../services/api';
-import { format } from 'date-fns';
+import { format, isToday, isYesterday, parseISO } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { useAuditLogs, useAuditStats, useUsers } from '../hooks/useAudit';
-import { formatNumber } from '../utils/formatters';
+import { formatCurrency, formatNumber } from '../utils/formatters';
+import {
+  ClipboardList, Search, Download, RotateCcw, ChevronDown, ChevronUp,
+  TrendingUp, Clock, Calendar, User2, Shield, PackagePlus, PackageMinus,
+  ReceiptText, XCircle, Trash2, CheckCircle2, Boxes, ArrowDownToLine,
+  BadgeAlert, Edit, LogIn, FileOutput, Settings, AlertTriangle,
+  Activity, Filter, Users
+} from 'lucide-react';
 
+// ── Config par type d'action ────────────────────────────────────────────────
+const ACTION_CONFIG: Record<string, {
+  Icon: React.FC<{ className?: string }>;
+  bg: string; ring: string; iconColor: string; label: string;
+  severity: 'neutral' | 'success' | 'warning' | 'danger' | 'info' | 'purple';
+}> = {
+  CREATE:     { Icon: PackagePlus,    bg: 'bg-emerald-50',  ring: 'ring-emerald-200', iconColor: 'text-emerald-600', label: 'Création',              severity: 'success'  },
+  INV_CRE:    { Icon: Boxes,          bg: 'bg-emerald-50',  ring: 'ring-emerald-200', iconColor: 'text-emerald-600', label: 'Inventaire créé',        severity: 'success'  },
+  ORD_RECV:   { Icon: ArrowDownToLine,bg: 'bg-sky-50',      ring: 'ring-sky-200',     iconColor: 'text-sky-600',     label: 'Réception commande',     severity: 'info'     },
+  CLOTURE:    { Icon: CheckCircle2,   bg: 'bg-sky-50',      ring: 'ring-sky-200',     iconColor: 'text-sky-600',     label: 'Clôture caisse',         severity: 'info'     },
+  UPDATE:     { Icon: Edit,           bg: 'bg-amber-50',    ring: 'ring-amber-200',   iconColor: 'text-amber-600',   label: 'Modification',           severity: 'warning'  },
+  STOCK_ADJ:  { Icon: PackageMinus,   bg: 'bg-amber-50',    ring: 'ring-amber-200',   iconColor: 'text-amber-600',   label: 'Ajust. stock',           severity: 'warning'  },
+  PRICE_CHG:  { Icon: TrendingUp,     bg: 'bg-amber-50',    ring: 'ring-amber-200',   iconColor: 'text-amber-600',   label: 'Changement prix',        severity: 'warning'  },
+  INV_VALID:  { Icon: CheckCircle2,   bg: 'bg-purple-50',   ring: 'ring-purple-200',  iconColor: 'text-purple-600',  label: 'Inventaire validé',      severity: 'purple'   },
+  INV_VAL:    { Icon: Shield,         bg: 'bg-purple-50',   ring: 'ring-purple-200',  iconColor: 'text-purple-600',  label: 'Validation (Sudo)',       severity: 'purple'   },
+  SUDO_VAL:   { Icon: Shield,         bg: 'bg-purple-50',   ring: 'ring-purple-200',  iconColor: 'text-purple-600',  label: 'Validation Sudo',        severity: 'purple'   },
+  DELETE:     { Icon: Trash2,         bg: 'bg-red-50',      ring: 'ring-red-200',     iconColor: 'text-red-600',     label: 'Suppression',            severity: 'danger'   },
+  INV_CANCEL: { Icon: XCircle,        bg: 'bg-red-50',      ring: 'ring-red-200',     iconColor: 'text-red-600',     label: 'Annulation facture',     severity: 'danger'   },
+  INV_DEL:    { Icon: Trash2,         bg: 'bg-red-50',      ring: 'ring-red-200',     iconColor: 'text-red-600',     label: 'Suppression facture',    severity: 'danger'   },
+  ORD_CNCL:   { Icon: XCircle,        bg: 'bg-red-50',      ring: 'ring-red-200',     iconColor: 'text-red-600',     label: 'Annulation commande',    severity: 'danger'   },
+  LOGIN:      { Icon: LogIn,          bg: 'bg-slate-50',    ring: 'ring-slate-200',   iconColor: 'text-slate-500',   label: 'Connexion',              severity: 'neutral'  },
+  EXPORT:     { Icon: FileOutput,     bg: 'bg-slate-50',    ring: 'ring-slate-200',   iconColor: 'text-slate-500',   label: 'Export',                 severity: 'neutral'  },
+};
+
+const SEVERITY_BADGE: Record<string, string> = {
+  success: 'bg-emerald-100 text-emerald-700',
+  info:    'bg-sky-100 text-sky-700',
+  warning: 'bg-amber-100 text-amber-700',
+  danger:  'bg-red-100 text-red-700',
+  purple:  'bg-purple-100 text-purple-700',
+  neutral: 'bg-slate-100 text-slate-600',
+};
+
+const QUICK_FILTERS = [
+  { value: '',          label: 'Tout',        color: 'bg-slate-100 text-slate-700 hover:bg-slate-200' },
+  { value: 'INV_CANCEL,INV_DEL,ORD_CNCL,DELETE', label: '🔴 Annulations', color: 'bg-red-50 text-red-700 hover:bg-red-100 border border-red-200' },
+  { value: 'PRICE_CHG', label: '💲 Prix',      color: 'bg-amber-50 text-amber-700 hover:bg-amber-100 border border-amber-200' },
+  { value: 'STOCK_ADJ', label: '📦 Stock',     color: 'bg-amber-50 text-amber-700 hover:bg-amber-100 border border-amber-200' },
+  { value: 'SUDO_VAL,INV_VAL', label: '🔐 Sudo', color: 'bg-purple-50 text-purple-700 hover:bg-purple-100 border border-purple-200' },
+  { value: 'CLOTURE',   label: '💰 Clôtures',  color: 'bg-sky-50 text-sky-700 hover:bg-sky-100 border border-sky-200' },
+];
+
+// ── Formatage lisible des détails ────────────────────────────────────────────
+function buildDetailChips(log: any): { label: string; value: string; highlight?: boolean }[] {
+  const d = log.details;
+  if (!d || Object.keys(d).length === 0) return [];
+  const chips: { label: string; value: string; highlight?: boolean }[] = [];
+
+  if (log.action === 'PRICE_CHG') {
+    chips.push({ label: 'Avant', value: `${d.old_price} FCFA` });
+    chips.push({ label: 'Après', value: `${d.new_price} FCFA`, highlight: true });
+    if (d.produit_nom) chips.push({ label: 'Produit', value: d.produit_nom });
+  } else if (log.action === 'STOCK_ADJ') {
+    chips.push({ label: 'Avant', value: String(d.old_quantity) });
+    chips.push({ label: 'Après', value: String(d.new_quantity), highlight: true });
+    if (d.ecart !== undefined) chips.push({ label: 'Écart', value: (d.ecart > 0 ? '+' : '') + d.ecart, highlight: true });
+    if (d.reason) chips.push({ label: 'Motif', value: d.reason });
+  } else if (d.sudo_validation) {
+    chips.push({ label: 'Validé par', value: d.sudo_user || '—', highlight: true });
+    if (d.sudo_permission) chips.push({ label: 'Permission', value: d.sudo_permission });
+  } else if (d.changes && typeof d.changes === 'object') {
+    Object.entries(d.changes).slice(0, 3).forEach(([key, val]: [string, any]) => {
+      chips.push({ label: key, value: `${val?.old ?? '—'} → ${val?.new ?? '—'}`, highlight: true });
+    });
+  } else {
+    if (d.amount !== undefined) chips.push({ label: 'Montant', value: `${Number(d.amount).toLocaleString('fr-FR')} FCFA`, highlight: true });
+    if (d.montant !== undefined) chips.push({ label: 'Montant', value: `${Number(d.montant).toLocaleString('fr-FR')} FCFA`, highlight: true });
+    if (d.quantity !== undefined) chips.push({ label: 'Qté', value: String(d.quantity), highlight: true });
+    if (d.total_ttc !== undefined) chips.push({ label: 'Total', value: `${Number(d.total_ttc).toLocaleString('fr-FR')} FCFA`, highlight: true });
+    if (d.client_name) chips.push({ label: 'Client', value: d.client_name });
+    if (d.produit_nom) chips.push({ label: 'Produit', value: d.produit_nom });
+    if (d.reason) chips.push({ label: 'Motif', value: d.reason });
+  }
+  return chips;
+}
+
+// ── Groupage par date ────────────────────────────────────────────────────────
+function groupByDay(logs: any[]) {
+  const groups: { label: string; dateKey: string; logs: any[] }[] = [];
+  const map = new Map<string, any[]>();
+  logs.forEach(log => {
+    const d = parseISO(log.timestamp);
+    const key = format(d, 'yyyy-MM-dd');
+    if (!map.has(key)) map.set(key, []);
+    map.get(key)!.push(log);
+  });
+  map.forEach((dayLogs, key) => {
+    const d = parseISO(key);
+    let label = '';
+    if (isToday(d)) label = "Aujourd'hui";
+    else if (isYesterday(d)) label = 'Hier';
+    else label = format(d, 'EEEE d MMMM yyyy', { locale: fr });
+    groups.push({ label, dateKey: key, logs: dayLogs });
+  });
+  return groups;
+}
+
+// ── Composant principal ──────────────────────────────────────────────────────
 const JournalAudit: React.FC = () => {
-    const { t, i18n } = useTranslation(['audit', 'common']);
+    const { t } = useTranslation(['audit', 'common']);
 
-    const ACTION_TYPES = [
-      { value: '', label: t('actions.all') },
-      { value: 'STOCK_ADJ', label: t('actions.STOCK_ADJ') },
-      { value: 'PRICE_CHG', label: t('actions.PRICE_CHG') },
-      { value: 'CLOTURE', label: t('actions.CLOTURE') },
-      { value: 'INV_CANCEL', label: t('actions.INV_CANCEL') },
-      { value: 'INV_DEL', label: t('actions.INV_DEL') },
-      { value: 'INV_VALID', label: t('actions.INV_VALID') },
-      { value: 'INV_CRE', label: t('actions.INV_CRE') },
-      { value: 'INV_VAL', label: t('actions.INV_VAL') },
-    
-      { value: 'ORD_RECV', label: t('actions.ORD_RECV') },
-      { value: 'ORD_CNCL', label: t('actions.ORD_CNCL') },
-      { value: 'CREATE', label: t('actions.CREATE') },
-      { value: 'UPDATE', label: t('actions.UPDATE') },
-      { value: 'DELETE', label: t('actions.DELETE') },
-    ];
-    // State for UI only (filters and view mode)
     const [page, setPage] = useState(1);
     const [actionFilter, setActionFilter] = useState('');
+    const [quickFilter, setQuickFilter] = useState('');
     const [searchQuery, setSearchQuery] = useState('');
     const [dateFrom, setDateFrom] = useState('');
     const [dateTo, setDateTo] = useState('');
     const [userFilter, setUserFilter] = useState('');
-    
     const [expandedLog, setExpandedLog] = useState<number | null>(null);
-    const [viewMode, setViewMode] = useState<'cards' | 'table'>('cards');
-    const [showStats, setShowStats] = useState(true);
+    const [showFilters, setShowFilters] = useState(false);
 
-    // React Query Hooks
-    const { 
-        data: logsData, 
-        isLoading: loading, 
-        isError: error 
-    } = useAuditLogs({
+    // L'action envoyée à l'API = quickFilter ou actionFilter standard
+    const effectiveAction = quickFilter || actionFilter;
+
+    const { data: logsData, isLoading: loading, isError: error } = useAuditLogs({
         page,
-        action: actionFilter,
+        action: effectiveAction.includes(',') ? '' : effectiveAction,
         user: userFilter,
         date_from: dateFrom,
-        date_to: dateTo
+        date_to: dateTo,
     });
 
     const { data: statistics } = useAuditStats({
-        action: actionFilter,
+        action: effectiveAction.includes(',') ? '' : effectiveAction,
         user: userFilter,
         date_from: dateFrom,
-        date_to: dateTo
+        date_to: dateTo,
     });
 
     const { data: users = [] } = useUsers();
 
-    // Derived Data
     const logs = logsData?.results || [];
     const totalPages = Math.ceil((logsData?.count || 0) / 50);
 
     const filteredLogs = useMemo(() => {
-        if (!searchQuery.trim()) return logs;
-        const query = searchQuery.toLowerCase();
-        return logs.filter(log => 
-          log.description?.toLowerCase().includes(query) ||
-          log.user_name?.toLowerCase().includes(query) ||
-          log.model_name?.toLowerCase().includes(query) ||
-          log.action_display?.toLowerCase().includes(query)
+        let result = logs;
+        // Filtre multi-valeurs pour les quick filters avec virgules
+        if (quickFilter && quickFilter.includes(',')) {
+            const values = quickFilter.split(',');
+            result = result.filter(log => values.includes(log.action));
+        }
+        if (!searchQuery.trim()) return result;
+        const q = searchQuery.toLowerCase();
+        return result.filter(log =>
+            log.description?.toLowerCase().includes(q) ||
+            log.user_name?.toLowerCase().includes(q) ||
+            log.model_name?.toLowerCase().includes(q)
         );
-    }, [logs, searchQuery]);
+    }, [logs, searchQuery, quickFilter]);
+
+    const groupedLogs = useMemo(() => groupByDay(filteredLogs), [filteredLogs]);
 
     const handleExportCSV = async () => {
         try {
-          const params = new URLSearchParams();
-          if (actionFilter) params.append('action', actionFilter);
-          if (userFilter) params.append('user', userFilter);
-          if (dateFrom) params.append('date_from', dateFrom);
-          if (dateTo) params.append('date_to', dateTo);
-          
-          const endpoint = `audit-logs/export_csv/${params.toString() ? '?' + params.toString() : ''}`;
-          const response = await api.get(endpoint, {
-            responseType: 'blob'
-          });
-          
-          const url = window.URL.createObjectURL(new Blob([response.data]));
-          const link = document.createElement('a');
-          link.href = url;
-          link.setAttribute('download', `audit_logs_${new Date().toISOString().slice(0, 10)}.csv`);
-          document.body.appendChild(link);
-          link.click();
-          link.remove();
-        } catch (err) {
-          console.error('Erreur export CSV:', err);
-          alert(t('messages.export_error'));
-        }
+            const params = new URLSearchParams();
+            if (effectiveAction && !effectiveAction.includes(',')) params.append('action', effectiveAction);
+            if (userFilter) params.append('user', userFilter);
+            if (dateFrom) params.append('date_from', dateFrom);
+            if (dateTo) params.append('date_to', dateTo);
+            const endpoint = `audit-logs/export_csv/${params.toString() ? '?' + params.toString() : ''}`;
+            const response = await api.get(endpoint, { responseType: 'blob' });
+            const url = window.URL.createObjectURL(new Blob([response.data]));
+            const link = document.createElement('a');
+            link.href = url;
+            link.setAttribute('download', `audit_logs_${new Date().toISOString().slice(0, 10)}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+        } catch { alert(t('messages.export_error')); }
     };
 
     const handleResetFilters = () => {
-        setActionFilter('');
-        setUserFilter('');
-        setDateFrom('');
-        setDateTo('');
-        setSearchQuery('');
-        setPage(1);
+        setActionFilter(''); setQuickFilter(''); setUserFilter('');
+        setDateFrom(''); setDateTo(''); setSearchQuery(''); setPage(1);
     };
 
-    const getActionStyle = (action: string) => {
-        switch (action) {
-          case 'CREATE':
-          case 'INV_CRE':
-            return { badge: 'badge-success', icon: '➕', bg: 'bg-emerald-50', color: 'text-emerald-700' };
-          case 'UPDATE':
-          case 'STOCK_ADJ':
-          case 'PRICE_CHG':
-            return { badge: 'badge-warning', icon: '✏️', bg: 'bg-yellow-50', color: 'text-yellow-700' };
-          case 'DELETE':
-          case 'INV_CANCEL':
-          case 'ORD_CNCL':
-          case 'INV_DEL':
-            return { badge: 'badge-error', icon: '🗑️', bg: 'bg-error/10', color: 'text-error' };
-          case 'CLOTURE':
-          case 'ORD_RECV':
-            return { badge: 'badge-info', icon: '💰', bg: 'bg-info/10', color: 'text-info' };
-          case 'INV_VALID':
-          case 'INV_VAL':
-            return { badge: 'badge-primary', icon: '✅', bg: 'bg-secondary/10', color: 'text-purple-700' };
-          default:
-            return { badge: 'badge-ghost', icon: '📝', bg: 'bg-base-200/50', color: 'text-base-content/90' };
-        }
-    };
-
-    const formatAuditDetails = (log: any) => {
-        if (!log.details || Object.keys(log.details).length === 0) return null;
-        const d = log.details;
-
-        // Custom formatting logic based on action and details structure
-        if (log.action === 'PRICE_CHG') {
-            return t('details.price_change', { old: d.old_price, new: d.new_price });
-        }
-        if (log.action === 'STOCK_ADJ') {
-            return t('details.stock_adj', { old: d.old_quantity, new: d.new_quantity, reason: d.reason || t('actions.STOCK_ADJ') });
-        }
-        if (d.sudo_validation) {
-            return t('details.sudo_val', { user: d.sudo_user, permission: d.sudo_permission });
-        }
-        if (d.changes) {
-            return Object.entries(d.changes)
-                .map(([key, val]: [any, any]) => `${key}: ${val.old} ➔ ${val.new}`)
-                .join(', ');
-        }
-        
-        // Fallback: search for common keys
-        const highlights = [];
-        if ('amount' in d) highlights.push(t('details.amount', { amount: d.amount }));
-        if ('montant' in d) highlights.push(t('details.amount', { amount: d.montant }));
-        if ('quantity' in d) highlights.push(t('details.quantity', { quantity: d.quantity }));
-        if ('ecart' in d) highlights.push(t('details.ecart', { ecart: d.ecart }));
-        
-        return highlights.length > 0 ? highlights.join(' | ') : null;
-    };
-
-    const toggleExpandLog = (logId: number) => {
-        setExpandedLog(expandedLog === logId ? null : logId);
-    };
+    const hasActiveFilters = !!(effectiveAction || userFilter || dateFrom || dateTo || searchQuery);
 
     return (
-        <div className="p-3 sm:p-6 max-w-7xl mx-auto">
-          <div className="mb-6">
-            <h2 className="text-2xl sm:text-3xl font-bold text-base-content mb-2">📋 {t('title')}</h2>
-            <p className="text-sm sm:text-base text-base-content/80">{t('subtitle')}</p>
-          </div>
-          
-          {error && (
-            <div className="alert alert-error mb-4 shadow-lg">
-              <div>
-                <svg xmlns="http://www.w3.org/2000/svg" className="stroke-current flex-shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-                <span>{t('messages.load_error')}</span>
-              </div>
-            </div>
-          )}
-    
-          {/* Statistiques */}
-          {statistics && showStats && (
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-              <div className="stat bg-gradient-to-br from-blue-500 to-blue-600 text-white rounded-lg shadow-lg">
-                <div className="stat-title text-blue-100">{t('stats.total')}</div>
-                <div className="stat-value">{formatNumber(statistics.total_logs)}</div>
-              </div>
-              <div className="stat bg-gradient-to-br from-emerald-500 to-emerald-600 text-white rounded-lg shadow-lg">
-                <div className="stat-title text-emerald-100">{t('stats.last_24h')}</div>
-                <div className="stat-value">{statistics.recent_activity.last_24h}</div>
-              </div>
-              <div className="stat bg-gradient-to-br from-purple-500 to-purple-600 text-white rounded-lg shadow-lg">
-                <div className="stat-title text-purple-100">{t('stats.last_7d')}</div>
-                <div className="stat-value">{statistics.recent_activity.last_7d}</div>
-              </div>
-              <div className="stat bg-gradient-to-br from-orange-500 to-orange-600 text-white rounded-lg shadow-lg">
-                <div className="stat-title text-orange-100">{t('stats.last_30d')}</div>
-                <div className="stat-value">{statistics.recent_activity.last_30d}</div>
-              </div>
-            </div>
-          )}
-    
-          {/* Filtres compacts */}
-          <div className="bg-base-100 rounded-2xl shadow-sm border border-base-200 overflow-hidden mb-6">
-            <div className="p-4 bg-base-200/50 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between border-b border-base-200">
-                <div className="flex items-center gap-2">
-                    <span className="p-2 bg-primary/10 rounded-lg">🔍</span>
-                    <h3 className="font-black text-sm uppercase tracking-wider text-base-content/70">{t('filters.title')}</h3>
-                </div>
-                <div className="flex flex-wrap items-stretch sm:items-center gap-2 w-full sm:w-auto">
-                    <button onClick={() => setShowStats(!showStats)} className={`btn btn-sm flex-1 sm:flex-none ${showStats ? 'btn-primary' : 'btn-ghost'} rounded-lg font-bold`}>
-                        {showStats ? t('filters.hide_stats') : t('filters.show_stats')}
-                    </button>
-                    <button onClick={handleExportCSV} className="btn btn-sm btn-success text-white rounded-lg font-bold flex-1 sm:flex-none">{t('filters.export')}</button>
-                    <button onClick={handleResetFilters} className="btn btn-sm btn-ghost rounded-lg text-base-content/50 hover:opacity-100 flex-1 sm:flex-none">{t('filters.reset')}</button>
-                </div>
-            </div>
+        <div className="p-3 sm:p-6 max-w-5xl mx-auto">
 
-            <div className="p-5 grid grid-cols-1 md:grid-cols-4 lg:grid-cols-5 gap-4">
-                <div className="flex flex-col gap-1">
-                    <label className="text-[10px] font-black uppercase opacity-40 ml-1">{t('filters.action_label')}</label>
-                    <select className="select select-bordered select-sm w-full font-bold focus:ring-0" value={actionFilter} onChange={(e) => { setActionFilter(e.target.value); setPage(1); }}>
-                        {ACTION_TYPES.map(type => <option key={type.value} value={type.value}>{type.label}</option>)}
-                    </select>
-                </div>
-                <div className="flex flex-col gap-1">
-                    <label className="text-[10px] font-black uppercase opacity-40 ml-1">{t('filters.user_label')}</label>
-                    <select className="select select-bordered select-sm w-full font-bold focus:ring-0" value={userFilter} onChange={(e) => { setUserFilter(e.target.value); setPage(1); }}>
-                        <option value="">{t('filters.all_users')}</option>
-                        {users.filter(u => u.id).map(user => (
-                            <option key={user.id} value={user.id?.toString()}>
-                                {user.first_name || user.last_name ? `${user.first_name} ${user.last_name}` : user.username}
-                            </option>
-                        ))}
-                    </select>
-                </div>
-                <div className="flex flex-col gap-1 lg:col-span-1">
-                    <label className="text-[10px] font-black uppercase opacity-40 ml-1">{t('filters.date_from')}</label>
-                    <input type="datetime-local" className="input input-bordered input-sm w-full font-bold" value={dateFrom} onChange={(e) => { setDateFrom(e.target.value); setPage(1); }} />
-                </div>
-                <div className="flex flex-col gap-1 lg:col-span-1">
-                    <label className="text-[10px] font-black uppercase opacity-40 ml-1">{t('filters.date_to')}</label>
-                    <input type="datetime-local" className="input input-bordered input-sm w-full font-bold" value={dateTo} onChange={(e) => { setDateTo(e.target.value); setPage(1); }} />
-                </div>
-                <div className="flex flex-col gap-1 lg:col-span-1">
-                    <label className="text-[10px] font-black uppercase opacity-40 ml-1">{t('filters.search_label')}</label>
-                    <input type="text" placeholder={t('filters.search_placeholder')} className="input input-bordered input-sm w-full font-bold" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
-                </div>
-            </div>
-          </div>
-            {/* View Toggle */}
-          <div className="flex flex-col gap-3 sm:flex-row sm:justify-between sm:items-center mb-4">
-              <div className="flex items-center gap-2">
-                  <h3 className="font-black text-xs uppercase opacity-40">{t('view.flux')}</h3>
-                  <div className="badge badge-ghost font-bold text-[10px]">{filteredLogs.length} {t('view.items')}</div>
-              </div>
-              <div className="join bg-base-100 shadow-sm border border-base-200 p-0.5 rounded-xl w-full sm:w-auto justify-center">
-                  <button onClick={() => setViewMode('cards')} className={`join-item btn btn-xs px-4 rounded-lg font-bold flex-1 sm:flex-none ${viewMode === 'cards' ? 'btn-neutral' : 'btn-ghost opacity-40'}`}>{t('view.cards_btn')}</button>
-                    <button onClick={() => setViewMode('table')} className={`join-item btn btn-xs px-4 rounded-lg font-bold flex-1 sm:flex-none ${viewMode === 'table' ? 'btn-neutral' : 'btn-ghost opacity-40'}`}>{t('view.table_btn')}</button>
-              </div>
-          </div>
-
-          {/* Logs */}
-          {loading ? (
-            <div className="flex flex-col items-center justify-center py-24 bg-base-100 rounded-3xl border-2 border-dashed border-base-200">
-              <div className="loading loading-spinner loading-lg text-primary"></div>
-              <span className="mt-4 font-black uppercase text-xs text-base-content/30 tracking-widest">{t('view.loading')}</span>
-            </div>
-          ) : filteredLogs.length === 0 ? (
-            <div className="bg-base-100 rounded-3xl border-2 border-dashed border-base-200 p-24 text-center">
-              <div className="text-5xl mb-6 text-base-content/20">🍃</div>
-              <p className="font-black text-lg opacity-40 uppercase">{t('view.empty_title')}</p>
-              <p className="text-sm text-base-content/30 mt-1">{t('view.empty_subtitle')}</p>
-            </div>
-          ) : viewMode === 'cards' ? (
-            <div className="space-y-4">
-              {filteredLogs.map(log => {
-                const style = getActionStyle(log.action);
-                const isExpanded = expandedLog === log.id;
-                const formattedDetails = formatAuditDetails(log);
-                const isSudo = !!log.details?.sudo_validation;
-                
-                return (
-                  <div key={log.id} className="bg-base-100 rounded-2xl shadow-sm border border-base-200 overflow-hidden group hover:border-primary/30 transition-all">
-                    <div className="flex flex-col md:flex-row md:items-center">
-                        <div className={`p-4 md:w-48 flex-shrink-0 flex items-center gap-3 border-r border-base-200 ${style.bg}/30`}>
-                            <span className="text-2xl">{style.icon}</span>
-                            <div className="flex flex-col">
-                                <span className={`text-[10px] font-black uppercase ${style.color}`}>{log.action_display || log.action}</span>
-                                <span className="text-[10px] font-bold opacity-40 leading-tight">
-                                    {format(new Date(log.timestamp), "HH:mm:ss", { locale: fr })}
-                                </span>
-                            </div>
-                        </div>
-
-                        <div className="p-4 flex-1 flex flex-col md:flex-row md:items-center justify-between gap-4">
-                            <div className="flex-1 min-w-0">
-                                <div className="flex items-center gap-2 mb-1">
-                                    <span className="font-bold text-sm text-base-content/80 line-clamp-1">{log.description || `${log.model_name} #${log.object_id}`}</span>
-                                    {isSudo && <span className="badge badge-error badge-sm font-black text-[9px] text-white">{t('view.sudo_badge')}</span>}
-                                </div>
-                                <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-[11px]">
-                                    <span className="flex items-center gap-1 font-bold opacity-60">
-                                        <div className="size-1.5 rounded-full bg-base-300"></div>
-                                        {log.user_name || t('view.system_user')}
-                                    </span>
-                                    <span className="text-base-content/30 font-bold">{format(new Date(log.timestamp), 'dd MMMM yyyy', { locale: i18n.language === 'fr' ? fr : undefined })}</span>
-                                    {formattedDetails && (
-                                        <span className="font-black text-primary/80 bg-primary/5 px-2 py-0.5 rounded-md border border-primary/10">
-                                            {formattedDetails}
-                                        </span>
-                                    )}
-                                </div>
-                            </div>
-                            
-                            <div className="flex items-center gap-3">
-                                {log.details && (
-                                    <button onClick={() => toggleExpandLog(log.id)} className={`btn btn-circle btn-sm ${isExpanded ? 'btn-neutral' : 'btn-ghost'}`}>
-                                        {isExpanded ? '▲' : t('view.json_btn')}
-                                    </button>
-                                )}
-                            </div>
-                        </div>
+            {/* ── Header ──────────────────────────────────────────── */}
+            <div className="flex items-start justify-between mb-6">
+                <div className="flex items-center gap-3">
+                    <div className="p-3 bg-slate-800 text-white rounded-2xl">
+                        <ClipboardList className="size-6" />
                     </div>
-                    
-                    {isExpanded && log.details && (
-                      <div className="bg-neutral text-neutral-content p-6 font-mono text-[11px] border-t border-neutral-focus">
-                        <div className="flex justify-between items-center mb-4 text-base-content/50">
-                            <span className="font-black">{t('view.raw_data')}</span>
-                            <span className="text-[9px]">ID: {log.id}</span>
-                        </div>
-                        <pre className="whitespace-pre-wrap leading-relaxed opacity-80">
-                          {JSON.stringify(log.details, null, 2)}
-                        </pre>
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
+                    <div>
+                        <h2 className="text-2xl font-black text-slate-800 tracking-tight">{t('title')}</h2>
+                        <p className="text-sm text-slate-400 font-medium">{t('subtitle')}</p>
+                    </div>
+                </div>
+                <div className="flex items-center gap-2">
+                    <button
+                        onClick={handleExportCSV}
+                        className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-emerald-50 text-emerald-700 border border-emerald-200 text-xs font-bold hover:bg-emerald-100 transition-colors"
+                    >
+                        <Download className="size-3.5" /> Export CSV
+                    </button>
+                    <button
+                        onClick={() => setShowFilters(!showFilters)}
+                        className={`inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold border transition-colors ${showFilters ? 'bg-slate-800 text-white border-slate-800' : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'}`}
+                    >
+                        <Filter className="size-3.5" /> Filtres
+                        {hasActiveFilters && <span className="size-1.5 rounded-full bg-orange-400 inline-block" />}
+                    </button>
+                </div>
             </div>
-          ) : (
-            <div className="bg-base-100 rounded-3xl border border-base-200 shadow-sm overflow-x-auto">
-              <table className="table w-full min-w-[720px]">
-                <thead>
-                  <tr className="bg-base-200/50">
-                    <th className="font-black text-[10px] uppercase text-base-content/50 pl-6">{t('table.timestamp')}</th>
-                    <th className="font-black text-[10px] uppercase text-base-content/50">{t('table.user')}</th>
-                    <th className="font-black text-[10px] uppercase text-base-content/50">{t('table.operation')}</th>
-                    <th className="font-black text-[10px] uppercase text-base-content/50">{t('table.description')}</th>
-                    <th className="font-black text-[10px] uppercase text-base-content/50 text-right pr-6">{t('table.status')}</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-base-200">
-                  {filteredLogs.map(log => {
-                    const style = getActionStyle(log.action);
-                    const isSudo = !!log.details?.sudo_validation;
-                    const details = formatAuditDetails(log);
 
-                    return (
-                      <tr key={log.id} className="hover:bg-base-200/30 transition-colors">
-                        <td className="pl-6 border-none">
-                            <div className="flex flex-col">
-                                <span className="font-black text-xs">{format(new Date(log.timestamp), 'HH:mm:ss', { locale: i18n.language === 'fr' ? fr : undefined })}</span>
-                                <span className="text-[9px] font-bold text-base-content/30">{format(new Date(log.timestamp), 'dd/MM/yy', { locale: i18n.language === 'fr' ? fr : undefined })}</span>
-                            </div>
-                        </td>
-                        <td className="border-none">
-                            <div className="flex items-center gap-2">
-                                <div className="size-6 rounded-full bg-base-300 flex items-center justify-center font-black text-[10px] uppercase">
-                                    {(log.user_name || t('view.system_user'))[0]}
-                                </div>
-                                <span className="font-bold text-xs uppercase opacity-80">{log.user_name || t('view.system_user')}</span>
-                            </div>
-                        </td>
-                        <td className="border-none">
-                             <div className={`badge ${style.badge} font-black text-[9px] gap-1 px-3 py-1.5`}>
-                                 <span>{style.icon}</span>
-                                 <span>{log.action_display || log.action}</span>
-                             </div>
-                        </td>
-                        <td className="max-w-md border-none">
-                             <div className="flex flex-col gap-0.5 py-1">
-                                <span className="font-bold text-xs text-base-content/80">{log.description}</span>
-                                {details && <span className="text-[10px] font-black text-primary bg-primary/5 px-2 py-1 rounded inline-block w-fit">{details}</span>}
-                                {log.model_name && <span className="text-[9px] font-bold text-base-content/20 uppercase tracking-tighter">{log.model_name} #{log.object_id}</span>}
-                             </div>
-                        </td>
-                        <td className="text-right pr-6 border-none">
-                            {isSudo && log.details ? (
-                                <div className="tooltip tooltip-left" data-tip={`Validé par ${log.details.sudo_user}`}>
-                                    <span className="badge badge-error text-white font-black text-[9px]">{t('table.sudo')}</span>
-                                </div>
-                            ) : (
-                                <span className="size-1.5 rounded-full bg-success inline-block"></span>
-                            )}
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
+            {error && (
+                <div className="flex items-center gap-3 p-4 rounded-xl bg-red-50 border border-red-200 mb-4 text-sm text-red-700 font-semibold">
+                    <AlertTriangle className="size-4 shrink-0" /> {t('messages.load_error')}
+                </div>
+            )}
+
+            {/* ── KPI Stats ────────────────────────────────────────── */}
+            {statistics && (
+                <div className="grid grid-cols-4 gap-3 mb-5">
+                    {[
+                        { label: 'Total logs', value: formatNumber(statistics.total_logs), color: 'text-slate-800', sub: 'depuis le début' },
+                        { label: 'Dernières 24h', value: statistics.recent_activity.last_24h, color: 'text-indigo-700', sub: 'aujourd\'hui' },
+                        { label: '7 derniers jours', value: statistics.recent_activity.last_7d, color: 'text-sky-700', sub: 'cette semaine' },
+                        { label: '30 derniers jours', value: statistics.recent_activity.last_30d, color: 'text-emerald-700', sub: 'ce mois' },
+                    ].map((kpi, i) => (
+                        <div key={i} className="bg-white border border-slate-200 rounded-2xl p-4">
+                            <div className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1">{kpi.label}</div>
+                            <div className={`text-2xl font-black ${kpi.color}`}>{kpi.value}</div>
+                            <div className="text-[10px] text-slate-300 font-medium mt-0.5">{kpi.sub}</div>
+                        </div>
+                    ))}
+                </div>
+            )}
+
+            {/* ── Quick filters (pills) ────────────────────────────── */}
+            <div className="flex flex-wrap gap-2 mb-4">
+                {QUICK_FILTERS.map(qf => (
+                    <button
+                        key={qf.value}
+                        onClick={() => { setQuickFilter(qf.value === quickFilter ? '' : qf.value); setActionFilter(''); setPage(1); }}
+                        className={`px-3 py-1.5 rounded-full text-xs font-bold transition-all ${qf.color} ${quickFilter === qf.value ? 'ring-2 ring-offset-1 ring-current opacity-100' : 'opacity-80 hover:opacity-100'}`}
+                    >
+                        {qf.label}
+                    </button>
+                ))}
+                <div className="relative ml-auto">
+                    <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 size-3.5 text-slate-400 pointer-events-none" />
+                    <input
+                        type="text"
+                        placeholder="Rechercher..."
+                        className="pl-8 pr-3 py-1.5 rounded-full text-xs font-medium border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-300 w-48"
+                        value={searchQuery}
+                        onChange={e => setSearchQuery(e.target.value)}
+                    />
+                </div>
             </div>
-          )}
-    
-          {/* Pagination */}
-          {!loading && filteredLogs.length > 0 && (
-            <div className="flex justify-center items-center gap-2 mt-8">
-              <button 
-                className="btn btn-outline" 
-                disabled={page === 1} 
-                onClick={() => setPage(page - 1)}
-              >
-                ← {t('common:pagination.prev')}
-              </button>
-              <div className="px-4 py-2 bg-base-100 rounded-lg shadow-md">
-                <span className="font-semibold">{t('common:pagination.page_info_simple', { page })}</span>
-                {totalPages > 1 && <span className="text-base-content/60"> {t('common:pagination.page_of', { count: totalPages })}</span>}
-              </div>
-              <button 
-                className="btn btn-outline" 
-                disabled={page >= totalPages} 
-                onClick={() => setPage(page + 1)}
-              >
-                {t('common:pagination.next')} →
-              </button>
+
+            {/* ── Filtres avancés (dépliables) ─────────────────────── */}
+            {showFilters && (
+                <div className="bg-white border border-slate-200 rounded-2xl p-5 mb-5 grid grid-cols-2 md:grid-cols-4 gap-4 animate-in slide-in-from-top-2 duration-200">
+                    <div className="flex flex-col gap-1">
+                        <label className="text-[10px] font-black uppercase text-slate-400">{t('filters.user_label')}</label>
+                        <select className="select select-bordered select-sm font-bold" value={userFilter} onChange={e => { setUserFilter(e.target.value); setPage(1); }}>
+                            <option value="">{t('filters.all_users')}</option>
+                            {users.filter(u => u.id).map(u => (
+                                <option key={u.id} value={u.id?.toString()}>
+                                    {u.first_name || u.last_name ? `${u.first_name} ${u.last_name}`.trim() : u.username}
+                                </option>
+                            ))}
+                        </select>
+                    </div>
+                    <div className="flex flex-col gap-1">
+                        <label className="text-[10px] font-black uppercase text-slate-400">{t('filters.date_from')}</label>
+                        <input type="datetime-local" className="input input-bordered input-sm font-bold" value={dateFrom} onChange={e => { setDateFrom(e.target.value); setPage(1); }} />
+                    </div>
+                    <div className="flex flex-col gap-1">
+                        <label className="text-[10px] font-black uppercase text-slate-400">{t('filters.date_to')}</label>
+                        <input type="datetime-local" className="input input-bordered input-sm font-bold" value={dateTo} onChange={e => { setDateTo(e.target.value); setPage(1); }} />
+                    </div>
+                    <div className="flex items-end">
+                        <button onClick={handleResetFilters} className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-slate-100 text-slate-600 text-xs font-bold hover:bg-slate-200 transition-colors w-full justify-center">
+                            <RotateCcw className="size-3.5" /> Réinitialiser
+                        </button>
+                    </div>
+                </div>
+            )}
+
+            {/* ── Compteur résultats ───────────────────────────────── */}
+            <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-2">
+                    <Activity className="size-3.5 text-slate-400" />
+                    <span className="text-xs font-black text-slate-400 uppercase tracking-widest">{t('view.flux')}</span>
+                    <span className="text-xs font-black text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-full">{filteredLogs.length} {t('view.items')}</span>
+                </div>
             </div>
-          )}
+
+            {/* ── Timeline ────────────────────────────────────────────── */}
+            {loading ? (
+                <div className="flex flex-col items-center justify-center py-24 bg-white rounded-3xl border-2 border-dashed border-slate-200">
+                    <div className="loading loading-spinner loading-lg text-indigo-500" />
+                    <span className="mt-4 font-black uppercase text-xs text-slate-300 tracking-widest">{t('view.loading')}</span>
+                </div>
+            ) : filteredLogs.length === 0 ? (
+                <div className="bg-white rounded-3xl border-2 border-dashed border-slate-200 py-24 text-center">
+                    <ClipboardList className="size-12 text-slate-200 mx-auto mb-4" />
+                    <p className="font-black text-lg text-slate-300 uppercase">{t('view.empty_title')}</p>
+                    <p className="text-sm text-slate-300 mt-1">{t('view.empty_subtitle')}</p>
+                </div>
+            ) : (
+                <div className="space-y-8">
+                    {groupedLogs.map(({ label, dateKey, logs: dayLogs }) => (
+                        <div key={dateKey}>
+                            {/* Day header */}
+                            <div className="flex items-center gap-3 mb-3">
+                                <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-slate-800 text-white">
+                                    <Calendar className="size-3" />
+                                    <span className="text-[11px] font-black capitalize">{label}</span>
+                                </div>
+                                <div className="flex-1 h-px bg-slate-200" />
+                                <span className="text-[10px] font-bold text-slate-300">{dayLogs.length} action{dayLogs.length > 1 ? 's' : ''}</span>
+                            </div>
+
+                            {/* Timeline entries */}
+                            <div className="relative">
+                                {/* Vertical line */}
+                                <div className="absolute left-[27px] top-0 bottom-0 w-px bg-slate-200" />
+
+                                <div className="space-y-2">
+                                    {dayLogs.map(log => {
+                                        const cfg = ACTION_CONFIG[log.action] ?? {
+                                            Icon: Settings, bg: 'bg-slate-50', ring: 'ring-slate-200',
+                                            iconColor: 'text-slate-500', label: log.action, severity: 'neutral'
+                                        };
+                                        const { Icon } = cfg;
+                                        const chips = buildDetailChips(log);
+                                        const isSudo = !!log.details?.sudo_validation;
+                                        const isExpanded = expandedLog === log.id;
+
+                                        return (
+                                            <div key={log.id} className="relative flex gap-4 group">
+                                                {/* Icon dot */}
+                                                <div className={`relative z-10 shrink-0 size-[54px] rounded-2xl flex items-center justify-center ${cfg.bg} ring-1 ${cfg.ring} transition-transform group-hover:scale-105`}>
+                                                    <Icon className={`size-5 ${cfg.iconColor}`} />
+                                                </div>
+
+                                                {/* Card */}
+                                                <div className={`flex-1 bg-white border rounded-2xl overflow-hidden transition-all ${isSudo ? 'border-purple-200' : 'border-slate-200'} hover:border-indigo-200 hover:shadow-sm`}>
+                                                    <div className="px-4 py-3 flex items-start justify-between gap-3">
+                                                        <div className="flex-1 min-w-0">
+                                                            {/* Action badge + heure */}
+                                                            <div className="flex items-center gap-2 mb-1.5 flex-wrap">
+                                                                <span className={`text-[10px] font-black px-2 py-0.5 rounded-full ${SEVERITY_BADGE[cfg.severity]}`}>
+                                                                    {cfg.label || log.action_display}
+                                                                </span>
+                                                                {isSudo && (
+                                                                    <span className="text-[9px] font-black px-2 py-0.5 rounded-full bg-purple-100 text-purple-700 flex items-center gap-1">
+                                                                        <Shield className="size-2.5" /> SUDO
+                                                                    </span>
+                                                                )}
+                                                                <span className="text-[10px] font-bold text-slate-400 flex items-center gap-1">
+                                                                    <Clock className="size-2.5" />
+                                                                    {format(parseISO(log.timestamp), 'HH:mm:ss')}
+                                                                </span>
+                                                            </div>
+
+                                                            {/* Description principale */}
+                                                            <p className="text-sm font-semibold text-slate-700 leading-snug mb-1.5">
+                                                                {log.description || `${log.model_name} #${log.object_id}`}
+                                                            </p>
+
+                                                            {/* Chips de détails */}
+                                                            {chips.length > 0 && (
+                                                                <div className="flex flex-wrap gap-1.5 mb-1">
+                                                                    {chips.map((chip, ci) => (
+                                                                        <span key={ci} className={`inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-md ${chip.highlight ? 'bg-indigo-50 text-indigo-700 border border-indigo-100' : 'bg-slate-100 text-slate-500'}`}>
+                                                                            <span className="opacity-60">{chip.label}:</span> {chip.value}
+                                                                        </span>
+                                                                    ))}
+                                                                </div>
+                                                            )}
+
+                                                            {/* Auteur */}
+                                                            <div className="flex items-center gap-1.5 mt-1">
+                                                                <div className="size-4 rounded-full bg-slate-200 flex items-center justify-center text-[8px] font-black uppercase text-slate-600">
+                                                                    {(log.user_name || 'S')[0]}
+                                                                </div>
+                                                                <span className="text-[10px] font-semibold text-slate-400">{log.user_name || t('view.system_user')}</span>
+                                                                {log.ip_address && <span className="text-[9px] text-slate-300">· {log.ip_address}</span>}
+                                                            </div>
+                                                        </div>
+
+                                                        {/* Toggle JSON */}
+                                                        {log.details && Object.keys(log.details).length > 0 && (
+                                                            <button
+                                                                onClick={() => setExpandedLog(isExpanded ? null : log.id)}
+                                                                className={`shrink-0 p-1.5 rounded-lg transition-colors ${isExpanded ? 'bg-slate-800 text-white' : 'text-slate-300 hover:bg-slate-100 hover:text-slate-600'}`}
+                                                                title="Voir les détails techniques"
+                                                            >
+                                                                {isExpanded ? <ChevronUp className="size-3.5" /> : <ChevronDown className="size-3.5" />}
+                                                            </button>
+                                                        )}
+                                                    </div>
+
+                                                    {/* JSON expandé — propre et lisible */}
+                                                    {isExpanded && log.details && (
+                                                        <div className="border-t border-slate-100 bg-slate-50 px-4 py-3 animate-in slide-in-from-top-1 duration-150">
+                                                            <div className="text-[9px] font-black uppercase text-slate-400 tracking-widest mb-2 flex items-center gap-1.5">
+                                                                <BadgeAlert className="size-3" /> Données techniques · ID #{log.id}
+                                                            </div>
+                                                            <div className="flex flex-wrap gap-2">
+                                                                {Object.entries(log.details).map(([key, val]) => (
+                                                                    <div key={key} className="bg-white rounded-lg px-3 py-2 border border-slate-200 text-[10px]">
+                                                                        <div className="text-slate-400 font-bold uppercase tracking-wider mb-0.5">{key}</div>
+                                                                        <div className="font-black text-slate-700 max-w-[200px] truncate" title={String(val)}>
+                                                                            {typeof val === 'object' ? JSON.stringify(val) : String(val ?? '—')}
+                                                                        </div>
+                                                                    </div>
+                                                                ))}
+                                                            </div>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            )}
+
+            {/* ── Pagination ───────────────────────────────────────── */}
+            {!loading && filteredLogs.length > 0 && totalPages > 1 && (
+                <div className="flex justify-center items-center gap-3 mt-8">
+                    <button
+                        className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl border border-slate-200 text-sm font-bold text-slate-600 hover:bg-slate-50 disabled:opacity-40 transition-colors"
+                        disabled={page === 1}
+                        onClick={() => setPage(page - 1)}
+                    >
+                        ← {t('common:pagination.prev')}
+                    </button>
+                    <span className="text-sm font-bold text-slate-500 px-3">
+                        Page {page} / {totalPages}
+                    </span>
+                    <button
+                        className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl border border-slate-200 text-sm font-bold text-slate-600 hover:bg-slate-50 disabled:opacity-40 transition-colors"
+                        disabled={page >= totalPages}
+                        onClick={() => setPage(page + 1)}
+                    >
+                        {t('common:pagination.next')} →
+                    </button>
+                </div>
+            )}
         </div>
-      );
+    );
 };
 
 export default JournalAudit;

@@ -10,6 +10,8 @@ interface ObjectivesConfig {
     id?: number;
     mode: 'MANUEL' | 'FIXE' | 'DYNAMIQUE';
     seuil_rentabilite_mensuel: number;
+    marge_objectif_mensuel: number;
+    coefficient_marge: number;
     pourcentage_croissance: number;
     jours_ouverts_semaine: number;
 }
@@ -35,6 +37,8 @@ export function ObjectivesSettings({ isOpen, onClose }: Props) {
     const [config, setConfig] = useState<ObjectivesConfig>({
         mode: 'MANUEL',
         seuil_rentabilite_mensuel: 0,
+        marge_objectif_mensuel: 0,
+        coefficient_marge: 1.40,
         pourcentage_croissance: 5,
         jours_ouverts_semaine: 6
     });
@@ -50,6 +54,8 @@ export function ObjectivesSettings({ isOpen, onClose }: Props) {
             setConfig({
                 mode: data.mode,
                 seuil_rentabilite_mensuel: normalizeNumberInput(data.seuil_rentabilite_mensuel),
+                marge_objectif_mensuel: normalizeNumberInput(data.marge_objectif_mensuel),
+                coefficient_marge: normalizeNumberInput(data.coefficient_marge),
                 pourcentage_croissance: normalizeNumberInput(data.pourcentage_croissance),
                 jours_ouverts_semaine: normalizeNumberInput(data.jours_ouverts_semaine)
             });
@@ -161,39 +167,78 @@ export function ObjectivesSettings({ isOpen, onClose }: Props) {
                             {/* Conditional Settings */}
                             <div className="space-y-6 pt-6 border-t border-base-200">
                                 {config.mode === 'FIXE' && (
-                                    <div className="grid sm:grid-cols-2 gap-6 animate-in slide-in-from-top-2 fade-in">
+                                    <div className="space-y-6 animate-in slide-in-from-top-2 fade-in">
+                                        {/* Objectif de marge mensuelle */}
                                         <div className="form-control">
                                             <label className="label">
-                                                <span className="label-text font-bold">{t('manager_dashboard.settings.fixed.expenses_label')}</span>
+                                                <span className="label-text font-bold">Objectif de marge brute mensuelle</span>
                                             </label>
                                             <div className="join">
                                                 <input 
                                                     type="number" 
                                                     className="input input-bordered join-item w-full bg-base-100" 
-                                                    value={config.seuil_rentabilite_mensuel}
-                                                    onChange={e => setConfig({...config, seuil_rentabilite_mensuel: normalizeNumberInput(e.target.value)})}
+                                                    value={config.marge_objectif_mensuel}
+                                                    onChange={e => setConfig({...config, marge_objectif_mensuel: normalizeNumberInput(e.target.value)})}
                                                 />
                                                 <span className="btn join-item pointer-events-none bg-base-200 border-base-200">{t('common:currency_symbol', 'F')}</span>
                                             </div>
                                             <label className="label">
-                                                <span className="label-text-alt text-base-content/60">{t('manager_dashboard.settings.fixed.expenses_help')}</span>
+                                                <span className="label-text-alt text-base-content/60">Le CA nécessaire sera calculé automatiquement selon le coefficient ci-dessous</span>
                                             </label>
                                         </div>
 
-                                        <div className="form-control">
-                                            <label className="label">
-                                                <span className="label-text font-bold">{t('manager_dashboard.settings.fixed.days_per_week')}</span>
-                                            </label>
-                                            <select 
-                                                className="select select-bordered w-full bg-base-100"
-                                                value={config.jours_ouverts_semaine}
-                                                onChange={e => setConfig({...config, jours_ouverts_semaine: normalizeNumberInput(e.target.value)})}
-                                            >
-                                                {[1,2,3,4,5,6,7].map(d => (
-                                                    <option key={d} value={d}>{t('manager_dashboard.settings.fixed.days_count', { count: d })}</option>
-                                                ))}
-                                            </select>
+                                        {/* Coefficient multiplicateur */}
+                                        <div className="grid sm:grid-cols-2 gap-6">
+                                            <div className="form-control">
+                                                <label className="label">
+                                                    <span className="label-text font-bold">Coefficient multiplicateur</span>
+                                                </label>
+                                                <div className="join">
+                                                    <input 
+                                                        type="number" 
+                                                        step="0.01"
+                                                        min="1.01"
+                                                        max="10"
+                                                        className="input input-bordered join-item w-full bg-base-100" 
+                                                        value={config.coefficient_marge}
+                                                        onChange={e => setConfig({...config, coefficient_marge: normalizeNumberInput(e.target.value)})}
+                                                    />
+                                                    <span className="btn join-item pointer-events-none bg-base-200 border-base-200">×</span>
+                                                </div>
+                                                <label className="label">
+                                                    <span className="label-text-alt text-base-content/60">Prix de vente = coût × coefficient (défaut 1.40)</span>
+                                                </label>
+                                            </div>
+
+                                            <div className="form-control">
+                                                <label className="label">
+                                                    <span className="label-text font-bold">{t('manager_dashboard.settings.fixed.days_per_week')}</span>
+                                                </label>
+                                                <select 
+                                                    className="select select-bordered w-full bg-base-100"
+                                                    value={config.jours_ouverts_semaine}
+                                                    onChange={e => setConfig({...config, jours_ouverts_semaine: normalizeNumberInput(e.target.value)})}
+                                                >
+                                                    {[1,2,3,4,5,6,7].map(d => (
+                                                        <option key={d} value={d}>{t('manager_dashboard.settings.fixed.days_count', { count: d })}</option>
+                                                    ))}
+                                                </select>
+                                            </div>
                                         </div>
+
+                                        {/* Aperçu CA déduit */}
+                                        {config.marge_objectif_mensuel > 0 && config.coefficient_marge > 1 && (
+                                            <div className="p-4 bg-emerald-50 border border-emerald-200 rounded-xl text-sm">
+                                                <div className="flex items-center gap-2 text-emerald-700 font-bold mb-1">
+                                                    <TrendingUp className="size-4" />
+                                                    Aperçu du CA mensuel requis
+                                                </div>
+                                                <div className="text-emerald-600">
+                                                    CA = {Math.round(config.marge_objectif_mensuel / ((config.coefficient_marge - 1) / config.coefficient_marge)).toLocaleString('fr-FR')} F
+                                                    <span className="text-emerald-400 ml-2">(semaine: {Math.round(config.marge_objectif_mensuel / 4.33 / ((config.coefficient_marge - 1) / config.coefficient_marge)).toLocaleString('fr-FR')} F, jour: {Math.round(config.marge_objectif_mensuel / (config.jours_ouverts_semaine * 4.33) / ((config.coefficient_marge - 1) / config.coefficient_marge)).toLocaleString('fr-FR')} F)</span>
+                                                </div>
+                                            </div>
+                                        )}
                                     </div>
                                 )}
 

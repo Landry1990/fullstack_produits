@@ -44,6 +44,7 @@ import PerformanceOverview from './dashboard/PerformanceOverview';
 import StockIntelligence from './dashboard/StockIntelligence';
 import FinancialSummary from './dashboard/FinancialSummary';
 import ExpirationAlertsWidget from './dashboard/ExpirationAlertsWidget';
+import DashboardVendeur from './dashboard/DashboardVendeur';
 
 export default function DashboardShadcn() {
   const { t } = useTranslation(['dashboard', 'common']);
@@ -74,6 +75,8 @@ export default function DashboardShadcn() {
   const currentLocale = t('common:locale', { defaultValue: 'fr-FR' });
   const currencySymbol = t('common:currency_symbol', { defaultValue: 'F' });
   const formatCurrencyLocal = (val: number) => formatCurrency(val, currentLocale, currencySymbol);
+
+  const isVendeur = stats?.role === 'VENDEUR' || stats?.role === 'CAISSIER';
 
   const loading = statsLoading || chartLoading;
   const error = statsError ? t('messages.error_loading') : null;
@@ -129,7 +132,9 @@ export default function DashboardShadcn() {
     const retards = echeances.filter(e => e.status === 'EN RETARD');
     if (retards.length > 0) {
       toast.error(
-        `${retards.length} échéance${retards.length > 1 ? 's' : ''} fournisseur${retards.length > 1 ? 's' : ''} en retard !`,
+        retards.length > 1
+          ? t('echeances_overdue_toast_plural', '{{count}} échéances fournisseurs en retard !', { count: retards.length })
+          : t('echeances_overdue_toast', '{{count}} échéance fournisseur en retard !', { count: retards.length }),
         { duration: 6000, id: 'echeances-retard-dashboard', icon: '💳' }
       );
     }
@@ -149,7 +154,7 @@ export default function DashboardShadcn() {
       <div className="min-h-screen bg-slate-50 flex items-center justify-center">
         <div className="flex flex-col items-center gap-3">
           <div className="size-12 border-4 border-slate-200 border-t-emerald-500 rounded-full animate-spin" />
-          <p className="text-sm font-medium text-slate-400">Chargement...</p>
+          <p className="text-sm font-medium text-slate-400">{t('loading', 'Chargement...')}</p>
         </div>
       </div>
     );
@@ -210,7 +215,7 @@ export default function DashboardShadcn() {
               <Button className="gap-2 rounded-xl bg-emerald-600 hover:bg-emerald-700">
                 <Plus className="size-4" />
                 <span className="hidden sm:inline">{t('actions.new_invoice')}</span>
-                <span className="sm:hidden">Vente</span>
+                <span className="sm:hidden">{t('new_sale_short', 'Vente')}</span>
               </Button>
             </Link>
             <Button
@@ -255,31 +260,36 @@ export default function DashboardShadcn() {
           </div>
         </div>
 
-        {/* ── TABS ── */}
-        <div className="mt-4">
-          <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as typeof activeTab)}>
-            <TabsList className="grid w-full max-w-md grid-cols-3 rounded-xl bg-slate-100 p-1">
-              {tabConfig.map(({ key, label, icon: Icon }) => (
-                <TabsTrigger
-                  key={key}
-                  value={key}
-                  className={cn(
-                    "flex items-center gap-2 rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-slate-900",
-                    "text-sm font-medium text-slate-500 transition-all"
-                  )}
-                >
-                  <Icon className="size-4" />
-                  <span className="hidden sm:inline">{label}</span>
-                </TabsTrigger>
-              ))}
-            </TabsList>
-          </Tabs>
-        </div>
+        {/* ── TABS — masqués pour les vendeurs ── */}
+        {!isVendeur && (
+          <div className="mt-4">
+            <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as typeof activeTab)}>
+              <TabsList className="grid w-full max-w-md grid-cols-3 rounded-xl bg-slate-100 p-1">
+                {tabConfig.map(({ key, label, icon: Icon }) => (
+                  <TabsTrigger
+                    key={key}
+                    value={key}
+                    className={cn(
+                      "flex items-center gap-2 rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-slate-900",
+                      "text-sm font-medium text-slate-500 transition-all"
+                    )}
+                  >
+                    <Icon className="size-4" />
+                    <span className="hidden sm:inline">{label}</span>
+                  </TabsTrigger>
+                ))}
+              </TabsList>
+            </Tabs>
+          </div>
+        )}
       </div>
 
       {/* ── TAB CONTENT ── */}
       <div className="p-6">
-        {activeTab === 'overview' && (
+        {isVendeur && (
+          <DashboardVendeur formatCurrencyLocal={formatCurrencyLocal} />
+        )}
+        {!isVendeur && activeTab === 'overview' && (
           <PerformanceOverview
             stats={stats}
             revenueChart={revenueChart}
@@ -290,7 +300,7 @@ export default function DashboardShadcn() {
             formatCurrencyLocal={formatCurrencyLocal}
           />
         )}
-        {activeTab === 'stock' && (
+        {!isVendeur && activeTab === 'stock' && (
           <div className="space-y-6">
             <ExpirationAlertsWidget />
             <StockIntelligence
@@ -307,7 +317,7 @@ export default function DashboardShadcn() {
             />
           </div>
         )}
-        {activeTab === 'finance' && (
+        {!isVendeur && activeTab === 'finance' && (
           <FinancialSummary
             stats={stats}
             ugStats={ugStats}

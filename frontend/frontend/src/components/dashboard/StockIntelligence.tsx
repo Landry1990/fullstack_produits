@@ -226,14 +226,14 @@ export default function StockIntelligence({
                   <TrendingUp className="size-5" />
                 </div>
                 <div>
-                  <h2 className="text-xs font-bold text-slate-700 tracking-tight uppercase">Surstock</h2>
-                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Produits en excédent</p>
+                  <h2 className="text-xs font-bold text-slate-700 tracking-tight uppercase">{t('overstock.title', 'Surstock')}</h2>
+                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{t('overstock.subtitle', 'Produits en excédent')}</p>
                 </div>
               </div>
               {overstockTotal > 0 && (
                 <div className="text-right">
                   <span className="text-xs font-black text-amber-500 block">{formatCurrencyLocal(overstockTotal)}</span>
-                  <span className="text-[9px] font-bold text-orange-400 uppercase tracking-wider">Capital bloqué</span>
+                  <span className="text-[9px] font-bold text-orange-400 uppercase tracking-wider">{t('overstock.capital_blocked', 'Capital bloqué')}</span>
                 </div>
               )}
             </div>
@@ -247,20 +247,20 @@ export default function StockIntelligence({
                       <div className="min-w-0">
                         <span className="text-xs font-bold text-slate-700 truncate block">{p.name}</span>
                         <span className="text-[9px] font-bold text-orange-500/70 uppercase tracking-widest">
-                          {p.excess_qty != null ? `+${p.excess_qty} unités en excès` : `Stock: ${p.stock}u`}
+                          {p.excess_qty != null ? t('overstock.excess_qty', '+{{count}} unités en excès', { count: p.excess_qty }) : t('overstock.stock_label', 'Stock: {{count}}u', { count: p.stock })}
                         </span>
                       </div>
                     </div>
                     <div className="flex flex-col items-end shrink-0 ml-2">
                       <span className="text-[10px] font-bold text-amber-500">{formatCurrencyLocal(p.excess_value ?? p.value ?? 0)}</span>
-                      <span className="text-[9px] font-bold text-slate-400">excédent</span>
+                      <span className="text-[9px] font-bold text-slate-400">{t('overstock.excess_label', 'excédent')}</span>
                     </div>
                   </div>
                 ))
               ) : (
                 <div className="flex flex-col items-center justify-center py-12 text-slate-300 text-center h-full">
                   <TrendingUp className="size-12 mb-2" />
-                  <span className="text-[10px] font-bold uppercase tracking-widest">Aucun surstock détecté</span>
+                  <span className="text-[10px] font-bold uppercase tracking-widest">{t('overstock.none_detected', 'Aucun surstock détecté')}</span>
                 </div>
               )}
             </div>
@@ -270,7 +270,7 @@ export default function StockIntelligence({
                 to="/app/stock-analysis?tab=overstock"
                 className="inline-flex items-center justify-center w-full px-3 py-2 bg-white hover:bg-amber-50 text-amber-500 text-xs font-bold gap-2 rounded-lg border border-orange-100 transition-colors"
               >
-                Voir tous les surstocks
+                {t('overstock.see_all', 'Voir tous les surstocks')}
                 <ArrowRight className="size-3" />
               </Link>
             </div>
@@ -329,7 +329,7 @@ export default function StockIntelligence({
                   <div className="p-2 bg-cyan-100 text-cyan-600 rounded-lg">
                     <Package className="size-5" />
                   </div>
-                  <h2 className="text-sm font-bold text-blue-800 tracking-tight uppercase">Réappro Rayon</h2>
+                  <h2 className="text-sm font-bold text-blue-800 tracking-tight uppercase">{t('reappro.rayon_title', 'Réappro Rayon')}</h2>
                 </div>
                 <span className="bg-cyan-500 text-white px-2.5 py-1 rounded-lg text-xs font-bold animate-pulse">
                   {reapproStats.product_count}
@@ -341,23 +341,23 @@ export default function StockIntelligence({
                   <Package className="size-10 text-blue-500" />
                 </div>
                 <p className="text-sm font-bold text-blue-900 leading-tight">
-                  {reapproStats.product_count} produits en attente de transfert
+                  {t('reappro.products_waiting', '{{count}} produits en attente de transfert', { count: reapproStats.product_count })}
                 </p>
                 <p className="text-[10px] text-cyan-600 font-medium mt-1">
-                  Le niveau en rayon est passé sous le seuil critique
+                  {t('reappro.threshold_warning', 'Le niveau en rayon est passé sous le seuil critique')}
                 </p>
 
                 {reapproStats.total_units_suggested > 0 && (
                   <div className="mt-4 px-4 py-2 bg-cyan-100/30 rounded-xl border border-blue-100/50">
-                    <span className="text-[10px] font-bold uppercase tracking-widest text-cyan-600 block">Suggestion totale</span>
-                    <span className="text-lg font-bold text-blue-800">+{reapproStats.total_units_suggested} <small className="text-xs">unités</small></span>
+                    <span className="text-[10px] font-bold uppercase tracking-widest text-cyan-600 block">{t('reappro.suggestion_label', 'Suggestion totale')}</span>
+                    <span className="text-lg font-bold text-blue-800">+{reapproStats.total_units_suggested} <small className="text-xs">{t('reappro.units_label', 'unités')}</small></span>
                   </div>
                 )}
               </div>
 
               <div className="mt-4 shrink-0">
                 <Link to="/app/reappro-rayon" className="inline-flex items-center justify-center w-full px-3 py-2 bg-cyan-500 hover:bg-cyan-600 text-white rounded-lg font-bold text-[10px] uppercase tracking-widest gap-2 transition-colors">
-                  Aller au menu réappro
+                  {t('reappro.go_to_reappro', 'Aller au menu réappro')}
                   <ArrowRight className="size-3.5" />
                 </Link>
               </div>

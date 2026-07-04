@@ -681,6 +681,7 @@ def _collect_data(date_debut, date_fin):
         Q, Subquery, Sum, Value, Max
     )
     from django.db.models.functions import Coalesce, TruncDate
+    from api.views.rapports.tz_utils import local_trunc_date
     from api.models import (
         Facture, FactureProduit, FactureProduitAllocation,
         ClotureCaisse, MouvementCaisse, Produit, Rayon,
@@ -739,9 +740,12 @@ def _collect_data(date_debut, date_fin):
     marge_divers  = marge_totale - marge_pharma
 
     # ── CA & Marges jour par jour ────────────────────────────────────────────
+    # Utiliser TruncDate (cohérent avec le calcul des allocations ci-dessous)
     daily_data: dict = {}
-    for f in factures_ann.values("date", "total_ttc", "divers_amount", "remise", "montant_fidelite"):
-        day = f["date"].date() if hasattr(f["date"], "date") else f["date"]
+    for f in factures_ann.annotate(day=local_trunc_date("date")).values(
+        "day", "total_ttc", "divers_amount", "remise", "montant_fidelite"
+    ):
+        day = f["day"]
         if day not in daily_data:
             daily_data[day] = {"ca_total": Decimal("0"), "ca_divers": Decimal("0"),
                                "remises": Decimal("0"), "nb_ventes": 0}
@@ -754,7 +758,7 @@ def _collect_data(date_debut, date_fin):
     alloc_day = FactureProduitAllocation.objects.filter(
         facture_produit__facture__in=factures
     ).annotate(
-        day=TruncDate("facture_produit__facture__date")
+        day=local_trunc_date("facture_produit__facture__date")
     ).values("day", "stock_lot__is_divers").annotate(
         rev=Coalesce(Sum(F("selling_price") * F("quantity"), output_field=DecimalField()), Decimal("0")),
         cost=Coalesce(Sum(F("cost_price") * F("quantity"), output_field=DecimalField()), Decimal("0")),
@@ -762,8 +766,7 @@ def _collect_data(date_debut, date_fin):
     for row in alloc_day:
         day = row["day"]
         if day not in daily_data:
-            daily_data[day] = {"ca_total": Decimal("0"), "ca_divers": Decimal("0"),
-                               "remises": Decimal("0"), "nb_ventes": 0}
+            continue  # allocation orpheline (décalage timezone) — ignorer
         marge_ligne = (row["rev"] or Decimal("0")) - (row["cost"] or Decimal("0"))
         if row["stock_lot__is_divers"]:
             daily_data[day]["marge_divers"] = daily_data[day].get("marge_divers", Decimal("0")) + marge_ligne
@@ -892,21 +895,31 @@ def _collect_data(date_debut, date_fin):
         })
 
     # ── Créances Clients ─────────────────────────────────────────────────────
+    # Filtré sur la période du rapport pour que créances + caisses = CA total mois
     clients_data = Client.objects.filter(
-        facture__status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE]
+        facture__status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE],
+        facture__date__gte=date_debut,
+        facture__date__lt=date_fin,
     ).distinct().annotate(
         nb_factures=Count("facture", filter=Q(
-            facture__status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE]
+            facture__status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE],
+            facture__date__gte=date_debut,
+            facture__date__lt=date_fin,
         )),
     )
     creances_rows = []
     for c in clients_data:
         ca_c = Facture.objects.filter(
             client=c,
-            status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE]
+            status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE],
+            date__gte=date_debut,
+            date__lt=date_fin,
         ).aggregate(t=Coalesce(Sum("total_ttc"), Decimal("0")))["t"]
         paye_c = Caisse.objects.filter(
-            facture__client=c, statut="completee"
+            facture__client=c,
+            facture__date__gte=date_debut,
+            facture__date__lt=date_fin,
+            statut="completee",
         ).exclude(mode_paiement="en_compte").aggregate(
             t=Coalesce(Sum("montant"), Decimal("0"))
         )["t"]

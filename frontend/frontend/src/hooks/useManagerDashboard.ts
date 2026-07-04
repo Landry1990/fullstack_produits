@@ -11,6 +11,7 @@ import { getLocalDateString } from '../utils/dateUtils';
 export interface EditingObjectif {
     periode: string;
     ca_objectif: string;
+    marge_objectif: string;
     date_debut: string;
 }
 
@@ -23,6 +24,7 @@ export const useManagerDashboard = () => {
     const [editingObjectif, setEditingObjectif] = useState<EditingObjectif>({
         periode: 'JOUR',
         ca_objectif: '',
+        marge_objectif: '',
         date_debut: getLocalDateString()
     });
 
@@ -132,12 +134,14 @@ export const useManagerDashboard = () => {
             setEditingObjectif({
                 periode: periode,
                 ca_objectif: objective ? objective.ca_objectif : '',
+                marge_objectif: objective ? objective.marge_objectif : '',
                 date_debut: objective ? objective.date_debut : getLocalDateString()
             });
         } else {
             setEditingObjectif({
                 periode: 'JOUR',
                 ca_objectif: '',
+                marge_objectif: '',
                 date_debut: getLocalDateString()
             });
         }

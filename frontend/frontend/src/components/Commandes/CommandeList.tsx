@@ -301,7 +301,7 @@ export default function CommandeList({
               )}
               onClick={() => onFilterStatusChange('ALL')}
             >
-              {t('orders:list.filters.all')} ({totalCount})
+              {t('orders:list.filters.all')} ({(statusCounts.PREP || 0) + (statusCounts.ATT || 0) + (statusCounts.CLOT || 0)})
             </Button>
             <Button
               variant="ghost"
