@@ -1,4 +1,10 @@
-import pytest
+try:
+    import pytest
+except ImportError:
+    import types
+    _noop = lambda *a, **k: (lambda f: f)
+    _mark = types.SimpleNamespace(django_db=_noop, parametrize=_noop)
+    pytest = types.SimpleNamespace(mark=_mark, fixture=_noop)  # type: ignore
 from decimal import Decimal
 from django.contrib.auth.models import User
 from api.models import Produit, Facture, FactureProduit, Caisse

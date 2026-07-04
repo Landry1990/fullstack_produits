@@ -48,6 +48,7 @@ def collect_extra_data(date_debut, date_fin):
         Count, DecimalField, F, Q, Sum, Value
     )
     from django.db.models.functions import Coalesce, TruncDate
+    from api.views.rapports.tz_utils import local_trunc_date
     from django.utils import timezone
     from api.models import (
         Facture, FactureProduit, FactureProduitAllocation,
@@ -134,7 +135,7 @@ def collect_extra_data(date_debut, date_fin):
 
     for p in Caisse.objects.filter(
         facture__in=factures_cur, statut="completee"
-    ).annotate(day=TruncDate("date_paiement")).values("day", "mode_paiement").annotate(
+    ).annotate(day=local_trunc_date("date_paiement")).values("day", "mode_paiement").annotate(
         total=Sum("montant")
     ):
         day = p["day"]
@@ -219,7 +220,7 @@ def collect_extra_data(date_debut, date_fin):
     semaines: dict = {}
     for p in Caisse.objects.filter(
         facture__in=factures_cur, statut="completee"
-    ).annotate(day=TruncDate("date_paiement")).values("day").annotate(
+    ).annotate(day=local_trunc_date("date_paiement")).values("day").annotate(
         total=Sum("montant")
     ):
         day = p["day"]
@@ -233,7 +234,7 @@ def collect_extra_data(date_debut, date_fin):
     # Dépenses par semaine
     for m in MouvementCaisse.objects.filter(
         date__gte=date_debut, date__lt=date_fin, type="SORTIE"
-    ).annotate(day=TruncDate("date")).values("day").annotate(total=Sum("montant")):
+    ).annotate(day=local_trunc_date("date")).values("day").annotate(total=Sum("montant")):
         day = m["day"]
         if day:
             iso = day.isocalendar()

@@ -111,7 +111,12 @@ const clientService = {
     addDepot: async (id: number, data: { type: string, montant: number, mode_paiement?: string, notes?: string }): Promise<any> => {
         const response = await api.post(`clients/${id}/add_depot/`, data);
         return response.data;
-    }
+    },
+
+    updateAlerte: async (id: number, data: { message_alerte: string; blocking_alerte: boolean }): Promise<any> => {
+        const response = await api.patch(`clients/${id}/update_alerte/`, data);
+        return response.data;
+    },
 };
 
 export default clientService;

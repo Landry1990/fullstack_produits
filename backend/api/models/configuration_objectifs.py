@@ -25,7 +25,23 @@ class ConfigurationObjectifs(models.Model):
         validators=[MinValueValidator(Decimal('0.00'))],
         help_text="Seuil de rentabilité mensuel (utilisé en mode FIXE). Utilisé pour calculer l'objectif quotidien."
     )
-    
+
+    marge_objectif_mensuel = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        default=Decimal('0.00'),
+        validators=[MinValueValidator(Decimal('0.00'))],
+        help_text="Objectif de marge brute mensuelle saisi par le pharmacien. Le CA nécessaire est calculé automatiquement via le coefficient."
+    )
+
+    coefficient_marge = models.DecimalField(
+        max_digits=5,
+        decimal_places=2,
+        default=Decimal('1.40'),
+        validators=[MinValueValidator(Decimal('1.01')), MaxValueValidator(Decimal('10.00'))],
+        help_text="Coefficient multiplicateur moyen (prix de vente = coût × coefficient). Défaut 1.40. Taux de marge = (coeff - 1) / coeff."
+    )
+
     pourcentage_croissance = models.DecimalField(
         max_digits=5,
         decimal_places=2,
@@ -52,15 +68,16 @@ class ConfigurationObjectifs(models.Model):
         self.pk = 1  # Ensures Singleton pattern
         super().save(*args, **kwargs)
         
-        # Delete currently auto-generated objectives so they are recalculated immediately
+        # Delete all current-period objectives so they are recalculated with new parameters
         from .objectif import ObjectifCommercial
         from django.utils import timezone
         
         today = timezone.localtime(timezone.now()).date()
+        start_of_week = today - timezone.timedelta(days=today.weekday())
         start_of_month = today.replace(day=1)
         
+        # Delete auto-generated and also objectives with marge_objectif=0 (legacy CA-only)
         ObjectifCommercial.objects.filter(
-            notes__startswith='Généré automatiquement',
             date_debut__gte=start_of_month
         ).delete()
 

@@ -2,7 +2,13 @@
 Tests de robustesse pour le système de ventes.
 Vérifie que l'application résiste aux données invalides, malveillantes ou extrêmes.
 """
-import pytest
+try:
+    import pytest
+except ImportError:
+    import types
+    _noop = lambda *a, **k: (lambda f: f)
+    _mark = types.SimpleNamespace(django_db=_noop, parametrize=_noop)
+    pytest = types.SimpleNamespace(mark=_mark, fixture=_noop)  # type: ignore
 from decimal import Decimal, InvalidOperation
 from django.urls import reverse
 from django.contrib.auth import get_user_model

@@ -11,7 +11,8 @@ User = get_user_model()
 class ObjectifCommercial(models.Model):
     """
     Objectifs commerciaux pour le tableau de bord manager.
-    Permet de définir des objectifs de CA et de ventes par période.
+    Le pharmacien saisit un objectif de marge brute mensuelle.
+    Le système calcule automatiquement le CA nécessaire via le coefficient multiplicateur.
     """
     
     class Periode(models.TextChoices):
@@ -27,10 +28,16 @@ class ObjectifCommercial(models.Model):
     date_debut = models.DateField(
         help_text="Premier jour de la période (lundi pour semaine, 1er pour mois)"
     )
+    marge_objectif = models.DecimalField(
+        max_digits=15,
+        decimal_places=2,
+        default=Decimal('0.00'),
+        help_text="Objectif de marge brute pour cette période (saisi par le pharmacien)"
+    )
     ca_objectif = models.DecimalField(
         max_digits=15, 
         decimal_places=2,
-        help_text="Objectif de chiffre d'affaires pour cette période"
+        help_text="CA objectif calculé automatiquement : marge / taux_marge, où taux_marge = (coeff - 1) / coeff"
     )
     nb_ventes_objectif = models.IntegerField(
         null=True, 
@@ -67,7 +74,7 @@ class ObjectifCommercial(models.Model):
         unique_together = ['periode', 'date_debut']
     
     def __str__(self):
-        return f"{self.get_periode_display()} - {self.date_debut} : {self.ca_objectif} F"
+        return f"{self.get_periode_display()} - {self.date_debut} : Marge {self.marge_objectif} F (CA {self.ca_objectif} F)"
     
     def save(self, *args, **kwargs):
         """
@@ -109,11 +116,29 @@ class ObjectifCommercial(models.Model):
         config = ConfigurationObjectifs.load()
         if config.mode == ConfigurationObjectifs.ModeCalcul.MANUEL:
             return None
-        
+
+        # Taux de marge = (coeff - 1) / coeff, ex: (1.40 - 1) / 1.40 = 0.2857
+        coeff = config.coefficient_marge or Decimal('1.40')
+        taux_marge = (coeff - Decimal('1')) / coeff
+
+        marge_objectif = Decimal('0.00')
         ca_objectif = Decimal('0.00')
 
         if config.mode == ConfigurationObjectifs.ModeCalcul.FIXE:
-            if config.seuil_rentabilite_mensuel > 0:
+            # Mode FIXE : la marge_objectif_mensuel est la saisie du pharmacien
+            marge_mensuelle = config.marge_objectif_mensuel
+            if marge_mensuelle > 0:
+                if periode == cls.Periode.MOIS:
+                    marge_objectif = marge_mensuelle
+                elif periode == cls.Periode.SEMAINE:
+                    marge_objectif = marge_mensuelle / Decimal('4.33')
+                elif periode == cls.Periode.JOUR:
+                    jours = Decimal(str(config.jours_ouverts_semaine)) * Decimal('4.33')
+                    marge_objectif = marge_mensuelle / jours
+                # CA = marge / taux_marge
+                ca_objectif = marge_objectif / taux_marge if taux_marge > 0 else Decimal('0.00')
+            # Fallback sur seuil_rentabilite_mensuel si marge non définie
+            elif config.seuil_rentabilite_mensuel > 0:
                 mensuel = config.seuil_rentabilite_mensuel
                 if periode == cls.Periode.MOIS:
                     ca_objectif = mensuel
@@ -122,7 +147,8 @@ class ObjectifCommercial(models.Model):
                 elif periode == cls.Periode.JOUR:
                     jours = Decimal(str(config.jours_ouverts_semaine)) * Decimal('4.33')
                     ca_objectif = mensuel / jours
-        
+                marge_objectif = ca_objectif * taux_marge
+
         elif config.mode == ConfigurationObjectifs.ModeCalcul.DYNAMIQUE:
             # Need to find previous periods' revenue
             from .billing import Facture
@@ -159,11 +185,12 @@ class ObjectifCommercial(models.Model):
                 ca_objectif = ca_ref * (Decimal('1') + config.pourcentage_croissance / Decimal('100'))
 
         # Save and return new generated objectif if valid
-        if ca_objectif > Decimal('0.00'):
+        if ca_objectif > Decimal('0.00') or marge_objectif > Decimal('0.00'):
             try:
                 return cls.objects.create(
                     periode=periode,
                     date_debut=date_debut,
+                    marge_objectif=round(marge_objectif, 2),
                     ca_objectif=round(ca_objectif, 2),
                     notes=f"Généré automatiquement (Mode {config.get_mode_display()})"
                 )

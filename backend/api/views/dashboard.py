@@ -318,15 +318,21 @@ class DashboardViewSet(viewsets.ViewSet):
         
         # --- Objectifs (Full fetch) ---
         objectifs_data = ObjectifCommercial.get_objectifs_courants()
-        
+
         obj_jour = objectifs_data['jour'].ca_objectif if objectifs_data['jour'] else Decimal('0')
+        marge_obj_jour = objectifs_data['jour'].marge_objectif if objectifs_data['jour'] else Decimal('0')
         taux_jour = float((ca_jour / obj_jour) * 100) if obj_jour > 0 else 0
-        
+        taux_marge_jour = float((margin_jour / marge_obj_jour) * 100) if marge_obj_jour > 0 else 0
+
         obj_sem = objectifs_data['semaine'].ca_objectif if objectifs_data['semaine'] else Decimal('0')
+        marge_obj_sem = objectifs_data['semaine'].marge_objectif if objectifs_data['semaine'] else Decimal('0')
         taux_sem = float((ca_sem / obj_sem) * 100) if obj_sem > 0 else 0
-        
+        taux_marge_sem = float((margin_sem / marge_obj_sem) * 100) if marge_obj_sem > 0 else 0
+
         obj_mois = objectifs_data['mois'].ca_objectif if objectifs_data['mois'] else Decimal('0')
+        marge_obj_mois = objectifs_data['mois'].marge_objectif if objectifs_data['mois'] else Decimal('0')
         taux_mois = float((ca_mois / obj_mois) * 100) if obj_mois > 0 else 0
+        taux_marge_mois = float((margin_mois / marge_obj_mois) * 100) if marge_obj_mois > 0 else 0
         
         # 5. Smart Alerts
         alerts = []
@@ -350,10 +356,61 @@ class DashboardViewSet(viewsets.ViewSet):
             if rate < float(perf_drop * 100):
                 alerts.append({
                     'type': 'danger',
+                    'icon': 'trending_down',
+                    'priority': 1,
                     'title_key': 'manager_dashboard.alerts.perf_title',
                     'message_key': 'manager_dashboard.alerts.perf_msg',
-                    'params': {'rate': round(rate)}
+                    'params': {'rate': round(rate)},
+                    'action_key': 'manager_dashboard.alerts.action_sales',
+                    'action_route': '/dashboard'
                 })
+        
+        # Success Alert (if daily objective exceeded)
+        if day_target > 0 and float(day_actual) >= float(day_target):
+            rate_success = (float(day_actual) / float(day_target)) * 100
+            alerts.append({
+                'type': 'success',
+                'icon': 'trophy',
+                'priority': 5,
+                'title_key': 'manager_dashboard.alerts.success_title',
+                'message_key': 'manager_dashboard.alerts.success_msg',
+                'params': {'rate': round(rate_success)},
+                'action_key': None,
+                'action_route': None
+            })
+
+        # Inactivity Alert (no sales since X hours during business hours)
+        if now.hour >= 9:
+            hours_since_open = now.hour - 8
+            last_sale = Facture.objects.filter(
+                status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE],
+                date__date=today
+            ).order_by('-date').first()
+            if last_sale is None and hours_since_open >= 2:
+                alerts.append({
+                    'type': 'warning',
+                    'icon': 'clock',
+                    'priority': 2,
+                    'title_key': 'manager_dashboard.alerts.inactivity_title',
+                    'message_key': 'manager_dashboard.alerts.inactivity_msg',
+                    'params': {'hours': hours_since_open},
+                    'action_key': 'manager_dashboard.alerts.action_sales',
+                    'action_route': '/ventes'
+                })
+            elif last_sale:
+                from django.utils import timezone as tz
+                idle_minutes = int((now - tz.localtime(last_sale.date)).total_seconds() / 60)
+                if idle_minutes >= 120 and now.hour < 20:
+                    alerts.append({
+                        'type': 'warning',
+                        'icon': 'clock',
+                        'priority': 2,
+                        'title_key': 'manager_dashboard.alerts.inactivity_title',
+                        'message_key': 'manager_dashboard.alerts.inactivity_idle_msg',
+                        'params': {'minutes': idle_minutes},
+                        'action_key': 'manager_dashboard.alerts.action_sales',
+                        'action_route': '/ventes'
+                    })
         
         # Stock Alert (Critical shortages)
         # Only count products that HAVE a minimum stock defined (> 0)
@@ -364,10 +421,14 @@ class DashboardViewSet(viewsets.ViewSet):
         ).count()
         if shortages > shortage_alert_threshold:
             alerts.append({
-                'type': 'warning',
+                'type': 'danger',
+                'icon': 'package_x',
+                'priority': 2,
                 'title_key': 'manager_dashboard.alerts.shortage_title',
                 'message_key': 'manager_dashboard.alerts.shortage_msg',
-                'params': {'count': shortages}
+                'params': {'count': shortages},
+                'action_key': 'manager_dashboard.alerts.action_stock',
+                'action_route': '/stock'
             })
 
         # --- IMPORTANT DEBTORS ALERT ---
@@ -407,6 +468,8 @@ class DashboardViewSet(viewsets.ViewSet):
             top_client = clients_with_debt[0]
             alerts.append({
                 'type': 'danger',
+                'icon': 'credit_card',
+                'priority': 3,
                 'title_key': 'manager_dashboard.alerts.debt_title',
                 'message_key': 'manager_dashboard.alerts.debt_msg',
                 'params': {
@@ -414,7 +477,9 @@ class DashboardViewSet(viewsets.ViewSet):
                     'threshold': int(debt_threshold),
                     'top_name': top_client.name,
                     'top_debt': int(top_client.calculated_debt)
-                }
+                },
+                'action_key': 'manager_dashboard.alerts.action_clients',
+                'action_route': '/clients'
             })
 
         # --- DORMANT STOCKS ALERT ---
@@ -432,9 +497,13 @@ class DashboardViewSet(viewsets.ViewSet):
         if dormant_count > 0:
             alerts.append({
                 'type': 'warning',
+                'icon': 'archive',
+                'priority': 4,
                 'title_key': 'manager_dashboard.alerts.dormant_title',
                 'message_key': 'manager_dashboard.alerts.dormant_msg',
-                'params': {'count': dormant_count, 'days': dormant_days_limit}
+                'params': {'count': dormant_count, 'days': dormant_days_limit},
+                'action_key': 'manager_dashboard.alerts.action_stock',
+                'action_route': '/stock'
             })
 
         # Week over Week Performance Drop (Compare strictly same days so far)
@@ -464,16 +533,23 @@ class DashboardViewSet(viewsets.ViewSet):
         if last_week_partial_ca > 0 and current_week_ca < last_week_partial_ca * perf_drop:
              alerts.append({
                 'type': 'warning',
+                'icon': 'trending_down',
+                'priority': 3,
                 'title_key': 'manager_dashboard.alerts.drop_title',
                 'message_key': 'manager_dashboard.alerts.drop_msg',
-                'params': {}
+                'params': {},
+                'action_key': 'manager_dashboard.alerts.action_sales',
+                'action_route': '/dashboard'
             })
 
         return Response({
             'kpis': {
-                'jour': {'actual': float(ca_jour), 'margin': float(margin_jour), 'target': float(obj_jour), 'rate': taux_jour},
-                'semaine': {'actual': float(ca_sem), 'margin': float(margin_sem), 'target': float(obj_sem), 'rate': taux_sem},
-                'mois': {'actual': float(ca_mois), 'margin': float(margin_mois), 'target': float(obj_mois), 'rate': taux_mois},
+                'jour': {'actual': float(ca_jour), 'margin': float(margin_jour), 'target': float(obj_jour), 'rate': taux_jour,
+                         'marge_target': float(marge_obj_jour), 'marge_rate': taux_marge_jour},
+                'semaine': {'actual': float(ca_sem), 'margin': float(margin_sem), 'target': float(obj_sem), 'rate': taux_sem,
+                            'marge_target': float(marge_obj_sem), 'marge_rate': taux_marge_sem},
+                'mois': {'actual': float(ca_mois), 'margin': float(margin_mois), 'target': float(obj_mois), 'rate': taux_mois,
+                         'marge_target': float(marge_obj_mois), 'marge_rate': taux_marge_mois},
             },
             'alerts': alerts
         })
@@ -1252,4 +1328,150 @@ class StatistiquesViewSet(viewsets.ViewSet):
             'total_stock_value': float(total_stock_value)
         })
 
+    @action(detail=False, methods=['get'])
+    def vendeur_stats(self, request):
+        """
+        Dashboard personnalisé pour un vendeur/caissier.
+        CA perso jour/semaine/mois, rang classement, objectif, sparkline 7j, top produits perso.
+        """
+        user = request.user
+        now = timezone.localtime(timezone.now())
+        today = now.date()
+        start_of_week = today - timedelta(days=today.weekday())
+        start_of_month = today.replace(day=1)
+        start_7d = today - timedelta(days=6)
+
+        from django.db.models import Case, When
+
+        # ── 1. CA & ventes personnels ─────────────────────────────────────
+        user_qs = Facture.objects.filter(
+            created_by=user,
+            status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE],
+            date__date__gte=start_of_month,
+        )
+        personal = user_qs.aggregate(
+            ca_jour=Coalesce(Sum(Case(When(date__date=today, then=F('total_ttc')), default=Value(0, output_field=DecimalField()))), Decimal('0')),
+            nb_jour=Count(Case(When(date__date=today, then=Value(1)))),
+            ca_sem=Coalesce(Sum(Case(When(date__date__gte=start_of_week, then=F('total_ttc')), default=Value(0, output_field=DecimalField()))), Decimal('0')),
+            nb_sem=Count(Case(When(date__date__gte=start_of_week, then=Value(1)))),
+            ca_mois=Coalesce(Sum(F('total_ttc')), Decimal('0')),
+            nb_mois=Count('id'),
+        )
+        ca_jour = personal['ca_jour']
+        nb_jour = personal['nb_jour']
+        ca_sem  = personal['ca_sem']
+        nb_sem  = personal['nb_sem']
+        ca_mois = personal['ca_mois']
+        nb_mois = personal['nb_mois']
+        panier_jour = float(ca_jour / nb_jour) if nb_jour > 0 else 0.0
+        panier_mois = float(ca_mois / nb_mois) if nb_mois > 0 else 0.0
+
+        # ── 2. Rang dans le classement du mois ───────────────────────────
+        classement_mois = list(
+            Facture.objects.filter(
+                status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE],
+                date__date__gte=start_of_month,
+                date__date__lte=today,
+            )
+            .values('created_by_id')
+            .annotate(ca=Coalesce(Sum('total_ttc'), Value(0, output_field=DecimalField())))
+            .order_by('-ca')
+        )
+        rang = None
+        total_vendeurs = len(classement_mois)
+        for i, row in enumerate(classement_mois, 1):
+            if row['created_by_id'] == user.id:
+                rang = i
+                break
+
+        # ── 3. Objectif du jour ──────────────────────────────────────────
+        objectifs = ObjectifCommercial.get_objectifs_courants()
+        obj_jour = objectifs['jour'].ca_objectif if objectifs['jour'] else Decimal('0')
+        nb_actifs = max(total_vendeurs, 1)
+        objectif_perso = float(obj_jour / nb_actifs) if obj_jour > 0 else 0.0
+        progression_perso = float((ca_jour / Decimal(str(objectif_perso))) * 100) if objectif_perso > 0 else 0.0
+        progression_global = float((ca_jour / obj_jour) * 100) if obj_jour > 0 else 0.0
+
+        # ── 4. Sparkline 7 jours ─────────────────────────────────────────
+        daily_qs = (
+            Facture.objects.filter(
+                created_by=user,
+                status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE],
+                date__date__gte=start_7d,
+                date__date__lte=today,
+            )
+            .annotate(day=TruncDay('date'))
+            .values('day')
+            .annotate(
+                ca=Coalesce(Sum('total_ttc'), Decimal('0')),
+                nb=Count('id'),
+            )
+            .order_by('day')
+        )
+        day_map = {item['day'].date(): {'ca': float(item['ca']), 'nb': item['nb']} for item in daily_qs}
+        DAY_NAMES = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim']
+        sparkline = []
+        cur = start_7d
+        while cur <= today:
+            d = day_map.get(cur, {'ca': 0, 'nb': 0})
+            sparkline.append({'label': DAY_NAMES[cur.weekday()], 'ca': d['ca'], 'nb': d['nb'], 'is_today': cur == today})
+            cur += timedelta(days=1)
+
+        # ── 5. Top 5 produits perso (mois) ───────────────────────────────
+        top_produits = (
+            FactureProduit.objects.filter(
+                facture__created_by=user,
+                facture__status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE],
+                facture__date__date__gte=start_of_month,
+            )
+            .values('produit_id', 'produit__name')
+            .annotate(
+                qty=Sum('quantity'),
+                revenue=Coalesce(Sum(F('quantity') * (F('selling_price') - F('discount'))), Decimal('0')),
+            )
+            .order_by('-revenue')[:5]
+        )
+        top_produits_data = [
+            {'id': p['produit_id'], 'name': p['produit__name'] or '—', 'qty': int(p['qty']), 'revenue': float(p['revenue'])}
+            for p in top_produits
+        ]
+
+        # ── 6. Dernière vente ────────────────────────────────────────────
+        derniere = (
+            Facture.objects.filter(
+                created_by=user,
+                status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE],
+            )
+            .order_by('-date')
+            .values('date', 'numero_facture', 'total_ttc')
+            .first()
+        )
+        derniere_vente = None
+        if derniere:
+            derniere_vente = {
+                'numero': derniere['numero_facture'],
+                'montant': float(derniere['total_ttc']),
+                'date': derniere['date'].isoformat(),
+            }
+
+        return Response({
+            'vendeur': user.get_full_name() or user.username,
+            'ca_jour': float(ca_jour),
+            'nb_jour': nb_jour,
+            'panier_jour': panier_jour,
+            'ca_sem': float(ca_sem),
+            'nb_sem': nb_sem,
+            'ca_mois': float(ca_mois),
+            'nb_mois': nb_mois,
+            'panier_mois': panier_mois,
+            'rang': rang,
+            'total_vendeurs': total_vendeurs,
+            'objectif_jour_global': float(obj_jour),
+            'objectif_jour_perso': objectif_perso,
+            'progression_perso': round(progression_perso, 1),
+            'progression_global': round(progression_global, 1),
+            'sparkline': sparkline,
+            'top_produits': top_produits_data,
+            'derniere_vente': derniere_vente,
+        })
 

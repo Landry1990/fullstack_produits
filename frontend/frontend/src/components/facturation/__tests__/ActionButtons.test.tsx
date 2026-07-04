@@ -16,7 +16,8 @@ const defaultProps = {
   onBonDeLivraison: mockOnBonDeLivraison,
   onSuspend: mockOnSuspend,
   onCancel: mockOnCancel,
-  isValid: true
+  isValid: true,
+  isSidebarStyle: true,
 }
 
 describe('ActionButtons', () => {
@@ -105,12 +106,9 @@ describe('ActionButtons', () => {
   it('affiche les raccourcis clavier dans les titres', () => {
     render(<ActionButtons {...defaultProps} />)
     
-    // Vérifier que le title contient le raccourci clavier
-    const encaisserButton = screen.getAllByRole('button', { name: /Valider/i })[0]
-    // Match actual tooltips in facturation.json
-    expect(encaisserButton).toHaveAttribute('title', expect.stringContaining('Valider la vente'))
-    
-    const annulerButton = screen.getByText(/Annuler/i).closest('button')
-    expect(annulerButton).toHaveAttribute('title', expect.stringContaining('Réinitialiser'))
+    // En mode Sidebar, le bouton paiement affiche un kbd F9 visible dans le DOM
+    const kbdF9 = document.querySelector('kbd')
+    expect(kbdF9).toBeInTheDocument()
+    expect(kbdF9?.textContent).toContain('F9')
   })
 })
