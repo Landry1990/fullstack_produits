@@ -20,7 +20,6 @@ import json
 from django.core.serializers.json import DjangoJSONEncoder
 
 @receiver(post_save, sender=Produit)
-@receiver(post_save, sender=Facture)
 @receiver(post_save, sender=Commande)
 @receiver(post_save, sender=Client)
 @receiver(post_save, sender=InvoiceSettings)
@@ -57,7 +56,6 @@ def log_save(sender, instance, created, **kwargs):
                 pass
 
 @receiver(post_delete, sender=Produit)
-@receiver(post_delete, sender=Facture)
 @receiver(post_delete, sender=Commande)
 @receiver(post_delete, sender=Client)
 def log_delete(sender, instance, **kwargs):

@@ -429,19 +429,24 @@ class FactureViewSet(BaseViewSetConfig, OptimizedSerializerMixin, viewsets.Model
                     user=validation_user
                 )
 
-            # Log d'audit
+            # Log d'audit — une seule ligne claire
+            vendeur_name = f"{request.user.first_name} {request.user.last_name}".strip() or request.user.username
+            caissier_name = f"{validation_user.first_name} {validation_user.last_name}".strip() or validation_user.username
+            client_label = str(facture.client) if facture.client else (facture.client_name_override or 'Passager')
+            sudo_suffix = f" · Sudo: {caissier_name}" if validation_user != request.user else ''
             log_audit(
                 user=request.user,
                 action=AuditLog.Action.INVOICE_VALIDATE,
                 model_name='Facture',
                 object_id=facture.id,
-                description=f"Validation Facture {facture.numero_facture} (Montant: {facture.total_ttc:,.0f} F)",
+                description=f"Facture {facture.numero_facture} validée — {client_label} — {facture.total_ttc:,.0f} F · Vendeur: {vendeur_name}{sudo_suffix}",
                 details={
                     'numero_facture': facture.numero_facture,
                     'total_ttc': float(facture.total_ttc),
-                    'client': str(facture.client) if facture.client else facture.client_name_override,
-                    'validated_by': validation_user.username,
-                    'sudo_mode': validation_user != request.user
+                    'client': client_label,
+                    'vendeur': vendeur_name,
+                    'caissier': caissier_name,
+                    'sudo_mode': validation_user != request.user,
                 },
                 request=request
             )

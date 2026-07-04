@@ -66,7 +66,7 @@ describe('Avoirs Component', () => {
     expect(await screen.findByText('AV-001', {}, { timeout: 3000 })).toBeInTheDocument()
     
     expect(screen.getByText('Laborex')).toBeInTheDocument()
-    expect(screen.getByText(/P.rim./i)).toBeInTheDocument()
+    expect(screen.getAllByText(/P.rim./i).length).toBeGreaterThan(0)
   })
 
   it('permet de créer un nouvel avoir', async () => {

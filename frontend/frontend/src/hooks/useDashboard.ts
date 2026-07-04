@@ -221,6 +221,7 @@ export interface ObjectifCommercial {
     periode: 'JOUR' | 'SEMAINE' | 'MOIS';
     periode_display: string;
     date_debut: string;
+    marge_objectif: string;
     ca_objectif: string;
     nb_ventes_objectif?: number;
     panier_moyen_objectif?: string;
@@ -328,6 +329,41 @@ export const useVendeursRanking = (mois: string, enabled: boolean = true) => {
         enabled,
         staleTime: 1000 * 60 * 5,
         refetchInterval: enabled ? 1000 * 60 * 5 : false,
+        refetchIntervalInBackground: false,
+    });
+};
+
+export interface VendeurStats {
+    vendeur: string;
+    ca_jour: number;
+    nb_jour: number;
+    panier_jour: number;
+    ca_sem: number;
+    nb_sem: number;
+    ca_mois: number;
+    nb_mois: number;
+    panier_mois: number;
+    rang: number | null;
+    total_vendeurs: number;
+    objectif_jour_global: number;
+    objectif_jour_perso: number;
+    progression_perso: number;
+    progression_global: number;
+    sparkline: { label: string; ca: number; nb: number; is_today: boolean }[];
+    top_produits: { id: number; name: string; qty: number; revenue: number }[];
+    derniere_vente: { numero: string; montant: number; date: string } | null;
+}
+
+export const useVendeurStats = (enabled: boolean = true) => {
+    return useQuery<VendeurStats>({
+        queryKey: ['dashboard', 'vendeurStats'],
+        queryFn: async () => {
+            const response = await api.get<VendeurStats>('dashboard/vendeur_stats/');
+            return response.data;
+        },
+        enabled,
+        staleTime: 1000 * 30,
+        refetchInterval: enabled ? 1000 * 30 : false,
         refetchIntervalInBackground: false,
     });
 };

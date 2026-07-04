@@ -28,11 +28,24 @@ vi.mock('../../hooks/useSupplierDashboard', () => ({
     loading: false,
     error: null,
     refresh: vi.fn()
-  })
+  }),
+  useInvalidateSupplierDashboard: () => vi.fn(),
 }));
 
 vi.mock('../../hooks/useConfirm', () => ({
   useConfirm: () => vi.fn().mockResolvedValue(true)
+}));
+
+vi.mock('../../hooks/useFinanceFournisseurs', () => ({
+  useFinanceFournisseurs: () => ({
+    paiements: [],
+    fournisseurs: [],
+    loading: false,
+    fetchFournisseurs: vi.fn(),
+    fetchPaiements: vi.fn().mockResolvedValue([]),
+    createPaiement: vi.fn().mockResolvedValue({}),
+    deletePaiement: vi.fn().mockResolvedValue({}),
+  }),
 }));
 
 const mockFournisseurs = [

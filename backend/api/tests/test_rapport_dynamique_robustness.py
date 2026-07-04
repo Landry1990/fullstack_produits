@@ -1,4 +1,10 @@
-import pytest
+try:
+    import pytest
+except ImportError:
+    import types
+    _noop = lambda *a, **k: (lambda f: f)
+    _mark = types.SimpleNamespace(django_db=_noop, parametrize=_noop)
+    pytest = types.SimpleNamespace(mark=_mark, fixture=_noop)  # type: ignore
 import json
 from django.urls import reverse
 from rest_framework.test import APIClient

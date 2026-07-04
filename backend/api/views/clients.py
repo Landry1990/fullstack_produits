@@ -3,9 +3,12 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from django.db import transaction
-from django.db.models import F, Sum, Value, DecimalField, OuterRef, Subquery, ProtectedError
+from django.db.models import F, Sum, Value, DecimalField, OuterRef, Subquery, ProtectedError, Count
 from django.db.models.functions import Coalesce
+from django.utils import timezone
+from datetime import timedelta
 from decimal import Decimal
+from collections import defaultdict
 from django_filters.rest_framework import DjangoFilterBackend
 
 from ..models import Client, Facture, Caisse, AyantDroit, DepotClient
@@ -106,18 +109,65 @@ class ClientViewSet(OptimizedSerializerMixin, viewsets.ModelViewSet):
 
     @action(detail=True, methods=['get'])
     def purchase_history(self, request, pk=None):
-        """Retourne l'historique des achats d'un client avec les produits."""
+        """Retourne l'historique enrichi des achats d'un client."""
         client = self.get_object()
-        
-        factures = Facture.objects.filter(
+
+        # Toutes les factures valides (sans limite pour les stats)
+        all_factures = Facture.objects.filter(
             client=client,
             status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE]
-        ).prefetch_related(
-            'produits__produit'
-        ).order_by('-date')[:50]
-        
+        ).prefetch_related('produits__produit').order_by('-date')
+
+        # ── Stats globales ──────────────────────────────────────
+        total_ca = Decimal('0.00')
+        product_counter: dict = defaultdict(lambda: {'nom': '', 'quantite': 0, 'total': Decimal('0.00')})
+        dates = []
+
+        for facture in all_factures:
+            total_ca += facture.total_ttc
+            dates.append(facture.date)
+            for fp in facture.produits.all():
+                pid = fp.produit.id if fp.produit else f"_{fp.produit_nom}"
+                nom = fp.produit.name if fp.produit else (fp.produit_nom or 'Produit inconnu')
+                product_counter[pid]['nom'] = nom
+                product_counter[pid]['quantite'] += fp.quantity
+                product_counter[pid]['total'] += fp.quantity * fp.selling_price
+
+        nb_factures = len(dates)
+        last_visit = dates[0].isoformat() if dates else None
+        avg_basket = float(total_ca / nb_factures) if nb_factures > 0 else 0.0
+
+        # Fréquence moyenne entre visites (en jours)
+        visit_frequency = None
+        if len(dates) >= 2:
+            spans = [(dates[i] - dates[i + 1]).days for i in range(len(dates) - 1)]
+            visit_frequency = round(sum(spans) / len(spans), 1)
+
+        # Top 5 produits par quantité
+        top_products = sorted(
+            [{'id': k, 'nom': v['nom'], 'quantite': v['quantite'], 'total': float(v['total'])}
+             for k, v in product_counter.items()],
+            key=lambda x: x['quantite'], reverse=True
+        )[:5]
+
+        # CA des 12 derniers mois par mois
+        now = timezone.now()
+        ca_12_mois = []
+        for i in range(11, -1, -1):
+            start = (now.replace(day=1) - timedelta(days=i * 30)).replace(day=1)
+            end = (start.replace(day=28) + timedelta(days=4)).replace(day=1)
+            ca_mois = sum(
+                float(f.total_ttc) for f in all_factures
+                if start <= f.date < end
+            )
+            ca_12_mois.append({
+                'mois': start.strftime('%b %Y'),
+                'ca': ca_mois
+            })
+
+        # ── 50 dernières factures pour la liste ────────────────
         result = []
-        for facture in factures:
+        for facture in list(all_factures)[:50]:
             produits_list = []
             for fp in facture.produits.all():
                 produits_list.append({
@@ -127,7 +177,6 @@ class ClientViewSet(OptimizedSerializerMixin, viewsets.ModelViewSet):
                     'prix_unitaire': float(fp.selling_price),
                     'total': float(fp.quantity * fp.selling_price)
                 })
-            
             result.append({
                 'id': facture.id,
                 'date': facture.date.isoformat(),
@@ -136,12 +185,33 @@ class ClientViewSet(OptimizedSerializerMixin, viewsets.ModelViewSet):
                 'status': facture.status,
                 'produits': produits_list
             })
-        
+
         return Response({
             'client_id': client.id,
             'client_name': client.name,
-            'total_factures': len(result),
-            'factures': result
+            'client_type': client.client_type,
+            'message_alerte': client.message_alerte,
+            'blocking_alerte': client.blocking_alerte,
+            'total_factures': nb_factures,
+            'total_ca': float(total_ca),
+            'avg_basket': round(avg_basket, 2),
+            'last_visit': last_visit,
+            'visit_frequency': visit_frequency,
+            'top_products': top_products,
+            'ca_12_mois': ca_12_mois,
+            'factures': result,
+        })
+
+    @action(detail=True, methods=['patch'])
+    def update_alerte(self, request, pk=None):
+        """Met à jour l'alerte personnalisée d'un client."""
+        client = self.get_object()
+        client.message_alerte = request.data.get('message_alerte', '')
+        client.blocking_alerte = bool(request.data.get('blocking_alerte', False))
+        client.save(update_fields=['message_alerte', 'blocking_alerte'])
+        return Response({
+            'message_alerte': client.message_alerte,
+            'blocking_alerte': client.blocking_alerte,
         })
 
     @action(detail=True, methods=['get'])
