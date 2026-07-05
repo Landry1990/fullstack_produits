@@ -60,6 +60,16 @@ const BulkActionsMenu: React.FC<BulkActionsMenuProps> = React.memo(({
     );
 });
 
+const normalizeStatus = (status: string): string => {
+    const s = status?.toUpperCase();
+    if (['PAY', 'PAYEE', 'PAYÉE'].includes(s)) return 'PAY';
+    if (['VAL', 'VALIDE', 'VALIDÉE', 'VALIDEE'].includes(s)) return 'VAL';
+    if (['ANN', 'ANNULEE', 'ANNULÉE'].includes(s)) return 'ANN';
+    if (['BROU', 'BROUILLON'].includes(s)) return 'BROU';
+    if (['PROF', 'PROFORMA'].includes(s)) return 'PROF';
+    return s || 'UNKNOWN';
+};
+
 interface SalesTableProps {
     factures: Facture[];
     onView: (facture: Facture) => void;
@@ -90,17 +100,6 @@ export const SalesTable: React.FC<SalesTableProps> = ({
     const { t } = useTranslation(['sales', 'common']);
     const [selectedIds, setSelectedIds] = React.useState<number[]>([]);
 
-
-    // Normaliser les statuts pour gérer toutes les variantes
-    const normalizeStatus = (status: string): string => {
-        const s = status?.toUpperCase();
-        if (['PAY', 'PAYEE', 'PAYÉE'].includes(s)) return 'PAY';
-        if (['VAL', 'VALIDE', 'VALIDÉE', 'VALIDEE'].includes(s)) return 'VAL';
-        if (['ANN', 'ANNULEE', 'ANNULÉE'].includes(s)) return 'ANN';
-        if (['BROU', 'BROUILLON'].includes(s)) return 'BROU';
-        if (['PROF', 'PROFORMA'].includes(s)) return 'PROF';
-        return s || 'UNKNOWN';
-    };
 
     const getStatusLabel = (status: string) => {
         const normalized = normalizeStatus(status);

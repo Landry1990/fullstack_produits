@@ -86,6 +86,34 @@ interface CommandeProductTableProps {
 
 }
 
+const normalizeExpiryMMYY = (raw: string) => {
+    const cleaned = String(raw ?? '').replace(/\s/g, '').replace(/[^0-9/]/g, '');
+    if (cleaned === '') return '';
+    const digits = cleaned.replace(/\//g, '').slice(0, 4);
+    if (digits.length <= 2) {
+        return digits;
+    }
+    const mm = digits.slice(0, 2);
+    const yy = digits.slice(2);
+    return `${mm}/${yy}`;
+};
+
+const finalizeExpiryMMYY = (raw: string) => {
+    const normalized = normalizeExpiryMMYY(raw);
+    const match = normalized.match(/^(\d{1,2})(?:\/(\d{0,2}))?$/);
+    if (!match) return '';
+    const mmRaw = match[1] || '';
+    const yyRaw = match[2] || '';
+    if (mmRaw.length === 0) return '';
+    const mmNum = Number(mmRaw);
+    if (!Number.isFinite(mmNum) || mmNum < 1 || mmNum > 12) return '';
+    if (yyRaw.length !== 2) return `${String(mmNum).padStart(2, '0')}${yyRaw ? `/${yyRaw}` : ''}`;
+    return `${String(mmNum).padStart(2, '0')}/${yyRaw}`;
+};
+
+const handleSelectAll = (e: React.FocusEvent<HTMLInputElement>) => {
+    e.target.select();
+};
 
 
 export default function CommandeProductTable({
@@ -169,75 +197,11 @@ export default function CommandeProductTable({
 
 
 
-    const normalizeExpiryMMYY = (raw: string) => {
-
-        const cleaned = String(raw ?? '').replace(/\s/g, '').replace(/[^0-9/]/g, '');
-
-        if (cleaned === '') return '';
-
-
-
-        const digits = cleaned.replace(/\//g, '').slice(0, 4);
-
-        if (digits.length <= 2) {
-
-            return digits;
-
-        }
-
-
-
-        const mm = digits.slice(0, 2);
-
-        const yy = digits.slice(2);
-
-        return `${mm}/${yy}`;
-
-    };
-
-
-
-    const finalizeExpiryMMYY = (raw: string) => {
-
-        const normalized = normalizeExpiryMMYY(raw);
-
-        const match = normalized.match(/^(\d{1,2})(?:\/(\d{0,2}))?$/);
-
-        if (!match) return '';
-
-        const mmRaw = match[1] || '';
-
-        const yyRaw = match[2] || '';
-
-        if (mmRaw.length === 0) return '';
-
-        const mmNum = Number(mmRaw);
-
-        if (!Number.isFinite(mmNum) || mmNum < 1 || mmNum > 12) return '';
-
-        if (yyRaw.length !== 2) return `${String(mmNum).padStart(2, '0')}${yyRaw ? `/${yyRaw}` : ''}`;
-
-        return `${String(mmNum).padStart(2, '0')}/${yyRaw}`;
-
-    };
-
-    
-
     // Deletion Modal State
 
     const [productToDelete, setProductToDelete] = useState<number | null>(null);
 
     const [isDeletingMultiple, setIsDeletingMultiple] = useState(false);
-
-    
-
-    // Auto-select content when input receives focus
-
-    const handleSelectAll = (e: React.FocusEvent<HTMLInputElement>) => {
-
-        e.target.select();
-
-    };
 
     
 

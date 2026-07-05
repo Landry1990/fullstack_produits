@@ -7,7 +7,31 @@ import { usePharmacySettings } from './usePharmacySettings';
 import { useAuth } from '../context/AuthContext';
 import { useTranslation } from 'react-i18next';
 import { formatCurrency, normalizeNumberInput } from '../utils/formatters';
+import { escHtml } from '../utils/print/printHelpers';
 import { formatDate, formatDateTime } from '../utils/dateUtils';
+
+const formatLocalISOString = (date: Date): string => {
+    const pad = (num: number) => num.toString().padStart(2, '0');
+    const year = date.getFullYear();
+    const month = pad(date.getMonth() + 1);
+    const day = pad(date.getDate());
+    const hours = pad(date.getHours());
+    const minutes = pad(date.getMinutes());
+    const seconds = pad(date.getSeconds());
+    return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}`;
+};
+
+const formatLocalISOStringEnd = (date: Date): string => {
+    const adjustedDate = new Date(date.getTime() + 1000);
+    const pad = (num: number) => num.toString().padStart(2, '0');
+    const year = adjustedDate.getFullYear();
+    const month = pad(adjustedDate.getMonth() + 1);
+    const day = pad(adjustedDate.getDate());
+    const hours = pad(adjustedDate.getHours());
+    const minutes = pad(adjustedDate.getMinutes());
+    const seconds = pad(adjustedDate.getSeconds());
+    return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}`;
+};
 
 export function useJournalCaisse() {
   const { t } = useTranslation(['cash_journal', 'common']);
@@ -64,8 +88,10 @@ export function useJournalCaisse() {
     end: Date,
     active: boolean,
     posteCaisseId?: number | null,
-    posteCaisseNom?: string | null
+    posteCaisseNom?: string | null,
+    hasActiveSession?: boolean
   } | null>(null);
+  const [isDetectingShift, setIsDetectingShift] = useState(false);
 
   const [isClosingModalOpen, setIsClosingModalOpen] = useState(false);
   const [closingTotals, setClosingTotals] = useState<{
@@ -100,31 +126,6 @@ export function useJournalCaisse() {
 
   const isInitialMount = useRef(true);
   const hasLoadedOnce = useRef(false);
-
-  const formatLocalISOString = (date: Date): string => {
-    const pad = (num: number) => num.toString().padStart(2, '0');
-    const year = date.getFullYear();
-    const month = pad(date.getMonth() + 1);
-    const day = pad(date.getDate());
-    const hours = pad(date.getHours());
-    const minutes = pad(date.getMinutes());
-    const seconds = pad(date.getSeconds());
-    return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}`;
-  };
-
-  // Pour la date de fin, on arrondit à la seconde supérieure pour inclure toutes les transactions
-  const formatLocalISOStringEnd = (date: Date): string => {
-    // Ajouter 1 seconde pour éviter d'exclure la dernière transaction (bug des millisecondes)
-    const adjustedDate = new Date(date.getTime() + 1000);
-    const pad = (num: number) => num.toString().padStart(2, '0');
-    const year = adjustedDate.getFullYear();
-    const month = pad(adjustedDate.getMonth() + 1);
-    const day = pad(adjustedDate.getDate());
-    const hours = pad(adjustedDate.getHours());
-    const minutes = pad(adjustedDate.getMinutes());
-    const seconds = pad(adjustedDate.getSeconds());
-    return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}`;
-  };
 
   const processTransactionsData = useCallback((data: { results?: CaisseTransaction[]; count?: number } | CaisseTransaction[]) => {
     if (Array.isArray(data)) {
@@ -189,15 +190,15 @@ export function useJournalCaisse() {
       isInitialMount.current = false;
       return;
     }
-    // Attendre que le shift soit détecté avant de fetch (évite double requête)
-    if (selectedUser && !detectedShift?.active) return;
-    
+    // Attendre que la détection de shift soit terminée avant de fetch (évite double requête)
+    if (isDetectingShift) return;
+
     setPage(1);
     const controller = new AbortController();
     fetchPageInit(controller.signal);
     return () => controller.abort();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [dateDebut, dateFin, detectedShift?.active]);
+  }, [dateDebut, dateFin, isDetectingShift, selectedUser]);
 
   useEffect(() => {
     if (selectedUser) {
@@ -212,27 +213,25 @@ export function useJournalCaisse() {
       setDateDebut(today);
       setDateFin(endToday);
       setPage(1); // Réinitialiser la pagination
-      // Forcer le rechargement des données pour "tout"
-      const controller = new AbortController();
-      fetchPageInit(controller.signal);
-      return () => controller.abort();
+      // Le rechargement sera déclenché par l'effect des dates
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedUser]);
 
   const handleUserShiftDetection = async (userId: string) => {
+    setIsDetectingShift(true);
     setLoading(true); // Bloquer l'UI pendant la détection
     try {
       const response = await api.get('caisse/get_user_shift/', {
         params: { user_id: userId }
       });
-      const { start_date, end_date, has_activity } = response.data;
-      
+      const { start_date, end_date, has_activity, has_active_session } = response.data;
+
       if (has_activity && start_date) {
         const start = new Date(start_date);
         const end = end_date ? new Date(end_date) : new Date();
-        
-        setDetectedShift({ start, end, active: true });
+
+        setDetectedShift({ start, end, active: true, hasActiveSession: has_active_session });
         // Mettre à jour les dates ET fetcher les données dans la foulée
         setDateDebut(start);
         setDateFin(end);
@@ -245,13 +244,14 @@ export function useJournalCaisse() {
         endToday.setHours(23,59,59,999);
         setDateDebut(today);
         setDateFin(endToday);
-        toast(t('messages.no_shift_found', { defaultValue: 'Aucune activité trouvée pour cette période' }), { icon: 'ℹ️' });
+        toast(t('messages.no_shift_found', { defaultValue: 'Aucune activité pour ce caissier...' }), { icon: 'ℹ️' });
       }
     } catch (err) {
       console.error("Erreur détection shift:", err);
       setDetectedShift(null);
       toast.error(t('messages.shift_error', { defaultValue: 'Erreur lors de la détection du shift' }));
     } finally {
+      setIsDetectingShift(false);
       setLoading(false);
     }
   };
@@ -445,12 +445,26 @@ export function useJournalCaisse() {
         ([key]) => !key.startsWith('__') && key !== 'mouvements_audit' && key !== 'mouvements'
       );
 
-      const movementsAudit = data.mouvements_audit || (data.details?.mouvements_audit) || [];
+      const manualMovements = (data.mouvements_manuels || []).map((m: any) => ({
+        type: m.type,
+        montant: m.montant,
+        motif: m.motif,
+        user_nom: data.user || 'Caissier',
+        date: data.date_fin || data.end_date
+      }));
+      const existingMovements = (data.mouvements_audit || (data.details?.mouvements_audit) || []).map((m: any) => ({
+        type: m.type,
+        montant: m.montant,
+        motif: m.motif,
+        user_nom: m.user_nom,
+        date: m.date
+      }));
+      const allMovements = [...manualMovements, ...existingMovements];
 
       const content = `
         <div style="font-family: monospace; width: 80mm; margin: 0 auto; padding: 10px; color: black; line-height: 1.2;">
             <div style="text-align: center; margin-bottom: 10px; border-bottom: 2px solid black; padding-bottom: 5px;">
-                <h2 style="margin: 0; font-size: 1.1em; font-weight: bold;">${pharmacySettings?.pharmacy_name || 'Ma Pharmacie'}</h2>
+                <h2 style="margin: 0; font-size: 1.1em; font-weight: bold;">${escHtml(pharmacySettings?.pharmacy_name || 'Ma Pharmacie')}</h2>
                 <div style="font-size: 0.8em; margin-top: 2px;">${t('print.report_title')}</div>
             </div>
 
@@ -461,7 +475,7 @@ export function useJournalCaisse() {
                 </div>
                 <div style="display: flex; justify-content: space-between;">
                     <span>${t('print.operator')}:</span>
-                    <span>${data.user || 'Admin'}</span>
+                    <span>${escHtml(data.user || 'Admin')}</span>
                 </div>
                 <div style="display: flex; justify-content: space-between; margin-top: 5px; border-top: 1px dotted #ccc; padding-top: 5px;">
                     <span>${t('print.from')}: ${startStr}</span>
@@ -499,12 +513,12 @@ export function useJournalCaisse() {
                 </div>
             </div>
 
-            ${movementsAudit.length > 0 ? `
+            ${allMovements.length > 0 ? `
             <div style="margin-bottom: 10px;">
                 <div style="font-weight: bold; margin-bottom: 3px; border-bottom: 1px solid black; font-size: 0.85em;">${t('print.expense_details')}</div>
-                ${movementsAudit.map((m: any) => `
+                ${allMovements.map((m: any) => `
                     <div style="display: flex; justify-content: space-between; font-size: 0.75em; margin-bottom: 2px;">
-                        <span style="max-width: 70%;">${m.motif} (${m.user_nom})</span>
+                        <span style="max-width: 70%;">${escHtml(m.motif)} (${escHtml(m.user_nom)})</span>
                         <span style="font-weight: bold;">${formatCurrencyLocal(m.montant)}</span>
                     </div>
                 `).join('')}

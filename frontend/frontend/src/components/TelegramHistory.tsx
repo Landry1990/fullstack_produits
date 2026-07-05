@@ -21,6 +21,24 @@ interface TelegramLog {
     facture_numero: string;
 }
 
+const getStatusIcon = (status: string) => {
+    switch (status) {
+        case 'SENT': return <CheckCircle2 className="size-4 text-success" />;
+        case 'FAILED': return <XCircle className="size-4 text-error" />;
+        case 'READ': return <CheckCircle2 className="size-4 text-info fill-info/20" />;
+        default: return <Clock className="size-4 text-warning" />;
+    }
+};
+
+const getStatusClass = (status: string) => {
+    switch (status) {
+        case 'SENT': return 'badge-success';
+        case 'FAILED': return 'badge-error';
+        case 'READ': return 'badge-info';
+        default: return 'badge-warning';
+    }
+};
+
 const TelegramHistory: React.FC = () => {
     const { } = useTranslation();
     const [logs, setLogs] = useState<TelegramLog[]>([]);
@@ -53,24 +71,6 @@ const TelegramHistory: React.FC = () => {
         log.message.toLowerCase().includes(searchTerm.toLowerCase()) ||
         log.facture_numero?.toLowerCase().includes(searchTerm.toLowerCase())
     );
-
-    const getStatusIcon = (status: string) => {
-        switch (status) {
-            case 'SENT': return <CheckCircle2 className="size-4 text-success" />;
-            case 'FAILED': return <XCircle className="size-4 text-error" />;
-            case 'READ': return <CheckCircle2 className="size-4 text-info fill-info/20" />;
-            default: return <Clock className="size-4 text-warning" />;
-        }
-    };
-
-    const getStatusClass = (status: string) => {
-        switch (status) {
-            case 'SENT': return 'badge-success';
-            case 'FAILED': return 'badge-error';
-            case 'READ': return 'badge-info';
-            default: return 'badge-warning';
-        }
-    };
 
     return (
         <div className="min-h-screen bg-base-200 p-4 md:p-8 space-y-6">

@@ -20,6 +20,27 @@ import { formatCurrency } from '../../utils/formatters';
 import { AnimatedNumber } from '../common/AnimatedNumber';
 import StockHealthSettingsModal from './StockHealthSettingsModal';
 
+const getScoreColor = (score: number) => {
+    if (score >= 80) return 'text-emerald-600';
+    if (score >= 50) return 'text-amber-500';
+    return 'text-red-500';
+};
+
+const getScoreBg = (score: number) => {
+    if (score >= 80) return 'bg-emerald-50';
+    if (score >= 50) return 'bg-amber-50';
+    return 'bg-red-50';
+};
+
+const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    const card = e.currentTarget;
+    const rect = card.getBoundingClientRect();
+    const x = ((e.clientX - rect.left) / rect.width) * 100;
+    const y = ((e.clientY - rect.top) / rect.height) * 100;
+    card.style.setProperty('--mouse-x', `${x}%`);
+    card.style.setProperty('--mouse-y', `${y}%`);
+};
+
 const StockHealthDashboard: React.FC = () => {
     const { t } = useTranslation(['stock', 'common']);
     const { data, loading, error, refresh } = useStockHealth();
@@ -37,27 +58,6 @@ const StockHealthDashboard: React.FC = () => {
     );
 
     if (error || !data) return null;
-
-    const getScoreColor = (score: number) => {
-        if (score >= 80) return 'text-emerald-600';
-        if (score >= 50) return 'text-amber-500';
-        return 'text-red-500';
-    };
-
-    const getScoreBg = (score: number) => {
-        if (score >= 80) return 'bg-emerald-50';
-        if (score >= 50) return 'bg-amber-50';
-        return 'bg-red-50';
-    };
-
-    const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
-        const card = e.currentTarget;
-        const rect = card.getBoundingClientRect();
-        const x = ((e.clientX - rect.left) / rect.width) * 100;
-        const y = ((e.clientY - rect.top) / rect.height) * 100;
-        card.style.setProperty('--mouse-x', `${x}%`);
-        card.style.setProperty('--mouse-y', `${y}%`);
-    };
 
     return (
         <div className="space-y-8 animate-in fade-in slide-in-from-bottom-6 duration-1000">

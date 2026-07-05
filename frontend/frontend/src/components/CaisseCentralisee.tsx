@@ -6,6 +6,7 @@ import { toast } from 'react-hot-toast'
 import { useAuth } from '../context/AuthContext'
 import { usePharmacySettings } from '../hooks/usePharmacySettings'
 import { formatCurrency } from '../utils/formatters'
+import { escHtml } from '../utils/print/printHelpers'
 import type { Facture, TicketCaisse, CouponMonnaie } from '../types'
 import PasswordConfirmModal from './PasswordConfirmModal'
 import { PaymentModal } from './caisse/PaymentModal'
@@ -730,13 +731,13 @@ export default function CaisseCentralisee() {
               .sort(([, a], [, b]) => b - a)
               .map(([mode, montant]) => {
                 const labels: Record<string, string> = {
-                  especes: `💵 ${t('journal.modes.especes')}`,
-                  cheque: `📋 ${t('journal.modes.cheque')}`,
-                  carte: `💳 ${t('journal.modes.carte')}`,
-                  virement: `🏦 ${t('journal.modes.virement')}`,
-                  om: `📱 ${t('journal.modes.om')}`,
-                  momo: `📱 ${t('journal.modes.momo')}`,
-                  recouvrement: `🔄 ${t('journal.modes.recouvrement')}`,
+                  especes: `💵 ${t('modes.especes')}`,
+                  cheque: `📋 ${t('modes.cheque')}`,
+                  carte: `💳 ${t('modes.carte')}`,
+                  virement: `🏦 ${t('modes.virement')}`,
+                  om: `📱 ${t('modes.om')}`,
+                  momo: `📱 ${t('modes.momo')}`,
+                  recouvrement: `🔄 ${t('modes.recouvrement')}`,
                   coupon: `🎫 ${t('recap.coupons', { defaultValue: 'Coupons' })}`
                 }
                 const isNegative = mode === 'coupon'
@@ -961,7 +962,7 @@ export default function CaisseCentralisee() {
               <label className="block text-xs font-bold uppercase text-slate-500 tracking-wider mb-1.5">{t('coupons.generate_modal.notes')}</label>
               <textarea
                 className="w-full h-20 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 resize-none"
-                placeholder={t('journal.movement_modal.description_placeholder')}
+                placeholder={t('movement_modal.description_placeholder')}
                 value={nouveauCouponNotes}
                 onChange={(e) => setNouveauCouponNotes(e.target.value)}
               ></textarea>
@@ -1109,29 +1110,29 @@ export default function CaisseCentralisee() {
 </head>
 <body>
   <div class="header">
-    <div class="pharmacy-name">${pharmacySettings.pharmacy_name || 'PHARMACIE'}</div>
+    <div class="pharmacy-name">${escHtml(pharmacySettings.pharmacy_name || 'PHARMACIE')}</div>
     <div class="pharmacy-info">
-      ${pharmacySettings.city ? `${pharmacySettings.city}` : ''}${pharmacySettings.country ? `, ${pharmacySettings.country}` : ''}<br>
-      ${pharmacySettings.phone ? `Tel: ${pharmacySettings.phone}` : ''}<br>
-      ${pharmacySettings.niu ? `NIU: ${pharmacySettings.niu}` : ''}<br>
-      ${pharmacySettings.registre_commerce ? `RC: ${pharmacySettings.registre_commerce}` : ''}
+      ${pharmacySettings.city ? `${escHtml(pharmacySettings.city)}` : ''}${pharmacySettings.country ? `, ${escHtml(pharmacySettings.country)}` : ''}<br>
+      ${pharmacySettings.phone ? `Tel: ${escHtml(pharmacySettings.phone)}` : ''}<br>
+      ${pharmacySettings.niu ? `NIU: ${escHtml(pharmacySettings.niu)}` : ''}<br>
+      ${pharmacySettings.registre_commerce ? `RC: ${escHtml(pharmacySettings.registre_commerce)}` : ''}
     </div>
   </div>
   
   <div class="coupon-box">
     <div class="coupon-label">Coupon de Monnaie</div>
-    <div class="coupon-number">#${couponTrouve.numero}</div>
+    <div class="coupon-number">#${escHtml(couponTrouve.numero)}</div>
     <div class="coupon-amount">${formatCurrency(Math.round(Number(couponTrouve.montant)))}</div>
   </div>
   
   <div class="info-section">
     <div class="info-row">
       <span class="info-label">Statut:</span>
-      <span>${couponTrouve.status_display || couponTrouve.status}<span class="status-badge">${couponTrouve.status}</span></span>
+      <span>${escHtml(couponTrouve.status_display || couponTrouve.status)}<span class="status-badge">${escHtml(couponTrouve.status)}</span></span>
     </div>
     <div class="info-row">
       <span class="info-label">Généré par:</span>
-      <span>${couponTrouve.cree_par_nom || 'Système'}</span>
+      <span>${escHtml(couponTrouve.cree_par_nom || 'Système')}</span>
     </div>
     <div class="info-row">
       <span class="info-label">Date:</span>
@@ -1148,7 +1149,7 @@ export default function CaisseCentralisee() {
   ${couponTrouve.notes ? `
   <div class="notes">
     <strong>Notes:</strong><br>
-    ${couponTrouve.notes}
+    ${escHtml(couponTrouve.notes)}
   </div>
   ` : ''}
   
@@ -1157,7 +1158,7 @@ export default function CaisseCentralisee() {
   </div>
   
   <div class="footer">
-    ${pharmacySettings.ticket_footer_message || 'Merci de votre visite !'}
+    ${escHtml(pharmacySettings.ticket_footer_message || 'Merci de votre visite !')}
   </div>
 </body>
 </html>`);
@@ -1212,7 +1213,7 @@ export default function CaisseCentralisee() {
                     <span className="font-medium">{couponTrouve.cree_par_nom || t('coupons.system')}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span>{t('journal.table.date_time')}</span>
+                    <span>{t('table.date_time')}</span>
                     <span className="font-medium">{new Date(couponTrouve.date_creation).toLocaleDateString('fr-FR', { day: '2-digit', month: 'long', year: 'numeric' })}</span>
                   </div>
                 </div>
@@ -1226,7 +1227,7 @@ export default function CaisseCentralisee() {
                     </div>
                     {couponTrouve.date_utilisation && (
                       <div className="flex justify-between">
-                        <span>{t('journal.table.date_time')}</span>
+                        <span>{t('table.date_time')}</span>
                         <span>{new Date(couponTrouve.date_utilisation).toLocaleDateString('fr-FR', { day: '2-digit', month: 'long', year: 'numeric' })}</span>
                       </div>
                     )}

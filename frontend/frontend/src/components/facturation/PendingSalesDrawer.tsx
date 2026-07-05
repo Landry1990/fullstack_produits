@@ -24,13 +24,13 @@ export default function PendingSalesDrawer({
     <div className="modal modal-open">
       <div className="modal-box max-w-2xl">
         <div className="flex justify-between items-center mb-4">
-          <h3 className="font-bold text-lg">{t('pending_sales.title')}</h3>
+          <h3 className="font-bold text-lg">{t('facturation:pending_sales.title')}</h3>
           <button onClick={onClose} className="btn btn-sm btn-circle btn-ghost">✕</button>
         </div>
 
         {ventesEnAttente.length === 0 ? (
           <div className="text-center py-8 text-base-content/40">
-            {t('pending_sales.no_sales')}
+            {t('facturation:pending_sales.no_sales')}
           </div>
         ) : (
           <div className="space-y-3">
@@ -49,8 +49,8 @@ export default function PendingSalesDrawer({
                     
                     {/* Client Info */}
                     <div className="flex-1 min-w-0">
-                      <div className="font-bold text-sm truncate" title={vente.clientName || vente.manualClientName || t('pending_sales.unspecified_client')}>
-                        {vente.clientName || vente.manualClientName || t('pending_sales.unspecified_client')}
+                      <div className="font-bold text-sm truncate" title={vente.clientName || vente.manualClientName || t('facturation:pending_sales.unspecified_client')}>
+                        {vente.clientName || vente.manualClientName || t('facturation:pending_sales.unspecified_client')}
                       </div>
                     </div>
 
@@ -58,22 +58,22 @@ export default function PendingSalesDrawer({
                     <div className="flex items-center gap-3 md:gap-5 shrink-0">
                       <div className="hidden sm:flex flex-col items-end border-r border-base-200 pr-3 sm:pr-5">
                         <span className="text-[10px] uppercase font-bold text-base-content/40 tracking-wider">
-                          {t('cart.items_count', { count: vente.lignes.length })}
+                          {t('facturation:cart.items_count', { count: vente.lignes.length })}
                         </span>
                         <span className="text-xs font-medium tabular-nums opacity-60">
-                           {vente.lignes.length} art.
+                           {vente.lignes.length} {t('facturation:pending_sales.articles_short')}
                         </span>
                       </div>
 
                       <div className="flex flex-col items-end border-r border-base-200 pr-3 sm:pr-5">
-                        <span className="text-[10px] uppercase font-bold text-base-content/40 tracking-wider font-sans">Total</span>
+                        <span className="text-[10px] uppercase font-bold text-base-content/40 tracking-wider font-sans">{t('facturation:pending_sales.total')}</span>
                         <span className="text-sm font-black text-primary tabular-nums">
                           {formatCurrency(totalNet)}
                         </span>
                       </div>
 
                       <div className="hidden md:flex flex-col items-center">
-                        <span className="text-[10px] uppercase font-bold text-base-content/40 tracking-wider">Heure</span>
+                        <span className="text-[10px] uppercase font-bold text-base-content/40 tracking-wider">{t('facturation:pending_sales.time')}</span>
                         <span className="text-xs font-medium opacity-40 tabular-nums">
                           {new Date(vente.timestamp).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
                         </span>

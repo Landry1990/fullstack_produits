@@ -160,7 +160,7 @@ const CartRow = React.memo(({
       return `${manualAllocs.length} lots • ${manualAllocs.map(a => `${a.lotText || a.lotId}×${a.quantity}`).join(', ')}`
     }
     if (!ligne.lotId) {
-      if (fefoPreview.length === 0) return 'AUTO (FEFO)'
+      if (fefoPreview.length === 0) return t('facturation:cart_extra.auto_fefo')
       if (fefoPreview.length === 1) {
         const p = fefoPreview[0]
         const parts = [p.lot]
@@ -168,11 +168,11 @@ const CartRow = React.memo(({
           const d = new Date(p.expiration)
           parts.push(`${String(d.getMonth() + 1).padStart(2, '0')}/${String(d.getFullYear()).slice(-2)}`)
         }
-        return `AUTO • ${parts.join(' • ')}`
+        return `${t('facturation:cart_extra.auto_prefix')} • ${parts.join(' • ')}`
       }
       const totalLots = fefoPreview.length
       const firstLot = fefoPreview[0]
-      return `AUTO • ${firstLot.lot} +${totalLots - 1}`
+      return `${t('facturation:cart_extra.auto_prefix')} • ${firstLot.lot} +${totalLots - 1}`
     }
     const parts = [ligne.lotText || `Lot ${ligne.lotId}`]
     if (ligne.lotExpiration) {
@@ -189,7 +189,7 @@ const CartRow = React.memo(({
     const manualAllocs = ligne.lotAllocations?.filter(a => a.quantity > 0)
     if (manualAllocs && manualAllocs.length > 0) {
       return [
-        'Répartition manuelle :',
+        t('facturation:cart_extra.manual_allocation'),
         ...manualAllocs.map(a => {
           const exp = a.lotExpiration ? new Date(a.lotExpiration).toLocaleDateString('fr-FR') : 'sans date'
           return `${a.lotText || a.lotId} × ${a.quantity} (exp ${exp})`
@@ -199,7 +199,7 @@ const CartRow = React.memo(({
     if (!ligne.lotId) {
       if (fefoPreview.length === 0) return t('facturation:cart.product_status.auto_lot')
       return [
-        'FEFO automatique :',
+        t('facturation:cart_extra.fefo_automatic'),
         ...fefoPreview.map(p => {
           const exp = p.expiration ? new Date(p.expiration).toLocaleDateString('fr-FR') : 'sans date'
           return `${p.lot} × ${p.qty} (exp ${exp})`
@@ -208,8 +208,8 @@ const CartRow = React.memo(({
     }
     return [
       ligne.lotText ? `${t('facturation:cart.headers.lot')}: ${ligne.lotText}` : '',
-      ligne.lotExpiration ? `Péremption: ${new Date(ligne.lotExpiration).toLocaleDateString('fr-FR')}` : '',
-      ligne.lotSellingPrice ? `Prix lot: ${formatCurrency(Number(ligne.lotSellingPrice))}` : ''
+      ligne.lotExpiration ? `${t('facturation:cart_extra.peremption')} ${new Date(ligne.lotExpiration).toLocaleDateString('fr-FR')}` : '',
+      ligne.lotSellingPrice ? `${t('facturation:cart_extra.prix_lot')} ${formatCurrency(Number(ligne.lotSellingPrice))}` : ''
     ].filter(Boolean).join(' | ')
   }, [ligne, t, fefoPreview])
 
@@ -228,11 +228,11 @@ const CartRow = React.memo(({
                <h4 className={`text-sm font-semibold truncate leading-tight ${isReturn ? 'text-red-600' : 'text-slate-800'}`} title={ligne.produit.name}>
                  {ligne.produit.name}
                </h4>
-               {ligne.isPromis && <Badge variant="secondary" className="text-[9px] h-4 px-1 bg-amber-100 text-amber-700 border-amber-200">PROMIS</Badge>}
+               {ligne.isPromis && <Badge variant="secondary" className="text-[9px] h-4 px-1 bg-amber-100 text-amber-700 border-amber-200">{t('facturation:cart_extra.promis')}</Badge>}
              </div>
              {ligne.produit.stock !== undefined && (
                 <div className={`text-[10px] leading-none mt-1 ${ligne.produit.stock <= 0 ? 'text-red-500 font-semibold' : 'text-slate-400'}`}>
-                  Stock: {ligne.produit.stock}
+                  {t('facturation:cart_extra.stock_label')} {ligne.produit.stock}
                 </div>
              )}
           </div>
@@ -312,7 +312,7 @@ const CartRow = React.memo(({
                      }
                    }}
                    className="w-full bg-transparent text-left font-semibold text-amber-600 focus:text-amber-700 focus:outline-none placeholder-amber-300"
-                   placeholder="Rem."
+                   placeholder={t('facturation:cart_extra.rem_placeholder')}
                    title={t('facturation:cart.discount_amount')}
                 />
              </div>
@@ -352,7 +352,7 @@ const CartRow = React.memo(({
             <span className="truncate text-slate-800">{ligne.produit.name}</span>
             {ligne.isPromis && (
               <Badge variant="secondary" className="text-[10px] h-5 bg-amber-100 text-amber-700 border-amber-200 animate-pulse shrink-0">
-                PROMIS
+                {t('facturation:cart_extra.promis')}
               </Badge>
             )}
           </div>

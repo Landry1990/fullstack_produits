@@ -19,6 +19,76 @@ interface PaymentState {
   onSuccess?: () => void
 }
 
+const processCouponPayment = async (factureId: number, coupon: CouponMonnaie): Promise<void> => {
+  const couponPayload = {
+    facture: factureId,
+    mode_paiement: 'coupon',
+    montant: coupon.montant,
+    reference: `COUPON-${coupon.numero}`,
+    statut: 'completee',
+  }
+  await api.post('caisse/', couponPayload)
+}
+
+const processRegularPayments = async (
+  factureId: number,
+  paiements: { mode: string; montant: number }[],
+  montantAEncaisser: number,
+  hasTiersPayant: boolean
+): Promise<void> => {
+  let resteAEnregistrer = montantAEncaisser
+
+  for (const paiement of paiements) {
+    if (resteAEnregistrer <= 0) break
+
+    const montantReel = Math.min(paiement.montant, resteAEnregistrer)
+
+    const paiementPayload: any = {
+      facture: factureId,
+      mode_paiement: paiement.mode,
+      montant: montantReel,
+      reference: null,
+      statut: 'completee',
+    }
+
+    if (hasTiersPayant) {
+      paiementPayload.part_patient = montantReel
+      paiementPayload.part_assurance = 0
+    }
+
+    await api.post('caisse/', paiementPayload)
+    resteAEnregistrer -= montantReel
+  }
+}
+
+const createTicketData = (
+  facture: Facture,
+  paiements: { mode: string; montant: number }[],
+  montantTotal: number,
+  montantAEncaisser: number,
+  user: any
+): TicketCaisse => {
+  const rendu = montantTotal - montantAEncaisser
+  const clientName = facture.client_name_override || facture.client_name || 'Client de passage'
+
+  return {
+    id: facture.id,
+    facture: facture as any,
+    mode_paiement: paiements.length > 1 ? 'Mixte' : (paiements[0]?.mode || 'especes'),
+    montant: facture.total_ttc,
+    montant_verse: montantTotal.toString(),
+    rendu: rendu.toString(),
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+    statut: 'completee',
+    date_paiement: new Date().toISOString(),
+    client_name: clientName,
+    paiements_details: (facture as any).paiements || [],
+    user_details: user,
+    reference: null
+  } as TicketCaisse
+}
+
 export const useCaissePayment = ({
   selectedFacture,
   couponsParFacture,
@@ -34,76 +104,6 @@ export const useCaissePayment = ({
 }: PaymentState) => {
   const queryClient = useQueryClient()
   const [loading, setLoading] = useState(false)
-
-  const processCouponPayment = async (factureId: number, coupon: CouponMonnaie): Promise<void> => {
-    const couponPayload = {
-      facture: factureId,
-      mode_paiement: 'coupon',
-      montant: coupon.montant,
-      reference: `COUPON-${coupon.numero}`,
-      statut: 'completee',
-    }
-    await api.post('caisse/', couponPayload)
-  }
-
-  const processRegularPayments = async (
-    factureId: number,
-    paiements: { mode: string; montant: number }[],
-    montantAEncaisser: number,
-    hasTiersPayant: boolean
-  ): Promise<void> => {
-    let resteAEnregistrer = montantAEncaisser
-
-    for (const paiement of paiements) {
-      if (resteAEnregistrer <= 0) break
-
-      const montantReel = Math.min(paiement.montant, resteAEnregistrer)
-
-      const paiementPayload: any = {
-        facture: factureId,
-        mode_paiement: paiement.mode,
-        montant: montantReel,
-        reference: null,
-        statut: 'completee',
-      }
-
-      if (hasTiersPayant) {
-        paiementPayload.part_patient = montantReel
-        paiementPayload.part_assurance = 0
-      }
-
-      await api.post('caisse/', paiementPayload)
-      resteAEnregistrer -= montantReel
-    }
-  }
-
-  const createTicketData = (
-    facture: Facture,
-    paiements: { mode: string; montant: number }[],
-    montantTotal: number,
-    montantAEncaisser: number,
-    user: any
-  ): TicketCaisse => {
-    const rendu = montantTotal - montantAEncaisser
-    const clientName = facture.client_name_override || facture.client_name || 'Client de passage'
-
-    return {
-      id: facture.id,
-      facture: facture as any,
-      mode_paiement: paiements.length > 1 ? 'Mixte' : (paiements[0]?.mode || 'especes'),
-      montant: facture.total_ttc,
-      montant_verse: montantTotal.toString(),
-      rendu: rendu.toString(),
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-      statut: 'completee',
-      date_paiement: new Date().toISOString(),
-      client_name: clientName,
-      paiements_details: (facture as any).paiements || [],
-      user_details: user,
-      reference: null
-    } as TicketCaisse
-  }
 
   const enregistrerPaiement = useCallback(async (
     paiementsValides: { mode: string; montant: number }[],

@@ -21,6 +21,34 @@ interface BulkActionsMenuProps {
     bulkLoading: boolean;
 }
 
+const getStatusStyle = (status: string) => {
+    switch (status?.toUpperCase()) {
+        case 'BROUILLON':
+        case 'BRO': return 'bg-warning/10 text-warning border-amber-200';
+        case 'VAL':
+        case 'VALIDE':
+        case 'VALIDÉ':
+        case 'VALIDEE':
+        case 'VALIDÉE': return 'bg-success/10 text-success border-emerald-200';
+        default: return 'bg-base-200 text-base-content/60 border-base-300';
+    }
+};
+
+const getTypeAvoirStyle = (type: string) => {
+    switch (type?.toUpperCase()) {
+        case 'PERIME':
+        case 'PÉRIMÉ': return 'bg-red-50 text-red-600 border-red-200';
+        case 'CASSE':
+        case 'CASSÉ': return 'bg-orange-50 text-orange-600 border-orange-200';
+        case 'ERREUR_LIVRAISON':
+        case 'ERREUR': return 'bg-yellow-50 text-yellow-700 border-yellow-200';
+        case 'AVARIE': return 'bg-purple-50 text-purple-600 border-purple-200';
+        case 'NON_FACTURE': return 'bg-blue-50 text-blue-600 border-blue-200';
+        case 'AUTRE': return 'bg-slate-100 text-slate-500 border-slate-200';
+        default: return 'bg-slate-100 text-slate-500 border-slate-200';
+    }
+};
+
 const BulkActionsMenu: React.FC<BulkActionsMenuProps> = React.memo(({
     selectedIds, avoirs, onView, onEdit, onValidate, onDelete, onBulkValidate, onBulkDelete, bulkLoading
 }) => {
@@ -116,19 +144,6 @@ export const AvoirsTable: React.FC<AvoirsTableProps> = ({
 }) => {
     const { t, i18n } = useTranslation(['stock', 'common']);
 
-    const getStatusStyle = (status: string) => {
-        switch (status?.toUpperCase()) {
-            case 'BROUILLON':
-            case 'BRO': return 'bg-warning/10 text-warning border-amber-200';
-            case 'VAL':
-            case 'VALIDE':
-            case 'VALIDÉ':
-            case 'VALIDEE':
-            case 'VALIDÉE': return 'bg-success/10 text-success border-emerald-200';
-            default: return 'bg-base-200 text-base-content/60 border-base-300';
-        }
-    };
-
     const getTypeAvoirLabel = (type: string) => {
         switch (type?.toUpperCase()) {
             case 'PERIME':
@@ -141,21 +156,6 @@ export const AvoirsTable: React.FC<AvoirsTableProps> = ({
             case 'NON_FACTURE': return t('stock:avoirs.types.non_facture');
             case 'AUTRE': return t('stock:avoirs.types.autre');
             default: return type;
-        }
-    };
-
-    const getTypeAvoirStyle = (type: string) => {
-        switch (type?.toUpperCase()) {
-            case 'PERIME':
-            case 'PÉRIMÉ': return 'bg-red-50 text-red-600 border-red-200';
-            case 'CASSE':
-            case 'CASSÉ': return 'bg-orange-50 text-orange-600 border-orange-200';
-            case 'ERREUR_LIVRAISON':
-            case 'ERREUR': return 'bg-yellow-50 text-yellow-700 border-yellow-200';
-            case 'AVARIE': return 'bg-purple-50 text-purple-600 border-purple-200';
-            case 'NON_FACTURE': return 'bg-blue-50 text-blue-600 border-blue-200';
-            case 'AUTRE': return 'bg-slate-100 text-slate-500 border-slate-200';
-            default: return 'bg-slate-100 text-slate-500 border-slate-200';
         }
     };
 

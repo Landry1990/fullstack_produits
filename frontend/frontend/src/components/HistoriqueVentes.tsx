@@ -39,6 +39,8 @@ interface DailySale {
   en_compte: number;
 }
 
+const formatMoney = (amount: number) => formatCurrency(amount);
+
 const HistoriqueVentes = () => {
   const { user } = useAuth();
   const { t } = useTranslation(['sales_history', 'common']);
@@ -123,10 +125,6 @@ const HistoriqueVentes = () => {
     } finally {
       setSendingTelegram(null);
     }
-  };
-
-  const formatMoney = (amount: number) => {
-    return formatCurrency(amount);
   };
 
   const totalPages = Math.ceil(totalItems / pageSize);

@@ -209,7 +209,7 @@ export default function StockResolutionModal({
             <div className="p-6 bg-blue-50/50 rounded-2xl border border-blue-100 shadow-inner space-y-4">
                 <div className="flex items-center gap-2 text-blue-600 mb-1">
                     <History className="size-4" />
-                    <h4 className="text-xs font-black uppercase tracking-widest">{t('promis:details')}</h4>
+                    <h4 className="text-xs font-black uppercase tracking-widest">{t('facturation:stock_resolution.promised')}</h4>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="w-full">

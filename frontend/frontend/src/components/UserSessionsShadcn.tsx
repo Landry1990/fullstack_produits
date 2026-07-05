@@ -48,6 +48,11 @@ interface RecapStats {
   avg_duration_display: string;
 }
 
+const formatTime = (dateStr: string | null) => {
+  if (!dateStr) return '---';
+  return format(new Date(dateStr), 'HH:mm:ss');
+};
+
 const UserSessionsShadcn: React.FC = () => {
   const { t, i18n } = useTranslation(['users', 'common']);
   const { user, getServerDate } = useAuth();
@@ -145,11 +150,6 @@ const UserSessionsShadcn: React.FC = () => {
     } finally {
       setDisconnectingId(null);
     }
-  };
-
-  const formatTime = (dateStr: string | null) => {
-    if (!dateStr) return '---';
-    return format(new Date(dateStr), 'HH:mm:ss');
   };
 
   const formatDate = (dateStr: string) => {

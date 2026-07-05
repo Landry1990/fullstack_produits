@@ -31,19 +31,19 @@ interface StockValuationTemplateProps {
     data: StockValuationData;
 }
 
+const formatDate = (dateStr: string) => {
+    if (!dateStr) return '';
+    return new Date(dateStr).toLocaleDateString('fr-FR', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+    });
+};
+
 const StockValuationTemplate: React.FC<StockValuationTemplateProps> = ({ settings, data }) => {
     const { t } = useTranslation(['reports', 'common']);
-
-    const formatDate = (dateStr: string) => {
-        if (!dateStr) return '';
-        return new Date(dateStr).toLocaleDateString('fr-FR', {
-            day: '2-digit',
-            month: '2-digit',
-            year: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit'
-        });
-    };
 
     const docTitle = data.is_pmp ? t('stock_valuation.doc_title_pmp') : t('stock_valuation.doc_title_vente');
     const typeLabel = data.is_pmp ? t('stock_valuation.valuation_pmp') : t('stock_valuation.valuation_vente');

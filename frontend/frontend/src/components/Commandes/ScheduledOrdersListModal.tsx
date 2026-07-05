@@ -26,6 +26,11 @@ interface ScheduledOrdersListModalProps {
     refreshTrigger?: number;
 }
 
+const getDayLabels = (days: number[]) => {
+    const labels = ['Dim', 'Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam'];
+    return days.map(d => labels[d]).join(', ');
+};
+
 export default function ScheduledOrdersListModal({
     isOpen,
     onClose,
@@ -82,11 +87,6 @@ export default function ScheduledOrdersListModal({
         } catch (err) {
             toast.error("Erreur lors de la suppression")
         }
-    }
-
-    const getDayLabels = (days: number[]) => {
-        const labels = ['Dim', 'Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam']
-        return days.map(d => labels[d]).join(', ')
     }
 
     return (

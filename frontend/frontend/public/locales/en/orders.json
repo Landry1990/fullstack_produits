@@ -42,6 +42,7 @@
     },
     "title_local": "Local Orders Management",
     "title_direct": "Direct Orders Management (Import)",
+    "title_divers": "Miscellaneous Orders",
     "subtitle": "Plan your purchases and track your deliveries",
     "all_suppliers": "All suppliers",
     "bulk_delete_btn": "Delete selection",

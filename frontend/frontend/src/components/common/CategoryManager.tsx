@@ -41,6 +41,8 @@ interface CategoryManagerProps {
   hasDescription?: boolean;
 }
 
+const getCategoryName = (category: Category) => category.name || category.nom || '';
+
 export default function CategoryManager({ 
   type, 
   title, 
@@ -83,8 +85,6 @@ export default function CategoryManager({
   const [printTarget, setPrintTarget] = useState<{id: number, name: string} | null>(null);
   const [excludeZeroStock, setExcludeZeroStock] = useState(false);
 
-
-  const getCategoryName = (cat: Category) => cat.name || cat.nom || '';
 
   const fetchCategories = async () => {
     try {

@@ -45,6 +45,8 @@ interface Fournisseur {
   name: string
 }
 
+const formatNumber = (n: number) => utilsFormatNumber(Math.round(n))
+
 export default function AnalyseABC() {
   const { t } = useTranslation(['stock', 'common'])
   const [data, setData] = useState<AnalyseABCData | null>(null)
@@ -106,8 +108,6 @@ export default function AnalyseABC() {
     if (!data) return []
     return data.produits.filter(p => p.categorie === activeTab)
   }, [data, activeTab])
-
-  const formatNumber = (n: number) => utilsFormatNumber(Math.round(n))
 
   // Copier le tableau dans le presse-papier (format TSV pour Excel)
   const copyToClipboard = () => {

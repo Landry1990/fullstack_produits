@@ -574,6 +574,7 @@ export default function Facturation() {
         saving={hook.sudoState.isValidating}
         title={hook.sudoState.title || hook.t('facturation.payment.sudo_title')}
         message={hook.sudoState.message || ""}
+        forceCurrentUser={hook.sudoState.forceCurrentUser}
         className="z-[9999]"
       />
 

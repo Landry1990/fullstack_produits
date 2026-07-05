@@ -279,20 +279,30 @@ class FactureViewSet(BaseViewSetConfig, OptimizedSerializerMixin, viewsets.Model
 
         validation_user = None
         is_avoir_client = data.get('is_avoir_client', False)
-        
-        if total_ttc <= 0 and not is_avoir_client:
+
+        # Enforce Sudo for non-positive amounts OR centralized cash register
+        needs_sudo = (total_ttc <= 0 and not is_avoir_client) or centralized
+
+        if needs_sudo:
             try:
                 validation_user, error_res = validate_sudo_mode(request)
                 if error_res:
                     return error_res
 
-                # Allow if user is superuser OR has the specific permission
-                has_permission = getattr(validation_user.profile, 'can_validate_zero_amount', False) if hasattr(validation_user, 'profile') else False  # type: ignore[attr-defined]
-
-                if validation_user == user and not user.is_superuser and not has_permission:
+                # For centralized cash register, the validator must be the currently logged-in user
+                if centralized and validation_user != user:
                     return Response({
-                        'detail': "Une vente à montant nul ou négatif nécessite la validation d'un tiers-validateur (Sudo)."
+                        'detail': "L'envoi à la caisse centralisée doit être validé par l'utilisateur connecté."
                     }, status=status.HTTP_403_FORBIDDEN)
+
+                # Allow if user is superuser OR has the specific permission
+                if total_ttc <= 0 and not is_avoir_client:
+                    has_permission = getattr(validation_user.profile, 'can_validate_zero_amount', False) if hasattr(validation_user, 'profile') else False  # type: ignore[attr-defined]
+
+                    if validation_user == user and not user.is_superuser and not has_permission:
+                        return Response({
+                            'detail': "Une vente à montant nul ou négatif nécessite la validation d'un tiers-validateur (Sudo)."
+                        }, status=status.HTTP_403_FORBIDDEN)
             except DatabaseError as e:
                 # Si une erreur DB survient pendant la validation Sudo, on rollback et retourne une erreur propre
                 transaction.set_rollback(True)
