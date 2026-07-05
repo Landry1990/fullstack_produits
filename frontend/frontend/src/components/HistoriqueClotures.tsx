@@ -65,6 +65,14 @@ interface SessionCaisse {
   ventilation_paiements: Record<string, number>
 }
 
+const formatDateForApi = (date: Date): string => {
+  const pad = (num: number) => num.toString().padStart(2, '0')
+  const year = date.getFullYear()
+  const month = pad(date.getMonth() + 1)
+  const day = pad(date.getDate())
+  return `${year}-${month}-${day}`
+}
+
 export default function HistoriqueClotures() {
   const { t } = useTranslation(['cash_closings', 'common'])
   const { settings: pharmacySettings } = usePharmacySettings()
@@ -149,15 +157,6 @@ export default function HistoriqueClotures() {
     }
     initPage()
   }, [])
-
-  // Helper pour formater la date en YYYY-MM-DD
-  const formatDateForApi = (date: Date): string => {
-    const pad = (num: number) => num.toString().padStart(2, '0')
-    const year = date.getFullYear()
-    const month = pad(date.getMonth() + 1)
-    const day = pad(date.getDate())
-    return `${year}-${month}-${day}`
-  }
 
   const fetchClotures = useCallback(async (page = currentPage) => {
     setLoading(true)

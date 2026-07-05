@@ -93,7 +93,7 @@ export default function Commandes({ forcedType }: CommandesProps) {
               <ShoppingCart className="size-5 text-emerald-600" />
             </div>
             <h1 className="text-lg font-bold text-slate-800">
-                {state.activeTab === 'DIV' ? 'Commandes Divers' : state.activeTab === 'DIR' ? state.t('orders:title_direct') : state.t('orders:title_local')}
+                {state.activeTab === 'DIV' ? state.t('orders:title_divers') : state.activeTab === 'DIR' ? state.t('orders:title_direct') : state.t('orders:title_local')}
             </h1>
             <Badge variant="secondary" className="ml-2">
               {listProps.sortedCommandes?.length || 0}

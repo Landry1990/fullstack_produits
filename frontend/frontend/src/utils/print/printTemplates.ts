@@ -4,7 +4,7 @@
  * Ces fonctions génèrent du HTML prêt à imprimer pour différents types de documents.
  */
 
-import { formatMoney, formatDateFr, getModeLabel } from './printHelpers';
+import { formatMoney, formatDateFr, getModeLabel, escHtml } from './printHelpers';
 import { formatDate, formatDateTime } from '../dateUtils';
 
 // ============== TYPES ==============
@@ -63,7 +63,7 @@ export function generateClotureTemplate(
   return `
     <div style="font-family: sans-serif; font-size: 11px; color: #000; line-height: 1.3;">
       <div style="text-align: center; border-bottom: 2px solid #000; padding-bottom: 15px; margin-bottom: 15px;">
-        <div style="font-weight: 900; font-size: 16px; text-transform: uppercase;">${cloture.pharmacy_name || 'PHARMACIE'}</div>
+        <div style="font-weight: 900; font-size: 16px; text-transform: uppercase;">${escHtml(cloture.pharmacy_name || 'PHARMACIE')}</div>
         <div style="font-weight: 700; font-size: 11px; text-transform: uppercase; letter-spacing: 1px; margin-top: 4px;">Rapport de Clôture</div>
         <div style="margin-top: 5px; font-weight: 700; opacity: 0.7;">ID: #${cloture.id}</div>
       </div>
@@ -75,7 +75,7 @@ export function generateClotureTemplate(
         </div>
         <div style="display: flex; justify-content: space-between;">
            <span style="font-weight: 700;">CAISSIER:</span>
-           <span style="text-transform: uppercase;">${cloture.user_name || cloture.username || 'N/A'}</span>
+           <span style="text-transform: uppercase;">${escHtml(cloture.user_name || cloture.username || 'N/A')}</span>
         </div>
       </div>
 
@@ -149,7 +149,7 @@ export function generateClotureTemplate(
       ${cloture.observation ? `
         <div style="font-size: 10px; border: 1px solid #e5e7eb; padding: 8px; border-radius: 4px; font-style: italic;">
           <div style="font-weight: 800; text-transform: uppercase; font-size: 8px; margin-bottom: 3px; color: #6b7280;">Observation:</div>
-          ${cloture.observation}
+          ${escHtml(cloture.observation)}
         </div>
       ` : ''}
 
@@ -175,13 +175,13 @@ export function generatePromisTemplate(
 
       <div style="margin-bottom: 15px; border-bottom: 1px solid #eee; padding-bottom: 10px;">
         <div style="font-weight: 800; font-size: 9px; text-transform: uppercase; color: #6b7280; margin-bottom: 5px; letter-spacing: 1px;">Information Client</div>
-        <div style="font-weight: 900; font-size: 13px;">${(promis.client_name || 'Non spécifié').toUpperCase()}</div>
-        ${promis.client_phone ? `<div style="font-weight: 700; color: #1e40af; margin-top: 2px;">📞 ${promis.client_phone}</div>` : ''}
+        <div style="font-weight: 900; font-size: 13px;">${escHtml((promis.client_name || 'Non spécifié').toUpperCase())}</div>
+        ${promis.client_phone ? `<div style="font-weight: 700; color: #1e40af; margin-top: 2px;">📞 ${escHtml(promis.client_phone)}</div>` : ''}
       </div>
 
       <div style="background: #fdf2f2; border: 1px solid #fee2e2; padding: 12px; border-radius: 8px; margin-bottom: 15px;">
         <div style="font-weight: 800; font-size: 9px; text-transform: uppercase; color: #b91c1c; margin-bottom: 8px; letter-spacing: 1px;">Produit Promis</div>
-        <div style="font-weight: 900; font-size: 12px; margin-bottom: 5px;">${promis.produit_nom?.toUpperCase() || 'Non spécifié'}</div>
+        <div style="font-weight: 900; font-size: 12px; margin-bottom: 5px;">${escHtml(promis.produit_nom?.toUpperCase() || 'Non spécifié')}</div>
         <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid rgba(185,28,28,0.1); pt-5; padding-top: 5px; margin-top: 5px;">
            <span style="font-weight: 700;">Quantité attendue:</span>
            <span style="background: #b91c1c; color: #fff; padding: 2px 8px; border-radius: 4px; font-weight: 900; font-size: 12px;">${promis.quantite}</span>
@@ -198,7 +198,7 @@ export function generatePromisTemplate(
       ${promis.notes ? `
         <div style="background: #f9fafb; border: 1px solid #e5e7eb; padding: 10px; border-radius: 8px; margin-bottom: 20px;">
           <div style="font-weight: 700; font-size: 9px; text-transform: uppercase; margin-bottom: 4px; color: #6b7280;">Notes / Instructions:</div>
-          <div style="font-style: italic;">${promis.notes}</div>
+          <div style="font-style: italic;">${escHtml(promis.notes)}</div>
         </div>
       ` : ''}
 
@@ -220,7 +220,7 @@ export function generateStockRayonTemplate(
     <div style="font-family: sans-serif; font-size: 10px; color: #000; line-height: 1.2;">
       <div style="text-align: center; border-bottom: 2px solid #000; padding-bottom: 12px; margin-bottom: 12px;">
         <div style="font-weight: 900; font-size: 14px; text-transform: uppercase;">État de Stock</div>
-        <div style="font-weight: 700; color: #4b5563; font-size: 11px; margin-top: 3px;">${data.rayon_name.toUpperCase()}</div>
+        <div style="font-weight: 700; color: #4b5563; font-size: 11px; margin-top: 3px;">${escHtml(data.rayon_name.toUpperCase())}</div>
       </div>
 
       <div style="display: flex; justify-content: space-between; margin-bottom: 10px; font-size: 8px; color: #6b7280; font-weight: 700;">
@@ -241,7 +241,7 @@ export function generateStockRayonTemplate(
           ${data.products.map((p, idx) => `
             <tr style="border-bottom: 1px solid #f3f4f6; ${idx % 2 === 0 ? 'background: #f9fafb;' : ''}">
               <td style="padding: 5px 4px; font-weight: 700; font-size: 9px; line-height: 1;">
-                ${p.name}
+                ${escHtml(p.name)}
               </td>
               <td style="text-align: right; padding: 5px 4px; font-weight: 900;">${p.stock}</td>
               <td style="text-align: right; padding: 5px 4px; color: #6b7280;">${formatMoney(p.selling_price)}</td>

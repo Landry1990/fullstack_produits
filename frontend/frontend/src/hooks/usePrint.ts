@@ -1,4 +1,5 @@
 import { useCallback, useRef } from 'react';
+import { escHtml } from '../utils/print/printHelpers';
 import { usePharmacySettings } from './usePharmacySettings';
 import { formatDateTime } from '../utils/dateUtils';
 import { useTranslation } from 'react-i18next';
@@ -156,12 +157,12 @@ function usePrint(): UsePrintReturn {
 
     return `
       <div class="print-header">
-        <h2>${settings.pharmacy_name || 'PHARMACIE'}</h2>
-        ${settings.address ? `<p>${settings.address}</p>` : ''}
-        ${settings.phone ? `<p>Tél: ${settings.phone}</p>` : ''}
-        ${settings.email ? `<p>${settings.email}</p>` : ''}
-        ${settings.niu ? `<p>NIU: ${settings.niu}</p>` : ''}
-        ${settings.registre_commerce ? `<p>RC: ${settings.registre_commerce}</p>` : ''}
+        <h2>${escHtml(settings.pharmacy_name || 'PHARMACIE')}</h2>
+        ${settings.address ? `<p>${escHtml(settings.address)}</p>` : ''}
+        ${settings.phone ? `<p>Tél: ${escHtml(settings.phone)}</p>` : ''}
+        ${settings.email ? `<p>${escHtml(settings.email)}</p>` : ''}
+        ${settings.niu ? `<p>NIU: ${escHtml(settings.niu)}</p>` : ''}
+        ${settings.registre_commerce ? `<p>RC: ${escHtml(settings.registre_commerce)}</p>` : ''}
       </div>
     `;
   }, [settings]);
@@ -173,7 +174,7 @@ function usePrint(): UsePrintReturn {
     const footerText = message || settings?.ticket_footer_message || 'Merci de votre visite !';
     return `
       <div class="print-footer">
-        <p>${footerText}</p>
+        <p>${escHtml(footerText)}</p>
         <p style="margin-top: 5px; font-size: 0.7em;">
           ${t('print.printed_on', { defaultValue: 'Imprimé le' })} ${formatDateTime(new Date())}
         </p>

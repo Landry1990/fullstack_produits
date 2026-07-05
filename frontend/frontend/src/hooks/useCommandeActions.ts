@@ -6,6 +6,7 @@ import type { Commande, CommandeProduit, User } from '../types';
 import commandeService, { type SudoCredentials } from '../services/commandeService';
 import { usePharmacySettings } from './usePharmacySettings';
 import { formatDate as formatDateUtil, formatDateTime, getLocale } from '../utils/dateUtils';
+import { escHtml } from '../utils/print/printHelpers';
 
 interface UseCommandeActionsProps {
     fetchCommandes: () => Promise<void>;
@@ -228,13 +229,13 @@ export function useCommandeActions({
                 // Formule: stAnt + qtyTotal = currentStock
                 const stAnt = currentStock - qtyTotal;
 
-                const lotInfo = p.lot ? `<div style="font-size: 9px; color: #666; font-family: monospace;">LOT: ${p.lot} | EXP: ${formatDateUtil(p.date_expiration)}</div>` : ''
+                const lotInfo = p.lot ? `<div style="font-size: 9px; color: #666; font-family: monospace;">LOT: ${escHtml(p.lot)} | EXP: ${escHtml(formatDateUtil(p.date_expiration))}</div>` : ''
                 const tvaLabel = p.tva ? `<span style="font-size: 8px; color: #64748b; margin-left: 4px;">(${p.tva}%)</span>` : '';
                 
                 return `
                     <tr style="border-bottom: 1px solid #eee; page-break-inside: avoid;">
                         <td style="padding: 6px 8px; text-align: left;">
-                            <div style="font-weight: bold; text-transform: uppercase; font-size: 11px;">${produitName}</div>
+                            <div style="font-weight: bold; text-transform: uppercase; font-size: 11px;">${escHtml(produitName)}</div>
                             ${lotInfo}
                         </td>
                         <td style="padding: 6px 8px; text-align: center; font-family: monospace; font-size: 10px;">${cip}</td>
@@ -255,7 +256,7 @@ export function useCommandeActions({
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Bon de Réception - ${commande.numero_facture || commande.id}</title>
+    <title>Bon de Réception - ${escHtml(commande.numero_facture || String(commande.id))}</title>
     <style>
         @media print {
             @page { size: A4; margin: 15mm; }

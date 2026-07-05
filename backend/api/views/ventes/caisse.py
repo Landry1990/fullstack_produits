@@ -46,7 +46,11 @@ class CaisseViewSet(BaseViewSetConfig, viewsets.ModelViewSet):
 
         date_debut = self.request.query_params.get('date_debut')
         date_fin = self.request.query_params.get('date_fin')
-        
+        user_id = self.request.query_params.get('user') or self.request.query_params.get('user_id')
+
+        if user_id:
+            queryset = queryset.filter(user_id=user_id)
+
         if date_debut:
             try:
                 clean = date_debut.replace('T', ' ').replace('Z', '')
@@ -433,6 +437,7 @@ class CaisseViewSet(BaseViewSetConfig, viewsets.ModelViewSet):
         ).select_related('poste').first()
         poste_caisse_id = active_session.poste_id if active_session else None
         poste_caisse_nom = active_session.poste.nom if active_session and active_session.poste else None
+        has_active_session = active_session is not None
 
         first_dates, last_dates = [], []
         if txs.exists():
@@ -451,14 +456,14 @@ class CaisseViewSet(BaseViewSetConfig, viewsets.ModelViewSet):
                 last_dates.append(last_mv.date)  # type: ignore[attr-defined]
 
         if not first_dates:
-            return Response({'user_id': user_id, 'start_date': None, 'end_date': None, 'has_activity': False, 'poste_caisse_id': poste_caisse_id, 'poste_caisse_nom': poste_caisse_nom})
+            return Response({'user_id': user_id, 'start_date': None, 'end_date': None, 'has_activity': False, 'poste_caisse_id': poste_caisse_id, 'poste_caisse_nom': poste_caisse_nom, 'has_active_session': has_active_session})
 
         start_date = min(first_dates)
         end_date = max(last_dates)
         if start_date == end_date:
             end_date = now
 
-        return Response({'user_id': user_id, 'start_date': start_date, 'end_date': end_date, 'has_activity': True, 'poste_caisse_id': poste_caisse_id, 'poste_caisse_nom': poste_caisse_nom})
+        return Response({'user_id': user_id, 'start_date': start_date, 'end_date': end_date, 'has_activity': True, 'poste_caisse_id': poste_caisse_id, 'poste_caisse_nom': poste_caisse_nom, 'has_active_session': has_active_session})
 
     @action(detail=False, methods=['post'], url_path='cloturer')
     @transaction.atomic
@@ -581,9 +586,13 @@ class CaisseViewSet(BaseViewSetConfig, viewsets.ModelViewSet):
 
         # Créer les mouvements manuels envoyés par le frontend
         mouvements_manuels_data = request.data.get('mouvements_manuels', [])
+        logger.info(f"[CLOTURE] Mouvements manuels reçus pour user={user_id}: {mouvements_manuels_data}")
         mouvements_crees = []
         for mv in mouvements_manuels_data:
-            if mv.get('montant', 0) > 0 and mv.get('motif'):
+            montant_mv = mv.get('montant', 0)
+            motif_mv = mv.get('motif')
+            logger.info(f"[CLOTURE] Traitement mouvement: montant={montant_mv}, motif={motif_mv}, type={mv.get('type')}")
+            if montant_mv > 0 and motif_mv:
                 mouvement = MouvementCaisse.objects.create(
                     type=mv.get('type', 'SORTIE'),
                     montant=Decimal(str(mv['montant'])),
@@ -593,6 +602,7 @@ class CaisseViewSet(BaseViewSetConfig, viewsets.ModelViewSet):
                     date=end_date or timezone.now()
                 )
                 mouvements_crees.append(mouvement)
+                logger.info(f"[CLOTURE] Mouvement créé id={mouvement.pk}, type={mouvement.type}, montant={mouvement.montant}, user={mouvement.user_id}")
 
         # Recalculer les totaux avec les mouvements manuels créés
         if mouvements_crees:

@@ -46,6 +46,21 @@ interface FinanceFournisseurModalProps {
   commandeIds?: number[];
 }
 
+const modeBadgeVariant = (mode: string) => {
+  switch (mode) {
+    case 'ESP':
+      return 'warning' as const;
+    case 'CHQ':
+      return 'secondary' as const;
+    case 'VIR':
+      return 'primary' as const;
+    case 'AVOIR':
+      return 'accent' as const;
+    default:
+      return 'ghost' as const;
+  }
+};
+
 export default function FinanceFournisseurModal({
   isOpen,
   onClose,
@@ -151,21 +166,6 @@ export default function FinanceFournisseurModal({
     [paiements]
   );
   const soldeRestant = Math.max(0, solde - totalPaye);
-
-  const modeBadgeVariant = (mode: string) => {
-    switch (mode) {
-      case 'ESP':
-        return 'warning' as const;
-      case 'CHQ':
-        return 'secondary' as const;
-      case 'VIR':
-        return 'primary' as const;
-      case 'AVOIR':
-        return 'accent' as const;
-      default:
-        return 'ghost' as const;
-    }
-  };
 
   const modeLabel = (mode: string) => {
     switch (mode) {

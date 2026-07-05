@@ -7,6 +7,20 @@ import { formatNumber } from '../formatters';
  */
 
 /**
+ * Échappe les caractères HTML spéciaux dans une chaîne provenant de la base de données.
+ * Empêche l'injection HTML/XSS dans les templates d'impression.
+ */
+export function escHtml(value: unknown): string {
+  if (value == null) return '';
+  return String(value)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#x27;');
+}
+
+/**
  * Formate un nombre en format monétaire français pour l'impression
  */
 export function formatMoney(value: number | string): string {

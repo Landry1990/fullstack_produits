@@ -16,6 +16,24 @@ import { Card, CardContent } from './shadcn/card';
 import { Badge } from './shadcn/badge';
 import { cn } from '../lib/utils';
 
+const getDeviceType = () => {
+  const ua = navigator.userAgent;
+  if (/(tablet|ipad|playbook|silk)|(android(?!.*mobi))/i.test(ua)) return 'TABLET';
+  if (/Mobile|iP(hone|od)|Android|BlackBerry|IEMobile|Kindle|NetFront|Silk-Accelerated|(hpw|web)OS|Opera M(obi|ini)/.test(ua)) return 'MOBILE';
+  return 'PC';
+};
+
+const handleResetLicence = async () => {
+  if (window.confirm('Êtes-vous sûr de vouloir supprimer la licence actuelle ? Le système se verrouillera à nouveau.')) {
+    try {
+      await api.delete('/licence/');
+      window.location.reload();
+    } catch (err) {
+      console.error('Error resetting licence:', err);
+    }
+  }
+};
+
 export default function LoginShadcn() {
   const { t } = useTranslation(['auth', 'common']);
   const [username, setUsername] = useState('');
@@ -134,14 +152,6 @@ export default function LoginShadcn() {
     return () => document.removeEventListener('keydown', handleKeyDown);
   }, [isOpen, filteredUsers, highlightedIndex]);
 
-  // Workstation naming
-  const getDeviceType = () => {
-    const ua = navigator.userAgent;
-    if (/(tablet|ipad|playbook|silk)|(android(?!.*mobi))/i.test(ua)) return 'TABLET';
-    if (/Mobile|iP(hone|od)|Android|BlackBerry|IEMobile|Kindle|NetFront|Silk-Accelerated|(hpw|web)OS|Opera M(obi|ini)/.test(ua)) return 'MOBILE';
-    return 'PC';
-  };
-
   const [workstationName, setWorkstationName] = useState(() => {
     const saved = localStorage.getItem('zenith_workstation');
     if (saved) return saved;
@@ -185,17 +195,6 @@ export default function LoginShadcn() {
       }
     } finally {
       setLoading(false);
-    }
-  };
-
-  const handleResetLicence = async () => {
-    if (window.confirm('Êtes-vous sûr de vouloir supprimer la licence actuelle ? Le système se verrouillera à nouveau.')) {
-      try {
-        await api.delete('/licence/');
-        window.location.reload();
-      } catch (err) {
-        console.error('Error resetting licence:', err);
-      }
     }
   };
 

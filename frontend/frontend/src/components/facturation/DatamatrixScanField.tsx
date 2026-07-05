@@ -1,4 +1,5 @@
 import React, { useRef, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { ScanLine, CheckCircle, XCircle, Loader2 } from 'lucide-react';
 import type { ScanStatus } from '../../hooks/useDatamatrixScan';
 
@@ -26,6 +27,7 @@ export default function DatamatrixScanField({
     lastScanned,
     autoFocus = false,
 }: DatamatrixScanFieldProps) {
+    const { t } = useTranslation(['facturation', 'common']);
     const inputRef = useRef<HTMLInputElement>(null);
 
     useEffect(() => {
@@ -44,7 +46,7 @@ export default function DatamatrixScanField({
                     ref={inputRef}
                     type="text"
                     className={`w-full pl-10 pr-4 text-sm h-11 rounded-xl border outline-none transition-all font-mono placeholder:text-slate-400 text-slate-700 ${border} ${bg}`}
-                    placeholder="Scanner le datamatrix de la boîte…"
+                    placeholder={t('facturation:datamatrix.placeholder')}
                     value={value}
                     onChange={(e) => onChange(e.target.value)}
                     onKeyDown={onKeyDown}
@@ -53,7 +55,7 @@ export default function DatamatrixScanField({
                 />
                 {status === 'idle' && (
                     <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] text-slate-400 hidden sm:block whitespace-nowrap pointer-events-none">
-                        Entrée pour valider
+                        {t('facturation:datamatrix.enter_to_validate')}
                     </span>
                 )}
             </div>
@@ -64,7 +66,7 @@ export default function DatamatrixScanField({
             )}
             {status === 'error' && (
                 <p className="text-[11px] text-red-500 pl-1">
-                    Produit ou lot introuvable — vérifiez le code-barres
+                    {t('facturation:datamatrix.not_found')}
                 </p>
             )}
         </div>

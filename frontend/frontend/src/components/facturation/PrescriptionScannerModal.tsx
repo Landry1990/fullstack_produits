@@ -1,4 +1,5 @@
 import React, { useState, useRef, useCallback, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Camera, Upload, Trash2, Search, Check, RefreshCw, Loader2, AlertCircle } from 'lucide-react';
 import PremiumModal from '../common/PremiumModal';
 import { prescriptionOcrService } from '../../services/prescriptionOcrService';
@@ -28,6 +29,7 @@ const PrescriptionScannerModal: React.FC<PrescriptionScannerModalProps> = ({
   onAddProducts,
   onExtractionDone 
 }) => {
+  const { t } = useTranslation(['facturation', 'common']);
   const [image, setImage] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
@@ -57,7 +59,7 @@ const PrescriptionScannerModal: React.FC<PrescriptionScannerModalProps> = ({
       setProducts(results || []);
     } catch (err) {
       console.error('Failed to load products for OCR matching', err);
-      toast.error('Erreur lors du chargement de la base produit');
+      toast.error(t('facturation:prescription_scanner.error_load_products'));
     } finally {
       setLoadingProducts(false);
     }
@@ -85,7 +87,7 @@ const PrescriptionScannerModal: React.FC<PrescriptionScannerModalProps> = ({
         }
       }
     } catch (err) {
-      toast.error('Impossible d\'accéder à la caméra');
+      toast.error(t('facturation:prescription_scanner.error_camera'));
       setShowCamera(false);
     }
   };
@@ -160,12 +162,12 @@ const PrescriptionScannerModal: React.FC<PrescriptionScannerModalProps> = ({
       setMatchResults(matches.filter(m => m.suggestions.length > 0));
       
       if (matches.length === 0) {
-        toast.error('Aucun produit reconnu sur l\'ordonnance');
+        toast.error(t('facturation:prescription_scanner.error_no_products'));
       }
     } catch (err: any) {
       console.error('OCR Error:', err);
-      const errorMessage = err && typeof err === 'object' && 'message' in err ? err.message : 'Détails dans la console (possible blocage antivirus)';
-      toast.error(`Erreur lors du traitement OCR: ${errorMessage}`);
+      const errorMessage = err && typeof err === 'object' && 'message' in err ? err.message : t('facturation:prescription_scanner.error_console');
+      toast.error(t('facturation:prescription_scanner.error_ocr', { error: errorMessage }));
     } finally {
       setIsProcessing(false);
     }
@@ -202,7 +204,7 @@ const PrescriptionScannerModal: React.FC<PrescriptionScannerModalProps> = ({
     }
     
     onClose();
-    toast.success(`${selectedProducts.length} produits ajoutés`);
+    toast.success(t('facturation:prescription_scanner.products_added', { count: selectedProducts.length }));
   };
 
   const reset = () => {
@@ -217,8 +219,8 @@ const PrescriptionScannerModal: React.FC<PrescriptionScannerModalProps> = ({
     <PremiumModal
       isOpen={isOpen}
       onClose={onClose}
-      title="Scanner Ordonnance"
-      subtitle="Capturez une photo pour extraction automatique avec OCR"
+      title={t('facturation:prescription_scanner.title')}
+      subtitle={t('facturation:prescription_scanner.subtitle')}
       icon={<Camera className="size-5 text-emerald-600" />}
       maxWidth="max-w-4xl"
     >
@@ -239,15 +241,15 @@ const PrescriptionScannerModal: React.FC<PrescriptionScannerModalProps> = ({
                     <Upload className="size-8" />
                   </div>
                   <div className="text-center">
-                    <p className="font-bold text-slate-800">Glissez une image ici</p>
-                    <p className="text-sm text-slate-400">Ou cliquez pour parcourir</p>
+                    <p className="font-bold text-slate-800">{t('facturation:prescription_scanner.drag_image')}</p>
+                    <p className="text-sm text-slate-400">{t('facturation:prescription_scanner.click_browse')}</p>
                   </div>
                   <button
                     className="inline-flex items-center justify-center h-8 px-4 rounded-lg text-sm font-medium bg-emerald-600 text-white hover:bg-emerald-700 transition-colors"
                     onClick={(e) => { e.stopPropagation(); startCamera(); }}
                   >
                     <Camera className="size-4 mr-2" />
-                    Utiliser la caméra
+                    {t('facturation:prescription_scanner.use_camera')}
                   </button>
                 </div>
               )}
@@ -287,7 +289,7 @@ const PrescriptionScannerModal: React.FC<PrescriptionScannerModalProps> = ({
                         disabled={loadingProducts}
                       >
                         {loadingProducts ? <Loader2 className="size-4 animate-spin mr-2" /> : <RefreshCw className="size-4 mr-2" />}
-                        Lancer l'analyse OCR
+                        {t('facturation:prescription_scanner.launch_ocr')}
                       </button>
                     </div>
                   )}
@@ -297,7 +299,7 @@ const PrescriptionScannerModal: React.FC<PrescriptionScannerModalProps> = ({
               {isProcessing && (
                 <div className="mt-4 space-y-2">
                   <div className="flex justify-between text-xs font-bold uppercase tracking-wider text-slate-400">
-                    <span>Traitement OCR en cours...</span>
+                    <span>{t('facturation:prescription_scanner.ocr_processing')}</span>
                     <span>{Math.round(progress * 100)}%</span>
                   </div>
                   <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden">
@@ -312,22 +314,22 @@ const PrescriptionScannerModal: React.FC<PrescriptionScannerModalProps> = ({
                 <div className="p-4 border-b border-slate-100 bg-slate-100/80 backdrop-blur-sm flex justify-between items-center">
                     <h3 className="font-bold flex items-center gap-2 text-slate-800">
                         <Search className="size-4 text-emerald-600" />
-                        Médicaments identifiés
+                        {t('facturation:prescription_scanner.medicines_identified')}
                     </h3>
-                    <span className="inline-flex items-center px-2.5 h-6 text-xs rounded-full bg-slate-200 text-slate-700 font-medium">{matchResults.filter(r => r.matchedProduct).length} reconnus</span>
+                    <span className="inline-flex items-center px-2.5 h-6 text-xs rounded-full bg-slate-200 text-slate-700 font-medium">{matchResults.filter(r => r.matchedProduct).length} {t('facturation:prescription_scanner.recognized')}</span>
                 </div>
 
                 <div className="flex-1 overflow-y-auto p-4 space-y-3">
                   {matchResults.length === 0 ? (
                     <div className="h-full flex flex-col items-center justify-center p-8 text-center text-slate-400 italic">
                       <AlertCircle className="size-12 mb-4 stroke-1" />
-                      <p>Les produits détectés apparaîtront ici après l'analyse.</p>
+                      <p>{t('facturation:prescription_scanner.no_results_placeholder')}</p>
                     </div>
                   ) : (
                     matchResults.map((result, idx) => (
                       <div key={idx} className={`p-3 rounded-xl border transition-all ${result.matchedProduct ? 'bg-emerald-50/50 border-emerald-200' : 'bg-white border-slate-100'}`}>
                         <div className="flex justify-between items-start mb-2">
-                          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">Lu sur l'ordonnance :</span>
+                          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">{t('facturation:prescription_scanner.ocr_line_label')}</span>
                           {result.matchedProduct && <Check className="size-4 text-emerald-600" />}
                         </div>
                         <p className="font-medium text-sm mb-2 text-slate-800">{result.ocrLine}</p>
@@ -347,7 +349,7 @@ const PrescriptionScannerModal: React.FC<PrescriptionScannerModalProps> = ({
                           {result.suggestions.length === 0 && (
                               <p className="text-[10px] text-red-600 flex items-center gap-1 py-1">
                                   <AlertCircle className="size-3" />
-                                  Aucune correspondance trouvée
+                                  {t('facturation:prescription_scanner.no_match')}
                               </p>
                           )}
                         </div>
@@ -364,20 +366,20 @@ const PrescriptionScannerModal: React.FC<PrescriptionScannerModalProps> = ({
             <div className="text-xs text-slate-400">
                 {extractionData && (
                     <div className="flex gap-4">
-                        <span className="flex items-center gap-1"><Check className="size-3 text-emerald-600" /> Patient détecté</span>
-                        <span className="flex items-center gap-1"><Check className="size-3 text-emerald-600" /> Médecin détecté</span>
+                        <span className="flex items-center gap-1"><Check className="size-3 text-emerald-600" /> {t('facturation:prescription_scanner.patient_detected')}</span>
+                        <span className="flex items-center gap-1"><Check className="size-3 text-emerald-600" /> {t('facturation:prescription_scanner.doctor_detected')}</span>
                     </div>
                 )}
             </div>
             <div className="flex gap-3">
-                <button className="inline-flex items-center justify-center h-9 px-4 rounded-xl text-sm font-medium text-slate-700 bg-white border border-slate-200 hover:bg-slate-50 transition-colors" onClick={onClose}>Annuler</button>
+                <button className="inline-flex items-center justify-center h-9 px-4 rounded-xl text-sm font-medium text-slate-700 bg-white border border-slate-200 hover:bg-slate-50 transition-colors" onClick={onClose}>{t('facturation:prescription_scanner.cancel')}</button>
                 <button
                   className="inline-flex items-center justify-center h-9 px-8 rounded-xl text-sm font-semibold bg-emerald-600 text-white shadow-lg hover:bg-emerald-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                   disabled={matchResults.filter(r => r.matchedProduct).length === 0 || isProcessing}
                   onClick={validateScan}
                 >
                   <Check className="size-4 mr-2" />
-                  Valider et ajouter
+                  {t('facturation:prescription_scanner.validate_add')}
                 </button>
             </div>
         </div>

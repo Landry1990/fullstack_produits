@@ -41,6 +41,17 @@
         "part_assurance": "Insurance Part",
         "assurance_label": "Insurance"
     },
+    "cart_extra": {
+        "promis": "PROMISED",
+        "auto_fefo": "AUTO (FEFO)",
+        "auto_prefix": "AUTO",
+        "manual_allocation": "Manual allocation:",
+        "fefo_automatic": "Automatic FEFO:",
+        "peremption": "Expiry:",
+        "prix_lot": "Batch price:",
+        "stock_label": "Stock:",
+        "rem_placeholder": "Disc."
+    },
     "actions": {
         "cancel": "Cancel Sale",
         "reset_tooltip": "Reset entire cart (F4)",
@@ -55,7 +66,13 @@
         "pay_tooltip": "Validate sale (Ctrl+Enter)",
         "retrocession_mode": "Retrocession",
         "facture_a4": "A4 Invoice",
-        "facture_a4_tooltip": "Print directly an A4 Invoice (disables ticket)"
+        "facture_a4_tooltip": "Print directly an A4 Invoice (disables ticket)",
+        "scan_ordonnance": "Scan Prescription",
+        "scan_ordonnance_tooltip": "Scan a prescription with OCR",
+        "modes_section": "Modes",
+        "documents_section": "Documents",
+        "sales_management_section": "Sales Management",
+        "format_a4": "A4 Format"
     },
     "search": {
         "label": "Search Product (F2)",
@@ -106,7 +123,9 @@
         "deposit_reminder": "Reminder: This client has a deposit of {{solde}} F.",
         "points_balance": "{{points}} pts",
         "pending_reward": "Earned {{discount}}% discount!",
-        "apply_reward_button": "Apply discount"
+        "apply_reward_button": "Apply discount",
+        "loyalty_label": "Loyalty",
+        "reward_label": "Reward"
     },
     "payment": {
         "modal_title": "Checkout",
@@ -125,6 +144,8 @@
         "payment_mode_label": "Cash register",
         "add_btn": "Add",
         "sudo_title": "Validation Required",
+        "sudo_confirm_identity": "Confirm your identity",
+        "sudo_send_to_caisse": "Please enter your password to send the invoice to the main cash register. This action is tied to your session.",
         "sudo_mode": {
             "validate_by": "Validated by",
             "password": "Password (Sudo)",
@@ -160,7 +181,12 @@
     },
     "pending_sales": {
         "title": "Pending Sales",
-        "items_count": "{{count}} item(s)"
+        "items_count": "{{count}} item(s)",
+        "no_sales": "No pending sales",
+        "unspecified_client": "Unspecified client",
+        "articles_short": "items",
+        "total": "Total",
+        "time": "Time"
     },
     "messages": {
         "discount_limit_error": "Discount limited to {{rate}}% for your profile.",
@@ -218,9 +244,67 @@
         "stock": "In Stock",
         "missing": "Missing",
         "promised": "Promised",
+        "force": "Force",
+        "reduce": "Reduce",
+        "actions": "Actions",
+        "force_all": "Force All",
+        "promis_all": "All Promised",
+        "reduce_all": "Reduce All",
+        "force_warning": "Forcing stock requires supervisor validation.",
         "client_name": "Client Name",
         "optional": "(Optional)",
         "client_phone_for_promised_ticket": "Phone for promised items follow-up",
-        "phone_number_placeholder": "Phone number..."
+        "phone_number_placeholder": "Phone number...",
+        "force_sale_title": "Forced Sale Validation / Insufficient Stock",
+        "force_sale_message": "Confirm forced sale of products with insufficient stock? This will create negative stock."
+    },
+    "alert_message": {
+        "title": "Alert for {{name}}",
+        "description_product": "Set an alert message that will appear in full screen when this product is scanned.",
+        "description_client": "Set an alert message that will appear in full screen when this client is selected.",
+        "placeholder": "Eg: Packaging change, beware of barcode...",
+        "cancel": "Cancel",
+        "save": "Save (Ctrl+S)",
+        "save_success": "Alert message updated for {{name}}",
+        "save_error": "Error saving alert message"
+    },
+    "display_alert": {
+        "critical_title": "CRITICAL ALERT: {{title}}",
+        "product_title": "Product Alert: {{title}}",
+        "client_title": "Client Alert: {{title}}",
+        "blocking_warning": "BLOCKING: THIS ALERT IS CRITICAL AND BLOCKING",
+        "product_check_message": "Please check this product before continuing.",
+        "client_check_message": "Please consider this information for this client.",
+        "understood_blocking": "I UNDERSTAND THE RESTRICTION (Enter)",
+        "understood": "Understood (Enter)"
+    },
+    "prescription_scanner": {
+        "title": "Scan Prescription",
+        "subtitle": "Capture a photo for automatic OCR extraction",
+        "drag_image": "Drag an image here",
+        "click_browse": "Or click to browse",
+        "use_camera": "Use camera",
+        "launch_ocr": "Run OCR analysis",
+        "ocr_processing": "OCR processing...",
+        "medicines_identified": "Identified medicines",
+        "recognized": "recognized",
+        "no_results_placeholder": "Detected products will appear here after analysis.",
+        "ocr_line_label": "Read from prescription:",
+        "no_match": "No match found",
+        "patient_detected": "Patient detected",
+        "doctor_detected": "Doctor detected",
+        "cancel": "Cancel",
+        "validate_add": "Validate and add",
+        "error_load_products": "Error loading product database",
+        "error_camera": "Cannot access camera",
+        "error_no_products": "No products recognized on prescription",
+        "error_ocr": "Error during OCR processing: {{error}}",
+        "error_console": "Details in console (possible antivirus blocking)",
+        "products_added": "{{count}} products added"
+    },
+    "datamatrix": {
+        "placeholder": "Scan the box datamatrix…",
+        "enter_to_validate": "Enter to validate",
+        "not_found": "Product or batch not found — check the barcode"
     }
 }

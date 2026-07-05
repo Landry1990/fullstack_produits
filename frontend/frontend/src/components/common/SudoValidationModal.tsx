@@ -19,6 +19,7 @@ interface SudoValidationModalProps {
     title?: string;
     message?: string;
     className?: string;
+    forceCurrentUser?: boolean;
 }
 
 export default function SudoValidationModal({ 
@@ -28,7 +29,8 @@ export default function SudoValidationModal({
     saving,
     title,
     message,
-    className
+    className,
+    forceCurrentUser
 }: SudoValidationModalProps) {
     const { t } = useTranslation(['common']);
     const { user: currentUser } = useAuth();
@@ -41,12 +43,22 @@ export default function SudoValidationModal({
 
     useEffect(() => {
         if (isOpen) {
-            fetchUsers();
             setPassword('');
             setPasswordError(null);
-            setSelectedValidator(null);
+            if (forceCurrentUser && currentUser?.id) {
+                setSelectedValidator(currentUser.id);
+                setUsers([{
+                    id: currentUser.id,
+                    username: currentUser.username,
+                    first_name: currentUser.first_name,
+                    last_name: currentUser.last_name,
+                }]);
+            } else {
+                setSelectedValidator(null);
+                fetchUsers();
+            }
         }
-    }, [isOpen]);
+    }, [isOpen, forceCurrentUser, currentUser]);
 
     useEffect(() => {
         if (selectedValidator && isOpen) {
@@ -122,7 +134,7 @@ export default function SudoValidationModal({
                         className="select select-bordered w-full h-12 rounded-xl"
                         value={selectedValidator || ''}
                         onChange={(e) => setSelectedValidator(e.target.value ? parseInt(e.target.value) : null)}
-                        disabled={loadingUsers}
+                        disabled={loadingUsers || forceCurrentUser}
                     >
                         <option value="" disabled>{t('common:sudo.validate_me')}</option>
                         {users.map(u => (

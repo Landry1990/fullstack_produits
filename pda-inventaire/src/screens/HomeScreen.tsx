@@ -18,6 +18,11 @@ interface HomeScreenProps {
   onLogout: () => void;
 }
 
+const generateDefaultReference = () => {
+  const now = new Date();
+  return `INV-${now.toLocaleDateString('fr-FR').replace(/\//g, '')}-${now.getHours()}${now.getMinutes()}`;
+};
+
 export default function HomeScreen({ onSelectInventaire, onLogout }: HomeScreenProps) {
   const [inventaires, setInventaires] = useState<Inventaire[]>([]);
   const [loading, setLoading] = useState(true);
@@ -100,11 +105,6 @@ export default function HomeScreen({ onSelectInventaire, onLogout }: HomeScreenP
   };
 
   // Générer une référence par défaut
-  const generateDefaultReference = () => {
-    const now = new Date();
-    return `INV-${now.toLocaleDateString('fr-FR').replace(/\//g, '')}-${now.getHours()}${now.getMinutes()}`;
-  };
-
   const openCreateModal = () => {
     setNewReference(generateDefaultReference());
     setShowCreateModal(true);

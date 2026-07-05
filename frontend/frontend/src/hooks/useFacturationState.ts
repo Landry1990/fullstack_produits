@@ -245,6 +245,18 @@ export function useFacturationState() {
 
   // --- Complete Sale Handler ---
   const handleCompleteSale = async (sudoCredentials?: { validatorId: number, password: string }) => {
+    // Sudo required when sending to centralized cash register
+    if (multiCaisse.centralizedCashRegister && !sudoCredentials) {
+      requireSudo(async (validatorId, password) => {
+        await handleCompleteSale({ validatorId, password })
+      }, {
+        title: t('facturation:payment.sudo_confirm_identity'),
+        message: t('facturation:payment.sudo_send_to_caisse'),
+        forceCurrentUser: true,
+      })
+      return
+    }
+
     const effectiveSudo = sudoCredentials || activeSudoCreds
     const params = {
       selectedClient: clientsHook.selectedClient,

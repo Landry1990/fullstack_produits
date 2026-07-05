@@ -60,7 +60,7 @@ function SidebarActions({
               onChange={(e) => setIsFactureA4?.(e.target.checked)}
               className="size-4 rounded border-blue-300 text-blue-500 focus:ring-blue-500"
             />
-            <span className="text-xs uppercase font-semibold text-slate-500 group-hover:text-blue-600 transition-colors">Format A4</span>
+            <span className="text-xs uppercase font-semibold text-slate-500 group-hover:text-blue-600 transition-colors">{t('facturation:actions.format_a4')}</span>
           </label>
       </div>
 
@@ -72,7 +72,7 @@ function SidebarActions({
             disabled={!isValid || loading}
             className="h-9 text-xs font-semibold uppercase tracking-wide border-slate-200 hover:border-slate-300 hover:bg-slate-50"
           >
-            Proforma
+            {t('facturation:actions.proforma')}
           </Button>
           <Button
             variant="outline"
@@ -86,7 +86,7 @@ function SidebarActions({
             variant="outline"
             onClick={onScanOrdonnance}
             className="h-9 px-2 border-emerald-200 text-emerald-700 hover:bg-emerald-50 hover:border-emerald-300"
-            title="Scanner Ordonnance"
+            title={t('facturation:actions.scan_ordonnance_tooltip')}
           >
             <Camera className="size-4" />
           </Button>
@@ -151,7 +151,7 @@ function FooterActions({
           </DropdownMenuTrigger>
           <DropdownMenuContent align="start" side="top" className="w-64 mb-2">
             {/* MODES SECTION */}
-            <div className="px-2 py-1.5 text-xs uppercase text-slate-400 font-semibold">Modes</div>
+            <div className="px-2 py-1.5 text-xs uppercase text-slate-400 font-semibold">{t('facturation:actions.modes_section')}</div>
             <DropdownMenuItem className="flex items-center justify-between py-2">
                 <span className="text-xs font-medium uppercase">{t('facturation:actions.retrocession_mode')}</span>
                 <input
@@ -174,10 +174,10 @@ function FooterActions({
             <DropdownMenuSeparator />
 
             {/* DOCUMENTS SECTION */}
-            <div className="px-2 py-1.5 text-xs uppercase text-slate-400 font-semibold">Documents</div>
+            <div className="px-2 py-1.5 text-xs uppercase text-slate-400 font-semibold">{t('facturation:actions.documents_section')}</div>
             <DropdownMenuItem onClick={onScanOrdonnance} className="gap-2 py-2 text-emerald-600 focus:text-emerald-700">
               <Camera className="size-4" />
-              <span className="text-xs uppercase font-semibold">Scanner Ordonnance</span>
+              <span className="text-xs uppercase font-semibold">{t('facturation:actions.scan_ordonnance')}</span>
             </DropdownMenuItem>
             <DropdownMenuItem onClick={onProforma} disabled={!isValid || loading} className="gap-2 py-2">
               <FileText className="size-4 text-blue-500" />
@@ -191,7 +191,7 @@ function FooterActions({
             <DropdownMenuSeparator />
 
             {/* SALES MANAGEMENT */}
-            <div className="px-2 py-1.5 text-xs uppercase text-slate-400 font-semibold">Gestion Vente</div>
+            <div className="px-2 py-1.5 text-xs uppercase text-slate-400 font-semibold">{t('facturation:actions.sales_management_section')}</div>
             <DropdownMenuItem
               onClick={onSuspend}
               disabled={!isValid || loading}

@@ -72,6 +72,37 @@ interface PerimesStats {
   }
 }
 
+const toLocalISODate = (date: Date) => {
+  const y = date.getFullYear()
+  const m = String(date.getMonth() + 1).padStart(2, '0')
+  const d = String(date.getDate()).padStart(2, '0')
+  return `${y}-${m}-${d}`
+}
+
+const getExpiryEndOfMonthISO = (dateString: string) => {
+  const [datePart] = dateString.split('T')
+  const [yStr, mStr] = datePart.split('-')
+  const y = Number(yStr)
+  const m = Number(mStr)
+  if (!y || !m) return null
+  const lastDay = new Date(y, m, 0).getDate()
+  return `${yStr}-${mStr}-${String(lastDay).padStart(2, '0')}`
+}
+
+const formatDateShort = (dateString: string) => {
+  if (!dateString) return '-'
+  const [datePart] = dateString.split('T')
+  const [, m, y] = datePart.split('-')
+  if (!m || !y) return dateString
+  return `${m}/${y.slice(-2)}`
+}
+
+const getUrgencyClass = (valeur: number) => {
+  if (valeur > 500000) return 'border-red-400 bg-red-50'
+  if (valeur > 100000) return 'border-amber-400 bg-amber-50'
+  return 'border-emerald-400 bg-emerald-50'
+}
+
 export default function Perimes() {
   const { t } = useTranslation(['stock', 'common'])
   const [lots, setLots] = useState<StockLot[]>([])
@@ -96,23 +127,6 @@ export default function Perimes() {
   const { sudoState, requireSudo, closeSudo } = useSudo()
   const [processing, setProcessing] = useState(false)
 
-
-  const toLocalISODate = (date: Date) => {
-    const y = date.getFullYear()
-    const m = String(date.getMonth() + 1).padStart(2, '0')
-    const d = String(date.getDate()).padStart(2, '0')
-    return `${y}-${m}-${d}`
-  }
-
-  const getExpiryEndOfMonthISO = (dateString: string) => {
-    const [datePart] = dateString.split('T')
-    const [yStr, mStr] = datePart.split('-')
-    const y = Number(yStr)
-    const m = Number(mStr)
-    if (!y || !m) return null
-    const lastDay = new Date(y, m, 0).getDate()
-    return `${yStr}-${mStr}-${String(lastDay).padStart(2, '0')}`
-  }
 
   const isExpiredByEndOfMonth = (dateString: string) => {
     if (!dateString) return false
@@ -346,22 +360,8 @@ export default function Perimes() {
     window.open(`${baseUrl}/api/stock-adjustments/export_excel/?reason_type=PERIME&created_at__date__gte=${dateDebut}&created_at__date__lte=${dateFin}`, '_blank')
   }
 
-  const formatDate = (dateString: string) => {
-    if (!dateString) return '-'
-    const [datePart] = dateString.split('T')
-    const [, m, y] = datePart.split('-')
-    if (!m || !y) return dateString
-    return `${m}/${y.slice(-2)}`
-  }
-
   const isExpired = (dateString: string) => {
     return isExpiredByEndOfMonth(dateString)
-  }
-
-  const getUrgencyClass = (valeur: number) => {
-    if (valeur > 500000) return 'border-red-400 bg-red-50'
-    if (valeur > 100000) return 'border-amber-400 bg-amber-50'
-    return 'border-emerald-400 bg-emerald-50'
   }
 
   return (

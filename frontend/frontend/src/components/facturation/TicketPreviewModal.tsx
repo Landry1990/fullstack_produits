@@ -39,7 +39,7 @@ export default function TicketPreviewModal({
       win.document.write(`<!DOCTYPE html>
 <html data-theme="light" lang="fr">
 <head>
-  <title>Ticket de Caisse</title>
+  <title>${t('facturation:common.receipt')}</title>
   <base href="${window.location.origin}/">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>

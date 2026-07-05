@@ -38,6 +38,8 @@
     },
     "messages": {
         "shift_detected": "Tranche horaire détectée",
+        "no_shift_found": "Aucune activité pour ce caissier...",
+        "shift_error": "Erreur lors de la détection du shift",
         "close_success": "Clôture effectuée avec succès",
         "close_error": "Erreur lors de la clôture",
         "no_cashier_selected": "Veuillez sélectionner un caissier pour clôturer"
@@ -99,7 +101,35 @@
         "mode_details": "Détails par mode",
         "confirm": "CONFIRMER LA CLÔTURE",
         "ticket": "TICKET",
-        "unit": "F"
+        "unit": "F",
+        "sales_breakdown": "RÉPARTITION DES VENTES",
+        "pharmacy_sales": "Ventes Pharmacie",
+        "diverse_sales": "Ventes Divers",
+        "total_sales": "Total des ventes",
+        "sales_by_method": "VENTES PAR MODE",
+        "no_sales": "Aucune vente",
+        "initial_fund": "Fond de caisse",
+        "db_entries": "Entrées enregistrées",
+        "db_exits": "Sorties enregistrées",
+        "add_movement": "AJOUTER UN MOUVEMENT",
+        "entry": "Entrée",
+        "exit": "Sortie",
+        "reason_placeholder": "Motif du mouvement...",
+        "amount_placeholder": "Montant...",
+        "add": "Ajouter",
+        "manual_movements": "Mouvements manuels ({{count}})",
+        "theoretical_amount": "MONTANT THÉORIQUE",
+        "theoretical_formula": "Ventes + Entrées - Sorties + Fond de caisse",
+        "active_session_blocked": "Ce caissier a une session active. Fermez d'abord la caisse avant de clôturer."
+    },
+    "modes": {
+        "especes": "Espèces",
+        "cheque": "Chèque",
+        "carte": "Carte",
+        "virement": "Virement",
+        "om": "Orange Money",
+        "momo": "Mobile Money",
+        "recouvrement": "Recouvrement"
     },
     "movement_modal": {
         "title_out": "Nouvelle Dépense (Sortie)",

@@ -49,6 +49,12 @@ interface BackupListData {
   total: number;
 }
 
+const backupStatusColor = (status: string) => {
+  if (status === 'ok') return 'text-emerald-600 bg-emerald-50';
+  if (status === 'warning') return 'text-amber-600 bg-amber-50';
+  return 'text-red-600 bg-red-50';
+};
+
 export default function SystemAdmin() {
   const { t } = useTranslation('system_admin');
   const [activeTab, setActiveTab] = useState<TabId>('sante');
@@ -263,12 +269,6 @@ export default function SystemAdmin() {
     { id: 'sante', label: t('tabs.health'), icon: <Server className="w-4 h-4" /> },
     { id: 'sauvegardes', label: t('tabs.backups'), icon: <HardDrive className="w-4 h-4" /> },
   ];
-
-  const backupStatusColor = (status: string) => {
-    if (status === 'ok') return 'text-emerald-600 bg-emerald-50';
-    if (status === 'warning') return 'text-amber-600 bg-amber-50';
-    return 'text-red-600 bg-red-50';
-  };
 
   const backupStatusLabel = (status: string, hours: number) => {
     if (status === 'ok') return t('backup_status.recent', { hours });

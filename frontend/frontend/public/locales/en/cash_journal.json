@@ -37,6 +37,8 @@
     },
     "messages": {
         "shift_detected": "Time slot detected",
+        "no_shift_found": "No activity for this cashier...",
+        "shift_error": "Error detecting shift",
         "close_success": "Closing successful",
         "close_error": "Error during closing",
         "no_cashier_selected": "Please select a cashier to close"
@@ -98,7 +100,35 @@
         "mode_details": "Details by mode",
         "confirm": "CONFIRM CLOSING",
         "ticket": "TICKET",
-        "unit": "F"
+        "unit": "F",
+        "sales_breakdown": "SALES BREAKDOWN",
+        "pharmacy_sales": "Pharmacy Sales",
+        "diverse_sales": "Misc Sales",
+        "total_sales": "Total Sales",
+        "sales_by_method": "SALES BY METHOD",
+        "no_sales": "No sales",
+        "initial_fund": "Initial Fund",
+        "db_entries": "Recorded Entries",
+        "db_exits": "Recorded Exits",
+        "add_movement": "ADD MOVEMENT",
+        "entry": "Entry",
+        "exit": "Exit",
+        "reason_placeholder": "Movement reason...",
+        "amount_placeholder": "Amount...",
+        "add": "Add",
+        "manual_movements": "Manual movements ({{count}})",
+        "theoretical_amount": "THEORETICAL AMOUNT",
+        "theoretical_formula": "Sales + Entries - Exits + Initial Fund",
+        "active_session_blocked": "This cashier has an active session. Close the cash register first before closing."
+    },
+    "modes": {
+        "especes": "Cash",
+        "cheque": "Cheque",
+        "carte": "Card",
+        "virement": "Transfer",
+        "om": "Orange Money",
+        "momo": "Mobile Money",
+        "recouvrement": "Recovery"
     },
     "movement_modal": {
         "title_out": "New Expense (Exit)",

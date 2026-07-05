@@ -69,6 +69,15 @@ interface CommandeDetailsProps {
 
 }
 
+function getStatusBadgeClass(us: string): string {
+  switch (us) {
+    case 'PREP': return 'bg-blue-50 text-blue-600 border-blue-200';
+    case 'ATT': return 'bg-amber-50 text-amber-600 border-amber-200';
+    case 'CLOT': return 'bg-emerald-50 text-emerald-600 border-emerald-200';
+    default: return 'bg-slate-100 text-slate-500 border-slate-200';
+  }
+}
+
 
 
 const CommandeDetails: React.FC<CommandeDetailsProps> = ({
@@ -159,16 +168,6 @@ const CommandeDetails: React.FC<CommandeDetailsProps> = ({
   }, [editLotValues, queryClient]);
 
 
-
-  // Fonction pour obtenir la classe CSS du badge de status
-  function getStatusBadgeClass(us: string): string {
-    switch (us) {
-      case 'PREP': return 'bg-blue-50 text-blue-600 border-blue-200';
-      case 'ATT': return 'bg-amber-50 text-amber-600 border-amber-200';
-      case 'CLOT': return 'bg-emerald-50 text-emerald-600 border-emerald-200';
-      default: return 'bg-slate-100 text-slate-500 border-slate-200';
-    }
-  }
 
   function getStatusLabel(us: string): string {
     switch (us) {

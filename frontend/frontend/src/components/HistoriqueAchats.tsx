@@ -33,6 +33,17 @@ interface HistoriqueAchatsProps {
     forcedType?: 'LOC' | 'DIR';
 }
 
+const formatMoney = (amount: number) => formatCurrency(amount);
+
+function normalizeNumber(val: any) {
+    if (typeof val === 'string') return parseFloat(val);
+    return val;
+}
+
+const handlePrint = () => {
+    window.print();
+};
+
 const HistoriqueAchats = ({ forcedType }: HistoriqueAchatsProps) => {
   const { t, i18n } = useTranslation('orders');
   const { user } = useAuth();
@@ -122,15 +133,6 @@ const HistoriqueAchats = ({ forcedType }: HistoriqueAchatsProps) => {
     fetchHistory(newPage);
   };
 
-  const formatMoney = (amount: number) => {
-    return formatCurrency(amount);
-  };
-
-  function normalizeNumber(val: any) {
-    if (typeof val === 'string') return parseFloat(val);
-    return val;
-  }
-
   const handleExportExcel = async () => {
     if (!user?.token) return;
     setLoading(true);
@@ -177,10 +179,6 @@ const HistoriqueAchats = ({ forcedType }: HistoriqueAchatsProps) => {
     } finally {
         setLoading(false);
     }
-  };
-
-  const handlePrint = () => {
-    window.print();
   };
 
   const totalPages = Math.ceil(totalCount / pageSize);

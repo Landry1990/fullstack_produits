@@ -32,6 +32,22 @@ import {
 } from '../ui/Dialog';
 import { Button } from '../ui/Button';
 
+const handleDownloadPdf = async (sessionId: number) => {
+    try {
+      const blob = await produitService.getReapproSessionPdf(sessionId);
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `reappro_session_${sessionId}.pdf`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+    } catch (error) {
+      console.error('Error downloading PDF:', error);
+      toast.error("Erreur lors du téléchargement du PDF");
+    }
+};
+
 export default function ReapproRayon() {
   const { t, i18n } = useTranslation(['stock', 'common']);
   const { user } = useAuth();
@@ -184,22 +200,6 @@ export default function ReapproRayon() {
     } finally {
         setLoading(false);
         setPendingIds([]);
-    }
-  };
-
-  const handleDownloadPdf = async (sessionId: number) => {
-    try {
-      const blob = await produitService.getReapproSessionPdf(sessionId);
-      const url = window.URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.setAttribute('download', `reappro_session_${sessionId}.pdf`);
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-    } catch (error) {
-      console.error('Error downloading PDF:', error);
-      toast.error("Erreur lors du téléchargement du PDF");
     }
   };
 
