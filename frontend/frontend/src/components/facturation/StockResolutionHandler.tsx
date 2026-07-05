@@ -1,4 +1,5 @@
 import React, { type Dispatch, type SetStateAction } from 'react'
+import { useTranslation } from 'react-i18next'
 import StockResolutionModal from './StockResolutionModal'
 import type { LigneFacture, Client, ProduitModel } from '../../types'
 
@@ -54,6 +55,8 @@ export const StockResolutionHandler: React.FC<StockResolutionHandlerProps> = ({
     requireSudo
 }) => {
     
+
+    const { t } = useTranslation(['facturation', 'common'])
 
     const handleConfirm = () => {
         // Apply Resolution actions to the invoice lines — single-pass reduce
@@ -116,8 +119,8 @@ export const StockResolutionHandler: React.FC<StockResolutionHandlerProps> = ({
             requireSudo(async (validatorId, password) => {
                 onComplete(updatedLignes, { validatorId, password })
             }, {
-                title: `Validation Vente Forcée / Stock Insuffisant`,
-                message: `Confirmer la vente forcée de produits avec stock insuffisant ? Cette action créera un stock négatif.`
+                title: t('facturation:stock_resolution.force_sale_title'),
+                message: t('facturation:stock_resolution.force_sale_message')
             });
         } else {
             onClose()

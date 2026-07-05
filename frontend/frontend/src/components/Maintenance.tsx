@@ -64,6 +64,18 @@ const getTableCategories = (t: any) => ({
   },
 });
 
+const downloadRapport = (filename: string) => {
+  api.get(`maintenance/download_rapport/?file=${filename}`, { responseType: 'blob' })
+    .then(res => {
+      const url = window.URL.createObjectURL(new Blob([res.data]));
+      const a = document.createElement('a'); a.href = url;
+      a.setAttribute('download', filename);
+      document.body.appendChild(a); a.click(); a.remove();
+      window.URL.revokeObjectURL(url);
+    })
+    .catch(() => toast.error('Erreur téléchargement rapport'));
+};
+
 export default function Maintenance() {
   const { t } = useTranslation(['maintenance', 'common']);
   const TABLE_CATEGORIES = getTableCategories(t);
@@ -194,18 +206,6 @@ export default function Maintenance() {
     } finally {
       setPurging2(false);
     }
-  };
-
-  const downloadRapport = (filename: string) => {
-    api.get(`maintenance/download_rapport/?file=${filename}`, { responseType: 'blob' })
-      .then(res => {
-        const url = window.URL.createObjectURL(new Blob([res.data]));
-        const a = document.createElement('a'); a.href = url;
-        a.setAttribute('download', filename);
-        document.body.appendChild(a); a.click(); a.remove();
-        window.URL.revokeObjectURL(url);
-      })
-      .catch(() => toast.error('Erreur téléchargement rapport'));
   };
 
   const toggleTable = (key: string) => {

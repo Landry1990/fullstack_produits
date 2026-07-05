@@ -42,6 +42,7 @@
     },
     "title_local": "Gestion des Commandes Locales",
     "title_direct": "Gestion des Commandes Directes (Import)",
+    "title_divers": "Commandes Divers",
     "subtitle": "Planifiez vos achats et suivez vos livraisons",
     "all_suppliers": "Tous les fournisseurs",
     "bulk_delete_btn": "Supprimer la sélection",

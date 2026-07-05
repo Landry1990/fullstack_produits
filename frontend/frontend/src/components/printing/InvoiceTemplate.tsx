@@ -81,26 +81,22 @@ interface InvoiceTemplateProps {
   isBonDeLivraison?: boolean;
 }
 
+const formatDate = (dateStr: string) => formatLocaleDate(dateStr);
+
+const formatExpiryDate = (dateStr: string) => {
+  if (!dateStr) return '';
+  const date = new Date(dateStr);
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const year = String(date.getFullYear()).slice(-2);
+  return `${month}/${year}`;
+};
+
+const calculateHTUnit = (priceTTC: number, tva: number) => {
+  return priceTTC / (1 + (Number(tva) || 0) / 100);
+};
+
 const InvoiceTemplate: React.FC<InvoiceTemplateProps> = ({ settings, data, isBonDeLivraison }) => {
   const { t } = useTranslation('printing');
-
-  // Standardized formatting used below
-
-  const formatDate = (dateStr: string) => {
-    return formatLocaleDate(dateStr);
-  };
-
-  const formatExpiryDate = (dateStr: string) => {
-    if (!dateStr) return '';
-    const date = new Date(dateStr);
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const year = String(date.getFullYear()).slice(-2);
-    return `${month}/${year}`;
-  };
-
-  const calculateHTUnit = (priceTTC: number, tva: number) => {
-    return priceTTC / (1 + (Number(tva) || 0) / 100);
-  };
 
   const totalQuantity = data.produits.reduce((acc, item) => acc + item.quantity, 0);
 

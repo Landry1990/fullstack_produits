@@ -37,17 +37,16 @@ const COLORS = [
   '#8B5CF6', '#14B8A6', '#F97316', '#06B6D4', '#84CC16', '#D946EF'
 ];
 
+const formatDate = (date: Date) => {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
 export default function StatistiquesFournisseur() {
   const { t, i18n } = useTranslation(['supplier_stats', 'common']);
   const [activeTab, setActiveTab] = useState('ventes');
-
-  // Helper pour formater les dates en YYYY-MM-DD local
-  const formatDate = (date: Date) => {
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const day = String(date.getDate()).padStart(2, '0');
-    return `${year}-${month}-${day}`;
-  };
 
   const [stats, setStats] = useState<StatsFournisseur[]>([]);
   const [loading, setLoading] = useState(false);

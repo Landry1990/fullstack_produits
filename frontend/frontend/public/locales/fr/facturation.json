@@ -41,6 +41,17 @@
         "part_assurance": "Part Assurance",
         "assurance_label": "Assurance"
     },
+    "cart_extra": {
+        "promis": "PROMIS",
+        "auto_fefo": "AUTO (FEFO)",
+        "auto_prefix": "AUTO",
+        "manual_allocation": "Répartition manuelle :",
+        "fefo_automatic": "FEFO automatique :",
+        "peremption": "Péremption:",
+        "prix_lot": "Prix lot:",
+        "stock_label": "Stock:",
+        "rem_placeholder": "Rem."
+    },
     "actions": {
         "cancel": "Annuler la Vente",
         "reset_tooltip": "Réinitialiser tout le panier (F4)",
@@ -55,7 +66,13 @@
         "pay_tooltip": "Valider la vente (Ctrl+Entrée)",
         "retrocession_mode": "Rétrocession",
         "facture_a4": "Facture A4",
-        "facture_a4_tooltip": "Imprimer directement une Facture A4 (désactive le ticket)"
+        "facture_a4_tooltip": "Imprimer directement une Facture A4 (désactive le ticket)",
+        "scan_ordonnance": "Scanner Ordonnance",
+        "scan_ordonnance_tooltip": "Scanner une ordonnance avec OCR",
+        "modes_section": "Modes",
+        "documents_section": "Documents",
+        "sales_management_section": "Gestion Vente",
+        "format_a4": "Format A4"
     },
     "search": {
         "label": "Rechercher un produit (F2)",
@@ -106,7 +123,9 @@
         "deposit_reminder": "Rappel : Ce client dispose d'un dépôt de {{solde}} F.",
         "points_balance": "{{points}} pts",
         "pending_reward": "Remise de {{discount}}% acquise !",
-        "apply_reward_button": "Appliquer la remise"
+        "apply_reward_button": "Appliquer la remise",
+        "loyalty_label": "Fidélité",
+        "reward_label": "Récompense"
     },
     "payment": {
         "modal_title": "Encaissement",
@@ -125,6 +144,8 @@
         "payment_mode_label": "Point de caisse",
         "add_btn": "Ajouter",
         "sudo_title": "Validation Requise",
+        "sudo_confirm_identity": "Confirmer votre identité",
+        "sudo_send_to_caisse": "Veuillez saisir votre mot de passe pour envoyer la facture à la caisse centrale. Cette action est liée à votre session.",
         "sudo_mode": {
             "validate_by": "Validé par",
             "password": "Mot de passe (Sudo)",
@@ -160,7 +181,12 @@
     },
     "pending_sales": {
         "title": "Ventes en attente",
-        "items_count": "{{count}} article(s)"
+        "items_count": "{{count}} article(s)",
+        "no_sales": "Aucune vente en attente",
+        "unspecified_client": "Client non précisé",
+        "articles_short": "art.",
+        "total": "Total",
+        "time": "Heure"
     },
     "messages": {
         "discount_limit_error": "Remise limitée à {{rate}}% pour votre profil.",
@@ -228,6 +254,57 @@
         "optional": "(Optionnel)",
         "client_phone_for_promised_ticket": "Téléphone pour suivi des promis",
         "phone_number_placeholder": "Numéro de téléphone...",
-        "force_warning": "Le forçage de stock nécessite une validation de superviseur."
+        "force_warning": "Le forçage de stock nécessite une validation de superviseur.",
+        "force_sale_title": "Validation Vente Forcée / Stock Insuffisant",
+        "force_sale_message": "Confirmer la vente forcée de produits avec stock insuffisant ? Cette action créera un stock négatif."
+    },
+    "alert_message": {
+        "title": "Alerte pour {{name}}",
+        "description_product": "Définissez un message d'alerte qui apparaîtra en plein écran dès que ce produit sera scanné.",
+        "description_client": "Définissez un message d'alerte qui apparaîtra en plein écran dès que ce client sera sélectionné.",
+        "placeholder": "Ex: Changement de conditionnement, attention au code barre...",
+        "cancel": "Annuler",
+        "save": "Enregistrer (Ctrl+S)",
+        "save_success": "Message d'alerte mis à jour pour {{name}}",
+        "save_error": "Erreur lors de l'enregistrement du message d'alerte"
+    },
+    "display_alert": {
+        "critical_title": "ALERTE CRITIQUE : {{title}}",
+        "product_title": "Alerte Produit : {{title}}",
+        "client_title": "Alerte Client : {{title}}",
+        "blocking_warning": "BLOCAGE : CETTE ALERTE EST CRITIQUE ET BLOQUANTE",
+        "product_check_message": "Veuillez vérifier ce produit avant de continuer.",
+        "client_check_message": "Veuillez prendre en compte cette information pour ce client.",
+        "understood_blocking": "J'AI COMPRIS LA RESTRICTION (Entrée)",
+        "understood": "Compris (Entrée)"
+    },
+    "prescription_scanner": {
+        "title": "Scanner Ordonnance",
+        "subtitle": "Capturez une photo pour extraction automatique avec OCR",
+        "drag_image": "Glissez une image ici",
+        "click_browse": "Ou cliquez pour parcourir",
+        "use_camera": "Utiliser la caméra",
+        "launch_ocr": "Lancer l'analyse OCR",
+        "ocr_processing": "Traitement OCR en cours...",
+        "medicines_identified": "Médicaments identifiés",
+        "recognized": "reconnus",
+        "no_results_placeholder": "Les produits détectés apparaîtront ici après l'analyse.",
+        "ocr_line_label": "Lu sur l'ordonnance :",
+        "no_match": "Aucune correspondance trouvée",
+        "patient_detected": "Patient détecté",
+        "doctor_detected": "Médecin détecté",
+        "cancel": "Annuler",
+        "validate_add": "Valider et ajouter",
+        "error_load_products": "Erreur lors du chargement de la base produit",
+        "error_camera": "Impossible d'accéder à la caméra",
+        "error_no_products": "Aucun produit reconnu sur l'ordonnance",
+        "error_ocr": "Erreur lors du traitement OCR: {{error}}",
+        "error_console": "Détails dans la console (possible blocage antivirus)",
+        "products_added": "{{count}} produits ajoutés"
+    },
+    "datamatrix": {
+        "placeholder": "Scanner le datamatrix de la boîte…",
+        "enter_to_validate": "Entrée pour valider",
+        "not_found": "Produit ou lot introuvable — vérifiez le code-barres"
     }
 }

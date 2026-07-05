@@ -8,7 +8,7 @@ interface DisplayAlertModalProps {
 }
 
 export default function DisplayAlertModal({ alerts, onAcknowledge }: DisplayAlertModalProps) {
-    const { t } = useTranslation(['common']);
+    const { t } = useTranslation(['facturation', 'common']);
     const currentAlert = alerts[0];
 
     const onAcknowledgeRef = React.useRef(onAcknowledge);
@@ -37,8 +37,8 @@ export default function DisplayAlertModal({ alerts, onAcknowledge }: DisplayAler
             onClose={onAcknowledge}
             title={
                 isBlocking 
-                    ? `🚨 ALERTE CRITIQUE : ${currentAlert.title}` 
-                    : (currentAlert.type === 'product' ? `⚠️ Alerte Produit : ${currentAlert.title}` : `⚠️ Alerte Client : ${currentAlert.title}`)
+                    ? t('facturation:display_alert.critical_title', { title: currentAlert.title })
+                    : (currentAlert.type === 'product' ? t('facturation:display_alert.product_title', { title: currentAlert.title }) : t('facturation:display_alert.client_title', { title: currentAlert.title }))
             }
             icon={isBlocking ? <span className="text-red-500 text-3xl animate-pulse">🚨</span> : <span className="text-amber-500 text-2xl">⚠️</span>}
             gradientFrom={isBlocking ? "red-200" : "red-100"}
@@ -53,10 +53,10 @@ export default function DisplayAlertModal({ alerts, onAcknowledge }: DisplayAler
 
                 <p className={`text-sm font-medium ${isBlocking ? 'text-red-600 font-bold uppercase tracking-widest animate-pulse' : 'text-slate-500'}`}>
                     {isBlocking
-                        ? "⚠️ BLOCAGE : CETTE ALERTE EST CRITIQUE ET BLOQUANTE"
+                        ? t('facturation:display_alert.blocking_warning')
                         : (currentAlert.type === 'product'
-                            ? "Veuillez vérifier ce produit avant de continuer."
-                            : "Veuillez prendre en compte cette information pour ce client.")
+                            ? t('facturation:display_alert.product_check_message')
+                            : t('facturation:display_alert.client_check_message'))
                     }
                 </p>
 
@@ -66,7 +66,7 @@ export default function DisplayAlertModal({ alerts, onAcknowledge }: DisplayAler
                         onClick={onAcknowledge}
                         autoFocus
                     >
-                        {isBlocking ? "⚠️ J'AI COMPRIS LA RESTRICTION (Entrée)" : `✓ ${t('common:understood', { defaultValue: 'Compris (Entrée)' })}`}
+                        {isBlocking ? t('facturation:display_alert.understood_blocking') : t('facturation:display_alert.understood')}
                     </button>
                 </div>
             </div>

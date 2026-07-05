@@ -93,11 +93,11 @@ export default function TotalsSection({
         {tauxCouverture > 0 && (
           <div className="flex justify-between items-center py-2.5 px-3 bg-blue-50 border border-blue-200 rounded-xl">
              <div className="flex flex-col">
-                <span className="text-[10px] text-blue-600 font-bold uppercase tracking-wide">Part Assurance ({tauxCouverture}%)</span>
+                <span className="text-[10px] text-blue-600 font-bold uppercase tracking-wide">{t('facturation:totals.part_assurance')} ({tauxCouverture}%)</span>
                 <span className="text-sm font-bold text-blue-700">{formatCurrency(Math.round(partAssurance))}</span>
              </div>
              <div className="text-right">
-                <span className="text-[9px] text-slate-400 uppercase font-semibold">Total TTC</span>
+                <span className="text-[9px] text-slate-400 uppercase font-semibold">{t('facturation:totals.total_ttc')}</span>
                 <div className="text-[10px] text-slate-500">{formatCurrency(Math.round(totalTTC))}</div>
              </div>
           </div>

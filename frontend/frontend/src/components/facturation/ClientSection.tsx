@@ -279,7 +279,7 @@ export default function ClientSection({
             <div className="mt-2 px-3 py-2 bg-violet-50 rounded-lg flex justify-between items-center border border-violet-100">
               <span className="text-[10px] font-semibold text-violet-600 uppercase tracking-wider flex items-center gap-1">
                 <Star className="size-3" />
-                {t('facturation:client.label')} Fidélité
+                {t('facturation:client.label')} {t('facturation:client.loyalty_label')}
               </span>
               <span className="text-sm font-bold text-violet-700">{t('facturation:client.points_balance', { points: selectedClientData.points_fidelite || 0 })}</span>
             </div>
@@ -291,7 +291,7 @@ export default function ClientSection({
               <div className="flex justify-between items-center">
                 <span className="text-[10px] font-semibold text-amber-700 uppercase tracking-wider flex items-center gap-1">
                   <Star className="size-3 fill-amber-500 text-amber-500" />
-                  Récompense
+                  {t('facturation:client.reward_label')}
                 </span>
                 <Badge variant="secondary" className="h-5 text-[10px] bg-amber-100 text-amber-700 border-amber-200 font-bold">-{selectedClientData.pending_discount}%</Badge>
               </div>

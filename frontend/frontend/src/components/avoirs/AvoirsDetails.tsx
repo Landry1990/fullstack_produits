@@ -9,6 +9,19 @@ interface AvoirsDetailsProps {
     data: UseAvoirsDataReturn;
 }
 
+const getStatusStyle = (status: string) => {
+    switch (status?.toUpperCase()) {
+        case 'BROUILLON':
+        case 'BRO': return 'bg-warning/10 text-warning border-amber-200';
+        case 'VAL':
+        case 'VALIDE':
+        case 'VALIDÉ':
+        case 'VALIDEE':
+        case 'VALIDÉE': return 'bg-success/10 text-success border-emerald-200';
+        default: return 'bg-base-200 text-base-content/60 border-base-300';
+    }
+};
+
 export const AvoirsDetails: React.FC<AvoirsDetailsProps> = ({ data }) => {
     const {
         selectedAvoir,
@@ -25,19 +38,6 @@ export const AvoirsDetails: React.FC<AvoirsDetailsProps> = ({ data }) => {
     if (!selectedAvoir) return null;
 
     const allLinesClosed = selectedAvoir.produits?.length > 0 && selectedAvoir.produits.every(p => p.est_cloture);
-
-    const getStatusStyle = (status: string) => {
-        switch (status?.toUpperCase()) {
-            case 'BROUILLON':
-            case 'BRO': return 'bg-warning/10 text-warning border-amber-200';
-            case 'VAL':
-            case 'VALIDE':
-            case 'VALIDÉ':
-            case 'VALIDEE':
-            case 'VALIDÉE': return 'bg-success/10 text-success border-emerald-200';
-            default: return 'bg-base-200 text-base-content/60 border-base-300';
-        }
-    };
 
     const getStatusLabel = (status: string) => {
         switch (status?.toUpperCase()) {

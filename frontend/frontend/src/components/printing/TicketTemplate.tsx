@@ -11,16 +11,7 @@ interface TicketTemplateProps {
   ref?: Ref<HTMLDivElement>;
 }
 
-export const TicketTemplate = ({ ticket, settings, ref }: TicketTemplateProps) => {
-  const { t } = useTranslation('printing');
-
-  const getProductName = (p: any) => {
-    if (!p) return t('ticket.unknown_article');
-    if (typeof p.produit === 'object') return p.produit.name;
-    return p.produit_nom || `${t('ticket.product')} #${p.produit || '?'}`;
-  };
-
-  const formatDate = (dateStr: string) => {
+const formatDate = (dateStr: string) => {
     try {
         return new Date(dateStr).toLocaleString('fr-FR', {
             day: '2-digit', month: '2-digit', year: 'numeric',
@@ -29,10 +20,17 @@ export const TicketTemplate = ({ ticket, settings, ref }: TicketTemplateProps) =
     } catch (e) {
         return dateStr;
     }
-  };
+};
 
-  const formatM = (val: number | string) => {
-    return formatNumber(Math.round(Number(val)));
+const formatM = (val: number | string) => formatNumber(Math.round(Number(val)));
+
+export const TicketTemplate = ({ ticket, settings, ref }: TicketTemplateProps) => {
+  const { t } = useTranslation('printing');
+
+  const getProductName = (p: any) => {
+    if (!p) return t('ticket.unknown_article');
+    if (typeof p.produit === 'object') return p.produit.name;
+    return p.produit_nom || `${t('ticket.product')} #${p.produit || '?'}`;
   };
 
   const getModeLabel = (mode: string) => {

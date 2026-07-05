@@ -10,6 +10,8 @@ interface Props {
   hook: ReturnType<typeof useFournisseurs>;
 }
 
+const getInitials = (name: string) => name.slice(0, 2).toUpperCase();
+
 export default function FournisseursList({ hook }: Props) {
   const { state, actions } = hook;
   const {
@@ -25,10 +27,6 @@ export default function FournisseursList({ hook }: Props) {
     showInactive,
     searchInputRef
   } = state;
-
-  const getInitials = (name: string) => {
-    return name.slice(0, 2).toUpperCase();
-  };
 
   return (
     <div className="md:col-span-1 bg-white rounded-xl shadow-sm border border-slate-200 flex flex-col overflow-hidden h-full">

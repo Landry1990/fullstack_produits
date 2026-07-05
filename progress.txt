@@ -1,0 +1,29 @@
+PROGRESS - 4 juillet 2026
+=========================
+
+1. React Doctor - prefer-module-scope-pure-function
+----------------------------------------------------
+Statut : tous les 57 fichiers listes traites.
+- Deplace les fonctions pures hors des composants/hooks dans : AnalyseABC, ClassementVendeurs, CommandeDetails, CommandeList, CommandeProductTable, ScheduledOrdersListModal, FinanceFournisseurModal, HistoriqueAchats, HistoriqueClotures, HistoriqueVentes, LoginShadcn, Maintenance, Perimes, StatistiquesFournisseur, SystemAdmin, TelegramHistory, UserSessionsShadcn, AvoirsDetails, AvoirsTable, JournalCaisseTable, CategoryManager, CreanceDetailsModal, MonthlyReportView, FournisseursList, InventairePrintTemplate, InvoiceTemplate, StockValuationTemplate, TicketTemplate, PromisTable, SalesTable, ReapproRayon, StockHealthDashboard, useInventairePDF, useJournalCaisse, useCaissePayment, useInvoiceActions, useProductSearch (inventaire), HomeScreen (pda).
+- Problemes corriges en cours de route : useInventairePDF, useJournalCaisse, useCaissePayment, SalesTable (normalizeStatus), useProductSearch (focusInput).
+
+A verifier demain :
+- Relancer React Doctor pour confirmer que le compteur d'issues est a 0 :
+  npx react-doctor scan --rule prefer-module-scope-pure-function --no-cache
+  (ou lancer depuis le bon repertoire frontend)
+- Lancer tsc --noEmit si disponible pour verifier la compilation TypeScript.
+
+2. Refactor dashboard.py
+-----------------------
+Statut : termine et verifie.
+- Fichier backend/api/views/dashboard.py (1 471 lignes) remplace par le package backend/api/views/dashboard/ :
+  __init__.py, core.py, clients.py, fournisseurs.py, vendeurs.py, statistiques.py
+- Verification : manage.py check OK, import api.views.dashboard OK, methodes exposees OK.
+- Aucun changement requis dans urls.py ni views/__init__.py.
+
+PROCHAINES ETAPES POSSIBLES
+---------------------------
+- Verifier React Doctor + tsc.
+- Traiter une autre regle React Doctor.
+- Subdiviser core.py si le fichier reste trop gros.
+- Autre tache a definir.

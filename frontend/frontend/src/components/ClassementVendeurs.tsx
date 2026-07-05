@@ -53,6 +53,15 @@ const formatMoney = (value: number, currencySymbol: string) => {
   return formatCurrency(value, 'fr-FR', currencySymbol);
 };
 
+const getMedal = (rang: number) => {
+  switch (rang) {
+    case 1: return '🥇';
+    case 2: return '🥈';
+    case 3: return '🥉';
+    default: return rang;
+  }
+};
+
 export default function ClassementVendeurs() {
   const { t } = useTranslation(['sellers', 'common']);
   const [loading, setLoading] = useState(true);
@@ -118,16 +127,6 @@ export default function ClassementVendeurs() {
     });
     return mergedPoint;
   }) : [];
-
-  // Get medal icon
-  const getMedal = (rang: number) => {
-    switch (rang) {
-      case 1: return '🥇';
-      case 2: return '🥈';
-      case 3: return '🥉';
-      default: return rang;
-    }
-  };
 
   return (
     <div className="p-6 space-y-6">

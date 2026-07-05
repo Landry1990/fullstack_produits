@@ -5,6 +5,7 @@ interface SudoOptions {
     message?: string;
     permission?: string;
     onCancel?: () => void;
+    forceCurrentUser?: boolean;
 }
 
 interface SudoState {
@@ -14,6 +15,7 @@ interface SudoState {
     title?: string;
     message?: string;
     permission?: string;
+    forceCurrentUser?: boolean;
     isValidating: boolean;
 }
 
@@ -48,6 +50,7 @@ export const useSudo = () => {
             title: options?.title,
             message: options?.message,
             permission: options?.permission,
+            forceCurrentUser: options?.forceCurrentUser,
         });
     }, []);
 

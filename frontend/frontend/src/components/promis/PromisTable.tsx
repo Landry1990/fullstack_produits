@@ -22,6 +22,15 @@ interface BulkActionsMenuProps {
     bulkLoading: boolean;
 }
 
+const getStatusStyle = (status: string) => {
+    switch (status) {
+        case 'ATT': return 'bg-amber-50 text-amber-600 border-amber-200';
+        case 'DEL': return 'bg-emerald-50 text-emerald-600 border-emerald-200';
+        case 'ANN': return 'bg-red-50 text-red-500 border-red-200';
+        default: return 'bg-slate-100 text-slate-500 border-slate-200';
+    }
+};
+
 const BulkActionsMenu: React.FC<BulkActionsMenuProps> = React.memo(({
     selectedIds, promisList, onDeliver, onCancel, onPrint, onSms, onWhatsApp, onBulkDeliver, onBulkCancel, bulkLoading
 }) => {
@@ -129,15 +138,6 @@ export const PromisTable: React.FC<PromisTableProps> = ({
 }) => {
     const { t, i18n } = useTranslation(['stock', 'common']);
     const currentLocale = i18n.language === 'fr' ? fr : enUS;
-
-    const getStatusStyle = (status: string) => {
-        switch (status) {
-            case 'ATT': return 'bg-amber-50 text-amber-600 border-amber-200';
-            case 'DEL': return 'bg-emerald-50 text-emerald-600 border-emerald-200';
-            case 'ANN': return 'bg-red-50 text-red-500 border-red-200';
-            default: return 'bg-slate-100 text-slate-500 border-slate-200';
-        }
-    };
 
     if (loading) {
         return (

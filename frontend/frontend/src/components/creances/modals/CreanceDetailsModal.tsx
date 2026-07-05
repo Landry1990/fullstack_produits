@@ -12,6 +12,19 @@ interface CreanceDetailsModalProps {
     onPrintReceipt: (creanceId: number, paiementId?: number) => void;
 }
 
+const getModeIcon = (mode: string) => {
+    switch (mode) {
+        case 'especes': return '💵';
+        case 'cheque': return '📝';
+        case 'carte': return '💳';
+        case 'virement': return '🏦';
+        case 'om': return '🟧';
+        case 'momo': return '📱';
+        case 'recouvrement': return '💸';
+        default: return '💰';
+    }
+};
+
 export const CreanceDetailsModal: React.FC<CreanceDetailsModalProps> = ({
     isOpen,
     onClose,
@@ -22,19 +35,6 @@ export const CreanceDetailsModal: React.FC<CreanceDetailsModalProps> = ({
     if (!creance) return null;
 
     const paiements = creance.paiements || [];
-
-    const getModeIcon = (mode: string) => {
-        switch (mode) {
-            case 'especes': return '💵';
-            case 'cheque': return '📝';
-            case 'carte': return '💳';
-            case 'virement': return '🏦';
-            case 'om': return '🟧';
-            case 'momo': return '📱';
-            case 'recouvrement': return '💸';
-            default: return '💰';
-        }
-    };
 
     return (
         <PremiumModal

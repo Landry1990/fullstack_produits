@@ -5,6 +5,17 @@ import { useTranslation } from 'react-i18next';
 import { getApiErrorDetail } from '../../utils/errorHandling';
 import type { ProduitModel, LigneInventaire, StockLot } from '../../types';
 
+const focusFirstQty = (id?: number) => {
+    setTimeout(() => {
+        const targetId = id !== undefined ? `qty-input-${id}` : 'qty-input-0';
+        const input = document.getElementById(targetId);
+        if (input) {
+            (input as HTMLInputElement).focus();
+            (input as HTMLInputElement).select();
+        }
+    }, 150);
+};
+
 export const useProductSearch = (
     _lignesEndpoint: string,
     activeInventaireId: number | undefined,
@@ -59,18 +70,6 @@ export const useProductSearch = (
 
     const focusInput = () => {
         if (searchInputRef.current) searchInputRef.current.focus();
-    };
-
-    const focusFirstQty = (id?: number) => {
-        // Wait a bit for the DOM to update since the line was just added
-        setTimeout(() => {
-            const targetId = id !== undefined ? `qty-input-${id}` : 'qty-input-0';
-            const input = document.getElementById(targetId);
-            if (input) {
-                (input as HTMLInputElement).focus();
-                (input as HTMLInputElement).select(); // Pre-select for quick typing
-            }
-        }, 150);
     };
 
     const handleSearchKeyDown = (e: React.KeyboardEvent) => {

@@ -37,23 +37,23 @@ interface InventairePrintTemplateProps {
     data: InventairePrintData;
 }
 
+const formatDate = (dateStr: string) => {
+    if (!dateStr) return '';
+    return new Date(dateStr).toLocaleDateString('fr-FR', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+    });
+};
+
+const formatNumber = (num: number | undefined) => {
+    if (num === undefined) return '-';
+    return formatNumberStandard(num);
+};
+
 const InventairePrintTemplate: React.FC<InventairePrintTemplateProps> = ({ settings, data }) => {
-    const formatDate = (dateStr: string) => {
-        if (!dateStr) return '';
-        return new Date(dateStr).toLocaleDateString('fr-FR', {
-            day: '2-digit',
-            month: '2-digit',
-            year: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit'
-        });
-    };
-
-    const formatNumber = (num: number | undefined) => {
-        if (num === undefined) return '-';
-        return formatNumberStandard(num);
-    };
-
     const sortedGroups = Object.keys(data.groups).sort();
 
     return (

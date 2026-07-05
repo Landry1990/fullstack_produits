@@ -10,6 +10,27 @@ interface UseInvoiceActionsProps {
     setFacturesLocal?: React.Dispatch<React.SetStateAction<Facture[]>>; // For optimistic updates
 }
 
+const printInvoicePDF = (factureId: number, clientName?: string | null, type?: string) => {
+    let url = `/app/print-invoice/${factureId}`;
+    const params = new URLSearchParams();
+    if (clientName) params.append('client_name', clientName);
+    if (type) params.append('type', type);
+
+    const queryString = params.toString();
+    if (queryString) url += `?${queryString}`;
+
+    const width = 1000;
+    const height = 800;
+    const left = (window.screen.width - width) / 2;
+    const top = (window.screen.height - height) / 2;
+
+    window.open(
+        url,
+        'PrintInvoice',
+        `width=${width},height=${height},top=${top},left=${left},resizable=yes,scrollbars=yes`
+    );
+};
+
 export const useInvoiceActions = ({ setFacturesLocal }: UseInvoiceActionsProps) => {
     const { t } = useTranslation(['sales', 'common']);
     const navigate = useNavigate();
@@ -45,28 +66,6 @@ export const useInvoiceActions = ({ setFacturesLocal }: UseInvoiceActionsProps) 
     };
 
     // --- PRINTING ---
-    const printInvoicePDF = (factureId: number, clientName?: string | null, type?: string) => {
-        let url = `/app/print-invoice/${factureId}`;
-        const params = new URLSearchParams();
-        if (clientName) params.append('client_name', clientName);
-        if (type) params.append('type', type);
-        
-        const queryString = params.toString();
-        if (queryString) url += `?${queryString}`;
-
-        // Ouvrir dans une popup centrée
-        const width = 1000;
-        const height = 800;
-        const left = (window.screen.width - width) / 2;
-        const top = (window.screen.height - height) / 2;
-
-        window.open(
-            url,
-            'PrintInvoice',
-            `width=${width},height=${height},top=${top},left=${left},resizable=yes,scrollbars=yes`
-        );
-    };
-
     const handlePrintInvoice = (facture: Facture) => {
         const nameToUse = facture.client_name_override || facture.client_name;
         printInvoicePDF(facture.id, nameToUse);

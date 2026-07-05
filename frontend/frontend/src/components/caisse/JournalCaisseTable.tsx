@@ -10,6 +10,21 @@ interface Props {
   state: ReturnType<typeof useJournalCaisse>;
 }
 
+const getModeIcon = (mode: string) => {
+  switch (mode) {
+    case 'especes': return '💵';
+    case 'cheque': return '📝';
+    case 'carte': return '💳';
+    case 'virement': return '🏦';
+    case 'om': return '🟧';
+    case 'momo': return '📱';
+    case 'recouvrement': return '💸';
+    case 'avoir': return '🎫';
+    case 'coupon': return '🎟️';
+    default: return '💰';
+  }
+};
+
 export default function JournalCaisseTable({ state }: Props) {
   const {
     t, currentLocale, loading, error, filteredItems, groupedItems,
@@ -26,20 +41,6 @@ export default function JournalCaisseTable({ state }: Props) {
       hour: '2-digit',
       minute: '2-digit'
     });
-  };
-
-  const getModeIcon = (mode: string) => {
-    switch (mode) {
-      case 'especes': return '💵';
-      case 'cheque': return '📝';
-      case 'carte': return '💳';
-      case 'virement': return '🏦';
-      case 'om': return '🟧';
-      case 'momo': return '📱';
-      case 'en_compte': return '📒';
-      case 'depot': return '🏦';
-      default: return '💰';
-    }
   };
 
   return (
