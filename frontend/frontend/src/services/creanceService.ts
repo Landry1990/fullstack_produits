@@ -79,6 +79,14 @@ const creanceService = {
     getSynthese: async (params: { date_debut?: string; date_fin?: string } = {}): Promise<any[]> => {
         const response = await api.get('creances/synthese_clients/', { params });
         return Array.isArray(response.data) ? response.data : [];
+    },
+
+    exportExcel: async (params: CreanceFilters = {}): Promise<Blob> => {
+        const response = await api.get('creances/export_excel/', {
+            params,
+            responseType: 'blob'
+        });
+        return response.data;
     }
 };
 

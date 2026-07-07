@@ -1,12 +1,27 @@
-/* eslint-disable react-hooks/exhaustive-deps */
 import { Toaster } from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
-import { PackageSearch, ShoppingBag, X, ChevronLeft, ChevronRight, TrendingUp, HelpCircle } from 'lucide-react';
+import {
+    PackageSearch, ShoppingBag, X, ChevronLeft, ChevronRight,
+    TrendingUp, AlertTriangle, Package, Clock
+} from 'lucide-react';
 import { formatCurrency } from '../utils/formatters';
 import { useStockAnalysis } from '../hooks/useStockAnalysis';
 import { StockAnalysisFilters } from './stock/StockAnalysisFilters';
 import { StockAnalysisTable } from './stock/StockAnalysisTable';
 import StockHealthDashboard from './stock/StockHealthDashboard';
+import {
+    Card, CardContent, CardHeader, CardTitle, CardDescription
+} from './shadcn/card';
+import { Button } from './shadcn/button';
+import { Badge } from './shadcn/badge';
+import { Tabs, TabsList, TabsTrigger } from './shadcn/tabs';
+
+const tabs = [
+    { id: 'pilotage' as const, label: 'Pilotage', icon: TrendingUp },
+    { id: 'unsold' as const, label: 'Invendus', icon: Clock },
+    { id: 'overstock' as const, label: 'Surstock', icon: Package },
+    { id: 'shortage' as const, label: 'Ruptures', icon: AlertTriangle },
+];
 
 const StockAnalysis = () => {
     const { t } = useTranslation(['stock', 'common']);
@@ -27,86 +42,151 @@ const StockAnalysis = () => {
         actions
     } = useStockAnalysis();
 
+    const currentTab = tabs.find(t => t.id === activeTab) || tabs[0];
+    const TabIcon = currentTab.icon;
+
     return (
-        <div className="min-h-screen bg-slate-100 p-3 sm:p-4 lg:p-8">
+        <div className="min-h-screen bg-slate-50 p-4 sm:p-6 lg:p-8">
             <Toaster position="top-right" />
 
-            <div className="max-w-[1600px] mx-auto space-y-8">
-                {/* Header Section */}
-                <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
-                    <div>
-                        <div className="flex items-center gap-3 mb-2">
-                            <div className="size-12 rounded-2xl bg-emerald-600 flex items-center justify-center text-white shadow-lg shadow-emerald-200">
-                                <PackageSearch className="size-7" />
-                            </div>
-                            <div>
-                                <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-slate-800">
-                                    {t('stock:analyse.title')} <span className="text-emerald-600 italic">Stock</span>
-                                </h1>
-                                <p className="text-sm font-semibold text-slate-400 uppercase tracking-widest mt-1">
-                                    {t('stock:analyse.subtitle')}
-                                </p>
-                            </div>
+            <div className="max-w-[1600px] mx-auto space-y-6">
+                {/* Header */}
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <div className="flex items-center gap-4">
+                        <div className="size-12 rounded-2xl bg-emerald-600 flex items-center justify-center text-white shadow-lg shadow-emerald-600/20">
+                            <PackageSearch className="size-6" />
+                        </div>
+                        <div>
+                            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-slate-900">
+                                {t('stock:analyse.title')}
+                            </h1>
+                            <p className="text-sm font-medium text-slate-500 mt-0.5">
+                                {t('stock:analyse.subtitle')}
+                            </p>
                         </div>
                     </div>
+
+                    {activeTab !== 'pilotage' && data && !loading && (
+                        <Badge variant="outline" className="self-start sm:self-auto text-xs">
+                            {data.total_items} articles · {formatCurrency(Math.round(data.total_value))}
+                        </Badge>
+                    )}
                 </div>
 
-                {/* Navigation Tabs */}
-                <div className="bg-white rounded-[32px] shadow-sm border border-slate-200 overflow-hidden">
-                    <StockAnalysisFilters
-                        activeTab={activeTab}
-                        onTabChange={setActiveTab}
-                        fournisseurs={fournisseurs}
-                        selectedFournisseur={selectedFournisseur}
-                        onFournisseurChange={setSelectedFournisseur}
-                        unsoldDays={unsoldDays}
-                        onUnsoldDaysChange={setUnsoldDays}
-                        onRefresh={actions.fetchData}
-                        loading={loading}
-                    />
-                </div>
+                {/* Navigation Tabs — shadcn */}
+                <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as typeof activeTab)}>
+                    <TabsList className="bg-white border border-slate-200 p-1 h-11 w-full sm:w-auto">
+                        {tabs.map((tab) => {
+                            const Icon = tab.icon;
+                            return (
+                                <TabsTrigger
+                                    key={tab.id}
+                                    value={tab.id}
+                                    className="gap-2 px-4 data-[state=active]:bg-emerald-600 data-[state=active]:text-white data-[state=active]:shadow"
+                                >
+                                    <Icon className="size-4" />
+                                    <span className="hidden sm:inline">{t(`stock:analyse.tabs.${tab.id}`, tab.label)}</span>
+                                    <span className="sm:hidden">{tab.label}</span>
+                                </TabsTrigger>
+                            );
+                        })}
+                    </TabsList>
+                </Tabs>
 
-                {/* Summary Stats Bar */}
-                {!loading && data && activeTab !== 'pilotage' && (
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 animate-in fade-in slide-in-from-top-4 duration-500">
-                        <div className="bg-white p-6 rounded-[24px] border border-slate-200 shadow-sm flex items-center gap-4">
-                            <div className="size-12 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
-                                <PackageSearch className="size-6" />
-                            </div>
-                            <div>
-                                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{t('stock:analyse.total_items', 'Articles Détectés')}</p>
-                                <p className="text-2xl font-black text-slate-800">{data.total_items}</p>
-                            </div>
-                        </div>
+                {activeTab === 'pilotage' ? (
+                    <StockHealthDashboard />
+                ) : (
+                    <div className="space-y-6">
+                        {/* Filters Card */}
+                        <Card>
+                            <CardHeader className="pb-4">
+                                <div className="flex items-center gap-3">
+                                    <div className="size-9 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
+                                        <TabIcon className="size-5" />
+                                    </div>
+                                    <div>
+                                        <CardTitle className="text-lg">
+                                            {t(`stock:analyse.tabs.${activeTab}`, currentTab.label)}
+                                        </CardTitle>
+                                        <CardDescription>
+                                            Filtrer et analyser les articles de cette catégorie
+                                        </CardDescription>
+                                    </div>
+                                </div>
+                            </CardHeader>
+                            <CardContent>
+                                <StockAnalysisFilters
+                                    activeTab={activeTab}
+                                    fournisseurs={fournisseurs}
+                                    selectedFournisseur={selectedFournisseur}
+                                    onFournisseurChange={setSelectedFournisseur}
+                                    unsoldDays={unsoldDays}
+                                    onUnsoldDaysChange={setUnsoldDays}
+                                    onRefresh={actions.fetchData}
+                                    loading={loading}
+                                />
+                            </CardContent>
+                        </Card>
 
-                        <div className="bg-white p-6 rounded-[24px] border border-slate-200 shadow-sm flex items-center gap-4">
-                            <div className="size-12 rounded-2xl bg-red-50 text-red-500 flex items-center justify-center">
-                                <TrendingUp className="size-6" />
-                            </div>
-                            <div>
-                                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
-                                    {activeTab === 'unsold' ? t('stock:analyse.unsold_value', 'Valeur des Invendus') :
-                                     activeTab === 'overstock' ? t('stock:analyse.excess_value', 'Valeur des Excédents') :
-                                     t('stock:analyse.total_value', 'Valeur Totale')}
-                                </p>
-                                <p className="text-2xl font-black text-red-500">
-                                    {formatCurrency(Math.round(data.total_value))}
-                                </p>
-                            </div>
-                        </div>
-                    </div>
-                )}
+                        {/* Stats Cards */}
+                        {!loading && data && (
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                                <Card>
+                                    <CardContent className="p-5 flex items-center gap-4">
+                                        <div className="size-11 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
+                                            <Package className="size-5" />
+                                        </div>
+                                        <div>
+                                            <p className="text-xs font-medium text-slate-500 uppercase tracking-wide">
+                                                Articles
+                                            </p>
+                                            <p className="text-2xl font-bold text-slate-900">{data.total_items}</p>
+                                        </div>
+                                    </CardContent>
+                                </Card>
 
-                {/* Main Content Area */}
-                <div className="space-y-8 animate-in fade-in duration-500">
-                    {activeTab === 'pilotage' ? (
-                        <StockHealthDashboard />
-                    ) : (
-                        <div className="bg-white rounded-[32px] shadow-sm border border-slate-200 overflow-hidden flex flex-col min-h-0 sm:min-h-[480px] lg:min-h-[600px]">
+                                <Card>
+                                    <CardContent className="p-5 flex items-center gap-4">
+                                        <div className="size-11 rounded-xl bg-red-50 text-red-600 flex items-center justify-center shrink-0">
+                                            <TrendingUp className="size-5" />
+                                        </div>
+                                        <div>
+                                            <p className="text-xs font-medium text-slate-500 uppercase tracking-wide">
+                                                {activeTab === 'unsold' ? 'Valeur invendus' :
+                                                 activeTab === 'overstock' ? 'Valeur excédents' :
+                                                 'Valeur totale'}
+                                            </p>
+                                            <p className="text-2xl font-bold text-red-600">
+                                                {formatCurrency(Math.round(data.total_value))}
+                                            </p>
+                                        </div>
+                                    </CardContent>
+                                </Card>
+
+                                {activeTab === 'shortage' && (
+                                    <Card>
+                                        <CardContent className="p-5 flex items-center gap-4">
+                                            <div className="size-11 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center shrink-0">
+                                                <AlertTriangle className="size-5" />
+                                            </div>
+                                            <div>
+                                                <p className="text-xs font-medium text-slate-500 uppercase tracking-wide">
+                                                    Alerts critiques
+                                                </p>
+                                                <p className="text-2xl font-bold text-amber-600">{data.critical_count ?? 0}</p>
+                                            </div>
+                                        </CardContent>
+                                    </Card>
+                                )}
+                            </div>
+                        )}
+
+                        {/* Table Card */}
+                        <Card className="overflow-hidden">
                             {error && (
-                                <div className="m-6 flex items-center gap-3 p-4 bg-red-50 border border-red-200 rounded-2xl text-red-600">
+                                <div className="m-6 flex items-center gap-3 p-4 bg-red-50 border border-red-200 rounded-xl text-red-700">
                                     <X className="size-5 shrink-0" />
-                                    <span className="font-bold text-sm">{error}</span>
+                                    <span className="text-sm font-medium">{error}</span>
                                 </div>
                             )}
 
@@ -119,67 +199,75 @@ const StockAnalysis = () => {
                                 onToggleSelectAll={actions.toggleSelectAll}
                             />
 
-                            {/* Pagination Controls */}
+                            {/* Pagination */}
                             {!loading && data && data.total_pages && data.total_pages > 1 && (
-                                <div className="p-6 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-4">
-                                    <div className="text-sm font-medium text-slate-400 uppercase tracking-wider">
-                                        {t('common:pagination.page', { defaultValue: 'Page' })} <span className="font-black text-slate-700">{data.current_page}</span> {t('common:pagination.of', { defaultValue: 'sur' })} <span className="font-black text-slate-700">{data.total_pages}</span>
-                                    </div>
-
-                                    <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-2xl">
-                                        <button
-                                            className="inline-flex items-center justify-center size-8 rounded-xl text-slate-500 hover:bg-white hover:text-emerald-600 transition-all disabled:opacity-30"
+                                <div className="px-6 py-4 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-4">
+                                    <p className="text-sm text-slate-500">
+                                        Page <span className="font-semibold text-slate-900">{data.current_page}</span> sur <span className="font-semibold text-slate-900">{data.total_pages}</span>
+                                    </p>
+                                    <div className="flex items-center gap-2">
+                                        <Button
+                                            variant="outline"
+                                            size="icon"
                                             onClick={() => setPage((p) => Math.max(1, p - 1))}
                                             disabled={page === 1}
                                         >
                                             <ChevronLeft className="size-4" />
-                                        </button>
-                                        <div className="px-4 text-sm font-black text-emerald-600">{page}</div>
-                                        <button
-                                            className="inline-flex items-center justify-center size-8 rounded-xl text-slate-500 hover:bg-white hover:text-emerald-600 transition-all disabled:opacity-30"
+                                        </Button>
+                                        <span className="min-w-[3rem] text-center text-sm font-semibold text-slate-900">
+                                            {page}
+                                        </span>
+                                        <Button
+                                            variant="outline"
+                                            size="icon"
                                             onClick={() => setPage((p) => Math.min(data.total_pages || 1, p + 1))}
                                             disabled={page === data.total_pages}
                                         >
                                             <ChevronRight className="size-4" />
-                                        </button>
+                                        </Button>
                                     </div>
                                 </div>
                             )}
+                        </Card>
+                    </div>
+                )}
 
-                            {/* Floating Action Bar for Selection */}
-                            {(activeTab === 'shortage' || activeTab === 'overstock') && selectedItems.size > 0 && (
-                                <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 w-full max-w-md px-4 animate-in fade-in slide-in-from-bottom-4 duration-300">
-                                    <div className="bg-emerald-700 text-white p-4 rounded-[24px] shadow-2xl flex items-center justify-between border border-white/10 backdrop-blur-md">
-                                        <div className="flex items-center gap-3 ml-2">
-                                            <div className="size-10 rounded-xl bg-white/20 flex items-center justify-center font-black">
-                                                {selectedItems.size}
-                                            </div>
-                                            <span className="font-bold text-sm uppercase tracking-tighter">
-                                                {t('stock:analyse.shortage.selected')}
-                                            </span>
-                                        </div>
-                                        <div className="flex items-center gap-2">
-                                            <HelpCircle className="size-4 text-white/50 hover:text-white cursor-help transition-colors" />
-                                            <button
-                                                className="inline-flex items-center justify-center h-10 px-4 rounded-xl text-sm font-black bg-amber-400 text-white gap-2 hover:bg-amber-500 transition-colors"
-                                                onClick={actions.handleGenerateOrder}
-                                            >
-                                                <ShoppingBag className="size-4" />
-                                                {t('stock:analyse.shortage.generate_order')}
-                                            </button>
-                                            <button
-                                                className="inline-flex items-center justify-center size-8 rounded-xl text-white/60 hover:text-white hover:bg-white/10 transition-colors"
-                                                onClick={() => actions.toggleSelectAll()}
-                                            >
-                                                <X className="size-5" />
-                                            </button>
-                                        </div>
+                {/* Floating Action Bar */}
+                {(activeTab === 'shortage' || activeTab === 'overstock') && selectedItems.size > 0 && (
+                    <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 w-full max-w-lg px-4">
+                        <Card className="bg-slate-900 text-white border-slate-800 shadow-2xl">
+                            <CardContent className="p-4 flex items-center justify-between gap-4">
+                                <div className="flex items-center gap-3">
+                                    <div className="size-10 rounded-lg bg-emerald-600 flex items-center justify-center font-bold">
+                                        {selectedItems.size}
+                                    </div>
+                                    <div>
+                                        <p className="text-sm font-semibold">{t('stock:analyse.shortage.selected')}</p>
+                                        <p className="text-xs text-slate-400">Prêts à être ajoutés à une commande</p>
                                     </div>
                                 </div>
-                            )}
-                        </div>
-                    )}
-                </div>
+                                <div className="flex items-center gap-2">
+                                    <Button
+                                        variant="secondary"
+                                        size="sm"
+                                        onClick={actions.handleGenerateOrder}
+                                    >
+                                        <ShoppingBag className="size-4" />
+                                        {t('stock:analyse.shortage.generate_order')}
+                                    </Button>
+                                    <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        className="text-slate-400 hover:text-white hover:bg-white/10"
+                                        onClick={() => actions.toggleSelectAll()}
+                                    >
+                                        <X className="size-5" />
+                                    </Button>
+                                </div>
+                            </CardContent>
+                        </Card>
+                    </div>
+                )}
             </div>
         </div>
     );

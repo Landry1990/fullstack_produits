@@ -11,8 +11,7 @@ import {
   Grid3X3, Info, Download
 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
-import { exportToExcel } from '../utils/excelExport';
-import { usePharmacySettings } from '../hooks/usePharmacySettings';
+import { downloadBlob } from '../utils/excelExport';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -93,7 +92,6 @@ function SummaryLine({ label, value, color }: { label: string; value: string; co
 // ─── Composant principal ──────────────────────────────────────────────────────
 
 export default function EtatsInventaire() {
-  const { settings } = usePharmacySettings();
   const [source, setSource] = useState<SourceOption>('stock');
   const [groupBy, setGroupBy] = useState<GroupByOption>('rayon');
   const [stockFilter, setStockFilter] = useState<StockFilterOption>('tous');
@@ -161,50 +159,12 @@ export default function EtatsInventaire() {
     }
     setExporting(true);
     try {
-      const res = await api.get('inventaires/listing-json/', {
+      const res = await api.get('inventaires/listing-excel/', {
         params: buildParams(),
+        responseType: 'blob',
       });
-      const toRow = (r: any): Record<string, string | number | boolean> =>
-        source === 'inventaire'
-          ? {
-              'CIP':          String(r.cip ?? ''),
-              'Désignation':  String(r.name ?? ''),
-              'N° Lot':       String(r.lot_numero ?? ''),
-              'Exp. Lot':     String(r.lot_expiration ?? ''),
-              'Stock Théo.':  Number(r.stock_theorique ?? 0),
-              'Qté Comptée':  Number(r.quantite_physique ?? 0),
-              'Écart':        Number(r.ecart ?? 0),
-              'PMP':          Number(r.pmp ?? 0),
-              'Val. Écart':   Number(r.valeur_ecart ?? 0),
-            }
-          : {
-              'CIP':          String(r.cip ?? ''),
-              'Désignation':  String(r.name ?? ''),
-              'Forme':        String(r.forme ?? ''),
-              'Rayon':        String(r.rayon ?? ''),
-              'N° Lot':       String(r.lot_numero ?? ''),
-              'Exp. Lot':     String(r.lot_expiration ?? ''),
-              'Stock Lot':    Number(r.stock ?? 0),
-              'Stock Rés.':   Number(r.stock_reserve ?? 0),
-              'PMP':          Number(r.pmp ?? 0),
-              'Val. Stock':   Number(r.valeur_stock ?? 0),
-              'Prix Vente':   Number(r.prix_vente ?? 0),
-            };
-      const rows = (res.data as any[]).map(toRow);
-
-      const groupLabel: Record<string, string> = {
-        rayon: 'Rayon', forme: 'Forme', groupe: 'Groupe', fournisseur: 'Fournisseur'
-      };
-      const titleLabel = source === 'inventaire'
-        ? `Listing Inventaire — par ${groupLabel[groupBy] ?? groupBy}`
-        : `Listing Stock (Lots) — par ${groupLabel[groupBy] ?? groupBy}`;
-
-      exportToExcel(rows, settings, {
-        filename: `listing_${source}_${groupBy}_${new Date().toISOString().slice(0, 10)}.xlsx`,
-        sheetName: 'Listing',
-        title: titleLabel,
-        printA4Portrait: true,
-      });
+      const filename = `listing_${source}_${groupBy}_${new Date().toISOString().slice(0, 10)}.xlsx`;
+      downloadBlob(res.data, filename);
       toast.success('Fichier Excel téléchargé !');
     } catch {
       toast.error("Erreur lors de l'export Excel");
