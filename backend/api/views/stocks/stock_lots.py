@@ -29,7 +29,7 @@ class StockLotViewSet(BaseViewSetConfig, OptimizedSerializerMixin, viewsets.Mode
     - List view: Lightweight serializer (8 fields)
     - Detail view: Complete serializer with all information
     """
-    queryset = StockLot.objects.select_related('produit', 'fournisseur').order_by('date_expiration')
+    queryset = StockLot.objects.select_related('produit', 'fournisseur').order_by('date_reception')
     serializer_class = StockLotSerializer
     filter_backends = (DjangoFilterBackend, filters.OrderingFilter)
     filterset_fields = ['produit', 'fournisseur']

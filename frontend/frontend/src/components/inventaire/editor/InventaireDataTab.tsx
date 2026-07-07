@@ -36,6 +36,37 @@ export const InventaireDataTab: React.FC<InventaireDataTabProps> = ({
     const [sortBy, setSortBy] = useState<'nom' | 'chronologie' | 'ecart' | 'prix'>('chronologie');
     const [sortOrder, setSortOrder] = useState<'desc' | 'asc'>('desc');
 
+    React.useEffect(() => {
+        const handler = (e: KeyboardEvent) => {
+            if (e.key === 'F3' || (e.key === '/' && !(e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement))) {
+                e.preventDefault();
+                onQtyEnter?.();
+                return;
+            }
+            if (e.key === 'Delete' && !(e.target instanceof HTMLInputElement && e.target.type === 'number')) {
+                // Delete key on a selected row: remove the first selected line
+                if (selectedLines.size > 0 && !isReadOnly) {
+                    e.preventDefault();
+                    const firstId = Array.from(selectedLines)[0];
+                    handleDeleteLine(firstId);
+                }
+                return;
+            }
+            if (e.key === 'Delete' && e.target instanceof HTMLInputElement && e.target.type === 'number') {
+                const idAttr = e.target.id;
+                if (idAttr?.startsWith('qty-input-')) {
+                    const lineId = parseInt(idAttr.replace('qty-input-', ''), 10);
+                    if (!isNaN(lineId) && !isReadOnly) {
+                        e.preventDefault();
+                        handleDeleteLine(lineId);
+                    }
+                }
+            }
+        };
+        window.addEventListener('keydown', handler);
+        return () => window.removeEventListener('keydown', handler);
+    }, [selectedLines, isReadOnly, handleDeleteLine, onQtyEnter]);
+
     // Sorting lines
     const sortedLines = useMemo(() => {
         return lignes.toSorted((a, b) => {

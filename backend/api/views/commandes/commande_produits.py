@@ -293,15 +293,16 @@ class CommandeProduitViewSet(viewsets.ModelViewSet):
             instance.date_expiration = None
         instance.save(update_fields=['lot', 'date_expiration'])
 
-        # Mise à jour du StockLot associé si existant
-        if instance.lot_id:
+        # Mise à jour du StockLot associé si existant (recherche par produit + lot)
+        if instance.lot and instance.produit_id:
             try:
-                stock_lot = StockLot.objects.get(pk=instance.lot_id)
-                stock_lot.lot = instance.lot
+                stock_lot = StockLot.objects.get(produit_id=instance.produit_id, lot=instance.lot)
                 if instance.date_expiration is not None:
                     stock_lot.date_expiration = instance.date_expiration
-                stock_lot.save(update_fields=['lot', 'date_expiration'])
+                    stock_lot.save(update_fields=['date_expiration'])
             except StockLot.DoesNotExist:
+                pass
+            except StockLot.MultipleObjectsReturned:
                 pass
 
         return Response({

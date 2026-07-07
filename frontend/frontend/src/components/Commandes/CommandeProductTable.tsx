@@ -84,6 +84,8 @@ interface CommandeProductTableProps {
 
     onSortProduits?: (sortBy: 'chrono' | 'stock' | 'name' | 'qty') => void;
 
+    highlightedIndex?: number | null;
+
 }
 
 const normalizeExpiryMMYY = (raw: string) => {
@@ -154,7 +156,9 @@ export default function CommandeProductTable({
 
     commandeSortBy,
 
-    onSortProduits
+    onSortProduits,
+
+    highlightedIndex = null
 
 }: CommandeProductTableProps) {
 
@@ -505,7 +509,7 @@ export default function CommandeProductTable({
 
                         <tr 
 
-                            className={`hover:bg-base-200/50 group border-b border-base-200 last:border-0 ${selectedRows.has(index) ? 'bg-primary/10' : ''}`}
+                            className={`hover:bg-base-200/50 group border-b border-base-200 last:border-0 ${selectedRows.has(index) ? 'bg-primary/10' : ''} ${highlightedIndex === index ? 'ring-2 ring-amber-400 bg-amber-50 animate-pulse' : ''}`}
 
                         >
 

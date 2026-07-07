@@ -392,8 +392,12 @@ export default function ProduitShadcn() {
                             <td className="py-3 px-4 w-10" onClick={e => e.stopPropagation()}>
                               <Checkbox size="sm" checked={isChecked} onChange={() => setSelectedIds(prev => prev.includes(produit.id) ? prev.filter(id => id !== produit.id) : [...prev, produit.id])} />
                             </td>
-                            <td className="py-3 px-2 w-32">
-                              <span className="font-mono text-xs text-slate-400">{produit.cip1 || '-'}</span>
+                            <td className="py-3 px-2 w-36">
+                              <div className="flex flex-col gap-0.5">
+                                <span className="font-mono text-xs text-slate-500">{produit.cip1 || '-'}</span>
+                                {produit.cip2 && <span className="font-mono text-xs text-slate-400">{produit.cip2}</span>}
+                                {produit.cip3 && <span className="font-mono text-xs text-slate-400">{produit.cip3}</span>}
+                              </div>
                             </td>
                             <td className="py-3 px-2">
                               <div className="flex items-center gap-2">
@@ -476,7 +480,11 @@ export default function ProduitShadcn() {
                           )}
                         </span>
                       </div>
-                      <p className="text-sm text-slate-500 font-mono">CIP: {selectedProduit.cip1 || '-'}</p>
+                      <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5">
+                        <p className="text-sm text-slate-500 font-mono">CIP: <span className="text-slate-700">{selectedProduit.cip1 || '-'}</span></p>
+                        {selectedProduit.cip2 && <p className="text-sm text-slate-400 font-mono">• <span className="text-slate-600">{selectedProduit.cip2}</span></p>}
+                        {selectedProduit.cip3 && <p className="text-sm text-slate-400 font-mono">• <span className="text-slate-600">{selectedProduit.cip3}</span></p>}
+                      </div>
                     </div>
                     <div className="flex items-center gap-2 shrink-0">
                       <Button variant="outline" size="sm" onClick={() => handleOpenEdit(selectedProduit)}>
