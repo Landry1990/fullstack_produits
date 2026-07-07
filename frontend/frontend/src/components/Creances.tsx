@@ -97,6 +97,12 @@ export default function Creances() {
                             data.filters.dateDebut,
                             data.filters.dateFin
                         )}
+                        onExportExcel={() => actions.actions.handleExportExcel({
+                            client_id: data.filters.selectedClient || undefined,
+                            date_debut: data.filters.dateDebut || undefined,
+                            date_fin: data.filters.dateFin || undefined,
+                            history: data.filters.showHistory
+                        })}
                         loading={data.loading}
                     />
                 </div>

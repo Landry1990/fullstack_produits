@@ -224,6 +224,7 @@ def generate_listing_excel(
     grand_total_stock = 0
     grand_total_valeur = 0
     grand_total_lines = 0
+    grand_total_refs = 0
 
     for group_name, group_rows in rows.items():
         if not group_rows:
@@ -231,7 +232,7 @@ def generate_listing_excel(
 
         # En-tête du groupe
         ws.merge_cells(start_row=row, start_column=1, end_row=row, end_column=nb_cols)
-        cell = ws.cell(row=row, column=1, value=f"  ▶  {group_name.upper()}")
+        cell = ws.cell(row=row, column=1, value=f"  {group_name.upper()}")
         cell.font = font_group
         cell.fill = _group_fill('BDD7EE')
         cell.alignment = Alignment(vertical='center')
@@ -243,8 +244,10 @@ def generate_listing_excel(
 
         group_total_stock = 0
         group_total_valeur = 0
+        group_unique_refs = set()
 
         for r in group_rows:
+            group_unique_refs.add(r.get('cip') or r.get('name', ''))
             if listing_type == 'inventaire':
                 vals = [
                     r.get('cip', ''),
@@ -290,23 +293,28 @@ def generate_listing_excel(
                     cell.alignment = Alignment(horizontal='left')
             row += 1
 
+        nb_refs = len(group_unique_refs)
+        nb_lots = len(group_rows)
+
         grand_total_stock += group_total_stock
         grand_total_valeur += group_total_valeur
-        grand_total_lines += len(group_rows)
+        grand_total_lines += nb_lots
+        grand_total_refs += nb_refs
 
-        # Sous-total groupe
-        ws.merge_cells(start_row=row, start_column=1, end_row=row, end_column=4)
-        subtotal_label = f"  Sous-total {group_name}  ({len(group_rows)} article(s))"
+        # Sous-total groupe (fin)
+        subtotal_cols = 4 if listing_type == 'inventaire' else 4
+        ws.merge_cells(start_row=row, start_column=1, end_row=row, end_column=subtotal_cols)
+        subtotal_label = f"  Total {group_name}  —  {nb_refs} réf.  |  {nb_lots} lot(s)  |  {group_total_stock} boîte(s)"
         cell = ws.cell(row=row, column=1, value=subtotal_label)
         cell.font = font_subtotal
         cell.fill = _subtotal_fill()
         cell.alignment = Alignment(horizontal='right')
 
         if listing_type == 'inventaire':
-            stock_col = 6
+            qte_col = 6
             val_col = 9
         else:
-            stock_col = 7
+            qte_col = 7
             val_col = 10
 
         for col_idx in range(1, nb_cols + 1):
@@ -315,10 +323,10 @@ def generate_listing_excel(
             c.border = thin_border
             c.font = font_subtotal
 
-        ws.cell(row=row, column=stock_col, value=group_total_stock).number_format = '#,##0'
-        ws.cell(row=row, column=stock_col).font = font_subtotal
-        ws.cell(row=row, column=stock_col).fill = _subtotal_fill()
-        ws.cell(row=row, column=stock_col).alignment = Alignment(horizontal='right')
+        ws.cell(row=row, column=qte_col, value=group_total_stock).number_format = '#,##0'
+        ws.cell(row=row, column=qte_col).font = font_subtotal
+        ws.cell(row=row, column=qte_col).fill = _subtotal_fill()
+        ws.cell(row=row, column=qte_col).alignment = Alignment(horizontal='right')
 
         ws.cell(row=row, column=val_col, value=group_total_valeur).number_format = '#,##0'
         ws.cell(row=row, column=val_col).font = font_subtotal
@@ -333,7 +341,7 @@ def generate_listing_excel(
     # 7. TOTAL GÉNÉRAL
     # ------------------------------------------------------------------
     ws.merge_cells(start_row=row, start_column=1, end_row=row, end_column=4)
-    cell = ws.cell(row=row, column=1, value=f"  TOTAL GÉNÉRAL  ({grand_total_lines} article(s))")
+    cell = ws.cell(row=row, column=1, value=f"  TOTAL GÉNÉRAL  ({grand_total_refs} réf. / {grand_total_lines} lot(s))")
     cell.font = Font(name='Calibri', bold=True, size=10, color='FFFFFF')
     cell.fill = _header_fill('1F4E79')
     cell.alignment = Alignment(horizontal='right', vertical='center')
@@ -345,11 +353,11 @@ def generate_listing_excel(
         c.font = Font(name='Calibri', bold=True, size=10, color='FFFFFF')
 
     if listing_type == 'inventaire':
-        stock_col, val_col = 6, 9
+        qte_col, val_col = 6, 9
     else:
-        stock_col, val_col = 7, 10
+        qte_col, val_col = 7, 10
 
-    c_stock = ws.cell(row=row, column=stock_col, value=grand_total_stock)
+    c_stock = ws.cell(row=row, column=qte_col, value=grand_total_stock)
     c_stock.number_format = '#,##0'
     c_stock.font = Font(name='Calibri', bold=True, size=10, color='FFFFFF')
     c_stock.fill = _header_fill('1F4E79')

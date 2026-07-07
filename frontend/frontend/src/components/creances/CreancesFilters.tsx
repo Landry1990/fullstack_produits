@@ -1,6 +1,6 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { Search, RotateCcw, Printer, History, Users, Calendar } from 'lucide-react';
+import { Search, RotateCcw, Printer, History, Users, Calendar, FileSpreadsheet } from 'lucide-react';
 import type { Client } from '../../types';
 
 interface CreancesFiltersProps {
@@ -15,6 +15,7 @@ interface CreancesFiltersProps {
     onHistoryToggle: (show: boolean) => void;
     onRefresh: () => void;
     onPrintStatement: () => void;
+    onExportExcel: () => void;
     loading: boolean;
 }
 
@@ -30,6 +31,7 @@ export const CreancesFilters: React.FC<CreancesFiltersProps> = ({
     onHistoryToggle,
     onRefresh,
     onPrintStatement,
+    onExportExcel,
     loading
 }) => {
     const { t } = useTranslation(['creances', 'common']);
@@ -123,6 +125,13 @@ export const CreancesFilters: React.FC<CreancesFiltersProps> = ({
                     >
                         {loading ? <div className="animate-spin rounded-full size-4 border-b-2 border-slate-400"></div> : <Search className="size-4" />}
                         {t('creances:filters.search')}
+                    </button>
+                    <button
+                        onClick={onExportExcel}
+                        className="inline-flex items-center justify-center h-10 px-6 rounded-xl bg-emerald-100 text-emerald-700 gap-2 shadow-sm transition-all hover:scale-105 active:scale-95 font-black uppercase tracking-widest text-[10px] hover:bg-emerald-200"
+                    >
+                        <FileSpreadsheet className="size-4" />
+                        Export Excel
                     </button>
                     {selectedClient && (
                         <button
