@@ -75,7 +75,7 @@ export const InventaireEditor: React.FC<InventaireEditorProps> = ({
     );
 
     return (
-        <div className="flex flex-col gap-6 animate-in fade-in slide-in-from-bottom-2 duration-500">
+        <div className="flex flex-col gap-4 animate-in fade-in slide-in-from-bottom-2 duration-500 flex-1 overflow-hidden">
           
           {/* Verrou pessimiste */}
           {activeInventaire && activeInventaire.status !== 'VALIDEE' && (
@@ -265,9 +265,9 @@ export const InventaireEditor: React.FC<InventaireEditorProps> = ({
           </div>
 
           {/* Work Area */}
-          <div className="grid grid-cols-1 gap-6">
+          <div className="flex flex-col gap-6 flex-1 overflow-hidden min-h-0">
             {activeTab === 'ENTRY' ? (
-                <>
+                <div className="flex flex-col gap-6 flex-1 overflow-hidden min-h-0">
                     <InventaireProductSearch searchLogic={searchLogic} isReadOnly={isReadOnly} />
                     <InventaireDataTab 
                         lignes={lignes}
@@ -282,7 +282,7 @@ export const InventaireEditor: React.FC<InventaireEditorProps> = ({
                         handleBulkDelete={handleBulkDelete}
                         onQtyEnter={searchLogic.focusInput}
                     />
-                </>
+                </div>
             ) : (
                 inventoryStats && activeInventaire && (
                     <InventaireAnalysisTab 

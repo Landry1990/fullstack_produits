@@ -72,8 +72,8 @@ def generate_ecarts_pdf(inventaire):
             data = [['ID', 'Produit', 'PMP', 'Theo.', 'Phys.', 'Ecart', 'Val.']]
             total_rayon = 0
             for l in grouped[rayon]:
-                price = l.pmp_snapshot if l.pmp_snapshot > 0 else (
-                    l.produit.cost_price if l.produit else 0
+                price = (l.produit.pmp if l.produit and l.produit.pmp > 0 else
+                    (l.produit.cost_price if l.produit else 0)
                 )
                 val = l.ecart * price
                 total_rayon += val
@@ -256,8 +256,8 @@ def get_print_data(inventaire, group_by='rayon', is_report=False):
             grouped[group_name] = []
 
         # Calcul du PMP/Coût pour la valeur de l'écart
-        pmp = l.pmp_snapshot or (
-            l.produit.pmp if l.produit else 0
+        pmp = (
+            l.produit.pmp if l.produit and l.produit.pmp else 0
         ) or (
             l.produit.cost_price if l.produit else 0
         )

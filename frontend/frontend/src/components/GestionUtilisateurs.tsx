@@ -143,7 +143,6 @@ const MENU_HIERARCHY = [
     ]
   },
   { key: 'aide_formation', labelKey: 'sidebar:aide_formation' },
-  { key: 'changelog', labelKey: 'sidebar:changelog' },
   { key: 'perimes', labelKey: 'sidebar:stock.perimes.title' },
   { key: 'commandes', labelKey: 'sidebar:commandes.title' }
 ];

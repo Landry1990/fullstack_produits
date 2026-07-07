@@ -77,11 +77,11 @@ export const InventaireList: React.FC<InventaireListProps> = ({
     const isSaving = editorLogic.saving || deleting;
 
     return (
-        <div className="flex flex-col gap-6 animate-in fade-in duration-500">
+        <div className="flex flex-col gap-4 animate-in fade-in duration-500 flex-1 overflow-hidden">
             {/* Title & Filters & QuickStats */}
-            <div className="w-full space-y-4">
+            <div className="w-full space-y-3 shrink-0">
                 <div className="bg-white rounded-2xl shadow-sm border border-slate-200 flex flex-col">
-                    <div className="p-6 border-b border-slate-100">
+                    <div className="p-4 border-b border-slate-100">
                         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                             <div>
                                 <h1 className="text-2xl font-bold text-slate-800 tracking-tight flex items-center gap-2">
@@ -144,10 +144,13 @@ export const InventaireList: React.FC<InventaireListProps> = ({
             </div>
             
             {/* Quick Stats Dashboard */}
-            <InventaireQuickStats inventaires={inventaires} />
+            <div className="shrink-0">
+                <InventaireQuickStats inventaires={inventaires} />
+            </div>
 
-            {/* Main Content: Table */}
-            <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden mt-6">
+            {/* Main Content: Table — scrollable area */}
+            <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden flex flex-col flex-1 min-h-0">
+                <div className="overflow-y-auto flex-1">
                 <InventaireListTable
                     inventaires={inventaires}
                     loading={loading}
@@ -160,9 +163,10 @@ export const InventaireList: React.FC<InventaireListProps> = ({
                     deleting={deleting}
                     sharingId={sharingId}
                 />
+                </div>
 
                 {/* Pagination Controls */}
-                <div className="p-4 border-t border-slate-100 flex items-center justify-between">
+                <div className="p-4 border-t border-slate-100 flex items-center justify-between shrink-0">
                     <div className="text-sm text-slate-500 font-medium">
                         {t('common:pagination.page_info', { current: currentPage, total: totalCount, label: t('inventaire.list.title_short', 'inventaires') })}
                     </div>

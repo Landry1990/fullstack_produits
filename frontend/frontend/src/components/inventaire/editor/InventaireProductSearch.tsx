@@ -47,7 +47,7 @@ export const InventaireProductSearch: React.FC<InventaireProductSearchProps> = (
 
     React.useEffect(() => {
         if (showLotModal && !loadingLots) {
-            const firstInput = document.getElementById('lot-input-0') || document.getElementById('lot-input-global');
+            const firstInput = document.getElementById('lot-input-0');
             if (firstInput) {
                 (firstInput as HTMLInputElement).focus();
                 (firstInput as HTMLInputElement).select();
@@ -64,7 +64,7 @@ export const InventaireProductSearch: React.FC<InventaireProductSearchProps> = (
     });
 
     return (
-        <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-1 overflow-visible relative">
+        <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-1 overflow-visible relative shrink-0">
             <div className="relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-300" />
                 <input
@@ -90,13 +90,13 @@ export const InventaireProductSearch: React.FC<InventaireProductSearchProps> = (
                 <span>naviguer</span>
                 <span className="px-1.5 py-0.5 rounded bg-slate-100 border border-slate-200 font-mono text-[9px]">Enter</span>
                 <span>sélectionner</span>
-                <span className="px-1.5 py-0.5 rounded bg-slate-100 border border-slate-200 font-mono text-[9px]">Delete</span>
-                <span>retirer</span>
+                <span className="px-1.5 py-0.5 rounded bg-slate-100 border border-slate-200 font-mono text-[9px]">Shift+Del</span>
+                <span>retirer ligne</span>
             </div>
 
             {/* Search Results Dropdown */}
             {searchQuery && (
-              <div className="absolute left-0 right-0 top-full mt-1 bg-white rounded-xl shadow-xl border border-slate-200 max-h-[12vh] overflow-y-auto z-50 animate-in fade-in zoom-in-95 duration-200">
+              <div className="absolute left-0 top-full mt-1 w-full max-w-md bg-white rounded-xl shadow-xl border border-slate-200 max-h-[12vh] overflow-y-auto z-50 animate-in fade-in zoom-in-95 duration-200">
                 {searchResults.length === 0 ? (
                   <div className="text-center py-6 text-slate-400">
                     {loadingSearch ? (
@@ -211,17 +211,24 @@ export const InventaireProductSearch: React.FC<InventaireProductSearchProps> = (
                                                     className="w-full h-10 text-center font-mono font-bold text-sm rounded-lg border border-slate-200 bg-white focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 outline-none transition-all"
                                                     value={lotQuantities[lot.id.toString()] ?? ''}
                                                     onChange={e => setLotQuantities(prev => ({ ...prev, [lot.id.toString()]: e.target.value }))}
-                                                    onFocus={() => setSelectedLotIndex(idx)}
+                                                    onFocus={(e) => { setSelectedLotIndex(idx); e.currentTarget.select(); }}
                                                     onKeyDown={e => {
                                                         if (e.key === 'Enter') {
                                                             e.preventDefault();
-                                                            const nextInput = document.getElementById(`lot-input-${idx + 1}`) || document.getElementById('lot-input-global');
+                                                            const nextInput = document.getElementById(`lot-input-${idx + 1}`);
                                                             if (nextInput) (nextInput as HTMLInputElement).focus();
-                                                            else handleMultiLotConfirm();
+                                                            else {
+                                                                const confirmBtn = document.getElementById('lot-confirm-btn');
+                                                                if (confirmBtn) (confirmBtn as HTMLButtonElement).focus();
+                                                            }
                                                         } else if (e.key === 'ArrowDown') {
                                                             e.preventDefault();
-                                                            const nextInput = document.getElementById(`lot-input-${idx + 1}`) || document.getElementById('lot-input-global');
+                                                            const nextInput = document.getElementById(`lot-input-${idx + 1}`);
                                                             if (nextInput) (nextInput as HTMLInputElement).focus();
+                                                            else {
+                                                                const confirmBtn = document.getElementById('lot-confirm-btn');
+                                                                if (confirmBtn) (confirmBtn as HTMLButtonElement).focus();
+                                                            }
                                                         } else if (e.key === 'ArrowUp') {
                                                             e.preventDefault();
                                                             const prevInput = document.getElementById(`lot-input-${idx - 1}`);
@@ -238,35 +245,6 @@ export const InventaireProductSearch: React.FC<InventaireProductSearchProps> = (
 
                             {/* Options supplémentaires */}
                             <div className="mt-6 pt-6 border-t border-slate-200 space-y-3">
-                                {/* GLOBAL */}
-                                <div className={`flex items-center gap-4 p-4 rounded-xl border transition-all ${selectedLotIndex === availableLots.length ? 'bg-slate-100 border-slate-400 shadow-sm' : 'bg-white border-slate-200'}`}>
-                                    <div className="flex-1">
-                                        <div className="font-bold text-sm text-slate-700">{t('inventaire.lot_modal.btn_global')}</div>
-                                        <div className="text-[10px] text-slate-400">{t('inventaire.lot_modal.desc_global')}</div>
-                                    </div>
-                                    <div className="w-24">
-                                        <input
-                                            id="lot-input-global"
-                                            type="number"
-                                            className="w-full h-10 text-center font-mono font-bold text-sm rounded-lg border border-slate-200 bg-white focus:border-slate-500 focus:ring-2 focus:ring-slate-500/20 outline-none transition-all"
-                                            value={lotQuantities['GLOBAL'] ?? ''}
-                                            onChange={e => setLotQuantities(prev => ({ ...prev, ['GLOBAL']: e.target.value }))}
-                                            onFocus={() => setSelectedLotIndex(availableLots.length)}
-                                            onKeyDown={e => {
-                                                if (e.key === 'Enter') {
-                                                    e.preventDefault();
-                                                    handleMultiLotConfirm();
-                                                } else if (e.key === 'ArrowUp') {
-                                                    e.preventDefault();
-                                                    const prevInput = document.getElementById(`lot-input-${availableLots.length - 1}`);
-                                                    if (prevInput) (prevInput as HTMLInputElement).focus();
-                                                }
-                                            }}
-                                            placeholder="0"
-                                        />
-                                    </div>
-                                </div>
-
                                 {/* NEW LOT */}
                                 <button
                                     tabIndex={0}
@@ -290,15 +268,41 @@ export const InventaireProductSearch: React.FC<InventaireProductSearchProps> = (
 
                         <div className="p-4 border-t border-slate-100 bg-slate-50 flex justify-between gap-3">
                             <button
+                                id="lot-cancel-btn"
                                 className="inline-flex items-center justify-center h-10 flex-1 rounded-xl text-sm font-bold text-slate-700 bg-white border border-slate-200 hover:bg-slate-50 transition-colors focus:outline-none focus:ring-2 focus:ring-slate-400/30"
                                 onClick={closeLotModal}
+                                onKeyDown={e => {
+                                    if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
+                                        e.preventDefault();
+                                        const confirmBtn = document.getElementById('lot-confirm-btn');
+                                        if (confirmBtn) (confirmBtn as HTMLButtonElement).focus();
+                                    } else if (e.key === 'ArrowUp') {
+                                        e.preventDefault();
+                                        const lastIdx = availableLots.length - 1;
+                                        const prevInput = document.getElementById(`lot-input-${lastIdx}`);
+                                        if (prevInput) (prevInput as HTMLInputElement).focus();
+                                    }
+                                }}
                             >
                                 {t('common:cancel')} (Esc)
                             </button>
                             <button
+                                id="lot-confirm-btn"
                                 className="inline-flex items-center justify-center h-10 flex-[2] rounded-xl text-sm font-black bg-emerald-600 text-white shadow-lg shadow-emerald-200 hover:bg-emerald-700 transition-colors gap-2 disabled:opacity-60 focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
                                 onClick={handleMultiLotConfirm}
                                 disabled={loadingLots}
+                                onKeyDown={e => {
+                                    if (e.key === 'ArrowUp') {
+                                        e.preventDefault();
+                                        const lastIdx = availableLots.length - 1;
+                                        const prevInput = document.getElementById(`lot-input-${lastIdx}`);
+                                        if (prevInput) (prevInput as HTMLInputElement).focus();
+                                    } else if (e.key === 'ArrowDown' || e.key === 'ArrowLeft') {
+                                        e.preventDefault();
+                                        const cancelBtn = document.getElementById('lot-cancel-btn');
+                                        if (cancelBtn) (cancelBtn as HTMLButtonElement).focus();
+                                    }
+                                }}
                             >
                                 <CheckCircle2 className="h-5 w-5" />
                                 {t('common:confirm')} (Ctrl+Enter)

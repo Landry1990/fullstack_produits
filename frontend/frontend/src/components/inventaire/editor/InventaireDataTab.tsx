@@ -38,28 +38,27 @@ export const InventaireDataTab: React.FC<InventaireDataTabProps> = ({
 
     React.useEffect(() => {
         const handler = (e: KeyboardEvent) => {
+            // F3 or "/" focuses the search input (when not already in an input)
             if (e.key === 'F3' || (e.key === '/' && !(e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement))) {
                 e.preventDefault();
                 onQtyEnter?.();
                 return;
             }
-            if (e.key === 'Delete' && !(e.target instanceof HTMLInputElement && e.target.type === 'number')) {
-                // Delete key on a selected row: remove the first selected line
-                if (selectedLines.size > 0 && !isReadOnly) {
+            // Shift+Delete removes the focused line (from qty input) or first selected line
+            if (e.key === 'Delete' && e.shiftKey && !isReadOnly) {
+                if (e.target instanceof HTMLInputElement && e.target.type === 'number') {
+                    const idAttr = e.target.id;
+                    if (idAttr?.startsWith('qty-input-')) {
+                        const lineId = parseInt(idAttr.replace('qty-input-', ''), 10);
+                        if (!isNaN(lineId)) {
+                            e.preventDefault();
+                            handleDeleteLine(lineId);
+                        }
+                    }
+                } else if (selectedLines.size > 0) {
                     e.preventDefault();
                     const firstId = Array.from(selectedLines)[0];
                     handleDeleteLine(firstId);
-                }
-                return;
-            }
-            if (e.key === 'Delete' && e.target instanceof HTMLInputElement && e.target.type === 'number') {
-                const idAttr = e.target.id;
-                if (idAttr?.startsWith('qty-input-')) {
-                    const lineId = parseInt(idAttr.replace('qty-input-', ''), 10);
-                    if (!isNaN(lineId) && !isReadOnly) {
-                        e.preventDefault();
-                        handleDeleteLine(lineId);
-                    }
                 }
             }
         };
@@ -67,9 +66,11 @@ export const InventaireDataTab: React.FC<InventaireDataTabProps> = ({
         return () => window.removeEventListener('keydown', handler);
     }, [selectedLines, isReadOnly, handleDeleteLine, onQtyEnter]);
 
-    // Sorting lines
+    // Sorting + filtering lines (only show lines with ecart != 0)
     const sortedLines = useMemo(() => {
-        return lignes.toSorted((a, b) => {
+        return lignes
+            .filter(l => (l.quantite_physique || 0) !== (l.stock_theorique || 0))
+            .toSorted((a, b) => {
             let comparison = 0;
             switch (sortBy) {
                 case 'nom': {
@@ -100,29 +101,38 @@ export const InventaireDataTab: React.FC<InventaireDataTabProps> = ({
     }, [lignes, sortBy, sortOrder]);
 
     const totalEcartValeur = useMemo(() => {
-        return lignes.reduce((acc, l) => {
-            const pmp = normalizeNumberInput(l.pmp_snapshot || l.produit_cost_price || '0');
+        return sortedLines.reduce((acc, l) => {
+            const pmp = normalizeNumberInput((l as any).produit_pmp || '0')
+                || normalizeNumberInput(l.produit_cost_price || '0');
             const ecart = (l.quantite_physique || 0) - (l.stock_theorique || 0);
             return acc + (ecart * pmp);
         }, 0);
-    }, [lignes]);
+    }, [sortedLines]);
 
-    if (lignes.length === 0) {
+    if (sortedLines.length === 0) {
         return (
             <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-12 text-center text-slate-400 flex flex-col items-center gap-4 animate-in fade-in">
                 <div className="size-16 rounded-full bg-slate-100 flex items-center justify-center mb-2">
                     <PackageX className="h-8 w-8" />
                 </div>
                 <div>
-                   <h3 className="text-lg font-bold text-slate-700 mb-1">{t('inventaire.detail.empty_list_title')}</h3>
-                   <p className="text-sm max-w-sm mx-auto">{t('inventaire.detail.empty_list')}</p>
+                   <h3 className="text-lg font-bold text-slate-700 mb-1">
+                       {lignes.length === 0
+                           ? t('inventaire.detail.empty_list_title')
+                           : t('inventaire.detail.no_ecart_title', { defaultValue: 'Aucun écart' })}
+                   </h3>
+                   <p className="text-sm max-w-sm mx-auto">
+                       {lignes.length === 0
+                           ? t('inventaire.detail.empty_list')
+                           : t('inventaire.detail.no_ecart_desc', { defaultValue: 'Tous les produits correspondent au stock théorique.' })}
+                   </p>
                 </div>
             </div>
         );
     }
 
     return (
-        <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden animate-in fade-in duration-300 flex flex-col">
+        <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden animate-in fade-in duration-300 flex flex-col flex-1 min-h-0">
             {/* Action Bar for Selection */}
             {selectedLines.size > 0 && !isReadOnly && (
                 <div className="bg-amber-50 p-4 border-b border-amber-200 flex items-center justify-between sticky top-0 z-10 backdrop-blur-md">
@@ -166,7 +176,7 @@ export const InventaireDataTab: React.FC<InventaireDataTabProps> = ({
             </div>
 
             {/* Table Header */}
-            <div className="overflow-x-auto w-full">
+            <div className="overflow-x-auto overflow-y-auto flex-1 w-full">
                <div className="min-w-[600px] md:min-w-[800px]">
                     <div className="grid grid-cols-12 gap-1 md:gap-2 p-2 px-2 md:px-4 border-b border-slate-100 bg-slate-50/50 text-[9px] md:text-[10px] font-bold uppercase tracking-wider text-slate-400">
                         {!isReadOnly && (
@@ -174,7 +184,7 @@ export const InventaireDataTab: React.FC<InventaireDataTabProps> = ({
                                 <input
                                     type="checkbox"
                                     className="w-4 h-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500 cursor-pointer"
-                                    checked={selectedLines.size === lignes.length && lignes.length > 0}
+                                    checked={selectedLines.size === sortedLines.length && sortedLines.length > 0}
                                     onChange={toggleSelectAll}
                                 />
                             </div>
@@ -339,7 +349,7 @@ export const InventaireDataTab: React.FC<InventaireDataTabProps> = ({
                 <div className="flex gap-3 md:gap-6">
                     <div className="flex flex-col">
                         <span className="text-[9px] md:text-[10px] uppercase font-bold text-slate-400 leading-none mb-1">{t('inventaire.detail.items_count')}</span>
-                        <span className="font-bold text-xs md:text-sm text-slate-700">{lignes.length}</span>
+                        <span className="font-bold text-xs md:text-sm text-slate-700">{sortedLines.length}</span>
                     </div>
                 </div>
 

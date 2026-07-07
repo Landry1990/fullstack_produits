@@ -101,10 +101,7 @@ export const useInventaireEditor = (
         // Reset dirty tracking
         pendingChangesRef.current = new Map();
         setDirtyLineIds(new Set());
-        if (debounceTimerRef.current) {
-            clearTimeout(debounceTimerRef.current);
-            debounceTimerRef.current = null;
-        }
+        cancelPendingSyncs();
 
         setActiveInventaire(inv);
         setDateInventaire(inv.date);
@@ -139,6 +136,9 @@ export const useInventaireEditor = (
         }
     };
 
+
+    // Ref to latest state for use inside async callbacks / intervals
+    const autoSaveInvRef = useRef({ activeInventaire, lignes, saving, flushPendingChanges: async () => {}, syncLocalOnlyLines: async () => {} });
 
     // Preserve focus across state updates / reloads
     const preserveFocus = () => {
@@ -202,10 +202,11 @@ export const useInventaireEditor = (
     };
 
     const syncLocalOnlyLines = async () => {
-        if (!activeInventaire) return;
-        if (activeInventaire.status === 'VALIDEE') return;
+        const { activeInventaire: inv, lignes: currentLignes } = autoSaveInvRef.current;
+        if (!inv) return;
+        if (inv.status === 'VALIDEE') return;
 
-        const linesToSync = lignes.filter(l => l.isLocalOnly);
+        const linesToSync = currentLignes.filter(l => l.isLocalOnly);
         if (linesToSync.length === 0) return;
 
         // Never disturb an active quantity input: defer if the user is typing
@@ -229,8 +230,8 @@ export const useInventaireEditor = (
                     lot_expiration: l.lot_expiration
                 }))
             };
-            await api.post(`inventaires/${activeInventaire.id}/lignes/bulk/`, payload);
-            const res = await api.get(`inventaires/${activeInventaire.id}/lignes/`);
+            await api.post(`inventaires/${inv.id}/lignes/bulk/`, payload);
+            const res = await api.get(`inventaires/${inv.id}/lignes/`);
             setLignes(res.data.map((l: LigneInventaire) => ({ ...l, isLocalOnly: false })));
         } catch (err) {
             console.error("Auto-save local-only lines error:", err);
@@ -330,10 +331,11 @@ export const useInventaireEditor = (
     };
 
     const toggleSelectAll = () => {
-        if (selectedLines.size === lignes.length) {
+        const ecartLines = lignes.filter(l => (l.quantite_physique || 0) !== (l.stock_theorique || 0));
+        if (selectedLines.size === ecartLines.length && ecartLines.length > 0) {
             setSelectedLines(new Set());
         } else {
-            setSelectedLines(new Set(lignes.map(l => l.id)));
+            setSelectedLines(new Set(ecartLines.map(l => l.id)));
         }
     };
 
@@ -409,10 +411,7 @@ export const useInventaireEditor = (
         if (!activeInventaire) return;
 
         // Cancel any pending debounce and flush changes
-        if (debounceTimerRef.current) {
-            clearTimeout(debounceTimerRef.current);
-            debounceTimerRef.current = null;
-        }
+        cancelPendingSyncs();
 
         // Flush pending quantity changes first
         if (pendingChangesRef.current.size > 0) {
@@ -472,10 +471,7 @@ export const useInventaireEditor = (
         setSaving(true);
         try {
             // Cancel any pending debounce
-            if (debounceTimerRef.current) {
-                clearTimeout(debounceTimerRef.current);
-                debounceTimerRef.current = null;
-            }
+            cancelPendingSyncs();
 
             // 1. Flush pending quantity changes first
             await flushPendingChanges();
@@ -661,7 +657,6 @@ export const useInventaireEditor = (
         reader.readAsText(file);
     };
 
-    const autoSaveInvRef = useRef({ activeInventaire, lignes, saving, flushPendingChanges, syncLocalOnlyLines });
     useEffect(() => {
         autoSaveInvRef.current = { activeInventaire, lignes, saving, flushPendingChanges, syncLocalOnlyLines };
     });
