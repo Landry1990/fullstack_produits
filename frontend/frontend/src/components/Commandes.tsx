@@ -96,7 +96,7 @@ export default function Commandes({ forcedType }: CommandesProps) {
                 {state.activeTab === 'DIV' ? state.t('orders:title_divers') : state.activeTab === 'DIR' ? state.t('orders:title_direct') : state.t('orders:title_local')}
             </h1>
             <Badge variant="secondary" className="ml-2">
-              {listProps.sortedCommandes?.length || 0}
+              {listProps.totalCount || 0}
             </Badge>
           </div>
 

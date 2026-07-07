@@ -1,4 +1,4 @@
-import React, { type FormEvent, type RefObject, useState } from 'react';
+import React, { type FormEvent, type RefObject, useState, useCallback } from 'react';
 import type { Commande, Fournisseur, ProduitModel, CommandeProduit } from '../../types';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'react-hot-toast';
@@ -10,6 +10,9 @@ import { Button } from '../shadcn/button';
 import { Badge } from '../shadcn/badge';
 import { ProductSearch, type SearchResult } from '../common/ProductSearch';
 import { cn } from '../../lib/utils';
+import { useDataMatrixScanner } from '../../hooks/useDataMatrixScanner';
+import DataMatrixScanBar from './DataMatrixScanBar';
+import DuplicateLotModal from './DuplicateLotModal';
 
 interface FieldConfig {
     name: string;
@@ -82,6 +85,10 @@ interface CommandeFormProps {
     onCloture?: () => void;
     onMettreEnAttente?: () => void;
     executingAction?: boolean;
+    pendingDuplicateProduct?: ProduitModel | null;
+    setPendingDuplicateProduct?: (p: ProduitModel | null) => void;
+    handleDuplicateAddNewLine?: () => void;
+    handleDuplicateIncrementExisting?: (index: number) => void;
     orderTotals?: {
       totalHT: number;
       totalTVA: number;
@@ -144,10 +151,24 @@ export default function CommandeForm({
     onCloture,
     onMettreEnAttente,
     executingAction,
-    orderTotals
+    orderTotals,
+    pendingDuplicateProduct,
+    setPendingDuplicateProduct,
+    handleDuplicateAddNewLine,
+    handleDuplicateIncrementExisting,
 }: CommandeFormProps) {
     const { t } = useTranslation(['orders', 'common']);
     const [isExportModalOpen, setIsExportModalOpen] = useState(false);
+
+    const handleNotFound = useCallback(() => {
+        searchInputRef.current?.focus();
+    }, [searchInputRef]);
+
+    const { processScan, highlightedIndex } = useDataMatrixScanner({
+        commandeProduits,
+        updateCommandeProduitField: updateCommandeProduitField as (index: number, field: 'lot' | 'date_expiration', value: string) => void,
+        onNotFound: handleNotFound,
+    });
 
     return (
         <div className="flex flex-col h-full overflow-hidden bg-slate-50">
@@ -313,6 +334,7 @@ export default function CommandeForm({
                 onViewProductDetails={onViewProductDetails}
                 commandeSortBy={commandeSortBy}
                 onSortProduits={onSortProduits}
+                highlightedIndex={highlightedIndex}
             />
             </div>
 
@@ -401,6 +423,24 @@ export default function CommandeForm({
               </div>
             </div>
           </form>
+
+          <DataMatrixScanBar
+            onScan={processScan}
+            searchInputRef={searchInputRef}
+            onClearSearchInput={() => setSearchProduitQuery('')}
+            active={viewMode === 'CREATE' || viewMode === 'EDIT'}
+          />
+
+          <DuplicateLotModal
+            isOpen={!!pendingDuplicateProduct}
+            product={pendingDuplicateProduct ?? null}
+            existingLines={commandeProduits.filter(cp =>
+              (typeof cp.produit === 'object' ? cp.produit?.id : cp.produit) === pendingDuplicateProduct?.id
+            )}
+            onAddNewLine={() => handleDuplicateAddNewLine?.()}
+            onIncrementExisting={(i) => handleDuplicateIncrementExisting?.(i)}
+            onCancel={() => setPendingDuplicateProduct?.(null)}
+          />
 
           {/* Modal d'export */}
           <ExportCommandeModal

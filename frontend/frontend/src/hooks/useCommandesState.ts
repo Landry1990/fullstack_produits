@@ -1,4 +1,4 @@
-import { useEffect, useMemo, type FormEvent, useRef, useCallback } from 'react';
+import { useEffect, useMemo, useState, type FormEvent, useRef, useCallback } from 'react';
 import { toast } from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import { useConfirm } from './useConfirm';
@@ -214,6 +214,8 @@ export function useCommandesState(forcedType?: 'LOC' | 'DIR' | 'DIV') {
   const pageSize = 20;
   const totalPages = Math.ceil(totalCount / pageSize) || 1;
   const error = loadError ? (loadError as Error).message : null;
+
+  const [pendingDuplicateProduct, setPendingDuplicateProduct] = useState<ProduitModel | null>(null);
 
   const numeroFacture = useCommandesStore((s) => s.numeroFacture);
   const setNumeroFacture = useCommandesStore((s) => s.setNumeroFacture);
@@ -843,23 +845,16 @@ export function useCommandesState(forcedType?: 'LOC' | 'DIR' | 'DIV') {
         }
     }
 
-    const existingIndex = commandeProduits.findIndex(
-      p => (typeof p.produit === 'object' ? p.produit.id : p.produit) === product.id
-    );
+    const existingIndexes = commandeProduits.reduce<number[]>((acc, p, i) => {
+      if ((typeof p.produit === 'object' ? p.produit.id : p.produit) === product.id) acc.push(i);
+      return acc;
+    }, []);
 
-    if (existingIndex !== -1) {
-      const newRowIndex = existingIndex;
-      setFocusedField({ row: newRowIndex, field: 0 });
-      const currentQty = normalizeNumberInput(String(commandeProduits[existingIndex].quantity || 0));
-      updateCommandeProduitField(existingIndex, 'quantity', currentQty + 1);
-
-      setTimeout(() => {
-        const row = document.querySelector(`input[data-row="${newRowIndex}"]`);
-        row?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        const quantityInput = document.querySelector(`input[data-row="${newRowIndex}"][data-field="${fieldsConfig[0].name}"]`) as HTMLInputElement;
-        quantityInput?.focus();
-      }, 50);
-
+    if (existingIndexes.length > 0) {
+      // Afficher le modal de choix lot dupliqué
+      setPendingDuplicateProduct(product);
+      setSearchProduitQuery('');
+      return;
     } else {
       const newCommandeProduit: CommandeProduit = {
         id: Date.now(), 
@@ -888,6 +883,56 @@ export function useCommandesState(forcedType?: 'LOC' | 'DIR' | 'DIV') {
          quantityInput?.select();
       }, 100);
     }
+    setSearchProduitQuery('');
+  }
+
+  function handleDuplicateAddNewLine() {
+    if (!pendingDuplicateProduct) return;
+    const product = pendingDuplicateProduct;
+    setPendingDuplicateProduct(null);
+    const newCommandeProduit: CommandeProduit = {
+      id: Date.now(),
+      produit: product,
+      quantity: 1,
+      unites_gratuites: 0,
+      prix_euro: commandeType === 'DIR' ? (product.cost_price ? (normalizeNumberInput(product.cost_price) / normalizeNumberInput(tauxChange)).toFixed(0) : '0') : undefined,
+      price: product.cost_price || '0',
+      price_cost: product.cost_price || '0',
+      tva: product.tva || '0',
+      marge: product.taux_marge || '1.3',
+      selling_price: product.selling_price || '0',
+      lot: '',
+      date_expiration: '',
+    };
+    setCommandeProduits(prev => [...prev, newCommandeProduit]);
+    const newRowIndex = commandeProduits.length;
+    setFocusedField({ row: newRowIndex, field: 0 });
+    setTimeout(() => {
+      const quantityInput = document.querySelector(`input[data-row="${newRowIndex}"][data-field="${fieldsConfig[0].name}"]`) as HTMLInputElement;
+      quantityInput?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      quantityInput?.focus();
+      quantityInput?.select();
+    }, 100);
+    setSearchProduitQuery('');
+  }
+
+  function handleDuplicateIncrementExisting(relativeIndex: number) {
+    if (!pendingDuplicateProduct) return;
+    const existingIndexes = commandeProduits.reduce<number[]>((acc, p, i) => {
+      if ((typeof p.produit === 'object' ? p.produit.id : p.produit) === pendingDuplicateProduct.id) acc.push(i);
+      return acc;
+    }, []);
+    const absoluteIndex = existingIndexes[relativeIndex];
+    if (absoluteIndex === undefined) return;
+    setPendingDuplicateProduct(null);
+    const currentQty = normalizeNumberInput(String(commandeProduits[absoluteIndex].quantity || 0));
+    updateCommandeProduitField(absoluteIndex, 'quantity', currentQty + 1);
+    setFocusedField({ row: absoluteIndex, field: 0 });
+    setTimeout(() => {
+      const quantityInput = document.querySelector(`input[data-row="${absoluteIndex}"][data-field="${fieldsConfig[0].name}"]`) as HTMLInputElement;
+      quantityInput?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      quantityInput?.focus();
+    }, 50);
     setSearchProduitQuery('');
   }
 
@@ -1434,7 +1479,7 @@ export function useCommandesState(forcedType?: 'LOC' | 'DIR' | 'DIV') {
     setSelectedCommande(null);
   }
 
-  function openEditView(commande: Commande) {
+  async function openEditView(commande: Commande) {
     setNewCommandeFournisseurId(commande.fournisseur ? String(commande.fournisseur) : '');
     setNumeroFacture(commande.numero_facture || '');
     setCommandeType((commande.type as 'LOC' | 'DIR') || 'LOC');
@@ -1443,11 +1488,21 @@ export function useCommandesState(forcedType?: 'LOC' | 'DIR' | 'DIV') {
         setTauxChange(commande.taux_change || pharmacySettings?.taux_change_actif || '655.957');
         setFraisCoefficient(commande.frais_coefficient || pharmacySettings?.coefficient_direct_commande || '1.0');
     }
+
+    // Récupérer les produits frais depuis l'API pour avoir les CIP à jour
+    let freshProduitsList = produitsList;
+    try {
+        const response = await api.get('produits/for_import/');
+        if (Array.isArray(response.data)) freshProduitsList = response.data;
+        else if (response.data?.results) freshProduitsList = response.data.results;
+    } catch {
+        // Fallback sur la liste en mémoire si l'API échoue
+    }
     
     const enrichedProducts = commande.produits.map(p => {
         const produitObj = typeof p.produit === 'object' ? p.produit : null;
         const produitId = produitObj ? produitObj.id : p.produit;
-        const fullProduct = produitId ? produitsList.find(prod => prod.id === produitId) : null;
+        const fullProduct = produitId ? freshProduitsList.find(prod => prod.id === produitId) : null;
 
         // Utiliser le taux de marge sauvegardé, sinon le calculer, sinon utiliser celui du produit
         let tauxMarge = p.taux_marge;
@@ -1595,6 +1650,10 @@ export function useCommandesState(forcedType?: 'LOC' | 'DIR' | 'DIV') {
       selectProduct,
       getItemProps,
       commandeProduits,
+      pendingDuplicateProduct,
+      setPendingDuplicateProduct,
+      handleDuplicateAddNewLine,
+      handleDuplicateIncrementExisting,
       produitsList,
       selectedRows,
       orderTotals,

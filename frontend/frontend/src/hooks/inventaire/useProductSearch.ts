@@ -132,6 +132,14 @@ export const useProductSearch = (
         }
     };
 
+    const closeLotModal = () => {
+        setShowLotModal(false);
+        setSelectedProductForLot(null);
+        setLotQuantities({});
+        setSelectedLotIndex(-1);
+        focusInput();
+    };
+
     const handleLotSelection = (lotId: number | 'NEW' | 'GLOBAL') => {
         if (!selectedProductForLot) return;
         const tempId = Date.now();
@@ -326,7 +334,8 @@ export const useProductSearch = (
         selectedLotIndex, setSelectedLotIndex,
         lotQuantities, setLotQuantities,
         handleLotSelection,
-        handleMultiLotConfirm
+        handleMultiLotConfirm,
+        closeLotModal
     };
 };
 
