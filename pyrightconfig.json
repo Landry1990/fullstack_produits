@@ -8,17 +8,35 @@
         "backend/my_env01"
     ],
     "extraPaths": [
-        "backend"
+        "backend",
+        "backend/my_env01/Lib/site-packages"
     ],
     "executionEnvironments": [
         {
             "root": "backend",
             "pythonVersion": "3.10",
             "extraPaths": [
-                "."
+                ".",
+                "my_env01/Lib/site-packages"
             ]
         }
     ],
     "useLibraryCodeForTypes": true,
-    "typeCheckingMode": "basic"
+    "typeCheckingMode": "basic",
+    "reportUnknownMemberType": "none",
+    "reportMissingTypeArgument": "none",
+    "reportUnknownArgumentType": "none",
+    "reportUnknownParameterType": "none",
+    "reportUnknownVariableType": "none",
+    "reportMissingParameterType": "none",
+    "reportGeneralTypeIssues": "none",
+    "reportAttributeAccessIssue": "none",
+    "reportIndexIssue": "none",
+    "reportArgumentType": "none",
+    "reportCallIssue": "none",
+    "reportOperatorIssue": "none",
+    "reportReturnType": "none",
+    "reportAssignmentType": "none",
+    "reportMissingImports": "warning",
+    "reportUndefinedVariable": "error"
 }

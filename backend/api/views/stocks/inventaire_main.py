@@ -62,9 +62,9 @@ class InventaireViewSet(MultiTermSearchMixin, viewsets.ModelViewSet):
         if self.action == 'list':
             from django.db.models import Subquery, OuterRef
             
-            # Price expression: if pmp_snapshot > 0 use it, else use product cost_price
+            # Price expression: use product's current PMP, fallback to cost_price
             line_price_expr = Case(
-                When(pmp_snapshot__gt=0, then=F('pmp_snapshot')),
+                When(produit__pmp__gt=0, then=F('produit__pmp')),
                 default=F('produit__cost_price'),
                 output_field=DecimalField()
             )

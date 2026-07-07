@@ -554,7 +554,7 @@ class TelegramRapportInventaireView(APIView):
                 nb_ecarts_neg = sum(1 for l in lignes if l.ecart < 0)
 
                 valeur_ecart = sum(
-                    float(l.ecart) * float(l.pmp_snapshot or 0)
+                    float(l.ecart) * float(l.produit.pmp or l.produit.cost_price or 0)
                     for l in lignes
                 )
 
@@ -563,11 +563,11 @@ class TelegramRapportInventaireView(APIView):
                 statut_label = "✅ Validé" if last_inv.status == 'VALIDEE' else "📝 En cours"
 
                 valeur_theo = sum(
-                    float(l.stock_theorique or 0) * float(l.pmp_snapshot or 0)
+                    float(l.stock_theorique or 0) * float(l.produit.pmp or l.produit.cost_price or 0)
                     for l in lignes
                 )
                 valeur_phys = sum(
-                    float(l.quantite_physique or 0) * float(l.pmp_snapshot or 0)
+                    float(l.quantite_physique or 0) * float(l.produit.pmp or l.produit.cost_price or 0)
                     for l in lignes
                 )
 
@@ -581,20 +581,20 @@ class TelegramRapportInventaireView(APIView):
                     f"❌ {TelegramService.t('shortage', lang)} : {nb_ecarts_neg} lignes"
                 )
 
-                top_plus = sorted([l for l in lignes if l.ecart > 0], key=lambda x: float(x.ecart) * float(x.pmp_snapshot or 0), reverse=True)[:5]
+                top_plus = sorted([l for l in lignes if l.ecart > 0], key=lambda x: float(x.ecart) * float(x.produit.pmp or x.produit.cost_price or 0), reverse=True)[:5]
                 if top_plus:
                     top_plus_text = f"\n\n📈 <b>{TelegramService.t('top_surplus', lang)} :</b>\n"
                     for l in top_plus:
                         nom = (l.produit.name if l.produit else l.produit_nom) or '?'
-                        valeur = int(float(l.ecart) * float(l.pmp_snapshot or 0))
+                        valeur = int(float(l.ecart) * float(l.produit.pmp or l.produit.cost_price or 0))
                         top_plus_text += f"  • {nom[:25]} : +{l.ecart} uté (+{valeur:,} F)\n"
 
-                top_moins = sorted([l for l in lignes if l.ecart < 0], key=lambda x: float(x.ecart) * float(x.pmp_snapshot or 0))[:5]
+                top_moins = sorted([l for l in lignes if l.ecart < 0], key=lambda x: float(x.ecart) * float(x.produit.pmp or x.produit.cost_price or 0))[:5]
                 if top_moins:
                     top_moins_text = f"\n📉 <b>{TelegramService.t('top_shortage', lang)} :</b>\n"
                     for l in top_moins:
                         nom = (l.produit.name if l.produit else l.produit_nom) or '?'
-                        valeur = int(float(l.ecart) * float(l.pmp_snapshot or 0))
+                        valeur = int(float(l.ecart) * float(l.produit.pmp or l.produit.cost_price or 0))
                         top_moins_text += f"  • {nom[:25]} : {l.ecart} uté ({valeur:,} F)\n"
 
             text = (

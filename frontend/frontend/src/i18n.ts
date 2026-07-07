@@ -52,7 +52,6 @@ i18n
             'config',
             'help',
             'clinical',
-            'changelog',
             'system_admin'
         ],
         defaultNS: 'common',

@@ -51,7 +51,7 @@ export default function InventaireComponent() {
     });
 
     return (
-        <div className="min-h-screen bg-slate-100 p-6 space-y-6 font-sans">
+        <div className="h-screen bg-slate-100 p-6 space-y-6 font-sans overflow-hidden flex flex-col">
             {viewMode === 'LIST' ? (
                 <InventaireList 
                     listLogic={listLogic}

@@ -90,7 +90,7 @@ def validate_inventaire(
                 defaults={
                     'quantity_initial': ligne.quantite_physique,
                     'quantity_remaining': ligne.quantite_physique,
-                    'price_cost': ligne.pmp_snapshot or produit.cost_price or 0,
+                    'price_cost': produit.pmp or produit.cost_price or 0,
                     'date_reception': inventaire.date,
                     'fournisseur': produit.fournisseur
                 }

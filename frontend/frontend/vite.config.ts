@@ -21,13 +21,12 @@ export default defineConfig({
       'react-hot-toast',
       '@tanstack/react-query'
     ],
-    // Exclure les gros modules qui ne sont pas toujours utilisés
-    exclude: []
+    // Tesseract chargé dynamiquement — ne pas pré-bundler
+    exclude: ['tesseract.js', 'tesseract.js-core']
   },
 
   // Amélioration des performances de build
   build: {
-    // Chunking pour mieux utiliser le cache navigateur
     rollupOptions: {
       output: {
         manualChunks: {
@@ -41,27 +40,26 @@ export default defineConfig({
           'vendor-ui': ['react-hot-toast', 'lucide-react'],
           'vendor-dates': ['date-fns'],
           'vendor-i18n': ['react-i18next', 'i18next'],
-          // Features groupes (eviter trop de petits chunks)
-          'feature-inventory': ['./src/components/Inventaire', './src/components/EtatsInventaire', './src/components/Organisation'],
+          // Feature inventory découpé en sous-chunks
+          'feature-inventory': ['./src/components/Inventaire'],
+          'feature-inventory-editor': ['./src/components/inventaire/editor/InventaireEditor'],
+          'feature-inventory-states': ['./src/components/EtatsInventaire', './src/components/Organisation'],
+          // Reports
           'feature-reports': ['./src/components/RapportMensuel', './src/components/CentreRapports', './src/components/AnalyseABC'],
+          // History
           'feature-history': ['./src/components/HistoriqueVentes', './src/components/HistoriqueAchats', './src/components/HistoriqueClotures']
         },
-        // Eviter les noms de chunks avec hash pour le debug
         entryFileNames: 'assets/[name]-[hash].js',
         chunkFileNames: 'assets/[name]-[hash].js',
         assetFileNames: 'assets/[name]-[hash][extname]'
       }
     },
-    // Optimisation du bundle
     target: 'esnext',
     minify: 'esbuild',
-    // Optimiser le chargement
     modulePreload: {
       polyfill: true
     },
-    // Reduire la taille des chunks
-    chunkSizeWarningLimit: 500,
-    // Source maps pour debug en production si necessaire
+    chunkSizeWarningLimit: 600,
     sourcemap: false
   },
 

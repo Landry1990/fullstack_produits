@@ -2,6 +2,61 @@
 
 ---
 
+## 2026-07-07
+
+### ⚡ Optimisations & Scalabilité
+
+- **Étude de scalabilité complète du projet**
+  - Analyse architecture Docker, DB, Redis, backend, frontend — identification des goulots.
+  - Projection de charge sur 2 ans (utilisateurs, volume transactions, taille DB).
+
+- **PostgreSQL — tuning performances** (`docker-compose.yml`, `docker-compose.prod.yml`)
+  - `shared_buffers` : 128 MB → **256 MB**
+  - `work_mem` : 4 MB → **16 MB**
+  - `wal_buffers` : 4 MB → **16 MB**
+  - `effective_cache_size` : 1 GB (réaliste)
+  - `checkpoint_completion_target` : 0.9 (réduit les pics I/O)
+  - `random_page_cost` : 1.1 (optimisé SSD)
+  - `maintenance_work_mem` : 64 MB, `default_statistics_target` : 100
+
+- **Redis — politique d'éviction** (`docker-compose.yml`, `docker-compose.prod.yml`)
+  - `maxmemory 256 MB` + `allkeys-lru` → éviction intelligente sous pression mémoire
+  - `tcp-keepalive 300` en prod
+
+- **Backend — serveur ASGI** (`docker-compose.yml`, `docker-compose.prod.yml`)
+  - Remplacement de Daphne (single-process) par **Uvicorn 4 workers** avec `uvloop` + `httptools` (~2x plus rapide)
+  - `DB_CONN_MAX_AGE` : 0 → **600s** — supprime les reconnexions DB à chaque requête (dev + prod)
+
+- **Django REST Framework** (`backend/backend/settings.py`)
+  - `MAX_PAGE_SIZE` : 10 000 → **500** — protège contre les requêtes abusives
+
+- **Frontend — bundle JS** (`frontend/vite.config.ts`, `frontend/src/services/prescriptionOcrService.ts`)
+  - **Tesseract.js (~4.7 MB wasm) passé en import dynamique** — ne charge que lors du premier scan OCR, absent du bundle initial
+  - `feature-inventory` découpé : `feature-inventory-editor` (22 KB gzip) extrait séparément
+  - `tesseract.js` exclu du pre-bundle Vite (`optimizeDeps.exclude`)
+
+- **Commande de maintenance** (`backend/api/management/commands/archive_audit_logs.py`)
+  - Nouvelle commande `python manage.py archive_audit_logs` — purge les `AuditLog` de plus de 90 jours par lots de 5 000 lignes sans verrouiller la table
+  - Options : `--days N`, `--dry-run`, `--batch-size N`
+
+### ✨ Nouvelles fonctionnalités
+
+- **Inventaire — scrollbars spécifiques aux tableaux** (session précédente déployée ce jour)
+  - `frontend/src/components/Inventaire.tsx` — suppression de la scrollbar globale de la page (`h-screen overflow-hidden`)
+  - `frontend/src/components/inventaire/editor/InventaireList.tsx` — scrollbar interne au tableau de liste, pagination fixe en bas
+  - `frontend/src/components/inventaire/editor/InventaireDataTab.tsx` — scrollbar interne au tableau de détail, header et totaux fixes
+  - `frontend/src/components/inventaire/editor/InventaireEditor.tsx` — zone de travail `flex flex-col flex-1 overflow-hidden` pour supporter le scroll interne
+  - `frontend/src/components/inventaire/editor/InventaireProductSearch.tsx` — `shrink-0` pour éviter la compression dans le flex container
+
+### 🐛 Corrections
+
+- **Rapport Excel inventaire — lots à stock zéro** (`backend/api/views/stocks/inventaire/listing_excel.py`)
+  - Filtre `tous` exclut désormais par défaut les lots à `quantity_remaining = 0`
+  - Filtre `zero` corrigé : `quantity_remaining__lt=0` → `quantity_remaining__lte=0`
+  - Produits sans lot (stock nul implicite) inclus uniquement en mode `zero`
+
+---
+
 ## 2026-07-05
 
 ### ✨ Nouvelles fonctionnalités

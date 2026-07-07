@@ -1158,19 +1158,19 @@ class InventaireSerializer(serializers.ModelSerializer):
 
     def get_total_valeur_theorique(self, obj):
         return sum(
-            (ligne.stock_theorique * (ligne.pmp_snapshot or ligne.produit.cost_price or 0))
+            (ligne.stock_theorique * (ligne.produit.pmp or ligne.produit.cost_price or 0))
             for ligne in obj.lignes.all()
         )
 
     def get_total_valeur_physique(self, obj):
         return sum(
-            (ligne.quantite_physique * (ligne.pmp_snapshot or ligne.produit.cost_price or 0))
+            (ligne.quantite_physique * (ligne.produit.pmp or ligne.produit.cost_price or 0))
             for ligne in obj.lignes.all()
         )
 
     def get_total_ecart_valeur(self, obj):
         return sum(
-            (ligne.ecart * (ligne.pmp_snapshot or ligne.produit.cost_price or 0))
+            (ligne.ecart * (ligne.produit.pmp or ligne.produit.cost_price or 0))
             for ligne in obj.lignes.all()
         )
         fields = '__all__'
