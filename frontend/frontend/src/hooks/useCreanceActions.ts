@@ -265,6 +265,31 @@ export const useCreanceActions = ({
         }
     }, [t, pharmacySettings]);
 
+    const handleExportExcel = useCallback(async (params: {
+        client_id?: string;
+        date_debut?: string;
+        date_fin?: string;
+        history?: boolean;
+    }) => {
+        const loadingToast = toast.loading('Génération du fichier Excel...');
+        try {
+            const blob = await creanceService.exportExcel(params);
+            const url = window.URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            const dateStr = new Date().toISOString().slice(0, 10);
+            link.setAttribute('download', `creances_${dateStr}.xlsx`);
+            document.body.appendChild(link);
+            link.click();
+            link.parentNode?.removeChild(link);
+            setTimeout(() => window.URL.revokeObjectURL(url), 100);
+            toast.success('Export Excel généré avec succès.', { id: loadingToast });
+        } catch (err) {
+            console.error('Erreur export Excel:', err);
+            toast.error('Erreur lors de l\'export Excel.', { id: loadingToast });
+        }
+    }, []);
+
     return {
         selectedCreance,
         modals: {
@@ -295,7 +320,8 @@ export const useCreanceActions = ({
             handleAjouterPaiement,
             handlePrintDirectReceipt,
             handlePrintBulkReceipt,
-            handleImprimerReleve
+            handleImprimerReleve,
+            handleExportExcel
         }
     };
 };

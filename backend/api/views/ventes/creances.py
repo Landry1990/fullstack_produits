@@ -156,7 +156,223 @@ class CreanceViewSet(viewsets.ReadOnlyModelViewSet):
             })
 
         return Response(results)
-    
+
+    @action(detail=False, methods=['get'])
+    def export_excel(self, request):
+        """Export Excel simple des créances filtrées par période et par client (assurance)."""
+        import io
+        import openpyxl
+        from openpyxl.styles import Font, Alignment, Border, Side
+        from openpyxl.utils import get_column_letter
+        from django.http import HttpResponse
+
+        history = request.query_params.get('history', 'false').lower() == 'true'
+        client_id = request.query_params.get('client_id')
+        date_debut = request.query_params.get('date_debut')
+        date_fin = request.query_params.get('date_fin')
+
+        from django.db.models import Sum, F, Value, DecimalField, OuterRef, Subquery
+        from django.db.models.functions import Coalesce
+
+        paid_subquery = Caisse.objects.filter(
+            facture=OuterRef('pk'),
+            statut='completee'
+        ).exclude(mode_paiement='en_compte').values('facture').annotate(
+            total=Sum('montant')
+        ).values('total')[:1]
+
+        queryset = Facture.objects.filter(
+            status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE]
+        ).annotate(
+            paid_amount=Coalesce(Subquery(paid_subquery), Value(0, output_field=DecimalField())),
+            remainder=F('total_ttc') - F('paid_amount')
+        )
+
+        if history:
+            queryset = queryset.filter(remainder__lte=0, paiements__mode_paiement='en_compte')
+        else:
+            queryset = queryset.filter(remainder__gt=0)
+
+        queryset = queryset.distinct().select_related('client', 'ayant_droit').order_by('client__name', '-date')
+
+        if client_id:
+            queryset = queryset.filter(client_id=client_id)
+        if date_debut:
+            try:
+                start_date = datetime.strptime(date_debut, '%Y-%m-%d')
+                start_date = timezone.make_aware(start_date)
+                queryset = queryset.filter(date__gte=start_date)
+            except ValueError:
+                pass
+        if date_fin:
+            try:
+                end_date = datetime.strptime(date_fin, '%Y-%m-%d') + timedelta(days=1)
+                end_date = timezone.make_aware(end_date)
+                queryset = queryset.filter(date__lt=end_date)
+            except ValueError:
+                pass
+
+        # ── En-tête pharmacie ──
+        from ...models import PharmacySettings
+        try:
+            pharmacy = PharmacySettings.objects.get(pk=1)
+            pharma_name = pharmacy.pharmacy_name or 'PHARMACIE'
+            pharma_address = f"{pharmacy.address or ''} {pharmacy.city or ''}".strip()
+            pharma_phone = pharmacy.phone or ''
+        except Exception:
+            pharma_name = 'PHARMACIE'
+            pharma_address = ''
+            pharma_phone = ''
+
+        now_str = timezone.localtime(timezone.now()).strftime("%d/%m/%Y à %H:%M")
+
+        # ── Construction du classeur ──
+        wb = openpyxl.Workbook()
+        ws = wb.active
+        ws.title = "Créances"
+
+        thin = Side(style='thin', color='BFBFBF')
+        thin_border = Border(left=thin, right=thin, top=thin, bottom=thin)
+
+        columns = [
+            ('Date', 12),
+            ('N° Facture', 18),
+            ('Client / Assurance', 30),
+            ('Bénéficiaire', 25),
+            ('Total TTC', 14),
+            ('Montant Payé', 14),
+            ('Reste à Payer', 14),
+            ('Statut', 12),
+        ]
+        nb_cols = len(columns)
+        for i, (_, width) in enumerate(columns, start=1):
+            ws.column_dimensions[get_column_letter(i)].width = width
+
+        row = 1
+        ws.append([pharma_name])
+        ws.append([pharma_address])
+        if pharma_phone:
+            ws.append([f"Tél : {pharma_phone}"])
+        ws.append([f"Édité le : {now_str}"])
+        ws.append([])
+
+        # Titre
+        title = "Listing des Créances"
+        if client_id:
+            from ...models import Client
+            try:
+                c = Client.objects.get(pk=client_id)
+                title += f" — {c.name}"
+            except Client.DoesNotExist:
+                pass
+        elif history:
+            title += " — Historique"
+        else:
+            title += " — En attente"
+        if date_debut and date_fin:
+            title += f" ({date_debut} au {date_fin})"
+        elif date_debut:
+            title += f" (à partir du {date_debut})"
+        elif date_fin:
+            title += f" (jusqu'au {date_fin})"
+
+        ws.append([title])
+        ws.append([])
+        row = ws.max_row + 1
+
+        # En-têtes du tableau
+        header_row = row
+        for col_idx, (col_name, _) in enumerate(columns, start=1):
+            cell = ws.cell(row=header_row, column=col_idx, value=col_name)
+            cell.font = Font(name='Calibri', bold=True, size=10)
+            cell.alignment = Alignment(horizontal='center', vertical='center')
+            cell.border = thin_border
+        ws.row_dimensions[header_row].height = 18
+        row += 1
+
+        # Données
+        total_ttc_sum = Decimal('0')
+        total_paye_sum = Decimal('0')
+        total_reste_sum = Decimal('0')
+        count = 0
+
+        for facture in queryset:
+            montant_paye = getattr(facture, 'paid_amount', Decimal('0'))
+            reste = facture.total_ttc - montant_paye
+            client_name = facture.client_name_override or (facture.client.name if facture.client else 'Client de passage')
+            ayant_droit = facture.ayant_droit.nom if hasattr(facture, 'ayant_droit') and facture.ayant_droit else ''
+            status_label = 'Payée' if reste <= 0 else 'En attente'
+
+            vals = [
+                facture.date.strftime('%d/%m/%Y') if facture.date else '',
+                facture.numero_facture or str(facture.id),
+                client_name,
+                ayant_droit,
+                float(facture.total_ttc),
+                float(montant_paye),
+                float(reste),
+                status_label,
+            ]
+            for col_idx, val in enumerate(vals, start=1):
+                cell = ws.cell(row=row, column=col_idx, value=val)
+                cell.font = Font(name='Calibri', size=10)
+                cell.border = thin_border
+                if isinstance(val, (int, float)):
+                    cell.alignment = Alignment(horizontal='right')
+                    if col_idx in (5, 6, 7):
+                        cell.number_format = '#,##0'
+                else:
+                    cell.alignment = Alignment(horizontal='left')
+
+            total_ttc_sum += facture.total_ttc
+            total_paye_sum += montant_paye
+            total_reste_sum += reste
+            count += 1
+            row += 1
+
+        # Ligne de totaux
+        if count > 0:
+            row += 1
+            ws.merge_cells(start_row=row, start_column=1, end_row=row, end_column=4)
+            cell = ws.cell(row=row, column=1, value=f"TOTAL ({count} facture(s))")
+            cell.font = Font(name='Calibri', bold=True, size=10)
+            cell.alignment = Alignment(horizontal='right')
+            cell.border = thin_border
+            for col_idx in range(1, nb_cols + 1):
+                ws.cell(row=row, column=col_idx).border = thin_border
+            for col_idx, val in [(5, float(total_ttc_sum)), (6, float(total_paye_sum)), (7, float(total_reste_sum))]:
+                c = ws.cell(row=row, column=col_idx, value=val)
+                c.number_format = '#,##0'
+                c.font = Font(name='Calibri', bold=True, size=10)
+                c.alignment = Alignment(horizontal='right')
+                c.border = thin_border
+
+        # Ajustement auto largeur colonnes texte
+        for col in ws.columns:
+            max_length = 0
+            col_idx = None
+            for cell in col:
+                if cell.column:
+                    col_idx = cell.column
+                if cell.value:
+                    max_length = max(max_length, len(str(cell.value)))
+            if col_idx:
+                current = ws.column_dimensions[get_column_letter(col_idx)].width or 0
+                ws.column_dimensions[get_column_letter(col_idx)].width = max(current, min(40, max_length + 2))
+
+        # ── Réponse HTTP ──
+        output = io.BytesIO()
+        wb.save(output)
+        output.seek(0)
+
+        response = HttpResponse(
+            output.read(),
+            content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+        )
+        filename = f"creances_{date_debut or 'all'}_{date_fin or 'now'}.xlsx"
+        response['Content-Disposition'] = build_safe_content_disposition(filename)
+        return response
+
     @action(detail=True, methods=['get'])
     def imprimer_recu(self, request, pk=None):
         facture = self.get_object()

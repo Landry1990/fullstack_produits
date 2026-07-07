@@ -41,6 +41,22 @@
 
 ### ✨ Nouvelles fonctionnalités
 
+- **Créances — export Excel filtré par période et par client/assurance**
+  - `backend/api/views/ventes/creances.py` : nouvelle action `export_excel` sur `CreanceViewSet` générant un fichier `.xlsx` avec filtre `date_debut`, `date_fin`, `client_id` et `history`.
+  - `frontend/src/services/creanceService.ts` : ajout de `exportExcel()` appelant l'API en `responseType: 'blob'`.
+  - `frontend/src/hooks/useCreanceActions.ts` : handler `handleExportExcel` avec téléchargement automatique et toasts.
+  - `frontend/src/components/creances/CreancesFilters.tsx` et `frontend/src/components/Creances.tsx` : bouton **Export Excel** intégré dans les filtres, reprenant les filtres actifs.
+
+- **Inventaire — sous-totaux par regroupement dans `listing_excel.py`**
+  - `backend/api/views/stocks/inventaire/listing_excel.py` : chaque groupe (rayon, fournisseur, forme, groupe) affiche désormais une ligne d'en-tête, ses lignes de données, puis une ligne **Total Groupe** avec : nombre de références, nombre de lots/lignes, nombre de boîtes et valeur de stock.
+  - Total général mis à jour avec les mêmes agrégats (références / lots / boîtes / valeur).
+  - `frontend/frontend/src/components/EtatsInventaire.tsx` : le bouton **Exporter en Excel** appelle désormais le backend `inventaires/listing-excel/` au lieu de générer le fichier côté navigateur. L'export Excel bénéficie ainsi du regroupement, des sous-totaux et du total général du backend.
+
+- **Stock Analysis — refonte design avec shadcn/ui**
+  - `frontend/frontend/src/components/StockAnalysis.tsx` : nouvelle structure avec en-tête épuré, navigation par onglets shadcn (`Tabs`), cartes de statistiques shadcn (`Card`), pagination avec `Button`, et barre d'action flottante redesignée.
+  - `frontend/frontend/src/components/stock/StockAnalysisFilters.tsx` : filtres réorganisés dans une `Card` avec selects stylisés et bouton `Button` actualiser.
+  - `frontend/frontend/src/components/stock/StockAnalysisTable.tsx` : tableau dans le style shadcn, colonnes calibrées via `table-fixed` et largeurs fixes, cases à cocher shadcn (`Checkbox`), badges shadcn (`Badge`) pour les urgences et le stock, états vides redesignés et squelettes de chargement.
+
 - **Inventaire — scrollbars spécifiques aux tableaux** (session précédente déployée ce jour)
   - `frontend/src/components/Inventaire.tsx` — suppression de la scrollbar globale de la page (`h-screen overflow-hidden`)
   - `frontend/src/components/inventaire/editor/InventaireList.tsx` — scrollbar interne au tableau de liste, pagination fixe en bas

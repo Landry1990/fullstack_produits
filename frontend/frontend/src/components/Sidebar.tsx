@@ -257,7 +257,6 @@ export default function Sidebar() {
     
     const adminOnlyKeys = ['utilisateurs', 'user_sessions', 'audit', 'import_dci', 'maintenance', 'corbeille'];
     if (adminOnlyKeys.includes(item.key)) return [];
-    if (item.key === 'changelog') return [item];
     return (hasExplicitParent || hasLegacyCategory || allowed.includes(item.key)) ? [item] : [];
   });
 
