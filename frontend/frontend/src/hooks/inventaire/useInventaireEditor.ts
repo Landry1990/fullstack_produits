@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import api from '../../services/api';
 import { toast } from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
@@ -30,6 +30,7 @@ export const useInventaireEditor = (
     const [dirtyLineIds, setDirtyLineIds] = useState<Set<number>>(new Set());
     const pendingChangesRef = useRef<Map<number, number>>(new Map());
     const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const localOnlyDebounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
     const isReadOnly = activeInventaire?.status === 'VALIDEE';
 
@@ -50,10 +51,7 @@ export const useInventaireEditor = (
             // Reset dirty tracking
             pendingChangesRef.current = new Map();
             setDirtyLineIds(new Set());
-            if (debounceTimerRef.current) {
-                clearTimeout(debounceTimerRef.current);
-                debounceTimerRef.current = null;
-            }
+            cancelPendingSyncs();
 
             // 1. Create the inventory header
             const response = await api.post('inventaires/', {
@@ -142,16 +140,48 @@ export const useInventaireEditor = (
     };
 
 
-    const flushPendingChanges = useCallback(async () => {
+    // Preserve focus across state updates / reloads
+    const preserveFocus = () => {
+        const active = document.activeElement;
+        if (!active || !(active instanceof HTMLInputElement)) return null;
+        return {
+            id: active.id,
+            selectionStart: active.selectionStart,
+            selectionEnd: active.selectionEnd,
+            value: active.value
+        };
+    };
+
+    const restoreFocus = (focusInfo: ReturnType<typeof preserveFocus>) => {
+        if (!focusInfo) return;
+        const el = document.getElementById(focusInfo.id);
+        if (el && el instanceof HTMLInputElement) {
+            el.focus();
+            if (focusInfo.value !== undefined && el.value !== focusInfo.value) {
+                // If the input was modified by a state update, keep the current value
+                // to avoid overwriting what the user is typing.
+            }
+            if (focusInfo.selectionStart !== null && focusInfo.selectionEnd !== null) {
+                try {
+                    el.setSelectionRange(focusInfo.selectionStart, focusInfo.selectionEnd);
+                } catch {
+                    // ignore if input type doesn't support selection
+                }
+            }
+        }
+    };
+
+    const flushPendingChanges = async () => {
         const pending = pendingChangesRef.current;
         if (pending.size === 0 || !activeInventaire) return;
 
+        const focusInfo = preserveFocus();
         setAutoSaving(true);
         const updates = Array.from(pending.entries());
         pendingChangesRef.current = new Map();
 
         try {
-            // Send all pending updates in parallel
+            // Send all pending updates in parallel — no full reload, no toast
             await Promise.all(
                 updates.map(([lineId, qty]) =>
                     api.patch(`lignes-inventaire/${lineId}/`, { quantite_physique: qty })
@@ -165,12 +195,70 @@ export const useInventaireEditor = (
             });
         } catch (err) {
             console.error("Auto-save batch error:", err);
-            // Re-queue failed changes? For simplicity, keep them cleared and rely on manual save if needed.
-            // Alternatively, could re-add to pending, but that might cause infinite loops.
         } finally {
             setAutoSaving(false);
+            restoreFocus(focusInfo);
         }
-    }, [activeInventaire]);
+    };
+
+    const syncLocalOnlyLines = async () => {
+        if (!activeInventaire) return;
+        if (activeInventaire.status === 'VALIDEE') return;
+
+        const linesToSync = lignes.filter(l => l.isLocalOnly);
+        if (linesToSync.length === 0) return;
+
+        // Never disturb an active quantity input: defer if the user is typing
+        const active = document.activeElement;
+        const isTyping = active instanceof HTMLInputElement && active.type === 'number';
+        if (isTyping) {
+            // Reschedule: user is still typing, wait for the next quiet window
+            scheduleLocalOnlySync();
+            return;
+        }
+
+        const focusInfo = preserveFocus();
+        setAutoSaving(true);
+        try {
+            const payload = {
+                lignes: linesToSync.map(l => ({
+                    produit: typeof l.produit === 'object' ? l.produit.id : l.produit,
+                    stock_lot: l.stock_lot,
+                    quantite_physique: l.quantite_physique,
+                    lot_numero: l.lot_numero,
+                    lot_expiration: l.lot_expiration
+                }))
+            };
+            await api.post(`inventaires/${activeInventaire.id}/lignes/bulk/`, payload);
+            const res = await api.get(`inventaires/${activeInventaire.id}/lignes/`);
+            setLignes(res.data.map((l: LigneInventaire) => ({ ...l, isLocalOnly: false })));
+        } catch (err) {
+            console.error("Auto-save local-only lines error:", err);
+        } finally {
+            setAutoSaving(false);
+            restoreFocus(focusInfo);
+        }
+    };
+
+    const scheduleLocalOnlySync = () => {
+        if (localOnlyDebounceTimerRef.current) {
+            clearTimeout(localOnlyDebounceTimerRef.current);
+        }
+        localOnlyDebounceTimerRef.current = setTimeout(() => {
+            syncLocalOnlyLines();
+        }, 5000);
+    };
+
+    const cancelPendingSyncs = () => {
+        if (debounceTimerRef.current) {
+            clearTimeout(debounceTimerRef.current);
+            debounceTimerRef.current = null;
+        }
+        if (localOnlyDebounceTimerRef.current) {
+            clearTimeout(localOnlyDebounceTimerRef.current);
+            localOnlyDebounceTimerRef.current = null;
+        }
+    };
 
     const handleUpdateQuantity = (lineId: number, newQty: number) => {
         // Optimistic update
@@ -183,7 +271,12 @@ export const useInventaireEditor = (
         }));
 
         const line = lignes.find(l => l.id === lineId);
-        if (line?.isLocalOnly) return;
+        if (line?.isLocalOnly) {
+            // Local-only lines have no real ID yet; schedule a background sync
+            // after the user stops typing so we don't disturb the active input.
+            scheduleLocalOnlySync();
+            return;
+        }
 
         // Track pending change for auto-save debounce
         pendingChangesRef.current.set(lineId, newQty);
@@ -195,7 +288,7 @@ export const useInventaireEditor = (
         }
         debounceTimerRef.current = setTimeout(() => {
             flushPendingChanges();
-        }, 20000);
+        }, 1500);
     };
 
     const handleDeleteLine = async (lineId: number) => {
@@ -568,51 +661,31 @@ export const useInventaireEditor = (
         reader.readAsText(file);
     };
 
-    const autoSaveInvRef = useRef({ activeInventaire, lignes, saving, flushPendingChanges });
+    const autoSaveInvRef = useRef({ activeInventaire, lignes, saving, flushPendingChanges, syncLocalOnlyLines });
     useEffect(() => {
-        autoSaveInvRef.current = { activeInventaire, lignes, saving, flushPendingChanges };
+        autoSaveInvRef.current = { activeInventaire, lignes, saving, flushPendingChanges, syncLocalOnlyLines };
     });
 
-    // Cleanup debounce timer on unmount
+    // Cleanup debounce timers on unmount
     useEffect(() => {
         return () => {
-            if (debounceTimerRef.current) {
-                clearTimeout(debounceTimerRef.current);
-            }
+            cancelPendingSyncs();
         };
     }, []);
 
     useEffect(() => {
         const interval = setInterval(async () => {
-            const { activeInventaire: inv, lignes: currentLignes, saving: isSaving, flushPendingChanges: flush } = autoSaveInvRef.current;
+            const { activeInventaire: inv, lignes: currentLignes, saving: isSaving, flushPendingChanges: flush, syncLocalOnlyLines: sync } = autoSaveInvRef.current;
             if (!inv || isSaving) return;
             if (inv.status === 'VALIDEE') return;
 
-            // 1. Flush pending quantity changes first
+            // 1. Flush pending quantity changes first (silent, no reload)
             await flush();
 
-            // 2. Sync local-only lines
+            // 2. Sync local-only lines in the background (deferred if user is typing)
             const linesToSync = currentLignes.filter(l => l.isLocalOnly);
-            if (linesToSync.length === 0) return;
-
-            setAutoSaving(true);
-            try {
-                const payload = {
-                    lignes: linesToSync.map(l => ({
-                        produit: typeof l.produit === 'object' ? l.produit.id : l.produit,
-                        stock_lot: l.stock_lot,
-                        quantite_physique: l.quantite_physique,
-                        lot_numero: l.lot_numero,
-                        lot_expiration: l.lot_expiration
-                    }))
-                };
-                await api.post(`inventaires/${inv.id}/lignes/bulk/`, payload);
-                const res = await api.get(`inventaires/${inv.id}/lignes/`);
-                setLignes(res.data.map((l: LigneInventaire) => ({ ...l, isLocalOnly: false })));
-            } catch (err) {
-                console.error("Inventaire auto-save error:", err);
-            } finally {
-                setAutoSaving(false);
+            if (linesToSync.length > 0) {
+                await sync();
             }
         }, 30000);
 

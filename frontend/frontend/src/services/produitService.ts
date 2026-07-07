@@ -101,7 +101,7 @@ const produitService = {
     getLots: async (produitId: number): Promise<StockLot[]> => {
         const response = await api.get<StockLot[] | { results: StockLot[] }>(
             'stock-lots/',
-            { params: { produit: produitId, ordering: 'date_expiration', include_empty: 'true' } }
+            { params: { produit: produitId, ordering: 'date_reception', include_empty: 'true' } }
         );
         return Array.isArray(response.data) ? response.data : (response.data.results || []);
     },

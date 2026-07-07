@@ -2,6 +2,39 @@
 
 ---
 
+## 2026-07-05
+
+### ✨ Nouvelles fonctionnalités
+
+- **Modal de gestion des lots dupliqués dans les commandes**
+  - `frontend/src/components/Commandes/DuplicateLotModal.tsx` — nouveau composant modal permettant de choisir entre "Ajouter une nouvelle ligne (lot différent)" ou "Incrémenter la quantité d'une ligne existante (même lot)" lorsqu'un produit déjà présent dans la commande est ajouté à nouveau.
+  - `frontend/src/hooks/useCommandesState.ts` — `selectProduct` détecte désormais les doublons et déclenche le modal au lieu d'incrémenter automatiquement la quantité. Ajout de l'état `pendingDuplicateProduct` et des handlers `handleDuplicateAddNewLine` / `handleDuplicateIncrementExisting`.
+  - `frontend/src/components/Commandes/CommandeForm.tsx` — intégration du `DuplicateLotModal` avec passage des props et filtrage des lignes existantes pour le produit concerné.
+
+### 🐛 Corrections
+
+- **Scan Data Matrix non intercepté quand le focus est sur le champ de recherche**
+  - `frontend/src/components/Commandes/DataMatrixScanBar.tsx` — le handler `keydown` intercepte maintenant les caractères même si le focus est sur un `<input>`/`<textarea>`/`<select>`. Un buffer de ≥ 18 caractères reçus en < 80 ms est considéré comme un scan douchette : le champ de recherche est vidé via `onClearSearchInput` et le scan est traité normalement. Les saisies humaines (< 18 chars) passent sans interruption.
+  - `frontend/src/components/Commandes/CommandeForm.tsx` — passage de `onClearSearchInput={() => setSearchProduitQuery('')}` au `DataMatrixScanBar`.
+
+- **CIPs obsolètes lors de l'édition d'une commande existante**
+  - `frontend/src/hooks/useCommandesState.ts` — `openEditView` récupère désormais une liste fraîche de produits depuis l'API avant d'enrichir les `commandeProduits`, garantissant que les CIPs à jour sont utilisés pour le matching Data Matrix.
+
+- **Enter de la douchette déclenchant la soumission du formulaire**
+  - `frontend/src/components/Commandes/DataMatrixScanBar.tsx` — ajout de `e.preventDefault()` et `e.stopPropagation()` sur l'événement `Enter` du scanner pour empêcher la soumission involontaire du formulaire de commande.
+
+- **AttributeError sur `CommandeProduit.lot_id` dans `correct_lot`**
+  - `backend/api/views/commandes/commande_produits.py` — `lot_id` n'existe pas sur `CommandeProduit` (champ texte, pas de FK). La mise à jour du `StockLot` associé se fait maintenant par recherche sur `produit_id + lot` au lieu d'un accès direct `lot_id`.
+
+- **Tri des lots par date d'expiration au lieu de date d'entrée**
+  - `backend/api/views/stocks/stock_lots.py` — le tri par défaut du `StockLotViewSet` passe de `date_expiration` à `date_reception` (plus ancien en premier).
+  - `frontend/src/services/produitService.ts` — `getLots` utilise `ordering: 'date_reception'` au lieu de `date_expiration`.
+
+- **Comptage des commandes incohérent (18 vs 2)**
+  - `frontend/src/components/Commandes.tsx` — le badge du header utilisait `sortedCommandes.length` (items sur la page courante, max 20) au lieu de `totalCount` (total réel de l'API). Corrigé pour utiliser `totalCount` partout.
+
+---
+
 ## 2026-07-04
 
 ### ✨ Nouvelles fonctionnalités
