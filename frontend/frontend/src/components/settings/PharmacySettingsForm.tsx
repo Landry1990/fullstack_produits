@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { usePharmacySettings, type PharmacySettings } from '../../hooks/usePharmacySettings'
 import { useTVA } from '../../hooks/useTVA'
@@ -45,7 +45,7 @@ type TabId = 'general' | 'printing' | 'stocks' | 'tva' | 'notifications' | 'repo
 
 export default function PharmacySettingsForm() {
   const { t } = useTranslation('pharmacy_settings')
-  const { settings, loading, updateSettings } = usePharmacySettings()
+  const { settings, loading, updateSettings, uploadLogo, removeLogo } = usePharmacySettings()
   const { tvaList, loading: loadingTVA, addTVA, deleteTVA } = useTVA()
   const { settings: invSettings, updateSettings: updateInvSettings } = useInvoiceSettings()
   const [formData, setFormData] = useState<Partial<PharmacySettings>>({})
@@ -57,6 +57,9 @@ export default function PharmacySettingsForm() {
   const [newTvaLabel, setNewTvaLabel] = useState('')
   const [addingTva, setAddingTva] = useState(false)
   const [activeTab, setActiveTab] = useState<TabId>('general')
+  const [uploadingLogo, setUploadingLogo] = useState(false)
+  const [removingLogo, setRemovingLogo] = useState(false)
+  const logoInputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
     if (settings) {
@@ -150,6 +153,35 @@ export default function PharmacySettingsForm() {
     }
   }
 
+  const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    if (file.size > 2 * 1024 * 1024) {
+      import('react-hot-toast').then(({ toast }) => toast.error('Le logo ne doit pas dépasser 2 Mo'))
+      return
+    }
+    setUploadingLogo(true)
+    try {
+      await uploadLogo(file)
+    } catch {
+      /* error already toasted in context */
+    } finally {
+      setUploadingLogo(false)
+      if (logoInputRef.current) logoInputRef.current.value = ''
+    }
+  }
+
+  const handleLogoRemove = async () => {
+    setRemovingLogo(true)
+    try {
+      await removeLogo()
+    } catch {
+      /* error already toasted in context */
+    } finally {
+      setRemovingLogo(false)
+    }
+  }
+
   const handleSubmit = async (e?: React.FormEvent) => {
     if (e) e.preventDefault()
     setSaving(true)
@@ -221,7 +253,58 @@ export default function PharmacySettingsForm() {
                         <Info className="h-6 w-6 text-primary shrink-0" />
                         <span>{t('hints.pharmacy_name_from_licence')}</span>
                       </div>
-                      
+
+                      {/* Logo upload */}
+                      <div className="flex flex-col gap-3">
+                        <label className="label">
+                          <span className="text-sm font-bold text-base-content/60">Logo de la pharmacie</span>
+                        </label>
+                        <div className="flex items-center gap-6">
+                          <div className="shrink-0 w-24 h-24 rounded-2xl border-2 border-dashed border-base-300 bg-base-50 flex items-center justify-center overflow-hidden">
+                            {settings.logo ? (
+                              <img src={settings.logo} alt="Logo" className="w-full h-full object-contain" />
+                            ) : (
+                              <Settings className="h-8 w-8 text-base-content/20" />
+                            )}
+                          </div>
+                          <div className="flex flex-col gap-2 flex-1">
+                            <p className="text-xs text-base-content/50">
+                              Le logo apparaîtra sur les tickets de caisse et les factures. Format PNG ou JPG, 2 Mo max.
+                            </p>
+                            <div className="flex items-center gap-3">
+                              <input
+                                ref={logoInputRef}
+                                type="file"
+                                accept="image/png,image/jpeg,image/jpg"
+                                onChange={handleLogoUpload}
+                                className="hidden"
+                              />
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                disabled={uploadingLogo}
+                                onClick={() => logoInputRef.current?.click()}
+                              >
+                                {uploadingLogo ? 'Import...' : settings.logo ? 'Remplacer' : 'Importer un logo'}
+                              </Button>
+                              {settings.logo && (
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  size="sm"
+                                  disabled={removingLogo}
+                                  onClick={handleLogoRemove}
+                                  className="text-error hover:text-error"
+                                >
+                                  {removingLogo ? 'Suppression...' : 'Supprimer'}
+                                </Button>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                         <div className="flex flex-col gap-1">
                           <label className="label">

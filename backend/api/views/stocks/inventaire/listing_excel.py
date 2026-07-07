@@ -400,12 +400,16 @@ def _get_rows_from_stock(group_by: str, stock_filter: str, filter_id=None):
     ).select_related(
         'produit', 'produit__rayon', 'produit__forme',
         'produit__groupe', 'produit__fournisseur',
+        'fournisseur',
     )
 
     # Filtre stock (sur quantity_remaining du lot)
     if stock_filter == 'zero':
-        qs = qs.filter(quantity_remaining__lt=0)
+        qs = qs.filter(quantity_remaining__lte=0)
     elif stock_filter == 'non_zero':
+        qs = qs.filter(quantity_remaining__gt=0)
+    else:
+        # 'tous' : exclure les lots épuisés (quantity_remaining = 0)
         qs = qs.filter(quantity_remaining__gt=0)
 
     # Filtre entité
@@ -417,14 +421,16 @@ def _get_rows_from_stock(group_by: str, stock_filter: str, filter_id=None):
         elif group_by == 'groupe':
             qs = qs.filter(produit__groupe_id=filter_id)
         elif group_by == 'fournisseur':
-            qs = qs.filter(produit__fournisseur_id=filter_id)
+            # Filtrer par fournisseur du lot (FK), pas du produit (souvent NULL)
+            qs = qs.filter(fournisseur_id=filter_id)
 
     # Tri : par groupe puis produit puis date de réception (FIFO)
+    # Pour fournisseur : tri par fournisseur du lot (FK) car produit.fournisseur est souvent NULL
     sort_map = {
         'rayon': ('produit__rayon__name', 'produit__name', 'date_reception'),
         'forme': ('produit__forme__nom', 'produit__name', 'date_reception'),
         'groupe': ('produit__groupe__nom', 'produit__name', 'date_reception'),
-        'fournisseur': ('produit__fournisseur__name', 'produit__name', 'date_reception'),
+        'fournisseur': ('fournisseur__name', 'fournisseur_nom', 'produit__name', 'date_reception'),
     }
     qs = qs.order_by(*sort_map.get(group_by, ('produit__name', 'date_reception')))
 
@@ -434,7 +440,7 @@ def _get_rows_from_stock(group_by: str, stock_filter: str, filter_id=None):
     for lot in qs:
         p = lot.produit
         seen_produit_ids.add(p.id)
-        group_name = _get_group_name(p, group_by)
+        group_name = _get_group_name(p, group_by, lot=lot)
         if group_name not in grouped:
             grouped[group_name] = []
 
@@ -462,8 +468,8 @@ def _get_rows_from_stock(group_by: str, stock_filter: str, filter_id=None):
             'prix_vente': float(lot.selling_price or p.selling_price or 0),
         })
 
-    # En mode "tous" : inclure aussi les produits actifs sans aucun lot (stock nul implicite)
-    if stock_filter == 'tous':
+    # En mode "zero" : inclure aussi les produits actifs sans aucun lot (stock nul implicite)
+    if stock_filter == 'zero':
         prod_qs = Produit.objects.filter(
             is_active=True,
         ).exclude(
@@ -519,7 +525,7 @@ def _get_rows_from_inventaire(inventaire_id: int, group_by: str, stock_filter: s
 
     qs = LigneInventaire.objects.filter(inventaire_id=inventaire_id).select_related(
         'produit', 'produit__rayon', 'produit__forme', 'produit__groupe',
-        'produit__fournisseur', 'stock_lot'
+        'produit__fournisseur', 'stock_lot', 'stock_lot__fournisseur'
     )
 
     # Filtre stock (sur quantite_physique)
@@ -544,7 +550,7 @@ def _get_rows_from_inventaire(inventaire_id: int, group_by: str, stock_filter: s
         'rayon': ('produit__rayon__name', 'produit__name'),
         'forme': ('produit__forme__nom', 'produit__name'),
         'groupe': ('produit__groupe__nom', 'produit__name'),
-        'fournisseur': ('produit__fournisseur__name', 'produit__name'),
+        'fournisseur': ('stock_lot__fournisseur__name', 'stock_lot__fournisseur_nom', 'produit__name'),
     }
     qs = qs.order_by(*sort_map.get(group_by, ('produit__name',)))
 
@@ -554,11 +560,11 @@ def _get_rows_from_inventaire(inventaire_id: int, group_by: str, stock_filter: s
         if not p:
             continue
 
-        group_name = _get_group_name(p, group_by)
+        group_name = _get_group_name(p, group_by, lot=ligne.stock_lot)
         if group_name not in grouped:
             grouped[group_name] = []
 
-        pmp = float(ligne.pmp_snapshot or p.pmp or p.cost_price or 0)
+        pmp = float(p.pmp or p.cost_price or 0)
         valeur_ecart = float(ligne.ecart) * pmp
 
         lot_numero = ''
@@ -587,7 +593,7 @@ def _get_rows_from_inventaire(inventaire_id: int, group_by: str, stock_filter: s
 # Helper : nom du groupe
 # ---------------------------------------------------------------------------
 
-def _get_group_name(produit, group_by: str) -> str:
+def _get_group_name(produit, group_by: str, lot=None) -> str:
     if group_by == 'rayon':
         return produit.rayon.name if produit.rayon else 'SANS RAYON'
     elif group_by == 'forme':
@@ -595,5 +601,12 @@ def _get_group_name(produit, group_by: str) -> str:
     elif group_by == 'groupe':
         return produit.groupe.nom if produit.groupe else 'SANS GROUPE'
     elif group_by == 'fournisseur':
-        return produit.fournisseur.name if produit.fournisseur else 'SANS FOURNISSEUR'
+        # Priorité : fournisseur du lot (FK) > nom sauvegardé du lot > fournisseur du produit
+        if lot and lot.fournisseur:
+            return lot.fournisseur.name
+        if lot and lot.fournisseur_nom:
+            return lot.fournisseur_nom
+        if produit.fournisseur:
+            return produit.fournisseur.name
+        return 'SANS FOURNISSEUR'
     return 'AUTRES'

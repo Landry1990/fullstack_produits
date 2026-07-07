@@ -110,12 +110,10 @@ const HelpTraining = lazyWithRetry(() => import('./components/HelpTraining'));
 const GestionUtilisateurs = lazyWithRetry(() => import('./components/GestionUtilisateurs'));
 const PharmacySettingsForm = lazyWithRetry(() => import('./components/settings/PharmacySettingsForm'));
 const Maintenance = lazyWithRetry(() => import('./components/Maintenance'));
-const Changelog = lazyWithRetry(() => import('./components/Changelog'));
 const Corbeille = lazyWithRetry(() => import('./components/Corbeille'));
 const ImportDCIPage = lazyWithRetry(() => import('./components/ImportDCIPage'));
 const Comptabilite = lazyWithRetry(() => import('./components/compta/Comptabilite'));
 const SystemAdmin = lazyWithRetry(() => import('./components/SystemAdmin'));
-const BackupManager = lazyWithRetry(() => import('./components/admin/BackupManager'));
 
 // ── Helper to reduce boilerplate ──
 const perm = (permission: string | string[], Component: React.ComponentType<any>, props?: Record<string, any>) => ({
@@ -231,7 +229,6 @@ export const router = createBrowserRouter([
 
           // ── Aide ──
           { path: 'aide-formation', ...perm('aide_formation', HelpTraining) },
-          { path: 'changelog', element: <Changelog /> },
 
           // ── Admin only ──
           { path: 'utilisateurs', ...admin(GestionUtilisateurs) },
@@ -240,7 +237,6 @@ export const router = createBrowserRouter([
           { path: 'import-dci', ...admin(ImportDCIPage) },
           { path: 'maintenance', ...perm('maintenance', Maintenance) },
           { path: 'systeme', ...admin(SystemAdmin) },
-          { path: 'sauvegardes', ...admin(BackupManager) },
           { path: 'corbeille', ...perm('corbeille', Corbeille) },
 
           // ── Paramètres ──

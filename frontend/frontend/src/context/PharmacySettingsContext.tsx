@@ -116,6 +116,8 @@ interface PharmacySettingsContextType {
   loading: boolean;
   error: string | null;
   updateSettings: (updates: Partial<PharmacySettings>) => Promise<PharmacySettings>;
+  uploadLogo: (file: File) => Promise<PharmacySettings>;
+  removeLogo: () => Promise<PharmacySettings>;
   refetch: () => Promise<void>;
 }
 
@@ -157,6 +159,36 @@ export const PharmacySettingsProvider = ({ children }: { children: ReactNode }) 
     }
   }, []);
 
+  const uploadLogo = useCallback(async (file: File) => {
+    try {
+      const formData = new FormData();
+      formData.append('logo', file);
+      const { data } = await api.put<PharmacySettings>('pharmacy-settings/', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
+      setSettings(data);
+      toast.success('Logo importé avec succès');
+      return data;
+    } catch (err) {
+      console.error('Error uploading logo:', err);
+      toast.error('Erreur lors de l\'import du logo');
+      throw err;
+    }
+  }, []);
+
+  const removeLogo = useCallback(async () => {
+    try {
+      const { data } = await api.put<PharmacySettings>('pharmacy-settings/', { logo: '' });
+      setSettings(data);
+      toast.success('Logo supprimé');
+      return data;
+    } catch (err) {
+      console.error('Error removing logo:', err);
+      toast.error('Erreur lors de la suppression du logo');
+      throw err;
+    }
+  }, []);
+
   useEffect(() => {
     if (isAuthenticated) {
       fetchSettings();
@@ -177,8 +209,10 @@ export const PharmacySettingsProvider = ({ children }: { children: ReactNode }) 
     loading,
     error,
     updateSettings,
+    uploadLogo,
+    removeLogo,
     refetch: fetchSettings
-  }), [effectiveSettings, loading, error, updateSettings, fetchSettings]);
+  }), [effectiveSettings, loading, error, updateSettings, uploadLogo, removeLogo, fetchSettings]);
 
   return (
     <PharmacySettingsContext.Provider value={contextValue}>

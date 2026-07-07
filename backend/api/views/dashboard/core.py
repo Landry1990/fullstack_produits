@@ -359,7 +359,7 @@ class DashboardCoreMixin(viewsets.ViewSet):
                     'message_key': 'manager_dashboard.alerts.perf_msg',
                     'params': {'rate': round(rate)},
                     'action_key': 'manager_dashboard.alerts.action_sales',
-                    'action_route': '/dashboard'
+                    'action_route': '/app/facturation'
                 })
     
         # Success Alert (if daily objective exceeded)
@@ -392,7 +392,7 @@ class DashboardCoreMixin(viewsets.ViewSet):
                     'message_key': 'manager_dashboard.alerts.inactivity_msg',
                     'params': {'hours': hours_since_open},
                     'action_key': 'manager_dashboard.alerts.action_sales',
-                    'action_route': '/ventes'
+                    'action_route': '/app/facturation'
                 })
             elif last_sale:
                 from django.utils import timezone as tz
@@ -406,7 +406,7 @@ class DashboardCoreMixin(viewsets.ViewSet):
                         'message_key': 'manager_dashboard.alerts.inactivity_idle_msg',
                         'params': {'minutes': idle_minutes},
                         'action_key': 'manager_dashboard.alerts.action_sales',
-                        'action_route': '/ventes'
+                        'action_route': '/app/facturation'
                     })
     
         # Stock Alert (Critical shortages)
@@ -425,7 +425,7 @@ class DashboardCoreMixin(viewsets.ViewSet):
                 'message_key': 'manager_dashboard.alerts.shortage_msg',
                 'params': {'count': shortages},
                 'action_key': 'manager_dashboard.alerts.action_stock',
-                'action_route': '/stock'
+                'action_route': '/app/ruptures'
             })
     
         # --- IMPORTANT DEBTORS ALERT ---
@@ -476,7 +476,7 @@ class DashboardCoreMixin(viewsets.ViewSet):
                     'top_debt': int(top_client.calculated_debt)
                 },
                 'action_key': 'manager_dashboard.alerts.action_clients',
-                'action_route': '/clients'
+                'action_route': '/app/creances'
             })
     
         # --- DORMANT STOCKS ALERT ---
@@ -500,7 +500,7 @@ class DashboardCoreMixin(viewsets.ViewSet):
                 'message_key': 'manager_dashboard.alerts.dormant_msg',
                 'params': {'count': dormant_count, 'days': dormant_days_limit},
                 'action_key': 'manager_dashboard.alerts.action_stock',
-                'action_route': '/stock'
+                'action_route': '/app/stock-analysis'
             })
     
         # Week over Week Performance Drop (Compare strictly same days so far)
@@ -536,7 +536,7 @@ class DashboardCoreMixin(viewsets.ViewSet):
                 'message_key': 'manager_dashboard.alerts.drop_msg',
                 'params': {},
                 'action_key': 'manager_dashboard.alerts.action_sales',
-                'action_route': '/dashboard'
+                'action_route': '/app/manager-dashboard'
             })
     
         return Response({

@@ -26,7 +26,7 @@ def get_inventaire_stats(inventaire: Inventaire) -> Response:
     lignes = inventaire.lignes.annotate(
         valeur_ecart=ExpressionWrapper(
             F('ecart') * Case(
-                When(pmp_snapshot__gt=0, then=F('pmp_snapshot')),
+                When(produit__pmp__gt=0, then=F('produit__pmp')),
                 default=F('produit__cost_price'),
                 output_field=DecimalField()
             ),
@@ -46,7 +46,7 @@ def get_inventaire_stats(inventaire: Inventaire) -> Response:
     lignes_surplus = inventaire.lignes.annotate(
         valeur_ecart=ExpressionWrapper(
             F('ecart') * Case(
-                When(pmp_snapshot__gt=0, then=F('pmp_snapshot')),
+                When(produit__pmp__gt=0, then=F('produit__pmp')),
                 default=F('produit__cost_price'),
                 output_field=DecimalField()
             ),
@@ -66,7 +66,7 @@ def get_inventaire_stats(inventaire: Inventaire) -> Response:
     stats_rayon_qs = inventaire.lignes.annotate(
         valeur_ecart_line=ExpressionWrapper(
             F('ecart') * Case(
-                When(pmp_snapshot__gt=0, then=F('pmp_snapshot')),
+                When(produit__pmp__gt=0, then=F('produit__pmp')),
                 default=F('produit__cost_price'),
                 output_field=DecimalField()
             ),
@@ -115,7 +115,7 @@ def audit_discrepancies(
     queryset = queryset.annotate(
         valeur_ecart=ExpressionWrapper(
             Cast(F('ecart'), output_field=DecimalField(max_digits=12, decimal_places=2)) * Case(
-                When(pmp_snapshot__gt=Decimal('0'), then=F('pmp_snapshot')),
+                When(produit__pmp__gt=Decimal('0'), then=F('produit__pmp')),
                 default=Coalesce(
                     F('produit__cost_price'),
                     Value(Decimal('0'), output_field=DecimalField(max_digits=12, decimal_places=2))

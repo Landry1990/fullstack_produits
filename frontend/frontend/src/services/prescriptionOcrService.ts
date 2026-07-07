@@ -1,6 +1,3 @@
-import { createWorker } from 'tesseract.js';
-import workerPath from 'tesseract.js/dist/worker.min.js?url';
-import corePath from 'tesseract.js-core/tesseract-core.wasm.js?url';
 export interface OcrResult {
   rawText: string;
   lines: string[];
@@ -15,7 +12,7 @@ export interface ScannedPrescription {
 }
 
 class PrescriptionOcrService {
-  private worker: Tesseract.Worker | null = null;
+  private worker: any | null = null;
   private isInitializing = false;
 
   async initialize(onProgress?: (progress: number) => void) {
@@ -24,10 +21,16 @@ class PrescriptionOcrService {
 
     this.isInitializing = true;
     try {
+      // Import dynamique : Tesseract (~4.7MB wasm) ne charge que quand l'OCR est utilisé
+      const [{ createWorker }, workerPathMod, corePathMod] = await Promise.all([
+        import('tesseract.js'),
+        import('tesseract.js/dist/worker.min.js?url'),
+        import('tesseract.js-core/tesseract-core.wasm.js?url'),
+      ]);
       this.worker = await createWorker('fra', 1, {
         workerBlobURL: false,
-        workerPath: workerPath,
-        corePath: corePath,
+        workerPath: workerPathMod.default,
+        corePath: corePathMod.default,
         logger: m => {
           if (m.status === 'recognizing text' && onProgress) {
             onProgress(m.progress);
@@ -54,7 +57,7 @@ class PrescriptionOcrService {
     
     return {
       rawText: result.data.text,
-      lines: result.data.text ? result.data.text.split('\n').flatMap(l => {
+      lines: result.data.text ? result.data.text.split('\n').flatMap((l: string) => {
         const trimmed = l.trim();
         return trimmed ? [trimmed] : [];
       }) : [],

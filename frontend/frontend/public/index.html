@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="fr" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ZenithPharmaLogo — Preview</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = { darkMode: 'class' }
+  </script>
+  <style>
+    body { font-family: 'Inter', system-ui, sans-serif; }
+    .font-syne { font-family: 'Syne, sans-serif'; }
+  </style>
+</head>
+<body class="bg-slate-950 text-white min-h-screen flex items-center justify-center p-8">
+
+  <div class="max-w-4xl w-full space-y-12">
+
+    <!-- Title -->
+    <div class="text-center">
+      <h1 class="text-2xl font-bold text-slate-400 uppercase tracking-widest">ZenithPharmaLogo — Preview</h1>
+    </div>
+
+    <!-- ===== Card 1: Horizontal sizes ===== -->
+    <div class="bg-slate-900/80 rounded-2xl border border-white/10 p-8 space-y-8">
+      <p class="text-sm text-slate-500 uppercase tracking-wider">Horizontal — All sizes</p>
+
+      <!-- SM -->
+      <div class="flex items-center gap-3">
+        <div class="relative shrink-0" style="width:28px;height:28px">
+          <svg viewBox="0 0 100 100" width="28" height="28" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <linearGradient id="zp-mint-sm" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stop-color="#00F5D4" /><stop offset="60%" stop-color="#00D9B7" /><stop offset="100%" stop-color="#059669" />
+              </linearGradient>
+              <linearGradient id="zp-night-sm" x1="0%" y1="0%" x2="0%" y2="100%">
+                <stop offset="0%" stop-color="#1e293b" /><stop offset="100%" stop-color="#0f172a" />
+              </linearGradient>
+              <filter id="zp-glow-sm" x="-20%" y="-20%" width="140%" height="140%">
+                <feGaussianBlur stdDeviation="2" result="blur" /><feMerge><feMergeNode in="blur" /><feMergeNode in="SourceGraphic" /></feMerge>
+              </filter>
+            </defs>
+            <path d="M50 6 L86 28 L86 72 L50 94 L14 72 L14 28 Z" fill="url(#zp-night-sm)" stroke="url(#zp-mint-sm)" stroke-width="3" stroke-linejoin="round" />
+            <path d="M32 34 L68 34 L32 66 L68 66" fill="none" stroke="url(#zp-mint-sm)" stroke-width="6" stroke-linecap="round" stroke-linejoin="round" opacity="0.25" />
+            <g filter="url(#zp-glow-sm)">
+              <rect x="45" y="36" width="10" height="28" rx="2.5" fill="url(#zp-mint-sm)" />
+              <rect x="36" y="45" width="28" height="10" rx="2.5" fill="url(#zp-mint-sm)" />
+            </g>
+          </svg>
+        </div>
+        <div class="flex flex-col leading-none">
+          <span class="font-syne font-extrabold uppercase tracking-[0.25em] text-lg text-[#00F5D4]">ZENITH</span>
+          <span class="font-syne font-bold uppercase tracking-[0.4em] text-[0.6rem] mt-1 text-emerald-400/70">PHARMA</span>
+        </div>
+        <span class="text-slate-600 text-xs ml-4">size="sm"</span>
+      </div>
+
+      <!-- MD -->
+      <div class="flex items-center gap-3">
+        <div class="relative shrink-0" style="width:40px;height:40px">
+          <svg viewBox="0 0 100 100" width="40" height="40" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <linearGradient id="zp-mint-md" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stop-color="#00F5D4" /><stop offset="60%" stop-color="#00D9B7" /><stop offset="100%" stop-color="#059669" />
+              </linearGradient>
+              <linearGradient id="zp-night-md" x1="0%" y1="0%" x2="0%" y2="100%">
+                <stop offset="0%" stop-color="#1e293b" /><stop offset="100%" stop-color="#0f172a" />
+              </linearGradient>
+              <filter id="zp-glow-md" x="-20%" y="-20%" width="140%" height="140%">
+                <feGaussianBlur stdDeviation="2" result="blur" /><feMerge><feMergeNode in="blur" /><feMergeNode in="SourceGraphic" /></feMerge>
+              </filter>
+            </defs>
+            <path d="M50 6 L86 28 L86 72 L50 94 L14 72 L14 28 Z" fill="url(#zp-night-md)" stroke="url(#zp-mint-md)" stroke-width="3" stroke-linejoin="round" />
+            <path d="M32 34 L68 34 L32 66 L68 66" fill="none" stroke="url(#zp-mint-md)" stroke-width="6" stroke-linecap="round" stroke-linejoin="round" opacity="0.25" />
+            <g filter="url(#zp-glow-md)">
+              <rect x="45" y="36" width="10" height="28" rx="2.5" fill="url(#zp-mint-md)" />
+              <rect x="36" y="45" width="28" height="10" rx="2.5" fill="url(#zp-mint-md)" />
+            </g>
+          </svg>
+        </div>
+        <div class="flex flex-col leading-none">
+          <span class="font-syne font-extrabold uppercase tracking-[0.25em] text-2xl text-[#00F5D4]">ZENITH</span>
+          <span class="font-syne font-bold uppercase tracking-[0.4em] text-xs mt-1 text-emerald-400/70">PHARMA</span>
+        </div>
+        <span class="text-slate-600 text-xs ml-4">size="md" (default)</span>
+      </div>
+
+      <!-- LG -->
+      <div class="flex items-center gap-3">
+        <div class="relative shrink-0" style="width:56px;height:56px">
+          <svg viewBox="0 0 100 100" width="56" height="56" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <linearGradient id="zp-mint-lg" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stop-color="#00F5D4" /><stop offset="60%" stop-color="#00D9B7" /><stop offset="100%" stop-color="#059669" />
+              </linearGradient>
+              <linearGradient id="zp-night-lg" x1="0%" y1="0%" x2="0%" y2="100%">
+                <stop offset="0%" stop-color="#1e293b" /><stop offset="100%" stop-color="#0f172a" />
+              </linearGradient>
+              <filter id="zp-glow-lg" x="-20%" y="-20%" width="140%" height="140%">
+                <feGaussianBlur stdDeviation="2" result="blur" /><feMerge><feMergeNode in="blur" /><feMergeNode in="SourceGraphic" /></feMerge>
+              </filter>
+            </defs>
+            <path d="M50 6 L86 28 L86 72 L50 94 L14 72 L14 28 Z" fill="url(#zp-night-lg)" stroke="url(#zp-mint-lg)" stroke-width="3" stroke-linejoin="round" />
+            <path d="M32 34 L68 34 L32 66 L68 66" fill="none" stroke="url(#zp-mint-lg)" stroke-width="6" stroke-linecap="round" stroke-linejoin="round" opacity="0.25" />
+            <g filter="url(#zp-glow-lg)">
+              <rect x="45" y="36" width="10" height="28" rx="2.5" fill="url(#zp-mint-lg)" />
+              <rect x="36" y="45" width="28" height="10" rx="2.5" fill="url(#zp-mint-lg)" />
+            </g>
+          </svg>
+        </div>
+        <div class="flex flex-col leading-none">
+          <span class="font-syne font-extrabold uppercase tracking-[0.25em] text-4xl text-[#00F5D4]">ZENITH</span>
+          <span class="font-syne font-bold uppercase tracking-[0.4em] text-sm mt-1 text-emerald-400/70">PHARMA</span>
+        </div>
+        <span class="text-slate-600 text-xs ml-4">size="lg"</span>
+      </div>
+
+      <!-- XL -->
+      <div class="flex items-center gap-3">
+        <div class="relative shrink-0" style="width:80px;height:80px">
+          <svg viewBox="0 0 100 100" width="80" height="80" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <linearGradient id="zp-mint-xl" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stop-color="#00F5D4" /><stop offset="60%" stop-color="#00D9B7" /><stop offset="100%" stop-color="#059669" />
+              </linearGradient>
+              <linearGradient id="zp-night-xl" x1="0%" y1="0%" x2="0%" y2="100%">
+                <stop offset="0%" stop-color="#1e293b" /><stop offset="100%" stop-color="#0f172a" />
+              </linearGradient>
+              <filter id="zp-glow-xl" x="-20%" y="-20%" width="140%" height="140%">
+                <feGaussianBlur stdDeviation="2" result="blur" /><feMerge><feMergeNode in="blur" /><feMergeNode in="SourceGraphic" /></feMerge>
+              </filter>
+            </defs>
+            <path d="M50 6 L86 28 L86 72 L50 94 L14 72 L14 28 Z" fill="url(#zp-night-xl)" stroke="url(#zp-mint-xl)" stroke-width="3" stroke-linejoin="round" />
+            <path d="M32 34 L68 34 L32 66 L68 66" fill="none" stroke="url(#zp-mint-xl)" stroke-width="6" stroke-linecap="round" stroke-linejoin="round" opacity="0.25" />
+            <g filter="url(#zp-glow-xl)">
+              <rect x="45" y="36" width="10" height="28" rx="2.5" fill="url(#zp-mint-xl)" />
+              <rect x="36" y="45" width="28" height="10" rx="2.5" fill="url(#zp-mint-xl)" />
+            </g>
+          </svg>
+        </div>
+        <div class="flex flex-col leading-none">
+          <span class="font-syne font-extrabold uppercase tracking-[0.25em] text-6xl text-[#00F5D4]">ZENITH</span>
+          <span class="font-syne font-bold uppercase tracking-[0.4em] text-lg mt-1 text-emerald-400/70">PHARMA</span>
+        </div>
+        <span class="text-slate-600 text-xs ml-4">size="xl"</span>
+      </div>
+    </div>
+
+    <!-- ===== Card 2: Stacked + Tagline ===== -->
+    <div class="bg-slate-900/80 rounded-2xl border border-white/10 p-8 flex flex-col items-center gap-6">
+      <p class="text-sm text-slate-500 uppercase tracking-wider">Stacked + Tagline (Login page style)</p>
+      <div class="flex flex-col items-center gap-2">
+        <div class="relative shrink-0" style="width:80px;height:80px">
+          <svg viewBox="0 0 100 100" width="80" height="80" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <linearGradient id="zp-mint-stack" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stop-color="#00F5D4" /><stop offset="60%" stop-color="#00D9B7" /><stop offset="100%" stop-color="#059669" />
+              </linearGradient>
+              <linearGradient id="zp-night-stack" x1="0%" y1="0%" x2="0%" y2="100%">
+                <stop offset="0%" stop-color="#1e293b" /><stop offset="100%" stop-color="#0f172a" />
+              </linearGradient>
+              <filter id="zp-glow-stack" x="-20%" y="-20%" width="140%" height="140%">
+                <feGaussianBlur stdDeviation="2" result="blur" /><feMerge><feMergeNode in="blur" /><feMergeNode in="SourceGraphic" /></feMerge>
+              </filter>
+            </defs>
+            <path d="M50 6 L86 28 L86 72 L50 94 L14 72 L14 28 Z" fill="url(#zp-night-stack)" stroke="url(#zp-mint-stack)" stroke-width="3" stroke-linejoin="round" />
+            <path d="M32 34 L68 34 L32 66 L68 66" fill="none" stroke="url(#zp-mint-stack)" stroke-width="6" stroke-linecap="round" stroke-linejoin="round" opacity="0.25" />
+            <g filter="url(#zp-glow-stack)">
+              <rect x="45" y="36" width="10" height="28" rx="2.5" fill="url(#zp-mint-stack)" />
+              <rect x="36" y="45" width="28" height="10" rx="2.5" fill="url(#zp-mint-stack)" />
+            </g>
+          </svg>
+        </div>
+        <div class="flex flex-col items-center leading-none">
+          <span class="font-syne font-extrabold uppercase tracking-[0.25em] text-4xl text-[#00F5D4]">ZENITH</span>
+          <span class="font-syne font-bold uppercase tracking-[0.4em] text-sm mt-1 text-emerald-400/70">PHARMA</span>
+          <span class="mt-1.5 text-[0.55rem] font-medium uppercase tracking-[0.3em] text-slate-500">Pharmacy Management</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== Card 3: Light theme ===== -->
+    <div class="bg-white rounded-2xl border border-slate-200 p-8 flex items-center gap-3">
+      <div class="relative shrink-0" style="width:40px;height:40px">
+        <svg viewBox="0 0 100 100" width="40" height="40" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <linearGradient id="zp-mint-light" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stop-color="#00F5D4" /><stop offset="60%" stop-color="#00D9B7" /><stop offset="100%" stop-color="#059669" />
+            </linearGradient>
+            <linearGradient id="zp-night-light" x1="0%" y1="0%" x2="0%" y2="100%">
+              <stop offset="0%" stop-color="#1e293b" /><stop offset="100%" stop-color="#0f172a" />
+            </linearGradient>
+            <filter id="zp-glow-light" x="-20%" y="-20%" width="140%" height="140%">
+              <feGaussianBlur stdDeviation="2" result="blur" /><feMerge><feMergeNode in="blur" /><feMergeNode in="SourceGraphic" /></feMerge>
+            </filter>
+          </defs>
+          <path d="M50 6 L86 28 L86 72 L50 94 L14 72 L14 28 Z" fill="url(#zp-night-light)" stroke="url(#zp-mint-light)" stroke-width="3" stroke-linejoin="round" />
+          <path d="M32 34 L68 34 L32 66 L68 66" fill="none" stroke="url(#zp-mint-light)" stroke-width="6" stroke-linecap="round" stroke-linejoin="round" opacity="0.25" />
+          <g filter="url(#zp-glow-light)">
+            <rect x="45" y="36" width="10" height="28" rx="2.5" fill="url(#zp-mint-light)" />
+            <rect x="36" y="45" width="28" height="10" rx="2.5" fill="url(#zp-mint-light)" />
+          </g>
+        </svg>
+      </div>
+      <div class="flex flex-col leading-none">
+        <span class="font-syne font-extrabold uppercase tracking-[0.25em] text-2xl text-[#0f172a]">ZENITH</span>
+        <span class="font-syne font-bold uppercase tracking-[0.4em] text-xs mt-1 text-[#059669]">PHARMA</span>
+      </div>
+      <span class="text-slate-400 text-xs ml-4">Light theme</span>
+    </div>
+
+  </div>
+
+</body>
+</html>

@@ -140,16 +140,15 @@ export const useProductSearch = (
         focusInput();
     };
 
-    const handleLotSelection = (lotId: number | 'NEW' | 'GLOBAL') => {
+    const handleLotSelection = (lotId: number | 'NEW') => {
         if (!selectedProductForLot) return;
         const tempId = Date.now();
 
-        // Default values (GLOBAL or product fallback)
         let lotStock = selectedProductForLot.stock;
         let lotNum = undefined;
         let lotExp = undefined;
 
-        if (lotId !== 'NEW' && lotId !== 'GLOBAL') {
+        if (lotId !== 'NEW') {
             const lot = availableLots.find(l => l.id === lotId);
             if (lot) {
                 lotStock = lot.quantity_remaining;
@@ -161,13 +160,11 @@ export const useProductSearch = (
             }
         } else if (lotId === 'NEW') {
             lotStock = 0;
-            // For NEW, we will let the user enter lot info later or handle it as is
-            // but the theoretical stock is definitely 0
         }
 
         handleAddProduct(
             selectedProductForLot,
-            lotId === 'NEW' || lotId === 'GLOBAL' ? undefined : lotId,
+            lotId === 'NEW' ? undefined : lotId,
             tempId,
             lotStock,
             lotNum as string | undefined,
@@ -220,37 +217,6 @@ export const useProductSearch = (
                 }
             }
         });
-
-        // 2. Global if modified
-        if (lotQuantities['GLOBAL'] !== undefined) {
-            const qty = parseFloat(lotQuantities['GLOBAL']) || 0;
-            const exists = lignes.some(l => 
-                (typeof l.produit === 'object' ? l.produit.id === selectedProductForLot.id : l.produit === selectedProductForLot.id) &&
-                !l.stock_lot
-            );
-
-            if (!exists) {
-                let stockTh = selectedProductForLot.stock || 0;
-                if (inventoryType === 'RESERVE') stockTh = selectedProductForLot.stock_reserve || 0;
-                else if (inventoryType === 'GLOBAL') stockTh = (selectedProductForLot.stock || 0) + (selectedProductForLot.stock_reserve || 0);
-
-                linesToAdd.push({
-                    id: now + Math.random(),
-                    inventaire: activeInventaireId,
-                    produit: selectedProductForLot,
-                    produit_nom: selectedProductForLot.name,
-                    produit_cip: selectedProductForLot.cip1 || undefined,
-                    produit_rayon: selectedProductForLot.rayon_name || undefined,
-                    stock_lot: undefined,
-                    stock_theorique: stockTh,
-                    quantite_physique: qty,
-                    ecart: qty - stockTh,
-                    isLocalOnly: true,
-                    pmp_snapshot: selectedProductForLot.cost_price || '0',
-                    produit_cost_price: selectedProductForLot.cost_price || '0'
-                });
-            }
-        }
 
         if (linesToAdd.length > 0) {
             setLignes(prev => [...linesToAdd, ...prev]);

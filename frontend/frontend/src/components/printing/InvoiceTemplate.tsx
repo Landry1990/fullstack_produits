@@ -107,7 +107,11 @@ const InvoiceTemplate: React.FC<InvoiceTemplateProps> = ({ settings, data, isBon
       <div className="flex justify-between items-start mb-6 border-b-2 border-slate-900 pb-4">
         
         {/* Left: Pharmacy Info */}
-        <div className="flex-1">
+        <div className="flex-1 flex items-start gap-4">
+            {settings.logo && (
+              <img src={settings.logo} alt="Logo" className="w-20 h-20 object-contain shrink-0" />
+            )}
+            <div>
             <h1 className="text-2xl font-black uppercase tracking-tight text-base-content mb-1 leading-none">
                 {settings.pharmacy_name}
             </h1>
@@ -127,6 +131,7 @@ const InvoiceTemplate: React.FC<InvoiceTemplateProps> = ({ settings, data, isBon
                         {settings.registre_commerce && <span>{t('invoice.rc')} : {settings.registre_commerce}</span>}
                     </div>
                 </div>
+            </div>
             </div>
         </div>
 
