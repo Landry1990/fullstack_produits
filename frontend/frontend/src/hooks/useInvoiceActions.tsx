@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
 import type { Facture, TicketCaisse, Client, FactureProduit } from '../types';
 import { safeStorage } from '../utils/storage';
+import { PAYMENT_MODES } from '../config/paymentModes';
 
 interface UseInvoiceActionsProps {
     setFacturesLocal?: React.Dispatch<React.SetStateAction<Facture[]>>; // For optimistic updates
@@ -138,7 +139,7 @@ export const useInvoiceActions = ({ setFacturesLocal }: UseInvoiceActionsProps) 
         let modePaiement: TicketCaisse['mode_paiement'] = 'especes'; // Defaut
         if (fullFacture.paiements && fullFacture.paiements.length > 0) {
             const pm = fullFacture.paiements[0].mode_paiement;
-             if (['especes', 'cheque', 'carte', 'virement', 'om', 'momo', 'en_compte'].includes(pm)) {
+             if (PAYMENT_MODES.some(m => m.value === pm)) {
                  modePaiement = pm as TicketCaisse['mode_paiement'];
              } else {
                  modePaiement = 'Mixte'; // Ou autre logique

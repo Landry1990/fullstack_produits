@@ -34,7 +34,8 @@ export function useCart({ onRequirePrescription, onAlert, onSubstitution, onForc
             try {
                 const saved = safeStorage.getItem(cartStorageKey, 'local')
                 if (saved) {
-                    setLignesFacture(JSON.parse(saved))
+                    // Use functional update to avoid overwriting data already set by useDevisLoader
+                    setLignesFacture(prev => prev.length > 0 ? prev : JSON.parse(saved))
                 }
                 hasHydratedRef.current = true
             } catch (err) {

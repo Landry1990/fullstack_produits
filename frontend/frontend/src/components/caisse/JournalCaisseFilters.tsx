@@ -5,6 +5,7 @@ import type { useJournalCaisse } from '../../hooks/useJournalCaisse';
 import { Button } from '../shadcn/button';
 import { Badge } from '../shadcn/badge';
 import { cn } from '../../lib/utils';
+import { getJournalPaymentModes, getPaymentModeWithIcon } from '../../config/paymentModes';
 
 interface Props {
   state: ReturnType<typeof useJournalCaisse>;
@@ -57,12 +58,9 @@ export default function JournalCaisseFilters({ state }: Props) {
               className="w-full sm:w-auto h-9 px-3 rounded-lg bg-slate-100 border border-slate-200 text-sm text-slate-700 focus:outline-none focus:border-emerald-300 focus:ring-2 focus:ring-emerald-100 transition-all"
             >
               <option value="all">{t('all_modes')}</option>
-              <option value="especes">💵 {t('common:payment_modes.especes')}</option>
-              <option value="cheque">✍️ {t('common:payment_modes.cheque')}</option>
-              <option value="carte">💳 {t('common:payment_modes.carte')}</option>
-              <option value="virement">🏦 {t('common:payment_modes.virement')}</option>
-              <option value="om">📶 {t('common:payment_modes.om')}</option>
-              <option value="momo">📶 {t('common:payment_modes.momo')}</option>
+              {getJournalPaymentModes().map(m => (
+                <option key={m.value} value={m.value}>{getPaymentModeWithIcon(m.value, t)}</option>
+              ))}
             </select>
           </div>
 

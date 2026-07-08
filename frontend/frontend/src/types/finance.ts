@@ -94,7 +94,7 @@ export interface TicketCaisse {
     facture: number | Facture
     facture_numero?: string
     client_name?: string
-    mode_paiement: 'especes' | 'cheque' | 'carte' | 'virement' | 'om' | 'momo' | 'en_compte' | 'depot' | 'Mixte'
+    mode_paiement: string
     montant: string
     reference: string | null
     statut: string
@@ -135,7 +135,7 @@ export interface CaisseTransaction {
     id: number
     facture: number
     facture_numero: string
-    mode_paiement: 'especes' | 'cheque' | 'carte' | 'virement' | 'om' | 'momo' | 'en_compte' | 'depot'
+    mode_paiement: string
     mode_paiement_display: string
     montant: string
     reference: string | null

@@ -65,14 +65,14 @@
         "pay": "Valider",
         "pay_tooltip": "Valider la vente (Ctrl+Entrée)",
         "retrocession_mode": "Rétrocession",
-        "facture_a4": "Facture A4",
-        "facture_a4_tooltip": "Imprimer directement une Facture A4 (désactive le ticket)",
+        "facture_a4": "Facture",
+        "facture_a4_tooltip": "Générer une facture A4 après envoi à la caisse",
         "scan_ordonnance": "Scanner Ordonnance",
         "scan_ordonnance_tooltip": "Scanner une ordonnance avec OCR",
         "modes_section": "Modes",
         "documents_section": "Documents",
         "sales_management_section": "Gestion Vente",
-        "format_a4": "Format A4"
+        "format_a4": "Facture"
     },
     "search": {
         "label": "Rechercher un produit (F2)",

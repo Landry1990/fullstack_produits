@@ -3,6 +3,8 @@ import { useTranslation } from 'react-i18next'
 import { toast } from 'react-hot-toast'
 import type { Facture, CouponMonnaie } from '../../types'
 import PremiumModal from '../common/PremiumModal'
+import { getCaissePaymentModes, getPaymentModeLabel } from '../../config/paymentModes'
+import { usePharmacySettings } from '../../hooks/usePharmacySettings'
 
 interface PaymentModalProps {
   isOpen: boolean
@@ -22,6 +24,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
   loading
 }) => {
   const { t } = useTranslation('caisse')
+  const { settings } = usePharmacySettings()
   const [montantPaye, setMontantPaye] = useState('')
   const [modePaiement, setModePaiement] = useState('especes')
   const [paiements, setPaiements] = useState<{ mode: string; montant: number }[]>([])
@@ -48,16 +51,13 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
   const isDepositEnabled = facture.client_is_deposit_enabled ?? false
 
   const paymentModes = [
-    { value: 'especes', label: t('payment.modes.especes') },
-    { value: 'carte', label: t('payment.modes.carte') },
-    { value: 'om', label: t('payment.modes.om') },
-    { value: 'momo', label: t('payment.modes.momo') },
-    { value: 'cheque', label: t('payment.modes.cheque') },
-    { value: 'virement', label: t('payment.modes.virement') },
-    ...(soldeDepot > 0 && isIndividual && isDepositEnabled ? [{ value: 'depot', label: `${t('payment.modes.depot')} (${soldeDepot})` }] : [])
+    ...getCaissePaymentModes(settings?.disabled_payment_modes, settings?.custom_payment_modes)
+      .filter(m => m.value !== 'depot')
+      .map(m => ({ value: m.value, label: getPaymentModeLabel(m.value, t, settings?.custom_payment_modes) })),
+    ...(soldeDepot > 0 && isIndividual && isDepositEnabled ? [{ value: 'depot', label: `${getPaymentModeLabel('depot', t)} (${soldeDepot})` }] : [])
   ]
 
-  const getModeLabel = (value: string) => paymentModes.find(m => m.value === value)?.label || value
+  const getModeLabel = (value: string) => paymentModes.find(m => m.value === value)?.label || getPaymentModeLabel(value, t, settings?.custom_payment_modes)
 
   // Reset on open
   useEffect(() => {
