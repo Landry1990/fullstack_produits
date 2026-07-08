@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo } from 'react'
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import { useNavigate } from 'react-router-dom'
 import api from '../services/api'
@@ -42,6 +42,11 @@ export default function CaisseCentralisee() {
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false)
   const [ticketCaisse, setTicketCaisse] = useState<TicketCaisse | null>(null)
   const [showTicketPreview, setShowTicketPreview] = useState(false)
+
+  // Refs pour la navigation clavier dans la modale de ticket
+  const closeTicketButtonRef = useRef<HTMLButtonElement>(null)
+  const whatsappTicketButtonRef = useRef<HTMLButtonElement>(null)
+  const printTicketButtonRef = useRef<HTMLButtonElement>(null)
   
   // États pour les coupons
   const [coupons, setCoupons] = useState<CouponMonnaie[]>([])
@@ -61,6 +66,36 @@ export default function CaisseCentralisee() {
   
   // État pour la navigation clavier (mouse killing)
   const [selectedRowIndex, setSelectedRowIndex] = useState<number>(0)
+
+  // Focus automatique sur le bouton d'impression à l'ouverture du ticket
+  useEffect(() => {
+    if (showTicketPreview && ticketCaisse) {
+      const timer = setTimeout(() => {
+        printTicketButtonRef.current?.focus()
+      }, 50)
+      return () => clearTimeout(timer)
+    }
+  }, [showTicketPreview, ticketCaisse])
+
+  // Navigation gauche/droite entre les boutons d'action du ticket
+  const handleTicketFooterKeyDown = useCallback((e: React.KeyboardEvent<HTMLDivElement>) => {
+    const buttons = [
+      closeTicketButtonRef.current,
+      whatsappTicketButtonRef.current,
+      printTicketButtonRef.current
+    ].filter(Boolean) as HTMLButtonElement[]
+
+    const currentIndex = buttons.findIndex(btn => btn === document.activeElement)
+    if (currentIndex === -1) return
+
+    if (e.key === 'ArrowLeft' && currentIndex > 0) {
+      e.preventDefault()
+      buttons[currentIndex - 1].focus()
+    } else if (e.key === 'ArrowRight' && currentIndex < buttons.length - 1) {
+      e.preventDefault()
+      buttons[currentIndex + 1].focus()
+    }
+  }, [])
   
   // États pour le multi-caisse et sessions
   const [postesCaisses, setPostesCaisses] = useState<any[]>([])
@@ -787,11 +822,12 @@ export default function CaisseCentralisee() {
         icon={<span className="text-emerald-600 text-xl">📄</span>}
         maxWidth="max-w-sm"
         footer={
-            <div className="flex justify-end gap-2 w-full">
-              <button className="inline-flex items-center justify-center h-8 px-3 rounded-lg text-xs font-semibold text-slate-600 hover:bg-slate-100 transition-colors" onClick={() => setShowTicketPreview(false)}>{t('coupons.details_modal.close') || 'Fermer'} (Esc)</button>
+            <div className="flex justify-end gap-2 w-full" onKeyDown={handleTicketFooterKeyDown}>
+              <button ref={closeTicketButtonRef} className="inline-flex items-center justify-center h-8 px-3 rounded-lg text-xs font-semibold text-slate-600 hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 transition-colors" onClick={() => setShowTicketPreview(false)}>{t('coupons.details_modal.close') || 'Fermer'} (Esc)</button>
               {pharmacySettings?.whatsapp_enabled && (
                 <button
-                  className="inline-flex items-center gap-2 h-8 px-3 rounded-lg text-xs font-semibold border-2 border-emerald-500 text-emerald-600 hover:bg-emerald-50 transition-colors"
+                  ref={whatsappTicketButtonRef}
+                  className="inline-flex items-center gap-2 h-8 px-3 rounded-lg text-xs font-semibold border-2 border-emerald-500 text-emerald-600 hover:bg-emerald-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 transition-colors"
                   onClick={handleSendWhatsApp}
                   disabled={loading}
                 >
@@ -802,7 +838,8 @@ export default function CaisseCentralisee() {
                 </button>
               )}
               <button
-                className="inline-flex items-center justify-center h-8 px-6 rounded-lg text-xs font-semibold bg-emerald-600 text-white shadow-sm hover:bg-emerald-700 transition-colors"
+                ref={printTicketButtonRef}
+                className="inline-flex items-center justify-center h-8 px-6 rounded-lg text-xs font-semibold bg-emerald-600 text-white shadow-sm hover:bg-emerald-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-emerald-600 transition-colors"
                 onClick={() => {
                   const ticketElement = document.getElementById('ticket-preview');
                   if (!ticketElement) return;
