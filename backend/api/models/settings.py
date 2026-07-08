@@ -343,6 +343,18 @@ class PharmacySettings(models.Model):
         help_text="Envoyer aussi via Telegram"
     )
 
+    # --- Modes de paiement ---
+    disabled_payment_modes = models.JSONField(
+        default=list,
+        blank=True,
+        help_text="Liste des modes de paiement désactivés (ex: ['cheque', 'virement'])"
+    )
+    custom_payment_modes = models.JSONField(
+        default=list,
+        blank=True,
+        help_text="Modes de paiement personnalisés (ex: [{'value': 'paypal', 'label': 'PayPal'}])"
+    )
+
     class Meta:
         verbose_name = "Paramètres Pharmacie"
         verbose_name_plural = "Paramètres Pharmacie"

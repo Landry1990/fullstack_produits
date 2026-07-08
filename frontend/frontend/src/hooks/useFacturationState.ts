@@ -207,6 +207,11 @@ export function useFacturationState() {
           } else {
             ui.setShowTicketPreview(true)
           }
+        } else {
+          // Envoi caisse centralisée — reset du flag facture
+          if (isFactureA4) {
+            setIsFactureA4(false)
+          }
         }
 
         ui.resetUIState()

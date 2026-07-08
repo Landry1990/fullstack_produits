@@ -140,6 +140,7 @@
     "groupe": "Group",
     "no_product_found": "No product found",
     "payment_modes": {
+        "title": "Payment Method",
         "especes": "Cash",
         "carte": "Bank Card",
         "cheque": "Check",
@@ -147,6 +148,8 @@
         "coupon": "Voucher / Coupon",
         "om": "Orange Money",
         "momo": "MTN Mobile Money",
+        "depot": "Deposit/Advance",
+        "en_compte": "On Account",
         "recouvrement": "Recovery",
         "recouvrement_caps": "RECOVERY"
     },

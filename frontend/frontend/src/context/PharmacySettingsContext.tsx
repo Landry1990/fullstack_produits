@@ -57,6 +57,9 @@ export interface PharmacySettings {
   report_send_telegram?: boolean;
   // Sécurité Caisse
   hide_cash_totals?: boolean;
+  // Modes de paiement
+  disabled_payment_modes?: string[];
+  custom_payment_modes?: { value: string; label: string }[];
 }
 
 const DEFAULT_SETTINGS: PharmacySettings = {

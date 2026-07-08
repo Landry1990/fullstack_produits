@@ -69,7 +69,9 @@ export function useDevisLoader({ clientsHook, cart, ui }: UseDevisLoaderOptions)
                             total_ligne: p.quantity * Number(p.selling_price),
                             lotId: lotId,
                             lotText: p.lot || null,
-                            lotExpiration: p.date_expiration || null
+                            lotExpiration: p.date_expiration || null,
+                            lotSellingPrice: p.selling_price || null,
+                            treatment_duration_days: p.treatment_duration_days
                         }
                     }))
                     cart.setLignesFacture(lignes)

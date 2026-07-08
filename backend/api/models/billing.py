@@ -436,7 +436,7 @@ class Caisse(models.Model):
     ]
     
     facture = models.ForeignKey(Facture, on_delete=models.CASCADE, related_name='paiements')
-    mode_paiement = models.CharField(max_length=20, choices=MODES_PAIEMENT)
+    mode_paiement = models.CharField(max_length=50)
     montant = models.DecimalField(max_digits=10, decimal_places=2)
     reference = models.CharField(max_length=100, blank=True, null=True)
     statut = models.CharField(max_length=20, choices=STATUTS, default='en_attente')

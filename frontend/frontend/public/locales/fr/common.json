@@ -160,6 +160,7 @@
     "groupe": "Groupe",
     "no_product_found": "Aucun produit trouvé",
     "payment_modes": {
+        "title": "Mode de paiement",
         "especes": "Espèces",
         "carte": "Carte Bancaire",
         "cheque": "Chèque",
@@ -167,6 +168,8 @@
         "coupon": "Bon / Coupon",
         "om": "Orange Money",
         "momo": "MTN Mobile Money",
+        "depot": "Dépôt/Acompte",
+        "en_compte": "En compte",
         "recouvrement": "Recouvrement",
         "recouvrement_caps": "RECOUVREMENT"
     },

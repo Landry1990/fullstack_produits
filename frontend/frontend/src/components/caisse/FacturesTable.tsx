@@ -86,10 +86,10 @@ export const FacturesTable: React.FC<FacturesTableProps> = ({
 
   if (sortedFactures.length === 0) {
     return (
-      <div className="text-center py-16 bg-base-100">
+      <div className="text-center py-16 bg-white">
         <div className="text-5xl mb-4">📭</div>
-        <h3 className="font-bold text-lg text-base-content">{t('no_pending')}</h3>
-        <p className="text-base-content/50 text-sm mt-1">{t('no_pending_desc')}</p>
+        <h3 className="font-bold text-lg text-slate-800">{t('no_pending')}</h3>
+        <p className="text-slate-500 text-sm mt-1">{t('no_pending_desc')}</p>
       </div>
     )
   }
@@ -116,8 +116,8 @@ export const FacturesTable: React.FC<FacturesTableProps> = ({
     <>
       <div className="overflow-auto flex-1 min-h-0">
         <table className="table table-sm w-full">
-          <thead className="bg-base-200 opacity-100 sticky top-0 z-10">
-            <tr className="text-xs uppercase tracking-wider text-base-content/60">
+          <thead className="bg-slate-100 sticky top-0 z-10 border-b border-slate-200">
+            <tr className="text-xs uppercase tracking-wider text-slate-600 font-bold">
               {onToggleSelect && (
                 <th className="w-10">
                   <input
@@ -157,12 +157,12 @@ export const FacturesTable: React.FC<FacturesTableProps> = ({
               return (
                 <tr 
                   key={facture.id} 
-                  className={`cursor-pointer transition-all ${
+                  className={`cursor-pointer transition-all border-b border-slate-100 ${
                     isChecked
-                      ? 'bg-error/5 border-l-4 border-error'
+                      ? 'bg-red-50 border-l-4 border-red-500'
                       : isSelected 
-                        ? 'bg-primary/10 border-l-4 border-primary font-medium' 
-                        : 'hover:bg-base-100'
+                        ? 'bg-sky-50 border-l-4 border-sky-500 font-medium' 
+                        : 'hover:bg-slate-50'
                   }`}
                   onClick={() => onSelectRow(index)}
                   onDoubleClick={() => {
@@ -182,29 +182,29 @@ export const FacturesTable: React.FC<FacturesTableProps> = ({
                     </td>
                   )}
                   <td>
-                    <span className="badge badge-neutral font-bold">
+                    <span className="inline-flex items-center justify-center min-w-[1.75rem] px-2 h-6 rounded-md bg-slate-800 text-white text-xs font-bold shadow-sm">
                       {facture.session_ticket_number || '?'}
                     </span>
                   </td>
                   <td>
-                    <div className="font-bold text-primary">#{facture.numero_facture}</div>
+                    <div className="font-bold text-sky-600">#{facture.numero_facture}</div>
                     {hasTiersPayant && (
-                      <div className="badge badge-xs badge-info mt-1">{t('table.tiers_payant')}</div>
+                      <div className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-700 mt-1">{t('table.tiers_payant')}</div>
                     )}
                     {couponPourCetteFacture && (
-                      <div className="badge badge-xs badge-success mt-1">{t('table.coupon_applied')}</div>
+                      <div className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-700 mt-1">{t('table.coupon_applied')}</div>
                     )}
                   </td>
                   <td>
                     <div className="font-bold">{facture.client_name || t('table.passerby_client')}</div>
                   </td>
-                  <td className="text-xs hidden lg:table-cell">
-                    <div>{new Date(facture.date).toLocaleDateString('fr-FR', {
+                  <td className="text-xs hidden lg:table-cell text-slate-600">
+                    <div className="font-medium">{new Date(facture.date).toLocaleDateString('fr-FR', {
                       day: '2-digit',
                       month: '2-digit',
                       year: '2-digit'
                     })}</div>
-                    <div className="text-base-content/50">{new Date(facture.date).toLocaleTimeString('fr-FR', {
+                    <div className="text-slate-400">{new Date(facture.date).toLocaleTimeString('fr-FR', {
                       hour: '2-digit',
                       minute: '2-digit'
                     })}</div>
@@ -212,7 +212,7 @@ export const FacturesTable: React.FC<FacturesTableProps> = ({
                   <td className="text-xs max-w-xs hidden xl:table-cell">
                     <button
                       type="button"
-                      className="link link-primary text-left truncate block max-w-[150px]"
+                      className="text-sky-600 hover:text-sky-700 hover:underline text-left truncate block max-w-[150px] font-medium"
                       onClick={(e) => {
                         e.stopPropagation()
                         setPreviewFacture(facture)
@@ -226,10 +226,10 @@ export const FacturesTable: React.FC<FacturesTableProps> = ({
                   <td className="text-xs hidden md:table-cell">
                     <div className="font-medium">{facture.created_by_name || '-'}</div>
                   </td>
-                  <td className="text-right font-mono font-bold text-lg">
+                  <td className="text-right font-mono font-bold text-lg text-slate-800">
                     {montantAPayer} {t('common:currency_symbol', 'F')}
                     {couponPourCetteFacture && (
-                      <div className="text-xs font-normal text-success line-through text-base-content/70 flex items-center justify-end gap-1">
+                      <div className="text-xs font-normal text-emerald-600 line-through text-slate-500 flex items-center justify-end gap-1">
                         {hasTiersPayant ? Number(facture.part_client) : Number(facture.total_ttc)} {t('common:currency_symbol', 'F')}
                          <button 
                           onClick={(e) => { 
@@ -253,7 +253,7 @@ export const FacturesTable: React.FC<FacturesTableProps> = ({
                            onModify(facture)
                         }}
                         onDoubleClick={(e) => e.stopPropagation()}
-                        className="btn btn-xs btn-outline btn-warning"
+                        className="btn btn-xs bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-100 hover:border-amber-300"
                         title={canModify ? t('table.modify') : t('table.not_authorized')}
                         disabled={!canModify}
                       >
@@ -267,7 +267,7 @@ export const FacturesTable: React.FC<FacturesTableProps> = ({
                            onCancel(facture)
                         }}
                         onDoubleClick={(e) => e.stopPropagation()}
-                        className="btn btn-xs btn-outline btn-error"
+                        className="btn btn-xs bg-red-50 text-red-700 border-red-200 hover:bg-red-100 hover:border-red-300"
                         title={canCancel ? t('table.cancel') : t('table.not_authorized')}
                         disabled={!canCancel}
                       >
@@ -282,7 +282,7 @@ export const FacturesTable: React.FC<FacturesTableProps> = ({
                              onApplyCoupon(facture)
                           }}
                           onDoubleClick={(e) => e.stopPropagation()}
-                          className="btn btn-xs btn-outline btn-secondary"
+                          className="btn btn-xs bg-fuchsia-50 text-fuchsia-700 border-fuchsia-200 hover:bg-fuchsia-100 hover:border-fuchsia-300"
                           title={t('table.apply_coupon')}
                         >
                           <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -297,7 +297,7 @@ export const FacturesTable: React.FC<FacturesTableProps> = ({
                         }}
                         onDoubleClick={(e) => e.stopPropagation()}
                         disabled={!canCashOut}
-                        className="btn btn-xs btn-success text-white gap-1"
+                        className="btn btn-xs bg-emerald-600 text-white hover:bg-emerald-700 gap-1 shadow-sm"
                         title={!canCashOut
                           ? (!hasActiveCashSession && !user?.is_superuser
                             ? t('table.open_cash_register_first', { defaultValue: 'Veuillez d\'abord ouvrir votre caisse' })
@@ -320,13 +320,13 @@ export const FacturesTable: React.FC<FacturesTableProps> = ({
 
       {/* Pagination */}
       {totalPages > 1 && (
-        <div className="shrink-0 bg-base-100 border-t border-base-200 px-4 py-2 flex items-center justify-between text-sm">
-          <span className="text-base-content/60">
+        <div className="shrink-0 bg-white border-t border-slate-200 px-4 py-2 flex items-center justify-between text-sm">
+          <span className="text-slate-500">
             {(page - 1) * PAGE_SIZE + 1}–{Math.min(page * PAGE_SIZE, sortedFactures.length)} {t('common.pagination.of', 'sur')} {sortedFactures.length}
           </span>
           <div className="join">
             <button className="join-item btn btn-sm" onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1}>{t('common.pagination.prev', 'Précédent')}</button>
-            <button className="join-item btn btn-sm bg-base-200 pointer-events-none">{page}/{totalPages}</button>
+            <button className="join-item btn btn-sm bg-slate-100 text-slate-700 pointer-events-none">{page}/{totalPages}</button>
             <button className="join-item btn btn-sm" onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page === totalPages}>{t('common.pagination.next', 'Suivant')}</button>
           </div>
         </div>
@@ -346,8 +346,8 @@ export const FacturesTable: React.FC<FacturesTableProps> = ({
         <div className="p-4">
           {previewFacture?.produits && previewFacture.produits.length > 0 ? (
             <div className="overflow-x-auto">
-              <table className="table table-sm table-zebra w-full">
-                <thead>
+              <table className="table table-sm w-full">
+                <thead className="bg-slate-100 text-slate-600">
                   <tr>
                     <th>{t('table.product')}</th>
                     <th className="text-center">{t('table.quantity')}</th>
@@ -363,11 +363,11 @@ export const FacturesTable: React.FC<FacturesTableProps> = ({
                     const canModify = user?.is_superuser || user?.profile?.can_modify_invoice || (user as any)?.can_modify_invoice
                     
                     return (
-                      <tr key={idx} className="hover:bg-base-100">
+                      <tr key={idx} className="hover:bg-slate-50">
                         <td className="font-medium">
                           <div className="flex flex-col">
                             <span>{name}</span>
-                            {p.lot && <span className="text-[10px] opacity-60">Lot: {p.lot}</span>}
+                            {p.lot && <span className="text-[10px] text-slate-400">Lot: {p.lot}</span>}
                           </div>
                         </td>
                         <td className="text-center">
@@ -375,7 +375,7 @@ export const FacturesTable: React.FC<FacturesTableProps> = ({
                             {canModify ? (
                               <>
                                 <button 
-                                  className="btn btn-xs btn-circle btn-ghost text-error"
+                                  className="btn btn-xs btn-circle btn-ghost text-red-600 hover:bg-red-50"
                                   onClick={(e) => {
                                     e.stopPropagation();
                                     if (qty > 1) {
@@ -389,7 +389,7 @@ export const FacturesTable: React.FC<FacturesTableProps> = ({
                                 </button>
                                 <span className="font-bold min-w-[1.5rem]">{qty}</span>
                                 <button 
-                                  className="btn btn-xs btn-circle btn-ghost text-success"
+                                  className="btn btn-xs btn-circle btn-ghost text-emerald-600 hover:bg-emerald-50"
                                   onClick={(e) => {
                                     e.stopPropagation();
                                     onUpdateProductQuantity(previewFacture.id, p.produit, qty + 1);
@@ -408,7 +408,7 @@ export const FacturesTable: React.FC<FacturesTableProps> = ({
                         <td className="text-right">
                           {canModify && (
                             <button 
-                              className="btn btn-xs btn-ghost text-error btn-square"
+                              className="btn btn-xs btn-ghost text-red-600 hover:bg-red-50 btn-square"
                               onClick={(e) => {
                                 e.stopPropagation();
                                 if (window.confirm(t('confirm_delete_product', { name }))) {
@@ -429,7 +429,7 @@ export const FacturesTable: React.FC<FacturesTableProps> = ({
                 <tfoot>
                   <tr>
                     <td colSpan={3} className="text-right font-bold">{t('table.total_ttc')}</td>
-                    <td className="text-right font-mono font-bold text-primary">
+                    <td className="text-right font-mono font-bold text-emerald-600">
                       {Math.round(Number(previewFacture.total_ttc))} {t('common:currency_symbol', 'F')}
                     </td>
                     <td></td>
@@ -438,7 +438,7 @@ export const FacturesTable: React.FC<FacturesTableProps> = ({
               </table>
             </div>
           ) : (
-            <p className="text-center text-base-content/50 py-4">{t('table.no_products')}</p>
+            <p className="text-center text-slate-500 py-4">{t('table.no_products')}</p>
           )}
         </div>
       </PremiumModal>

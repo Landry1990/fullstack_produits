@@ -3,6 +3,7 @@ import { ArrowUpRight, ArrowDownRight, Banknote, CreditCard, Wallet } from 'luci
 import { formatCurrency, normalizeNumberInput } from '../../utils/formatters';
 import type { useJournalCaisse } from '../../hooks/useJournalCaisse';
 import { cn } from '../../lib/utils';
+import { getPaymentMode, getPaymentModeLabel } from '../../config/paymentModes';
 
 interface Props {
   state: ReturnType<typeof useJournalCaisse>;
@@ -94,19 +95,11 @@ export default function JournalCaisseStats({ state }: Props) {
           const numValue = normalizeNumberInput(value);
           if (numValue === 0) return null;
 
-          const labels: Record<string, {label: string, colorClass: string}> = {
-            especes: { label: t('common:payment_modes.especes'), colorClass: 'bg-emerald-500' },
-            cheque: { label: t('common:payment_modes.cheque'), colorClass: 'bg-sky-500' },
-            carte: { label: t('common:payment_modes.carte'), colorClass: 'bg-sky-500' },
-            virement: { label: t('common:payment_modes.virement'), colorClass: 'bg-sky-500' },
-            om: { label: 'O.M.', colorClass: 'bg-amber-500' },
-            momo: { label: 'MoMo', colorClass: 'bg-amber-400' },
-            depot: { label: t('common:payment_modes.depot'), colorClass: 'bg-sky-500' },
-            en_compte: { label: t('common:payment_modes.en_compte'), colorClass: 'bg-amber-500' },
-            recouvrement: { label: t('common:payment_modes.recouvrement'), colorClass: 'bg-emerald-600' }
+          const modeConfig = getPaymentMode(mode);
+          const info = {
+            label: getPaymentModeLabel(mode, t),
+            colorClass: modeConfig?.colorClass || 'bg-slate-300'
           };
-
-          const info = labels[mode] || { label: mode.toUpperCase(), colorClass: 'bg-slate-300' };
 
           return (
             <div key={mode} className="inline-flex items-center gap-2 px-3 py-1.5 rounded-md border border-slate-200 bg-white text-[10px] font-bold">

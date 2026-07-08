@@ -6,10 +6,56 @@
 
 ### ✨ Nouvelles fonctionnalités
 
+- **Caisse centralisée — impression facture A4 après vente**
+  - `frontend/frontend/src/components/caisse/CaisseTicketPreviewModal.tsx` : ajout du bouton **🧾 Facture A4** dans la modale de ticket après encaissement.
+  - Ouvre `/app/print-invoice/{facture_id}` dans un nouvel onglet pour générer/imprimer la facture A4 depuis la caisse.
+
+- **Progressive Web App (PWA)**
+  - Installation de `vite-plugin-pwa` et configuration dans `vite.config.ts` (`generateSW`, `autoUpdate`, cache stratégique).
+  - Création de `public/manifest.json` (nom : Zenith Pharma, thème emerald `#059669`).
+  - Génération des icônes `public/pwa-icon-192x192.png` et `public/pwa-icon-512x512.png` via `scripts/generate-pwa-icons.py`.
+  - Mise à jour de `index.html` avec `theme-color` et lien vers le manifeste.
+  - L'application est désormais installable sur desktop et mobile, avec mise en cache des assets pour fonctionnement hors-ligne (sauf le WASM Tesseract de 4,7 Mo).
+
 - **Caisse centralisée — navigation clavier sur le ticket de caisse**
   - `frontend/frontend/src/components/CaisseCentralisee.tsx` : après validation du paiement, le focus est automatiquement positionné sur le bouton **Imprimer** dans la modale de visualisation du ticket.
   - Navigation possible avec les touches **Gauche** et **Droite** entre les boutons d'action (Fermer, WhatsApp si activé, Imprimer).
   - Ajout de styles `focus-visible` pour rendre le focus clavier visible sur les boutons.
+
+- **Facturation — checkbox "FACTURE" (anciennement "Format A4")**
+  - Renommage du label "Format A4" → "FACTURE" dans la sidebar et le menu déroulant.
+  - Lorsque cochée, une facture A4 est désormais générée automatiquement même lors de l'envoi à la caisse centralisée.
+  - Le flag est réinitialisé après chaque vente (caisse directe ou centralisée).
+
+- **Modes de paiement — configuration centralisée + gestion dans Paramètres**
+  - Création de `src/config/paymentModes.ts` : source unique pour tous les modes de paiement.
+  - **Paramètres > Général > Modes de paiement** : activer/désactiver les modes ET ajouter des modes personnalisés (PayPal, Stripe, Wave…).
+  - Backend : champs `disabled_payment_modes` + `custom_payment_modes` (JSONField) + suppression du `choices` sur `Caisse.mode_paiement` (max_length 50).
+  - Les modes désactivés sont masqués dans la caisse, facturation, et dépôts client.
+  - Les modes personnalisés apparaissent dans tous les contextes (caisse, facturation, journal, filtres).
+  - Refactorisation de 9 fichiers pour utiliser la config centralisée au lieu de listes hardcodées.
+  - Types `TicketCaisse` et `CaisseTransaction` changés en `string` pour supporter tout nouveau mode.
+  - Traductions `common:payment_modes.*` complétées (depot, en_compte).
+
+### � Corrections
+
+- **Rappel d'une facture à la facturation — panier vide**
+  - Cause : race condition entre l'hydratation du panier depuis `localStorage` (`useCart`) et le chargement du devis via `useDevisLoader`.
+  - Fix dans `frontend/frontend/src/hooks/useCart.ts` : utilisation d'une mise à jour fonctionnelle pour ne pas écraser les lignes déjà injectées par `useDevisLoader`.
+  - Ajout des champs `lotSellingPrice` et `treatment_duration_days` dans `useDevisLoader.ts` pour une restitution complète du panier.
+
+### �🔧 Refactorisation
+
+- **Caisse centralisée — extraction en sous-composants**
+  - `CaisseCentralisee.tsx` réduit de ~1485 → ~686 lignes (-54%).
+  - `caisse/CaisseTicketPreviewModal.tsx` : modale de prévisualisation et impression du ticket (avec navigation clavier intégrée).
+  - `caisse/CouponGenerateModal.tsx` : modale de génération de coupon de monnaie.
+  - `caisse/CouponDetailsModal.tsx` : modale détails/impression d'un coupon.
+  - `caisse/ClosingReportModal.tsx` : modale du rapport de clôture de caisse.
+  - `caisse/BulkCancelModal.tsx` : modale de confirmation de vidange caisse (annulation en lot).
+  - `caisse/CaisseHeader.tsx` : header avec toolbar (session, coupons, multi-caisse, vidange).
+  - `caisse/CaisseStatsCards.tsx` : cartes statistiques (en attente, montant total, coupons).
+  - `caisse/SessionRecapBar.tsx` : barre récap session live avec détails par mode de paiement.
 
 ## 2026-07-07
 
