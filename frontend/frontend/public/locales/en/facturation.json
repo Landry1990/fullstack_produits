@@ -65,14 +65,14 @@
         "pay": "Validate",
         "pay_tooltip": "Validate sale (Ctrl+Enter)",
         "retrocession_mode": "Retrocession",
-        "facture_a4": "A4 Invoice",
-        "facture_a4_tooltip": "Print directly an A4 Invoice (disables ticket)",
+        "facture_a4": "Invoice",
+        "facture_a4_tooltip": "Generate an A4 invoice after sending to cash register",
         "scan_ordonnance": "Scan Prescription",
         "scan_ordonnance_tooltip": "Scan a prescription with OCR",
         "modes_section": "Modes",
         "documents_section": "Documents",
         "sales_management_section": "Sales Management",
-        "format_a4": "A4 Format"
+        "format_a4": "Invoice"
     },
     "search": {
         "label": "Search Product (F2)",

@@ -49,7 +49,7 @@ export interface FacturationUIState {
     pushDisplayAlert: (alert: { title: string; message: string; type: 'product'|'client'; is_blocking: boolean; targetId?: number }) => void
 
     // Payment State
-    modePaiement: 'especes' | 'cheque' | 'carte' | 'virement' | 'en_compte'
+    modePaiement: string
     montantPaye: string
     paiements: { mode: string; montant: number; part_patient?: number | null; part_assurance?: number | null }[]
     reference: string
@@ -79,7 +79,7 @@ export function useFacturationUI() {
     const [remiseMode, setRemiseMode] = useState<'montant' | 'taux'>('montant')
 
     // Payment Form State
-    const [modePaiement, setModePaiement] = useState<'especes' | 'cheque' | 'carte' | 'virement' | 'en_compte'>('especes')
+    const [modePaiement, setModePaiement] = useState<string>('especes')
     const [montantPaye, setMontantPaye] = useState('')
     const [paiements, setPaiements] = useState<{ mode: string; montant: number; part_patient?: number | null; part_assurance?: number | null }[]>([])
     const [reference, setReference] = useState('')

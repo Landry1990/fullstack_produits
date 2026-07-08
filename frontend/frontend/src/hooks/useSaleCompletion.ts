@@ -363,6 +363,10 @@ function useSaleCompletion(options: UseSaleCompletionOptions = {}): UseSaleCompl
                 onReset?.();
                 return result;
             } else {
+                // Envoi à la caisse centralisée — générer la facture A4 si demandé
+                if (params.isFactureA4) {
+                    window.open(`/app/print-invoice/${finalFacture.id}`, '_blank');
+                }
                 toast.success(t('messages.sent_to_caisse', { id: finalFacture.numero_facture || finalFacture.id }));
                 const result: SaleCompletionResult = { success: true, facture: finalFacture };
                 setLastResult(result);

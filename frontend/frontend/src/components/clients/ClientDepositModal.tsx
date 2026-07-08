@@ -6,6 +6,8 @@ import PremiumModal from '../common/PremiumModal'
 import clientService from '../../services/clientService'
 import { formatCurrency, formatDateFr } from '../../utils/formatters'
 import type { Client, DepotClient } from '../../types/crm'
+import { getCaissePaymentModes, getPaymentModeLabel } from '../../config/paymentModes'
+import { usePharmacySettings } from '../../hooks/usePharmacySettings'
 
 interface Props {
     isOpen: boolean
@@ -16,6 +18,7 @@ interface Props {
 
 export default function ClientDepositModal({ isOpen, onClose, client, onSuccess }: Props) {
     const { t } = useTranslation(['clients', 'common'])
+    const { settings } = usePharmacySettings()
     const [activeTab, setActiveTab] = useState<'transaction' | 'history'>('transaction')
     const [type, setType] = useState<'DEPOT' | 'RETRAIT'>('DEPOT')
     const [montant, setMontant] = useState('')
@@ -153,12 +156,9 @@ export default function ClientDepositModal({ isOpen, onClose, client, onSuccess 
                                         value={modePaiement}
                                         onChange={e => setModePaiement(e.target.value)}
                                     >
-                                        <option value="especes">{t('common:payment_modes.especes')}</option>
-                                        <option value="cheque">{t('common:payment_modes.cheque')}</option>
-                                        <option value="virement">{t('common:payment_modes.virement')}</option>
-                                        <option value="om">{t('common:payment_modes.om')}</option>
-                                        <option value="momo">{t('common:payment_modes.momo')}</option>
-                                        <option value="carte">{t('common:payment_modes.carte')}</option>
+                                        {getCaissePaymentModes(settings?.disabled_payment_modes, settings?.custom_payment_modes).filter(m => m.value !== 'depot').map(m => (
+                                            <option key={m.value} value={m.value}>{getPaymentModeLabel(m.value, t, settings?.custom_payment_modes)}</option>
+                                        ))}
                                     </select>
                                 </div>
                             </div>

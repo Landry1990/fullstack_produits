@@ -40,6 +40,7 @@ import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from '../ui/Table'
 import { Badge } from '../ui/Badge'
+import { getConfigurablePaymentModes, getPaymentModeLabel } from '../../config/paymentModes'
 
 type TabId = 'general' | 'printing' | 'stocks' | 'tva' | 'notifications' | 'reports'
 
@@ -449,6 +450,134 @@ export default function PharmacySettingsForm() {
                           className="input input-bordered w-full font-bold text-primary focus:input-primary h-12 rounded-xl text-center text-xl"
                           placeholder={t('placeholders.currency')}
                         />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Section: Modes de paiement */}
+                <div className="card bg-base-100 shadow-xl shadow-base-content/5 border border-base-200 overflow-hidden rounded-2xl">
+                  <div className="p-0">
+                    <div className="px-8 py-5 border-b border-base-200 bg-base-50/50">
+                      <h2 className="font-bold text-xl flex items-center gap-3">
+                        <div className="p-2 bg-primary/10 rounded-lg">
+                          <CreditCard className="h-5 w-5 text-primary" />
+                        </div>
+                        {t('sections.payment_modes', { defaultValue: 'Modes de paiement' })}
+                      </h2>
+                    </div>
+                    <div className="p-8 space-y-6">
+                      <p className="text-sm text-base-content/60">
+                        {t('hints.payment_modes', { defaultValue: 'Désactivez les modes de paiement que vous n\'utilisez pas. Ils ne seront plus proposés dans la caisse et la facturation.' })}
+                      </p>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+                        {getConfigurablePaymentModes(formData.custom_payment_modes).map((mode) => {
+                          const isDisabled = (formData.disabled_payment_modes || []).includes(mode.value)
+                          const isCustom = (formData.custom_payment_modes || []).some((c: { value: string }) => c.value === mode.value)
+                          return (
+                            <label
+                              key={mode.value}
+                              className={`flex items-center gap-3 p-3 rounded-xl border cursor-pointer transition-all ${
+                                isDisabled
+                                  ? 'border-red-200 bg-red-50/50 opacity-60'
+                                  : 'border-emerald-200 bg-emerald-50/50'
+                              }`}
+                            >
+                              <input
+                                type="checkbox"
+                                checked={!isDisabled}
+                                onChange={(e) => {
+                                  const current = formData.disabled_payment_modes || []
+                                  if (e.target.checked) {
+                                    handleChange('disabled_payment_modes', current.filter((v: string) => v !== mode.value))
+                                  } else {
+                                    handleChange('disabled_payment_modes', [...current, mode.value])
+                                  }
+                                }}
+                                className="size-4 rounded border-slate-300 text-emerald-500 focus:ring-emerald-500"
+                              />
+                              <span className="text-lg">{mode.icon}</span>
+                              <span className="text-sm font-medium text-base-content flex-1">
+                                {getPaymentModeLabel(mode.value, t, formData.custom_payment_modes)}
+                              </span>
+                              {isCustom && (
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.preventDefault()
+                                    e.stopPropagation()
+                                    const updated = (formData.custom_payment_modes || []).filter((c: { value: string }) => c.value !== mode.value)
+                                    handleChange('custom_payment_modes', updated)
+                                    // Also remove from disabled if was disabled
+                                    const currentDisabled = formData.disabled_payment_modes || []
+                                    if (currentDisabled.includes(mode.value)) {
+                                      handleChange('disabled_payment_modes', currentDisabled.filter((v: string) => v !== mode.value))
+                                    }
+                                  }}
+                                  className="text-red-400 hover:text-red-600 text-xs font-bold transition-colors"
+                                  title="Supprimer ce mode"
+                                >✕</button>
+                              )}
+                            </label>
+                          )
+                        })}
+                      </div>
+
+                      {/* Ajouter un mode personnalisé */}
+                      <div className="border-t border-base-200 pt-4">
+                        <h3 className="text-sm font-bold text-base-content/70 mb-3">
+                          {t('labels.add_custom_mode', { defaultValue: 'Ajouter un mode personnalisé' })}
+                        </h3>
+                        <div className="flex items-center gap-3">
+                          <input
+                            type="text"
+                            id="new-payment-mode-input"
+                            placeholder={t('placeholders.custom_mode', { defaultValue: 'Ex: PayPal, Stripe, Wave...' })}
+                            className="flex-1 h-10 px-4 rounded-lg border border-base-300 bg-base-100 text-sm focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter') {
+                                e.preventDefault()
+                                const input = e.currentTarget
+                                const label = input.value.trim()
+                                if (!label) return
+                                const value = label.toLowerCase().replace(/[^a-z0-9]/g, '_').replace(/_+/g, '_').replace(/^_|_$/g, '')
+                                if (!value) return
+                                const existing = [...(formData.custom_payment_modes || [])]
+                                if (existing.some((m: { value: string }) => m.value === value)) {
+                                  import('react-hot-toast').then(({ toast }) => toast.error('Ce mode existe déjà'))
+                                  return
+                                }
+                                handleChange('custom_payment_modes', [...existing, { value, label }])
+                                input.value = ''
+                              }
+                            }}
+                          />
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                              const input = document.getElementById('new-payment-mode-input') as HTMLInputElement
+                              if (!input) return
+                              const label = input.value.trim()
+                              if (!label) return
+                              const value = label.toLowerCase().replace(/[^a-z0-9]/g, '_').replace(/_+/g, '_').replace(/^_|_$/g, '')
+                              if (!value) return
+                              const existing = [...(formData.custom_payment_modes || [])]
+                              if (existing.some((m: { value: string }) => m.value === value)) {
+                                import('react-hot-toast').then(({ toast }) => toast.error('Ce mode existe déjà'))
+                                return
+                              }
+                              handleChange('custom_payment_modes', [...existing, { value, label }])
+                              input.value = ''
+                            }}
+                          >
+                            + Ajouter
+                          </Button>
+                        </div>
+                        <p className="text-xs text-base-content/40 mt-2">
+                          {t('hints.custom_mode', { defaultValue: 'Saisissez un nom et appuyez sur Entrée ou cliquez Ajouter. N\'oubliez pas de sauvegarder.' })}
+                        </p>
                       </div>
                     </div>
                   </div>

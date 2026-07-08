@@ -5,6 +5,7 @@ import type { useJournalCaisse } from '../../hooks/useJournalCaisse';
 import { Button } from '../shadcn/button';
 import { cn } from '../../lib/utils';
 import { useAuth } from '../../context/AuthContext';
+import { getPaymentModeLabel } from '../../config/paymentModes';
 
 interface Props {
   state: ReturnType<typeof useJournalCaisse>;
@@ -31,17 +32,7 @@ export default function JournalCaisseClosingModal({ state }: Props) {
   const [newMontant, setNewMontant] = useState('');
   const [newType, setNewType] = useState<'ENTREE' | 'SORTIE'>('SORTIE');
 
-  const modeLabels: Record<string, string> = {
-    especes: t('common:payment_modes.especes'),
-    cheque: t('common:payment_modes.cheque'),
-    carte: t('common:payment_modes.carte'),
-    virement: t('common:payment_modes.virement'),
-    om: t('modes.om'),
-    momo: t('modes.momo'),
-    depot: t('common:payment_modes.depot'),
-    en_compte: t('common:payment_modes.en_compte'),
-    recouvrement: t('common:payment_modes.recouvrement'),
-  };
+  const getModeLabel = (mode: string) => getPaymentModeLabel(mode, t);
 
   const computed = useMemo(() => {
     if (!closingTotals) return null;
@@ -125,7 +116,7 @@ export default function JournalCaisseClosingModal({ state }: Props) {
                     .filter(([k, v]) => !k.startsWith('__') && k !== 'mouvements_audit' && (v as number) !== 0)
                     .map(([mode, montant]) => (
                       <div key={mode} className="flex justify-between text-xs">
-                        <span className="text-slate-500 capitalize">{modeLabels[mode] || mode}</span>
+                        <span className="text-slate-500 capitalize">{getModeLabel(mode)}</span>
                         <span className="font-bold">{formatCurrencyLocal(Math.round(montant as number))}</span>
                       </div>
                     ))}

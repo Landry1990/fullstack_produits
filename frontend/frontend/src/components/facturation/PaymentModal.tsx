@@ -3,6 +3,7 @@ import type { Facture } from '../../types'
 import { useTranslation } from 'react-i18next'
 import { formatCurrency } from '../../utils/formatters'
 import PremiumModal from '../common/PremiumModal'
+import { getPaymentModeLabel } from '../../config/paymentModes'
 
 type PaymentItem = {
     mode: string
@@ -212,7 +213,7 @@ export default function PaymentModal({
                                 <div className="bg-slate-50 rounded p-2 space-y-1 mb-2">
                                     {paiements.map((p, idx) => (
                                         <div key={idx} className="flex justify-between items-center text-xs p-1 px-2 bg-white rounded border border-slate-200">
-                                            <span>{p.mode === 'especes' ? t('facturation:payment.modes.especes') : p.mode === 'carte' ? t('facturation:payment.modes.carte') : p.mode === 'om' ? t('facturation:payment.modes.mobile') : p.mode === 'momo' ? t('facturation:payment.modes.momo') : p.mode === 'cheque' ? t('facturation:payment.modes.cheque') : t('facturation:payment.modes.other')}</span>
+                                            <span>{getPaymentModeLabel(p.mode, t)}</span>
                                             <div className="flex items-center gap-2">
                                                 <span className="font-mono font-bold">{formatCurrency(p.montant)}</span>
                                                 <button

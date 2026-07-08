@@ -9,6 +9,7 @@ import { useTranslation } from 'react-i18next';
 import { formatCurrency, normalizeNumberInput } from '../utils/formatters';
 import { escHtml } from '../utils/print/printHelpers';
 import { formatDate, formatDateTime } from '../utils/dateUtils';
+import { getPaymentModeLabel } from '../config/paymentModes';
 
 const formatLocalISOString = (date: Date): string => {
     const pad = (num: number) => num.toString().padStart(2, '0');
@@ -435,11 +436,7 @@ export function useJournalCaisse() {
       // Solde à justifier = théorique backend (inclut recouvrements + fond + entrées - sorties)
       const soldeOp = totalTheorique;
       
-      const modeLabels: Record<string, string> = {
-        especes: 'Espèces', cheque: 'Chèque', carte: 'Carte Bancaire',
-        virement: 'Virement', om: 'Orange Money', momo: 'Mobile Money',
-        recouvrement: 'Recouvrement', coupon: 'Coupons',
-      };
+      const getModeLabel = (mode: string) => getPaymentModeLabel(mode, t);
 
       const displayDetails = Object.entries(data.details || {}).filter(
         ([key]) => !key.startsWith('__') && key !== 'mouvements_audit' && key !== 'mouvements'
@@ -529,7 +526,7 @@ export function useJournalCaisse() {
                 <div style="font-weight: bold; margin-bottom: 3px; border-bottom: 1px solid black; font-size: 0.85em;">${t('print.mode_summary')}</div>
                 ${displayDetails.map(([mode, montant]) => `
                     <div style="display: flex; justify-content: space-between; font-size: 0.8em; margin-bottom: 1px;">
-                        <span style="text-transform: capitalize;">${modeLabels[mode] || mode}</span>
+                        <span style="text-transform: capitalize;">${getModeLabel(mode)}</span>
                         <span>${formatCurrencyLocal(normalizeNumberInput(montant as any))}</span>
                     </div>
                 `).join('')}
