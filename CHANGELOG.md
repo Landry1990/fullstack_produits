@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-07-08
+
+### ✨ Nouvelles fonctionnalités
+
+- **Caisse centralisée — navigation clavier sur le ticket de caisse**
+  - `frontend/frontend/src/components/CaisseCentralisee.tsx` : après validation du paiement, le focus est automatiquement positionné sur le bouton **Imprimer** dans la modale de visualisation du ticket.
+  - Navigation possible avec les touches **Gauche** et **Droite** entre les boutons d'action (Fermer, WhatsApp si activé, Imprimer).
+  - Ajout de styles `focus-visible` pour rendre le focus clavier visible sur les boutons.
+
 ## 2026-07-07
 
 ### ⚡ Optimisations & Scalabilité
