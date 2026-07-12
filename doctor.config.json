@@ -1,0 +1,10 @@
+{
+  "$schema": "https://react.doctor/schema/config.json",
+  "ignore": {
+    "files": [
+      "backend/my_env01/**",
+      "backend/staticfiles/**",
+      "backend/static/**"
+    ]
+  }
+}

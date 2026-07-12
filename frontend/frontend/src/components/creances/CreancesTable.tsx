@@ -186,7 +186,8 @@ export const CreancesTable: React.FC<CreancesTableProps> = ({
                 </thead>
                 <tbody className="divide-y divide-slate-100">
                     {filteredCreances.map((creance) => {
-                        const isSelected = selectedIds.includes(creance.id);
+                        const selectedSet = new Set(selectedIds);
+                        const isSelected = selectedSet.has(creance.id);
                         const remaining = normalizeNumberInput(creance.reste_a_payer);
                         const isPaid = remaining <= 0;
 

@@ -15,11 +15,17 @@ interface StockAnalysisTableProps {
     onToggleSelectAll: () => void;
 }
 
+const emptyStateIcons = {
+    unsold: <Clock className="size-10 text-slate-300" />,
+    overstock: <TrendingUp className="size-10 text-slate-300" />,
+    shortage: <CheckCircle2 className="size-10 text-emerald-500" />,
+};
+
 const SkeletonRow = ({ widths, hasCheckbox }: { widths: string[]; hasCheckbox: boolean }) => (
     <tr className="border-b border-slate-100 animate-pulse">
-        {hasCheckbox && <td className="py-3 px-3 text-center"><div className="size-4 rounded bg-slate-200 mx-auto" /></td>}
+        {hasCheckbox && <td className="py-2 px-3 text-center"><div className="size-4 rounded bg-slate-200 mx-auto" /></td>}
         {widths.map((_, i) => (
-            <td key={i} className="py-3 px-3">
+            <td key={i} className="py-2 px-3">
                 <div className="h-4 rounded bg-slate-200" style={{ width: `${60 + Math.random() * 30}%` }} />
             </td>
         ))}
@@ -93,9 +99,9 @@ export const StockAnalysisTable: React.FC<StockAnalysisTableProps> = ({
 
     if (loading) {
         return (
-            <div className="overflow-x-auto">
+            <div className="overflow-x-auto overflow-y-auto max-h-[55vh]">
                 <table className="w-full table-fixed text-sm">
-                    <thead>
+                    <thead className="sticky top-0 z-10">
                         <tr className="bg-slate-50 border-b border-slate-100">
                             {hasSelection && (
                                 <th className="w-12 px-3 py-3 text-center text-xs font-semibold uppercase tracking-wide text-slate-500">
@@ -104,8 +110,8 @@ export const StockAnalysisTable: React.FC<StockAnalysisTableProps> = ({
                             )}
                             {headers.map((h, i) => (
                                 <th
-                                    key={i}
-                                    className={`px-3 py-3 text-xs font-semibold uppercase tracking-wide text-slate-500 ${widths[i]} ${
+                                    key={h}
+                                    className={`px-3 py-2 text-xs font-semibold uppercase tracking-wide text-slate-500 ${widths[i]} ${
                                         i === 0 ? 'text-left' : i === headers.length - 1 ? 'text-right' : 'text-center'
                                     }`}
                                 >
@@ -125,11 +131,6 @@ export const StockAnalysisTable: React.FC<StockAnalysisTableProps> = ({
     }
 
     if (items.length === 0) {
-        const icons = {
-            unsold: <Clock className="size-10 text-slate-300" />,
-            overstock: <TrendingUp className="size-10 text-slate-300" />,
-            shortage: <CheckCircle2 className="size-10 text-emerald-500" />,
-        };
         const labels = {
             unsold: t('stock:analyse.empty.unsold'),
             overstock: t('stock:analyse.empty.overstock'),
@@ -137,11 +138,11 @@ export const StockAnalysisTable: React.FC<StockAnalysisTableProps> = ({
         };
 
         return (
-            <div className="flex flex-col items-center justify-center py-24 px-6 text-center">
-                <div className="p-5 bg-slate-100 rounded-2xl mb-5">
-                    {icons[activeTab]}
+            <div className="flex flex-col items-center justify-center py-16 px-6 text-center">
+                <div className="p-4 bg-slate-100 rounded-2xl mb-4">
+                    {emptyStateIcons[activeTab]}
                 </div>
-                <h3 className="text-lg font-semibold text-slate-700">{labels[activeTab]}</h3>
+                <h3 className="text-base font-semibold text-slate-700">{labels[activeTab]}</h3>
                 <p className="text-sm text-slate-500 mt-1 max-w-sm">
                     {t('stock:analyse.empty.all_good')}
                 </p>
@@ -150,12 +151,12 @@ export const StockAnalysisTable: React.FC<StockAnalysisTableProps> = ({
     }
 
     return (
-        <div className="overflow-x-auto">
+        <div className="overflow-auto max-h-[55vh]">
             <table className="w-full table-fixed text-sm">
-                <thead>
+                <thead className="sticky top-0 z-10">
                     <tr className="bg-slate-50 border-b border-slate-100">
                         {hasSelection && (
-                            <th className="w-12 px-3 py-3 text-center">
+                            <th className="w-12 px-3 py-2 text-center">
                                 <Checkbox
                                     checked={allSelected}
                                     onCheckedChange={onToggleSelectAll}
@@ -165,8 +166,8 @@ export const StockAnalysisTable: React.FC<StockAnalysisTableProps> = ({
                         )}
                         {headers.map((h, i) => (
                             <th
-                                key={i}
-                                className={`px-3 py-3 text-xs font-semibold uppercase tracking-wide text-slate-500 ${widths[i]} ${
+                                key={h}
+                                className={`px-3 py-2 text-xs font-semibold uppercase tracking-wide text-slate-500 ${widths[i]} ${
                                     i === 0 ? 'text-left' : i === headers.length - 1 ? 'text-right' : 'text-center'
                                 }`}
                             >
@@ -188,7 +189,7 @@ export const StockAnalysisTable: React.FC<StockAnalysisTableProps> = ({
                                 className={`border-b border-slate-100 transition-colors hover:bg-slate-50/80 ${isSelected ? 'bg-emerald-50/40' : ''}`}
                             >
                                 {hasSelection && (
-                                    <td className="px-3 py-3 text-center">
+                                    <td className="px-3 py-2 text-center">
                                         <Checkbox
                                             checked={isSelected}
                                             onCheckedChange={() => onToggleSelect(item.id)}
@@ -196,13 +197,13 @@ export const StockAnalysisTable: React.FC<StockAnalysisTableProps> = ({
                                         />
                                     </td>
                                 )}
-                                <td className="px-3 py-3">
-                                    <div className="font-semibold text-slate-900 truncate" title={item.name}>{item.name}</div>
-                                    <div className="text-[11px] text-slate-500 mt-0.5">
+                                <td className="px-3 py-2">
+                                    <div className="font-semibold text-slate-900 truncate text-sm" title={item.name}>{item.name}</div>
+                                    <div className="text-[10px] text-slate-500 mt-0.5">
                                         CIP: {item.cip || item.id}
                                     </div>
                                 </td>
-                                <td className="px-3 py-3 text-center">
+                                <td className="px-3 py-2 text-center">
                                     <Badge variant="outline" className="font-mono text-xs">
                                         {item.stock}
                                     </Badge>
@@ -210,49 +211,49 @@ export const StockAnalysisTable: React.FC<StockAnalysisTableProps> = ({
 
                                 {activeTab === 'unsold' ? (
                                     <>
-                                        <td className="px-3 py-3 font-mono text-xs text-slate-600">
+                                        <td className="px-3 py-2 font-mono text-xs text-slate-600">
                                             {item.dernier_achat ? new Date(item.dernier_achat).toLocaleDateString(i18n.language) : '-'}
                                         </td>
-                                        <td className="px-3 py-3 font-mono text-xs text-slate-600">
+                                        <td className="px-3 py-2 font-mono text-xs text-slate-600">
                                             {item.derniere_vente ? new Date(item.derniere_vente).toLocaleDateString(i18n.language) : (
                                                 <span className="text-red-600 font-semibold">{t('stock:analyse.messages.never_sold')}</span>
                                             )}
                                         </td>
-                                        <td className="px-3 py-3 text-center">
-                                            <Badge className="bg-amber-100 text-amber-700 hover:bg-amber-100">
+                                        <td className="px-3 py-2 text-center">
+                                            <Badge className="bg-amber-100 text-amber-700 hover:bg-amber-100 text-xs">
                                                 {item.days_since_sale ?? '-'} {t('stock:analyse.day_short', { defaultValue: 'j' })}
                                             </Badge>
                                         </td>
-                                        <td className="px-3 py-3 text-right font-mono text-xs text-slate-600">
+                                        <td className="px-3 py-2 text-right font-mono text-xs text-slate-600">
                                             {formatCurrency(Math.round(item.cost_price))}
                                         </td>
-                                        <td className="px-3 py-3 text-right font-semibold text-red-600">
+                                        <td className="px-3 py-2 text-right font-semibold text-red-600 text-sm">
                                             {formatCurrency(Math.round(item.value))}
                                         </td>
                                     </>
                                 ) : activeTab === 'overstock' ? (
                                     <>
-                                        <td className="px-3 py-3 text-center font-mono text-xs text-slate-700">
+                                        <td className="px-3 py-2 text-center font-mono text-xs text-slate-700">
                                             {Number(item.rotation || 0).toFixed(0)}
                                             <span className="text-[10px] text-slate-400 ml-1">/ {t('stock:analyse.per_month')}</span>
                                         </td>
-                                        <td className="px-3 py-3 text-center font-semibold text-slate-700">
+                                        <td className="px-3 py-2 text-center font-semibold text-slate-700 text-sm">
                                             {item.threshold}
                                         </td>
-                                        <td className="px-3 py-3 text-center font-semibold text-red-600">
+                                        <td className="px-3 py-2 text-center font-semibold text-red-600 text-sm">
                                             +{item.excess_qty}
                                         </td>
-                                        <td className="px-3 py-3 text-right font-semibold text-red-600">
+                                        <td className="px-3 py-2 text-right font-semibold text-red-600 text-sm">
                                             {formatCurrency(Math.round(item.value))}
                                         </td>
                                     </>
                                 ) : (
                                     <>
-                                        <td className="px-3 py-3 text-center font-mono text-xs text-slate-700">
+                                        <td className="px-3 py-2 text-center font-mono text-xs text-slate-700">
                                             {item.avg_daily_sales}
                                             <span className="text-[10px] text-slate-400 ml-1">/ {t('stock:analyse.per_day')}</span>
                                         </td>
-                                        <td className="px-3 py-3 text-center font-semibold">
+                                        <td className="px-3 py-2 text-center font-semibold text-sm">
                                             <span className={`text-xs ${
                                                 (item.days_until_stockout || 0) < 7 ? 'text-red-600' :
                                                 (item.days_until_stockout || 0) < 14 ? 'text-amber-600' : 'text-blue-600'
@@ -260,10 +261,10 @@ export const StockAnalysisTable: React.FC<StockAnalysisTableProps> = ({
                                                 {item.days_until_stockout} {t('stock:analyse.days')}
                                             </span>
                                         </td>
-                                        <td className="px-3 py-3 text-center">
+                                        <td className="px-3 py-2 text-center">
                                             {getUrgencyBadge(item.urgency || '')}
                                         </td>
-                                        <td className="px-3 py-3 text-right font-semibold text-red-600">
+                                        <td className="px-3 py-2 text-right font-semibold text-red-600 text-sm">
                                             {formatCurrency(Math.round(item.value))}
                                         </td>
                                     </>

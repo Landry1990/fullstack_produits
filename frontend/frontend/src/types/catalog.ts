@@ -145,7 +145,10 @@ export interface StockAdjustment {
     produit_name: string
     produit_cip?: string
     stock_lot: number | null
+    lot_id: number | null
     lot_number: string | null
+    lot_expiration: string | null
+    lot_quantity_remaining: number | null
     user: number | null
     user_name: string
     username: string

@@ -32,6 +32,17 @@ const printInvoicePDF = (factureId: number, clientName?: string | null, type?: s
     );
 };
 
+// --- PRINTING HELPERS (module-scope: close over no hook state) ---
+const handlePrintInvoice = (facture: Facture): void => {
+    const nameToUse = facture.client_name_override || facture.client_name;
+    printInvoicePDF(facture.id, nameToUse);
+};
+
+const handlePrintBL = (facture: Facture): void => {
+    const nameToUse = facture.client_name_override || facture.client_name;
+    printInvoicePDF(facture.id, nameToUse, 'BL');
+};
+
 export const useInvoiceActions = ({ setFacturesLocal }: UseInvoiceActionsProps) => {
     const { t } = useTranslation(['sales', 'common']);
     const navigate = useNavigate();
@@ -66,16 +77,7 @@ export const useInvoiceActions = ({ setFacturesLocal }: UseInvoiceActionsProps) 
         }
     };
 
-    // --- PRINTING ---
-    const handlePrintInvoice = (facture: Facture) => {
-        const nameToUse = facture.client_name_override || facture.client_name;
-        printInvoicePDF(facture.id, nameToUse);
-    };
-
-    const handlePrintBL = (facture: Facture) => {
-        const nameToUse = facture.client_name_override || facture.client_name;
-        printInvoicePDF(facture.id, nameToUse, 'BL');
-    };
+    // --- PRINTING --- (handlePrintInvoice & handlePrintBL hoisted to module scope below)
 
     const handleConfirmPrintClientName = async (clientNameInput: string) => {
         if (!pendingPrintFacture) return;

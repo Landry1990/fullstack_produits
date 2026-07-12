@@ -4,11 +4,20 @@ Service centralisé pour tous les calculs de marge
 """
 from decimal import Decimal, ROUND_HALF_UP
 from typing import Dict, List, Optional, Tuple, Union
-from datetime import timedelta
+from datetime import timedelta, date as date_type, datetime
 from django.db.models import Sum, F, DecimalField, Q, Value, Count, Avg, Exists, OuterRef
 from django.db.models.functions import Coalesce
 from django.utils import timezone
 from api.models import Produit, Facture, FactureProduit, FactureProduitAllocation, StockLot
+
+def _to_aware_datetime(d):
+    """Convert a date or naive datetime to a timezone-aware datetime."""
+    if isinstance(d, date_type) and not isinstance(d, datetime):
+        d = datetime(d.year, d.month, d.day)
+    if timezone.is_naive(d):
+        d = timezone.make_aware(d)
+    return d
+
 
 class MarginService:
     """
@@ -133,8 +142,8 @@ class MarginService:
         if factures_qs is None:
             factures_qs = Facture.objects.filter(
                 status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE],
-                date__gte=date_debut,
-                date__lt=date_fin
+                date__gte=_to_aware_datetime(date_debut),
+                date__lt=_to_aware_datetime(date_fin)
             )
         
         # Requête optimisée avec annotations
@@ -190,8 +199,8 @@ class MarginService:
         if factures_qs is None:
             factures_qs = Facture.objects.filter(
                 status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE],
-                date__gte=date_debut,
-                date__lt=date_fin
+                date__gte=_to_aware_datetime(date_debut),
+                date__lt=_to_aware_datetime(date_fin)
             )
         
         # Exclure les factures avec uniquement des produits is_divers si demandé

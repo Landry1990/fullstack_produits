@@ -2,6 +2,99 @@
 
 ---
 
+## 2026-07-11
+
+### 🧹 Qualité du code — React Doctor (session 2)
+
+- **`axios` CVE** : upgrade `axios@1.15.0` → latest (score socket.dev 25/100 → résolu)
+- **`array-index-as-key` ×6** : `ModuleFinancier`, `StatistiquesFournisseur` (Cell Recharts), `caisse/PaymentModal`, `facturation/PaymentModal` ×2, `ReportFilters`, `SystemAdmin` — clés stables sans index
+- **`unused-export` ×8** : `printRow/printDivider/printTotal`, `STANDARD_LABEL_SIZES`, `AVAILABLE_FIELDS`, `TOKEN_VALIDITY`, `SCANNER_CONFIG`, `export default api` (mobile), `export default {}` (printTemplates)
+- **`unused-file` ×12** : suppression de `ZenithPharmaLogo.tsx`, `AjustementsQuickStats.tsx`, `StockAnalysisStats.tsx`, `useSystem.ts`, `systemService.ts`, `product-search/index.ts`, `useInventaireSearch.ts` + barrels index mobile-facturation et pda-inventaire
+- **`pure-function-rebuilt-every-render` ×3** : `isExpiredByEndOfMonth` (Perimes), `getStatusStyle` (SalesTable), `getStatusKey` (SupplierDashboard) déplacés au module scope
+- **`nested-interactive` ×7** : `CategoryManager.tsx` — wrappers `<button>` remplacés par `<div role="button" tabIndex onKeyDown>` pour permettre les boutons d'action imbriqués
+- **🐛 Bugfix dashboard fournisseurs** : `SupplierDashboard.tsx` — correction ordre des hooks (erreur React #310). Les hooks `useSupplierDashboard` et `useTranslation` sont maintenant appelés avant le `useRecharts` et le return early conditionnel.
+- **🐛 Bugfix React #310 généralisé** : correction du même pattern dans `AnalyseTemporelle`, `ClassementVendeurs`, `ModuleFinancier`, `StatistiquesFournisseur`, `DashboardVendeur`, `PerformanceOverview`, `InventaireAudit` et `ProductTabsContent/PriceEvolutionChart`. Tous les hooks sont désormais appelés avant le `useRecharts` et le return early conditionnel.
+- **`client-localstorage-no-version` ×2** : ajout d'un suffixe de version `:v1` sur les clés `zenith_label_fields_config`, `zenith_label_format`, `zenith_label_barcode_type` (`SimplePrintLabelsModal.tsx`) et `pharmacy_licence_cache` (`LicenceContext.tsx`). Migration automatique de l'ancienne clé `zenith_label_fields_config` vers la version `:v1`.
+
+### 🧹 Qualité du code — React Doctor (top 3 issues)
+
+- **`no-array-index-as-key` (×44 instances résolues)**
+  - Remplacé `key={index}` par des identifiants stables (`item.id`, `item.title`, `item.label`, clés composites) dans 28 fichiers composants.
+  - Fichiers corrigés : `SuggestionCommandeModal`, `TransferCommandeModal`, `HelpTraining`, `JournalAudit`, `Maintenance`, `ModuleFinancier`, `OrdonnanceModal`, `RapportMensuel`, `SimplePrintLabelsModal`, `StatistiquesFournisseur`, `StockUGReportShadcn`, `AvoirsForm`, `AvoirsQuickStats`, `caisse/PaymentModal`, `ClientFormModal`, `PurchaseHistoryDrawer`, `BMICalculator`, `CreancesQuickStats`, `PerformanceOverview`, `ReportFilters`, `ReportResults`, `facturation/PaymentModal`, `PrescriptionScannerModal`, `InventaireAnalysisTab`, `OmnisearchPreview`, `AvoirPrintTemplate`, `InventairePrintTemplate`, `InvoiceTemplate`, `StockValuationTemplate`, `TicketTemplate`, `ImportProductsModal`, `PromisQuickStats`, `ProductDetailsModal`, `StockAnalysisStats`.
+
+- **`dangerous-html-sink` (×6 instances — faux positifs documentés)**
+  - Tous les 6 sites (`useCommandeActions`, `useJournalCaisse`, `usePrint`, `HistoriqueClotures`, `CaisseTicketPreviewModal`, `CouponDetailsModal`) utilisent déjà `escHtml()` sur chaque valeur dynamique avant injection dans les fenêtres d'impression. Aucune modification nécessaire.
+
+- **`unused-export` (×12 exports retirés)**
+  - Retiré le mot-clé `export` des symboles non importés hors de leur fichier : `useLicenceStatus`, `invalidateUsersCache`, `prefetchRoute`, `generateDashboardFlashText`, `getFacturationPaymentModes`, `StartErrorExtraction`, `parseDate`, `getLocalDateTimeString`, `formatDateLong`, `formatExpirationDate`, `ExcelExportOptions`, `safeFormatNumber`, `generatePromisTemplate`, `generateStockRayonTemplate`, `generateInventaireTemplate`.
+
+### 🔧 Corrections
+
+- **Timezone — correction globale et définitive**
+  - **Problème** : le frontend envoyait les dates sans offset timezone (ex: `2026-07-10T00:00:00`). Le backend (UTC+1) les interprétait comme UTC, provoquant un décalage d'1 heure. Résultat : sélectionner le 10/07 déclenchait des erreurs référençant le 9/07.
+  - **Frontend** : ajout de `toApiDateTime()`, `toApiDateStart()`, `toApiDateEnd()` dans `dateUtils.ts` — toutes incluent l'offset timezone local (`+01:00`). Ces fonctions sont la référence unique pour construire tout paramètre de date envoyé à l'API.
+  - **Backend** : création de `parse_api_datetime()` centralisée dans `backend/api/views/rapports/tz_utils.py`, gérant ISO 8601 avec offset, avec `Z`, et les formats legacy sans timezone.
+  - **Fichiers backend patchés** : `ventes/caisse.py`, `ventes/mouvements.py`, `rapports/sales.py`, `rapports/finance.py`, `historique_ventes.py`, `dashboard/statistiques.py`.
+  - **Fichiers frontend patchés** : `hooks/useJournalCaisse.ts`, `hooks/useSalesData.ts`, `hooks/useAjustementsData.ts`.
+  - **Clôture caisse** : passage de `__gte/__lte` à `__gt/__lt` pour la détection de chevauchement, évitant le blocage de deux clôtures journalières contiguës (fin J = début J+1 à 00:00).
+
+---
+
+## 2026-07-10
+
+### ✨ Nouvelles fonctionnalités
+
+- **Cadencier de stock**
+  - Nouveau menu **Stock > Cadencier** (`frontend/frontend/src/components/stock/Cadencier.tsx`) avec interface shadcn/ui (Card, Table, Select, Checkbox, Badge, Button).
+  - Endpoint backend `/api/cadencier/` (`backend/api/views/stocks/cadencier.py`) calculant rotation mensuelle/journalière, couverture actuelle, stock cible et quantité suggérée par produit.
+  - Filtres par type de commande (grossiste/divers), couverture cible (7 à 90 jours), rayon, fournisseur et recherche texte.
+
+  - Tableau avec tri par urgence (rupture/alerte/surveillance/OK), stock, rotation, couverture, quantité suggérée, prix d'achat et montant HT.
+  - Sélection multi-lignes et génération directe d'une **commande grossiste (LOC)** ou d'une **commande diverse (DIV)** pré-remplie avec les produits et quantités suggérées.
+  - Adaptation de `useCommandesState.ts` pour recevoir les produits du cadencier via `createFromCadencier`.
+
+### 🔧 Corrections
+
+- **Cadencier de stock** : le calcul de rotation est désormais basé sur les **ventes réelles** de la période (et non plus uniquement sur `rotation_moyenne` stockée). Les produits en rupture de stock apparaissent toujours, même sans historique de ventes, avec une quantité minimale suggérée. Suppression du filtre par défaut sur `fournisseur` pour afficher aussi les produits sans fournisseur principal renseigné.
+
+- **Cadencier de stock** : correction de l'algorithme de suggestion : ne commande que si rotation > 0 OU stock minimum défini. Les produits sans rotation et sans stock minimum ne génèrent plus de commande (plus de 10 boites suggérées abusivement). L'urgence "rupture" n'est affichée que si le produit a une rotation.
+- **Cadencier de stock** : refonte UI plus compacte avec moins d'espaces blancs, alignement des filtres sur une seule ligne, vert emeraude comme couleur d'accent unique, en-tête du tableau sticky au scroll et augmentation de la zone d'affichage des produits.
+
+- **Cadencier de stock** : espace comme séparateur de milliers (`toLocaleString('fr-FR')`) au lieu de la virgule pour les montants et quantités.
+
+- **Transformations de stock** : ajout d'un endpoint backend `relations-transformation/{id}/preview/` pour prévisualiser les lots consommés (FEFO) et le stock restant. Le modal de transformation affiche désormais le stock source restant, les lots qui seront consommés et leur date de péremption avant confirmation. Possibilité de sélectionner manuellement les lots et leurs quantités si le lot automatique n'est pas disponible physiquement.
+
+- **Journal des ajustements de stock** : la table affiche désormais la colonne **Lot** (numéro de lot et date de péremption) pour les ajustements liés à des lots. Le serializer backend `StockAdjustmentSerializer` expose `lot_id`, `lot_number`, `lot_expiration` et `lot_quantity_remaining`.
+- **Journal des ajustements de stock** : correction du endpoint `stock-adjustments/stats/` qui retournait `count` et `total_valorisation` au lieu de `total_count`, `positive_sum` et `negative_sum` attendus par le frontend. Les cartes de stats affichent désormais les valeurs correctes.
+
+- **Audit gestion des lots** : analyse exhaustive et correction des flux touchant aux stocks pour garantir la cohérence des lots (`use_lot_management = true`) :
+  - **Transformations** : suppression du recalcul manuel du stock qui écrasait la synchronisation automatique depuis les lots. Le stock source et destination est désormais rafraîchi après la mise à jour des lots.
+
+  - **Annulation de vente** (`SalesService.cancel_invoice`) : restauration des quantités sur les lots avec `.save()` (signaux) et récupération de `quantity_free_remaining`. Le stock est recalculé depuis les lots uniquement lorsque la vente avait des allocations de lots ; sinon, restauration manuelle cohérente avec `validate_invoice`.
+
+  - **Modification de vente** (`SalesService.modify_sale`) : même logique que l'annulation pour la restauration des anciens lots et l'allocation des nouveaux lots, avec recalcul conditionnel du stock.
+  - **Avoirs** (`AvoirViewSet.decharger_stock`) : lorsqu'aucun lot n'est spécifié pour un produit en gestion par lots, l'auto-allocation FEFO est appliquée et le stock est recalculé depuis les lots. Évite les désynchronisations stock/lots.
+
+  - **Promis** (`PromisViewSet.annuler_et_reintegrer` et `bulk_annuler`) : pas de réintégration physique de stock pour les produits en gestion par lots (aucun lot n'est réservé lors de la création). Un mouvement neutre est généré pour tracer l'annulation sans fausser le stock.
+  - **Annulation de réception commande** : recalcul du stock depuis les lots après suppression des lots pour les produits en gestion par lots.
+
+- **Correction bug critique — Mode Sudo** : le mot de passe n'était pas vérifié avant d'exécuter les actions protégées.
+  - `SudoValidationModal.tsx` : ajout d'un appel `POST users/verify_password/` **avant** de propager `onValidate`. Si le mot de passe est incorrect, l'action est bloquée, le champ est vidé et un message d'erreur s'affiche. Double vérification : frontend (check immédiat) + backend (revalidation à l'exécution).
+
+  - `backend/api/views/fournisseurs.py` : ajout de `validate_sudo_mode` sur `destroy` et `bulk_delete`. Le backend refusait toute suppression sans credentials valides. Auparavant ces endpoints n'effectuaient aucune vérification sudo.
+
+  - `frontend/hooks/useFournisseurs.ts` : transmission de `validated_by_id` et `sudo_password` vers les endpoints `DELETE fournisseurs/{id}/` et `POST fournisseurs/bulk_delete/`.
+  - Actions corrigées (19 au total) : modification prix/quantité/remise en caisse, clôture commande, suppression commande/réception, avoirs, créances, inventaire, périmés, caisse centralisée, **fournisseurs (suppression unitaire et en lot)**.
+
+- **Historique des mouvements produit** (`backend/api/views/produit_actions/stock.py`) : le libellé des ventes (source `VENTE`) n'affiche plus le nom du client ; seul le numéro de facture complet est conservé.
+- **Mouvements de stock — ventes** (`backend/api/services/sales_service.py`) : suppression du suffixe `- Client: ...` dans la description des mouvements de sortie (`Vente Facture #...`).
+
+- **Mouvements de stock — réceptions** (`backend/api/views/commandes/commandes.py`) : les entrées de stock affichent désormais le nom du fournisseur (`Réception Fournisseur: ...`) au lieu du numéro de commande.
+
+- **Frontend — consultation vente depuis l'historique des mouvements** (`frontend/frontend/src/components/Produit.tsx`) : le modal de détail de vente s'ouvre désormais après le chargement réussi de la facture, avec un log d'erreur explicite en cas d'échec.
+
+- **Compatibilité Safari** : remplacement de toutes les occurrences de `.toSorted()` par `.slice().sort()` dans le frontend (CaisseCentralisee, useCommandesState, useFacturationState, GestionUtilisateurs, InventaireDataTab, ProductTabsContent, StockIntelligence, CategoryManager, ConfigOptionManager, useFacturationClients). `.toSorted()` n'est pas supporté sur Safari < 16.4.
+
 ## 2026-07-08
 
 ### ✨ Nouvelles fonctionnalités
@@ -12,14 +105,17 @@
 
 - **Progressive Web App (PWA)**
   - Installation de `vite-plugin-pwa` et configuration dans `vite.config.ts` (`generateSW`, `autoUpdate`, cache stratégique).
+
   - Création de `public/manifest.json` (nom : Zenith Pharma, thème emerald `#059669`).
   - Génération des icônes `public/pwa-icon-192x192.png` et `public/pwa-icon-512x512.png` via `scripts/generate-pwa-icons.py`.
+
   - Mise à jour de `index.html` avec `theme-color` et lien vers le manifeste.
   - L'application est désormais installable sur desktop et mobile, avec mise en cache des assets pour fonctionnement hors-ligne (sauf le WASM Tesseract de 4,7 Mo).
 
 - **Caisse centralisée — navigation clavier sur le ticket de caisse**
   - `frontend/frontend/src/components/CaisseCentralisee.tsx` : après validation du paiement, le focus est automatiquement positionné sur le bouton **Imprimer** dans la modale de visualisation du ticket.
   - Navigation possible avec les touches **Gauche** et **Droite** entre les boutons d'action (Fermer, WhatsApp si activé, Imprimer).
+
   - Ajout de styles `focus-visible` pour rendre le focus clavier visible sur les boutons.
 
 - **Facturation — checkbox "FACTURE" (anciennement "Format A4")**
@@ -30,7 +126,9 @@
 - **Modes de paiement — configuration centralisée + gestion dans Paramètres**
   - Création de `src/config/paymentModes.ts` : source unique pour tous les modes de paiement.
   - **Paramètres > Général > Modes de paiement** : activer/désactiver les modes ET ajouter des modes personnalisés (PayPal, Stripe, Wave…).
+
   - Backend : champs `disabled_payment_modes` + `custom_payment_modes` (JSONField) + suppression du `choices` sur `Caisse.mode_paiement` (max_length 50).
+  
   - Les modes désactivés sont masqués dans la caisse, facturation, et dépôts client.
   - Les modes personnalisés apparaissent dans tous les contextes (caisse, facturation, journal, filtres).
   - Refactorisation de 9 fichiers pour utiliser la config centralisée au lieu de listes hardcodées.
@@ -45,6 +143,12 @@
   - Ajout des champs `lotSellingPrice` et `treatment_duration_days` dans `useDevisLoader.ts` pour une restitution complète du panier.
 
 ### �🔧 Refactorisation
+
+- **Caisse centralisée — amélioration de la lisibilité du tableau**
+  - `frontend/frontend/src/components/caisse/FacturesTable.tsx` : remplacement des couleurs DaisyUI `base-*` par des couleurs `slate-*` explicites pour éviter les problèmes de contraste.
+  - Badge numéro de ticket en fond `slate-800` + texte blanc (au lieu de `badge-neutral` peu lisible).
+  - Header, sélection de ligne, pagination et badges tiers payant/coupon passés à des couleurs fixes et contrastées.
+  - Boutons d'action (modifier, annuler, coupon, encaisser) avec couleurs explicites et états hover clairs.
 
 - **Caisse centralisée — extraction en sous-composants**
   - `CaisseCentralisee.tsx` réduit de ~1485 → ~686 lignes (-54%).

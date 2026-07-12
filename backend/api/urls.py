@@ -76,6 +76,7 @@ from .views import (
     InvoiceConfigurationView, ClotureCaisseViewSet, StockAdjustmentViewSet,
     generer_suggestions_commande, HistoriqueVentesViewSet, HistoriqueAchatsViewSet,
     StatsUGViewSet, StockAnalysisUnsoldView, StockAnalysisOverstockView, StockAnalysisShortageView,
+    CadencierViewSet,
     PharmacySettingsView, ProductImportView, ConfigurationOptionViewSet, WhatsAppTestView,
     TelegramTestView, TelegramGetChatIdView, TelegramRapportFlashView, TelegramRapportFlashDateView, TelegramRapportInventaireView, TelegramRapportMensuelView,
     AuditLogViewSet, LoyaltySettingViewSet, UserViewSet, CustomAuthToken,
@@ -183,6 +184,7 @@ router.register(r'postes-caisses', PosteCaisseViewSet, basename='postecaisse')
 router.register(r'sessions-caisses', SessionCaisseViewSet, basename='sessioncaisse')
 router.register(r'corbeille', CorbeilleViewSet, basename='corbeille')
 router.register(r'margins', MarginViewSet, basename='margin')
+router.register(r'cadencier', CadencierViewSet, basename='cadencier')
 router.register(r'med-ref', MedicamentReferenceViewSet, basename='medreference')
 router.register(r'dci-admin', DCIAdminViewSet, basename='dci-admin')
 

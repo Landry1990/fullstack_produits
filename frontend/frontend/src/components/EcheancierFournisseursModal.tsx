@@ -49,7 +49,6 @@ interface Echeance {
 interface Props {
   isOpen: boolean;
   onClose: () => void;
-  onRegler: (fournisseurId: number) => void;
   onPointer?: (fournisseurId: number, fournisseurNom: string) => void;
 }
 
@@ -62,7 +61,7 @@ const statusBadgeVariant = (status: Echeance['status']) => {
   }
 };
 
-export default function EcheancierFournisseursModal({ isOpen, onClose, onRegler, onPointer }: Props) {
+export default function EcheancierFournisseursModal({ isOpen, onClose, onPointer }: Props) {
   const { t } = useTranslation(['providers', 'common']);
   const [echeances, setEcheances] = useState<Echeance[]>([]);
   const [loading, setLoading] = useState(false);
@@ -246,17 +245,8 @@ export default function EcheancierFournisseursModal({ isOpen, onClose, onRegler,
                           <Button
                             variant="primary"
                             size="sm"
-                            leftIcon={<Wallet className="h-3.5 w-3.5" />}
-                            onClick={() => onRegler(e.fournisseur_id)}
-                          >
-                            {t('providers:schedule.table.pay_btn')}
-                          </Button>
-                          <Button
-                            variant="outline"
-                            size="sm"
                             leftIcon={<CheckSquare className="h-3.5 w-3.5" />}
                             onClick={() => onPointer && onPointer(e.fournisseur_id, e.fournisseur_nom)}
-                            title={t('providers:schedule.table.pointage_btn')}
                           >
                             {t('providers:schedule.table.pointage_btn')}
                           </Button>

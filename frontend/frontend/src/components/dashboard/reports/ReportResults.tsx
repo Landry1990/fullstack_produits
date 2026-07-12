@@ -140,8 +140,9 @@ export const ReportResults: React.FC<ReportResultsProps> = ({
             const rawColumns = dataForColumns.length > 0 
                 ? Object.keys(dataForColumns[0]).filter(k => !k.startsWith('_') && k !== 'id')
                 : [];
+            const rawColumnsSet = new Set(rawColumns);
             const columns = selectedQuery.columns 
-                ? selectedQuery.columns.filter(col => rawColumns.includes(col))
+                ? selectedQuery.columns.filter(col => rawColumnsSet.has(col))
                 : rawColumns;
 
             return (
@@ -186,7 +187,7 @@ export const ReportResults: React.FC<ReportResultsProps> = ({
                             </thead>
                             <tbody className="divide-y divide-base-100">
                                 {(isMargesReport ? filteredResults : filteredResults.slice(0, 100)).map((row: any, idx: number) => (
-                                    <tr key={idx} className={`hover:bg-primary/5 transition-all group ${
+                                    <tr key={row.id ?? row.produit_id ?? row.code ?? idx} className={`hover:bg-primary/5 transition-all group ${
                                         isMargesReport && Number(row['taux_marge'] ?? 0) < 0 ? 'bg-error/5' :
                                         isMargesReport && Number(row['taux_marge'] ?? 0) < 25 ? 'bg-warning/5' : ''
                                     }`}>

@@ -330,6 +330,7 @@
         "exclusive_product_message": "Ce produit est normalement exclusif au fournisseur : {{supplier}}. Voulez-vous quand même l'ajouter ?",
         "exclusive_product_confirm": "Oui, ajouter",
         "products_added_from_alerts": "{{count}} produits ajoutés à partir des alertes de stock",
+        "products_added_from_cadencier": "{{count}} produits ajoutés à partir du cadencier",
         "lots_merged": "Lignes fusionnées pour {{product}} (même lot)",
         "import_load_error": "Impossible de charger la liste des produits pour l'import CSV",
         "csv_partial_import": "Importation partielle : {{found}} reconnus, {{notFound}} non reconnus (téléchargement du rapport en cours)",

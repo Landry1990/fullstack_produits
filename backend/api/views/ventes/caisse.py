@@ -18,12 +18,14 @@ from ...models import (
 from ...serializers import CaisseSerializer, ClotureCaisseSerializer, MouvementCaisseSerializer
 from ...audit_helpers import log_audit
 from ...sudo_utils import validate_sudo_mode
+from ..rapports.tz_utils import parse_api_datetime as _parse_iso_datetime
 from ...centralized_configs import (
     BaseViewSetConfig,
     StandardResultsSetPagination
 )
 
 logger = logging.getLogger(__name__)
+
 
 
 class CaisseViewSet(BaseViewSetConfig, viewsets.ModelViewSet):
@@ -52,26 +54,14 @@ class CaisseViewSet(BaseViewSetConfig, viewsets.ModelViewSet):
             queryset = queryset.filter(user_id=user_id)
 
         if date_debut:
-            try:
-                clean = date_debut.replace('T', ' ').replace('Z', '')
-                try:
-                    dt = datetime.strptime(clean, '%Y-%m-%d %H:%M:%S')
-                except ValueError:
-                    dt = datetime.strptime(clean, '%Y-%m-%d %H:%M')
-                if timezone.is_naive(dt): dt = timezone.make_aware(dt)
+            dt = _parse_iso_datetime(date_debut)
+            if dt:
                 queryset = queryset.filter(date_paiement__gte=dt)
-            except ValueError: pass
-            
+
         if date_fin:
-            try:
-                clean = date_fin.replace('T', ' ').replace('Z', '')
-                try:
-                    dt = datetime.strptime(clean, '%Y-%m-%d %H:%M:%S')
-                except ValueError:
-                    dt = datetime.strptime(clean, '%Y-%m-%d %H:%M')
-                if timezone.is_naive(dt): dt = timezone.make_aware(dt)
+            dt = _parse_iso_datetime(date_fin)
+            if dt:
                 queryset = queryset.filter(date_paiement__lte=dt)
-            except ValueError: pass
             
         return queryset
 
@@ -123,6 +113,23 @@ class CaisseViewSet(BaseViewSetConfig, viewsets.ModelViewSet):
         if instance.facture:
             from ...services.payment_service import PaymentService
             PaymentService.process_payment(instance, is_created=True)
+
+    def _serialize_allocation(self, alloc):
+        """Sérialise une FactureProduitAllocation divers."""
+        return {
+            'id': alloc.id,
+            'date': alloc.created_at,
+            'produit_name': (
+                alloc.facture_produit.produit.name
+                if alloc.facture_produit.produit
+                else alloc.facture_produit.produit_nom or 'Produit supprimé'
+            ),
+            'facture_numero': alloc.facture_produit.facture.numero_facture if alloc.facture_produit.facture else 'N/A',
+            'quantity': alloc.quantity,
+            'selling_price': float(alloc.selling_price),
+            'total': float(alloc.quantity * alloc.selling_price),
+            'lot': alloc.stock_lot.lot if alloc.stock_lot else 'N/A'
+        }
 
     @action(detail=False, methods=['get'])
     def ventes_diverses(self, request):
@@ -184,28 +191,57 @@ class CaisseViewSet(BaseViewSetConfig, viewsets.ModelViewSet):
         paginator = StandardResultsSetPagination()
         paginator.page_size = PaginationHelper.get_page_size(request, PaginationDefaults.DEFAULT_LIST_PAGE_SIZE)
         
+        group_by = request.query_params.get('group_by')
+        single_date = request.query_params.get('date')
+        
+        # Filtrage sur une date unique (pour le détail d'un jour)
+        if single_date:
+            try:
+                datetime.strptime(single_date, '%Y-%m-%d').date()
+                queryset = queryset.filter(created_at__date=single_date)
+            except ValueError:
+                return Response(
+                    {'detail': 'Format de date invalide. Utiliser YYYY-MM-DD'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+        
+        # Regroupement par jour
+        if group_by == 'day':
+            from django.db.models.functions import TruncDate
+            from django.db.models import Count
+            
+            daily_totals = queryset.annotate(
+                day=TruncDate('created_at')
+            ).values('day').annotate(
+                total_ca=Sum(ExpressionWrapper(F('quantity') * F('selling_price'), output_field=DecimalField())),
+                total_quantity=Sum('quantity'),
+                nb_produits=Count('id'),
+                nb_factures=Count('facture_produit__facture', distinct=True)
+            ).order_by('-day')
+            
+            data = []
+            for day in daily_totals:
+                data.append({
+                    'date': day['day'].isoformat() if day['day'] else None,
+                    'total_ca': float(day['total_ca'] or 0),
+                    'total_quantity': day['total_quantity'] or 0,
+                    'nb_produits': day['nb_produits'] or 0,
+                    'nb_factures': day['nb_factures'] or 0,
+                })
+            
+            return Response({
+                'count': len(data),
+                'total_ca': float(total_ca),
+                'results': data
+            })
+        
         page_qs = paginator.paginate_queryset(queryset, request, view=self)
         
         # Si pas de pagination demandée ou erreur, prendre tout le queryset
         if page_qs is None:
             page_qs = queryset[:paginator.page_size]
         
-        data = []
-        for alloc in page_qs:
-            data.append({
-                'id': alloc.id,
-                'date': alloc.created_at,
-                'produit_name': (
-                    alloc.facture_produit.produit.name 
-                    if alloc.facture_produit.produit 
-                    else alloc.facture_produit.produit_nom or 'Produit supprimé'
-                ),
-                'facture_numero': alloc.facture_produit.facture.numero_facture if alloc.facture_produit.facture else 'N/A',
-                'quantity': alloc.quantity,
-                'selling_price': float(alloc.selling_price),
-                'total': float(alloc.quantity * alloc.selling_price),
-                'lot': alloc.stock_lot.lot if alloc.stock_lot else 'N/A'
-            })
+        data = [self._serialize_allocation(alloc) for alloc in page_qs]
         
         # Structure plate compatible avec le frontend (VentesDiversesResponse)
         return Response({
@@ -225,34 +261,16 @@ class CaisseViewSet(BaseViewSetConfig, viewsets.ModelViewSet):
         
         start_date = None
         end_date = None
-        
+
         if date_debut:
-            try:
-                clean_date = date_debut.replace('T', ' ').replace('Z', '')
-                try:
-                    start_date = datetime.strptime(clean_date, '%Y-%m-%d %H:%M:%S')
-                except ValueError:
-                    start_date = datetime.strptime(clean_date, '%Y-%m-%d %H:%M')
-                if timezone.is_naive(start_date):
-                    start_date = timezone.make_aware(start_date)
-            except ValueError as e:
-                logger.error(f"Error parsing date_debut {date_debut}: {e}")
-                
+            start_date = _parse_iso_datetime(date_debut)
+            if start_date is None:
+                logger.error(f"Error parsing date_debut {date_debut}")
+
         if date_fin:
-            try:
-                clean_date = date_fin.replace('T', ' ').replace('Z', '')
-                try:
-                    end_date = datetime.strptime(clean_date, '%Y-%m-%d %H:%M:%S')
-                except ValueError:
-                    try:
-                        end_date = datetime.strptime(clean_date, '%Y-%m-%d %H:%M')
-                    except ValueError:
-                        end_date = datetime.strptime(clean_date, '%Y-%m-%d')
-                        end_date = end_date.replace(hour=23, minute=59, second=59)
-                if timezone.is_naive(end_date):
-                    end_date = timezone.make_aware(end_date)
-            except ValueError as e:
-                logger.error(f"Error parsing date_fin {date_fin}: {e}")
+            end_date = _parse_iso_datetime(date_fin)
+            if end_date is None:
+                logger.error(f"Error parsing date_fin {date_fin}")
 
         if not start_date:
             last_cloture = ClotureCaisse.objects.order_by('-date').first()
@@ -379,19 +397,13 @@ class CaisseViewSet(BaseViewSetConfig, viewsets.ModelViewSet):
         if user_id:
             mouvements_qs = mouvements_qs.filter(user_id=user_id)
         if date_debut:
-            try:
-                clean = date_debut.replace('T', ' ').replace('Z', '')
-                start_dt = datetime.strptime(clean, '%Y-%m-%d %H:%M:%S')
+            start_dt = _parse_iso_datetime(date_debut)
+            if start_dt:
                 mouvements_qs = mouvements_qs.filter(date__gte=start_dt)
-            except ValueError:
-                pass
         if date_fin:
-            try:
-                clean = date_fin.replace('T', ' ').replace('Z', '')
-                end_dt = datetime.strptime(clean, '%Y-%m-%d %H:%M:%S')
+            end_dt = _parse_iso_datetime(date_fin)
+            if end_dt:
                 mouvements_qs = mouvements_qs.filter(date__lte=end_dt)
-            except ValueError:
-                pass
         mouvements_data = MouvementCaisseSerializer(mouvements_qs, many=True).data
         totals_response = self.get_totals(request)
 
@@ -483,34 +495,16 @@ class CaisseViewSet(BaseViewSetConfig, viewsets.ModelViewSet):
         
         start_date = None
         end_date = None
-        
+
         if date_debut:
-            try:
-                clean_date = date_debut.replace('T', ' ').replace('Z', '')
-                try:
-                    start_date = datetime.strptime(clean_date, '%Y-%m-%d %H:%M:%S')
-                except ValueError:
-                    start_date = datetime.strptime(clean_date, '%Y-%m-%d %H:%M')
-                if timezone.is_naive(start_date):
-                    start_date = timezone.make_aware(start_date)
-            except ValueError as e:
-                logger.error(f"Error parsing date_debut {date_debut}: {e}")
-                
+            start_date = _parse_iso_datetime(date_debut)
+            if start_date is None:
+                logger.error(f"Error parsing date_debut {date_debut}")
+
         if date_fin:
-            try:
-                clean_date = date_fin.replace('T', ' ').replace('Z', '')
-                try:
-                    end_date = datetime.strptime(clean_date, '%Y-%m-%d %H:%M:%S')
-                except ValueError:
-                    try:
-                        end_date = datetime.strptime(clean_date, '%Y-%m-%d %H:%M')
-                    except ValueError:
-                        end_date = datetime.strptime(clean_date, '%Y-%m-%d')
-                        end_date = end_date.replace(hour=23, minute=59, second=59)
-                if timezone.is_naive(end_date):
-                    end_date = timezone.make_aware(end_date)
-            except ValueError as e:
-                logger.error(f"Error parsing date_fin {date_fin}: {e}")
+            end_date = _parse_iso_datetime(date_fin)
+            if end_date is None:
+                logger.error(f"Error parsing date_fin {date_fin}")
 
         if not start_date:
             # FIX: Filtrer la dernière clôture par user_id pour éviter de mélanger les caissiers
@@ -621,13 +615,15 @@ class CaisseViewSet(BaseViewSetConfig, viewsets.ModelViewSet):
              return Response({'detail': 'Impossible de clôturer : aucun mouvement détecté depuis la dernière clôture.'}, status=status.HTTP_400_BAD_REQUEST)
 
         # Vérifier qu'il n'existe pas déjà une clôture couvrant cette même période
+        # On utilise des inégalités strictes pour ne pas bloquer deux clôtures
+        # journalières contiguës (fin de J = début de J+1 à 00:00).
         doublon_qs = ClotureCaisse.objects.filter(user=target_user)
         if start_date:
-            doublon_qs = doublon_qs.filter(date_fin__gte=start_date)
+            doublon_qs = doublon_qs.filter(date_fin__gt=start_date)
         if end_date:
-            doublon_qs = doublon_qs.filter(date_debut__lte=end_date)
+            doublon_qs = doublon_qs.filter(date_debut__lt=end_date)
         else:
-            doublon_qs = doublon_qs.filter(date_debut__lte=timezone.now())
+            doublon_qs = doublon_qs.filter(date_debut__lt=timezone.now())
         existing = doublon_qs.order_by('-date').first()
         if existing:
             return Response({

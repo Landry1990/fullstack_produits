@@ -3,6 +3,7 @@ import api from '../services/api';
 import { toast } from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import type { StockAdjustment, PaginatedResponse, StockAdjustmentStats } from '../types';
+import { toApiDateEnd } from '../utils/dateUtils';
 
 export const useAjustementsData = () => {
     const { t } = useTranslation(['common']);
@@ -42,7 +43,7 @@ export const useAjustementsData = () => {
             if (searchQuery) params.search = searchQuery;
             if (filterReasonType) params.reason_type = filterReasonType;
             if (dateStart) params.created_at__gte = dateStart;
-            if (dateEnd) params.created_at__lte = dateEnd + 'T23:59:59';
+            if (dateEnd) params.created_at__lte = toApiDateEnd(new Date(dateEnd + 'T00:00:00'));
 
             // 1. Fetch List
             const response = await api.get<PaginatedResponse<StockAdjustment> | StockAdjustment[]>('stock-adjustments/', { params, signal: controller.signal });
@@ -91,7 +92,7 @@ export const useAjustementsData = () => {
             if (searchQuery) params.search = searchQuery;
             if (filterReasonType) params.reason_type = filterReasonType;
             if (dateStart) params.created_at__gte = dateStart;
-            if (dateEnd) params.created_at__lte = dateEnd + 'T23:59:59';
+            if (dateEnd) params.created_at__lte = toApiDateEnd(new Date(dateEnd + 'T00:00:00'));
 
             const response = await api.get('stock-adjustments/export_excel/', {
                 params,

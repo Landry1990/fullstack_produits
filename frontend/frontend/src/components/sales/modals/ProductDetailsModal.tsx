@@ -142,8 +142,8 @@ export const ProductDetailsModal: React.FC<ProductDetailsModalProps> = ({
                                 <CreditCard className="size-3.5" />
                                 <span>Règlements:</span>
                                 <div className="flex gap-2">
-                                    {facture.paiements.map((p, idx) => (
-                                        <span key={idx} className="bg-slate-100 px-1.5 py-0.5 rounded text-slate-700 border border-slate-200 text-[10px]">
+                                    {facture.paiements.map((p) => (
+                                        <span key={p.mode_paiement_display} className="bg-slate-100 px-1.5 py-0.5 rounded text-slate-700 border border-slate-200 text-[10px]">
                                             {p.mode_paiement_display} ({formatCurrency(parseFloat(p.montant))})
                                         </span>
                                     ))}

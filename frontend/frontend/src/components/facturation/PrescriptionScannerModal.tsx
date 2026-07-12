@@ -327,7 +327,7 @@ const PrescriptionScannerModal: React.FC<PrescriptionScannerModalProps> = ({
                     </div>
                   ) : (
                     matchResults.map((result, idx) => (
-                      <div key={idx} className={`p-3 rounded-xl border transition-all ${result.matchedProduct ? 'bg-emerald-50/50 border-emerald-200' : 'bg-white border-slate-100'}`}>
+                      <div key={result.ocrLine} className={`p-3 rounded-xl border transition-all ${result.matchedProduct ? 'bg-emerald-50/50 border-emerald-200' : 'bg-white border-slate-100'}`}>
                         <div className="flex justify-between items-start mb-2">
                           <span className="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">{t('facturation:prescription_scanner.ocr_line_label')}</span>
                           {result.matchedProduct && <Check className="size-4 text-emerald-600" />}

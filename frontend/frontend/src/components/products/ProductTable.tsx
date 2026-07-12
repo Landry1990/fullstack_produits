@@ -71,15 +71,16 @@ export const ProductTable: React.FC<ProductTableProps> = (props) => {
                       size="sm"
                     />
                   </th>
-                  <th className="py-2.5 px-3 text-left text-[10px] font-semibold uppercase tracking-wider w-32">CIP</th>
+                  <th className="py-2.5 px-3 text-left text-[10px] font-semibold uppercase tracking-wider w-32">{t('products:table.cip')}</th>
                   <th className="py-2.5 px-3 text-left text-[10px] font-semibold uppercase tracking-wider">{t('products:table.product', { defaultValue: 'Produit' })}</th>
                 </tr>
               </thead>
               <tbody className="bg-base-100 divide-y divide-base-200">
                 {products.map((produit) => {
+                  const selectedSet = new Set(selectedProductIds);
                   const stock = produit.stock ?? 0;
                   const isSelected = selectedProduit?.id === produit.id;
-                  const isChecked = selectedProductIds.includes(produit.id);
+                  const isChecked = selectedSet.has(produit.id);
 
                   return (
                     <tr
@@ -123,7 +124,7 @@ export const ProductTable: React.FC<ProductTableProps> = (props) => {
                               className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-success/10 text-success border border-emerald-100 shrink-0"
                               title={`${t('products:table.exclusivity', { defaultValue: 'Exclusivité' })}: ${produit.fournisseur_name || t('products:form.provider_placeholder')}`}
                             >
-                              EXCLU
+                              {t('products:table.exclusive_badge')}
                             </span>
                           )}
                         </div>
@@ -138,9 +139,10 @@ export const ProductTable: React.FC<ProductTableProps> = (props) => {
           {/* MOBILE POP-UP LIST (Cards) */}
           <div className="md:hidden flex flex-col w-full px-2 py-2 gap-2 bg-base-200">
             {products.map(produit => {
+              const selectedSet = new Set(selectedProductIds);
               const stock = produit.stock ?? 0;
               const isSelected = selectedProduit?.id === produit.id;
-              const isChecked = selectedProductIds.includes(produit.id);
+              const isChecked = selectedSet.has(produit.id);
 
               return (
                 <div
@@ -173,16 +175,16 @@ export const ProductTable: React.FC<ProductTableProps> = (props) => {
 
                        <div className="flex items-center gap-2 mb-2">
                            {produit.is_supplier_exclusive && (
-                               <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-success/10 text-success border border-emerald-100">EXCLUSIF</span>
+                               <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-success/10 text-success border border-emerald-100">{t('products:table.exclusive_badge')}</span>
                            )}
                            <span className="text-xs text-base-content/50 font-mono font-medium tracking-tight">
-                              {produit.cip1 || 'AUCUN CIP'}
+                              {produit.cip1 || '-'}
                            </span>
                        </div>
 
                         <div className="flex items-center justify-between w-full pt-1.5 border-t border-base-200">
                           <div className="flex items-center gap-1">
-                             <span className="text-[10px] text-base-content/50 font-medium uppercase">Stock</span>
+                             <span className="text-[10px] text-base-content/50 font-medium uppercase">{t('products:table.stock')}</span>
                              <span className={`text-xs font-semibold ${stock < 0 ? 'text-red-500' : stock === 0 ? 'text-base-content/50' : 'text-base-content'}`}>
                                 {stock}
                              </span>

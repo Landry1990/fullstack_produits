@@ -18,7 +18,7 @@ export default function JournalCaisseClosingModal({ state }: Props) {
     t, isClosingModalOpen, closingTotals, actualAmount, setActualAmount,
     handleCloseCaisse, loading, handleImprimerCloture, setIsClosingModalOpen,
     formatCurrencyLocal, manualMovements, setManualMovements, fondDeCaisse,
-    setTheorique, selectedUser, users, detectedShift
+    selectedUser, users, detectedShift
   } = state;
 
   const { user } = useAuth();
@@ -43,10 +43,6 @@ export default function JournalCaisseClosingModal({ state }: Props) {
     const gap = actualAmount ? normalizeNumberInput(actualAmount) - totalTheorique : null;
     return { manualEntrees, manualSorties, totalTheorique, gap };
   }, [closingTotals, manualMovements, actualAmount]);
-
-  useEffect(() => {
-    if (computed) setTheorique(computed.totalTheorique);
-  }, [computed?.totalTheorique]);
 
   const handleAddMovement = () => {
     const montant = normalizeNumberInput(newMontant);
@@ -113,13 +109,12 @@ export default function JournalCaisseClosingModal({ state }: Props) {
                 </div>
                 <div className="p-3 space-y-1">
                   {Object.entries(closingTotals.details)
-                    .filter(([k, v]) => !k.startsWith('__') && k !== 'mouvements_audit' && (v as number) !== 0)
-                    .map(([mode, montant]) => (
-                      <div key={mode} className="flex justify-between text-xs">
-                        <span className="text-slate-500 capitalize">{getModeLabel(mode)}</span>
-                        <span className="font-bold">{formatCurrencyLocal(Math.round(montant as number))}</span>
+                    .flatMap(([k, v]) => (!k.startsWith('__') && k !== 'mouvements_audit' && (v as number) !== 0) ? [(
+                      <div key={k} className="flex justify-between text-xs">
+                        <span className="text-slate-500 capitalize">{getModeLabel(k)}</span>
+                        <span className="font-bold">{formatCurrencyLocal(Math.round(v as number))}</span>
                       </div>
-                    ))}
+                    )] : [])}
                   {(!closingTotals.details || Object.keys(closingTotals.details).filter(k => !k.startsWith('__')).length === 0) && (
                     <div className="text-xs text-slate-400 italic text-center py-1">{t('closing.no_sales')}</div>
                   )}

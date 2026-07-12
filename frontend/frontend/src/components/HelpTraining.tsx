@@ -114,10 +114,10 @@ const HelpTraining = () => {
   const currentCategory = CATEGORIES.find((c: Category) => c.id === activeCategory) || CATEGORIES[0];
 
   const filteredCategories = search.trim()
-    ? CATEGORIES.map((cat: Category) => ({
-        ...cat,
-        videos: cat.videos.filter((v: Video) => v.title.toLowerCase().includes(search.toLowerCase()))
-      })).filter((cat: Category) => cat.videos.length > 0)
+    ? CATEGORIES.flatMap((cat: Category) => {
+        const filteredVideos = cat.videos.filter((v: Video) => v.title.toLowerCase().includes(search.toLowerCase()));
+        return filteredVideos.length > 0 ? [{ ...cat, videos: filteredVideos }] : [];
+      })
     : CATEGORIES;
 
   const allVideos = search.trim() ? filteredCategories.flatMap((c: Category) => c.videos) : currentCategory.videos;
@@ -183,8 +183,8 @@ const HelpTraining = () => {
                   <span className="text-[10px] font-black uppercase tracking-widest text-base-content/30">{t('help:training.shortcuts.title')}</span>
                 </div>
                 <div className="space-y-1.5">
-                  {SHORTCUTS.map((s: any, i: number) => (
-                    <div key={i} className="flex items-center justify-between px-2 py-1">
+                  {SHORTCUTS.map((s: any) => (
+                    <div key={s.key} className="flex items-center justify-between px-2 py-1">
                       <span className="text-xs text-base-content/50">{s.label}</span>
                       <kbd className={`kbd kbd-xs text-[10px] ${s.highlight ? 'bg-primary text-white border-primary' : ''}`}>{s.key}</kbd>
                     </div>

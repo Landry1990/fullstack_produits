@@ -48,9 +48,10 @@ const EMPTY_PRODUCTS_LIST: ProduitModel[] = []
 /* ═══════════════════════════════════════════
    STORAGE KEY
    ═══════════════════════════════════════════ */
-const LABEL_CONFIG_KEY = 'zenith_label_fields_config'
-const LABEL_FORMAT_KEY = 'zenith_label_format'
-const LABEL_BARCODE_TYPE_KEY = 'zenith_label_barcode_type'
+const LABEL_CONFIG_KEY = 'zenith_label_fields_config:v1'
+const LABEL_FORMAT_KEY = 'zenith_label_format:v1'
+const LABEL_BARCODE_TYPE_KEY = 'zenith_label_barcode_type:v1'
+const LEGACY_LABEL_CONFIG_KEY = 'zenith_label_fields_config'
 
 function loadBarcodeType(): 'CODE128' | 'DATAMATRIX' {
   try {
@@ -81,6 +82,15 @@ function loadFieldsConfig(): Partial<LabelField>[] {
   try {
     const saved = localStorage.getItem(LABEL_CONFIG_KEY)
     if (saved) return JSON.parse(saved)
+
+    // Migration clé non versionnée -> versionnée
+    const legacy = localStorage.getItem(LEGACY_LABEL_CONFIG_KEY)
+    if (legacy) {
+      const parsed = JSON.parse(legacy)
+      localStorage.setItem(LABEL_CONFIG_KEY, legacy)
+      localStorage.removeItem(LEGACY_LABEL_CONFIG_KEY)
+      return parsed
+    }
   } catch { /* ignore */ }
   return []
 }
@@ -1085,7 +1095,7 @@ ${labelsHTML}
               <div className="grid grid-cols-1 gap-8 justify-items-center">
                 {labelsData.slice(0, 10).map((label, i) => (
                   <PreviewLabelWrapper
-                    key={i}
+                    key={label.cip || label.barcode || i}
                     label={label}
                     fields={fields}
                     format={labelFormat}

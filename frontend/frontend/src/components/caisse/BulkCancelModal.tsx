@@ -61,14 +61,13 @@ export function BulkCancelModal({
               </thead>
               <tbody>
                 {facturesEnAttente
-                  .filter(f => selectedFactureIds.has(f.id))
-                  .map(f => (
+                  .flatMap(f => selectedFactureIds.has(f.id) ? [(
                     <tr key={f.id}>
                       <td className="font-bold">#{f.numero_facture}</td>
                       <td>{f.client_name || t('table.passerby_client')}</td>
                       <td className="text-right font-mono">{Math.round(Number(f.total_ttc))} F</td>
                     </tr>
-                  ))}
+                  )] : [])}
               </tbody>
             </table>
           </div>

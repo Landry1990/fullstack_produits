@@ -1,5 +1,5 @@
 ﻿import React from 'react';
-import { Calendar, Package, Hash, User, ArrowLeftRight, ClipboardList, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Calendar, Package, Hash, User, ArrowLeftRight, ClipboardList, ChevronLeft, ChevronRight, Tag } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import type { StockAdjustment } from '../../types';
 import { formatDate, formatDateTime } from '../../utils/dateUtils';
@@ -47,9 +47,9 @@ export const AjustementsTable: React.FC<AjustementsTableProps> = ({
 
     return (
         <div className="flex flex-col h-full">
-            <div className="overflow-x-auto">
+            <div className="flex-1 overflow-auto">
                 <table className="w-full text-sm">
-                    <thead>
+                    <thead className="sticky top-0 z-10">
                         <tr className="bg-slate-50 border-b border-slate-100">
                             <th className="text-[10px] font-black uppercase tracking-widest text-slate-400 px-6 py-3 text-left">
                                 <div className="flex items-center gap-1.5"><Calendar className="size-3" /> {t('ajustements.table.date_header')}</div>
@@ -62,6 +62,9 @@ export const AjustementsTable: React.FC<AjustementsTableProps> = ({
                             </th>
                             <th className="text-[10px] font-black uppercase tracking-widest text-slate-400 py-3 text-left">
                                 <div className="flex items-center gap-1.5"><User className="size-3" /> {t('ajustements.table.user_header')}</div>
+                            </th>
+                            <th className="text-[10px] font-black uppercase tracking-widest text-slate-400 py-3 text-left">
+                                <div className="flex items-center gap-1.5"><Tag className="size-3" /> {t('ajustements.table.lot_header')}</div>
                             </th>
                             <th className="text-[10px] font-black uppercase tracking-widest text-slate-400 py-3 text-right">{t('ajustements.table.before_header')}</th>
                             <th className="text-[10px] font-black uppercase tracking-widest text-slate-400 py-3 text-right">{t('ajustements.table.after_header')}</th>
@@ -88,6 +91,22 @@ export const AjustementsTable: React.FC<AjustementsTableProps> = ({
                                     <span className="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-semibold bg-slate-100 text-slate-600">
                                         {adj.user_name || adj.username || '-'}
                                     </span>
+                                </td>
+                                <td className="py-3">
+                                    {adj.lot_number ? (
+                                        <div className="flex flex-col">
+                                            <span className="font-mono text-xs font-bold text-emerald-600">
+                                                {adj.lot_number}
+                                            </span>
+                                            {adj.lot_expiration && (
+                                                <span className="text-[10px] text-slate-400">
+                                                    {formatDate(adj.lot_expiration)}
+                                                </span>
+                                            )}
+                                        </div>
+                                    ) : (
+                                        <span className="text-xs text-slate-400">-</span>
+                                    )}
                                 </td>
                                 <td className="text-right font-mono text-slate-500 py-3">{adj.quantity_before}</td>
                                 <td className="text-right font-bold text-slate-700 py-3">{adj.quantity_after}</td>

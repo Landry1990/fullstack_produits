@@ -2,8 +2,8 @@ import React, { useState } from 'react';
 import {
   View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, ActivityIndicator,
 } from 'react-native';
-import { useAuthStore } from '../stores';
-import { login } from '../services';
+import { useAuthStore } from '../stores/useAuthStore';
+import { login } from '../services/api';
 
 export function LoginScreen({ onLoginSuccess }: { onLoginSuccess: () => void }) {
   const { serverUrl, setServerUrl, setAuth } = useAuthStore();

@@ -157,7 +157,7 @@ const AvoirPrintTemplate: React.FC<AvoirPrintTemplateProps> = ({ settings, data 
                     </thead>
                     <tbody className="text-[10px]">
                         {data.lignes.map((ligne, idx) => (
-                            <tr key={idx} className="border-b border-gray-50 break-inside-avoid">
+                            <tr key={ligne.produit_nom ?? idx} className="border-b border-gray-50 break-inside-avoid">
                                 <td className="py-2 px-3">
                                     <div className="font-bold text-gray-900 text-[10.5px] uppercase leading-tight">{ligne.produit_nom}</div>
                                     {ligne.produit_cip && (

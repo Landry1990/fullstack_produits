@@ -185,7 +185,7 @@ function LicenceToastContent({ notification, onDismiss }: LicenceToastContentPro
 /**
  * Hook pour vérifier le statut de la licence
  */
-export function useLicenceStatus() {
+function useLicenceStatus() {
   const { isAuthenticated, loading } = useAuth();
   const [status, setStatus] = useState<{
     isValid: boolean;

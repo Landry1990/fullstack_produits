@@ -309,6 +309,6 @@ function usePrint(): UsePrintReturn {
 
 // ============== HELPER FUNCTIONS (RE-EXPORTED FOR COMPATIBILITY) ==============
 
-export { formatMoney, formatDateFr, printRow, printDivider, printTotal } from '../utils/print/printHelpers';
+export { formatMoney, formatDateFr } from '../utils/print/printHelpers';
 
 export default usePrint;

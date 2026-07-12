@@ -442,20 +442,21 @@ export default function GestionUtilisateurs() {
   const handleMenuToggle = (menuKey: string, submenus?: {key: string}[]) => {
     setFormData(prev => {
       let allowed = [...prev.allowed_menus];
+      const allowedSet = new Set(allowed);
       const isParent = !!submenus;
-      const isCurrentlySelected = allowed.includes(menuKey);
+      const isCurrentlySelected = allowedSet.has(menuKey);
 
       if (isCurrentlySelected) {
           allowed = allowed.filter(k => k !== menuKey);
           if (isParent) {
-             const subKeys = submenus.map(s => s.key);
-             allowed = allowed.filter(k => !subKeys.includes(k));
+             const subKeySet = new Set(submenus.map(s => s.key));
+             allowed = allowed.filter(k => !subKeySet.has(k));
           }
       } else {
           allowed.push(menuKey);
           if (isParent) {
              submenus.forEach(sub => {
-                 if (!allowed.includes(sub.key)) {
+                 if (!allowedSet.has(sub.key)) {
                      allowed.push(sub.key);
                  }
              });
@@ -468,14 +469,16 @@ export default function GestionUtilisateurs() {
   const handleSubMenuToggle = (submenuKey: string, parentKey: string, totalSubmenusCount: number) => {
     setFormData(prev => {
         let allowed = [...prev.allowed_menus];
-        if (allowed.includes(submenuKey)) {
+        const allowedSet = new Set(allowed);
+        if (allowedSet.has(submenuKey)) {
             allowed = allowed.filter(k => k !== submenuKey);
             allowed = allowed.filter(k => k !== parentKey);
         } else {
             allowed.push(submenuKey);
+            allowedSet.add(submenuKey);
             const parent = MENU_HIERARCHY.find(m => m.key === parentKey);
-            const currentCount = parent?.submenus?.filter(s => allowed.includes(s.key)).length || 0;
-            if (currentCount === totalSubmenusCount && !allowed.includes(parentKey)) {
+            const currentCount = parent?.submenus?.filter(s => allowedSet.has(s.key)).length || 0;
+            if (currentCount === totalSubmenusCount && !allowedSet.has(parentKey)) {
                 allowed.push(parentKey);
             }
         }
@@ -606,7 +609,7 @@ export default function GestionUtilisateurs() {
         toast.success(t('messages.updated'));
       } else {
         const { data: newUser } = await api.post('users/', payload);
-        setUsers(prev => [...prev, newUser].toSorted((a, b) => a.username.localeCompare(b.username)));
+        setUsers(prev => [...prev, newUser].slice().sort((a, b) => a.username.localeCompare(b.username)));
         toast.success(t('messages.created'));
       }
       
@@ -664,7 +667,10 @@ export default function GestionUtilisateurs() {
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100">
-            {users.filter(u => showTrash ? !u.is_active : u.is_active).map(user => (
+            {users.reduce<User[]>((acc, u) => {
+              if (showTrash ? !u.is_active : u.is_active) acc.push(u);
+              return acc;
+            }, []).map(user => (
               <tr key={user.id} className={`hover:bg-slate-50 transition-colors ${!user.is_active ? 'bg-red-50/30' : ''}`}>
                 <td className="px-4 py-3">
                   <div className="flex items-center space-x-3">
@@ -881,11 +887,11 @@ export default function GestionUtilisateurs() {
                         onChange={e => setCopyFromUserId(e.target.value ? Number(e.target.value) : '')}
                       >
                         <option value="">{t('form.select_user', 'Sélectionner un utilisateur...')}</option>
-                        {users.filter(u => u.is_active).map(user => (
+                        {users.flatMap(user => user.is_active ? [(
                           <option key={user.id} value={String(user.id)}>
                             {user.username} ({user.profile?.role || (user.is_superuser ? 'PHARMACIEN' : 'VENDEUR')})
                           </option>
-                        ))}
+                        )] : [])}
                       </select>
                       <button
                         type="button"
@@ -912,9 +918,10 @@ export default function GestionUtilisateurs() {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                   {MENU_HIERARCHY.map(menu => {
+                      const allowedSet = new Set(formData.allowed_menus);
                       const parentLabel = t(menu.labelKey);
-                      const isParentChecked = formData.allowed_menus.includes(menu.key);
-                      const indeterminate = !isParentChecked && menu.submenus?.some(sub => formData.allowed_menus.includes(sub.key));
+                      const isParentChecked = allowedSet.has(menu.key);
+                      const indeterminate = !isParentChecked && menu.submenus?.some(sub => allowedSet.has(sub.key));
 
                       return (
                         <div key={menu.key} className={`bg-slate-50 rounded-xl border border-slate-200 overflow-hidden ${menu.submenus && menu.submenus.length > 0 ? 'flex flex-col h-full' : ''}`}>
@@ -940,7 +947,7 @@ export default function GestionUtilisateurs() {
                                           <Checkbox 
                                             size="xs"
                                             color="primary"
-                                            checked={formData.allowed_menus.includes(sub.key) || formData.allowed_menus.includes(menu.key)}
+                                            checked={allowedSet.has(sub.key) || allowedSet.has(menu.key)}
                                             onChange={checked => handleSubMenuToggle(sub.key, menu.key, menu.submenus!.length)}
                                             disabled={formData.is_superuser}
                                             label={subLabel}

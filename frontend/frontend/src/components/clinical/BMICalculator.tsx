@@ -235,7 +235,7 @@ const BMICalculator: React.FC = () => {
                   <div className="h-1.5 md:h-2 w-full bg-base-100/10 rounded-full overflow-hidden flex">
                     {bmiRanges.map((range, idx) => (
                       <div 
-                        key={idx} 
+                        key={range.label} 
                         className={`h-full ${range.color} transition-all duration-700`}
                         style={{ 
                           width: '16.66%',
@@ -279,8 +279,8 @@ const BMICalculator: React.FC = () => {
             <div className="pharma-card p-5 md:p-6">
               <h3 className="text-[9px] md:text-[10px] font-black text-base-content/40 uppercase tracking-[0.2em] mb-3 md:mb-4">{t('bmi.oms_classification')}</h3>
               <div className="grid grid-cols-1 gap-1 md:gap-2">
-                {bmiRanges.map((range, idx) => (
-                  <div key={idx} className="flex items-center justify-between p-2 md:p-2.5 rounded-lg md:rounded-xl hover:bg-base-200 transition-colors">
+                {bmiRanges.map((range) => (
+                  <div key={range.label} className="flex items-center justify-between p-2 md:p-2.5 rounded-lg md:rounded-xl hover:bg-base-200 transition-colors">
                     <div className="flex items-center gap-2 md:gap-3">
                       <div className={`size-1.5 md:w-2 md:h-2 rounded-full ${range.color}`}></div>
                       <span className="text-[10px] md:text-xs font-semibold text-base-content/70">{range.text}</span>

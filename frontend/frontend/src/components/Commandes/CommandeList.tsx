@@ -339,7 +339,7 @@ export default function CommandeList({
         </div>
 
       {/* Table Section */}
-      <div className="flex-1 min-h-0 overflow-auto bg-white rounded-xl shadow-sm border border-slate-200">
+      <div className="flex-1 min-h-0 overflow-auto bg-white rounded-xl shadow-sm border border-slate-200 max-h-[60vh]">
         <table className="w-full text-sm">
           <thead>
             <tr className="bg-slate-50 text-slate-500 border-b border-slate-200">

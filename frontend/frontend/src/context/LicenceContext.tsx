@@ -20,7 +20,7 @@ interface LicenceContextType {
 
 const LicenceContext = createContext<LicenceContextType | undefined>(undefined);
 
-const LICENCE_STORAGE_KEY = 'pharmacy_licence_cache';
+const LICENCE_STORAGE_KEY = 'pharmacy_licence_cache:v1';
 
 function loadCachedLicence(): LicenceInfo | null {
     try {

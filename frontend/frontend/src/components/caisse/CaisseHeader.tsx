@@ -6,7 +6,7 @@ interface CaisseHeaderProps {
   isMultiCaisse: boolean
   selectedPosteCaisseId: string
   onPosteCaisseChange: (id: string) => void
-  postesCaisses: any[]
+  postesCaisses: PosteCaisse[]
   myActivePoste: PosteCaisse | null
   hideAmounts: boolean
   onHideAmountsChange: (val: boolean) => void

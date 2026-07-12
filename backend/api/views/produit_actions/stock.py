@@ -58,7 +58,7 @@ class ProduitStockMixin:
                 'type': 'SORTIE',
                 'quantity': -v['quantity'], 
                 'stock_apres': 0, 
-                'libelle': f"Vente: Facture #{v['facture__numero_facture'] or v['facture__id']} - {v['facture__client__name'] or 'Client Divers'}",
+                'libelle': f"Vente Facture #{v['facture__numero_facture'] or v['facture__id']}",
                 'prix_unitaire': v['selling_price'],
                 'user': '',
                 'source': 'VENTE',

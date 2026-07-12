@@ -76,7 +76,7 @@ export const StockAdjustmentModal: React.FC<StockAdjustmentModalProps> = ({
           <div className="space-y-4">
             <div className="w-full">
               <label className="block text-[10px] font-semibold text-base-content/60 uppercase tracking-wider mb-1.5">
-                {selectedProduit?.has_reserve_storage ? "Nouveau Stock Rayon" : t('products:adjustment.new_quantity')}
+                {selectedProduit?.has_reserve_storage ? t('products:adjustment.new_shelf_stock') : t('products:adjustment.new_quantity')}
               </label>
               <input
                 type="number"
@@ -101,7 +101,7 @@ export const StockAdjustmentModal: React.FC<StockAdjustmentModalProps> = ({
 
             {selectedProduit?.has_reserve_storage && (
               <div className="w-full">
-                <label className="block text-[10px] font-semibold text-base-content/60 uppercase tracking-wider mb-1.5">Nouveau Stock Réserve</label>
+                <label className="block text-[10px] font-semibold text-base-content/60 uppercase tracking-wider mb-1.5">{t('products:adjustment.new_reserve_stock')}</label>
                 <input
                   type="number"
                   className="w-full rounded-lg border border-base-300 bg-base-200 text-center text-xl font-bold text-base-content focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none h-12 transition-all"

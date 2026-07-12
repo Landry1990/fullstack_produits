@@ -250,7 +250,7 @@ export default function PurchaseHistoryDrawer({
                   </div>
                   <div className="space-y-2">
                     {data.top_products.map((p, i) => (
-                      <div key={i} className="flex items-center gap-3 p-2.5 rounded-xl bg-slate-50 border border-slate-100">
+                      <div key={p.nom} className="flex items-center gap-3 p-2.5 rounded-xl bg-slate-50 border border-slate-100">
                         <span className={`size-6 rounded-lg flex items-center justify-center text-[10px] font-black shrink-0 ${i === 0 ? 'bg-amber-400 text-white' : i === 1 ? 'bg-slate-300 text-white' : 'bg-slate-100 text-slate-500'}`}>
                           {i + 1}
                         </span>
@@ -274,7 +274,7 @@ export default function PurchaseHistoryDrawer({
                   </div>
                   <div className="flex items-end gap-1 h-20 bg-slate-50 rounded-xl px-3 py-2 border border-slate-100">
                     {data.ca_12_mois.map((m, i) => (
-                      <div key={i} className="flex-1 flex flex-col items-center gap-0.5 group relative">
+                      <div key={m.mois} className="flex-1 flex flex-col items-center gap-0.5 group relative">
                         <div
                           className="w-full rounded-sm bg-indigo-400 hover:bg-indigo-600 transition-colors cursor-default"
                           style={{ height: `${Math.max(2, (m.ca / maxCa) * 60)}px` }}
@@ -338,8 +338,8 @@ export default function PurchaseHistoryDrawer({
                             </tr>
                           </thead>
                           <tbody>
-                            {facture.produits.map((prod, idx) => (
-                              <tr key={idx} className="border-t border-slate-100 hover:bg-slate-50">
+                            {facture.produits.map((prod) => (
+                              <tr key={prod.nom} className="border-t border-slate-100 hover:bg-slate-50">
                                 <td className="py-2 px-3">
                                   <div className="font-semibold text-slate-700 truncate">{prod.nom}</div>
                                   <div className="text-[9px] text-slate-400 font-mono">{prod.prix_unitaire} {t('clients:units.per_unit')}</div>

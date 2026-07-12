@@ -375,9 +375,10 @@ export default function ProduitShadcn() {
                   <table className="w-full">
                     <tbody className="divide-y divide-slate-100">
                       {produits.map(produit => {
+                        const selectedSet = new Set(selectedIds);
                         const stock = produit.stock ?? 0
                         const isSelected = selectedProduit?.id === produit.id
-                        const isChecked = selectedIds.includes(produit.id)
+                        const isChecked = selectedSet.has(produit.id)
                         return (
                           <tr
                             key={produit.id}
@@ -390,7 +391,7 @@ export default function ProduitShadcn() {
                             }`}
                           >
                             <td className="py-3 px-4 w-10" onClick={e => e.stopPropagation()}>
-                              <Checkbox size="sm" checked={isChecked} onChange={() => setSelectedIds(prev => prev.includes(produit.id) ? prev.filter(id => id !== produit.id) : [...prev, produit.id])} />
+                              <Checkbox size="sm" checked={isChecked} onChange={() => setSelectedIds(prev => { const s = new Set(prev); return s.has(produit.id) ? prev.filter(id => id !== produit.id) : [...prev, produit.id]; })} />
                             </td>
                             <td className="py-3 px-2 w-36">
                               <div className="flex flex-col gap-0.5">

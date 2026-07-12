@@ -104,20 +104,27 @@
         "rayon_active": "Active Rayon",
         "provider_active": "Active Supplier",
         "exclusive_only": "Exclusives",
-        "inactive_only": "Inactives"
+        "inactive_only": "Inactives",
+        "in_stock_only": "In stock only",
+        "show_inactive": "Show inactive"
     },
     "table": {
         "cip": "CIP",
         "product": "Product",
         "stock": "Stock",
         "empty": "No products",
+        "empty_title": "No product",
+        "empty_subtitle": "Create your first product or service to get started.",
         "select_all": "Select all",
-        "exclusivity": "Exclusivity"
+        "exclusivity": "Exclusivity",
+        "exclusive_badge": "EXCL"
     },
     "adjustment": {
         "title": "Adjust Stock",
         "current_stock": "Current stock:",
         "new_quantity": "New quantity *",
+        "new_shelf_stock": "New Shelf Stock",
+        "new_reserve_stock": "New Reserve Stock",
         "difference": "Difference:",
         "reason_type": "Reason type *",
         "reasons": {
@@ -134,6 +141,7 @@
         "title": "Product Details",
         "none_selected": "No product selected",
         "select_hint": "Select a product from the list to see its details",
+        "stock_label": "Stock",
         "rayon_label": "Shelf",
         "total_stock": "Total Stock",
         "reserve_label": "Reserve",
@@ -180,7 +188,13 @@
             "price": "Price",
             "lot": "Lot",
             "exp": "Exp.",
-            "empty": "No purchases recorded"
+            "empty": "No purchases recorded",
+            "price_evolution": "Purchase Price Evolution",
+            "all_providers": "All suppliers",
+            "min": "Min:",
+            "max": "Max:",
+            "latest": "Latest:",
+            "price_label": "Purchase price"
         },
         "lots": {
             "lot": "Lot",
@@ -235,6 +249,8 @@
     },
     "messages": {
         "loading": "Loading products...",
+        "create_success": "Product created successfully",
+        "adjust_reserve_details": " (Reserve: {{oldReserve}} -> {{newReserve}})",
         "delete_confirm_title": "Delete Product",
         "delete_confirm_body": "Do you really want to delete the product \"{{name}}\"?\n\nThis action is irreversible.",
         "delete_success": "Product deleted successfully",
@@ -273,6 +289,9 @@
         "update_error": "Error while updating product",
         "adjust_success": "Stock adjusted ({{change}})",
         "adjust_error": "Error while adjusting stock"
+    },
+    "labels": {
+        "filename_prefix": "labels"
     },
     "import": {
         "title": "Import Products",

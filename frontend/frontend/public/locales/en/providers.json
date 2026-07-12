@@ -180,5 +180,36 @@
             "amount": "TTC Amount"
         },
         "regler_btn": "Pay selection ({{amount}} F)"
+    },
+    "dashboard": {
+        "tabs": {
+            "overview": "Overview",
+            "management": "List & Management"
+        },
+        "kpis": {
+            "total_debt": "Total Debt",
+            "overdue": "Overdue",
+            "due_today": "Due Today",
+            "due_soon": "Due Soon",
+            "active_providers": "{{count}} active providers",
+            "late_schedules": "{{count}} overdue deadlines",
+            "immediate_pay": "To be paid immediately",
+            "upcoming": "Upcoming deadlines"
+        },
+        "charts": {
+            "evolution_title": "Debt Evolution",
+            "evolution_subtitle": "Last 6 months",
+            "distribution_title": "Distribution by Provider",
+            "distribution_subtitle": "Top 5 + Others"
+        },
+        "deadlines": {
+            "title": "Priority Schedule",
+            "subtitle": "5 next critical deadlines",
+            "view_all": "View full schedule",
+            "no_deadlines": "No deadline scheduled",
+            "days_late": "{{count}}d late",
+            "in_days": "In {{count}}d"
+        },
+        "loading": "Loading financial data..."
     }
 }

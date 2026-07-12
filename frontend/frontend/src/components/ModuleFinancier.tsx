@@ -1,22 +1,6 @@
 import { useState, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import {
-  AreaChart,
-  Area,
-  LineChart,
-  Line,
-  BarChart,
-  Bar,
-  PieChart,
-  Pie,
-  Cell,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  Legend,
-  ResponsiveContainer
-} from 'recharts';
+import { useRecharts } from '../hooks/useRecharts';
 import {
   useCAEvolution,
   useMargesEvolution,
@@ -134,6 +118,10 @@ export default function ModuleFinancier() {
     categoryAnalysis?.data.slice(0, 10) || [],
     [categoryAnalysis]
   );
+
+  const Recharts = useRecharts();
+  if (!Recharts) return <div className="flex items-center justify-center p-8"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-slate-400" /></div>;
+  const { AreaChart, Area, LineChart, Line, BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } = Recharts;
 
   return (
     <div className="p-6 space-y-6">
@@ -267,11 +255,11 @@ export default function ModuleFinancier() {
 
                 <div className="space-y-3">
                   <h3 className="font-bold text-sm uppercase tracking-wider opacity-60">{isEnglish ? 'Key Insights' : 'Analyses Clés'}</h3>
-                  {varianceReport.insights.map((insight: any, idx: number) => {
+                  {varianceReport.insights.map((insight: any) => {
                     const text = isEnglish ? insight?.en : insight?.fr;
                     const safeText = typeof text === 'string' ? text : JSON.stringify(text);
                     return (
-                      <div key={idx} className="alert alert-info shadow-sm bg-info/10 border-info/20 text-sm">
+                      <div key={insight.en ?? insight.fr} className="alert alert-info shadow-sm bg-info/10 border-info/20 text-sm">
                         <span>{safeText}</span>
                       </div>
                     );
@@ -543,8 +531,8 @@ export default function ModuleFinancier() {
                     nameKey="name"
                     label={pieLabelFormatter}
                   >
-                    {repartition.data.map((_, index) => (
-                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                    {pieChartData.map((entry, index) => (
+                      <Cell key={entry.name} fill={COLORS[index % COLORS.length]} />
                     ))}
                   </Pie>
                   <Tooltip formatter={tooltipFormatterMoney} />

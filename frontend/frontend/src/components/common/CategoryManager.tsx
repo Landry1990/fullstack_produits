@@ -185,7 +185,7 @@ export default function CategoryManager({
         toast.success(t('stock:organisation.category_manager.success_save', { type: title }));
       } else {
         const { data: newCat } = await api.post(apiPath.replace(/^\/api\//, ''), payload);
-        setCategories(prev => [...prev, newCat].toSorted((a, b) => {
+        setCategories(prev => [...prev, newCat].slice().sort((a, b) => {
             const nameA = a.name || a.nom || '';
             const nameB = b.name || b.nom || '';
             return nameA.localeCompare(nameB);
@@ -264,7 +264,7 @@ export default function CategoryManager({
       toast.success(t('stock:organisation.category_manager.product_added', { name: product.name, type }));
       
       // Update local products list
-      setProducts(prev => [...prev, updatedProduct].toSorted((a, b) => a.name.localeCompare(b.name)));
+      setProducts(prev => [...prev, updatedProduct].slice().sort((a, b) => a.name.localeCompare(b.name)));
       setTotalCount(prev => prev + 1);
       
       // Remove from search results to avoid double add
@@ -362,9 +362,12 @@ export default function CategoryManager({
            ) : (
               hierarchy.map((cat: any) => (
                 <div key={cat.id} className="space-y-1">
-                  <button
+                  <div
+                    role="button"
+                    tabIndex={0}
                     onClick={() => setSelectedCategory(cat)}
-                    className={`w-full flex items-center justify-between p-3 rounded-xl transition-all group ${
+                    onKeyDown={(e) => e.key === 'Enter' && setSelectedCategory(cat)}
+                    className={`w-full flex items-center justify-between p-3 rounded-xl transition-all group cursor-pointer ${
                       selectedCategory?.id === cat.id
                       ? 'bg-emerald-600 text-white shadow-sm'
                       : 'hover:bg-slate-100 text-slate-700'
@@ -414,15 +417,18 @@ export default function CategoryManager({
                          <Trash2 size={12} />
                        </button>
                     </div>
-                  </button>
+                  </div>
 
                   {cat.children && cat.children.length > 0 && (
                     <div className="pl-6 space-y-1 border-l-2 border-slate-100 ml-5 mt-1">
                       {cat.children.map((child: any) => (
-                        <button
+                        <div
                           key={child.id}
+                          role="button"
+                          tabIndex={0}
                           onClick={() => setSelectedCategory(child)}
-                          className={`w-full flex items-center justify-between p-2 rounded-xl transition-all group text-sm ${
+                          onKeyDown={(e) => e.key === 'Enter' && setSelectedCategory(child)}
+                          className={`w-full flex items-center justify-between p-2 rounded-xl transition-all group text-sm cursor-pointer ${
                             selectedCategory?.id === child.id
                             ? 'bg-emerald-50 text-emerald-700 font-semibold'
                             : 'hover:bg-slate-100 text-slate-600'
@@ -452,7 +458,7 @@ export default function CategoryManager({
                                <Trash2 size={10} />
                              </button>
                           </div>
-                        </button>
+                        </div>
                       ))}
                     </div>
                   )}
@@ -643,9 +649,9 @@ export default function CategoryManager({
                    onChange={e => setFormData({...formData, parent: e.target.value})}
                  >
                    <option value="">{t('stock:organisation.category_manager.parent_select_none')}</option>
-                   {categories.filter(c => !c.parent && c.id !== editingCategory?.id).map(c => (
+                   {categories.flatMap(c => (!c.parent && c.id !== editingCategory?.id) ? [(
                      <option key={c.id} value={c.id.toString()}>{getCategoryName(c)}</option>
-                   ))}
+                   )] : [])}
                  </select>
               </div>
            )}

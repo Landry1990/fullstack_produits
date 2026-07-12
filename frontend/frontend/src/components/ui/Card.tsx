@@ -6,22 +6,23 @@ export interface CardProps extends React.HTMLAttributes<HTMLDivElement> {
   ref?: React.Ref<HTMLDivElement>;
 }
 
-export const Card: React.FC<CardProps> = ({ className = '', variant = 'default', padding = 'md', children, ref, ...props }) => {
-  const baseStyles = 'rounded-box overflow-hidden transition-all duration-300';
-  
-  const variants = {
-    default: 'bg-base-100 border border-base-300 shadow-sm hover:shadow-md',
-    bordered: 'bg-transparent border-2 border-base-300 hover:border-base-400',
-    glass: 'glass-panel-pro',
-    elevated: 'bg-base-100 border border-base-300 shadow-lg hover:shadow-premium hover:-translate-y-1',
-  };
+const baseStyles = 'rounded-box overflow-hidden transition-all duration-300';
 
-  const paddings = {
-    none: '',
-    sm: 'p-4',
-    md: 'p-6',
-    lg: 'p-8',
-  };
+const variants = {
+  default: 'bg-base-100 border border-base-300 shadow-sm hover:shadow-md',
+  bordered: 'bg-transparent border-2 border-base-300 hover:border-base-400',
+  glass: 'glass-panel-pro',
+  elevated: 'bg-base-100 border border-base-300 shadow-lg hover:shadow-premium hover:-translate-y-1',
+};
+
+const paddings = {
+  none: '',
+  sm: 'p-4',
+  md: 'p-6',
+  lg: 'p-8',
+};
+
+export const Card: React.FC<CardProps> = ({ className = '', variant = 'default', padding = 'md', children, ref, ...props }) => {
 
   return (
     <div

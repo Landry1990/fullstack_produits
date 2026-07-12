@@ -6,6 +6,8 @@ import type { InventoryStats } from '../../../types';
 import api from '../../../services/api';
 import { toast } from 'react-hot-toast';
 
+const EMPTY_ARRAY: never[] = [];
+
 // Composant séparé pour éviter les re-renders
 interface StatsListProps {
     title: string;
@@ -37,7 +39,7 @@ const StatsList = memo(({ title, data, type, t }: StatsListProps) => {
                     </div>
                 ) : (
                     data.map((p, i) => (
-                        <div key={i} className="group flex items-center justify-between p-4 border-b border-slate-50 hover:bg-slate-50 transition-colors last:border-0">
+                        <div key={p.id ?? p.name} className="group flex items-center justify-between p-4 border-b border-slate-50 hover:bg-slate-50 transition-colors last:border-0">
                             <div className="flex items-center gap-4">
                                 <div className={`size-8 rounded-lg bg-slate-100 flex items-center justify-center text-xs font-bold text-slate-400 group-hover:${bgColorClass} group-hover:${colorClass} transition-colors`}>
                                     {i + 1}
@@ -93,13 +95,13 @@ export const InventaireAnalysisTab: React.FC<InventaireAnalysisTabProps> = ({
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 <StatsList
                     title={t('inventaire.analysis.top_losses')}
-                    data={inventoryStats?.top_pertes || []}
+                    data={inventoryStats?.top_pertes || EMPTY_ARRAY}
                     type="negative"
                     t={t}
                 />
                 <StatsList
                     title={t('inventaire.analysis.top_surplus')}
-                    data={inventoryStats?.top_surplus || []}
+                    data={inventoryStats?.top_surplus || EMPTY_ARRAY}
                     type="positive"
                     t={t}
                 />

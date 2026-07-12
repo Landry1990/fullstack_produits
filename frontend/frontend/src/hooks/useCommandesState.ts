@@ -608,33 +608,60 @@ export function useCommandesState(forcedType?: 'LOC' | 'DIR' | 'DIV') {
   }, [tauxChange, fraisCoefficient, commandeType, viewMode]);
 
   useEffect(() => {
-    if (location.state && (location.state as any).createFromStockAlert) {
-      const data = (location.state as any).createFromStockAlert;
+    const state = location.state as any;
+    if (state && (state.createFromStockAlert || state.createFromCadencier)) {
+      const isCadencier = !!state.createFromCadencier;
+      const data = state.createFromCadencier || state.createFromStockAlert;
+      const orderType = state.createFromCadencier?.orderType;
+      
       setViewMode('CREATE');
       setSelectedCommande(null);
       setCommandeProduits([]);
+      
+      if (orderType) {
+        setCommandeType(orderType);
+        setActiveTab(orderType);
+      }
       
       const loadProducts = async () => {
         if (!Array.isArray(data.products) || data.products.length === 0) return;
 
         const newLines = await Promise.all(
-          data.products.map(async (p: { id: number; name: string; stock: number; avg_daily_sales?: number }) => {
+          data.products.map(async (p: { 
+            id: number; 
+            name: string; 
+            stock: number; 
+            avg_daily_sales?: number;
+            quantity?: number;
+            price?: number;
+            fournisseur_id?: number | null;
+            tva?: string;
+            taux_marge?: string;
+          }) => {
             try {
               const fullProduct = await produitService.getById(p.id);
-              const avgSales = (p as any).avg_daily_sales;
-              const coverageDays = 30;
-              const suggestedQty = avgSales && avgSales > 0
-                ? Math.max(1, Math.ceil(avgSales * coverageDays) - (fullProduct.stock || 0))
-                : Math.max(1, (fullProduct.stock_minimum || 10) - (fullProduct.stock || 0));
+              let suggestedQty: number;
+              
+              if (isCadencier && p.quantity !== undefined && p.quantity > 0) {
+                suggestedQty = p.quantity;
+              } else {
+                const avgSales = (p as any).avg_daily_sales;
+                const coverageDays = 30;
+                suggestedQty = avgSales && avgSales > 0
+                  ? Math.max(1, Math.ceil(avgSales * coverageDays) - (fullProduct.stock || 0))
+                  : Math.max(1, (fullProduct.stock_minimum || 10) - (fullProduct.stock || 0));
+              }
 
               return {
                 id: Date.now() + p.id,
                 produit: fullProduct,
                 quantity: suggestedQty,
                 unites_gratuites: 0,
-                price: fullProduct.cost_price || '0',
-                tva: fullProduct.tva || '0',
-                marge: fullProduct.taux_marge || '1.3',
+                prix_euro: orderType === 'DIR' ? (fullProduct.cost_price ? (normalizeNumberInput(fullProduct.cost_price) / normalizeNumberInput(tauxChange || '655.957')).toFixed(0) : '0') : undefined,
+                price: p.price !== undefined && p.price > 0 ? String(p.price) : (fullProduct.cost_price || '0'),
+                price_cost: p.price !== undefined && p.price > 0 ? String(p.price) : (fullProduct.cost_price || '0'),
+                tva: p.tva || fullProduct.tva || '0',
+                marge: p.taux_marge || fullProduct.taux_marge || '1.3',
                 selling_price: fullProduct.selling_price || '0',
                 lot: '',
                 date_expiration: '',
@@ -644,11 +671,13 @@ export function useCommandesState(forcedType?: 'LOC' | 'DIR' | 'DIV') {
               return {
                 id: Date.now() + p.id,
                 produit: { id: p.id, name: p.name, stock: p.stock } as any,
-                quantity: 10,
+                quantity: p.quantity || 10,
                 unites_gratuites: 0,
-                price: '0',
-                tva: '0',
-                marge: '1.3',
+                prix_euro: orderType === 'DIR' ? '0' : undefined,
+                price: String(p.price || '0'),
+                price_cost: String(p.price || '0'),
+                tva: p.tva || '0',
+                marge: p.taux_marge || '1.3',
                 selling_price: '0',
                 lot: '',
                 date_expiration: '',
@@ -667,7 +696,8 @@ export function useCommandesState(forcedType?: 'LOC' | 'DIR' | 'DIV') {
           setNewCommandeFournisseurId(String(fId));
         }
 
-        toast.success(t('orders:messages.products_added_from_alerts', { count: newLines.length }), { icon: '📦' });
+        const msgKey = isCadencier ? 'orders:messages.products_added_from_cadencier' : 'orders:messages.products_added_from_alerts';
+        toast.success(t(msgKey, { count: newLines.length }), { icon: '📦' });
       };
       
       loadProducts();
@@ -1407,7 +1437,7 @@ export function useCommandesState(forcedType?: 'LOC' | 'DIR' | 'DIV') {
       });
     }
     
-    return filtered.toSorted((a, b) => {
+    return filtered.slice().sort((a, b) => {
       let valA, valB;
       if (sortKey === 'numero') { valA = a.numero_facture || a.id; valB = b.numero_facture || b.id; }
       else if (sortKey === 'date') { valA = a.date; valB = b.date; }
@@ -1433,7 +1463,7 @@ export function useCommandesState(forcedType?: 'LOC' | 'DIR' | 'DIV') {
   const handleSortProduits = useCallback((sortBy: 'chrono' | 'stock' | 'name' | 'qty') => {
     setCommandeSortBy(sortBy);
     setCommandeProduits(prev => {
-      const sorted = prev.toSorted((a: any, b: any) => {
+      const sorted = prev.slice().sort((a: any, b: any) => {
         if (sortBy === 'chrono') return (a.id || 0) - (b.id || 0);
 
         const prodA = typeof a.produit === 'object' ? a.produit : produitsList.find(p => p.id === a.produit);

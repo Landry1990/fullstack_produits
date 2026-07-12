@@ -69,7 +69,7 @@ export const ProductFilters: React.FC<ProductFiltersProps> = (props) => {
               onChange={(e) => setShowInStockOnly(e.target.checked)}
             />
             <span className="text-xs font-medium text-base-content/70 group-hover:text-primary transition-colors">
-              {t('products:filters.in_stock_only', { defaultValue: 'En stock uniquement' })}
+              {t('products:filters.in_stock_only')}
             </span>
           </label>
           <label className="flex items-center gap-2 cursor-pointer group ml-2">
@@ -80,7 +80,7 @@ export const ProductFilters: React.FC<ProductFiltersProps> = (props) => {
               onChange={(e) => setShowInactive(e.target.checked)}
             />
             <span className="text-xs font-medium text-base-content/70 group-hover:text-base-content transition-colors">
-              {t('products:filters.show_inactive', { defaultValue: 'Afficher inactifs' })}
+              {t('products:filters.show_inactive')}
             </span>
           </label>
         </div>
@@ -94,7 +94,7 @@ export const ProductFilters: React.FC<ProductFiltersProps> = (props) => {
               {filterFournisseur && <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-medium bg-warning/10 text-warning border border-amber-100">{t('products:filters.provider_active')}</span>}
               {filterExclusive && <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-medium bg-primary/10 text-primary border border-indigo-100">{t('products:filters.exclusive_only')}</span>}
               {showInactive && <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-medium bg-base-200 text-base-content/70 border border-base-300">{t('products:filters.inactive_only')}</span>}
-              {showInStockOnly && <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-medium bg-success/10 text-success border border-emerald-100">{t('products:filters.in_stock_only', { defaultValue: 'En stock' })}</span>}
+              {showInStockOnly && <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-medium bg-success/10 text-success border border-emerald-100">{t('products:filters.in_stock_only')}</span>}
             </div>
           </div>
         )}

@@ -1106,5 +1106,23 @@
                 }
             }
         }
+    },
+    "expiration": {
+        "widget_title": "Expiration Alerts",
+        "error_loading": "Error loading alerts",
+        "no_alerts": "No expiration alerts",
+        "all_good": "No product expiring in the next {{days}} days",
+        "alerts_count": "{{count}} alert(s)",
+        "critical_count": "{{count}} critical",
+        "urgent_count": "{{count}} urgent",
+        "notice_count": "{{count}} notice",
+        "days_until": "D-{{days}}",
+        "units": "{{count}} unit(s)",
+        "lot_label": "Lot: {{lot}}",
+        "pa_label": "CP: {{value}}",
+        "days_filter": "{{days}}d",
+        "view_all": "View all expired",
+        "manage_perimes": "Manage expired products",
+        "total_value": "{{count}} alert(s) • {{value}}"
     }
 }

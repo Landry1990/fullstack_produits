@@ -109,7 +109,7 @@ export default function FournisseurDetails({ hook }: Props) {
                 className="text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50"
                 onClick={(e) => {
                   e.stopPropagation();
-                  state.setFinanceModalState({ isOpen: true });
+                  state.setIsPointageModalOpen(true);
                 }}
               >
                 {t('providers:details.manage_payments')}

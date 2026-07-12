@@ -2,7 +2,7 @@ import * as XLSX from 'xlsx';
 import type { PharmacySettings } from '../context/PharmacySettingsContext';
 import { formatDate, formatTime } from './dateUtils';
 
-export interface ExcelExportOptions {
+interface ExcelExportOptions {
     sheetName?: string;
     filename: string;
     title?: string;

@@ -47,24 +47,151 @@ interface Fournisseur {
 
 const formatNumber = (n: number) => utilsFormatNumber(Math.round(n))
 
+// ─── AbcFilterBar ─────────────────────────────────────────────────────────────
+interface AbcFilterBarProps {
+  periode: number
+  onPeriodeChange: (v: number) => void
+  rayonId: string
+  onRayonChange: (v: string) => void
+  fournisseurId: string
+  onFournisseurChange: (v: string) => void
+  rayons: Rayon[]
+  fournisseurs: Fournisseur[]
+  onCopy: () => void
+  copyDisabled: boolean
+}
+
+function AbcFilterBar({
+  periode, onPeriodeChange,
+  rayonId, onRayonChange,
+  fournisseurId, onFournisseurChange,
+  rayons, fournisseurs,
+  onCopy, copyDisabled,
+}: AbcFilterBarProps) {
+  const { t } = useTranslation(['stock', 'common'])
+  return (
+    <div className="flex flex-wrap gap-2">
+      <select
+        className="h-9 px-3 rounded-xl border border-slate-200 bg-white text-xs font-bold text-slate-700 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all appearance-none"
+        value={periode}
+        onChange={(e) => onPeriodeChange(Number(e.target.value))}
+      >
+        <option value={3}>{t('stock:abc.filters.months_3')}</option>
+        <option value={6}>{t('stock:abc.filters.months_6')}</option>
+        <option value={12}>{t('stock:abc.filters.months_12')}</option>
+      </select>
+
+      <select
+        className="h-9 px-3 rounded-xl border border-slate-200 bg-white text-xs font-bold text-slate-700 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all appearance-none"
+        value={rayonId}
+        onChange={(e) => onRayonChange(e.target.value)}
+      >
+        <option value="">{t('stock:abc.filters.all_rayons')}</option>
+        {rayons.map(r => (
+          <option key={r.id} value={r.id}>{r.name}</option>
+        ))}
+      </select>
+
+      <select
+        className="h-9 px-3 rounded-xl border border-slate-200 bg-white text-xs font-bold text-slate-700 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all appearance-none"
+        value={fournisseurId}
+        onChange={(e) => onFournisseurChange(e.target.value)}
+      >
+        <option value="">{t('stock:abc.filters.all_suppliers')}</option>
+        {fournisseurs.map(f => (
+          <option key={f.id} value={f.id}>{f.name}</option>
+        ))}
+      </select>
+
+      <button
+        type="button"
+        className="inline-flex items-center gap-2 h-9 px-4 rounded-xl border border-slate-200 text-xs font-bold text-slate-700 hover:bg-slate-50 transition-colors disabled:opacity-40"
+        onClick={onCopy}
+        disabled={copyDisabled}
+      >
+        📋 {t('stock:abc.filters.copy')}
+      </button>
+    </div>
+  )
+}
+
+// ─── AbcProductTable ──────────────────────────────────────────────────────────
+interface AbcProductTableProps {
+  produits: ProduitABC[]
+}
+
+function AbcProductTable({ produits }: AbcProductTableProps) {
+  const { t } = useTranslation(['stock', 'common'])
+  return (
+    <div className="flex-1 bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+      <div className="overflow-auto h-full">
+        <table className="w-full border-separate border-spacing-0 text-sm">
+          <thead>
+            <tr className="bg-slate-50 text-[11px] font-black text-slate-400 uppercase tracking-[0.12em]">
+              <th className="sticky top-0 bg-slate-50 py-3 pl-6 text-left border-b border-slate-200">{t('stock:abc.table.product')}</th>
+              <th className="sticky top-0 bg-slate-50 py-3 text-left border-b border-slate-200">{t('stock:abc.table.cip')}</th>
+              <th className="sticky top-0 bg-slate-50 py-3 text-left border-b border-slate-200">{t('stock:abc.table.rayon')}</th>
+              <th className="sticky top-0 bg-slate-50 py-3 text-right border-b border-slate-200 pr-4">{t('stock:abc.table.stock')}</th>
+              <th className="sticky top-0 bg-slate-50 py-3 text-right border-b border-slate-200">{t('stock:abc.table.qty_sold')}</th>
+              <th className="sticky top-0 bg-slate-50 py-3 text-right border-b border-slate-200">{t('stock:abc.table.sale_price')}</th>
+              <th className="sticky top-0 bg-slate-50 py-3 text-right border-b border-slate-200">{t('stock:abc.table.ca')}</th>
+              <th className="sticky top-0 bg-slate-50 py-3 text-right border-b border-slate-200">{t('stock:abc.table.ca_percent')}</th>
+              <th className="sticky top-0 bg-slate-50 py-3 text-right border-b border-slate-200 pr-6">{t('stock:abc.table.cumulated_percent')}</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-slate-100">
+            {produits.length === 0 ? (
+              <tr>
+                <td colSpan={9} className="text-center py-12 text-slate-400">
+                  {t('stock:abc.table.no_products')}
+                </td>
+              </tr>
+            ) : (
+              produits.map((p) => (
+                <tr key={p.id} className={`hover:bg-blue-50/30 transition-colors ${p.en_rupture ? 'bg-red-50/50' : ''}`}>
+                  <td className="py-2.5 pl-6 font-medium text-slate-700">
+                    {p.nom}
+                    {p.en_rupture && <span className="inline-flex items-center ml-2 px-1.5 py-0.5 rounded-full bg-red-100 text-red-600 text-[10px] font-bold">{t('stock:abc.table.shortage_badge')}</span>}
+                  </td>
+                  <td className="py-2.5 font-mono text-xs text-slate-400">{p.cip}</td>
+                  <td className="py-2.5 text-sm text-slate-600">{p.rayon}</td>
+                  <td className={`py-2.5 text-right font-bold pr-4 ${
+                    p.stock <= 0 ? 'text-red-500' : p.stock <= 5 ? 'text-amber-500' : 'text-slate-700'
+                  }`}>{p.stock}</td>
+                  <td className="py-2.5 text-right font-semibold text-blue-600">{formatNumber(p.quantite_vendue)}</td>
+                  <td className="py-2.5 text-right text-slate-600">{formatNumber(p.prix_vente)} {t('common:currency_symbol', { defaultValue: 'F' })}</td>
+                  <td className="py-2.5 text-right font-bold text-slate-800">{formatNumber(p.chiffre_affaires)} {t('common:currency_symbol', { defaultValue: 'F' })}</td>
+                  <td className="py-2.5 text-right text-slate-600">{p.pourcentage_ca.toFixed(0)}%</td>
+                  <td className="py-2.5 text-right text-slate-400 pr-6">{p.pourcentage_cumule.toFixed(1)}%</td>
+                </tr>
+              ))
+            )}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  )
+}
+
+// ─── Main Component ────────────────────────────────────────────────────────────
 export default function AnalyseABC() {
   const { t } = useTranslation(['stock', 'common'])
   const [data, setData] = useState<AnalyseABCData | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  
+
   // Filtres
   const [periode, setPeriode] = useState(6)
   const [rayonId, setRayonId] = useState<string>('')
   const [fournisseurId, setFournisseurId] = useState<string>('')
-  
+
   // Options de filtres
   const [rayons, setRayons] = useState<Rayon[]>([])
   const [fournisseurs, setFournisseurs] = useState<Fournisseur[]>([])
-  
+
   // Tab active
   const [activeTab, setActiveTab] = useState<'A' | 'B' | 'C'>('A')
-  
+
   // Charger les options de filtres
   useEffect(() => {
     const fetchOptions = async () => {
@@ -91,7 +218,7 @@ export default function AnalyseABC() {
         const params = new URLSearchParams({ periode: periode.toString() })
         if (rayonId) params.append('rayon_id', rayonId)
         if (fournisseurId) params.append('fournisseur_id', fournisseurId)
-        
+
         const response = await api.get(`produits/analyse_abc/?${params}`)
         setData(response.data)
       } catch (err: any) {
@@ -112,7 +239,7 @@ export default function AnalyseABC() {
   // Copier le tableau dans le presse-papier (format TSV pour Excel)
   const copyToClipboard = () => {
     if (!data) return
-    
+
     // En-têtes
     const headers = [
       t('stock:abc.table.product'),
@@ -126,7 +253,7 @@ export default function AnalyseABC() {
       t('stock:abc.table.cumulated_percent'),
       t('stock:abc.table.category', { defaultValue: 'Catégorie' })
     ]
-    
+
     // Lignes de données
     const rows = produitsFiltrés.map(p => [
       p.nom,
@@ -140,10 +267,10 @@ export default function AnalyseABC() {
       p.pourcentage_cumule.toFixed(1) + '%',
       p.categorie
     ])
-    
+
     // Construire le TSV
     const tsv = [headers.join('\t'), ...rows.map(r => r.join('\t'))].join('\n')
-    
+
     // Modern clipboard API
     navigator.clipboard.writeText(tsv)
       .then(() => {
@@ -188,49 +315,20 @@ export default function AnalyseABC() {
             {t('stock:abc.subtitle')}
           </p>
         </div>
-        
+
         {/* Filtres */}
-        <div className="flex flex-wrap gap-2">
-          <select 
-            className="h-9 px-3 rounded-xl border border-slate-200 bg-white text-xs font-bold text-slate-700 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all appearance-none"
-            value={periode}
-            onChange={(e) => setPeriode(Number(e.target.value))}
-          >
-            <option value={3}>{t('stock:abc.filters.months_3')}</option>
-            <option value={6}>{t('stock:abc.filters.months_6')}</option>
-            <option value={12}>{t('stock:abc.filters.months_12')}</option>
-          </select>
-          
-          <select 
-            className="h-9 px-3 rounded-xl border border-slate-200 bg-white text-xs font-bold text-slate-700 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all appearance-none"
-            value={rayonId}
-            onChange={(e) => setRayonId(e.target.value)}
-          >
-            <option value="">{t('stock:abc.filters.all_rayons')}</option>
-            {rayons.map(r => (
-              <option key={r.id} value={r.id}>{r.name}</option>
-            ))}
-          </select>
-          
-          <select 
-            className="h-9 px-3 rounded-xl border border-slate-200 bg-white text-xs font-bold text-slate-700 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all appearance-none"
-            value={fournisseurId}
-            onChange={(e) => setFournisseurId(e.target.value)}
-          >
-            <option value="">{t('stock:abc.filters.all_suppliers')}</option>
-            {fournisseurs.map(f => (
-              <option key={f.id} value={f.id}>{f.name}</option>
-            ))}
-          </select>
-          
-          <button 
-            className="inline-flex items-center gap-2 h-9 px-4 rounded-xl border border-slate-200 text-xs font-bold text-slate-700 hover:bg-slate-50 transition-colors disabled:opacity-40"
-            onClick={copyToClipboard}
-            disabled={!data || produitsFiltrés.length === 0}
-          >
-            📋 {t('stock:abc.filters.copy')}
-          </button>
-        </div>
+        <AbcFilterBar
+          periode={periode}
+          onPeriodeChange={setPeriode}
+          rayonId={rayonId}
+          onRayonChange={setRayonId}
+          fournisseurId={fournisseurId}
+          onFournisseurChange={setFournisseurId}
+          rayons={rayons}
+          fournisseurs={fournisseurs}
+          onCopy={copyToClipboard}
+          copyDisabled={!data || produitsFiltrés.length === 0}
+        />
       </div>
 
       {/* Alertes */}
@@ -254,19 +352,19 @@ export default function AnalyseABC() {
             <div className="text-2xl font-black text-blue-600">{formatNumber(data.ca_total)} F</div>
             <div className="text-xs text-slate-400 mt-1">{t('stock:abc.stats.period_info', { count: data.periode_mois })}</div>
           </div>
-          
+
           <div className="bg-red-50 rounded-xl border border-red-200 shadow-sm p-4">
             <div className="text-xs font-bold text-red-400 uppercase tracking-widest mb-1">🔴 {t('stock:abc.stats.category_a')}</div>
             <div className="text-2xl font-black text-red-600">{data.nb_produits_a}</div>
             <div className="text-xs text-red-400 mt-1">{formatNumber(data.ca_categorie_a)} F ({data.ca_total > 0 ? Math.round(data.ca_categorie_a / data.ca_total * 100) : 0}%)</div>
           </div>
-          
+
           <div className="bg-yellow-50 rounded-xl border border-yellow-200 shadow-sm p-4">
             <div className="text-xs font-bold text-yellow-600 uppercase tracking-widest mb-1">🟡 {t('stock:abc.stats.category_b')}</div>
             <div className="text-2xl font-black text-yellow-600">{data.nb_produits_b}</div>
             <div className="text-xs text-yellow-500 mt-1">{formatNumber(data.ca_categorie_b)} F ({data.ca_total > 0 ? Math.round(data.ca_categorie_b / data.ca_total * 100) : 0}%)</div>
           </div>
-          
+
           <div className="bg-emerald-50 rounded-xl border border-emerald-200 shadow-sm p-4">
             <div className="text-xs font-bold text-emerald-600 uppercase tracking-widest mb-1">🟢 {t('stock:abc.stats.category_c')}</div>
             <div className="text-2xl font-black text-emerald-600">{data.nb_produits_c}</div>
@@ -277,7 +375,8 @@ export default function AnalyseABC() {
 
       {/* Tabs */}
       <div className="flex bg-slate-100 p-1 rounded-xl mb-4 shrink-0 w-fit gap-1">
-        <button 
+        <button
+          type="button"
           className={`h-8 px-4 rounded-lg text-xs font-bold transition-all ${
             activeTab === 'A' ? 'bg-red-500 text-white shadow' : 'text-slate-500 hover:bg-slate-200'
           }`}
@@ -285,7 +384,8 @@ export default function AnalyseABC() {
         >
           🔴 {t('stock:abc.tabs.vital')} ({data?.nb_produits_a || 0})
         </button>
-        <button 
+        <button
+          type="button"
           className={`h-8 px-4 rounded-lg text-xs font-bold transition-all ${
             activeTab === 'B' ? 'bg-yellow-500 text-white shadow' : 'text-slate-500 hover:bg-slate-200'
           }`}
@@ -293,7 +393,8 @@ export default function AnalyseABC() {
         >
           🟡 {t('stock:abc.tabs.important')} ({data?.nb_produits_b || 0})
         </button>
-        <button 
+        <button
+          type="button"
           className={`h-8 px-4 rounded-lg text-xs font-bold transition-all ${
             activeTab === 'C' ? 'bg-emerald-500 text-white shadow' : 'text-slate-500 hover:bg-slate-200'
           }`}
@@ -304,53 +405,7 @@ export default function AnalyseABC() {
       </div>
 
       {/* Table */}
-      <div className="flex-1 bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
-        <div className="overflow-auto h-full">
-          <table className="w-full border-separate border-spacing-0 text-sm">
-            <thead>
-              <tr className="bg-slate-50 text-[11px] font-black text-slate-400 uppercase tracking-[0.12em]">
-                <th className="sticky top-0 bg-slate-50 py-3 pl-6 text-left border-b border-slate-200">{t('stock:abc.table.product')}</th>
-                <th className="sticky top-0 bg-slate-50 py-3 text-left border-b border-slate-200">{t('stock:abc.table.cip')}</th>
-                <th className="sticky top-0 bg-slate-50 py-3 text-left border-b border-slate-200">{t('stock:abc.table.rayon')}</th>
-                <th className="sticky top-0 bg-slate-50 py-3 text-right border-b border-slate-200 pr-4">{t('stock:abc.table.stock')}</th>
-                <th className="sticky top-0 bg-slate-50 py-3 text-right border-b border-slate-200">{t('stock:abc.table.qty_sold')}</th>
-                <th className="sticky top-0 bg-slate-50 py-3 text-right border-b border-slate-200">{t('stock:abc.table.sale_price')}</th>
-                <th className="sticky top-0 bg-slate-50 py-3 text-right border-b border-slate-200">{t('stock:abc.table.ca')}</th>
-                <th className="sticky top-0 bg-slate-50 py-3 text-right border-b border-slate-200">{t('stock:abc.table.ca_percent')}</th>
-                <th className="sticky top-0 bg-slate-50 py-3 text-right border-b border-slate-200 pr-6">{t('stock:abc.table.cumulated_percent')}</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100">
-              {produitsFiltrés.length === 0 ? (
-                <tr>
-                  <td colSpan={9} className="text-center py-12 text-slate-400">
-                    {t('stock:abc.table.no_products')}
-                  </td>
-                </tr>
-              ) : (
-                produitsFiltrés.map((p) => (
-                  <tr key={p.id} className={`hover:bg-blue-50/30 transition-colors ${p.en_rupture ? 'bg-red-50/50' : ''}`}>
-                    <td className="py-2.5 pl-6 font-medium text-slate-700">
-                      {p.nom}
-                      {p.en_rupture && <span className="inline-flex items-center ml-2 px-1.5 py-0.5 rounded-full bg-red-100 text-red-600 text-[10px] font-bold">{t('stock:abc.table.shortage_badge')}</span>}
-                    </td>
-                    <td className="py-2.5 font-mono text-xs text-slate-400">{p.cip}</td>
-                    <td className="py-2.5 text-sm text-slate-600">{p.rayon}</td>
-                    <td className={`py-2.5 text-right font-bold pr-4 ${
-                      p.stock <= 0 ? 'text-red-500' : p.stock <= 5 ? 'text-amber-500' : 'text-slate-700'
-                    }`}>{p.stock}</td>
-                    <td className="py-2.5 text-right font-semibold text-blue-600">{formatNumber(p.quantite_vendue)}</td>
-                    <td className="py-2.5 text-right text-slate-600">{formatNumber(p.prix_vente)} {t('common:currency_symbol', { defaultValue: 'F' })}</td>
-                    <td className="py-2.5 text-right font-bold text-slate-800">{formatNumber(p.chiffre_affaires)} {t('common:currency_symbol', { defaultValue: 'F' })}</td>
-                    <td className="py-2.5 text-right text-slate-600">{p.pourcentage_ca.toFixed(0)}%</td>
-                    <td className="py-2.5 text-right text-slate-400 pr-6">{p.pourcentage_cumule.toFixed(1)}%</td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
-      </div>
+      <AbcProductTable produits={produitsFiltrés} />
 
       {/* Footer */}
       <div className="mt-4 text-xs text-slate-400 text-center shrink-0">

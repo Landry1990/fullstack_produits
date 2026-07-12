@@ -71,7 +71,7 @@ export default function CatalogDCIAddModal({
     const toAdd = results.filter(r => selected.has(r.id) && !isAlreadyLinked(r));
     const errors: string[] = [];
 
-    for (const prod of toAdd) {
+    const results_all = await Promise.all(toAdd.map(async (prod) => {
       try {
         const currentSubs = new Set(prod.substances || []);
         currentSubs.add(substance.id);
@@ -80,11 +80,13 @@ export default function CatalogDCIAddModal({
           substances: Array.from(currentSubs),
           substance_active: substance.nom,
         });
+        return null;
       } catch (err: any) {
         const msg = err.response?.data?.detail || err.message;
-        errors.push(`${prod.name}: ${msg}`);
+        return `${prod.name}: ${msg}`;
       }
-    }
+    }));
+    results_all.forEach((msg) => { if (msg) errors.push(msg); });
 
     setAdding(false);
     if (errors.length > 0) {

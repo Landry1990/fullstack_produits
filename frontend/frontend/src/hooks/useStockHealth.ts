@@ -1,12 +1,25 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import api from '../services/api';
 
+export interface ScoreComponent {
+    score: number;
+    rate: number;
+    weight: number;
+}
+
 export interface StockHealthData {
     health_score: number;
     availability_rate: number;
     rotation_rate: number;
     availability_weight: number;
     rotation_weight: number;
+    score_details?: {
+        disponibilite: ScoreComponent;
+        fluidite: ScoreComponent;
+        couverture: ScoreComponent;
+        activite: ScoreComponent;
+        immobilisation: ScoreComponent;
+    };
     dead_stock: {
         value: number;
         count: number;
@@ -20,8 +33,22 @@ export interface StockHealthData {
     critical_alerts: {
         soon_out_of_stock_count: number;
         soon_out_of_stock_value: number;
+        rupture_count?: number;
     };
+    top_penalties?: MatrixProduct[];
     total_stock_value: number;
+}
+
+export interface MatrixProduct {
+    id: number;
+    name: string;
+    cip: string;
+    quadrant: 'MOTEUR' | 'HEMORRAGIE' | 'SOMNIFERE' | 'NEUTRE';
+    days_since_sale: number;
+    stock_value: number;
+    impact_pts: number;
+    rotation?: number;
+    days_until_stockout?: number | null;
 }
 
 export const useStockHealth = () => {

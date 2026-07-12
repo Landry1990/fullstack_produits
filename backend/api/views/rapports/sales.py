@@ -5,6 +5,7 @@ from django.db.models import Sum, DecimalField, Count, F, Q, Value
 from django.db.models.functions import TruncMonth, Coalesce
 from django.utils import timezone
 from datetime import datetime, timedelta
+from .tz_utils import parse_api_datetime
 from decimal import Decimal
 from api.models import Facture, FactureProduit, FactureProduitAllocation, Fournisseur
 from django.utils.formats import date_format
@@ -20,16 +21,10 @@ class RapportSalesMixin:
     def stats_vendeurs(self, request):
         db_str, df_str = request.query_params.get('date_debut'), request.query_params.get('date_fin')
         if not db_str or not df_str: return Response({'error': 'Dates requises'}, status=400)
-        try:
-            date_debut = timezone.make_aware(datetime.fromisoformat(db_str.replace('Z', '+00:00')))
-            date_fin = timezone.make_aware(datetime.fromisoformat(df_str.replace('Z', '+00:00')))
-            # Si l'heure n'est pas précisée (minuit), on prend la journée entière
-            if date_fin.hour == 0 and date_fin.minute == 0:
-                date_fin += timedelta(days=1)
-            else:
-                # Sinon on s'assure d'inclure les secondes si le sélecteur s'arrête à la minute (ex: 23:59)
-                date_fin += timedelta(minutes=1)
-        except: return Response({'error': 'Date invalide'}, status=400)
+        date_debut = parse_api_datetime(db_str)
+        date_fin = parse_api_datetime(df_str, end_of_day=True)
+        if date_debut is None or date_fin is None:
+            return Response({'error': 'Date invalide'}, status=400)
 
         # ── 1 seule requête GROUP BY created_by ────────────────────────────
         from django.contrib.auth import get_user_model
@@ -78,10 +73,10 @@ class RapportSalesMixin:
         db_str, df_str = request.query_params.get('date_debut'), request.query_params.get('date_fin')
         fmt = request.query_params.get('format')
         if not db_str or not df_str: return Response({'error': 'Dates requises'}, status=400)
-        try:
-            date_debut, date_fin = timezone.make_aware(datetime.fromisoformat(db_str.replace('Z', '+00:00'))), timezone.make_aware(datetime.fromisoformat(df_str.replace('Z', '+00:00')))
-            if date_fin.hour == 0 and date_fin.minute == 0: date_fin += timedelta(days=1)
-        except: return Response({'error': 'Date invalide'}, status=400)
+        date_debut = parse_api_datetime(db_str)
+        date_fin = parse_api_datetime(df_str, end_of_day=True)
+        if date_debut is None or date_fin is None:
+            return Response({'error': 'Date invalide'}, status=400)
 
         # ── 1 seule requête GROUP BY client ─────────────────────────────────
         rows = (
@@ -260,11 +255,10 @@ class RapportSalesMixin:
         df_str = request.query_params.get('date_fin')
         fid = request.query_params.get('fournisseur_id')
         
-        try:
-            date_debut = timezone.make_aware(datetime.fromisoformat(db_str.replace('Z', '+00:00'))) if db_str else timezone.now() - timedelta(days=30)
-            date_fin = timezone.make_aware(datetime.fromisoformat(df_str.replace('Z', '+00:00'))) if df_str else timezone.now()
-            if date_fin.hour == 0 and date_fin.minute == 0: date_fin += timedelta(days=1)
-        except: return Response({'error': 'Dates invalides'}, status=400)
+        date_debut = parse_api_datetime(db_str) if db_str else timezone.now() - timedelta(days=30)
+        date_fin = parse_api_datetime(df_str, end_of_day=True) if df_str else timezone.now()
+        if date_debut is None or date_fin is None:
+            return Response({'error': 'Dates invalides'}, status=400)
 
         # Base QuerySet: Filtrage sur les factures validées/payées ayant au moins un paiement
         # On utilise FactureProduitAllocation pour la précision des marges (prix d'achat réel du lot)

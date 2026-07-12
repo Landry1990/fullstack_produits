@@ -163,7 +163,7 @@ export function generateClotureTemplate(
 /**
  * Template pour un bon de promis
  */
-export function generatePromisTemplate(
+function generatePromisTemplate(
   promis: PromisData
 ): string {
   return `
@@ -213,7 +213,7 @@ export function generatePromisTemplate(
 /**
  * Template pour un état de stock par rayon
  */
-export function generateStockRayonTemplate(
+function generateStockRayonTemplate(
   data: StockRayonData
 ): string {
   return `
@@ -262,7 +262,7 @@ export function generateStockRayonTemplate(
 /**
  * Template pour un inventaire (Thermal 80mm format)
  */
-export function generateInventaireTemplate(
+function generateInventaireTemplate(
   inventaire: {
     id: number;
     date: string;
@@ -338,7 +338,7 @@ export function generateInventaireTemplate(
   `;
 }
 
-export default {
+const printTemplates = {
   generateClotureTemplate,
   generatePromisTemplate,
   generateStockRayonTemplate,
