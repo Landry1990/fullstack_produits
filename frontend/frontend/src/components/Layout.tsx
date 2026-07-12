@@ -3,7 +3,8 @@ import { Outlet } from 'react-router-dom'
 import Sidebar from './Sidebar'
 import UserHeader from './common/UserHeader'
 import Omnisearch from './common/Omnisearch'
-import { SidebarProvider, useSidebar } from '../context/SidebarContext'
+import { SidebarProvider } from '../context/SidebarContext'
+import { useSidebar } from '../hooks/useSidebar'
 import LicenceExpirationBanner from './LicenceExpirationBanner'
 
 function LayoutContent() {

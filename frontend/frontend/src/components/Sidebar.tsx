@@ -1,19 +1,19 @@
 import { NavLink, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { useSidebar } from '../context/SidebarContext';
+import { useSidebar } from '../hooks/useSidebar';
 import { useLicence } from '../context/LicenceContext';
 import ZenithLogo from './ZenithLogo';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useReapproStats } from '../hooks/useDashboard';
-import { LogOut, ChevronLeft, ChevronRight, ChevronDown, Menu, X } from 'lucide-react';
+import { ChevronLeft, ChevronRight, ChevronDown, Menu, X } from 'lucide-react';
 import { formatVersion } from '../version';
 import { cn } from '../lib/utils';
 
 
 export default function Sidebar() {
   const { t } = useTranslation(['sidebar', 'common']);
-  const { user, logout } = useAuth();
+  const { user } = useAuth();
   const { licence } = useLicence();
   const { isOpen, isCollapsed, toggleSidebar, closeSidebar, toggleCollapse } = useSidebar();
   const location = useLocation();
@@ -221,10 +221,10 @@ export default function Sidebar() {
   ];
 
   // Logic to calculate menuItems based on authentication
-  const menuItems = allMenuItems.flatMap(item => {
+  const menuItems = useMemo(() => allMenuItems.flatMap(item => {
     if (user?.is_superuser) return [item];
     
-    const allowed = (user as any)?.allowed_menus || [];
+    const allowed = (user as { allowed_menus?: string[] } | undefined)?.allowed_menus || [];
     const allowedSet = new Set(allowed);
     
     // 1. Explicit parent permission
@@ -260,7 +260,7 @@ export default function Sidebar() {
     const adminOnlyKeys = ['utilisateurs', 'user_sessions', 'audit', 'import_dci', 'maintenance', 'corbeille'];
     if (adminOnlyKeys.includes(item.key)) return [];
     return (hasExplicitParent || hasLegacyCategory || allowedSet.has(item.key)) ? [item] : [];
-  });
+  }), [user, t]);
 
 
 
@@ -280,18 +280,11 @@ export default function Sidebar() {
         setOpenMenu(null);
       }
     }
-  }, []);
+  }, [location.pathname, menuItems]);
 
   const toggleMenu = (key: string) => {
     setOpenMenu(prev => prev === key ? null : key);
   }
-
-  const userInitials = user
-    ? `${user.first_name?.[0] ?? ''}${user.last_name?.[0] ?? ''}`.toUpperCase() || user.username?.[0]?.toUpperCase() || '?'
-    : '?';
-  const userFullName = user
-    ? `${user.first_name ?? ''} ${user.last_name ?? ''}`.trim() || user.username
-    : '';
 
   return (
     <>

@@ -27,10 +27,18 @@ import {
   Clock,
   PlayCircle,
   StopCircle,
-  X,
   List,
   CalendarDays
 } from 'lucide-react'
+
+interface DetailsPaiement {
+  [mode: string]: string | number | undefined
+}
+
+interface DetailsMeta {
+  total_ca_pharmacie?: number
+  total_ca_divers?: number
+}
 
 interface ClotureCaisse {
   id: number
@@ -41,7 +49,8 @@ interface ClotureCaisse {
   total_ventes: string | number
   total_entrees: string | number
   total_sorties: string | number
-  details_paiement: Record<string, any>
+  details_paiement: DetailsPaiement
+  poste_caisse_nom?: string
   date_debut: string | null
   date_fin: string | null
   user: number | null
@@ -94,7 +103,7 @@ export default function HistoriqueClotures() {
   const [selectedSession, setSelectedSession] = useState<SessionCaisse | null>(null)
   
   // Utilisateurs pour le filtrage
-  const [users, setUsers] = useState<any[]>([])
+  const [users, setUsers] = useState<{ id: string | number; username: string; first_name?: string; last_name?: string }[]>([])
   const [selectedUser, setSelectedUser] = useState<string>('')
   
   // Filtres — par défaut : mois en cours
@@ -113,10 +122,10 @@ export default function HistoriqueClotures() {
   const [totalItems, setTotalItems] = useState(0)
   
   // Totaux globaux de la période
-  const [globalTotals, setGlobalTotals] = useState<any>(null)
+  const [globalTotals, setGlobalTotals] = useState<Record<string, string | number> | null>(null)
 
   // Multi-Caisse
-  const [postesCaisses, setPostesCaisses] = useState<any[]>([])
+  const [postesCaisses, setPostesCaisses] = useState<{ id: string | number; nom: string }[]>([])
   const [selectedPosteCaisse, setSelectedPosteCaisse] = useState<string>('')
   const [isMultiCaisse, setIsMultiCaisse] = useState(false)
   
@@ -161,7 +170,7 @@ export default function HistoriqueClotures() {
   const fetchClotures = useCallback(async (page = currentPage) => {
     setLoading(true)
     try {
-      const params: Record<string, any> = {
+      const params: Record<string, string | number | undefined> = {
         page,
         page_size: pageSize
       }
@@ -451,7 +460,7 @@ export default function HistoriqueClotures() {
                     className="w-full h-9 px-3 rounded-lg bg-slate-100 border border-slate-200 text-sm text-slate-700 focus:outline-none focus:border-emerald-300 focus:ring-2 focus:ring-emerald-100 transition-all font-medium"
                 >
                     <option value="">👤 {t('filters.all_cashiers') || 'Tous les caissiers'}</option>
-                    {users.map((u: any) => (
+                    {users.map((u) => (
                         <option key={u.id} value={u.id}>
                             {u.first_name ? `${u.first_name} ${u.last_name || ''}` : u.username}
                         </option>
@@ -473,7 +482,7 @@ export default function HistoriqueClotures() {
                         className="w-full h-9 px-3 rounded-lg bg-slate-100 border border-slate-200 text-sm text-slate-700 focus:outline-none focus:border-emerald-300 focus:ring-2 focus:ring-emerald-100 transition-all font-medium"
                     >
                         <option value="">🖥️ Tous les postes</option>
-                        {postesCaisses.map((p: any) => (
+                        {postesCaisses.map((p) => (
                             <option key={p.id} value={p.id}>{p.nom}</option>
                         ))}
                     </select>
@@ -853,7 +862,7 @@ export default function HistoriqueClotures() {
                         {isMultiCaisse && (
                            <td className="py-3 px-4 align-middle">
                              <span className="font-medium text-sm text-slate-700">
-                               {(cloture as any).poste_caisse_nom || '-'}
+                               {cloture.poste_caisse_nom || '-'}
                              </span>
                            </td>
                         )}
@@ -1034,10 +1043,10 @@ export default function HistoriqueClotures() {
 
       {/* Modal détails */}
       {selectedCloture && (
-        <dialog open className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm w-full h-full p-0 m-0 border-none">
+        <dialog open aria-labelledby="cloture-detail-title" className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm w-full h-full p-0 m-0 border-none">
           <div className="w-full max-w-xl p-0 overflow-hidden rounded-2xl bg-white shadow-2xl max-h-[90vh] flex flex-col">
             <div className="bg-emerald-600 p-6 text-white shrink-0">
-              <h3 className="font-bold text-xl flex items-center gap-3">
+              <h3 id="cloture-detail-title" className="font-bold text-xl flex items-center gap-3">
                 <Banknote className="size-6" />
                 {t('modal.title')}
               </h3>
@@ -1088,9 +1097,9 @@ export default function HistoriqueClotures() {
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                   <div className="bg-white border border-slate-200 p-3 rounded-lg text-center flex flex-col justify-center relative">
                     <div className="text-xs opacity-60 font-bold">{t('modal.ventes')} : {formatMoney(selectedCloture.total_ventes)}</div>
-                    <div className="text-[10px] mt-1 text-slate-500">Pharmacie: {formatMoney(selectedCloture.details_paiement?.__meta__?.total_ca_pharmacie ?? selectedCloture.total_ventes)}</div>
-                    {(selectedCloture.details_paiement?.__meta__?.total_ca_divers ?? 0) > 0 && (
-                      <div className="text-[10px] text-slate-500">Diverses: {formatMoney(selectedCloture.details_paiement?.__meta__?.total_ca_divers)}</div>
+                    <div className="text-[10px] mt-1 text-slate-500">Pharmacie: {formatMoney((selectedCloture.details_paiement?.__meta__ as DetailsMeta | undefined)?.total_ca_pharmacie ?? selectedCloture.total_ventes)}</div>
+                    {((selectedCloture.details_paiement?.__meta__ as DetailsMeta | undefined)?.total_ca_divers ?? 0) > 0 && (
+                      <div className="text-[10px] text-slate-500">Diverses: {formatMoney((selectedCloture.details_paiement?.__meta__ as DetailsMeta | undefined)?.total_ca_divers || 0)}</div>
                     )}
                   </div>
                   <div className="bg-emerald-50 border border-emerald-200 p-3 rounded-lg text-center">
@@ -1120,7 +1129,7 @@ export default function HistoriqueClotures() {
                           {(mode === 'om' || mode === 'momo') && '📱'}
                           {getModeLabel(mode)}
                         </span>
-                        <span className="font-semibold">{formatMoney(montant)}</span>
+                        <span className="font-semibold">{formatMoney(montant ?? 0)}</span>
                       </div>
                     )] : [])}
                   </div>
@@ -1155,10 +1164,10 @@ export default function HistoriqueClotures() {
 
       {/* Modal Détail Session de Caisse */}
       {selectedSession && (
-        <dialog open className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm w-full h-full p-0 m-0 border-none">
+        <dialog open aria-labelledby="session-detail-title" className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm w-full h-full p-0 m-0 border-none">
           <div className="w-full max-w-lg p-0 overflow-hidden rounded-2xl bg-white shadow-2xl max-h-[90vh] flex flex-col">
             <div className={cn("p-6 shrink-0", selectedSession.est_active ? 'bg-emerald-600 text-white' : 'bg-emerald-600 text-white')}>
-              <h3 className="font-bold text-xl flex items-center gap-3">
+              <h3 id="session-detail-title" className="font-bold text-xl flex items-center gap-3">
                 <Clock className="size-6" />
                 Détail de la session
               </h3>

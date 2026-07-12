@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { usePharmacySettings, type PharmacySettings } from '../../hooks/usePharmacySettings'
 import { useTVA } from '../../hooks/useTVA'
+import type { TVA } from '../../types'
 import { useInvoiceSettings } from '../../hooks/useInvoiceSettings'
 import { getApiErrorDetail } from '../../utils/errorHandling'
 import {
@@ -29,20 +30,109 @@ import {
   Lock
 } from 'lucide-react'
 import { Button } from '../ui/Button'
-import { Card } from '../ui/Card'
-import { Input } from '../ui/Input'
-import { Label } from '../ui/Label'
-import { Checkbox } from '../ui/Checkbox'
-import { Select } from '../ui/Select'
-import { Textarea } from '../ui/Textarea'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/Tabs'
-import {
-  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
-} from '../ui/Table'
-import { Badge } from '../ui/Badge'
 import { getConfigurablePaymentModes, getPaymentModeLabel } from '../../config/paymentModes'
 
 type TabId = 'general' | 'printing' | 'stocks' | 'tva' | 'notifications' | 'reports'
+
+function TVARow({ tva, onDelete, t }: { tva: TVA; onDelete: (id: number) => void; t: (key: string) => string }) {
+  return (
+    <tr className="hover:bg-primary/10/50 transition-colors group">
+      <td className="font-black text-2xl text-primary">{tva.taux}%</td>
+      <td className="font-medium text-base-content/60">{tva.libelle || '-'}</td>
+      <td>
+        {tva.is_active ? (
+          <span className="badge badge-success badge-md font-bold px-4 py-3 rounded-lg shadow-sm shadow-success/20">{t('tva.active')}</span>
+        ) : (
+          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-base-200 text-base-content/70 border border-base-300 badge-md font-medium px-4 py-3 rounded-lg opacity-60">{t('tva.inactive')}</span>
+        )}
+      </td>
+      <td className="text-right">
+        <button
+          type="button"
+          onClick={() => onDelete(tva.id)}
+          className="inline-flex items-center gap-1.5 px-3 py-2 text-base-content/70 hover:bg-base-200 rounded-lg text-sm font-medium transition-colors btn-circle text-error hover:bg-error/10 scale-90 group-hover:scale-100 transition-all opacity-0 group-hover:"
+          title={t('tva.delete')}
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+          </svg>
+        </button>
+      </td>
+    </tr>
+  )
+}
+
+function TVATable({ tvaList, loadingTVA, deleteTVA, t }: { tvaList: TVA[]; loadingTVA: boolean; deleteTVA: (id: number) => void; t: (key: string) => string }) {
+  return (
+    <div className="overflow-x-auto rounded-2xl border border-base-200">
+      <table className="table table-zebra table-lg">
+        <thead className="bg-base-200">
+          <tr>
+            <th className="font-bold text-base-content/60">{t('tva.rate')}</th>
+            <th className="font-bold text-base-content/60">{t('tva.label')}</th>
+            <th className="font-bold text-base-content/60">{t('tva.status')}</th>
+            <th className="text-right font-bold text-base-content/60">{t('tva.actions')}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {loadingTVA ? (
+            <tr><td colSpan={4} className="text-center p-12"><span className="inline-block size-8 border-2 border-base-300 border-t-indigo-600 rounded-full animate-spin text-primary"></span></td></tr>
+          ) : !Array.isArray(tvaList) || tvaList.length === 0 ? (
+            <tr><td colSpan={4} className="text-center p-12 opacity-40 italic">{t('tva.empty')}</td></tr>
+          ) : (
+            tvaList.map(tva => <TVARow key={tva.id} tva={tva} onDelete={deleteTVA} t={t} />)
+          )}
+        </tbody>
+      </table>
+    </div>
+  )
+}
+
+function TVAForm({ t, newTvaRate, setNewTvaRate, newTvaLabel, setNewTvaLabel, addingTva, handleAddTva }: { t: (key: string) => string; newTvaRate: string; setNewTvaRate: (v: string) => void; newTvaLabel: string; setNewTvaLabel: (v: string) => void; addingTva: boolean; handleAddTva: () => void }) {
+  return (
+    <div className="bg-base-200 p-8 rounded-[2rem] border border-base-200">
+      <h3 className="font-bold text-lg mb-6 flex items-center gap-3">
+        <Settings className="size-5 text-primary" />
+        {t('tva.add_title')}
+      </h3>
+      <div className="flex flex-col md:flex-row gap-6 items-end">
+        <div className="flex flex-col gap-1 w-full md:w-48">
+          <label className="label"><span className="text-sm font-bold text-base-content font-bold text-base-content/60">{t('tva.rate')} *</span></label>
+          <div className="relative">
+            <input
+              type="number"
+              step="0.01"
+              placeholder="0.00"
+              className="input input-bordered w-full focus:input-primary h-12 rounded-xl font-bold pr-10"
+              value={newTvaRate}
+              onChange={e => setNewTvaRate(e.target.value)}
+            />
+            <div className="absolute right-4 top-1/2 -translate-y-1/2 font-bold text-base-content/30">%</div>
+          </div>
+        </div>
+        <div className="flex flex-col gap-1 w-full md:flex-1">
+          <label className="label"><span className="text-sm font-bold text-base-content font-bold text-base-content/60">{t('tva.label')}</span></label>
+          <input
+            type="text"
+            placeholder={t('placeholders.tva_label')}
+            className="input input-bordered w-full focus:input-primary h-12 rounded-xl"
+            value={newTvaLabel}
+            onChange={e => setNewTvaLabel(e.target.value)}
+          />
+        </div>
+        <button
+          type="button"
+          className="inline-flex items-center justify-center px-4 py-2 bg-primary text-white rounded-lg text-sm font-bold hover:bg-primary-focus transition-colors shadow-sm h-12 px-10 rounded-xl shadow-lg shadow-primary/30 font-bold"
+          onClick={handleAddTva}
+          disabled={addingTva || !newTvaRate}
+        >
+          {addingTva ? <span className="loading loading-spinner"></span> : t('tva.add_btn')}
+        </button>
+      </div>
+    </div>
+  )
+}
 
 export default function PharmacySettingsForm() {
   const { t } = useTranslation('pharmacy_settings')
@@ -68,7 +158,7 @@ export default function PharmacySettingsForm() {
     }
   }, [settings])
 
-  const handleChange = (field: keyof PharmacySettings, value: any) => {
+  const handleChange = (field: keyof PharmacySettings, value: unknown) => {
     setFormData(prev => ({ ...prev, [field]: value }))
   }
   
@@ -653,7 +743,7 @@ export default function PharmacySettingsForm() {
                         </label>
                         <select
                           value={formData.ticket_paper_width || 80}
-                          onChange={(e) => handleChange('ticket_paper_width', parseInt(e.target.value) as any)}
+                          onChange={(e) => handleChange('ticket_paper_width', parseInt(e.target.value))}
                           className="select select-bordered w-full h-12 rounded-xl focus:select-primary"
                         >
                           <option value={80}>{t('labels.paper_standard')}</option>
@@ -723,7 +813,7 @@ export default function PharmacySettingsForm() {
                           <input
                             type="number"
                             value={formData.low_stock_threshold_days || 15}
-                            onChange={(e) => handleChange('low_stock_threshold_days', parseInt(e.target.value) as any)}
+                            onChange={(e) => handleChange('low_stock_threshold_days', parseInt(e.target.value))}
                             className="input input-bordered w-full h-12 rounded-xl focus:input-primary"
                           />
                           <label className="label">
@@ -739,7 +829,7 @@ export default function PharmacySettingsForm() {
                           <input
                             type="number"
                             value={formData.dormant_stock_days || 90}
-                            onChange={(e) => handleChange('dormant_stock_days', parseInt(e.target.value) as any)}
+                            onChange={(e) => handleChange('dormant_stock_days', parseInt(e.target.value))}
                             className="input input-bordered w-full h-12 rounded-xl focus:input-primary"
                           />
                           <label className="label">
@@ -882,105 +972,30 @@ export default function PharmacySettingsForm() {
 
             {/* --- TAB: TVA --- */}
             <TabsContent value="tva" className="mt-0 data-[state=inactive]:hidden space-y-8">
-                <div className="card bg-base-100 shadow-xl shadow-base-content/5 border border-base-200 overflow-hidden rounded-2xl">
-                  <div className="p-0">
-                    <div className="px-8 py-5 border-b border-base-200 bg-base-50/50">
-                      <h2 className="font-bold text-xl flex items-center gap-3">
-                        <div className="p-2 bg-primary/10 rounded-lg">
-                          <Percent className="h-5 w-5 text-primary" />
-                        </div>
-                        {t('sections.tva')}
-                      </h2>
-                    </div>
-                    <div className="p-8 space-y-8">
-                      <div className="overflow-x-auto rounded-2xl border border-base-200">
-                        <table className="table table-zebra table-lg">
-                          <thead className="bg-base-200">
-                            <tr>
-                              <th className="font-bold text-base-content/60">{t('tva.rate')}</th>
-                              <th className="font-bold text-base-content/60">{t('tva.label')}</th>
-                              <th className="font-bold text-base-content/60">{t('tva.status')}</th>
-                              <th className="text-right font-bold text-base-content/60">{t('tva.actions')}</th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {loadingTVA ? (
-                              <tr><td colSpan={4} className="text-center p-12"><span className="inline-block size-8 border-2 border-base-300 border-t-indigo-600 rounded-full animate-spin text-primary"></span></td></tr>
-                            ) : !Array.isArray(tvaList) || tvaList.length === 0 ? (
-                              <tr><td colSpan={4} className="text-center p-12 opacity-40 italic">{t('tva.empty')}</td></tr>
-                            ) : (
-                              tvaList.map(tva => (
-                                <tr key={tva.id} className="hover:bg-primary/10/50 transition-colors group">
-                                  <td className="font-black text-2xl text-primary">{tva.taux}%</td>
-                                  <td className="font-medium text-base-content/60">{tva.libelle || '-'}</td>
-                                  <td>
-                                    {tva.is_active ? 
-                                      <span className="badge badge-success badge-md font-bold px-4 py-3 rounded-lg shadow-sm shadow-success/20">{t('tva.active')}</span> : 
-                                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-base-200 text-base-content/70 border border-base-300 badge-md font-medium px-4 py-3 rounded-lg opacity-60">{t('tva.inactive')}</span>
-                                    }
-                                  </td>
-                                  <td className="text-right">
-                                    <button 
-                                        type="button"
-                                        onClick={() => deleteTVA(tva.id)} 
-                                        className="inline-flex items-center gap-1.5 px-3 py-2 text-base-content/70 hover:bg-base-200 rounded-lg text-sm font-medium transition-colors btn-circle text-error hover:bg-error/10 scale-90 group-hover:scale-100 transition-all opacity-0 group-hover:"
-                                        title={t('tva.delete')}
-                                    >
-                                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                                        </svg>
-                                    </button>
-                                  </td>
-                                </tr>
-                              ))
-                            )}
-                          </tbody>
-                        </table>
+              <div className="card bg-base-100 shadow-xl shadow-base-content/5 border border-base-200 overflow-hidden rounded-2xl">
+                <div className="p-0">
+                  <div className="px-8 py-5 border-b border-base-200 bg-base-50/50">
+                    <h2 className="font-bold text-xl flex items-center gap-3">
+                      <div className="p-2 bg-primary/10 rounded-lg">
+                        <Percent className="h-5 w-5 text-primary" />
                       </div>
-
-                      <div className="bg-base-200 p-8 rounded-[2rem] border border-base-200">
-                          <h3 className="font-bold text-lg mb-6 flex items-center gap-3">
-                            <Settings className="size-5 text-primary" />
-                            {t('tva.add_title')}
-                          </h3>
-                          <div className="flex flex-col md:flex-row gap-6 items-end">
-                              <div className="flex flex-col gap-1 w-full md:w-48">
-                                  <label className="label"><span className="text-sm font-bold text-base-content font-bold text-base-content/60">{t('tva.rate')} *</span></label>
-                                  <div className="relative">
-                                    <input 
-                                        type="number" 
-                                        step="0.01" 
-                                        placeholder="0.00" 
-                                        className="input input-bordered w-full focus:input-primary h-12 rounded-xl font-bold pr-10" 
-                                        value={newTvaRate}
-                                        onChange={e => setNewTvaRate(e.target.value)}
-                                    />
-                                    <div className="absolute right-4 top-1/2 -translate-y-1/2 font-bold text-base-content/30">%</div>
-                                  </div>
-                              </div>
-                              <div className="flex flex-col gap-1 w-full md:flex-1">
-                                  <label className="label"><span className="text-sm font-bold text-base-content font-bold text-base-content/60">{t('tva.label')}</span></label>
-                                  <input 
-                                       type="text" 
-                                      placeholder={t('placeholders.tva_label')} 
-                                      className="input input-bordered w-full focus:input-primary h-12 rounded-xl"
-                                      value={newTvaLabel}
-                                      onChange={e => setNewTvaLabel(e.target.value)}
-                                  />
-                              </div>
-                              <button 
-                                  type="button" 
-                                  className="inline-flex items-center justify-center px-4 py-2 bg-primary text-white rounded-lg text-sm font-bold hover:bg-primary-focus transition-colors shadow-sm h-12 px-10 rounded-xl shadow-lg shadow-primary/30 font-bold"
-                                  onClick={handleAddTva}
-                                  disabled={addingTva || !newTvaRate}
-                              >
-                                  {addingTva ? <span className="loading loading-spinner"></span> : t('tva.add_btn')}
-                              </button>
-                          </div>
-                      </div>
-                    </div>
+                      {t('sections.tva')}
+                    </h2>
+                  </div>
+                  <div className="p-8 space-y-8">
+                    <TVATable tvaList={tvaList} loadingTVA={loadingTVA} deleteTVA={deleteTVA} t={t} />
+                    <TVAForm
+                      t={t}
+                      newTvaRate={newTvaRate}
+                      setNewTvaRate={setNewTvaRate}
+                      newTvaLabel={newTvaLabel}
+                      setNewTvaLabel={setNewTvaLabel}
+                      addingTva={addingTva}
+                      handleAddTva={handleAddTva}
+                    />
                   </div>
                 </div>
+              </div>
             </TabsContent>
 
             {/* --- TAB: NOTIFICATIONS --- */}

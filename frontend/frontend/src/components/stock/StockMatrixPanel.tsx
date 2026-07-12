@@ -126,7 +126,7 @@ const StockMatrixPanel: React.FC<StockMatrixPanelProps> = ({ data, products }) =
     const stats = useMemo(() => computeMatrixStats(data), [data]);
 
     return (
-        <div className="space-y-6">
+        <div className="space-y-3">
 
             {/* ── Bloc Score + Diagnostic ───────────────────────────────── */}
             <ScoreCard data={data} diagnostic={diagnostic} />
@@ -155,10 +155,10 @@ const ScoreCard: React.FC<{ data: StockHealthData; diagnostic: string }> = ({ da
     const offset = circumference * (1 - score / 100);
 
     return (
-        <div className="bg-white rounded-2xl border border-slate-200 p-6 flex flex-col sm:flex-row items-start sm:items-center gap-6">
+        <div className="bg-white rounded-2xl border border-slate-200 p-3 flex flex-col sm:flex-row items-start sm:items-center gap-3">
             {/* Ring */}
-            <div className="relative size-32 shrink-0 mx-auto sm:mx-0">
-                <svg className="size-32 -rotate-90" viewBox="0 0 120 120">
+            <div className="relative size-20 shrink-0 mx-auto sm:mx-0">
+                <svg className="size-20 -rotate-90" viewBox="0 0 120 120">
                     <circle cx="60" cy="60" r="52" fill="none" stroke="#f1f5f9" strokeWidth="10" />
                     <circle
                         cx="60" cy="60" r="52" fill="none"
@@ -170,15 +170,15 @@ const ScoreCard: React.FC<{ data: StockHealthData; diagnostic: string }> = ({ da
                     />
                 </svg>
                 <div className="absolute inset-0 flex flex-col items-center justify-center">
-                    <span className="text-4xl font-black text-slate-800">{Math.round(score)}</span>
-                    <span className="text-sm text-slate-400 font-semibold">/100</span>
+                    <span className="text-2xl font-black text-slate-800">{Math.round(score)}</span>
+                    <span className="text-[10px] text-slate-400 font-semibold">/100</span>
                 </div>
             </div>
 
             {/* Texte */}
             <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 mb-0.5">
-                    <span className="text-xs font-semibold uppercase tracking-widest text-slate-500">Score de Santé</span>
+                    <span className="text-[10px] font-semibold uppercase tracking-widest text-slate-500">Score de Santé</span>
                     <div className="relative group/tooltip">
                         <Info className="size-3.5 text-slate-300 hover:text-slate-500 cursor-help" />
                         <div className="absolute left-0 bottom-full mb-2 w-64 hidden group-hover/tooltip:block z-50 bg-white border border-slate-200 rounded-xl shadow-lg p-4 text-left">
@@ -193,23 +193,23 @@ const ScoreCard: React.FC<{ data: StockHealthData; diagnostic: string }> = ({ da
                         </div>
                     </div>
                 </div>
-                <p className="text-lg font-bold text-slate-800">{scoreLabel}</p>
-                <p className="text-base text-slate-500 mt-1 leading-relaxed">{diagnostic}</p>
+                <p className="text-sm font-bold text-slate-800">{scoreLabel}</p>
+                <p className="text-xs text-slate-500 mt-0.5 leading-relaxed">{diagnostic}</p>
             </div>
 
             {/* Barres composantes */}
             {data.score_details && (
-                <div className="w-full sm:w-56 shrink-0 space-y-2">
+                <div className="w-full sm:w-48 shrink-0 space-y-1.5">
                     {(Object.entries(data.score_details) as [string, { score: number; weight: number }][]).map(([key, comp]) => {
                         const pct = Math.round((comp.score / comp.weight) * 100);
                         const barColor = pct >= 80 ? 'bg-emerald-500' : pct >= 50 ? 'bg-slate-400' : 'bg-red-400';
                         return (
-                            <div key={key} className="flex items-center gap-2.5">
-                                <span className="text-xs text-slate-500 w-16 shrink-0">{scoreCardLabels[key]}</span>
-                                <div className="flex-1 h-2 bg-slate-100 rounded-full overflow-hidden">
+                            <div key={key} className="flex items-center gap-2">
+                                <span className="text-[10px] text-slate-500 w-14 shrink-0">{scoreCardLabels[key]}</span>
+                                <div className="flex-1 h-1.5 bg-slate-100 rounded-full overflow-hidden">
                                     <div className={`h-full rounded-full ${barColor}`} style={{ width: `${pct}%` }} />
                                 </div>
-                                <span className="text-xs font-semibold text-slate-600 w-10 text-right">{comp.score.toFixed(0)}/{comp.weight}</span>
+                                <span className="text-[10px] font-semibold text-slate-600 w-8 text-right">{comp.score.toFixed(0)}/{comp.weight}</span>
                             </div>
                         );
                     })}
@@ -239,46 +239,46 @@ const MatrixGrid: React.FC<{ data: StockHealthData; stats: MatrixStats }> = ({ d
     ];
 
     return (
-        <div className="bg-white rounded-2xl border border-slate-200 p-6">
-            <div className="flex items-center justify-between mb-5">
-                <p className="text-base font-semibold text-slate-800">Matrice Performance</p>
-                <div className="flex items-center gap-4 text-xs text-slate-400">
-                    <span className="flex items-center gap-1"><TrendingUp className="size-3.5" /> Rotation forte</span>
-                    <span className="flex items-center gap-1"><TrendingDown className="size-3.5" /> Rotation faible</span>
+        <div className="bg-white rounded-2xl border border-slate-200 p-3">
+            <div className="flex items-center justify-between mb-2">
+                <p className="text-xs font-semibold text-slate-800">Matrice Performance</p>
+                <div className="flex items-center gap-2 text-[10px] text-slate-400">
+                    <span className="flex items-center gap-1"><TrendingUp className="size-2.5" /> Rot. forte</span>
+                    <span className="flex items-center gap-1"><TrendingDown className="size-2.5" /> Rot. faible</span>
                 </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-2 gap-1.5">
                 {quadrants.map(({ key, count, value, valueLabel }) => {
                     const cfg = QUADRANT_CONFIG[key];
                     const Icon = cfg.icon;
                     return (
-                        <div key={key} className="rounded-xl border border-slate-100 bg-slate-50/50 p-5">
-                            <div className="flex items-center justify-between mb-3">
-                                <div className="flex items-center gap-2.5">
-                                    <div className={`size-2 rounded-full ${cfg.dot}`} />
-                                    <span className="text-sm font-semibold text-slate-800">{cfg.label}</span>
+                        <div key={key} className="rounded-lg border border-slate-100 bg-slate-50/50 p-2">
+                            <div className="flex items-center justify-between mb-1">
+                                <div className="flex items-center gap-1.5">
+                                    <div className={`size-1.5 rounded-full ${cfg.dot}`} />
+                                    <span className="text-[10px] font-semibold text-slate-800">{cfg.label}</span>
                                 </div>
-                                <Icon className={`size-5 ${cfg.accent}`} />
+                                <Icon className={`size-3.5 ${cfg.accent}`} />
                             </div>
-                            <p className="text-sm text-slate-500 mb-4">{cfg.description}</p>
+                            <p className="text-[10px] text-slate-500 mb-1 leading-tight">{cfg.description}</p>
                             {count > 0 ? (
                                 <>
-                                    <span className={`text-2xl font-bold ${cfg.accent}`}>{count}</span>
-                                    <span className="text-sm text-slate-500 ml-1.5">produit{count > 1 ? 's' : ''}</span>
+                                    <span className={`text-lg font-bold ${cfg.accent}`}>{count}</span>
+                                    <span className="text-[10px] text-slate-500 ml-1">prod{count > 1 ? 's' : ''}</span>
                                     {value !== undefined && value > 0 && (
-                                        <p className="text-sm text-slate-600 mt-2">{valueLabel} : <span className="font-semibold">{formatCurrency(Math.round(value))}</span></p>
+                                        <p className="text-[10px] text-slate-600 mt-0.5 leading-tight">{valueLabel} : <span className="font-semibold">{formatCurrency(Math.round(value))}</span></p>
                                     )}
                                 </>
                             ) : (
-                                <span className="text-base text-slate-300 italic">—</span>
+                                <span className="text-xs text-slate-300 italic">—</span>
                             )}
                         </div>
                     );
                 })}
             </div>
 
-            <div className="mt-4 flex justify-between text-xs text-slate-400">
+            <div className="mt-2 flex justify-between text-[10px] text-slate-400">
                 <span>← Dispo. Basse</span>
                 <span>Dispo. Haute →</span>
             </div>
@@ -293,17 +293,17 @@ const TopPenaltiesTable: React.FC<{ products: MatrixProduct[] }> = ({ products }
 
     if (sorted.length === 0) {
         return (
-            <div className="bg-white rounded-2xl border border-slate-200 p-6">
-                <p className="text-base font-semibold text-slate-800 mb-2">Top 5 — Pénalités de score</p>
-                <p className="text-sm text-slate-500">Aucune pénalité significative détectée. Votre stock est équilibré.</p>
+            <div className="bg-white rounded-2xl border border-slate-200 p-3">
+                <p className="text-xs font-semibold text-slate-800 mb-1">Top 5 — Pénalités de score</p>
+                <p className="text-xs text-slate-500">Aucune pénalité significative détectée. Votre stock est équilibré.</p>
             </div>
         );
     }
 
     return (
         <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
-            <div className="px-6 py-5 border-b border-slate-100">
-                <p className="text-base font-semibold text-slate-800">Top 5 — Pénalités de score</p>
+            <div className="px-4 py-2 border-b border-slate-100">
+                <p className="text-xs font-semibold text-slate-800">Top 5 — Pénalités de score</p>
             </div>
             <div className="overflow-x-auto">
                 <table className="w-full">

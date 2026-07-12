@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from 'react'
+import React, { useState, useMemo, useEffect, useRef } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'react-hot-toast'
@@ -12,7 +12,7 @@ import { getApiErrorDetail } from '../utils/errorHandling'
 import { useConfirm } from '../hooks/useConfirm'
 import { useAuth } from '../context/AuthContext'
 import type { ProduitModel } from '../types'
-import { formatCurrency } from '../utils/formatters'
+import type { Groupe } from '../types/catalog'
 
 import {
   useProduits, useRayons, useFournisseurs, useFormes, useGroupes,
@@ -44,12 +44,6 @@ function stockClass(stock: number): string {
   return 'text-slate-800 font-bold'
 }
 
-function stockBadgeVariant(stock: number, alert?: number | null): 'success' | 'warning' | 'error' | 'ghost' {
-  if (stock <= 0) return 'error'
-  if (alert != null && stock <= alert) return 'warning'
-  return 'success'
-}
-
 /* ------------------------------------------------------------------ */
 /*  Component                                                           */
 /* ------------------------------------------------------------------ */
@@ -78,13 +72,12 @@ export default function ProduitShadcn() {
   /* ── Modals ── */
   const [isCreateOpen, setIsCreateOpen] = useState(false)
   const [isEditOpen, setIsEditOpen] = useState(false)
-  const [isImportOpen, setIsImportOpen] = useState(false)
   const [isPasswordOpen, setIsPasswordOpen] = useState(false)
   const [passwordConfig, setPasswordConfig] = useState({ title: '', message: '' })
-  const [pendingAction, setPendingAction] = useState<() => Promise<void>>(() => Promise.resolve())
+  const pendingActionRef = useRef<() => Promise<void>>(() => Promise.resolve())
 
   /* ── Forms ── */
-  const [editForm, setEditForm] = useState<any>({})
+  const [editForm, setEditForm] = useState<Record<string, unknown>>({})
 
   /* ── Debounce search ── */
   useEffect(() => {
@@ -108,9 +101,9 @@ export default function ProduitShadcn() {
     only_in_stock: showInStockOnly,
   })
 
-  const { data: lots = [], isLoading: loadingLots } = useProduitLots(selectedProduit?.id || null)
-  const { data: monthlyStats = [], isLoading: loadingStats } = useProduitStats(selectedProduit?.id || null)
-  const { data: achats = [], isLoading: loadingAchats } = useProduitAchats(selectedProduit?.id || null)
+  const { data: lots = [] } = useProduitLots(selectedProduit?.id || null)
+  const { data: monthlyStats = [] } = useProduitStats(selectedProduit?.id || null)
+  const { data: achats = [] } = useProduitAchats(selectedProduit?.id || null)
   const { data: stockHistory = [], isLoading: loadingHistory } = useProduitHistory(selectedProduit?.id || null, activeTab)
 
   useEffect(() => {
@@ -131,7 +124,7 @@ export default function ProduitShadcn() {
   const { data: fournisseurs = [] } = useFournisseurs()
   const { data: formes = [] } = useFormes()
   const { data: groupes = [] } = useGroupes()
-  const { tvaList } = useTVA()
+  useTVA()
 
   const produits = useMemo(() => productsData?.results || [], [productsData])
   const totalCount = productsData?.count || 0
@@ -160,32 +153,21 @@ export default function ProduitShadcn() {
     })
     if (!ok) return
     setPasswordConfig({ title: 'Confirmation', message: 'Entrez votre mot de passe pour supprimer' })
-    setPendingAction(() => async () => {
+    pendingActionRef.current = async () => {
       await api.delete(`produits/${produit.id}/`)
       setSelectedProduit(null)
       refetch()
       toast.success(t('products:messages.delete_success'))
-    })
+    }
     setIsPasswordOpen(true)
   }
 
-  const handleToggleActive = async (produit: ProduitModel) => {
-    try {
-      const response = await api.post(`produits/${produit.id}/toggle_active/`)
-      const isActive = response.data.is_active
-      toast.success(isActive ? t('products:messages.status_reactivated') : t('products:messages.status_hidden'))
-      setSelectedProduit(prev => prev ? ({ ...prev, is_active: isActive }) : null)
-      refetch()
-    } catch (err) { toast.error(getApiErrorDetail(err, t('products:messages.status_error'))) }
-  }
-
-  const handleMovementClick = async (item: any) => {
+  const handleMovementClick = async (item: { facture?: number; commande?: number; type?: string }) => {
     if (item.facture && (item.type === 'SORTIE' || item.type === 'RETOUR')) {
       try {
-        const response = await api.get(`factures/${item.facture}/`)
+        await api.get(`factures/${item.facture}/`)
         toast.success(t('products:messages.facture_loaded', { defaultValue: 'Facture #' + item.facture }))
-        // Navigation vers la caisse avec la facture si besoin — pour l'instant on navigue simplement
-      } catch (error) {
+      } catch {
         toast.error(t('products:messages.facture_load_error', { defaultValue: 'Erreur chargement facture' }))
       }
     } else if (item.commande) {
@@ -284,7 +266,7 @@ export default function ProduitShadcn() {
           <Button variant="primary" size="sm" leftIcon={<Package className="size-4" />} onClick={() => setIsCreateOpen(true)}>
             {t('products:actions.new', { defaultValue: 'Nouveau' })}
           </Button>
-          <Button variant="outline" size="sm" leftIcon={<Upload className="size-4" />} onClick={() => setIsImportOpen(true)}>
+          <Button variant="outline" size="sm" leftIcon={<Upload className="size-4" />} onClick={() => {}}>
             {t('products:import.title', { defaultValue: 'Importer' })}
           </Button>
         </div>
@@ -530,12 +512,12 @@ export default function ProduitShadcn() {
         rayons={rayons}
         fournisseurs={fournisseurs}
         formes={formes}
-        groupes={groupes as any}
+        groupes={groupes as unknown as Groupe[]}
       />
       <PasswordConfirmModal
         isOpen={isPasswordOpen}
         onClose={() => setIsPasswordOpen(false)}
-        onConfirm={pendingAction}
+        onConfirm={() => pendingActionRef.current()}
         title={passwordConfig.title}
         message={passwordConfig.message}
       />
@@ -547,7 +529,7 @@ export default function ProduitShadcn() {
         rayons={rayons}
         fournisseurs={fournisseurs}
         formes={formes}
-        groupes={groupes as any}
+        groupes={groupes as unknown as Groupe[]}
       />
     </div>
   )
@@ -556,15 +538,6 @@ export default function ProduitShadcn() {
 /* ------------------------------------------------------------------ */
 /*  Sub-components                                                    */
 /* ------------------------------------------------------------------ */
-
-function StatCard({ label, value, variant = 'ghost' }: { label: string; value: string; variant?: 'primary' | 'success' | 'warning' | 'error' | 'ghost' }) {
-  return (
-    <Card variant="bordered" padding="sm" className="flex items-center justify-between">
-      <span className="text-xs text-slate-400 font-medium uppercase tracking-wider">{label}</span>
-      <Badge variant={variant} size="md">{value}</Badge>
-    </Card>
-  )
-}
 
 function PriceRow({ label, value }: { label: string; value: string }) {
   return (

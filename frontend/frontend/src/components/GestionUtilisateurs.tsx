@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import api from '../services/api';
 import { toast } from 'react-hot-toast';
@@ -148,7 +148,7 @@ const MENU_HIERARCHY = [
 ];
 
 const getAllMenuKeys = () => {
-    let keys: string[] = [];
+    const keys: string[] = [];
     MENU_HIERARCHY.forEach(menu => {
         keys.push(menu.key);
         if (menu.submenus) {
@@ -158,7 +158,7 @@ const getAllMenuKeys = () => {
     return keys;
 };
 
-const getMenuLabel = (key: string, t: any): string => {
+const getMenuLabel = (key: string, t: (key: string, options?: { defaultValue: string }) => string): string => {
   for (const menu of MENU_HIERARCHY) {
     if (menu.key === key) {
       return t(menu.labelKey, { defaultValue: key });
@@ -193,7 +193,7 @@ export default function GestionUtilisateurs() {
   // Sudo Mode State
   const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
   const [passwordModalConfig, setPasswordModalConfig] = useState({ title: '', message: '' });
-  const [pendingAction, setPendingAction] = useState<(() => Promise<void>) | null>(null);
+  const pendingActionRef = useRef<(() => Promise<void>) | null>(null);
 
   // Copy permissions from user
   const [copyFromUserId, setCopyFromUserId] = useState<number | ''>('');
@@ -239,8 +239,8 @@ export default function GestionUtilisateurs() {
   const fetchUsers = async () => {
     try {
       const response = await api.get('users/');
-      const data: any = response.data;
-      setUsers(Array.isArray(data) ? data : (data.results || []));
+      const data: unknown = response.data;
+      setUsers(Array.isArray(data) ? data : (Array.isArray((data as { results?: unknown })?.results) ? (data as { results: unknown[] }).results : []));
     } catch (error) {
       console.error('Error fetching users:', error);
       toast.error(t('messages.load_error'));
@@ -286,7 +286,7 @@ export default function GestionUtilisateurs() {
   };
 
   const handleRoleChange = (role: string, preserveMenus: boolean = false) => {
-    let updates: any = { role };
+    const updates: Record<string, unknown> = { role };
 
     if (role === 'PHARMACIEN') {
       updates.is_superuser = true;
@@ -498,9 +498,9 @@ export default function GestionUtilisateurs() {
   };
 
   const handlePasswordConfirmed = () => {
-    if (pendingAction) {
-      pendingAction();
-      setPendingAction(null);
+    if (pendingActionRef.current) {
+      pendingActionRef.current();
+      pendingActionRef.current = null;
     }
     setIsPasswordModalOpen(false);
   };
@@ -518,7 +518,7 @@ export default function GestionUtilisateurs() {
         title: t('messages.sudo_title'),
         message: t('messages.sudo_message')
       });
-      setPendingAction(() => () => executeDeleteUser(userId, username));
+      pendingActionRef.current = () => executeDeleteUser(userId, username);
       setIsPasswordModalOpen(true);
     }
   };
@@ -547,7 +547,7 @@ export default function GestionUtilisateurs() {
         title: t('messages.sudo_title'),
         message: t('messages.sudo_message')
       });
-      setPendingAction(() => () => executeRestoreUser(userId, username));
+      pendingActionRef.current = () => executeRestoreUser(userId, username);
       setIsPasswordModalOpen(true);
     }
   };
@@ -555,7 +555,7 @@ export default function GestionUtilisateurs() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const payload: any = {
+      const payload: Record<string, unknown> & { profile: Record<string, unknown> } = {
         username: formData.username,
         email: formData.email,
         first_name: formData.first_name,
@@ -598,10 +598,10 @@ export default function GestionUtilisateurs() {
         const { data: finalUser } = await api.patch(`users/${editingUser.id}/`, payload);
         setUsers(prev => prev.map(u => u.id === finalUser.id ? finalUser : u));
         // Si c'est l'utilisateur courant, rafraîchir ses droits dans la session active
-        if (currentUser && editingUser.id === (currentUser as any).id) {
+        if (currentUser && editingUser.id === currentUser.id) {
           const updatedSession = {
-            ...(currentUser as any),
-            allowed_menus: payload.profile.allowed_menus,
+            ...currentUser,
+            allowed_menus: payload.profile.allowed_menus as string[],
             ...payload.profile,
           };
           login(updatedSession);
@@ -948,7 +948,7 @@ export default function GestionUtilisateurs() {
                                             size="xs"
                                             color="primary"
                                             checked={allowedSet.has(sub.key) || allowedSet.has(menu.key)}
-                                            onChange={checked => handleSubMenuToggle(sub.key, menu.key, menu.submenus!.length)}
+                                            onChange={() => handleSubMenuToggle(sub.key, menu.key, menu.submenus!.length)}
                                             disabled={formData.is_superuser}
                                             label={subLabel}
                                           />

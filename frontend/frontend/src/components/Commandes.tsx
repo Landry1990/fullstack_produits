@@ -15,8 +15,6 @@ import CommandeList from './Commandes/CommandeList';
 import CommandeForm from './Commandes/CommandeForm';
 import CommandeDetails from './Commandes/CommandeDetails';
 
-import ScheduledOrdersListModal from './Commandes/ScheduledOrdersListModal';
-import OrderSchedulingModal from './Commandes/OrderSchedulingModal';
 import ProduitFormModal from './ProduitFormModal';
 import SimplePrintLabelsModal from './SimplePrintLabelsModal';
 import SudoValidationModal from './common/SudoValidationModal';
@@ -33,9 +31,6 @@ interface CommandesProps {
 export default function Commandes({ forcedType }: CommandesProps) {
   const hook = useCommandesState(forcedType);
   const { state, listProps, detailsProps, formProps, modals } = hook;
-  const [editingSchedule, setEditingSchedule] = useState<any>(null); // State for editing
-  const [schedulesRefreshKey, setSchedulesRefreshKey] = useState(0);
-  const [isScheduledListOpen, setIsScheduledListOpen] = useState(false);
   const [detailProduitId, setDetailProduitId] = useState<number | null>(null);
   const [detailActiveTab, setDetailActiveTab] = useState('general');
 
@@ -138,7 +133,7 @@ export default function Commandes({ forcedType }: CommandesProps) {
 
       {state.viewMode === 'LIST' && (
         <div className="flex-1 min-h-0 overflow-hidden flex flex-col">
-          <CommandeList {...listProps} onOpenScheduledList={() => setIsScheduledListOpen(true)} />
+          <CommandeList {...listProps} />
         </div>
       )}
 
@@ -163,42 +158,6 @@ export default function Commandes({ forcedType }: CommandesProps) {
           }}
           fournisseurs={modals.fournisseurs}
           produitsList={modals.produitsList}
-        />
-      )}
-
-      {isScheduledListOpen && (
-        <ScheduledOrdersListModal
-          isOpen={isScheduledListOpen}
-          onClose={() => setIsScheduledListOpen(false)}
-          onEditSchedule={(s) => {
-            setEditingSchedule(s);
-            state.setIsSchedulingModalOpen(true);
-          }}
-          onCreateSchedule={() => {
-            setEditingSchedule(null);
-            state.setIsSchedulingModalOpen(true);
-          }}
-          fournisseurs={modals.fournisseurs}
-          refreshTrigger={schedulesRefreshKey}
-        />
-      )}
-
-      {state.isSchedulingModalOpen && (
-        <OrderSchedulingModal
-           isOpen={state.isSchedulingModalOpen}
-           onClose={() => {
-              state.setIsSchedulingModalOpen(false);
-              setEditingSchedule(null);
-           }}
-           initialSchedule={editingSchedule}
-           onSave={() => {
-              state.setIsSchedulingModalOpen(false);
-              setEditingSchedule(null);
-              setSchedulesRefreshKey(prev => prev + 1);
-           }}
-           onApplySuggestions={modals.handleApplySuggestions}
-           fournisseurs={modals.fournisseurs}
-           produitsList={modals.produitsList}
         />
       )}
 

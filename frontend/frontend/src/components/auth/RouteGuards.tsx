@@ -34,8 +34,11 @@ export const HomeRedirector = () => {
   if (!user) return <Navigate to="/" />;
 
   if (user.is_superuser) return <Navigate to="/app/dashboard" />;
+
+  // Les caissiers atterrissent directement sur la caisse centrale
+  if (user.role === 'CAISSIER') return <Navigate to="/app/caisse-centralisee" />;
   
-  const allowed = (user as any).allowed_menus || [];
+  const allowed = user.allowed_menus || [];
   if (allowed.includes('dashboard')) return <Navigate to="/app/dashboard" />;
   if (allowed.includes('facturation')) return <Navigate to="/app/facturation" />;
   if (allowed.includes('caisse')) return <Navigate to="/app/caisse-centralisee" />;

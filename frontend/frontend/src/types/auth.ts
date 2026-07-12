@@ -26,6 +26,9 @@ export interface User {
         max_discount_rate?: number;
     };
 
+    // Role direct (from backend token response)
+    role?: string;
+
     // Legacy flat permissions
     can_do_returns?: boolean;
     can_sell_negative_stock?: boolean;

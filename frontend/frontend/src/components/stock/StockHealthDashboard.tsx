@@ -49,11 +49,11 @@ const StockHealthDashboard: React.FC = () => {
     const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
     if (loading) return (
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-            <div className="lg:col-span-4 h-80 bg-white rounded-[40px] border border-slate-200 animate-pulse"></div>
-            <div className="lg:col-span-8 grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="h-40 bg-white rounded-[40px] border border-slate-200 animate-pulse"></div>
-                <div className="h-40 bg-white rounded-[40px] border border-slate-200 animate-pulse"></div>
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
+            <div className="lg:col-span-4 h-72 bg-white rounded-[32px] border border-slate-200 animate-pulse"></div>
+            <div className="lg:col-span-8 grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="h-36 bg-white rounded-[32px] border border-slate-200 animate-pulse"></div>
+                <div className="h-36 bg-white rounded-[32px] border border-slate-200 animate-pulse"></div>
             </div>
         </div>
     );
@@ -61,13 +61,13 @@ const StockHealthDashboard: React.FC = () => {
     if (error || !data) return null;
 
     return (
-        <div className="space-y-8 animate-in fade-in slide-in-from-bottom-6 duration-1000">
+        <div className="space-y-4 animate-in fade-in slide-in-from-bottom-6 duration-1000">
             {/* Main Health Row */}
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
                 {/* Health Score Card */}
                 <div
                     onMouseMove={handleMouseMove}
-                    className="lg:col-span-4 expert-card stagger-1 bg-white p-8 rounded-[40px] border border-slate-200 shadow-sm flex flex-col items-center justify-center relative group !overflow-visible z-10 hover:z-[100]"
+                    className="lg:col-span-4 expert-card stagger-1 bg-white p-4 rounded-[24px] border border-slate-200 shadow-sm flex flex-col items-center justify-center relative group !overflow-visible z-10 hover:z-[100]"
                 >
                     <div className={`absolute inset-0 rounded-[40px] opacity-5 ${getScoreBg(data.health_score)} transition-colors duration-500`}></div>
 
@@ -75,52 +75,52 @@ const StockHealthDashboard: React.FC = () => {
                     <div className="absolute top-6 right-6 flex gap-2">
                         <button
                             onClick={() => setIsSettingsOpen(true)}
-                            className="inline-flex items-center justify-center rounded-full size-8 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 transition-all opacity-0 group-hover:opacity-100"
+                            className="inline-flex items-center justify-center rounded-full size-7 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 transition-all opacity-0 group-hover:opacity-100"
                         >
                             <Settings className="size-4" />
                         </button>
                         <button
                             onClick={refresh}
-                            className="inline-flex items-center justify-center rounded-full size-8 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 transition-all opacity-0 group-hover:opacity-100"
+                            className="inline-flex items-center justify-center rounded-full size-7 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 transition-all opacity-0 group-hover:opacity-100"
                         >
                             <RefreshCw className="size-4" />
                         </button>
                     </div>
 
                     <div className="relative">
-                        <div className="size-36 rounded-full border-8 border-slate-100 flex items-center justify-center mb-6 transition-all duration-1000 group-hover:scale-105">
-                            <span className={`text-5xl font-black tracking-tighter ${getScoreColor(data.health_score)}`}>
+                        <div className="size-28 rounded-full border-8 border-slate-100 flex items-center justify-center mb-3 transition-all duration-1000 group-hover:scale-105">
+                            <span className={`text-4xl font-black tracking-tighter ${getScoreColor(data.health_score)}`}>
                                 <AnimatedNumber value={data.health_score} />
-                                <span className="text-2xl ml-0.5">%</span>
+                                <span className="text-xl ml-0.5">%</span>
                             </span>
                             {/* SVG Ring for Circular Progress */}
-                            <svg className="absolute size-36 -rotate-90">
+                            <svg className="absolute size-28 -rotate-90">
                                 <circle
-                                    cx="72" cy="72" r="64"
+                                    cx="56" cy="56" r="48"
                                     className="stroke-current opacity-10"
                                     strokeWidth="8" fill="transparent"
                                 />
                                 <circle
-                                    cx="72" cy="72" r="64"
+                                    cx="56" cy="56" r="48"
                                     className={`stroke-current ${getScoreColor(data.health_score)} transition-all duration-1000`}
                                     strokeWidth="8" fill="transparent"
-                                    strokeDasharray={402.12}
-                                    strokeDashoffset={402.12 * (1 - data.health_score / 100)}
+                                    strokeDasharray={301.59}
+                                    strokeDashoffset={301.59 * (1 - data.health_score / 100)}
                                     strokeLinecap="round"
                                 />
                             </svg>
                         </div>
                     </div>
 
-                    <div className="relative flex items-center gap-2 mb-1">
-                        <h3 className="text-xl font-black text-slate-800 tracking-tighter">
+                    <div className="relative flex items-center gap-2">
+                        <h3 className="text-base font-black text-slate-800 tracking-tighter">
                             {t('stock:analyse.dashboard.health_score')}
                         </h3>
                         <div className="relative group/tooltip">
                             <Info className="size-4 text-slate-400 hover:text-slate-700 transition-colors cursor-help" />
                             <div className="absolute left-1/2 -translate-x-1/2 bottom-full mb-2 w-72 hidden group-hover/tooltip:block z-[100] bg-white border border-slate-200 rounded-2xl shadow-xl p-4 text-left">
                                 <h4 className="font-bold text-sm text-slate-700 mb-2">Interprétation du Score</h4>
-                                <ul className="text-xs space-y-2">
+                                <ul className="text-[10px] space-y-2">
                                     <li className="flex items-start gap-2">
                                         <span className="text-emerald-600 font-bold w-12 shrink-0">&ge; 80%</span>
                                         <span className="text-slate-600"><strong>Sain</strong> : Stock optimal, peu de ruptures, rotation fluide.</span>
@@ -137,26 +137,26 @@ const StockHealthDashboard: React.FC = () => {
                             </div>
                         </div>
                     </div>
-                    <p className="relative text-sm text-slate-400 font-medium mt-1">
+                    <p className="relative text-[10px] text-slate-400 font-medium mt-0.5">
                         {t('stock:analyse.dashboard.health_score_desc')}
                     </p>
                 </div>
 
                 {/* Financial Impact Cards */}
-                <div className="lg:col-span-8 grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="lg:col-span-8 grid grid-cols-1 md:grid-cols-2 gap-4">
                     {/* Lost Revenue Card */}
                     <div
                         onMouseMove={handleMouseMove}
-                        className="expert-card stagger-2 bg-white p-8 rounded-[40px] border border-slate-200 shadow-sm relative group hover:shadow-xl hover:shadow-red-500/5 transition-all duration-500 !overflow-visible z-10 hover:z-[100]"
+                        className="expert-card stagger-2 bg-white p-6 rounded-[32px] border border-slate-200 shadow-sm relative group hover:shadow-xl hover:shadow-red-500/5 transition-all duration-500 !overflow-visible z-10 hover:z-[100]"
                     >
                         <div className="absolute top-0 right-0 p-8 opacity-5 group-hover:opacity-10 transition-opacity">
                             <TrendingDown className="size-24 text-red-500" />
                         </div>
-                        <div className="size-14 bg-red-50 rounded-2xl flex items-center justify-center text-red-500 mb-6">
-                            <AlertCircle className="size-7" />
+                        <div className="size-12 bg-red-50 rounded-2xl flex items-center justify-center text-red-500 mb-4">
+                            <AlertCircle className="size-6" />
                         </div>
-                        <div className="flex items-center gap-2 mb-1">
-                            <div className="text-xs font-black uppercase tracking-[0.2em] text-red-400">
+                        <div className="flex items-center gap-2">
+                            <div className="text-[10px] font-black uppercase tracking-[0.2em] text-red-400">
                                 {t('stock:analyse.dashboard.missed_sales')}
                             </div>
                             <div className="relative group/tip">
@@ -167,13 +167,13 @@ const StockHealthDashboard: React.FC = () => {
                                 </div>
                             </div>
                         </div>
-                        <div className="text-3xl font-black text-red-500 tracking-tighter mb-2">
+                        <div className="text-2xl font-black text-red-500 tracking-tighter mb-1">
                             -<AnimatedNumber
                                 value={data.missed_sales.monthly_revenue}
                                 formatValue={(v) => formatCurrency(v)}
                             />
                         </div>
-                        <div className="flex items-center gap-2 mb-6">
+                        <div className="flex items-center gap-2 mb-4">
                             <div className="flex items-center gap-2 text-sm font-bold text-red-400 bg-red-50 w-fit px-3 py-1 rounded-full">
                                 <div className="size-1.5 rounded-full bg-red-500 animate-pulse"></div>
                                 {t('stock:analyse.dashboard.lost_revenue_label')}
@@ -182,13 +182,13 @@ const StockHealthDashboard: React.FC = () => {
 
                         <button
                             onClick={() => navigate('/app/commandes', { state: { action: 'OPEN_SUGGESTIONS', mode: 'optimise' } })}
-                            className="inline-flex items-center justify-center h-11 px-4 text-sm font-bold bg-red-500 text-white hover:bg-red-600 rounded-xl gap-2 shadow-lg shadow-red-500/20 hover:scale-105 active:scale-95 transition-all w-full md:w-auto"
+                            className="inline-flex items-center justify-center h-9 px-3 text-xs font-bold bg-red-500 text-white hover:bg-red-600 rounded-xl gap-2 shadow-lg shadow-red-500/20 hover:scale-105 active:scale-95 transition-all w-full md:w-auto"
                         >
                             <ShoppingCart className="size-4" />
                             {t('stock:analyse.dashboard.fix_ruptures_btn')}
                         </button>
 
-                        <p className="mt-4 text-xs text-slate-400 font-medium leading-relaxed italic">
+                        <p className="mt-3 text-[10px] text-slate-400 font-medium leading-relaxed italic">
                             {t('stock:analyse.dashboard.lost_revenue_desc')}
                         </p>
                     </div>
@@ -196,16 +196,16 @@ const StockHealthDashboard: React.FC = () => {
                     {/* Dead Capital Card */}
                     <div
                         onMouseMove={handleMouseMove}
-                        className="expert-card stagger-3 bg-white p-8 rounded-[40px] border border-slate-200 shadow-sm relative group hover:shadow-xl hover:shadow-blue-500/5 transition-all duration-500 !overflow-visible z-10 hover:z-[100]"
+                        className="expert-card stagger-3 bg-white p-6 rounded-[32px] border border-slate-200 shadow-sm relative group hover:shadow-xl hover:shadow-blue-500/5 transition-all duration-500 !overflow-visible z-10 hover:z-[100]"
                     >
                         <div className="absolute top-0 right-0 p-8 opacity-5 group-hover:opacity-10 transition-opacity">
                             <Clock className="size-24 text-amber-500" />
                         </div>
-                        <div className="size-14 bg-blue-50 rounded-2xl flex items-center justify-center text-blue-600 mb-6">
-                            <Wallet className="size-7" />
+                        <div className="size-12 bg-blue-50 rounded-2xl flex items-center justify-center text-blue-600 mb-4">
+                            <Wallet className="size-6" />
                         </div>
-                        <div className="flex items-center gap-2 mb-1">
-                            <div className="text-xs font-black uppercase tracking-[0.2em] text-blue-400">
+                        <div className="flex items-center gap-2">
+                            <div className="text-[10px] font-black uppercase tracking-[0.2em] text-blue-400">
                                 {t('stock:analyse.dashboard.dead_stock')}
                             </div>
                             <div className="relative group/tip">
@@ -216,13 +216,13 @@ const StockHealthDashboard: React.FC = () => {
                                 </div>
                             </div>
                         </div>
-                        <div className="text-3xl font-black text-blue-600 tracking-tighter mb-2">
+                        <div className="text-2xl font-black text-blue-600 tracking-tighter mb-1">
                             <AnimatedNumber
                                 value={data.dead_stock.value}
                                 formatValue={(v) => formatCurrency(v)}
                             />
                         </div>
-                        <div className="flex items-center gap-2 mb-6">
+                        <div className="flex items-center gap-2 mb-4">
                             <div className="flex items-center gap-2 text-sm font-bold text-blue-400 bg-blue-50 w-fit px-3 py-1 rounded-full">
                                 {t('stock:analyse.dashboard.dead_stock_impact', { count: data.dead_stock.count, days: data.dead_stock.days_threshold })}
                             </div>
@@ -230,13 +230,13 @@ const StockHealthDashboard: React.FC = () => {
 
                         <button
                             onClick={() => window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' })}
-                            className="inline-flex items-center justify-center h-11 px-4 text-sm font-bold bg-blue-600 hover:bg-blue-700 text-white rounded-xl gap-2 shadow-lg shadow-blue-500/20 hover:scale-105 active:scale-95 transition-all w-full md:w-auto"
+                            className="inline-flex items-center justify-center h-9 px-3 text-xs font-bold bg-blue-600 hover:bg-blue-700 text-white rounded-xl gap-2 shadow-lg shadow-blue-500/20 hover:scale-105 active:scale-95 transition-all w-full md:w-auto"
                         >
                             <Filter className="size-4" />
                             {t('stock:analyse.dashboard.optimize_cash_btn')}
                         </button>
 
-                        <p className="mt-4 text-xs text-slate-400 font-medium leading-relaxed italic">
+                        <p className="mt-3 text-[10px] text-slate-400 font-medium leading-relaxed italic">
                             {t('stock:analyse.dashboard.dead_stock_desc', { days: data.dead_stock.days_threshold })}
                         </p>
                     </div>
@@ -244,7 +244,7 @@ const StockHealthDashboard: React.FC = () => {
             </div>
 
             {/* Sub Metrics Row */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                 <div
                     onMouseMove={handleMouseMove}
                     className="expert-card stagger-4 bg-white p-6 rounded-[24px] border border-slate-200 shadow-sm flex items-center gap-4 group hover:border-emerald-300 transition-all !overflow-visible z-10 hover:z-[100]"
