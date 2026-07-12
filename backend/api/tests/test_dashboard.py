@@ -392,3 +392,36 @@ class DashboardManagerStatsTestCase(APITestCase):
         kpis = response.data['kpis']
         self.assertEqual(float(kpis['jour']['actual']), 1000.0)
         self.assertEqual(float(kpis['jour']['margin']), 300.0)
+
+    def test_manager_stats_dormant_alert_matches_stock_health(self):
+        """Vérifie que l'alerte stocks dormants du manager utilise la même définition que stock_health."""
+        today = timezone.localtime(timezone.now()).date()
+        old_date = today - timedelta(days=120)
+
+        rayon = TestDataFactory.create_rayon(name='DormantRayon')
+        fournisseur = TestDataFactory.create_fournisseur(name='DormantFournisseur')
+        Produit.objects.create(
+            name='Produit Dormant',
+            stock=10,
+            pmp=Decimal('100'),
+            cost_price=Decimal('100'),
+            selling_price=Decimal('200'),
+            rayon=rayon,
+            fournisseur=fournisseur,
+            is_active=True,
+            dernier_vente=old_date,
+        )
+
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        dormant_alert = next(
+            (a for a in response.data['alerts'] if a['title_key'] == 'manager_dashboard.alerts.dormant_title'),
+            None
+        )
+        self.assertIsNotNone(dormant_alert)
+        self.assertEqual(dormant_alert['params']['count'], 1)
+
+        health_response = self.client.get('/api/statistiques/stock_health/')
+        self.assertEqual(health_response.status_code, status.HTTP_200_OK)
+        self.assertEqual(health_response.data['dead_stock']['count'], 1)

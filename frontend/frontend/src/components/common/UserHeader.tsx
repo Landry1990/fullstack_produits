@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import toast from 'react-hot-toast';
 import { useAuth } from '../../context/AuthContext';
-import { useSidebar } from '../../context/SidebarContext';
+import { useSidebar } from '../../hooks/useSidebar';
 import { useTranslation } from 'react-i18next';
 import communicationService from '../../services/communicationService';
 import MessagingModal from './MessagingModal';
@@ -32,7 +32,7 @@ export default function UserHeader() {
 
         if (!isMessagingOpen) {
           toast.success(
-            (toastObj: any) => (
+            (toastObj: { id: string }) => (
               <div className="flex items-center gap-3">
                 <div className="flex-1">
                   <p className="text-sm font-semibold text-slate-700">{t('new.new_notification')}</p>
@@ -41,7 +41,6 @@ export default function UserHeader() {
                 <button 
                   onClick={() => {
                     setIsMessagingOpen(true);
-                    // @ts-ignore
                     toast.dismiss(toastObj.id);
                   }}
                   className="px-3 py-1.5 text-xs font-medium text-white bg-emerald-600 rounded-lg hover:bg-emerald-700 transition-colors"
@@ -67,7 +66,7 @@ export default function UserHeader() {
     fetchUnread();
     const interval = setInterval(fetchUnread, 30000); // Check every 30 seconds
     return () => clearInterval(interval);
-  }, [user]);
+  }, [user, fetchUnread]);
 
   // Handle outside click to close menu
   useEffect(() => {

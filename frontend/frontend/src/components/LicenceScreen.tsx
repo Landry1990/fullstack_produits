@@ -1,18 +1,26 @@
 import React, { useState, useEffect } from 'react';
-import { Lock, Key, ShieldAlert, CheckCircle2, Copy, Send, FileUp, Info, UserCheck, Hospital, Calendar, AlertTriangle } from 'lucide-react';
+import { Lock, ShieldAlert, Copy, Send, FileUp, Info, UserCheck, Hospital, Calendar, AlertTriangle } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import api from '../services/api';
 import { useNavigate } from 'react-router-dom';
 import { useLicence } from '../context/LicenceContext';
 import { useTranslation } from 'react-i18next';
 
+interface PreviewData {
+  pharmacie_nom: string;
+  pharmacien_nom: string;
+  plan: string;
+  exp: number;
+  hardware_match: boolean;
+}
+
 const LicenceScreen = () => {
     const { t } = useTranslation('auth');
     const [hardwareId, setHardwareId] = useState<string>(t('loading', { ns: 'common' }));
     const [cle, setCle] = useState('');
     const [loading, setLoading] = useState(false);
-    const [status, setStatus] = useState<{ is_valid: boolean; message: string; payload?: any } | null>(null);
-    const [previewData, setPreviewData] = useState<any>(null);
+    const [status, setStatus] = useState<{ is_valid: boolean; message: string; payload?: Record<string, unknown> } | null>(null);
+    const [previewData, setPreviewData] = useState<PreviewData | null>(null);
     const { refreshLicence } = useLicence();
     const navigate = useNavigate();
 
@@ -54,8 +62,9 @@ const LicenceScreen = () => {
                     setCle(content.trim()); // <--- CRITIQUE : On mémorise la clé ici
                     setPreviewData(res.data);
                     toast.success(t('licence.file_loaded'));
-                } catch (error: any) {
-                    toast.error(error.response?.data?.detail || t('licence.file_invalid'));
+                } catch (error: unknown) {
+                    const detail = error && typeof error === 'object' && 'response' in error ? (error as { response?: { data?: { detail?: string } } }).response?.data?.detail : undefined;
+                    toast.error(detail || t('licence.file_invalid'));
                     setCle('');
                     setPreviewData(null);
                 } finally {
@@ -76,8 +85,9 @@ const LicenceScreen = () => {
             setTimeout(() => {
                 window.location.href = '/'; 
             }, 1500);
-        } catch (error: any) {
-            toast.error(error.response?.data?.detail || t('licence.activate_error'));
+        } catch (error: unknown) {
+            const detail = error && typeof error === 'object' && 'response' in error ? (error as { response?: { data?: { detail?: string } } }).response?.data?.detail : undefined;
+            toast.error(detail || t('licence.activate_error'));
         } finally {
             setLoading(false);
         }

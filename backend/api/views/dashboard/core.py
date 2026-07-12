@@ -1,4 +1,4 @@
-from rest_framework import viewsets
+from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
@@ -485,10 +485,10 @@ class DashboardCoreMixin(viewsets.ViewSet):
         dormant_count = Produit.objects.filter(
             stock__gt=0,
             is_active=True
-        ).exclude(
-            factureproduit__facture__date__date__gte=limit_date,
-            factureproduit__facture__status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE],
-            factureproduit__facture__paiements__isnull=False
+        ).filter(
+            Q(dernier_vente__lte=limit_date) |
+            (Q(dernier_vente__isnull=True) & Q(dernier_achat__lte=limit_date)) |
+            (Q(dernier_vente__isnull=True) & Q(dernier_achat__isnull=True) & Q(created_at__date__lte=limit_date))
         ).count()
     
         if dormant_count > 0:

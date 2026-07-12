@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Printer, Plus, Trash2, User as UserIcon } from 'lucide-react';
 import { normalizeNumberInput } from '../../utils/formatters';
 import type { useJournalCaisse } from '../../hooks/useJournalCaisse';
@@ -23,7 +23,7 @@ export default function JournalCaisseClosingModal({ state }: Props) {
 
   const { user } = useAuth();
   // Priorité : caissier sélectionné dans le filtre → sinon user connecté
-  const selectedUserObj = selectedUser ? users?.find((u: any) => u.id.toString() === selectedUser) : null;
+  const selectedUserObj = selectedUser ? users?.find((u: { id: string | number; full_name?: string; username: string }) => u.id.toString() === selectedUser) : null;
   const userName = selectedUserObj
     ? selectedUserObj.full_name || selectedUserObj.username
     : user ? (user.first_name ? `${user.first_name} ${user.last_name || ''}`.trim() : user.username) : '';
@@ -59,11 +59,11 @@ export default function JournalCaisseClosingModal({ state }: Props) {
   if (!isClosingModalOpen) return null;
 
   return (
-    <dialog open className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm w-full h-full p-0 m-0 border-none">
+    <dialog open aria-labelledby="closing-modal-title" className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm w-full h-full p-0 m-0 border-none">
       <div className="w-full max-w-lg p-0 overflow-hidden rounded-2xl border border-slate-200 shadow-2xl max-h-[90vh] flex flex-col bg-white">
         {/* Header */}
         <div className="bg-emerald-600 p-5 text-white shrink-0">
-          <h3 className="font-black text-xl tracking-tight">{t('closing.title')}</h3>
+          <h3 id="closing-modal-title" className="font-black text-xl tracking-tight">{t('closing.title')}</h3>
           <p className="text-emerald-100 text-xs mt-1 font-bold uppercase tracking-widest">{t('closing.security')}</p>
         </div>
 
@@ -212,7 +212,7 @@ export default function JournalCaisseClosingModal({ state }: Props) {
                           </span>
                           <div className="min-w-0">
                             <div className="text-slate-700 truncate">{m.motif}</div>
-                            {(m as any).caissier && <div className="text-[10px] text-slate-400 font-bold">{(m as any).caissier}</div>}
+                            {'caissier' in m && typeof m.caissier === 'string' && <div className="text-[10px] text-slate-400 font-bold">{m.caissier}</div>}
                           </div>
                         </div>
                         <div className="flex items-center gap-2">

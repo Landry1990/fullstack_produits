@@ -383,9 +383,9 @@
         "title": "Suggestions de Commande",
         "subtitle_config": "Configurez les paramètres de l'analyse",
         "mode_simple_title": "Mode Simple",
-        "mode_simple_desc": "Analyse basée sur les ruptures et alertes stock.",
+        "mode_simple_desc": "Remplace exactement les quantités vendues sur la période sélectionnée.",
         "mode_smart_title": "Mode Intelligent",
-        "mode_smart_desc": "Analyse prédictive basée sur l'historique des ventes.",
+        "mode_smart_desc": "Analyse prédictive avec rotation, tendances et stock cible optimisé.",
         "supplier_label": "Fournisseur",
         "all_suppliers": "Tous les fournisseurs",
         "budget_label": "Budget estimatif (FCFA)",
@@ -424,7 +424,13 @@
         "date_to": "Au",
         "no_results_title": "Rien à commander",
         "no_results_desc": "Aucune vente n'a été trouvée sur cette plage horaire pour les critères sélectionnés.",
-        "modify_params": "Modifier les paramètres"
+        "modify_params": "Modifier les paramètres",
+        "generation_error": "Erreur lors de la génération des suggestions",
+        "no_selection": "Aucun produit sélectionné",
+        "results_unit": "articles",
+        "step_config": "Paramètres",
+        "step_results": "Résultats",
+        "mode_label": "Mode d'analyse"
     },
     "merge_modal": {
         "title": "Fusionner {{count}} commandes",

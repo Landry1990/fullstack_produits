@@ -3,6 +3,7 @@ import api from '../services/api'
 import { toast } from 'react-hot-toast'
 import { useQueryClient } from '@tanstack/react-query'
 import type { ProduitModel, Facture, LigneFacture, PaginatedResponse } from '../types'
+import type { SaleCompletionResult } from '../types/finance'
 import { useProductSearch } from './useProductSearch'
 import { useCart } from './useCart'
 import { useAuth } from '../context/AuthContext'
@@ -11,7 +12,7 @@ import { usePendingSales } from './usePendingSales'
 import { usePharmacySettings } from './usePharmacySettings'
 import { useKeyboardNavigation } from './useKeyboardNavigation'
 import { useClinicalCheck } from './useClinicalCheck'
-import { useSidebar } from '../context/SidebarContext'
+import { useSidebar } from './useSidebar'
 import { useTranslation } from 'react-i18next'
 import { useSudo } from './useSudo'
 import useSaleCompletion from './useSaleCompletion'
@@ -181,7 +182,7 @@ export function useFacturationState() {
 
   // --- Sale Completion ---
   const { completeSale, completeExistingInvoicePayment, loading: saleLoading } = useSaleCompletion({
-    onSuccess: (result: any) => {
+    onSuccess: (result: SaleCompletionResult) => {
       if (result.success && result.facture) {
         // Notification visuelle uniquement si vente payée directement (pas en attente caisse centralisée)
         if (result.ticketCaisse) {
@@ -333,7 +334,7 @@ export function useFacturationState() {
         }
         return ligne
       })
-    } catch (e) {
+    } catch {
       toast.error(t('facturation.messages.refresh_failed') || "Erreur de rafraîchissement des stocks")
     }
 

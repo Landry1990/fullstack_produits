@@ -1,6 +1,6 @@
-import { createContext, use, useState, useEffect, useMemo, type ReactNode } from 'react'
+import { useState, useEffect, useMemo, createContext, type ReactNode } from 'react'
 
-interface SidebarContextType {
+export interface SidebarContextType {
   isOpen: boolean
   isCollapsed: boolean
   isZenithMode: boolean
@@ -13,7 +13,7 @@ interface SidebarContextType {
   toggleMidnightTheme: () => void
 }
 
-const SidebarContext = createContext<SidebarContextType | undefined>(undefined)
+export const SidebarContext = createContext<SidebarContextType | undefined>(undefined)
 
 export function SidebarProvider({ children }: { children: ReactNode }) {
   const [isOpen, setIsOpen] = useState(false)
@@ -38,22 +38,21 @@ export function SidebarProvider({ children }: { children: ReactNode }) {
     }
   }, [isMidnightTheme])
 
+  // Persister les préférences utilisateur
+  useEffect(() => {
+    localStorage.setItem('sidebar-collapsed', String(isCollapsed))
+  }, [isCollapsed])
+
+  useEffect(() => {
+    localStorage.setItem('theme-midnight', String(isMidnightTheme))
+  }, [isMidnightTheme])
+
   const toggleSidebar = () => setIsOpen(prev => !prev)
   const closeSidebar = () => setIsOpen(false)
   const openSidebar = () => setIsOpen(true)
-  const toggleCollapse = () => {
-    setIsCollapsed(prev => {
-      const next = !prev
-      localStorage.setItem('sidebar-collapsed', String(next))
-      return next
-    })
-  }
+  const toggleCollapse = () => setIsCollapsed(prev => !prev)
   const toggleZenithMode = () => setIsZenithMode(prev => !prev)
-  const toggleMidnightTheme = () => setIsMidnightTheme(prev => {
-    const next = !prev
-    localStorage.setItem('theme-midnight', String(next))
-    return next
-  })
+  const toggleMidnightTheme = () => setIsMidnightTheme(prev => !prev)
 
   // Mémoriser l'objet value pour éviter les re-renders inutiles
   const contextValue = useMemo(() => ({
@@ -76,10 +75,3 @@ export function SidebarProvider({ children }: { children: ReactNode }) {
   )
 }
 
-export function useSidebar() {
-  const context = use(SidebarContext)
-  if (context === undefined) {
-    throw new Error('useSidebar must be used within a SidebarProvider')
-  }
-  return context
-}

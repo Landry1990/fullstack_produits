@@ -382,9 +382,9 @@
         "title": "Order Suggestions",
         "subtitle_config": "Configure analysis settings",
         "mode_simple_title": "Simple Mode",
-        "mode_simple_desc": "Analysis based on stock outs and alerts.",
+        "mode_simple_desc": "Replaces exactly the quantities sold over the selected period.",
         "mode_smart_title": "Smart Mode",
-        "mode_smart_desc": "Predictive analysis based on sales history.",
+        "mode_smart_desc": "Predictive analysis with rotation, trends and optimized stock target.",
         "supplier_label": "Supplier",
         "all_suppliers": "All suppliers",
         "budget_label": "Estimated Budget (FCFA)",
@@ -423,7 +423,13 @@
         "date_to": "To",
         "no_results_title": "Nothing to order",
         "no_results_desc": "No sales were found in this time range for the selected criteria.",
-        "modify_params": "Modify parameters"
+        "modify_params": "Modify parameters",
+        "generation_error": "Error generating suggestions",
+        "no_selection": "No product selected",
+        "results_unit": "items",
+        "step_config": "Settings",
+        "step_results": "Results",
+        "mode_label": "Analysis mode"
     }
 }
 
