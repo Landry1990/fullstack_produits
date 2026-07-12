@@ -386,6 +386,7 @@
         "mode_simple_desc": "Remplace exactement les quantités vendues sur la période sélectionnée.",
         "mode_smart_title": "Mode Intelligent",
         "mode_smart_desc": "Analyse prédictive avec rotation, tendances et stock cible optimisé.",
+        "abc_a_only_label": "Produits A uniquement (20/80)",
         "supplier_label": "Fournisseur",
         "all_suppliers": "Tous les fournisseurs",
         "budget_label": "Budget estimatif (FCFA)",

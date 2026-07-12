@@ -46,21 +46,21 @@ const StockAnalysis = () => {
     const TabIcon = currentTab.icon;
 
     return (
-        <div className="h-screen overflow-hidden bg-slate-50 p-3 sm:p-4 lg:p-5">
+        <div className="h-screen overflow-hidden bg-slate-50 p-2 sm:p-3 lg:p-4">
             <Toaster position="top-right" />
 
-            <div className="h-full max-w-[1600px] mx-auto space-y-4 overflow-hidden flex flex-col">
+            <div className="h-full max-w-[1600px] mx-auto space-y-3 overflow-hidden flex flex-col">
                 {/* Header */}
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                    <div className="flex items-center gap-4">
-                        <div className="size-12 rounded-2xl bg-emerald-600 flex items-center justify-center text-white shadow-lg shadow-emerald-600/20">
-                            <PackageSearch className="size-6" />
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <div className="flex items-center gap-3">
+                        <div className="size-10 rounded-2xl bg-emerald-600 flex items-center justify-center text-white shadow-lg shadow-emerald-600/20">
+                            <PackageSearch className="size-5" />
                         </div>
                         <div>
-                            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-slate-900">
+                            <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900">
                                 {t('stock:analyse.title')}
                             </h1>
-                            <p className="text-sm font-medium text-slate-500 mt-0.5">
+                            <p className="text-xs font-medium text-slate-500 mt-0.5">
                                 {t('stock:analyse.subtitle')}
                             </p>
                         </div>
@@ -75,16 +75,16 @@ const StockAnalysis = () => {
 
                 {/* Navigation Tabs — shadcn */}
                 <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as typeof activeTab)}>
-                    <TabsList className="bg-white border border-slate-200 p-1 h-11 w-full sm:w-auto">
+                    <TabsList className="bg-white border border-slate-200 p-1 h-9 w-full sm:w-auto">
                         {tabs.map((tab) => {
                             const Icon = tab.icon;
                             return (
                                 <TabsTrigger
                                     key={tab.id}
                                     value={tab.id}
-                                    className="gap-2 px-4 data-[state=active]:bg-emerald-600 data-[state=active]:text-white data-[state=active]:shadow"
+                                    className="gap-1.5 px-3 py-1 text-xs data-[state=active]:bg-emerald-600 data-[state=active]:text-white data-[state=active]:shadow"
                                 >
-                                    <Icon className="size-4" />
+                                    <Icon className="size-3.5" />
                                     <span className="hidden sm:inline">{t(`stock:analyse.tabs.${tab.id}`, tab.label)}</span>
                                     <span className="sm:hidden">{tab.label}</span>
                                 </TabsTrigger>
@@ -94,7 +94,9 @@ const StockAnalysis = () => {
                 </Tabs>
 
                 {activeTab === 'pilotage' ? (
-                    <StockHealthDashboard />
+                    <div className="flex-1 min-h-0 overflow-y-auto pr-1">
+                        <StockHealthDashboard />
+                    </div>
                 ) : (
                     <div className="flex-1 min-h-0 overflow-hidden flex flex-col space-y-4">
                         {/* Filters Card */}
@@ -166,12 +168,28 @@ const StockAnalysis = () => {
                                 {activeTab === 'shortage' && (
                                     <Card>
                                         <CardContent className="p-3 flex items-center gap-3">
+                                            <div className="size-9 rounded-lg bg-red-100 text-red-700 flex items-center justify-center shrink-0">
+                                                <AlertTriangle className="size-4" />
+                                            </div>
+                                            <div>
+                                                <p className="text-[10px] font-medium text-slate-500 uppercase tracking-wide">
+                                                    {t('stock:analyse.shortage.rupture_count', 'En rupture')}
+                                                </p>
+                                                <p className="text-xl font-bold text-red-700">{data.rupture_count ?? 0}</p>
+                                            </div>
+                                        </CardContent>
+                                    </Card>
+                                )}
+
+                                {activeTab === 'shortage' && (
+                                    <Card>
+                                        <CardContent className="p-3 flex items-center gap-3">
                                             <div className="size-9 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center shrink-0">
                                                 <AlertTriangle className="size-4" />
                                             </div>
                                             <div>
                                                 <p className="text-[10px] font-medium text-slate-500 uppercase tracking-wide">
-                                                    Alerts critiques
+                                                    {t('stock:analyse.shortage.critical_count', 'Alertes critiques')}
                                                 </p>
                                                 <p className="text-xl font-bold text-amber-600">{data.critical_count ?? 0}</p>
                                             </div>

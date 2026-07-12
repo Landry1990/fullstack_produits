@@ -351,10 +351,15 @@ class StockAnalysisShortageView(APIView):
         date_30_days_ago = today - timedelta(days=30)
         date_7_days_ago = today - timedelta(days=7)
 
-        # ── 1. Produits avec stock > 0 ──
+        # ── 1. Produits avec stock > 0 (ruptures imminentes) ──
         produits = Produit.objects.filter(stock__gt=0).select_related('fournisseur')
         if fournisseur_id:
             produits = produits.filter(fournisseur_id=fournisseur_id)
+
+        # ── 1b. Produits déjà en rupture (stock <= 0, rotation > 0) ──
+        produits_rupture = Produit.objects.filter(stock__lte=0, is_active=True, rotation_moyenne__gt=0).select_related('fournisseur')
+        if fournisseur_id:
+            produits_rupture = produits_rupture.filter(fournisseur_id=fournisseur_id)
 
         # ── 2. Ventes des 30 derniers jours (séparées en 2 périodes) ──
         # Période récente : 7 derniers jours
@@ -496,7 +501,53 @@ class StockAnalysisShortageView(APIView):
         # Trier par urgence (jours restants croissants)
         results.sort(key=lambda x: x['days_until_stockout'])
 
+        # ── 5. Produits déjà en rupture (stock <= 0) ──
+        for produit in produits_rupture:
+            vendu_recent = map_recentes.get(produit.id, 0)
+            vendu_ancien = map_anciennes.get(produit.id, 0)
+            qte_en_commande = map_commandes.get(produit.id, 0)
+
+            if vendu_recent + vendu_ancien > 0:
+                taux_journalier_recent = vendu_recent / 7.0
+                taux_journalier_ancien = vendu_ancien / 23.0 if vendu_ancien > 0 else 0
+                if taux_journalier_ancien > 0:
+                    ventes_jour = (taux_journalier_recent * 2 + taux_journalier_ancien) / 3.0
+                else:
+                    ventes_jour = taux_journalier_recent
+            else:
+                ventes_jour = 0
+
+            couverture_cible = 30
+            besoin_total = ventes_jour * couverture_cible if ventes_jour > 0 else 0
+            qte_suggeree = max(0, int(besoin_total - produit.stock + qte_en_commande + 0.5))
+
+            results.append({
+                'id': produit.id,
+                'cip': produit.cip1 if hasattr(produit, 'cip1') else '',
+                'name': produit.name,
+                'stock': produit.stock,
+                'avg_daily_sales': round(ventes_jour, 2),
+                'days_until_stockout': 0,
+                'days_with_pending_orders': 0,
+                'cost_price': float(produit.cost_price or 0),
+                'selling_price': float(produit.selling_price or 0),
+                'value': 0,
+                'urgency': 'rupture',
+                'fournisseur_name': produit.fournisseur.name if produit.fournisseur else 'N/A',
+                'pending_orders': qte_en_commande,
+                'suggested_order_qty': qte_suggeree,
+                'trend': 'stable',
+                'trend_pct': 0,
+                'sold_last_7d': vendu_recent,
+                'sold_prev_23d': vendu_ancien,
+            })
+
+        # Re-trier : ruptures d'abord, puis par jours restants
+        urgency_order = {'rupture': 0, 'critical': 1, 'warning': 2, 'caution': 3}
+        results.sort(key=lambda x: (urgency_order.get(x['urgency'], 9), x['days_until_stockout']))
+
         # Compteurs par urgence globaux
+        rupture_count = sum(1 for r in results if r['urgency'] == 'rupture')
         critical_count = sum(1 for r in results if r['urgency'] == 'critical')
         warning_count = sum(1 for r in results if r['urgency'] == 'warning')
         trending_up = sum(1 for r in results if r['trend'] == 'hausse')
@@ -514,6 +565,7 @@ class StockAnalysisShortageView(APIView):
             'fournisseur': Fournisseur.objects.get(id=fournisseur_id).name if fournisseur_id and Fournisseur.objects.filter(id=fournisseur_id).exists() else 'Tous',
             'total_items': total_items, # Conserve global
             'total_value': float(total_value_at_risk), # Conserve global
+            'rupture_count': rupture_count,
             'critical_count': critical_count,
             'warning_count': warning_count,
             'trending_up_count': trending_up,

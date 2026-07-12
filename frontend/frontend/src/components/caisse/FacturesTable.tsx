@@ -1,7 +1,24 @@
 import React, { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
+import { Package, Minus, Plus, Trash2 } from 'lucide-react'
 import type { Facture, CouponMonnaie } from '../../types'
-import PremiumModal from '../common/PremiumModal'
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from '../shadcn/dialog'
+import { Button } from '../shadcn/button'
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '../ui/Table'
 
 interface FacturesTableProps {
   sortedFactures: Facture[]
@@ -333,115 +350,135 @@ export const FacturesTable: React.FC<FacturesTableProps> = ({
       )}
 
       {/* Products Preview Popup */}
-      <PremiumModal
-        isOpen={!!previewFacture}
-        onClose={() => setPreviewFacture(null)}
-        title={`${t('table.products_preview_title', { numero: previewFacture?.numero_facture })} - Vendeur: ${previewFacture?.created_by_name || '?'}`}
-        footer={
-          <div className="flex justify-end w-full">
-            <button className="btn btn-sm" onClick={() => setPreviewFacture(null)}>{t('table.close')}</button>
-          </div>
-        }
-      >
-        <div className="p-4">
-          {previewFacture?.produits && previewFacture.produits.length > 0 ? (
-            <div className="overflow-x-auto">
-              <table className="table table-sm w-full">
-                <thead className="bg-slate-100 text-slate-600">
-                  <tr>
-                    <th>{t('table.product')}</th>
-                    <th className="text-center">{t('table.quantity')}</th>
-                    <th className="text-right">{t('table.unit_price_short')}</th>
-                    <th className="text-right">{t('table.total')}</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {previewFacture.produits.map((p: any, idx: number) => {
-                    const name = getProductName(p)
-                    const qty = p.quantity || p.quantite || 1
-                    const price = Number(p.selling_price || p.prix_vente || 0)
-                    const canModify = user?.is_superuser || user?.profile?.can_modify_invoice || (user as any)?.can_modify_invoice
-                    
-                    return (
-                      <tr key={p.id ?? p.produit_id ?? p.produit ?? idx} className="hover:bg-slate-50">
-                        <td className="font-medium">
-                          <div className="flex flex-col">
-                            <span>{name}</span>
-                            {p.lot && <span className="text-[10px] text-slate-400">Lot: {p.lot}</span>}
-                          </div>
-                        </td>
-                        <td className="text-center">
-                          <div className="flex items-center justify-center gap-1">
-                            {canModify ? (
-                              <>
-                                <button 
-                                  className="btn btn-xs btn-circle btn-ghost text-red-600 hover:bg-red-50"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    if (qty > 1) {
-                                      onUpdateProductQuantity(previewFacture.id, p.produit, qty - 1);
-                                    } else if (window.confirm(t('confirm_delete_product', { name }))) {
-                                      onRemoveProduct(previewFacture.id, p.produit);
-                                    }
-                                  }}
-                                >
-                                  -
-                                </button>
-                                <span className="font-bold min-w-[1.5rem]">{qty}</span>
-                                <button 
-                                  className="btn btn-xs btn-circle btn-ghost text-emerald-600 hover:bg-emerald-50"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    onUpdateProductQuantity(previewFacture.id, p.produit, qty + 1);
-                                  }}
-                                >
-                                  +
-                                </button>
-                              </>
-                            ) : (
-                              <span className="font-bold min-w-[1.5rem]">{qty}</span>
-                            )}
-                          </div>
-                        </td>
-                        <td className="text-right font-mono">{Math.round(price)} {t('common:currency_symbol', 'F')}</td>
-                        <td className="text-right font-mono font-bold">{Math.round(qty * price)} {t('common:currency_symbol', 'F')}</td>
-                        <td className="text-right">
-                          {canModify && (
-                            <button 
-                              className="btn btn-xs btn-ghost text-red-600 hover:bg-red-50 btn-square"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                if (window.confirm(t('confirm_delete_product', { name }))) {
-                                  onRemoveProduct(previewFacture.id, p.produit);
-                                }
-                              }}
-                            >
-                              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                              </svg>
-                            </button>
-                          )}
-                        </td>
-                      </tr>
-                    )
-                  })}
-                </tbody>
-                <tfoot>
-                  <tr>
-                    <td colSpan={3} className="text-right font-bold">{t('table.total_ttc')}</td>
-                    <td className="text-right font-mono font-bold text-emerald-600">
-                      {Math.round(Number(previewFacture.total_ttc))} {t('common:currency_symbol', 'F')}
-                    </td>
-                    <td></td>
-                  </tr>
-                </tfoot>
-              </table>
+      <Dialog open={!!previewFacture} onOpenChange={(open) => !open && setPreviewFacture(null)}>
+        <DialogContent className="max-w-2xl p-0 gap-0 overflow-hidden" aria-labelledby="preview-title" aria-describedby="preview-desc">
+          <DialogHeader className="px-6 py-5 border-b border-slate-200 bg-gradient-to-r from-emerald-50 via-white to-sky-50">
+            <div className="flex items-center gap-3">
+              <div className="size-10 rounded-xl bg-white shadow-sm flex items-center justify-center text-emerald-600">
+                <Package className="size-5" />
+              </div>
+              <div className="min-w-0">
+                <DialogTitle id="preview-title" className="text-lg font-bold text-slate-800 truncate">
+                  {t('table.products_preview_title', { numero: previewFacture?.numero_facture })}
+                </DialogTitle>
+                <DialogDescription id="preview-desc" className="text-xs text-slate-500 truncate">
+                  {t('table.seller', 'Vendeur')} : {previewFacture?.created_by_name || '?'}
+                </DialogDescription>
+              </div>
             </div>
-          ) : (
-            <p className="text-center text-slate-500 py-4">{t('table.no_products')}</p>
-          )}
-        </div>
-      </PremiumModal>
+          </DialogHeader>
+
+          <div className="p-6">
+            {previewFacture?.produits && previewFacture.produits.length > 0 ? (
+              <div className="rounded-xl border border-slate-200 overflow-hidden">
+                <Table>
+                  <TableHeader>
+                    <TableRow className="bg-slate-50 hover:bg-slate-50">
+                      <TableHead>{t('table.product')}</TableHead>
+                      <TableHead className="text-center w-32">{t('table.quantity')}</TableHead>
+                      <TableHead className="text-right w-28">{t('table.unit_price_short')}</TableHead>
+                      <TableHead className="text-right w-28">{t('table.total')}</TableHead>
+                      <TableHead className="w-10"></TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {previewFacture.produits.map((p: any, idx: number) => {
+                      const name = getProductName(p)
+                      const qty = p.quantity || p.quantite || 1
+                      const price = Number(p.selling_price || p.prix_vente || 0)
+                      const canModify = user?.is_superuser || user?.profile?.can_modify_invoice || (user as any)?.can_modify_invoice
+
+                      return (
+                        <TableRow key={p.id ?? p.produit_id ?? p.produit ?? idx} className="group">
+                          <TableCell>
+                            <div className="flex flex-col">
+                              <span className="font-semibold text-slate-800">{name}</span>
+                              {p.lot && <span className="text-[10px] text-slate-400">Lot: {p.lot}</span>}
+                            </div>
+                          </TableCell>
+                          <TableCell className="text-center">
+                            <div className="flex items-center justify-center gap-1">
+                              {canModify ? (
+                                <>
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="size-7 text-red-600 hover:bg-red-50"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      if (qty > 1) {
+                                        onUpdateProductQuantity(previewFacture.id, p.produit, qty - 1);
+                                      } else if (window.confirm(t('confirm_delete_product', { name }))) {
+                                        onRemoveProduct(previewFacture.id, p.produit);
+                                      }
+                                    }}
+                                  >
+                                    <Minus className="size-3.5" />
+                                  </Button>
+                                  <span className="font-bold min-w-[1.5rem] text-sm">{qty}</span>
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="size-7 text-emerald-600 hover:bg-emerald-50"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      onUpdateProductQuantity(previewFacture.id, p.produit, qty + 1);
+                                    }}
+                                  >
+                                    <Plus className="size-3.5" />
+                                  </Button>
+                                </>
+                              ) : (
+                                <span className="font-bold min-w-[1.5rem] text-sm">{qty}</span>
+                              )}
+                            </div>
+                          </TableCell>
+                          <TableCell className="text-right font-mono text-sm text-slate-600">{Math.round(price)} {t('common:currency_symbol', 'F')}</TableCell>
+                          <TableCell className="text-right font-mono font-bold text-sm text-slate-800">{Math.round(qty * price)} {t('common:currency_symbol', 'F')}</TableCell>
+                          <TableCell className="text-right">
+                            {canModify && (
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="size-7 text-red-600 hover:bg-red-50 opacity-0 group-hover:opacity-100 transition-opacity"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  if (window.confirm(t('confirm_delete_product', { name }))) {
+                                    onRemoveProduct(previewFacture.id, p.produit);
+                                  }
+                                }}
+                              >
+                                <Trash2 className="size-3.5" />
+                              </Button>
+                            )}
+                          </TableCell>
+                        </TableRow>
+                      )
+                    })}
+                  </TableBody>
+                </Table>
+                <div className="flex items-center justify-between px-4 py-3 bg-slate-50 border-t border-slate-200">
+                  <span className="text-sm font-semibold text-slate-600">{t('table.total_ttc')}</span>
+                  <span className="text-lg font-bold font-mono text-emerald-600">
+                    {Math.round(Number(previewFacture.total_ttc))} {t('common:currency_symbol', 'F')}
+                  </span>
+                </div>
+              </div>
+            ) : (
+              <div className="text-center py-8 text-slate-500">
+                <Package className="size-10 mx-auto mb-2 text-slate-300" />
+                <p className="text-sm font-medium">{t('table.no_products')}</p>
+              </div>
+            )}
+          </div>
+
+          <DialogFooter className="px-6 py-4 border-t border-slate-200 bg-slate-50">
+            <Button variant="outline" onClick={() => setPreviewFacture(null)}>
+              {t('table.close')}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </>
   )
 }

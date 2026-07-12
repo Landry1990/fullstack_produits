@@ -104,7 +104,6 @@ export default function Sidebar() {
         { path: '/app/inventaire', label: t('stock.inventaire.title'), key: 'inventaire_saisie' },
         { path: '/app/journal-ajustements', label: t('stock.journal'), key: 'inventaire_journal' },
         { path: '/app/stock-analysis', label: t('stock.analyse.title'), key: 'inventaire_analyse' },
-        { path: '/app/ruptures', label: t('stock.ruptures.title', 'Suivi des Ruptures'), key: 'inventaire_ruptures' },
         { path: '/app/cadencier', label: t('stock.cadencier.title', 'Cadencier'), key: 'inventaire_cadencier' },
         { path: '/app/reappro-rayon', label: t('stock.reappro.title', 'Réappro Rayon'), key: 'inventaire_reappro' },
         { path: '/app/avoirs', label: t('stock.avoirs'), key: 'inventaire_avoirs' },

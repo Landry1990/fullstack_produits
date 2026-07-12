@@ -385,6 +385,7 @@
         "mode_simple_desc": "Replaces exactly the quantities sold over the selected period.",
         "mode_smart_title": "Smart Mode",
         "mode_smart_desc": "Predictive analysis with rotation, trends and optimized stock target.",
+        "abc_a_only_label": "A-products only (20/80)",
         "supplier_label": "Supplier",
         "all_suppliers": "All suppliers",
         "budget_label": "Estimated Budget (FCFA)",

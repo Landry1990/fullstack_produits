@@ -13,7 +13,7 @@ export interface StockAnalysisItem {
     excess_qty?: number;
     avg_daily_sales?: number;
     days_until_stockout?: number;
-    urgency?: 'critical' | 'warning' | 'caution';
+    urgency?: 'rupture' | 'critical' | 'warning' | 'caution';
     value: number;
     cost_price: number;
     selling_price: number;
@@ -32,6 +32,7 @@ export interface StockAnalysisResponse {
     current_page?: number;
     total_pages?: number;
     page_size?: number;
+    rupture_count?: number;
     critical_count?: number;
     warning_count?: number;
     items: StockAnalysisItem[];
