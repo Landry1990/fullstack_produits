@@ -33,6 +33,13 @@ build/
 .env.*
 !.env.example
 
+# Licence / secrets applicatifs
+licence_key.txt
+license_key.txt
+*.licence
+*.license
+licences_recovered.txt
+
 # ============== IDE ==============
 .vscode/
 .idea/

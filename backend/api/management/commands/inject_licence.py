@@ -6,6 +6,7 @@ Usage:
     python manage.py inject_licence --file licence.txt
     python manage.py inject_licence --validate-only "eyJhbGciOiJSUzI1NiIs..."
 """
+import os
 from django.core.management.base import BaseCommand, CommandError
 from django.utils import timezone
 from api.models.licence import Licence
@@ -28,6 +29,12 @@ class Command(BaseCommand):
             help='Path to a file containing the licence key',
         )
         parser.add_argument(
+            '--from-env',
+            dest='from_env',
+            type=str,
+            help='Name of an environment variable containing the licence key',
+        )
+        parser.add_argument(
             '--validate-only',
             action='store_true',
             help='Only validate the key, do not insert it',
@@ -41,11 +48,17 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         cle = options.get('cle')
         file_path = options.get('file')
+        from_env = options.get('from_env')
         validate_only = options.get('validate_only')
         force = options.get('force')
 
+        if from_env:
+            cle = os.environ.get(from_env, '').strip()
+            if not cle:
+                raise CommandError(f'Environment variable {from_env} is empty or not set.')
+
         if not cle and not file_path:
-            raise CommandError('You must provide either a key or a --file path.')
+            raise CommandError('You must provide either a key, a --file path, or a --from-env variable.')
 
         if file_path:
             try:
